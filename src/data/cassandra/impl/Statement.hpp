@@ -54,7 +54,7 @@ public:
      */
     template <typename... Args>
     explicit Statement(std::string_view query, Args&&... args)
-        : ManagedObject{cass_statement_new(query.data(), sizeof...(args)), deleter}
+        : ManagedObject{cass_statement_new_n(query.data(), query.size(), sizeof...(args)), deleter}
     {
         cass_statement_set_consistency(*this, CASS_CONSISTENCY_QUORUM);
         cass_statement_set_is_idempotent(*this, cass_true);

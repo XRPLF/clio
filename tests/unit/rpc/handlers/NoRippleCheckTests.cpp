@@ -72,87 +72,87 @@ generateTestValuesForParametersTest()
 {
     return std::vector<NoRippleParamTestCaseBundle>{
         NoRippleParamTestCaseBundle{
-            "AccountNotExists",
-            R"({
+            .testName = "AccountNotExists",
+            .testJson = R"({
                 "role": "gateway"
              })",
-            "invalidParams",
-            "Required field 'account' missing"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Required field 'account' missing"
         },
         NoRippleParamTestCaseBundle{
-            "AccountNotString",
-            R"({
+            .testName = "AccountNotString",
+            .testJson = R"({
                 "account": 123,
                 "role": "gateway"
              })",
-            "invalidParams",
-            "accountNotString"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "accountNotString"
         },
         NoRippleParamTestCaseBundle{
-            "InvalidAccount",
-            R"({
+            .testName = "InvalidAccount",
+            .testJson = R"({
                 "account": "123",
                 "role": "gateway"
              })",
-            "actMalformed",
-            "accountMalformed"
+            .expectedError = "actMalformed",
+            .expectedErrorMessage = "accountMalformed"
         },
         NoRippleParamTestCaseBundle{
-            "InvalidRole",
-            R"({
+            .testName = "InvalidRole",
+            .testJson = R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "role": "notrole"
              })",
-            "invalidParams",
-            "role field is invalid"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "role field is invalid"
         },
         NoRippleParamTestCaseBundle{
-            "RoleNotExists",
-            R"({
+            .testName = "RoleNotExists",
+            .testJson = R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
              })",
-            "invalidParams",
-            "Required field 'role' missing"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Required field 'role' missing"
         },
         NoRippleParamTestCaseBundle{
-            "LimitNotInt",
-            R"({
+            .testName = "LimitNotInt",
+            .testJson = R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "role": "gateway",
                 "limit": "gg"
              })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         NoRippleParamTestCaseBundle{
-            "LimitNegative",
-            R"({
+            .testName = "LimitNegative",
+            .testJson = R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "role": "gateway",
                 "limit": -1
              })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         NoRippleParamTestCaseBundle{
-            "LimitZero",
-            R"({
+            .testName = "LimitZero",
+            .testJson = R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "role": "gateway",
                 "limit": 0
              })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         NoRippleParamTestCaseBundle{
-            "TransactionsNotBool",
-            R"({
+            .testName = "TransactionsNotBool",
+            .testJson = R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "role": "gateway",
                 "transactions": "gg"
              })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
     };
 }

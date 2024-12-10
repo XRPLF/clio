@@ -87,116 +87,116 @@ TEST_P(ParameterTest, CheckError)
     });
 }
 
-auto
+static auto
 generateParameterTestBundles()
 {
     return std::vector<ParameterTestBundle>{
         ParameterTestBundle{
-            "AccountNotString",
-            R"({
+            .testName = "AccountNotString",
+            .testJson = R"({
                 "account": 1213
             })",
-            "invalidParams",
-            "accountNotString"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "accountNotString"
         },
         ParameterTestBundle{
-            "AccountMissing",
-            R"({
+            .testName = "AccountMissing",
+            .testJson = R"({
             })",
-            "invalidParams",
-            "Required field 'account' missing"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Required field 'account' missing"
         },
         ParameterTestBundle{
-            "AccountInvalid",
-            R"({
+            .testName = "AccountInvalid",
+            .testJson = R"({
                 "account": "1213"
             })",
-            "actMalformed",
-            "accountMalformed"
+            .expectedError = "actMalformed",
+            .expectedErrorMessage = "accountMalformed"
         },
         ParameterTestBundle{
-            "LedgerIndexInvalid",
-            fmt::format(
+            .testName = "LedgerIndexInvalid",
+            .testJson = fmt::format(
                 R"({{
                     "account": "{}",
                     "ledger_index": "meh"
                 }})",
                 ACCOUNT
             ),
-            "invalidParams",
-            "ledgerIndexMalformed"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
         ParameterTestBundle{
-            "LedgerHashInvalid",
-            fmt::format(
+            .testName = "LedgerHashInvalid",
+            .testJson = fmt::format(
                 R"({{
                     "account": "{}",
                     "ledger_hash": "meh"
                 }})",
                 ACCOUNT
             ),
-            "invalidParams",
-            "ledger_hashMalformed"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashMalformed"
         },
         ParameterTestBundle{
-            "LedgerHashNotString",
-            fmt::format(
+            .testName = "LedgerHashNotString",
+            .testJson = fmt::format(
                 R"({{
                     "account": "{}",
                     "ledger_hash": 12
                 }})",
                 ACCOUNT
             ),
-            "invalidParams",
-            "ledger_hashNotString"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashNotString"
         },
         ParameterTestBundle{
-            "WalletsNotStringOrArray",
-            fmt::format(
+            .testName = "WalletsNotStringOrArray",
+            .testJson = fmt::format(
                 R"({{
                     "account": "{}",
                     "hotwallet": 12
                 }})",
                 ACCOUNT
             ),
-            "invalidParams",
-            "hotwalletNotStringOrArray"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "hotwalletNotStringOrArray"
         },
         ParameterTestBundle{
-            "WalletsNotStringAccount",
-            fmt::format(
+            .testName = "WalletsNotStringAccount",
+            .testJson = fmt::format(
                 R"({{
                     "account": "{}",
                     "hotwallet": [12]
                 }})",
                 ACCOUNT
             ),
-            "invalidParams",
-            "hotwalletMalformed"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "hotwalletMalformed"
         },
         ParameterTestBundle{
-            "WalletsInvalidAccount",
-            fmt::format(
+            .testName = "WalletsInvalidAccount",
+            .testJson = fmt::format(
                 R"({{
                     "account": "{}",
                     "hotwallet": ["12"]
                 }})",
                 ACCOUNT
             ),
-            "invalidParams",
-            "hotwalletMalformed"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "hotwalletMalformed"
         },
         ParameterTestBundle{
-            "WalletInvalidAccount",
-            fmt::format(
+            .testName = "WalletInvalidAccount",
+            .testJson = fmt::format(
                 R"({{
                     "account": "{}",
                     "hotwallet": "12"
                 }})",
                 ACCOUNT
             ),
-            "invalidParams",
-            "hotwalletMalformed"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "hotwalletMalformed"
         },
     };
 }
@@ -402,9 +402,9 @@ TEST_P(NormalPathTest, CheckOutput)
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
 
     std::vector<Blob> bbs;
-    std::transform(
-        bundle.mockedObjects.begin(),
-        bundle.mockedObjects.end(),
+    std::ranges::transform(
+        bundle.mockedObjects,
+
         std::back_inserter(bbs),
         [](auto const& obj) { return obj.getSerializer().peekData(); }
     );
@@ -429,7 +429,7 @@ TEST_P(NormalPathTest, CheckOutput)
     });
 }
 
-auto
+static auto
 generateNormalPathTestBundles()
 {
     auto frozenState = CreateRippleStateLedgerObject("JPY", ISSUER, -50, ACCOUNT, 10, ACCOUNT3, 20, TXNID, 123);
@@ -440,8 +440,8 @@ generateNormalPathTestBundles()
     overflowState.setFieldAmount(ripple::sfBalance, ripple::STAmount(GetIssue("JPY", ISSUER), min64, 80));
     return std::vector<NormalTestBundle>{
         NormalTestBundle{
-            "AllBranches",
-            CreateOwnerDirLedgerObject(
+            .testName = "AllBranches",
+            .mockedDir = CreateOwnerDirLedgerObject(
                 {ripple::uint256{INDEX2},
                  ripple::uint256{INDEX2},
                  ripple::uint256{INDEX2},
@@ -450,20 +450,26 @@ generateNormalPathTestBundles()
                  ripple::uint256{INDEX2}},
                 INDEX1
             ),
-            std::vector{// hotwallet
-                        CreateRippleStateLedgerObject("USD", ISSUER, -10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123),
-                        // hotwallet
-                        CreateRippleStateLedgerObject("CNY", ISSUER, -20, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123),
-                        // positive balance -> asset
-                        CreateRippleStateLedgerObject("EUR", ISSUER, 30, ACCOUNT, 100, ACCOUNT3, 200, TXNID, 123),
-                        // positive balance -> asset
-                        CreateRippleStateLedgerObject("JPY", ISSUER, 40, ACCOUNT, 100, ACCOUNT3, 200, TXNID, 123),
-                        // obligation
-                        CreateRippleStateLedgerObject("JPY", ISSUER, -50, ACCOUNT, 10, ACCOUNT3, 20, TXNID, 123),
-                        frozenState
-
-            },
-            fmt::format(
+            .mockedObjects =
+                {
+                    CreateRippleStateLedgerObject(
+                        "USD", ISSUER, -10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123
+                    ),  // hotwallet
+                    CreateRippleStateLedgerObject(
+                        "CNY", ISSUER, -20, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123
+                    ),  // hotwallet
+                    CreateRippleStateLedgerObject(
+                        "EUR", ISSUER, 30, ACCOUNT, 100, ACCOUNT3, 200, TXNID, 123
+                    ),  // positive balance -> asset
+                    CreateRippleStateLedgerObject(
+                        "JPY", ISSUER, 40, ACCOUNT, 100, ACCOUNT3, 200, TXNID, 123
+                    ),  // positive balance -> asset
+                    CreateRippleStateLedgerObject(
+                        "JPY", ISSUER, -50, ACCOUNT, 10, ACCOUNT3, 20, TXNID, 123
+                    ),  // obligation
+                    frozenState,
+                },
+            .expectedJson = fmt::format(
                 R"({{
                     "obligations":{{
                         "JPY":"50"
@@ -509,13 +515,14 @@ generateNormalPathTestBundles()
                 ACCOUNT3,
                 ACCOUNT
             ),
-            fmt::format(R"("hotwallet": "{}")", ACCOUNT2)
+            .hotwallet = fmt::format(R"("hotwallet": "{}")", ACCOUNT2)
         },
         NormalTestBundle{
-            "NoHotwallet",
-            CreateOwnerDirLedgerObject({ripple::uint256{INDEX2}}, INDEX1),
-            std::vector{CreateRippleStateLedgerObject("JPY", ISSUER, -50, ACCOUNT, 10, ACCOUNT3, 20, TXNID, 123)},
-            fmt::format(
+            .testName = "NoHotwallet",
+            .mockedDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX2}}, INDEX1),
+            .mockedObjects =
+                std::vector{CreateRippleStateLedgerObject("JPY", ISSUER, -50, ACCOUNT, 10, ACCOUNT3, 20, TXNID, 123)},
+            .expectedJson = fmt::format(
                 R"({{
                     "obligations":{{
                         "JPY":"50"
@@ -526,13 +533,13 @@ generateNormalPathTestBundles()
                 }})",
                 ACCOUNT
             ),
-            R"("ledger_index" : "validated")"
+            .hotwallet = R"("ledger_index" : "validated")"
         },
         NormalTestBundle{
-            "ObligationOverflow",
-            CreateOwnerDirLedgerObject({ripple::uint256{INDEX2}, ripple::uint256{INDEX2}}, INDEX1),
-            std::vector{overflowState, overflowState},
-            fmt::format(
+            .testName = "ObligationOverflow",
+            .mockedDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX2}, ripple::uint256{INDEX2}}, INDEX1),
+            .mockedObjects = std::vector{overflowState, overflowState},
+            .expectedJson = fmt::format(
                 R"({{
                     "obligations":{{
                         "JPY":"9999999999999999e80"
@@ -543,22 +550,26 @@ generateNormalPathTestBundles()
                 }})",
                 ACCOUNT
             ),
-            R"("ledger_index" : "validated")"
+            .hotwallet = R"("ledger_index" : "validated")"
         },
         NormalTestBundle{
-            "HighID",
-            CreateOwnerDirLedgerObject(
+            .testName = "HighID",
+            .mockedDir = CreateOwnerDirLedgerObject(
                 {ripple::uint256{INDEX2}, ripple::uint256{INDEX2}, ripple::uint256{INDEX2}, ripple::uint256{INDEX2}},
                 INDEX1
             ),
-            std::vector{// hotwallet
-                        CreateRippleStateLedgerObject("USD", ISSUER, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123),
-                        // hotwallet
-                        CreateRippleStateLedgerObject("CNY", ISSUER, 20, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123),
-                        CreateRippleStateLedgerObject("EUR", ISSUER, 30, ACCOUNT3, 100, ACCOUNT, 200, TXNID, 123),
-                        CreateRippleStateLedgerObject("JPY", ISSUER, -50, ACCOUNT3, 10, ACCOUNT, 20, TXNID, 123)
-            },
-            fmt::format(
+            .mockedObjects =
+                {
+                    CreateRippleStateLedgerObject(
+                        "USD", ISSUER, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123
+                    ),  // hotwallet
+                    CreateRippleStateLedgerObject(
+                        "CNY", ISSUER, 20, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123
+                    ),  // hotwallet
+                    CreateRippleStateLedgerObject("EUR", ISSUER, 30, ACCOUNT3, 100, ACCOUNT, 200, TXNID, 123),
+                    CreateRippleStateLedgerObject("JPY", ISSUER, -50, ACCOUNT3, 10, ACCOUNT, 20, TXNID, 123),
+                },
+            .expectedJson = fmt::format(
                 R"({{
                     "obligations":{{
                         "EUR":"30"
@@ -591,20 +602,21 @@ generateNormalPathTestBundles()
                 ACCOUNT3,
                 ACCOUNT
             ),
-            fmt::format(R"("hotwallet": "{}")", ACCOUNT2)
+            .hotwallet = fmt::format(R"("hotwallet": "{}")", ACCOUNT2)
         },
         NormalTestBundle{
-            "HotWalletArray",
-            CreateOwnerDirLedgerObject(
+            .testName = "HotWalletArray",
+            .mockedDir = CreateOwnerDirLedgerObject(
                 {ripple::uint256{INDEX2}, ripple::uint256{INDEX2}, ripple::uint256{INDEX2}}, INDEX1
             ),
-            std::vector{
-                CreateRippleStateLedgerObject("USD", ISSUER, -10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123),
-                CreateRippleStateLedgerObject("CNY", ISSUER, -20, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123),
-                CreateRippleStateLedgerObject("EUR", ISSUER, -30, ACCOUNT, 100, ACCOUNT3, 200, TXNID, 123)
+            .mockedObjects =
+                std::vector{
+                    CreateRippleStateLedgerObject("USD", ISSUER, -10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123),
+                    CreateRippleStateLedgerObject("CNY", ISSUER, -20, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123),
+                    CreateRippleStateLedgerObject("EUR", ISSUER, -30, ACCOUNT, 100, ACCOUNT3, 200, TXNID, 123)
 
-            },
-            fmt::format(
+                },
+            .expectedJson = fmt::format(
                 R"({{
                     "balances":{{
                         "{}":[
@@ -632,7 +644,7 @@ generateNormalPathTestBundles()
                 ACCOUNT2,
                 ACCOUNT
             ),
-            fmt::format(R"("hotwallet": ["{}", "{}"])", ACCOUNT2, ACCOUNT3)
+            .hotwallet = fmt::format(R"("hotwallet": ["{}", "{}"])", ACCOUNT2, ACCOUNT3)
         },
     };
 }

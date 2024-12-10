@@ -84,7 +84,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonHexLedgerHash)
             }})",
             MPTID
         ));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -104,7 +104,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonStringLedgerHash)
             }})",
             MPTID
         ));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -124,7 +124,7 @@ TEST_F(RPCMPTHoldersHandlerTest, InvalidLedgerIndexString)
             }})",
             MPTID
         ));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -141,7 +141,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTIDInvalidFormat)
         auto const input = json::parse(R"({ 
             "mpt_issuance_id": "xxx"
         })");
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -155,7 +155,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTIDMissing)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend}};
         auto const input = json::parse(R"({})");
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -171,7 +171,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTIDNotString)
         auto const input = json::parse(R"({ 
             "mpt_issuance_id": 12
         })");
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -192,7 +192,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerInvalidFormat)
         }})",
             MPTID
         ));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -212,7 +212,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerNotString)
         }})",
             MPTID
         ));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -238,7 +238,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerHash)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -261,7 +261,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerStringIndex)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -282,7 +282,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerIntIndex)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -308,7 +308,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerHash2)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -331,7 +331,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerIndex2)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -358,7 +358,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTNotFound)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto handler = AnyHandler{MPTHoldersHandler{this->backend}};
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
@@ -388,7 +388,7 @@ TEST_F(RPCMPTHoldersHandlerTest, DefaultParameters)
 
     auto const mptoken = CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID));
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
-    ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, {}}));
+    ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = {}}));
     EXPECT_CALL(
         *backend, fetchMPTHolders(ripple::uint192(MPTID), testing::_, testing::Eq(std::nullopt), Const(30), testing::_)
     )
@@ -435,7 +435,7 @@ TEST_F(RPCMPTHoldersHandlerTest, CustomAmounts)
 
     auto const mptoken = CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID), 0);
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
-    ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, {}}));
+    ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = {}}));
     EXPECT_CALL(
         *backend, fetchMPTHolders(ripple::uint192(MPTID), testing::_, testing::Eq(std::nullopt), Const(30), testing::_)
     )
@@ -480,7 +480,7 @@ TEST_F(RPCMPTHoldersHandlerTest, SpecificLedgerIndex)
 
     auto const mptoken = CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID));
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
-    ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, {}}));
+    ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = {}}));
     EXPECT_CALL(
         *backend,
         fetchMPTHolders(
@@ -529,7 +529,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerParameter)
     auto const mptoken = CreateMPTokenObject(HOLDER2_ACCOUNT, ripple::uint192(MPTID));
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
     auto const marker = GetAccountIDWithString(HOLDER1_ACCOUNT);
-    ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, marker}));
+    ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = marker}));
     EXPECT_CALL(
         *backend, fetchMPTHolders(ripple::uint192(MPTID), testing::_, testing::Eq(marker), Const(30), testing::_)
     )
@@ -575,7 +575,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
     auto const mptoken1 = CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID));
     auto const mptoken2 = CreateMPTokenObject(HOLDER2_ACCOUNT, ripple::uint192(MPTID));
     std::vector<Blob> const mpts = {mptoken1.getSerializer().peekData(), mptoken2.getSerializer().peekData()};
-    ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, {}}));
+    ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = {}}));
     EXPECT_CALL(
         *backend, fetchMPTHolders(ripple::uint192(MPTID), testing::_, testing::Eq(std::nullopt), Const(30), testing::_)
     )
@@ -616,7 +616,7 @@ TEST_F(RPCMPTHoldersHandlerTest, LimitMoreThanMAx)
 
     auto const mptoken = CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID));
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
-    ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, {}}));
+    ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{.mptokens = mpts, .cursor = {}}));
     EXPECT_CALL(
         *backend,
         fetchMPTHolders(

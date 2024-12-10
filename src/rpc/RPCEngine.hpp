@@ -174,7 +174,13 @@ public:
         try {
             LOG(perfLog_.debug()) << ctx.tag() << " start executing rpc `" << ctx.method << '`';
 
-            auto const context = Context{ctx.yield, ctx.session, ctx.isAdmin, ctx.clientIp, ctx.apiVersion};
+            auto const context = Context{
+                .yield = ctx.yield,
+                .session = ctx.session,
+                .isAdmin = ctx.isAdmin,
+                .clientIp = ctx.clientIp,
+                .apiVersion = ctx.apiVersion
+            };
             auto v = (*method).process(ctx.params, context);
 
             LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';

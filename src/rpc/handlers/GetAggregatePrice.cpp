@@ -147,11 +147,11 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
         avg = divide(avg, ripple::STAmount{ripple::noIssue(), size, 0}, ripple::noIssue());
         if (size > 1) {
             sd = std::accumulate(begin, end, sd, [&](ripple::Number const& acc, auto const& it) {
-                return acc + (it.first - avg) * (it.first - avg);
+                return acc + ((it.first - avg) * (it.first - avg));
             });
             sd = root2(sd / (size - 1));
         }
-        return {avg, sd, size};
+        return {.avg = avg, .sd = sd, .size = size};
     };
 
     out.extireStats = getStats(timestampPricesBiMap.right.begin(), timestampPricesBiMap.right.end());

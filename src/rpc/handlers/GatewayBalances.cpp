@@ -146,7 +146,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
         return Error{*status};
 
     auto inHotbalances = [&](auto const& hw) { return output.hotBalances.contains(hw); };
-    if (not std::all_of(input.hotWallets.begin(), input.hotWallets.end(), inHotbalances))
+    if (not std::ranges::all_of(input.hotWallets, inHotbalances))
         return Error{Status{ClioError::rpcINVALID_HOT_WALLET}};
 
     output.accountID = input.account;
@@ -233,9 +233,9 @@ tag_invoke(boost::json::value_to_tag<GatewayBalancesHandler::Input>, boost::json
             input.hotWallets.insert(*accountFromStringStrict(boost::json::value_to<std::string>(jv.at(JS(hotwallet)))));
         } else {
             auto const& hotWallets = jv.at(JS(hotwallet)).as_array();
-            std::transform(
-                hotWallets.begin(),
-                hotWallets.end(),
+            std::ranges::transform(
+                hotWallets,
+
                 std::inserter(input.hotWallets, input.hotWallets.begin()),
                 [](auto const& hotWallet) {
                     return *accountFromStringStrict(boost::json::value_to<std::string>(hotWallet));

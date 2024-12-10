@@ -215,7 +215,11 @@ struct Custom {
     {
         ASSERT(value.is_object(), "Value must be an object");
         auto const& obj = value.as_object();
-        return {boost::json::value_to<std::string>(obj.at("str")), obj.at("int").as_int64(), obj.at("bool").as_bool()};
+        return {
+            .a = boost::json::value_to<std::string>(obj.at("str")),
+            .b = obj.at("int").as_int64(),
+            .c = obj.at("bool").as_bool()
+        };
     }
 };
 

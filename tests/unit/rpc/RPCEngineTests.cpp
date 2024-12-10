@@ -223,7 +223,7 @@ TEST_P(RPCEngineFlowParameterTest, Test)
             boost::json::parse(testBundle.params).as_object(),
             nullptr,
             tagFactory,
-            LedgerRange{0, 30},
+            LedgerRange{.minSequence = 0, .maxSequence = 30},
             "127.0.0.2",
             testBundle.isAdmin
         );
@@ -261,7 +261,7 @@ TEST_F(RPCEngineTest, ThrowDatabaseError)
             boost::json::parse("{}").as_object(),
             nullptr,
             tagFactory,
-            LedgerRange{0, 30},
+            LedgerRange{.minSequence = 0, .maxSequence = 30},
             "127.0.0.2",
             false
         );
@@ -294,7 +294,7 @@ TEST_F(RPCEngineTest, ThrowException)
             boost::json::parse("{}").as_object(),
             nullptr,
             tagFactory,
-            LedgerRange{0, 30},
+            LedgerRange{.minSequence = 0, .maxSequence = 30},
             "127.0.0.2",
             false
         );
@@ -418,7 +418,7 @@ TEST_P(RPCEngineCacheParameterTest, Test)
                 boost::json::parse(R"JSON({"hello": "world", "limit": 50})JSON").as_object(),
                 nullptr,
                 tagFactory,
-                LedgerRange{0, 30},
+                LedgerRange{.minSequence = 0, .maxSequence = 30},
                 "127.0.0.2",
                 admin
             );
@@ -463,7 +463,7 @@ TEST_F(RPCEngineTest, NotCacheIfErrorHappen)
                 boost::json::parse(R"JSON({"hello": "world","limit": 50})JSON").as_object(),
                 nullptr,
                 tagFactory,
-                LedgerRange{0, 30},
+                LedgerRange{.minSequence = 0, .maxSequence = 30},
                 "127.0.0.2",
                 notAdmin
             );

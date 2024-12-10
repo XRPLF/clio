@@ -208,7 +208,7 @@ benchmarkThreads(benchmark::State& state)
 }
 
 template <typename CtxType>
-void
+static void
 benchmarkExecutionContextBatched(benchmark::State& state)
 {
     auto data = generateData();
@@ -219,7 +219,7 @@ benchmarkExecutionContextBatched(benchmark::State& state)
 }
 
 template <typename CtxType>
-void
+static void
 benchmarkAnyExecutionContextBatched(benchmark::State& state)
 {
     auto data = generateData();

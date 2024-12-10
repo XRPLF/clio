@@ -83,124 +83,124 @@ generateTestValuesForParametersTest()
 {
     return std::vector<DepositAuthorizedTestCaseBundle>{
         {
-            "SourceAccountMissing",
-            R"({
+            .testName = "SourceAccountMissing",
+            .testJson = R"({
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
             })",
-            "invalidParams",
-            "Required field 'source_account' missing",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Required field 'source_account' missing",
         },
         {
-            "SourceAccountMalformed",
-            R"({
+            .testName = "SourceAccountMalformed",
+            .testJson = R"({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp", 
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
             })",
-            "actMalformed",
-            "source_accountMalformed",
+            .expectedError = "actMalformed",
+            .expectedErrorMessage = "source_accountMalformed",
         },
         {
-            "SourceAccountNotString",
-            R"({
+            .testName = "SourceAccountNotString",
+            .testJson = R"({
                 "source_account": 1234, 
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
             })",
-            "invalidParams",
-            "source_accountNotString",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "source_accountNotString",
         },
         {
-            "DestinationAccountMissing",
-            R"({
+            .testName = "DestinationAccountMissing",
+            .testJson = R"({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
             })",
-            "invalidParams",
-            "Required field 'destination_account' missing",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Required field 'destination_account' missing",
         },
         {
-            "DestinationAccountMalformed",
-            R"({
+            .testName = "DestinationAccountMalformed",
+            .testJson = R"({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp", 
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
             })",
-            "actMalformed",
-            "destination_accountMalformed",
+            .expectedError = "actMalformed",
+            .expectedErrorMessage = "destination_accountMalformed",
         },
         {
-            "DestinationAccountNotString",
-            R"({
+            .testName = "DestinationAccountNotString",
+            .testJson = R"({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "destination_account": 1234,
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
             })",
-            "invalidParams",
-            "destination_accountNotString",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "destination_accountNotString",
         },
         {
-            "LedgerHashInvalid",
-            R"({
+            .testName = "LedgerHashInvalid",
+            .testJson = R"({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "ledger_hash": "x"
             })",
-            "invalidParams",
-            "ledger_hashMalformed",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashMalformed",
         },
         {
-            "LedgerHashNotString",
-            R"({
+            .testName = "LedgerHashNotString",
+            .testJson = R"({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "ledger_hash": 123
             })",
-            "invalidParams",
-            "ledger_hashNotString",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashNotString",
         },
         {
-            "LedgerIndexNotInt",
-            R"({
+            .testName = "LedgerIndexNotInt",
+            .testJson = R"({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "ledger_index": "x"
             })",
-            "invalidParams",
-            "ledgerIndexMalformed",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledgerIndexMalformed",
         },
         {
-            "CredentialsNotArray",
-            R"({
+            .testName = "CredentialsNotArray",
+            .testJson = R"({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "credentials": "x"
             })",
-            "invalidParams",
-            "Invalid parameters.",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters.",
         },
         {
-            "CredentialsNotStringsInArray",
-            R"({
+            .testName = "CredentialsNotStringsInArray",
+            .testJson = R"({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "credentials": [123]
             })",
-            "invalidParams",
-            "Item is not a valid uint256 type.",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Item is not a valid uint256 type.",
         },
         {
-            "CredentialsNotHexedStringInArray",
-            R"({
+            .testName = "CredentialsNotHexedStringInArray",
+            .testJson = R"({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "credentials": ["234", "432"]
             })",
-            "invalidParams",
-            "Item is not a valid uint256 type.",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Item is not a valid uint256 type.",
         }
     };
 }

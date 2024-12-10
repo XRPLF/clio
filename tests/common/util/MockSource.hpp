@@ -177,8 +177,11 @@ public:
                            ) {
                 auto it = std::ranges::find_if(mockData_, [](auto const& d) { return not d.callbacks.has_value(); });
                 [&]() { ASSERT_NE(it, mockData_.end()) << "Make source called more than expected"; }();
-                it->callbacks =
-                    MockSourceCallbacks{std::move(onDisconnect), std::move(onConnect), std::move(onLedgerClosed)};
+                it->callbacks = MockSourceCallbacks{
+                    .onDisconnect = std::move(onDisconnect),
+                    .onConnect = std::move(onConnect),
+                    .onLedgerClosed = std::move(onLedgerClosed)
+                };
 
                 return std::make_unique<MockSourceWrapper<MockType>>(it->source);
             });

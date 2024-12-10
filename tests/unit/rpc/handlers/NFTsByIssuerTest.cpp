@@ -107,7 +107,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonHexLedgerHash)
             }})",
             ACCOUNT
         ));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -127,7 +127,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonStringLedgerHash)
             }})",
             ACCOUNT
         ));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -147,7 +147,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, InvalidLedgerIndexString)
             }})",
             ACCOUNT
         ));
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -164,7 +164,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerInvalidFormat)
         auto const input = json::parse(R"({ 
             "issuer": "xxx"
         })");
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
@@ -178,7 +178,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerMissing)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend}};
         auto const input = json::parse(R"({})");
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -194,7 +194,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerNotString)
         auto const input = json::parse(R"({ 
             "issuer": 12
         })");
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -221,7 +221,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -244,7 +244,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerStringIndex)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -265,7 +265,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIntIndex)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -291,7 +291,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash2)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -314,7 +314,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIndex2)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -341,7 +341,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, AccountNotFound)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto handler = AnyHandler{NFTsByIssuerHandler{this->backend}};
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
@@ -371,7 +371,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
 
     std::vector<NFT> const nfts = {CreateNFT(NFTID1, ACCOUNT, 29)};
     auto const account = GetAccountIDWithString(ACCOUNT);
-    ON_CALL(*backend, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{nfts, {}}));
+    ON_CALL(*backend, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{.nfts = nfts, .cursor = {}}));
     EXPECT_CALL(
         *backend,
         fetchNFTsByIssuer(
@@ -429,7 +429,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, SpecificLedgerIndex)
 
     std::vector<NFT> const nfts = {CreateNFT(NFTID1, ACCOUNT, specificLedger)};
     auto const account = GetAccountIDWithString(ACCOUNT);
-    ON_CALL(*backend, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{nfts, {}}));
+    ON_CALL(*backend, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{.nfts = nfts, .cursor = {}}));
     EXPECT_CALL(
         *backend,
         fetchNFTsByIssuer(
@@ -476,7 +476,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, TaxonParameter)
 
     std::vector<NFT> const nfts = {CreateNFT(NFTID1, ACCOUNT, 29)};
     auto const account = GetAccountIDWithString(ACCOUNT);
-    ON_CALL(*backend, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{nfts, {}}));
+    ON_CALL(*backend, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{.nfts = nfts, .cursor = {}}));
     EXPECT_CALL(
         *backend,
         fetchNFTsByIssuer(account, testing::Optional(0), Const(30), testing::_, testing::Eq(std::nullopt), testing::_)
@@ -520,7 +520,8 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MarkerParameter)
 
     std::vector<NFT> const nfts = {CreateNFT(NFTID3, ACCOUNT, 29)};
     auto const account = GetAccountIDWithString(ACCOUNT);
-    ON_CALL(*backend, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{nfts, ripple::uint256{NFTID3}}));
+    ON_CALL(*backend, fetchNFTsByIssuer)
+        .WillByDefault(Return(NFTsAndCursor{.nfts = nfts, .cursor = ripple::uint256{NFTID3}}));
     EXPECT_CALL(
         *backend,
         fetchNFTsByIssuer(account, testing::_, Const(30), testing::_, testing::Eq(ripple::uint256{NFTID1}), testing::_)
@@ -568,7 +569,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
         CreateNFT(NFTID1, ACCOUNT, 29), CreateNFT(NFTID2, ACCOUNT, 29), CreateNFT(NFTID3, ACCOUNT, 29)
     };
     auto const account = GetAccountIDWithString(ACCOUNT);
-    ON_CALL(*backend, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{nfts, {}}));
+    ON_CALL(*backend, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{.nfts = nfts, .cursor = {}}));
     EXPECT_CALL(
         *backend,
         fetchNFTsByIssuer(
@@ -612,7 +613,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, LimitMoreThanMAx)
 
     std::vector<NFT> const nfts = {CreateNFT(NFTID1, ACCOUNT, 29)};
     auto const account = GetAccountIDWithString(ACCOUNT);
-    ON_CALL(*backend, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{nfts, {}}));
+    ON_CALL(*backend, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{.nfts = nfts, .cursor = {}}));
     EXPECT_CALL(
         *backend,
         fetchNFTsByIssuer(

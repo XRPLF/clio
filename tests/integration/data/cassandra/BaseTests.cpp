@@ -289,7 +289,7 @@ TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
         EXPECT_EQ(totalRows, entries.size());
 
         for (auto [hash, seq] : extract<std::string, int64_t>(results))
-            EXPECT_TRUE(std::find(std::begin(entries), std::end(entries), hash) != std::end(entries));
+            EXPECT_TRUE(std::ranges::find(entries, hash) != std::end(entries));
     }
 
     // delete everything
@@ -352,7 +352,7 @@ TEST_F(BackendCassandraBaseTest, BatchInsert)
         EXPECT_EQ(totalRows, entries.size());
 
         for (auto [hash, seq] : extract<std::string, int64_t>(results))
-            EXPECT_TRUE(std::find(std::begin(entries), std::end(entries), hash) != std::end(entries));
+            EXPECT_TRUE(std::ranges::find(entries, hash) != std::end(entries));
     }
 
     dropKeyspace(handle, "test");

@@ -60,7 +60,7 @@ Handle::connect() const
 Handle::FutureType
 Handle::asyncConnect(std::string_view keyspace) const
 {
-    return cass_session_connect_keyspace(session_, cluster_, keyspace.data());
+    return cass_session_connect_keyspace_n(session_, cluster_, keyspace.data(), keyspace.size());
 }
 
 Handle::MaybeErrorType
@@ -155,7 +155,7 @@ Handle::asyncExecute(std::vector<StatementType> const& statements, std::function
 Handle::PreparedStatementType
 Handle::prepare(std::string_view query) const
 {
-    Handle::FutureType const future = cass_session_prepare(session_, query.data());
+    Handle::FutureType const future = cass_session_prepare_n(session_, query.data(), query.size());
     auto const rc = future.await();
     if (rc)
         return cass_future_get_prepared(future);

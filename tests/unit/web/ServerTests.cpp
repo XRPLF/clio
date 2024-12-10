@@ -64,7 +64,7 @@ using namespace util;
 using namespace web::impl;
 using namespace web;
 
-boost::json::value
+static boost::json::value
 generateJSONWithDynamicPort(std::string_view port)
 {
     return boost::json::parse(fmt::format(
@@ -85,7 +85,7 @@ generateJSONWithDynamicPort(std::string_view port)
     ));
 }
 
-boost::json::value
+static boost::json::value
 generateJSONDataOverload(std::string_view port)
 {
     return boost::json::parse(fmt::format(
@@ -420,7 +420,7 @@ TEST_F(WebServerTest, GetOtherThanHealthCheck)
     EXPECT_EQ(status, boost::beast::http::status::bad_request);
 }
 
-std::string
+static std::string
 JSONServerConfigWithAdminPassword(uint32_t const port)
 {
     return fmt::format(
@@ -435,7 +435,7 @@ JSONServerConfigWithAdminPassword(uint32_t const port)
     );
 }
 
-std::string
+static std::string
 JSONServerConfigWithLocalAdmin(uint32_t const port)
 {
     return fmt::format(
@@ -450,7 +450,7 @@ JSONServerConfigWithLocalAdmin(uint32_t const port)
     );
 }
 
-std::string
+static std::string
 JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse(uint32_t const port)
 {
     return fmt::format(
@@ -466,7 +466,7 @@ JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse(uint32_t const port)
     );
 }
 
-std::string
+static std::string
 JSONServerConfigWithNoSpecifiedAdmin(uint32_t const port)
 {
     return fmt::format(

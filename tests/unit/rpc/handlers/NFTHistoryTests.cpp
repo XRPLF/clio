@@ -71,94 +71,107 @@ static auto
 generateTestValuesForParametersTest()
 {
     return std::vector<NFTHistoryParamTestCaseBundle>{
-        NFTHistoryParamTestCaseBundle{"MissingNFTID", R"({})", "invalidParams", "Required field 'nft_id' missing"},
         NFTHistoryParamTestCaseBundle{
-            "BinaryNotBool",
-            R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "binary": 1})",
-            "invalidParams",
-            "Invalid parameters."
+            .testName = "MissingNFTID",
+            .testJson = R"({})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Required field 'nft_id' missing"
         },
         NFTHistoryParamTestCaseBundle{
-            "ForwardNotBool",
-            R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "forward": 1})",
-            "invalidParams",
-            "Invalid parameters."
+            .testName = "BinaryNotBool",
+            .testJson = R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "binary": 1})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         NFTHistoryParamTestCaseBundle{
-            "ledger_index_minNotInt",
-            R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_index_min": "x"})",
-            "invalidParams",
-            "Invalid parameters."
+            .testName = "ForwardNotBool",
+            .testJson =
+                R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "forward": 1})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         NFTHistoryParamTestCaseBundle{
-            "ledger_index_maxNotInt",
-            R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_index_max": "x"})",
-            "invalidParams",
-            "Invalid parameters."
+            .testName = "ledger_index_minNotInt",
+            .testJson =
+                R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_index_min": "x"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         NFTHistoryParamTestCaseBundle{
-            "ledger_indexInvalid",
-            R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_index": "x"})",
-            "invalidParams",
-            "ledgerIndexMalformed"
+            .testName = "ledger_index_maxNotInt",
+            .testJson =
+                R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_index_max": "x"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         NFTHistoryParamTestCaseBundle{
-            "ledger_hashInvalid",
-            R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_hash": "x"})",
-            "invalidParams",
-            "ledger_hashMalformed"
+            .testName = "ledger_indexInvalid",
+            .testJson =
+                R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_index": "x"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
         NFTHistoryParamTestCaseBundle{
-            "ledger_hashNotString",
-            R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_hash": 123})",
-            "invalidParams",
-            "ledger_hashNotString"
+            .testName = "ledger_hashInvalid",
+            .testJson =
+                R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_hash": "x"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashMalformed"
         },
         NFTHistoryParamTestCaseBundle{
-            "limitNotInt",
-            R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "limit": "123"})",
-            "invalidParams",
-            "Invalid parameters."
+            .testName = "ledger_hashNotString",
+            .testJson =
+                R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_hash": 123})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashNotString"
         },
         NFTHistoryParamTestCaseBundle{
-            "limitNagetive",
-            R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "limit": -1})",
-            "invalidParams",
-            "Invalid parameters."
+            .testName = "limitNotInt",
+            .testJson =
+                R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "limit": "123"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         NFTHistoryParamTestCaseBundle{
-            "limitZero",
-            R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "limit": 0})",
-            "invalidParams",
-            "Invalid parameters."
+            .testName = "limitNagetive",
+            .testJson = R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "limit": -1})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         NFTHistoryParamTestCaseBundle{
-            "MarkerNotObject",
-            R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "marker": 101})",
-            "invalidParams",
-            "invalidMarker"
+            .testName = "limitZero",
+            .testJson = R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "limit": 0})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         NFTHistoryParamTestCaseBundle{
-            "MarkerMissingSeq",
-            R"({
+            .testName = "MarkerNotObject",
+            .testJson =
+                R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "marker": 101})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "invalidMarker"
+        },
+        NFTHistoryParamTestCaseBundle{
+            .testName = "MarkerMissingSeq",
+            .testJson = R"({
                 "nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
                 "marker": {"ledger": 123}
             })",
-            "invalidParams",
-            "Required field 'seq' missing"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Required field 'seq' missing"
         },
         NFTHistoryParamTestCaseBundle{
-            "MarkerMissingLedger",
-            R"({
+            .testName = "MarkerMissingLedger",
+            .testJson = R"({
                 "nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
                 "marker":{"seq": 123}
             })",
-            "invalidParams",
-            "Required field 'ledger' missing"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Required field 'ledger' missing"
         },
         NFTHistoryParamTestCaseBundle{
-            "MarkerLedgerNotInt",
-            R"({
+            .testName = "MarkerLedgerNotInt",
+            .testJson = R"({
                 "nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
                 "marker": 
                 {
@@ -166,12 +179,12 @@ generateTestValuesForParametersTest()
                     "ledger": 1
                 }
             })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         NFTHistoryParamTestCaseBundle{
-            "MarkerSeqNotInt",
-            R"({
+            .testName = "MarkerSeqNotInt",
+            .testJson = R"({
                 "nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
                 "marker": 
                 {
@@ -179,47 +192,47 @@ generateTestValuesForParametersTest()
                     "seq": 1
                 }
             })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         NFTHistoryParamTestCaseBundle{
-            "LedgerIndexMinLessThanMinSeq",
-            R"({
+            .testName = "LedgerIndexMinLessThanMinSeq",
+            .testJson = R"({
                 "nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
                 "ledger_index_min": 9
             })",
-            "lgrIdxMalformed",
-            "ledgerSeqMinOutOfRange"
+            .expectedError = "lgrIdxMalformed",
+            .expectedErrorMessage = "ledgerSeqMinOutOfRange"
         },
         NFTHistoryParamTestCaseBundle{
-            "LedgerIndexMaxLargeThanMaxSeq",
-            R"({
+            .testName = "LedgerIndexMaxLargeThanMaxSeq",
+            .testJson = R"({
                 "nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
                 "ledger_index_max": 31
             })",
-            "lgrIdxMalformed",
-            "ledgerSeqMaxOutOfRange"
+            .expectedError = "lgrIdxMalformed",
+            .expectedErrorMessage = "ledgerSeqMaxOutOfRange"
         },
         NFTHistoryParamTestCaseBundle{
-            "LedgerIndexMaxLessThanLedgerIndexMin",
-            R"({
+            .testName = "LedgerIndexMaxLessThanLedgerIndexMin",
+            .testJson = R"({
                 "nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
                 "ledger_index_max": 11,
                 "ledger_index_min": 20
             })",
-            "lgrIdxsInvalid",
-            "Ledger indexes invalid."
+            .expectedError = "lgrIdxsInvalid",
+            .expectedErrorMessage = "Ledger indexes invalid."
         },
         NFTHistoryParamTestCaseBundle{
-            "LedgerIndexMaxMinAndLedgerIndex",
-            R"({
+            .testName = "LedgerIndexMaxMinAndLedgerIndex",
+            .testJson = R"({
                 "nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", 
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_index": 10
             })",
-            "invalidParams",
-            "containsLedgerSpecifierAndRange"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "containsLedgerSpecifierAndRange"
         },
     };
 }
@@ -273,7 +286,7 @@ genTransactions(uint32_t seq1, uint32_t seq2)
 TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardTrue)
 {
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend,
@@ -413,7 +426,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV1)
                                 })";
 
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend,
@@ -564,7 +577,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
                                 })";
 
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     EXPECT_CALL(
         *backend,
         fetchNFTTransactions(
@@ -603,7 +616,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
 TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
 {
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend,
@@ -640,7 +653,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
 TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
 {
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend,
@@ -681,7 +694,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
 TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV1)
 {
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend,
@@ -736,7 +749,7 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV1)
 TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV2)
 {
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     EXPECT_CALL(
         *backend,
         fetchNFTTransactions(
@@ -790,7 +803,7 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV2)
 TEST_F(RPCNFTHistoryHandlerTest, LimitAndMarker)
 {
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend,
@@ -830,7 +843,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerIndex)
 {
     // adjust the order for forward->false
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend,
@@ -919,7 +932,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
 {
     // adjust the order for forward->false
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend,
@@ -961,7 +974,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
 TEST_F(RPCNFTHistoryHandlerTest, TxLessThanMinSeq)
 {
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend,
@@ -1002,7 +1015,7 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLessThanMinSeq)
 TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
 {
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend,
@@ -1043,7 +1056,7 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
 TEST_F(RPCNFTHistoryHandlerTest, LimitMoreThanMax)
 {
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
-    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend,

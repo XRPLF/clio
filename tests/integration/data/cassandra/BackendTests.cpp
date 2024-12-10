@@ -775,7 +775,7 @@ TEST_F(BackendCassandraTest, Basic)
             EXPECT_NE(objs[0], objs[1]);
             EXPECT_EQ(txns.size(), 10);
             EXPECT_NE(txns[0], txns[1]);
-            std::sort(objs.begin(), objs.end());
+            std::ranges::sort(objs);
             state[lgrInfoNext.seq] = objs;
             writeLedger(lgrInfoNext, txns, objs, accountTx, state);
             allTxns[lgrInfoNext.seq] = txns;
@@ -806,7 +806,7 @@ TEST_F(BackendCassandraTest, Basic)
             EXPECT_NE(objs[0], objs[1]);
             EXPECT_EQ(txns.size(), 10);
             EXPECT_NE(txns[0], txns[1]);
-            std::sort(objs.begin(), objs.end());
+            std::ranges::sort(objs);
             state[lgrInfoNext.seq] = objs;
             writeLedger(lgrInfoNext, txns, objs, accountTx, state);
             allTxns[lgrInfoNext.seq] = txns;
@@ -850,7 +850,7 @@ TEST_F(BackendCassandraTest, Basic)
                 }
             }
             for (auto& [account, data] : accountTx)
-                std::reverse(data.begin(), data.end());
+                std::ranges::reverse(data);
             return accountTx;
         };
 
@@ -970,7 +970,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             backend->writeLedger(lgrInfoNext, ledgerHeaderToBinaryString(lgrInfoNext));
             backend->writeLedgerObject(std::string{accountIndexBlob}, lgrInfoNext.seq, std::string{accountBlob});
             auto key = ripple::uint256::fromVoidChecked(accountIndexBlob);
-            backend->cache().update({{*key, {accountBlob.begin(), accountBlob.end()}}}, lgrInfoNext.seq);
+            backend->cache().update({{.key = *key, .blob = {accountBlob.begin(), accountBlob.end()}}}, lgrInfoNext.seq);
             backend->writeSuccessor(uint256ToString(data::firstKey), lgrInfoNext.seq, std::string{accountIndexBlob});
             backend->writeSuccessor(std::string{accountIndexBlob}, lgrInfoNext.seq, uint256ToString(data::lastKey));
 
@@ -1007,7 +1007,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             backend->writeLedger(lgrInfoNext, ledgerHeaderToBinaryString(lgrInfoNext));
             std::shuffle(accountBlob.begin(), accountBlob.end(), randomEngine);
             auto key = ripple::uint256::fromVoidChecked(accountIndexBlob);
-            backend->cache().update({{*key, {accountBlob.begin(), accountBlob.end()}}}, lgrInfoNext.seq);
+            backend->cache().update({{.key = *key, .blob = {accountBlob.begin(), accountBlob.end()}}}, lgrInfoNext.seq);
             backend->writeLedgerObject(std::string{accountIndexBlob}, lgrInfoNext.seq, std::string{accountBlob});
 
             ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
@@ -1044,7 +1044,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
 
             backend->writeLedger(lgrInfoNext, ledgerHeaderToBinaryString(lgrInfoNext));
             auto key = ripple::uint256::fromVoidChecked(accountIndexBlob);
-            backend->cache().update({{*key, {}}}, lgrInfoNext.seq);
+            backend->cache().update({{.key = *key, .blob = {}}}, lgrInfoNext.seq);
             backend->writeLedgerObject(std::string{accountIndexBlob}, lgrInfoNext.seq, std::string{});
             backend->writeSuccessor(uint256ToString(data::firstKey), lgrInfoNext.seq, uint256ToString(data::lastKey));
 
@@ -1209,7 +1209,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             auto objs = generateObjects(25, lgrInfoNext.seq);
             EXPECT_EQ(objs.size(), 25);
             EXPECT_NE(objs[0], objs[1]);
-            std::sort(objs.begin(), objs.end());
+            std::ranges::sort(objs);
             state[lgrInfoNext.seq] = objs;
             writeLedger(lgrInfoNext, objs, state);
             lgrInfos[lgrInfoNext.seq] = lgrInfoNext;
@@ -1225,7 +1225,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             }
             EXPECT_EQ(objs.size(), 25);
             EXPECT_NE(objs[0], objs[1]);
-            std::sort(objs.begin(), objs.end());
+            std::ranges::sort(objs);
             state[lgrInfoNext.seq] = objs;
             writeLedger(lgrInfoNext, objs, state);
             lgrInfos[lgrInfoNext.seq] = lgrInfoNext;

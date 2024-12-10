@@ -23,7 +23,6 @@
 
 #include <algorithm>
 #include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -31,18 +30,6 @@ namespace util::prometheus {
 
 Label::Label(std::string name, std::string value) : name_(std::move(name)), value_(std::move(value))
 {
-}
-
-bool
-Label::operator<(Label const& rhs) const
-{
-    return std::tie(name_, value_) < std::tie(rhs.name_, rhs.value_);
-}
-
-bool
-Label::operator==(Label const& rhs) const
-{
-    return std::tie(name_, value_) == std::tie(rhs.name_, rhs.value_);
 }
 
 std::string
@@ -73,7 +60,7 @@ Label::serialize() const
 
 Labels::Labels(std::vector<Label> labels) : labels_(std::move(labels))
 {
-    std::sort(labels_.begin(), labels_.end());
+    std::ranges::sort(labels_);
 }
 
 std::string

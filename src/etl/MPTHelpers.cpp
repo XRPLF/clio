@@ -27,6 +27,7 @@
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/TER.h>
 #include <xrpl/protocol/TxFormats.h>
 
@@ -41,7 +42,8 @@ namespace etl {
  * @param txMeta Transaction metadata
  * @return MPT and holder account pair
  */
-static std::optional<MPTHolderData>
+std::optional<MPTHolderData>
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 getMPTokenAuthorize(ripple::TxMeta const& txMeta)
 {
     for (ripple::STObject const& node : txMeta.getNodes()) {
@@ -50,13 +52,16 @@ getMPTokenAuthorize(ripple::TxMeta const& txMeta)
 
         if (node.getFName() == ripple::sfCreatedNode) {
             auto const& newMPT = node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>();
-            return MPTHolderData{newMPT[ripple::sfMPTokenIssuanceID], newMPT.getAccountID(ripple::sfAccount)};
+            return MPTHolderData{
+                .mptID = newMPT[ripple::sfMPTokenIssuanceID], .holder = newMPT.getAccountID(ripple::sfAccount)
+            };
         }
     }
     return {};
 }
 
 std::optional<MPTHolderData>
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     if (txMeta.getResultTER() != ripple::tesSUCCESS || sttx.getTxnType() != ripple::TxType::ttMPTOKEN_AUTHORIZE)
@@ -66,6 +71,7 @@ getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 }
 
 std::optional<MPTHolderData>
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 getMPTHolderFromObj(std::string const& key, std::string const& blob)
 {
     ripple::STLedgerEntry const sle =
@@ -77,7 +83,7 @@ getMPTHolderFromObj(std::string const& key, std::string const& blob)
     auto const mptIssuanceID = sle[ripple::sfMPTokenIssuanceID];
     auto const holder = sle.getAccountID(ripple::sfAccount);
 
-    return MPTHolderData{mptIssuanceID, holder};
+    return MPTHolderData{.mptID = mptIssuanceID, .holder = holder};
 }
 
 }  // namespace etl

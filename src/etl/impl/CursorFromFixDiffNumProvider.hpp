@@ -70,12 +70,9 @@ public:
             return a.key < b.key or (a.key == b.key and std::size(a.blob) < std::size(b.blob));
         });
 
-        diffs.erase(
-            std::unique(
-                std::begin(diffs), std::end(diffs), [](auto const& a, auto const& b) { return a.key == b.key; }
-            ),
-            std::end(diffs)
-        );
+        auto const [removalCursor, last] =
+            rg::unique(diffs, [](auto const& a, auto const& b) { return a.key == b.key; });
+        diffs.erase(removalCursor, last);
 
         std::vector<ripple::uint256> cursors{data::firstKey};
         rg::copy(

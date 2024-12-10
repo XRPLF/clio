@@ -845,12 +845,16 @@ auto
 generateInvalidVersions()
 {
     return std::vector<InvalidAPIVersionTestBundle>{
-        {"v0", "0", fmt::format("Requested API version is lower than minimum supported ({})", rpc::API_VERSION_MIN)},
-        {"v4", "4", fmt::format("Requested API version is higher than maximum supported ({})", rpc::API_VERSION_MAX)},
-        {"null", "null", "API version must be an integer"},
-        {"str", "\"bogus\"", "API version must be an integer"},
-        {"bool", "false", "API version must be an integer"},
-        {"double", "12.34", "API version must be an integer"},
+        {.testName = "v0",
+         .version = "0",
+         .wsMessage = fmt::format("Requested API version is lower than minimum supported ({})", rpc::API_VERSION_MIN)},
+        {.testName = "v4",
+         .version = "4",
+         .wsMessage = fmt::format("Requested API version is higher than maximum supported ({})", rpc::API_VERSION_MAX)},
+        {.testName = "null", .version = "null", .wsMessage = "API version must be an integer"},
+        {.testName = "str", .version = "\"bogus\"", .wsMessage = "API version must be an integer"},
+        {.testName = "bool", .version = "false", .wsMessage = "API version must be an integer"},
+        {.testName = "double", .version = "12.34", .wsMessage = "API version must be an integer"},
     };
 }
 

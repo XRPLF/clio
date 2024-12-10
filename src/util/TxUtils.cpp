@@ -34,6 +34,7 @@ namespace util {
  * @return The transaction types in lowercase
  */
 [[nodiscard]] std::unordered_set<std::string> const&
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 getTxTypesInLowercase()
 {
     static std::unordered_set<std::string> const typesKeysInLowercase = []() {

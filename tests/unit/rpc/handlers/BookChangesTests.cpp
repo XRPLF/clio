@@ -73,13 +73,22 @@ generateTestValuesForParametersTest()
 {
     return std::vector<BookChangesParamTestCaseBundle>{
         BookChangesParamTestCaseBundle{
-            "LedgerHashInvalid", R"({"ledger_hash":"1"})", "invalidParams", "ledger_hashMalformed"
+            .testName = "LedgerHashInvalid",
+            .testJson = R"({"ledger_hash":"1"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashMalformed"
         },
         BookChangesParamTestCaseBundle{
-            "LedgerHashNotString", R"({"ledger_hash":1})", "invalidParams", "ledger_hashNotString"
+            .testName = "LedgerHashNotString",
+            .testJson = R"({"ledger_hash":1})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashNotString"
         },
         BookChangesParamTestCaseBundle{
-            "LedgerIndexInvalid", R"({"ledger_index":"a"})", "invalidParams", "ledgerIndexMalformed"
+            .testName = "LedgerIndexInvalid",
+            .testJson = R"({"ledger_index":"a"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
     };
 }

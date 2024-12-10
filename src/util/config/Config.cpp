@@ -110,7 +110,7 @@ Config::maybeArray(KeyType key) const
             ArrayType out;
             out.reserve(arr.size());
 
-            std::transform(std::begin(arr), std::end(arr), std::back_inserter(out), [](auto&& element) {
+            std::ranges::transform(arr, std::back_inserter(out), [](auto&& element) {
                 return Config{std::forward<decltype(element)>(element)};
             });
             return std::make_optional<ArrayType>(std::move(out));
@@ -144,7 +144,7 @@ Config::arrayOrThrow(KeyType key, std::string_view err) const
     try {
         return maybeArray(key).value();
     } catch (std::exception const&) {
-        throw std::runtime_error(err.data());
+        throw std::runtime_error(std::string{err});
     }
 }
 
@@ -176,9 +176,7 @@ Config::array() const
     auto const& arr = store_.as_array();
     out.reserve(arr.size());
 
-    std::transform(std::cbegin(arr), std::cend(arr), std::back_inserter(out), [](auto const& element) {
-        return Config{element};
-    });
+    std::ranges::transform(arr, std::back_inserter(out), [](auto const& element) { return Config{element}; });
     return out;
 }
 

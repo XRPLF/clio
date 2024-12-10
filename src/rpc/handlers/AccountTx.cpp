@@ -132,7 +132,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
     Output response;
 
     if (retCursor)
-        response.marker = {retCursor->ledgerSequence, retCursor->transactionIndex};
+        response.marker = {.ledger = retCursor->ledgerSequence, .seq = retCursor->transactionIndex};
 
     for (auto const& txnPlusMeta : blobs) {
         // over the range
@@ -265,8 +265,8 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
 
     if (jsonObject.contains(JS(marker))) {
         input.marker = AccountTxHandler::Marker{
-            jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
-            jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()
+            .ledger = jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
+            .seq = jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()
         };
     }
 

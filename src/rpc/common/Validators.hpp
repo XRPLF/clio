@@ -92,9 +92,9 @@ public:
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
-        if (value.is_object() and value.as_object().contains(key.data())) {
+        if (value.is_object() and value.as_object().contains(key)) {
             using boost::json::value_to;
-            auto const res = value_to<T>(value.as_object().at(key.data()));
+            auto const res = value_to<T>(value.as_object().at(key));
             if (value_ == res) {
                 return Error{Status{
                     RippledError::rpcNOT_SUPPORTED,
@@ -122,7 +122,7 @@ public:
     [[nodiscard]] static MaybeError
     verify(boost::json::value const& value, std::string_view key)
     {
-        if (value.is_object() and value.as_object().contains(key.data()))
+        if (value.is_object() and value.as_object().contains(key))
             return Error{Status{RippledError::rpcNOT_SUPPORTED, "Not supported field '" + std::string{key} + '\''}};
 
         return {};
@@ -150,10 +150,10 @@ struct Type final {
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. If field is supposed to exist, let 'required' fail instead
 
-        auto const& res = value.as_object().at(key.data());
+        auto const& res = value.as_object().at(key);
         auto const convertible = (checkType<Types>(res) || ...);
 
         if (not convertible)
@@ -194,10 +194,10 @@ public:
     {
         using boost::json::value_to;
 
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
-        auto const res = value_to<Type>(value.as_object().at(key.data()));
+        auto const res = value_to<Type>(value.as_object().at(key));
 
         // TODO: may want a way to make this code more generic (e.g. use a free
         // function that can be overridden for this comparison)
@@ -237,10 +237,10 @@ public:
     {
         using boost::json::value_to;
 
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
-        auto const res = value_to<Type>(value.as_object().at(key.data()));
+        auto const res = value_to<Type>(value.as_object().at(key));
 
         if (res < min_)
             return Error{Status{RippledError::rpcINVALID_PARAMS}};
@@ -278,10 +278,10 @@ public:
     {
         using boost::json::value_to;
 
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
-        auto const res = value_to<Type>(value.as_object().at(key.data()));
+        auto const res = value_to<Type>(value.as_object().at(key));
 
         if (res > max_)
             return Error{Status{RippledError::rpcINVALID_PARAMS}};
@@ -346,10 +346,10 @@ public:
     {
         using boost::json::value_to;
 
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
-        auto const res = value_to<Type>(value.as_object().at(key.data()));
+        auto const res = value_to<Type>(value.as_object().at(key));
         if (res != original_)
             return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
@@ -401,10 +401,10 @@ public:
     {
         using boost::json::value_to;
 
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
-        auto const res = value_to<Type>(value.as_object().at(key.data()));
+        auto const res = value_to<Type>(value.as_object().at(key));
         if (std::find(std::begin(options_), std::end(options_), res) == std::end(options_))
             return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}'.", key)}};
 
@@ -588,10 +588,10 @@ struct Hex256ItemType final {
     [[nodiscard]] static MaybeError
     verify(boost::json::value const& value, std::string_view key)
     {
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. If field is supposed to exist, let 'required' fail instead
 
-        auto const& res = value.as_object().at(key.data());
+        auto const& res = value.as_object().at(key);
 
         // loop through each item in the array and make sure it is uint256 hex string
         for (auto const& elem : res.as_array()) {

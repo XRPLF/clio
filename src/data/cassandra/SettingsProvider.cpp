@@ -43,7 +43,7 @@
 namespace data::cassandra {
 
 namespace impl {
-inline Settings::ContactPoints
+inline static Settings::ContactPoints
 tag_invoke(boost::json::value_to_tag<Settings::ContactPoints>, boost::json::value const& value)
 {
     if (not value.is_object()) {
@@ -59,7 +59,7 @@ tag_invoke(boost::json::value_to_tag<Settings::ContactPoints>, boost::json::valu
     return out;
 }
 
-inline Settings::SecureConnectionBundle
+inline static Settings::SecureConnectionBundle
 tag_invoke(boost::json::value_to_tag<Settings::SecureConnectionBundle>, boost::json::value const& value)
 {
     if (not value.is_string())

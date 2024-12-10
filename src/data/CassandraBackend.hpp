@@ -128,7 +128,7 @@ public:
     {
         auto rng = fetchLedgerRange();
         if (!rng)
-            return {{}, {}};
+            return {.txns = {}, .cursor = {}};
 
         Statement const statement = [this, forward, &account]() {
             if (forward)
@@ -399,7 +399,7 @@ public:
     {
         auto rng = fetchLedgerRange();
         if (!rng)
-            return {{}, {}};
+            return {.txns = {}, .cursor = {}};
 
         Statement const statement = [this, forward, &tokenID]() {
             if (forward)

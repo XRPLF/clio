@@ -61,8 +61,8 @@ TEST(LedgerUtilsTests, LedgerObjectTypeList)
 
     static_assert(std::size(typesList) == types.size());
 
-    static_assert(std::all_of(std::cbegin(typesList), std::cend(typesList), [&types](std::string_view type) {
-        return std::find(std::cbegin(types), std::cend(types), type) != std::cend(types);
+    static_assert(std::ranges::all_of(typesList, [&types](std::string_view type) {
+        return std::ranges::find(types, type) != std::cend(types);
     }));
 }
 
@@ -94,11 +94,11 @@ TEST(LedgerUtilsTests, AccountOwnedTypeList)
 
     static_assert(std::size(correctTypes) == accountOwned.size());
 
-    static_assert(std::all_of(
-        std::cbegin(correctTypes),
-        std::cend(correctTypes),
+    static_assert(std::ranges::all_of(
+        correctTypes,
+
         [&accountOwned](std::string_view type) {
-            return std::find(std::cbegin(accountOwned), std::cend(accountOwned), type) != std::cend(accountOwned);
+            return std::ranges::find(accountOwned, type) != std::cend(accountOwned);
         }
     ));
 }
@@ -110,7 +110,7 @@ TEST(LedgerUtilsTests, StrToType)
     EXPECT_EQ(util::LedgerTypes::GetLedgerEntryTypeFromStr("account"), ripple::ltACCOUNT_ROOT);
 
     auto constexpr types = util::LedgerTypes::GetLedgerEntryTypeStrList();
-    std::for_each(types.cbegin(), types.cend(), [](auto const& typeStr) {
+    std::ranges::for_each(types, [](auto const& typeStr) {
         EXPECT_NE(util::LedgerTypes::GetLedgerEntryTypeFromStr(typeStr), ripple::ltANY);
     });
 }
@@ -133,7 +133,7 @@ TEST(LedgerUtilsTests, DeletionBlockerTypes)
     };
 
     static_assert(std::size(deletionBlockers) == testedTypes.size());
-    static_assert(std::any_of(testedTypes.cbegin(), testedTypes.cend(), [](auto const& type) {
+    static_assert(std::ranges::any_of(testedTypes, [](auto const& type) {
         return std::find(std::cbegin(deletionBlockers), std::cend(deletionBlockers), type) !=
             std::cend(deletionBlockers);
     }));

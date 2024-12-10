@@ -27,6 +27,7 @@
 #include <boost/json/value_to.hpp>
 #include <xrpl/protocol/ErrorCodes.h>
 
+#include <concepts>
 #include <exception>
 #include <functional>
 #include <string>
@@ -65,12 +66,12 @@ public:
     {
         using boost::json::value_to;
 
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
         // clamp to min_ and max_
-        auto const oldValue = value_to<Type>(value.as_object().at(key.data()));
-        value.as_object()[key.data()] = std::clamp<Type>(oldValue, min_, max_);
+        auto const oldValue = value_to<Type>(value.as_object().at(key));
+        value.as_object()[key] = std::clamp<Type>(oldValue, min_, max_);
 
         return {};
     }
@@ -92,14 +93,13 @@ struct ToLower final {
     [[nodiscard]] static MaybeError
     modify(boost::json::value& value, std::string_view key)
     {
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
-        if (not value.as_object().at(key.data()).is_string())
+        if (not value.as_object().at(key).is_string())
             return {};  // ignore for non-string types
 
-        value.as_object()[key.data()] =
-            util::toLower(boost::json::value_to<std::string>(value.as_object().at(key.data())));
+        value.as_object()[key] = util::toLower(boost::json::value_to<std::string>(value.as_object().at(key)));
         return {};
     }
 };
@@ -131,7 +131,7 @@ struct ToNumber final {
             return Error{Status{RippledError::rpcINVALID_PARAMS}};  // maybe a float
 
         try {
-            value.as_object()[key.data()] = std::stoi(strInt);
+            value.as_object()[key] = std::stoi(strInt);
         } catch (std::exception& e) {
             return Error{Status{RippledError::rpcINVALID_PARAMS}};
         }
@@ -171,7 +171,7 @@ public:
         if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
-        return modifier_(value.as_object().at(key.data()), key);
+        return modifier_(value.as_object().at(key), key);
     };
 };
 

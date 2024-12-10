@@ -55,7 +55,7 @@ tag_invoke(boost::json::value_to_tag<TestInput>, boost::json::value const& jv)
     if (jv.as_object().contains("limit"))
         optLimit = jv.at("limit").as_int64();
 
-    return {boost::json::value_to<std::string>(jv.as_object().at("hello")), optLimit};
+    return {.hello = boost::json::value_to<std::string>(jv.as_object().at("hello")), .limit = optLimit};
 }
 
 // must be implemented as per rpc/common/Concepts.h

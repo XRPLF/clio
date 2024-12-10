@@ -72,60 +72,78 @@ generateTestValuesForParametersTest()
     return std::vector<RPCFeatureHandlerParamTestCaseBundle>{
         // Note: on rippled this and below returns "badFeature"
         RPCFeatureHandlerParamTestCaseBundle{
-            "InvalidTypeFeatureBool", R"({"feature": true})", "invalidParams", "Invalid parameters."
+            .testName = "InvalidTypeFeatureBool",
+            .testJson = R"({"feature": true})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         RPCFeatureHandlerParamTestCaseBundle{
-            "InvalidTypeFeatureInt", R"({"feature": 42})", "invalidParams", "Invalid parameters."
+            .testName = "InvalidTypeFeatureInt",
+            .testJson = R"({"feature": 42})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         RPCFeatureHandlerParamTestCaseBundle{
-            "InvalidTypeFeatureDouble", R"({"feature": 4.2})", "invalidParams", "Invalid parameters."
+            .testName = "InvalidTypeFeatureDouble",
+            .testJson = R"({"feature": 4.2})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         RPCFeatureHandlerParamTestCaseBundle{
-            "InvalidTypeFeatureNull", R"({"feature": null})", "invalidParams", "Invalid parameters."
+            .testName = "InvalidTypeFeatureNull",
+            .testJson = R"({"feature": null})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         // Note: this and below internal errors on rippled
         RPCFeatureHandlerParamTestCaseBundle{
-            "InvalidTypeFeatureObj", R"({"feature": {}})", "invalidParams", "Invalid parameters."
+            .testName = "InvalidTypeFeatureObj",
+            .testJson = R"({"feature": {}})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         RPCFeatureHandlerParamTestCaseBundle{
-            "InvalidTypeFeatureArray", R"({"feature": []})", "invalidParams", "Invalid parameters."
+            .testName = "InvalidTypeFeatureArray",
+            .testJson = R"({"feature": []})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         // "vetoed" should always be blocked
         RPCFeatureHandlerParamTestCaseBundle{
-            "VetoedPassed",
-            R"({"feature": "foo", "vetoed": true})",
-            "noPermission",
-            "The admin portion of feature API is not available through Clio."
+            .testName = "VetoedPassed",
+            .testJson = R"({"feature": "foo", "vetoed": true})",
+            .expectedError = "noPermission",
+            .expectedErrorMessage = "The admin portion of feature API is not available through Clio."
         },
         RPCFeatureHandlerParamTestCaseBundle{
-            "InvalidTypeVetoedString",
-            R"({"feature": "foo", "vetoed": "test"})",
-            "noPermission",
-            "The admin portion of feature API is not available through Clio."
+            .testName = "InvalidTypeVetoedString",
+            .testJson = R"({"feature": "foo", "vetoed": "test"})",
+            .expectedError = "noPermission",
+            .expectedErrorMessage = "The admin portion of feature API is not available through Clio."
         },
         RPCFeatureHandlerParamTestCaseBundle{
-            "InvalidTypeVetoedInt",
-            R"({"feature": "foo", "vetoed": 42})",
-            "noPermission",
-            "The admin portion of feature API is not available through Clio."
+            .testName = "InvalidTypeVetoedInt",
+            .testJson = R"({"feature": "foo", "vetoed": 42})",
+            .expectedError = "noPermission",
+            .expectedErrorMessage = "The admin portion of feature API is not available through Clio."
         },
         RPCFeatureHandlerParamTestCaseBundle{
-            "InvalidTypeVetoedDouble",
-            R"({"feature": "foo", "vetoed": 4.2})",
-            "noPermission",
-            "The admin portion of feature API is not available through Clio."
+            .testName = "InvalidTypeVetoedDouble",
+            .testJson = R"({"feature": "foo", "vetoed": 4.2})",
+            .expectedError = "noPermission",
+            .expectedErrorMessage = "The admin portion of feature API is not available through Clio."
         },
         RPCFeatureHandlerParamTestCaseBundle{
-            "InvalidTypeVetoedObject",
-            R"({"feature": "foo", "vetoed": {}})",
-            "noPermission",
-            "The admin portion of feature API is not available through Clio."
+            .testName = "InvalidTypeVetoedObject",
+            .testJson = R"({"feature": "foo", "vetoed": {}})",
+            .expectedError = "noPermission",
+            .expectedErrorMessage = "The admin portion of feature API is not available through Clio."
         },
         RPCFeatureHandlerParamTestCaseBundle{
-            "InvalidTypeVetoedArray",
-            R"({"feature": "foo", "vetoed": []})",
-            "noPermission",
-            "The admin portion of feature API is not available through Clio."
+            .testName = "InvalidTypeVetoedArray",
+            .testJson = R"({"feature": "foo", "vetoed": []})",
+            .expectedError = "noPermission",
+            .expectedErrorMessage = "The admin portion of feature API is not available through Clio."
         },
     };
 }

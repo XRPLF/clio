@@ -31,10 +31,10 @@ namespace rpc::meta {
 [[nodiscard]] MaybeError
 Section::verify(boost::json::value& value, std::string_view key) const
 {
-    if (not value.is_object() or not value.as_object().contains(key.data()))
+    if (not value.is_object() or not value.as_object().contains(key))
         return {};  // ignore. field does not exist, let 'required' fail instead
 
-    auto& res = value.as_object().at(key.data());
+    auto& res = value.as_object().at(key);
 
     // if it is not a json object, let other validators fail
     if (!res.is_object())
@@ -51,13 +51,13 @@ Section::verify(boost::json::value& value, std::string_view key) const
 [[nodiscard]] MaybeError
 ValidateArrayAt::verify(boost::json::value& value, std::string_view key) const
 {
-    if (not value.is_object() or not value.as_object().contains(key.data()))
+    if (not value.is_object() or not value.as_object().contains(key))
         return {};  // ignore. field does not exist, let 'required' fail instead
 
-    if (not value.as_object().at(key.data()).is_array())
+    if (not value.as_object().at(key).is_array())
         return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
-    auto& arr = value.as_object().at(key.data()).as_array();
+    auto& arr = value.as_object().at(key).as_array();
     if (idx_ >= arr.size())
         return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
