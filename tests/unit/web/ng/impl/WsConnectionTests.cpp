@@ -51,7 +51,8 @@ struct web_WsConnectionTests : SyncAsioContextTest {
     util::TagDecoratorFactory tagDecoratorFactory_{util::Config{boost::json::object{{"log_tag_style", "int"}}}};
     TestHttpServer httpServer_{ctx, "localhost"};
     WebSocketAsyncClient wsClient_{ctx};
-    Request request_{"some request", Request::HttpHeaders{}};
+    Request::HttpHeaders const headers_;
+    Request request_{"some request", headers_};
 
     std::unique_ptr<PlainWsConnection>
     acceptConnection(boost::asio::yield_context yield)

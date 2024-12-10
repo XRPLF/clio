@@ -34,7 +34,10 @@
 using namespace web::ng;
 namespace http = boost::beast::http;
 
-struct RequestTest : public ::testing::Test {};
+struct RequestTest : public ::testing::Test {
+    static Request::HttpHeaders const headers_;
+};
+Request::HttpHeaders const RequestTest::headers_ = {};
 
 struct RequestMethodTestBundle {
     std::string testName;
@@ -65,7 +68,7 @@ INSTANTIATE_TEST_SUITE_P(
         },
         RequestMethodTestBundle{
             .testName = "WebSocket",
-            .request = Request{"websocket message", Request::HttpHeaders{}},
+            .request = Request{"websocket message", RequestTest::headers_},
             .expectedMethod = Request::Method::Websocket,
         },
         RequestMethodTestBundle{
@@ -101,7 +104,7 @@ INSTANTIATE_TEST_SUITE_P(
         },
         RequestIsHttpTestBundle{
             .testName = "WebSocketRequest",
-            .request = Request{"websocket message", Request::HttpHeaders{}},
+            .request = Request{"websocket message", RequestTest::headers_},
             .expectedIsHttp = false,
         }
     ),
@@ -124,7 +127,7 @@ TEST_F(RequestAsHttpRequestTest, HttpRequest)
 
 TEST_F(RequestAsHttpRequestTest, WebSocketRequest)
 {
-    Request const request{"websocket message", Request::HttpHeaders{}};
+    Request const request{"websocket message", RequestTest::headers_};
     auto const maybeHttpRequest = request.asHttpRequest();
     EXPECT_FALSE(maybeHttpRequest.has_value());
 }
@@ -142,7 +145,7 @@ TEST_F(RequestMessageTest, HttpRequest)
 TEST_F(RequestMessageTest, WebSocketRequest)
 {
     std::string const message = "websocket message";
-    Request const request{message, Request::HttpHeaders{}};
+    Request const request{message, RequestTest::headers_};
     EXPECT_EQ(request.message(), message);
 }
 
@@ -171,7 +174,7 @@ INSTANTIATE_TEST_SUITE_P(
         },
         RequestTargetTestBundle{
             .testName = "WebSocketRequest",
-            .request = Request{"websocket message", Request::HttpHeaders{}},
+            .request = Request{"websocket message", RequestTest::headers_},
             .expectedTarget = std::nullopt,
         }
     ),

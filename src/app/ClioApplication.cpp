@@ -19,6 +19,7 @@
 
 #include "app/ClioApplication.hpp"
 
+#include "app/WebHandlers.hpp"
 #include "data/AmendmentCenter.hpp"
 #include "data/BackendFactory.hpp"
 #include "etl/ETLService.hpp"
@@ -30,11 +31,9 @@
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
-#include "util/Assert.hpp"
 #include "util/build/Build.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
-#include "util/prometheus/Http.hpp"
 #include "util/prometheus/Prometheus.hpp"
 #include "web/AdminVerificationStrategy.hpp"
 #include "web/RPCServerHandler.hpp"
@@ -52,11 +51,14 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/http/status.hpp>
+#include <boost/json/array.hpp>
+#include <boost/json/parse.hpp>
 
 #include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <memory>
+#include <optional>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -64,14 +66,6 @@
 namespace app {
 
 namespace {
-
-auto constexpr HealthCheckHTML = R"html(
-    <!DOCTYPE html>
-    <html>
-        <head><title>Test page for Clio</title></head>
-        <body><h1>Clio Test</h1><p>This page shows Clio http(s) connectivity is working.</p></body>
-    </html>
-)html";
 
 /**
  * @brief Start context threads
@@ -158,72 +152,18 @@ ClioApplication::run(bool const useNgWebServer)
         }
         auto const adminVerifier = std::move(expectedAdminVerifier).value();
 
-        auto httpServer = web::ng::make_Server(config_, ioc);
+        auto httpServer = web::ng::make_Server(config_, OnConnectCheck{dosGuard}, DisconnectHook{dosGuard}, ioc);
 
         if (not httpServer.has_value()) {
             LOG(util::LogService::error()) << "Error creating web server: " << httpServer.error();
             return EXIT_FAILURE;
         }
 
-        httpServer->onGet(
-            "/metrics",
-            [adminVerifier](
-                web::ng::Request const& request,
-                web::ng::ConnectionMetadata& connectionMetadata,
-                web::SubscriptionContextPtr,
-                boost::asio::yield_context
-            ) -> web::ng::Response {
-                auto const maybeHttpRequest = request.asHttpRequest();
-                ASSERT(maybeHttpRequest.has_value(), "Got not a http request in Get");
-                auto const& httpRequest = maybeHttpRequest->get();
-
-                // FIXME(#1702): Using veb server thread to handle prometheus request. Better to post on work queue.
-                auto maybeResponse = util::prometheus::handlePrometheusRequest(
-                    httpRequest, adminVerifier->isAdmin(httpRequest, connectionMetadata.ip())
-                );
-                ASSERT(maybeResponse.has_value(), "Got unexpected request for Prometheus");
-                return web::ng::Response{std::move(maybeResponse).value(), request};
-            }
-        );
-
-        httpServer->onGet(
-            "/health",
-            [](web::ng::Request const& request,
-               web::ng::ConnectionMetadata&,
-               web::SubscriptionContextPtr,
-               boost::asio::yield_context) -> web::ng::Response {
-                return web::ng::Response{boost::beast::http::status::ok, HealthCheckHTML, request};
-            }
-        );
-
-        util::Logger webServerLog{"WebServer"};
-        auto onRequest = [adminVerifier, &webServerLog, &handler](
-                             web::ng::Request const& request,
-                             web::ng::ConnectionMetadata& connectionMetadata,
-                             web::SubscriptionContextPtr subscriptionContext,
-                             boost::asio::yield_context yield
-                         ) -> web::ng::Response {
-            LOG(webServerLog.info()) << connectionMetadata.tag()
-                                     << "Received request from ip = " << connectionMetadata.ip()
-                                     << " - posting to WorkQueue";
-
-            connectionMetadata.setIsAdmin([&adminVerifier, &request, &connectionMetadata]() {
-                return adminVerifier->isAdmin(request.httpHeaders(), connectionMetadata.ip());
-            });
-
-            try {
-                return handler(request, connectionMetadata, std::move(subscriptionContext), yield);
-            } catch (std::exception const&) {
-                return web::ng::Response{
-                    boost::beast::http::status::internal_server_error,
-                    rpc::makeError(rpc::RippledError::rpcINTERNAL),
-                    request
-                };
-            }
-        };
-
-        httpServer->onPost("/", onRequest);
-        httpServer->onWs(onRequest);
+        httpServer->onGet("/metrics", MetricsHandler{adminVerifier});
+        httpServer->onGet("/health", HealthCheckHandler{});
+        auto requestHandler = RequestHandler{adminVerifier, handler, dosGuard};
+        httpServer->onPost("/", requestHandler);
+        httpServer->onWs(std::move(requestHandler));
 
         auto const maybeError = httpServer->run();
         if (maybeError.has_value()) {

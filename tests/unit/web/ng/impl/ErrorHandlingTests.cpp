@@ -49,7 +49,8 @@ struct ng_ErrorHandlingTests : NoLoggerFixture {
     {
         if (isHttp)
             return Request{http::request<http::string_body>{http::verb::post, "/", 11, body.value_or("")}};
-        return Request{body.value_or(""), Request::HttpHeaders{}};
+        static Request::HttpHeaders const headers_;
+        return Request{body.value_or(""), headers_};
     }
 };
 

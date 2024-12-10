@@ -29,6 +29,8 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/string_body.hpp>
 #include <gmock/gmock.h>
 
 #include <chrono>
@@ -45,6 +47,15 @@ struct MockHttpConnectionImpl : web::ng::impl::UpgradableConnection {
         SendReturnType,
         send,
         (web::ng::Response, boost::asio::yield_context, std::chrono::steady_clock::duration),
+        (override)
+    );
+
+    MOCK_METHOD(
+        SendReturnType,
+        sendRaw,
+        (boost::beast::http::response<boost::beast::http::string_body>,
+         boost::asio::yield_context,
+         std::chrono::steady_clock::duration),
         (override)
     );
 

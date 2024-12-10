@@ -124,12 +124,13 @@ detectSsl(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield)
     return SslDetectionResult{.socket = tcpStream.release_socket(), .isSsl = isSsl, .buffer = std::move(buffer)};
 }
 
-std::expected<ConnectionPtr, std::string>
+std::expected<ConnectionPtr, std::optional<std::string>>
 makeConnection(
     SslDetectionResult sslDetectionResult,
     std::optional<boost::asio::ssl::context>& sslContext,
     std::string ip,
     util::TagDecoratorFactory& tagDecoratorFactory,
+    Server::OnConnectCheck onConnectCheck,
     boost::asio::yield_context yield
 )
 {
@@ -152,6 +153,13 @@ makeConnection(
             std::move(sslDetectionResult.buffer),
             tagDecoratorFactory
         );
+    }
+
+    auto expectedSuccess = onConnectCheck(*connection);
+    if (not expectedSuccess.has_value()) {
+        connection->send(std::move(expectedSuccess).error(), yield);
+        connection->close(yield);
+        return std::unexpected{std::nullopt};
     }
 
     auto const expectedIsUpgrade = connection->isUpgradeRequested(yield);
@@ -182,13 +190,16 @@ Server::Server(
     ProcessingPolicy processingPolicy,
     std::optional<size_t> parallelRequestLimit,
     util::TagDecoratorFactory tagDecoratorFactory,
-    std::optional<size_t> maxSubscriptionSendQueueSize
+    std::optional<size_t> maxSubscriptionSendQueueSize,
+    OnConnectCheck onConnectCheck,
+    OnDisconnectHook onDisconnectHook
 )
     : ctx_{ctx}
     , sslContext_{std::move(sslContext)}
     , tagDecoratorFactory_{tagDecoratorFactory}
-    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, maxSubscriptionSendQueueSize}
+    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, maxSubscriptionSendQueueSize, std::move(onDisconnectHook)}
     , endpoint_{std::move(endpoint)}
+    , onConnectCheck_{std::move(onConnectCheck)}
 {
 }
 
@@ -269,13 +280,18 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
         return;
     }
 
-    // TODO(kuznetsss): check ip with dosguard here
-
     auto connectionExpected = makeConnection(
-        std::move(sslDetectionResult).value(), sslContext_, std::move(ip).value(), tagDecoratorFactory_, yield
+        std::move(sslDetectionResult).value(),
+        sslContext_,
+        std::move(ip).value(),
+        tagDecoratorFactory_,
+        onConnectCheck_,
+        yield
     );
     if (not connectionExpected.has_value()) {
-        LOG(log_.info()) << "Error creating a connection: " << connectionExpected.error();
+        if (connectionExpected.error().has_value()) {
+            LOG(log_.info()) << "Error creating a connection: " << *connectionExpected.error();
+        }
         return;
     }
 
@@ -288,7 +304,12 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
 }
 
 std::expected<Server, std::string>
-make_Server(util::Config const& config, boost::asio::io_context& context)
+make_Server(
+    util::Config const& config,
+    Server::OnConnectCheck onConnectCheck,
+    Server::OnDisconnectHook onDisconnectHook,
+    boost::asio::io_context& context
+)
 {
     auto const serverConfig = config.section("server");
 
@@ -321,7 +342,9 @@ make_Server(util::Config const& config, boost::asio::io_context& context)
         processingPolicy,
         parallelRequestLimit,
         util::TagDecoratorFactory(config),
-        maxSubscriptionSendQueueSize
+        maxSubscriptionSendQueueSize,
+        std::move(onConnectCheck),
+        std::move(onDisconnectHook)
     };
 }
 
