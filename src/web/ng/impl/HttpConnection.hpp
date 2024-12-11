@@ -65,6 +65,13 @@ public:
         util::TagDecoratorFactory const& tagDecoratorFactory,
         boost::asio::yield_context yield
     ) = 0;
+
+    virtual std::optional<Error>
+    sendRaw(
+        boost::beast::http::response<boost::beast::http::string_body> response,
+        boost::asio::yield_context yield,
+        std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT
+    ) = 0;
 };
 
 using UpgradableConnectionPtr = std::unique_ptr<UpgradableConnection>;
@@ -106,19 +113,29 @@ public:
     }
 
     std::optional<Error>
+    sendRaw(
+        boost::beast::http::response<boost::beast::http::string_body> response,
+        boost::asio::yield_context yield,
+        std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT
+    ) override
+    {
+        boost::system::error_code error;
+        boost::beast::get_lowest_layer(stream_).expires_after(timeout);
+        boost::beast::http::async_write(stream_, response, yield[error]);
+        if (error)
+            return error;
+        return std::nullopt;
+    }
+
+    std::optional<Error>
     send(
         Response response,
         boost::asio::yield_context yield,
         std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT
     ) override
     {
-        auto const httpResponse = std::move(response).intoHttpResponse();
-        boost::system::error_code error;
-        boost::beast::get_lowest_layer(stream_).expires_after(timeout);
-        boost::beast::http::async_write(stream_, httpResponse, yield[error]);
-        if (error)
-            return error;
-        return std::nullopt;
+        auto httpResponse = std::move(response).intoHttpResponse();
+        return sendRaw(std::move(httpResponse), yield, timeout);
     }
 
     std::expected<Request, Error>

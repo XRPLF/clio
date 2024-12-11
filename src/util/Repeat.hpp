@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "util/Assert.hpp"
+
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/steady_timer.hpp>
@@ -26,7 +28,7 @@
 #include <atomic>
 #include <chrono>
 #include <concepts>
-#include <semaphore>
+#include <memory>
 
 namespace util {
 
@@ -36,8 +38,7 @@ namespace util {
  */
 class Repeat {
     boost::asio::steady_timer timer_;
-    std::atomic_bool stopping_{false};
-    std::binary_semaphore semaphore_{0};
+    std::shared_ptr<std::atomic_bool> stopped_ = std::make_shared<std::atomic_bool>(true);
 
 public:
     /**
@@ -48,6 +49,11 @@ public:
     Repeat(boost::asio::io_context& ioc);
 
     /**
+     * @brief Destroy the Repeat object
+     */
+    ~Repeat();
+
+    /**
      * @brief Stop repeating
      * @note This method will block to ensure the repeating is actually stopped. But blocking time should be very short.
      */
@@ -56,6 +62,7 @@ public:
 
     /**
      * @brief Start asynchronously repeating
+     * @note stop() must be called before start() is called for the second time
      *
      * @tparam Action The action type
      * @param interval The interval to repeat
@@ -65,7 +72,9 @@ public:
     void
     start(std::chrono::steady_clock::duration interval, Action&& action)
     {
-        stopping_ = false;
+        ASSERT(*stopped_, "Repeat should be stopped before the next use");
+        // Create a new variable for each start() to make each start()-stop() session independent
+        stopped_ = std::make_shared<std::atomic_bool>(false);
         startImpl(interval, std::forward<Action>(action));
     }
 
@@ -75,9 +84,10 @@ private:
     startImpl(std::chrono::steady_clock::duration interval, Action&& action)
     {
         timer_.expires_after(interval);
-        timer_.async_wait([this, interval, action = std::forward<Action>(action)](auto const&) mutable {
-            if (stopping_) {
-                semaphore_.release();
+        timer_.async_wait([this, interval, stopping = stopped_, action = std::forward<Action>(action)](
+                              auto const& errorCode
+                          ) mutable {
+            if (errorCode or *stopping) {
                 return;
             }
             action();

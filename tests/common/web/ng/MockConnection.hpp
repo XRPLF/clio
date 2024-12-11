@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/Taggable.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/Request.hpp"

@@ -17,26 +17,25 @@
 */
 //==============================================================================
 
-#include "util/Repeat.hpp"
+#pragma once
 
-#include <boost/asio/io_context.hpp>
+#include "web/dosguard/DOSGuardInterface.hpp"
 
-namespace util {
+#include <gmock/gmock.h>
 
-Repeat::Repeat(boost::asio::io_context& ioc) : timer_(ioc)
-{
-}
+#include <cstdint>
+#include <string>
+#include <string_view>
 
-Repeat::~Repeat()
-{
-    *stopped_ = true;
-}
+struct DOSGuardMockImpl : web::dosguard::DOSGuardInterface {
+    MOCK_METHOD(bool, isWhiteListed, (std::string_view const ip), (const, noexcept, override));
+    MOCK_METHOD(bool, isOk, (std::string const& ip), (const, noexcept, override));
+    MOCK_METHOD(void, increment, (std::string const& ip), (noexcept, override));
+    MOCK_METHOD(void, decrement, (std::string const& ip), (noexcept, override));
+    MOCK_METHOD(bool, add, (std::string const& ip, uint32_t size), (noexcept, override));
+    MOCK_METHOD(bool, request, (std::string const& ip), (noexcept, override));
+    MOCK_METHOD(void, clear, (), (noexcept, override));
+};
 
-void
-Repeat::stop()
-{
-    *stopped_ = true;
-    timer_.cancel();
-}
-
-}  // namespace util
+using DOSGuardMock = testing::NiceMock<DOSGuardMockImpl>;
+using DOSGuardStrictMock = testing::StrictMock<DOSGuardMockImpl>;

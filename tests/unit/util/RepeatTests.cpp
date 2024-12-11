@@ -34,7 +34,7 @@
 using namespace util;
 using testing::AtLeast;
 
-struct RepeatTests : SyncAsioContextTest {
+struct RepeatTest : SyncAsioContextTest {
     Repeat repeat{ctx};
     testing::StrictMock<testing::MockFunction<void()>> handlerMock;
 
@@ -51,14 +51,14 @@ struct RepeatTests : SyncAsioContextTest {
     }
 };
 
-TEST_F(RepeatTests, CallsHandler)
+TEST_F(RepeatTest, CallsHandler)
 {
     repeat.start(std::chrono::milliseconds{1}, handlerMock.AsStdFunction());
     EXPECT_CALL(handlerMock, Call).Times(AtLeast(10));
     runContextFor(std::chrono::milliseconds{20});
 }
 
-TEST_F(RepeatTests, StopsOnStop)
+TEST_F(RepeatTest, StopsOnStop)
 {
     withRunningContext([this]() {
         repeat.start(std::chrono::milliseconds{1}, handlerMock.AsStdFunction());
@@ -68,14 +68,27 @@ TEST_F(RepeatTests, StopsOnStop)
     });
 }
 
-TEST_F(RepeatTests, RunsAfterStop)
+TEST_F(RepeatTest, RunsAfterStop)
 {
     withRunningContext([this]() {
-        for ([[maybe_unused]] auto _ : std::ranges::iota_view(0, 2)) {
+        for ([[maybe_unused]] auto i : std::ranges::iota_view(0, 2)) {
             repeat.start(std::chrono::milliseconds{1}, handlerMock.AsStdFunction());
             EXPECT_CALL(handlerMock, Call).Times(AtLeast(1));
             std::this_thread::sleep_for(std::chrono::milliseconds{10});
             repeat.stop();
         }
     });
+}
+
+struct RepeatDeathTest : RepeatTest {};
+
+TEST_F(RepeatDeathTest, DiesWhenStartCalledTwice)
+{
+    EXPECT_DEATH(
+        {
+            repeat.start(std::chrono::seconds{1}, []() {});
+            repeat.start(std::chrono::seconds{1}, []() {});
+        },
+        "Assertion .* failed.*"
+    );
 }
