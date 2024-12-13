@@ -46,23 +46,15 @@ struct MockConnectionImpl : web::ng::Connection {
 
     MOCK_METHOD(bool, wasUpgraded, (), (const, override));
 
+    MOCK_METHOD(void, setTimeout, (std::chrono::steady_clock::duration), (override));
+
     using SendReturnType = std::optional<web::ng::Error>;
-    MOCK_METHOD(
-        SendReturnType,
-        send,
-        (web::ng::Response, boost::asio::yield_context, std::chrono::steady_clock::duration),
-        (override)
-    );
+    MOCK_METHOD(SendReturnType, send, (web::ng::Response, boost::asio::yield_context), (override));
 
     using ReceiveReturnType = std::expected<web::ng::Request, web::ng::Error>;
-    MOCK_METHOD(
-        ReceiveReturnType,
-        receive,
-        (boost::asio::yield_context, std::chrono::steady_clock::duration),
-        (override)
-    );
+    MOCK_METHOD(ReceiveReturnType, receive, (boost::asio::yield_context), (override));
 
-    MOCK_METHOD(void, close, (boost::asio::yield_context, std::chrono::steady_clock::duration));
+    MOCK_METHOD(void, close, (boost::asio::yield_context));
 };
 
 using MockConnection = testing::NiceMock<MockConnectionImpl>;

@@ -32,6 +32,7 @@
 #include <boost/asio/ssl/verify_mode.hpp>
 #include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/core/role.hpp>
 #include <boost/beast/core/stream_traits.hpp>
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/version.hpp>
@@ -150,8 +151,8 @@ WebSocketAsyncClient::connect(
     if (error)
         return error;
 
-    boost::beast::websocket::stream_base::timeout wsTimeout{};
-    stream_.get_option(wsTimeout);
+    boost::beast::websocket::stream_base::timeout wsTimeout =
+        boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::client);
     wsTimeout.handshake_timeout = timeout;
     stream_.set_option(wsTimeout);
     boost::beast::get_lowest_layer(stream_).expires_never();
@@ -162,6 +163,18 @@ WebSocketAsyncClient::connect(
             req.set(header.name, header.value);
         }
     }));
+    stream_.control_callback([](boost::beast::websocket::frame_type t, auto&&) {
+        switch (t) {
+            case boost::beast::websocket::frame_type::close:
+                std::cout << "Received close frame" << std::endl;
+                return;
+            case boost::beast::websocket::frame_type::ping:
+                std::cout << "Received ping frame" << std::endl;
+                return;
+            case boost::beast::websocket::frame_type::pong:
+                std::cout << "Received pong frame" << std::endl;
+        }
+    });
     stream_.async_handshake(fmt::format("{}:{}", host, port), "/", yield[error]);
 
     if (error)

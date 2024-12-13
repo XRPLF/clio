@@ -154,6 +154,7 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
             yield,
             [this](Error const& e, Connection const& c) { return handleError(e, c); }
         );
+        LOG(log_.trace()) << connectionRef.tag() << "Created SubscriptionContext for the connection";
     }
     SubscriptionContextPtr subscriptionContextInterfacePtr = subscriptionContext;
 
@@ -166,14 +167,21 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
             break;
     }
 
-    if (subscriptionContext != nullptr)
+    if (subscriptionContext != nullptr) {
         subscriptionContext->disconnect(yield);
+        LOG(log_.trace()) << connectionRef.tag() << "SubscriptionContext disconnected";
+    }
 
-    if (shouldCloseGracefully)
+    if (shouldCloseGracefully) {
         connectionRef.close(yield);
+        LOG(log_.trace()) << connectionRef.tag() << "Closed gracefully";
+    }
 
     signalConnection.disconnect();
+    LOG(log_.trace()) << connectionRef.tag() << "Signal disconnected";
+
     onDisconnectHook_(connectionRef);
+    LOG(log_.trace()) << connectionRef.tag() << "Processing finished";
 }
 
 void
@@ -185,6 +193,7 @@ ConnectionHandler::stop()
 bool
 ConnectionHandler::handleError(Error const& error, Connection const& connection) const
 {
+    LOG(log_.trace()) << connection.tag() << "Got error: " << error << " " << error.message();
     // ssl::error::stream_truncated, also known as an SSL "short read",
     // indicates the peer closed the connection without performing the
     // required closing handshake (for example, Google does this to
@@ -201,7 +210,8 @@ ConnectionHandler::handleError(Error const& error, Connection const& connection)
     // Beast returns the error boost::beast::http::error::partial_message.
     // Therefore, if we see a short read here, it has occurred
     // after the message has been completed, so it is safe to ignore it.
-    if (error == boost::beast::http::error::end_of_stream || error == boost::asio::ssl::error::stream_truncated)
+    if (error == boost::beast::http::error::end_of_stream || error == boost::asio::ssl::error::stream_truncated ||
+        error == boost::asio::error::eof)
         return false;
 
     // WebSocket connection was gracefully closed
@@ -229,6 +239,7 @@ ConnectionHandler::sequentRequestResponseLoop(
     //   an error appears.
     // - When server is shutting down it will cancel all operations on the connection so an error appears.
 
+    LOG(log_.trace()) << connection.tag() << "Processing sequentially";
     while (true) {
         auto expectedRequest = connection.receive(yield);
         if (not expectedRequest)
@@ -250,12 +261,14 @@ ConnectionHandler::parallelRequestResponseLoop(
     boost::asio::yield_context yield
 )
 {
+    LOG(log_.trace()) << connection.tag() << "Processing in parallel";
     // atomic_bool is not needed here because everything happening on coroutine's strand
     bool stop = false;
     bool closeConnectionGracefully = true;
     util::CoroutineGroup tasksGroup{yield, maxParallelRequests_};
 
     while (not stop) {
+        LOG(log_.trace()) << connection.tag() << "Receiving request";
         auto expectedRequest = connection.receive(yield);
         if (not expectedRequest) {
             auto const closeGracefully = handleError(expectedRequest.error(), connection);
@@ -282,7 +295,9 @@ ConnectionHandler::parallelRequestResponseLoop(
                 }
             );
             ASSERT(spawnSuccess, "The coroutine was expected to be spawned");
+            LOG(log_.trace()) << connection.tag() << "Spawned a coroutine to process request";
         } else {
+            LOG(log_.trace()) << connection.tag() << "Too many requests from one connection, rejecting the request";
             connection.send(
                 Response{
                     boost::beast::http::status::too_many_requests,
@@ -305,8 +320,10 @@ ConnectionHandler::processRequest(
     boost::asio::yield_context yield
 )
 {
+    LOG(log_.trace()) << connection.tag() << "Processing request: " << request.message();
     auto response = handleRequest(connection, subscriptionContext, request, yield);
 
+    LOG(log_.trace()) << connection.tag() << "Sending response: " << response.message();
     auto const maybeError = connection.send(std::move(response), yield);
     if (maybeError.has_value()) {
         return handleError(maybeError.value(), connection);

@@ -227,6 +227,7 @@ Server::onWs(MessageHandler handler)
 std::optional<std::string>
 Server::run()
 {
+    LOG(log_.info()) << "Starting ng::Server";
     auto acceptor = makeAcceptor(ctx_.get(), endpoint_);
     if (not acceptor.has_value())
         return std::move(acceptor).error();
@@ -240,6 +241,7 @@ Server::run()
                 boost::asio::ip::tcp::socket socket{ctx_.get().get_executor()};
 
                 acceptor.async_accept(socket, yield[errorCode]);
+                LOG(log_.trace()) << "Accepted a new connection";
                 if (errorCode) {
                     LOG(log_.debug()) << "Error accepting a connection: " << errorCode.what();
                     continue;
@@ -294,6 +296,7 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
         }
         return;
     }
+    LOG(log_.trace()) << connectionExpected.value()->tag() << "Connection created";
 
     boost::asio::spawn(
         ctx_.get(),

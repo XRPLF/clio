@@ -60,7 +60,7 @@ TEST_F(ng_SubscriptionContextTests, Send)
         auto subscriptionContext = makeSubscriptionContext(yield);
         auto const message = std::make_shared<std::string>("some message");
 
-        EXPECT_CALL(connection_, sendBuffer).WillOnce([&message](boost::asio::const_buffer buffer, auto, auto) {
+        EXPECT_CALL(connection_, sendBuffer).WillOnce([&message](boost::asio::const_buffer buffer, auto&&) {
             EXPECT_EQ(boost::beast::buffers_to_string(buffer), *message);
             return std::nullopt;
         });
@@ -79,13 +79,13 @@ TEST_F(ng_SubscriptionContextTests, SendOrder)
         testing::Sequence const sequence;
         EXPECT_CALL(connection_, sendBuffer)
             .InSequence(sequence)
-            .WillOnce([&message1](boost::asio::const_buffer buffer, auto, auto) {
+            .WillOnce([&message1](boost::asio::const_buffer buffer, auto&&) {
                 EXPECT_EQ(boost::beast::buffers_to_string(buffer), *message1);
                 return std::nullopt;
             });
         EXPECT_CALL(connection_, sendBuffer)
             .InSequence(sequence)
-            .WillOnce([&message2](boost::asio::const_buffer buffer, auto, auto) {
+            .WillOnce([&message2](boost::asio::const_buffer buffer, auto&&) {
                 EXPECT_EQ(boost::beast::buffers_to_string(buffer), *message2);
                 return std::nullopt;
             });
@@ -102,7 +102,7 @@ TEST_F(ng_SubscriptionContextTests, SendFailed)
         auto subscriptionContext = makeSubscriptionContext(yield);
         auto const message = std::make_shared<std::string>("some message");
 
-        EXPECT_CALL(connection_, sendBuffer).WillOnce([&message](boost::asio::const_buffer buffer, auto, auto) {
+        EXPECT_CALL(connection_, sendBuffer).WillOnce([&message](boost::asio::const_buffer buffer, auto&&) {
             EXPECT_EQ(boost::beast::buffers_to_string(buffer), *message);
             return boost::system::errc::make_error_code(boost::system::errc::not_supported);
         });
@@ -120,7 +120,7 @@ TEST_F(ng_SubscriptionContextTests, SendTooManySubscriptions)
         auto const message = std::make_shared<std::string>("message1");
 
         EXPECT_CALL(connection_, sendBuffer)
-            .WillOnce([&message](boost::asio::const_buffer buffer, boost::asio::yield_context innerYield, auto) {
+            .WillOnce([&message](boost::asio::const_buffer buffer, boost::asio::yield_context innerYield) {
                 boost::asio::post(innerYield);  // simulate send is slow by switching to another coroutine
                 EXPECT_EQ(boost::beast::buffers_to_string(buffer), *message);
                 return std::nullopt;

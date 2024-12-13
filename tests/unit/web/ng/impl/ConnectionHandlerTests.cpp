@@ -153,7 +153,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_NoHandler_Send)
         .WillOnce(Return(makeRequest("some_request", headers_)))
         .WillOnce(Return(makeError(websocket::error::closed)));
 
-    EXPECT_CALL(*mockHttpConnection_, send).WillOnce([](Response response, auto&&, auto&&) {
+    EXPECT_CALL(*mockHttpConnection_, send).WillOnce([](Response response, auto&&) {
         EXPECT_EQ(response.message(), "WebSocket is not supported by this server");
         return std::nullopt;
     });
@@ -177,7 +177,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_BadTarget_Send)
         .WillOnce(Return(makeRequest(http::request<http::string_body>{http::verb::get, target, 11, requestMessage})))
         .WillOnce(Return(makeError(http::error::end_of_stream)));
 
-    EXPECT_CALL(*mockHttpConnection_, send).WillOnce([](Response response, auto&&, auto&&) {
+    EXPECT_CALL(*mockHttpConnection_, send).WillOnce([](Response response, auto&&) {
         EXPECT_EQ(response.message(), "Bad target");
         auto const httpResponse = std::move(response).intoHttpResponse();
         EXPECT_EQ(httpResponse.result(), http::status::bad_request);
@@ -201,7 +201,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_BadMethod_Send)
         .WillOnce(Return(makeRequest(http::request<http::string_body>{http::verb::acl, "/", 11})))
         .WillOnce(Return(makeError(http::error::end_of_stream)));
 
-    EXPECT_CALL(*mockHttpConnection_, send).WillOnce([](Response response, auto&&, auto&&) {
+    EXPECT_CALL(*mockHttpConnection_, send).WillOnce([](Response response, auto&&) {
         EXPECT_EQ(response.message(), "Unsupported http method");
         return std::nullopt;
     });
@@ -235,7 +235,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send)
         return Response(http::status::ok, responseMessage, request);
     });
 
-    EXPECT_CALL(*mockWsConnection_, send).WillOnce([&responseMessage](Response response, auto&&, auto&&) {
+    EXPECT_CALL(*mockWsConnection_, send).WillOnce([&responseMessage](Response response, auto&&) {
         EXPECT_EQ(response.message(), responseMessage);
         return std::nullopt;
     });
@@ -273,7 +273,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SendSubscriptionMessage)
     EXPECT_CALL(*mockWsConnection_, send).WillOnce(Return(std::nullopt));
 
     EXPECT_CALL(*mockWsConnection_, sendBuffer)
-        .WillOnce([&subscriptionMessage](boost::asio::const_buffer buffer, auto&&, auto&&) {
+        .WillOnce([&subscriptionMessage](boost::asio::const_buffer buffer, auto&&) {
             EXPECT_EQ(boost::beast::buffers_to_string(buffer), subscriptionMessage);
             return std::nullopt;
         });
@@ -347,7 +347,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SubscriptionContextIsNullForHt
             return Response(http::status::ok, responseMessage, request);
         });
 
-    EXPECT_CALL(*mockHttpConnection_, send).WillOnce([&responseMessage](Response response, auto&&, auto&&) {
+    EXPECT_CALL(*mockHttpConnection_, send).WillOnce([&responseMessage](Response response, auto&&) {
         EXPECT_EQ(response.message(), responseMessage);
         return std::nullopt;
     });
@@ -389,12 +389,10 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send_Loop)
         return Response(http::status::ok, responseMessage, request);
     });
 
-    EXPECT_CALL(*mockHttpConnection_, send)
-        .Times(3)
-        .WillRepeatedly([&responseMessage](Response response, auto&&, auto&&) {
-            EXPECT_EQ(response.message(), responseMessage);
-            return std::nullopt;
-        });
+    EXPECT_CALL(*mockHttpConnection_, send).Times(3).WillRepeatedly([&responseMessage](Response response, auto&&) {
+        EXPECT_EQ(response.message(), responseMessage);
+        return std::nullopt;
+    });
 
     EXPECT_CALL(*mockHttpConnection_, close);
 
@@ -428,7 +426,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_SendError)
         return Response(http::status::ok, responseMessage, request);
     });
 
-    EXPECT_CALL(*mockHttpConnection_, send).WillOnce([&responseMessage](Response response, auto&&, auto&&) {
+    EXPECT_CALL(*mockHttpConnection_, send).WillOnce([&responseMessage](Response response, auto&&) {
         EXPECT_EQ(response.message(), responseMessage);
         return makeError(http::error::end_of_stream).error();
     });
@@ -454,14 +452,12 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
     bool connectionClosed = false;
 
     EXPECT_CALL(*mockWsConnection_, wasUpgraded).WillOnce(Return(true));
-    EXPECT_CALL(*mockWsConnection_, receive)
-        .Times(4)
-        .WillRepeatedly([&](auto&&, auto&&) -> std::expected<Request, Error> {
-            if (connectionClosed) {
-                return makeError(websocket::error::closed);
-            }
-            return makeRequest(requestMessage, headers_);
-        });
+    EXPECT_CALL(*mockWsConnection_, receive).Times(4).WillRepeatedly([&](auto&&) -> std::expected<Request, Error> {
+        if (connectionClosed) {
+            return makeError(websocket::error::closed);
+        }
+        return makeRequest(requestMessage, headers_);
+    });
 
     EXPECT_CALL(wsHandlerMock, Call).Times(3).WillRepeatedly([&](Request const& request, auto&&, auto&&, auto&&) {
         EXPECT_EQ(request.message(), requestMessage);
@@ -469,7 +465,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
     });
 
     size_t numCalls = 0;
-    EXPECT_CALL(*mockWsConnection_, send).Times(3).WillRepeatedly([&](Response response, auto&&, auto&&) {
+    EXPECT_CALL(*mockWsConnection_, send).Times(3).WillRepeatedly([&](Response response, auto&&) {
         EXPECT_EQ(response.message(), responseMessage);
 
         ++numCalls;
@@ -544,7 +540,7 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send)
         return Response(http::status::ok, responseMessage, request);
     });
 
-    EXPECT_CALL(*mockWsConnection_, send).WillOnce([&responseMessage](Response response, auto&&, auto&&) {
+    EXPECT_CALL(*mockWsConnection_, send).WillOnce([&responseMessage](Response response, auto&&) {
         EXPECT_EQ(response.message(), responseMessage);
         return std::nullopt;
     });
@@ -568,7 +564,7 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop)
     std::string const requestMessage = "some message";
     std::string const responseMessage = "some response";
 
-    auto const returnRequest = [&](auto&&, auto&&) { return makeRequest(requestMessage, headers_); };
+    auto const returnRequest = [&](auto&&) { return makeRequest(requestMessage, headers_); };
 
     EXPECT_CALL(*mockWsConnection_, wasUpgraded).WillOnce(Return(true));
     EXPECT_CALL(*mockWsConnection_, receive)
@@ -581,12 +577,10 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop)
         return Response(http::status::ok, responseMessage, request);
     });
 
-    EXPECT_CALL(*mockWsConnection_, send)
-        .Times(2)
-        .WillRepeatedly([&responseMessage](Response response, auto&&, auto&&) {
-            EXPECT_EQ(response.message(), responseMessage);
-            return std::nullopt;
-        });
+    EXPECT_CALL(*mockWsConnection_, send).Times(2).WillRepeatedly([&responseMessage](Response response, auto&&) {
+        EXPECT_EQ(response.message(), responseMessage);
+        return std::nullopt;
+    });
 
     EXPECT_CALL(onDisconnectMock_, Call).WillOnce([connectionPtr = mockWsConnection_.get()](Connection const& c) {
         EXPECT_EQ(&c, connectionPtr);
@@ -607,7 +601,7 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop_TooMany
     std::string const requestMessage = "some message";
     std::string const responseMessage = "some response";
 
-    auto const returnRequest = [&](auto&&, auto&&) { return makeRequest(requestMessage, headers_); };
+    auto const returnRequest = [&](auto&&) { return makeRequest(requestMessage, headers_); };
     testing::Sequence const sequence;
 
     EXPECT_CALL(*mockWsConnection_, wasUpgraded).WillOnce(Return(true));
@@ -629,11 +623,7 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop_TooMany
 
     EXPECT_CALL(
         *mockWsConnection_,
-        send(
-            testing::ResultOf([](Response response) { return response.message(); }, responseMessage),
-            testing::_,
-            testing::_
-        )
+        send(testing::ResultOf([](Response response) { return response.message(); }, responseMessage), testing::_)
     )
         .Times(3)
         .WillRepeatedly(Return(std::nullopt));
@@ -644,7 +634,6 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop_TooMany
             testing::ResultOf(
                 [](Response response) { return response.message(); }, "Too many requests for one connection"
             ),
-            testing::_,
             testing::_
         )
     )
