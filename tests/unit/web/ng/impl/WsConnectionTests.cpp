@@ -33,6 +33,7 @@
 #include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/use_future.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/status.hpp>
@@ -98,24 +99,35 @@ TEST_F(web_WsConnectionTests, WasUpgraded)
     });
 }
 
-// TEST_F(web_WsConnectionTests, DisconnectClientOnInactivity)
-// {
-//     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-//         auto maybeError = wsClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
-//         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError.value().message(); }();
-//         std::cout << "client finished" << std::endl;
-//     });
-//
-//     runSpawn([this](boost::asio::yield_context yield) {
-//         auto wsConnection = acceptConnection(yield);
-//         wsConnection->setTimeout(std::chrono::milliseconds{1});
-//         // Client will not respond to pings because there is no reading operation scheduled for it.
-//         auto const receivedMessage = wsConnection->receive(yield);
-//         EXPECT_FALSE(receivedMessage.has_value());
-//         EXPECT_EQ(receivedMessage.error().value(), boost::asio::error::no_permission);
-//         std::cout << "server finished" << std::endl;
-//     });
-// }
+TEST_F(web_WsConnectionTests, DisconnectClientOnInactivity)
+{
+    boost::asio::io_context clientCtx;
+    auto work = boost::asio::make_work_guard(clientCtx);
+    std::thread clientThread{[&clientCtx]() { clientCtx.run(); }};
+
+    boost::asio::spawn(clientCtx, [&work, this](boost::asio::yield_context yield) {
+        auto maybeError = wsClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError.value().message(); }();
+        boost::asio::steady_timer timer{yield.get_executor(), std::chrono::milliseconds{5}};
+        timer.async_wait(yield);
+        work.reset();
+    });
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto wsConnection = acceptConnection(yield);
+        wsConnection->setTimeout(std::chrono::milliseconds{1});
+        // Client will not respond to pings because there is no reading operation scheduled for it.
+
+        auto const start = std::chrono::steady_clock::now();
+        auto const receivedMessage = wsConnection->receive(yield);
+        auto const end = std::chrono::steady_clock::now();
+        EXPECT_LT(end - start, std::chrono::milliseconds{4});  // Should be 2 ms, double it in case of slow CI.
+
+        EXPECT_FALSE(receivedMessage.has_value());
+        EXPECT_EQ(receivedMessage.error().value(), boost::asio::error::no_permission);
+    });
+    clientThread.join();
+}
 
 TEST_F(web_WsConnectionTests, Send)
 {

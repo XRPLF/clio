@@ -163,18 +163,6 @@ WebSocketAsyncClient::connect(
             req.set(header.name, header.value);
         }
     }));
-    stream_.control_callback([](boost::beast::websocket::frame_type t, auto&&) {
-        switch (t) {
-            case boost::beast::websocket::frame_type::close:
-                std::cout << "Received close frame" << std::endl;
-                return;
-            case boost::beast::websocket::frame_type::ping:
-                std::cout << "Received ping frame" << std::endl;
-                return;
-            case boost::beast::websocket::frame_type::pong:
-                std::cout << "Received pong frame" << std::endl;
-        }
-    });
     stream_.async_handshake(fmt::format("{}:{}", host, port), "/", yield[error]);
 
     if (error)
