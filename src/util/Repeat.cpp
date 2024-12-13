@@ -27,12 +27,16 @@ Repeat::Repeat(boost::asio::io_context& ioc) : timer_(ioc)
 {
 }
 
+Repeat::~Repeat()
+{
+    *stopped_ = true;
+}
+
 void
 Repeat::stop()
 {
-    stopping_ = true;
+    *stopped_ = true;
     timer_.cancel();
-    semaphore_.acquire();
 }
 
 }  // namespace util

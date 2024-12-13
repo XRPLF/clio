@@ -27,7 +27,6 @@
 #include "etl/NetworkValidatedLedgers.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "rpc/Counters.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
@@ -38,25 +37,16 @@
 #include "web/AdminVerificationStrategy.hpp"
 #include "web/RPCServerHandler.hpp"
 #include "web/Server.hpp"
-#include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuard.hpp"
 #include "web/dosguard/IntervalSweepHandler.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
-#include "web/ng/Connection.hpp"
 #include "web/ng/RPCServerHandler.hpp"
-#include "web/ng/Request.hpp"
-#include "web/ng/Response.hpp"
 #include "web/ng/Server.hpp"
 
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/spawn.hpp>
-#include <boost/beast/http/status.hpp>
-#include <boost/json/array.hpp>
-#include <boost/json/parse.hpp>
 
 #include <cstdint>
 #include <cstdlib>
-#include <exception>
 #include <memory>
 #include <optional>
 #include <thread>
