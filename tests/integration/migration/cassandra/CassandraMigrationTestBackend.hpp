@@ -60,8 +60,6 @@ public:
             throw std::runtime_error("Could not create schema: " + res.error());
     }
 
-    ~CassandraMigrationTestBackend() override = default;
-
     /**
      * @brief Write a transaction hash and its transaction type to the tx_index_example table. It's used by
      * ExampleTransactionsMigrator.

@@ -85,6 +85,8 @@ class FullTableScanner {
         {
             auto const minValue = std::numeric_limits<std::int64_t>::min();
             auto const maxValue = std::numeric_limits<std::int64_t>::max();
+            if (numRanges_ == 1)
+                return {TokenRange{minValue, maxValue}};
 
             // Safely calculate the range size using uint64_t to avoid overflow
             uint64_t rangeSize = (static_cast<uint64_t>(maxValue) * 2) / numRanges_;

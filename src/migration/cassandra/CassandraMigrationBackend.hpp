@@ -69,8 +69,8 @@ public:
     template <impl::TableSpec TableDesc>
     void
     migrateInTokenRange(
-        std::int64_t const& start,
-        std::int64_t const& end,
+        std::int64_t const start,
+        std::int64_t const end,
         auto const& callback,
         boost::asio::yield_context yield
     )
@@ -84,6 +84,12 @@ public:
         auto const statement = statementPrepared.bind(start, end);
 
         auto const res = this->executor_.read(yield, statement);
+        if (not res) {
+            LOG(log_.error()) << "Could not fetch data from table: " << TableDesc::TABLE_NAME << " range: " << start
+                              << " - " << end << ";" << res.error();
+            return;
+        }
+
         auto const& results = res.value();
         if (not results.hasRows()) {
             LOG(log_.debug()) << "No rows returned  - table: " << TableDesc::TABLE_NAME << " range: " << start << " - "

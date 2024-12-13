@@ -20,17 +20,7 @@
 #pragma once
 
 #include "util/MockBackend.hpp"
-#include "util/config/Config.hpp"
-
-#include <boost/asio/spawn.hpp>
-#include <boost/json/object.hpp>
-#include <gmock/gmock.h>
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/AccountID.h>
-#include <xrpl/protocol/LedgerHeader.h>
 
 struct MockMigrationBackend : public MockBackend {
-    MockMigrationBackend(util::Config) : MockBackend(util::Config{})
-    {
-    }
+    using MockBackend::MockBackend;
 };
