@@ -29,7 +29,6 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <memory>
 #include <optional>
 #include <string>
 #include <tuple>
@@ -42,8 +41,7 @@ struct MigratorRegisterTests : public util::prometheus::WithMockPrometheus, publ
 
 TEST_F(MigratorRegisterTests, EmptyMigratorRegister)
 {
-    auto mockBackendPtr = backend.operator std::shared_ptr<MockMigrationBackend>();
-    EmptyMigratorRegister migratorRegister(mockBackendPtr);
+    EmptyMigratorRegister migratorRegister(backend_);
     EXPECT_EQ(migratorRegister.getMigratorsStatus().size(), 0);
     EXPECT_EQ(migratorRegister.getMigratorNames().size(), 0);
     EXPECT_EQ(migratorRegister.getMigratorStatus("unknown"), migration::MigratorStatus::NotKnown);
@@ -60,14 +58,13 @@ struct MultipleMigratorRegisterTests : public util::prometheus::WithMockPromethe
 
     MultipleMigratorRegisterTests()
     {
-        auto mockBackendPtr = backend.operator std::shared_ptr<MockMigrationBackend>();
-        migratorRegister.emplace(mockBackendPtr);
+        migratorRegister.emplace(backend_);
     }
 };
 
 TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenError)
 {
-    EXPECT_CALL(*backend, fetchMigratorStatus(testing::_, testing::_))
+    EXPECT_CALL(*backend_, fetchMigratorStatus(testing::_, testing::_))
         .Times(2)
         .WillRepeatedly(testing::Return(std::nullopt));
 
@@ -87,7 +84,7 @@ TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenError)
 
 TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenReturnInvalidStatus)
 {
-    EXPECT_CALL(*backend, fetchMigratorStatus(testing::_, testing::_))
+    EXPECT_CALL(*backend_, fetchMigratorStatus(testing::_, testing::_))
         .Times(2)
         .WillRepeatedly(testing::Return("Invalid"));
 
@@ -107,8 +104,8 @@ TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenReturnInvalidStatus)
 
 TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenOneMigrated)
 {
-    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
-    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
+    EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
+    EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
         .WillOnce(testing::Return("NotMigrated"));
 
     auto const status = migratorRegister->getMigratorsStatus();
@@ -127,8 +124,8 @@ TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenOneMigrated)
 
 TEST_F(MultipleMigratorRegisterTests, GetMigratorStatus)
 {
-    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
-    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
+    EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
+    EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
         .WillOnce(testing::Return("NotMigrated"));
 
     EXPECT_EQ(migratorRegister->getMigratorStatus("unknown"), migration::MigratorStatus::NotKnown);
@@ -138,7 +135,7 @@ TEST_F(MultipleMigratorRegisterTests, GetMigratorStatus)
 
 TEST_F(MultipleMigratorRegisterTests, GetMigratorStatusWhenError)
 {
-    EXPECT_CALL(*backend, fetchMigratorStatus(testing::_, testing::_))
+    EXPECT_CALL(*backend_, fetchMigratorStatus(testing::_, testing::_))
         .Times(2)
         .WillRepeatedly(testing::Return(std::nullopt));
 
@@ -157,12 +154,12 @@ TEST_F(MultipleMigratorRegisterTests, Names)
 
 TEST_F(MultipleMigratorRegisterTests, RunUnknownMigrator)
 {
-    EXPECT_CALL(*backend, writeMigratorStatus(testing::_, testing::_)).Times(0);
+    EXPECT_CALL(*backend_, writeMigratorStatus(testing::_, testing::_)).Times(0);
     EXPECT_NO_THROW(migratorRegister->runMigrator("unknown", cfg));
 }
 
 TEST_F(MultipleMigratorRegisterTests, MigrateNormalMigrator)
 {
-    EXPECT_CALL(*backend, writeMigratorStatus("SimpleTestMigrator", "Migrated")).Times(1);
+    EXPECT_CALL(*backend_, writeMigratorStatus("SimpleTestMigrator", "Migrated")).Times(1);
     EXPECT_NO_THROW(migratorRegister->runMigrator("SimpleTestMigrator", cfg));
 }

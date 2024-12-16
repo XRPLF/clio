@@ -25,7 +25,7 @@
 #include <tuple>
 #include <vector>
 
-namespace migration::impl {
+namespace migration {
 
 /**
  * @brief The interface for the migration manager. This interface is tend to be implemented for specific database. The
@@ -45,7 +45,7 @@ struct MigrationManagerInterface {
      * @return A vector of tuple, the first element is the migrator's name, the second element is the status of the
      */
     virtual std::vector<std::tuple<std::string, MigratorStatus>>
-    allMigratorsStatus() const = 0;
+    allMigratorsStatusPairs() const = 0;
 
     /**
      * @brief Get all registered migrators' names
@@ -74,4 +74,4 @@ struct MigrationManagerInterface {
     getMigratorDescriptionByName(std::string const& name) const = 0;
 };
 
-}  // namespace migration::impl
+}  // namespace migration

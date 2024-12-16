@@ -31,7 +31,7 @@ data::cassandra::ResultOrError
 writeTxFromCSVString(std::string const& space, std::string const& record, data::cassandra::Handle const& handler)
 {
     std::string statement = fmt::format(
-        "insert into {}.transactions (hash, date, ledger_sequence, metadata, transaction) VALUES ({})", space, record
+        "INSERT INTO {}.transactions (hash, date, ledger_sequence, metadata, transaction) VALUES ({})", space, record
     );
 
     return handler.execute(statement);
@@ -40,7 +40,7 @@ writeTxFromCSVString(std::string const& space, std::string const& record, data::
 data::cassandra::ResultOrError
 writeObjectFromCSVString(std::string const& space, std::string const& record, data::cassandra::Handle const& handler)
 {
-    std::string statement = fmt::format("insert into {}.objects (key, sequence, object) VALUES ({})", space, record);
+    std::string statement = fmt::format("INSERT INTO {}.objects (key, sequence, object) VALUES ({})", space, record);
 
     return handler.execute(statement);
 }
@@ -48,7 +48,7 @@ writeObjectFromCSVString(std::string const& space, std::string const& record, da
 data::cassandra::ResultOrError
 writeLedgerFromCSVString(std::string const& space, std::string const& record, data::cassandra::Handle const& handler)
 {
-    std::string statement = fmt::format("insert into {}.ledgers (sequence, header) VALUES ({})", space, record);
+    std::string statement = fmt::format("INSERT INTO {}.ledgers (sequence, header) VALUES ({})", space, record);
     return handler.execute(statement);
 }
 
@@ -61,12 +61,12 @@ writeLedgerRange(
 )
 {
     std::string statement =
-        fmt::format("insert into {}.ledger_range (sequence, is_latest) VALUES ({},false)", space, minSeq);
+        fmt::format("INSERT INTO {}.ledger_range (sequence, is_latest) VALUES ({},false)", space, minSeq);
     auto ret = handler.execute(statement);
 
     if (!ret)
         return ret;
 
-    statement = fmt::format("insert into {}.ledger_range (sequence, is_latest) VALUES ({},true)", space, maxSeq);
+    statement = fmt::format("INSERT INTO {}.ledger_range (sequence, is_latest) VALUES ({},true)", space, maxSeq);
     return handler.execute(statement);
 }

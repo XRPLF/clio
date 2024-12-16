@@ -59,14 +59,11 @@ constexpr bool
 hasNoDuplicateNames()
 {
     constexpr std::array<std::string_view, sizeof...(Types)> names = {Types::name...};
-    for (std::size_t i = 0; i < names.size(); ++i) {
-        for (std::size_t j = i + 1; j < names.size(); ++j) {
-            if (names[i] == names[j]) {
-                return false;
-            }
-        }
-    }
-    return true;
+    return !std::ranges::any_of(names, [&](std::string_view const& name1) {
+        return std::ranges::any_of(names, [&](std::string_view const& name2) {
+            return &name1 != &name2 && name1 == name2;  // Ensure different elements are compared
+        });
+    });
 }
 
 }  // namespace util

@@ -30,9 +30,9 @@ namespace migration::cassandra {
 template <typename BackendType>
 using CassandraSupportedMigrators = migration::impl::MigratorsRegister<BackendType>;
 
-/// Register with MigrationBackend which proceeds the migration
+// Register with MigrationBackend which proceeds the migration
 using MigrationProcesser = CassandraSupportedMigrators<CassandraMigrationBackend>;
 
-/// The Cassandra migration manager
+// The Cassandra migration manager
 using CassandraMigrationManager = migration::impl::MigrationManagerBase<MigrationProcesser>;
 }  // namespace migration::cassandra

@@ -129,8 +129,6 @@ class FullTableScanner {
             tasks_.push_back(spawnWorker());
     }
 
-    static auto constexpr CursorNumMultiplier = 100;  // will generate 100*workersNum cursors
-
     util::async::AnyExecutionContext ctx_;
     std::size_t cursorsNum_;
     etl::ThreadSafeQueue<TokenRange> queue_;
@@ -148,13 +146,20 @@ public:
      * @param reader The table adapter
      */
     template <typename ExecutionContextType = util::async::CoroExecutionContext>
-    FullTableScanner(std::uint32_t ctxThreadsNum, std::uint32_t workersNum, TableAdapter&& reader)
+    FullTableScanner(
+        std::uint32_t ctxThreadsNum,
+        std::uint32_t workersNum,
+        std::uint32_t cursorsPerWorker,
+        TableAdapter&& reader
+    )
         : ctx_(ExecutionContextType(ctxThreadsNum))
-        , cursorsNum_(workersNum * CursorNumMultiplier)
+        , cursorsNum_(workersNum * cursorsPerWorker)
         , queue_{cursorsNum_}
         , reader_{std::move(reader)}
     {
         ASSERT(workersNum > 0, "workersNum for full table scanner must be greater than 0");
+        ASSERT(cursorsPerWorker > 0, "cursorsPerWorker for full table scanner must be greater than 0");
+
         auto const cursors = TokenRangesProvider{cursorsNum_}.getRanges();
         std::ranges::for_each(cursors, [this](auto const& cursor) { queue_.push(cursor); });
         load(workersNum);

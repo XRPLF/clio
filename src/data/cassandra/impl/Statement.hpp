@@ -120,7 +120,7 @@ public:
             auto const rc = bindBytes(reinterpret_cast<unsigned char const*>(value.data()), value.size());
             throwErrorIfNeeded(rc, "Bind string (as bytes)");
         } else if constexpr (std::is_convertible_v<DecayedType, Text>) {
-            auto const rc = cass_statement_bind_string(*this, idx, value.text.c_str());
+            auto const rc = cass_statement_bind_string_n(*this, idx, value.text.c_str(), value.text.size());
             throwErrorIfNeeded(rc, "Bind string (as TEXT)");
         } else if constexpr (std::is_same_v<DecayedType, UintTupleType> ||
                              std::is_same_v<DecayedType, UintByteTupleType>) {

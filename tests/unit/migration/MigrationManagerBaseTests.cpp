@@ -46,7 +46,7 @@ struct MigrationManagerBaseTest : public util::prometheus::WithMockPrometheus, p
 
     MigrationManagerBaseTest()
     {
-        auto mockBackendPtr = backend.operator std::shared_ptr<MockMigrationBackend>();
+        auto mockBackendPtr = backend_.operator std::shared_ptr<MockMigrationBackend>();
         TestMigratorRegister migratorRegister(mockBackendPtr);
         migrationManager = std::make_shared<TestCassandraMigrationManager>(mockBackendPtr, cfg);
     }
@@ -54,10 +54,10 @@ struct MigrationManagerBaseTest : public util::prometheus::WithMockPrometheus, p
 
 TEST_F(MigrationManagerBaseTest, AllStatus)
 {
-    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
-    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
+    EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
+    EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
         .WillOnce(testing::Return("NotMigrated"));
-    auto const status = migrationManager->allMigratorsStatus();
+    auto const status = migrationManager->allMigratorsStatusPairs();
     EXPECT_EQ(status.size(), 2);
     EXPECT_TRUE(
         std::find(
@@ -81,14 +81,14 @@ TEST_F(MigrationManagerBaseTest, AllNames)
 
 TEST_F(MigrationManagerBaseTest, RunMigration)
 {
-    EXPECT_CALL(*backend, writeMigratorStatus("SimpleTestMigrator", "Migrated")).Times(1);
+    EXPECT_CALL(*backend_, writeMigratorStatus("SimpleTestMigrator", "Migrated"));
     migrationManager->runMigration("SimpleTestMigrator");
 }
 
 TEST_F(MigrationManagerBaseTest, getMigratorStatusByName)
 {
-    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
-    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
+    EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
+    EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
         .WillOnce(testing::Return("NotMigrated"));
 
     EXPECT_EQ(migrationManager->getMigratorStatusByName("SimpleTestMigrator"), migration::MigratorStatus::Migrated);

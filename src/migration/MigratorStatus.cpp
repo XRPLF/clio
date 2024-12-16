@@ -50,7 +50,7 @@ MigratorStatus::fromString(std::string const& statusStr)
             return MigratorStatus(static_cast<Status>(i));
         }
     }
-    return MigratorStatus(NotMigrated);
+    return MigratorStatus(Status::NotMigrated);
 }
 
 }  // namespace migration

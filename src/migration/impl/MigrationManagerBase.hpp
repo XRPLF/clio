@@ -19,8 +19,8 @@
 
 #pragma once
 
+#include "migration/MigrationManagerInterface.hpp"
 #include "migration/MigratiorStatus.hpp"
-#include "migration/impl/MigrationManagerInterface.hpp"
 #include "util/config/Config.hpp"
 
 #include <memory>
@@ -76,7 +76,7 @@ public:
      * migrator
      */
     std::vector<std::tuple<std::string, MigratorStatus>>
-    allMigratorsStatus() const override
+    allMigratorsStatusPairs() const override
     {
         return migrators_.getMigratorsStatus();
     }

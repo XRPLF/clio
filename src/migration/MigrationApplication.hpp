@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "migration/impl/MigrationManagerInterface.hpp"
+#include "migration/MigrationManagerInterface.hpp"
 #include "util/config/Config.hpp"
 
 #include <memory>
@@ -74,7 +74,7 @@ struct MigrateSubCmd {
  */
 class MigratorApplication {
     std::string option_;
-    std::shared_ptr<migration::impl::MigrationManagerInterface> migrationManager_;
+    std::shared_ptr<migration::MigrationManagerInterface> migrationManager_;
     MigrateSubCmd cmd_;
 
 public:

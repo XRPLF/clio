@@ -21,7 +21,6 @@
 
 #include "migration/MigratiorStatus.hpp"
 #include "migration/impl/MigrationManagerFactory.hpp"
-#include "migration/impl/MigrationManagerInterface.hpp"
 #include "util/OverloadSet.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
@@ -64,13 +63,13 @@ int
 MigratorApplication::printStatus()
 {
     std::cout << "Current Migration Status:" << std::endl;
-    auto const allMigratorsStatus = migrationManager_->allMigratorsStatus();
+    auto const allMigratorsStatusPairs = migrationManager_->allMigratorsStatusPairs();
 
-    if (allMigratorsStatus.empty()) {
+    if (allMigratorsStatusPairs.empty()) {
         std::cout << "No migrator found" << std::endl;
     }
 
-    for (auto const& [migrator, status] : allMigratorsStatus) {
+    for (auto const& [migrator, status] : allMigratorsStatusPairs) {
         std::cout << "Migrator: " << migrator << " - " << migrationManager_->getMigratorDescriptionByName(migrator)
                   << " - " << status.toString() << std::endl;
     }

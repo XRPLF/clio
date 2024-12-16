@@ -69,7 +69,7 @@ class MigratorsRegister {
         if (name == Migrator::name) {
             LOG(log_.info()) << "Running migration: " << name;
             Migrator::runMigration(backend_, config);
-            backend_->writeMigratorStatus(name, MigratorStatus(MigratorStatus::Status::Migrated).toString());
+            backend_->writeMigratorStatus(name, MigratorStatus(MigratorStatus::Migrated).toString());
             LOG(log_.info()) << "Finished migration: " << name;
         }
     }
@@ -122,7 +122,7 @@ public:
 
         std::vector<std::tuple<std::string, MigratorStatus>> status;
 
-        std::transform(fullList.begin(), fullList.end(), std::back_inserter(status), [&](auto const& migratorName) {
+        std::ranges::transform(fullList, std::back_inserter(status), [&](auto const& migratorName) {
             auto const migratorNameStr = std::string(migratorName);
             return std::make_tuple(migratorNameStr, getMigratorStatus(migratorNameStr));
         });

@@ -42,12 +42,14 @@ ExampleTransactionsMigrator::runMigration(std::shared_ptr<Backend> const& backen
 {
     auto const ctxFullScanThreads = config.valueOr<std::uint32_t>("full_scan_threads", 2);
     auto const jobsFullScan = config.valueOr<std::uint32_t>("jobs_full_scan", 4);
+    auto const cursorPerJobsFullScan = config.valueOr<std::uint32_t>("cursors_per_job", 100);
 
     std::unordered_set<std::string> hashSet;
     std::mutex mtx;  // protect hashSet
     migration::cassandra::impl::TransactionsScanner scaner(
         ctxFullScanThreads,
         jobsFullScan,
+        cursorPerJobsFullScan,
         migration::cassandra::impl::TransactionsAdapter(
             backend,
             [&](ripple::STTx const& tx, ripple::TxMeta const&) {

@@ -316,24 +316,24 @@ private:
 
         statements.emplace_back(fmt::format(
             R"(
-           CREATE TABLE IF NOT EXISTS {}
-                  (      
+            CREATE TABLE IF NOT EXISTS {}
+                   (      
                         hash blob,
-                        tx_type text,
-                        PRIMARY KEY (hash) 
-                  ) 
+                     tx_type text,
+                     PRIMARY KEY (hash) 
+                   ) 
             )",
             data::cassandra::qualifiedTableName(settingsProvider_, "tx_index_example")
         ));
 
         statements.emplace_back(fmt::format(
             R"(
-           CREATE TABLE IF NOT EXISTS {}
-                  (      
+            CREATE TABLE IF NOT EXISTS {}
+                   (      
                         sequence bigint,
-                        account_hash blob,
-                        PRIMARY KEY (sequence) 
-                  ) 
+                    account_hash blob,
+                         PRIMARY KEY (sequence) 
+                   ) 
             )",
             data::cassandra::qualifiedTableName(settingsProvider_, "ledger_example")
         ));

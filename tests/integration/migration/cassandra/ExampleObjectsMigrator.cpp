@@ -29,10 +29,8 @@
 
 #include <atomic>
 #include <cstdint>
-#include <iostream>
 #include <memory>
 #include <optional>
-#include <ostream>
 #include <unordered_set>
 
 std::atomic_int64_t ExampleObjectsMigrator::count;
@@ -41,14 +39,15 @@ std::atomic_int64_t ExampleObjectsMigrator::accountCount;
 void
 ExampleObjectsMigrator::runMigration(std::shared_ptr<Backend> const& backend, util::Config const& config)
 {
-    // Do something
     auto const ctxFullScanThreads = config.valueOr<std::uint32_t>("full_scan_threads", 2);
     auto const jobsFullScan = config.valueOr<std::uint32_t>("jobs_full_scan", 4);
+    auto const cursorPerJobsFullScan = config.valueOr<std::uint32_t>("cursors_per_job", 100);
 
     std::unordered_set<ripple::uint256> idx;
     migration::cassandra::impl::ObjectsScanner scaner(
         ctxFullScanThreads,
         jobsFullScan,
+        cursorPerJobsFullScan,
         migration::cassandra::impl::ObjectsAdapter(
             backend,
             [&](std::uint32_t, std::optional<ripple::SLE> sle) {

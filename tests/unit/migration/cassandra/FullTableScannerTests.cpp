@@ -24,27 +24,29 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstdint>
 #include <functional>
+#include <limits>
 
 namespace {
 
-// Help to verify that the function is called
-struct MockObject {
-    MOCK_METHOD(void, call, (migration::cassandra::impl::TokenRange const&, boost::asio::yield_context));
-};
-
 struct TestScannerAdaper {
-    TestScannerAdaper(MockObject& obj) : objRef(obj) {};
+    TestScannerAdaper(
+        testing::MockFunction<void(migration::cassandra::impl::TokenRange const&, boost::asio::yield_context)>& func
+    )
+        : callback(func) {};
 
     TestScannerAdaper(TestScannerAdaper const&) = default;
     TestScannerAdaper(TestScannerAdaper&&) = default;
 
-    std::reference_wrapper<MockObject> objRef;
+    std::reference_wrapper<
+        testing::MockFunction<void(migration::cassandra::impl::TokenRange const&, boost::asio::yield_context)>>
+        callback;
 
     void
     readByTokenRange(migration::cassandra::impl::TokenRange const& range, boost::asio::yield_context yield) const
     {
-        objRef.get().call(range, yield);
+        callback.get().Call(range, yield);
     }
 };
 }  // namespace
@@ -53,25 +55,50 @@ struct FullTableScannerTests : public NoLoggerFixture {};
 
 TEST_F(FullTableScannerTests, workerNumZero)
 {
-    MockObject obj;
+    testing::MockFunction<void(migration::cassandra::impl::TokenRange const&, boost::asio::yield_context)> mockCallback;
     EXPECT_DEATH(
-        migration::cassandra::impl::FullTableScanner<TestScannerAdaper>(1, 0, TestScannerAdaper(obj)),
+        migration::cassandra::impl::FullTableScanner<TestScannerAdaper>(1, 0, 100, TestScannerAdaper(mockCallback)),
         "workersNum for full table scanner must be greater than 0"
+    );
+}
+
+TEST_F(FullTableScannerTests, cursorsPerWorkerZero)
+{
+    testing::MockFunction<void(migration::cassandra::impl::TokenRange const&, boost::asio::yield_context)> mockCallback;
+    EXPECT_DEATH(
+        migration::cassandra::impl::FullTableScanner<TestScannerAdaper>(1, 1, 0, TestScannerAdaper(mockCallback)),
+        "cursorsPerWorker for full table scanner must be greater than 0"
     );
 }
 
 TEST_F(FullTableScannerTests, SingleThreadCtx)
 {
-    MockObject obj;
-    EXPECT_CALL(obj, call(testing::_, testing::_)).Times(100);
-    auto scanner = migration::cassandra::impl::FullTableScanner<TestScannerAdaper>(1, 1, TestScannerAdaper(obj));
+    testing::MockFunction<void(migration::cassandra::impl::TokenRange const&, boost::asio::yield_context)> mockCallback;
+    EXPECT_CALL(mockCallback, Call(testing::_, testing::_)).Times(100);
+    auto scanner =
+        migration::cassandra::impl::FullTableScanner<TestScannerAdaper>(1, 1, 100, TestScannerAdaper(mockCallback));
     scanner.wait();
 }
 
 TEST_F(FullTableScannerTests, MultipleThreadCtx)
 {
-    MockObject obj;
-    EXPECT_CALL(obj, call(testing::_, testing::_)).Times(200);
-    auto scanner = migration::cassandra::impl::FullTableScanner<TestScannerAdaper>(2, 2, TestScannerAdaper(obj));
+    testing::MockFunction<void(migration::cassandra::impl::TokenRange const&, boost::asio::yield_context)> mockCallback;
+    EXPECT_CALL(mockCallback, Call(testing::_, testing::_)).Times(200);
+    auto scanner =
+        migration::cassandra::impl::FullTableScanner<TestScannerAdaper>(2, 2, 100, TestScannerAdaper(mockCallback));
+    scanner.wait();
+}
+
+MATCHER(RangeMinMax, "Matches the range with min and max")
+{
+    return (arg.start == std::numeric_limits<std::int64_t>::min()) &&
+        (arg.end == std::numeric_limits<std::int64_t>::max());
+}
+TEST_F(FullTableScannerTests, RangeSizeIsOne)
+{
+    testing::MockFunction<void(migration::cassandra::impl::TokenRange const&, boost::asio::yield_context)> mockCallback;
+    EXPECT_CALL(mockCallback, Call(RangeMinMax(), testing::_)).Times(1);
+    auto scanner =
+        migration::cassandra::impl::FullTableScanner<TestScannerAdaper>(2, 1, 1, TestScannerAdaper(mockCallback));
     scanner.wait();
 }

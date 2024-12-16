@@ -21,6 +21,8 @@
 #include "data/DBHelpers.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
+#include "migration/MigrationManagerInterface.hpp"
+#include "migration/MigratiorStatus.hpp"
 #include "migration/cassandra/CassandraMigrationTestBackend.hpp"
 #include "migration/cassandra/DBRawData.hpp"
 #include "migration/cassandra/ExampleDropTableMigrator.hpp"
@@ -28,7 +30,6 @@
 #include "migration/cassandra/ExampleObjectsMigrator.hpp"
 #include "migration/cassandra/ExampleTransactionsMigrator.hpp"
 #include "migration/impl/MigrationManagerBase.hpp"
-#include "migration/impl/MigrationManagerInterface.hpp"
 #include "migration/impl/MigratorsRegister.hpp"
 #include "util/CassandraDBHelper.hpp"
 #include "util/LoggerFixtures.hpp"
@@ -67,7 +68,7 @@ using CassandraSupportedTestMigrators = migration::impl::MigratorsRegister<
 using CassandraMigrationTestManager = migration::impl::MigrationManagerBase<CassandraSupportedTestMigrators>;
 
 namespace {
-std::pair<std::shared_ptr<migration::impl::MigrationManagerInterface>, std::shared_ptr<CassandraMigrationTestBackend>>
+std::pair<std::shared_ptr<migration::MigrationManagerInterface>, std::shared_ptr<CassandraMigrationTestBackend>>
 make_MigrationTestManagerAndBackend(util::Config const& config)
 {
     auto const cfg = config.section("database.cassandra");
@@ -105,7 +106,7 @@ protected:
         TestGlobals::instance().backendKeyspace
     ))};
 
-    std::shared_ptr<migration::impl::MigrationManagerInterface> testMigrationManager;
+    std::shared_ptr<migration::MigrationManagerInterface> testMigrationManager;
     std::shared_ptr<CassandraMigrationTestBackend> testMigrationBackend;
 
     MigrationCassandraSimpleTest()
@@ -146,7 +147,7 @@ TEST_F(MigrationCassandraManagerCleanDBTest, GetAllMigratorNames)
 
 TEST_F(MigrationCassandraManagerCleanDBTest, AllMigratorStatusBeforeAnyMigration)
 {
-    auto const status = testMigrationManager->allMigratorsStatus();
+    auto const status = testMigrationManager->allMigratorsStatusPairs();
     EXPECT_EQ(status.size(), 4);
     EXPECT_EQ(std::get<1>(status[0]), MigratorStatus::NotMigrated);
     EXPECT_EQ(std::get<1>(status[1]), MigratorStatus::NotMigrated);

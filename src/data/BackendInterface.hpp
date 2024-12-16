@@ -684,10 +684,10 @@ public:
     finishWrites(std::uint32_t ledgerSequence);
 
     /**
-     *@brief Mark the migration status of a migrator as Migrated in the database
+     * @brief Mark the migration status of a migrator as Migrated in the database
      *
-     *@param migratorName The name of the migrator
-     *@param status The status to set
+     * @param migratorName The name of the migrator
+     * @param status The status to set
      */
     virtual void
     writeMigratorStatus(std::string const& migratorName, std::string const& status) = 0;
