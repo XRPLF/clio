@@ -24,8 +24,6 @@
 #include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
 
-#include <stdexcept>
-
 struct MigrationManagerFactoryTests : public NoLoggerFixture {};
 
 TEST_F(MigrationManagerFactoryTests, InvalidDBType)
@@ -39,5 +37,7 @@ TEST_F(MigrationManagerFactoryTests, InvalidDBType)
     )JSON";
     util::Config config(boost::json::parse(cfgJson));
 
-    EXPECT_THROW(migration::impl::makeMigrationManager(config), std::runtime_error);
+    auto const ret = migration::impl::makeMigrationManager(config);
+    EXPECT_FALSE(ret);
+    EXPECT_EQ(ret.error(), "Invalid database type");
 }

@@ -28,13 +28,12 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <utility>
 
 namespace migration::impl {
 
-std::shared_ptr<impl::MigrationManagerInterface>
+std::expected<std::shared_ptr<impl::MigrationManagerInterface>, std::string>
 makeMigrationManager(util::Config const& config)
 {
     static util::Logger const log{"Migration"};
@@ -44,7 +43,7 @@ makeMigrationManager(util::Config const& config)
 
     if (not boost::iequals(type, "cassandra")) {
         LOG(log.error()) << "Unknown database type to migrate: " << type;
-        throw std::runtime_error("Invalid database type");
+        return std::unexpected(std::string("Invalid database type"));
     }
 
     auto const cfg = config.section("database." + type);

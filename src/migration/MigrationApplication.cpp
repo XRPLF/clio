@@ -30,6 +30,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <variant>
@@ -40,7 +41,11 @@ MigratorApplication::MigratorApplication(util::Config const& config, MigrateSubC
 {
     PrometheusService::init(config);
 
-    migrationManager_ = migration::impl::makeMigrationManager(config);
+    auto expectedMigrationManager = migration::impl::makeMigrationManager(config);
+
+    if (not expectedMigrationManager) {
+        throw std::runtime_error("Failed to create migration manager: " + expectedMigrationManager.error());
+    }
 }
 
 int

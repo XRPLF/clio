@@ -22,7 +22,7 @@
 #include "migration/impl/MigrationManagerInterface.hpp"
 #include "util/config/Config.hpp"
 
-#include <memory>
+#include <expected>
 
 namespace migration::impl {
 
@@ -32,7 +32,7 @@ namespace migration::impl {
  * @param config The configuration of the migration application, it contains the database connection configuration and
  * other migration specific configurations
  */
-std::shared_ptr<impl::MigrationManagerInterface>
+std::expected<std::shared_ptr<impl::MigrationManagerInterface>, std::string>
 makeMigrationManager(util::Config const& config);
 
 }  // namespace migration::impl
