@@ -50,9 +50,7 @@ ExampleTransactionsMigrator::runMigration(
     std::unordered_set<std::string> hashSet;
     std::mutex mtx;  // protect hashSet
     migration::cassandra::impl::TransactionsScanner scaner(
-        ctxFullScanThreads,
-        jobsFullScan,
-        cursorPerJobsFullScan,
+        {.ctxThreadsNum = ctxFullScanThreads, .jobsNum = jobsFullScan, .cursorsPerJob = cursorPerJobsFullScan},
         migration::cassandra::impl::TransactionsAdapter(
             backend,
             [&](ripple::STTx const& tx, ripple::TxMeta const&) {

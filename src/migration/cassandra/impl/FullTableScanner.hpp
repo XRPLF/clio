@@ -137,32 +137,35 @@ class FullTableScanner {
 
 public:
     /**
+     * @brief The full table scanner settings.
+     */
+    struct FullTableScannerSettings {
+        std::uint32_t ctxThreadsNum;  // number of threads used in the execution context
+        std::uint32_t jobsNum;        // number of coroutines to run, it is the number of concurrent database reads
+        std::uint32_t cursorsPerJob;  // number of cursors per coroutine
+    };
+
+    /**
      * @brief Construct a new Full Table Scanner object, it will run in a sync or async context according to the
      * parameter. The scan process will immediately start.
      *
      * @tparam ExecutionContextType The execution context type
-     * @param ctxThreadsNum The number of threads in the execution context
-     * @param workersNum The number of workers
+     * @param settings The full table scanner settings
      * @param reader The table adapter
      */
     template <typename ExecutionContextType = util::async::CoroExecutionContext>
-    FullTableScanner(
-        std::uint32_t ctxThreadsNum,
-        std::uint32_t workersNum,
-        std::uint32_t cursorsPerWorker,
-        TableAdapter&& reader
-    )
-        : ctx_(ExecutionContextType(ctxThreadsNum))
-        , cursorsNum_(workersNum * cursorsPerWorker)
+    FullTableScanner(FullTableScannerSettings settings, TableAdapter&& reader)
+        : ctx_(ExecutionContextType(settings.ctxThreadsNum))
+        , cursorsNum_(settings.jobsNum * settings.cursorsPerJob)
         , queue_{cursorsNum_}
         , reader_{std::move(reader)}
     {
-        ASSERT(workersNum > 0, "workersNum for full table scanner must be greater than 0");
-        ASSERT(cursorsPerWorker > 0, "cursorsPerWorker for full table scanner must be greater than 0");
+        ASSERT(settings.jobsNum > 0, "jobsNum for full table scanner must be greater than 0");
+        ASSERT(settings.cursorsPerJob > 0, "cursorsPerJob for full table scanner must be greater than 0");
 
         auto const cursors = TokenRangesProvider{cursorsNum_}.getRanges();
         std::ranges::for_each(cursors, [this](auto const& cursor) { queue_.push(cursor); });
-        load(workersNum);
+        load(settings.jobsNum);
     }
 
     /**

@@ -67,7 +67,7 @@ public:
             R"(
             SELECT * 
               FROM {} 
-            WHERE TOKEN({}) >= ? AND TOKEN({}) <= ?
+             WHERE TOKEN({}) >= ? AND TOKEN({}) <= ?
             )",
             data::cassandra::qualifiedTableName<SettingsProviderType>(settingsProvider_.get(), tableName),
             key,

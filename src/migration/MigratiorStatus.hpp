@@ -33,7 +33,7 @@ public:
     /**
      * @brief The status of a migrator
      */
-    enum Status { Migrated, NotMigrated, NotKnown, COUNT };
+    enum Status { Migrated, NotMigrated, NotKnown, NumStatuses };
 
     /**
      * @brief Construct a new Migrator Status object with the given status
@@ -79,7 +79,7 @@ public:
     fromString(std::string const& statusStr);
 
 private:
-    static constexpr std::array<char const*, static_cast<size_t>(COUNT)> statusStrMap = {
+    static constexpr std::array<char const*, static_cast<size_t>(NumStatuses)> statusStrMap = {
         "Migrated",
         "NotMigrated",
         "NotKnown"
