@@ -139,7 +139,17 @@ void
 ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::yield_context yield)
 {
     auto& connectionRef = *connectionPtr;
-    auto signalConnection = onStop_.connect([&connectionRef, yield]() { connectionRef.close(yield); });
+    auto signalConnection = onStop_.connect([&connectionRef, yield]() {
+        boost::asio::spawn(yield, [&connectionRef](boost::asio::yield_context innerYield) {
+            Response response{
+                boost::beast::http::status::service_unavailable,
+                "This Clio node is shutting down. Please try another node.",
+                connectionRef
+            };
+            connectionRef.send(std::move(response), innerYield);
+            connectionRef.close(innerYield);
+        });
+    });
 
     bool shouldCloseGracefully = false;
 

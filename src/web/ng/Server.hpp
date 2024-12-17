@@ -33,8 +33,10 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 
+#include <atomic>
 #include <cstddef>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 
@@ -71,6 +73,8 @@ private:
     OnConnectCheck onConnectCheck_;
 
     bool running_{false};
+
+    std::unique_ptr<std::atomic_bool> stopping_ = std::make_unique<std::atomic_bool>(false);
 
 public:
     /**

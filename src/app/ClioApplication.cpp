@@ -146,6 +146,8 @@ ClioApplication::run(bool const useNgWebServer)
             return EXIT_FAILURE;
         }
 
+        signalsHandler_.subscribeToStop([&httpServer]() { httpServer->stop(); });
+
         httpServer->onGet("/metrics", MetricsHandler{adminVerifier});
         httpServer->onGet("/health", HealthCheckHandler{});
         auto requestHandler = RequestHandler{adminVerifier, handler, dosGuard};
