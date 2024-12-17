@@ -19,7 +19,9 @@
 
 #include "util/Taggable.hpp"
 #include "util/build/Build.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/ng/MockConnection.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
@@ -41,6 +43,7 @@
 
 using namespace web::ng;
 namespace http = boost::beast::http;
+using namespace util::config;
 
 struct ResponseDeathTest : testing::Test {};
 
@@ -133,8 +136,10 @@ TEST_F(ResponseTest, asConstBufferJson)
 
 TEST_F(ResponseTest, createFromStringAndConnection)
 {
-    util::TagDecoratorFactory tagDecoratorFactory{util::Config{}};
-    StrictMockConnection connection{"some ip", boost::beast::flat_buffer{}, tagDecoratorFactory};
+    util::TagDecoratorFactory const tagDecoratorFactory{
+        ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
+    };
+    StrictMockConnection const connection{"some ip", boost::beast::flat_buffer{}, tagDecoratorFactory};
     std::string const responseMessage = "response message";
 
     EXPECT_CALL(connection, wasUpgraded()).WillOnce(testing::Return(false));
@@ -150,8 +155,10 @@ TEST_F(ResponseTest, createFromStringAndConnection)
 
 TEST_F(ResponseTest, createFromJsonAndConnection)
 {
-    util::TagDecoratorFactory tagDecoratorFactory{util::Config{}};
-    StrictMockConnection connection{"some ip", boost::beast::flat_buffer{}, tagDecoratorFactory};
+    util::TagDecoratorFactory const tagDecoratorFactory{
+        ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
+    };
+    StrictMockConnection const connection{"some ip", boost::beast::flat_buffer{}, tagDecoratorFactory};
     boost::json::object const responseMessage{{"key", "value"}};
 
     EXPECT_CALL(connection, wasUpgraded()).WillOnce(testing::Return(false));

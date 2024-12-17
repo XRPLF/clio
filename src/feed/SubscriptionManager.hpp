@@ -30,8 +30,8 @@
 #include "feed/impl/TransactionFeed.hpp"
 #include "util/async/AnyExecutionContext.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
@@ -77,9 +77,12 @@ public:
      * @return A shared pointer to a new instance of SubscriptionManager
      */
     static std::shared_ptr<SubscriptionManager>
-    make_SubscriptionManager(util::Config const& config, std::shared_ptr<data::BackendInterface const> const& backend)
+    make_SubscriptionManager(
+        util::config::ClioConfigDefinition const& config,
+        std::shared_ptr<data::BackendInterface const> const& backend
+    )
     {
-        auto const workersNum = config.valueOr<std::uint64_t>("subscription_workers", 1);
+        auto const workersNum = config.get<uint64_t>("subscription_workers");
 
         util::Logger const logger{"Subscriptions"};
         LOG(logger.info()) << "Starting subscription manager with " << workersNum << " workers";

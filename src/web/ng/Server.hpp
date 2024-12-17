@@ -20,8 +20,8 @@
 #pragma once
 
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/ProcessingPolicy.hpp"
@@ -170,7 +170,7 @@ private:
  */
 std::expected<Server, std::string>
 make_Server(
-    util::Config const& config,
+    util::config::ClioConfigDefinition const& config,
     Server::OnConnectCheck onConnectCheck,
     Server::OnDisconnectHook onDisconnectHook,
     boost::asio::io_context& context

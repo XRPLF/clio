@@ -30,7 +30,6 @@
 #include "util/JsonUtils.hpp"
 #include "util/Profiler.hpp"
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
@@ -87,7 +86,7 @@ public:
      * @param etl The ETL to use
      */
     RPCServerHandler(
-        util::Config const& config,
+        util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<RPCEngineType> const& rpcEngine,
         std::shared_ptr<ETLType const> const& etl
@@ -96,7 +95,7 @@ public:
         , rpcEngine_(rpcEngine)
         , etl_(etl)
         , tagFactory_(config)
-        , apiVersionParser_(config.sectionOr("api_version", {}))
+        , apiVersionParser_(config.getObject("api_version"))
     {
     }
 

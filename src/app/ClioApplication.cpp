@@ -27,36 +27,26 @@
 #include "etl/NetworkValidatedLedgers.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "rpc/Counters.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
 #include "util/build/Build.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 #include "util/prometheus/Prometheus.hpp"
 #include "web/AdminVerificationStrategy.hpp"
 #include "web/RPCServerHandler.hpp"
 #include "web/Server.hpp"
-#include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuard.hpp"
 #include "web/dosguard/IntervalSweepHandler.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
-#include "web/ng/Connection.hpp"
 #include "web/ng/RPCServerHandler.hpp"
-#include "web/ng/Request.hpp"
-#include "web/ng/Response.hpp"
 #include "web/ng/Server.hpp"
 
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/spawn.hpp>
-#include <boost/beast/http/status.hpp>
-#include <boost/json/array.hpp>
-#include <boost/json/parse.hpp>
 
 #include <cstdint>
 #include <cstdlib>
-#include <exception>
 #include <memory>
 #include <optional>
 #include <thread>
@@ -88,7 +78,8 @@ start(boost::asio::io_context& ioc, std::uint32_t numThreads)
 
 }  // namespace
 
-ClioApplication::ClioApplication(util::Config const& config) : config_(config), signalsHandler_{config_}
+ClioApplication::ClioApplication(util::config::ClioConfigDefinition const& config)
+    : config_(config), signalsHandler_{config_}
 {
     LOG(util::LogService::info()) << "Clio version: " << util::build::getClioFullVersionString();
     PrometheusService::init(config);
@@ -97,11 +88,7 @@ ClioApplication::ClioApplication(util::Config const& config) : config_(config), 
 int
 ClioApplication::run(bool const useNgWebServer)
 {
-    auto const threads = config_.valueOr("io_threads", 2);
-    if (threads <= 0) {
-        LOG(util::LogService::fatal()) << "io_threads is less than 1";
-        return EXIT_FAILURE;
-    }
+    auto const threads = config_.get<uint16_t>("io_threads");
     LOG(util::LogService::info()) << "Number of io threads = " << threads;
 
     // IO context to handle all incoming requests, as well as other things.
@@ -142,7 +129,7 @@ ClioApplication::run(bool const useNgWebServer)
     auto const rpcEngine =
         RPCEngineType::make_RPCEngine(config_, backend, balancer, dosGuard, workQueue, counters, handlerProvider);
 
-    if (useNgWebServer or config_.valueOr("server.__ng_web_server", false)) {
+    if (useNgWebServer or config_.get<bool>("server.__ng_web_server")) {
         web::ng::RPCServerHandler<RPCEngineType, etl::ETLService> handler{config_, backend, rpcEngine, etl};
 
         auto expectedAdminVerifier = web::make_AdminVerificationStrategy(config_);

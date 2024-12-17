@@ -19,19 +19,24 @@
 
 #include "util/LoggerFixtures.hpp"
 #include "util/NameGenerator.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/AdminVerificationStrategy.hpp"
 
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <gtest/gtest.h>
 
 #include <optional>
 #include <string>
 
 namespace http = boost::beast::http;
+using namespace util::config;
 
 class IPAdminVerificationStrategyTest : public NoLoggerFixture {
 protected:
@@ -134,9 +139,21 @@ struct MakeAdminVerificationStrategyFromConfigTestParams {
 struct MakeAdminVerificationStrategyFromConfigTest
     : public testing::TestWithParam<MakeAdminVerificationStrategyFromConfigTestParams> {};
 
+inline static ClioConfigDefinition
+generateDefaultAdminConfig()
+{
+    return ClioConfigDefinition{
+        {{"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
+         {"server.admin_password", ConfigValue{ConfigType::String}.optional()}}
+    };
+}
+
 TEST_P(MakeAdminVerificationStrategyFromConfigTest, ChecksConfig)
 {
-    util::Config const serverConfig{boost::json::parse(GetParam().config)};
+    ConfigFileJson const js{boost::json::parse(GetParam().config).as_object()};
+    ClioConfigDefinition serverConfig{generateDefaultAdminConfig()};
+    auto const errors = serverConfig.parse(js);
+    ASSERT_TRUE(!errors.has_value());
     auto const result = web::make_AdminVerificationStrategy(serverConfig);
     EXPECT_EQ(not result.has_value(), GetParam().expectedError);
 }

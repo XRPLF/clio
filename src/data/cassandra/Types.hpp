@@ -21,6 +21,8 @@
 
 #include <cstdint>
 #include <expected>
+#include <string>
+#include <utility>
 
 namespace data::cassandra {
 
@@ -53,6 +55,26 @@ using Batch = impl::Batch;
  */
 struct Limit {
     int32_t limit;
+};
+
+/**
+ * @brief A strong type wrapper for string
+ *
+ * This is unfortunately needed right now to support TEXT properly
+ * because clio uses string to represent BLOB
+ * If we want to bind TEXT with string, we need to use this type
+ */
+struct Text {
+    std::string text;
+
+    /**
+     * @brief Construct a new Text object from string type
+     *
+     * @param text The text to wrap
+     */
+    explicit Text(std::string text) : text{std::move(text)}
+    {
+    }
 };
 
 class Handle;

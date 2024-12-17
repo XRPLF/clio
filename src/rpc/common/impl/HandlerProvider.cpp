@@ -60,7 +60,7 @@
 #include "rpc/handlers/Tx.hpp"
 #include "rpc/handlers/Unsubscribe.hpp"
 #include "rpc/handlers/VersionHandler.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <memory>
 #include <optional>
@@ -69,7 +69,7 @@
 namespace rpc::impl {
 
 ProductionHandlerProvider::ProductionHandlerProvider(
-    util::Config const& config,
+    util::config::ClioConfigDefinition const& config,
     std::shared_ptr<BackendInterface> const& backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptionManager,
     std::shared_ptr<etl::LoadBalancer> const& balancer,

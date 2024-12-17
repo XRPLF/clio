@@ -26,7 +26,9 @@
 #include "util/MockRPCEngine.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/RPCServerHandler.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/interface/ConnectionBase.hpp"
@@ -44,6 +46,7 @@
 #include <vector>
 
 using namespace web;
+using namespace util::config;
 
 namespace {
 
@@ -81,7 +84,12 @@ struct MockWsBase : public web::ConnectionBase {
 };
 
 struct WebRPCServerHandlerTest : util::prometheus::WithPrometheus, MockBackendTest, SyncAsioContextTest {
-    util::Config cfg;
+    util::config::ClioConfigDefinition cfg{
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
+        {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(rpc::API_VERSION_DEFAULT)},
+        {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(rpc::API_VERSION_MIN)},
+        {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(rpc::API_VERSION_MAX)}
+    };
     std::shared_ptr<MockAsyncRPCEngine> rpcEngine = std::make_shared<MockAsyncRPCEngine>();
     std::shared_ptr<MockETLService> etl = std::make_shared<MockETLService>();
     std::shared_ptr<util::TagDecoratorFactory> tagFactory = std::make_shared<util::TagDecoratorFactory>(cfg);

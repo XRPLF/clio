@@ -20,7 +20,7 @@
 #include "web/AdminVerificationStrategy.hpp"
 
 #include "util/JsonUtils.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/beast/http/field.hpp>
 #include <xrpl/basics/base_uint.h>
@@ -81,7 +81,7 @@ make_AdminVerificationStrategy(std::optional<std::string> password)
 }
 
 std::expected<std::shared_ptr<AdminVerificationStrategy>, std::string>
-make_AdminVerificationStrategy(util::Config const& config)
+make_AdminVerificationStrategy(util::config::ClioConfigDefinition const& config)
 {
     auto adminPassword = config.maybeValue<std::string>("server.admin_password");
     auto const localAdmin = config.maybeValue<bool>("server.local_admin");

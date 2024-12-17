@@ -18,9 +18,8 @@
 //==============================================================================
 
 #pragma once
-
 #include "util/SignalsHandler.hpp"
-#include "util/config//Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 namespace app {
 
@@ -28,7 +27,7 @@ namespace app {
  * @brief The main application class
  */
 class ClioApplication {
-    util::Config const& config_;
+    util::config::ClioConfigDefinition const& config_;
     util::SignalsHandler signalsHandler_;
 
 public:
@@ -37,7 +36,7 @@ public:
      *
      * @param config The configuration of the application
      */
-    ClioApplication(util::Config const& config);
+    ClioApplication(util::config::ClioConfigDefinition const& config);
 
     /**
      * @brief Run the application

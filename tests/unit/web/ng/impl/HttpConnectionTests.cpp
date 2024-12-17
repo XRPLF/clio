@@ -22,7 +22,9 @@
 #include "util/TestHttpClient.hpp"
 #include "util/TestHttpServer.hpp"
 #include "util/TestWebSocketClient.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 #include "web/ng/impl/HttpConnection.hpp"
@@ -36,7 +38,6 @@
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
-#include <boost/json/object.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -48,10 +49,13 @@
 
 using namespace web::ng::impl;
 using namespace web::ng;
+using namespace util::config;
 namespace http = boost::beast::http;
 
 struct HttpConnectionTests : SyncAsioContextTest {
-    util::TagDecoratorFactory tagDecoratorFactory_{util::Config{boost::json::object{{"log_tag_style", "int"}}}};
+    util::TagDecoratorFactory tagDecoratorFactory_{
+        ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("int")}}
+    };
     TestHttpServer httpServer_{ctx, "localhost"};
     HttpAsyncClient httpClient_{ctx};
     http::request<http::string_body> request_{http::verb::post, "/some_target", 11, "some data"};
