@@ -21,7 +21,7 @@
 
 #include "migration/cassandra/impl/ObjectsAdapter.hpp"
 #include "migration/cassandra/impl/Types.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/LedgerFormats.h>
@@ -37,11 +37,11 @@ std::atomic_int64_t ExampleObjectsMigrator::count;
 std::atomic_int64_t ExampleObjectsMigrator::accountCount;
 
 void
-ExampleObjectsMigrator::runMigration(std::shared_ptr<Backend> const& backend, util::Config const& config)
+ExampleObjectsMigrator::runMigration(std::shared_ptr<Backend> const& backend, util::config::ObjectView const& config)
 {
-    auto const ctxFullScanThreads = config.valueOr<std::uint32_t>("full_scan_threads", 2);
-    auto const jobsFullScan = config.valueOr<std::uint32_t>("jobs_full_scan", 4);
-    auto const cursorPerJobsFullScan = config.valueOr<std::uint32_t>("cursors_per_job", 100);
+    auto const ctxFullScanThreads = config.get<std::uint32_t>("full_scan_threads");
+    auto const jobsFullScan = config.get<std::uint32_t>("full_scan_jobs");
+    auto const cursorPerJobsFullScan = config.get<std::uint32_t>("cursors_per_job");
 
     std::unordered_set<ripple::uint256> idx;
     migration::cassandra::impl::ObjectsScanner scaner(

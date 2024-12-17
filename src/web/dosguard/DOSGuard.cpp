@@ -26,7 +26,6 @@
 #include "util/newconfig/ValueView.hpp"
 #include "web/dosguard/WhitelistHandlerInterface.hpp"
 
-
 #include <cstdint>
 #include <functional>
 #include <mutex>

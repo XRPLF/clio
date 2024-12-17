@@ -21,12 +21,11 @@
 
 #include "migration/MigrationManagerInterface.hpp"
 #include "migration/MigratiorStatus.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <memory>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 namespace migration::impl {
@@ -41,7 +40,7 @@ template <typename SupportedMigrators>
 class MigrationManagerBase : public MigrationManagerInterface {
     SupportedMigrators migrators_;
     // contains only migration related settings
-    util::Config config_;
+    util::config::ObjectView config_;
 
 public:
     /**
@@ -52,9 +51,9 @@ public:
      */
     explicit MigrationManagerBase(
         std::shared_ptr<typename SupportedMigrators::BackendType> backend,
-        util::Config config
+        util::config::ObjectView const& config
     )
-        : migrators_{backend}, config_{std::move(config)}
+        : migrators_{backend}, config_{config}
     {
     }
 

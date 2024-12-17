@@ -20,7 +20,7 @@
 #pragma once
 
 #include "migration/cassandra/CassandraMigrationTestBackend.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <memory>
 
@@ -37,5 +37,5 @@ struct ExampleLedgerMigrator {
     using Backend = CassandraMigrationTestBackend;
 
     static void
-    runMigration(std::shared_ptr<Backend> const& backend, util::Config const& config);
+    runMigration(std::shared_ptr<Backend> const& backend, util::config::ObjectView const& config);
 };

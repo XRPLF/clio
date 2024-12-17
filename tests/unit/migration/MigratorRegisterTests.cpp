@@ -23,7 +23,10 @@
 #include "util/MockMigrationBackend.hpp"
 #include "util/MockMigrationBackendFixture.hpp"
 #include "util/MockPrometheus.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigConstraints.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -35,9 +38,24 @@
 
 using EmptyMigratorRegister = migration::impl::MigratorsRegister<MockMigrationBackend>;
 
-struct MigratorRegisterTests : public util::prometheus::WithMockPrometheus, public MockMigrationBackendTest {
-    util::Config cfg;
+namespace {
+util::config::ClioConfigDefinition cfg{
+    {{"migration.full_scan_threads",
+      util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(2).withConstraint(
+          util::config::validateUint32
+      )},
+     {"migration.full_scan_jobs",
+      util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(4).withConstraint(
+          util::config::validateUint32
+      )},
+     {"migration.cursors_per_job",
+      util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(100).withConstraint(
+          util::config::validateUint32
+      )}}
 };
+}  // namespace
+
+struct MigratorRegisterTests : public util::prometheus::WithMockPrometheus, public MockMigrationBackendTest {};
 
 TEST_F(MigratorRegisterTests, EmptyMigratorRegister)
 {
@@ -45,15 +63,14 @@ TEST_F(MigratorRegisterTests, EmptyMigratorRegister)
     EXPECT_EQ(migratorRegister.getMigratorsStatus().size(), 0);
     EXPECT_EQ(migratorRegister.getMigratorNames().size(), 0);
     EXPECT_EQ(migratorRegister.getMigratorStatus("unknown"), migration::MigratorStatus::NotKnown);
-    EXPECT_NO_THROW(migratorRegister.runMigrator("unknown", cfg));
+    EXPECT_NO_THROW(migratorRegister.runMigrator("unknown", cfg.getObject("migration")));
+    EXPECT_EQ(migratorRegister.getMigratorDescription("unknown"), "No Description");
 }
 
 using MultipleMigratorRegister =
     migration::impl::MigratorsRegister<MockMigrationBackend, SimpleTestMigrator, SimpleTestMigrator2>;
 
 struct MultipleMigratorRegisterTests : public util::prometheus::WithMockPrometheus, public MockMigrationBackendTest {
-    util::Config cfg;
-
     std::optional<MultipleMigratorRegister> migratorRegister;
 
     MultipleMigratorRegisterTests()
@@ -152,14 +169,21 @@ TEST_F(MultipleMigratorRegisterTests, Names)
     EXPECT_TRUE(std::find(names.begin(), names.end(), "SimpleTestMigrator2") != names.end());
 }
 
+TEST_F(MultipleMigratorRegisterTests, Description)
+{
+    EXPECT_EQ(migratorRegister->getMigratorDescription("unknown"), "No Description");
+    EXPECT_EQ(migratorRegister->getMigratorDescription("SimpleTestMigrator"), "The migrator for version 0 -> 1");
+    EXPECT_EQ(migratorRegister->getMigratorDescription("SimpleTestMigrator2"), "The migrator for version 1 -> 2");
+}
+
 TEST_F(MultipleMigratorRegisterTests, RunUnknownMigrator)
 {
     EXPECT_CALL(*backend_, writeMigratorStatus(testing::_, testing::_)).Times(0);
-    EXPECT_NO_THROW(migratorRegister->runMigrator("unknown", cfg));
+    EXPECT_NO_THROW(migratorRegister->runMigrator("unknown", cfg.getObject("migration")));
 }
 
 TEST_F(MultipleMigratorRegisterTests, MigrateNormalMigrator)
 {
     EXPECT_CALL(*backend_, writeMigratorStatus("SimpleTestMigrator", "Migrated")).Times(1);
-    EXPECT_NO_THROW(migratorRegister->runMigrator("SimpleTestMigrator", cfg));
+    EXPECT_NO_THROW(migratorRegister->runMigrator("SimpleTestMigrator", cfg.getObject("migration")));
 }

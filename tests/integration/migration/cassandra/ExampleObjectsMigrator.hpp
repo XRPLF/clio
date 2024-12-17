@@ -20,7 +20,7 @@
 #pragma once
 
 #include "migration/cassandra/CassandraMigrationTestBackend.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
@@ -42,5 +42,5 @@ struct ExampleObjectsMigrator {
     static std::atomic_int64_t accountCount;
 
     static void
-    runMigration(std::shared_ptr<Backend> const& backend, util::Config const& config);
+    runMigration(std::shared_ptr<Backend> const& backend, util::config::ObjectView const& config);
 };

@@ -24,7 +24,6 @@
 #include "util/Constants.hpp"
 #include "util/newconfig/ObjectView.hpp"
 
-
 #include <cerrno>
 #include <chrono>
 #include <cstddef>

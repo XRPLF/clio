@@ -19,13 +19,12 @@
 
 #include "migration/cassandra/ExampleDropTableMigrator.hpp"
 
-#include "util/config/Config.hpp"
-#include "util/log/Logger.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <memory>
 
 void
-ExampleDropTableMigrator::runMigration(std::shared_ptr<Backend> const& backend, util::Config const&)
+ExampleDropTableMigrator::runMigration(std::shared_ptr<Backend> const& backend, util::config::ObjectView const&)
 {
     backend->dropDiffTable();
 }

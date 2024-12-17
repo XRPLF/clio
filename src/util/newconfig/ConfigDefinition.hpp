@@ -380,7 +380,11 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
      {"api_version.min",
       ConfigValue{ConfigType::Integer}.defaultValue(rpc::API_VERSION_MIN).withConstraint(validateApiVersion)},
      {"api_version.max",
-      ConfigValue{ConfigType::Integer}.defaultValue(rpc::API_VERSION_MAX).withConstraint(validateApiVersion)}}
+      ConfigValue{ConfigType::Integer}.defaultValue(rpc::API_VERSION_MAX).withConstraint(validateApiVersion)},
+     {"migration.full_scan_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(validateUint32)},
+     {"migration.full_scan_jobs", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(validateUint32)},
+     {"migration.cursors_per_job", ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(validateUint32)}},
+
 };
 
 }  // namespace util::config

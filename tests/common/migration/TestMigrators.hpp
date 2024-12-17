@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "util/MockMigrationBackend.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <memory>
 
@@ -27,7 +27,7 @@ struct SimpleTestMigrator {
     static constexpr auto name = "SimpleTestMigrator";
     static constexpr auto description = "The migrator for version 0 -> 1";
     static void
-    runMigration(std::shared_ptr<MockMigrationBackend>, util::Config const&)
+    runMigration(std::shared_ptr<MockMigrationBackend>, util::config::ObjectView const&)
     {
     }
 
@@ -42,7 +42,7 @@ struct SimpleTestMigrator2 {
     static constexpr auto name = "SimpleTestMigrator2";
     static constexpr auto description = "The migrator for version 1 -> 2";
     static void
-    runMigration(std::shared_ptr<MockMigrationBackend>, util::Config const&)
+    runMigration(std::shared_ptr<MockMigrationBackend>, util::config::ObjectView const&)
     {
     }
 

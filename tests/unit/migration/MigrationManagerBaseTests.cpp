@@ -24,7 +24,10 @@
 #include "util/MockMigrationBackend.hpp"
 #include "util/MockMigrationBackendFixture.hpp"
 #include "util/MockPrometheus.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigConstraints.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -40,15 +43,19 @@ using TestMigratorRegister =
 using TestCassandraMigrationManager = migration::impl::MigrationManagerBase<TestMigratorRegister>;
 
 struct MigrationManagerBaseTest : public util::prometheus::WithMockPrometheus, public MockMigrationBackendTestStrict {
-    util::Config cfg;
-
+    util::config::ClioConfigDefinition cfg{
+        {"migration.full_scan_threads",
+         util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(2).withConstraint(
+             util::config::validateUint32
+         )}
+    };
     std::shared_ptr<TestCassandraMigrationManager> migrationManager;
 
     MigrationManagerBaseTest()
     {
         auto mockBackendPtr = backend_.operator std::shared_ptr<MockMigrationBackend>();
         TestMigratorRegister migratorRegister(mockBackendPtr);
-        migrationManager = std::make_shared<TestCassandraMigrationManager>(mockBackendPtr, cfg);
+        migrationManager = std::make_shared<TestCassandraMigrationManager>(mockBackendPtr, cfg.getObject("migration"));
     }
 };
 
@@ -77,6 +84,13 @@ TEST_F(MigrationManagerBaseTest, AllNames)
     EXPECT_EQ(names.size(), 2);
     EXPECT_EQ(names[0], "SimpleTestMigrator");
     EXPECT_EQ(names[1], "SimpleTestMigrator2");
+}
+
+TEST_F(MigrationManagerBaseTest, Description)
+{
+    EXPECT_EQ(migrationManager->getMigratorDescriptionByName("unknown"), "No Description");
+    EXPECT_EQ(migrationManager->getMigratorDescriptionByName("SimpleTestMigrator"), "The migrator for version 0 -> 1");
+    EXPECT_EQ(migrationManager->getMigratorDescriptionByName("SimpleTestMigrator2"), "The migrator for version 1 -> 2");
 }
 
 TEST_F(MigrationManagerBaseTest, RunMigration)

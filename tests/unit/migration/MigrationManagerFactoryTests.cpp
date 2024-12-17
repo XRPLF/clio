@@ -19,7 +19,9 @@
 
 #include "migration/impl/MigrationManagerFactory.hpp"
 #include "util/LoggerFixtures.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
@@ -28,16 +30,10 @@ struct MigrationManagerFactoryTests : public NoLoggerFixture {};
 
 TEST_F(MigrationManagerFactoryTests, InvalidDBType)
 {
-    constexpr static auto cfgJson = R"JSON(
-        {
-            "database": {
-                "type": "invalid"
-            }
-        }
-    )JSON";
-    util::Config config(boost::json::parse(cfgJson));
-
-    auto const ret = migration::impl::makeMigrationManager(config);
+    util::config::ClioConfigDefinition const configDef{
+        {"database.type", util::config::ConfigValue{util::config::ConfigType::String}.defaultValue("invalid")}
+    };
+    auto const ret = migration::impl::makeMigrationManager(configDef);
     EXPECT_FALSE(ret);
     EXPECT_EQ(ret.error(), "Invalid database type");
 }

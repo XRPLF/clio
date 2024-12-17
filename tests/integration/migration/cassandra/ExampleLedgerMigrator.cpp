@@ -22,7 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
 #include "util/Assert.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -30,7 +30,7 @@
 #include <memory>
 
 void
-ExampleLedgerMigrator::runMigration(std::shared_ptr<Backend> const& backend, util::Config const&)
+ExampleLedgerMigrator::runMigration(std::shared_ptr<Backend> const& backend, util::config::ObjectView const&)
 {
     auto const range =
         data::synchronous([&](boost::asio::yield_context yield) { return backend->hardFetchLedgerRange(yield); });

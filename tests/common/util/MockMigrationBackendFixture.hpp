@@ -21,7 +21,7 @@
 
 #include "util/LoggerFixtures.hpp"
 #include "util/MockMigrationBackend.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <gmock/gmock.h>
 
@@ -31,7 +31,7 @@ template <template <typename> typename MockType = ::testing::NiceMock>
 struct MockMigrationBackendTestBase : virtual public NoLoggerFixture {
     class BackendProxy {
         std::shared_ptr<MockType<MockMigrationBackend>> backend =
-            std::make_shared<MockType<MockMigrationBackend>>(util::Config{});
+            std::make_shared<MockType<MockMigrationBackend>>(util::config::ClioConfigDefinition{});
 
     public:
         auto

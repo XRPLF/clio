@@ -22,8 +22,8 @@
 #include "migration/MigratiorStatus.hpp"
 #include "migration/impl/MigrationManagerFactory.hpp"
 #include "util/OverloadSet.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
 #include <cstdlib>
@@ -36,7 +36,8 @@
 
 namespace app {
 
-MigratorApplication::MigratorApplication(util::Config const& config, MigrateSubCmd command) : cmd_(std::move(command))
+MigratorApplication::MigratorApplication(util::config::ClioConfigDefinition const& config, MigrateSubCmd command)
+    : cmd_(std::move(command))
 {
     PrometheusService::init(config);
 
@@ -45,6 +46,8 @@ MigratorApplication::MigratorApplication(util::Config const& config, MigrateSubC
     if (not expectedMigrationManager) {
         throw std::runtime_error("Failed to create migration manager: " + expectedMigrationManager.error());
     }
+
+    migrationManager_ = std::move(expectedMigrationManager.value());
 }
 
 int

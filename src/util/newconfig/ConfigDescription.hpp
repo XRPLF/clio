@@ -163,7 +163,10 @@ private:
         KV{.key = "ssl_key_file", .value = "Path to the SSL key file."},
         KV{.key = "api_version.default", .value = "Default API version Clio will run on."},
         KV{.key = "api_version.min", .value = "Minimum API version."},
-        KV{.key = "api_version.max", .value = "Maximum API version."}
+        KV{.key = "api_version.max", .value = "Maximum API version."},
+        KV{.key = "migration.full_scan_threads", .value = "The number of threads used to scan table."},
+        KV{.key = "migration.full_scan_jobs", .value = "The number of coroutines used to scan table."},
+        KV{.key = "migration.cursors_per_job", .value = "The number of cursors each coroutine will scan."}
     };
 };
 

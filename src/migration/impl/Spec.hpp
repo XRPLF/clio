@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "util/config/Config.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <boost/asio/spawn.hpp>
 
@@ -33,7 +33,7 @@ namespace migration::impl {
  * @brief The migrator specification concept
  */
 template <typename T, typename Backend>
-concept MigratorSpec = requires(std::shared_ptr<Backend> const& backend, util::Config const& cfg) {
+concept MigratorSpec = requires(std::shared_ptr<Backend> const& backend, util::config::ObjectView const& cfg) {
     // Check that 'name' exists and is a string
     { T::name } -> std::convertible_to<std::string>;
 

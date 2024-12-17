@@ -20,7 +20,7 @@
 #pragma once
 
 #include "migration/MigrationManagerInterface.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <expected>
 #include <memory>
@@ -36,6 +36,6 @@ namespace migration::impl {
  * @return A shared pointer to the MigrationManagerInterface if the creation was successful, otherwise an error message
  */
 std::expected<std::shared_ptr<MigrationManagerInterface>, std::string>
-makeMigrationManager(util::Config const& config);
+makeMigrationManager(util::config::ClioConfigDefinition const& config);
 
 }  // namespace migration::impl

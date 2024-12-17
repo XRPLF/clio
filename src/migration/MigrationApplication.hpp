@@ -20,7 +20,7 @@
 #pragma once
 
 #include "migration/MigrationManagerInterface.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <memory>
 #include <string>
@@ -84,7 +84,7 @@ public:
      * @param config The configuration of the application
      * @param command The command to run
      */
-    MigratorApplication(util::Config const& config, MigrateSubCmd command);
+    MigratorApplication(util::config::ClioConfigDefinition const& config, MigrateSubCmd command);
 
     /**
      * @brief Run the application

@@ -24,6 +24,7 @@
 #include "migration/cassandra/CassandraMigrationBackend.hpp"
 #include "migration/cassandra/CassandraMigrationManager.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -34,20 +35,21 @@
 namespace migration::impl {
 
 std::expected<std::shared_ptr<MigrationManagerInterface>, std::string>
-makeMigrationManager(util::Config const& config)
+makeMigrationManager(util::config::ClioConfigDefinition const& config)
 {
     static util::Logger const log{"Migration"};
     LOG(log.info()) << "Constructing MigrationManager";
 
-    auto const type = config.value<std::string>("database.type");
+    auto const type = config.get<std::string>("database.type");
 
     if (not boost::iequals(type, "cassandra")) {
         LOG(log.error()) << "Unknown database type to migrate: " << type;
         return std::unexpected(std::string("Invalid database type"));
     }
 
-    auto const cfg = config.section("database." + type);
-    auto migrationCfg = cfg.sectionOr("migration", {});
+    auto const cfg = config.getObject("database." + type);
+
+    auto migrationCfg = config.getObject("migration");
 
     return std::make_shared<cassandra::CassandraMigrationManager>(
         std::make_shared<cassandra::CassandraMigrationBackend>(data::cassandra::SettingsProvider{cfg}),

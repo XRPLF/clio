@@ -34,10 +34,14 @@
 #include "util/CassandraDBHelper.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigConstraints.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <TestGlobals.hpp>
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
@@ -47,6 +51,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <thread>
 #include <utility>
 
 using namespace util;
@@ -54,7 +59,7 @@ using namespace std;
 using namespace prometheus;
 using namespace data::cassandra;
 using namespace migration;
-namespace json = boost::json;
+using namespace util::config;
 
 // Register the migrators
 using CassandraSupportedTestMigrators = migration::impl::MigratorsRegister<
@@ -69,14 +74,14 @@ using CassandraMigrationTestManager = migration::impl::MigrationManagerBase<Cass
 
 namespace {
 std::pair<std::shared_ptr<migration::MigrationManagerInterface>, std::shared_ptr<CassandraMigrationTestBackend>>
-make_MigrationTestManagerAndBackend(util::Config const& config)
+make_MigrationTestManagerAndBackend(ClioConfigDefinition const& config)
 {
-    auto const cfg = config.section("database.cassandra");
+    auto const cfg = config.getObject("database.cassandra");
 
     auto const backendPtr = std::make_shared<CassandraMigrationTestBackend>(data::cassandra::SettingsProvider{cfg});
 
     return std::make_pair(
-        std::make_shared<CassandraMigrationTestManager>(backendPtr, cfg.sectionOr("migration", {})), backendPtr
+        std::make_shared<CassandraMigrationTestManager>(backendPtr, config.getObject("migration")), backendPtr
     );
 }
 }  // namespace
@@ -91,20 +96,48 @@ class MigrationCassandraSimpleTest : public WithPrometheus, public NoLoggerFixtu
     }
 
 protected:
-    Config cfg{json::parse(fmt::format(
-        R"JSON({{
-            "database": {{
-                "type": "cassandra",
-                "cassandra": {{
-                    "contact_points": "{}",
-                    "keyspace": "{}",
-                    "replication_factor": 1
-                }}
-            }}
-        }})JSON",
-        TestGlobals::instance().backendHost,
-        TestGlobals::instance().backendKeyspace
-    ))};
+    ClioConfigDefinition cfg{
+
+        {{"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
+         {"database.cassandra.contact_points",
+          ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
+         {"database.cassandra.keyspace",
+          ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendKeyspace)},
+         {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
+         {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
+         {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+         {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
+         {"database.cassandra.port", ConfigValue{ConfigType::Integer}.withConstraint(validatePort).optional()},
+         {"database.cassandra.replication_factor",
+          ConfigValue{ConfigType::Integer}.defaultValue(3u).withConstraint(validateUint16)},
+         {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
+         {"database.cassandra.max_write_requests_outstanding",
+          ConfigValue{ConfigType::Integer}.defaultValue(10'000).withConstraint(validateUint32)},
+         {"database.cassandra.max_read_requests_outstanding",
+          ConfigValue{ConfigType::Integer}.defaultValue(100'000).withConstraint(validateUint32)},
+         {"database.cassandra.threads",
+          ConfigValue{ConfigType::Integer}
+              .defaultValue(static_cast<uint32_t>(std::thread::hardware_concurrency()))
+              .withConstraint(validateUint32)},
+         {"database.cassandra.core_connections_per_host",
+          ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(validateUint16)},
+         {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional().withConstraint(validateUint16)
+         },
+         {"database.cassandra.write_batch_size",
+          ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(validateUint16)},
+         {"database.cassandra.connect_timeout",
+          ConfigValue{ConfigType::Integer}.optional().withConstraint(validateUint32)},
+         {"database.cassandra.request_timeout",
+          ConfigValue{ConfigType::Integer}.optional().withConstraint(validateUint32)},
+         {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
+         {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
+         {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
+         {"migration.full_scan_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(validateUint32)
+         },
+         {"migration.full_scan_jobs", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(validateUint32)},
+         {"migration.cursors_per_job", ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(validateUint32)
+         }}
+    };
 
     std::shared_ptr<migration::MigrationManagerInterface> testMigrationManager;
     std::shared_ptr<CassandraMigrationTestBackend> testMigrationBackend;

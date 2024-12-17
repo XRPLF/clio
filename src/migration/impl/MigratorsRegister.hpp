@@ -23,8 +23,8 @@
 #include "migration/MigratiorStatus.hpp"
 #include "migration/impl/Spec.hpp"
 #include "util/Concepts.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <algorithm>
 #include <array>
@@ -64,7 +64,7 @@ class MigratorsRegister {
 
     template <typename Migrator>
     void
-    callMigration(std::string const& name, util::Config const& config)
+    callMigration(std::string const& name, util::config::ObjectView const& config)
     {
         if (name == Migrator::name) {
             LOG(log_.info()) << "Running migration: " << name;
@@ -103,7 +103,7 @@ public:
      * @param config The configuration of the migration
      */
     void
-    runMigrator(std::string const& name, util::Config const& config)
+    runMigrator(std::string const& name, util::config::ObjectView const& config)
         requires BackendMatchAllMigrators<BackendType, MigratorType...>
     {
         (callMigration<MigratorType>(name, config), ...);
