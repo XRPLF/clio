@@ -23,7 +23,6 @@
 #include "util/TestWebSocketClient.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/Request.hpp"
@@ -36,7 +35,6 @@
 #include <boost/asio/ssl/context.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/status.hpp>
-#include <boost/json/object.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

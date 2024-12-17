@@ -38,8 +38,6 @@
 #include <boost/asio/impl/spawn.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/json/parse.hpp>
-#include <fmt/core.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/base_uint.h>

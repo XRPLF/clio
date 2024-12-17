@@ -32,9 +32,7 @@
 #include <boost/json/value.hpp>
 #include <gtest/gtest.h>
 
-#include <iostream>
 #include <optional>
-#include <ostream>
 #include <string>
 
 namespace http = boost::beast::http;
@@ -141,7 +139,7 @@ struct MakeAdminVerificationStrategyFromConfigTestParams {
 struct MakeAdminVerificationStrategyFromConfigTest
     : public testing::TestWithParam<MakeAdminVerificationStrategyFromConfigTestParams> {};
 
-inline ClioConfigDefinition
+inline static ClioConfigDefinition
 generateDefaultAdminConfig()
 {
     return ClioConfigDefinition{

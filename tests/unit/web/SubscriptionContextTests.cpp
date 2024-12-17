@@ -19,7 +19,6 @@
 
 #include "util/LoggerFixtures.hpp"
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"

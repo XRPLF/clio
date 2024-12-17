@@ -25,7 +25,6 @@
 #include "web/dosguard/DOSGuard.hpp"
 #include "web/dosguard/WhitelistHandlerInterface.hpp"
 
-#include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

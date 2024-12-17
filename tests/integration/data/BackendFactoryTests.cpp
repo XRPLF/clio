@@ -26,7 +26,6 @@
 #include "util/newconfig/Types.hpp"
 
 #include <TestGlobals.hpp>
-#include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 
@@ -75,13 +74,13 @@ protected:
 
 TEST_F(BackendCassandraFactoryTest, NoSuchBackend)
 {
-    ClioConfigDefinition cfg{{"database.type", ConfigValue{ConfigType::String}.defaultValue("unknown")}};
+    ClioConfigDefinition const cfg{{"database.type", ConfigValue{ConfigType::String}.defaultValue("unknown")}};
     EXPECT_THROW(data::make_Backend(cfg), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
 {
-    ClioConfigDefinition cfg{
+    ClioConfigDefinition const cfg{
         {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
         {"database.cassandra.contact_points", ConfigValue{ConfigType::String}.defaultValue("127.0.0.2")},
         {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue(keyspace)},
@@ -93,7 +92,7 @@ TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
 {
-    ClioConfigDefinition cfg{
+    ClioConfigDefinition const cfg{
         {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
         {"database.cassandra.contact_points",
          ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
@@ -127,7 +126,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmptyDB)
 {
-    ClioConfigDefinition cfg{
+    ClioConfigDefinition const cfg{
         {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
         {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
         {"database.cassandra.contact_points",
@@ -141,7 +140,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmpt
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBReady)
 {
-    ClioConfigDefinition cfgReadOnly{
+    ClioConfigDefinition const cfgReadOnly{
         {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
         {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
         {"database.cassandra.contact_points",
@@ -150,7 +149,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBRe
         {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)}
     };
 
-    ClioConfigDefinition cfgWrite{
+    ClioConfigDefinition const cfgWrite{
         {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
         {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
         {"database.cassandra.contact_points",

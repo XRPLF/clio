@@ -24,8 +24,6 @@
 #include "util/Constants.hpp"
 #include "util/newconfig/ObjectView.hpp"
 
-#include <boost/json/conversion.hpp>
-#include <boost/json/value.hpp>
 
 #include <cerrno>
 #include <chrono>

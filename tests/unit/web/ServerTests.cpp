@@ -28,7 +28,6 @@
 #include "util/newconfig/ConfigFileJson.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"
-#include "util/prometheus/Gauge.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
 #include "web/AdminVerificationStrategy.hpp"
@@ -111,7 +110,7 @@ generateJSONDataOverload(std::string_view port)
     ));
 }
 
-inline ClioConfigDefinition
+inline static ClioConfigDefinition
 getParseServerConfig(boost::json::value val)
 {
     ConfigFileJson const jsonVal{val.as_object()};
@@ -534,7 +533,7 @@ struct WebServerAdminTestParams {
     std::string expectedResponse;
 };
 
-inline ClioConfigDefinition
+inline static ClioConfigDefinition
 getParseAdminServerConfig(boost::json::value val)
 {
     ConfigFileJson const jsonVal{val.as_object()};

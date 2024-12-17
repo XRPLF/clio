@@ -21,7 +21,6 @@
 #include "util/newconfig/ConfigFileJson.hpp"
 #include "util/newconfig/FakeConfigData.hpp"
 
-#include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
 
 #include <algorithm>

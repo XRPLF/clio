@@ -24,7 +24,6 @@
 #include "web/dosguard/DOSGuardMock.hpp"
 #include "web/dosguard/IntervalSweepHandler.hpp"
 
-#include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

@@ -26,7 +26,6 @@
 #include "util/newconfig/ValueView.hpp"
 #include "web/dosguard/WhitelistHandlerInterface.hpp"
 
-#include <boost/iterator/transform_iterator.hpp>
 
 #include <cstdint>
 #include <functional>

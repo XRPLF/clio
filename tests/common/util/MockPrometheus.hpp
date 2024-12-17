@@ -208,7 +208,7 @@ struct WithMockPrometheus : virtual ::testing::Test {
             }
             std::cerr << "\n";
         }
-        config::ClioConfigDefinition config{
+        config::ClioConfigDefinition const config{
             {"prometheus.compress_reply", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)},
             {"prometheus.enabled", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)}
         };
@@ -259,7 +259,7 @@ struct WithMockPrometheus : virtual ::testing::Test {
 struct WithPrometheus : virtual ::testing::Test {
     WithPrometheus()
     {
-        config::ClioConfigDefinition config{
+        config::ClioConfigDefinition const config{
             {"prometheus.compress_reply", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(false)},
             {"prometheus.enabled", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)}
         };

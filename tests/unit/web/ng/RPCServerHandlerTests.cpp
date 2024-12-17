@@ -25,7 +25,6 @@
 #include "util/MockPrometheus.hpp"
 #include "util/MockRPCEngine.hpp"
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"

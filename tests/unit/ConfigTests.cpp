@@ -20,7 +20,6 @@
 #include "util/Assert.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/config/Config.hpp"
-#include "util/log/Logger.hpp"
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/json/conversion.hpp>
@@ -32,6 +31,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <fstream>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>

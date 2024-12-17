@@ -62,7 +62,7 @@ struct MakeServerSslContextFromConfigTest : testing::TestWithParam<MakeServerSsl
 
 TEST_P(MakeServerSslContextFromConfigTest, makeFromConfig)
 {
-    ConfigFileJson js{GetParam().configJson().as_object()};
+    ConfigFileJson const js{GetParam().configJson().as_object()};
     // generate cert and key file
     auto config = ClioConfigDefinition{
         {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},

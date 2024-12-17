@@ -95,7 +95,7 @@ constexpr static auto const ThreeSourcesLedgerResponse = R"({
     ]
 })";
 
-inline ClioConfigDefinition
+inline static ClioConfigDefinition
 getParseLoadBalancerConfig(boost::json::value val)
 {
     ClioConfigDefinition config{

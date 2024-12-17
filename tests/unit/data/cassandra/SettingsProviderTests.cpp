@@ -45,7 +45,7 @@ namespace json = boost::json;
 
 using namespace data::cassandra;
 
-inline ClioConfigDefinition
+inline static ClioConfigDefinition
 getParseSettingsConfig(boost::json::value val)
 {
     ConfigFileJson const jsonVal{val.as_object()};

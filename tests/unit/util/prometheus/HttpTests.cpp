@@ -30,8 +30,6 @@
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
-#include <boost/json/object.hpp>
-#include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 
@@ -54,7 +52,7 @@ struct PrometheusCheckRequestTests : public ::testing::TestWithParam<PrometheusC
 
 TEST_P(PrometheusCheckRequestTests, isPrometheusRequest)
 {
-    ClioConfigDefinition config{
+    ClioConfigDefinition const config{
         {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(GetParam().prometheusEnabled)},
         {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)}
     };
@@ -128,7 +126,7 @@ TEST_F(PrometheusHandleRequestTests, emptyResponse)
 
 TEST_F(PrometheusHandleRequestTests, prometheusDisabled)
 {
-    ClioConfigDefinition config{
+    ClioConfigDefinition const config{
         {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
         {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)}
     };

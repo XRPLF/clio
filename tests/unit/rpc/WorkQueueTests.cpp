@@ -26,7 +26,6 @@
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
 
-#include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

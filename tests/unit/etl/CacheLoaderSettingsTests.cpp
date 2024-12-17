@@ -32,7 +32,7 @@ using namespace etl;
 using namespace testing;
 using namespace util::config;
 
-inline ClioConfigDefinition
+inline static ClioConfigDefinition
 generateDefaultCacheConfig()
 {
     return ClioConfigDefinition{
@@ -46,7 +46,7 @@ generateDefaultCacheConfig()
     };
 }
 
-inline ClioConfigDefinition
+inline static ClioConfigDefinition
 getParseCacheConfig(boost::json::value val)
 {
     ConfigFileJson const jsonVal{val.as_object()};

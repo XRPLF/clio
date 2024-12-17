@@ -29,7 +29,6 @@
 #include "util/TestObject.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 
-#include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

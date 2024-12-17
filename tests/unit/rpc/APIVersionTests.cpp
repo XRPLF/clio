@@ -24,7 +24,6 @@
 #include "util/newconfig/Types.hpp"
 
 #include <boost/json/parse.hpp>
-#include <fmt/core.h>
 #include <gtest/gtest.h>
 
 constexpr static auto DEFAULT_API_VERSION = 5u;
@@ -96,7 +95,7 @@ TEST_F(RPCAPIVersionTest, ReturnsParsedVersionIfAllPreconditionsAreMet)
 
 TEST_F(RPCAPIVersionTest, GetsValuesFromConfigCorrectly)
 {
-    ClioConfigDefinition cfg{
+    ClioConfigDefinition const cfg{
         {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(MIN_API_VERSION)},
         {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(MAX_API_VERSION)},
         {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(DEFAULT_API_VERSION)}

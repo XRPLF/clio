@@ -29,8 +29,6 @@
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
-#include <boost/json/conversion.hpp>
-#include <boost/json/value.hpp>
 #include <boost/log/attributes/attribute_value_set.hpp>
 #include <boost/log/core/core.hpp>
 #include <boost/log/expressions/filter.hpp>
@@ -91,7 +89,7 @@ operator<<(std::ostream& stream, Severity sev)
  * @param logLevel A string representing the log level
  * @return Severity The corresponding Severity enum value.
  */
-Severity
+static Severity
 getSeverityLevel(std::string_view logLevel)
 {
     if (boost::iequals(logLevel, "trace"))

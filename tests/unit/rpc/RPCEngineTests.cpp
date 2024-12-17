@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "data/BackendInterface.hpp"
+#include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/FakesAndMocks.hpp"
 #include "rpc/RPCEngine.hpp"
@@ -39,6 +40,7 @@
 #include "util/newconfig/ConfigFileJson.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"
+#include "web/Context.hpp"
 #include "web/dosguard/DOSGuard.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
 
@@ -70,7 +72,7 @@ constexpr auto FORWARD_REPLY = R"JSON({
 })JSON";
 }  // namespace
 
-inline ClioConfigDefinition
+inline static ClioConfigDefinition
 generateDefaultRPCEngineConfig()
 {
     return ClioConfigDefinition{

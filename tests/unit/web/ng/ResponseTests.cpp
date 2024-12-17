@@ -19,7 +19,6 @@
 
 #include "util/Taggable.hpp"
 #include "util/build/Build.hpp"
-#include "util/config/Config.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"
@@ -137,7 +136,7 @@ TEST_F(ResponseTest, asConstBufferJson)
 
 TEST_F(ResponseTest, createFromStringAndConnection)
 {
-    util::TagDecoratorFactory tagDecoratorFactory{
+    util::TagDecoratorFactory const tagDecoratorFactory{
         ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
     };
     StrictMockConnection const connection{"some ip", boost::beast::flat_buffer{}, tagDecoratorFactory};
@@ -156,7 +155,7 @@ TEST_F(ResponseTest, createFromStringAndConnection)
 
 TEST_F(ResponseTest, createFromJsonAndConnection)
 {
-    util::TagDecoratorFactory tagDecoratorFactory{
+    util::TagDecoratorFactory const tagDecoratorFactory{
         ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
     };
     StrictMockConnection const connection{"some ip", boost::beast::flat_buffer{}, tagDecoratorFactory};

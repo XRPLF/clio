@@ -41,7 +41,7 @@ using namespace web::dosguard;
 
 struct WhitelistHandlerTest : NoLoggerFixture {};
 
-inline ClioConfigDefinition
+inline static ClioConfigDefinition
 getParseWhitelistHandlerConfig(boost::json::value val)
 {
     ConfigFileJson const jsonVal{val.as_object()};

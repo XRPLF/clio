@@ -23,7 +23,6 @@
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"
 
-#include <boost/json/value.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
