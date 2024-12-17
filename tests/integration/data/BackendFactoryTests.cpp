@@ -45,7 +45,6 @@ struct BackendCassandraFactoryTest : SyncAsioContextTest, util::prometheus::With
     constexpr static auto keyspace = "factory_test";
 
     ClioConfigDefinition cfg_{
-
         {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
         {"database.cassandra.contact_points",
          ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
