@@ -72,12 +72,14 @@ class BasicCassandraBackend : public BackendInterface {
 
     SettingsProviderType settingsProvider_;
     Schema<SettingsProviderType> schema_;
+
+    std::atomic_uint32_t ledgerSequence_ = 0u;
+
+protected:
     Handle handle_;
 
     // have to be mutable because BackendInterface constness :(
     mutable ExecutionStrategyType executor_;
-
-    std::atomic_uint32_t ledgerSequence_ = 0u;
 
 public:
     /**
@@ -835,6 +837,26 @@ public:
         return results;
     }
 
+    std::optional<std::string>
+    fetchMigratorStatus(std::string const& migratorName, boost::asio::yield_context yield) const override
+    {
+        auto const res = executor_.read(yield, schema_->selectMigratorStatus, Text(migratorName));
+        if (not res) {
+            LOG(log_.error()) << "Could not fetch migrator status: " << res.error();
+            return {};
+        }
+
+        auto const& results = res.value();
+        if (not results) {
+            return {};
+        }
+
+        for (auto [statusString] : extract<std::string>(results))
+            return statusString;
+
+        return {};
+    }
+
     void
     doWriteLedgerObject(std::string&& key, std::uint32_t const seq, std::string&& blob) override
     {
@@ -960,6 +982,14 @@ public:
     {
         // Note: no-op in original implementation too.
         // probably was used in PG to start a transaction or smth.
+    }
+
+    void
+    writeMigratorStatus(std::string const& migratorName, std::string const& status) override
+    {
+        executor_.writeSync(
+            schema_->insertMigratorStatus, data::cassandra::Text{migratorName}, data::cassandra::Text(status)
+        );
     }
 
     bool

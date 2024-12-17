@@ -50,6 +50,14 @@ target_sources(
           Main.cpp
           Playground.cpp
           ProfilerTests.cpp
+          # Migration
+          migration/cassandra/FullTableScannerTests.cpp
+          migration/cassandra/SpecTests.cpp
+          migration/MigratorRegisterTests.cpp
+          migration/MigratorStatusTests.cpp
+          migration/MigrationManagerBaseTests.cpp
+          migration/MigrationManagerFactoryTests.cpp
+          migration/SpecTests.cpp
           # RPC
           rpc/APIVersionTests.cpp
           rpc/BaseTests.cpp
@@ -112,6 +120,7 @@ target_sources(
           util/async/AnyStrandTests.cpp
           util/async/AsyncExecutionContextTests.cpp
           util/BatchingTests.cpp
+          util/ConceptsTests.cpp
           util/CoroutineGroupTests.cpp
           util/LedgerUtilsTests.cpp
           # Prometheus support

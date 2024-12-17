@@ -19,6 +19,7 @@
 
 #include "app/CliArgs.hpp"
 
+#include "migration/MigrationApplication.hpp"
 #include "util/build/Build.hpp"
 
 #include <boost/program_options/options_description.hpp>
@@ -45,6 +46,7 @@ CliArgs::parse(int argc, char const* argv[])
         ("version,v", "print version and exit")
         ("conf,c", po::value<std::string>()->default_value(defaultConfigPath), "configuration file")
         ("ng-web-server,w", "Use ng-web-server")
+        ("migrate", po::value<std::string>(), "start migration helper")
     ;
     // clang-format on
     po::positional_options_description positional;
@@ -65,6 +67,14 @@ CliArgs::parse(int argc, char const* argv[])
     }
 
     auto configPath = parsed["conf"].as<std::string>();
+
+    if (parsed.count("migrate") != 0u) {
+        auto const opt = parsed["migrate"].as<std::string>();
+        if (opt == "status")
+            return Action{Action::Migrate{std::move(configPath), MigrateSubCmd::status()}};
+        return Action{Action::Migrate{std::move(configPath), MigrateSubCmd::migration(opt)}};
+    }
+
     return Action{Action::Run{.configPath = std::move(configPath), .useNgWebServer = parsed.count("ng-web-server") != 0}
     };
 }
