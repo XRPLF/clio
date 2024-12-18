@@ -54,7 +54,7 @@ struct MigrationManagerBaseTest : public util::prometheus::WithMockPrometheus, p
     MigrationManagerBaseTest()
     {
         auto mockBackendPtr = backend_.operator std::shared_ptr<MockMigrationBackend>();
-        TestMigratorRegister migratorRegister(mockBackendPtr);
+        TestMigratorRegister const migratorRegister(mockBackendPtr);
         migrationManager = std::make_shared<TestCassandraMigrationManager>(mockBackendPtr, cfg.getObject("migration"));
     }
 };
@@ -67,13 +67,13 @@ TEST_F(MigrationManagerBaseTest, AllStatus)
     auto const status = migrationManager->allMigratorsStatusPairs();
     EXPECT_EQ(status.size(), 2);
     EXPECT_TRUE(
-        std::find(
-            status.begin(), status.end(), std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::Migrated)
+        std::ranges::find(
+            status, std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::Migrated)
         ) != status.end()
     );
     EXPECT_TRUE(
-        std::find(
-            status.begin(), status.end(), std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)
+        std::ranges::find(
+            status, std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)
         ) != status.end()
     );
 }

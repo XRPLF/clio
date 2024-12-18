@@ -19,7 +19,6 @@
 
 #include "migration/cassandra/impl/TransactionsAdapter.hpp"
 
-#include <boost/asio/spawn.hpp>
 #include <xrpl/protocol/STTx.h>
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/TxMeta.h>

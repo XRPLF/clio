@@ -26,6 +26,7 @@
 #include <memory>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace migration::impl {
@@ -51,9 +52,9 @@ public:
      */
     explicit MigrationManagerBase(
         std::shared_ptr<typename SupportedMigrators::BackendType> backend,
-        util::config::ObjectView const& config
+        util::config::ObjectView  config
     )
-        : migrators_{backend}, config_{config}
+        : migrators_{backend}, config_{std::move(config)}
     {
     }
 

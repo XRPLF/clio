@@ -19,7 +19,6 @@
 
 #include "migration/cassandra/impl/ObjectsAdapter.hpp"
 
-#include <boost/asio/spawn.hpp>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/Serializer.h>
 

@@ -55,7 +55,7 @@ ExampleTransactionsMigrator::runMigration(
             backend,
             [&](ripple::STTx const& tx, ripple::TxMeta const&) {
                 {
-                    std::lock_guard<std::mutex> lock(mtx);
+                    std::lock_guard<std::mutex> const lock(mtx);
                     hashSet.insert(ripple::to_string(tx.getTransactionID()));
                 }
                 auto const json = tx.getJson(ripple::JsonOptions::none);

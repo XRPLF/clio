@@ -40,9 +40,7 @@
 #include "util/newconfig/Types.hpp"
 
 #include <TestGlobals.hpp>
-#include <boost/json/parse.hpp>
-#include <boost/json/value.hpp>
-#include <fmt/core.h>
+#include <algorithm>
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
 
@@ -215,7 +213,7 @@ class MigrationCassandraManagerTxTableTest : public MigrationCassandraSimpleTest
         Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
 
-        std::for_each(std::begin(TransactionsRawData), std::end(TransactionsRawData), [&](auto const& value) {
+        std::ranges::for_each(TransactionsRawData, [&](auto const& value) {
             writeTxFromCSVString(TestGlobals::instance().backendKeyspace, value, handle);
         });
     }

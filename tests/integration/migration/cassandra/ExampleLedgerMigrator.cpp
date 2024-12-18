@@ -24,7 +24,6 @@
 #include "util/Assert.hpp"
 #include "util/newconfig/ObjectView.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 
 #include <memory>
