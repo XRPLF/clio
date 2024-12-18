@@ -40,10 +40,10 @@
 #include "util/newconfig/Types.hpp"
 
 #include <TestGlobals.hpp>
-#include <algorithm>
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <optional>
