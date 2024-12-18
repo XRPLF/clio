@@ -80,8 +80,8 @@ getAmmLpHolds(
     return getAmmLpHolds(
         backend,
         sequence,
-        ammSle[ripple::sfAsset].currency,
-        ammSle[ripple::sfAsset2].currency,
+        ammSle[ripple::sfAsset].get<ripple::Issue>().currency,
+        ammSle[ripple::sfAsset2].get<ripple::Issue>().currency,
         ammSle[ripple::sfAccount],
         lpAccount,
         yield

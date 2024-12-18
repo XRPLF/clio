@@ -145,8 +145,8 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     // If the issue1 and issue2 are not specified, we need to get them from the AMM.
     // Otherwise we preserve the mapping of asset1 -> issue1 and asset2 -> issue2 as requested by the user.
     if (issue1 == ripple::noIssue() and issue2 == ripple::noIssue()) {
-        issue1 = amm[sfAsset];
-        issue2 = amm[sfAsset2];
+        issue1 = amm[sfAsset].get<Issue>();
+        issue2 = amm[sfAsset2].get<Issue>();
     }
 
     auto const [asset1Balance, asset2Balance] =
@@ -204,12 +204,22 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
 
     if (!isXRP(asset1Balance)) {
         response.asset1Frozen = isFrozen(
-            *sharedPtrBackend_, lgrInfo.seq, ammAccountID, amm[sfAsset].currency, amm[sfAsset].account, ctx.yield
+            *sharedPtrBackend_,
+            lgrInfo.seq,
+            ammAccountID,
+            amm[sfAsset].get<Issue>().currency,
+            amm[sfAsset].get<Issue>().account,
+            ctx.yield
         );
     }
     if (!isXRP(asset2Balance)) {
         response.asset2Frozen = isFrozen(
-            *sharedPtrBackend_, lgrInfo.seq, ammAccountID, amm[sfAsset2].currency, amm[sfAsset2].account, ctx.yield
+            *sharedPtrBackend_,
+            lgrInfo.seq,
+            ammAccountID,
+            amm[sfAsset2].get<Issue>().currency,
+            amm[sfAsset2].get<Issue>().account,
+            ctx.yield
         );
     }
 

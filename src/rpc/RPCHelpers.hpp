@@ -40,7 +40,7 @@
 #include <boost/regex/v5/regex_fwd.hpp>
 #include <boost/regex/v5/regex_match.hpp>
 #include <fmt/core.h>
-#include <xrpl/basics/XRPAmount.h>
+#include <xrpl/protocol/XRPAmount.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/json/json_value.h>
 #include <xrpl/protocol/AccountID.h>
