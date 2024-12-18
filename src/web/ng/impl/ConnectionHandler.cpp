@@ -139,15 +139,15 @@ void
 ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::yield_context yield)
 {
     auto& connectionRef = *connectionPtr;
-    auto signalConnection = onStop_.connect([&connectionRef, yield]() {
+
+    if (isStopping()) {
+        stopConnection(connectionRef, yield);
+        return;
+    }
+
+    auto stopSignalConnection = onStop_.connect([&connectionRef, yield]() {
         boost::asio::spawn(yield, [&connectionRef](boost::asio::yield_context innerYield) {
-            Response response{
-                boost::beast::http::status::service_unavailable,
-                "This Clio node is shutting down. Please try another node.",
-                connectionRef
-            };
-            connectionRef.send(std::move(response), innerYield);
-            connectionRef.close(innerYield);
+            stopConnection(connectionRef, innerYield);
         });
     });
 
@@ -187,7 +187,7 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
         LOG(log_.trace()) << connectionRef.tag() << "Closed gracefully";
     }
 
-    signalConnection.disconnect();
+    stopSignalConnection.disconnect();
     LOG(log_.trace()) << connectionRef.tag() << "Signal disconnected";
 
     onDisconnectHook_(connectionRef);
@@ -195,9 +195,28 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
 }
 
 void
+ConnectionHandler::stopConnection(Connection& connection, boost::asio::yield_context yield)
+{
+    Response response{
+        boost::beast::http::status::service_unavailable,
+        "This Clio node is shutting down. Please try another node.",
+        connection
+    };
+    connection.send(std::move(response), yield);
+    connection.close(yield);
+}
+
+void
 ConnectionHandler::stop()
 {
+    *stopping_ = true;
     onStop_();
+}
+
+bool
+ConnectionHandler::isStopping() const
+{
+    return *stopping_;
 }
 
 bool

@@ -33,8 +33,10 @@
 #include <boost/signals2/signal.hpp>
 #include <boost/signals2/variadic_signal.hpp>
 
+#include <atomic>
 #include <cstddef>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -77,6 +79,7 @@ private:
     std::optional<MessageHandler> wsHandler_;
 
     boost::signals2::signal<void()> onStop_;
+    std::unique_ptr<std::atomic_bool> stopping_ = std::make_unique<std::atomic_bool>(false);
 
 public:
     ConnectionHandler(
@@ -99,8 +102,14 @@ public:
     void
     processConnection(ConnectionPtr connection, boost::asio::yield_context yield);
 
+    static void
+    stopConnection(Connection& connection, boost::asio::yield_context yield);
+
     void
     stop();
+
+    bool
+    isStopping() const;
 
 private:
     /**

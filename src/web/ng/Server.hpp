@@ -33,10 +33,8 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 
-#include <atomic>
 #include <cstddef>
 #include <functional>
-#include <memory>
 #include <optional>
 #include <string>
 
@@ -73,8 +71,6 @@ private:
     OnConnectCheck onConnectCheck_;
 
     bool running_{false};
-
-    std::unique_ptr<std::atomic_bool> stopping_ = std::make_unique<std::atomic_bool>(false);
 
 public:
     /**
@@ -152,7 +148,7 @@ public:
 
     /**
      * @brief Stop the server.
-     ** @note Stopping the server cause graceful shutdown of all connections. And rejecting new connections.
+     * @note Stopping the server cause graceful shutdown of all connections. And rejecting new connections.
      */
     void
     stop();

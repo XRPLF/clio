@@ -270,7 +270,6 @@ Server::run()
 void
 Server::stop()
 {
-    *stopping_ = true;
     connectionHandler_.stop();
 }
 
@@ -308,17 +307,11 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
     }
     LOG(log_.trace()) << connectionExpected.value()->tag() << "Connection created";
 
-    if (*stopping_) {
+    if (connectionHandler_.isStopping()) {
         boost::asio::spawn(
             ctx_.get(),
             [connection = std::move(connectionExpected).value()](boost::asio::yield_context yield) {
-                Response response{
-                    boost::beast::http::status::service_unavailable,
-                    "This Clio node is shutting down. Please try another node.",
-                    *connection
-                };
-
-                connection->send(std::move(response), yield);
+                web::ng::impl::ConnectionHandler::stopConnection(*connection, yield);
             }
         );
         return;

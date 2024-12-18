@@ -457,7 +457,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
     std::string const responseMessage = "some response";
     bool connectionClosed = false;
 
-    EXPECT_CALL(*mockWsConnection_, wasUpgraded).WillOnce(Return(true));
+    EXPECT_CALL(*mockWsConnection_, wasUpgraded).Times(2).WillRepeatedly(Return(true));
     EXPECT_CALL(*mockWsConnection_, receive).Times(4).WillRepeatedly([&](auto&&) -> std::expected<Request, Error> {
         if (connectionClosed) {
             return makeError(websocket::error::closed);
@@ -471,15 +471,29 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
     });
 
     size_t numCalls = 0;
-    EXPECT_CALL(*mockWsConnection_, send).Times(3).WillRepeatedly([&](Response response, auto&&) {
-        EXPECT_EQ(response.message(), responseMessage);
+    EXPECT_CALL(
+        *mockWsConnection_,
+        send(testing::ResultOf([](Response const& r) { return r.message(); }, responseMessage), testing::_)
+    )
+        .Times(3)
+        .WillRepeatedly([&](auto&&, auto&&) {
+            ++numCalls;
+            if (numCalls == 3)
+                connectionHandler_.stop();
 
-        ++numCalls;
-        if (numCalls == 3)
-            connectionHandler_.stop();
+            return std::nullopt;
+        });
 
-        return std::nullopt;
-    });
+    EXPECT_CALL(
+        *mockWsConnection_,
+        send(
+            testing::ResultOf(
+                [](Response const& r) { return r.message(); },
+                "This Clio node is shutting down. Please try another node."
+            ),
+            testing::_
+        )
+    );
 
     EXPECT_CALL(*mockWsConnection_, close).WillOnce([&connectionClosed]() { connectionClosed = true; });
 
