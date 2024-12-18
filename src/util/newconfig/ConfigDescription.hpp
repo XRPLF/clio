@@ -63,9 +63,15 @@ public:
 
 private:
     static constexpr auto configDescription = std::array{
-        KV{.key = "database.type", .value = "Type of database to use."},
+        KV{.key = "database.type", .value = "Type of database to use. Default is Scylladb."},
         KV{.key = "database.cassandra.contact_points",
-           .value = "Comma-separated list of contact points for Cassandra nodes."},
+           .value =
+               "A list of IP addresses or hostnames of the initial nodes (Cassandra/Scylladb cluster nodes) that the "
+               "client will connect to when establishing a connection with the database."},
+        KV{.key = "database.cassandra.secure_connect_bundle",
+           .value = "Configuration file that contains the necessary security credentials and connection details for "
+                    "securely "
+                    "connecting to a Cassandra database cluster."},
         KV{.key = "database.cassandra.port", .value = "Port number to connect to Cassandra."},
         KV{.key = "database.cassandra.keyspace", .value = "Keyspace to use in Cassandra."},
         KV{.key = "database.cassandra.replication_factor", .value = "Number of replicated nodes for Scylladb."},
@@ -79,30 +85,59 @@ private:
            .value = "Number of core connections per host for Cassandra."},
         KV{.key = "database.cassandra.queue_size_io", .value = "Queue size for I/O operations in Cassandra."},
         KV{.key = "database.cassandra.write_batch_size", .value = "Batch size for write operations in Cassandra."},
-        KV{.key = "etl_source.[].ip", .value = "IP address of the ETL source."},
-        KV{.key = "etl_source.[].ws_port", .value = "WebSocket port of the ETL source."},
-        KV{.key = "etl_source.[].grpc_port", .value = "gRPC port of the ETL source."},
+        KV{.key = "database.cassandra.connect_timeout",
+           .value = "The maximum amount of time in seconds the system will wait for a connection to be successfully "
+                    "established "
+                    "with the database."},
+        KV{.key = "database.cassandra.request_timeout",
+           .value =
+               "The maximum amount of time in seconds the system will wait for a request to be fetched from database."},
+        KV{.key = "database.cassandra.username", .value = "The username used for authenticating with the database."},
+        KV{.key = "database.cassandra.password", .value = "The password used for authenticating with the database."},
+        KV{.key = "database.cassandra.certfile",
+           .value = "The path to the SSL/TLS certificate file used to establish a secure connection between the client "
+                    "and the "
+                    "Cassandra database."},
+        KV{.key = "allow_no_etl", .value = "If True, no ETL nodes will run with Clio."},
+        KV{.key = "etl_sources.[].ip", .value = "IP address of the ETL source."},
+        KV{.key = "etl_sources.[].ws_port", .value = "WebSocket port of the ETL source."},
+        KV{.key = "etl_sources.[].grpc_port", .value = "gRPC port of the ETL source."},
         KV{.key = "forwarding.cache_timeout",
            .value = "Timeout duration for the forwarding cache used in Rippled communication."},
         KV{.key = "forwarding.request_timeout",
            .value = "Timeout duration for the forwarding request used in Rippled communication."},
+        KV{.key = "rpc.cache_timeout", .value = "Timeout duration for the rpc request."},
+        KV{.key = "num_markers",
+           .value = "The number of markers is the number of coroutines to load the cache concurrently."},
         KV{.key = "dos_guard.[].whitelist", .value = "List of IP addresses to whitelist for DOS protection."},
         KV{.key = "dos_guard.max_fetches", .value = "Maximum number of fetch operations allowed by DOS guard."},
         KV{.key = "dos_guard.max_connections", .value = "Maximum number of concurrent connections allowed by DOS guard."
         },
         KV{.key = "dos_guard.max_requests", .value = "Maximum number of requests allowed by DOS guard."},
         KV{.key = "dos_guard.sweep_interval", .value = "Interval in seconds for DOS guard to sweep/clear its state."},
-        KV{.key = "cache.peers.[].ip", .value = "IP address of peer nodes to cache."},
-        KV{.key = "cache.peers.[].port", .value = "Port number of peer nodes to cache."},
+        KV{.key = "workers", .value = "Number of threads to process RPC requests."},
         KV{.key = "server.ip", .value = "IP address of the Clio HTTP server."},
         KV{.key = "server.port", .value = "Port number of the Clio HTTP server."},
-        KV{.key = "server.max_queue_size", .value = "Maximum size of the server's request queue."},
-        KV{.key = "server.workers", .value = "Maximum number of threads for server to run with."},
+        KV{.key = "server.max_queue_size",
+           .value = "Maximum size of the server's request queue. Value of 0 is no limit."},
         KV{.key = "server.local_admin", .value = "Indicates if the server should run with admin privileges."},
         KV{.key = "server.admin_password", .value = "Password for Clio admin-only APIs."},
+        KV{.key = "server.processing_policy",
+           .value = R"(Could be "sequent" or "parallel". For the sequent policy, requests from a single client 
+        connection are processed one by one, with the next request read only after the previous one is processed. For the parallel policy, Clio will accept
+         all requests and process them in parallel, sending a reply for each request as soon as it is ready.)"},
+        KV{.key = "server.parallel_requests_limit",
+           .value = R"(Optional parameter, used only if "processing_strategy" is
+         "parallel". It limits the number of requests for a single client connection that are processed in parallel. If not specified, the limit is infinite.)"
+        },
+        KV{.key = "server.ws_max_sending_queue_size", .value = "Maximum size of the websocket sending queue."},
         KV{.key = "prometheus.enabled", .value = "Enable or disable Prometheus metrics."},
         KV{.key = "prometheus.compress_reply", .value = "Enable or disable compression of Prometheus responses."},
-        KV{.key = "io_threads", .value = "Number of I/O threads."},
+        KV{.key = "io_threads", .value = "Number of I/O threads. Value must be greater than 1"},
+        KV{.key = "subscription_workers",
+           .value = "The number of worker threads or processes that are responsible for managing and processing "
+                    "subscription-based tasks."},
+        KV{.key = "graceful_period", .value = "Number of milliseconds server will wait to shutdown gracefully."},
         KV{.key = "cache.num_diffs", .value = "Number of diffs to cache."},
         KV{.key = "cache.num_markers", .value = "Number of markers to cache."},
         KV{.key = "cache.num_cursors_from_diff", .value = "Num of cursors that are different."},
@@ -126,8 +161,12 @@ private:
         KV{.key = "finish_sequence", .value = "Ending ledger index."},
         KV{.key = "ssl_cert_file", .value = "Path to the SSL certificate file."},
         KV{.key = "ssl_key_file", .value = "Path to the SSL key file."},
+        KV{.key = "api_version.default", .value = "Default API version Clio will run on."},
         KV{.key = "api_version.min", .value = "Minimum API version."},
-        KV{.key = "api_version.max", .value = "Maximum API version."}
+        KV{.key = "api_version.max", .value = "Maximum API version."},
+        KV{.key = "migration.full_scan_threads", .value = "The number of threads used to scan table."},
+        KV{.key = "migration.full_scan_jobs", .value = "The number of coroutines used to scan table."},
+        KV{.key = "migration.cursors_per_job", .value = "The number of cursors each coroutine will scan."}
     };
 };
 

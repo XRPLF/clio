@@ -19,14 +19,18 @@
 
 #include "app/CliArgs.hpp"
 #include "app/ClioApplication.hpp"
+#include "migration/MigrationApplication.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
 #include "util/TerminationHandler.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
 
 #include <cstdlib>
 #include <exception>
 #include <iostream>
+
+using namespace util::config;
 
 int
 main(int argc, char const* argv[])
@@ -37,15 +41,36 @@ try {
     return action.apply(
         [](app::CliArgs::Action::Exit const& exit) { return exit.exitCode; },
         [](app::CliArgs::Action::Run const& run) {
-            auto const config = util::ConfigReader::open(run.configPath);
-            if (!config) {
-                std::cerr << "Couldnt parse config '" << run.configPath << "'." << std::endl;
+            auto const json = ConfigFileJson::make_ConfigFileJson(run.configPath);
+            if (!json.has_value()) {
+                std::cerr << json.error().error << std::endl;
                 return EXIT_FAILURE;
             }
-            util::LogService::init(config);
-            app::ClioApplication clio{config};
-
+            auto const errors = ClioConfig.parse(json.value());
+            if (errors.has_value()) {
+                for (auto const& err : errors.value())
+                    std::cerr << err.error << std::endl;
+                return EXIT_FAILURE;
+            }
+            util::LogService::init(ClioConfig);
+            app::ClioApplication clio{ClioConfig};
             return clio.run(run.useNgWebServer);
+        },
+        [](app::CliArgs::Action::Migrate const& migrate) {
+            auto const json = ConfigFileJson::make_ConfigFileJson(migrate.configPath);
+            if (!json.has_value()) {
+                std::cerr << json.error().error << std::endl;
+                return EXIT_FAILURE;
+            }
+            auto const errors = ClioConfig.parse(json.value());
+            if (errors.has_value()) {
+                for (auto const& err : errors.value())
+                    std::cerr << err.error << std::endl;
+                return EXIT_FAILURE;
+            }
+            util::LogService::init(ClioConfig);
+            app::MigratorApplication migrator{ClioConfig, migrate.subCmd};
+            return migrator.run();
         }
     );
 } catch (std::exception const& e) {

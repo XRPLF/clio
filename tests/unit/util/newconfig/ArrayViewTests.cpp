@@ -29,6 +29,7 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
+#include <string>
 
 using namespace util::config;
 
@@ -99,8 +100,8 @@ TEST_F(ArrayViewTest, ArrayWithObj)
 
     auto const obj1 = arrVals.objectAt(0);
     auto const obj2 = arrValAlt.objectAt(0);
-    EXPECT_NEAR(obj1.getValue("sub").asDouble(), obj2.getValue("sub").asDouble(), precision);
-    EXPECT_NEAR(obj1.getValue("sub").asDouble(), 111.11, precision);
+    EXPECT_NEAR(obj1.get<double>("sub"), obj2.get<double>("sub"), precision);
+    EXPECT_NEAR(obj1.get<double>("sub"), 111.11, precision);
 }
 
 TEST_F(ArrayViewTest, IterateArray)
@@ -134,14 +135,14 @@ TEST_F(ArrayViewTest, IterateObject)
     EXPECT_EQ(3, arr.size());
 
     auto it = arr.begin<ObjectView>();
-    EXPECT_EQ(111.11, (*it).getValue("sub").asDouble());
-    EXPECT_EQ("subCategory", (*it++).getValue("sub2").asString());
+    EXPECT_EQ(111.11, (*it).get<double>("sub"));
+    EXPECT_EQ("subCategory", (*it++).get<std::string>("sub2"));
 
-    EXPECT_EQ(4321.55, (*it).getValue("sub").asDouble());
-    EXPECT_EQ("temporary", (*it++).getValue("sub2").asString());
+    EXPECT_EQ(4321.55, (*it).get<double>("sub"));
+    EXPECT_EQ("temporary", (*it++).get<std::string>("sub2"));
 
-    EXPECT_EQ(5555.44, (*it).getValue("sub").asDouble());
-    EXPECT_EQ("london", (*it++).getValue("sub2").asString());
+    EXPECT_EQ(5555.44, (*it).get<double>("sub"));
+    EXPECT_EQ("london", (*it++).get<std::string>("sub2"));
 
     EXPECT_EQ(it, arr.end<ObjectView>());
 }

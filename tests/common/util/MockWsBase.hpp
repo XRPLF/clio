@@ -20,7 +20,9 @@
 #pragma once
 
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
@@ -37,7 +39,9 @@ struct MockSession : public web::SubscriptionContextInterface {
     MOCK_METHOD(void, setApiSubversion, (uint32_t), (override));
     MOCK_METHOD(uint32_t, apiSubversion, (), (const, override));
 
-    util::TagDecoratorFactory tagDecoratorFactory{util::Config{}};
+    util::TagDecoratorFactory tagDecoratorFactory{util::config::ClioConfigDefinition{
+        {"log_tag_style", util::config::ConfigValue{util::config::ConfigType::String}.defaultValue("none")}
+    }};
 
     MockSession() : web::SubscriptionContextInterface(tagDecoratorFactory)
     {

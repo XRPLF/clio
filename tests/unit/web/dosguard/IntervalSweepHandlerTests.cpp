@@ -18,17 +18,19 @@
 //==============================================================================
 
 #include "util/AsioContextTestFixture.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/dosguard/DOSGuardMock.hpp"
 #include "web/dosguard/IntervalSweepHandler.hpp"
 
-#include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
 
 using namespace web::dosguard;
+using namespace util::config;
 
 struct IntervalSweepHandlerTest : SyncAsioContextTest {
 protected:
@@ -42,7 +44,7 @@ protected:
 
     DOSGuardStrictMock guardMock;
 
-    util::Config cfg{boost::json::parse(JSONData)};
+    ClioConfigDefinition cfg{{"dos_guard.sweep_interval", ConfigValue{ConfigType::Integer}.defaultValue(0)}};
     IntervalSweepHandler sweepHandler{cfg, ctx, guardMock};
 };
 

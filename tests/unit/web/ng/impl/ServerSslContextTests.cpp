@@ -18,8 +18,10 @@
 //==============================================================================
 
 #include "util/NameGenerator.hpp"
-#include "util/TmpFile.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/ng/impl/ServerSslContext.hpp"
 
 #include <boost/json/object.hpp>
@@ -32,6 +34,7 @@
 #include <string>
 
 using namespace web::ng::impl;
+using namespace util::config;
 
 struct MakeServerSslContextFromConfigTestBundle {
     std::string testName;
@@ -59,7 +62,15 @@ struct MakeServerSslContextFromConfigTest : testing::TestWithParam<MakeServerSsl
 
 TEST_P(MakeServerSslContextFromConfigTest, makeFromConfig)
 {
-    auto const config = util::Config{GetParam().configJson()};
+    ConfigFileJson const js{GetParam().configJson().as_object()};
+    // generate cert and key file
+    auto config = ClioConfigDefinition{
+        {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
+        {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()}
+    };
+    auto const errors = config.parse(js);
+    ASSERT_TRUE(!errors.has_value());
+
     auto const expectedServerSslContext = makeServerSslContext(config);
     if (GetParam().expectedError.has_value()) {
         ASSERT_FALSE(expectedServerSslContext.has_value());
@@ -110,9 +121,11 @@ struct MakeServerSslContextFromConfigRealFilesTest : testing::Test {};
 TEST_F(MakeServerSslContextFromConfigRealFilesTest, WrongKeyFile)
 {
     auto const certFile = tests::sslCertFile();
-    boost::json::object const configJson = {{"ssl_cert_file", certFile.path}, {"ssl_key_file", "some_path"}};
 
-    util::Config const config{configJson};
+    ClioConfigDefinition const config{
+        {"ssl_cert_file", ConfigValue{ConfigType::String}.defaultValue(certFile.path)},
+        {"ssl_key_file", ConfigValue{ConfigType::String}.defaultValue("some_path")}
+    };
     auto const expectedServerSslContext = makeServerSslContext(config);
     ASSERT_FALSE(expectedServerSslContext.has_value());
     EXPECT_THAT(expectedServerSslContext.error(), testing::HasSubstr("Can't read SSL key"));
@@ -122,9 +135,11 @@ TEST_F(MakeServerSslContextFromConfigRealFilesTest, BothFilesValid)
 {
     auto const certFile = tests::sslCertFile();
     auto const keyFile = tests::sslKeyFile();
-    boost::json::object const configJson = {{"ssl_cert_file", certFile.path}, {"ssl_key_file", keyFile.path}};
 
-    util::Config const config{configJson};
+    ClioConfigDefinition const config{
+        {"ssl_cert_file", ConfigValue{ConfigType::String}.defaultValue(certFile.path)},
+        {"ssl_key_file", ConfigValue{ConfigType::String}.defaultValue(keyFile.path)}
+    };
     auto const expectedServerSslContext = makeServerSslContext(config);
     EXPECT_TRUE(expectedServerSslContext.has_value());
 }

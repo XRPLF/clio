@@ -22,7 +22,9 @@
 #include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/AdminVerificationStrategy.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuardMock.hpp"
@@ -49,10 +51,13 @@
 
 using namespace app;
 namespace http = boost::beast::http;
+using namespace util::config;
 
 struct WebHandlersTest : virtual NoLoggerFixture {
     DOSGuardStrictMock dosGuardMock_;
-    util::TagDecoratorFactory tagFactory_{util::Config{}};
+    util::TagDecoratorFactory const tagFactory_{
+        ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
+    };
     std::string const ip_ = "some ip";
     StrictMockConnection connectionMock_{ip_, boost::beast::flat_buffer{}, tagFactory_};
 

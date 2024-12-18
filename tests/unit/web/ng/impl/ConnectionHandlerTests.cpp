@@ -20,7 +20,9 @@
 #include "util/AsioContextTestFixture.hpp"
 #include "util/Taggable.hpp"
 #include "util/UnsupportedType.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
@@ -43,7 +45,6 @@
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/beast/websocket/error.hpp>
-#include <boost/json/object.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -57,6 +58,7 @@
 
 using namespace web::ng::impl;
 using namespace web::ng;
+using namespace util;
 using testing::Return;
 namespace beast = boost::beast;
 namespace http = boost::beast::http;
@@ -64,7 +66,9 @@ namespace websocket = boost::beast::websocket;
 
 struct ConnectionHandlerTest : SyncAsioContextTest {
     ConnectionHandlerTest(ProcessingPolicy policy, std::optional<size_t> maxParallelConnections)
-        : tagFactory_{util::Config{}}
+        : tagFactory_{util::config::ClioConfigDefinition{
+              {"log_tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
+          }}
         , connectionHandler_{
               policy,
               maxParallelConnections,
@@ -104,7 +108,9 @@ struct ConnectionHandlerTest : SyncAsioContextTest {
     util::TagDecoratorFactory tagFactory_;
     ConnectionHandler connectionHandler_;
 
-    util::TagDecoratorFactory tagDecoratorFactory_{util::Config(boost::json::object{{"log_tag_style", "uint"}})};
+    util::TagDecoratorFactory tagDecoratorFactory_{config::ClioConfigDefinition{
+        {"log_tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
+    }};
     StrictMockHttpConnectionPtr mockHttpConnection_ =
         std::make_unique<StrictMockHttpConnection>("1.2.3.4", beast::flat_buffer{}, tagDecoratorFactory_);
     StrictMockWsConnectionPtr mockWsConnection_ =

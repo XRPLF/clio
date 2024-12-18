@@ -18,11 +18,13 @@
 //==============================================================================
 
 #include "util/LoggerFixtures.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/Array.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/dosguard/DOSGuard.hpp"
 #include "web/dosguard/WhitelistHandlerInterface.hpp"
 
-#include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -31,8 +33,8 @@
 using namespace testing;
 using namespace util;
 using namespace std;
+using namespace util::config;
 using namespace web::dosguard;
-namespace json = boost::json;
 
 struct DOSGuardTest : NoLoggerFixture {
     static constexpr auto JSONData = R"JSON(
@@ -54,7 +56,12 @@ struct DOSGuardTest : NoLoggerFixture {
         MOCK_METHOD(bool, isWhiteListed, (std::string_view ip), (const));
     };
 
-    Config cfg{json::parse(JSONData)};
+    ClioConfigDefinition cfg{
+        {{"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(100)},
+         {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+         {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(3)},
+         {"dos_guard.whitelist", Array{ConfigValue{ConfigType::String}}}}
+    };
     NiceMock<MockWhitelistHandler> whitelistHandler;
     DOSGuard guard{cfg, whitelistHandler};
 };

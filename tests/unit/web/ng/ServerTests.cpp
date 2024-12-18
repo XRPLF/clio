@@ -24,7 +24,11 @@
 #include "util/Taggable.hpp"
 #include "util/TestHttpClient.hpp"
 #include "util/TestWebSocketClient.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigConstraints.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/ProcessingPolicy.hpp"
@@ -53,6 +57,7 @@
 #include <string>
 
 using namespace web::ng;
+using namespace util::config;
 
 namespace http = boost::beast::http;
 
@@ -68,7 +73,22 @@ struct MakeServerTest : NoLoggerFixture, testing::WithParamInterface<MakeServerT
 
 TEST_P(MakeServerTest, Make)
 {
-    util::Config const config{boost::json::parse(GetParam().configJson)};
+    ConfigFileJson const json{boost::json::parse(GetParam().configJson).as_object()};
+
+    util::config::ClioConfigDefinition config{
+        {"server.ip", ConfigValue{ConfigType::String}.optional()},
+        {"server.port", ConfigValue{ConfigType::Integer}.optional()},
+        {"server.processing_policy", ConfigValue{ConfigType::String}.defaultValue("parallel")},
+        {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional()},
+        {"server.ws_max_sending_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1500)},
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+        {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
+        {"ssl_key_file", ConfigValue{ConfigType::String}.optional()}
+
+    };
+    auto const errors = config.parse(json);
+    ASSERT_TRUE(!errors.has_value());
+
     auto const expectedServer =
         make_Server(config, [](auto&&) -> std::expected<void, Response> { return {}; }, [](auto&&) {}, ioContext_);
     EXPECT_EQ(expectedServer.has_value(), GetParam().expectSuccess);
@@ -79,15 +99,6 @@ INSTANTIATE_TEST_CASE_P(
     MakeServerTest,
     testing::Values(
         MakeServerTestBundle{
-            "NoIp",
-            R"json(
-                {
-                    "server": {"port": 12345}
-                }
-            )json",
-            false
-        },
-        MakeServerTestBundle{
             "BadEndpoint",
             R"json(
                 {
@@ -97,20 +108,11 @@ INSTANTIATE_TEST_CASE_P(
             false
         },
         MakeServerTestBundle{
-            "PortMissing",
-            R"json(
-        {
-            "server": {"ip": "127.0.0.1"}
-        }
-            )json",
-            false
-        },
-        MakeServerTestBundle{
             "BadSslConfig",
             R"json(
         {
             "server": {"ip": "127.0.0.1", "port": 12345},
-            "ssl_cert_file": "somг_file"
+            "ssl_cert_file": "some_file"
         }
             )json",
             false
@@ -157,8 +159,17 @@ struct ServerTest : SyncAsioContextTest {
 
     uint32_t const serverPort_ = tests::util::generateFreePort();
 
-    util::Config const config_{
-        boost::json::object{{"server", boost::json::object{{"ip", "127.0.0.1"}, {"port", serverPort_}}}}
+    ClioConfigDefinition const config_{
+        {"server.ip", ConfigValue{ConfigType::String}.defaultValue("127.0.0.1").withConstraint(validateIP)},
+        {"server.port", ConfigValue{ConfigType::Integer}.defaultValue(serverPort_).withConstraint(validatePort)},
+        {"server.processing_policy", ConfigValue{ConfigType::String}.defaultValue("parallel")},
+        {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
+        {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
+        {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional()},
+        {"server.ws_max_sending_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1500)},
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+        {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
+        {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()}
     };
 
     Server::OnConnectCheck emptyOnConnectCheck_ = [](auto&&) -> std::expected<void, Response> { return {}; };
@@ -183,7 +194,9 @@ struct ServerTest : SyncAsioContextTest {
 TEST_F(ServerTest, BadEndpoint)
 {
     boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("1.2.3.4"), 0};
-    util::TagDecoratorFactory const tagDecoratorFactory{util::Config{boost::json::value{}}};
+    util::TagDecoratorFactory const tagDecoratorFactory{
+        ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
+    };
     Server server{
         ctx,
         endpoint,
@@ -241,7 +254,9 @@ TEST_F(ServerHttpTest, OnConnectCheck)
 {
     auto const serverPort = tests::util::generateFreePort();
     boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("0.0.0.0"), serverPort};
-    util::TagDecoratorFactory const tagDecoratorFactory{util::Config{boost::json::value{}}};
+    util::TagDecoratorFactory const tagDecoratorFactory{
+        ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
+    };
 
     testing::StrictMock<testing::MockFunction<std::expected<void, Response>(Connection const&)>> onConnectCheck;
 
@@ -298,7 +313,9 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
 {
     auto const serverPort = tests::util::generateFreePort();
     boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("0.0.0.0"), serverPort};
-    util::TagDecoratorFactory const tagDecoratorFactory{util::Config{boost::json::value{}}};
+    util::TagDecoratorFactory const tagDecoratorFactory{
+        ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
+    };
 
     testing::StrictMock<testing::MockFunction<std::expected<void, Response>(Connection const&)>> onConnectCheck;
 
@@ -354,7 +371,9 @@ TEST_F(ServerHttpTest, OnDisconnectHook)
 {
     auto const serverPort = tests::util::generateFreePort();
     boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("0.0.0.0"), serverPort};
-    util::TagDecoratorFactory const tagDecoratorFactory{util::Config{boost::json::value{}}};
+    util::TagDecoratorFactory const tagDecoratorFactory{
+        ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
+    };
 
     testing::StrictMock<testing::MockFunction<void(Connection const&)>> OnDisconnectHookMock;
 

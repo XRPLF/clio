@@ -21,7 +21,9 @@
 #include "util/LoggerFixtures.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/impl/ErrorHandling.hpp"
 #include "web/interface/ConnectionBaseMock.hpp"
 
@@ -37,9 +39,12 @@
 
 using namespace web::impl;
 using namespace web;
+using namespace util::config;
 
 struct ErrorHandlingTests : NoLoggerFixture {
-    util::TagDecoratorFactory tagFactory_{util::Config{}};
+    util::TagDecoratorFactory tagFactory_{ClioConfigDefinition{
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+    }};
     std::string const clientIp_ = "some ip";
     ConnectionBaseStrictMockPtr connection_ =
         std::make_shared<testing::StrictMock<ConnectionBaseMock>>(tagFactory_, clientIp_);

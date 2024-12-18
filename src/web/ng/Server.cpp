@@ -21,8 +21,9 @@
 
 #include "util/Assert.hpp"
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ObjectView.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/ProcessingPolicy.hpp"
@@ -56,22 +57,17 @@ namespace web::ng {
 namespace {
 
 std::expected<boost::asio::ip::tcp::endpoint, std::string>
-makeEndpoint(util::Config const& serverConfig)
+makeEndpoint(util::config::ObjectView const& serverConfig)
 {
-    auto const ip = serverConfig.maybeValue<std::string>("ip");
-    if (not ip.has_value())
-        return std::unexpected{"Missing 'ip` in server config."};
+    auto const ip = serverConfig.get<std::string>("ip");
 
     boost::system::error_code error;
-    auto const address = boost::asio::ip::make_address(*ip, error);
+    auto const address = boost::asio::ip::make_address(ip, error);
     if (error)
         return std::unexpected{fmt::format("Error parsing provided IP: {}", error.message())};
 
-    auto const port = serverConfig.maybeValue<unsigned short>("port");
-    if (not port.has_value())
-        return std::unexpected{"Missing 'port` in server config."};
-
-    return boost::asio::ip::tcp::endpoint{address, *port};
+    auto const port = serverConfig.get<unsigned short>("port");
+    return boost::asio::ip::tcp::endpoint{address, port};
 }
 
 std::expected<boost::asio::ip::tcp::acceptor, std::string>
@@ -308,13 +304,13 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
 
 std::expected<Server, std::string>
 make_Server(
-    util::Config const& config,
+    util::config::ClioConfigDefinition const& config,
     Server::OnConnectCheck onConnectCheck,
     Server::OnDisconnectHook onDisconnectHook,
     boost::asio::io_context& context
 )
 {
-    auto const serverConfig = config.section("server");
+    auto const serverConfig = config.getObject("server");
 
     auto endpoint = makeEndpoint(serverConfig);
     if (not endpoint.has_value())
@@ -327,7 +323,7 @@ make_Server(
     ProcessingPolicy processingPolicy{ProcessingPolicy::Parallel};
     std::optional<size_t> parallelRequestLimit;
 
-    auto const processingStrategyStr = serverConfig.valueOr<std::string>("processing_policy", "parallel");
+    auto const processingStrategyStr = serverConfig.get<std::string>("processing_policy");
     if (processingStrategyStr == "sequent") {
         processingPolicy = ProcessingPolicy::Sequential;
     } else if (processingStrategyStr == "parallel") {
@@ -336,7 +332,7 @@ make_Server(
         return std::unexpected{fmt::format("Invalid 'server.processing_strategy': {}", processingStrategyStr)};
     }
 
-    auto const maxSubscriptionSendQueueSize = serverConfig.maybeValue<size_t>("ws_max_sending_queue_size");
+    auto const maxSubscriptionSendQueueSize = serverConfig.get<size_t>("ws_max_sending_queue_size");
 
     return Server{
         context,

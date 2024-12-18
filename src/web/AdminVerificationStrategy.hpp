@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/beast/http.hpp>
 #include <boost/beast/http/message.hpp>
@@ -116,6 +116,6 @@ make_AdminVerificationStrategy(std::optional<std::string> password);
  * @return Admin verification strategy according to the config or an error message.
  */
 std::expected<std::shared_ptr<AdminVerificationStrategy>, std::string>
-make_AdminVerificationStrategy(util::Config const& serverConfig);
+make_AdminVerificationStrategy(util::config::ClioConfigDefinition const& serverConfig);
 
 }  // namespace web

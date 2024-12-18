@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
 #include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
@@ -28,6 +28,7 @@
 #include "util/prometheus/MetricBase.hpp"
 #include "util/prometheus/MetricsFamily.hpp"
 
+#include <concepts>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -256,7 +257,7 @@ public:
      *
      * @param config The configuration to use
      */
-    void static init(util::Config const& config = util::Config{});
+    void static init(util::config::ClioConfigDefinition const& config);
 
     /**
      * @brief Get a bool based metric. It will be created if it doesn't exist

@@ -270,6 +270,18 @@ public:
             qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
         ));
 
+        statements.emplace_back(fmt::format(
+            R"(
+           CREATE TABLE IF NOT EXISTS {}
+                  ( 
+                   migrator_name TEXT,
+                          status TEXT,
+                         PRIMARY KEY (migrator_name)
+                  ) 
+            )",
+            qualifiedTableName(settingsProvider_.get(), "migrator_status")
+        ));
+
         return statements;
     }();
 
@@ -463,6 +475,17 @@ public:
                  WHERE is_latest = false
                 )",
                 qualifiedTableName(settingsProvider_.get(), "ledger_range")
+            ));
+        }();
+
+        PreparedStatement insertMigratorStatus = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                INSERT INTO {}
+                       (migrator_name, status)
+                VALUES (?, ?)
+                )",
+                qualifiedTableName(settingsProvider_.get(), "migrator_status")
             ));
         }();
 
@@ -766,6 +789,17 @@ public:
                   FROM {}
                 )",
                 qualifiedTableName(settingsProvider_.get(), "ledger_range")
+            ));
+        }();
+
+        PreparedStatement selectMigratorStatus = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                SELECT status
+                  FROM {}
+                 WHERE migrator_name = ?
+                )",
+                qualifiedTableName(settingsProvider_.get(), "migrator_status")
             ));
         }();
     };

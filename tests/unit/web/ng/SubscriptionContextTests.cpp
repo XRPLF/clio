@@ -19,7 +19,9 @@
 
 #include "util/AsioContextTestFixture.hpp"
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
@@ -41,11 +43,14 @@
 #include <string>
 
 using namespace web::ng;
+using namespace util::config;
 
 struct ng_SubscriptionContextTests : SyncAsioContextTest {
-    util::TagDecoratorFactory tagFactory_{util::Config{}};
+    util::TagDecoratorFactory tagFactory_{ClioConfigDefinition{
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+    }};
     MockWsConnectionImpl connection_{"some ip", boost::beast::flat_buffer{}, tagFactory_};
-    testing::StrictMock<testing::MockFunction<bool(Error const&, Connection const&)>> errorHandler_;
+    testing::StrictMock<testing::MockFunction<bool(web::ng::Error const&, Connection const&)>> errorHandler_;
 
     SubscriptionContext
     makeSubscriptionContext(boost::asio::yield_context yield, std::optional<size_t> maxSendQueueSize = std::nullopt)

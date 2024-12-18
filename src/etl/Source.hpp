@@ -23,8 +23,9 @@
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -147,7 +148,7 @@ public:
 using SourcePtr = std::unique_ptr<SourceBase>;
 
 using SourceFactory = std::function<SourcePtr(
-    util::Config const& config,
+    util::config::ObjectView const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
@@ -175,7 +176,7 @@ using SourceFactory = std::function<SourcePtr(
  */
 SourcePtr
 make_Source(
-    util::Config const& config,
+    util::config::ObjectView const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,

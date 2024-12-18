@@ -27,8 +27,8 @@
 #include "rpc/Errors.hpp"
 #include "util/Mutex.hpp"
 #include "util/ResponseExpirationCache.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
@@ -103,7 +103,7 @@ public:
      * @param sourceFactory A factory function to create a source
      */
     LoadBalancer(
-        util::Config const& config,
+        util::config::ClioConfigDefinition const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
@@ -124,7 +124,7 @@ public:
      */
     static std::shared_ptr<LoadBalancer>
     make_LoadBalancer(
-        util::Config const& config,
+        util::config::ClioConfigDefinition const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
