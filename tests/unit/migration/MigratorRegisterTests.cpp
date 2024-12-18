@@ -88,14 +88,12 @@ TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenError)
     auto const status = migratorRegister->getMigratorsStatus();
     EXPECT_EQ(status.size(), 2);
     EXPECT_TRUE(
-        std::ranges::find(
-            status, std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::NotMigrated)
-        ) != status.end()
+        std::ranges::find(status, std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::NotMigrated)) !=
+        status.end()
     );
     EXPECT_TRUE(
-        std::ranges::find(
-            status, std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)
-        ) != status.end()
+        std::ranges::find(status, std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)) !=
+        status.end()
     );
 }
 
@@ -108,14 +106,12 @@ TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenReturnInvalidStatus)
     auto const status = migratorRegister->getMigratorsStatus();
     EXPECT_EQ(status.size(), 2);
     EXPECT_TRUE(
-        std::ranges::find(
-            status, std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::NotMigrated)
-        ) != status.end()
+        std::ranges::find(status, std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::NotMigrated)) !=
+        status.end()
     );
     EXPECT_TRUE(
-        std::ranges::find(
-            status, std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)
-        ) != status.end()
+        std::ranges::find(status, std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)) !=
+        status.end()
     );
 }
 
@@ -128,14 +124,12 @@ TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenOneMigrated)
     auto const status = migratorRegister->getMigratorsStatus();
     EXPECT_EQ(status.size(), 2);
     EXPECT_TRUE(
-        std::ranges::find(
-            status, std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::Migrated)
-        ) != status.end()
+        std::ranges::find(status, std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::Migrated)) !=
+        status.end()
     );
     EXPECT_TRUE(
-        std::ranges::find(
-            status, std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)
-        ) != status.end()
+        std::ranges::find(status, std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)) !=
+        status.end()
     );
 }
 

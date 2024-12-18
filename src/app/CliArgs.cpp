@@ -71,8 +71,8 @@ CliArgs::parse(int argc, char const* argv[])
     if (parsed.count("migrate") != 0u) {
         auto const opt = parsed["migrate"].as<std::string>();
         if (opt == "status")
-            return Action{Action::Migrate{.configPath=std::move(configPath), .subCmd=MigrateSubCmd::status()}};
-        return Action{Action::Migrate{.configPath=std::move(configPath), .subCmd=MigrateSubCmd::migration(opt)}};
+            return Action{Action::Migrate{.configPath = std::move(configPath), .subCmd = MigrateSubCmd::status()}};
+        return Action{Action::Migrate{.configPath = std::move(configPath), .subCmd = MigrateSubCmd::migration(opt)}};
     }
 
     return Action{Action::Run{.configPath = std::move(configPath), .useNgWebServer = parsed.count("ng-web-server") != 0}

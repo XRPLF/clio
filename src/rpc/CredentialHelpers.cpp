@@ -53,7 +53,6 @@
 namespace rpc::credentials {
 
 bool
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 checkExpired(ripple::SLE const& sleCred, ripple::LedgerHeader const& ledger)
 {
     if (sleCred.isFieldPresent(ripple::sfExpiration)) {
@@ -65,7 +64,6 @@ checkExpired(ripple::SLE const& sleCred, ripple::LedgerHeader const& ledger)
 }
 
 std::set<std::pair<ripple::AccountID, ripple::Slice>>
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 createAuthCredentials(ripple::STArray const& in)
 {
     std::set<std::pair<ripple::AccountID, ripple::Slice>> out;
@@ -76,7 +74,6 @@ createAuthCredentials(ripple::STArray const& in)
 }
 
 ripple::STArray
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 parseAuthorizeCredentials(boost::json::array const& jv)
 {
     ripple::STArray arr;
@@ -111,7 +108,6 @@ parseAuthorizeCredentials(boost::json::array const& jv)
 }
 
 std::expected<ripple::STArray, Status>
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 fetchCredentialArray(
     std::optional<boost::json::array> const& credID,
     ripple::AccountID const& srcAcc,

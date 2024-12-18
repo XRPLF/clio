@@ -67,14 +67,12 @@ TEST_F(MigrationManagerBaseTest, AllStatus)
     auto const status = migrationManager->allMigratorsStatusPairs();
     EXPECT_EQ(status.size(), 2);
     EXPECT_TRUE(
-        std::ranges::find(
-            status, std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::Migrated)
-        ) != status.end()
+        std::ranges::find(status, std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::Migrated)) !=
+        status.end()
     );
     EXPECT_TRUE(
-        std::ranges::find(
-            status, std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)
-        ) != status.end()
+        std::ranges::find(status, std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)) !=
+        status.end()
     );
 }
 
