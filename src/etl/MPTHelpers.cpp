@@ -43,7 +43,6 @@ namespace etl {
  * @return MPT and holder account pair
  */
 std::optional<MPTHolderData>
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 getMPTokenAuthorize(ripple::TxMeta const& txMeta)
 {
     for (ripple::STObject const& node : txMeta.getNodes()) {
@@ -61,7 +60,6 @@ getMPTokenAuthorize(ripple::TxMeta const& txMeta)
 }
 
 std::optional<MPTHolderData>
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     if (txMeta.getResultTER() != ripple::tesSUCCESS || sttx.getTxnType() != ripple::TxType::ttMPTOKEN_AUTHORIZE)
@@ -71,7 +69,6 @@ getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 }
 
 std::optional<MPTHolderData>
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 getMPTHolderFromObj(std::string const& key, std::string const& blob)
 {
     ripple::STLedgerEntry const sle =

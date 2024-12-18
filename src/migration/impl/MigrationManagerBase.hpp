@@ -52,7 +52,7 @@ public:
      */
     explicit MigrationManagerBase(
         std::shared_ptr<typename SupportedMigrators::BackendType> backend,
-        util::config::ObjectView  config
+        util::config::ObjectView config
     )
         : migrators_{backend}, config_{std::move(config)}
     {
