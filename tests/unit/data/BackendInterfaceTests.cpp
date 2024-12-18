@@ -27,7 +27,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/Blob.h>
-#include <xrpl/basics/XRPAmount.h>
+#include <xrpl/protocol/XRPAmount.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
 
