@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "util/AsioContextTestFixture.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/Taggable.hpp"
 #include "util/UnsupportedType.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
@@ -64,7 +65,7 @@ namespace beast = boost::beast;
 namespace http = boost::beast::http;
 namespace websocket = boost::beast::websocket;
 
-struct ConnectionHandlerTest : SyncAsioContextTest {
+struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
     ConnectionHandlerTest(ProcessingPolicy policy, std::optional<size_t> maxParallelConnections)
         : tagFactory_{util::config::ClioConfigDefinition{
               {"log_tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
@@ -479,7 +480,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
         .WillRepeatedly([&](auto&&, auto&&) {
             ++numCalls;
             if (numCalls == 3)
-                connectionHandler_.stop();
+                boost::asio::spawn(ctx, [this](auto yield) { connectionHandler_.stop(yield); });
 
             return std::nullopt;
         });

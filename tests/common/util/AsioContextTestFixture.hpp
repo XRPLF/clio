@@ -108,6 +108,15 @@ struct SyncAsioContextTest : virtual public NoLoggerFixture {
         ctx.reset();
     }
 
+    template <typename F>
+    static void
+    runSyncOperation(F&& f)
+    {
+        boost::asio::io_service ioc;
+        boost::asio::spawn(ioc, f);
+        ioc.run();
+    }
+
 protected:
     boost::asio::io_context ctx;
 };

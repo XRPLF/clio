@@ -20,6 +20,7 @@
 #include "util/AsioContextTestFixture.hpp"
 #include "util/AssignRandomPort.hpp"
 #include "util/LoggerFixtures.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
 #include "util/TestHttpClient.hpp"
@@ -149,7 +150,7 @@ INSTANTIATE_TEST_CASE_P(
     tests::util::NameGenerator
 );
 
-struct ServerTest : SyncAsioContextTest {
+struct ServerTest : util::prometheus::WithPrometheus, SyncAsioContextTest {
     ServerTest()
     {
         [&]() { ASSERT_TRUE(server_.has_value()); }();
@@ -446,7 +447,7 @@ TEST_F(ServerHttpTest, ClientIsDisconnectedIfServerStopped)
     });
 
     server_->run();
-    server_->stop();
+    runSyncOperation([this](auto yield) { server_->stop(yield); });
     runContext();
 }
 
@@ -576,6 +577,6 @@ TEST_F(ServerTest, WsClientIsDisconnectedIfServerStopped)
     });
 
     server_->run();
-    server_->stop();
+    runSyncOperation([this](auto yield) { server_->stop(yield); });
     runContext();
 }

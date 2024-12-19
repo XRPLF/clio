@@ -164,11 +164,11 @@ ClioApplication::run(bool const useNgWebServer)
             auto serverStopped = boost::asio::spawn(
                 yield, [&httpServer](auto innerYield) { httpServer->stop(innerYield); }, boost::asio::use_future
             );
-            balancer->stop();
+            // balancer->stop();
             serverStopped.get();
-            etl->stop();
-            subscriptions->stop();
-            backend->finishWrites();
+            // etl->stop();
+            // subscriptions->stop();
+            // backend->finishWrites();
             ioc.stop();
         });
         signalsHandler_.subscribeToStop([this]() { appStopper_.stop(); });
