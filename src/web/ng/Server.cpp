@@ -268,9 +268,9 @@ Server::run()
 }
 
 void
-Server::stop()
+Server::stop(boost::asio::yield_context yield)
 {
-    connectionHandler_.stop();
+    connectionHandler_.stop(yield);
 }
 
 void

@@ -44,6 +44,7 @@
 #include "web/ng/Server.hpp"
 
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
 
 #include <cstdint>
 #include <cstdlib>
@@ -83,6 +84,7 @@ ClioApplication::ClioApplication(util::config::ClioConfigDefinition const& confi
 {
     LOG(util::LogService::info()) << "Clio version: " << util::build::getClioFullVersionString();
     PrometheusService::init(config);
+    signalsHandler_.subscribeToStop([this]() { appStopper_.stop(); });
 }
 
 int
@@ -146,8 +148,6 @@ ClioApplication::run(bool const useNgWebServer)
             return EXIT_FAILURE;
         }
 
-        signalsHandler_.subscribeToStop([&httpServer]() { httpServer->stop(); });
-
         httpServer->onGet("/metrics", MetricsHandler{adminVerifier});
         httpServer->onGet("/health", HealthCheckHandler{});
         auto requestHandler = RequestHandler{adminVerifier, handler, dosGuard};
@@ -159,6 +159,19 @@ ClioApplication::run(bool const useNgWebServer)
             LOG(util::LogService::error()) << "Error starting web server: " << *maybeError;
             return EXIT_FAILURE;
         }
+
+        appStopper_.setOnStop([&](boost::asio::yield_context yield) {
+            auto serverStopped = boost::asio::spawn(
+                yield, [&httpServer](auto innerYield) { httpServer->stop(innerYield); }, boost::asio::use_future
+            );
+            balancer->stop();
+            serverStopped.get();
+            etl->stop();
+            subscriptions->stop();
+            backend->finishWrites();
+            ioc.stop();
+        });
+        signalsHandler_.subscribeToStop([this]() { appStopper_.stop(); });
 
         // Blocks until stopped.
         // When stopped, shared_ptrs fall out of scope

@@ -21,6 +21,9 @@
 
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
+#include "util/prometheus/Gauge.hpp"
+#include "util/prometheus/Label.hpp"
+#include "util/prometheus/Prometheus.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
@@ -81,6 +84,10 @@ private:
     boost::signals2::signal<void()> onStop_;
     std::unique_ptr<std::atomic_bool> stopping_ = std::make_unique<std::atomic_bool>(false);
 
+    std::reference_wrapper<util::prometheus::GaugeInt> connectionsCounter_ =
+        PrometheusService::gaugeInt("connections_total_number", util::prometheus::Labels{{{"status", "connected"}}});
+    std::function<void()> onLastConnection_;
+
 public:
     ConnectionHandler(
         ProcessingPolicy processingPolicy,
@@ -106,7 +113,7 @@ public:
     stopConnection(Connection& connection, boost::asio::yield_context yield);
 
     void
-    stop();
+    stop(boost::asio::yield_context yield);
 
     bool
     isStopping() const;

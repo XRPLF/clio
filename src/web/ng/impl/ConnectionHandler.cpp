@@ -35,10 +35,12 @@
 #include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/error.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/websocket/error.hpp>
 
+#include <chrono>
 #include <cstddef>
 #include <memory>
 #include <optional>
@@ -144,6 +146,7 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
         stopConnection(connectionRef, yield);
         return;
     }
+    ++connectionsCounter_.get();
 
     auto stopSignalConnection = onStop_.connect([&connectionRef, yield]() {
         boost::asio::spawn(yield, [&connectionRef](boost::asio::yield_context innerYield) {
@@ -192,6 +195,10 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
 
     onDisconnectHook_(connectionRef);
     LOG(log_.trace()) << connectionRef.tag() << "Processing finished";
+
+    --connectionsCounter_.get();
+    if (connectionsCounter_.get().value() == 0 && stopping_ && onLastConnection_)
+        onLastConnection_();
 }
 
 void
@@ -207,10 +214,18 @@ ConnectionHandler::stopConnection(Connection& connection, boost::asio::yield_con
 }
 
 void
-ConnectionHandler::stop()
+ConnectionHandler::stop(boost::asio::yield_context yield)
 {
     *stopping_ = true;
     onStop_();
+    if (connectionsCounter_.get().value() == 0)
+        return;
+
+    // Wait for server to disconnect all the users
+    boost::asio::steady_timer timer{yield.get_executor(), std::chrono::steady_clock::duration::max()};
+    onLastConnection_ = [&timer]() { timer.cancel(); };
+    boost::system::error_code error;
+    timer.async_wait(yield[error]);
 }
 
 bool

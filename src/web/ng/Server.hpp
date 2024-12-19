@@ -147,11 +147,11 @@ public:
     run();
 
     /**
-     * @brief Stop the server.
+     * @brief Stop the server. This method will asynchronously sleep unless all the users are disconnected.
      * @note Stopping the server cause graceful shutdown of all connections. And rejecting new connections.
      */
     void
-    stop();
+    stop(boost::asio::yield_context yield);
 
 private:
     void

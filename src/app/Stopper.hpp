@@ -19,37 +19,39 @@
 
 #pragma once
 
-#include "app/Stopper.hpp"
-#include "util/SignalsHandler.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
 
+#include <functional>
+#include <thread>
+#include <utility>
 namespace app {
 
-/**
- * @brief The main application class
- */
-class ClioApplication {
-    util::config::ClioConfigDefinition const& config_;
-    util::SignalsHandler signalsHandler_;
-    Stopper appStopper_;
+class Stopper {
+    boost::asio::io_context ctx_;
+    std::thread worker_;
+
+    std::function<void(boost::asio::yield_context)> onStop_;
 
 public:
-    /**
-     * @brief Construct a new ClioApplication object
-     *
-     * @param config The configuration of the application
-     */
-    ClioApplication(util::config::ClioConfigDefinition const& config);
+    ~Stopper()
+    {
+        if (worker_.joinable())
+            worker_.join();
+    }
 
-    /**
-     * @brief Run the application
-     *
-     * @param useNgWebServer Whether to use the new web server
-     *
-     * @return exit code
-     */
-    int
-    run(bool useNgWebServer);
+    void
+    setOnStop(std::function<void(boost::asio::yield_context)> cb)
+    {
+        onStop_ = std::move(cb);
+    }
+
+    void
+    stop()
+    {
+        worker_ = std::thread{[this]() { ctx_.run(); }};
+    }
 };
 
 }  // namespace app
