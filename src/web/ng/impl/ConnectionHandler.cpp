@@ -197,7 +197,7 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
     LOG(log_.trace()) << connectionRef.tag() << "Processing finished";
 
     --connectionsCounter_.get();
-    if (connectionsCounter_.get().value() == 0 && stopping_ && onLastConnection_)
+    if (connectionsCounter_.get().value() == 0 && stopping_)
         onLastConnection_();
 }
 
@@ -223,7 +223,7 @@ ConnectionHandler::stop(boost::asio::yield_context yield)
 
     // Wait for server to disconnect all the users
     boost::asio::steady_timer timer{yield.get_executor(), std::chrono::steady_clock::duration::max()};
-    onLastConnection_ = [&timer]() { timer.cancel(); };
+    onLastConnection_.connect([&timer]() { timer.cancel(); });
     boost::system::error_code error;
     timer.async_wait(yield[error]);
 }

@@ -86,7 +86,7 @@ private:
 
     std::reference_wrapper<util::prometheus::GaugeInt> connectionsCounter_ =
         PrometheusService::gaugeInt("connections_total_number", util::prometheus::Labels{{{"status", "connected"}}});
-    std::function<void()> onLastConnection_;
+    boost::signals2::signal<void()> onLastConnection_;
 
 public:
     ConnectionHandler(
