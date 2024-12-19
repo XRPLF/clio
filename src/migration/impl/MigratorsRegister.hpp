@@ -172,7 +172,7 @@ public:
             return "No Description";
         } else {
             // Fold expression to search through all types
-            std::string result = ([](std::string const& name) {
+            std::string const result = ([](std::string const& name) {
                 return std::string(getDescriptionIfMatch<MigratorType>(name));
             }(name) + ...);
 

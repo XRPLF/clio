@@ -61,7 +61,7 @@ struct BackendCassandraFactoryTest : SyncAsioContextTest, util::prometheus::With
         {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional()},
         {"database.cassandra.write_batch_size", ConfigValue{ConfigType::Integer}.defaultValue(20)},
         {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.defaultValue(1).optional()},
-        {"database.cassandra.request_timeout", ConfigValue{ConfigType::Integer}.defaultValue(1).optional()},
+        {"database.cassandra.request_timeout", ConfigValue{ConfigType::Integer}.optional()},
         {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},

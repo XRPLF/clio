@@ -48,7 +48,6 @@
 namespace etl {
 
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     // To find the minted token ID, we put all tokenIDs referenced in the
@@ -139,7 +138,6 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 }
 
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     ripple::uint256 const tokenID = sttx.getFieldH256(ripple::sfNFTokenID);
@@ -196,7 +194,6 @@ getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 }
 
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 getNFTokenAcceptOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     // If we have the buy offer from this tx, we can determine the owner
@@ -286,7 +283,6 @@ getNFTokenAcceptOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
 // transaction using this feature. This transaction also never returns an
 // NFTsData because it does not change the state of an NFT itself.
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 getNFTokenCancelOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     std::vector<NFTTransactionsData> txs;
@@ -313,14 +309,12 @@ getNFTokenCancelOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
 // This transaction never returns an NFTokensData because it does not
 // change the state of an NFT itself.
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 getNFTokenCreateOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     return {{NFTTransactionsData(sttx.getFieldH256(ripple::sfNFTokenID), txMeta, sttx.getTransactionID())}, {}};
 }
 
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 getNFTDataFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     if (txMeta.getResultTER() != ripple::tesSUCCESS)
@@ -348,7 +342,6 @@ getNFTDataFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 }
 
 std::vector<NFTsData>
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 getNFTDataFromObj(std::uint32_t const seq, std::string const& key, std::string const& blob)
 {
     std::vector<NFTsData> nfts;
@@ -366,7 +359,6 @@ getNFTDataFromObj(std::uint32_t const seq, std::string const& key, std::string c
 }
 
 std::vector<NFTsData>
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 getUniqueNFTsDatas(std::vector<NFTsData> const& nfts)
 {
     std::vector<NFTsData> results = nfts;

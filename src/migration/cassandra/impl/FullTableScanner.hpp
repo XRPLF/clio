@@ -89,14 +89,14 @@ class FullTableScanner {
                 return {TokenRange{minValue, maxValue}};
 
             // Safely calculate the range size using uint64_t to avoid overflow
-            uint64_t rangeSize = (static_cast<uint64_t>(maxValue) * 2) / numRanges_;
+            uint64_t const rangeSize = (static_cast<uint64_t>(maxValue) * 2) / numRanges_;
 
             std::vector<TokenRange> ranges;
             ranges.reserve(numRanges_);
 
             for (std::int64_t i = 0; i < numRanges_; ++i) {
-                int64_t start = minValue + i * rangeSize;
-                int64_t end = (i == numRanges_ - 1) ? maxValue : start + static_cast<int64_t>(rangeSize) - 1;
+                int64_t const start = minValue + (i * rangeSize);
+                int64_t const end = (i == numRanges_ - 1) ? maxValue : start + static_cast<int64_t>(rangeSize) - 1;
                 ranges.emplace_back(start, end);
             }
 

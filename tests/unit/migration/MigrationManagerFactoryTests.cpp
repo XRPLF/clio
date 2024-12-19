@@ -23,7 +23,6 @@
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"
 
-#include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
 
 struct MigrationManagerFactoryTests : public NoLoggerFixture {};

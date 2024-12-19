@@ -41,7 +41,7 @@ TEST(MigratiorStatus, FromString)
 
 TEST(MigratiorStatus, Compare)
 {
-    migration::MigratorStatus status1(migration::MigratorStatus::Migrated);
+    migration::MigratorStatus const status1(migration::MigratorStatus::Migrated);
     migration::MigratorStatus status2(migration::MigratorStatus::Migrated);
     EXPECT_TRUE(status1 == status2);
     status2 = migration::MigratorStatus(migration::MigratorStatus::NotMigrated);
