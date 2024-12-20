@@ -58,7 +58,7 @@ struct SubscriptionSourceMock {
     MOCK_METHOD(void, setForwarding, (bool));
     MOCK_METHOD(std::chrono::steady_clock::time_point, lastMessageTime, (), (const));
     MOCK_METHOD(std::string, validatedRange, (), (const));
-    MOCK_METHOD(void, stop, ());
+    MOCK_METHOD(void, stop, (boost::asio::yield_context));
 };
 
 struct ForwardingSourceMock {

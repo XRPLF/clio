@@ -65,6 +65,9 @@ public:
     virtual void
     run() = 0;
 
+    virtual void
+    stop(boost::asio::yield_context yield) = 0;
+
     /**
      * @brief Check if source is connected
      *

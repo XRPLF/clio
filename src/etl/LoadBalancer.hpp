@@ -203,6 +203,9 @@ public:
     std::optional<ETLState>
     getETLState() noexcept;
 
+    void
+    stop(boost::asio::yield_context yield);
+
 private:
     /**
      * @brief Execute a function on a randomly selected source.

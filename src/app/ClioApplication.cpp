@@ -45,6 +45,7 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/use_future.hpp>
 
 #include <cstdint>
 #include <cstdlib>
@@ -164,8 +165,11 @@ ClioApplication::run(bool const useNgWebServer)
             auto serverStopped = boost::asio::spawn(
                 yield, [&httpServer](auto innerYield) { httpServer->stop(innerYield); }, boost::asio::use_future
             );
-            // balancer->stop();
+            auto balancerStopped = boost::asio::spawn(
+                yield, [&balancer](auto innerYield) { balancer->stop(innerYield); }, boost::asio::use_future
+            );
             serverStopped.get();
+            balancerStopped.get();
             // etl->stop();
             // subscriptions->stop();
             // backend->finishWrites();

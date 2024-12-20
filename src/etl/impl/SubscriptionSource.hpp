@@ -24,6 +24,7 @@
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Mutex.hpp"
 #include "util/Retry.hpp"
+#include "util/StopHelper.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Gauge.hpp"
 #include "util/requests/Types.hpp"
@@ -39,7 +40,6 @@
 #include <chrono>
 #include <cstdint>
 #include <functional>
-#include <future>
 #include <memory>
 #include <optional>
 #include <string>
@@ -89,10 +89,10 @@ private:
 
     std::reference_wrapper<util::prometheus::GaugeInt> lastMessageTimeSecondsSinceEpoch_;
 
-    std::future<void> runFuture_;
+    util::StopHelper stopHelper_;
 
     static constexpr std::chrono::seconds WS_TIMEOUT{30};
-    static constexpr std::chrono::seconds RETRY_MAX_DELAY{30};
+    static constexpr std::chrono::seconds RETRY_MAX_DELAY{5};
     static constexpr std::chrono::seconds RETRY_DELAY{1};
 
 public:
@@ -193,7 +193,7 @@ public:
      * @brief Stop the source. The source will complete already scheduled operations but will not schedule new ones
      */
     void
-    stop();
+    stop(boost::asio::yield_context yield);
 
 private:
     void

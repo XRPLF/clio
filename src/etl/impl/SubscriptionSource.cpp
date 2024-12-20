@@ -49,7 +49,6 @@
 #include <cstdint>
 #include <exception>
 #include <expected>
-#include <future>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -94,11 +93,7 @@ SubscriptionSource::SubscriptionSource(
 
 SubscriptionSource::~SubscriptionSource()
 {
-    stop();
-    retry_.cancel();
-
-    if (runFuture_.valid())
-        runFuture_.wait();
+    stop_ = true;
 }
 
 void
@@ -157,59 +152,55 @@ SubscriptionSource::validatedRange() const
 }
 
 void
-SubscriptionSource::stop()
+SubscriptionSource::stop(boost::asio::yield_context yield)
 {
     stop_ = true;
+    stopHelper_.asyncWaitForStop(yield);
 }
 
 void
 SubscriptionSource::subscribe()
 {
-    runFuture_ = boost::asio::spawn(
-        strand_,
-        [this, _ = boost::asio::make_work_guard(strand_)](boost::asio::yield_context yield) {
-            auto connection = wsConnectionBuilder_.connect(yield);
-            if (not connection) {
-                handleError(connection.error(), yield);
+    boost::asio::spawn(strand_, [this, _ = boost::asio::make_work_guard(strand_)](boost::asio::yield_context yield) {
+        auto connection = wsConnectionBuilder_.connect(yield);
+        if (not connection) {
+            handleError(connection.error(), yield);
+            return;
+        }
+
+        wsConnection_ = std::move(connection).value();
+
+        auto const& subscribeCommand = getSubscribeCommandJson();
+        auto const writeErrorOpt = wsConnection_->write(subscribeCommand, yield, wsTimeout_);
+        if (writeErrorOpt) {
+            handleError(writeErrorOpt.value(), yield);
+            return;
+        }
+
+        isConnected_ = true;
+        LOG(log_.info()) << "Connected";
+        onConnect_();
+
+        retry_.reset();
+
+        while (!stop_) {
+            auto const message = wsConnection_->read(yield, wsTimeout_);
+            if (not message) {
+                handleError(message.error(), yield);
                 return;
             }
 
-            wsConnection_ = std::move(connection).value();
-
-            auto const& subscribeCommand = getSubscribeCommandJson();
-            auto const writeErrorOpt = wsConnection_->write(subscribeCommand, yield, wsTimeout_);
-            if (writeErrorOpt) {
-                handleError(writeErrorOpt.value(), yield);
+            auto const handleErrorOpt = handleMessage(message.value());
+            if (handleErrorOpt) {
+                handleError(handleErrorOpt.value(), yield);
                 return;
             }
-
-            isConnected_ = true;
-            LOG(log_.info()) << "Connected";
-            onConnect_();
-
-            retry_.reset();
-
-            while (!stop_) {
-                auto const message = wsConnection_->read(yield, wsTimeout_);
-                if (not message) {
-                    handleError(message.error(), yield);
-                    return;
-                }
-
-                auto const handleErrorOpt = handleMessage(message.value());
-                if (handleErrorOpt) {
-                    handleError(handleErrorOpt.value(), yield);
-                    return;
-                }
-            }
-            // Close the connection
-            handleError(
-                util::requests::RequestError{"Subscription source stopped", boost::asio::error::operation_aborted},
-                yield
-            );
-        },
-        boost::asio::use_future
-    );
+        }
+        // Close the connection
+        handleError(
+            util::requests::RequestError{"Subscription source stopped", boost::asio::error::operation_aborted}, yield
+        );
+    });
 }
 
 std::optional<util::requests::RequestError>
@@ -299,6 +290,8 @@ SubscriptionSource::handleError(util::requests::RequestError const& error, boost
     logError(error);
     if (not stop_) {
         retry_.retry([this] { subscribe(); });
+    } else {
+        stopHelper_.readyToStop();
     }
 }
 

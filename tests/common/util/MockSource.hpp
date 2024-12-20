@@ -23,7 +23,6 @@
 #include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ObjectView.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -49,6 +48,7 @@
 
 struct MockSource : etl::SourceBase {
     MOCK_METHOD(void, run, (), (override));
+    MOCK_METHOD(void, stop, (boost::asio::yield_context), (override));
     MOCK_METHOD(bool, isConnected, (), (const, override));
     MOCK_METHOD(void, setForwarding, (bool), (override));
     MOCK_METHOD(boost::json::object, toJson, (), (const, override));
@@ -87,6 +87,12 @@ public:
     run() override
     {
         mock_->run();
+    }
+
+    void
+    stop(boost::asio::yield_context yield) override
+    {
+        mock_->stop(yield);
     }
 
     bool
