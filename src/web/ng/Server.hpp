@@ -149,6 +149,8 @@ public:
     /**
      * @brief Stop the server. This method will asynchronously sleep unless all the users are disconnected.
      * @note Stopping the server cause graceful shutdown of all connections. And rejecting new connections.
+     *
+     * @param yield The coroutine context.
      */
     void
     stop(boost::asio::yield_context yield);

@@ -26,8 +26,12 @@
 #include <functional>
 #include <thread>
 #include <utility>
+
 namespace app {
 
+/**
+ * @brief Application stopper class. On stop it will create a new thread to run all the shutdown tasks.
+ */
 class Stopper {
     boost::asio::io_context ctx_;
     std::thread worker_;
@@ -35,18 +39,29 @@ class Stopper {
     std::function<void(boost::asio::yield_context)> onStop_;
 
 public:
+    /**
+     * @brief Destroy the Stopper object
+     */
     ~Stopper()
     {
         if (worker_.joinable())
             worker_.join();
     }
 
+    /**
+     * @brief Set the callabck to be called when the application is stopped.
+     *
+     * @param cb The callback to be called on application stop.
+     */
     void
     setOnStop(std::function<void(boost::asio::yield_context)> cb)
     {
         onStop_ = std::move(cb);
     }
 
+    /**
+     * @brief Stop the application and run the shutdown tasks.
+     */
     void
     stop()
     {

@@ -28,14 +28,25 @@
 
 namespace util {
 
+/**
+ * @brief Helper class to stop a class asynchronously.
+ */
 class StopHelper {
     boost::signals2::signal<void()> onStopReady_;
     std::unique_ptr<std::atomic_bool> stopped_ = std::make_unique<std::atomic_bool>(false);
 
 public:
+    /**
+     * @brief Notify that the class is ready to stop.
+     */
     void
     readyToStop();
 
+    /**
+     * @brief Wait for the class to stop.
+     *
+     * @param yield The coroutine context
+     */
     void
     asyncWaitForStop(boost::asio::yield_context yield);
 };

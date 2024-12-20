@@ -65,6 +65,12 @@ public:
     virtual void
     run() = 0;
 
+    /**
+     * @brief Stop Source.
+     * @note This method will asynchronously wait for source to be stopped.
+     *
+     * @param yield The coroutine context.
+     */
     virtual void
     stop(boost::asio::yield_context yield) = 0;
 

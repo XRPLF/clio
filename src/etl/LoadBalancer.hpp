@@ -203,6 +203,12 @@ public:
     std::optional<ETLState>
     getETLState() noexcept;
 
+    /**
+     * @brief Stop the load balancer. This will stop all subscription sources.
+     * @note This function will asynchronously wait for all sources to stop.
+     *
+     * @param yield The coroutine context
+     */
     void
     stop(boost::asio::yield_context yield);
 
