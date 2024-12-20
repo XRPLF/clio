@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/StopHelper.hpp"
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Gauge.hpp"
@@ -86,7 +87,8 @@ private:
 
     std::reference_wrapper<util::prometheus::GaugeInt> connectionsCounter_ =
         PrometheusService::gaugeInt("connections_total_number", util::prometheus::Labels{{{"status", "connected"}}});
-    boost::signals2::signal<void()> onLastConnection_;
+
+    util::StopHelper stopHelper_;
 
 public:
     ConnectionHandler(

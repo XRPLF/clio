@@ -22,6 +22,7 @@ target_sources(
           requests/impl/SslContext.cpp
           ResponseExpirationCache.cpp
           SignalsHandler.cpp
+          StopHelper.cpp
           Taggable.cpp
           TerminationHandler.cpp
           TimeUtils.cpp

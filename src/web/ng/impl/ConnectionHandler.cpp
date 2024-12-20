@@ -40,7 +40,6 @@
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/websocket/error.hpp>
 
-#include <chrono>
 #include <cstddef>
 #include <memory>
 #include <optional>
@@ -198,7 +197,7 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
 
     --connectionsCounter_.get();
     if (connectionsCounter_.get().value() == 0 && stopping_)
-        onLastConnection_();
+        stopHelper_.readyToStop();
 }
 
 void
@@ -222,10 +221,7 @@ ConnectionHandler::stop(boost::asio::yield_context yield)
         return;
 
     // Wait for server to disconnect all the users
-    boost::asio::steady_timer timer{yield.get_executor(), std::chrono::steady_clock::duration::max()};
-    onLastConnection_.connect([&timer]() { timer.cancel(); });
-    boost::system::error_code error;
-    timer.async_wait(yield[error]);
+    stopHelper_.asyncWaitForStop(yield);
 }
 
 bool
