@@ -162,14 +162,12 @@ public:
 
     using Timer = typename ContextHolderType::Timer;
 
-    /**
-     * @brief Create a new execution context with the given number of threads.
-     *
-     * Note: scheduled operations are always stoppable
-     * @tparam T The type of the value returned by operations
-     */
+    // note: scheduled operations are always stoppable
     template <typename T>
     using ScheduledOperation = ScheduledOperation<BasicExecutionContext, StoppableOperation<T>>;
+
+    // note: repeating operations are always stoppable and must return void
+    using RepeatedOperation = RepeatingOperation<BasicExecutionContext>;
 
     /**
      * @brief Create a new execution context with the given number of threads.
@@ -181,7 +179,7 @@ public:
     }
 
     /**
-     * @brief Stops and joins the underlying thread pool.
+     * @brief Stops the underlying thread pool.
      */
     ~BasicExecutionContext()
     {
@@ -269,6 +267,23 @@ public:
                     );
                 }
             );
+        }
+    }
+
+    /**
+     * @brief Schedule a repeating operation on the execution context
+     *
+     * @param interval The interval at which the operation should be repeated
+     * @param fn The block of code to execute; no args allowed and return type must be void
+     * @return A repeating stoppable operation that can be used to wait for its cancellation
+     */
+    [[nodiscard]] auto
+    executeRepeatedly(SomeStdDuration auto interval, SomeHandlerWithoutStopToken auto&& fn) noexcept(isNoexcept)
+    {
+        if constexpr (not std::is_same_v<decltype(TimerContextProvider::getContext(*this)), decltype(*this)>) {
+            return TimerContextProvider::getContext(*this).executeRepeatedly(interval, std::forward<decltype(fn)>(fn));
+        } else {
+            return RepeatedOperation(impl::extractAssociatedExecutor(*this), interval, std::forward<decltype(fn)>(fn));
         }
     }
 

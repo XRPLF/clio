@@ -50,6 +50,9 @@ struct MockExecutionContext {
     template <typename T>
     using ScheduledOperation = MockScheduledOperation<T>;
 
+    template <typename T>
+    using RepeatingOperation = MockRepeatingOperation<T>;
+
     MOCK_METHOD(Operation<std::any> const&, execute, (std::function<std::any()>), ());
     MOCK_METHOD(
         Operation<std::any> const&,
@@ -75,6 +78,13 @@ struct MockExecutionContext {
         (std::chrono::milliseconds, std::function<std::any(util::async::AnyStopToken, bool)>),
         ()
     );
+    MOCK_METHOD(
+        RepeatingOperation<std::any> const&,
+        executeRepeatedly,
+        (std::chrono::milliseconds, std::function<std::any()>),
+        ()
+    );
+
     MOCK_METHOD(MockStrand const&, makeStrand, (), ());
     MOCK_METHOD(void, stop, (), (const));
     MOCK_METHOD(void, join, (), ());

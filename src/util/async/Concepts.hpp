@@ -46,11 +46,32 @@ concept SomeCancellable = requires(T v) {
 };
 
 /**
+ * @brief Specifies the interface for an operation that can be awaited
+ */
+template <typename T>
+concept SomeAwaitable = requires(T v) {
+    { v.wait() } -> std::same_as<void>;
+};
+
+/**
+ * @brief Specifies the interface for an operation that can be aborted
+ */
+template <typename T>
+concept SomeAbortable = requires(T v) {
+    { v.abort() } -> std::same_as<void>;
+};
+
+/**
  * @brief Specifies the interface for an operation
  */
 template <typename T>
-concept SomeOperation = requires(T v) {
-    { v.wait() } -> std::same_as<void>;
+concept SomeOperation = SomeAwaitable<T> or SomeAbortable<T>;
+
+/**
+ * @brief Specifies the interface for an operation
+ */
+template <typename T>
+concept SomeOperationWithData = SomeOperation<T> and requires(T v) {
     { v.get() };
 };
 

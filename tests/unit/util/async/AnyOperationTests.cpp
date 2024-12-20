@@ -36,15 +36,18 @@ struct AnyOperationTests : Test {
     using OperationType = MockOperation<std::expected<std::any, ExecutionError>>;
     using StoppableOperationType = MockStoppableOperation<std::expected<std::any, ExecutionError>>;
     using ScheduledOperationType = MockScheduledOperation<std::expected<std::any, ExecutionError>>;
+    using RepeatingOperationType = MockRepeatingOperation<std::expected<std::any, ExecutionError>>;
 
     NaggyMock<OperationType> mockOp;
     NaggyMock<StoppableOperationType> mockStoppableOp;
     NaggyMock<ScheduledOperationType> mockScheduledOp;
+    NaggyMock<RepeatingOperationType> mockRepeatingOp;
 
     AnyOperation<void> voidOp{impl::ErasedOperation(static_cast<OperationType&>(mockOp))};
     AnyOperation<void> voidStoppableOp{impl::ErasedOperation(static_cast<StoppableOperationType&>(mockStoppableOp))};
     AnyOperation<int> intOp{impl::ErasedOperation(static_cast<OperationType&>(mockOp))};
     AnyOperation<void> scheduledVoidOp{impl::ErasedOperation(static_cast<ScheduledOperationType&>(mockScheduledOp))};
+    AnyOperation<void> repeatingOp{impl::ErasedOperation(static_cast<RepeatingOperationType&>(mockRepeatingOp))};
 };
 using AnyOperationDeathTest = AnyOperationTests;
 
@@ -111,6 +114,18 @@ TEST_F(AnyOperationTests, GetIncorrectDataReturnsError)
     ASSERT_FALSE(res);
     EXPECT_TRUE(res.error().message.ends_with("Bad any cast"));
     EXPECT_TRUE(std::string{res.error()}.ends_with("Bad any cast"));
+}
+
+TEST_F(AnyOperationTests, RepeatingOpWaitPropagated)
+{
+    EXPECT_CALL(mockRepeatingOp, wait());
+    repeatingOp.wait();
+}
+
+TEST_F(AnyOperationTests, RepeatingOpRequestStopCallPropagated)
+{
+    EXPECT_CALL(mockRepeatingOp, requestStop());
+    repeatingOp.abort();
 }
 
 TEST_F(AnyOperationDeathTest, CallAbortOnNonStoppableOrCancellableOperation)

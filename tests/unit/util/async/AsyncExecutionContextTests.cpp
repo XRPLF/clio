@@ -17,15 +17,20 @@
 */
 //==============================================================================
 
+#include "util/Profiler.hpp"
+#include "util/async/Operation.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
 #include "util/async/context/SyncExecutionContext.hpp"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <cstddef>
 #include <semaphore>
 #include <stdexcept>
 #include <string>
+#include <thread>
 
 using namespace util::async;
 using ::testing::Types;
@@ -36,6 +41,12 @@ template <typename T>
 struct ExecutionContextTests : public ::testing::Test {
     using ExecutionContextType = T;
     ExecutionContextType ctx{2};
+
+    ~ExecutionContextTests() override
+    {
+        ctx.stop();
+        ctx.join();
+    }
 };
 
 TYPED_TEST_CASE(ExecutionContextTests, ExecutionContextTypes);
@@ -165,6 +176,23 @@ TYPED_TEST(ExecutionContextTests, timerUnknownException)
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("unknown"));
     EXPECT_TRUE(std::string{err}.ends_with("unknown"));
+}
+
+TYPED_TEST(ExecutionContextTests, repeatingOperation)
+{
+    auto const repeatDelay = std::chrono::milliseconds{1};
+    auto const timeout = std::chrono::milliseconds{15};
+    auto callCount = 0uz;
+
+    auto res = this->ctx.executeRepeatedly(repeatDelay, [&] { ++callCount; });
+    auto timeSpent = util::timed([timeout] { std::this_thread::sleep_for(timeout); });  // calculate actual time spent
+
+    res.abort();  // outside of the above stopwatch because it blocks and can take arbitrary time
+    auto const expectedPureCalls = timeout.count() / repeatDelay.count();
+    auto const expectedActualCount = timeSpent / repeatDelay.count();
+
+    EXPECT_GE(callCount, expectedPureCalls / 2u);  // expect at least half of the scheduled calls
+    EXPECT_LE(callCount, expectedActualCount);     // never should be called more times than possible before timeout
 }
 
 TYPED_TEST(ExecutionContextTests, strandMove)

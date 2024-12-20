@@ -30,13 +30,13 @@
 #include "web/ng/impl/HttpConnection.hpp"
 #include "web/ng/impl/WsConnection.hpp"
 
-#include <boost/asio/buffer.hpp>
 #include <boost/asio/error.hpp>
+#include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/asio/use_future.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/status.hpp>
 #include <gmock/gmock.h>
@@ -48,6 +48,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <thread>
 #include <utility>
 
 using namespace web::ng::impl;

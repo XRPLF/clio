@@ -19,16 +19,24 @@
 
 #pragma once
 
+#include "util/Repeat.hpp"
 #include "util/async/Concepts.hpp"
+#include "util/async/Error.hpp"
 #include "util/async/Outcome.hpp"
 #include "util/async/context/impl/Cancellation.hpp"
 #include "util/async/context/impl/Timer.hpp"
 
+#include <fmt/core.h>
+
+#include <chrono>
+#include <concepts>
 #include <condition_variable>
+#include <expected>
 #include <future>
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <thread>
 
 namespace util::async {
 namespace impl {
@@ -180,5 +188,51 @@ using Operation = impl::BasicOperation<Outcome<RetType>>;
  */
 template <typename CtxType, typename OpType>
 using ScheduledOperation = impl::BasicScheduledOperation<CtxType, OpType>;
+
+/**
+ * @brief The `future` side of async operations that automatically repeat until aborted
+ *
+ * @note The current implementation requires the user provided function to return void and to take no arguments. There
+ * is also no mechanism to request the repeating task to stop from inside of the user provided block of code.
+ *
+ * @tparam CtxType The type of the execution context
+ */
+template <typename CtxType>
+class RepeatingOperation {
+    util::Repeat repeat_;
+
+public:
+    /**
+     * @brief Construct a new Repeating Operation object
+     * @note The first invocation of the user-provided function happens with no delay
+     *
+     * @param executor The executor to operate on
+     * @param interval Time to wait before repeating the user-provided block of code
+     * @param fn The function to execute repeatedly
+     */
+    RepeatingOperation(auto& executor, std::chrono::steady_clock::duration interval, std::invocable auto&& fn)
+        : repeat_(executor)
+    {
+        repeat_.start(interval, std::forward<decltype(fn)>(fn));
+    }
+
+    RepeatingOperation(RepeatingOperation const&) = delete;
+    RepeatingOperation&
+    operator=(RepeatingOperation const&) = delete;
+    RepeatingOperation(RepeatingOperation&&) = default;
+    RepeatingOperation&
+    operator=(RepeatingOperation&&) = default;
+
+    /**
+     * @brief Aborts the operation and the repeating timer
+     * @note This call blocks until the underlying timer is cancelled
+     * @warning Calling this from inside of the repeating operation yields a deadlock
+     */
+    void
+    abort() noexcept
+    {
+        repeat_.stop();
+    }
+};
 
 }  // namespace util::async

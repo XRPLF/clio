@@ -27,7 +27,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <functional>
 
 namespace web::dosguard {
 
@@ -36,7 +35,7 @@ IntervalSweepHandler::IntervalSweepHandler(
     boost::asio::io_context& ctx,
     BaseDOSGuard& dosGuard
 )
-    : repeat_{std::ref(ctx)}
+    : repeat_{ctx}
 {
     auto const sweepInterval{std::max(
         std::chrono::milliseconds{1u},

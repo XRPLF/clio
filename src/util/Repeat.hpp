@@ -29,6 +29,7 @@
 #include <chrono>
 #include <concepts>
 #include <memory>
+#include <semaphore>
 
 namespace util {
 
@@ -37,21 +38,35 @@ namespace util {
  * @note io_context must be stopped before the Repeat object is destroyed. Otherwise it is undefined behavior
  */
 class Repeat {
-    boost::asio::steady_timer timer_;
-    std::shared_ptr<std::atomic_bool> stopped_ = std::make_shared<std::atomic_bool>(true);
+    struct Control {
+        boost::asio::steady_timer timer;
+        std::atomic_bool stopping{true};
+        std::binary_semaphore semaphore{0};
+
+        Control(auto& ctx) : timer(ctx)
+        {
+        }
+    };
+
+    std::unique_ptr<Control> control_;
 
 public:
     /**
      * @brief Construct a new Repeat object
+     * @note The `ctx` parameter is `auto` so that this util supports `strand` and `thread_pool` as well as `io_context`
      *
-     * @param ioc The io_context to use
+     * @param ctx The io_context-like object to use
      */
-    Repeat(boost::asio::io_context& ioc);
+    Repeat(auto& ctx) : control_(std::make_unique<Control>(ctx))
+    {
+    }
 
-    /**
-     * @brief Destroy the Repeat object
-     */
-    ~Repeat();
+    Repeat(Repeat const&) = delete;
+    Repeat&
+    operator=(Repeat const&) = delete;
+    Repeat(Repeat&&) = default;
+    Repeat&
+    operator=(Repeat&&) = default;
 
     /**
      * @brief Stop repeating
@@ -72,9 +87,8 @@ public:
     void
     start(std::chrono::steady_clock::duration interval, Action&& action)
     {
-        ASSERT(*stopped_, "Repeat should be stopped before the next use");
-        // Create a new variable for each start() to make each start()-stop() session independent
-        stopped_ = std::make_shared<std::atomic_bool>(false);
+        ASSERT(control_->stopping, "Should be stopped before starting");
+        control_->stopping = false;
         startImpl(interval, std::forward<Action>(action));
     }
 
@@ -83,11 +97,10 @@ private:
     void
     startImpl(std::chrono::steady_clock::duration interval, Action&& action)
     {
-        timer_.expires_after(interval);
-        timer_.async_wait([this, interval, stopping = stopped_, action = std::forward<Action>(action)](
-                              auto const& errorCode
-                          ) mutable {
-            if (errorCode or *stopping) {
+        control_->timer.expires_after(interval);
+        control_->timer.async_wait([this, interval, action = std::forward<Action>(action)](auto const& ec) mutable {
+            if (ec or control_->stopping) {
+                control_->semaphore.release();
                 return;
             }
             action();
