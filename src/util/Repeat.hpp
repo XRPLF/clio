@@ -29,7 +29,7 @@
 #include <chrono>
 #include <concepts>
 #include <memory>
-#include <semaphore>
+#include <utility>
 
 namespace util {
 
@@ -38,17 +38,8 @@ namespace util {
  * @note io_context must be stopped before the Repeat object is destroyed. Otherwise it is undefined behavior
  */
 class Repeat {
-    struct Control {
-        boost::asio::steady_timer timer;
-        std::atomic_bool stopping{true};
-        std::binary_semaphore semaphore{0};
-
-        Control(auto& ctx) : timer(ctx)
-        {
-        }
-    };
-
-    std::unique_ptr<Control> control_;
+    boost::asio::steady_timer timer_;
+    std::shared_ptr<std::atomic_bool> stopping_ = std::make_shared<std::atomic_bool>(true);
 
 public:
     /**
@@ -57,9 +48,11 @@ public:
      *
      * @param ctx The io_context-like object to use
      */
-    Repeat(auto& ctx) : control_(std::make_unique<Control>(ctx))
+    Repeat(auto& ctx) : timer_(ctx)
     {
     }
+
+    ~Repeat();
 
     Repeat(Repeat const&) = delete;
     Repeat&
@@ -87,26 +80,40 @@ public:
     void
     start(std::chrono::steady_clock::duration interval, Action&& action)
     {
-        ASSERT(control_->stopping, "Should be stopped before starting");
-        control_->stopping = false;
-        startImpl(interval, std::forward<Action>(action));
+        ASSERT(*stopping_, "Should be stopped before starting");
+        *stopping_ = false;
+        startImpl(interval, std::forward<Action>(action), stopping_, timer_);
     }
 
 private:
     template <std::invocable Action>
-    void
-    startImpl(std::chrono::steady_clock::duration interval, Action&& action)
+    static void
+    startImpl(
+        std::chrono::steady_clock::duration interval,
+        Action&& action,
+        std::shared_ptr<std::atomic_bool> stopping,
+        boost::asio::steady_timer& timer
+    )
     {
-        control_->timer.expires_after(interval);
-        control_->timer.async_wait([this, interval, action = std::forward<Action>(action)](auto const& ec) mutable {
-            if (ec or control_->stopping) {
-                control_->semaphore.release();
-                return;
-            }
-            action();
+        if (*stopping) {
+            std::cout << "Exit 1" << std::endl;
+            return;
+        }
 
-            startImpl(interval, std::forward<Action>(action));
-        });
+        timer.expires_after(interval);
+        timer.async_wait(
+            [interval, action = std::forward<Action>(action), &timer, stopping = std::move(stopping)](auto&&) mutable {
+                if (*stopping) {
+                    std::cout << "Exit 2" << std::endl;
+                    return;
+                }
+                std::cout << "action()" << std::endl;
+                action();
+
+                std::cout << "restart" << std::endl;
+                startImpl(interval, std::forward<Action>(action), std::move(stopping), timer);
+            }
+        );
     }
 };
 

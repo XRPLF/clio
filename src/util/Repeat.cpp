@@ -21,14 +21,19 @@
 
 namespace util {
 
+Repeat::~Repeat()
+{
+    *stopping_ = true;
+    std::cout << "~" << std::endl;
+}
+
 void
 Repeat::stop()
 {
-    if (control_->stopping)
+    if (*stopping_)
         return;
-    control_->stopping = true;
-    control_->timer.cancel();
-    control_->semaphore.acquire();
+    *stopping_ = true;
+    timer_.cancel();
 }
 
 }  // namespace util
