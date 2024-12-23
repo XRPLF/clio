@@ -5,4 +5,4 @@ target_sources(
                          cassandra/impl/ObjectsAdapter.cpp cassandra/impl/TransactionsAdapter.cpp
 )
 
-target_link_libraries(clio_migration PRIVATE clio_util clio_etl)
+target_link_libraries(clio_migration PRIVATE clio_util clio_data)
