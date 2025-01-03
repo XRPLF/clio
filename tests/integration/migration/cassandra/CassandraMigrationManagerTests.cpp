@@ -310,7 +310,8 @@ TEST_F(MigrationCassandraManagerLedgerTableTest, MigrateExampleLedgerMigrator)
     EXPECT_EQ(newTableSize, gLedgerHeaderRawData.size());
 
     auto const getAccountHash = [this](std::uint32_t seq) {
-        return data::synchronous([&](auto ctx) { return testMigrationBackend_->fetchAccountHashViaSequence(seq, ctx); });
+        return data::synchronous([&](auto ctx) { return testMigrationBackend_->fetchAccountHashViaSequence(seq, ctx); }
+        );
     };
 
     EXPECT_EQ(

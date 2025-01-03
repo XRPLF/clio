@@ -229,7 +229,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonExistLedgerViaLedgerHash)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
-        auto const output = handler.process(input, Context{.yield=yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -253,7 +253,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonExistLedgerViaLedgerIndex)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
-        auto const output = handler.process(input, Context{.yield=yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -279,7 +279,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonExistLedgerViaLedgerHash2)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
-        auto const output = handler.process(input, Context{.yield=yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -302,7 +302,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
-        auto const output = handler.process(input, Context{.yield=yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -328,7 +328,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NoNFT)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
-        auto const output = handler.process(input, Context{.yield=yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "objectNotFound");

@@ -290,7 +290,7 @@ genTransactions(uint32_t seq1, uint32_t seq2)
 TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardTrue)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns=transactions, .cursor=TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -434,7 +434,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV1)
                                 })";
 
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns=transactions, .cursor=TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -585,7 +585,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
                                 })";
 
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns=transactions, .cursor=TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     EXPECT_CALL(
         *backend_,
         fetchNFTTransactions(
@@ -624,7 +624,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
 TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns=transactions, .cursor=TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -661,7 +661,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
 TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns=transactions, .cursor=TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -702,7 +702,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
 TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV1)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns=transactions, .cursor=TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -757,7 +757,7 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV1)
 TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV2)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns=transactions, .cursor=TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     EXPECT_CALL(
         *backend_,
         fetchNFTTransactions(
@@ -811,7 +811,7 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV2)
 TEST_F(RPCNFTHistoryHandlerTest, LimitAndMarker)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns=transactions, .cursor=TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -851,7 +851,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerIndex)
 {
     // adjust the order for forward->false
     auto const transactions = genTransactions(kMAX_SEQ - 1, kMIN_SEQ + 1);
-    auto const transCursor = TransactionsAndCursor{.txns=transactions, .cursor=TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -940,7 +940,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
 {
     // adjust the order for forward->false
     auto const transactions = genTransactions(kMAX_SEQ - 1, kMIN_SEQ + 1);
-    auto const transCursor = TransactionsAndCursor{.txns=transactions, .cursor=TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -982,7 +982,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
 TEST_F(RPCNFTHistoryHandlerTest, TxLessThanMinSeq)
 {
     auto const transactions = genTransactions(kMAX_SEQ - 1, kMIN_SEQ + 1);
-    auto const transCursor = TransactionsAndCursor{.txns=transactions, .cursor=TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -1023,7 +1023,7 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLessThanMinSeq)
 TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
 {
     auto const transactions = genTransactions(kMAX_SEQ - 1, kMIN_SEQ + 1);
-    auto const transCursor = TransactionsAndCursor{.txns=transactions, .cursor=TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -1064,7 +1064,7 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
 TEST_F(RPCNFTHistoryHandlerTest, LimitMoreThanMax)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns=transactions, .cursor=TransactionsCursor{12, 34}};
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,

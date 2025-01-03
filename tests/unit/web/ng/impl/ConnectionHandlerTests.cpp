@@ -69,13 +69,7 @@ struct ConnectionHandlerTest : SyncAsioContextTest {
         : tagFactory{util::config::ClioConfigDefinition{
               {"log_tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
           }}
-        , connectionHandler{
-              policy,
-              maxParallelConnections,
-              tagFactory,
-              std::nullopt,
-              onDisconnectMock.AsStdFunction()
-          }
+        , connectionHandler{policy, maxParallelConnections, tagFactory, std::nullopt, onDisconnectMock.AsStdFunction()}
     {
     }
 

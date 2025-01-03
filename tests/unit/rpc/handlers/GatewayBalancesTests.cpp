@@ -444,8 +444,8 @@ generateNormalPathTestBundles()
     overflowState.setFieldAmount(ripple::sfBalance, ripple::STAmount(getIssue("JPY", kISSUER), min64, 80));
     return std::vector<NormalTestBundle>{
         NormalTestBundle{
-            .testName="AllBranches",
-            .mockedDir=createOwnerDirLedgerObject(
+            .testName = "AllBranches",
+            .mockedDir = createOwnerDirLedgerObject(
                 {ripple::uint256{kINDEX2},
                  ripple::uint256{kINDEX2},
                  ripple::uint256{kINDEX2},
@@ -454,20 +454,22 @@ generateNormalPathTestBundles()
                  ripple::uint256{kINDEX2}},
                 kINDEX1
             ),
-            .mockedObjects=std::vector{// hotwallet
-                        createRippleStateLedgerObject("USD", kISSUER, -10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123),
-                        // hotwallet
-                        createRippleStateLedgerObject("CNY", kISSUER, -20, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123),
-                        // positive balance -> asset
-                        createRippleStateLedgerObject("EUR", kISSUER, 30, kACCOUNT, 100, kACCOUNT3, 200, kTXN_ID, 123),
-                        // positive balance -> asset
-                        createRippleStateLedgerObject("JPY", kISSUER, 40, kACCOUNT, 100, kACCOUNT3, 200, kTXN_ID, 123),
-                        // obligation
-                        createRippleStateLedgerObject("JPY", kISSUER, -50, kACCOUNT, 10, kACCOUNT3, 20, kTXN_ID, 123),
-                        frozenState
+            .mockedObjects =
+                std::vector{
+                    // hotwallet
+                    createRippleStateLedgerObject("USD", kISSUER, -10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123),
+                    // hotwallet
+                    createRippleStateLedgerObject("CNY", kISSUER, -20, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123),
+                    // positive balance -> asset
+                    createRippleStateLedgerObject("EUR", kISSUER, 30, kACCOUNT, 100, kACCOUNT3, 200, kTXN_ID, 123),
+                    // positive balance -> asset
+                    createRippleStateLedgerObject("JPY", kISSUER, 40, kACCOUNT, 100, kACCOUNT3, 200, kTXN_ID, 123),
+                    // obligation
+                    createRippleStateLedgerObject("JPY", kISSUER, -50, kACCOUNT, 10, kACCOUNT3, 20, kTXN_ID, 123),
+                    frozenState
 
-            },
-            .expectedJson=fmt::format(
+                },
+            .expectedJson = fmt::format(
                 R"({{
                     "obligations":{{
                         "JPY":"50"
@@ -513,13 +515,15 @@ generateNormalPathTestBundles()
                 kACCOUNT3,
                 kACCOUNT
             ),
-            .hotwallet=fmt::format(R"("hotwallet": "{}")", kACCOUNT2)
+            .hotwallet = fmt::format(R"("hotwallet": "{}")", kACCOUNT2)
         },
         NormalTestBundle{
-            .testName="NoHotwallet",
-            .mockedDir=createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1),
-            .mockedObjects=std::vector{createRippleStateLedgerObject("JPY", kISSUER, -50, kACCOUNT, 10, kACCOUNT3, 20, kTXN_ID, 123)},
-            .expectedJson=fmt::format(
+            .testName = "NoHotwallet",
+            .mockedDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1),
+            .mockedObjects = std::vector{createRippleStateLedgerObject(
+                "JPY", kISSUER, -50, kACCOUNT, 10, kACCOUNT3, 20, kTXN_ID, 123
+            )},
+            .expectedJson = fmt::format(
                 R"({{
                     "obligations":{{
                         "JPY":"50"
@@ -533,10 +537,10 @@ generateNormalPathTestBundles()
             .hotwallet = R"("ledger_index" : "validated")"
         },
         NormalTestBundle{
-            .testName="ObligationOverflow",
-            .mockedDir=createOwnerDirLedgerObject({ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}}, kINDEX1),
-            .mockedObjects=std::vector{overflowState, overflowState},
-            .expectedJson=fmt::format(
+            .testName = "ObligationOverflow",
+            .mockedDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}}, kINDEX1),
+            .mockedObjects = std::vector{overflowState, overflowState},
+            .expectedJson = fmt::format(
                 R"({{
                     "obligations":{{
                         "JPY":"9999999999999999e80"
@@ -550,20 +554,22 @@ generateNormalPathTestBundles()
             .hotwallet = R"("ledger_index" : "validated")"
         },
         NormalTestBundle{
-            .testName="HighID",
-            .mockedDir=createOwnerDirLedgerObject(
+            .testName = "HighID",
+            .mockedDir = createOwnerDirLedgerObject(
                 {ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}
                 },
                 kINDEX1
             ),
-            .mockedObjects=std::vector{// hotwallet
-                        createRippleStateLedgerObject("USD", kISSUER, 10, kACCOUNT2, 100, kACCOUNT, 200, kTXN_ID, 123),
-                        // hotwallet
-                        createRippleStateLedgerObject("CNY", kISSUER, 20, kACCOUNT2, 100, kACCOUNT, 200, kTXN_ID, 123),
-                        createRippleStateLedgerObject("EUR", kISSUER, 30, kACCOUNT3, 100, kACCOUNT, 200, kTXN_ID, 123),
-                        createRippleStateLedgerObject("JPY", kISSUER, -50, kACCOUNT3, 10, kACCOUNT, 20, kTXN_ID, 123)
-            },
-            .expectedJson=fmt::format(
+            .mockedObjects =
+                std::vector{
+                    // hotwallet
+                    createRippleStateLedgerObject("USD", kISSUER, 10, kACCOUNT2, 100, kACCOUNT, 200, kTXN_ID, 123),
+                    // hotwallet
+                    createRippleStateLedgerObject("CNY", kISSUER, 20, kACCOUNT2, 100, kACCOUNT, 200, kTXN_ID, 123),
+                    createRippleStateLedgerObject("EUR", kISSUER, 30, kACCOUNT3, 100, kACCOUNT, 200, kTXN_ID, 123),
+                    createRippleStateLedgerObject("JPY", kISSUER, -50, kACCOUNT3, 10, kACCOUNT, 20, kTXN_ID, 123)
+                },
+            .expectedJson = fmt::format(
                 R"({{
                     "obligations":{{
                         "EUR":"30"
@@ -596,19 +602,20 @@ generateNormalPathTestBundles()
                 kACCOUNT3,
                 kACCOUNT
             ),
-            .hotwallet=fmt::format(R"("hotwallet": "{}")", kACCOUNT2)
+            .hotwallet = fmt::format(R"("hotwallet": "{}")", kACCOUNT2)
         },
         NormalTestBundle{
-            .testName="HotWalletArray",
-            .mockedDir=createOwnerDirLedgerObject(
+            .testName = "HotWalletArray",
+            .mockedDir = createOwnerDirLedgerObject(
                 {ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}}, kINDEX1
             ),
-            .mockedObjects=std::vector{
-                createRippleStateLedgerObject("USD", kISSUER, -10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123),
-                createRippleStateLedgerObject("CNY", kISSUER, -20, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123),
-                createRippleStateLedgerObject("EUR", kISSUER, -30, kACCOUNT, 100, kACCOUNT3, 200, kTXN_ID, 123)
+            .mockedObjects =
+                std::vector{
+                    createRippleStateLedgerObject("USD", kISSUER, -10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123),
+                    createRippleStateLedgerObject("CNY", kISSUER, -20, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123),
+                    createRippleStateLedgerObject("EUR", kISSUER, -30, kACCOUNT, 100, kACCOUNT3, 200, kTXN_ID, 123)
 
-            },
+                },
             .expectedJson = fmt::format(
                 R"({{
                     "balances":{{
@@ -637,7 +644,7 @@ generateNormalPathTestBundles()
                 kACCOUNT2,
                 kACCOUNT
             ),
-            .hotwallet=fmt::format(R"("hotwallet": ["{}", "{}"])", kACCOUNT2, kACCOUNT3)
+            .hotwallet = fmt::format(R"("hotwallet": ["{}", "{}"])", kACCOUNT2, kACCOUNT3)
         },
     };
 }

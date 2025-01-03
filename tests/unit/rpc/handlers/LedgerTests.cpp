@@ -766,10 +766,11 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
 
     EXPECT_CALL(*backend_, fetchLedgerDiff).Times(1);
 
-    los.push_back(LedgerObject{.key=ripple::uint256{kINDEX2}, .blob=Blob{}});  // NOLINT(modernize-use-emplace)
+    los.push_back(LedgerObject{.key = ripple::uint256{kINDEX2}, .blob = Blob{}});  // NOLINT(modernize-use-emplace)
     los.push_back(LedgerObject{
-        .key=ripple::uint256{kINDEX1},
-        .blob=createAccountRootObject(kACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, kINDEX1, 3).getSerializer().peekData()
+        .key = ripple::uint256{kINDEX1},
+        .blob =
+            createAccountRootObject(kACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, kINDEX1, 3).getSerializer().peekData()
     });
 
     ON_CALL(*backend_, fetchLedgerDiff(kRANGE_MAX, _)).WillByDefault(Return(los));
@@ -809,10 +810,11 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
 
     EXPECT_CALL(*backend_, fetchLedgerDiff).Times(1);
 
-    los.push_back(LedgerObject{.key=ripple::uint256{kINDEX2}, .blob=Blob{}});  // NOLINT(modernize-use-emplace)
+    los.push_back(LedgerObject{.key = ripple::uint256{kINDEX2}, .blob = Blob{}});  // NOLINT(modernize-use-emplace)
     los.push_back(LedgerObject{
-        .key=ripple::uint256{kINDEX1},
-        .blob=createAccountRootObject(kACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, kINDEX1, 3).getSerializer().peekData()
+        .key = ripple::uint256{kINDEX1},
+        .blob =
+            createAccountRootObject(kACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, kINDEX1, 3).getSerializer().peekData()
     });
 
     ON_CALL(*backend_, fetchLedgerDiff(kRANGE_MAX, _)).WillByDefault(Return(los));

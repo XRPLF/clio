@@ -167,7 +167,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTInfoHandler{backend_}};
-        auto const output = handler.process(input, Context{.yield=yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -191,7 +191,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerStringIndex)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTInfoHandler{backend_}};
-        auto const output = handler.process(input, Context{.yield=yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -213,7 +213,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIntIndex)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTInfoHandler{backend_}};
-        auto const output = handler.process(input, Context{.yield=yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -239,7 +239,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash2)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTInfoHandler{backend_}};
-        auto const output = handler.process(input, Context{.yield=yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -262,7 +262,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIndex2)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTInfoHandler{backend_}};
-        auto const output = handler.process(input, Context{.yield=yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -289,7 +289,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistNFT)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTInfoHandler{backend_}};
-        auto const output = handler.process(input, Context{.yield=yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
