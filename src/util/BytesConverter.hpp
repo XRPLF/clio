@@ -31,18 +31,7 @@ namespace util {
 constexpr std::uint64_t
 mbToBytes(std::uint32_t mb)
 {
-    return mb * 1024u * 1024u;
-}
-
-/**
- * @brief Convert gigabytes to bytes
- * @param gb Number of gigabytes to convert
- * @return The equivalent number of bytes
- */
-constexpr std::uint64_t
-gbToBytes(std::uint32_t gb)
-{
-    return gb * 1024u * 1024u * 1024u;
+    return mb * 1024ul * 1024ul;
 }
 
 };  // namespace util
