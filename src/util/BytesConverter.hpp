@@ -29,9 +29,8 @@ namespace util {
  * @return The equivalent number of bytes
  */
 constexpr std::uint64_t
-mbToBytes(std::uint64_t mb)
+mbToBytes(std::uint32_t mb)
 {
-    ASSERT(mb >= 0, "bytes size must be positive");
     return mb * 1024u * 1024u;
 }
 
@@ -41,9 +40,8 @@ mbToBytes(std::uint64_t mb)
  * @return The equivalent number of bytes
  */
 constexpr std::uint64_t
-gbToBytes(std::uint64_t gb)
+gbToBytes(std::uint32_t gb)
 {
-    ASSERT(gb >= 0, "bytes size must be positive");
     return gb * 1024u * 1024u * 1024u;
 }
 
