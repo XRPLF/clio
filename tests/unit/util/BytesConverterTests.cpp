@@ -32,7 +32,7 @@ TEST(MBToBytesTest, SimpleValues)
     EXPECT_EQ(mbToBytes(2), 2 * 1024 * 1024);
 }
 
-TEST(MBToBytesTest, limitValues)
+TEST(MBToBytesTest, LimitValues)
 {
     auto const maxNum = std::numeric_limits<std::uint32_t>::max();
     EXPECT_NE(mbToBytes(maxNum), maxNum * 1024 * 1024);

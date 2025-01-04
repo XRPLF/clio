@@ -18,6 +18,7 @@
 //==============================================================================
 
 #pragma once
+
 #include "util/SignalsHandler.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 
