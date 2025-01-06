@@ -30,7 +30,6 @@
 #include "util/JsonUtils.hpp"
 #include "util/Profiler.hpp"
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
@@ -87,7 +86,7 @@ public:
      * @param etl The ETL to use
      */
     RPCServerHandler(
-        util::Config const& config,
+        util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<RPCEngineType> const& rpcEngine,
         std::shared_ptr<ETLType const> const& etl
@@ -96,7 +95,7 @@ public:
         , rpcEngine_(rpcEngine)
         , etl_(etl)
         , tagFactory_(config)
-        , apiVersionParser_(config.sectionOr("api_version", {}))
+        , apiVersionParser_(config.getObject("api_version"))
     {
     }
 
@@ -200,7 +199,7 @@ private:
             auto const context = [&] {
                 if (connectionMetadata.wasUpgraded()) {
                     ASSERT(subscriptionContext != nullptr, "Subscription context must exist for a WS connecton");
-                    return rpc::make_WsContext(
+                    return rpc::makeWsContext(
                         yield,
                         request,
                         std::move(subscriptionContext),
@@ -211,7 +210,7 @@ private:
                         connectionMetadata.isAdmin()
                     );
                 }
-                return rpc::make_HttpContext(
+                return rpc::makeHttpContext(
                     yield,
                     request,
                     tagFactory_.with(connectionMetadata.tag()),
@@ -293,10 +292,10 @@ private:
             }
 
             boost::json::array warnings = std::move(result.warnings);
-            warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_CLIO));
+            warnings.emplace_back(rpc::makeWarning(rpc::WarnRpcClio));
 
             if (etl_->lastCloseAgeSeconds() >= 60)
-                warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_OUTDATED));
+                warnings.emplace_back(rpc::makeWarning(rpc::WarnRpcOutdated));
 
             response["warnings"] = warnings;
             return Response{boost::beast::http::status::ok, response, rawRequest};

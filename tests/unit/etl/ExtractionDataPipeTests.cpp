@@ -28,37 +28,41 @@
 #include <cstdint>
 #include <thread>
 
-constexpr static auto STRIDE = 4;
-constexpr static auto START_SEQ = 1234;
+namespace {
+
+constexpr auto kSTRIDE = 4;
+constexpr auto kSTART_SEQ = 1234;
+
+}  // namespace
 
 class ETLExtractionDataPipeTest : public NoLoggerFixture {
 protected:
-    etl::impl::ExtractionDataPipe<uint32_t> pipe_{STRIDE, START_SEQ};
+    etl::impl::ExtractionDataPipe<uint32_t> pipe_{kSTRIDE, kSTART_SEQ};
 };
 
 TEST_F(ETLExtractionDataPipeTest, StrideMatchesInput)
 {
-    EXPECT_EQ(pipe_.getStride(), STRIDE);
+    EXPECT_EQ(pipe_.getStride(), kSTRIDE);
 }
 
 TEST_F(ETLExtractionDataPipeTest, PushedDataCanBeRetrievedAndMatchesOriginal)
 {
     for (std::size_t i = 0; i < 8; ++i)
-        pipe_.push(START_SEQ + i, START_SEQ + i);
+        pipe_.push(kSTART_SEQ + i, kSTART_SEQ + i);
 
     for (std::size_t i = 0; i < 8; ++i) {
-        auto const data = pipe_.popNext(START_SEQ + i);
-        EXPECT_EQ(data.value(), START_SEQ + i);
+        auto const data = pipe_.popNext(kSTART_SEQ + i);
+        EXPECT_EQ(data.value(), kSTART_SEQ + i);
     }
 }
 
 TEST_F(ETLExtractionDataPipeTest, CallingFinishPushesAnEmptyOptional)
 {
     for (std::size_t i = 0; i < 4; ++i)
-        pipe_.finish(START_SEQ + i);
+        pipe_.finish(kSTART_SEQ + i);
 
     for (std::size_t i = 0; i < 4; ++i) {
-        auto const data = pipe_.popNext(START_SEQ + i);
+        auto const data = pipe_.popNext(kSTART_SEQ + i);
         EXPECT_FALSE(data.has_value());
     }
 }
@@ -68,7 +72,7 @@ TEST_F(ETLExtractionDataPipeTest, CallingCleanupUnblocksOtherThread)
     std::atomic_bool unblocked = false;
     auto bgThread = std::thread([this, &unblocked] {
         for (std::size_t i = 0; i < 252; ++i)
-            pipe_.push(START_SEQ, 1234);  // 251st element will block this thread here
+            pipe_.push(kSTART_SEQ, 1234);  // 251st element will block this thread here
         unblocked = true;
     });
 

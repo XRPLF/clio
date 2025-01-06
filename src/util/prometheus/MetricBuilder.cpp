@@ -42,8 +42,8 @@ MetricBuilder::operator()(
     std::vector<std::int64_t> const& buckets
 )
 {
-    ASSERT(type != MetricType::HISTOGRAM_DOUBLE, "Wrong metric type. Probably wrong bucket type was used.");
-    if (type == MetricType::HISTOGRAM_INT) {
+    ASSERT(type != MetricType::HistogramDouble, "Wrong metric type. Probably wrong bucket type was used.");
+    if (type == MetricType::HistogramInt) {
         return makeHistogram(std::move(name), std::move(labelsString), type, buckets);
     }
     ASSERT(buckets.empty(), "Buckets must be empty for non-histogram types.");
@@ -58,7 +58,7 @@ MetricBuilder::operator()(
     std::vector<double> const& buckets
 )
 {
-    ASSERT(type == MetricType::HISTOGRAM_DOUBLE, "This method is for HISTOGRAM_DOUBLE only.");
+    ASSERT(type == MetricType::HistogramDouble, "This method is for HISTOGRAM_DOUBLE only.");
     return makeHistogram(std::move(name), std::move(labelsString), type, buckets);
 }
 
@@ -66,19 +66,19 @@ std::unique_ptr<MetricBase>
 MetricBuilder::makeMetric(std::string name, std::string labelsString, MetricType const type)
 {
     switch (type) {
-        case MetricType::COUNTER_INT:
+        case MetricType::CounterInt:
             return std::make_unique<CounterInt>(name, labelsString);
-        case MetricType::COUNTER_DOUBLE:
+        case MetricType::CounterDouble:
             return std::make_unique<CounterDouble>(name, labelsString);
-        case MetricType::GAUGE_INT:
+        case MetricType::GaugeInt:
             return std::make_unique<GaugeInt>(name, labelsString);
-        case MetricType::GAUGE_DOUBLE:
+        case MetricType::GaugeDouble:
             return std::make_unique<GaugeDouble>(name, labelsString);
-        case MetricType::HISTOGRAM_INT:
+        case MetricType::HistogramInt:
             [[fallthrough]];
-        case MetricType::HISTOGRAM_DOUBLE:
+        case MetricType::HistogramDouble:
             [[fallthrough]];
-        case MetricType::SUMMARY:
+        case MetricType::Summary:
             [[fallthrough]];
         default:
             ASSERT(false, "Unknown metric type: {}", static_cast<int>(type));
@@ -97,7 +97,7 @@ MetricBuilder::makeHistogram(
 )
 {
     switch (type) {
-        case MetricType::HISTOGRAM_INT: {
+        case MetricType::HistogramInt: {
             if constexpr (std::same_as<ValueType, std::int64_t>) {
                 return std::make_unique<HistogramInt>(std::move(name), std::move(labelsString), buckets);
             } else {
@@ -105,22 +105,22 @@ MetricBuilder::makeHistogram(
                 break;
             }
         }
-        case MetricType::HISTOGRAM_DOUBLE:
+        case MetricType::HistogramDouble:
             if constexpr (std::same_as<ValueType, double>) {
                 return std::make_unique<HistogramDouble>(std::move(name), std::move(labelsString), buckets);
             } else {
                 ASSERT(false, "Wrong bucket type for HISTOGRAM_DOUBLE.");
                 break;
             }
-        case MetricType::COUNTER_INT:
+        case MetricType::CounterInt:
             [[fallthrough]];
-        case MetricType::COUNTER_DOUBLE:
+        case MetricType::CounterDouble:
             [[fallthrough]];
-        case MetricType::GAUGE_INT:
+        case MetricType::GaugeInt:
             [[fallthrough]];
-        case MetricType::GAUGE_DOUBLE:
+        case MetricType::GaugeDouble:
             [[fallthrough]];
-        case MetricType::SUMMARY:
+        case MetricType::Summary:
             [[fallthrough]];
         default:
             ASSERT(false, "Unknown metric type: {}", static_cast<int>(type));

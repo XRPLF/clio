@@ -23,6 +23,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/conversion.hpp>
@@ -56,7 +57,7 @@ using namespace ::rpc;
 namespace ripple {
 
 // TODO: move to some common serialization impl place
-inline void
+inline static void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, SLE const& offer)
 {
     auto amount = ::toBoostJson(offer.getFieldAmount(sfAmount).getJson(JsonOptions::none));
@@ -90,6 +91,8 @@ NFTOffersHandlerBase::iterateOfferDirectory(
 ) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "NFTOffersCommon's ledger range must be available");
+
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
@@ -162,7 +165,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
         offers.pop_back();
     }
 
-    std::move(std::begin(offers), std::end(offers), std::back_inserter(output.offers));
+    std::ranges::move(offers, std::back_inserter(output.offers));
 
     return output;
 }

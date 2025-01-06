@@ -176,8 +176,8 @@ private:
         parser_.emplace();
 
         // Apply a reasonable limit to the allowed size of the body in bytes to prevent abuse.
-        constexpr static auto maxBodySize = 10000;
-        parser_->body_limit(maxBodySize);
+        static constexpr auto kMAX_BODY_SIZE = 10000;
+        parser_->body_limit(kMAX_BODY_SIZE);
 
         boost::beast::get_lowest_layer(https_).expires_after(std::chrono::seconds(30));
         onUpgrade();

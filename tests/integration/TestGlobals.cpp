@@ -28,8 +28,8 @@
 TestGlobals&
 TestGlobals::instance()
 {
-    static TestGlobals inst;
-    return inst;
+    static TestGlobals kINST;
+    return kINST;
 }
 
 void

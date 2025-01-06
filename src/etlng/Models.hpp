@@ -49,7 +49,7 @@ namespace etlng::model {
 template <ripple::TxType... Types>
     requires(util::hasNoDuplicates(Types...))
 struct Spec {
-    static constexpr bool SpecTag = true;
+    static constexpr bool kSPEC_TAG = true;
 
     /**
      * @brief Checks if the transaction type was requested.
@@ -57,7 +57,7 @@ struct Spec {
      * @param type The transaction type
      * @return true if the transaction was requested; false otherwise
      */
-    [[nodiscard]] constexpr static bool
+    [[nodiscard]] static constexpr bool
     wants(ripple::TxType type) noexcept
     {
         return ((Types == type) || ...);

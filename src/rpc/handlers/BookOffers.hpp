@@ -53,9 +53,9 @@ class BookOffersHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    static auto constexpr LIMIT_MIN = 1;
-    static auto constexpr LIMIT_MAX = 100;
-    static auto constexpr LIMIT_DEFAULT = 60;
+    static constexpr auto kLIMIT_MIN = 1;
+    static constexpr auto kLIMIT_MAX = 100;
+    static constexpr auto kLIMIT_DEFAULT = 60;
 
     /**
      * @brief A struct to hold the output data of the command
@@ -76,7 +76,7 @@ public:
     struct Input {
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = LIMIT_DEFAULT;
+        uint32_t limit = kLIMIT_DEFAULT;
         std::optional<ripple::AccountID> taker;
         ripple::Currency paysCurrency;
         ripple::Currency getsCurrency;
@@ -105,7 +105,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const rpcSpec = RpcSpec{
+        static auto const kRPC_SPEC = RpcSpec{
             {JS(taker_gets),
              validation::Required{},
              validation::Type<boost::json::object>{},
@@ -113,11 +113,11 @@ public:
                  {JS(currency),
                   validation::Required{},
                   meta::WithCustomError{
-                      validation::CustomValidators::CurrencyValidator, Status(RippledError::rpcDST_AMT_MALFORMED)
+                      validation::CustomValidators::currencyValidator, Status(RippledError::rpcDST_AMT_MALFORMED)
                   }},
                  {JS(issuer),
                   meta::WithCustomError{
-                      validation::CustomValidators::IssuerValidator, Status(RippledError::rpcDST_ISR_MALFORMED)
+                      validation::CustomValidators::issuerValidator, Status(RippledError::rpcDST_ISR_MALFORMED)
                   }}
              }},
             {JS(taker_pays),
@@ -127,28 +127,28 @@ public:
                  {JS(currency),
                   validation::Required{},
                   meta::WithCustomError{
-                      validation::CustomValidators::CurrencyValidator, Status(RippledError::rpcSRC_CUR_MALFORMED)
+                      validation::CustomValidators::currencyValidator, Status(RippledError::rpcSRC_CUR_MALFORMED)
                   }},
                  {JS(issuer),
                   meta::WithCustomError{
-                      validation::CustomValidators::IssuerValidator, Status(RippledError::rpcSRC_ISR_MALFORMED)
+                      validation::CustomValidators::issuerValidator, Status(RippledError::rpcSRC_ISR_MALFORMED)
                   }}
              }},
             // return INVALID_PARAMS if account format is wrong for "taker"
             {JS(taker),
              meta::WithCustomError{
-                 validation::CustomValidators::AccountValidator,
+                 validation::CustomValidators::accountValidator,
                  Status(RippledError::rpcINVALID_PARAMS, "Invalid field 'taker'.")
              }},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
-             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
-            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
+             modifiers::Clamp<int32_t>{kLIMIT_MIN, kLIMIT_MAX}},
+            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
         };
 
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     /**

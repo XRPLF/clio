@@ -43,7 +43,7 @@
 namespace data::cassandra::impl {
 
 class Statement : public ManagedObject<CassStatement> {
-    static constexpr auto deleter = [](CassStatement* ptr) { cass_statement_free(ptr); };
+    static constexpr auto kDELETER = [](CassStatement* ptr) { cass_statement_free(ptr); };
 
 public:
     /**
@@ -54,14 +54,14 @@ public:
      */
     template <typename... Args>
     explicit Statement(std::string_view query, Args&&... args)
-        : ManagedObject{cass_statement_new(query.data(), sizeof...(args)), deleter}
+        : ManagedObject{cass_statement_new_n(query.data(), query.size(), sizeof...(args)), kDELETER}
     {
         cass_statement_set_consistency(*this, CASS_CONSISTENCY_QUORUM);
         cass_statement_set_is_idempotent(*this, cass_true);
         bind<Args...>(std::forward<Args>(args)...);
     }
 
-    /* implicit */ Statement(CassStatement* ptr) : ManagedObject{ptr, deleter}
+    /* implicit */ Statement(CassStatement* ptr) : ManagedObject{ptr, kDELETER}
     {
         cass_statement_set_consistency(*this, CASS_CONSISTENCY_QUORUM);
         cass_statement_set_is_idempotent(*this, cass_true);
@@ -119,6 +119,9 @@ public:
             // reinterpret_cast is needed here :'(
             auto const rc = bindBytes(reinterpret_cast<unsigned char const*>(value.data()), value.size());
             throwErrorIfNeeded(rc, "Bind string (as bytes)");
+        } else if constexpr (std::is_convertible_v<DecayedType, Text>) {
+            auto const rc = cass_statement_bind_string_n(*this, idx, value.text.c_str(), value.text.size());
+            throwErrorIfNeeded(rc, "Bind string (as TEXT)");
         } else if constexpr (std::is_same_v<DecayedType, UintTupleType> ||
                              std::is_same_v<DecayedType, UintByteTupleType>) {
             auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::forward<Type>(value)});
@@ -150,10 +153,10 @@ public:
  * This is used to produce Statement objects that can be executed.
  */
 class PreparedStatement : public ManagedObject<CassPrepared const> {
-    static constexpr auto deleter = [](CassPrepared const* ptr) { cass_prepared_free(ptr); };
+    static constexpr auto kDELETER = [](CassPrepared const* ptr) { cass_prepared_free(ptr); };
 
 public:
-    /* implicit */ PreparedStatement(CassPrepared const* ptr) : ManagedObject{ptr, deleter}
+    /* implicit */ PreparedStatement(CassPrepared const* ptr) : ManagedObject{ptr, kDELETER}
     {
     }
 

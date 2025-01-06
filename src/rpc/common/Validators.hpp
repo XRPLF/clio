@@ -92,9 +92,9 @@ public:
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
-        if (value.is_object() and value.as_object().contains(key.data())) {
+        if (value.is_object() and value.as_object().contains(key)) {
             using boost::json::value_to;
-            auto const res = value_to<T>(value.as_object().at(key.data()));
+            auto const res = value_to<T>(value.as_object().at(key));
             if (value_ == res) {
                 return Error{Status{
                     RippledError::rpcNOT_SUPPORTED,
@@ -122,7 +122,7 @@ public:
     [[nodiscard]] static MaybeError
     verify(boost::json::value const& value, std::string_view key)
     {
-        if (value.is_object() and value.as_object().contains(key.data()))
+        if (value.is_object() and value.as_object().contains(key))
             return Error{Status{RippledError::rpcNOT_SUPPORTED, "Not supported field '" + std::string{key} + '\''}};
 
         return {};
@@ -150,10 +150,10 @@ struct Type final {
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. If field is supposed to exist, let 'required' fail instead
 
-        auto const& res = value.as_object().at(key.data());
+        auto const& res = value.as_object().at(key);
         auto const convertible = (checkType<Types>(res) || ...);
 
         if (not convertible)
@@ -194,10 +194,10 @@ public:
     {
         using boost::json::value_to;
 
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
-        auto const res = value_to<Type>(value.as_object().at(key.data()));
+        auto const res = value_to<Type>(value.as_object().at(key));
 
         // TODO: may want a way to make this code more generic (e.g. use a free
         // function that can be overridden for this comparison)
@@ -237,10 +237,10 @@ public:
     {
         using boost::json::value_to;
 
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
-        auto const res = value_to<Type>(value.as_object().at(key.data()));
+        auto const res = value_to<Type>(value.as_object().at(key));
 
         if (res < min_)
             return Error{Status{RippledError::rpcINVALID_PARAMS}};
@@ -278,10 +278,10 @@ public:
     {
         using boost::json::value_to;
 
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
-        auto const res = value_to<Type>(value.as_object().at(key.data()));
+        auto const res = value_to<Type>(value.as_object().at(key));
 
         if (res > max_)
             return Error{Status{RippledError::rpcINVALID_PARAMS}};
@@ -346,10 +346,10 @@ public:
     {
         using boost::json::value_to;
 
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
-        auto const res = value_to<Type>(value.as_object().at(key.data()));
+        auto const res = value_to<Type>(value.as_object().at(key));
         if (res != original_)
             return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
@@ -401,10 +401,10 @@ public:
     {
         using boost::json::value_to;
 
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
-        auto const res = value_to<Type>(value.as_object().at(key.data()));
+        auto const res = value_to<Type>(value.as_object().at(key));
         if (std::find(std::begin(options_), std::end(options_), res) == std::end(options_))
             return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}'.", key)}};
 
@@ -481,21 +481,21 @@ struct CustomValidators final {
      * LedgerIndex must be a string or an int. If the specified LedgerIndex is a string, its value must be either
      * "validated" or a valid integer value represented as a string.
      */
-    static CustomValidator LedgerIndexValidator;
+    static CustomValidator ledgerIndexValidator;
 
     /**
      * @brief Provides a commonly used validator for accounts.
      *
      * Account must be a string and the converted public key is valid.
      */
-    static CustomValidator AccountValidator;
+    static CustomValidator accountValidator;
 
     /**
      * @brief Provides a commonly used validator for accounts.
      *
      * Account must be a string and can convert to base58.
      */
-    static CustomValidator AccountBase58Validator;
+    static CustomValidator accountBase58Validator;
 
     /**
      * @brief Provides a commonly used validator for markers.
@@ -503,7 +503,7 @@ struct CustomValidators final {
      * A marker is composed of a comma-separated index and a start hint.
      * The former will be read as hex, and the latter can be cast to uint64.
      */
-    static CustomValidator AccountMarkerValidator;
+    static CustomValidator accountMarkerValidator;
 
     /**
      * @brief Provides a commonly used validator for uint160(AccountID) hex string.
@@ -511,7 +511,7 @@ struct CustomValidators final {
      * It must be a string and also a decodable hex.
      * AccountID uses this validator.
      */
-    static CustomValidator Uint160HexStringValidator;
+    static CustomValidator uint160HexStringValidator;
 
     /**
      * @brief Provides a commonly used validator for uint192 hex string.
@@ -519,7 +519,7 @@ struct CustomValidators final {
      * It must be a string and also a decodable hex.
      * MPTIssuanceID uses this validator.
      */
-    static CustomValidator Uint192HexStringValidator;
+    static CustomValidator uint192HexStringValidator;
 
     /**
      * @brief Provides a commonly used validator for uint256 hex string.
@@ -527,50 +527,50 @@ struct CustomValidators final {
      * It must be a string and also a decodable hex.
      * Transaction index, ledger hash all use this validator.
      */
-    static CustomValidator Uint256HexStringValidator;
+    static CustomValidator uint256HexStringValidator;
 
     /**
      * @brief Provides a commonly used validator for currency, including standard currency code and token code.
      */
-    static CustomValidator CurrencyValidator;
+    static CustomValidator currencyValidator;
 
     /**
      * @brief Provides a commonly used validator for issuer type.
      *
      * It must be a hex string or base58 string.
      */
-    static CustomValidator IssuerValidator;
+    static CustomValidator issuerValidator;
 
     /**
      * @brief Provides a validator for validating streams used in subscribe/unsubscribe.
      */
-    static CustomValidator SubscribeStreamValidator;
+    static CustomValidator subscribeStreamValidator;
 
     /**
      * @brief Provides a validator for validating accounts used in subscribe/unsubscribe.
      */
-    static CustomValidator SubscribeAccountsValidator;
+    static CustomValidator subscribeAccountsValidator;
 
     /**
      * @brief Validates an asset (ripple::Issue).
      *
      * Used by amm_info.
      */
-    static CustomValidator CurrencyIssueValidator;
+    static CustomValidator currencyIssueValidator;
 
     /**
      * @brief Provides a validator for validating authorized_credentials json array.
      *
      * Used by deposit_preauth.
      */
-    static CustomValidator AuthorizeCredentialValidator;
+    static CustomValidator authorizeCredentialValidator;
 
     /**
      * @brief Provides a validator for validating credential_type.
      *
      * Used by AuthorizeCredentialValidator in deposit_preauth.
      */
-    static CustomValidator CredentialTypeValidator;
+    static CustomValidator credentialTypeValidator;
 };
 
 /**
@@ -588,10 +588,10 @@ struct Hex256ItemType final {
     [[nodiscard]] static MaybeError
     verify(boost::json::value const& value, std::string_view key)
     {
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. If field is supposed to exist, let 'required' fail instead
 
-        auto const& res = value.as_object().at(key.data());
+        auto const& res = value.as_object().at(key);
 
         // loop through each item in the array and make sure it is uint256 hex string
         for (auto const& elem : res.as_array()) {

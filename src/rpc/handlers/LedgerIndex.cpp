@@ -22,6 +22,7 @@
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 #include "util/TimeUtils.hpp"
 
 #include <boost/json/conversion.hpp>
@@ -42,6 +43,8 @@ LedgerIndexHandler::Result
 LedgerIndexHandler::process(LedgerIndexHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "LedgerIndex's ledger range must be available");
+
     auto const [minIndex, maxIndex] = *range;
 
     auto const fillOutputByIndex = [&](std::uint32_t index) {
@@ -58,7 +61,7 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input input, Context const& ctx)
         return fillOutputByIndex(maxIndex);
 
     auto const convertISOTimeStrToTicks = [](std::string const& isoTimeStr) {
-        auto const systemTime = util::SystemTpFromUTCStr(isoTimeStr, DATE_FORMAT);
+        auto const systemTime = util::systemTpFromUtcStr(isoTimeStr, kDATE_FORMAT);
         // systemTime must be valid after validation passed
         return systemTime->time_since_epoch().count();
     };
@@ -67,7 +70,7 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input input, Context const& ctx)
 
     auto const earlierThan = [&](std::uint32_t ledgerIndex) {
         auto const header = sharedPtrBackend_->fetchLedgerBySequence(ledgerIndex, ctx.yield);
-        auto const ledgerTime = util::SystemTpFromLedgerCloseTime(header->closeTime);
+        auto const ledgerTime = util::systemTpFromLedgerCloseTime(header->closeTime);
         return ticks < ledgerTime.time_since_epoch().count();
     };
 

@@ -64,38 +64,38 @@ public:
             // Note: a collection of crutches to match rippled output follows
             if (auto const clioCode = std::get_if<rpc::ClioError>(&err.code)) {
                 switch (*clioCode) {
-                    case rpc::ClioError::rpcINVALID_API_VERSION:
+                    case rpc::ClioError::RpcInvalidApiVersion:
                         connection_->send(
                             std::string{rpc::getErrorInfo(*clioCode).error}, boost::beast::http::status::bad_request
                         );
                         break;
-                    case rpc::ClioError::rpcCOMMAND_IS_MISSING:
+                    case rpc::ClioError::RpcCommandIsMissing:
                         connection_->send("Null method", boost::beast::http::status::bad_request);
                         break;
-                    case rpc::ClioError::rpcCOMMAND_IS_EMPTY:
+                    case rpc::ClioError::RpcCommandIsEmpty:
                         connection_->send("method is empty", boost::beast::http::status::bad_request);
                         break;
-                    case rpc::ClioError::rpcCOMMAND_NOT_STRING:
+                    case rpc::ClioError::RpcCommandNotString:
                         connection_->send("method is not string", boost::beast::http::status::bad_request);
                         break;
-                    case rpc::ClioError::rpcPARAMS_UNPARSEABLE:
+                    case rpc::ClioError::RpcParamsUnparseable:
                         connection_->send("params unparseable", boost::beast::http::status::bad_request);
                         break;
 
                     // others are not applicable but we want a compilation error next time we add one
-                    case rpc::ClioError::rpcUNKNOWN_OPTION:
-                    case rpc::ClioError::rpcMALFORMED_CURRENCY:
-                    case rpc::ClioError::rpcMALFORMED_REQUEST:
-                    case rpc::ClioError::rpcMALFORMED_OWNER:
-                    case rpc::ClioError::rpcMALFORMED_ADDRESS:
-                    case rpc::ClioError::rpcINVALID_HOT_WALLET:
-                    case rpc::ClioError::rpcFIELD_NOT_FOUND_TRANSACTION:
-                    case rpc::ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID:
-                    case rpc::ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS:
-                    case rpc::ClioError::etlCONNECTION_ERROR:
-                    case rpc::ClioError::etlREQUEST_ERROR:
-                    case rpc::ClioError::etlREQUEST_TIMEOUT:
-                    case rpc::ClioError::etlINVALID_RESPONSE:
+                    case rpc::ClioError::RpcUnknownOption:
+                    case rpc::ClioError::RpcMalformedCurrency:
+                    case rpc::ClioError::RpcMalformedRequest:
+                    case rpc::ClioError::RpcMalformedOwner:
+                    case rpc::ClioError::RpcMalformedAddress:
+                    case rpc::ClioError::RpcInvalidHotWallet:
+                    case rpc::ClioError::RpcFieldNotFoundTransaction:
+                    case rpc::ClioError::RpcMalformedOracleDocumentId:
+                    case rpc::ClioError::RpcMalformedAuthorizedCredentials:
+                    case rpc::ClioError::EtlConnectionError:
+                    case rpc::ClioError::EtlRequestError:
+                    case rpc::ClioError::EtlRequestTimeout:
+                    case rpc::ClioError::EtlInvalidResponse:
                         ASSERT(
                             false, "Unknown rpc error code {}", static_cast<int>(*clioCode)
                         );  // this should never happen

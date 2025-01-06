@@ -24,6 +24,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 #include "util/LedgerUtils.hpp"
 #include "util/log/Logger.hpp"
 
@@ -61,6 +62,8 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
         return Error{Status{RippledError::rpcINVALID_PARAMS, "markerNotString"}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "LedgerData's ledger range must be available");
+
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
@@ -110,14 +113,14 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
         // limit's limitation is different based on binary or json
         // framework can not handler the check right now, adjust the value here
         auto const limit =
-            std::min(input.limit, input.binary ? LedgerDataHandler::LIMITBINARY : LedgerDataHandler::LIMITJSON);
+            std::min(input.limit, input.binary ? LedgerDataHandler::kLIMIT_BINARY : LedgerDataHandler::kLIMIT_JSON);
         auto page = sharedPtrBackend_->fetchLedgerPage(input.marker, lgrInfo.seq, limit, input.outOfOrder, ctx.yield);
         results = std::move(page.objects);
 
         if (page.cursor) {
             output.marker = ripple::strHex(*(page.cursor));
         } else if (input.outOfOrder) {
-            output.diffMarker = sharedPtrBackend_->fetchLedgerRange()->maxSequence;
+            output.diffMarker = range->maxSequence;
         }
     }
 
@@ -186,7 +189,7 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
 
     if (jsonObject.contains(JS(binary))) {
         input.binary = jsonObject.at(JS(binary)).as_bool();
-        input.limit = input.binary ? LedgerDataHandler::LIMITBINARY : LedgerDataHandler::LIMITJSON;
+        input.limit = input.binary ? LedgerDataHandler::kLIMIT_BINARY : LedgerDataHandler::kLIMIT_JSON;
     }
 
     if (jsonObject.contains(JS(limit)))
@@ -215,7 +218,7 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
     }
 
     if (jsonObject.contains(JS(type)))
-        input.type = util::LedgerTypes::GetLedgerEntryTypeFromStr(boost::json::value_to<std::string>(jv.at(JS(type))));
+        input.type = util::LedgerTypes::getLedgerEntryTypeFromStr(boost::json::value_to<std::string>(jv.at(JS(type))));
 
     return input;
 }

@@ -31,6 +31,7 @@ using namespace app;
 struct CliArgsTests : testing::Test {
     testing::StrictMock<testing::MockFunction<int(CliArgs::Action::Run)>> onRunMock;
     testing::StrictMock<testing::MockFunction<int(CliArgs::Action::Exit)>> onExitMock;
+    testing::StrictMock<testing::MockFunction<int(CliArgs::Action::Migrate)>> onMigrateMock;
 };
 
 TEST_F(CliArgsTests, Parse_NoArgs)
@@ -40,11 +41,13 @@ TEST_F(CliArgsTests, Parse_NoArgs)
 
     int const returnCode = 123;
     EXPECT_CALL(onRunMock, Call).WillOnce([](CliArgs::Action::Run const& run) {
-        EXPECT_EQ(run.configPath, CliArgs::defaultConfigPath);
+        EXPECT_EQ(run.configPath, CliArgs::kDEFAULT_CONFIG_PATH);
         EXPECT_FALSE(run.useNgWebServer);
         return returnCode;
     });
-    EXPECT_EQ(action.apply(onRunMock.AsStdFunction(), onExitMock.AsStdFunction()), returnCode);
+    EXPECT_EQ(
+        action.apply(onRunMock.AsStdFunction(), onExitMock.AsStdFunction(), onMigrateMock.AsStdFunction()), returnCode
+    );
 }
 
 TEST_F(CliArgsTests, Parse_NgWebServer)
@@ -54,11 +57,14 @@ TEST_F(CliArgsTests, Parse_NgWebServer)
 
         int const returnCode = 123;
         EXPECT_CALL(onRunMock, Call).WillOnce([](CliArgs::Action::Run const& run) {
-            EXPECT_EQ(run.configPath, CliArgs::defaultConfigPath);
+            EXPECT_EQ(run.configPath, CliArgs::kDEFAULT_CONFIG_PATH);
             EXPECT_TRUE(run.useNgWebServer);
             return returnCode;
         });
-        EXPECT_EQ(action.apply(onRunMock.AsStdFunction(), onExitMock.AsStdFunction()), returnCode);
+        EXPECT_EQ(
+            action.apply(onRunMock.AsStdFunction(), onExitMock.AsStdFunction(), onMigrateMock.AsStdFunction()),
+            returnCode
+        );
     }
 }
 
@@ -72,15 +78,17 @@ TEST_F(CliArgsTests, Parse_VersionHelp)
         auto const action = CliArgs::parse(argv.size(), const_cast<char const**>(argv.data()));
 
         EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) { return exit.exitCode; });
-        EXPECT_EQ(action.apply(onRunMock.AsStdFunction(), onExitMock.AsStdFunction()), EXIT_SUCCESS);
+        EXPECT_EQ(
+            action.apply(onRunMock.AsStdFunction(), onExitMock.AsStdFunction(), onMigrateMock.AsStdFunction()),
+            EXIT_SUCCESS
+        );
     }
 }
 
 TEST_F(CliArgsTests, Parse_Config)
 {
     std::string_view configPath = "some_config_path";
-    std::array argv{"clio_server", "--conf", configPath.data()};
-
+    std::array argv{"clio_server", "--conf", configPath.data()};  // NOLINT(bugprone-suspicious-stringview-data-usage)
     auto const action = CliArgs::parse(argv.size(), argv.data());
 
     int const returnCode = 123;
@@ -88,5 +96,7 @@ TEST_F(CliArgsTests, Parse_Config)
         EXPECT_EQ(run.configPath, configPath);
         return returnCode;
     });
-    EXPECT_EQ(action.apply(onRunMock.AsStdFunction(), onExitMock.AsStdFunction()), returnCode);
+    EXPECT_EQ(
+        action.apply(onRunMock.AsStdFunction(), onExitMock.AsStdFunction(), onMigrateMock.AsStdFunction()), returnCode
+    );
 }

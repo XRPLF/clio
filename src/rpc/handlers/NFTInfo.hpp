@@ -94,13 +94,13 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const rpcSpec = RpcSpec{
-            {JS(nft_id), validation::Required{}, validation::CustomValidators::Uint256HexStringValidator},
-            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
+        static auto const kRPC_SPEC = RpcSpec{
+            {JS(nft_id), validation::Required{}, validation::CustomValidators::uint256HexStringValidator},
+            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
         };
 
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     /**

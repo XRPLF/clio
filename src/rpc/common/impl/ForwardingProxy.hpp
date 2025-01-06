@@ -104,7 +104,7 @@ public:
     bool
     isProxied(std::string const& method) const
     {
-        static std::unordered_set<std::string> const proxiedCommands{
+        static std::unordered_set<std::string> const kPROXIED_COMMANDS{
             "server_definitions",
             "server_state",
             "submit",
@@ -118,7 +118,7 @@ public:
             "channel_verify",
         };
 
-        return proxiedCommands.contains(method);
+        return kPROXIED_COMMANDS.contains(method);
     }
 
 private:
@@ -145,9 +145,9 @@ private:
     bool
     isForcedForward(web::Context const& ctx) const
     {
-        static constexpr auto FORCE_FORWARD = "force_forward";
-        return ctx.isAdmin and ctx.params.contains(FORCE_FORWARD) and ctx.params.at(FORCE_FORWARD).is_bool() and
-            ctx.params.at(FORCE_FORWARD).as_bool();
+        static constexpr auto kFORCE_FORWARD = "force_forward";
+        return ctx.isAdmin and ctx.params.contains(kFORCE_FORWARD) and ctx.params.at(kFORCE_FORWARD).is_bool() and
+            ctx.params.at(kFORCE_FORWARD).as_bool();
     }
 };
 

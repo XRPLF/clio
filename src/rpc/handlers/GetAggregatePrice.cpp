@@ -24,6 +24,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/bimap/bimap.hpp>
@@ -61,6 +62,8 @@ GetAggregatePriceHandler::Result
 GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "GetAggregatePrice's ledger range must be available");
+
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
@@ -144,11 +147,11 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
         avg = divide(avg, ripple::STAmount{ripple::noIssue(), size, 0}, ripple::noIssue());
         if (size > 1) {
             sd = std::accumulate(begin, end, sd, [&](ripple::Number const& acc, auto const& it) {
-                return acc + (it.first - avg) * (it.first - avg);
+                return acc + ((it.first - avg) * (it.first - avg));
             });
             sd = root2(sd / (size - 1));
         }
-        return {avg, sd, size};
+        return {.avg = avg, .sd = sd, .size = size};
     };
 
     out.extireStats = getStats(timestampPricesBiMap.right.begin(), timestampPricesBiMap.right.end());
@@ -171,11 +174,11 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
     auto const median = [&, size = out.extireStats.size]() {
         auto const middle = size / 2;
         if ((size % 2) == 0) {
-            static ripple::STAmount const two{ripple::noIssue(), 2, 0};
+            static ripple::STAmount const kTWO{ripple::noIssue(), 2, 0};
             auto it = itAdvance(timestampPricesBiMap.right.begin(), middle - 1);
             auto const& a1 = it->first;
             auto const& a2 = (++it)->first;
-            return divide(a1 + a2, two, ripple::noIssue());
+            return divide(a1 + a2, kTWO, ripple::noIssue());
         }
         return itAdvance(timestampPricesBiMap.right.begin(), middle)->first;
     }();
@@ -191,7 +194,7 @@ GetAggregatePriceHandler::tracebackOracleObject(
     std::function<bool(ripple::STObject const&)> const& callback
 ) const
 {
-    static auto constexpr HISTORY_MAX = 3;
+    static constexpr auto kHISTORY_MAX = 3;
 
     std::optional<ripple::STObject> optOracleObject = oracleObject;
     std::optional<ripple::STObject> optCurrentObject = optOracleObject;
@@ -209,7 +212,7 @@ GetAggregatePriceHandler::tracebackOracleObject(
         if (callback(*optOracleObject) or isNew)
             return;
 
-        if (++history > HISTORY_MAX)
+        if (++history > kHISTORY_MAX)
             return;
 
         auto const prevTxIndex = optCurrentObject->getFieldH256(ripple::sfPreviousTxnID);

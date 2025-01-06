@@ -23,6 +23,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
@@ -48,6 +49,8 @@ NFTsByIssuerHandler::Result
 NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "NFTsByIssuer's ledger range must be available");
+
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
@@ -56,7 +59,7 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ct
 
     auto const lgrInfo = std::get<LedgerHeader>(lgrInfoOrStatus);
 
-    auto const limit = input.limit.value_or(NFTsByIssuerHandler::LIMIT_DEFAULT);
+    auto const limit = input.limit.value_or(NFTsByIssuerHandler::kLIMIT_DEFAULT);
 
     auto const issuer = accountFromStringStrict(input.issuer);
     auto const accountLedgerObject =

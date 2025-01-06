@@ -73,9 +73,9 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
         if (node.getFName() == ripple::sfCreatedNode) {
             ripple::STArray const& toAddNFTs =
                 node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>().getFieldArray(ripple::sfNFTokens);
-            std::transform(
-                toAddNFTs.begin(),
-                toAddNFTs.end(),
+            std::ranges::transform(
+                toAddNFTs,
+
                 std::back_inserter(finalIDs),
                 [](ripple::STObject const& nft) { return nft.getFieldH256(ripple::sfNFTokenID); }
             );
@@ -98,18 +98,18 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
                 continue;
 
             ripple::STArray const& toAddNFTs = previousFields.getFieldArray(ripple::sfNFTokens);
-            std::transform(
-                toAddNFTs.begin(),
-                toAddNFTs.end(),
+            std::ranges::transform(
+                toAddNFTs,
+
                 std::back_inserter(prevIDs),
                 [](ripple::STObject const& nft) { return nft.getFieldH256(ripple::sfNFTokenID); }
             );
 
             ripple::STArray const& toAddFinalNFTs =
                 node.peekAtField(ripple::sfFinalFields).downcast<ripple::STObject>().getFieldArray(ripple::sfNFTokens);
-            std::transform(
-                toAddFinalNFTs.begin(),
-                toAddFinalNFTs.end(),
+            std::ranges::transform(
+                toAddFinalNFTs,
+
                 std::back_inserter(finalIDs),
                 [](ripple::STObject const& nft) { return nft.getFieldH256(ripple::sfNFTokenID); }
             );
@@ -121,6 +121,7 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 
     // Find the first NFT ID that doesn't match.  We're looking for an
     // added NFT, so the one we want will be the mismatch in finalIDs.
+    // NOLINTNEXTLINE(modernize-use-ranges)
     auto const diff = std::mismatch(finalIDs.begin(), finalIDs.end(), prevIDs.begin(), prevIDs.end());
 
     // There should always be a difference so the returned finalIDs
@@ -261,7 +262,7 @@ getNFTokenAcceptOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
                 .getFieldArray(ripple::sfNFTokens);
         }();
 
-        auto const nft = std::find_if(nfts.begin(), nfts.end(), [&tokenID](ripple::STObject const& candidate) {
+        auto const nft = std::ranges::find_if(nfts, [&tokenID](ripple::STObject const& candidate) {
             return candidate.getFieldH256(ripple::sfNFTokenID) == tokenID;
         });
         if (nft != nfts.end()) {
@@ -298,10 +299,10 @@ getNFTokenCancelOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
     std::ranges::sort(txs, [](NFTTransactionsData const& a, NFTTransactionsData const& b) {
         return a.tokenID < b.tokenID;
     });
-    auto last = std::unique(txs.begin(), txs.end(), [](NFTTransactionsData const& a, NFTTransactionsData const& b) {
+    auto [last, end] = std::ranges::unique(txs, [](NFTTransactionsData const& a, NFTTransactionsData const& b) {
         return a.tokenID == b.tokenID;
     });
-    txs.erase(last, txs.end());
+    txs.erase(last, end);
     return {txs, {}};
 }
 
@@ -366,10 +367,9 @@ getUniqueNFTsDatas(std::vector<NFTsData> const& nfts)
         return a.tokenID == b.tokenID ? a.transactionIndex > b.transactionIndex : a.tokenID > b.tokenID;
     });
 
-    auto const last = std::unique(results.begin(), results.end(), [](NFTsData const& a, NFTsData const& b) {
-        return a.tokenID == b.tokenID;
-    });
-    results.erase(last, results.end());
+    auto const [last, end] =
+        std::ranges::unique(results, [](NFTsData const& a, NFTsData const& b) { return a.tokenID == b.tokenID; });
+    results.erase(last, end);
     return results;
 }
 

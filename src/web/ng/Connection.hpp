@@ -104,8 +104,9 @@ protected:
 public:
     /**
      * @brief The default timeout for send, receive, and close operations.
+     * @note This value should be higher than forwarding timeout to not disconnect clients if rippled is slow.
      */
-    static constexpr std::chrono::steady_clock::duration DEFAULT_TIMEOUT = std::chrono::seconds{30};
+    static constexpr std::chrono::steady_clock::duration kDEFAULT_TIMEOUT = std::chrono::seconds{11};
 
     /**
      * @brief Construct a new Connection object
@@ -117,38 +118,40 @@ public:
     Connection(std::string ip, boost::beast::flat_buffer buffer, util::TagDecoratorFactory const& tagDecoratorFactory);
 
     /**
+     * @brief Get the timeout for send, receive, and close operations. For WebSocket connections, this is the ping
+     * interval.
+     *
+     * @param newTimeout The new timeout to set.
+     */
+    virtual void
+    setTimeout(std::chrono::steady_clock::duration newTimeout) = 0;
+
+    /**
      * @brief Send a response to the client.
      *
      * @param response The response to send.
      * @param yield The yield context.
-     * @param timeout The timeout for the operation.
      * @return An error if the operation failed or nullopt if it succeeded.
      */
     virtual std::optional<Error>
-    send(
-        Response response,
-        boost::asio::yield_context yield,
-        std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT
-    ) = 0;
+    send(Response response, boost::asio::yield_context yield) = 0;
 
     /**
      * @brief Receive a request from the client.
      *
      * @param yield The yield context.
-     * @param timeout The timeout for the operation.
      * @return The request if it was received or an error if the operation failed.
      */
     virtual std::expected<Request, Error>
-    receive(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) = 0;
+    receive(boost::asio::yield_context yield) = 0;
 
     /**
      * @brief Gracefully close the connection.
      *
      * @param yield The yield context.
-     * @param timeout The timeout for the operation.
      */
     virtual void
-    close(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) = 0;
+    close(boost::asio::yield_context yield) = 0;
 };
 
 /**

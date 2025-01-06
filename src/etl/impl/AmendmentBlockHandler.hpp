@@ -43,13 +43,13 @@ private:
     ActionType action_;
 
 public:
-    static ActionType const defaultAmendmentBlockAction;
+    static ActionType const kDEFAULT_AMENDMENT_BLOCK_ACTION;
 
     AmendmentBlockHandler(
         boost::asio::io_context& ioc,
         SystemState& state,
         std::chrono::steady_clock::duration interval = std::chrono::seconds{1},
-        ActionType action = defaultAmendmentBlockAction
+        ActionType action = kDEFAULT_AMENDMENT_BLOCK_ACTION
     );
 
     void

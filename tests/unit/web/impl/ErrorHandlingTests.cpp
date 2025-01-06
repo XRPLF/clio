@@ -21,7 +21,9 @@
 #include "util/LoggerFixtures.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/impl/ErrorHandling.hpp"
 #include "web/interface/ConnectionBaseMock.hpp"
 
@@ -37,9 +39,13 @@
 
 using namespace web::impl;
 using namespace web;
+using namespace util::config;
 
 struct ErrorHandlingTests : NoLoggerFixture {
-    util::TagDecoratorFactory tagFactory_{util::Config{}};
+protected:
+    util::TagDecoratorFactory tagFactory_{ClioConfigDefinition{
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+    }};
     std::string const clientIp_ = "some ip";
     ConnectionBaseStrictMockPtr connection_ =
         std::make_shared<testing::StrictMock<ConnectionBaseMock>>(tagFactory_, clientIp_);
@@ -115,7 +121,7 @@ INSTANTIATE_TEST_CASE_P(
                 {"request", {{"id", 1}, {"api_version", 2}}}}}}
          }}
     ),
-    tests::util::NameGenerator
+    tests::util::kNAME_GENERATOR
 );
 
 struct ErrorHandlingSendErrorTestBundle {
@@ -152,35 +158,35 @@ INSTANTIATE_TEST_CASE_P(
         ErrorHandlingSendErrorTestBundle{
             "NotUpgradedConnection_InvalidApiVersion",
             false,
-            rpc::Status{rpc::ClioError::rpcINVALID_API_VERSION},
+            rpc::Status{rpc::ClioError::RpcInvalidApiVersion},
             "invalid_API_version",
             boost::beast::http::status::bad_request
         },
         ErrorHandlingSendErrorTestBundle{
             "NotUpgradedConnection_CommandIsMissing",
             false,
-            rpc::Status{rpc::ClioError::rpcCOMMAND_IS_MISSING},
+            rpc::Status{rpc::ClioError::RpcCommandIsMissing},
             "Null method",
             boost::beast::http::status::bad_request
         },
         ErrorHandlingSendErrorTestBundle{
             "NotUpgradedConnection_CommandIsEmpty",
             false,
-            rpc::Status{rpc::ClioError::rpcCOMMAND_IS_EMPTY},
+            rpc::Status{rpc::ClioError::RpcCommandIsEmpty},
             "method is empty",
             boost::beast::http::status::bad_request
         },
         ErrorHandlingSendErrorTestBundle{
             "NotUpgradedConnection_CommandNotString",
             false,
-            rpc::Status{rpc::ClioError::rpcCOMMAND_NOT_STRING},
+            rpc::Status{rpc::ClioError::RpcCommandNotString},
             "method is not string",
             boost::beast::http::status::bad_request
         },
         ErrorHandlingSendErrorTestBundle{
             "NotUpgradedConnection_ParamsUnparseable",
             false,
-            rpc::Status{rpc::ClioError::rpcPARAMS_UNPARSEABLE},
+            rpc::Status{rpc::ClioError::RpcParamsUnparseable},
             "params unparseable",
             boost::beast::http::status::bad_request
         },
@@ -192,7 +198,7 @@ INSTANTIATE_TEST_CASE_P(
             boost::beast::http::status::bad_request
         },
     }),
-    tests::util::NameGenerator
+    tests::util::kNAME_GENERATOR
 );
 
 TEST_F(ErrorHandlingTests, sendInternalError)

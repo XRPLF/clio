@@ -23,6 +23,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
@@ -49,6 +50,8 @@ MPTHoldersHandler::Result
 MPTHoldersHandler::process(MPTHoldersHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "MPTHolder's ledger range must be available");
+
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
@@ -56,7 +59,7 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input input, Context const& ctx) c
         return Error{*status};
 
     auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
-    auto const limit = input.limit.value_or(MPTHoldersHandler::LIMIT_DEFAULT);
+    auto const limit = input.limit.value_or(MPTHoldersHandler::kLIMIT_DEFAULT);
     auto const mptID = ripple::uint192{input.mptID.c_str()};
 
     auto const issuanceLedgerObject =

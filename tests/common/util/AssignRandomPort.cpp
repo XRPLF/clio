@@ -31,8 +31,8 @@ namespace tests::util {
 uint32_t
 generateFreePort()
 {
-    boost::asio::io_context io_context;
-    tcp::acceptor acceptor(io_context);
+    boost::asio::io_context ioContext;
+    tcp::acceptor acceptor(ioContext);
     tcp::endpoint const endpoint(tcp::v4(), 0);
 
     acceptor.open(endpoint.protocol());

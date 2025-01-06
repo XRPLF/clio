@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
 #include "data/Types.hpp"
+#include "data/cassandra/Concepts.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/Schema.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
@@ -72,12 +73,14 @@ class BasicCassandraBackend : public BackendInterface {
 
     SettingsProviderType settingsProvider_;
     Schema<SettingsProviderType> schema_;
+
+    std::atomic_uint32_t ledgerSequence_ = 0u;
+
+protected:
     Handle handle_;
 
     // have to be mutable because BackendInterface constness :(
     mutable ExecutionStrategyType executor_;
-
-    std::atomic_uint32_t ledgerSequence_ = 0u;
 
 public:
     /**
@@ -93,7 +96,7 @@ public:
         , executor_{settingsProvider_.getSettings(), handle_}
     {
         if (auto const res = handle_.connect(); not res)
-            throw std::runtime_error("Could not connect to databse: " + res.error());
+            throw std::runtime_error("Could not connect to database: " + res.error());
 
         if (not readOnly) {
             if (auto const res = handle_.execute(schema_.createKeyspace); not res) {
@@ -128,7 +131,7 @@ public:
     {
         auto rng = fetchLedgerRange();
         if (!rng)
-            return {{}, {}};
+            return {.txns = {}, .cursor = {}};
 
         Statement const statement = [this, forward, &account]() {
             if (forward)
@@ -191,7 +194,7 @@ public:
         // wait for other threads to finish their writes
         executor_.sync();
 
-        if (!range) {
+        if (!range_) {
             executor_.writeSync(schema_->updateLedgerRange, ledgerSequence_, false, ledgerSequence_);
         }
 
@@ -399,7 +402,7 @@ public:
     {
         auto rng = fetchLedgerRange();
         if (!rng)
-            return {{}, {}};
+            return {.txns = {}, .cursor = {}};
 
         Statement const statement = [this, forward, &tokenID]() {
             if (forward)
@@ -647,7 +650,7 @@ public:
     {
         if (auto const res = executor_.read(yield, schema_->selectSuccessor, key, ledgerSequence); res) {
             if (auto const result = res->template get<ripple::uint256>(); result) {
-                if (*result == lastKey)
+                if (*result == kLAST_KEY)
                     return std::nullopt;
                 return result;
             }
@@ -835,12 +838,32 @@ public:
         return results;
     }
 
+    std::optional<std::string>
+    fetchMigratorStatus(std::string const& migratorName, boost::asio::yield_context yield) const override
+    {
+        auto const res = executor_.read(yield, schema_->selectMigratorStatus, Text(migratorName));
+        if (not res) {
+            LOG(log_.error()) << "Could not fetch migrator status: " << res.error();
+            return {};
+        }
+
+        auto const& results = res.value();
+        if (not results) {
+            return {};
+        }
+
+        for (auto [statusString] : extract<std::string>(results))
+            return statusString;
+
+        return {};
+    }
+
     void
     doWriteLedgerObject(std::string&& key, std::uint32_t const seq, std::string&& blob) override
     {
         LOG(log_.trace()) << " Writing ledger object " << key.size() << ":" << seq << " [" << blob.size() << " bytes]";
 
-        if (range)
+        if (range_)
             executor_.write(schema_->insertDiff, seq, key);
 
         executor_.write(schema_->insertObject, std::move(key), seq, std::move(blob));
@@ -960,6 +983,14 @@ public:
     {
         // Note: no-op in original implementation too.
         // probably was used in PG to start a transaction or smth.
+    }
+
+    void
+    writeMigratorStatus(std::string const& migratorName, std::string const& status) override
+    {
+        executor_.writeSync(
+            schema_->insertMigratorStatus, data::cassandra::Text{migratorName}, data::cassandra::Text(status)
+        );
     }
 
     bool

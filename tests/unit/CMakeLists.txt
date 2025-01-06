@@ -5,6 +5,7 @@ target_sources(
   PRIVATE # Common
           ConfigTests.cpp
           app/CliArgsTests.cpp
+          app/WebHandlersTests.cpp
           data/AmendmentCenterTests.cpp
           data/BackendCountersTests.cpp
           data/BackendInterfaceTests.cpp
@@ -49,6 +50,14 @@ target_sources(
           Main.cpp
           Playground.cpp
           ProfilerTests.cpp
+          # Migration
+          migration/cassandra/FullTableScannerTests.cpp
+          migration/cassandra/SpecTests.cpp
+          migration/MigratorRegisterTests.cpp
+          migration/MigratorStatusTests.cpp
+          migration/MigrationManagerBaseTests.cpp
+          migration/MigrationManagerFactoryTests.cpp
+          migration/SpecTests.cpp
           # RPC
           rpc/APIVersionTests.cpp
           rpc/BaseTests.cpp
@@ -67,6 +76,7 @@ target_sources(
           rpc/handlers/AccountOffersTests.cpp
           rpc/handlers/AccountTxTests.cpp
           rpc/handlers/AMMInfoTests.cpp
+          rpc/handlers/AllHandlerTests.cpp
           rpc/handlers/BookChangesTests.cpp
           rpc/handlers/BookOffersTests.cpp
           rpc/handlers/CredentialHelpersTests.cpp
@@ -110,6 +120,7 @@ target_sources(
           util/async/AnyStrandTests.cpp
           util/async/AsyncExecutionContextTests.cpp
           util/BatchingTests.cpp
+          util/ConceptsTests.cpp
           util/CoroutineGroupTests.cpp
           util/LedgerUtilsTests.cpp
           # Prometheus support
@@ -160,6 +171,7 @@ target_sources(
           util/newconfig/ConfigValueTests.cpp
           util/newconfig/ObjectViewTests.cpp
           util/newconfig/JsonConfigFileTests.cpp
+          util/newconfig/JsonFileTests.cpp
           util/newconfig/ValueViewTests.cpp
 )
 
@@ -169,7 +181,6 @@ gtest_discover_tests(clio_tests DISCOVERY_TIMEOUT 90)
 # Fix for dwarf5 bug on ci
 target_compile_options(clio_options INTERFACE -gdwarf-4)
 
-target_compile_definitions(clio_tests PUBLIC UNITTEST_BUILD)
 target_include_directories(clio_tests PRIVATE .)
 target_link_libraries(clio_tests PUBLIC clio_testing_common)
 set_target_properties(clio_tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

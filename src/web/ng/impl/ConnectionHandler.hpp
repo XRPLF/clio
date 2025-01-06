@@ -44,6 +44,8 @@ namespace web::ng::impl {
 
 class ConnectionHandler {
 public:
+    using OnDisconnectHook = std::function<void(Connection const&)>;
+
     struct StringHash {
         using hash_type = std::hash<std::string_view>;
         using is_transparent = void;
@@ -68,6 +70,8 @@ private:
     std::reference_wrapper<util::TagDecoratorFactory> tagFactory_;
     std::optional<size_t> maxSubscriptionSendQueueSize_;
 
+    OnDisconnectHook onDisconnectHook_;
+
     TargetToHandlerMap getHandlers_;
     TargetToHandlerMap postHandlers_;
     std::optional<MessageHandler> wsHandler_;
@@ -79,7 +83,8 @@ public:
         ProcessingPolicy processingPolicy,
         std::optional<size_t> maxParallelRequests,
         util::TagDecoratorFactory& tagFactory,
-        std::optional<size_t> maxSubscriptionSendQueueSize
+        std::optional<size_t> maxSubscriptionSendQueueSize,
+        OnDisconnectHook onDisconnectHook
     );
 
     void

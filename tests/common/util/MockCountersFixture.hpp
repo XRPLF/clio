@@ -27,5 +27,5 @@
  */
 struct MockCountersTest : virtual public NoLoggerFixture {
 protected:
-    std::shared_ptr<MockCounters> mockCountersPtr = std::make_shared<MockCounters>();
+    std::shared_ptr<MockCounters> mockCountersPtr_ = std::make_shared<MockCounters>();
 };

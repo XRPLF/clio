@@ -119,7 +119,7 @@ public:
      * @param ledgers The network validated ledgers datastructure
      */
     ETLService(
-        util::Config const& config,
+        util::config::ClioConfigDefinition const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
@@ -141,8 +141,8 @@ public:
      * @return A shared pointer to a new instance of ETLService
      */
     static std::shared_ptr<ETLService>
-    make_ETLService(
-        util::Config const& config,
+    makeETLService(
+        util::config::ClioConfigDefinition const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,

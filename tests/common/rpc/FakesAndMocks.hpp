@@ -55,7 +55,7 @@ tag_invoke(boost::json::value_to_tag<TestInput>, boost::json::value const& jv)
     if (jv.as_object().contains("limit"))
         optLimit = jv.at("limit").as_int64();
 
-    return {boost::json::value_to<std::string>(jv.as_object().at("hello")), optLimit};
+    return {.hello = boost::json::value_to<std::string>(jv.as_object().at("hello")), .limit = optLimit};
 }
 
 // must be implemented as per rpc/common/Concepts.h
@@ -77,12 +77,12 @@ public:
     {
         using namespace rpc::validation;
 
-        static auto const rpcSpec = rpc::RpcSpec{
+        static auto const kRPC_SPEC = rpc::RpcSpec{
             {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
             {"limit", Type<uint32_t>{}, Between<uint32_t>{0, 100}},  // optional field
         };
 
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     static Result
@@ -116,12 +116,12 @@ public:
     {
         using namespace rpc::validation;
 
-        static auto const rpcSpec = rpc::RpcSpec{
+        static auto const kRPC_SPEC = rpc::RpcSpec{
             {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
             {"limit", Type<uint32_t>{}, Between<uint32_t>{0u, 100u}},  // optional field
         };
 
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     static Result

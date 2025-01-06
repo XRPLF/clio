@@ -29,6 +29,9 @@
 #include "util/Random.hpp"
 #include "util/ResponseExpirationCache.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ArrayView.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -51,13 +54,13 @@
 #include <utility>
 #include <vector>
 
-using namespace util;
+using namespace util::config;
 
 namespace etl {
 
 std::shared_ptr<LoadBalancer>
-LoadBalancer::make_LoadBalancer(
-    Config const& config,
+LoadBalancer::makeLoadBalancer(
+    ClioConfigDefinition const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
@@ -71,7 +74,7 @@ LoadBalancer::make_LoadBalancer(
 }
 
 LoadBalancer::LoadBalancer(
-    Config const& config,
+    ClioConfigDefinition const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
@@ -79,23 +82,23 @@ LoadBalancer::LoadBalancer(
     SourceFactory sourceFactory
 )
 {
-    auto const forwardingCacheTimeout = config.valueOr<float>("forwarding.cache_timeout", 0.f);
+    auto const forwardingCacheTimeout = config.get<float>("forwarding.cache_timeout");
     if (forwardingCacheTimeout > 0.f) {
         forwardingCache_ = util::ResponseExpirationCache{
-            Config::toMilliseconds(forwardingCacheTimeout),
+            util::config::ClioConfigDefinition::toMilliseconds(forwardingCacheTimeout),
             {"server_info", "server_state", "server_definitions", "fee", "ledger_closed"}
         };
     }
 
-    static constexpr std::uint32_t MAX_DOWNLOAD = 256;
-    if (auto value = config.maybeValue<uint32_t>("num_markers"); value) {
-        ASSERT(*value > 0 and *value <= MAX_DOWNLOAD, "'num_markers' value in config must be in range 1-256");
-        downloadRanges_ = *value;
+    auto const numMarkers = config.getValueView("num_markers");
+    if (numMarkers.hasValue()) {
+        auto const value = numMarkers.asIntType<uint32_t>();
+        downloadRanges_ = value;
     } else if (backend->fetchLedgerRange()) {
         downloadRanges_ = 4;
     }
 
-    auto const allowNoEtl = config.valueOr("allow_no_etl", false);
+    auto const allowNoEtl = config.get<bool>("allow_no_etl");
 
     auto const checkOnETLFailure = [this, allowNoEtl](std::string const& log) {
         LOG(log_.warn()) << log;
@@ -106,10 +109,12 @@ LoadBalancer::LoadBalancer(
         }
     };
 
-    auto const forwardingTimeout = Config::toMilliseconds(config.valueOr<float>("forwarding.request_timeout", 10.));
-    for (auto const& entry : config.array("etl_sources")) {
+    auto const forwardingTimeout =
+        ClioConfigDefinition::toMilliseconds(config.get<float>("forwarding.request_timeout"));
+    auto const etlArray = config.getArray("etl_sources");
+    for (auto it = etlArray.begin<ObjectView>(); it != etlArray.end<ObjectView>(); ++it) {
         auto source = sourceFactory(
-            entry,
+            *it,
             ioc,
             backend,
             subscriptions,
@@ -230,7 +235,7 @@ LoadBalancer::forwardToRippled(
 )
 {
     if (not request.contains("command"))
-        return std::unexpected{rpc::ClioError::rpcCOMMAND_IS_MISSING};
+        return std::unexpected{rpc::ClioError::RpcCommandIsMissing};
 
     auto const cmd = boost::json::value_to<std::string>(request.at("command"));
     if (forwardingCache_) {
@@ -244,10 +249,10 @@ LoadBalancer::forwardToRippled(
 
     auto numAttempts = 0u;
 
-    auto xUserValue = isAdmin ? ADMIN_FORWARDING_X_USER_VALUE : USER_FORWARDING_X_USER_VALUE;
+    auto xUserValue = isAdmin ? kADMIN_FORWARDING_X_USER_VALUE : kUSER_FORWARDING_X_USER_VALUE;
 
     std::optional<boost::json::object> response;
-    rpc::ClioError error = rpc::ClioError::etlCONNECTION_ERROR;
+    rpc::ClioError error = rpc::ClioError::EtlConnectionError;
     while (numAttempts < sources_.size()) {
         auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield);
         if (res) {

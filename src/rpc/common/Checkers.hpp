@@ -78,7 +78,7 @@ public:
     check(boost::json::value const& value, std::string_view key)
     {
         if (value.is_object() and value.as_object().contains(key))
-            return Warning{WarningCode::warnRPC_DEPRECATED, fmt::format("Field '{}' is deprecated.", key)};
+            return Warning{WarningCode::WarnRpcDeprecated, fmt::format("Field '{}' is deprecated.", key)};
         return std::nullopt;
     }
 };
@@ -117,7 +117,7 @@ public:
             auto const res = value_to<T>(value.as_object().at(key));
             if (value_ == res) {
                 return Warning{
-                    WarningCode::warnRPC_DEPRECATED, fmt::format("Value '{}' for field '{}' is deprecated", value_, key)
+                    WarningCode::WarnRpcDeprecated, fmt::format("Value '{}' for field '{}' is deprecated", value_, key)
                 };
             }
         }

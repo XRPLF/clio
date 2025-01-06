@@ -27,6 +27,7 @@
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/TER.h>
 #include <xrpl/protocol/TxFormats.h>
 
@@ -41,7 +42,7 @@ namespace etl {
  * @param txMeta Transaction metadata
  * @return MPT and holder account pair
  */
-static std::optional<MPTHolderData>
+std::optional<MPTHolderData>
 getMPTokenAuthorize(ripple::TxMeta const& txMeta)
 {
     for (ripple::STObject const& node : txMeta.getNodes()) {
@@ -50,7 +51,9 @@ getMPTokenAuthorize(ripple::TxMeta const& txMeta)
 
         if (node.getFName() == ripple::sfCreatedNode) {
             auto const& newMPT = node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>();
-            return MPTHolderData{newMPT[ripple::sfMPTokenIssuanceID], newMPT.getAccountID(ripple::sfAccount)};
+            return MPTHolderData{
+                .mptID = newMPT[ripple::sfMPTokenIssuanceID], .holder = newMPT.getAccountID(ripple::sfAccount)
+            };
         }
     }
     return {};
@@ -77,7 +80,7 @@ getMPTHolderFromObj(std::string const& key, std::string const& blob)
     auto const mptIssuanceID = sle[ripple::sfMPTokenIssuanceID];
     auto const holder = sle.getAccountID(ripple::sfAccount);
 
-    return MPTHolderData{mptIssuanceID, holder};
+    return MPTHolderData{.mptID = mptIssuanceID, .holder = holder};
 }
 
 }  // namespace etl

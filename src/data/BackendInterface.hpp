@@ -65,7 +65,7 @@ public:
     }
 };
 
-static constexpr std::size_t DEFAULT_WAIT_BETWEEN_RETRY = 500;
+static constexpr std::size_t kDEFAULT_WAIT_BETWEEN_RETRY = 500;
 /**
  * @brief A helper function that catches DatabaseTimout exceptions and retries indefinitely.
  *
@@ -76,9 +76,9 @@ static constexpr std::size_t DEFAULT_WAIT_BETWEEN_RETRY = 500;
  */
 template <typename FnType>
 auto
-retryOnTimeout(FnType func, size_t waitMs = DEFAULT_WAIT_BETWEEN_RETRY)
+retryOnTimeout(FnType func, size_t waitMs = kDEFAULT_WAIT_BETWEEN_RETRY)
 {
-    static util::Logger const log{"Backend"};
+    static util::Logger const log{"Backend"};  // NOLINT(readability-identifier-naming)
 
     while (true) {
         try {
@@ -138,7 +138,7 @@ synchronousAndRetryOnTimeout(FnType&& func)
 class BackendInterface {
 protected:
     mutable std::shared_mutex rngMtx_;
-    std::optional<LedgerRange> range;
+    std::optional<LedgerRange> range_;
     LedgerCache cache_;
     std::optional<etl::CorruptionDetector<LedgerCache>> corruptionDetector_;
 
@@ -549,6 +549,16 @@ public:
     ) const;
 
     /**
+     * @brief Fetches the status of migrator by name.
+     *
+     * @param migratorName The name of the migrator
+     * @param yield The coroutine context
+     * @return The status of the migrator if found; nullopt otherwise
+     */
+    virtual std::optional<std::string>
+    fetchMigratorStatus(std::string const& migratorName, boost::asio::yield_context yield) const = 0;
+
+    /**
      * @brief Synchronously fetches the ledger range from DB.
      *
      * This function just wraps hardFetchLedgerRange(boost::asio::yield_context) using synchronous(FnType&&).
@@ -672,6 +682,15 @@ public:
      */
     bool
     finishWrites(std::uint32_t ledgerSequence);
+
+    /**
+     * @brief Mark the migration status of a migrator as Migrated in the database
+     *
+     * @param migratorName The name of the migrator
+     * @param status The status to set
+     */
+    virtual void
+    writeMigratorStatus(std::string const& migratorName, std::string const& status) = 0;
 
     /**
      * @return true if database is overwhelmed; false otherwise

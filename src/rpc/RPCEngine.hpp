@@ -84,7 +84,7 @@ public:
      * @param handlerProvider The handler provider to use
      */
     RPCEngine(
-        util::Config const& config,
+        util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<LoadBalancerType> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,
@@ -100,13 +100,14 @@ public:
         , forwardingProxy_{balancer, counters, handlerProvider}
     {
         // Let main thread catch the exception if config type is wrong
-        auto const cacheTimeout = config.valueOr<float>("rpc.cache_timeout", 0.f);
+        auto const cacheTimeout = config.get<float>("rpc.cache_timeout");
 
         if (cacheTimeout > 0.f) {
             LOG(log_.info()) << fmt::format("Init RPC Cache, timeout: {} seconds", cacheTimeout);
 
             responseCache_.emplace(
-                util::Config::toMilliseconds(cacheTimeout), std::unordered_set<std::string>{"server_info"}
+                util::config::ClioConfigDefinition::toMilliseconds(cacheTimeout),
+                std::unordered_set<std::string>{"server_info"}
             );
         }
     }
@@ -124,8 +125,8 @@ public:
      * @return A new instance of the RPC engine
      */
     static std::shared_ptr<RPCEngine>
-    make_RPCEngine(
-        util::Config const& config,
+    makeRPCEngine(
+        util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<LoadBalancerType> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,
@@ -174,7 +175,13 @@ public:
         try {
             LOG(perfLog_.debug()) << ctx.tag() << " start executing rpc `" << ctx.method << '`';
 
-            auto const context = Context{ctx.yield, ctx.session, ctx.isAdmin, ctx.clientIp, ctx.apiVersion};
+            auto const context = Context{
+                .yield = ctx.yield,
+                .session = ctx.session,
+                .isAdmin = ctx.isAdmin,
+                .clientIp = ctx.clientIp,
+                .apiVersion = ctx.apiVersion
+            };
             auto v = (*method).process(ctx.params, context);
 
             LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';

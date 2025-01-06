@@ -40,7 +40,7 @@ namespace util {
 inline std::string
 toLower(std::string str)
 {
-    std::transform(std::begin(str), std::end(str), std::begin(str), [](unsigned char c) { return std::tolower(c); });
+    std::ranges::transform(str, std::begin(str), [](unsigned char c) { return std::tolower(c); });
     return str;
 }
 
@@ -53,7 +53,7 @@ toLower(std::string str)
 inline std::string
 toUpper(std::string str)
 {
-    std::transform(std::begin(str), std::end(str), std::begin(str), [](unsigned char c) { return std::toupper(c); });
+    std::ranges::transform(str, std::begin(str), [](unsigned char c) { return std::toupper(c); });
     return str;
 }
 

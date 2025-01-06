@@ -30,7 +30,7 @@ using namespace data::cassandra::impl;
 using namespace testing;
 
 struct BackendCassandraRetryPolicyTest : SyncAsioContextTest {
-    ExponentialBackoffRetryPolicy retryPolicy{ctx};
+    ExponentialBackoffRetryPolicy retryPolicy{ctx_};
 };
 
 TEST_F(BackendCassandraRetryPolicyTest, ShouldRetryAlwaysTrue)

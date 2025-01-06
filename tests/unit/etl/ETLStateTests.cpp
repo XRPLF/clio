@@ -38,7 +38,7 @@ struct ETLStateTest : public NoLoggerFixture {
 
 TEST_F(ETLStateTest, Error)
 {
-    EXPECT_CALL(source, forwardToRippled).WillOnce(Return(std::unexpected{rpc::ClioError::etlINVALID_RESPONSE}));
+    EXPECT_CALL(source, forwardToRippled).WillOnce(Return(std::unexpected{rpc::ClioError::EtlInvalidResponse}));
     auto const state = etl::ETLState::fetchETLStateFromSource(source);
     EXPECT_FALSE(state);
 }

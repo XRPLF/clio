@@ -56,7 +56,7 @@ MetricsFamily::getMetric(Labels labels, std::vector<std::int64_t> const& buckets
 MetricBase&
 MetricsFamily::getMetric(Labels labels, std::vector<double> const& buckets)
 {
-    ASSERT(type_ == MetricType::HISTOGRAM_DOUBLE, "This method is for HISTOGRAM_DOUBLE only.");
+    ASSERT(type_ == MetricType::HistogramDouble, "This method is for HistogramDouble only.");
     return getMetricImpl(std::move(labels), buckets);
 }
 

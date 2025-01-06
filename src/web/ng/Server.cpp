@@ -21,8 +21,9 @@
 
 #include "util/Assert.hpp"
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ObjectView.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/ProcessingPolicy.hpp"
@@ -56,22 +57,17 @@ namespace web::ng {
 namespace {
 
 std::expected<boost::asio::ip::tcp::endpoint, std::string>
-makeEndpoint(util::Config const& serverConfig)
+makeEndpoint(util::config::ObjectView const& serverConfig)
 {
-    auto const ip = serverConfig.maybeValue<std::string>("ip");
-    if (not ip.has_value())
-        return std::unexpected{"Missing 'ip` in server config."};
+    auto const ip = serverConfig.get<std::string>("ip");
 
     boost::system::error_code error;
-    auto const address = boost::asio::ip::make_address(*ip, error);
+    auto const address = boost::asio::ip::make_address(ip, error);
     if (error)
         return std::unexpected{fmt::format("Error parsing provided IP: {}", error.message())};
 
-    auto const port = serverConfig.maybeValue<unsigned short>("port");
-    if (not port.has_value())
-        return std::unexpected{"Missing 'port` in server config."};
-
-    return boost::asio::ip::tcp::endpoint{address, *port};
+    auto const port = serverConfig.get<unsigned short>("port");
+    return boost::asio::ip::tcp::endpoint{address, port};
 }
 
 std::expected<boost::asio::ip::tcp::acceptor, std::string>
@@ -124,12 +120,13 @@ detectSsl(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield)
     return SslDetectionResult{.socket = tcpStream.release_socket(), .isSsl = isSsl, .buffer = std::move(buffer)};
 }
 
-std::expected<ConnectionPtr, std::string>
+std::expected<ConnectionPtr, std::optional<std::string>>
 makeConnection(
     SslDetectionResult sslDetectionResult,
     std::optional<boost::asio::ssl::context>& sslContext,
     std::string ip,
     util::TagDecoratorFactory& tagDecoratorFactory,
+    Server::OnConnectCheck onConnectCheck,
     boost::asio::yield_context yield
 )
 {
@@ -152,6 +149,13 @@ makeConnection(
             std::move(sslDetectionResult.buffer),
             tagDecoratorFactory
         );
+    }
+
+    auto expectedSuccess = onConnectCheck(*connection);
+    if (not expectedSuccess.has_value()) {
+        connection->send(std::move(expectedSuccess).error(), yield);
+        connection->close(yield);
+        return std::unexpected{std::nullopt};
     }
 
     auto const expectedIsUpgrade = connection->isUpgradeRequested(yield);
@@ -182,13 +186,16 @@ Server::Server(
     ProcessingPolicy processingPolicy,
     std::optional<size_t> parallelRequestLimit,
     util::TagDecoratorFactory tagDecoratorFactory,
-    std::optional<size_t> maxSubscriptionSendQueueSize
+    std::optional<size_t> maxSubscriptionSendQueueSize,
+    OnConnectCheck onConnectCheck,
+    OnDisconnectHook onDisconnectHook
 )
     : ctx_{ctx}
     , sslContext_{std::move(sslContext)}
     , tagDecoratorFactory_{tagDecoratorFactory}
-    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, maxSubscriptionSendQueueSize}
+    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, maxSubscriptionSendQueueSize, std::move(onDisconnectHook)}
     , endpoint_{std::move(endpoint)}
+    , onConnectCheck_{std::move(onConnectCheck)}
 {
 }
 
@@ -216,6 +223,7 @@ Server::onWs(MessageHandler handler)
 std::optional<std::string>
 Server::run()
 {
+    LOG(log_.info()) << "Starting ng::Server";
     auto acceptor = makeAcceptor(ctx_.get(), endpoint_);
     if (not acceptor.has_value())
         return std::move(acceptor).error();
@@ -229,6 +237,7 @@ Server::run()
                 boost::asio::ip::tcp::socket socket{ctx_.get().get_executor()};
 
                 acceptor.async_accept(socket, yield[errorCode]);
+                LOG(log_.trace()) << "Accepted a new connection";
                 if (errorCode) {
                     LOG(log_.debug()) << "Error accepting a connection: " << errorCode.what();
                     continue;
@@ -269,15 +278,21 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
         return;
     }
 
-    // TODO(kuznetsss): check ip with dosguard here
-
     auto connectionExpected = makeConnection(
-        std::move(sslDetectionResult).value(), sslContext_, std::move(ip).value(), tagDecoratorFactory_, yield
+        std::move(sslDetectionResult).value(),
+        sslContext_,
+        std::move(ip).value(),
+        tagDecoratorFactory_,
+        onConnectCheck_,
+        yield
     );
     if (not connectionExpected.has_value()) {
-        LOG(log_.info()) << "Error creating a connection: " << connectionExpected.error();
+        if (connectionExpected.error().has_value()) {
+            LOG(log_.info()) << "Error creating a connection: " << *connectionExpected.error();
+        }
         return;
     }
+    LOG(log_.trace()) << connectionExpected.value()->tag() << "Connection created";
 
     boost::asio::spawn(
         ctx_.get(),
@@ -288,9 +303,14 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
 }
 
 std::expected<Server, std::string>
-make_Server(util::Config const& config, boost::asio::io_context& context)
+makeServer(
+    util::config::ClioConfigDefinition const& config,
+    Server::OnConnectCheck onConnectCheck,
+    Server::OnDisconnectHook onDisconnectHook,
+    boost::asio::io_context& context
+)
 {
-    auto const serverConfig = config.section("server");
+    auto const serverConfig = config.getObject("server");
 
     auto endpoint = makeEndpoint(serverConfig);
     if (not endpoint.has_value())
@@ -303,7 +323,7 @@ make_Server(util::Config const& config, boost::asio::io_context& context)
     ProcessingPolicy processingPolicy{ProcessingPolicy::Parallel};
     std::optional<size_t> parallelRequestLimit;
 
-    auto const processingStrategyStr = serverConfig.valueOr<std::string>("processing_policy", "parallel");
+    auto const processingStrategyStr = serverConfig.get<std::string>("processing_policy");
     if (processingStrategyStr == "sequent") {
         processingPolicy = ProcessingPolicy::Sequential;
     } else if (processingStrategyStr == "parallel") {
@@ -312,7 +332,7 @@ make_Server(util::Config const& config, boost::asio::io_context& context)
         return std::unexpected{fmt::format("Invalid 'server.processing_strategy': {}", processingStrategyStr)};
     }
 
-    auto const maxSubscriptionSendQueueSize = serverConfig.maybeValue<size_t>("ws_max_sending_queue_size");
+    auto const maxSubscriptionSendQueueSize = serverConfig.get<size_t>("ws_max_sending_queue_size");
 
     return Server{
         context,
@@ -321,7 +341,9 @@ make_Server(util::Config const& config, boost::asio::io_context& context)
         processingPolicy,
         parallelRequestLimit,
         util::TagDecoratorFactory(config),
-        maxSubscriptionSendQueueSize
+        maxSubscriptionSendQueueSize,
+        std::move(onConnectCheck),
+        std::move(onDisconnectHook)
     };
 }
 

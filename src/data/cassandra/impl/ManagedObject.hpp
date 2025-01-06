@@ -30,8 +30,8 @@ protected:
     std::unique_ptr<Managed, void (*)(Managed*)> ptr_;
 
 public:
-    template <typename deleterCallable>
-    ManagedObject(Managed* rawPtr, deleterCallable deleter) : ptr_{rawPtr, deleter}
+    template <typename DeleterCallable>
+    ManagedObject(Managed* rawPtr, DeleterCallable deleter) : ptr_{rawPtr, deleter}
     {
         if (rawPtr == nullptr)
             throw std::runtime_error("Could not create DB object - got nullptr");

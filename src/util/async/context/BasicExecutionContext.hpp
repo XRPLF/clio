@@ -138,7 +138,7 @@ class BasicExecutionContext {
 
 public:
     /** @brief Whether operations on this execution context are noexcept */
-    static constexpr bool isNoexcept = noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; }));
+    static constexpr bool kIS_NOEXCEPT = noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; }));
 
     using ContextHolderType = ContextType;
 
@@ -162,14 +162,12 @@ public:
 
     using Timer = typename ContextHolderType::Timer;
 
-    /**
-     * @brief Create a new execution context with the given number of threads.
-     *
-     * Note: scheduled operations are always stoppable
-     * @tparam T The type of the value returned by operations
-     */
+    // note: scheduled operations are always stoppable
     template <typename T>
     using ScheduledOperation = ScheduledOperation<BasicExecutionContext, StoppableOperation<T>>;
+
+    // note: repeating operations are always stoppable and must return void
+    using RepeatedOperation = RepeatingOperation<BasicExecutionContext>;
 
     /**
      * @brief Create a new execution context with the given number of threads.
@@ -181,7 +179,7 @@ public:
     }
 
     /**
-     * @brief Stops and joins the underlying thread pool.
+     * @brief Stops the underlying thread pool.
      */
     ~BasicExecutionContext()
     {
@@ -204,7 +202,7 @@ public:
         SomeStdDuration auto delay,
         SomeHandlerWith<StopToken> auto&& fn,
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
-    ) noexcept(isNoexcept)
+    ) noexcept(kIS_NOEXCEPT)
     {
         if constexpr (not std::is_same_v<decltype(TimerContextProvider::getContext(*this)), decltype(*this)>) {
             return TimerContextProvider::getContext(*this).scheduleAfter(
@@ -244,7 +242,7 @@ public:
         SomeStdDuration auto delay,
         SomeHandlerWith<StopToken, bool> auto&& fn,
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
-    ) noexcept(isNoexcept)
+    ) noexcept(kIS_NOEXCEPT)
     {
         if constexpr (not std::is_same_v<decltype(TimerContextProvider::getContext(*this)), decltype(*this)>) {
             return TimerContextProvider::getContext(*this).scheduleAfter(
@@ -273,6 +271,23 @@ public:
     }
 
     /**
+     * @brief Schedule a repeating operation on the execution context
+     *
+     * @param interval The interval at which the operation should be repeated
+     * @param fn The block of code to execute; no args allowed and return type must be void
+     * @return A repeating stoppable operation that can be used to wait for its cancellation
+     */
+    [[nodiscard]] auto
+    executeRepeatedly(SomeStdDuration auto interval, SomeHandlerWithoutStopToken auto&& fn) noexcept(kIS_NOEXCEPT)
+    {
+        if constexpr (not std::is_same_v<decltype(TimerContextProvider::getContext(*this)), decltype(*this)>) {
+            return TimerContextProvider::getContext(*this).executeRepeatedly(interval, std::forward<decltype(fn)>(fn));
+        } else {
+            return RepeatedOperation(impl::extractAssociatedExecutor(*this), interval, std::forward<decltype(fn)>(fn));
+        }
+    }
+
+    /**
      * @brief Schedule an operation on the execution context
      *
      * @param fn The block of code to execute with stop token as first arg
@@ -283,7 +298,7 @@ public:
     execute(
         SomeHandlerWith<StopToken> auto&& fn,
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
-    ) noexcept(isNoexcept)
+    ) noexcept(kIS_NOEXCEPT)
     {
         return DispatcherType::dispatch(
             context_,
@@ -313,7 +328,7 @@ public:
      * @return A stoppable operation that can be used to wait for the result
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout) noexcept(isNoexcept)
+    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout) noexcept(kIS_NOEXCEPT)
     {
         return execute(
             std::forward<decltype(fn)>(fn),
@@ -328,7 +343,7 @@ public:
      * @return A unstoppable operation that can be used to wait for the result
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWithoutStopToken auto&& fn) noexcept(isNoexcept)
+    execute(SomeHandlerWithoutStopToken auto&& fn) noexcept(kIS_NOEXCEPT)
     {
         return DispatcherType::dispatch(
             context_,

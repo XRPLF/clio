@@ -57,7 +57,7 @@ namespace rpc {
  * @return A Websocket context or error Status
  */
 std::expected<web::Context, Status>
-make_WsContext(
+makeWsContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
     web::SubscriptionContextPtr session,
@@ -81,7 +81,7 @@ make_WsContext(
  * @return A HTTP context or error Status
  */
 std::expected<web::Context, Status>
-make_HttpContext(
+makeHttpContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
     util::TagDecoratorFactory const& tagFactory,

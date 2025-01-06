@@ -24,6 +24,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 
@@ -53,6 +54,8 @@ NFTHistoryHandler::Result
 NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "NFTHistory's ledger range must be available");
+
     auto [minIndex, maxIndex] = *range;
 
     if (input.ledgerIndexMin) {
@@ -100,7 +103,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
         }
     }
 
-    auto const limit = input.limit.value_or(LIMIT_DEFAULT);
+    auto const limit = input.limit.value_or(kLIMIT_DEFAULT);
     auto const tokenID = ripple::uint256{input.nftID.c_str()};
 
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
@@ -112,7 +115,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
     auto const [blobs, retCursor] = txnsAndCursor;
 
     if (retCursor)
-        response.marker = {retCursor->ledgerSequence, retCursor->transactionIndex};
+        response.marker = {.ledger = retCursor->ledgerSequence, .seq = retCursor->transactionIndex};
 
     for (auto const& txnPlusMeta : blobs) {
         // over the range
@@ -229,8 +232,8 @@ tag_invoke(boost::json::value_to_tag<NFTHistoryHandler::Input>, boost::json::val
 
     if (jsonObject.contains(JS(marker))) {
         input.marker = NFTHistoryHandler::Marker{
-            jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
-            jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()
+            .ledger = jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
+            .seq = jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()
         };
     }
 

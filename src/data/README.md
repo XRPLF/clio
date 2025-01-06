@@ -262,3 +262,15 @@ CREATE TABLE clio.nf_token_transactions (
 ```
 
 The `nf_token_transactions` table serves as the NFT counterpart to `account_tx`, inspired by the same motivations and fulfilling a similar role within this context. It drives the `nft_history` API.
+
+### migrator_status
+
+```
+CREATE TABLE clio.migrator_status (
+    migrator_name TEXT,     # The name of the migrator
+    status TEXT,            # The status of the migrator
+    PRIMARY KEY (migrator_name)
+) 
+```
+
+The `migrator_status` table stores the status of the migratior in this database. If a migrator's status is `migrated`, it means this database has finished data migration for this migrator.

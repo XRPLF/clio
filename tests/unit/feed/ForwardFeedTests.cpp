@@ -32,7 +32,11 @@ using namespace feed::impl;
 namespace json = boost::json;
 using namespace util::prometheus;
 
-constexpr static auto FEED = R"({"test":"test"})";
+namespace {
+
+constexpr auto kFEED = R"({"test":"test"})";
+
+}  // namespace
 
 class NamedForwardFeedTest : public ForwardFeed {
 public:
@@ -49,8 +53,8 @@ TEST_F(FeedForwardTest, Pub)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
 
-    auto const json = json::parse(FEED).as_object();
-    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(FEED))).Times(1);
+    auto const json = json::parse(kFEED).as_object();
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kFEED))).Times(1);
     testFeedPtr->pub(json);
 
     testFeedPtr->unsub(sessionPtr);
@@ -65,8 +69,8 @@ TEST_F(FeedForwardTest, AutoDisconnect)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
 
-    auto const json = json::parse(FEED).as_object();
-    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(FEED)));
+    auto const json = json::parse(kFEED).as_object();
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kFEED)));
     testFeedPtr->pub(json);
 
     slot(sessionPtr.get());

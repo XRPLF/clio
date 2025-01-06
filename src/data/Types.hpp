@@ -266,7 +266,7 @@ struct Amendment {
      * @return The amendment Id as uint256
      */
     static ripple::uint256
-    GetAmendmentId(std::string_view const name);
+    getAmendmentId(std::string_view const name);
 
     /**
      * @brief Equality comparison operator
@@ -312,8 +312,8 @@ struct AmendmentKey {
     operator<=>(AmendmentKey const& other) const = default;
 };
 
-constexpr ripple::uint256 firstKey{"0000000000000000000000000000000000000000000000000000000000000000"};
-constexpr ripple::uint256 lastKey{"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"};
-constexpr ripple::uint256 hi192{"0000000000000000000000000000000000000000000000001111111111111111"};
+constexpr ripple::uint256 kFIRST_KEY{"0000000000000000000000000000000000000000000000000000000000000000"};
+constexpr ripple::uint256 kLAST_KEY{"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"};
+constexpr ripple::uint256 kHI192{"0000000000000000000000000000000000000000000000001111111111111111"};
 
 }  // namespace data

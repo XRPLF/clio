@@ -23,7 +23,8 @@
 #include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -165,7 +166,7 @@ public:
 
         ON_CALL(*this, makeSource)
             .WillByDefault([this](
-                               util::Config const&,
+                               util::config::ObjectView const&,
                                boost::asio::io_context&,
                                std::shared_ptr<BackendInterface>,
                                std::shared_ptr<feed::SubscriptionManagerInterface>,
@@ -177,8 +178,11 @@ public:
                            ) {
                 auto it = std::ranges::find_if(mockData_, [](auto const& d) { return not d.callbacks.has_value(); });
                 [&]() { ASSERT_NE(it, mockData_.end()) << "Make source called more than expected"; }();
-                it->callbacks =
-                    MockSourceCallbacks{std::move(onDisconnect), std::move(onConnect), std::move(onLedgerClosed)};
+                it->callbacks = MockSourceCallbacks{
+                    .onDisconnect = std::move(onDisconnect),
+                    .onConnect = std::move(onConnect),
+                    .onLedgerClosed = std::move(onLedgerClosed)
+                };
 
                 return std::make_unique<MockSourceWrapper<MockType>>(it->source);
             });
@@ -202,7 +206,7 @@ public:
     MOCK_METHOD(
         etl::SourcePtr,
         makeSource,
-        (util::Config const&,
+        (util::config::ObjectView const&,
          boost::asio::io_context&,
          std::shared_ptr<BackendInterface>,
          std::shared_ptr<feed::SubscriptionManagerInterface>,

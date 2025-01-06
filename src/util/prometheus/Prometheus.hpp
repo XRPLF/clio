@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
 #include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
@@ -28,6 +28,7 @@
 #include "util/prometheus/MetricBase.hpp"
 #include "util/prometheus/MetricsFamily.hpp"
 
+#include <concepts>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -256,7 +257,7 @@ public:
      *
      * @param config The configuration to use
      */
-    void static init(util::Config const& config = util::Config{});
+    void static init(util::config::ClioConfigDefinition const& config);
 
     /**
      * @brief Get a bool based metric. It will be created if it doesn't exist
@@ -393,10 +394,10 @@ public:
      *
      * @note Be careful with this method because there could be hanging references to counters
      *
-     * @param instance The new prometheus object
+     * @param inst The new prometheus object
      */
     static void
-    replaceInstance(std::unique_ptr<util::prometheus::PrometheusInterface> instance);
+    replaceInstance(std::unique_ptr<util::prometheus::PrometheusInterface> inst);
 
     /**
      * @brief Get the prometheus object stored in the singleton
@@ -407,5 +408,5 @@ public:
     instance();
 
 private:
-    static std::unique_ptr<util::prometheus::PrometheusInterface> instance_;
+    static std::unique_ptr<util::prometheus::PrometheusInterface> impl;
 };

@@ -39,14 +39,14 @@ class ForwardingSource {
     util::requests::WsConnectionBuilder connectionBuilder_;
     std::chrono::steady_clock::duration forwardingTimeout_;
 
-    static constexpr std::chrono::seconds CONNECTION_TIMEOUT{3};
+    static constexpr std::chrono::seconds kCONNECTION_TIMEOUT{3};
 
 public:
     ForwardingSource(
         std::string ip,
         std::string wsPort,
         std::chrono::steady_clock::duration forwardingTimeout,
-        std::chrono::steady_clock::duration connectionTimeout = CONNECTION_TIMEOUT
+        std::chrono::steady_clock::duration connTimeout = ForwardingSource::kCONNECTION_TIMEOUT
     );
 
     /**

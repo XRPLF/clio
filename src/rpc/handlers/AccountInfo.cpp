@@ -25,6 +25,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/JsonBool.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
@@ -58,6 +59,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
         return Error{Status{RippledError::rpcINVALID_PARAMS, ripple::RPC::missing_field_message(JS(account))}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "AccountInfo's ledger range must be available");
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
@@ -164,7 +166,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
 
     boost::json::object acctFlags;
     for (auto const& lsf : lsFlags)
-        acctFlags[lsf.first.data()] = output.accountData.isFlag(lsf.second);
+        acctFlags[lsf.first] = output.accountData.isFlag(lsf.second);
 
     jv.as_object()[JS(account_flags)] = std::move(acctFlags);
 

@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/asio/ssl/context.hpp>
 
@@ -30,7 +30,7 @@
 namespace web::ng::impl {
 
 std::expected<std::optional<boost::asio::ssl::context>, std::string>
-makeServerSslContext(util::Config const& config);
+makeServerSslContext(util::config::ClioConfigDefinition const& config);
 
 std::expected<boost::asio::ssl::context, std::string>
 makeServerSslContext(std::string const& certData, std::string const& keyData);

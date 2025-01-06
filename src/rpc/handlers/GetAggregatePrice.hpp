@@ -130,11 +130,11 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto constexpr ORACLES_MAX = 200;
+        static constexpr auto kORACLES_MAX = 200;
 
-        static auto const oraclesValidator =
+        static auto const kORACLES_VALIDATOR =
             modifiers::CustomModifier{[](boost::json::value& value, std::string_view) -> MaybeError {
-                if (!value.is_array() or value.as_array().empty() or value.as_array().size() > ORACLES_MAX)
+                if (!value.is_array() or value.as_array().empty() or value.as_array().size() > kORACLES_MAX)
                     return Error{Status{RippledError::rpcORACLE_MALFORMED}};
 
                 for (auto& oracle : value.as_array()) {
@@ -153,7 +153,7 @@ public:
                         return maybeError;
 
                     maybeError =
-                        validation::CustomValidators::AccountBase58Validator.verify(oracle.as_object(), JS(account));
+                        validation::CustomValidators::accountBase58Validator.verify(oracle.as_object(), JS(account));
                     if (!maybeError)
                         return Error{Status{RippledError::rpcINVALID_PARAMS}};
                 };
@@ -161,23 +161,23 @@ public:
                 return MaybeError{};
             }};
 
-        static auto const rpcSpec = RpcSpec{
-            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
+        static auto const kRPC_SPEC = RpcSpec{
+            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
             // validate quoteAsset and base_asset in accordance to the currency code found in XRPL doc:
             // https://xrpl.org/docs/references/protocol/data-types/currency-formats#currency-codes
             // usually Clio returns rpcMALFORMED_CURRENCY , return InvalidParam here just to mimic rippled
             {JS(base_asset),
              validation::Required{},
              meta::WithCustomError{
-                 validation::CustomValidators::CurrencyValidator, Status(RippledError::rpcINVALID_PARAMS)
+                 validation::CustomValidators::currencyValidator, Status(RippledError::rpcINVALID_PARAMS)
              }},
             {JS(quote_asset),
              validation::Required{},
              meta::WithCustomError{
-                 validation::CustomValidators::CurrencyValidator, Status(RippledError::rpcINVALID_PARAMS)
+                 validation::CustomValidators::currencyValidator, Status(RippledError::rpcINVALID_PARAMS)
              }},
-            {JS(oracles), validation::Required{}, oraclesValidator},
+            {JS(oracles), validation::Required{}, kORACLES_VALIDATOR},
             // note: Unlike `rippled`, Clio only supports UInt as input, no string, no `null`, etc.
             {JS(time_threshold), validation::Type<std::uint32_t>{}},
             {
@@ -187,7 +187,7 @@ public:
             }
         };
 
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     /**

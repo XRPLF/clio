@@ -82,7 +82,7 @@ struct GrpcSourceNgTests : NoLoggerFixture, tests::util::WithMockXrpLedgerAPISer
             for (auto mi = 0uz; mi < markers.size(); ++mi) {
                 for (auto i = 0uz; i < totalPerMarker; ++i) {
                     auto const mapKey = ripple::strHex(markers.at(mi)).substr(0, 2);
-                    store_[mapKey].push(keys_.at(mi * totalPerMarker + i));
+                    store_[mapKey].push(keys_.at((mi * totalPerMarker) + i));
                 }
             }
         }
@@ -124,11 +124,13 @@ struct GrpcSourceNgTests : NoLoggerFixture, tests::util::WithMockXrpLedgerAPISer
         };
     };
 
+protected:
     testing::StrictMock<MockLoadObserver> observer_;
     etlng::impl::GrpcSource grpcSource_;
 };
 
 struct GrpcSourceNgLoadInitialLedgerTests : GrpcSourceNgTests {
+protected:
     uint32_t const sequence_ = 123u;
     uint32_t const numMarkers_ = 4u;
     bool const cacheOnly_ = false;
@@ -189,7 +191,7 @@ TEST_F(GrpcSourceNgLoadInitialLedgerTests, ObserverCalledCorrectly)
 {
     auto const key = ripple::uint256{4};
     auto const keyStr = uint256ToString(key);
-    auto const object = CreateTicketLedgerObject("rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", sequence_);
+    auto const object = createTicketLedgerObject("rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", sequence_);
     auto const objectData = object.getSerializer().peekData();
 
     EXPECT_CALL(mockXrpLedgerAPIService, GetLedgerData)
@@ -223,11 +225,8 @@ TEST_F(GrpcSourceNgLoadInitialLedgerTests, ObserverCalledCorrectly)
     EXPECT_EQ(data, std::vector<std::string>(4, keyStr));
 }
 
-// TODO(godexsoft): Enable after fixing in #1752
 TEST_F(GrpcSourceNgLoadInitialLedgerTests, DataTransferredAndObserverCalledCorrectly)
 {
-    GTEST_SKIP() << "Skipping flaky test. Will be fixed in #1752.";
-
     auto const totalKeys = 256uz;
     auto const totalPerMarker = totalKeys / numMarkers_;
     auto const batchSize = totalPerMarker / 4uz;
@@ -235,7 +234,7 @@ TEST_F(GrpcSourceNgLoadInitialLedgerTests, DataTransferredAndObserverCalledCorre
 
     auto keyStore = KeyStore(totalKeys, numMarkers_);
 
-    auto const object = CreateTicketLedgerObject("rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", sequence_);
+    auto const object = createTicketLedgerObject("rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", sequence_);
     auto const objectData = object.getSerializer().peekData();
 
     EXPECT_CALL(mockXrpLedgerAPIService, GetLedgerData)
@@ -265,22 +264,21 @@ TEST_F(GrpcSourceNgLoadInitialLedgerTests, DataTransferredAndObserverCalledCorre
             return grpc::Status::OK;
         });
 
-    std::atomic_uint total = 0u;
-    [[maybe_unused]] testing::InSequence const seqGuard;
+    std::atomic_size_t total = 0uz;
+    std::atomic_size_t totalWithLastKey = 0uz;
+    std::atomic_size_t totalWithoutLastKey = 0uz;
 
     EXPECT_CALL(observer_, onInitialLoadGotMoreObjects)
-        .Times(numMarkers_)
+        .Times(numMarkers_ * batchesPerMarker)
         .WillRepeatedly([&](uint32_t, std::vector<Object> const& data, std::optional<std::string> lastKey) {
             EXPECT_LE(data.size(), batchSize);
-            EXPECT_FALSE(lastKey.has_value());
-            total += data.size();
-        });
 
-    EXPECT_CALL(observer_, onInitialLoadGotMoreObjects)
-        .Times((numMarkers_ - 1) * batchesPerMarker)
-        .WillRepeatedly([&](uint32_t, std::vector<Object> const& data, std::optional<std::string> lastKey) {
-            EXPECT_LE(data.size(), batchSize);
-            EXPECT_TRUE(lastKey.has_value());
+            if (lastKey.has_value()) {
+                ++totalWithLastKey;
+            } else {
+                ++totalWithoutLastKey;
+            }
+
             total += data.size();
         });
 
@@ -289,4 +287,7 @@ TEST_F(GrpcSourceNgLoadInitialLedgerTests, DataTransferredAndObserverCalledCorre
     EXPECT_TRUE(success);
     EXPECT_EQ(data.size(), numMarkers_);
     EXPECT_EQ(total, totalKeys);
+    EXPECT_EQ(totalWithLastKey + totalWithoutLastKey, numMarkers_ * batchesPerMarker);
+    EXPECT_EQ(totalWithoutLastKey, numMarkers_);
+    EXPECT_EQ(totalWithLastKey, (numMarkers_ - 1) * batchesPerMarker);
 }

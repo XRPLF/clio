@@ -33,24 +33,24 @@
 namespace util {
 
 [[maybe_unused, nodiscard]] std::pair<std::string, std::string>
-CreateNftTxAndMetaBlobs();
+createNftTxAndMetaBlobs();
 
 [[maybe_unused, nodiscard]] std::pair<ripple::STTx, ripple::TxMeta>
-CreateNftTxAndMeta();
+createNftTxAndMeta();
 
 [[maybe_unused, nodiscard]] etlng::model::Transaction
-CreateTransaction(ripple::TxType type);
+createTransaction(ripple::TxType type);
 
 [[maybe_unused, nodiscard]] etlng::model::Object
-CreateObject();
+createObject();
 
 [[maybe_unused, nodiscard]] etlng::model::BookSuccessor
-CreateSuccessor();
+createSuccessor();
 
 [[maybe_unused, nodiscard]] etlng::impl::PBLedgerResponseType
-CreateDataAndDiff();
+createDataAndDiff();
 
 [[maybe_unused, nodiscard]] etlng::impl::PBLedgerResponseType
-CreateData();
+createData();
 
 }  // namespace util

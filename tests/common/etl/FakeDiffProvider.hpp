@@ -57,14 +57,14 @@ struct DiffProvider {
     nextKey(std::size_t keysSize)
     {
         // mock the result from doFetchSuccessorKey, be aware this function will be called from multiple threads
-        std::lock_guard<std::mutex> const guard(keysMutex);
-        threadKeysMap[std::this_thread::get_id()]++;
+        std::lock_guard<std::mutex> const guard(keysMutex_);
+        threadKeysMap_[std::this_thread::get_id()]++;
 
-        if (threadKeysMap[std::this_thread::get_id()] == keysSize - 1) {
-            return data::lastKey;
+        if (threadKeysMap_[std::this_thread::get_id()] == keysSize - 1) {
+            return data::kLAST_KEY;
         }
-        if (threadKeysMap[std::this_thread::get_id()] == keysSize) {
-            threadKeysMap[std::this_thread::get_id()] = 0;
+        if (threadKeysMap_[std::this_thread::get_id()] == keysSize) {
+            threadKeysMap_[std::this_thread::get_id()] = 0;
             return std::nullopt;
         }
 
@@ -72,6 +72,6 @@ struct DiffProvider {
     }
 
 private:
-    std::mutex keysMutex;
-    std::map<std::thread::id, uint32_t> threadKeysMap;
+    std::mutex keysMutex_;
+    std::map<std::thread::id, uint32_t> threadKeysMap_;
 };

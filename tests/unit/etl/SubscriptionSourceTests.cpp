@@ -51,6 +51,28 @@ struct SubscriptionSourceConnectionTestsBase : public NoLoggerFixture {
         subscriptionSource_.run();
     }
 
+    [[maybe_unused]] TestWsConnection
+    serverConnection(boost::asio::yield_context yield)
+    {
+        // The first one is an SSL attempt
+        auto failedConnection = wsServer_.acceptConnection(yield);
+        [&]() { ASSERT_FALSE(failedConnection); }();
+
+        auto connection = wsServer_.acceptConnection(yield);
+        [&]() { ASSERT_TRUE(connection) << connection.error().message(); }();
+
+        auto message = connection->receive(yield);
+        [&]() {
+            ASSERT_TRUE(message);
+            EXPECT_EQ(
+                message.value(),
+                R"({"command":"subscribe","streams":["ledger","manifests","validations","transactions_proposed"]})"
+            );
+        }();
+        return std::move(connection).value();
+    }
+
+protected:
     boost::asio::io_context ioContext_;
     TestWsServer wsServer_{ioContext_, "0.0.0.0"};
 
@@ -73,27 +95,6 @@ struct SubscriptionSourceConnectionTestsBase : public NoLoggerFixture {
         std::chrono::milliseconds(5),
         std::chrono::milliseconds(5)
     };
-
-    [[maybe_unused]] TestWsConnection
-    serverConnection(boost::asio::yield_context yield)
-    {
-        // The first one is an SSL attempt
-        auto failedConnection = wsServer_.acceptConnection(yield);
-        [&]() { ASSERT_FALSE(failedConnection); }();
-
-        auto connection = wsServer_.acceptConnection(yield);
-        [&]() { ASSERT_TRUE(connection) << connection.error().message(); }();
-
-        auto message = connection->receive(yield);
-        [&]() {
-            ASSERT_TRUE(message);
-            EXPECT_EQ(
-                message.value(),
-                R"({"command":"subscribe","streams":["ledger","manifests","validations","transactions_proposed"]})"
-            );
-        }();
-        return std::move(connection).value();
-    }
 };
 
 struct SubscriptionSourceConnectionTests : util::prometheus::WithPrometheus, SubscriptionSourceConnectionTestsBase {};

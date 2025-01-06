@@ -26,7 +26,7 @@
 #include "etl/impl/SourceImpl.hpp"
 #include "etl/impl/SubscriptionSource.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <boost/asio/io_context.hpp>
 
@@ -38,8 +38,8 @@
 namespace etl {
 
 SourcePtr
-make_Source(
-    util::Config const& config,
+makeSource(
+    util::config::ObjectView const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
@@ -50,9 +50,9 @@ make_Source(
     SourceBase::OnLedgerClosedHook onLedgerClosed
 )
 {
-    auto const ip = config.valueOr<std::string>("ip", {});
-    auto const wsPort = config.valueOr<std::string>("ws_port", {});
-    auto const grpcPort = config.valueOr<std::string>("grpc_port", {});
+    auto const ip = config.get<std::string>("ip");
+    auto const wsPort = config.get<std::string>("ws_port");
+    auto const grpcPort = config.get<std::string>("grpc_port");
 
     impl::ForwardingSource forwardingSource{ip, wsPort, forwardingTimeout};
     impl::GrpcSource grpcSource{ip, grpcPort, std::move(backend)};

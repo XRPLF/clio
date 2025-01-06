@@ -23,6 +23,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
@@ -59,6 +60,8 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
 {
     // check ledger
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "GatewayBalances' ledger range must be available");
+
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
@@ -143,8 +146,8 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
         return Error{*status};
 
     auto inHotbalances = [&](auto const& hw) { return output.hotBalances.contains(hw); };
-    if (not std::all_of(input.hotWallets.begin(), input.hotWallets.end(), inHotbalances))
-        return Error{Status{ClioError::rpcINVALID_HOT_WALLET}};
+    if (not std::ranges::all_of(input.hotWallets, inHotbalances))
+        return Error{Status{ClioError::RpcInvalidHotWallet}};
 
     output.accountID = input.account;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
@@ -230,9 +233,9 @@ tag_invoke(boost::json::value_to_tag<GatewayBalancesHandler::Input>, boost::json
             input.hotWallets.insert(*accountFromStringStrict(boost::json::value_to<std::string>(jv.at(JS(hotwallet)))));
         } else {
             auto const& hotWallets = jv.at(JS(hotwallet)).as_array();
-            std::transform(
-                hotWallets.begin(),
-                hotWallets.end(),
+            std::ranges::transform(
+                hotWallets,
+
                 std::inserter(input.hotWallets, input.hotWallets.begin()),
                 [](auto const& hotWallet) {
                     return *accountFromStringStrict(boost::json::value_to<std::string>(hotWallet));

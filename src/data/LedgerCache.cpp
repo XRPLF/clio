@@ -75,7 +75,7 @@ LedgerCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool is
 
                 auto& e = map_[obj.key];
                 if (seq > e.seq) {
-                    e = {seq, obj.blob};
+                    e = {.seq = seq, .blob = obj.blob};
                 }
             } else {
                 map_.erase(obj.key);
@@ -101,7 +101,7 @@ LedgerCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
     if (e == map_.end())
         return {};
     ++successorHitCounter_.get();
-    return {{e->first, e->second.blob}};
+    return {{.key = e->first, .blob = e->second.blob}};
 }
 
 std::optional<LedgerObject>
@@ -117,7 +117,7 @@ LedgerCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
     if (e == map_.begin())
         return {};
     --e;
-    return {{e->first, e->second.blob}};
+    return {{.key = e->first, .blob = e->second.blob}};
 }
 
 std::optional<Blob>

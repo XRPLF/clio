@@ -20,12 +20,11 @@
 #include "util/SignalsHandler.hpp"
 
 #include "util/Assert.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <chrono>
 #include <csignal>
-#include <cstddef>
 #include <functional>
 #include <optional>
 #include <utility>
@@ -35,42 +34,42 @@ namespace util {
 namespace impl {
 
 class SignalsHandlerStatic {
-    static SignalsHandler* handler_;
+    static SignalsHandler* installedHandler;
 
 public:
     static void
     registerHandler(SignalsHandler& handler)
     {
-        ASSERT(handler_ == nullptr, "There could be only one instance of SignalsHandler");
-        handler_ = &handler;
+        ASSERT(installedHandler == nullptr, "There could be only one instance of SignalsHandler");
+        installedHandler = &handler;
     }
 
     static void
     resetHandler()
     {
-        handler_ = nullptr;
+        installedHandler = nullptr;
     }
 
     static void
     handleSignal(int signal)
     {
-        ASSERT(handler_ != nullptr, "SignalsHandler is not initialized");
-        handler_->stopHandler_(signal);
+        ASSERT(installedHandler != nullptr, "SignalsHandler is not initialized");
+        installedHandler->stopHandler_(signal);
     }
 
     static void
     handleSecondSignal(int signal)
     {
-        ASSERT(handler_ != nullptr, "SignalsHandler is not initialized");
-        handler_->secondSignalHandler_(signal);
+        ASSERT(installedHandler != nullptr, "SignalsHandler is not initialized");
+        installedHandler->secondSignalHandler_(signal);
     }
 };
 
-SignalsHandler* SignalsHandlerStatic::handler_ = nullptr;
+SignalsHandler* SignalsHandlerStatic::installedHandler = nullptr;
 
 }  // namespace impl
 
-SignalsHandler::SignalsHandler(Config const& config, std::function<void()> forceExitHandler)
+SignalsHandler::SignalsHandler(config::ClioConfigDefinition const& config, std::function<void()> forceExitHandler)
     : gracefulPeriod_(0)
     , context_(1)
     , stopHandler_([this, forceExitHandler](int) mutable {
@@ -99,9 +98,7 @@ SignalsHandler::SignalsHandler(Config const& config, std::function<void()> force
 {
     impl::SignalsHandlerStatic::registerHandler(*this);
 
-    gracefulPeriod_ = Config::toMilliseconds(config.valueOr("graceful_period", 10.f));
-    ASSERT(gracefulPeriod_.count() >= 0, "Graceful period must be non-negative");
-
+    gracefulPeriod_ = util::config::ClioConfigDefinition::toMilliseconds(config.get<float>("graceful_period"));
     setHandler(impl::SignalsHandlerStatic::handleSignal);
 }
 
@@ -122,7 +119,7 @@ SignalsHandler::cancelTimer()
 void
 SignalsHandler::setHandler(void (*handler)(int))
 {
-    for (int const signal : HANDLED_SIGNALS) {
+    for (int const signal : kHANDLED_SIGNALS) {
         std::signal(signal, handler == nullptr ? SIG_DFL : handler);
     }
 }

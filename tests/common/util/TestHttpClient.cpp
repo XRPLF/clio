@@ -130,7 +130,7 @@ HttpSyncClient::get(
 }
 
 bool
-HttpsSyncClient::verify_certificate(bool /* preverified */, boost::asio::ssl::verify_context& /* ctx */)
+HttpsSyncClient::verifyCertificate(bool /* preverified */, boost::asio::ssl::verify_context& /* ctx */)
 {
     return true;
 }

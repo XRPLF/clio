@@ -81,7 +81,7 @@ struct MetricsFamilyTest : ::testing::Test {
 
     std::string const name{"name"};
     std::string const description{"description"};
-    MetricType const type{MetricType::COUNTER_INT};
+    MetricType const type{MetricType::CounterInt};
     MetricsFamily metricsFamily{name, description, type, metricBuilderMock};
 };
 

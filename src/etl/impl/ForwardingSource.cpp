@@ -44,13 +44,13 @@ ForwardingSource::ForwardingSource(
     std::string ip,
     std::string wsPort,
     std::chrono::steady_clock::duration forwardingTimeout,
-    std::chrono::steady_clock::duration connectionTimeout
+    std::chrono::steady_clock::duration connTimeout
 )
     : log_(fmt::format("ForwardingSource[{}:{}]", ip, wsPort))
     , connectionBuilder_(std::move(ip), std::move(wsPort))
     , forwardingTimeout_{forwardingTimeout}
 {
-    connectionBuilder_.setConnectionTimeout(connectionTimeout)
+    connectionBuilder_.setConnectionTimeout(connTimeout)
         .addHeader(
             {boost::beast::http::field::user_agent, fmt::format("{} websocket-client-coro", BOOST_BEAST_VERSION_STRING)}
         );
@@ -76,14 +76,14 @@ ForwardingSource::forwardToRippled(
     auto expectedConnection = connectionBuilder.connect(yield);
     if (not expectedConnection) {
         LOG(log_.debug()) << "Couldn't connect to rippled to forward request.";
-        return std::unexpected{rpc::ClioError::etlCONNECTION_ERROR};
+        return std::unexpected{rpc::ClioError::EtlConnectionError};
     }
     auto& connection = expectedConnection.value();
 
     auto writeError = connection->write(boost::json::serialize(request), yield, forwardingTimeout_);
     if (writeError) {
         LOG(log_.debug()) << "Error sending request to rippled to forward request.";
-        return std::unexpected{rpc::ClioError::etlREQUEST_ERROR};
+        return std::unexpected{rpc::ClioError::EtlRequestError};
     }
 
     auto response = connection->read(yield, forwardingTimeout_);
@@ -91,10 +91,10 @@ ForwardingSource::forwardToRippled(
         if (auto errorCode = response.error().errorCode();
             errorCode.has_value() and errorCode->value() == boost::system::errc::timed_out) {
             LOG(log_.debug()) << "Request to rippled timed out";
-            return std::unexpected{rpc::ClioError::etlREQUEST_TIMEOUT};
+            return std::unexpected{rpc::ClioError::EtlRequestTimeout};
         }
         LOG(log_.debug()) << "Error sending request to rippled to forward request.";
-        return std::unexpected{rpc::ClioError::etlREQUEST_ERROR};
+        return std::unexpected{rpc::ClioError::EtlRequestError};
     }
 
     boost::json::value parsedResponse;
@@ -104,7 +104,7 @@ ForwardingSource::forwardToRippled(
             throw std::runtime_error("response is not an object");
     } catch (std::exception const& e) {
         LOG(log_.debug()) << "Error parsing response from rippled: " << e.what() << ". Response: " << *response;
-        return std::unexpected{rpc::ClioError::etlINVALID_RESPONSE};
+        return std::unexpected{rpc::ClioError::EtlInvalidResponse};
     }
 
     auto responseObject = parsedResponse.as_object();

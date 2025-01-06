@@ -26,8 +26,8 @@
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Assert.hpp"
 #include "util/Constants.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <xrpl/beast/core/CurrentThreadName.h>
@@ -88,9 +88,9 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
 
     auto const end = std::chrono::system_clock::now();
     auto const lastPublishedSeq = ledgerPublisher_.getLastPublishedSequence();
-    static constexpr auto NANOSECONDS_PER_SECOND = 1'000'000'000.0;
+    static constexpr auto kNANOSECONDS_PER_SECOND = 1'000'000'000.0;
     LOG(log_.debug()) << "Extracted and wrote " << lastPublishedSeq.value_or(startSequence) - startSequence << " in "
-                      << ((end - begin).count()) / NANOSECONDS_PER_SECOND;
+                      << ((end - begin).count()) / kNANOSECONDS_PER_SECOND;
 
     state_.isWriting = false;
 
@@ -168,7 +168,7 @@ ETLService::publishNextSequence(uint32_t nextSequence)
     if (auto rng = backend_->hardFetchLedgerRangeNoThrow(); rng && rng->maxSequence >= nextSequence) {
         ledgerPublisher_.publish(nextSequence, {});
         ++nextSequence;
-    } else if (networkValidatedLedgers_->waitUntilValidatedByNetwork(nextSequence, util::MILLISECONDS_PER_SECOND)) {
+    } else if (networkValidatedLedgers_->waitUntilValidatedByNetwork(nextSequence, util::kMILLISECONDS_PER_SECOND)) {
         LOG(log_.info()) << "Ledger with sequence = " << nextSequence << " has been validated by the network. "
                          << "Attempting to find in database and publish";
 
@@ -178,8 +178,8 @@ ETLService::publishNextSequence(uint32_t nextSequence)
         // database after the specified number of attempts. publishLedger()
         // waits one second between each attempt to read the ledger from the
         // database
-        constexpr size_t timeoutSeconds = 10;
-        bool const success = ledgerPublisher_.publish(nextSequence, timeoutSeconds);
+        constexpr size_t kTIMEOUT_SECONDS = 10;
+        bool const success = ledgerPublisher_.publish(nextSequence, kTIMEOUT_SECONDS);
 
         if (!success) {
             LOG(log_.warn()) << "Failed to publish ledger with sequence = " << nextSequence << " . Beginning ETL";
@@ -233,7 +233,7 @@ ETLService::monitorReadOnly()
             // if we can't, wait until it's validated by the network, or 1 second passes, whichever occurs
             // first. Even if we don't hear from rippled, if ledgers are being written to the db, we publish
             // them.
-            networkValidatedLedgers_->waitUntilValidatedByNetwork(latestSequence, util::MILLISECONDS_PER_SECOND);
+            networkValidatedLedgers_->waitUntilValidatedByNetwork(latestSequence, util::kMILLISECONDS_PER_SECOND);
         }
     }
 }
@@ -262,7 +262,7 @@ ETLService::doWork()
 }
 
 ETLService::ETLService(
-    util::Config const& config,
+    util::config::ClioConfigDefinition const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
@@ -280,9 +280,9 @@ ETLService::ETLService(
 {
     startSequence_ = config.maybeValue<uint32_t>("start_sequence");
     finishSequence_ = config.maybeValue<uint32_t>("finish_sequence");
-    state_.isReadOnly = config.valueOr("read_only", static_cast<bool>(state_.isReadOnly));
-    extractorThreads_ = config.valueOr<uint32_t>("extractor_threads", extractorThreads_);
-    txnThreshold_ = config.valueOr<size_t>("txn_threshold", txnThreshold_);
+    state_.isReadOnly = config.get<bool>("read_only");
+    extractorThreads_ = config.get<uint32_t>("extractor_threads");
+    txnThreshold_ = config.get<std::size_t>("txn_threshold");
 
     // This should probably be done in the backend factory but we don't have state available until here
     backend_->setCorruptionDetector(CorruptionDetector<data::LedgerCache>{state_, backend->cache()});

@@ -35,30 +35,30 @@ namespace rpc {
 /** @brief Custom clio RPC Errors. */
 enum class ClioError {
     // normal clio errors start with 5000
-    rpcMALFORMED_CURRENCY = 5000,
-    rpcMALFORMED_REQUEST = 5001,
-    rpcMALFORMED_OWNER = 5002,
-    rpcMALFORMED_ADDRESS = 5003,
-    rpcINVALID_HOT_WALLET = 5004,
-    rpcUNKNOWN_OPTION = 5005,
-    rpcFIELD_NOT_FOUND_TRANSACTION = 5006,
-    rpcMALFORMED_ORACLE_DOCUMENT_ID = 5007,
-    rpcMALFORMED_AUTHORIZED_CREDENTIALS = 5008,
+    RpcMalformedCurrency = 5000,
+    RpcMalformedRequest = 5001,
+    RpcMalformedOwner = 5002,
+    RpcMalformedAddress = 5003,
+    RpcInvalidHotWallet = 5004,
+    RpcUnknownOption = 5005,
+    RpcFieldNotFoundTransaction = 5006,
+    RpcMalformedOracleDocumentId = 5007,
+    RpcMalformedAuthorizedCredentials = 5008,
 
     // special system errors start with 6000
-    rpcINVALID_API_VERSION = 6000,
-    rpcCOMMAND_IS_MISSING = 6001,
-    rpcCOMMAND_NOT_STRING = 6002,
-    rpcCOMMAND_IS_EMPTY = 6003,
-    rpcPARAMS_UNPARSEABLE = 6004,
+    RpcInvalidApiVersion = 6000,
+    RpcCommandIsMissing = 6001,
+    RpcCommandNotString = 6002,
+    RpcCommandIsEmpty = 6003,
+    RpcParamsUnparseable = 6004,
 
     // TODO: Since it is not only rpc errors here now, we should move it to util
     // etl related errors start with 7000
     // Higher value in this errors means better progress in the forwarding
-    etlCONNECTION_ERROR = 7000,
-    etlREQUEST_ERROR = 7001,
-    etlREQUEST_TIMEOUT = 7002,
-    etlINVALID_RESPONSE = 7003,
+    EtlConnectionError = 7000,
+    EtlRequestError = 7001,
+    EtlRequestTimeout = 7002,
+    EtlInvalidResponse = 7003,
 };
 
 /** @brief Holds info about a particular @ref ClioError. */
@@ -186,11 +186,11 @@ struct Status {
 
 /** @brief Warning codes that can be returned by clio. */
 enum WarningCode {
-    warnUNKNOWN = -1,
-    warnRPC_CLIO = 2001,
-    warnRPC_OUTDATED = 2002,
-    warnRPC_RATE_LIMIT = 2003,
-    warnRPC_DEPRECATED = 2004
+    WarnUnknown = -1,
+    WarnRpcClio = 2001,
+    WarnRpcOutdated = 2002,
+    WarnRpcRateLimit = 2003,
+    WarnRpcDeprecated = 2004
 };
 
 /** @brief Holds information about a clio warning. */
@@ -207,13 +207,13 @@ struct WarningInfo {
     {
     }
 
-    WarningCode code = warnUNKNOWN;
+    WarningCode code = WarnUnknown;
     std::string_view const message = "unknown warning";
 };
 
 /** @brief Invalid parameters error. */
 class InvalidParamsError : public std::exception {
-    std::string msg;
+    std::string msg_;
 
 public:
     /**
@@ -221,7 +221,7 @@ public:
      *
      * @param msg The error message
      */
-    explicit InvalidParamsError(std::string msg) : msg(std::move(msg))
+    explicit InvalidParamsError(std::string msg) : msg_(std::move(msg))
     {
     }
 
@@ -233,13 +233,13 @@ public:
     char const*
     what() const throw() override
     {
-        return msg.c_str();
+        return msg_.c_str();
     }
 };
 
 /** @brief Account not found error. */
 class AccountNotFoundError : public std::exception {
-    std::string account;
+    std::string account_;
 
 public:
     /**
@@ -247,7 +247,7 @@ public:
      *
      * @param acct The account
      */
-    explicit AccountNotFoundError(std::string acct) : account(std::move(acct))
+    explicit AccountNotFoundError(std::string acct) : account_(std::move(acct))
     {
     }
 
@@ -259,12 +259,12 @@ public:
     char const*
     what() const throw() override
     {
-        return account.c_str();
+        return account_.c_str();
     }
 };
 
 /** @brief A globally available @ref rpc::Status that represents a successful state. */
-static Status OK;
+static Status gOk;
 
 /**
  * @brief Get the warning info object from a warning code.

@@ -77,7 +77,7 @@ SubscriptionSource::SubscriptionSource(
     , subscriptions_(std::move(subscriptions))
     , strand_(boost::asio::make_strand(ioContext))
     , wsTimeout_(wsTimeout)
-    , retry_(util::makeRetryExponentialBackoff(retryDelay, RETRY_MAX_DELAY, strand_))
+    , retry_(util::makeRetryExponentialBackoff(retryDelay, kRETRY_MAX_DELAY, strand_))
     , onConnect_(std::move(onConnect))
     , onDisconnect_(std::move(onDisconnect))
     , onLedgerClosed_(std::move(onLedgerClosed))
@@ -222,9 +222,9 @@ SubscriptionSource::handleMessage(std::string const& message)
         auto const object = raw.as_object();
         uint32_t ledgerIndex = 0;
 
-        static constexpr char const* const JS_LedgerClosed = "ledgerClosed";
-        static constexpr char const* const JS_ValidationReceived = "validationReceived";
-        static constexpr char const* const JS_ManifestReceived = "manifestReceived";
+        static constexpr auto kJS_LEDGER_CLOSED = "ledgerClosed";
+        static constexpr auto kJS_VALIDATION_RECEIVED = "validationReceived";
+        static constexpr auto kJS_MANIFEST_RECEIVED = "manifestReceived";
 
         if (object.contains(JS(result))) {
             auto const& result = object.at(JS(result)).as_object();
@@ -237,7 +237,7 @@ SubscriptionSource::handleMessage(std::string const& message)
             }
             LOG(log_.debug()) << "Received a message on ledger subscription stream. Message: " << object;
 
-        } else if (object.contains(JS(type)) && object.at(JS(type)) == JS_LedgerClosed) {
+        } else if (object.contains(JS(type)) && object.at(JS(type)) == kJS_LEDGER_CLOSED) {
             LOG(log_.debug()) << "Received a message of type 'ledgerClosed' on ledger subscription stream. Message: "
                               << object;
             if (object.contains(JS(ledger_index))) {
@@ -259,10 +259,10 @@ SubscriptionSource::handleMessage(std::string const& message)
                 if (object.contains(JS(transaction)) and !object.contains(JS(meta))) {
                     LOG(log_.debug()) << "Forwarding proposed transaction: " << object;
                     subscriptions_->forwardProposedTransaction(object);
-                } else if (object.contains(JS(type)) && object.at(JS(type)) == JS_ValidationReceived) {
+                } else if (object.contains(JS(type)) && object.at(JS(type)) == kJS_VALIDATION_RECEIVED) {
                     LOG(log_.debug()) << "Forwarding validation: " << object;
                     subscriptions_->forwardValidation(object);
-                } else if (object.contains(JS(type)) && object.at(JS(type)) == JS_ManifestReceived) {
+                } else if (object.contains(JS(type)) && object.at(JS(type)) == kJS_MANIFEST_RECEIVED) {
                     LOG(log_.debug()) << "Forwarding manifest: " << object;
                     subscriptions_->forwardManifest(object);
                 }
@@ -353,7 +353,7 @@ SubscriptionSource::setValidatedRange(std::string range)
             pairs.emplace_back(min, max);
         }
     }
-    std::sort(pairs.begin(), pairs.end(), [](auto left, auto right) { return left.first < right.first; });
+    std::ranges::sort(pairs, [](auto left, auto right) { return left.first < right.first; });
 
     auto dataLock = validatedLedgersData_.lock();
     dataLock->validatedLedgers = std::move(pairs);
@@ -363,12 +363,12 @@ SubscriptionSource::setValidatedRange(std::string range)
 std::string const&
 SubscriptionSource::getSubscribeCommandJson()
 {
-    static boost::json::object const jsonValue{
+    static boost::json::object const kJSON_VALUE{
         {"command", "subscribe"},
         {"streams", {"ledger", "manifests", "validations", "transactions_proposed"}},
     };
-    static std::string const jsonString = boost::json::serialize(jsonValue);
-    return jsonString;
+    static std::string const kJSON_STRING = boost::json::serialize(kJSON_VALUE);
+    return kJSON_STRING;
 }
 
 }  // namespace etl::impl

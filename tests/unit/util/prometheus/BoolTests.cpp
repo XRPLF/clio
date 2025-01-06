@@ -33,6 +33,8 @@ struct BoolTests : public testing::Test {
         MOCK_METHOD(void, set, (int64_t), ());
         MOCK_METHOD(int64_t, value, (), ());
     };
+
+protected:
     StrictMock<MockImpl> impl_;
     AnyBool<StrictMock<MockImpl>> bool_{impl_};
 };

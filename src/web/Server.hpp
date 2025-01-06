@@ -335,14 +335,14 @@ using HttpServer = Server<HttpSession, SslHttpSession, HandlerType>;
  */
 template <typename HandlerType>
 static std::shared_ptr<HttpServer<HandlerType>>
-make_HttpServer(
-    util::Config const& config,
+makeHttpServer(
+    util::config::ClioConfigDefinition const& config,
     boost::asio::io_context& ioc,
     dosguard::DOSGuardInterface& dosGuard,
     std::shared_ptr<HandlerType> const& handler
 )
 {
-    static util::Logger const log{"WebServer"};
+    static util::Logger const log{"WebServer"};  // NOLINT(readability-identifier-naming)
 
     auto expectedSslContext = ng::impl::makeServerSslContext(config);
     if (not expectedSslContext) {
@@ -350,14 +350,11 @@ make_HttpServer(
         return nullptr;
     }
 
-    if (!config.contains("server"))
-        return nullptr;
+    auto const serverConfig = config.getObject("server");
+    auto const address = boost::asio::ip::make_address(serverConfig.get<std::string>("ip"));
+    auto const port = serverConfig.get<unsigned short>("port");
 
-    auto const serverConfig = config.section("server");
-    auto const address = boost::asio::ip::make_address(serverConfig.value<std::string>("ip"));
-    auto const port = serverConfig.value<unsigned short>("port");
-
-    auto expectedAdminVerification = make_AdminVerificationStrategy(config);
+    auto expectedAdminVerification = makeAdminVerificationStrategy(config);
     if (not expectedAdminVerification.has_value()) {
         LOG(log.error()) << expectedAdminVerification.error();
         throw std::logic_error{expectedAdminVerification.error()};
@@ -365,7 +362,7 @@ make_HttpServer(
 
     // If the transactions number is 200 per ledger, A client which subscribes everything will send 400+ feeds for
     // each ledger. we allow user delay 3 ledgers by default
-    auto const maxWsSendingQueueSize = serverConfig.valueOr("ws_max_sending_queue_size", 1500);
+    auto const maxWsSendingQueueSize = serverConfig.get<uint32_t>("ws_max_sending_queue_size");
 
     auto server = std::make_shared<HttpServer<HandlerType>>(
         ioc,

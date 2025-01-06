@@ -53,17 +53,17 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnSuccess)
 
     ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([this](auto const&, auto&& cb) {
-            ctx.post([cb = std::forward<decltype(cb)>(cb)]() { cb({}); });
+            ctx_.post([cb = std::forward<decltype(cb)>(cb)]() { cb({}); });
             return FakeFutureWithCallback{};
         });
     EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(AtLeast(1));
 
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
+    auto work = std::optional<boost::asio::io_context::work>{ctx_};
     EXPECT_CALL(callbackMock_, onComplete);
 
     AsyncExecutor<FakeStatement, MockHandle>::run(
-        ctx,
+        ctx_,
         handle,
         FakeStatement{},
         [&work, this](auto resultOrError) {
@@ -73,7 +73,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnSuccess)
         std::move(onRetry_)
     );
 
-    ctx.run();
+    ctx_.run();
 }
 
 TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMainThread)
@@ -96,12 +96,12 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMa
     EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(3);
 
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
+    auto work = std::optional<boost::asio::io_context::work>{ctx_};
     EXPECT_CALL(callbackMock_, onComplete);
     EXPECT_CALL(callbackMock_, onRetry).Times(2);
 
     AsyncExecutor<FakeStatement, MockHandle>::run(
-        ctx,
+        ctx_,
         handle,
         FakeStatement{},
         [this, &work](auto resultOrError) {
@@ -111,7 +111,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMa
         std::move(onRetry_)
     );
 
-    ctx.run();
+    ctx_.run();
     ASSERT_EQ(callCount, 3);
 }
 
@@ -139,7 +139,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOt
     EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(3);
 
-    auto work2 = std::optional<boost::asio::io_context::work>{ctx};
+    auto work2 = std::optional<boost::asio::io_context::work>{ctx_};
     EXPECT_CALL(callbackMock_, onComplete);
     EXPECT_CALL(callbackMock_, onRetry).Times(2);
 
@@ -155,7 +155,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOt
         std::move(onRetry_)
     );
 
-    ctx.run();
+    ctx_.run();
     EXPECT_EQ(callCount, 3);
     threadedCtx.stop();
     thread.join();
@@ -175,11 +175,11 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnFailureAfterRetryCou
     EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(1);
 
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
+    auto work = std::optional<boost::asio::io_context::work>{ctx_};
     EXPECT_CALL(callbackMock_, onComplete);
 
     AsyncExecutor<FakeStatement, MockHandle, FakeRetryPolicy>::run(
-        ctx,
+        ctx_,
         handle,
         FakeStatement{},
         [this, &work](auto res) {
@@ -193,5 +193,5 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnFailureAfterRetryCou
         std::move(onRetry_)
     );
 
-    ctx.run();
+    ctx_.run();
 }

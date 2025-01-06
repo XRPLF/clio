@@ -131,8 +131,8 @@ public:
                 result.mptHoldersData.push_back(*maybeMPTHolder);
 
             result.accountTxData.emplace_back(txMeta, sttx.getTransactionID());
-            static constexpr std::size_t KEY_SIZE = 32;
-            std::string keyStr{reinterpret_cast<char const*>(sttx.getTransactionID().data()), KEY_SIZE};
+            static constexpr std::size_t kEY_SIZE = 32;
+            std::string keyStr{reinterpret_cast<char const*>(sttx.getTransactionID().data()), kEY_SIZE};
             backend_->writeTransaction(
                 std::move(keyStr),
                 ledger.seq,
@@ -204,10 +204,10 @@ public:
                         backend_->writeSuccessor(std::move(key), sequence, uint256ToString(succ->key));
                 }
 
-                ripple::uint256 prev = data::firstKey;
+                ripple::uint256 prev = data::kFIRST_KEY;
                 while (auto cur = backend_->cache().getSuccessor(prev, sequence)) {
                     ASSERT(cur.has_value(), "Succesor for key {} must exist", ripple::strHex(prev));
-                    if (prev == data::firstKey)
+                    if (prev == data::kFIRST_KEY)
                         backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(cur->key));
 
                     if (isBookDir(cur->key, cur->blob)) {
@@ -228,12 +228,12 @@ public:
                     }
 
                     prev = cur->key;
-                    static constexpr std::size_t LOG_INTERVAL = 100000;
-                    if (numWrites % LOG_INTERVAL == 0 && numWrites != 0)
+                    static constexpr std::size_t kLOG_INTERVAL = 100000;
+                    if (numWrites % kLOG_INTERVAL == 0 && numWrites != 0)
                         LOG(log_.info()) << "Wrote " << numWrites << " book successors";
                 }
 
-                backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(data::lastKey));
+                backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(data::kLAST_KEY));
                 ++numWrites;
             });
 

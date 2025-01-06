@@ -26,9 +26,13 @@
 #include "util/MockCache.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -39,10 +43,35 @@ using namespace etl;
 using namespace util;
 using namespace data;
 using namespace testing;
+using namespace util::config;
 
 namespace {
 
-constexpr auto SEQ = 30;
+inline ClioConfigDefinition
+generateDefaultCacheConfig()
+{
+    return ClioConfigDefinition{
+        {{"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+         {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32)},
+         {"cache.num_markers", ConfigValue{ConfigType::Integer}.defaultValue(48)},
+         {"cache.num_cursors_from_diff", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+         {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+         {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512)},
+         {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")}}
+    };
+}
+
+inline ClioConfigDefinition
+getParseCacheConfig(boost::json::value val)
+{
+    ConfigFileJson const jsonVal{val.as_object()};
+    auto config = generateDefaultCacheConfig();
+    auto const errors = config.parse(jsonVal);
+    [&]() { ASSERT_FALSE(errors.has_value()); }();
+    return config;
+}
+
+constexpr auto kSEQ = 30;
 
 struct CacheLoaderTest : util::prometheus::WithPrometheus, MockBackendTest {
     DiffProvider diffProvider;
@@ -93,12 +122,12 @@ TEST_P(ParametrizedCacheLoaderTest, LoadCacheWithDifferentSettings)
     auto const loops = diffs.size() + 1;
     auto const keysSize = 14;
 
-    EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).WillRepeatedly(Return(diffs));
-    EXPECT_CALL(*backend, doFetchSuccessorKey(_, SEQ, _)).Times(keysSize * loops).WillRepeatedly([this]() {
+    EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).WillRepeatedly(Return(diffs));
+    EXPECT_CALL(*backend_, doFetchSuccessorKey(_, kSEQ, _)).Times(keysSize * loops).WillRepeatedly([this]() {
         return diffProvider.nextKey(keysSize);
     });
 
-    EXPECT_CALL(*backend, doFetchLedgerObjects(_, SEQ, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObjects(_, kSEQ, _))
         .WillRepeatedly(Return(std::vector<Blob>(keysSize - 1, Blob{'s'})));
 
     EXPECT_CALL(cache, isDisabled).WillRepeatedly(Return(false));
@@ -106,10 +135,10 @@ TEST_P(ParametrizedCacheLoaderTest, LoadCacheWithDifferentSettings)
     EXPECT_CALL(cache, setFull).Times(1);
 
     async::CoroExecutionContext ctx{settings.numThreads};
-    etl::impl::CursorFromFixDiffNumProvider const provider{backend, settings.numCacheDiffs};
+    etl::impl::CursorFromFixDiffNumProvider const provider{backend_, settings.numCacheDiffs};
 
     etl::impl::CacheLoaderImpl<MockCache> loader{
-        ctx, backend, cache, SEQ, settings.numCacheMarkers, settings.cachePageFetchSize, provider.getCursors(SEQ)
+        ctx, backend_, cache, kSEQ, settings.numCacheMarkers, settings.cachePageFetchSize, provider.getCursors(kSEQ)
     };
 
     loader.wait();
@@ -122,12 +151,12 @@ TEST_P(ParametrizedCacheLoaderTest, AutomaticallyCancelledAndAwaitedInDestructor
     auto const loops = diffs.size() + 1;
     auto const keysSize = 1024;
 
-    EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).WillRepeatedly(Return(diffs));
-    EXPECT_CALL(*backend, doFetchSuccessorKey(_, SEQ, _)).Times(AtMost(keysSize * loops)).WillRepeatedly([this]() {
+    EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).WillRepeatedly(Return(diffs));
+    EXPECT_CALL(*backend_, doFetchSuccessorKey(_, kSEQ, _)).Times(AtMost(keysSize * loops)).WillRepeatedly([this]() {
         return diffProvider.nextKey(keysSize);
     });
 
-    EXPECT_CALL(*backend, doFetchLedgerObjects(_, SEQ, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObjects(_, kSEQ, _))
         .WillRepeatedly(Return(std::vector<Blob>(keysSize - 1, Blob{'s'})));
 
     EXPECT_CALL(cache, isDisabled).WillRepeatedly(Return(false));
@@ -135,10 +164,10 @@ TEST_P(ParametrizedCacheLoaderTest, AutomaticallyCancelledAndAwaitedInDestructor
     EXPECT_CALL(cache, setFull).Times(AtMost(1));
 
     async::CoroExecutionContext ctx{settings.numThreads};
-    etl::impl::CursorFromFixDiffNumProvider const provider{backend, settings.numCacheDiffs};
+    etl::impl::CursorFromFixDiffNumProvider const provider{backend_, settings.numCacheDiffs};
 
     etl::impl::CacheLoaderImpl<MockCache> const loader{
-        ctx, backend, cache, SEQ, settings.numCacheMarkers, settings.cachePageFetchSize, provider.getCursors(SEQ)
+        ctx, backend_, cache, kSEQ, settings.numCacheMarkers, settings.cachePageFetchSize, provider.getCursors(kSEQ)
     };
 
     // no loader.wait(): loader is immediately stopped and awaited in destructor
@@ -151,12 +180,12 @@ TEST_P(ParametrizedCacheLoaderTest, CacheDisabledLeadsToCancellation)
     auto const loops = diffs.size() + 1;
     auto const keysSize = 1024;
 
-    EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).WillRepeatedly(Return(diffs));
-    EXPECT_CALL(*backend, doFetchSuccessorKey(_, SEQ, _)).Times(AtMost(keysSize * loops)).WillRepeatedly([this]() {
+    EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).WillRepeatedly(Return(diffs));
+    EXPECT_CALL(*backend_, doFetchSuccessorKey(_, kSEQ, _)).Times(AtMost(keysSize * loops)).WillRepeatedly([this]() {
         return diffProvider.nextKey(keysSize);
     });
 
-    EXPECT_CALL(*backend, doFetchLedgerObjects(_, SEQ, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObjects(_, kSEQ, _))
         .WillRepeatedly(Return(std::vector<Blob>(keysSize - 1, Blob{'s'})));
 
     EXPECT_CALL(cache, isDisabled).WillOnce(Return(false)).WillRepeatedly(Return(true));
@@ -164,10 +193,10 @@ TEST_P(ParametrizedCacheLoaderTest, CacheDisabledLeadsToCancellation)
     EXPECT_CALL(cache, setFull).Times(0);
 
     async::CoroExecutionContext ctx{settings.numThreads};
-    etl::impl::CursorFromFixDiffNumProvider const provider{backend, settings.numCacheDiffs};
+    etl::impl::CursorFromFixDiffNumProvider const provider{backend_, settings.numCacheDiffs};
 
     etl::impl::CacheLoaderImpl<MockCache> loader{
-        ctx, backend, cache, SEQ, settings.numCacheMarkers, settings.cachePageFetchSize, provider.getCursors(SEQ)
+        ctx, backend_, cache, kSEQ, settings.numCacheMarkers, settings.cachePageFetchSize, provider.getCursors(kSEQ)
     };
 
     loader.wait();
@@ -178,19 +207,19 @@ TEST_P(ParametrizedCacheLoaderTest, CacheDisabledLeadsToCancellation)
 //
 TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
 {
-    auto const cfg = util::Config(json::parse(R"({"cache": {"load": "sync"}})"));
-    CacheLoader loader{cfg, backend, cache};
+    auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"load": "sync"}})"));
+    CacheLoader loader{cfg, backend_, cache};
 
     auto const diffs = diffProvider.getLatestDiff();
     auto const loops = diffs.size() + 1;
     auto const keysSize = 14;
 
-    EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(32).WillRepeatedly(Return(diffs));
-    EXPECT_CALL(*backend, doFetchSuccessorKey).Times(keysSize * loops).WillRepeatedly([this]() {
+    EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).Times(32).WillRepeatedly(Return(diffs));
+    EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(keysSize * loops).WillRepeatedly([this]() {
         return diffProvider.nextKey(keysSize);
     });
 
-    EXPECT_CALL(*backend, doFetchLedgerObjects(_, SEQ, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObjects(_, kSEQ, _))
         .Times(loops)
         .WillRepeatedly(Return(std::vector<Blob>{keysSize - 1, Blob{'s'}}));
 
@@ -199,24 +228,24 @@ TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
     EXPECT_CALL(cache, isFull).WillOnce(Return(false)).WillRepeatedly(Return(true));
     EXPECT_CALL(cache, setFull).Times(1);
 
-    loader.load(SEQ);
+    loader.load(kSEQ);
 }
 
 TEST_F(CacheLoaderTest, AsyncCacheLoaderCanBeStopped)
 {
-    auto const cfg = util::Config(json::parse(R"({"cache": {"load": "async"}})"));
-    CacheLoader loader{cfg, backend, cache};
+    auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"load": "async"}})"));
+    CacheLoader loader{cfg, backend_, cache};
 
     auto const diffs = diffProvider.getLatestDiff();
     auto const loops = diffs.size() + 1;
     auto const keysSize = 14;
 
-    EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(AtMost(32)).WillRepeatedly(Return(diffs));
-    EXPECT_CALL(*backend, doFetchSuccessorKey).Times(AtMost(keysSize * loops)).WillRepeatedly([this]() {
+    EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).Times(AtMost(32)).WillRepeatedly(Return(diffs));
+    EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(AtMost(keysSize * loops)).WillRepeatedly([this]() {
         return diffProvider.nextKey(keysSize);
     });
 
-    EXPECT_CALL(*backend, doFetchLedgerObjects(_, SEQ, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObjects(_, kSEQ, _))
         .Times(AtMost(loops))
         .WillRepeatedly(Return(std::vector<Blob>{keysSize - 1, Blob{'s'}}));
 
@@ -225,19 +254,19 @@ TEST_F(CacheLoaderTest, AsyncCacheLoaderCanBeStopped)
     EXPECT_CALL(cache, isFull).WillRepeatedly(Return(false));
     EXPECT_CALL(cache, setFull).Times(AtMost(1));
 
-    loader.load(SEQ);
+    loader.load(kSEQ);
     loader.stop();
     loader.wait();
 }
 
 TEST_F(CacheLoaderTest, DisabledCacheLoaderDoesNotLoadCache)
 {
-    auto cfg = util::Config(json::parse(R"({"cache": {"load": "none"}})"));
-    CacheLoader loader{cfg, backend, cache};
+    auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"load": "none"}})"));
+    CacheLoader loader{cfg, backend_, cache};
 
     EXPECT_CALL(cache, updateImp).Times(0);
     EXPECT_CALL(cache, isFull).WillRepeatedly(Return(false));
     EXPECT_CALL(cache, setDisabled).Times(1);
 
-    loader.load(SEQ);
+    loader.load(kSEQ);
 }

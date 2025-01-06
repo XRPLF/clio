@@ -23,19 +23,19 @@
 
 namespace util::build {
 
-static constexpr char versionString[] = "@CLIO_VERSION@";
+static constexpr char versionString[] = "@CLIO_VERSION@"; // NOLINT(readability-identifier-naming)
 
 std::string const&
 getClioVersionString()
 {
-    static std::string const value = versionString;
+    static std::string const value = versionString; // NOLINT(readability-identifier-naming)
     return value;
 }
 
 std::string const&
 getClioFullVersionString()
 {
-    static std::string const value = "clio-" + getClioVersionString();
+    static std::string const value = "clio-" + getClioVersionString(); // NOLINT(readability-identifier-naming)
     return value;
 }
 

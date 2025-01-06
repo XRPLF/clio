@@ -45,9 +45,9 @@ class NFTsByIssuerHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    static auto constexpr LIMIT_MIN = 1;
-    static auto constexpr LIMIT_MAX = 100;
-    static auto constexpr LIMIT_DEFAULT = 50;
+    static constexpr auto kLIMIT_MIN = 1;
+    static constexpr auto kLIMIT_MAX = 100;
+    static constexpr auto kLIMIT_DEFAULT = 50;
 
     /**
      * @brief A struct to hold the output data of the command
@@ -94,19 +94,19 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const rpcSpec = RpcSpec{
-            {JS(issuer), validation::Required{}, validation::CustomValidators::AccountValidator},
+        static auto const kRPC_SPEC = RpcSpec{
+            {JS(issuer), validation::Required{}, validation::CustomValidators::accountValidator},
             {JS(nft_taxon), validation::Type<uint32_t>{}},
-            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
+            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
-             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
-            {JS(marker), validation::CustomValidators::Uint256HexStringValidator},
+             modifiers::Clamp<int32_t>{kLIMIT_MIN, kLIMIT_MAX}},
+            {JS(marker), validation::CustomValidators::uint256HexStringValidator},
         };
 
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     /**

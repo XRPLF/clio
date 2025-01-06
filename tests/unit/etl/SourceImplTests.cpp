@@ -75,6 +75,7 @@ struct ForwardingSourceMock {
 };
 
 struct SourceImplTest : public ::testing::Test {
+protected:
     boost::asio::io_context ioc_;
 
     StrictMock<GrpcSourceMock> grpcSourceMock_;

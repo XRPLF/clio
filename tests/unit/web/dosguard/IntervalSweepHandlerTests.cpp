@@ -18,21 +18,23 @@
 //==============================================================================
 
 #include "util/AsioContextTestFixture.hpp"
-#include "util/config/Config.hpp"
-#include "web/dosguard/DOSGuardInterface.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
+#include "web/dosguard/DOSGuardMock.hpp"
 #include "web/dosguard/IntervalSweepHandler.hpp"
 
-#include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
 
 using namespace web::dosguard;
+using namespace util::config;
 
 struct IntervalSweepHandlerTest : SyncAsioContextTest {
 protected:
-    constexpr static auto JSONData = R"JSON(
+    static constexpr auto kJSON_DATA = R"JSON(
     {
         "dos_guard": {
             "sweep_interval": 0
@@ -40,17 +42,14 @@ protected:
     }
 )JSON";
 
-    struct DosGuardMock : BaseDOSGuard {
-        MOCK_METHOD(void, clear, (), (noexcept, override));
-    };
-    testing::StrictMock<DosGuardMock> guardMock;
+    DOSGuardStrictMock guardMock_;
 
-    util::Config cfg{boost::json::parse(JSONData)};
-    IntervalSweepHandler sweepHandler{cfg, ctx, guardMock};
+    ClioConfigDefinition cfg_{{"dos_guard.sweep_interval", ConfigValue{ConfigType::Integer}.defaultValue(0)}};
+    IntervalSweepHandler sweepHandler_{cfg_, ctx_, guardMock_};
 };
 
 TEST_F(IntervalSweepHandlerTest, SweepAfterInterval)
 {
-    EXPECT_CALL(guardMock, clear()).Times(testing::AtLeast(10));
+    EXPECT_CALL(guardMock_, clear()).Times(testing::AtLeast(10));
     runContextFor(std::chrono::milliseconds{20});
 }

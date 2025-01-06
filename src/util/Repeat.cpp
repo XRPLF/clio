@@ -19,20 +19,16 @@
 
 #include "util/Repeat.hpp"
 
-#include <boost/asio/io_context.hpp>
-
 namespace util {
-
-Repeat::Repeat(boost::asio::io_context& ioc) : timer_(ioc)
-{
-}
 
 void
 Repeat::stop()
 {
-    stopping_ = true;
-    timer_.cancel();
-    semaphore_.acquire();
+    if (control_->stopping)
+        return;
+    control_->stopping = true;
+    control_->timer.cancel();
+    control_->semaphore.acquire();
 }
 
 }  // namespace util

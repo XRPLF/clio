@@ -20,7 +20,6 @@
 #pragma once
 
 #include "util/Taggable.hpp"
-#include "util/WithTimeout.hpp"
 #include "util/build/Build.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
@@ -58,11 +57,7 @@ public:
     using Connection::Connection;
 
     virtual std::optional<Error>
-    sendBuffer(
-        boost::asio::const_buffer buffer,
-        boost::asio::yield_context yield,
-        std::chrono::steady_clock::duration timeout = Connection::DEFAULT_TIMEOUT
-    ) = 0;
+    sendBuffer(boost::asio::const_buffer buffer, boost::asio::yield_context yield) = 0;
 };
 
 template <typename StreamType>
@@ -83,6 +78,7 @@ public:
         , stream_(std::move(socket))
         , initialRequest_(std::move(initialRequest))
     {
+        setupWsStream();
     }
 
     WsConnection(
@@ -98,14 +94,7 @@ public:
         , stream_(std::move(socket), sslContext)
         , initialRequest_(std::move(initialRequest))
     {
-        // Disable the timeout. The websocket::stream uses its own timeout settings.
-        boost::beast::get_lowest_layer(stream_).expires_never();
-        stream_.set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
-        stream_.set_option(
-            boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::response_type& res) {
-                res.set(boost::beast::http::field::server, util::build::getClioFullVersionString());
-            })
-        );
+        setupWsStream();
     }
 
     std::optional<Error>
@@ -125,33 +114,39 @@ public:
     }
 
     std::optional<Error>
-    sendBuffer(
-        boost::asio::const_buffer buffer,
-        boost::asio::yield_context yield,
-        std::chrono::steady_clock::duration timeout = Connection::DEFAULT_TIMEOUT
-    ) override
+    sendBuffer(boost::asio::const_buffer buffer, boost::asio::yield_context yield) override
     {
-        auto error =
-            util::withTimeout([this, buffer](auto&& yield) { stream_.async_write(buffer, yield); }, yield, timeout);
+        boost::beast::websocket::stream_base::timeout timeoutOption{};
+        stream_.get_option(timeoutOption);
+
+        boost::system::error_code error;
+        stream_.async_write(buffer, yield[error]);
         if (error)
             return error;
         return std::nullopt;
     }
 
-    std::optional<Error>
-    send(
-        Response response,
-        boost::asio::yield_context yield,
-        std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT
-    ) override
+    void
+    setTimeout(std::chrono::steady_clock::duration newTimeout) override
     {
-        return sendBuffer(response.asWsResponse(), yield, timeout);
+        boost::beast::websocket::stream_base::timeout wsTimeout =
+            boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server);
+        wsTimeout.idle_timeout = newTimeout;
+        wsTimeout.handshake_timeout = newTimeout;
+        stream_.set_option(wsTimeout);
+    }
+
+    std::optional<Error>
+    send(Response response, boost::asio::yield_context yield) override
+    {
+        return sendBuffer(response.asWsResponse(), yield);
     }
 
     std::expected<Request, Error>
-    receive(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) override
+    receive(boost::asio::yield_context yield) override
     {
-        auto error = util::withTimeout([this](auto&& yield) { stream_.async_read(buffer_, yield); }, yield, timeout);
+        Error error;
+        stream_.async_read(buffer_, yield[error]);
         if (error)
             return std::unexpected{error};
 
@@ -162,14 +157,24 @@ public:
     }
 
     void
-    close(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) override
+    close(boost::asio::yield_context yield) override
     {
-        boost::beast::websocket::stream_base::timeout wsTimeout{};
-        stream_.get_option(wsTimeout);
-        wsTimeout.handshake_timeout = timeout;
-        stream_.set_option(wsTimeout);
+        boost::system::error_code error;  // unused
+        stream_.async_close(boost::beast::websocket::close_code::normal, yield[error]);
+    }
 
-        stream_.async_close(boost::beast::websocket::close_code::normal, yield);
+private:
+    void
+    setupWsStream()
+    {
+        // Disable the timeout. The websocket::stream uses its own timeout settings.
+        boost::beast::get_lowest_layer(stream_).expires_never();
+        setTimeout(kDEFAULT_TIMEOUT);
+        stream_.set_option(
+            boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::response_type& res) {
+                res.set(boost::beast::http::field::server, util::build::getClioFullVersionString());
+            })
+        );
     }
 };
 
@@ -177,7 +182,7 @@ using PlainWsConnection = WsConnection<boost::beast::tcp_stream>;
 using SslWsConnection = WsConnection<boost::asio::ssl::stream<boost::beast::tcp_stream>>;
 
 std::expected<std::unique_ptr<PlainWsConnection>, Error>
-make_PlainWsConnection(
+makePlainWsConnection(
     boost::asio::ip::tcp::socket socket,
     std::string ip,
     boost::beast::flat_buffer buffer,
@@ -187,7 +192,7 @@ make_PlainWsConnection(
 );
 
 std::expected<std::unique_ptr<SslWsConnection>, Error>
-make_SslWsConnection(
+makeSslWsConnection(
     boost::asio::ip::tcp::socket socket,
     std::string ip,
     boost::beast::flat_buffer buffer,

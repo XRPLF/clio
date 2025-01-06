@@ -160,7 +160,7 @@ TestWsServer::acceptConnection(asio::yield_context yield)
     if (errorCode)
         return std::unexpected{util::requests::RequestError{"Read error", errorCode}};
     std::vector<util::requests::HttpHeader> headers;
-    std::transform(request.begin(), request.end(), std::back_inserter(headers), [](auto const& header) {
+    std::ranges::transform(request, std::back_inserter(headers), [](auto const& header) {
         if (header.name() == boost::beast::http::field::unknown)
             return util::requests::HttpHeader{header.name_string(), header.value()};
 

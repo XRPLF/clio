@@ -28,7 +28,7 @@
 
 namespace util {
 [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
-SystemTpFromUTCStr(std::string const& dateStr, std::string const& format)
+systemTpFromUtcStr(std::string const& dateStr, std::string const& format)
 {
     std::tm timeStruct{};
     auto const ret = strptime(dateStr.c_str(), format.c_str(), &timeStruct);
@@ -39,7 +39,7 @@ SystemTpFromUTCStr(std::string const& dateStr, std::string const& format)
 }
 
 [[nodiscard]] std::chrono::system_clock::time_point
-SystemTpFromLedgerCloseTime(ripple::NetClock::time_point closeTime)
+systemTpFromLedgerCloseTime(ripple::NetClock::time_point closeTime)
 {
     return std::chrono::system_clock::time_point{closeTime.time_since_epoch() + ripple::epoch_offset};
 }

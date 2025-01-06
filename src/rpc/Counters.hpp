@@ -84,7 +84,7 @@ public:
      * @return The new instance
      */
     static Counters
-    make_Counters(WorkQueue const& wq)
+    makeCounters(WorkQueue const& wq)
     {
         return Counters{wq};
     }

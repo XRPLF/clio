@@ -32,6 +32,7 @@
 #include <fmt/core.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <fstream>
 #include <ios>
@@ -58,6 +59,9 @@ extractJsonValue(boost::json::value const& jsonValue)
     if (jsonValue.is_int64()) {
         return jsonValue.as_int64();
     }
+    if (jsonValue.is_uint64()) {
+        return static_cast<int64_t>(jsonValue.as_uint64());
+    }
     if (jsonValue.is_string()) {
         return jsonValue.as_string().c_str();
     }
@@ -67,7 +71,7 @@ extractJsonValue(boost::json::value const& jsonValue)
     if (jsonValue.is_double()) {
         return jsonValue.as_double();
     }
-    ASSERT(false, "Json is not of type int, string, bool or double");
+    ASSERT(false, "Json is not of type int, uint, string, bool or double");
     std::unreachable();
 }
 }  // namespace
@@ -78,7 +82,7 @@ ConfigFileJson::ConfigFileJson(boost::json::object jsonObj)
 }
 
 std::expected<ConfigFileJson, Error>
-ConfigFileJson::make_ConfigFileJson(boost::filesystem::path configFilePath)
+ConfigFileJson::makeConfigFileJson(boost::filesystem::path configFilePath)
 {
     try {
         if (auto const in = std::ifstream(configFilePath.string(), std::ios::in | std::ios::binary); in) {

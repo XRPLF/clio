@@ -19,9 +19,10 @@
 
 #include "util/LoggerFixtures.hpp"
 #include "util/SignalsHandler.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
-#include <boost/json/value.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -33,14 +34,11 @@
 #include <thread>
 
 using namespace util;
+using namespace util::config;
 using testing::MockFunction;
 using testing::StrictMock;
 
 struct SignalsHandlerTestsBase : NoLoggerFixture {
-    StrictMock<MockFunction<void()>> forceExitHandler_;
-    StrictMock<MockFunction<void()>> stopHandler_;
-    StrictMock<MockFunction<void()>> anotherStopHandler_;
-
     void
     allowTestToFinish()
     {
@@ -56,6 +54,11 @@ struct SignalsHandlerTestsBase : NoLoggerFixture {
         cv_.wait(lock, [this] { return testCanBeFinished_; });
     }
 
+protected:
+    StrictMock<MockFunction<void()>> forceExitHandler_;
+    StrictMock<MockFunction<void()>> stopHandler_;
+    StrictMock<MockFunction<void()>> anotherStopHandler_;
+
     std::mutex mutex_;
     std::condition_variable cv_;
     bool testCanBeFinished_{false};
@@ -63,14 +66,19 @@ struct SignalsHandlerTestsBase : NoLoggerFixture {
 
 TEST(SignalsHandlerDeathTest, CantCreateTwoSignalsHandlers)
 {
-    auto makeHandler = []() { return SignalsHandler{Config{}, []() {}}; };
+    auto makeHandler = []() {
+        return SignalsHandler{
+            ClioConfigDefinition{{"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(10.f)}}, []() {}
+        };
+    };
     auto const handler = makeHandler();
     EXPECT_DEATH({ makeHandler(); }, ".*");
 }
 
 struct SignalsHandlerTests : SignalsHandlerTestsBase {
+protected:
     SignalsHandler handler_{
-        util::Config{boost::json::value{{"graceful_period", 3.0}}},
+        ClioConfigDefinition{{"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(3.0)}},
         forceExitHandler_.AsStdFunction()
     };
 };
@@ -93,8 +101,9 @@ TEST_F(SignalsHandlerTests, OneSignal)
 }
 
 struct SignalsHandlerTimeoutTests : SignalsHandlerTestsBase {
+protected:
     SignalsHandler handler_{
-        util::Config{boost::json::value{{"graceful_period", 0.001}}},
+        ClioConfigDefinition{{"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(0.001)}},
         forceExitHandler_.AsStdFunction()
     };
 };

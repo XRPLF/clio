@@ -25,6 +25,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/JsonBool.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 #include "util/JsonUtils.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
@@ -55,6 +56,8 @@ AccountTxHandler::Result
 AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "AccountTX's ledger range must be available");
+
     auto [minIndex, maxIndex] = *range;
 
     if (input.ledgerIndexMin) {
@@ -117,7 +120,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
         }
     }
 
-    auto const limit = input.limit.value_or(LIMIT_DEFAULT);
+    auto const limit = input.limit.value_or(kLIMIT_DEFAULT);
     auto const accountID = accountFromStringStrict(input.account);
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
         return sharedPtrBackend_->fetchAccountTransactions(*accountID, limit, input.forward, cursor, ctx.yield);
@@ -129,7 +132,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
     Output response;
 
     if (retCursor)
-        response.marker = {retCursor->ledgerSequence, retCursor->transactionIndex};
+        response.marker = {.ledger = retCursor->ledgerSequence, .seq = retCursor->transactionIndex};
 
     for (auto const& txnPlusMeta : blobs) {
         // over the range
@@ -262,8 +265,8 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
 
     if (jsonObject.contains(JS(marker))) {
         input.marker = AccountTxHandler::Marker{
-            jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
-            jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()
+            .ledger = jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
+            .seq = jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()
         };
     }
 

@@ -39,7 +39,7 @@ namespace rpc::impl {
 
 using FieldSpecProcessor = std::function<MaybeError(boost::json::value&)>;
 
-static FieldSpecProcessor const EMPTY_FIELD_PROCESSOR = [](boost::json::value&) -> MaybeError { return {}; };
+static FieldSpecProcessor const kEMPTY_FIELD_PROCESSOR = [](boost::json::value&) -> MaybeError { return {}; };
 
 template <SomeProcessor... Processors>
 [[nodiscard]] FieldSpecProcessor
@@ -77,7 +77,7 @@ makeFieldProcessor(std::string const& key, Processors&&... procs)
 
 using FieldChecker = std::function<check::Warnings(boost::json::value const&)>;
 
-static FieldChecker const EMPTY_FIELD_CHECKER = [](boost::json::value const&) -> check::Warnings { return {}; };
+static FieldChecker const kEMPTY_FIELD_CHECKER = [](boost::json::value const&) -> check::Warnings { return {}; };
 
 template <SomeCheck... Checks>
 [[nodiscard]] FieldChecker

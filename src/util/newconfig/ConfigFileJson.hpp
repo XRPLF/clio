@@ -79,7 +79,7 @@ public:
      * @return A ConfigFileJson object if parsing user file is successful. Error otherwise
      */
     [[nodiscard]] static std::expected<ConfigFileJson, Error>
-    make_ConfigFileJson(boost::filesystem::path configFilePath);
+    makeConfigFileJson(boost::filesystem::path configFilePath);
 
 private:
     /**

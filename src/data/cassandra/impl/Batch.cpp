@@ -31,14 +31,14 @@
 #include <vector>
 
 namespace {
-constexpr auto batchDeleter = [](CassBatch* ptr) { cass_batch_free(ptr); };
+constexpr auto kBATCH_DELETER = [](CassBatch* ptr) { cass_batch_free(ptr); };
 }  // namespace
 
 namespace data::cassandra::impl {
 
 // TODO: Use an appropriate value instead of CASS_BATCH_TYPE_LOGGED for different use cases
 Batch::Batch(std::vector<Statement> const& statements)
-    : ManagedObject{cass_batch_new(CASS_BATCH_TYPE_LOGGED), batchDeleter}
+    : ManagedObject{cass_batch_new(CASS_BATCH_TYPE_LOGGED), kBATCH_DELETER}
 {
     cass_batch_set_is_idempotent(*this, cass_true);
 

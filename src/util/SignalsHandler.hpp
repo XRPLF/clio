@@ -20,8 +20,8 @@
 #pragma once
 
 #include "util/async/context/BasicExecutionContext.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
@@ -35,7 +35,6 @@
 #include <cstdlib>
 #include <functional>
 #include <optional>
-#include <string>
 
 namespace util {
 
@@ -70,7 +69,10 @@ public:
      * @param config The configuration.
      * @param forceExitHandler The handler for forced exit.
      */
-    SignalsHandler(Config const& config, std::function<void()> forceExitHandler = defaultForceExitHandler_);
+    SignalsHandler(
+        util::config::ClioConfigDefinition const& config,
+        std::function<void()> forceExitHandler = kDEFAULT_FORCE_EXIT_HANDLER
+    );
 
     SignalsHandler(SignalsHandler const&) = delete;
     SignalsHandler(SignalsHandler&&) = delete;
@@ -98,7 +100,7 @@ public:
         stopSignal_.connect(static_cast<int>(priority), std::forward<SomeCallback>(callback));
     }
 
-    static constexpr auto HANDLED_SIGNALS = {SIGINT, SIGTERM};
+    static constexpr auto kHANDLED_SIGNALS = {SIGINT, SIGTERM};
 
 private:
     /**
@@ -115,7 +117,7 @@ private:
     static void
     setHandler(void (*handler)(int) = nullptr);
 
-    static auto constexpr defaultForceExitHandler_ = []() { std::exit(EXIT_FAILURE); };
+    static constexpr auto kDEFAULT_FORCE_EXIT_HANDLER = []() { std::exit(EXIT_FAILURE); };
 };
 
 }  // namespace util

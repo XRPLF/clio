@@ -156,7 +156,7 @@ WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_contex
     if (errorCode)
         return std::unexpected{RequestError{"Connect error", errorCode}};
 
-    if constexpr (StreamDataType::sslEnabled) {
+    if constexpr (StreamDataType::kSSL_ENABLED) {
         beast::get_lowest_layer(ws).expires_after(connectionTimeout_);
         ws.next_layer().async_handshake(asio::ssl::stream_base::client, yield[errorCode]);
         if (errorCode)
@@ -179,7 +179,7 @@ WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_contex
     if (errorCode)
         return std::unexpected{RequestError{"Handshake error", errorCode}};
 
-    if constexpr (StreamDataType::sslEnabled) {
+    if constexpr (StreamDataType::kSSL_ENABLED) {
         return std::make_unique<impl::SslWsConnection>(std::move(ws));
     } else {
         return std::make_unique<impl::PlainWsConnection>(std::move(ws));

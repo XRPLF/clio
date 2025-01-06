@@ -29,6 +29,8 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/string_body.hpp>
 #include <gmock/gmock.h>
 
 #include <chrono>
@@ -40,31 +42,25 @@ struct MockHttpConnectionImpl : web::ng::impl::UpgradableConnection {
 
     MOCK_METHOD(bool, wasUpgraded, (), (const, override));
 
+    MOCK_METHOD(void, setTimeout, (std::chrono::steady_clock::duration), (override));
+
     using SendReturnType = std::optional<web::ng::Error>;
+    MOCK_METHOD(SendReturnType, send, (web::ng::Response, boost::asio::yield_context), (override));
+
     MOCK_METHOD(
         SendReturnType,
-        send,
-        (web::ng::Response, boost::asio::yield_context, std::chrono::steady_clock::duration),
+        sendRaw,
+        (boost::beast::http::response<boost::beast::http::string_body>, boost::asio::yield_context),
         (override)
     );
 
     using ReceiveReturnType = std::expected<web::ng::Request, web::ng::Error>;
-    MOCK_METHOD(
-        ReceiveReturnType,
-        receive,
-        (boost::asio::yield_context, std::chrono::steady_clock::duration),
-        (override)
-    );
+    MOCK_METHOD(ReceiveReturnType, receive, (boost::asio::yield_context), (override));
 
-    MOCK_METHOD(void, close, (boost::asio::yield_context, std::chrono::steady_clock::duration));
+    MOCK_METHOD(void, close, (boost::asio::yield_context));
 
     using IsUpgradeRequestedReturnType = std::expected<bool, web::ng::Error>;
-    MOCK_METHOD(
-        IsUpgradeRequestedReturnType,
-        isUpgradeRequested,
-        (boost::asio::yield_context, std::chrono::steady_clock::duration),
-        (override)
-    );
+    MOCK_METHOD(IsUpgradeRequestedReturnType, isUpgradeRequested, (boost::asio::yield_context), (override));
 
     using UpgradeReturnType = std::expected<web::ng::ConnectionPtr, web::ng::Error>;
     using OptionalSslContext = std::optional<boost::asio::ssl::context>;

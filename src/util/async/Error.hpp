@@ -68,7 +68,7 @@ struct ExecutionError {
     std::string message;
 };
 
-// these are not the robots you are looking for...
+// these are not the droids you are looking for...
 static_assert(std::is_copy_constructible_v<std::expected<std::any, ExecutionError>>);
 
 }  // namespace util::async

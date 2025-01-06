@@ -69,7 +69,7 @@ TEST(RPCErrorsTest, StatusAsBool)
         RippledError::rpcNO_NETWORK,
         RippledError::rpcACT_MALFORMED,
         RippledError::rpcBAD_MARKET,
-        ClioError::rpcMALFORMED_CURRENCY,
+        ClioError::RpcMalformedCurrency,
     };
 
     for (auto const& ec : errors)
@@ -114,19 +114,19 @@ TEST(RPCErrorsTest, RippledErrorToJSONCustomStrCodeAndMessage)
 
 TEST(RPCErrorsTest, ClioErrorToJSON)
 {
-    auto const status = Status{ClioError::rpcMALFORMED_CURRENCY};
+    auto const status = Status{ClioError::RpcMalformedCurrency};
     check(makeError(status), "malformedCurrency", 5000, "Malformed currency.");
 }
 
 TEST(RPCErrorsTest, ClioErrorToJSONCustomMessage)
 {
-    auto const status = Status{ClioError::rpcMALFORMED_CURRENCY, "custom"};
+    auto const status = Status{ClioError::RpcMalformedCurrency, "custom"};
     check(makeError(status), "malformedCurrency", 5000, "custom");
 }
 
 TEST(RPCErrorsTest, ClioErrorToJSONCustomStrCodeAndMessage)
 {
-    auto const status = Status{ClioError::rpcMALFORMED_CURRENCY, "customCode", "customMessage"};
+    auto const status = Status{ClioError::RpcMalformedCurrency, "customCode", "customMessage"};
     check(makeError(status), "customCode", 5000, "customMessage");
 }
 
@@ -147,18 +147,18 @@ INSTANTIATE_TEST_SUITE_P(
     WarningCodeTestGroup,
     WarningCodeTest,
     testing::Values(
-        WarningCodeTestBundle{"Unknown", WarningCode::warnUNKNOWN, "Unknown warning"},
+        WarningCodeTestBundle{"Unknown", WarningCode::WarnUnknown, "Unknown warning"},
         WarningCodeTestBundle{
             "Clio",
-            WarningCode::warnRPC_CLIO,
+            WarningCode::WarnRpcClio,
             "This is a clio server. clio only serves validated data. If you want to talk to rippled, include "
             "'ledger_index':'current' in your request"
         },
-        WarningCodeTestBundle{"Outdated", WarningCode::warnRPC_OUTDATED, "This server may be out of date"},
-        WarningCodeTestBundle{"RateLimit", WarningCode::warnRPC_RATE_LIMIT, "You are about to be rate limited"},
+        WarningCodeTestBundle{"Outdated", WarningCode::WarnRpcOutdated, "This server may be out of date"},
+        WarningCodeTestBundle{"RateLimit", WarningCode::WarnRpcRateLimit, "You are about to be rate limited"},
         WarningCodeTestBundle{
             "Deprecated",
-            WarningCode::warnRPC_DEPRECATED,
+            WarningCode::WarnRpcDeprecated,
             "Some fields from your request are deprecated. Please check the documentation at "
             "https://xrpl.org/docs/references/http-websocket-apis/ and update your request."
         }

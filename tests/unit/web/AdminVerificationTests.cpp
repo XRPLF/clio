@@ -19,19 +19,24 @@
 
 #include "util/LoggerFixtures.hpp"
 #include "util/NameGenerator.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/AdminVerificationStrategy.hpp"
 
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <gtest/gtest.h>
 
 #include <optional>
 #include <string>
 
 namespace http = boost::beast::http;
+using namespace util::config;
 
 class IPAdminVerificationStrategyTest : public NoLoggerFixture {
 protected:
@@ -93,7 +98,7 @@ class MakeAdminVerificationStrategyTest : public testing::TestWithParam<MakeAdmi
 
 TEST_P(MakeAdminVerificationStrategyTest, ChoosesStrategyCorrectly)
 {
-    auto strat = web::make_AdminVerificationStrategy(GetParam().passwordOpt);
+    auto strat = web::makeAdminVerificationStrategy(GetParam().passwordOpt);
     auto ipStrat = dynamic_cast<web::IPAdminVerificationStrategy*>(strat.get());
     EXPECT_EQ(ipStrat != nullptr, GetParam().expectIpStrategy);
     auto passwordStrat = dynamic_cast<web::PasswordAdminVerificationStrategy*>(strat.get());
@@ -134,10 +139,22 @@ struct MakeAdminVerificationStrategyFromConfigTestParams {
 struct MakeAdminVerificationStrategyFromConfigTest
     : public testing::TestWithParam<MakeAdminVerificationStrategyFromConfigTestParams> {};
 
+inline static ClioConfigDefinition
+generateDefaultAdminConfig()
+{
+    return ClioConfigDefinition{
+        {{"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
+         {"server.admin_password", ConfigValue{ConfigType::String}.optional()}}
+    };
+}
+
 TEST_P(MakeAdminVerificationStrategyFromConfigTest, ChecksConfig)
 {
-    util::Config const serverConfig{boost::json::parse(GetParam().config)};
-    auto const result = web::make_AdminVerificationStrategy(serverConfig);
+    ConfigFileJson const js{boost::json::parse(GetParam().config).as_object()};
+    ClioConfigDefinition serverConfig{generateDefaultAdminConfig()};
+    auto const errors = serverConfig.parse(js);
+    ASSERT_TRUE(!errors.has_value());
+    auto const result = web::makeAdminVerificationStrategy(serverConfig);
     EXPECT_EQ(not result.has_value(), GetParam().expectedError);
 }
 
@@ -176,5 +193,5 @@ INSTANTIATE_TEST_SUITE_P(
             .expectedError = false
         }
     ),
-    tests::util::NameGenerator
+    tests::util::kNAME_GENERATOR
 );

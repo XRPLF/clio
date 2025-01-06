@@ -45,10 +45,10 @@ public:
         ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
         if constexpr (std::is_floating_point_v<T>) {
             std::uniform_real_distribution<T> distribution(min, max);
-            return distribution(generator_);
+            return distribution(generator);
         }
         std::uniform_int_distribution<T> distribution(min, max);
-        return distribution(generator_);
+        return distribution(generator);
     }
 
     /**
@@ -60,7 +60,7 @@ public:
     setSeed(size_t seed);
 
 private:
-    static std::mt19937_64 generator_;
+    static std::mt19937_64 generator;
 };
 
 }  // namespace util

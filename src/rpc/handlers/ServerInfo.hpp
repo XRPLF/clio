@@ -26,6 +26,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 #include "util/build/Build.hpp"
 
 #include <boost/json/conversion.hpp>
@@ -67,7 +68,7 @@ namespace rpc {
  */
 template <typename LoadBalancerType, typename ETLServiceType, typename CountersType>
 class BaseServerInfoHandler {
-    static constexpr auto BACKEND_COUNTERS_KEY = "backend_counters";
+    static constexpr auto kBACKEND_COUNTERS_KEY = "backend_counters";
 
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
@@ -178,8 +179,8 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static RpcSpec const rpcSpec = {};
-        return rpcSpec;
+        static RpcSpec const kRPC_SPEC = {};
+        return kRPC_SPEC;
     }
 
     /**
@@ -196,6 +197,8 @@ public:
         using namespace std::chrono;
 
         auto const range = backend_->fetchLedgerRange();
+        ASSERT(range.has_value(), "ServerInfo's ledger range must be available");
+
         auto const lgrInfo = backend_->fetchLedgerBySequence(range->maxSequence, ctx.yield);
         if (not lgrInfo.has_value())
             return Error{Status{RippledError::rpcINTERNAL}};
@@ -208,7 +211,7 @@ public:
         auto const sinceEpoch = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
         auto const age = static_cast<int32_t>(sinceEpoch) -
             static_cast<int32_t>(lgrInfo->closeTime.time_since_epoch().count()) -
-            static_cast<int32_t>(rippleEpochStart);
+            static_cast<int32_t>(kRIPPLE_EPOCH_START);
 
         output.info.completeLedgers = fmt::format("{}-{}", range->minSequence, range->maxSequence);
 
@@ -301,7 +304,7 @@ private:
             jv.as_object()[JS(counters)] = info.adminSection->counters;
             jv.as_object()[JS(counters)].as_object()["subscriptions"] = info.adminSection->subscriptions;
             if (info.adminSection->backendCounters.has_value()) {
-                jv.as_object()[BACKEND_COUNTERS_KEY] = *info.adminSection->backendCounters;
+                jv.as_object()[kBACKEND_COUNTERS_KEY] = *info.adminSection->backendCounters;
             }
         }
     }
@@ -337,8 +340,8 @@ private:
     {
         auto input = BaseServerInfoHandler::Input{};
         auto const jsonObject = jv.as_object();
-        if (jsonObject.contains(BACKEND_COUNTERS_KEY) && jsonObject.at(BACKEND_COUNTERS_KEY).is_bool())
-            input.backendCounters = jv.at(BACKEND_COUNTERS_KEY).as_bool();
+        if (jsonObject.contains(kBACKEND_COUNTERS_KEY) && jsonObject.at(kBACKEND_COUNTERS_KEY).is_bool())
+            input.backendCounters = jv.at(kBACKEND_COUNTERS_KEY).as_bool();
         return input;
     }
 };

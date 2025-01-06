@@ -25,7 +25,9 @@
 #include "util/MockLoadBalancer.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/Context.hpp"
 
 #include <boost/json/object.hpp>
@@ -42,23 +44,26 @@
 
 using namespace rpc;
 using namespace testing;
+using namespace util::config;
 namespace json = boost::json;
 
-constexpr static auto CLIENT_IP = "127.0.0.1";
+namespace {
+constexpr auto kCLIENT_IP = "127.0.0.1";
+}  // namespace
 
 class RPCForwardingProxyTest : public HandlerBaseTest {
 protected:
-    std::shared_ptr<MockLoadBalancer> loadBalancer = std::make_shared<MockLoadBalancer>();
-    std::shared_ptr<MockHandlerProvider> handlerProvider = std::make_shared<MockHandlerProvider>();
-    MockCounters counters;
+    std::shared_ptr<MockLoadBalancer> loadBalancer_ = std::make_shared<MockLoadBalancer>();
+    std::shared_ptr<MockHandlerProvider> handlerProvider_ = std::make_shared<MockHandlerProvider>();
+    MockCounters counters_;
 
-    util::Config config;
-    util::TagDecoratorFactory tagFactory{config};
+    ClioConfigDefinition const config_{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none")}};
+    util::TagDecoratorFactory tagFactory_{config_};
 
-    rpc::impl::ForwardingProxy<MockLoadBalancer, MockCounters, MockHandlerProvider> proxy{
-        loadBalancer,
-        counters,
-        handlerProvider
+    rpc::impl::ForwardingProxy<MockLoadBalancer, MockCounters, MockHandlerProvider> proxy_{
+        loadBalancer_,
+        counters_,
+        handlerProvider_
     };
 };
 
@@ -84,108 +89,150 @@ generateTestValuesForParametersTest()
     auto const shouldForward = true;
 
     return std::vector<ShouldForwardParamTestCaseBundle>{
-        {"ShouldForwardReturnsFalseIfClioOnly", 2u, "test", "{}", isClioOnly, 1, !isAdmin, !shouldForward},
-        {"ShouldForwardReturnsTrueIfProxied", 2u, "submit", "{}", !isClioOnly, 1, !isAdmin, shouldForward},
-        {"ShouldForwardReturnsTrueIfCurrentLedgerSpecified",
-         2u,
-         "anymethod",
-         R"({"ledger_index": "current"})",
-         !isClioOnly,
-         1,
-         !isAdmin,
-         shouldForward},
-        {"ShouldForwardReturnsTrueIfClosedLedgerSpecified",
-         2u,
-         "anymethod",
-         R"({"ledger_index": "closed"})",
-         !isClioOnly,
-         1,
-         !isAdmin,
-         shouldForward},
-        {"ShouldForwardReturnsTrueIfAccountInfoWithQueueSpecified",
-         2u,
-         "account_info",
-         R"({"queue": true})",
-         !isClioOnly,
-         1,
-         !isAdmin,
-         shouldForward},
-        {"ShouldForwardReturnsFalseIfAccountInfoQueueIsFalse",
-         2u,
-         "account_info",
-         R"({"queue": false})",
-         !isClioOnly,
-         1,
-         !isAdmin,
-         !shouldForward},
-        {"ShouldForwardReturnsTrueIfLedgerWithQueueSpecified",
-         2u,
-         "ledger",
-         R"({"queue": true})",
-         !isClioOnly,
-         1,
-         !isAdmin,
-         shouldForward},
-        {"ShouldForwardReturnsFalseIfLedgerQueueIsFalse",
-         2u,
-         "ledger",
-         R"({"queue": false})",
-         !isClioOnly,
-         1,
-         !isAdmin,
-         !shouldForward},
-        {"ShouldNotForwardReturnsTrueIfAPIVersionIsV1",
-         1u,
-         "api_version_check",
-         "{}",
-         !isClioOnly,
-         1,
-         !isAdmin,
-         !shouldForward},
-        {"ShouldForwardReturnsFalseIfAPIVersionIsV2",
-         2u,
-         "api_version_check",
-         "{}",
-         !isClioOnly,
-         1,
-         !isAdmin,
-         !shouldForward},
-        {"ShouldNeverForwardSubscribe", 1u, "subscribe", "{}", !isClioOnly, 0, !isAdmin, !shouldForward},
-        {"ShouldNeverForwardUnsubscribe", 1u, "unsubscribe", "{}", !isClioOnly, 0, !isAdmin, !shouldForward},
-        {"ForceForwardTrue", 1u, "any_method", R"({"force_forward": true})", !isClioOnly, 1, isAdmin, shouldForward},
-        {"ForceForwardFalse", 1u, "any_method", R"({"force_forward": false})", !isClioOnly, 1, isAdmin, !shouldForward},
-        {"ForceForwardNotAdmin",
-         1u,
-         "any_method",
-         R"({"force_forward": true})",
-         !isClioOnly,
-         1,
-         !isAdmin,
-         !shouldForward},
-        {"ForceForwardSubscribe",
-         1u,
-         "subscribe",
-         R"({"force_forward": true})",
-         !isClioOnly,
-         0,
-         isAdmin,
-         not shouldForward},
-        {"ForceForwardUnsubscribe",
-         1u,
-         "unsubscribe",
-         R"({"force_forward": true})",
-         !isClioOnly,
-         0,
-         isAdmin,
-         !shouldForward},
-        {"ForceForwardClioOnly",
-         1u,
-         "clio_only_method",
-         R"({"force_forward": true})",
-         isClioOnly,
-         1,
-         isAdmin,
-         !shouldForward},
+        {.testName = "ShouldForwardReturnsFalseIfClioOnly",
+         .apiVersion = 2u,
+         .method = "test",
+         .testJson = "{}",
+         .mockedIsClioOnly = isClioOnly,
+         .called = 1,
+         .isAdmin = !isAdmin,
+         .expected = !shouldForward},
+        {.testName = "ShouldForwardReturnsTrueIfProxied",
+         .apiVersion = 2u,
+         .method = "submit",
+         .testJson = "{}",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 1,
+         .isAdmin = !isAdmin,
+         .expected = shouldForward},
+        {.testName = "ShouldForwardReturnsTrueIfCurrentLedgerSpecified",
+         .apiVersion = 2u,
+         .method = "anymethod",
+         .testJson = R"({"ledger_index": "current"})",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 1,
+         .isAdmin = !isAdmin,
+         .expected = shouldForward},
+        {.testName = "ShouldForwardReturnsTrueIfClosedLedgerSpecified",
+         .apiVersion = 2u,
+         .method = "anymethod",
+         .testJson = R"({"ledger_index": "closed"})",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 1,
+         .isAdmin = !isAdmin,
+         .expected = shouldForward},
+        {.testName = "ShouldForwardReturnsTrueIfAccountInfoWithQueueSpecified",
+         .apiVersion = 2u,
+         .method = "account_info",
+         .testJson = R"({"queue": true})",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 1,
+         .isAdmin = !isAdmin,
+         .expected = shouldForward},
+        {.testName = "ShouldForwardReturnsFalseIfAccountInfoQueueIsFalse",
+         .apiVersion = 2u,
+         .method = "account_info",
+         .testJson = R"({"queue": false})",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 1,
+         .isAdmin = !isAdmin,
+         .expected = !shouldForward},
+        {.testName = "ShouldForwardReturnsTrueIfLedgerWithQueueSpecified",
+         .apiVersion = 2u,
+         .method = "ledger",
+         .testJson = R"({"queue": true})",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 1,
+         .isAdmin = !isAdmin,
+         .expected = shouldForward},
+        {.testName = "ShouldForwardReturnsFalseIfLedgerQueueIsFalse",
+         .apiVersion = 2u,
+         .method = "ledger",
+         .testJson = R"({"queue": false})",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 1,
+         .isAdmin = !isAdmin,
+         .expected = !shouldForward},
+        {.testName = "ShouldNotForwardReturnsTrueIfAPIVersionIsV1",
+         .apiVersion = 1u,
+         .method = "api_version_check",
+         .testJson = "{}",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 1,
+         .isAdmin = !isAdmin,
+         .expected = !shouldForward},
+        {.testName = "ShouldForwardReturnsFalseIfAPIVersionIsV2",
+         .apiVersion = 2u,
+         .method = "api_version_check",
+         .testJson = "{}",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 1,
+         .isAdmin = !isAdmin,
+         .expected = !shouldForward},
+        {.testName = "ShouldNeverForwardSubscribe",
+         .apiVersion = 1u,
+         .method = "subscribe",
+         .testJson = "{}",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 0,
+         .isAdmin = !isAdmin,
+         .expected = !shouldForward},
+        {.testName = "ShouldNeverForwardUnsubscribe",
+         .apiVersion = 1u,
+         .method = "unsubscribe",
+         .testJson = "{}",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 0,
+         .isAdmin = !isAdmin,
+         .expected = !shouldForward},
+        {.testName = "ForceForwardTrue",
+         .apiVersion = 1u,
+         .method = "any_method",
+         .testJson = R"({"force_forward": true})",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 1,
+         .isAdmin = isAdmin,
+         .expected = shouldForward},
+        {.testName = "ForceForwardFalse",
+         .apiVersion = 1u,
+         .method = "any_method",
+         .testJson = R"({"force_forward": false})",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 1,
+         .isAdmin = isAdmin,
+         .expected = !shouldForward},
+        {.testName = "ForceForwardNotAdmin",
+         .apiVersion = 1u,
+         .method = "any_method",
+         .testJson = R"({"force_forward": true})",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 1,
+         .isAdmin = !isAdmin,
+         .expected = !shouldForward},
+        {.testName = "ForceForwardSubscribe",
+         .apiVersion = 1u,
+         .method = "subscribe",
+         .testJson = R"({"force_forward": true})",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 0,
+         .isAdmin = isAdmin,
+         .expected = not shouldForward},
+        {.testName = "ForceForwardUnsubscribe",
+         .apiVersion = 1u,
+         .method = "unsubscribe",
+         .testJson = R"({"force_forward": true})",
+         .mockedIsClioOnly = !isClioOnly,
+         .called = 0,
+         .isAdmin = isAdmin,
+         .expected = !shouldForward},
+        {.testName = "ForceForwardClioOnly",
+         .apiVersion = 1u,
+         .method = "clio_only_method",
+         .testJson = R"({"force_forward": true})",
+         .mockedIsClioOnly = isClioOnly,
+         .called = 1,
+         .isAdmin = isAdmin,
+         .expected = !shouldForward},
     };
 }
 
@@ -193,13 +240,13 @@ INSTANTIATE_TEST_CASE_P(
     ShouldForwardTest,
     ShouldForwardParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    tests::util::NameGenerator
+    tests::util::kNAME_GENERATOR
 );
 
 TEST_P(ShouldForwardParameterTest, Test)
 {
     auto const testBundle = GetParam();
-    auto const rawHandlerProviderPtr = handlerProvider.get();
+    auto const rawHandlerProviderPtr = handlerProvider_.get();
     auto const apiVersion = testBundle.apiVersion;
     auto const method = testBundle.method;
     auto const params = json::parse(testBundle.testJson);
@@ -208,40 +255,40 @@ TEST_P(ShouldForwardParameterTest, Test)
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(testBundle.called);
 
     runSpawn([&](auto yield) {
-        auto const range = backend->fetchLedgerRange();
+        auto const range = backend_->fetchLedgerRange();
         auto const ctx = web::Context(
-            yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, testBundle.isAdmin
+            yield, method, apiVersion, params.as_object(), nullptr, tagFactory_, *range, kCLIENT_IP, testBundle.isAdmin
         );
 
-        auto const res = proxy.shouldForward(ctx);
+        auto const res = proxy_.shouldForward(ctx);
         ASSERT_EQ(res, testBundle.expected);
     });
 }
 
 TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
 {
-    auto const rawHandlerProviderPtr = handlerProvider.get();
-    auto const rawBalancerPtr = loadBalancer.get();
+    auto const rawHandlerProviderPtr = handlerProvider_.get();
+    auto const rawBalancerPtr = loadBalancer_.get();
     auto const apiVersion = 2u;
     auto const method = "submit";
     auto const params = json::parse(R"({"test": true})");
     auto const forwarded = json::parse(R"({"test": true, "command": "submit"})");
 
     EXPECT_CALL(
-        *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(CLIENT_IP), true, _)
+        *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(kCLIENT_IP), true, _)
     )
         .WillOnce(Return(json::object{}));
 
     EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).WillOnce(Return(true));
 
-    EXPECT_CALL(counters, rpcForwarded(method));
+    EXPECT_CALL(counters_, rpcForwarded(method));
 
     runSpawn([&](auto yield) {
-        auto const range = backend->fetchLedgerRange();
+        auto const range = backend_->fetchLedgerRange();
         auto const ctx =
-            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory_, *range, kCLIENT_IP, true);
 
-        auto const res = proxy.forward(ctx);
+        auto const res = proxy_.forward(ctx);
 
         auto const data = std::get_if<json::object>(&res.response);
         EXPECT_TRUE(data != nullptr);
@@ -250,31 +297,31 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
 
 TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
 {
-    auto const rawHandlerProviderPtr = handlerProvider.get();
-    auto const rawBalancerPtr = loadBalancer.get();
+    auto const rawHandlerProviderPtr = handlerProvider_.get();
+    auto const rawBalancerPtr = loadBalancer_.get();
     auto const apiVersion = 2u;
     auto const method = "submit";
     auto const params = json::parse(R"({"test": true})");
     auto const forwarded = json::parse(R"({"test": true, "command": "submit"})");
 
     EXPECT_CALL(
-        *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(CLIENT_IP), true, _)
+        *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(kCLIENT_IP), true, _)
     )
-        .WillOnce(Return(std::unexpected{rpc::ClioError::etlINVALID_RESPONSE}));
+        .WillOnce(Return(std::unexpected{rpc::ClioError::EtlInvalidResponse}));
 
     EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).WillOnce(Return(true));
 
-    EXPECT_CALL(counters, rpcFailedToForward(method));
+    EXPECT_CALL(counters_, rpcFailedToForward(method));
 
     runSpawn([&](auto yield) {
-        auto const range = backend->fetchLedgerRange();
+        auto const range = backend_->fetchLedgerRange();
         auto const ctx =
-            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory_, *range, kCLIENT_IP, true);
 
-        auto const res = proxy.forward(ctx);
+        auto const res = proxy_.forward(ctx);
 
         auto const status = std::get_if<Status>(&res.response);
         EXPECT_TRUE(status != nullptr);
-        EXPECT_EQ(*status, rpc::ClioError::etlINVALID_RESPONSE);
+        EXPECT_EQ(*status, rpc::ClioError::EtlInvalidResponse);
     });
 }

@@ -31,16 +31,18 @@
 
 #include <memory>
 
-constexpr static auto FEED = R"({"test":"test"})";
+namespace {
+constexpr auto kFEED = R"({"test":"test"})";
+}  // namespace
 
 using namespace feed::impl;
 using namespace util::prometheus;
 
 struct FeedBaseMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {
 protected:
-    web::SubscriptionContextPtr sessionPtr = std::make_shared<MockSession>();
-    std::shared_ptr<SingleFeedBase> testFeedPtr = std::make_shared<SingleFeedBase>(ctx, "testFeed");
-    MockSession* mockSessionPtr = dynamic_cast<MockSession*>(sessionPtr.get());
+    web::SubscriptionContextPtr sessionPtr_ = std::make_shared<MockSession>();
+    std::shared_ptr<SingleFeedBase> testFeedPtr_ = std::make_shared<SingleFeedBase>(ctx_, "testFeed");
+    MockSession* mockSessionPtr_ = dynamic_cast<MockSession*>(sessionPtr_.get());
 };
 
 TEST_F(FeedBaseMockPrometheusTest, subUnsub)
@@ -49,9 +51,9 @@ TEST_F(FeedBaseMockPrometheusTest, subUnsub)
     EXPECT_CALL(counter, add(1));
     EXPECT_CALL(counter, add(-1));
 
-    EXPECT_CALL(*mockSessionPtr, onDisconnect);
-    testFeedPtr->sub(sessionPtr);
-    testFeedPtr->unsub(sessionPtr);
+    EXPECT_CALL(*mockSessionPtr_, onDisconnect);
+    testFeedPtr_->sub(sessionPtr_);
+    testFeedPtr_->unsub(sessionPtr_);
 }
 
 TEST_F(FeedBaseMockPrometheusTest, AutoUnsub)
@@ -61,10 +63,10 @@ TEST_F(FeedBaseMockPrometheusTest, AutoUnsub)
     EXPECT_CALL(counter, add(-1));
 
     web::SubscriptionContextInterface::OnDisconnectSlot slot;
-    EXPECT_CALL(*mockSessionPtr, onDisconnect).WillOnce(testing::SaveArg<0>(&slot));
-    testFeedPtr->sub(sessionPtr);
-    slot(sessionPtr.get());
-    sessionPtr.reset();
+    EXPECT_CALL(*mockSessionPtr_, onDisconnect).WillOnce(testing::SaveArg<0>(&slot));
+    testFeedPtr_->sub(sessionPtr_);
+    slot(sessionPtr_.get());
+    sessionPtr_.reset();
 }
 
 class NamedSingleFeedTest : public SingleFeedBase {
@@ -79,24 +81,24 @@ using SingleFeedBaseTest = FeedBaseTest<NamedSingleFeedTest>;
 TEST_F(SingleFeedBaseTest, Test)
 {
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
-    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(FEED)));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kFEED)));
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
-    testFeedPtr->pub(FEED);
+    testFeedPtr->pub(kFEED);
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 0);
-    testFeedPtr->pub(FEED);
+    testFeedPtr->pub(kFEED);
 }
 
 TEST_F(SingleFeedBaseTest, TestAutoDisconnect)
 {
     web::SubscriptionContextInterface::OnDisconnectSlot slot;
     EXPECT_CALL(*mockSessionPtr, onDisconnect).WillOnce(testing::SaveArg<0>(&slot));
-    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(FEED)));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kFEED)));
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
-    testFeedPtr->pub(FEED);
+    testFeedPtr->pub(kFEED);
 
     slot(sessionPtr.get());
     sessionPtr.reset();

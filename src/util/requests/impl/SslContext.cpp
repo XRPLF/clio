@@ -50,7 +50,7 @@ namespace {
 
 // Taken from https://go.dev/src/crypto/x509/root_linux.go
 
-constexpr std::array CERT_FILE_PATHS{
+constexpr std::array kCERT_FILE_PATHS{
     "/etc/ssl/certs/ca-certificates.crt",                 // Debian/Ubuntu/Gentoo etc.
     "/etc/pki/tls/certs/ca-bundle.crt",                   // Fedora/RHEL 6
     "/etc/ssl/ca-bundle.pem",                             // OpenSUSE
@@ -65,7 +65,7 @@ constexpr std::array CERT_FILE_PATHS{
 std::expected<std::string, RequestError>
 getRootCertificate()
 {
-    for (auto const& path : CERT_FILE_PATHS) {
+    for (auto const& path : kCERT_FILE_PATHS) {
         if (std::filesystem::exists(path)) {
             std::ifstream const fileStream{path, std::ios::in};
             if (not fileStream.is_open()) {
@@ -106,8 +106,8 @@ sslErrorToString(boost::beast::error_code const& error)
         boost::lexical_cast<std::string>(ERR_GET_REASON(error.value()))
     );
 
-    static constexpr size_t BUFFER_SIZE = 128;
-    char buf[BUFFER_SIZE];
+    static constexpr size_t kBUFFER_SIZE = 128;
+    char buf[kBUFFER_SIZE];
     ::ERR_error_string_n(error.value(), buf, sizeof(buf));
     errorString += buf;
 

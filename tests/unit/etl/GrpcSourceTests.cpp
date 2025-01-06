@@ -23,7 +23,7 @@
 #include "util/MockPrometheus.hpp"
 #include "util/MockXrpLedgerAPIService.hpp"
 #include "util/TestObject.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <gmock/gmock.h>
 #include <grpcpp/server_context.h>
@@ -39,15 +39,17 @@
 #include <vector>
 
 using namespace etl::impl;
+using namespace util::config;
 
 struct GrpcSourceTests : NoLoggerFixture, util::prometheus::WithPrometheus, tests::util::WithMockXrpLedgerAPIService {
     GrpcSourceTests()
         : WithMockXrpLedgerAPIService("localhost:0")
-        , mockBackend_(std::make_shared<testing::StrictMock<MockBackend>>(util::Config{}))
+        , mockBackend_(std::make_shared<testing::StrictMock<MockBackend>>(ClioConfigDefinition{}))
         , grpcSource_("localhost", std::to_string(getXRPLMockPort()), mockBackend_)
     {
     }
 
+protected:
     std::shared_ptr<testing::StrictMock<MockBackend>> mockBackend_;
     GrpcSource grpcSource_;
 };
@@ -96,6 +98,7 @@ TEST_F(GrpcSourceTests, loadInitialLedgerNoStub)
 }
 
 struct GrpcSourceLoadInitialLedgerTests : GrpcSourceTests {
+protected:
     uint32_t const sequence_ = 123;
     uint32_t const numMarkers_ = 4;
     bool const cacheOnly_ = false;
@@ -122,7 +125,7 @@ TEST_F(GrpcSourceLoadInitialLedgerTests, worksFine)
 {
     auto const key = ripple::uint256{4};
     std::string const keyStr{reinterpret_cast<char const*>(key.data()), ripple::uint256::size()};
-    auto const object = CreateTicketLedgerObject("rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", sequence_);
+    auto const object = createTicketLedgerObject("rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", sequence_);
     auto const objectData = object.getSerializer().peekData();
 
     EXPECT_CALL(mockXrpLedgerAPIService, GetLedgerData)

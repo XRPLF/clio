@@ -54,15 +54,18 @@ public:
     using Connection::Connection;
 
     virtual std::expected<bool, Error>
-    isUpgradeRequested(
-        boost::asio::yield_context yield,
-        std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT
-    ) = 0;
+    isUpgradeRequested(boost::asio::yield_context yield) = 0;
 
     virtual std::expected<ConnectionPtr, Error>
     upgrade(
         std::optional<boost::asio::ssl::context>& sslContext,
         util::TagDecoratorFactory const& tagDecoratorFactory,
+        boost::asio::yield_context yield
+    ) = 0;
+
+    virtual std::optional<Error>
+    sendRaw(
+        boost::beast::http::response<boost::beast::http::string_body> response,
         boost::asio::yield_context yield
     ) = 0;
 };
@@ -73,6 +76,7 @@ template <typename StreamType>
 class HttpConnection : public UpgradableConnection {
     StreamType stream_;
     std::optional<boost::beast::http::request<boost::beast::http::string_body>> request_;
+    std::chrono::steady_clock::duration timeout_{kDEFAULT_TIMEOUT};
 
 public:
     HttpConnection(
@@ -106,30 +110,39 @@ public:
     }
 
     std::optional<Error>
-    send(
-        Response response,
-        boost::asio::yield_context yield,
-        std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT
-    ) override
+    sendRaw(boost::beast::http::response<boost::beast::http::string_body> response, boost::asio::yield_context yield)
+        override
     {
-        auto const httpResponse = std::move(response).intoHttpResponse();
         boost::system::error_code error;
-        boost::beast::get_lowest_layer(stream_).expires_after(timeout);
-        boost::beast::http::async_write(stream_, httpResponse, yield[error]);
+        boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
+        boost::beast::http::async_write(stream_, response, yield[error]);
         if (error)
             return error;
         return std::nullopt;
     }
 
+    void
+    setTimeout(std::chrono::steady_clock::duration newTimeout) override
+    {
+        timeout_ = newTimeout;
+    }
+
+    std::optional<Error>
+    send(Response response, boost::asio::yield_context yield) override
+    {
+        auto httpResponse = std::move(response).intoHttpResponse();
+        return sendRaw(std::move(httpResponse), yield);
+    }
+
     std::expected<Request, Error>
-    receive(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) override
+    receive(boost::asio::yield_context yield) override
     {
         if (request_.has_value()) {
             Request result{std::move(request_).value()};
             request_.reset();
             return result;
         }
-        auto expectedRequest = fetch(yield, timeout);
+        auto expectedRequest = fetch(yield);
         if (expectedRequest.has_value())
             return Request{std::move(expectedRequest).value()};
 
@@ -137,27 +150,22 @@ public:
     }
 
     void
-    close(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) override
+    close(boost::asio::yield_context yield) override
     {
         [[maybe_unused]] boost::system::error_code error;
         if constexpr (IsSslTcpStream<StreamType>) {
-            boost::beast::get_lowest_layer(stream_).expires_after(timeout);
-            stream_.async_shutdown(yield[error]);
+            boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
+            stream_.async_shutdown(yield[error]);  // Close the SSL connection gracefully
         }
-        if constexpr (IsTcpStream<StreamType>) {
-            stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_type::shutdown_both, error);
-        } else {
-            boost::beast::get_lowest_layer(stream_).socket().shutdown(
-                boost::asio::ip::tcp::socket::shutdown_type::shutdown_both, error
-            );
-        }
+        boost::beast::get_lowest_layer(stream_).socket().shutdown(
+            boost::asio::ip::tcp::socket::shutdown_type::shutdown_both, error
+        );
     }
 
     std::expected<bool, Error>
-    isUpgradeRequested(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT)
-        override
+    isUpgradeRequested(boost::asio::yield_context yield) override
     {
-        auto expectedRequest = fetch(yield, timeout);
+        auto expectedRequest = fetch(yield);
         if (not expectedRequest.has_value())
             return std::unexpected{std::move(expectedRequest).error()};
 
@@ -177,7 +185,7 @@ public:
 
         if constexpr (IsSslTcpStream<StreamType>) {
             ASSERT(sslContext.has_value(), "SSL context must be present to upgrade the connection");
-            return make_SslWsConnection(
+            return makeSslWsConnection(
                 boost::beast::get_lowest_layer(stream_).release_socket(),
                 std::move(ip_),
                 std::move(buffer_),
@@ -187,7 +195,7 @@ public:
                 yield
             );
         } else {
-            return make_PlainWsConnection(
+            return makePlainWsConnection(
                 stream_.release_socket(),
                 std::move(ip_),
                 std::move(buffer_),
@@ -200,11 +208,11 @@ public:
 
 private:
     std::expected<boost::beast::http::request<boost::beast::http::string_body>, Error>
-    fetch(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout)
+    fetch(boost::asio::yield_context yield)
     {
         boost::beast::http::request<boost::beast::http::string_body> request{};
         boost::system::error_code error;
-        boost::beast::get_lowest_layer(stream_).expires_after(timeout);
+        boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
         boost::beast::http::async_read(stream_, buffer_, request, yield[error]);
         if (error)
             return std::unexpected{error};

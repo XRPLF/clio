@@ -136,19 +136,19 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const rpcSpecV1 = RpcSpec{
-            {JS(account), validation::CustomValidators::AccountValidator},
-            {JS(ident), validation::CustomValidators::AccountValidator},
+        static auto const kRPC_SPEC_V1 = RpcSpec{
+            {JS(account), validation::CustomValidators::accountValidator},
+            {JS(ident), validation::CustomValidators::accountValidator},
             {JS(ident), check::Deprecated{}},
-            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
+            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
             {JS(ledger), check::Deprecated{}},
             {JS(strict), check::Deprecated{}}
         };
 
-        static auto const rpcSpec = RpcSpec{rpcSpecV1, {{JS(signer_lists), validation::Type<bool>{}}}};
+        static auto const kRPC_SPEC = RpcSpec{kRPC_SPEC_V1, {{JS(signer_lists), validation::Type<bool>{}}}};
 
-        return apiVersion == 1 ? rpcSpecV1 : rpcSpec;
+        return apiVersion == 1 ? kRPC_SPEC_V1 : kRPC_SPEC;
     }
 
     /**

@@ -175,8 +175,7 @@ public:
      *
      * @return true if optional, false otherwise
      */
-    [[nodiscard]] constexpr bool
-    isOptional() const
+    [[nodiscard]] bool constexpr isOptional() const
     {
         return optional_;
     }
@@ -186,8 +185,7 @@ public:
      *
      * @return if value is optiona, false otherwise
      */
-    [[nodiscard]] constexpr bool
-    hasValue() const
+    [[nodiscard]] bool constexpr hasValue() const
     {
         return value_.has_value();
     }
@@ -219,7 +217,9 @@ private:
         if (type == ConfigType::Boolean && !std::holds_alternative<bool>(value)) {
             return Error{"value does not match type boolean"};
         }
-        if (type == ConfigType::Double && !std::holds_alternative<double>(value)) {
+        if (type == ConfigType::Double && (!std::holds_alternative<double>(value))) {
+            if (std::holds_alternative<int64_t>(value))
+                return std::nullopt;
             return Error{"value does not match type double"};
         }
         if (type == ConfigType::Integer && !std::holds_alternative<int64_t>(value)) {

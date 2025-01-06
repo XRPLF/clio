@@ -86,6 +86,7 @@ struct ProcessorTestBundle {
 };
 
 struct FieldProcessorTests : SpecsTests, testing::WithParamInterface<ProcessorTestBundle> {
+protected:
     FieldSpec spec_{"key", RequirementMockRef(requirementMock), RequirementMockRef(anotherRequirementMock)};
     boost::json::value json_;
 };
@@ -137,6 +138,7 @@ struct FieldCheckerTestBundle {
 };
 
 struct FieldCheckerTests : SpecsTests, testing::WithParamInterface<FieldCheckerTestBundle> {
+protected:
     FieldSpec spec_{"key", CheckMockRef(checkMock), CheckMockRef(anotherCheckMock)};
     boost::json::value json_;
 };
@@ -148,23 +150,23 @@ INSTANTIATE_TEST_SUITE_P(
         FieldCheckerTestBundle{"NoWarnings", std::nullopt, std::nullopt, check::Warnings{}},
         FieldCheckerTestBundle{
             "FirstWarning",
-            check::Warning{WarningCode::warnUNKNOWN, "error1"},
+            check::Warning{WarningCode::WarnUnknown, "error1"},
             std::nullopt,
-            check::Warnings{check::Warning{WarningCode::warnUNKNOWN, "error1"}}
+            check::Warnings{check::Warning{WarningCode::WarnUnknown, "error1"}}
         },
         FieldCheckerTestBundle{
             "SecondWarning",
             std::nullopt,
-            check::Warning{WarningCode::warnUNKNOWN, "error2"},
-            check::Warnings{check::Warning{WarningCode::warnUNKNOWN, "error2"}}
+            check::Warning{WarningCode::WarnUnknown, "error2"},
+            check::Warnings{check::Warning{WarningCode::WarnUnknown, "error2"}}
         },
         FieldCheckerTestBundle{
             "BothWarnings",
-            check::Warning{WarningCode::warnUNKNOWN, "error1"},
-            check::Warning{WarningCode::warnUNKNOWN, "error2"},
+            check::Warning{WarningCode::WarnUnknown, "error1"},
+            check::Warning{WarningCode::WarnUnknown, "error2"},
             check::Warnings{
-                check::Warning{WarningCode::warnUNKNOWN, "error1"},
-                check::Warning{WarningCode::warnUNKNOWN, "error2"}
+                check::Warning{WarningCode::WarnUnknown, "error1"},
+                check::Warning{WarningCode::WarnUnknown, "error2"}
             }
         }
     ),
@@ -230,6 +232,7 @@ struct RpcSpecCheckTestBundle {
 };
 
 struct RpcSpecCheckTests : SpecsTests, testing::WithParamInterface<RpcSpecCheckTestBundle> {
+protected:
     RpcSpec spec_{{"key1", CheckMockRef(checkMock)}, {"key2", CheckMockRef(anotherCheckMock)}};
     boost::json::value json_;
 };
@@ -241,27 +244,27 @@ INSTANTIATE_TEST_SUITE_P(
         RpcSpecCheckTestBundle{"NoWarnings", std::nullopt, std::nullopt, {}},
         RpcSpecCheckTestBundle{
             "FirstWarning",
-            check::Warning{WarningCode::warnUNKNOWN, "error1"},
+            check::Warning{WarningCode::WarnUnknown, "error1"},
             std::nullopt,
-            {{WarningCode::warnUNKNOWN, {"error1"}}}
+            {{WarningCode::WarnUnknown, {"error1"}}}
         },
         RpcSpecCheckTestBundle{
             "SecondWarning",
             std::nullopt,
-            check::Warning{WarningCode::warnUNKNOWN, "error2"},
-            {{WarningCode::warnUNKNOWN, {"error2"}}}
+            check::Warning{WarningCode::WarnUnknown, "error2"},
+            {{WarningCode::WarnUnknown, {"error2"}}}
         },
         RpcSpecCheckTestBundle{
             "BothWarnings",
-            check::Warning{WarningCode::warnUNKNOWN, "error1"},
-            check::Warning{WarningCode::warnUNKNOWN, "error2"},
-            {{WarningCode::warnUNKNOWN, {"error1", "error2"}}}
+            check::Warning{WarningCode::WarnUnknown, "error1"},
+            check::Warning{WarningCode::WarnUnknown, "error2"},
+            {{WarningCode::WarnUnknown, {"error1", "error2"}}}
         },
         RpcSpecCheckTestBundle{
             "DifferentWarningCodes",
-            check::Warning{WarningCode::warnUNKNOWN, "error1"},
-            check::Warning{WarningCode::warnRPC_CLIO, "error2"},
-            {{WarningCode::warnUNKNOWN, {"error1"}}, {WarningCode::warnRPC_CLIO, {"error2"}}}
+            check::Warning{WarningCode::WarnUnknown, "error1"},
+            check::Warning{WarningCode::WarnRpcClio, "error2"},
+            {{WarningCode::WarnUnknown, {"error1"}}, {WarningCode::WarnRpcClio, {"error2"}}}
         }
 
     ),

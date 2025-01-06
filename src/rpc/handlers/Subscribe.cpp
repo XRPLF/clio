@@ -31,6 +31,7 @@
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
@@ -63,7 +64,7 @@ SubscribeHandler::SubscribeHandler(
 RpcSpecConstRef
 SubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
 {
-    static auto const booksValidator =
+    static auto const kBOOKS_VALIDATOR =
         validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
             if (!value.is_array())
                 return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
@@ -80,7 +81,7 @@ SubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
 
                 if (book.as_object().contains("taker")) {
                     if (auto err = meta::WithCustomError(
-                                       validation::CustomValidators::AccountValidator,
+                                       validation::CustomValidators::accountValidator,
                                        Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."}
                         )
                                        .verify(book.as_object(), "taker");
@@ -96,17 +97,17 @@ SubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
             return MaybeError{};
         }};
 
-    static auto const rpcSpec = RpcSpec{
-        {JS(streams), validation::CustomValidators::SubscribeStreamValidator},
-        {JS(accounts), validation::CustomValidators::SubscribeAccountsValidator},
-        {JS(accounts_proposed), validation::CustomValidators::SubscribeAccountsValidator},
-        {JS(books), booksValidator},
+    static auto const kRPC_SPEC = RpcSpec{
+        {JS(streams), validation::CustomValidators::subscribeStreamValidator},
+        {JS(accounts), validation::CustomValidators::subscribeAccountsValidator},
+        {JS(accounts_proposed), validation::CustomValidators::subscribeAccountsValidator},
+        {JS(books), kBOOKS_VALIDATOR},
         {"user", check::Deprecated{}},
         {JS(password), check::Deprecated{}},
         {JS(rt_accounts), check::Deprecated{}}
     };
 
-    return rpcSpec;
+    return kRPC_SPEC;
 }
 
 SubscribeHandler::Result
@@ -195,19 +196,21 @@ SubscribeHandler::subscribeToBooks(
     Output& output
 ) const
 {
-    static auto constexpr fetchLimit = 200;
+    static constexpr auto kFETCH_LIMIT = 200;
 
     std::optional<data::LedgerRange> rng;
 
     for (auto const& internalBook : books) {
         if (internalBook.snapshot) {
-            if (!rng)
+            if (!rng) {
                 rng = sharedPtrBackend_->fetchLedgerRange();
+                ASSERT(rng.has_value(), "Subscribe's ledger range must be available");
+            }
 
             auto const getOrderBook = [&](auto const& book, auto& snapshots) {
                 auto const bookBase = getBookBase(book);
                 auto const [offers, _] =
-                    sharedPtrBackend_->fetchBookOffers(bookBase, rng->maxSequence, fetchLimit, yield);
+                    sharedPtrBackend_->fetchBookOffers(bookBase, rng->maxSequence, kFETCH_LIMIT, yield);
 
                 // the taker is not really uesed, same issue with
                 // https://github.com/XRPLF/xrpl-dev-portal/issues/1818
