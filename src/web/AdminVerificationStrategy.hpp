@@ -79,7 +79,7 @@ public:
     /**
      * @brief The prefix for the password in the request header.
      */
-    static constexpr std::string_view passwordPrefix = "Password ";
+    static constexpr std::string_view kPASSWORD_PREFIX = "Password ";
 
     /**
      * @brief Construct a new PasswordAdminVerificationStrategy object
@@ -107,7 +107,7 @@ public:
  * Otherwise, it will be IPAdminVerificationStrategy.
  */
 std::shared_ptr<AdminVerificationStrategy>
-make_AdminVerificationStrategy(std::optional<std::string> password);
+makeAdminVerificationStrategy(std::optional<std::string> password);
 
 /**
  * @brief Factory function for creating an admin verification strategy from server config.
@@ -116,6 +116,6 @@ make_AdminVerificationStrategy(std::optional<std::string> password);
  * @return Admin verification strategy according to the config or an error message.
  */
 std::expected<std::shared_ptr<AdminVerificationStrategy>, std::string>
-make_AdminVerificationStrategy(util::config::ClioConfigDefinition const& serverConfig);
+makeAdminVerificationStrategy(util::config::ClioConfigDefinition const& serverConfig);
 
 }  // namespace web

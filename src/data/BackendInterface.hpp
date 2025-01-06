@@ -65,7 +65,7 @@ public:
     }
 };
 
-static constexpr std::size_t DEFAULT_WAIT_BETWEEN_RETRY = 500;
+static constexpr std::size_t kDEFAULT_WAIT_BETWEEN_RETRY = 500;
 /**
  * @brief A helper function that catches DatabaseTimout exceptions and retries indefinitely.
  *
@@ -76,9 +76,9 @@ static constexpr std::size_t DEFAULT_WAIT_BETWEEN_RETRY = 500;
  */
 template <typename FnType>
 auto
-retryOnTimeout(FnType func, size_t waitMs = DEFAULT_WAIT_BETWEEN_RETRY)
+retryOnTimeout(FnType func, size_t waitMs = kDEFAULT_WAIT_BETWEEN_RETRY)
 {
-    static util::Logger const log{"Backend"};
+    static util::Logger const log{"Backend"};  // NOLINT(readability-identifier-naming)
 
     while (true) {
         try {
@@ -138,7 +138,7 @@ synchronousAndRetryOnTimeout(FnType&& func)
 class BackendInterface {
 protected:
     mutable std::shared_mutex rngMtx_;
-    std::optional<LedgerRange> range;
+    std::optional<LedgerRange> range_;
     LedgerCache cache_;
     std::optional<etl::CorruptionDetector<LedgerCache>> corruptionDetector_;
 

@@ -19,8 +19,10 @@
 
 #pragma once
 
+#include "util/Concepts.hpp"
 #include "util/prometheus/impl/CounterImpl.hpp"
 
+#include <concepts>
 #include <memory>
 #include <type_traits>
 
@@ -54,29 +56,29 @@ protected:
     struct Model : Concept {
         template <SomeCounterImpl SomeImplType>
             requires std::same_as<ImplType, SomeImplType>
-        Model(SomeImplType&& impl) : impl_(std::forward<SomeImplType>(impl))
+        Model(SomeImplType&& impl) : impl(std::forward<SomeImplType>(impl))
         {
         }
 
         void
         add(ValueType value) override
         {
-            impl_.add(value);
+            impl.add(value);
         }
 
         void
         set(ValueType v) override
         {
-            impl_.set(v);
+            impl.set(v);
         }
 
         ValueType
         value() const override
         {
-            return impl_.value();
+            return impl.value();
         }
 
-        ImplType impl_;
+        ImplType impl;
     };
 
     std::unique_ptr<Concept> pimpl_;

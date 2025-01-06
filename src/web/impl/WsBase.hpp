@@ -216,9 +216,9 @@ public:
             jsonResponse["warning"] = "load";
 
             if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {
-                jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::warnRPC_RATE_LIMIT));
+                jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::WarnRpcRateLimit));
             } else {
-                jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::warnRPC_RATE_LIMIT)};
+                jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::WarnRpcRateLimit)};
             }
 
             // Reserialize when we need to include this warning
@@ -270,9 +270,9 @@ public:
     }
 
     void
-    onRead(boost::beast::error_code ec, std::size_t bytes_transferred)
+    onRead(boost::beast::error_code ec, std::size_t bytesTransferred)
     {
-        boost::ignore_unused(bytes_transferred);
+        boost::ignore_unused(bytesTransferred);
 
         if (ec)
             return wsFail(ec, "read");

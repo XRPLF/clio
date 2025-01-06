@@ -33,7 +33,7 @@ struct MockETLServiceTestBase : virtual public NoLoggerFixture {
     using Mock = MockType<MockETLService>;
 
 protected:
-    std::shared_ptr<Mock> mockETLServicePtr = std::make_shared<Mock>();
+    std::shared_ptr<Mock> mockETLServicePtr_ = std::make_shared<Mock>();
 };
 
 /**
@@ -61,5 +61,5 @@ using MockETLServiceTestStrict = MockETLServiceTestBase<::testing::StrictMock>;
  */
 struct MockLoadBalancerTest : virtual public NoLoggerFixture {
 protected:
-    std::shared_ptr<MockLoadBalancer> mockLoadBalancerPtr = std::make_shared<MockLoadBalancer>();
+    std::shared_ptr<MockLoadBalancer> mockLoadBalancerPtr_ = std::make_shared<MockLoadBalancer>();
 };

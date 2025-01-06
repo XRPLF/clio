@@ -21,13 +21,11 @@
 
 #include "rpc/common/Concepts.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/UnsupportedType.hpp"
 
 #include <boost/json/value.hpp>
 
 namespace rpc::impl {
-
-template <typename>
-static constexpr bool unsupported_handler_v = false;
 
 template <SomeHandler HandlerType>
 struct DefaultProcessor final {
@@ -63,7 +61,7 @@ struct DefaultProcessor final {
             return ReturnType{value_from(ret.value())};
         } else {
             // when concept SomeHandlerWithInput and SomeHandlerWithoutInput not cover all Handler case
-            static_assert(unsupported_handler_v<HandlerType>);
+            static_assert(util::Unsupported<HandlerType>);
         }
     }
 };

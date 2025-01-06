@@ -79,7 +79,7 @@ public:
     fromString(std::string const& statusStr);
 
 private:
-    static constexpr std::array<char const*, static_cast<size_t>(NumStatuses)> statusStrMap = {
+    static constexpr std::array<char const*, static_cast<size_t>(NumStatuses)> kSTATUS_STR_MAP = {
         "Migrated",
         "NotMigrated",
         "NotKnown"

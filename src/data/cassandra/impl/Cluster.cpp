@@ -33,13 +33,13 @@
 
 namespace {
 
-constexpr auto clusterDeleter = [](CassCluster* ptr) { cass_cluster_free(ptr); };
+constexpr auto kCLUSTER_DELETER = [](CassCluster* ptr) { cass_cluster_free(ptr); };
 
 };  // namespace
 
 namespace data::cassandra::impl {
 
-Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), clusterDeleter}
+Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), kCLUSTER_DELETER}
 {
     using std::to_string;
 

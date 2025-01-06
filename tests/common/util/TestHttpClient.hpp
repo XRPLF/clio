@@ -63,7 +63,7 @@ struct HttpSyncClient {
 
 struct HttpsSyncClient {
     static bool
-    verify_certificate(bool /* preverified */, boost::asio::ssl::verify_context& /* ctx */);
+    verifyCertificate(bool /* preverified */, boost::asio::ssl::verify_context& /* ctx */);
 
     static std::string
     syncPost(std::string const& host, std::string const& port, std::string const& body);

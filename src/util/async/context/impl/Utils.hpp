@@ -39,7 +39,7 @@ inline constexpr struct AssociatedExecutorExtractor {
     {
         return ctx.context_.getExecutor();
     }
-} extractAssociatedExecutor;
+} extractAssociatedExecutor;  // NOLINT(readability-identifier-naming)
 
 template <typename CtxType>
 [[nodiscard]] constexpr auto

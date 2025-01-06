@@ -96,7 +96,7 @@ public:
      * @return The work queue
      */
     static WorkQueue
-    make_WorkQueue(util::config::ClioConfigDefinition const& config);
+    makeWorkQueue(util::config::ClioConfigDefinition const& config);
 
     /**
      * @brief Submit a job to the work queue.

@@ -117,16 +117,16 @@ public:
     static RpcSpecConstRef
     spec(uint32_t apiVersion)
     {
-        static RpcSpec const rpcSpecForV1 = {
-            {JS(transaction), validation::CustomValidators::Uint256HexStringValidator},
+        static RpcSpec const kRPC_SPEC_FOR_V1 = {
+            {JS(transaction), validation::CustomValidators::uint256HexStringValidator},
             {JS(min_ledger), validation::Type<uint32_t>{}},
             {JS(max_ledger), validation::Type<uint32_t>{}},
             {JS(ctid), validation::Type<std::string>{}},
         };
 
-        static auto const rpcSpec = RpcSpec{rpcSpecForV1, {{JS(binary), validation::Type<bool>{}}}};
+        static auto const kRPC_SPEC = RpcSpec{kRPC_SPEC_FOR_V1, {{JS(binary), validation::Type<bool>{}}}};
 
-        return apiVersion == 1 ? rpcSpecForV1 : rpcSpec;
+        return apiVersion == 1 ? kRPC_SPEC_FOR_V1 : kRPC_SPEC;
     }
 
     /**
@@ -145,14 +145,14 @@ public:
         if (!input.ctid && !input.transaction)  // at least one identifier must be supplied
             return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
-        static auto constexpr maxLedgerRange = 1000u;
+        static constexpr auto kMAX_LEDGER_RANGE = 1000u;
         auto const rangeSupplied = input.minLedger && input.maxLedger;
 
         if (rangeSupplied) {
             if (*input.minLedger > *input.maxLedger)
                 return Error{Status{RippledError::rpcINVALID_LGR_RANGE}};
 
-            if (*input.maxLedger - *input.minLedger > maxLedgerRange)
+            if (*input.maxLedger - *input.minLedger > kMAX_LEDGER_RANGE)
                 return Error{Status{RippledError::rpcEXCESSIVE_LGR_RANGE}};
         }
 

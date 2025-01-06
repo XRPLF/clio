@@ -22,8 +22,8 @@
 #include <array>
 #include <string>
 
-extern std::array<std::string, 100> TransactionsRawData;
+extern std::array<std::string, 100> gTransactionsRawData;
 
-extern std::array<std::string, 100> ObjectsRawData;
+extern std::array<std::string, 100> gObjectsRawData;
 
-extern std::array<std::string, 50> LedgerHeaderRawData;
+extern std::array<std::string, 50> gLedgerHeaderRawData;

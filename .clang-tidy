@@ -130,6 +130,7 @@ Checks: '-*,
   readability-enum-initial-value,
   readability-implicit-bool-conversion,
   readability-inconsistent-declaration-parameter-name,
+  readability-identifier-naming,
   readability-make-member-function-const,
   readability-math-missing-parentheses,
   readability-misleading-indentation,
@@ -149,6 +150,39 @@ Checks: '-*,
 
 CheckOptions:
   readability-braces-around-statements.ShortStatementLines: 2
+  readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
+  readability-identifier-naming.ClassCase: CamelCase
+  readability-identifier-naming.StructCase: CamelCase
+  readability-identifier-naming.UnionCase: CamelCase
+  readability-identifier-naming.EnumCase: CamelCase
+  readability-identifier-naming.EnumConstantCase: CamelCase
+  readability-identifier-naming.ScopedEnumConstantCase: CamelCase
+  readability-identifier-naming.GlobalConstantCase: UPPER_CASE
+  readability-identifier-naming.GlobalConstantPrefix: 'k'
+  readability-identifier-naming.GlobalVariableCase: CamelCase
+  readability-identifier-naming.GlobalVariablePrefix: 'g'
+  readability-identifier-naming.ConstexprFunctionCase: camelBack
+  readability-identifier-naming.ConstexprMethodCase: camelBack
+  readability-identifier-naming.ClassMethodCase: camelBack
+  readability-identifier-naming.ClassMemberCase: camelBack
+  readability-identifier-naming.ClassConstantCase: UPPER_CASE
+  readability-identifier-naming.ClassConstantPrefix: 'k'
+  readability-identifier-naming.StaticConstantCase: UPPER_CASE
+  readability-identifier-naming.StaticConstantPrefix: 'k'
+  readability-identifier-naming.StaticVariableCase: UPPER_CASE
+  readability-identifier-naming.StaticVariablePrefix: 'k'
+  readability-identifier-naming.ConstexprVariableCase: UPPER_CASE
+  readability-identifier-naming.ConstexprVariablePrefix: 'k'
+  readability-identifier-naming.LocalConstantCase: camelBack
+  readability-identifier-naming.LocalVariableCase: camelBack
+  readability-identifier-naming.TemplateParameterCase: CamelCase
+  readability-identifier-naming.ParameterCase: camelBack
+  readability-identifier-naming.FunctionCase: camelBack
+  readability-identifier-naming.MemberCase: camelBack
+  readability-identifier-naming.PrivateMemberSuffix: _
+  readability-identifier-naming.ProtectedMemberSuffix: _
+  readability-identifier-naming.PublicMemberSuffix: ''
+  readability-identifier-naming.FunctionIgnoredRegexp: '.*tag_invoke.*'
   bugprone-unsafe-functions.ReportMoreUnsafeFunctions: true
   bugprone-unused-return-value.CheckedReturnTypes: ::std::error_code;::std::error_condition;::std::errc
   misc-include-cleaner.IgnoreHeaders: '.*/(detail|impl)/.*;.*(expected|unexpected).*;.*ranges_lower_bound\.h;time.h;stdlib.h'

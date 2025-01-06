@@ -63,6 +63,7 @@ TEST_F(ResponseDeathTest, asConstBufferWithHttpData)
 }
 
 struct ResponseTest : testing::Test {
+protected:
     int const httpVersion_ = 11;
     http::status const responseStatus_ = http::status::ok;
     Request::HttpHeaders const headers_;

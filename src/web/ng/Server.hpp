@@ -171,7 +171,7 @@ private:
  * @return The Server or an error message.
  */
 std::expected<Server, std::string>
-make_Server(
+makeServer(
     util::config::ClioConfigDefinition const& config,
     Server::OnConnectCheck onConnectCheck,
     Server::OnDisconnectHook onDisconnectHook,

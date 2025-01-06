@@ -66,7 +66,7 @@ class MigratorsRegister {
     void
     callMigration(std::string const& name, util::config::ObjectView const& config)
     {
-        if (name == Migrator::name) {
+        if (name == Migrator::kNAME) {
             LOG(log_.info()) << "Running migration: " << name;
             Migrator::runMigration(backend_, config);
             backend_->writeMigratorStatus(name, MigratorStatus(MigratorStatus::Migrated).toString());
@@ -78,7 +78,7 @@ class MigratorsRegister {
     static constexpr std::string_view
     getDescriptionIfMatch(std::string_view targetName)
     {
-        return (T::name == targetName) ? T::description : "";
+        return (T::kNAME == targetName) ? T::kDESCRIPTION : "";
     }
 
 public:
@@ -156,7 +156,7 @@ public:
     constexpr auto
     getMigratorNames() const
     {
-        return std::array<std::string_view, sizeof...(MigratorType)>{MigratorType::name...};
+        return std::array<std::string_view, sizeof...(MigratorType)>{MigratorType::kNAME...};
     }
 
     /**

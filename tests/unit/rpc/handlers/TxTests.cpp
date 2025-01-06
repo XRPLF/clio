@@ -45,16 +45,19 @@ using namespace testing;
 
 using TestTxHandler = BaseTxHandler<MockETLService>;
 
-auto constexpr static TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
-auto constexpr static NFTID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
-auto constexpr static NFTID2 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA";
-constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-auto constexpr static ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
-auto constexpr static ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-auto constexpr static CURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
-constexpr static auto CTID = "C002807000010002";  // seq 163952 txindex 1 netid 2
-constexpr static auto SEQ_FROM_CTID = 163952;
-auto constexpr static DEFAULT_OUT_1 = R"({
+namespace {
+
+constexpr auto kTXN_ID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
+constexpr auto kNFT_ID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
+constexpr auto kNFT_ID2 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA";
+constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+constexpr auto kCURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
+constexpr auto kCTID = "C002807000010002";  // seq 163952 txindex 1 netid 2
+constexpr auto kSEQ_FROM_CTID = 163952;
+
+constexpr auto kDEFAULT_OUT1 = R"({
     "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
     "Fee": "2",
     "Sequence": 100,
@@ -92,7 +95,7 @@ auto constexpr static DEFAULT_OUT_1 = R"({
     "validated": true
 })";
 
-auto constexpr static DEFAULT_OUT_2 = R"({
+constexpr auto kDEFAULT_OUT2 = R"({
     "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
     "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
     "ledger_index": 100,
@@ -134,12 +137,14 @@ auto constexpr static DEFAULT_OUT_2 = R"({
     "validated": true
 })";
 
+}  // namespace
+
 class RPCTxTest : public HandlerBaseTest {};
 
 TEST_F(RPCTxTest, ExcessiveLgrRange)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -147,7 +152,7 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
                 "min_ledger": 1,
                 "max_ledger": 1002
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -161,26 +166,26 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
 TEST_F(RPCTxTest, InvalidBinaryV1)
 {
     TransactionAndMetadata tx;
-    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}",
                 "binary": 12
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
@@ -190,14 +195,14 @@ TEST_F(RPCTxTest, InvalidBinaryV1)
 TEST_F(RPCTxTest, InvalidBinaryV2)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}",
                 "binary": 12
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_FALSE(output);
@@ -211,7 +216,7 @@ TEST_F(RPCTxTest, InvalidBinaryV2)
 TEST_F(RPCTxTest, InvalidLgrRange)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -219,7 +224,7 @@ TEST_F(RPCTxTest, InvalidLgrRange)
                 "max_ledger": 1,
                 "min_ledger": 10
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -232,21 +237,21 @@ TEST_F(RPCTxTest, InvalidLgrRange)
 
 TEST_F(RPCTxTest, TxnNotFound)
 {
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _))
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _))
         .WillOnce(Return(std::optional<TransactionAndMetadata>{}));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -259,16 +264,16 @@ TEST_F(RPCTxTest, TxnNotFound)
 
 TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
 {
-    backend->setRange(10, 30);
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _))
+    backend_->setRange(10, 30);
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _))
         .WillOnce(Return(std::optional<TransactionAndMetadata>{}));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -276,7 +281,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
                 "min_ledger": 1,
                 "max_ledger": 1000
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -290,16 +295,16 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
 
 TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
 {
-    backend->setRange(1, 1000);
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _))
+    backend_->setRange(1, 1000);
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _))
         .WillOnce(Return(std::optional<TransactionAndMetadata>{}));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -307,7 +312,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
                 "min_ledger": 1,
                 "max_ledger": 1000
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -322,23 +327,23 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
 // when ledger range and ctid are provided, searched_all should not be present, because the seq is specified in ctid
 TEST_F(RPCTxTest, CtidNotFoundSearchAllFalse)
 {
-    backend->setRange(1, 1000);
-    EXPECT_CALL(*backend, fetchAllTransactionsInLedger(SEQ_FROM_CTID, _))
+    backend_->setRange(1, 1000);
+    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSEQ_FROM_CTID, _))
         .WillOnce(Return(std::vector<TransactionAndMetadata>{}));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{2}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "ctid": "{}",
                 "min_ledger": 1,
                 "max_ledger": 1000
             }})",
-            CTID
+            kCTID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -353,56 +358,56 @@ TEST_F(RPCTxTest, CtidNotFoundSearchAllFalse)
 TEST_F(RPCTxTest, DefaultParameter_API_v1)
 {
     TransactionAndMetadata tx;
-    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
 
-        EXPECT_EQ(*output.result, json::parse(DEFAULT_OUT_1));
+        EXPECT_EQ(*output.result, json::parse(kDEFAULT_OUT1));
     });
 }
 
 TEST_F(RPCTxTest, PaymentTx_API_v1)
 {
     TransactionAndMetadata tx;
-    tx.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 2, 3, 300).getSerializer().peekData();
-    tx.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
+    tx.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 2, 3, 300).getSerializer().peekData();
+    tx.metadata = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 110, 30).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
@@ -414,26 +419,26 @@ TEST_F(RPCTxTest, PaymentTx_API_v1)
 TEST_F(RPCTxTest, PaymentTx_API_v2)
 {
     TransactionAndMetadata tx;
-    tx.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 2, 3, 300).getSerializer().peekData();
-    tx.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
+    tx.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 2, 3, 300).getSerializer().peekData();
+    tx.metadata = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 110, 30).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
-    EXPECT_CALL(*backend, fetchLedgerBySequence(tx.ledgerSequence, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(tx.ledgerSequence, _)).WillOnce(Return(std::nullopt));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
@@ -446,39 +451,39 @@ TEST_F(RPCTxTest, PaymentTx_API_v2)
 TEST_F(RPCTxTest, DefaultParameter_API_v2)
 {
     TransactionAndMetadata tx;
-    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
-    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, tx.ledgerSequence);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(tx.ledgerSequence, _)).WillOnce(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, tx.ledgerSequence);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(tx.ledgerSequence, _)).WillOnce(Return(ledgerHeader));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(DEFAULT_OUT_2));
+        EXPECT_EQ(*output.result, json::parse(kDEFAULT_OUT2));
     });
 }
 
 TEST_F(RPCTxTest, ReturnBinary)
 {
     // Note: `inLedger` is API v1 only. See DefaultOutput_*
-    auto constexpr static OUT = R"({
+    static constexpr auto kOUT = R"({
         "meta": "201C00000064F8E311006FE864D50AA87BEE5380000158415500000000C1F76FF6ECB0BAC6000000004B4E9C06F24296074F7BC48F92A97916C6DC5EA96540000000000000C8E1E1F1031000",
         "tx": "120007240000006464400000000000012C65D5071AFD498D00000158415500000000C1F76FF6ECB0BAC600000000D31252CF902EF8DD8451243869B38667CBD89DF368400000000000000273047465737481144B4E9C06F24296074F7BC48F92A97916C6DC5EA9",
         "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
@@ -489,30 +494,30 @@ TEST_F(RPCTxTest, ReturnBinary)
     })";
 
     TransactionAndMetadata tx;
-    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}",
                 "binary": true
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(kOUT));
     });
 }
 
@@ -520,7 +525,7 @@ TEST_F(RPCTxTest, ReturnBinary)
 TEST_F(RPCTxTest, ReturnBinaryWithCTID)
 {
     // Note: `inLedger` is API v1 only. See DefaultOutput_*
-    auto constexpr static OUT = R"({
+    static constexpr auto kOUT = R"({
         "meta": "201C00000064F8E311006FE864D50AA87BEE5380000158415500000000C1F76FF6ECB0BAC6000000004B4E9C06F24296074F7BC48F92A97916C6DC5EA96540000000000000C8E1E1F1031000",
         "tx": "120007240000006464400000000000012C65D5071AFD498D00000158415500000000C1F76FF6ECB0BAC600000000D31252CF902EF8DD8451243869B38667CBD89DF368400000000000000273047465737481144B4E9C06F24296074F7BC48F92A97916C6DC5EA9",
         "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
@@ -532,37 +537,37 @@ TEST_F(RPCTxTest, ReturnBinaryWithCTID)
     })";
 
     TransactionAndMetadata tx;
-    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 2}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}",
                 "binary": true
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(kOUT));
     });
 }
 
 TEST_F(RPCTxTest, MintNFT)
 {
     // Note: `inLedger` is API v1 only. See DefaultOutput_*
-    auto static const OUT = fmt::format(
+    auto static const kOUT = fmt::format(
         R"({{
             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Fee": "50",
@@ -617,82 +622,82 @@ TEST_F(RPCTxTest, MintNFT)
             "inLedger": 100,
             "validated": true
         }})",
-        NFTID,
-        NFTID
+        kNFT_ID,
+        kNFT_ID
     );
-    TransactionAndMetadata tx = CreateMintNFTTxWithMetadata(ACCOUNT, 1, 50, 123, NFTID);
+    TransactionAndMetadata tx = createMintNftTxWithMetadata(kACCOUNT, 1, 50, 123, kNFT_ID);
 
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(kOUT));
     });
 }
 
 TEST_F(RPCTxTest, NFTAcceptOffer)
 {
-    TransactionAndMetadata tx = CreateAcceptNFTOfferTxWithMetadata(ACCOUNT, 1, 50, NFTID);
+    TransactionAndMetadata tx = createAcceptNftOfferTxWithMetadata(kACCOUNT, 1, 50, kNFT_ID);
 
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result->at("meta").at("nftoken_id").as_string(), NFTID);
+        EXPECT_EQ(output.result->at("meta").at("nftoken_id").as_string(), kNFT_ID);
     });
 }
 
 TEST_F(RPCTxTest, NFTCancelOffer)
 {
-    std::vector<std::string> ids{NFTID, NFTID2};
-    TransactionAndMetadata tx = CreateCancelNFTOffersTxWithMetadata(ACCOUNT, 1, 50, ids);
+    std::vector<std::string> ids{kNFT_ID, kNFT_ID2};
+    TransactionAndMetadata tx = createCancelNftOffersTxWithMetadata(kACCOUNT, 1, 50, ids);
 
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this, &ids](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -710,43 +715,43 @@ TEST_F(RPCTxTest, NFTCancelOffer)
 
 TEST_F(RPCTxTest, NFTCreateOffer)
 {
-    TransactionAndMetadata tx = CreateCreateNFTOfferTxWithMetadata(ACCOUNT, 1, 50, NFTID, 123, NFTID2);
+    TransactionAndMetadata tx = createCreateNftOfferTxWithMetadata(kACCOUNT, 1, 50, kNFT_ID, 123, kNFT_ID2);
 
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output.result->at("meta").at("offer_id").as_string() == NFTID2);
+        EXPECT_TRUE(output.result->at("meta").at("offer_id").as_string() == kNFT_ID2);
     });
 }
 
 TEST_F(RPCTxTest, CTIDAndTransactionBothProvided)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}",
                 "ctid": "{}"
             }})",
-            TXNID,
-            CTID
+            kTXN_ID,
+            kCTID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -760,7 +765,7 @@ TEST_F(RPCTxTest, CTIDAndTransactionBothProvided)
 TEST_F(RPCTxTest, CTIDAndTransactionBothNotProvided)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(R"({ "command": "tx"})");
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -774,7 +779,7 @@ TEST_F(RPCTxTest, CTIDAndTransactionBothNotProvided)
 TEST_F(RPCTxTest, CTIDInvalidType)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(R"({ "command": "tx", "ctid": 123})");
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -787,12 +792,12 @@ TEST_F(RPCTxTest, CTIDInvalidType)
 
 TEST_F(RPCTxTest, CTIDInvalidString)
 {
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 5}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(R"({ "command": "tx", "ctid": "B002807000010002"})");
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -805,18 +810,18 @@ TEST_F(RPCTxTest, CTIDInvalidString)
 
 TEST_F(RPCTxTest, CTIDNotMatch)
 {
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 5}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "ctid": "{}"
             }})",
-            CTID
+            kCTID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -832,7 +837,7 @@ TEST_F(RPCTxTest, CTIDNotMatch)
 
 TEST_F(RPCTxTest, ReturnCTIDForTxInput)
 {
-    auto constexpr static OUT = R"({
+    static constexpr auto kOUT = R"({
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Fee":"2",
             "Sequence":100,
@@ -878,35 +883,35 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
     })";
 
     TransactionAndMetadata tx;
-    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 2}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(kOUT));
     });
 }
 
 TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvaiable)
 {
-    auto constexpr static OUT = R"({
+    static constexpr auto kOUT = R"({
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Fee":"2",
             "Sequence":100,
@@ -951,35 +956,35 @@ TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvaiable)
     })";
 
     TransactionAndMetadata tx;
-    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(std::nullopt));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID
+            kTXN_ID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(kOUT));
     });
 }
 
 TEST_F(RPCTxTest, ViaCTID)
 {
-    auto static const OUT = fmt::format(
+    auto static const kOUT = fmt::format(
         R"({{
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Fee":"2",
@@ -1024,69 +1029,69 @@ TEST_F(RPCTxTest, ViaCTID)
             "inLedger":{},
             "validated": true
     }})",
-        CTID,
-        SEQ_FROM_CTID,
-        SEQ_FROM_CTID
+        kCTID,
+        kSEQ_FROM_CTID,
+        kSEQ_FROM_CTID
     );
 
     TransactionAndMetadata tx1;
-    tx1.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 1, 200, 300).getSerializer().peekData();
+    tx1.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 1, 200, 300).getSerializer().peekData();
     tx1.transaction =
-        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
     tx1.date = 123456;
-    tx1.ledgerSequence = SEQ_FROM_CTID;
+    tx1.ledgerSequence = kSEQ_FROM_CTID;
 
     TransactionAndMetadata tx2;
-    tx2.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 2, 3, 300).getSerializer().peekData();
-    tx2.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
-    tx2.ledgerSequence = SEQ_FROM_CTID;
+    tx2.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 2, 3, 300).getSerializer().peekData();
+    tx2.metadata = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 110, 30).getSerializer().peekData();
+    tx2.ledgerSequence = kSEQ_FROM_CTID;
 
-    EXPECT_CALL(*backend, fetchAllTransactionsInLedger(SEQ_FROM_CTID, _)).WillOnce(Return(std::vector{tx1, tx2}));
+    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSEQ_FROM_CTID, _)).WillOnce(Return(std::vector{tx1, tx2}));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 2}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
                 "ctid": "{}"
             }})",
-            CTID
+            kCTID
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(kOUT));
     });
 }
 
 TEST_F(RPCTxTest, ViaLowercaseCTID)
 {
     TransactionAndMetadata tx1;
-    tx1.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 1, 200, 300).getSerializer().peekData();
+    tx1.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 1, 200, 300).getSerializer().peekData();
     tx1.transaction =
-        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
     tx1.date = 123456;
-    tx1.ledgerSequence = SEQ_FROM_CTID;
+    tx1.ledgerSequence = kSEQ_FROM_CTID;
 
     TransactionAndMetadata tx2;
-    tx2.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 2, 3, 300).getSerializer().peekData();
-    tx2.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
-    tx2.ledgerSequence = SEQ_FROM_CTID;
+    tx2.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 2, 3, 300).getSerializer().peekData();
+    tx2.metadata = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 110, 30).getSerializer().peekData();
+    tx2.ledgerSequence = kSEQ_FROM_CTID;
 
-    EXPECT_CALL(*backend, fetchAllTransactionsInLedger(SEQ_FROM_CTID, _)).WillOnce(Return(std::vector{tx1, tx2}));
+    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSEQ_FROM_CTID, _)).WillOnce(Return(std::vector{tx1, tx2}));
 
-    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 2}));
 
-    std::string ctid(CTID);
+    std::string ctid(kCTID);
     std::ranges::transform(ctid, ctid.begin(), ::tolower);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -1096,6 +1101,6 @@ TEST_F(RPCTxTest, ViaLowercaseCTID)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result->at("ctid").as_string(), CTID);
+        EXPECT_EQ(output.result->at("ctid").as_string(), kCTID);
     });
 }

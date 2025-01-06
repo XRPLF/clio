@@ -27,7 +27,7 @@
 
 namespace etl {
 std::shared_ptr<NetworkValidatedLedgers>
-NetworkValidatedLedgers::make_ValidatedLedgers()
+NetworkValidatedLedgers::makeValidatedLedgers()
 {
     return std::make_shared<NetworkValidatedLedgers>();
 }

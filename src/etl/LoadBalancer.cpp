@@ -60,7 +60,7 @@ using namespace util::config;
 namespace etl {
 
 std::shared_ptr<LoadBalancer>
-LoadBalancer::make_LoadBalancer(
+LoadBalancer::makeLoadBalancer(
     ClioConfigDefinition const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
@@ -236,7 +236,7 @@ LoadBalancer::forwardToRippled(
 )
 {
     if (not request.contains("command"))
-        return std::unexpected{rpc::ClioError::rpcCOMMAND_IS_MISSING};
+        return std::unexpected{rpc::ClioError::RpcCommandIsMissing};
 
     auto const cmd = boost::json::value_to<std::string>(request.at("command"));
     if (forwardingCache_) {
@@ -250,10 +250,10 @@ LoadBalancer::forwardToRippled(
 
     auto numAttempts = 0u;
 
-    auto xUserValue = isAdmin ? ADMIN_FORWARDING_X_USER_VALUE : USER_FORWARDING_X_USER_VALUE;
+    auto xUserValue = isAdmin ? kADMIN_FORWARDING_X_USER_VALUE : kUSER_FORWARDING_X_USER_VALUE;
 
     std::optional<boost::json::object> response;
-    rpc::ClioError error = rpc::ClioError::etlCONNECTION_ERROR;
+    rpc::ClioError error = rpc::ClioError::EtlConnectionError;
     while (numAttempts < sources_.size()) {
         auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield);
         if (res) {

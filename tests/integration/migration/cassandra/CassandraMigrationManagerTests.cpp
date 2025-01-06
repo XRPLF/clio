@@ -71,7 +71,7 @@ using CassandraMigrationTestManager = migration::impl::MigrationManagerBase<Cass
 
 namespace {
 std::pair<std::shared_ptr<migration::MigrationManagerInterface>, std::shared_ptr<CassandraMigrationTestBackend>>
-make_MigrationTestManagerAndBackend(ClioConfigDefinition const& config)
+makeMigrationTestManagerAndBackend(ClioConfigDefinition const& config)
 {
     auto const cfg = config.getObject("database.cassandra");
 
@@ -93,7 +93,7 @@ class MigrationCassandraSimpleTest : public WithPrometheus, public NoLoggerFixtu
     }
 
 protected:
-    ClioConfigDefinition cfg{
+    ClioConfigDefinition cfg_{
 
         {{"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
          {"database.cassandra.contact_points",
@@ -104,46 +104,46 @@ protected:
          {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
          {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.defaultValue(2)},
          {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
-         {"database.cassandra.port", ConfigValue{ConfigType::Integer}.withConstraint(validatePort).optional()},
+         {"database.cassandra.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort).optional()},
          {"database.cassandra.replication_factor",
-          ConfigValue{ConfigType::Integer}.defaultValue(3u).withConstraint(validateUint16)},
+          ConfigValue{ConfigType::Integer}.defaultValue(3u).withConstraint(gValidateUint16)},
          {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
          {"database.cassandra.max_write_requests_outstanding",
-          ConfigValue{ConfigType::Integer}.defaultValue(10'000).withConstraint(validateUint32)},
+          ConfigValue{ConfigType::Integer}.defaultValue(10'000).withConstraint(gValidateUint32)},
          {"database.cassandra.max_read_requests_outstanding",
-          ConfigValue{ConfigType::Integer}.defaultValue(100'000).withConstraint(validateUint32)},
+          ConfigValue{ConfigType::Integer}.defaultValue(100'000).withConstraint(gValidateUint32)},
          {"database.cassandra.threads",
           ConfigValue{ConfigType::Integer}
               .defaultValue(static_cast<uint32_t>(std::thread::hardware_concurrency()))
-              .withConstraint(validateUint32)},
+              .withConstraint(gValidateUint32)},
          {"database.cassandra.core_connections_per_host",
-          ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(validateUint16)},
-         {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional().withConstraint(validateUint16)
-         },
+          ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint16)},
+         {"database.cassandra.queue_size_io",
+          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint16)},
          {"database.cassandra.write_batch_size",
-          ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(validateUint16)},
+          ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(gValidateUint16)},
          {"database.cassandra.connect_timeout",
-          ConfigValue{ConfigType::Integer}.optional().withConstraint(validateUint32)},
+          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
          {"database.cassandra.request_timeout",
-          ConfigValue{ConfigType::Integer}.optional().withConstraint(validateUint32)},
+          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
          {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
          {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
          {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
-         {"migration.full_scan_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(validateUint32)
-         },
-         {"migration.full_scan_jobs", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(validateUint32)},
-         {"migration.cursors_per_job", ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(validateUint32)
-         }}
+         {"migration.full_scan_threads",
+          ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint32)},
+         {"migration.full_scan_jobs", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint32)},
+         {"migration.cursors_per_job",
+          ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(gValidateUint32)}}
     };
 
-    std::shared_ptr<migration::MigrationManagerInterface> testMigrationManager;
-    std::shared_ptr<CassandraMigrationTestBackend> testMigrationBackend;
+    std::shared_ptr<migration::MigrationManagerInterface> testMigrationManager_;
+    std::shared_ptr<CassandraMigrationTestBackend> testMigrationBackend_;
 
     MigrationCassandraSimpleTest()
     {
-        auto const testBundle = make_MigrationTestManagerAndBackend(cfg);
-        testMigrationManager = testBundle.first;
-        testMigrationBackend = testBundle.second;
+        auto const testBundle = makeMigrationTestManagerAndBackend(cfg_);
+        testMigrationManager_ = testBundle.first;
+        testMigrationBackend_ = testBundle.second;
     }
 
     void
@@ -167,7 +167,7 @@ struct MigrationCassandraManagerCleanDBTest : public MigrationCassandraSimpleTes
 
 TEST_F(MigrationCassandraManagerCleanDBTest, GetAllMigratorNames)
 {
-    auto const names = testMigrationManager->allMigratorsNames();
+    auto const names = testMigrationManager_->allMigratorsNames();
     EXPECT_EQ(names.size(), 4);
     EXPECT_EQ(names[0], "ExampleObjectsMigrator");
     EXPECT_EQ(names[1], "ExampleTransactionsMigrator");
@@ -177,7 +177,7 @@ TEST_F(MigrationCassandraManagerCleanDBTest, GetAllMigratorNames)
 
 TEST_F(MigrationCassandraManagerCleanDBTest, AllMigratorStatusBeforeAnyMigration)
 {
-    auto const status = testMigrationManager->allMigratorsStatusPairs();
+    auto const status = testMigrationManager_->allMigratorsStatusPairs();
     EXPECT_EQ(status.size(), 4);
     EXPECT_EQ(std::get<1>(status[0]), MigratorStatus::NotMigrated);
     EXPECT_EQ(std::get<1>(status[1]), MigratorStatus::NotMigrated);
@@ -187,19 +187,19 @@ TEST_F(MigrationCassandraManagerCleanDBTest, AllMigratorStatusBeforeAnyMigration
 
 TEST_F(MigrationCassandraManagerCleanDBTest, MigratorStatus)
 {
-    auto status = testMigrationManager->getMigratorStatusByName("ExampleObjectsMigrator");
+    auto status = testMigrationManager_->getMigratorStatusByName("ExampleObjectsMigrator");
     EXPECT_EQ(status, MigratorStatus::NotMigrated);
 
-    status = testMigrationManager->getMigratorStatusByName("ExampleTransactionsMigrator");
+    status = testMigrationManager_->getMigratorStatusByName("ExampleTransactionsMigrator");
     EXPECT_EQ(status, MigratorStatus::NotMigrated);
 
-    status = testMigrationManager->getMigratorStatusByName("ExampleLedgerMigrator");
+    status = testMigrationManager_->getMigratorStatusByName("ExampleLedgerMigrator");
     EXPECT_EQ(status, MigratorStatus::NotMigrated);
 
-    status = testMigrationManager->getMigratorStatusByName("ExampleDropTableMigrator");
+    status = testMigrationManager_->getMigratorStatusByName("ExampleDropTableMigrator");
     EXPECT_EQ(status, MigratorStatus::NotMigrated);
 
-    status = testMigrationManager->getMigratorStatusByName("NonExistentMigrator");
+    status = testMigrationManager_->getMigratorStatusByName("NonExistentMigrator");
     EXPECT_EQ(status, MigratorStatus::NotKnown);
 }
 
@@ -212,7 +212,7 @@ class MigrationCassandraManagerTxTableTest : public MigrationCassandraSimpleTest
         Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
 
-        std::ranges::for_each(TransactionsRawData, [&](auto const& value) {
+        std::ranges::for_each(gTransactionsRawData, [&](auto const& value) {
             writeTxFromCSVString(TestGlobals::instance().backendKeyspace, value, handle);
         });
     }
@@ -220,23 +220,23 @@ class MigrationCassandraManagerTxTableTest : public MigrationCassandraSimpleTest
 
 TEST_F(MigrationCassandraManagerTxTableTest, MigrateExampleTransactionsMigrator)
 {
-    auto constexpr TransactionsMigratorName = "ExampleTransactionsMigrator";
-    EXPECT_EQ(testMigrationManager->getMigratorStatusByName(TransactionsMigratorName), MigratorStatus::NotMigrated);
+    auto constexpr kTRANSACTIONS_MIGRATOR_NAME = "ExampleTransactionsMigrator";
+    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kTRANSACTIONS_MIGRATOR_NAME), MigratorStatus::NotMigrated);
 
     ExampleTransactionsMigrator::count = 0;
-    testMigrationManager->runMigration(TransactionsMigratorName);
-    EXPECT_EQ(ExampleTransactionsMigrator::count, TransactionsRawData.size());
+    testMigrationManager_->runMigration(kTRANSACTIONS_MIGRATOR_NAME);
+    EXPECT_EQ(ExampleTransactionsMigrator::count, gTransactionsRawData.size());
 
     auto const newTableSize =
-        data::synchronous([&](auto ctx) { return testMigrationBackend->fetchTxIndexTableSize(ctx); });
+        data::synchronous([&](auto ctx) { return testMigrationBackend_->fetchTxIndexTableSize(ctx); });
 
     EXPECT_TRUE(newTableSize.has_value());
-    EXPECT_EQ(newTableSize, TransactionsRawData.size());
+    EXPECT_EQ(newTableSize, gTransactionsRawData.size());
 
     // check a few tx types
     auto const getTxType = [&](ripple::uint256 const& txHash) -> std::optional<std::string> {
         return data::synchronous([&](auto ctx) {
-            return testMigrationBackend->fetchTxTypeViaID(uint256ToString(txHash), ctx);
+            return testMigrationBackend_->fetchTxTypeViaID(uint256ToString(txHash), ctx);
         });
     };
 
@@ -252,7 +252,7 @@ TEST_F(MigrationCassandraManagerTxTableTest, MigrateExampleTransactionsMigrator)
     EXPECT_TRUE(txType.has_value());
     EXPECT_EQ(txType.value(), "AMMCreate");
 
-    EXPECT_EQ(testMigrationManager->getMigratorStatusByName(TransactionsMigratorName), MigratorStatus::Migrated);
+    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kTRANSACTIONS_MIGRATOR_NAME), MigratorStatus::Migrated);
 }
 
 // The test suite for testing migration process for ExampleObjectsMigrator. In this test suite, the objects are written
@@ -263,7 +263,7 @@ class MigrationCassandraManagerObjectsTableTest : public MigrationCassandraSimpl
     {
         Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
-        for (auto const& value : ObjectsRawData) {
+        for (auto const& value : gObjectsRawData) {
             writeObjectFromCSVString(TestGlobals::instance().backendKeyspace, value, handle);
         }
     }
@@ -271,15 +271,15 @@ class MigrationCassandraManagerObjectsTableTest : public MigrationCassandraSimpl
 
 TEST_F(MigrationCassandraManagerObjectsTableTest, MigrateExampleObjectsMigrator)
 {
-    auto constexpr ObjectsMigratorName = "ExampleObjectsMigrator";
-    EXPECT_EQ(testMigrationManager->getMigratorStatusByName(ObjectsMigratorName), MigratorStatus::NotMigrated);
+    auto constexpr kOBJECTS_MIGRATOR_NAME = "ExampleObjectsMigrator";
+    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kOBJECTS_MIGRATOR_NAME), MigratorStatus::NotMigrated);
 
-    testMigrationManager->runMigration(ObjectsMigratorName);
+    testMigrationManager_->runMigration(kOBJECTS_MIGRATOR_NAME);
 
-    EXPECT_EQ(ExampleObjectsMigrator::count, ObjectsRawData.size());
+    EXPECT_EQ(ExampleObjectsMigrator::count, gObjectsRawData.size());
     EXPECT_EQ(ExampleObjectsMigrator::accountCount, 37);
 
-    EXPECT_EQ(testMigrationManager->getMigratorStatusByName(ObjectsMigratorName), MigratorStatus::Migrated);
+    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kOBJECTS_MIGRATOR_NAME), MigratorStatus::Migrated);
 }
 
 // The test suite for testing migration process for ExampleLedgerMigrator. In this test suite, the ledger headers are
@@ -290,7 +290,7 @@ class MigrationCassandraManagerLedgerTableTest : public MigrationCassandraSimple
     {
         Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
-        for (auto const& value : LedgerHeaderRawData) {
+        for (auto const& value : gLedgerHeaderRawData) {
             writeLedgerFromCSVString(TestGlobals::instance().backendKeyspace, value, handle);
         }
         writeLedgerRange(TestGlobals::instance().backendKeyspace, 5619393, 5619442, handle);
@@ -299,18 +299,19 @@ class MigrationCassandraManagerLedgerTableTest : public MigrationCassandraSimple
 
 TEST_F(MigrationCassandraManagerLedgerTableTest, MigrateExampleLedgerMigrator)
 {
-    auto constexpr HeaderMigratorName = "ExampleLedgerMigrator";
-    EXPECT_EQ(testMigrationManager->getMigratorStatusByName(HeaderMigratorName), MigratorStatus::NotMigrated);
+    auto constexpr kHEADER_MIGRATOR_NAME = "ExampleLedgerMigrator";
+    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kHEADER_MIGRATOR_NAME), MigratorStatus::NotMigrated);
 
-    testMigrationManager->runMigration(HeaderMigratorName);
-    EXPECT_EQ(testMigrationManager->getMigratorStatusByName(HeaderMigratorName), MigratorStatus::Migrated);
+    testMigrationManager_->runMigration(kHEADER_MIGRATOR_NAME);
+    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kHEADER_MIGRATOR_NAME), MigratorStatus::Migrated);
 
     auto const newTableSize =
-        data::synchronous([&](auto ctx) { return testMigrationBackend->fetchLedgerTableSize(ctx); });
-    EXPECT_EQ(newTableSize, LedgerHeaderRawData.size());
+        data::synchronous([&](auto ctx) { return testMigrationBackend_->fetchLedgerTableSize(ctx); });
+    EXPECT_EQ(newTableSize, gLedgerHeaderRawData.size());
 
     auto const getAccountHash = [this](std::uint32_t seq) {
-        return data::synchronous([&](auto ctx) { return testMigrationBackend->fetchAccountHashViaSequence(seq, ctx); });
+        return data::synchronous([&](auto ctx) { return testMigrationBackend_->fetchAccountHashViaSequence(seq, ctx); }
+        );
     };
 
     EXPECT_EQ(
@@ -329,17 +330,17 @@ class MigrationCassandraManagerDropTableTest : public MigrationCassandraSimpleTe
 
 TEST_F(MigrationCassandraManagerDropTableTest, MigrateDropTableMigrator)
 {
-    auto constexpr DropTableMigratorName = "ExampleDropTableMigrator";
-    EXPECT_EQ(testMigrationManager->getMigratorStatusByName(DropTableMigratorName), MigratorStatus::NotMigrated);
+    auto constexpr kDROP_TABLE_MIGRATOR_NAME = "ExampleDropTableMigrator";
+    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kDROP_TABLE_MIGRATOR_NAME), MigratorStatus::NotMigrated);
 
     auto const beforeDropSize =
-        data::synchronous([&](auto ctx) { return testMigrationBackend->fetchDiffTableSize(ctx); });
+        data::synchronous([&](auto ctx) { return testMigrationBackend_->fetchDiffTableSize(ctx); });
     EXPECT_EQ(beforeDropSize, 0);
 
-    testMigrationManager->runMigration(DropTableMigratorName);
-    EXPECT_EQ(testMigrationManager->getMigratorStatusByName(DropTableMigratorName), MigratorStatus::Migrated);
+    testMigrationManager_->runMigration(kDROP_TABLE_MIGRATOR_NAME);
+    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kDROP_TABLE_MIGRATOR_NAME), MigratorStatus::Migrated);
 
     auto const newTableSize =
-        data::synchronous([&](auto ctx) { return testMigrationBackend->fetchDiffTableSize(ctx); });
+        data::synchronous([&](auto ctx) { return testMigrationBackend_->fetchDiffTableSize(ctx); });
     EXPECT_EQ(newTableSize, std::nullopt);
 }

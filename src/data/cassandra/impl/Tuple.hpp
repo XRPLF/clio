@@ -37,14 +37,14 @@
 namespace data::cassandra::impl {
 
 class Tuple : public ManagedObject<CassTuple> {
-    static constexpr auto deleter = [](CassTuple* ptr) { cass_tuple_free(ptr); };
+    static constexpr auto kDELETER = [](CassTuple* ptr) { cass_tuple_free(ptr); };
 
 public:
     /* implicit */ Tuple(CassTuple* ptr);
 
     template <typename... Types>
     explicit Tuple(std::tuple<Types...>&& value)
-        : ManagedObject{cass_tuple_new(std::tuple_size<std::tuple<Types...>>{}), deleter}
+        : ManagedObject{cass_tuple_new(std::tuple_size<std::tuple<Types...>>{}), kDELETER}
     {
         std::apply(std::bind_front(&Tuple::bind<Types...>, this), std::move(value));
     }

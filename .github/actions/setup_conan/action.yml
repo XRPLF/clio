@@ -15,10 +15,10 @@ runs:
       if: ${{ runner.os == 'macOS' }}
       shell: bash
       env:
-        CONAN_PROFILE: apple_clang_15
+        CONAN_PROFILE: apple_clang_16
       id: conan_setup_mac
       run: |
-        echo "Creating $CONAN_PROFILE conan profile";
+        echo "Creating $CONAN_PROFILE conan profile"
         conan profile new $CONAN_PROFILE --detect --force
         conan profile update settings.compiler.libcxx=libc++ $CONAN_PROFILE
         conan profile update settings.compiler.cppstd=20 $CONAN_PROFILE

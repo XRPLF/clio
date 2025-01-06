@@ -41,7 +41,9 @@ using namespace boost::log;
 using namespace std;
 namespace json = boost::json;
 
-constexpr static auto JSONData = R"JSON(
+namespace {
+
+constexpr auto kJSON_DATA = R"JSON(
     {
         "arr": [                
             { "first": 1234 },
@@ -62,73 +64,75 @@ constexpr static auto JSONData = R"JSON(
     }
 )JSON";
 
+}  // namespace
+
 class ConfigTest : public NoLoggerFixture {
 protected:
-    Config cfg{json::parse(JSONData)};
+    Config cfg_{json::parse(kJSON_DATA)};
 };
 
 TEST_F(ConfigTest, SanityCheck)
 {
     // throw on wrong key format etc.:
-    ASSERT_ANY_THROW((void)cfg.value<bool>(""));
-    ASSERT_ANY_THROW((void)cfg.value<bool>("a."));
-    ASSERT_ANY_THROW((void)cfg.value<bool>(".a"));
-    ASSERT_ANY_THROW((void)cfg.valueOr<bool>("", false));
-    ASSERT_ANY_THROW((void)cfg.valueOr<bool>("a.", false));
-    ASSERT_ANY_THROW((void)cfg.valueOr<bool>(".a", false));
-    ASSERT_ANY_THROW((void)cfg.maybeValue<bool>(""));
-    ASSERT_ANY_THROW((void)cfg.maybeValue<bool>("a."));
-    ASSERT_ANY_THROW((void)cfg.maybeValue<bool>(".a"));
-    ASSERT_ANY_THROW((void)cfg.valueOrThrow<bool>("", "custom"));
-    ASSERT_ANY_THROW((void)cfg.valueOrThrow<bool>("a.", "custom"));
-    ASSERT_ANY_THROW((void)cfg.valueOrThrow<bool>(".a", "custom"));
-    ASSERT_ANY_THROW((void)cfg.contains(""));
-    ASSERT_ANY_THROW((void)cfg.contains("a."));
-    ASSERT_ANY_THROW((void)cfg.contains(".a"));
-    ASSERT_ANY_THROW((void)cfg.section(""));
-    ASSERT_ANY_THROW((void)cfg.section("a."));
-    ASSERT_ANY_THROW((void)cfg.section(".a"));
+    ASSERT_ANY_THROW((void)cfg_.value<bool>(""));
+    ASSERT_ANY_THROW((void)cfg_.value<bool>("a."));
+    ASSERT_ANY_THROW((void)cfg_.value<bool>(".a"));
+    ASSERT_ANY_THROW((void)cfg_.valueOr<bool>("", false));
+    ASSERT_ANY_THROW((void)cfg_.valueOr<bool>("a.", false));
+    ASSERT_ANY_THROW((void)cfg_.valueOr<bool>(".a", false));
+    ASSERT_ANY_THROW((void)cfg_.maybeValue<bool>(""));
+    ASSERT_ANY_THROW((void)cfg_.maybeValue<bool>("a."));
+    ASSERT_ANY_THROW((void)cfg_.maybeValue<bool>(".a"));
+    ASSERT_ANY_THROW((void)cfg_.valueOrThrow<bool>("", "custom"));
+    ASSERT_ANY_THROW((void)cfg_.valueOrThrow<bool>("a.", "custom"));
+    ASSERT_ANY_THROW((void)cfg_.valueOrThrow<bool>(".a", "custom"));
+    ASSERT_ANY_THROW((void)cfg_.contains(""));
+    ASSERT_ANY_THROW((void)cfg_.contains("a."));
+    ASSERT_ANY_THROW((void)cfg_.contains(".a"));
+    ASSERT_ANY_THROW((void)cfg_.section(""));
+    ASSERT_ANY_THROW((void)cfg_.section("a."));
+    ASSERT_ANY_THROW((void)cfg_.section(".a"));
 
     // valid path, value does not exists -> optional functions should not throw
-    ASSERT_ANY_THROW((void)cfg.value<bool>("b"));
-    ASSERT_EQ(cfg.valueOr<bool>("b", false), false);
-    ASSERT_EQ(cfg.maybeValue<bool>("b"), std::nullopt);
-    ASSERT_ANY_THROW((void)cfg.valueOrThrow<bool>("b", "custom"));
+    ASSERT_ANY_THROW((void)cfg_.value<bool>("b"));
+    ASSERT_EQ(cfg_.valueOr<bool>("b", false), false);
+    ASSERT_EQ(cfg_.maybeValue<bool>("b"), std::nullopt);
+    ASSERT_ANY_THROW((void)cfg_.valueOrThrow<bool>("b", "custom"));
 }
 
 TEST_F(ConfigTest, Access)
 {
-    ASSERT_EQ(cfg.value<int64_t>("top"), 420);
-    ASSERT_EQ(cfg.value<string>("section.test.str"), "hello");
-    ASSERT_EQ(cfg.value<int64_t>("section.test.int"), 9042);
-    ASSERT_EQ(cfg.value<bool>("section.test.bool"), true);
+    ASSERT_EQ(cfg_.value<int64_t>("top"), 420);
+    ASSERT_EQ(cfg_.value<string>("section.test.str"), "hello");
+    ASSERT_EQ(cfg_.value<int64_t>("section.test.int"), 9042);
+    ASSERT_EQ(cfg_.value<bool>("section.test.bool"), true);
 
-    ASSERT_ANY_THROW((void)cfg.value<uint64_t>("section.test.bool"));  // wrong type requested
-    ASSERT_ANY_THROW((void)cfg.value<bool>("section.doesnotexist"));
+    ASSERT_ANY_THROW((void)cfg_.value<uint64_t>("section.test.bool"));  // wrong type requested
+    ASSERT_ANY_THROW((void)cfg_.value<bool>("section.doesnotexist"));
 
-    ASSERT_EQ(cfg.valueOr<string>("section.test.str", "fallback"), "hello");
-    ASSERT_EQ(cfg.valueOr<string>("section.test.nonexistent", "fallback"), "fallback");
-    ASSERT_EQ(cfg.valueOr("section.test.bool", false), true);
-    ASSERT_EQ(cfg.valueOr("section.test.double", 0.42), 3.14);
-    ASSERT_EQ(cfg.valueOr<float>("section.test.double", 0.42f), 3.14f);
-    ASSERT_EQ(cfg.valueOr("section.test.float", 0.42f), 42.0f);
-    ASSERT_EQ(cfg.valueOr<double>("section.test.float", 0.42), 42.0);
+    ASSERT_EQ(cfg_.valueOr<string>("section.test.str", "fallback"), "hello");
+    ASSERT_EQ(cfg_.valueOr<string>("section.test.nonexistent", "fallback"), "fallback");
+    ASSERT_EQ(cfg_.valueOr("section.test.bool", false), true);
+    ASSERT_EQ(cfg_.valueOr("section.test.double", 0.42), 3.14);
+    ASSERT_EQ(cfg_.valueOr<float>("section.test.double", 0.42f), 3.14f);
+    ASSERT_EQ(cfg_.valueOr("section.test.float", 0.42f), 42.0f);
+    ASSERT_EQ(cfg_.valueOr<double>("section.test.float", 0.42), 42.0);
 
-    ASSERT_ANY_THROW((void)cfg.valueOr("section.test.bool", 1234));  // wrong type requested
+    ASSERT_ANY_THROW((void)cfg_.valueOr("section.test.bool", 1234));  // wrong type requested
 }
 
 TEST_F(ConfigTest, ErrorHandling)
 {
     try {
-        (void)cfg.valueOrThrow<bool>("section.test.int", "msg");
+        (void)cfg_.valueOrThrow<bool>("section.test.int", "msg");
         ASSERT_FALSE(true);  // should not get here
     } catch (std::runtime_error const& e) {
         ASSERT_STREQ(e.what(), "msg");
     }
 
-    ASSERT_EQ(cfg.valueOrThrow<bool>("section.test.bool", ""), true);
+    ASSERT_EQ(cfg_.valueOrThrow<bool>("section.test.bool", ""), true);
 
-    auto arr = cfg.array("arr");
+    auto arr = cfg_.array("arr");
     try {
         (void)arr[3].array()[1].valueOrThrow<int>("msg");  // wrong type
         ASSERT_FALSE(true);                                // should not get here
@@ -139,18 +143,18 @@ TEST_F(ConfigTest, ErrorHandling)
     ASSERT_EQ(arr[3].array()[1].valueOrThrow<string>(""), "192.168.0.255");
 
     try {
-        (void)cfg.arrayOrThrow("nonexisting.key", "msg");
+        (void)cfg_.arrayOrThrow("nonexisting.key", "msg");
         ASSERT_FALSE(true);  // should not get here
     } catch (std::runtime_error const& e) {
         ASSERT_STREQ(e.what(), "msg");
     }
 
-    ASSERT_EQ(cfg.arrayOrThrow("arr", "")[0].value<int>("first"), 1234);
+    ASSERT_EQ(cfg_.arrayOrThrow("arr", "")[0].value<int>("first"), 1234);
 }
 
 TEST_F(ConfigTest, Section)
 {
-    auto sub = cfg.section("section.test");
+    auto sub = cfg_.section("section.test");
 
     ASSERT_EQ(sub.value<string>("str"), "hello");
     ASSERT_EQ(sub.value<int64_t>("int"), 9042);
@@ -160,21 +164,21 @@ TEST_F(ConfigTest, Section)
 TEST_F(ConfigTest, SectionOr)
 {
     {
-        auto sub = cfg.sectionOr("section.test", {});  // exists
+        auto sub = cfg_.sectionOr("section.test", {});  // exists
 
         ASSERT_EQ(sub.value<string>("str"), "hello");
         ASSERT_EQ(sub.value<int64_t>("int"), 9042);
         ASSERT_EQ(sub.value<bool>("bool"), true);
     }
     {
-        auto sub = cfg.sectionOr("section.doesnotexist", {{"int", 9043}});  // does not exist
-        ASSERT_EQ(sub.value<int64_t>("int"), 9043);                         // default from fallback
+        auto sub = cfg_.sectionOr("section.doesnotexist", {{"int", 9043}});  // does not exist
+        ASSERT_EQ(sub.value<int64_t>("int"), 9043);                          // default from fallback
     }
 }
 
 TEST_F(ConfigTest, Array)
 {
-    auto arr = cfg.array("arr");
+    auto arr = cfg_.array("arr");
 
     ASSERT_EQ(arr.size(), 4);
     ASSERT_EQ(arr[0].value<int64_t>("first"), 1234);
@@ -225,7 +229,7 @@ struct Custom {
 
 TEST_F(ConfigTest, Extend)
 {
-    auto custom = cfg.value<Custom>("section.test");
+    auto custom = cfg_.value<Custom>("section.test");
 
     ASSERT_EQ(custom.a, "hello");
     ASSERT_EQ(custom.b, 9042);
@@ -260,7 +264,7 @@ private:
 
 TEST_F(ConfigTest, File)
 {
-    auto tmp = TmpFile(JSONData);
+    auto tmp = TmpFile(kJSON_DATA);
     auto conf = ConfigReader::open(tmp.path());
 
     ASSERT_EQ(conf.value<int64_t>("top"), 420);

@@ -38,7 +38,7 @@ struct AmendmentBlockHandlerTest : util::prometheus::WithPrometheus, SyncAsioCon
 
 TEST_F(AmendmentBlockHandlerTest, CallToOnAmendmentBlockSetsStateAndRepeatedlyCallsAction)
 {
-    AmendmentBlockHandler handler{ctx, state, std::chrono::nanoseconds{1}, actionMock.AsStdFunction()};
+    AmendmentBlockHandler handler{ctx_, state, std::chrono::nanoseconds{1}, actionMock.AsStdFunction()};
 
     EXPECT_FALSE(state.isAmendmentBlocked);
     EXPECT_CALL(actionMock, Call()).Times(testing::AtLeast(10));
@@ -52,7 +52,7 @@ struct DefaultAmendmentBlockActionTest : LoggerFixture {};
 
 TEST_F(DefaultAmendmentBlockActionTest, Call)
 {
-    AmendmentBlockHandler::defaultAmendmentBlockAction();
+    AmendmentBlockHandler::kDEFAULT_AMENDMENT_BLOCK_ACTION();
     auto const loggerString = getLoggerString();
     EXPECT_TRUE(loggerString.starts_with("ETL:FTL Can't process new ledgers")) << "LoggerString " << loggerString;
 }

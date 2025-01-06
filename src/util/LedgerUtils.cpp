@@ -28,18 +28,18 @@
 namespace util {
 
 ripple::LedgerEntryType
-LedgerTypes::GetLedgerEntryTypeFromStr(std::string const& entryName)
+LedgerTypes::getLedgerEntryTypeFromStr(std::string const& entryName)
 {
-    static std::unordered_map<std::string, ripple::LedgerEntryType> typeMap = []() {
+    static std::unordered_map<std::string, ripple::LedgerEntryType> kTYPE_MAP = []() {
         std::unordered_map<std::string, ripple::LedgerEntryType> map;
-        std::ranges::for_each(LEDGER_TYPES, [&map](auto const& item) { map[item.name] = item.type; });
+        std::ranges::for_each(kLEDGER_TYPES, [&map](auto const& item) { map[item.name_] = item.type_; });
         return map;
     }();
 
-    if (typeMap.find(entryName) == typeMap.end())
+    if (kTYPE_MAP.find(entryName) == kTYPE_MAP.end())
         return ripple::ltANY;
 
-    return typeMap.at(entryName);
+    return kTYPE_MAP.at(entryName);
 }
 
 }  // namespace util

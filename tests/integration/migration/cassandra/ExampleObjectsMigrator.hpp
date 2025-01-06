@@ -35,8 +35,8 @@
 struct ExampleObjectsMigrator {
     using Backend = CassandraMigrationTestBackend;
 
-    static constexpr char const* name = "ExampleObjectsMigrator";
-    static constexpr char const* description = "The migrator for objects table";
+    static constexpr char const* kNAME = "ExampleObjectsMigrator";
+    static constexpr char const* kDESCRIPTION = "The migrator for objects table";
 
     static std::atomic_int64_t count;
     static std::atomic_int64_t accountCount;

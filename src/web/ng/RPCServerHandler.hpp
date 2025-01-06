@@ -199,7 +199,7 @@ private:
             auto const context = [&] {
                 if (connectionMetadata.wasUpgraded()) {
                     ASSERT(subscriptionContext != nullptr, "Subscription context must exist for a WS connecton");
-                    return rpc::make_WsContext(
+                    return rpc::makeWsContext(
                         yield,
                         request,
                         std::move(subscriptionContext),
@@ -210,7 +210,7 @@ private:
                         connectionMetadata.isAdmin()
                     );
                 }
-                return rpc::make_HttpContext(
+                return rpc::makeHttpContext(
                     yield,
                     request,
                     tagFactory_.with(connectionMetadata.tag()),
@@ -292,10 +292,10 @@ private:
             }
 
             boost::json::array warnings = std::move(result.warnings);
-            warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_CLIO));
+            warnings.emplace_back(rpc::makeWarning(rpc::WarnRpcClio));
 
             if (etl_->lastCloseAgeSeconds() >= 60)
-                warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_OUTDATED));
+                warnings.emplace_back(rpc::makeWarning(rpc::WarnRpcOutdated));
 
             response["warnings"] = warnings;
             return Response{boost::beast::http::status::ok, response, rawRequest};

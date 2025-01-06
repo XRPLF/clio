@@ -72,11 +72,12 @@ public:
 
 template <typename CtxType, typename OpType>
 struct BasicScheduledOperation {
-    struct State {
+    class State {
         std::mutex m_;
         std::condition_variable ready_;
         std::optional<OpType> op_{std::nullopt};
 
+    public:
         void
         emplace(auto&& op)
         {
@@ -94,11 +95,11 @@ struct BasicScheduledOperation {
         }
     };
 
-    std::shared_ptr<State> state_ = std::make_shared<State>();
-    typename CtxType::Timer timer_;
+    std::shared_ptr<State> state = std::make_shared<State>();
+    typename CtxType::Timer timer;
 
     BasicScheduledOperation(auto& executor, auto delay, auto&& fn)
-        : timer_(executor, delay, [state = state_, fn = std::forward<decltype(fn)>(fn)](auto ec) mutable {
+        : timer(executor, delay, [state = state, fn = std::forward<decltype(fn)>(fn)](auto ec) mutable {
             state->emplace(fn(ec));
         })
     {
@@ -107,26 +108,26 @@ struct BasicScheduledOperation {
     [[nodiscard]] auto
     get()
     {
-        return state_->get().get();
+        return state->get().get();
     }
 
     void
     wait() noexcept
     {
-        state_->get().wait();
+        state->get().wait();
     }
 
     void
     cancel() noexcept
     {
-        timer_.cancel();
+        timer.cancel();
     }
 
     void
     requestStop() noexcept
         requires(SomeStoppableOperation<OpType>)
     {
-        state_->get().requestStop();
+        state->get().requestStop();
     }
 
     void

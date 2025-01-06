@@ -43,18 +43,18 @@ using namespace web::ng;
 
 namespace http = boost::beast::http;
 
-struct ng_ErrorHandlingTests : NoLoggerFixture {
+struct NgErrorHandlingTests : NoLoggerFixture {
     static Request
     makeRequest(bool isHttp, std::optional<std::string> body = std::nullopt)
     {
         if (isHttp)
             return Request{http::request<http::string_body>{http::verb::post, "/", 11, body.value_or("")}};
-        static Request::HttpHeaders const headers_;
-        return Request{body.value_or(""), headers_};
+        static Request::HttpHeaders const kHEADERS;
+        return Request{body.value_or(""), kHEADERS};
     }
 };
 
-struct ng_ErrorHandlingMakeErrorTestBundle {
+struct NgErrorHandlingMakeErrorTestBundle {
     std::string testName;
     bool isHttp;
     rpc::Status status;
@@ -62,10 +62,10 @@ struct ng_ErrorHandlingMakeErrorTestBundle {
     boost::beast::http::status expectedStatus;
 };
 
-struct ng_ErrorHandlingMakeErrorTest : ng_ErrorHandlingTests,
-                                       testing::WithParamInterface<ng_ErrorHandlingMakeErrorTestBundle> {};
+struct NgErrorHandlingMakeErrorTest : NgErrorHandlingTests,
+                                      testing::WithParamInterface<NgErrorHandlingMakeErrorTestBundle> {};
 
-TEST_P(ng_ErrorHandlingMakeErrorTest, MakeError)
+TEST_P(NgErrorHandlingMakeErrorTest, MakeError)
 {
     auto const request = makeRequest(GetParam().isHttp);
     ErrorHelper const errorHelper{request};
@@ -86,51 +86,51 @@ TEST_P(ng_ErrorHandlingMakeErrorTest, MakeError)
 
 INSTANTIATE_TEST_CASE_P(
     ng_ErrorHandlingMakeErrorTestGroup,
-    ng_ErrorHandlingMakeErrorTest,
+    NgErrorHandlingMakeErrorTest,
     testing::ValuesIn({
-        ng_ErrorHandlingMakeErrorTestBundle{
+        NgErrorHandlingMakeErrorTestBundle{
             "WsRequest",
             false,
             rpc::Status{rpc::RippledError::rpcTOO_BUSY},
             R"({"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"})",
             boost::beast::http::status::ok
         },
-        ng_ErrorHandlingMakeErrorTestBundle{
+        NgErrorHandlingMakeErrorTestBundle{
             "HttpRequest_InvalidApiVersion",
             true,
-            rpc::Status{rpc::ClioError::rpcINVALID_API_VERSION},
+            rpc::Status{rpc::ClioError::RpcInvalidApiVersion},
             "invalid_API_version",
             boost::beast::http::status::bad_request
         },
-        ng_ErrorHandlingMakeErrorTestBundle{
+        NgErrorHandlingMakeErrorTestBundle{
             "HttpRequest_CommandIsMissing",
             true,
-            rpc::Status{rpc::ClioError::rpcCOMMAND_IS_MISSING},
+            rpc::Status{rpc::ClioError::RpcCommandIsMissing},
             "Null method",
             boost::beast::http::status::bad_request
         },
-        ng_ErrorHandlingMakeErrorTestBundle{
+        NgErrorHandlingMakeErrorTestBundle{
             "HttpRequest_CommandIsEmpty",
             true,
-            rpc::Status{rpc::ClioError::rpcCOMMAND_IS_EMPTY},
+            rpc::Status{rpc::ClioError::RpcCommandIsEmpty},
             "method is empty",
             boost::beast::http::status::bad_request
         },
-        ng_ErrorHandlingMakeErrorTestBundle{
+        NgErrorHandlingMakeErrorTestBundle{
             "HttpRequest_CommandNotString",
             true,
-            rpc::Status{rpc::ClioError::rpcCOMMAND_NOT_STRING},
+            rpc::Status{rpc::ClioError::RpcCommandNotString},
             "method is not string",
             boost::beast::http::status::bad_request
         },
-        ng_ErrorHandlingMakeErrorTestBundle{
+        NgErrorHandlingMakeErrorTestBundle{
             "HttpRequest_ParamsUnparseable",
             true,
-            rpc::Status{rpc::ClioError::rpcPARAMS_UNPARSEABLE},
+            rpc::Status{rpc::ClioError::RpcParamsUnparseable},
             "params unparseable",
             boost::beast::http::status::bad_request
         },
-        ng_ErrorHandlingMakeErrorTestBundle{
+        NgErrorHandlingMakeErrorTestBundle{
             "HttpRequest_RippledError",
             true,
             rpc::Status{rpc::RippledError::rpcTOO_BUSY},
@@ -138,21 +138,21 @@ INSTANTIATE_TEST_CASE_P(
             boost::beast::http::status::bad_request
         },
     }),
-    tests::util::NameGenerator
+    tests::util::kNAME_GENERATOR
 );
 
-struct ng_ErrorHandlingMakeInternalErrorTestBundle {
+struct NgErrorHandlingMakeInternalErrorTestBundle {
     std::string testName;
     bool isHttp;
     std::optional<std::string> request;
     boost::json::object expectedResult;
 };
 
-struct ng_ErrorHandlingMakeInternalErrorTest
-    : ng_ErrorHandlingTests,
-      testing::WithParamInterface<ng_ErrorHandlingMakeInternalErrorTestBundle> {};
+struct NgErrorHandlingMakeInternalErrorTest : NgErrorHandlingTests,
+                                              testing::WithParamInterface<NgErrorHandlingMakeInternalErrorTestBundle> {
+};
 
-TEST_P(ng_ErrorHandlingMakeInternalErrorTest, ComposeError)
+TEST_P(NgErrorHandlingMakeInternalErrorTest, ComposeError)
 {
     auto const request = makeRequest(GetParam().isHttp, GetParam().request);
     std::optional<boost::json::object> const requestJson = GetParam().request.has_value()
@@ -172,9 +172,9 @@ TEST_P(ng_ErrorHandlingMakeInternalErrorTest, ComposeError)
 
 INSTANTIATE_TEST_CASE_P(
     ng_ErrorHandlingComposeErrorTestGroup,
-    ng_ErrorHandlingMakeInternalErrorTest,
+    NgErrorHandlingMakeInternalErrorTest,
     testing::ValuesIn(
-        {ng_ErrorHandlingMakeInternalErrorTestBundle{
+        {NgErrorHandlingMakeInternalErrorTestBundle{
              "NoRequest_WebsocketConnection",
              false,
              std::nullopt,
@@ -184,7 +184,7 @@ INSTANTIATE_TEST_CASE_P(
               {"status", "error"},
               {"type", "response"}}
          },
-         ng_ErrorHandlingMakeInternalErrorTestBundle{
+         NgErrorHandlingMakeInternalErrorTestBundle{
              "NoRequest_HttpConnection",
              true,
              std::nullopt,
@@ -195,7 +195,7 @@ INSTANTIATE_TEST_CASE_P(
                 {"status", "error"},
                 {"type", "response"}}}}
          },
-         ng_ErrorHandlingMakeInternalErrorTestBundle{
+         NgErrorHandlingMakeInternalErrorTestBundle{
              "Request_WebsocketConnection",
              false,
              std::string{R"({"id": 1, "api_version": 2})"},
@@ -208,7 +208,7 @@ INSTANTIATE_TEST_CASE_P(
               {"api_version", 2},
               {"request", {{"id", 1}, {"api_version", 2}}}}
          },
-         ng_ErrorHandlingMakeInternalErrorTestBundle{
+         NgErrorHandlingMakeInternalErrorTestBundle{
              "Request_WebsocketConnection_NoId",
              false,
              std::string{R"({"api_version": 2})"},
@@ -220,7 +220,7 @@ INSTANTIATE_TEST_CASE_P(
               {"api_version", 2},
               {"request", {{"api_version", 2}}}}
          },
-         ng_ErrorHandlingMakeInternalErrorTestBundle{
+         NgErrorHandlingMakeInternalErrorTestBundle{
              "Request_HttpConnection",
              true,
              std::string{R"({"id": 1, "api_version": 2})"},
@@ -234,10 +234,10 @@ INSTANTIATE_TEST_CASE_P(
                 {"request", {{"id", 1}, {"api_version", 2}}}}}}
          }}
     ),
-    tests::util::NameGenerator
+    tests::util::kNAME_GENERATOR
 );
 
-TEST_F(ng_ErrorHandlingTests, MakeNotReadyError)
+TEST_F(NgErrorHandlingTests, MakeNotReadyError)
 {
     auto const request = makeRequest(true);
     auto response = ErrorHelper{request}.makeNotReadyError();
@@ -252,7 +252,7 @@ TEST_F(ng_ErrorHandlingTests, MakeNotReadyError)
     EXPECT_EQ(httpResponse.at(http::field::content_type), "application/json");
 }
 
-TEST_F(ng_ErrorHandlingTests, MakeTooBusyError_WebsocketRequest)
+TEST_F(NgErrorHandlingTests, MakeTooBusyError_WebsocketRequest)
 {
     auto const request = makeRequest(false);
     auto response = ErrorHelper{request}.makeTooBusyError();
@@ -264,7 +264,7 @@ TEST_F(ng_ErrorHandlingTests, MakeTooBusyError_WebsocketRequest)
     );
 }
 
-TEST_F(ng_ErrorHandlingTests, sendTooBusyError_HttpConnection)
+TEST_F(NgErrorHandlingTests, sendTooBusyError_HttpConnection)
 {
     auto const request = makeRequest(true);
     auto response = ErrorHelper{request}.makeTooBusyError();
@@ -279,7 +279,7 @@ TEST_F(ng_ErrorHandlingTests, sendTooBusyError_HttpConnection)
     EXPECT_EQ(httpResponse.at(http::field::content_type), "application/json");
 }
 
-TEST_F(ng_ErrorHandlingTests, makeJsonParsingError_WebsocketConnection)
+TEST_F(NgErrorHandlingTests, makeJsonParsingError_WebsocketConnection)
 {
     auto const request = makeRequest(false);
     auto response = ErrorHelper{request}.makeJsonParsingError();
@@ -291,7 +291,7 @@ TEST_F(ng_ErrorHandlingTests, makeJsonParsingError_WebsocketConnection)
     );
 }
 
-TEST_F(ng_ErrorHandlingTests, makeJsonParsingError_HttpConnection)
+TEST_F(NgErrorHandlingTests, makeJsonParsingError_HttpConnection)
 {
     auto const request = makeRequest(true);
     auto response = ErrorHelper{request}.makeJsonParsingError();
@@ -301,17 +301,17 @@ TEST_F(ng_ErrorHandlingTests, makeJsonParsingError_HttpConnection)
     EXPECT_EQ(httpResponse.at(http::field::content_type), "text/html");
 }
 
-struct ng_ErrorHandlingComposeErrorTestBundle {
+struct NgErrorHandlingComposeErrorTestBundle {
     std::string testName;
     bool isHttp;
     std::optional<boost::json::object> request;
     std::string expectedMessage;
 };
 
-struct ng_ErrorHandlingComposeErrorTest : ng_ErrorHandlingTests,
-                                          testing::WithParamInterface<ng_ErrorHandlingComposeErrorTestBundle> {};
+struct NgErrorHandlingComposeErrorTest : NgErrorHandlingTests,
+                                         testing::WithParamInterface<NgErrorHandlingComposeErrorTestBundle> {};
 
-TEST_P(ng_ErrorHandlingComposeErrorTest, ComposeError)
+TEST_P(NgErrorHandlingComposeErrorTest, ComposeError)
 {
     auto const request = makeRequest(GetParam().isHttp);
     ErrorHelper const errorHelper{request, GetParam().request};
@@ -321,38 +321,38 @@ TEST_P(ng_ErrorHandlingComposeErrorTest, ComposeError)
 
 INSTANTIATE_TEST_CASE_P(
     ng_ErrorHandlingComposeErrorTestGroup,
-    ng_ErrorHandlingComposeErrorTest,
+    NgErrorHandlingComposeErrorTest,
     testing::ValuesIn(
-        {ng_ErrorHandlingComposeErrorTestBundle{
+        {NgErrorHandlingComposeErrorTestBundle{
              "NoRequest_WebsocketConnection",
              false,
              std::nullopt,
              R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"})"
          },
-         ng_ErrorHandlingComposeErrorTestBundle{
+         NgErrorHandlingComposeErrorTestBundle{
              "NoRequest_HttpConnection",
              true,
              std::nullopt,
              R"({"result":{"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"}})"
          },
-         ng_ErrorHandlingComposeErrorTestBundle{
+         NgErrorHandlingComposeErrorTestBundle{
              "Request_WebsocketConnection",
              false,
              boost::json::object{{"id", 1}, {"api_version", 2}},
              R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","id":1,"api_version":2,"request":{"id":1,"api_version":2}})",
          },
-         ng_ErrorHandlingComposeErrorTestBundle{
+         NgErrorHandlingComposeErrorTestBundle{
              "Request_WebsocketConnection_NoId",
              false,
              boost::json::object{{"api_version", 2}},
              R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","api_version":2,"request":{"api_version":2}})",
          },
-         ng_ErrorHandlingComposeErrorTestBundle{
+         NgErrorHandlingComposeErrorTestBundle{
              "Request_HttpConnection",
              true,
              boost::json::object{{"id", 1}, {"api_version", 2}},
              R"({"result":{"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","id":1,"request":{"id":1,"api_version":2}}})"
          }}
     ),
-    tests::util::NameGenerator
+    tests::util::kNAME_GENERATOR
 );

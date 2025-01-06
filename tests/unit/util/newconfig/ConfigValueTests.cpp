@@ -58,14 +58,15 @@ TEST(ConfigValue, PortConstraint)
 
 TEST(ConfigValue, SetValuesOnPortConstraint)
 {
-    auto cvPort = ConfigValue{ConfigType::Integer}.defaultValue(4444).withConstraint(validatePort);
+    auto cvPort = ConfigValue{ConfigType::Integer}.defaultValue(4444).withConstraint(gValidatePort);
     auto const err = cvPort.setValue(99999);
     EXPECT_TRUE(err.has_value());
     EXPECT_EQ(err->error, "Port does not satisfy the constraint bounds");
     EXPECT_TRUE(cvPort.setValue(33.33).has_value());
     EXPECT_TRUE(cvPort.setValue(33.33).value().error == "value does not match type integer");
     EXPECT_FALSE(cvPort.setValue(1).has_value());
-    auto cvPort2 = ConfigValue{ConfigType::String}.defaultValue("4444").withConstraint(validatePort);
+
+    auto cvPort2 = ConfigValue{ConfigType::String}.defaultValue("4444").withConstraint(gValidatePort);
     auto const strPortError = cvPort2.setValue("100000");
     EXPECT_TRUE(strPortError.has_value());
     EXPECT_EQ(strPortError->error, "Port does not satisfy the constraint bounds");
@@ -106,7 +107,7 @@ TEST(ConfigValue, OneOfConstraint)
 
 TEST(ConfigValue, IpConstraint)
 {
-    auto ip = ConfigValue{ConfigType::String}.defaultValue("127.0.0.1").withConstraint(validateIP);
+    auto ip = ConfigValue{ConfigType::String}.defaultValue("127.0.0.1").withConstraint(gValidateIp);
     EXPECT_FALSE(ip.setValue("http://127.0.0.1").has_value());
     EXPECT_FALSE(ip.setValue("http://127.0.0.1.com").has_value());
     auto const err = ip.setValue("123.44");
@@ -137,7 +138,7 @@ TEST(ConfigValue, positiveNumConstraint)
 
 TEST(ConfigValue, SetValuesOnNumberConstraint)
 {
-    auto positiveNum = ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(validateUint16);
+    auto positiveNum = ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint16);
     auto const err = positiveNum.setValue(-22, "key");
     EXPECT_TRUE(err.has_value());
     EXPECT_EQ(err->error, fmt::format("key Number must be between {} and {}", 0, 65535));
@@ -158,7 +159,7 @@ TEST(ConfigValue, PositiveDoubleConstraint)
 
 struct ConstraintTestBundle {
     std::string name;
-    Constraint const& cons_;
+    Constraint const& constraint;
 };
 
 struct ConstraintDeathTest : public testing::Test, public testing::WithParamInterface<ConstraintTestBundle> {};
@@ -167,18 +168,18 @@ INSTANTIATE_TEST_SUITE_P(
     EachConstraints,
     ConstraintDeathTest,
     testing::Values(
-        ConstraintTestBundle{"logTagConstraint", validateLogTag},
-        ConstraintTestBundle{"portConstraint", validatePort},
-        ConstraintTestBundle{"ipConstraint", validateIP},
-        ConstraintTestBundle{"channelConstraint", validateChannelName},
-        ConstraintTestBundle{"logLevelConstraint", validateLogLevelName},
-        ConstraintTestBundle{"cannsandraNameCnstraint", validateCassandraName},
-        ConstraintTestBundle{"loadModeConstraint", validateLoadMode},
-        ConstraintTestBundle{"ChannelNameConstraint", validateChannelName},
-        ConstraintTestBundle{"ApiVersionConstraint", validateApiVersion},
-        ConstraintTestBundle{"Uint16Constraint", validateUint16},
-        ConstraintTestBundle{"Uint32Constraint", validateUint32},
-        ConstraintTestBundle{"PositiveDoubleConstraint", validatePositiveDouble}
+        ConstraintTestBundle{"logTagConstraint", gValidateLogTag},
+        ConstraintTestBundle{"portConstraint", gValidatePort},
+        ConstraintTestBundle{"ipConstraint", gValidateIp},
+        ConstraintTestBundle{"channelConstraint", gValidateChannelName},
+        ConstraintTestBundle{"logLevelConstraint", gValidateLogLevelName},
+        ConstraintTestBundle{"cannsandraNameCnstraint", gValidateCassandraName},
+        ConstraintTestBundle{"loadModeConstraint", gValidateLoadMode},
+        ConstraintTestBundle{"ChannelNameConstraint", gValidateChannelName},
+        ConstraintTestBundle{"ApiVersionConstraint", gValidateApiVersion},
+        ConstraintTestBundle{"Uint16Constraint", gValidateUint16},
+        ConstraintTestBundle{"Uint32Constraint", gValidateUint32},
+        ConstraintTestBundle{"PositiveDoubleConstraint", gValidatePositiveDouble}
     ),
     [](testing::TestParamInfo<ConstraintTestBundle> const& info) { return info.param.name; }
 );
@@ -188,7 +189,7 @@ TEST_P(ConstraintDeathTest, TestEachConstraint)
     EXPECT_DEATH(
         {
             [[maybe_unused]] auto const a =
-                ConfigValue{ConfigType::Boolean}.defaultValue(true).withConstraint(GetParam().cons_);
+                ConfigValue{ConfigType::Boolean}.defaultValue(true).withConstraint(GetParam().constraint);
         },
         ".*"
     );
@@ -198,7 +199,8 @@ TEST(ConfigValueDeathTest, SetInvalidValueTypeStringAndBool)
 {
     EXPECT_DEATH(
         {
-            [[maybe_unused]] auto a = ConfigValue{ConfigType::String}.defaultValue(33).withConstraint(validateLoadMode);
+            [[maybe_unused]] auto a =
+                ConfigValue{ConfigType::String}.defaultValue(33).withConstraint(gValidateLoadMode);
         },
         ".*"
     );
@@ -210,13 +212,14 @@ TEST(ConfigValueDeathTest, OutOfBounceIntegerConstraint)
     EXPECT_DEATH(
         {
             [[maybe_unused]] auto a =
-                ConfigValue{ConfigType::Integer}.defaultValue(999999).withConstraint(validateUint16);
+                ConfigValue{ConfigType::Integer}.defaultValue(999999).withConstraint(gValidateUint16);
         },
         ".*"
     );
     EXPECT_DEATH(
         {
-            [[maybe_unused]] auto a = ConfigValue{ConfigType::Integer}.defaultValue(-66).withConstraint(validateUint32);
+            [[maybe_unused]] auto a =
+                ConfigValue{ConfigType::Integer}.defaultValue(-66).withConstraint(gValidateUint32);
         },
         ".*"
     );

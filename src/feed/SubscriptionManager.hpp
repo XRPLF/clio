@@ -77,7 +77,7 @@ public:
      * @return A shared pointer to a new instance of SubscriptionManager
      */
     static std::shared_ptr<SubscriptionManager>
-    make_SubscriptionManager(
+    makeSubscriptionManager(
         util::config::ClioConfigDefinition const& config,
         std::shared_ptr<data::BackendInterface const> const& backend
     )

@@ -39,11 +39,6 @@ struct ETLExtractorTest : util::prometheus::WithPrometheus, NoLoggerFixture {
     using LedgerFetcherType = MockLedgerFetcher;
     using ExtractorType = etl::impl::Extractor<ExtractionDataPipeType, LedgerFetcherType>;
 
-    ExtractionDataPipeType dataPipe_;
-    MockNetworkValidatedLedgersPtr networkValidatedLedgers_;
-    LedgerFetcherType ledgerFetcher_;
-    SystemState state_;
-
     ETLExtractorTest()
     {
         state_.isStopping = false;
@@ -51,6 +46,12 @@ struct ETLExtractorTest : util::prometheus::WithPrometheus, NoLoggerFixture {
         state_.isReadOnly = false;
         state_.isWriting = false;
     }
+
+protected:
+    ExtractionDataPipeType dataPipe_;
+    MockNetworkValidatedLedgersPtr networkValidatedLedgers_;
+    LedgerFetcherType ledgerFetcher_;
+    SystemState state_;
 };
 
 TEST_F(ETLExtractorTest, StopsWhenCurrentSequenceExceedsFinishSequence)

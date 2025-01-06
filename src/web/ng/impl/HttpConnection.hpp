@@ -76,7 +76,7 @@ template <typename StreamType>
 class HttpConnection : public UpgradableConnection {
     StreamType stream_;
     std::optional<boost::beast::http::request<boost::beast::http::string_body>> request_;
-    std::chrono::steady_clock::duration timeout_{DEFAULT_TIMEOUT};
+    std::chrono::steady_clock::duration timeout_{kDEFAULT_TIMEOUT};
 
 public:
     HttpConnection(
@@ -185,7 +185,7 @@ public:
 
         if constexpr (IsSslTcpStream<StreamType>) {
             ASSERT(sslContext.has_value(), "SSL context must be present to upgrade the connection");
-            return make_SslWsConnection(
+            return makeSslWsConnection(
                 boost::beast::get_lowest_layer(stream_).release_socket(),
                 std::move(ip_),
                 std::move(buffer_),
@@ -195,7 +195,7 @@ public:
                 yield
             );
         } else {
-            return make_PlainWsConnection(
+            return makePlainWsConnection(
                 stream_.release_socket(),
                 std::move(ip_),
                 std::move(buffer_),

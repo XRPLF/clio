@@ -59,7 +59,7 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input input, Context const& ctx) c
         return Error{*status};
 
     auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
-    auto const limit = input.limit.value_or(MPTHoldersHandler::LIMIT_DEFAULT);
+    auto const limit = input.limit.value_or(MPTHoldersHandler::kLIMIT_DEFAULT);
     auto const mptID = ripple::uint192{input.mptID.c_str()};
 
     auto const issuanceLedgerObject =

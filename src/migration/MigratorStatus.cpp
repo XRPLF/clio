@@ -39,14 +39,14 @@ MigratorStatus::operator==(Status const& other) const
 std::string
 MigratorStatus::toString() const
 {
-    return statusStrMap[static_cast<size_t>(status_)];
+    return kSTATUS_STR_MAP[static_cast<size_t>(status_)];
 }
 
 MigratorStatus
 MigratorStatus::fromString(std::string const& statusStr)
 {
-    for (std::size_t i = 0; i < statusStrMap.size(); ++i) {
-        if (statusStr == statusStrMap[i]) {
+    for (std::size_t i = 0; i < kSTATUS_STR_MAP.size(); ++i) {
+        if (statusStr == kSTATUS_STR_MAP[i]) {
             return MigratorStatus(static_cast<Status>(i));
         }
     }

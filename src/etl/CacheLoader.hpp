@@ -69,7 +69,7 @@ public:
         std::shared_ptr<BackendInterface> const& backend,
         CacheType& cache
     )
-        : backend_{backend}, cache_{cache}, settings_{make_CacheLoaderSettings(config)}, ctx_{settings_.numThreads}
+        : backend_{backend}, cache_{cache}, settings_{makeCacheLoaderSettings(config)}, ctx_{settings_.numThreads}
     {
     }
 

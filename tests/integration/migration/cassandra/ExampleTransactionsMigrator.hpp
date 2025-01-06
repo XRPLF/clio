@@ -30,8 +30,8 @@
  * and migrate the data to index table. We create an index table for transaction hash to transaction type string.
  */
 struct ExampleTransactionsMigrator {
-    static constexpr char const* name = "ExampleTransactionsMigrator";
-    static constexpr char const* description = "The migrator for transactions table";
+    static constexpr char const* kNAME = "ExampleTransactionsMigrator";
+    static constexpr char const* kDESCRIPTION = "The migrator for transactions table";
 
     using Backend = CassandraMigrationTestBackend;
     static std::uint64_t count;

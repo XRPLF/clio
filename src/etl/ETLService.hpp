@@ -141,7 +141,7 @@ public:
      * @return A shared pointer to a new instance of ETLService
      */
     static std::shared_ptr<ETLService>
-    make_ETLService(
+    makeETLService(
         util::config::ClioConfigDefinition const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,

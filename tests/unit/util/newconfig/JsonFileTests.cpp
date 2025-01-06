@@ -30,7 +30,7 @@
 #include <vector>
 
 struct JsonFromTempFile : testing::Test {
-    JsonFromTempFile() : jsonFileObj{util::config::ConfigFileJson::make_ConfigFileJson(TmpFile(JSONData).path).value()}
+    JsonFromTempFile() : jsonFileObj{util::config::ConfigFileJson::makeConfigFileJson(TmpFile(kJSON_DATA).path).value()}
     {
     }
 

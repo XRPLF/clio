@@ -56,9 +56,9 @@ class AccountObjectsHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    static auto constexpr LIMIT_MIN = 10;
-    static auto constexpr LIMIT_MAX = 400;
-    static auto constexpr LIMIT_DEFAULT = 200;
+    static constexpr auto kLIMIT_MIN = 10;
+    static constexpr auto kLIMIT_MAX = 400;
+    static constexpr auto kLIMIT_DEFAULT = 200;
 
     /**
      * @brief A struct to hold the output data of the command
@@ -80,7 +80,7 @@ public:
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = LIMIT_DEFAULT;  // [10,400]
+        uint32_t limit = kLIMIT_DEFAULT;  // [10,400]
         std::optional<std::string> marker;
         std::optional<ripple::LedgerEntryType> type;
         bool deletionBlockersOnly = false;
@@ -107,23 +107,23 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        auto const& accountOwnedTypes = util::LedgerTypes::GetAccountOwnedLedgerTypeStrList();
-        static auto const rpcSpec = RpcSpec{
-            {JS(account), validation::Required{}, validation::CustomValidators::AccountValidator},
-            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
+        auto const& accountOwnedTypes = util::LedgerTypes::getAccountOwnedLedgerTypeStrList();
+        static auto const kRPC_SPEC = RpcSpec{
+            {JS(account), validation::Required{}, validation::CustomValidators::accountValidator},
+            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
-             modifiers::Clamp<int32_t>(LIMIT_MIN, LIMIT_MAX)},
+             modifiers::Clamp<int32_t>(kLIMIT_MIN, kLIMIT_MAX)},
             {JS(type),
              validation::Type<std::string>{},
              validation::OneOf<std::string>(accountOwnedTypes.cbegin(), accountOwnedTypes.cend())},
-            {JS(marker), validation::CustomValidators::AccountMarkerValidator},
+            {JS(marker), validation::CustomValidators::accountMarkerValidator},
             {JS(deletion_blockers_only), validation::Type<bool>{}},
         };
 
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     /**

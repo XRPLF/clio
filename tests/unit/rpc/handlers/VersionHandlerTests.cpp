@@ -31,9 +31,13 @@
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 
-constexpr static auto DEFAULT_API_VERSION = 3u;
-constexpr static auto MIN_API_VERSION = 2u;
-constexpr static auto MAX_API_VERSION = 10u;
+namespace {
+
+constexpr auto kDEFAULT_API_VERSION = 3u;
+constexpr auto kMIN_API_VERSION = 2u;
+constexpr auto kMAX_API_VERSION = 10u;
+
+}  // namespace
 
 using namespace rpc;
 using namespace util::config;
@@ -43,9 +47,9 @@ class RPCVersionHandlerTest : public HandlerBaseTest {};
 TEST_F(RPCVersionHandlerTest, Default)
 {
     ClioConfigDefinition cfg{
-        {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(MIN_API_VERSION)},
-        {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(MAX_API_VERSION)},
-        {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(DEFAULT_API_VERSION)}
+        {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(kMIN_API_VERSION)},
+        {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(kMAX_API_VERSION)},
+        {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(kDEFAULT_API_VERSION)}
     };
 
     boost::json::value jsonData = boost::json::parse(fmt::format(
@@ -54,9 +58,9 @@ TEST_F(RPCVersionHandlerTest, Default)
             "api_version.max": {},
             "api_version.default": {}
         }})",
-        MIN_API_VERSION,
-        MAX_API_VERSION,
-        DEFAULT_API_VERSION
+        kMIN_API_VERSION,
+        kMAX_API_VERSION,
+        kDEFAULT_API_VERSION
     ));
 
     runSpawn([&](auto yield) {

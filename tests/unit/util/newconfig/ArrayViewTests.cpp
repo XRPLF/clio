@@ -36,7 +36,7 @@ using namespace util::config;
 struct ArrayViewTest : testing::Test {
     ArrayViewTest()
     {
-        ConfigFileJson const jsonFileObj{boost::json::parse(JSONData).as_object()};
+        ConfigFileJson const jsonFileObj{boost::json::parse(kJSON_DATA).as_object()};
         auto const errors = configData.parse(jsonFileObj);
         EXPECT_TRUE(!errors.has_value());
     }

@@ -95,7 +95,7 @@ TEST_F(FullTableScannerTests, MultipleThreadCtx)
     scanner.wait();
 }
 
-MATCHER(RangeMinMax, "Matches the range with min and max")
+MATCHER(rangeMinMax, "Matches the range with min and max")
 {
     return (arg.start == std::numeric_limits<std::int64_t>::min()) &&
         (arg.end == std::numeric_limits<std::int64_t>::max());
@@ -103,7 +103,7 @@ MATCHER(RangeMinMax, "Matches the range with min and max")
 TEST_F(FullTableScannerTests, RangeSizeIsOne)
 {
     testing::MockFunction<void(migration::cassandra::impl::TokenRange const&, boost::asio::yield_context)> mockCallback;
-    EXPECT_CALL(mockCallback, Call(RangeMinMax(), testing::_)).Times(1);
+    EXPECT_CALL(mockCallback, Call(rangeMinMax(), testing::_)).Times(1);
     auto scanner = migration::cassandra::impl::FullTableScanner<TestScannerAdaper>(
         {.ctxThreadsNum = 2, .jobsNum = 1, .cursorsPerJob = 1}, TestScannerAdaper(mockCallback)
     );

@@ -39,7 +39,7 @@ class Connection;
  */
 class Response {
 public:
-    std::variant<boost::beast::http::response<boost::beast::http::string_body>, std::string> data_;
+    std::variant<boost::beast::http::response<boost::beast::http::string_body>, std::string> data;
 
 public:
     /**

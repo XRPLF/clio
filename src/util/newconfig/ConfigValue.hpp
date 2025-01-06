@@ -175,8 +175,7 @@ public:
      *
      * @return true if optional, false otherwise
      */
-    [[nodiscard]] constexpr bool
-    isOptional() const
+    [[nodiscard]] bool constexpr isOptional() const
     {
         return optional_;
     }
@@ -186,8 +185,7 @@ public:
      *
      * @return if value is optiona, false otherwise
      */
-    [[nodiscard]] constexpr bool
-    hasValue() const
+    [[nodiscard]] bool constexpr hasValue() const
     {
         return value_.has_value();
     }

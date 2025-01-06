@@ -50,9 +50,9 @@ class AccountOffersHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    static auto constexpr LIMIT_MIN = 10;
-    static auto constexpr LIMIT_MAX = 400;
-    static auto constexpr LIMIT_DEFAULT = 200;
+    static constexpr auto kLIMIT_MIN = 10;
+    static constexpr auto kLIMIT_MAX = 400;
+    static constexpr auto kLIMIT_DEFAULT = 200;
 
     /**
      * @brief A struct to hold data for one offer response
@@ -86,7 +86,7 @@ public:
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = LIMIT_DEFAULT;
+        uint32_t limit = kLIMIT_DEFAULT;
         std::optional<std::string> marker;
     };
 
@@ -111,20 +111,20 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const rpcSpec = RpcSpec{
-            {JS(account), validation::Required{}, validation::CustomValidators::AccountValidator},
-            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
-            {JS(marker), validation::CustomValidators::AccountMarkerValidator},
+        static auto const kRPC_SPEC = RpcSpec{
+            {JS(account), validation::Required{}, validation::CustomValidators::accountValidator},
+            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
+            {JS(marker), validation::CustomValidators::accountMarkerValidator},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
-             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
+             modifiers::Clamp<int32_t>{kLIMIT_MIN, kLIMIT_MAX}},
             {JS(ledger), check::Deprecated{}},
             {JS(strict), check::Deprecated{}},
         };
 
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     /**

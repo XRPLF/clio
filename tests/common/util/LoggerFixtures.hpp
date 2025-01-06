@@ -61,8 +61,8 @@ public:
     // Simulates the `util::Logger::init(config)` call
     LoggerFixture()
     {
-        static std::once_flag once_;
-        std::call_once(once_, [] {
+        static std::once_flag kONCE;
+        std::call_once(kONCE, [] {
             boost::log::add_common_attributes();
             boost::log::register_simple_formatter_factory<util::Severity, char>("Severity");
         });
@@ -73,16 +73,16 @@ public:
 
         core->remove_all_sinks();
         boost::log::add_console_log(stream_, keywords::format = "%Channel%:%Severity% %Message%");
-        auto min_severity = expr::channel_severity_filter(util::log_channel, util::log_severity);
+        auto minSeverity = expr::channel_severity_filter(util::LogChannel, util::LogSeverity);
 
-        std::ranges::for_each(util::Logger::CHANNELS, [&min_severity](char const* channel) {
-            min_severity[channel] = util::Severity::TRC;
+        std::ranges::for_each(util::Logger::kCHANNELS, [&minSeverity](char const* channel) {
+            minSeverity[channel] = util::Severity::TRC;
         });
 
-        min_severity["General"] = util::Severity::DBG;
-        min_severity["Trace"] = util::Severity::TRC;
+        minSeverity["General"] = util::Severity::DBG;
+        minSeverity["Trace"] = util::Severity::TRC;
 
-        core->set_filter(min_severity);
+        core->set_filter(minSeverity);
         core->set_logging_enabled(true);
     }
 

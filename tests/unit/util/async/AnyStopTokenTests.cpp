@@ -27,11 +27,12 @@ using namespace ::testing;
 
 namespace {
 struct FakeStopToken {
-    bool isStopRequested_ = false;
+    bool stopRequested = false;
+
     bool
     isStopRequested() const
     {
-        return isStopRequested_;
+        return stopRequested;
     }
 };
 }  // namespace

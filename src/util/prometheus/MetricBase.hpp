@@ -83,15 +83,7 @@ private:
     std::string labelsString_;
 };
 
-enum class MetricType {
-    COUNTER_INT,
-    COUNTER_DOUBLE,
-    GAUGE_INT,
-    GAUGE_DOUBLE,
-    HISTOGRAM_INT,
-    HISTOGRAM_DOUBLE,
-    SUMMARY
-};
+enum class MetricType { CounterInt, CounterDouble, GaugeInt, GaugeDouble, HistogramInt, HistogramDouble, Summary };
 
 char const*
 toString(MetricType type);

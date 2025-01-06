@@ -63,7 +63,7 @@ INSTANTIATE_TEST_CASE_P(
     JsonBoolCheckGroup,
     JsonBoolTests,
     ValuesIn(JsonBoolTests::generateTestValuesForParametersTest()),
-    tests::util::NameGenerator
+    tests::util::kNAME_GENERATOR
 );
 
 TEST_P(JsonBoolTests, Parse)

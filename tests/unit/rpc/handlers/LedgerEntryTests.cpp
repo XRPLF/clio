@@ -59,22 +59,26 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-constexpr static auto INDEX1 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
-constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
-constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-constexpr static auto ACCOUNT3 = "rhzcyub9SbyZ4YF1JYskN5rLrTDUuLZG6D";
-constexpr static auto RANGEMIN = 10;
-constexpr static auto RANGEMAX = 30;
-constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constexpr static auto TOKENID = "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA";
-constexpr static auto NFTID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
-constexpr static auto TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
-constexpr static auto CREDENTIALTYPE = "4B5943";
+namespace {
+
+constexpr auto kINDEX1 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
+constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+constexpr auto kACCOUNT3 = "rhzcyub9SbyZ4YF1JYskN5rLrTDUuLZG6D";
+constexpr auto kRANGE_MIN = 10;
+constexpr auto kRANGE_MAX = 30;
+constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr auto kTOKEN_ID = "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA";
+constexpr auto kNFT_ID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
+constexpr auto kTXN_ID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
+constexpr auto kCREDENTIAL_TYPE = "4B5943";
+
+}  // namespace
 
 struct RPCLedgerEntryTest : HandlerBaseTest {
     RPCLedgerEntryTest()
     {
-        backend->setRange(RANGEMIN, RANGEMAX);
+        backend_->setRange(kRANGE_MIN, kRANGE_MAX);
     }
 };
 
@@ -208,7 +212,7 @@ generateTestValuesForParametersTest()
                         "authorized": 123
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "authorizedNotString"
@@ -223,7 +227,7 @@ generateTestValuesForParametersTest()
                         "authorized_credentials": "asdf"
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "authorized_credentials not array"
@@ -238,7 +242,7 @@ generateTestValuesForParametersTest()
                         "authorized_credentials": ["C2F2A19C8D0D893D18F18FDCFE13A3ECB41767E48422DF07F2455CDA08FDF09B"]
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedAuthorizedCredentials",
             .expectedErrorMessage = "authorized_credentials elements in array are not objects."
@@ -252,7 +256,7 @@ generateTestValuesForParametersTest()
                         "owner": "{}"
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Must have one of authorized or authorized_credentials."
@@ -273,10 +277,10 @@ generateTestValuesForParametersTest()
                         ]
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT2,
-                ACCOUNT3,
-                CREDENTIALTYPE
+                kACCOUNT,
+                kACCOUNT2,
+                kACCOUNT3,
+                kCREDENTIAL_TYPE
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Must have one of authorized or authorized_credentials."
@@ -292,7 +296,7 @@ generateTestValuesForParametersTest()
                         ]
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedAuthorizedCredentials",
             .expectedErrorMessage = "Requires at least one element in authorized_credentials array."
@@ -311,8 +315,8 @@ generateTestValuesForParametersTest()
                         ]
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT2
             ),
             .expectedError = "malformedAuthorizedCredentials",
             .expectedErrorMessage = "Field 'CredentialType' is required but missing."
@@ -331,8 +335,8 @@ generateTestValuesForParametersTest()
                         ]
                     }}
                 }})",
-                ACCOUNT,
-                CREDENTIALTYPE
+                kACCOUNT,
+                kCREDENTIAL_TYPE
             ),
             .expectedError = "malformedAuthorizedCredentials",
             .expectedErrorMessage = "Field 'Issuer' is required but missing."
@@ -352,8 +356,8 @@ generateTestValuesForParametersTest()
                         ]
                     }}
                 }})",
-                ACCOUNT,
-                CREDENTIALTYPE
+                kACCOUNT,
+                kCREDENTIAL_TYPE
             ),
             .expectedError = "malformedAuthorizedCredentials",
             .expectedErrorMessage = "issuer NotString"
@@ -373,8 +377,8 @@ generateTestValuesForParametersTest()
                         ]
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT2
             ),
             .expectedError = "malformedAuthorizedCredentials",
             .expectedErrorMessage = "credential_type NotString"
@@ -394,8 +398,8 @@ generateTestValuesForParametersTest()
                         ]
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT2
             ),
             .expectedError = "malformedAuthorizedCredentials",
             .expectedErrorMessage = "credential_type NotHexString"
@@ -415,8 +419,8 @@ generateTestValuesForParametersTest()
                         ]
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT2
             ),
             .expectedError = "malformedAuthorizedCredentials",
             .expectedErrorMessage = "credential_type is empty"
@@ -440,11 +444,11 @@ generateTestValuesForParametersTest()
                         ]
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT2,
-                CREDENTIALTYPE,
-                ACCOUNT2,
-                CREDENTIALTYPE
+                kACCOUNT,
+                kACCOUNT2,
+                kCREDENTIAL_TYPE,
+                kACCOUNT2,
+                kCREDENTIAL_TYPE
             ),
             .expectedError = "malformedAuthorizedCredentials",
             .expectedErrorMessage = "duplicates in credentials."
@@ -510,7 +514,7 @@ generateTestValuesForParametersTest()
                         "ticket_seq": "123"
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -576,7 +580,7 @@ generateTestValuesForParametersTest()
                         "seq": "123"
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -642,7 +646,7 @@ generateTestValuesForParametersTest()
                         "seq": "123"
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -685,7 +689,7 @@ generateTestValuesForParametersTest()
                         "accounts" : ["{}"]
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "malformedAccounts"
@@ -700,8 +704,8 @@ generateTestValuesForParametersTest()
                         "currency": "USD"
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT
+                kACCOUNT,
+                kACCOUNT
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "malformedAccounts"
@@ -716,7 +720,7 @@ generateTestValuesForParametersTest()
                         "currency": "USD"
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "malformedAccounts"
@@ -731,7 +735,7 @@ generateTestValuesForParametersTest()
                         "currency": "USD"
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedAddress",
             .expectedErrorMessage = "malformedAddresses"
@@ -746,8 +750,8 @@ generateTestValuesForParametersTest()
                         "currency": "XXXX"
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT2
             ),
             .expectedError = "malformedCurrency",
             .expectedErrorMessage = "malformedCurrency"
@@ -762,8 +766,8 @@ generateTestValuesForParametersTest()
                         "currency": 123
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT2
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "currencyNotString"
@@ -849,8 +853,8 @@ generateTestValuesForParametersTest()
                         "owner": "{}"
                     }}
                 }})",
-                INDEX1,
-                ACCOUNT
+                kINDEX1,
+                kACCOUNT
             ),
             .expectedError = "invalidParams",
             .expectedErrorMessage = "mayNotSpecifyBothDirRootAndOwner"
@@ -865,7 +869,7 @@ generateTestValuesForParametersTest()
                         "sub_index": "not int"
                     }}
                 }})",
-                INDEX1
+                kINDEX1
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -915,7 +919,7 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -935,7 +939,7 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -954,7 +958,7 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -973,7 +977,7 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -993,7 +997,7 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1013,7 +1017,7 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1036,7 +1040,7 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1059,7 +1063,7 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1082,7 +1086,7 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1106,8 +1110,8 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT
+                kACCOUNT,
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1129,7 +1133,7 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1153,10 +1157,10 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
+                kACCOUNT,
+                kACCOUNT,
                 "JPY",
-                ACCOUNT2
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1181,11 +1185,11 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
-                ACCOUNT,
+                kACCOUNT,
+                kACCOUNT,
+                kACCOUNT,
                 1,
-                ACCOUNT2
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1210,9 +1214,9 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
-                ACCOUNT,
+                kACCOUNT,
+                kACCOUNT,
+                kACCOUNT,
                 "JPY",
                 2
             ),
@@ -1235,9 +1239,9 @@ generateTestValuesForParametersTest()
                         "IssuingChainIssue": 1
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
-                ACCOUNT
+                kACCOUNT,
+                kACCOUNT,
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1262,10 +1266,10 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
+                kACCOUNT,
+                kACCOUNT,
                 "JPY",
-                ACCOUNT2
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1290,10 +1294,10 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
+                kACCOUNT,
+                kACCOUNT,
                 "JPY",
-                ACCOUNT2
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1318,9 +1322,9 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
-                ACCOUNT,
+                kACCOUNT,
+                kACCOUNT,
+                kACCOUNT,
                 "JPY"
             ),
             .expectedError = "malformedRequest",
@@ -1346,10 +1350,10 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
-                ACCOUNT2,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT,
+                kACCOUNT2,
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1375,11 +1379,11 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
-                ACCOUNT2,
-                ACCOUNT2,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT,
+                kACCOUNT2,
+                kACCOUNT2,
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1403,9 +1407,9 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT,
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1430,10 +1434,10 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT2,
-                ACCOUNT2,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT2,
+                kACCOUNT2,
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1457,9 +1461,9 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT,
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1480,10 +1484,10 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
-                ACCOUNT,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT,
+                kACCOUNT,
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1504,10 +1508,10 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
-                ACCOUNT,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT,
+                kACCOUNT,
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1519,7 +1523,7 @@ generateTestValuesForParametersTest()
                     "bridge_account": "{}",
                     "bridge": "invalid"
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1551,10 +1555,10 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
+                kACCOUNT,
+                kACCOUNT,
                 "JPY",
-                ACCOUNT2
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1578,9 +1582,9 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
+                kACCOUNT,
                 "JPY",
-                ACCOUNT2
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1600,8 +1604,8 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT
+                kACCOUNT,
+                kACCOUNT
             ),
 
             .expectedError = "malformedRequest",
@@ -1627,9 +1631,9 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
+                kACCOUNT,
                 "JPY",
-                ACCOUNT2
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1653,8 +1657,8 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
+                kACCOUNT,
+                kACCOUNT,
                 "JPY"
             ),
             .expectedError = "malformedRequest",
@@ -1687,10 +1691,10 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
+                kACCOUNT,
+                kACCOUNT,
                 "JPY",
-                ACCOUNT2
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1714,9 +1718,9 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
+                kACCOUNT,
                 "JPY",
-                ACCOUNT2
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1736,8 +1740,8 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT
+                kACCOUNT,
+                kACCOUNT
             ),
 
             .expectedError = "malformedRequest",
@@ -1763,9 +1767,9 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
+                kACCOUNT,
                 "JPY",
-                ACCOUNT2
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1789,8 +1793,8 @@ generateTestValuesForParametersTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
+                kACCOUNT,
+                kACCOUNT,
                 "JPY"
             ),
             .expectedError = "malformedRequest",
@@ -1804,7 +1808,7 @@ generateTestValuesForParametersTest()
                         "account": "{}"
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -1818,7 +1822,7 @@ generateTestValuesForParametersTest()
                         "oracle_document_id": -1
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedDocumentID",
             .expectedErrorMessage = "Malformed oracle_document_id."
@@ -1832,7 +1836,7 @@ generateTestValuesForParametersTest()
                         "oracle_document_id": "invalid"
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedDocumentID",
             .expectedErrorMessage = "Malformed oracle_document_id."
@@ -1846,7 +1850,7 @@ generateTestValuesForParametersTest()
                         "oracle_document_id": 3.21
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedDocumentID",
             .expectedErrorMessage = "Malformed oracle_document_id."
@@ -1860,7 +1864,7 @@ generateTestValuesForParametersTest()
                         "oracle_document_id": {{}}
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedDocumentID",
             .expectedErrorMessage = "Malformed oracle_document_id."
@@ -1874,7 +1878,7 @@ generateTestValuesForParametersTest()
                         "oracle_document_id": []
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedDocumentID",
             .expectedErrorMessage = "Malformed oracle_document_id."
@@ -1888,7 +1892,7 @@ generateTestValuesForParametersTest()
                         "oracle_document_id": null
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedDocumentID",
             .expectedErrorMessage = "Malformed oracle_document_id."
@@ -2027,7 +2031,7 @@ generateTestValuesForParametersTest()
                     "issuer": ["{}"]
                 }}
             }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -2074,7 +2078,7 @@ generateTestValuesForParametersTest()
                         "account": "{}"
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -2089,8 +2093,8 @@ generateTestValuesForParametersTest()
                     "credential_type": 1234
                 }}
             }})",
-                ACCOUNT,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -2104,8 +2108,8 @@ generateTestValuesForParametersTest()
                     "credential_type": "1234"
                 }}
             }})",
-                ACCOUNT,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT2
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -2140,14 +2144,14 @@ INSTANTIATE_TEST_CASE_P(
     RPCLedgerEntryGroup1,
     LedgerEntryParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    tests::util::NameGenerator
+    tests::util::kNAME_GENERATOR
 );
 
 TEST_P(LedgerEntryParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -2182,7 +2186,7 @@ TEST_P(IndexTest, InvalidIndexUint256)
 {
     auto const index = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "{}": "invalid"
@@ -2202,7 +2206,7 @@ TEST_P(IndexTest, InvalidIndexNotString)
 {
     auto const index = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "{}": 123
@@ -2221,20 +2225,20 @@ TEST_P(IndexTest, InvalidIndexNotString)
 TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
 {
     // return valid ledgerHeader
-    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
 
     // return null for ledger entry
-    auto const key = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
-    EXPECT_CALL(*backend, doFetchLedgerObject(key, RANGEMAX, _)).WillRepeatedly(Return(std::optional<Blob>{}));
+    auto const key = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(key, kRANGE_MAX, _)).WillRepeatedly(Return(std::optional<Blob>{}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "account_root": "{}"
             }})",
-            ACCOUNT
+            kACCOUNT
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -2255,8 +2259,8 @@ struct RPCLedgerEntryNormalPathTest : public RPCLedgerEntryTest, public WithPara
 static auto
 generateTestValuesForNormalPathTest()
 {
-    auto account1 = GetAccountIDWithString(ACCOUNT);
-    auto account2 = GetAccountIDWithString(ACCOUNT2);
+    auto account1 = getAccountIdWithString(kACCOUNT);
+    auto account2 = getAccountIdWithString(kACCOUNT2);
     ripple::Currency currency;
     ripple::to_currency(currency, "USD");
 
@@ -2268,10 +2272,10 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "index": "{}"
                 }})",
-                INDEX1
+                kINDEX1
             ),
-            .expectedIndex = ripple::uint256{INDEX1},
-            .mockedEntity = CreateAccountRootObject(ACCOUNT2, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3)
+            .expectedIndex = ripple::uint256{kINDEX1},
+            .mockedEntity = createAccountRootObject(kACCOUNT2, ripple::lsfGlobalFreeze, 1, 10, 2, kINDEX1, 3)
         },
         NormalPathTestBundle{
             .testName = "Payment_channel",
@@ -2280,10 +2284,10 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "payment_channel": "{}"
                 }})",
-                INDEX1
+                kINDEX1
             ),
-            .expectedIndex = ripple::uint256{INDEX1},
-            .mockedEntity = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400)
+            .expectedIndex = ripple::uint256{kINDEX1},
+            .mockedEntity = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 200, 300, kINDEX1, 400)
         },
         NormalPathTestBundle{
             .testName = "Nft_page",
@@ -2292,11 +2296,11 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "nft_page": "{}"
                 }})",
-                INDEX1
+                kINDEX1
             ),
-            .expectedIndex = ripple::uint256{INDEX1},
-            .mockedEntity = CreateNFTTokenPage(
-                std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, std::nullopt
+            .expectedIndex = ripple::uint256{kINDEX1},
+            .mockedEntity = createNftTokenPage(
+                std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, std::nullopt
             )
         },
         NormalPathTestBundle{
@@ -2306,10 +2310,10 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "check": "{}"
                 }})",
-                INDEX1
+                kINDEX1
             ),
-            .expectedIndex = ripple::uint256{INDEX1},
-            .mockedEntity = CreateCheckLedgerObject(ACCOUNT, ACCOUNT2)
+            .expectedIndex = ripple::uint256{kINDEX1},
+            .mockedEntity = createCheckLedgerObject(kACCOUNT, kACCOUNT2)
         },
         NormalPathTestBundle{
             .testName = "DirectoryIndex",
@@ -2318,10 +2322,10 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "directory": "{}"
                 }})",
-                INDEX1
+                kINDEX1
             ),
-            .expectedIndex = ripple::uint256{INDEX1},
-            .mockedEntity = CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)
+            .expectedIndex = ripple::uint256{kINDEX1},
+            .mockedEntity = createOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{kINDEX1}}, kINDEX1)
         },
         NormalPathTestBundle{
             .testName = "OfferIndex",
@@ -2330,11 +2334,11 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "offer": "{}"
                 }})",
-                INDEX1
+                kINDEX1
             ),
-            .expectedIndex = ripple::uint256{INDEX1},
-            .mockedEntity = CreateOfferLedgerObject(
-                ACCOUNT, 100, 200, "USD", "XRP", ACCOUNT2, ripple::toBase58(ripple::xrpAccount()), INDEX1
+            .expectedIndex = ripple::uint256{kINDEX1},
+            .mockedEntity = createOfferLedgerObject(
+                kACCOUNT, 100, 200, "USD", "XRP", kACCOUNT2, ripple::toBase58(ripple::xrpAccount()), kINDEX1
             )
         },
         NormalPathTestBundle{
@@ -2344,10 +2348,10 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "escrow": "{}"
                 }})",
-                INDEX1
+                kINDEX1
             ),
-            .expectedIndex = ripple::uint256{INDEX1},
-            .mockedEntity = CreateEscrowLedgerObject(ACCOUNT, ACCOUNT2)
+            .expectedIndex = ripple::uint256{kINDEX1},
+            .mockedEntity = createEscrowLedgerObject(kACCOUNT, kACCOUNT2)
         },
         NormalPathTestBundle{
             .testName = "TicketIndex",
@@ -2356,10 +2360,10 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "ticket": "{}"
                 }})",
-                INDEX1
+                kINDEX1
             ),
-            .expectedIndex = ripple::uint256{INDEX1},
-            .mockedEntity = CreateTicketLedgerObject(ACCOUNT, 0)
+            .expectedIndex = ripple::uint256{kINDEX1},
+            .mockedEntity = createTicketLedgerObject(kACCOUNT, 0)
         },
         NormalPathTestBundle{
             .testName = "DepositPreauthIndex",
@@ -2368,10 +2372,10 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "deposit_preauth": "{}"
                 }})",
-                INDEX1
+                kINDEX1
             ),
-            .expectedIndex = ripple::uint256{INDEX1},
-            .mockedEntity = CreateDepositPreauthLedgerObjectByAuth(ACCOUNT, ACCOUNT2)
+            .expectedIndex = ripple::uint256{kINDEX1},
+            .mockedEntity = createDepositPreauthLedgerObjectByAuth(kACCOUNT, kACCOUNT2)
         },
         NormalPathTestBundle{
             .testName = "AccountRoot",
@@ -2380,10 +2384,10 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "account_root": "{}"
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
-            .expectedIndex = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key,
-            .mockedEntity = CreateAccountRootObject(ACCOUNT, 0, 1, 1, 1, INDEX1, 1)
+            .expectedIndex = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key,
+            .mockedEntity = createAccountRootObject(kACCOUNT, 0, 1, 1, 1, kINDEX1, 1)
         },
         NormalPathTestBundle{
             .testName = "DID",
@@ -2392,10 +2396,10 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "did": "{}"
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
-            .expectedIndex = ripple::keylet::did(GetAccountIDWithString(ACCOUNT)).key,
-            .mockedEntity = CreateDidObject(ACCOUNT, "mydocument", "myURI", "mydata")
+            .expectedIndex = ripple::keylet::did(getAccountIdWithString(kACCOUNT)).key,
+            .mockedEntity = createDidObject(kACCOUNT, "mydocument", "myURI", "mydata")
         },
         NormalPathTestBundle{
             .testName = "DirectoryViaDirRoot",
@@ -2407,10 +2411,10 @@ generateTestValuesForNormalPathTest()
                         "sub_index": 2
                     }}
                 }})",
-                INDEX1
+                kINDEX1
             ),
-            .expectedIndex = ripple::keylet::page(ripple::uint256{INDEX1}, 2).key,
-            .mockedEntity = CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)
+            .expectedIndex = ripple::keylet::page(ripple::uint256{kINDEX1}, 2).key,
+            .mockedEntity = createOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{kINDEX1}}, kINDEX1)
         },
         NormalPathTestBundle{
             .testName = "DirectoryViaOwner",
@@ -2422,10 +2426,10 @@ generateTestValuesForNormalPathTest()
                         "sub_index": 2
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedIndex = ripple::keylet::page(ripple::keylet::ownerDir(account1), 2).key,
-            .mockedEntity = CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)
+            .mockedEntity = createOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{kINDEX1}}, kINDEX1)
         },
         NormalPathTestBundle{
             .testName = "DirectoryViaDefaultSubIndex",
@@ -2436,11 +2440,11 @@ generateTestValuesForNormalPathTest()
                         "owner": "{}"
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             // default sub_index is 0
             .expectedIndex = ripple::keylet::page(ripple::keylet::ownerDir(account1), 0).key,
-            .mockedEntity = CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)
+            .mockedEntity = createOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{kINDEX1}}, kINDEX1)
         },
         NormalPathTestBundle{
             .testName = "Escrow",
@@ -2452,10 +2456,10 @@ generateTestValuesForNormalPathTest()
                         "seq": 1
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedIndex = ripple::keylet::escrow(account1, 1).key,
-            .mockedEntity = CreateEscrowLedgerObject(ACCOUNT, ACCOUNT2)
+            .mockedEntity = createEscrowLedgerObject(kACCOUNT, kACCOUNT2)
         },
         NormalPathTestBundle{
             .testName = "DepositPreauthByAuth",
@@ -2467,11 +2471,11 @@ generateTestValuesForNormalPathTest()
                         "authorized": "{}"
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT2
             ),
             .expectedIndex = ripple::keylet::depositPreauth(account1, account2).key,
-            .mockedEntity = CreateDepositPreauthLedgerObjectByAuth(ACCOUNT, ACCOUNT2)
+            .mockedEntity = createDepositPreauthLedgerObjectByAuth(kACCOUNT, kACCOUNT2)
         },
         NormalPathTestBundle{
             .testName = "DepositPreauthByAuthCredentials",
@@ -2488,19 +2492,19 @@ generateTestValuesForNormalPathTest()
                            ]
                        }}
                    }})",
-                ACCOUNT,
-                ACCOUNT2,
-                CREDENTIALTYPE
+                kACCOUNT,
+                kACCOUNT2,
+                kCREDENTIAL_TYPE
             ),
             .expectedIndex =
                 ripple::keylet::depositPreauth(
                     account1,
-                    credentials::createAuthCredentials(CreateAuthCredentialArray(
-                        std::vector<std::string_view>{ACCOUNT2}, std::vector<std::string_view>{CREDENTIALTYPE}
+                    credentials::createAuthCredentials(createAuthCredentialArray(
+                        std::vector<std::string_view>{kACCOUNT2}, std::vector<std::string_view>{kCREDENTIAL_TYPE}
                     ))
                 )
                     .key,
-            .mockedEntity = CreateDepositPreauthLedgerObjectByAuthCredentials(ACCOUNT, ACCOUNT2, CREDENTIALTYPE)
+            .mockedEntity = createDepositPreauthLedgerObjectByAuthCredentials(kACCOUNT, kACCOUNT2, kCREDENTIAL_TYPE)
         },
         NormalPathTestBundle{
             .testName = "Credentials",
@@ -2513,18 +2517,20 @@ generateTestValuesForNormalPathTest()
                         "credential_type": "{}"
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT2,
-                CREDENTIALTYPE
+                kACCOUNT,
+                kACCOUNT2,
+                kCREDENTIAL_TYPE
             ),
             .expectedIndex =
                 ripple::keylet::credential(
                     account1,
                     account2,
-                    ripple::Slice(ripple::strUnHex(CREDENTIALTYPE)->data(), ripple::strUnHex(CREDENTIALTYPE)->size())
+                    ripple::Slice(
+                        ripple::strUnHex(kCREDENTIAL_TYPE)->data(), ripple::strUnHex(kCREDENTIAL_TYPE)->size()
+                    )
                 )
                     .key,
-            .mockedEntity = CreateCredentialObject(ACCOUNT, ACCOUNT2, CREDENTIALTYPE)
+            .mockedEntity = createCredentialObject(kACCOUNT, kACCOUNT2, kCREDENTIAL_TYPE)
         },
         NormalPathTestBundle{
             .testName = "RippleState",
@@ -2536,12 +2542,12 @@ generateTestValuesForNormalPathTest()
                         "currency": "USD"
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT2
+                kACCOUNT,
+                kACCOUNT2
             ),
             .expectedIndex = ripple::keylet::line(account1, account2, currency).key,
             .mockedEntity =
-                CreateRippleStateLedgerObject("USD", ACCOUNT2, 100, ACCOUNT, 10, ACCOUNT2, 20, INDEX1, 123, 0)
+                createRippleStateLedgerObject("USD", kACCOUNT2, 100, kACCOUNT, 10, kACCOUNT2, 20, kINDEX1, 123, 0)
         },
         NormalPathTestBundle{
             .testName = "Ticket",
@@ -2553,10 +2559,10 @@ generateTestValuesForNormalPathTest()
                         "ticket_seq": 2
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedIndex = ripple::getTicketIndex(account1, 2),
-            .mockedEntity = CreateTicketLedgerObject(ACCOUNT, 0)
+            .mockedEntity = createTicketLedgerObject(kACCOUNT, 0)
         },
         NormalPathTestBundle{
             .testName = "Offer",
@@ -2568,11 +2574,11 @@ generateTestValuesForNormalPathTest()
                         "seq": 2
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
             .expectedIndex = ripple::keylet::offer(account1, 2).key,
-            .mockedEntity = CreateOfferLedgerObject(
-                ACCOUNT, 100, 200, "USD", "XRP", ACCOUNT2, ripple::toBase58(ripple::xrpAccount()), INDEX1
+            .mockedEntity = createOfferLedgerObject(
+                kACCOUNT, 100, 200, "USD", "XRP", kACCOUNT2, ripple::toBase58(ripple::xrpAccount()), kINDEX1
             )
         },
         NormalPathTestBundle{
@@ -2582,10 +2588,10 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "amm": "{}"
                 }})",
-                INDEX1
+                kINDEX1
             ),
-            .expectedIndex = ripple::uint256{INDEX1},
-            .mockedEntity = CreateAMMObject(ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", ACCOUNT2)
+            .expectedIndex = ripple::uint256{kINDEX1},
+            .mockedEntity = createAmmObject(kACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", kACCOUNT2)
         },
         NormalPathTestBundle{
             .testName = "AMMViaJson",
@@ -2603,12 +2609,12 @@ generateTestValuesForNormalPathTest()
                     }}
                 }})",
                 "JPY",
-                ACCOUNT2
+                kACCOUNT2
             ),
             .expectedIndex =
-                ripple::keylet::amm(GetIssue("XRP", ripple::toBase58(ripple::xrpAccount())), GetIssue("JPY", ACCOUNT2))
+                ripple::keylet::amm(getIssue("XRP", ripple::toBase58(ripple::xrpAccount())), getIssue("JPY", kACCOUNT2))
                     .key,
-            .mockedEntity = CreateAMMObject(ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", ACCOUNT2)
+            .mockedEntity = createAmmObject(kACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", kACCOUNT2)
         },
         NormalPathTestBundle{
             .testName = "BridgeLocking",
@@ -2628,22 +2634,22 @@ generateTestValuesForNormalPathTest()
                         }}
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT,
-                ACCOUNT2,
-                ACCOUNT3
+                kACCOUNT,
+                kACCOUNT,
+                kACCOUNT2,
+                kACCOUNT3
             ),
             .expectedIndex = ripple::keylet::bridge(
                                  ripple::STXChainBridge(
-                                     GetAccountIDWithString(ACCOUNT),
+                                     getAccountIdWithString(kACCOUNT),
                                      ripple::xrpIssue(),
-                                     GetAccountIDWithString(ACCOUNT2),
-                                     GetIssue("JPY", ACCOUNT3)
+                                     getAccountIdWithString(kACCOUNT2),
+                                     getIssue("JPY", kACCOUNT3)
                                  ),
                                  ripple::STXChainBridge::ChainType::locking
             )
                                  .key,
-            .mockedEntity = CreateBridgeObject(ACCOUNT, ACCOUNT, ACCOUNT2, "JPY", ACCOUNT3)
+            .mockedEntity = createBridgeObject(kACCOUNT, kACCOUNT, kACCOUNT2, "JPY", kACCOUNT3)
         },
         NormalPathTestBundle{
             .testName = "BridgeIssuing",
@@ -2663,22 +2669,22 @@ generateTestValuesForNormalPathTest()
                         }}
                     }}
                 }})",
-                ACCOUNT2,
-                ACCOUNT,
-                ACCOUNT2,
-                ACCOUNT3
+                kACCOUNT2,
+                kACCOUNT,
+                kACCOUNT2,
+                kACCOUNT3
             ),
             .expectedIndex = ripple::keylet::bridge(
                                  ripple::STXChainBridge(
-                                     GetAccountIDWithString(ACCOUNT),
+                                     getAccountIdWithString(kACCOUNT),
                                      ripple::xrpIssue(),
-                                     GetAccountIDWithString(ACCOUNT2),
-                                     GetIssue("JPY", ACCOUNT3)
+                                     getAccountIdWithString(kACCOUNT2),
+                                     getIssue("JPY", kACCOUNT3)
                                  ),
                                  ripple::STXChainBridge::ChainType::issuing
             )
                                  .key,
-            .mockedEntity = CreateBridgeObject(ACCOUNT, ACCOUNT, ACCOUNT2, "JPY", ACCOUNT3)
+            .mockedEntity = createBridgeObject(kACCOUNT, kACCOUNT, kACCOUNT2, "JPY", kACCOUNT3)
         },
         NormalPathTestBundle{
             .testName = "XChainOwnedClaimId",
@@ -2698,21 +2704,21 @@ generateTestValuesForNormalPathTest()
                         "xchain_owned_claim_id": 10
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT2,
-                ACCOUNT3
+                kACCOUNT,
+                kACCOUNT2,
+                kACCOUNT3
             ),
             .expectedIndex = ripple::keylet::xChainClaimID(
                                  ripple::STXChainBridge(
-                                     GetAccountIDWithString(ACCOUNT),
+                                     getAccountIdWithString(kACCOUNT),
                                      ripple::xrpIssue(),
-                                     GetAccountIDWithString(ACCOUNT2),
-                                     GetIssue("JPY", ACCOUNT3)
+                                     getAccountIdWithString(kACCOUNT2),
+                                     getIssue("JPY", kACCOUNT3)
                                  ),
                                  10
             )
                                  .key,
-            .mockedEntity = CreateChainOwnedClaimIDObject(ACCOUNT, ACCOUNT, ACCOUNT2, "JPY", ACCOUNT3, ACCOUNT)
+            .mockedEntity = createChainOwnedClaimIdObject(kACCOUNT, kACCOUNT, kACCOUNT2, "JPY", kACCOUNT3, kACCOUNT)
         },
         NormalPathTestBundle{
             .testName = "XChainOwnedCreateAccountClaimId",
@@ -2732,21 +2738,21 @@ generateTestValuesForNormalPathTest()
                         "xchain_owned_create_account_claim_id": 10
                     }}
                 }})",
-                ACCOUNT,
-                ACCOUNT2,
-                ACCOUNT3
+                kACCOUNT,
+                kACCOUNT2,
+                kACCOUNT3
             ),
             .expectedIndex = ripple::keylet::xChainCreateAccountClaimID(
                                  ripple::STXChainBridge(
-                                     GetAccountIDWithString(ACCOUNT),
+                                     getAccountIdWithString(kACCOUNT),
                                      ripple::xrpIssue(),
-                                     GetAccountIDWithString(ACCOUNT2),
-                                     GetIssue("JPY", ACCOUNT3)
+                                     getAccountIdWithString(kACCOUNT2),
+                                     getIssue("JPY", kACCOUNT3)
                                  ),
                                  10
             )
                                  .key,
-            .mockedEntity = CreateChainOwnedClaimIDObject(ACCOUNT, ACCOUNT, ACCOUNT2, "JPY", ACCOUNT3, ACCOUNT)
+            .mockedEntity = createChainOwnedClaimIdObject(kACCOUNT, kACCOUNT, kACCOUNT2, "JPY", kACCOUNT3, kACCOUNT)
         },
         NormalPathTestBundle{
             .testName = "OracleEntryFoundViaIntOracleDocumentId",
@@ -2758,20 +2764,20 @@ generateTestValuesForNormalPathTest()
                         "oracle_document_id": 1
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
-            .expectedIndex = ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), 1).key,
-            .mockedEntity = CreateOracleObject(
-                ACCOUNT,
+            .expectedIndex = ripple::keylet::oracle(getAccountIdWithString(kACCOUNT), 1).key,
+            .mockedEntity = createOracleObject(
+                kACCOUNT,
                 "70726F7669646572",
                 32u,
                 1234u,
                 ripple::Blob(8, 's'),
                 ripple::Blob(8, 's'),
-                RANGEMAX - 2,
+                kRANGE_MAX - 2,
                 ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
-                CreatePriceDataSeries(
-                    {CreateOraclePriceData(2e4, ripple::to_currency("XRP"), ripple::to_currency("USD"), 3)}
+                createPriceDataSeries(
+                    {createOraclePriceData(2e4, ripple::to_currency("XRP"), ripple::to_currency("USD"), 3)}
                 )
             )
         },
@@ -2785,20 +2791,20 @@ generateTestValuesForNormalPathTest()
                         "oracle_document_id": "1"
                     }}
                 }})",
-                ACCOUNT
+                kACCOUNT
             ),
-            .expectedIndex = ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), 1).key,
-            .mockedEntity = CreateOracleObject(
-                ACCOUNT,
+            .expectedIndex = ripple::keylet::oracle(getAccountIdWithString(kACCOUNT), 1).key,
+            .mockedEntity = createOracleObject(
+                kACCOUNT,
                 "70726F7669646572",
                 32u,
                 1234u,
                 ripple::Blob(8, 's'),
                 ripple::Blob(8, 's'),
-                RANGEMAX - 2,
+                kRANGE_MAX - 2,
                 ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
-                CreatePriceDataSeries(
-                    {CreateOraclePriceData(2e4, ripple::to_currency("XRP"), ripple::to_currency("USD"), 3)}
+                createPriceDataSeries(
+                    {createOraclePriceData(2e4, ripple::to_currency("XRP"), ripple::to_currency("USD"), 3)}
                 )
             )
         },
@@ -2809,20 +2815,20 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "oracle": "{}"
                 }})",
-                ripple::to_string(ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), 1).key)
+                ripple::to_string(ripple::keylet::oracle(getAccountIdWithString(kACCOUNT), 1).key)
             ),
-            .expectedIndex = ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), 1).key,
-            .mockedEntity = CreateOracleObject(
-                ACCOUNT,
+            .expectedIndex = ripple::keylet::oracle(getAccountIdWithString(kACCOUNT), 1).key,
+            .mockedEntity = createOracleObject(
+                kACCOUNT,
                 "70726F7669646572",
                 64u,
                 4321u,
                 ripple::Blob(8, 'a'),
                 ripple::Blob(8, 'a'),
-                RANGEMAX - 4,
+                kRANGE_MAX - 4,
                 ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
-                CreatePriceDataSeries(
-                    {CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)}
+                createPriceDataSeries(
+                    {createOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)}
                 )
             )
         },
@@ -2836,7 +2842,7 @@ generateTestValuesForNormalPathTest()
                 ripple::to_string(ripple::makeMptID(2, account1))
             ),
             .expectedIndex = ripple::keylet::mptIssuance(ripple::makeMptID(2, account1)).key,
-            .mockedEntity = CreateMPTIssuanceObject(ACCOUNT, 2, "metadata")
+            .mockedEntity = createMptIssuanceObject(kACCOUNT, 2, "metadata")
         },
         NormalPathTestBundle{
             .testName = "MPTokenViaIndex",
@@ -2845,10 +2851,10 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "mptoken": "{}"
                 }})",
-                INDEX1
+                kINDEX1
             ),
-            .expectedIndex = ripple::uint256{INDEX1},
-            .mockedEntity = CreateMPTokenObject(ACCOUNT, ripple::makeMptID(2, account1))
+            .expectedIndex = ripple::uint256{kINDEX1},
+            .mockedEntity = createMpTokenObject(kACCOUNT, ripple::makeMptID(2, account1))
         },
         NormalPathTestBundle{
             .testName = "MPTokenViaObject",
@@ -2860,11 +2866,11 @@ generateTestValuesForNormalPathTest()
                         "mpt_issuance_id": "{}"
                     }}
                 }})",
-                ACCOUNT,
+                kACCOUNT,
                 ripple::to_string(ripple::makeMptID(2, account1))
             ),
             .expectedIndex = ripple::keylet::mptoken(ripple::makeMptID(2, account1), account1).key,
-            .mockedEntity = CreateMPTokenObject(ACCOUNT, ripple::makeMptID(2, account1))
+            .mockedEntity = createMpTokenObject(kACCOUNT, ripple::makeMptID(2, account1))
         },
     };
 }
@@ -2873,7 +2879,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCLedgerEntryGroup2,
     RPCLedgerEntryNormalPathTest,
     ValuesIn(generateTestValuesForNormalPathTest()),
-    tests::util::NameGenerator
+    tests::util::kNAME_GENERATOR
 );
 
 // Test for normal path
@@ -2883,19 +2889,19 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
     auto const testBundle = GetParam();
 
     // return valid ledgerHeader
-    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
 
-    EXPECT_CALL(*backend, doFetchLedgerObject(testBundle.expectedIndex, RANGEMAX, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(testBundle.expectedIndex, kRANGE_MAX, _))
         .WillRepeatedly(Return(testBundle.mockedEntity.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result.value().at("ledger_hash").as_string(), LEDGERHASH);
-        EXPECT_EQ(output.result.value().at("ledger_index").as_uint64(), RANGEMAX);
+        EXPECT_EQ(output.result.value().at("ledger_hash").as_string(), kLEDGER_HASH);
+        EXPECT_EQ(output.result.value().at("ledger_index").as_uint64(), kRANGE_MAX);
         EXPECT_EQ(
             output.result.value().at("node_binary").as_string(),
             ripple::strHex(testBundle.mockedEntity.getSerializer().peekData())
@@ -2910,7 +2916,7 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
 // this testcase will test the deserialization of ledger entry
 TEST_F(RPCLedgerEntryTest, BinaryFalse)
 {
-    static auto constexpr OUT = R"({
+    static constexpr auto kOUT = R"({
         "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index":30,
         "validated":true,
@@ -2932,46 +2938,46 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
     })";
 
     // return valid ledgerHeader
-    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
 
     // return valid ledger entry which can be deserialized
-    auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+    auto const ledgerEntry = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 200, 300, kINDEX1, 400);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "payment_channel": "{}"
             }})",
-            INDEX1
+            kINDEX1
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(kOUT));
     });
 }
 
 TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
 {
     // return valid ledgerHeader
-    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
 
     // return valid ledger entry which can be deserialized
-    auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+    auto const ledgerEntry = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 200, 300, kINDEX1, 400);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "check": "{}"
             }})",
-            INDEX1
+            kINDEX1
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -2982,17 +2988,17 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
 
 TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "check": "{}",
                 "ledger_index": {}
             }})",
-            INDEX1,
-            RANGEMAX
+            kINDEX1,
+            kRANGE_MAX
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -3004,17 +3010,17 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
 
 TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "check": "{}",
                 "ledger_index": "{}"
             }})",
-            INDEX1,
-            RANGEMAX
+            kINDEX1,
+            kRANGE_MAX
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -3026,17 +3032,17 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
 
 TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
 {
-    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillRepeatedly(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "check": "{}",
                 "ledger_hash": "{}"
             }})",
-            INDEX1,
-            LEDGERHASH
+            kINDEX1,
+            kLEDGER_HASH
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -3049,7 +3055,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
 TEST_F(RPCLedgerEntryTest, InvalidEntryTypeVersion2)
 {
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(R"({})");
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
         ASSERT_FALSE(output);
@@ -3062,7 +3068,7 @@ TEST_F(RPCLedgerEntryTest, InvalidEntryTypeVersion2)
 TEST_F(RPCLedgerEntryTest, InvalidEntryTypeVersion1)
 {
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(R"({})");
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1});
         ASSERT_FALSE(output);
@@ -3082,7 +3088,7 @@ TEST(RPCLedgerEntrySpecTest, DeprecatedFields)
     auto const& warning = warnings[0].as_object();
     ASSERT_TRUE(warning.contains("id"));
     ASSERT_TRUE(warning.contains("message"));
-    EXPECT_EQ(warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::warnRPC_DEPRECATED));
+    EXPECT_EQ(warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::WarnRpcDeprecated));
     EXPECT_NE(warning.at("message").as_string().find("Field 'ledger' is deprecated."), std::string::npos) << warning;
 }
 
@@ -3090,7 +3096,7 @@ TEST(RPCLedgerEntrySpecTest, DeprecatedFields)
 // Expected Result: same as BinaryFalse
 TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleted)
 {
-    static auto constexpr OUT = R"({
+    static constexpr auto kOUT = R"({
         "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index": 30,
         "validated": true,
@@ -3112,26 +3118,26 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleted)
     })";
 
     // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    auto const ledgerinfo = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerinfo));
 
     // return valid ledger entry which can be deserialized
-    auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+    auto const ledgerEntry = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 200, 300, kINDEX1, 400);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "index": "{}",
                 "include_deleted": true
             }})",
-            INDEX1
+            kINDEX1
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(kOUT));
     });
 }
 
@@ -3139,7 +3145,7 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleted)
 // Expected Result: return the latest object that is not deleted
 TEST_F(RPCLedgerEntryTest, LedgerEntryDeleted)
 {
-    static auto constexpr OUT = R"({
+    static constexpr auto kOUT = R"({
         "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index": 30,
         "validated": true,
@@ -3158,28 +3164,28 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryDeleted)
             "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD"
             }
         })";
-    auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    auto const ledgerinfo = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerinfo));
     // return valid ledger entry which can be deserialized
-    auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+    auto const offer = createNftBuyOffer(kNFT_ID, kACCOUNT);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillOnce(Return(std::optional<Blob>{}));
-    EXPECT_CALL(*backend, doFetchLedgerObjectSeq(ripple::uint256{INDEX1}, RANGEMAX, _))
-        .WillOnce(Return(uint32_t{RANGEMAX}));
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX - 1, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObjectSeq(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
+        .WillOnce(Return(uint32_t{kRANGE_MAX}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX - 1, _))
         .WillOnce(Return(offer.getSerializer().peekData()));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "index": "{}",
                 "include_deleted": true
             }})",
-            INDEX1
+            kINDEX1
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(kOUT));
     });
 }
 
@@ -3187,23 +3193,23 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryDeleted)
 // Expected Result: return entryNotFound error
 TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist)
 {
-    auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+    auto const ledgerinfo = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerinfo));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillOnce(Return(std::optional<Blob>{}));
-    EXPECT_CALL(*backend, doFetchLedgerObjectSeq(ripple::uint256{INDEX1}, RANGEMAX, _))
-        .WillOnce(Return(uint32_t{RANGEMAX}));
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX - 1, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObjectSeq(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
+        .WillOnce(Return(uint32_t{kRANGE_MAX}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX - 1, _))
         .WillOnce(Return(std::optional<Blob>{}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "index": "{}",
                 "include_deleted": true
             }})",
-            INDEX1
+            kINDEX1
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -3217,7 +3223,7 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist)
 // Expected Result: same as BinaryFalse
 TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleteFalse)
 {
-    static auto constexpr OUT = R"({
+    static constexpr auto kOUT = R"({
         "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index": 30,
         "validated": true,
@@ -3239,26 +3245,26 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleteFalse)
     })";
 
     // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    auto const ledgerinfo = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerinfo));
 
     // return valid ledger entry which can be deserialized
-    auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+    auto const ledgerEntry = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 200, 300, kINDEX1, 400);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "payment_channel": "{}",
                 "include_deleted": false
             }})",
-            INDEX1
+            kINDEX1
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(kOUT));
     });
 }
 
@@ -3266,7 +3272,7 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleteFalse)
 // Expected Result: return the latest object that is not deleted (latest object in this test)
 TEST_F(RPCLedgerEntryTest, ObjectUpdateIncludeDelete)
 {
-    static auto constexpr OUT = R"({
+    static constexpr auto kOUT = R"({
         "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index": 30,
         "validated": true,
@@ -3296,29 +3302,29 @@ TEST_F(RPCLedgerEntryTest, ObjectUpdateIncludeDelete)
         })";
 
     // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    auto const ledgerinfo = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerinfo));
 
     // return valid ledger entry which can be deserialized
-    auto const line1 = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
-    auto const line2 = CreateRippleStateLedgerObject("USD", ACCOUNT, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123);
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+    auto const line1 = createRippleStateLedgerObject("USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123);
+    auto const line2 = createRippleStateLedgerObject("USD", kACCOUNT, 10, kACCOUNT2, 100, kACCOUNT, 200, kTXN_ID, 123);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillRepeatedly(Return(line1.getSerializer().peekData()));
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX - 1, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX - 1, _))
         .WillRepeatedly(Return(line2.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "index": "{}",
                 "include_deleted": true
             }})",
-            INDEX1
+            kINDEX1
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(kOUT));
     });
 }
 
@@ -3326,7 +3332,7 @@ TEST_F(RPCLedgerEntryTest, ObjectUpdateIncludeDelete)
 // Expected Result: return the latest object that is not deleted
 TEST_F(RPCLedgerEntryTest, ObjectDeletedPreviously)
 {
-    static auto constexpr OUT = R"({
+    static constexpr auto kOUT = R"({
         "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index": 30,
         "validated": true,
@@ -3345,28 +3351,28 @@ TEST_F(RPCLedgerEntryTest, ObjectDeletedPreviously)
             "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD"
             }
         })";
-    auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    auto const ledgerinfo = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerinfo));
     // return valid ledger entry which can be deserialized
-    auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+    auto const offer = createNftBuyOffer(kNFT_ID, kACCOUNT);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillOnce(Return(std::optional<Blob>{}));
-    EXPECT_CALL(*backend, doFetchLedgerObjectSeq(ripple::uint256{INDEX1}, RANGEMAX, _))
-        .WillOnce(Return(uint32_t{RANGEMAX - 4}));
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX - 5, _))
+    EXPECT_CALL(*backend_, doFetchLedgerObjectSeq(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
+        .WillOnce(Return(uint32_t{kRANGE_MAX - 4}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX - 5, _))
         .WillOnce(Return(offer.getSerializer().peekData()));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "index": "{}",
                 "include_deleted": true
             }})",
-            INDEX1
+            kINDEX1
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(kOUT));
     });
 }
 
@@ -3374,20 +3380,21 @@ TEST_F(RPCLedgerEntryTest, ObjectDeletedPreviously)
 // Expected Result: return entryNotFound error
 TEST_F(RPCLedgerEntryTest, ObjectSeqNotExist)
 {
-    auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+    auto const ledgerinfo = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerinfo));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillOnce(Return(std::optional<Blob>{}));
-    EXPECT_CALL(*backend, doFetchLedgerObjectSeq(ripple::uint256{INDEX1}, RANGEMAX, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, doFetchLedgerObjectSeq(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
+        .WillOnce(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "index": "{}",
                 "include_deleted": true
             }})",
-            INDEX1
+            kINDEX1
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -3400,7 +3407,7 @@ TEST_F(RPCLedgerEntryTest, ObjectSeqNotExist)
 // this testcase will test the if response includes synthetic mpt_issuance_id
 TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
 {
-    static auto constexpr OUT = R"({
+    static constexpr auto kOUT = R"({
         "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
         "ledger_index":30,
         "validated":true,
@@ -3421,19 +3428,19 @@ TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
         }
     })";
 
-    auto const mptId = ripple::makeMptID(2, GetAccountIDWithString(ACCOUNT));
+    auto const mptId = ripple::makeMptID(2, getAccountIdWithString(kACCOUNT));
 
     // return valid ledgerHeader
-    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
 
     // return valid ledger entry which can be deserialized
-    auto const ledgerEntry = CreateMPTIssuanceObject(ACCOUNT, 2, "metadata");
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::mptIssuance(mptId).key, RANGEMAX, _))
+    auto const ledgerEntry = createMptIssuanceObject(kACCOUNT, 2, "metadata");
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::mptIssuance(mptId).key, kRANGE_MAX, _))
         .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "mpt_issuance": "{}"
@@ -3442,6 +3449,6 @@ TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output.result, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(kOUT));
     });
 }

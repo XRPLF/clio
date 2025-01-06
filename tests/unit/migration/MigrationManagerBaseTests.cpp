@@ -46,7 +46,7 @@ struct MigrationManagerBaseTest : public util::prometheus::WithMockPrometheus, p
     util::config::ClioConfigDefinition cfg{
         {"migration.full_scan_threads",
          util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(2).withConstraint(
-             util::config::validateUint32
+             util::config::gValidateUint32
          )}
     };
     std::shared_ptr<TestCassandraMigrationManager> migrationManager;

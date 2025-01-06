@@ -267,7 +267,7 @@ std::optional<LedgerRange>
 BackendInterface::fetchLedgerRange() const
 {
     std::shared_lock const lck(rngMtx_);
-    return range;
+    return range_;
 }
 
 void
@@ -276,16 +276,16 @@ BackendInterface::updateRange(uint32_t newMax)
     std::scoped_lock const lck(rngMtx_);
 
     ASSERT(
-        !range || newMax >= range->maxSequence,
+        !range_ || newMax >= range_->maxSequence,
         "Range shouldn't exist yet or newMax should be greater. newMax = {}, range->maxSequence = {}",
         newMax,
-        range->maxSequence
+        range_->maxSequence
     );
 
-    if (!range) {
-        range = {.minSequence = newMax, .maxSequence = newMax};
+    if (!range_) {
+        range_ = {.minSequence = newMax, .maxSequence = newMax};
     } else {
-        range->maxSequence = newMax;
+        range_->maxSequence = newMax;
     }
 }
 
@@ -296,10 +296,10 @@ BackendInterface::setRange(uint32_t min, uint32_t max, bool force)
 
     if (!force) {
         ASSERT(min <= max, "Range min must be less than or equal to max");
-        ASSERT(not range.has_value(), "Range was already set");
+        ASSERT(not range_.has_value(), "Range was already set");
     }
 
-    range = {.minSequence = min, .maxSequence = max};
+    range_ = {.minSequence = min, .maxSequence = max};
 }
 
 LedgerPage
@@ -320,10 +320,10 @@ BackendInterface::fetchLedgerPage(
         ripple::uint256 const& curCursor = [&]() {
             if (!keys.empty())
                 return keys.back();
-            return (cursor ? *cursor : firstKey);
+            return (cursor ? *cursor : kFIRST_KEY);
         }();
 
-        std::uint32_t const seq = outOfOrder ? range->maxSequence : ledgerSequence;
+        std::uint32_t const seq = outOfOrder ? range_->maxSequence : ledgerSequence;
         auto succ = fetchSuccessorKey(curCursor, seq, yield);
 
         if (!succ) {

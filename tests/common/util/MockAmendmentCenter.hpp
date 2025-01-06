@@ -55,12 +55,12 @@ struct MockAmendmentCenter : public data::AmendmentCenterInterface {
 
     MOCK_METHOD(data::Amendment const&, getAmendment, (data::AmendmentKey const&), (const, override));
 
-    MOCK_METHOD(data::Amendment const&, IndexOperator, (data::AmendmentKey const&), (const));
+    MOCK_METHOD(data::Amendment const&, indexOperator, (data::AmendmentKey const&), (const));
 
     data::Amendment const&
     operator[](data::AmendmentKey const& key) const override
     {
-        return IndexOperator(key);
+        return indexOperator(key);
     }
 };
 

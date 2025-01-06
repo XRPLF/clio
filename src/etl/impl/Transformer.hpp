@@ -308,11 +308,11 @@ private:
 
                 auto lb = backend_->cache().getPredecessor(obj.key, lgrInfo.seq);
                 if (!lb)
-                    lb = {.key = data::firstKey, .blob = {}};
+                    lb = {.key = data::kFIRST_KEY, .blob = {}};
 
                 auto ub = backend_->cache().getSuccessor(obj.key, lgrInfo.seq);
                 if (!ub)
-                    ub = {.key = data::lastKey, .blob = {}};
+                    ub = {.key = data::kLAST_KEY, .blob = {}};
 
                 if (obj.blob.empty()) {
                     LOG(log_.debug()) << "writing successor for deleted object " << ripple::strHex(obj.key) << " - "
@@ -336,10 +336,10 @@ private:
                     LOG(log_.debug()) << "Updating book successor " << ripple::strHex(base) << " - "
                                       << ripple::strHex(succ->key);
                 } else {
-                    backend_->writeSuccessor(uint256ToString(base), lgrInfo.seq, uint256ToString(data::lastKey));
+                    backend_->writeSuccessor(uint256ToString(base), lgrInfo.seq, uint256ToString(data::kLAST_KEY));
 
                     LOG(log_.debug()) << "Updating book successor " << ripple::strHex(base) << " - "
-                                      << ripple::strHex(data::lastKey);
+                                      << ripple::strHex(data::kLAST_KEY);
                 }
             }
         }
@@ -361,7 +361,7 @@ private:
             for (auto& obj : *(rawData.mutable_book_successors())) {
                 auto firstBook = std::move(*obj.mutable_first_book());
                 if (!firstBook.size())
-                    firstBook = uint256ToString(data::lastKey);
+                    firstBook = uint256ToString(data::kLAST_KEY);
                 LOG(log_.debug()) << "writing book successor " << ripple::strHex(obj.book_base()) << " - "
                                   << ripple::strHex(firstBook);
 
@@ -372,10 +372,10 @@ private:
                 if (obj.mod_type() != RawLedgerObjectType::MODIFIED) {
                     std::string* predPtr = obj.mutable_predecessor();
                     if (predPtr->empty())
-                        *predPtr = uint256ToString(data::firstKey);
+                        *predPtr = uint256ToString(data::kFIRST_KEY);
                     std::string* succPtr = obj.mutable_successor();
                     if (succPtr->empty())
-                        *succPtr = uint256ToString(data::lastKey);
+                        *succPtr = uint256ToString(data::kLAST_KEY);
 
                     if (obj.mod_type() == RawLedgerObjectType::DELETED) {
                         LOG(log_.debug()) << "Modifying successors for deleted object " << ripple::strHex(obj.key())

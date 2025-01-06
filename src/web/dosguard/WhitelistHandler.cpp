@@ -94,15 +94,15 @@ Whitelist::isInV6Subnet(boost::asio::ip::address const& addr, boost::asio::ip::n
 bool
 Whitelist::isV4(std::string_view net)
 {
-    static std::regex const ipv4CidrRegex(R"(^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$)");
-    return std::regex_match(std::string(net), ipv4CidrRegex);
+    static std::regex const kIPV4_CIDR_REGEX(R"(^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$)");
+    return std::regex_match(std::string(net), kIPV4_CIDR_REGEX);
 }
 
 bool
 Whitelist::isV6(std::string_view net)
 {
-    static std::regex const ipv6CidrRegex(R"(^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}/\d{1,3}$)");
-    return std::regex_match(std::string(net), ipv6CidrRegex);
+    static std::regex const kIPV6_CIDR_REGEX(R"(^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}/\d{1,3}$)");
+    return std::regex_match(std::string(net), kIPV6_CIDR_REGEX);
 }
 
 bool

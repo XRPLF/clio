@@ -62,17 +62,17 @@ PasswordAdminVerificationStrategy::isAdmin(RequestHeader const& request, std::st
         return false;
     }
     auto userAuth = it->value();
-    if (!userAuth.starts_with(passwordPrefix)) {
+    if (!userAuth.starts_with(kPASSWORD_PREFIX)) {
         // Invalid Authorization header
         return false;
     }
 
-    userAuth.remove_prefix(passwordPrefix.size());
+    userAuth.remove_prefix(kPASSWORD_PREFIX.size());
     return passwordSha256_ == util::toUpper(userAuth);
 }
 
 std::shared_ptr<AdminVerificationStrategy>
-make_AdminVerificationStrategy(std::optional<std::string> password)
+makeAdminVerificationStrategy(std::optional<std::string> password)
 {
     if (password.has_value()) {
         return std::make_shared<PasswordAdminVerificationStrategy>(std::move(*password));
@@ -81,7 +81,7 @@ make_AdminVerificationStrategy(std::optional<std::string> password)
 }
 
 std::expected<std::shared_ptr<AdminVerificationStrategy>, std::string>
-make_AdminVerificationStrategy(util::config::ClioConfigDefinition const& config)
+makeAdminVerificationStrategy(util::config::ClioConfigDefinition const& config)
 {
     auto adminPassword = config.maybeValue<std::string>("server.admin_password");
     auto const localAdmin = config.maybeValue<bool>("server.local_admin");
@@ -95,7 +95,7 @@ make_AdminVerificationStrategy(util::config::ClioConfigDefinition const& config)
         };
     }
 
-    return make_AdminVerificationStrategy(std::move(adminPassword));
+    return makeAdminVerificationStrategy(std::move(adminPassword));
 }
 
 }  // namespace web

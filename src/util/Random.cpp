@@ -28,9 +28,9 @@ namespace util {
 void
 Random::setSeed(size_t seed)
 {
-    generator_.seed(seed);
+    generator.seed(seed);
 }
 
-std::mt19937_64 Random::generator_{std::chrono::system_clock::now().time_since_epoch().count()};
+std::mt19937_64 Random::generator{std::chrono::system_clock::now().time_since_epoch().count()};
 
 }  // namespace util

@@ -41,7 +41,7 @@ namespace rpc {
  */
 class LedgerIndexHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
-    static constexpr auto DATE_FORMAT = "%Y-%m-%dT%TZ";
+    static constexpr auto kDATE_FORMAT = "%Y-%m-%dT%TZ";
 
 public:
     /**
@@ -80,10 +80,10 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const rpcSpec = RpcSpec{
-            {JS(date), validation::Type<std::string>{}, validation::TimeFormatValidator{DATE_FORMAT}},
+        static auto const kRPC_SPEC = RpcSpec{
+            {JS(date), validation::Type<std::string>{}, validation::TimeFormatValidator{kDATE_FORMAT}},
         };
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     /**

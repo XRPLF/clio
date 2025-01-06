@@ -36,7 +36,7 @@ namespace data {
 
 namespace {
 
-std::vector<std::int64_t> const histogramBuckets{1, 2, 5, 10, 20, 50, 100, 200, 500, 700, 1000};
+std::vector<std::int64_t> const kHISTOGRAM_BUCKETS{1, 2, 5, 10, 20, 50, 100, 200, 500, 700, 1000};
 
 std::int64_t
 durationInMillisecondsSince(std::chrono::steady_clock::time_point const startTime)
@@ -69,13 +69,13 @@ BackendCounters::BackendCounters()
     , readDurationHistogram_(PrometheusService::histogramInt(
           "backend_duration_milliseconds_histogram",
           Labels({Label{"operation", "read"}}),
-          histogramBuckets,
+          kHISTOGRAM_BUCKETS,
           "The duration of backend read operations including retries"
       ))
     , writeDurationHistogram_(PrometheusService::histogramInt(
           "backend_duration_milliseconds_histogram",
           Labels({Label{"operation", "write"}}),
-          histogramBuckets,
+          kHISTOGRAM_BUCKETS,
           "The duration of backend write operations including retries"
       ))
 {

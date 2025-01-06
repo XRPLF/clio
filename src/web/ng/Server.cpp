@@ -333,7 +333,7 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
 }
 
 std::expected<Server, std::string>
-make_Server(
+makeServer(
     util::config::ClioConfigDefinition const& config,
     Server::OnConnectCheck onConnectCheck,
     Server::OnDisconnectHook onDisconnectHook,

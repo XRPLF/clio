@@ -294,7 +294,7 @@ TEST_F(RPCBaseTest, IfTypeValidator)
              Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
              Section{{"limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}
          },
-         IfType<std::string>{CustomValidators::Uint256HexStringValidator}},
+         IfType<std::string>{CustomValidators::uint256HexStringValidator}},
         {"mix2",
          Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
          Type<std::string, json::object>{}},
@@ -331,7 +331,7 @@ TEST_F(RPCBaseTest, WithCustomError)
     auto const spec = RpcSpec{
         {"transaction",
          WithCustomError{
-             CustomValidators::Uint256HexStringValidator, rpc::Status{ripple::rpcBAD_FEATURE, "MyCustomError"}
+             CustomValidators::uint256HexStringValidator, rpc::Status{ripple::rpcBAD_FEATURE, "MyCustomError"}
          }},
         {"other", WithCustomError{Type<std::string>{}, rpc::Status{ripple::rpcALREADY_MULTISIG, "MyCustomError2"}}}
     };
@@ -428,7 +428,7 @@ TEST_F(RPCBaseTest, NotSupported)
 TEST_F(RPCBaseTest, LedgerIndexValidator)
 {
     auto spec = RpcSpec{
-        {"ledgerIndex", CustomValidators::LedgerIndexValidator},
+        {"ledgerIndex", CustomValidators::ledgerIndexValidator},
     };
     auto passingInput = json::parse(R"({ "ledgerIndex": "validated" })");
     ASSERT_TRUE(spec.process(passingInput));
@@ -453,7 +453,7 @@ TEST_F(RPCBaseTest, LedgerIndexValidator)
 TEST_F(RPCBaseTest, AccountValidator)
 {
     auto spec = RpcSpec{
-        {"account", CustomValidators::AccountValidator},
+        {"account", CustomValidators::accountValidator},
     };
     auto failingInput = json::parse(R"({ "account": 256 })");
     ASSERT_FALSE(spec.process(failingInput));
@@ -478,7 +478,7 @@ TEST_F(RPCBaseTest, AccountValidator)
 TEST_F(RPCBaseTest, AccountBase58Validator)
 {
     auto spec = RpcSpec{
-        {"account", CustomValidators::AccountBase58Validator},
+        {"account", CustomValidators::accountBase58Validator},
     };
     auto failingInput = json::parse(R"({ "account": 256 })");
     ASSERT_FALSE(spec.process(failingInput));
@@ -500,7 +500,7 @@ TEST_F(RPCBaseTest, AccountBase58Validator)
 TEST_F(RPCBaseTest, AccountMarkerValidator)
 {
     auto spec = RpcSpec{
-        {"marker", CustomValidators::AccountMarkerValidator},
+        {"marker", CustomValidators::accountMarkerValidator},
     };
     auto failingInput = json::parse(R"({ "marker": 256 })");
     ASSERT_FALSE(spec.process(failingInput));
@@ -517,7 +517,7 @@ TEST_F(RPCBaseTest, AccountMarkerValidator)
 
 TEST_F(RPCBaseTest, Uint160HexStringValidator)
 {
-    auto const spec = RpcSpec{{"marker", CustomValidators::Uint160HexStringValidator}};
+    auto const spec = RpcSpec{{"marker", CustomValidators::uint160HexStringValidator}};
     auto passingInput = json::parse(R"({ "marker": "F609A18102218C75767209946A77523CBD97E225"})");
     ASSERT_TRUE(spec.process(passingInput));
 
@@ -534,7 +534,7 @@ TEST_F(RPCBaseTest, Uint160HexStringValidator)
 
 TEST_F(RPCBaseTest, Uint192HexStringValidator)
 {
-    auto const spec = RpcSpec{{"mpt_issuance_id", CustomValidators::Uint192HexStringValidator}};
+    auto const spec = RpcSpec{{"mpt_issuance_id", CustomValidators::uint192HexStringValidator}};
     auto passingInput = json::parse(R"({ "mpt_issuance_id": "0000012F27A9DE73EAA1E8831FA253E19030A17E2D038198"})");
     ASSERT_TRUE(spec.process(passingInput));
 
@@ -551,7 +551,7 @@ TEST_F(RPCBaseTest, Uint192HexStringValidator)
 
 TEST_F(RPCBaseTest, Uint256HexStringValidator)
 {
-    auto const spec = RpcSpec{{"transaction", CustomValidators::Uint256HexStringValidator}};
+    auto const spec = RpcSpec{{"transaction", CustomValidators::uint256HexStringValidator}};
     auto passingInput =
         json::parse(R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"})");
     ASSERT_TRUE(spec.process(passingInput));
@@ -569,7 +569,7 @@ TEST_F(RPCBaseTest, Uint256HexStringValidator)
 
 TEST_F(RPCBaseTest, CurrencyValidator)
 {
-    auto const spec = RpcSpec{{"currency", CustomValidators::CurrencyValidator}};
+    auto const spec = RpcSpec{{"currency", CustomValidators::currencyValidator}};
     auto passingInput = json::parse(R"({ "currency": "GBP"})");
     ASSERT_TRUE(spec.process(passingInput));
 
@@ -597,7 +597,7 @@ TEST_F(RPCBaseTest, CurrencyValidator)
 
 TEST_F(RPCBaseTest, IssuerValidator)
 {
-    auto const spec = RpcSpec{{"issuer", CustomValidators::IssuerValidator}};
+    auto const spec = RpcSpec{{"issuer", CustomValidators::issuerValidator}};
     auto passingInput = json::parse(R"({ "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"})");
     ASSERT_TRUE(spec.process(passingInput));
 
@@ -613,7 +613,7 @@ TEST_F(RPCBaseTest, IssuerValidator)
 
 TEST_F(RPCBaseTest, SubscribeStreamValidator)
 {
-    auto const spec = RpcSpec{{"streams", CustomValidators::SubscribeStreamValidator}};
+    auto const spec = RpcSpec{{"streams", CustomValidators::subscribeStreamValidator}};
     auto passingInput = json::parse(
         R"({ 
             "streams": 
@@ -645,7 +645,7 @@ TEST_F(RPCBaseTest, SubscribeStreamValidator)
 
 TEST_F(RPCBaseTest, SubscribeAccountsValidator)
 {
-    auto const spec = RpcSpec{{"accounts", CustomValidators::SubscribeAccountsValidator}};
+    auto const spec = RpcSpec{{"accounts", CustomValidators::subscribeAccountsValidator}};
     auto passingInput =
         json::parse(R"({ "accounts": ["rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn","rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"]})");
     ASSERT_TRUE(spec.process(passingInput));

@@ -74,9 +74,9 @@ class FullTableScanner {
      * @brief The helper to generate the token ranges.
      */
     struct TokenRangesProvider {
-        uint32_t numRanges_;
+        uint32_t numRanges;
 
-        TokenRangesProvider(uint32_t numRanges) : numRanges_{numRanges}
+        TokenRangesProvider(uint32_t numRanges) : numRanges{numRanges}
         {
         }
 
@@ -85,18 +85,18 @@ class FullTableScanner {
         {
             auto const minValue = std::numeric_limits<std::int64_t>::min();
             auto const maxValue = std::numeric_limits<std::int64_t>::max();
-            if (numRanges_ == 1)
+            if (numRanges == 1)
                 return {TokenRange{minValue, maxValue}};
 
             // Safely calculate the range size using uint64_t to avoid overflow
-            uint64_t const rangeSize = (static_cast<uint64_t>(maxValue) * 2) / numRanges_;
+            uint64_t const rangeSize = (static_cast<uint64_t>(maxValue) * 2) / numRanges;
 
             std::vector<TokenRange> ranges;
-            ranges.reserve(numRanges_);
+            ranges.reserve(numRanges);
 
-            for (std::int64_t i = 0; i < numRanges_; ++i) {
+            for (std::int64_t i = 0; i < numRanges; ++i) {
                 int64_t const start = minValue + (i * rangeSize);
-                int64_t const end = (i == numRanges_ - 1) ? maxValue : start + static_cast<int64_t>(rangeSize) - 1;
+                int64_t const end = (i == numRanges - 1) ? maxValue : start + static_cast<int64_t>(rangeSize) - 1;
                 ranges.emplace_back(start, end);
             }
 

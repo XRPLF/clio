@@ -124,22 +124,22 @@ TEST_F(CounterIntTests, reset)
 
 TEST_F(CounterIntTests, multithreadAdd)
 {
-    static auto constexpr numAdditions = 1000;
-    static auto constexpr numNumberAdditions = 100;
-    static auto constexpr numberToAdd = 11;
+    static constexpr auto kNUM_ADDITIONS = 1000;
+    static constexpr auto kNUM_NUMBER_ADDITIONS = 100;
+    static constexpr auto kNUMBER_TO_ADD = 11;
     std::thread thread1([&] {
-        for (int i = 0; i < numAdditions; ++i) {
+        for (int i = 0; i < kNUM_ADDITIONS; ++i) {
             ++counter;
         }
     });
     std::thread thread2([&] {
-        for (int i = 0; i < numNumberAdditions; ++i) {
-            counter += numberToAdd;
+        for (int i = 0; i < kNUM_NUMBER_ADDITIONS; ++i) {
+            counter += kNUMBER_TO_ADD;
         }
     });
     thread1.join();
     thread2.join();
-    EXPECT_EQ(counter.value(), numAdditions + (numNumberAdditions * numberToAdd));
+    EXPECT_EQ(counter.value(), kNUM_ADDITIONS + (kNUM_NUMBER_ADDITIONS * kNUMBER_TO_ADD));
 }
 
 struct CounterDoubleTests : ::testing::Test {
@@ -163,20 +163,20 @@ TEST_F(CounterDoubleTests, reset)
 
 TEST_F(CounterDoubleTests, multithreadAdd)
 {
-    static auto constexpr numAdditions = 1000;
-    static auto constexpr numNumberAdditions = 100;
-    static auto constexpr numberToAdd = 11.1234;
+    static constexpr auto kNUM_ADDITIONS = 1000;
+    static constexpr auto kNUM_NUMBER_ADDITIONS = 100;
+    static constexpr auto kNUMBER_TO_ADD = 11.1234;
     std::thread thread1([&] {
-        for (int i = 0; i < numAdditions; ++i) {
+        for (int i = 0; i < kNUM_ADDITIONS; ++i) {
             ++counter;
         }
     });
     std::thread thread2([&] {
-        for (int i = 0; i < numNumberAdditions; ++i) {
-            counter += numberToAdd;
+        for (int i = 0; i < kNUM_NUMBER_ADDITIONS; ++i) {
+            counter += kNUMBER_TO_ADD;
         }
     });
     thread1.join();
     thread2.join();
-    EXPECT_NEAR(counter.value(), numAdditions + (numNumberAdditions * numberToAdd), 1e-9);
+    EXPECT_NEAR(counter.value(), kNUM_ADDITIONS + (kNUM_NUMBER_ADDITIONS * kNUMBER_TO_ADD), 1e-9);
 }

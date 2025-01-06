@@ -184,8 +184,8 @@ public:
 
             // if the ledger closed over MAX_LEDGER_AGE_SECONDS ago, assume we are still catching up and don't publish
             // TODO: this probably should be a strategy
-            static constexpr std::uint32_t MAX_LEDGER_AGE_SECONDS = 600;
-            if (age < MAX_LEDGER_AGE_SECONDS) {
+            static constexpr std::uint32_t kMAX_LEDGER_AGE_SECONDS = 600;
+            if (age < kMAX_LEDGER_AGE_SECONDS) {
                 std::optional<ripple::Fees> fees = data::synchronousAndRetryOnTimeout([&](auto yield) {
                     return backend_->fetchFees(lgrInfo.seq, yield);
                 });
@@ -260,9 +260,9 @@ public:
         auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())
                        .count();
         auto closeTime = lastCloseTime_.time_since_epoch().count();
-        if (now < (rippleEpochStart + closeTime))
+        if (now < (kRIPPLE_EPOCH_START + closeTime))
             return 0;
-        return now - (rippleEpochStart + closeTime);
+        return now - (kRIPPLE_EPOCH_START + closeTime);
     }
 
     /**

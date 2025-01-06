@@ -481,21 +481,21 @@ struct CustomValidators final {
      * LedgerIndex must be a string or an int. If the specified LedgerIndex is a string, its value must be either
      * "validated" or a valid integer value represented as a string.
      */
-    static CustomValidator LedgerIndexValidator;
+    static CustomValidator ledgerIndexValidator;
 
     /**
      * @brief Provides a commonly used validator for accounts.
      *
      * Account must be a string and the converted public key is valid.
      */
-    static CustomValidator AccountValidator;
+    static CustomValidator accountValidator;
 
     /**
      * @brief Provides a commonly used validator for accounts.
      *
      * Account must be a string and can convert to base58.
      */
-    static CustomValidator AccountBase58Validator;
+    static CustomValidator accountBase58Validator;
 
     /**
      * @brief Provides a commonly used validator for markers.
@@ -503,7 +503,7 @@ struct CustomValidators final {
      * A marker is composed of a comma-separated index and a start hint.
      * The former will be read as hex, and the latter can be cast to uint64.
      */
-    static CustomValidator AccountMarkerValidator;
+    static CustomValidator accountMarkerValidator;
 
     /**
      * @brief Provides a commonly used validator for uint160(AccountID) hex string.
@@ -511,7 +511,7 @@ struct CustomValidators final {
      * It must be a string and also a decodable hex.
      * AccountID uses this validator.
      */
-    static CustomValidator Uint160HexStringValidator;
+    static CustomValidator uint160HexStringValidator;
 
     /**
      * @brief Provides a commonly used validator for uint192 hex string.
@@ -519,7 +519,7 @@ struct CustomValidators final {
      * It must be a string and also a decodable hex.
      * MPTIssuanceID uses this validator.
      */
-    static CustomValidator Uint192HexStringValidator;
+    static CustomValidator uint192HexStringValidator;
 
     /**
      * @brief Provides a commonly used validator for uint256 hex string.
@@ -527,50 +527,50 @@ struct CustomValidators final {
      * It must be a string and also a decodable hex.
      * Transaction index, ledger hash all use this validator.
      */
-    static CustomValidator Uint256HexStringValidator;
+    static CustomValidator uint256HexStringValidator;
 
     /**
      * @brief Provides a commonly used validator for currency, including standard currency code and token code.
      */
-    static CustomValidator CurrencyValidator;
+    static CustomValidator currencyValidator;
 
     /**
      * @brief Provides a commonly used validator for issuer type.
      *
      * It must be a hex string or base58 string.
      */
-    static CustomValidator IssuerValidator;
+    static CustomValidator issuerValidator;
 
     /**
      * @brief Provides a validator for validating streams used in subscribe/unsubscribe.
      */
-    static CustomValidator SubscribeStreamValidator;
+    static CustomValidator subscribeStreamValidator;
 
     /**
      * @brief Provides a validator for validating accounts used in subscribe/unsubscribe.
      */
-    static CustomValidator SubscribeAccountsValidator;
+    static CustomValidator subscribeAccountsValidator;
 
     /**
      * @brief Validates an asset (ripple::Issue).
      *
      * Used by amm_info.
      */
-    static CustomValidator CurrencyIssueValidator;
+    static CustomValidator currencyIssueValidator;
 
     /**
      * @brief Provides a validator for validating authorized_credentials json array.
      *
      * Used by deposit_preauth.
      */
-    static CustomValidator AuthorizeCredentialValidator;
+    static CustomValidator authorizeCredentialValidator;
 
     /**
      * @brief Provides a validator for validating credential_type.
      *
      * Used by AuthorizeCredentialValidator in deposit_preauth.
      */
-    static CustomValidator CredentialTypeValidator;
+    static CustomValidator credentialTypeValidator;
 };
 
 /**

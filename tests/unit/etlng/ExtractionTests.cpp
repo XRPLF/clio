@@ -40,7 +40,7 @@
 #include <optional>
 
 namespace {
-constinit auto const Seq = 30;
+constinit auto const kSEQ = 30;
 }  // namespace
 
 struct ExtractionTests : NoLoggerFixture {};
@@ -60,15 +60,15 @@ TEST_F(ExtractionTests, OneTransaction)
 {
     using namespace etlng::impl;
 
-    auto expected = util::CreateTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER);
+    auto expected = util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER);
 
     auto original = org::xrpl::rpc::v1::TransactionAndMetadata();
-    auto [metaRaw, txRaw] = util::CreateNftTxAndMetaBlobs();
+    auto [metaRaw, txRaw] = util::createNftTxAndMetaBlobs();
     original.set_transaction_blob(txRaw);
     original.set_metadata_blob(metaRaw);
 
-    auto res = extractTx(original, Seq);
-    EXPECT_EQ(res.meta.getLgrSeq(), Seq);
+    auto res = extractTx(original, kSEQ);
+    EXPECT_EQ(res.meta.getLgrSeq(), kSEQ);
     EXPECT_EQ(res.meta.getLgrSeq(), expected.meta.getLgrSeq());
     EXPECT_EQ(res.meta.getTxID(), expected.meta.getTxID());
     EXPECT_EQ(res.sttx.getTxnType(), expected.sttx.getTxnType());
@@ -78,10 +78,10 @@ TEST_F(ExtractionTests, MultipleTransactions)
 {
     using namespace etlng::impl;
 
-    auto expected = util::CreateTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER);
+    auto expected = util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER);
 
     auto original = org::xrpl::rpc::v1::TransactionAndMetadata();
-    auto [metaRaw, txRaw] = util::CreateNftTxAndMetaBlobs();
+    auto [metaRaw, txRaw] = util::createNftTxAndMetaBlobs();
     original.set_transaction_blob(txRaw);
     original.set_metadata_blob(metaRaw);
 
@@ -91,11 +91,11 @@ TEST_F(ExtractionTests, MultipleTransactions)
         *p = original;
     }
 
-    auto res = extractTxs(list.transactions(), Seq);
+    auto res = extractTxs(list.transactions(), kSEQ);
     EXPECT_EQ(res.size(), 10);
 
     for (auto const& tx : res) {
-        EXPECT_EQ(tx.meta.getLgrSeq(), Seq);
+        EXPECT_EQ(tx.meta.getLgrSeq(), kSEQ);
         EXPECT_EQ(tx.meta.getLgrSeq(), expected.meta.getLgrSeq());
         EXPECT_EQ(tx.meta.getTxID(), expected.meta.getTxID());
         EXPECT_EQ(tx.sttx.getTxnType(), expected.sttx.getTxnType());
@@ -106,7 +106,7 @@ TEST_F(ExtractionTests, OneObject)
 {
     using namespace etlng::impl;
 
-    auto expected = util::CreateObject();
+    auto expected = util::createObject();
     auto original = org::xrpl::rpc::v1::RawLedgerObject();
     original.set_data(expected.dataRaw);
     original.set_key(expected.keyRaw);
@@ -114,8 +114,8 @@ TEST_F(ExtractionTests, OneObject)
     auto res = extractObj(original);
     EXPECT_EQ(ripple::strHex(res.key), ripple::strHex(expected.keyRaw));
     EXPECT_EQ(ripple::strHex(res.data), ripple::strHex(expected.dataRaw));
-    EXPECT_EQ(res.predecessor, uint256ToString(data::lastKey));
-    EXPECT_EQ(res.successor, uint256ToString(data::firstKey));
+    EXPECT_EQ(res.predecessor, uint256ToString(data::kLAST_KEY));
+    EXPECT_EQ(res.successor, uint256ToString(data::kFIRST_KEY));
     EXPECT_EQ(res.type, expected.type);
 }
 
@@ -123,7 +123,7 @@ TEST_F(ExtractionTests, OneObjectWithSuccessorAndPredecessor)
 {
     using namespace etlng::impl;
 
-    auto expected = util::CreateObject();
+    auto expected = util::createObject();
     auto original = org::xrpl::rpc::v1::RawLedgerObject();
     original.set_data(expected.dataRaw);
     original.set_key(expected.keyRaw);
@@ -142,7 +142,7 @@ TEST_F(ExtractionTests, MultipleObjects)
 {
     using namespace etlng::impl;
 
-    auto expected = util::CreateObject();
+    auto expected = util::createObject();
     auto original = org::xrpl::rpc::v1::RawLedgerObject();
     original.set_data(expected.dataRaw);
     original.set_key(expected.keyRaw);
@@ -159,8 +159,8 @@ TEST_F(ExtractionTests, MultipleObjects)
     for (auto const& obj : res) {
         EXPECT_EQ(ripple::strHex(obj.key), ripple::strHex(expected.keyRaw));
         EXPECT_EQ(ripple::strHex(obj.data), ripple::strHex(expected.dataRaw));
-        EXPECT_EQ(obj.predecessor, uint256ToString(data::lastKey));
-        EXPECT_EQ(obj.successor, uint256ToString(data::firstKey));
+        EXPECT_EQ(obj.predecessor, uint256ToString(data::kLAST_KEY));
+        EXPECT_EQ(obj.successor, uint256ToString(data::kFIRST_KEY));
         EXPECT_EQ(obj.type, expected.type);
     }
 }
@@ -169,7 +169,7 @@ TEST_F(ExtractionTests, OneSuccessor)
 {
     using namespace etlng::impl;
 
-    auto expected = util::CreateSuccessor();
+    auto expected = util::createSuccessor();
     auto original = org::xrpl::rpc::v1::BookSuccessor();
     original.set_first_book(expected.firstBook);
     original.set_book_base(expected.bookBase);
@@ -183,7 +183,7 @@ TEST_F(ExtractionTests, MultipleSuccessors)
 {
     using namespace etlng::impl;
 
-    auto expected = util::CreateSuccessor();
+    auto expected = util::createSuccessor();
     auto original = org::xrpl::rpc::v1::BookSuccessor();
     original.set_first_book(expected.firstBook);
     original.set_book_base(expected.bookBase);
@@ -245,24 +245,24 @@ struct ExtractorTests : ExtractionTests {
 
 TEST_F(ExtractorTests, ExtractLedgerWithDiffNoResult)
 {
-    EXPECT_CALL(*fetcher, fetchDataAndDiff(Seq)).WillOnce(testing::Return(std::nullopt));
-    auto res = extractor.extractLedgerWithDiff(Seq);
+    EXPECT_CALL(*fetcher, fetchDataAndDiff(kSEQ)).WillOnce(testing::Return(std::nullopt));
+    auto res = extractor.extractLedgerWithDiff(kSEQ);
     EXPECT_FALSE(res.has_value());
 }
 
 TEST_F(ExtractorTests, ExtractLedgerOnlyNoResult)
 {
-    EXPECT_CALL(*fetcher, fetchData(Seq)).WillOnce(testing::Return(std::nullopt));
-    auto res = extractor.extractLedgerOnly(Seq);
+    EXPECT_CALL(*fetcher, fetchData(kSEQ)).WillOnce(testing::Return(std::nullopt));
+    auto res = extractor.extractLedgerOnly(kSEQ);
     EXPECT_FALSE(res.has_value());
 }
 
 TEST_F(ExtractorTests, ExtractLedgerWithDiffWithResult)
 {
-    auto original = util::CreateDataAndDiff();
+    auto original = util::createDataAndDiff();
 
-    EXPECT_CALL(*fetcher, fetchDataAndDiff(Seq)).WillOnce(testing::Return(original));
-    auto res = extractor.extractLedgerWithDiff(Seq);
+    EXPECT_CALL(*fetcher, fetchDataAndDiff(kSEQ)).WillOnce(testing::Return(original));
+    auto res = extractor.extractLedgerWithDiff(kSEQ);
 
     EXPECT_TRUE(res.has_value());
     EXPECT_EQ(res->objects.size(), 10);
@@ -274,10 +274,10 @@ TEST_F(ExtractorTests, ExtractLedgerWithDiffWithResult)
 
 TEST_F(ExtractorTests, ExtractLedgerOnlyWithResult)
 {
-    auto original = util::CreateData();
+    auto original = util::createData();
 
-    EXPECT_CALL(*fetcher, fetchData(Seq)).WillOnce(testing::Return(original));
-    auto res = extractor.extractLedgerOnly(Seq);
+    EXPECT_CALL(*fetcher, fetchData(kSEQ)).WillOnce(testing::Return(original));
+    auto res = extractor.extractLedgerOnly(kSEQ);
 
     EXPECT_TRUE(res.has_value());
     EXPECT_TRUE(res->objects.empty());

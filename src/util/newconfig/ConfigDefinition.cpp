@@ -121,7 +121,7 @@ std::chrono::milliseconds
 ClioConfigDefinition::toMilliseconds(float value)
 {
     ASSERT(value >= 0.0f, "Floating point value of seconds must be non-negative, got: {}", value);
-    return std::chrono::milliseconds{std::lroundf(value * static_cast<float>(util::MILLISECONDS_PER_SECOND))};
+    return std::chrono::milliseconds{std::lroundf(value * static_cast<float>(util::kMILLISECONDS_PER_SECOND))};
 }
 
 ValueView

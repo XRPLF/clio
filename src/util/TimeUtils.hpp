@@ -33,7 +33,7 @@ namespace util {
  * @return The system_clock::time_point if the conversion was successful, otherwise std::nullopt.
  */
 [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
-SystemTpFromUTCStr(std::string const& dateStr, std::string const& format);
+systemTpFromUtcStr(std::string const& dateStr, std::string const& format);
 
 /**
  * @brief Convert a ledger close time which is XRPL network clock to a system_clock::time_point.
@@ -41,6 +41,6 @@ SystemTpFromUTCStr(std::string const& dateStr, std::string const& format);
  * @return The system_clock::time_point.
  */
 [[nodiscard]] std::chrono::system_clock::time_point
-SystemTpFromLedgerCloseTime(ripple::NetClock::time_point closeTime);
+systemTpFromLedgerCloseTime(ripple::NetClock::time_point closeTime);
 
 }  // namespace util

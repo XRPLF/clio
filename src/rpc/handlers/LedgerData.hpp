@@ -59,8 +59,8 @@ class LedgerDataHandler {
 
 public:
     // constants
-    static uint32_t constexpr LIMITBINARY = 2048;
-    static uint32_t constexpr LIMITJSON = 256;
+    static constexpr uint32_t kLIMIT_BINARY = 2048;
+    static constexpr uint32_t kLIMIT_JSON = 256;
 
     /**
      * @brief A struct to hold the output data of the command
@@ -86,7 +86,7 @@ public:
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         bool binary = false;
-        uint32_t limit = LedgerDataHandler::LIMITJSON;  // max 256 for json ; 2048 for binary
+        uint32_t limit = LedgerDataHandler::kLIMIT_JSON;  // max 256 for json ; 2048 for binary
         std::optional<ripple::uint256> marker;
         std::optional<uint32_t> diffMarker;
         bool outOfOrder = false;
@@ -113,16 +113,16 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        auto const& ledgerTypeStrs = util::LedgerTypes::GetLedgerEntryTypeStrList();
-        static auto const rpcSpec = RpcSpec{
+        auto const& ledgerTypeStrs = util::LedgerTypes::getLedgerEntryTypeStrList();
+        static auto const kRPC_SPEC = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
             {"out_of_order", validation::Type<bool>{}},
-            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
+            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
             {JS(limit), validation::Type<uint32_t>{}, validation::Min(1u)},
             {JS(marker),
              validation::Type<uint32_t, std::string>{},
-             meta::IfType<std::string>{validation::CustomValidators::Uint256HexStringValidator}},
+             meta::IfType<std::string>{validation::CustomValidators::uint256HexStringValidator}},
             {JS(type),
              meta::WithCustomError{
                  validation::Type<std::string>{}, Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}
@@ -130,7 +130,7 @@ public:
              validation::OneOf<std::string>(ledgerTypeStrs.cbegin(), ledgerTypeStrs.cend())},
             {JS(ledger), check::Deprecated{}},
         };
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     /**

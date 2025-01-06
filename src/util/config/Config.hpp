@@ -48,7 +48,7 @@ namespace util {
  */
 class Config final {
     boost::json::value store_;
-    static constexpr char Separator = '.';
+    static constexpr char kSEPARATOR = '.';
 
 public:
     using KeyType = std::string;
@@ -107,9 +107,9 @@ public:
     [[nodiscard]] std::optional<Result>
     maybeValue(KeyType key) const
     {
-        auto maybe_element = lookup(key);
-        if (maybe_element)
-            return std::make_optional<Result>(checkedAs<Result>(key, *maybe_element));
+        auto maybeElement = lookup(key);
+        if (maybeElement)
+            return std::make_optional<Result>(checkedAs<Result>(key, *maybeElement));
         return std::nullopt;
     }
 
@@ -379,7 +379,7 @@ private:
     {
         using boost::json::value_to;
 
-        auto error_if = [&key, &value](bool condition) {
+        auto errorIf = [&key, &value](bool condition) {
             if (condition) {
                 throw std::runtime_error(
                     "Type for key '" + key + "' is '" + std::string{to_string(value.kind())} +
@@ -389,13 +389,13 @@ private:
         };
 
         if constexpr (std::is_same_v<Return, bool>) {
-            error_if(not value.is_bool());
+            errorIf(not value.is_bool());
         } else if constexpr (std::is_same_v<Return, std::string>) {
-            error_if(not value.is_string());
+            errorIf(not value.is_string());
         } else if constexpr (std::is_same_v<Return, double> or std::is_same_v<Return, float>) {
-            error_if(not value.is_number());
+            errorIf(not value.is_number());
         } else if constexpr (std::is_convertible_v<Return, uint64_t> || std::is_convertible_v<Return, int64_t>) {
-            error_if(not value.is_int64() && not value.is_uint64());
+            errorIf(not value.is_int64() && not value.is_uint64());
         }
 
         return value_to<Return>(value);

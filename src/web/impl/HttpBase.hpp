@@ -62,7 +62,7 @@
 
 namespace web::impl {
 
-static auto constexpr HealthCheckHTML = R"html(
+static auto constexpr kHEALTH_CHECK_HTML = R"html(
     <!DOCTYPE html>
     <html>
         <head><title>Test page for Clio</title></head>
@@ -88,31 +88,31 @@ class HttpBase : public ConnectionBase {
 
     // TODO: this should be rewritten using http::message_generator instead
     struct SendLambda {
-        HttpBase& self_;
+        HttpBase& self;
 
-        explicit SendLambda(HttpBase& self) : self_(self)
+        explicit SendLambda(HttpBase& self) : self(self)
         {
         }
 
-        template <bool isRequest, typename Body, typename Fields>
+        template <bool IsRequest, typename Body, typename Fields>
         void
-        operator()(http::message<isRequest, Body, Fields>&& msg) const
+        operator()(http::message<IsRequest, Body, Fields>&& msg) const
         {
-            if (self_.dead())
+            if (self.dead())
                 return;
 
             // The lifetime of the message has to extend for the duration of the async operation so we use a shared_ptr
             // to manage it.
-            auto sp = std::make_shared<http::message<isRequest, Body, Fields>>(std::move(msg));
+            auto sp = std::make_shared<http::message<IsRequest, Body, Fields>>(std::move(msg));
 
             // Store a type-erased version of the shared pointer in the class to keep it alive.
-            self_.res_ = sp;
+            self.res_ = sp;
 
             // Write the response
             http::async_write(
-                self_.derived().stream(),
+                self.derived().stream(),
                 *sp,
-                boost::beast::bind_front_handler(&HttpBase::onWrite, self_.derived().shared_from_this(), sp->need_eof())
+                boost::beast::bind_front_handler(&HttpBase::onWrite, self.derived().shared_from_this(), sp->need_eof())
             );
         }
     };
@@ -207,7 +207,7 @@ public:
     }
 
     void
-    onRead(boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred)
+    onRead(boost::beast::error_code ec, [[maybe_unused]] std::size_t bytesTransferred)
     {
         if (ec == http::error::end_of_stream)
             return derived().doClose();
@@ -216,7 +216,7 @@ public:
             return httpFail(ec, "read");
 
         if (req_.method() == http::verb::get and req_.target() == "/health")
-            return sender_(httpResponse(http::status::ok, "text/html", HealthCheckHTML));
+            return sender_(httpResponse(http::status::ok, "text/html", kHEALTH_CHECK_HTML));
 
         // Update isAdmin property of the connection
         ConnectionBase::isAdmin_ = adminVerification_->isAdmin(req_, this->clientIp);
@@ -277,9 +277,9 @@ public:
             auto jsonResponse = boost::json::parse(msg).as_object();
             jsonResponse["warning"] = "load";
             if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {
-                jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::warnRPC_RATE_LIMIT));
+                jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::WarnRpcRateLimit));
             } else {
-                jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::warnRPC_RATE_LIMIT)};
+                jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::WarnRpcRateLimit)};
             }
 
             // Reserialize when we need to include this warning
@@ -296,9 +296,9 @@ public:
     }
 
     void
-    onWrite(bool close, boost::beast::error_code ec, std::size_t bytes_transferred)
+    onWrite(bool close, boost::beast::error_code ec, std::size_t bytesTransferred)
     {
-        boost::ignore_unused(bytes_transferred);
+        boost::ignore_unused(bytesTransferred);
 
         if (ec)
             return httpFail(ec, "write");
@@ -314,11 +314,11 @@ public:
 
 private:
     http::response<http::string_body>
-    httpResponse(http::status status, std::string content_type, std::string message) const
+    httpResponse(http::status status, std::string contentType, std::string message) const
     {
         http::response<http::string_body> res{status, req_.version()};
         res.set(http::field::server, "clio-server-" + util::build::getClioVersionString());
-        res.set(http::field::content_type, content_type);
+        res.set(http::field::content_type, contentType);
         res.keep_alive(req_.keep_alive());
         res.body() = std::move(message);
         res.prepare_payload();

@@ -37,7 +37,7 @@ namespace migration::impl {
 std::expected<std::shared_ptr<MigrationManagerInterface>, std::string>
 makeMigrationManager(util::config::ClioConfigDefinition const& config)
 {
-    static util::Logger const log{"Migration"};
+    static util::Logger const log{"Migration"};  // NOLINT(readability-identifier-naming)
     LOG(log.info()) << "Constructing MigrationManager";
 
     auto const type = config.get<std::string>("database.type");

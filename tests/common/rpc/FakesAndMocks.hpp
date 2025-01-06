@@ -77,12 +77,12 @@ public:
     {
         using namespace rpc::validation;
 
-        static auto const rpcSpec = rpc::RpcSpec{
+        static auto const kRPC_SPEC = rpc::RpcSpec{
             {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
             {"limit", Type<uint32_t>{}, Between<uint32_t>{0, 100}},  // optional field
         };
 
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     static Result
@@ -116,12 +116,12 @@ public:
     {
         using namespace rpc::validation;
 
-        static auto const rpcSpec = rpc::RpcSpec{
+        static auto const kRPC_SPEC = rpc::RpcSpec{
             {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
             {"limit", Type<uint32_t>{}, Between<uint32_t>{0u, 100u}},  // optional field
         };
 
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     static Result

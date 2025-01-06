@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos14
+          - os: macos15
             build_type: Release
             static: false
           - os: heavy
@@ -90,7 +90,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos14
+          - os: macos15
             build_type: Release
             integration_tests: false
           - os: heavy

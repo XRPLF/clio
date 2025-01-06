@@ -92,15 +92,15 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const rpcSpec = RpcSpec{
+        static auto const kRPC_SPEC = RpcSpec{
             {JS(tx_hash),
-             meta::WithCustomError{validation::Required{}, Status(ClioError::rpcFIELD_NOT_FOUND_TRANSACTION)},
-             validation::CustomValidators::Uint256HexStringValidator},
-            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
+             meta::WithCustomError{validation::Required{}, Status(ClioError::RpcFieldNotFoundTransaction)},
+             validation::CustomValidators::uint256HexStringValidator},
+            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
         };
 
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     /**

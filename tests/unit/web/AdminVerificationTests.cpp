@@ -98,7 +98,7 @@ class MakeAdminVerificationStrategyTest : public testing::TestWithParam<MakeAdmi
 
 TEST_P(MakeAdminVerificationStrategyTest, ChoosesStrategyCorrectly)
 {
-    auto strat = web::make_AdminVerificationStrategy(GetParam().passwordOpt);
+    auto strat = web::makeAdminVerificationStrategy(GetParam().passwordOpt);
     auto ipStrat = dynamic_cast<web::IPAdminVerificationStrategy*>(strat.get());
     EXPECT_EQ(ipStrat != nullptr, GetParam().expectIpStrategy);
     auto passwordStrat = dynamic_cast<web::PasswordAdminVerificationStrategy*>(strat.get());
@@ -154,7 +154,7 @@ TEST_P(MakeAdminVerificationStrategyFromConfigTest, ChecksConfig)
     ClioConfigDefinition serverConfig{generateDefaultAdminConfig()};
     auto const errors = serverConfig.parse(js);
     ASSERT_TRUE(!errors.has_value());
-    auto const result = web::make_AdminVerificationStrategy(serverConfig);
+    auto const result = web::makeAdminVerificationStrategy(serverConfig);
     EXPECT_EQ(not result.has_value(), GetParam().expectedError);
 }
 
@@ -193,5 +193,5 @@ INSTANTIATE_TEST_SUITE_P(
             .expectedError = false
         }
     ),
-    tests::util::NameGenerator
+    tests::util::kNAME_GENERATOR
 );

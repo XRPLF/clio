@@ -30,18 +30,18 @@ namespace util::impl {
 UIntTagGenerator::TagType
 UIntTagGenerator::next()
 {
-    static std::atomic_uint64_t num{0};
-    return num++;
+    static std::atomic_uint64_t kNUM{0};
+    return kNUM++;
 }
 
 UUIDTagGenerator::TagType
 UUIDTagGenerator::next()
 {
-    static boost::uuids::random_generator gen{};
-    static std::mutex mtx{};
+    static boost::uuids::random_generator kGEN{};
+    static std::mutex kMTX{};
 
-    std::lock_guard const lk(mtx);
-    return gen();
+    std::lock_guard const lk(kMTX);
+    return kGEN();
 }
 
 }  // namespace util::impl

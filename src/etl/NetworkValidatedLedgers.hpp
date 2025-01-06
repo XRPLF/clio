@@ -51,7 +51,7 @@ public:
      * @return A shared pointer to a new instance of NetworkValidatedLedgers
      */
     static std::shared_ptr<NetworkValidatedLedgers>
-    make_ValidatedLedgers();
+    makeValidatedLedgers();
 
     /**
      * @brief Notify the datastructure that idx has been validated by the network.

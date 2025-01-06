@@ -71,7 +71,7 @@ public:
      */
     SignalsHandler(
         util::config::ClioConfigDefinition const& config,
-        std::function<void()> forceExitHandler = defaultForceExitHandler_
+        std::function<void()> forceExitHandler = kDEFAULT_FORCE_EXIT_HANDLER
     );
 
     SignalsHandler(SignalsHandler const&) = delete;
@@ -100,7 +100,7 @@ public:
         stopSignal_.connect(static_cast<int>(priority), std::forward<SomeCallback>(callback));
     }
 
-    static constexpr auto HANDLED_SIGNALS = {SIGINT, SIGTERM};
+    static constexpr auto kHANDLED_SIGNALS = {SIGINT, SIGTERM};
 
 private:
     /**
@@ -117,7 +117,7 @@ private:
     static void
     setHandler(void (*handler)(int) = nullptr);
 
-    static auto constexpr defaultForceExitHandler_ = []() { std::exit(EXIT_FAILURE); };
+    static constexpr auto kDEFAULT_FORCE_EXIT_HANDLER = []() { std::exit(EXIT_FAILURE); };
 };
 
 }  // namespace util

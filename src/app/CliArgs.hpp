@@ -35,7 +35,7 @@ public:
     /**
      * @brief Default configuration path.
      */
-    static constexpr char defaultConfigPath[] = "/etc/opt/clio/config.json";
+    static constexpr char kDEFAULT_CONFIG_PATH[] = "/etc/opt/clio/config.json";
 
     /**
      * @brief An action parsed from the command line.

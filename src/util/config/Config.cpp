@@ -73,7 +73,7 @@ Config::lookup(KeyType key) const
 
     std::reference_wrapper<boost::json::value const> cur = std::cref(store_);
     auto hasBrokenPath = false;
-    auto tokenized = impl::Tokenizer<KeyType, Separator>{key};
+    auto tokenized = impl::Tokenizer<KeyType, kSEPARATOR>{key};
     std::string subkey{};
 
     auto maybeSection = tokenized.next();
@@ -91,7 +91,7 @@ Config::lookup(KeyType key) const
             }
         }
 
-        subkey += Separator;
+        subkey += kSEPARATOR;
         maybeSection = tokenized.next();
     }
 
@@ -104,9 +104,9 @@ std::optional<Config::ArrayType>
 Config::maybeArray(KeyType key) const
 {
     try {
-        auto maybe_arr = lookup(key);
-        if (maybe_arr && maybe_arr->is_array()) {
-            auto& arr = maybe_arr->as_array();
+        auto maybeArr = lookup(key);
+        if (maybeArr && maybeArr->is_array()) {
+            auto& arr = maybeArr->as_array();
             ArrayType out;
             out.reserve(arr.size());
 
@@ -125,16 +125,16 @@ Config::maybeArray(KeyType key) const
 Config::ArrayType
 Config::array(KeyType key) const
 {
-    if (auto maybe_arr = maybeArray(key); maybe_arr)
-        return maybe_arr.value();
+    if (auto maybeArr = maybeArray(key); maybeArr)
+        return maybeArr.value();
     throw std::logic_error("No array found at '" + key + "'");
 }
 
 Config::ArrayType
 Config::arrayOr(KeyType key, ArrayType fallback) const
 {
-    if (auto maybe_arr = maybeArray(key); maybe_arr)
-        return maybe_arr.value();
+    if (auto maybeArr = maybeArray(key); maybeArr)
+        return maybeArr.value();
     return fallback;
 }
 
@@ -151,18 +151,18 @@ Config::arrayOrThrow(KeyType key, std::string_view err) const
 Config
 Config::section(KeyType key) const
 {
-    auto maybe_element = lookup(key);
-    if (maybe_element && maybe_element->is_object())
-        return Config{std::move(*maybe_element)};
+    auto maybeElement = lookup(key);
+    if (maybeElement && maybeElement->is_object())
+        return Config{std::move(*maybeElement)};
     throw std::logic_error("No section found at '" + key + "'");
 }
 
 Config
 Config::sectionOr(KeyType key, boost::json::object fallback) const
 {
-    auto maybe_element = lookup(key);
-    if (maybe_element && maybe_element->is_object())
-        return Config{std::move(*maybe_element)};
+    auto maybeElement = lookup(key);
+    if (maybeElement && maybeElement->is_object())
+        return Config{std::move(*maybeElement)};
     return Config{std::move(fallback)};
 }
 
@@ -184,7 +184,7 @@ std::chrono::milliseconds
 Config::toMilliseconds(float value)
 {
     ASSERT(value >= 0.0f, "Floating point value of seconds must be non-negative, got: {}", value);
-    return std::chrono::milliseconds{std::lroundf(value * static_cast<float>(util::MILLISECONDS_PER_SECOND))};
+    return std::chrono::milliseconds{std::lroundf(value * static_cast<float>(util::kMILLISECONDS_PER_SECOND))};
 }
 
 Config

@@ -82,7 +82,7 @@ ConfigFileJson::ConfigFileJson(boost::json::object jsonObj)
 }
 
 std::expected<ConfigFileJson, Error>
-ConfigFileJson::make_ConfigFileJson(boost::filesystem::path configFilePath)
+ConfigFileJson::makeConfigFileJson(boost::filesystem::path configFilePath)
 {
     try {
         if (auto const in = std::ifstream(configFilePath.string(), std::ios::in | std::ios::binary); in) {

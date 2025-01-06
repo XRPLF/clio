@@ -51,9 +51,9 @@ class AccountChannelsHandler {
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 
 public:
-    static constexpr auto LIMIT_MIN = 10;
-    static constexpr auto LIMIT_MAX = 400;
-    static constexpr auto LIMIT_DEFAULT = 200;
+    static constexpr auto kLIMIT_MIN = 10;
+    static constexpr auto kLIMIT_MAX = 400;
+    static constexpr auto kLIMIT_DEFAULT = 200;
 
     /**
      * @brief A struct to hold data for one channel response
@@ -97,7 +97,7 @@ public:
         std::optional<std::string> destinationAccount;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = LIMIT_DEFAULT;
+        uint32_t limit = kLIMIT_DEFAULT;
         std::optional<std::string> marker;
     };
 
@@ -122,19 +122,19 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const rpcSpec = RpcSpec{
-            {JS(account), validation::Required{}, validation::CustomValidators::AccountValidator},
-            {JS(destination_account), validation::Type<std::string>{}, validation::CustomValidators::AccountValidator},
-            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+        static auto const kRPC_SPEC = RpcSpec{
+            {JS(account), validation::Required{}, validation::CustomValidators::accountValidator},
+            {JS(destination_account), validation::Type<std::string>{}, validation::CustomValidators::accountValidator},
+            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
-             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
-            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
-            {JS(marker), validation::CustomValidators::AccountMarkerValidator},
+             modifiers::Clamp<int32_t>{kLIMIT_MIN, kLIMIT_MAX}},
+            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
+            {JS(marker), validation::CustomValidators::accountMarkerValidator},
         };
 
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     /**

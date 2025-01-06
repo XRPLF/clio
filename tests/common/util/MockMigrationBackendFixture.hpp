@@ -30,30 +30,30 @@
 template <template <typename> typename MockType = ::testing::NiceMock>
 struct MockMigrationBackendTestBase : virtual public NoLoggerFixture {
     class BackendProxy {
-        std::shared_ptr<MockType<MockMigrationBackend>> backend =
+        std::shared_ptr<MockType<MockMigrationBackend>> backend_ =
             std::make_shared<MockType<MockMigrationBackend>>(util::config::ClioConfigDefinition{});
 
     public:
         auto
         operator->()
         {
-            return backend.get();
+            return backend_.get();
         }
 
         operator std::shared_ptr<MockMigrationBackend>()
         {
-            return backend;
+            return backend_;
         }
 
         operator std::shared_ptr<MockMigrationBackend const>() const
         {
-            return backend;
+            return backend_;
         }
 
         MockType<MockMigrationBackend>&
         operator*()
         {
-            return *backend;
+            return *backend_;
         }
     };
 

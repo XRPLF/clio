@@ -158,7 +158,7 @@ private:
 
             auto const context = [&] {
                 if (connection->upgraded) {
-                    return rpc::make_WsContext(
+                    return rpc::makeWsContext(
                         yield,
                         request,
                         connection->makeSubscriptionContext(tagFactory_),
@@ -169,7 +169,7 @@ private:
                         connection->isAdmin()
                     );
                 }
-                return rpc::make_HttpContext(
+                return rpc::makeHttpContext(
                     yield,
                     request,
                     tagFactory_.with(connection->tag()),
@@ -253,10 +253,10 @@ private:
             }
 
             boost::json::array warnings = std::move(result.warnings);
-            warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_CLIO));
+            warnings.emplace_back(rpc::makeWarning(rpc::WarnRpcClio));
 
             if (etl_->lastCloseAgeSeconds() >= 60)
-                warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_OUTDATED));
+                warnings.emplace_back(rpc::makeWarning(rpc::WarnRpcOutdated));
 
             response["warnings"] = warnings;
             connection->send(boost::json::serialize(response));

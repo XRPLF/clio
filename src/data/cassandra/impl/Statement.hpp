@@ -43,7 +43,7 @@
 namespace data::cassandra::impl {
 
 class Statement : public ManagedObject<CassStatement> {
-    static constexpr auto deleter = [](CassStatement* ptr) { cass_statement_free(ptr); };
+    static constexpr auto kDELETER = [](CassStatement* ptr) { cass_statement_free(ptr); };
 
 public:
     /**
@@ -54,14 +54,14 @@ public:
      */
     template <typename... Args>
     explicit Statement(std::string_view query, Args&&... args)
-        : ManagedObject{cass_statement_new_n(query.data(), query.size(), sizeof...(args)), deleter}
+        : ManagedObject{cass_statement_new_n(query.data(), query.size(), sizeof...(args)), kDELETER}
     {
         cass_statement_set_consistency(*this, CASS_CONSISTENCY_QUORUM);
         cass_statement_set_is_idempotent(*this, cass_true);
         bind<Args...>(std::forward<Args>(args)...);
     }
 
-    /* implicit */ Statement(CassStatement* ptr) : ManagedObject{ptr, deleter}
+    /* implicit */ Statement(CassStatement* ptr) : ManagedObject{ptr, kDELETER}
     {
         cass_statement_set_consistency(*this, CASS_CONSISTENCY_QUORUM);
         cass_statement_set_is_idempotent(*this, cass_true);
@@ -153,10 +153,10 @@ public:
  * This is used to produce Statement objects that can be executed.
  */
 class PreparedStatement : public ManagedObject<CassPrepared const> {
-    static constexpr auto deleter = [](CassPrepared const* ptr) { cass_prepared_free(ptr); };
+    static constexpr auto kDELETER = [](CassPrepared const* ptr) { cass_prepared_free(ptr); };
 
 public:
-    /* implicit */ PreparedStatement(CassPrepared const* ptr) : ManagedObject{ptr, deleter}
+    /* implicit */ PreparedStatement(CassPrepared const* ptr) : ManagedObject{ptr, kDELETER}
     {
     }
 

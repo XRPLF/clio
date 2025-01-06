@@ -51,7 +51,7 @@ struct RequestBuilderTestBundle {
 };
 
 struct RequestBuilderTestBase : SyncAsioContextTest {
-    TestHttpServer server{ctx, "0.0.0.0"};
+    TestHttpServer server{ctx_, "0.0.0.0"};
     RequestBuilder builder{"localhost", server.port()};
 };
 

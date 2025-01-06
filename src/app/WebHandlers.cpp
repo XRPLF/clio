@@ -97,7 +97,7 @@ HealthCheckHandler::operator()(
     boost::asio::yield_context
 )
 {
-    static auto constexpr HealthCheckHTML = R"html(
+    static auto constexpr kHEALTH_CHECK_HTML = R"html(
     <!DOCTYPE html>
     <html>
         <head><title>Test page for Clio</title></head>
@@ -105,7 +105,7 @@ HealthCheckHandler::operator()(
     </html>
 )html";
 
-    return web::ng::Response{boost::beast::http::status::ok, HealthCheckHTML, request};
+    return web::ng::Response{boost::beast::http::status::ok, kHEALTH_CHECK_HTML, request};
 }
 
 }  // namespace app

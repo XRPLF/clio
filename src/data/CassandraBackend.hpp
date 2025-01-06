@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
 #include "data/Types.hpp"
+#include "data/cassandra/Concepts.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/Schema.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
@@ -193,7 +194,7 @@ public:
         // wait for other threads to finish their writes
         executor_.sync();
 
-        if (!range) {
+        if (!range_) {
             executor_.writeSync(schema_->updateLedgerRange, ledgerSequence_, false, ledgerSequence_);
         }
 
@@ -649,7 +650,7 @@ public:
     {
         if (auto const res = executor_.read(yield, schema_->selectSuccessor, key, ledgerSequence); res) {
             if (auto const result = res->template get<ripple::uint256>(); result) {
-                if (*result == lastKey)
+                if (*result == kLAST_KEY)
                     return std::nullopt;
                 return result;
             }
@@ -862,7 +863,7 @@ public:
     {
         LOG(log_.trace()) << " Writing ledger object " << key.size() << ":" << seq << " [" << blob.size() << " bytes]";
 
-        if (range)
+        if (range_)
             executor_.write(schema_->insertDiff, seq, key);
 
         executor_.write(schema_->insertObject, std::move(key), seq, std::move(blob));

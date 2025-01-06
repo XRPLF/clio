@@ -72,7 +72,7 @@ TEST(ArrayTest, testArrayPattern)
 
 TEST(ArrayTest, iterateValueArray)
 {
-    auto arr = Array{ConfigValue{ConfigType::Integer}.withConstraint(validateUint16)};
+    auto arr = Array{ConfigValue{ConfigType::Integer}.withConstraint(gValidateUint16)};
     std::vector<int64_t> const expected{543, 123, 909};
 
     for (auto const num : expected)

@@ -44,7 +44,7 @@ CliArgs::parse(int argc, char const* argv[])
     description.add_options()
         ("help,h", "print help message and exit")
         ("version,v", "print version and exit")
-        ("conf,c", po::value<std::string>()->default_value(defaultConfigPath), "configuration file")
+        ("conf,c", po::value<std::string>()->default_value(kDEFAULT_CONFIG_PATH), "configuration file")
         ("ng-web-server,w", "Use ng-web-server")
         ("migrate", po::value<std::string>(), "start migration helper")
     ;

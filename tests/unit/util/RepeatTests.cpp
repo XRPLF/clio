@@ -34,16 +34,16 @@
 using namespace util;
 using testing::AtLeast;
 
-struct RepeatTest : SyncAsioContextTest {
-    Repeat repeat{ctx};
+struct RepeatTests : SyncAsioContextTest {
+    Repeat repeat{ctx_};
     testing::StrictMock<testing::MockFunction<void()>> handlerMock;
 
     void
     withRunningContext(std::function<void()> func)
     {
         tests::common::util::callWithTimeout(std::chrono::seconds{1}, [this, func = std::move(func)]() {
-            auto workGuard = boost::asio::make_work_guard(ctx);
-            std::thread thread{[this]() { ctx.run(); }};
+            auto workGuard = boost::asio::make_work_guard(ctx_);
+            std::thread thread{[this]() { ctx_.run(); }};
             func();
             workGuard.reset();
             thread.join();
@@ -51,14 +51,14 @@ struct RepeatTest : SyncAsioContextTest {
     }
 };
 
-TEST_F(RepeatTest, CallsHandler)
+TEST_F(RepeatTests, CallsHandler)
 {
     repeat.start(std::chrono::milliseconds{1}, handlerMock.AsStdFunction());
     EXPECT_CALL(handlerMock, Call).Times(testing::AtMost(22));
     runContextFor(std::chrono::milliseconds{20});
 }
 
-TEST_F(RepeatTest, StopsOnStop)
+TEST_F(RepeatTests, StopsOnStop)
 {
     withRunningContext([this]() {
         repeat.start(std::chrono::milliseconds{1}, handlerMock.AsStdFunction());
@@ -68,7 +68,7 @@ TEST_F(RepeatTest, StopsOnStop)
     });
 }
 
-TEST_F(RepeatTest, RunsAfterStop)
+TEST_F(RepeatTests, RunsAfterStop)
 {
     withRunningContext([this]() {
         for ([[maybe_unused]] auto i : std::ranges::iota_view(0, 2)) {

@@ -32,7 +32,7 @@
 
 TEST(CreateConfigFile, filePath)
 {
-    auto const jsonFileObj = ConfigFileJson::make_ConfigFileJson(TmpFile(JSONData).path);
+    auto const jsonFileObj = ConfigFileJson::makeConfigFileJson(TmpFile(kJSON_DATA).path);
     EXPECT_TRUE(jsonFileObj.has_value());
 
     EXPECT_TRUE(jsonFileObj->containsKey("array.[].sub"));
@@ -42,12 +42,12 @@ TEST(CreateConfigFile, filePath)
 
 TEST(CreateConfigFile, incorrectFilePath)
 {
-    auto const jsonFileObj = util::config::ConfigFileJson::make_ConfigFileJson("123/clio");
+    auto const jsonFileObj = util::config::ConfigFileJson::makeConfigFileJson("123/clio");
     EXPECT_FALSE(jsonFileObj.has_value());
 }
 
 struct ParseJson : testing::Test {
-    ParseJson() : jsonFileObj{boost::json::parse(JSONData).as_object()}
+    ParseJson() : jsonFileObj{boost::json::parse(kJSON_DATA).as_object()}
     {
     }
 

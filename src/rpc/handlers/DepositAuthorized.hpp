@@ -99,15 +99,15 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const rpcSpec = RpcSpec{
-            {JS(source_account), validation::Required{}, validation::CustomValidators::AccountValidator},
-            {JS(destination_account), validation::Required{}, validation::CustomValidators::AccountValidator},
-            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
+        static auto const kRPC_SPEC = RpcSpec{
+            {JS(source_account), validation::Required{}, validation::CustomValidators::accountValidator},
+            {JS(destination_account), validation::Required{}, validation::CustomValidators::accountValidator},
+            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
             {JS(credentials), validation::Type<boost::json::array>{}, validation::Hex256ItemType()}
         };
 
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     /**

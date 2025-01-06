@@ -27,7 +27,7 @@
 
 TEST(TimeUtilTests, SystemTpFromUTCStrSuccess)
 {
-    auto const tp = util::SystemTpFromUTCStr("2024-01-01T10:50:40Z", "%Y-%m-%dT%H:%M:%SZ");
+    auto const tp = util::systemTpFromUtcStr("2024-01-01T10:50:40Z", "%Y-%m-%dT%H:%M:%SZ");
     ASSERT_TRUE(tp.has_value());
     auto const time = std::chrono::system_clock::to_time_t(tp.value());
     std::tm timeStruct{};
@@ -42,7 +42,7 @@ TEST(TimeUtilTests, SystemTpFromUTCStrSuccess)
 
 TEST(TimeUtilTests, SystemTpFromUTCStrFail)
 {
-    auto const tp = util::SystemTpFromUTCStr("2024-01-01T", "%Y-%m-%dT%H:%M:%SZ");
+    auto const tp = util::systemTpFromUtcStr("2024-01-01T", "%Y-%m-%dT%H:%M:%SZ");
     ASSERT_FALSE(tp.has_value());
 }
 
@@ -50,6 +50,6 @@ TEST(TimeUtilTests, SystemTpFromLedgerCloseTime)
 {
     using namespace std::chrono;
 
-    auto const tp = util::SystemTpFromLedgerCloseTime(ripple::NetClock::time_point{seconds{0}});
+    auto const tp = util::systemTpFromLedgerCloseTime(ripple::NetClock::time_point{seconds{0}});
     EXPECT_EQ(tp.time_since_epoch(), ripple::epoch_offset);
 }

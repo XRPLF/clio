@@ -169,7 +169,7 @@ private:
     {
         // Disable the timeout. The websocket::stream uses its own timeout settings.
         boost::beast::get_lowest_layer(stream_).expires_never();
-        setTimeout(DEFAULT_TIMEOUT);
+        setTimeout(kDEFAULT_TIMEOUT);
         stream_.set_option(
             boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::response_type& res) {
                 res.set(boost::beast::http::field::server, util::build::getClioFullVersionString());
@@ -182,7 +182,7 @@ using PlainWsConnection = WsConnection<boost::beast::tcp_stream>;
 using SslWsConnection = WsConnection<boost::asio::ssl::stream<boost::beast::tcp_stream>>;
 
 std::expected<std::unique_ptr<PlainWsConnection>, Error>
-make_PlainWsConnection(
+makePlainWsConnection(
     boost::asio::ip::tcp::socket socket,
     std::string ip,
     boost::beast::flat_buffer buffer,
@@ -192,7 +192,7 @@ make_PlainWsConnection(
 );
 
 std::expected<std::unique_ptr<SslWsConnection>, Error>
-make_SslWsConnection(
+makeSslWsConnection(
     boost::asio::ip::tcp::socket socket,
     std::string ip,
     boost::beast::flat_buffer buffer,

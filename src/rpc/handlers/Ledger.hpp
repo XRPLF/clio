@@ -103,15 +103,15 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const rpcSpec = RpcSpec{
+        static auto const kRPC_SPEC = RpcSpec{
             {JS(full), validation::Type<bool>{}, validation::NotSupported{true}},
             {JS(full), check::Deprecated{}},
             {JS(accounts), validation::Type<bool>{}, validation::NotSupported{true}},
             {JS(accounts), check::Deprecated{}},
             {JS(owner_funds), validation::Type<bool>{}},
             {JS(queue), validation::Type<bool>{}, validation::NotSupported{true}},
-            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
+            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
             {JS(transactions), validation::Type<bool>{}},
             {JS(expand), validation::Type<bool>{}},
             {JS(binary), validation::Type<bool>{}},
@@ -120,7 +120,7 @@ public:
             {JS(type), check::Deprecated{}},
         };
 
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     /**

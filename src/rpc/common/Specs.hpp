@@ -48,7 +48,7 @@ struct FieldSpec final {
     template <SomeProcessor... Processors>
     FieldSpec(std::string const& key, Processors&&... processors)
         : processor_{impl::makeFieldProcessor<Processors...>(key, std::forward<Processors>(processors)...)}
-        , checker_{impl::EMPTY_FIELD_CHECKER}
+        , checker_{impl::kEMPTY_FIELD_CHECKER}
     {
     }
 
@@ -61,7 +61,7 @@ struct FieldSpec final {
      */
     template <SomeCheck... Checks>
     FieldSpec(std::string const& key, Checks&&... checks)
-        : processor_{impl::EMPTY_FIELD_PROCESSOR}
+        : processor_{impl::kEMPTY_FIELD_PROCESSOR}
         , checker_{impl::makeFieldChecker<Checks...>(key, std::forward<Checks>(checks)...)}
     {
     }

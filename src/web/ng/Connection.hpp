@@ -106,7 +106,7 @@ public:
      * @brief The default timeout for send, receive, and close operations.
      * @note This value should be higher than forwarding timeout to not disconnect clients if rippled is slow.
      */
-    static constexpr std::chrono::steady_clock::duration DEFAULT_TIMEOUT = std::chrono::seconds{11};
+    static constexpr std::chrono::steady_clock::duration kDEFAULT_TIMEOUT = std::chrono::seconds{11};
 
     /**
      * @brief Construct a new Connection object

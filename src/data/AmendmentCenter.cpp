@@ -50,10 +50,10 @@
 namespace {
 
 std::unordered_set<std::string>&
-SUPPORTED_AMENDMENTS()
+supportedAmendments()
 {
-    static std::unordered_set<std::string> amendments = {};
-    return amendments;
+    static std::unordered_set<std::string> kAMENDMENTS = {};
+    return kAMENDMENTS;
 }
 
 bool
@@ -72,8 +72,8 @@ namespace impl {
 
 WritingAmendmentKey::WritingAmendmentKey(std::string amendmentName) : AmendmentKey{std::move(amendmentName)}
 {
-    ASSERT(not SUPPORTED_AMENDMENTS().contains(name), "Attempt to register the same amendment twice");
-    SUPPORTED_AMENDMENTS().insert(name);
+    ASSERT(not supportedAmendments().contains(name), "Attempt to register the same amendment twice");
+    supportedAmendments().insert(name);
 }
 
 }  // namespace impl
@@ -90,7 +90,7 @@ AmendmentKey::operator std::string_view() const
 
 AmendmentKey::operator ripple::uint256() const
 {
-    return Amendment::GetAmendmentId(name);
+    return Amendment::getAmendmentId(name);
 }
 
 AmendmentCenter::AmendmentCenter(std::shared_ptr<data::BackendInterface> const& backend) : backend_{backend}
@@ -103,9 +103,9 @@ AmendmentCenter::AmendmentCenter(std::shared_ptr<data::BackendInterface> const& 
             auto const& [name, support] = p;
             return Amendment{
                 .name = name,
-                .feature = Amendment::GetAmendmentId(name),
+                .feature = Amendment::getAmendmentId(name),
                 .isSupportedByXRPL = support != ripple::AmendmentSupport::Unsupported,
-                .isSupportedByClio = rg::find(SUPPORTED_AMENDMENTS(), name) != rg::end(SUPPORTED_AMENDMENTS()),
+                .isSupportedByClio = rg::find(supportedAmendments(), name) != rg::end(supportedAmendments()),
                 .isRetired = support == ripple::AmendmentSupport::Retired
             };
         }),
@@ -180,7 +180,7 @@ AmendmentCenter::operator[](AmendmentKey const& key) const
 }
 
 ripple::uint256
-Amendment::GetAmendmentId(std::string_view name)
+Amendment::getAmendmentId(std::string_view name)
 {
     return ripple::sha512Half(ripple::Slice(name.data(), name.size()));
 }

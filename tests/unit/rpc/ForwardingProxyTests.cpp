@@ -47,21 +47,23 @@ using namespace testing;
 using namespace util::config;
 namespace json = boost::json;
 
-constexpr static auto CLIENT_IP = "127.0.0.1";
+namespace {
+constexpr auto kCLIENT_IP = "127.0.0.1";
+}  // namespace
 
 class RPCForwardingProxyTest : public HandlerBaseTest {
 protected:
-    std::shared_ptr<MockLoadBalancer> loadBalancer = std::make_shared<MockLoadBalancer>();
-    std::shared_ptr<MockHandlerProvider> handlerProvider = std::make_shared<MockHandlerProvider>();
-    MockCounters counters;
+    std::shared_ptr<MockLoadBalancer> loadBalancer_ = std::make_shared<MockLoadBalancer>();
+    std::shared_ptr<MockHandlerProvider> handlerProvider_ = std::make_shared<MockHandlerProvider>();
+    MockCounters counters_;
 
-    ClioConfigDefinition const config{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none")}};
-    util::TagDecoratorFactory tagFactory{config};
+    ClioConfigDefinition const config_{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none")}};
+    util::TagDecoratorFactory tagFactory_{config_};
 
-    rpc::impl::ForwardingProxy<MockLoadBalancer, MockCounters, MockHandlerProvider> proxy{
-        loadBalancer,
-        counters,
-        handlerProvider
+    rpc::impl::ForwardingProxy<MockLoadBalancer, MockCounters, MockHandlerProvider> proxy_{
+        loadBalancer_,
+        counters_,
+        handlerProvider_
     };
 };
 
@@ -238,13 +240,13 @@ INSTANTIATE_TEST_CASE_P(
     ShouldForwardTest,
     ShouldForwardParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    tests::util::NameGenerator
+    tests::util::kNAME_GENERATOR
 );
 
 TEST_P(ShouldForwardParameterTest, Test)
 {
     auto const testBundle = GetParam();
-    auto const rawHandlerProviderPtr = handlerProvider.get();
+    auto const rawHandlerProviderPtr = handlerProvider_.get();
     auto const apiVersion = testBundle.apiVersion;
     auto const method = testBundle.method;
     auto const params = json::parse(testBundle.testJson);
@@ -253,40 +255,40 @@ TEST_P(ShouldForwardParameterTest, Test)
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(testBundle.called);
 
     runSpawn([&](auto yield) {
-        auto const range = backend->fetchLedgerRange();
+        auto const range = backend_->fetchLedgerRange();
         auto const ctx = web::Context(
-            yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, testBundle.isAdmin
+            yield, method, apiVersion, params.as_object(), nullptr, tagFactory_, *range, kCLIENT_IP, testBundle.isAdmin
         );
 
-        auto const res = proxy.shouldForward(ctx);
+        auto const res = proxy_.shouldForward(ctx);
         ASSERT_EQ(res, testBundle.expected);
     });
 }
 
 TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
 {
-    auto const rawHandlerProviderPtr = handlerProvider.get();
-    auto const rawBalancerPtr = loadBalancer.get();
+    auto const rawHandlerProviderPtr = handlerProvider_.get();
+    auto const rawBalancerPtr = loadBalancer_.get();
     auto const apiVersion = 2u;
     auto const method = "submit";
     auto const params = json::parse(R"({"test": true})");
     auto const forwarded = json::parse(R"({"test": true, "command": "submit"})");
 
     EXPECT_CALL(
-        *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(CLIENT_IP), true, _)
+        *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(kCLIENT_IP), true, _)
     )
         .WillOnce(Return(json::object{}));
 
     EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).WillOnce(Return(true));
 
-    EXPECT_CALL(counters, rpcForwarded(method));
+    EXPECT_CALL(counters_, rpcForwarded(method));
 
     runSpawn([&](auto yield) {
-        auto const range = backend->fetchLedgerRange();
+        auto const range = backend_->fetchLedgerRange();
         auto const ctx =
-            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory_, *range, kCLIENT_IP, true);
 
-        auto const res = proxy.forward(ctx);
+        auto const res = proxy_.forward(ctx);
 
         auto const data = std::get_if<json::object>(&res.response);
         EXPECT_TRUE(data != nullptr);
@@ -295,31 +297,31 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
 
 TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
 {
-    auto const rawHandlerProviderPtr = handlerProvider.get();
-    auto const rawBalancerPtr = loadBalancer.get();
+    auto const rawHandlerProviderPtr = handlerProvider_.get();
+    auto const rawBalancerPtr = loadBalancer_.get();
     auto const apiVersion = 2u;
     auto const method = "submit";
     auto const params = json::parse(R"({"test": true})");
     auto const forwarded = json::parse(R"({"test": true, "command": "submit"})");
 
     EXPECT_CALL(
-        *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(CLIENT_IP), true, _)
+        *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(kCLIENT_IP), true, _)
     )
-        .WillOnce(Return(std::unexpected{rpc::ClioError::etlINVALID_RESPONSE}));
+        .WillOnce(Return(std::unexpected{rpc::ClioError::EtlInvalidResponse}));
 
     EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).WillOnce(Return(true));
 
-    EXPECT_CALL(counters, rpcFailedToForward(method));
+    EXPECT_CALL(counters_, rpcFailedToForward(method));
 
     runSpawn([&](auto yield) {
-        auto const range = backend->fetchLedgerRange();
+        auto const range = backend_->fetchLedgerRange();
         auto const ctx =
-            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory_, *range, kCLIENT_IP, true);
 
-        auto const res = proxy.forward(ctx);
+        auto const res = proxy_.forward(ctx);
 
         auto const status = std::get_if<Status>(&res.response);
         EXPECT_TRUE(status != nullptr);
-        EXPECT_EQ(*status, rpc::ClioError::etlINVALID_RESPONSE);
+        EXPECT_EQ(*status, rpc::ClioError::EtlInvalidResponse);
     });
 }

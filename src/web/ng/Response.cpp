@@ -109,29 +109,29 @@ makeData(http::status status, MessageType message, Connection const& connection)
 }  // namespace
 
 Response::Response(boost::beast::http::status status, std::string message, Request const& request)
-    : data_{makeData(status, std::move(message), request)}
+    : data{makeData(status, std::move(message), request)}
 {
 }
 
 Response::Response(boost::beast::http::status status, boost::json::object const& message, Request const& request)
-    : data_{makeData(status, message, request)}
+    : data{makeData(status, message, request)}
 {
 }
 
 Response::Response(boost::beast::http::status status, boost::json::object const& message, Connection const& connection)
-    : data_{makeData(status, message, connection)}
+    : data{makeData(status, message, connection)}
 {
 }
 
 Response::Response(boost::beast::http::status status, std::string message, Connection const& connection)
-    : data_{makeData(status, std::move(message), connection)}
+    : data{makeData(status, std::move(message), connection)}
 {
 }
 
 Response::Response(boost::beast::http::response<boost::beast::http::string_body> response, Request const& request)
 {
     ASSERT(request.isHttp(), "Request must be HTTP to construct response from HTTP response");
-    data_ = prepareResponse(std::move(response), request.asHttpRequest()->get().keep_alive());
+    data = prepareResponse(std::move(response), request.asHttpRequest()->get().keep_alive());
 }
 
 std::string const&
@@ -144,20 +144,20 @@ Response::message() const
                 return message;  // NOLINT(bugprone-return-const-ref-from-parameter)
             },
         },
-        data_
+        data
     );
 }
 
 void
 Response::setMessage(std::string newMessage)
 {
-    if (std::holds_alternative<std::string>(data_)) {
-        std::get<std::string>(data_) = std::move(newMessage);
+    if (std::holds_alternative<std::string>(data)) {
+        std::get<std::string>(data) = std::move(newMessage);
         return;
     }
     MessageData messageData{std::move(newMessage)};
-    auto const& oldHttpResponse = std::get<http::response<http::string_body>>(data_);
-    data_ = makeHttpData(
+    auto const& oldHttpResponse = std::get<http::response<http::string_body>>(data);
+    data = makeHttpData(
         std::move(messageData), oldHttpResponse.result(), oldHttpResponse.version(), oldHttpResponse.keep_alive()
     );
 }
@@ -166,12 +166,12 @@ void
 Response::setMessage(boost::json::object const& newMessage)
 {
     MessageData messageData{newMessage};
-    if (std::holds_alternative<std::string>(data_)) {
-        std::get<std::string>(data_) = std::move(messageData).body;
+    if (std::holds_alternative<std::string>(data)) {
+        std::get<std::string>(data) = std::move(messageData).body;
         return;
     }
-    auto const& oldHttpResponse = std::get<http::response<http::string_body>>(data_);
-    data_ = makeHttpData(
+    auto const& oldHttpResponse = std::get<http::response<http::string_body>>(data);
+    data = makeHttpData(
         std::move(messageData), oldHttpResponse.result(), oldHttpResponse.version(), oldHttpResponse.keep_alive()
     );
 }
@@ -179,16 +179,17 @@ Response::setMessage(boost::json::object const& newMessage)
 http::response<http::string_body>
 Response::intoHttpResponse() &&
 {
-    ASSERT(std::holds_alternative<http::response<http::string_body>>(data_), "Response must contain HTTP data");
+    ASSERT(std::holds_alternative<http::response<http::string_body>>(data), "Response must contain HTTP data");
 
-    return std::move(std::get<http::response<http::string_body>>(data_));
+    return std::move(std::get<http::response<http::string_body>>(data));
 }
 
 boost::asio::const_buffer
 Response::asWsResponse() const&
 {
-    ASSERT(std::holds_alternative<std::string>(data_), "Response must contain WebSocket data");
-    auto const& message = std::get<std::string>(data_);
+    ASSERT(std::holds_alternative<std::string>(data), "Response must contain WebSocket data");
+    auto const& message = std::get<std::string>(data);
+
     return boost::asio::buffer(message.data(), message.size());
 }
 

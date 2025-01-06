@@ -54,12 +54,12 @@ namespace http = boost::beast::http;
 using namespace util::config;
 
 struct WebHandlersTest : virtual NoLoggerFixture {
-    DOSGuardStrictMock dosGuardMock_;
-    util::TagDecoratorFactory const tagFactory_{
+    DOSGuardStrictMock dosGuardMock;
+    util::TagDecoratorFactory const tagFactory{
         ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
     };
-    std::string const ip_ = "some ip";
-    StrictMockConnection connectionMock_{ip_, boost::beast::flat_buffer{}, tagFactory_};
+    std::string const ip = "some ip";
+    StrictMockConnection connectionMock{ip, boost::beast::flat_buffer{}, tagFactory};
 
     struct AdminVerificationStrategyMock : web::AdminVerificationStrategy {
         MOCK_METHOD(bool, isAdmin, (RequestHeader const&, std::string_view), (const, override));
@@ -68,23 +68,23 @@ struct WebHandlersTest : virtual NoLoggerFixture {
 };
 
 struct OnConnectCheckTests : WebHandlersTest {
-    OnConnectCheck onConnectCheck_{dosGuardMock_};
+    OnConnectCheck onConnectCheck{dosGuardMock};
 };
 
 TEST_F(OnConnectCheckTests, Ok)
 {
-    EXPECT_CALL(dosGuardMock_, increment(ip_));
-    EXPECT_CALL(dosGuardMock_, isOk(ip_)).WillOnce(testing::Return(true));
-    EXPECT_TRUE(onConnectCheck_(connectionMock_).has_value());
+    EXPECT_CALL(dosGuardMock, increment(ip));
+    EXPECT_CALL(dosGuardMock, isOk(ip)).WillOnce(testing::Return(true));
+    EXPECT_TRUE(onConnectCheck(connectionMock).has_value());
 }
 
 TEST_F(OnConnectCheckTests, RateLimited)
 {
-    EXPECT_CALL(dosGuardMock_, increment(ip_));
-    EXPECT_CALL(dosGuardMock_, isOk(ip_)).WillOnce(testing::Return(false));
-    EXPECT_CALL(connectionMock_, wasUpgraded).WillOnce(testing::Return(false));
+    EXPECT_CALL(dosGuardMock, increment(ip));
+    EXPECT_CALL(dosGuardMock, isOk(ip)).WillOnce(testing::Return(false));
+    EXPECT_CALL(connectionMock, wasUpgraded).WillOnce(testing::Return(false));
 
-    auto response = onConnectCheck_(connectionMock_);
+    auto response = onConnectCheck(connectionMock);
     ASSERT_FALSE(response.has_value());
     auto const httpResponse = std::move(response).error().intoHttpResponse();
     EXPECT_EQ(httpResponse.result(), boost::beast::http::status::too_many_requests);
@@ -92,50 +92,50 @@ TEST_F(OnConnectCheckTests, RateLimited)
 }
 
 struct DisconnectHookTests : WebHandlersTest {
-    DisconnectHook disconnectHook_{dosGuardMock_};
+    DisconnectHook disconnectHook{dosGuardMock};
 };
 
 TEST_F(DisconnectHookTests, CallsDecrement)
 {
-    EXPECT_CALL(dosGuardMock_, decrement(ip_));
-    disconnectHook_(connectionMock_);
+    EXPECT_CALL(dosGuardMock, decrement(ip));
+    disconnectHook(connectionMock);
 }
 
 struct MetricsHandlerTests : util::prometheus::WithPrometheus, SyncAsioContextTest, WebHandlersTest {
-    AdminVerificationStrategyStrictMockPtr adminVerifier_{
+    AdminVerificationStrategyStrictMockPtr adminVerifier{
         std::make_shared<testing::StrictMock<AdminVerificationStrategyMock>>()
     };
 
-    MetricsHandler metricsHandler_{adminVerifier_};
-    web::ng::Request request_{http::request<http::string_body>{http::verb::get, "/metrics", 11}};
+    MetricsHandler metricsHandler{adminVerifier};
+    web::ng::Request request{http::request<http::string_body>{http::verb::get, "/metrics", 11}};
 };
 
 TEST_F(MetricsHandlerTests, Call)
 {
-    EXPECT_CALL(*adminVerifier_, isAdmin).WillOnce(testing::Return(true));
+    EXPECT_CALL(*adminVerifier, isAdmin).WillOnce(testing::Return(true));
     runSpawn([&](boost::asio::yield_context yield) {
-        auto response = metricsHandler_(request_, connectionMock_, nullptr, yield);
+        auto response = metricsHandler(request, connectionMock, nullptr, yield);
         auto const httpResponse = std::move(response).intoHttpResponse();
         EXPECT_EQ(httpResponse.result(), boost::beast::http::status::ok);
     });
 }
 
 struct HealthCheckHandlerTests : SyncAsioContextTest, WebHandlersTest {
-    web::ng::Request request_{http::request<http::string_body>{http::verb::get, "/", 11}};
-    HealthCheckHandler healthCheckHandler_;
+    web::ng::Request request{http::request<http::string_body>{http::verb::get, "/", 11}};
+    HealthCheckHandler healthCheckHandler;
 };
 
 TEST_F(HealthCheckHandlerTests, Call)
 {
     runSpawn([&](boost::asio::yield_context yield) {
-        auto response = healthCheckHandler_(request_, connectionMock_, nullptr, yield);
+        auto response = healthCheckHandler(request, connectionMock, nullptr, yield);
         auto const httpResponse = std::move(response).intoHttpResponse();
         EXPECT_EQ(httpResponse.result(), boost::beast::http::status::ok);
     });
 }
 
 struct RequestHandlerTest : SyncAsioContextTest, WebHandlersTest {
-    AdminVerificationStrategyStrictMockPtr adminVerifier_{
+    AdminVerificationStrategyStrictMockPtr adminVerifier{
         std::make_shared<testing::StrictMock<AdminVerificationStrategyMock>>()
     };
 
@@ -162,19 +162,19 @@ struct RequestHandlerTest : SyncAsioContextTest, WebHandlersTest {
         }
     };
 
-    testing::StrictMock<RpcHandlerMock> rpcHandler_;
-    StrictMockConnection connectionMock_{ip_, boost::beast::flat_buffer{}, tagFactory_};
-    RequestHandler<RpcHandlerMock> requestHandler_{adminVerifier_, rpcHandler_, dosGuardMock_};
+    testing::StrictMock<RpcHandlerMock> rpcHandler;
+    StrictMockConnection connectionMock{ip, boost::beast::flat_buffer{}, tagFactory};
+    RequestHandler<RpcHandlerMock> requestHandler{adminVerifier, rpcHandler, dosGuardMock};
 };
 
 TEST_F(RequestHandlerTest, DosguardRateLimited_Http)
 {
     web::ng::Request const request{http::request<http::string_body>{http::verb::get, "/", 11}};
 
-    EXPECT_CALL(dosGuardMock_, request(ip_)).WillOnce(testing::Return(false));
+    EXPECT_CALL(dosGuardMock, request(ip)).WillOnce(testing::Return(false));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto response = requestHandler_(request, connectionMock_, nullptr, yield);
+        auto response = requestHandler(request, connectionMock, nullptr, yield);
         auto const httpResponse = std::move(response).intoHttpResponse();
 
         EXPECT_EQ(httpResponse.result(), boost::beast::http::status::service_unavailable);
@@ -194,10 +194,10 @@ TEST_F(RequestHandlerTest, DosguardRateLimited_Ws)
     web::ng::Request::HttpHeaders const headers{};
     web::ng::Request const request{requestMessage, headers};
 
-    EXPECT_CALL(dosGuardMock_, request(ip_)).WillOnce(testing::Return(false));
+    EXPECT_CALL(dosGuardMock, request(ip)).WillOnce(testing::Return(false));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const response = requestHandler_(request, connectionMock_, nullptr, yield);
+        auto const response = requestHandler(request, connectionMock, nullptr, yield);
         auto const message = boost::json::parse(response.message()).as_object();
 
         EXPECT_EQ(message.at("error").as_string(), "slowDown");
@@ -214,10 +214,10 @@ TEST_F(RequestHandlerTest, DosguardRateLimited_Ws_ErrorParsing)
     web::ng::Request::HttpHeaders const headers{};
     web::ng::Request const request{requestMessage, headers};
 
-    EXPECT_CALL(dosGuardMock_, request(ip_)).WillOnce(testing::Return(false));
+    EXPECT_CALL(dosGuardMock, request(ip)).WillOnce(testing::Return(false));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const response = requestHandler_(request, connectionMock_, nullptr, yield);
+        auto const response = requestHandler(request, connectionMock, nullptr, yield);
         auto const message = boost::json::parse(response.message()).as_object();
 
         EXPECT_EQ(message.at("error").as_string(), "slowDown");
@@ -232,12 +232,12 @@ TEST_F(RequestHandlerTest, RpcHandlerThrows)
 {
     web::ng::Request const request{http::request<http::string_body>{http::verb::get, "/", 11}};
 
-    EXPECT_CALL(dosGuardMock_, request(ip_)).WillOnce(testing::Return(true));
-    EXPECT_CALL(*adminVerifier_, isAdmin).WillOnce(testing::Return(true));
-    EXPECT_CALL(rpcHandler_, call).WillOnce(testing::Throw(std::runtime_error{"some error"}));
+    EXPECT_CALL(dosGuardMock, request(ip)).WillOnce(testing::Return(true));
+    EXPECT_CALL(*adminVerifier, isAdmin).WillOnce(testing::Return(true));
+    EXPECT_CALL(rpcHandler, call).WillOnce(testing::Throw(std::runtime_error{"some error"}));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto response = requestHandler_(request, connectionMock_, nullptr, yield);
+        auto response = requestHandler(request, connectionMock, nullptr, yield);
 
         auto const httpResponse = std::move(response).intoHttpResponse();
 
@@ -256,13 +256,13 @@ TEST_F(RequestHandlerTest, NoErrors)
     web::ng::Response const response{http::status::ok, "some response", request};
     auto const httpResponse = web::ng::Response{response}.intoHttpResponse();
 
-    EXPECT_CALL(dosGuardMock_, request(ip_)).WillOnce(testing::Return(true));
-    EXPECT_CALL(*adminVerifier_, isAdmin).WillOnce(testing::Return(true));
-    EXPECT_CALL(rpcHandler_, call).WillOnce(testing::Return(response));
-    EXPECT_CALL(dosGuardMock_, add(ip_, testing::_)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosGuardMock, request(ip)).WillOnce(testing::Return(true));
+    EXPECT_CALL(*adminVerifier, isAdmin).WillOnce(testing::Return(true));
+    EXPECT_CALL(rpcHandler, call).WillOnce(testing::Return(response));
+    EXPECT_CALL(dosGuardMock, add(ip, testing::_)).WillOnce(testing::Return(true));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto actualResponse = requestHandler_(request, connectionMock_, nullptr, yield);
+        auto actualResponse = requestHandler(request, connectionMock, nullptr, yield);
 
         auto const actualHttpResponse = std::move(actualResponse).intoHttpResponse();
 
@@ -280,13 +280,13 @@ TEST_F(RequestHandlerTest, ResponseDosGuardWarning_ResponseHasWarnings)
     };
     auto const httpResponse = web::ng::Response{response}.intoHttpResponse();
 
-    EXPECT_CALL(dosGuardMock_, request(ip_)).WillOnce(testing::Return(true));
-    EXPECT_CALL(*adminVerifier_, isAdmin).WillOnce(testing::Return(true));
-    EXPECT_CALL(rpcHandler_, call).WillOnce(testing::Return(response));
-    EXPECT_CALL(dosGuardMock_, add(ip_, testing::_)).WillOnce(testing::Return(false));
+    EXPECT_CALL(dosGuardMock, request(ip)).WillOnce(testing::Return(true));
+    EXPECT_CALL(*adminVerifier, isAdmin).WillOnce(testing::Return(true));
+    EXPECT_CALL(rpcHandler, call).WillOnce(testing::Return(response));
+    EXPECT_CALL(dosGuardMock, add(ip, testing::_)).WillOnce(testing::Return(false));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto actualResponse = requestHandler_(request, connectionMock_, nullptr, yield);
+        auto actualResponse = requestHandler(request, connectionMock, nullptr, yield);
 
         auto const actualHttpResponse = std::move(actualResponse).intoHttpResponse();
 
@@ -305,13 +305,13 @@ TEST_F(RequestHandlerTest, ResponseDosGuardWarning_ResponseDoesntHaveWarnings)
     web::ng::Response const response{http::status::ok, R"json({"some":"response"})json", request};
     auto const httpResponse = web::ng::Response{response}.intoHttpResponse();
 
-    EXPECT_CALL(dosGuardMock_, request(ip_)).WillOnce(testing::Return(true));
-    EXPECT_CALL(*adminVerifier_, isAdmin).WillOnce(testing::Return(true));
-    EXPECT_CALL(rpcHandler_, call).WillOnce(testing::Return(response));
-    EXPECT_CALL(dosGuardMock_, add(ip_, testing::_)).WillOnce(testing::Return(false));
+    EXPECT_CALL(dosGuardMock, request(ip)).WillOnce(testing::Return(true));
+    EXPECT_CALL(*adminVerifier, isAdmin).WillOnce(testing::Return(true));
+    EXPECT_CALL(rpcHandler, call).WillOnce(testing::Return(response));
+    EXPECT_CALL(dosGuardMock, add(ip, testing::_)).WillOnce(testing::Return(false));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto actualResponse = requestHandler_(request, connectionMock_, nullptr, yield);
+        auto actualResponse = requestHandler(request, connectionMock, nullptr, yield);
 
         auto const actualHttpResponse = std::move(actualResponse).intoHttpResponse();
 

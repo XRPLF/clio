@@ -67,6 +67,7 @@ struct Amendments {
     // Most of the time it's going to be no changes at all.
 
     /** @cond */
+    // NOLINTBEGIN(readability-identifier-naming)
     REGISTER(OwnerPaysFee);
     REGISTER(Flow);
     REGISTER(FlowCross);
@@ -154,6 +155,7 @@ struct Amendments {
     REGISTER(fix1512);
     REGISTER(fix1523);
     REGISTER(fix1528);
+    // NOLINTEND(readability-identifier-naming)
     /** @endcond */
 };
 

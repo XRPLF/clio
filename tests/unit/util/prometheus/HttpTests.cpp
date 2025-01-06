@@ -108,7 +108,7 @@ INSTANTIATE_TEST_CASE_P(
             .expected = false
         },
     }),
-    tests::util::NameGenerator
+    tests::util::kNAME_GENERATOR
 );
 
 struct PrometheusHandleRequestTests : util::prometheus::WithPrometheus {

@@ -70,7 +70,7 @@ public:
     void
     writeTxIndexExample(std::string const& hash, std::string const& txType)
     {
-        auto static insertTxIndexExample = [this]() {
+        auto static kINSERT_TX_INDEX_EXAMPLE = [this]() {
             return handle_.prepare(fmt::format(
                 R"(
                 INSERT INTO {} 
@@ -80,7 +80,7 @@ public:
                 data::cassandra::qualifiedTableName(settingsProvider_, "tx_index_example")
             ));
         }();
-        executor_.writeSync(insertTxIndexExample.bind(hash, data::cassandra::Text(txType)));
+        executor_.writeSync(kINSERT_TX_INDEX_EXAMPLE.bind(hash, data::cassandra::Text(txType)));
     }
 
     /**
@@ -94,7 +94,7 @@ public:
     std::optional<std::string>
     fetchTxTypeViaID(std::string const& hash, boost::asio::yield_context ctx)
     {
-        auto static fetchTxType = [this]() {
+        auto static kFETCH_TX_TYPE = [this]() {
             return handle_.prepare(fmt::format(
                 R"(
                 SELECT tx_type FROM {} WHERE hash = ?
@@ -102,7 +102,7 @@ public:
                 data::cassandra::qualifiedTableName(settingsProvider_, "tx_index_example")
             ));
         }();
-        auto const res = executor_.read(ctx, fetchTxType.bind(hash));
+        auto const res = executor_.read(ctx, kFETCH_TX_TYPE.bind(hash));
         if (not res) {
             return std::nullopt;
         }
@@ -127,7 +127,7 @@ public:
     std::optional<std::uint64_t>
     fetchTxIndexTableSize(boost::asio::yield_context ctx)
     {
-        auto static insertTxIndexExample = [this]() {
+        auto static kINSERT_TX_INDEX_EXAMPLE = [this]() {
             return handle_.prepare(fmt::format(
                 R"(
                 SELECT COUNT(*) FROM {}
@@ -138,7 +138,7 @@ public:
 
         // This function will be called after table being dropped, catch the exception
         try {
-            auto const res = executor_.read(ctx, insertTxIndexExample);
+            auto const res = executor_.read(ctx, kINSERT_TX_INDEX_EXAMPLE);
             if (not res) {
                 return std::nullopt;
             }
@@ -166,7 +166,7 @@ public:
     void
     writeLedgerAccountHash(std::uint64_t sequence, std::string const& accountHash)
     {
-        auto static insertLedgerExample = [this]() {
+        auto static kINSERT_LEDGER_EXAMPLE = [this]() {
             return handle_.prepare(fmt::format(
                 R"(
                 INSERT INTO {} 
@@ -176,7 +176,7 @@ public:
                 data::cassandra::qualifiedTableName(settingsProvider_, "ledger_example")
             ));
         }();
-        executor_.writeSync(insertLedgerExample.bind(sequence, accountHash));
+        executor_.writeSync(kINSERT_LEDGER_EXAMPLE.bind(sequence, accountHash));
     }
 
     /**
@@ -190,7 +190,7 @@ public:
     std::optional<ripple::uint256>
     fetchAccountHashViaSequence(std::uint64_t sequence, boost::asio::yield_context ctx)
     {
-        auto static fetchAccountHash = [this]() {
+        auto static kFETCH_ACCOUNT_HASH = [this]() {
             return handle_.prepare(fmt::format(
                 R"(
                 SELECT account_hash FROM {} WHERE sequence = ?
@@ -198,7 +198,7 @@ public:
                 data::cassandra::qualifiedTableName(settingsProvider_, "ledger_example")
             ));
         }();
-        auto const res = executor_.read(ctx, fetchAccountHash.bind(sequence));
+        auto const res = executor_.read(ctx, kFETCH_ACCOUNT_HASH.bind(sequence));
         if (not res) {
             return std::nullopt;
         }
@@ -223,7 +223,7 @@ public:
     std::optional<std::uint64_t>
     fetchLedgerTableSize(boost::asio::yield_context ctx)
     {
-        auto static insertLedgerExample = [this]() {
+        auto static kINSERT_LEDGER_EXAMPLE = [this]() {
             return handle_.prepare(fmt::format(
                 R"(
                 SELECT COUNT(*) FROM {}
@@ -234,7 +234,7 @@ public:
 
         // This function will be called after table being dropped, catch the exception
         try {
-            auto const res = executor_.read(ctx, insertLedgerExample);
+            auto const res = executor_.read(ctx, kINSERT_LEDGER_EXAMPLE);
             if (not res) {
                 return std::nullopt;
             }
@@ -278,7 +278,7 @@ public:
     std::optional<std::uint64_t>
     fetchDiffTableSize(boost::asio::yield_context ctx)
     {
-        auto static countDiff = [this]() {
+        auto static kCOUNT_DIFF = [this]() {
             return handle_.prepare(fmt::format(
                 R"(
                 SELECT COUNT(*) FROM {}
@@ -289,7 +289,7 @@ public:
 
         // This function will be called after table being dropped, catch the exception
         try {
-            auto const res = executor_.read(ctx, countDiff);
+            auto const res = executor_.read(ctx, kCOUNT_DIFF);
             if (not res) {
                 return std::nullopt;
             }

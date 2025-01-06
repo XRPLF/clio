@@ -118,8 +118,8 @@ extractObj(PBObjType obj)
         .keyRaw = std::move(*obj.mutable_key()),
         .data = {obj.mutable_data()->begin(), obj.mutable_data()->end()},
         .dataRaw = std::move(*obj.mutable_data()),
-        .successor = valueOr(obj.successor(), uint256ToString(data::firstKey)),
-        .predecessor = valueOr(obj.predecessor(), uint256ToString(data::lastKey)),
+        .successor = valueOr(obj.successor(), uint256ToString(data::kFIRST_KEY)),
+        .predecessor = valueOr(obj.predecessor(), uint256ToString(data::kLAST_KEY)),
         .type = extractModType(obj.mod_type()),
     };
 }

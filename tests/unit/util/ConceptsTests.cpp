@@ -36,15 +36,15 @@ TEST(ConceptTests, hasNoDuplicates)
 }
 
 struct TestA {
-    static constexpr auto name = "TestA";
+    static constexpr auto kNAME = "TestA";
 };
 
 struct AnotherA {
-    static constexpr auto name = "TestA";
+    static constexpr auto kNAME = "TestA";
 };
 
 struct TestB {
-    static constexpr auto name = "TestB";
+    static constexpr auto kNAME = "TestB";
 };
 
 TEST(ConceptTests, hasNoDuplicateNames)

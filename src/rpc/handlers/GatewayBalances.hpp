@@ -108,7 +108,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const hotWalletValidator =
+        static auto const kHOT_WALLET_VALIDATOR =
             validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
                 if (!value.is_string() && !value.is_array())
                     return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotStringOrArray"}};
@@ -138,14 +138,14 @@ public:
                 return MaybeError{};
             }};
 
-        static auto const rpcSpec = RpcSpec{
-            {JS(account), validation::Required{}, validation::CustomValidators::AccountValidator},
-            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
-            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
-            {JS(hotwallet), hotWalletValidator}
+        static auto const kRPC_SPEC = RpcSpec{
+            {JS(account), validation::Required{}, validation::CustomValidators::accountValidator},
+            {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
+            {JS(hotwallet), kHOT_WALLET_VALIDATOR}
         };
 
-        return rpcSpec;
+        return kRPC_SPEC;
     }
 
     /**

@@ -65,7 +65,7 @@ public:
     using OptionalGetLedgerResponseType = std::optional<GetLedgerResponseType>;
 
 private:
-    static constexpr std::uint32_t DEFAULT_DOWNLOAD_RANGES = 16;
+    static constexpr std::uint32_t kDEFAULT_DOWNLOAD_RANGES = 16;
 
     util::Logger log_{"ETL"};
     // Forwarding cache must be destroyed after sources because sources have a callback to invalidate cache
@@ -75,7 +75,7 @@ private:
     std::vector<SourcePtr> sources_;
     std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ =
-        DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading initial ledger */
+        kDEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading initial ledger */
 
     // Using mutext instead of atomic_bool because choosing a new source to
     // forward messages should be done with a mutual exclusion otherwise there will be a race condition
@@ -85,12 +85,12 @@ public:
     /**
      * @brief Value for the X-User header when forwarding admin requests
      */
-    static constexpr std::string_view ADMIN_FORWARDING_X_USER_VALUE = "clio_admin";
+    static constexpr std::string_view kADMIN_FORWARDING_X_USER_VALUE = "clio_admin";
 
     /**
      * @brief Value for the X-User header when forwarding user requests
      */
-    static constexpr std::string_view USER_FORWARDING_X_USER_VALUE = "clio_user";
+    static constexpr std::string_view kUSER_FORWARDING_X_USER_VALUE = "clio_user";
 
     /**
      * @brief Create an instance of the load balancer.
@@ -108,7 +108,7 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
-        SourceFactory sourceFactory = make_Source
+        SourceFactory sourceFactory = makeSource
     );
 
     /**
@@ -123,13 +123,13 @@ public:
      * @return A shared pointer to a new instance of LoadBalancer
      */
     static std::shared_ptr<LoadBalancer>
-    make_LoadBalancer(
+    makeLoadBalancer(
         util::config::ClioConfigDefinition const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
-        SourceFactory sourceFactory = make_Source
+        SourceFactory sourceFactory = makeSource
     );
 
     ~LoadBalancer();

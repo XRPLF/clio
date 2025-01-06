@@ -37,8 +37,7 @@ using namespace util::config;
 using namespace web::dosguard;
 
 struct DOSGuardTest : NoLoggerFixture {
-    static constexpr auto JSONData = R"JSON(
-    {
+    static constexpr auto kJSON_DATA = R"JSON({
         "dos_guard": {
             "max_fetches": 100,
             "max_connections": 2,
@@ -47,10 +46,9 @@ struct DOSGuardTest : NoLoggerFixture {
                 "127.0.0.1"
             ]
         }
-    }
-)JSON";
+    })JSON";
 
-    static constexpr auto IP = "127.0.0.2";
+    static constexpr auto kIP = "127.0.0.2";
 
     struct MockWhitelistHandler : WhitelistHandlerInterface {
         MOCK_METHOD(bool, isWhiteListed, (std::string_view ip), (const));
@@ -76,60 +74,60 @@ TEST_F(DOSGuardTest, Whitelisting)
 
 TEST_F(DOSGuardTest, ConnectionCount)
 {
-    EXPECT_TRUE(guard.isOk(IP));
-    guard.increment(IP);  // one connection
-    EXPECT_TRUE(guard.isOk(IP));
-    guard.increment(IP);  // two connections
-    EXPECT_TRUE(guard.isOk(IP));
-    guard.increment(IP);  // > two connections, can't connect more
-    EXPECT_FALSE(guard.isOk(IP));
+    EXPECT_TRUE(guard.isOk(kIP));
+    guard.increment(kIP);  // one connection
+    EXPECT_TRUE(guard.isOk(kIP));
+    guard.increment(kIP);  // two connections
+    EXPECT_TRUE(guard.isOk(kIP));
+    guard.increment(kIP);  // > two connections, can't connect more
+    EXPECT_FALSE(guard.isOk(kIP));
 
-    guard.decrement(IP);
-    EXPECT_TRUE(guard.isOk(IP));  // can connect again
+    guard.decrement(kIP);
+    EXPECT_TRUE(guard.isOk(kIP));  // can connect again
 }
 
 TEST_F(DOSGuardTest, FetchCount)
 {
-    EXPECT_TRUE(guard.add(IP, 50));  // half of allowence
-    EXPECT_TRUE(guard.add(IP, 50));  // now fully charged
-    EXPECT_FALSE(guard.add(IP, 1));  // can't add even 1 anymore
-    EXPECT_FALSE(guard.isOk(IP));
+    EXPECT_TRUE(guard.add(kIP, 50));  // half of allowence
+    EXPECT_TRUE(guard.add(kIP, 50));  // now fully charged
+    EXPECT_FALSE(guard.add(kIP, 1));  // can't add even 1 anymore
+    EXPECT_FALSE(guard.isOk(kIP));
 
-    guard.clear();                // force clear the above fetch count
-    EXPECT_TRUE(guard.isOk(IP));  // can fetch again
+    guard.clear();                 // force clear the above fetch count
+    EXPECT_TRUE(guard.isOk(kIP));  // can fetch again
 }
 
 TEST_F(DOSGuardTest, ClearFetchCountOnTimer)
 {
-    EXPECT_TRUE(guard.add(IP, 50));  // half of allowence
-    EXPECT_TRUE(guard.add(IP, 50));  // now fully charged
-    EXPECT_FALSE(guard.add(IP, 1));  // can't add even 1 anymore
-    EXPECT_FALSE(guard.isOk(IP));
+    EXPECT_TRUE(guard.add(kIP, 50));  // half of allowence
+    EXPECT_TRUE(guard.add(kIP, 50));  // now fully charged
+    EXPECT_FALSE(guard.add(kIP, 1));  // can't add even 1 anymore
+    EXPECT_FALSE(guard.isOk(kIP));
 
-    guard.clear();                // pretend sweep called from timer
-    EXPECT_TRUE(guard.isOk(IP));  // can fetch again
+    guard.clear();                 // pretend sweep called from timer
+    EXPECT_TRUE(guard.isOk(kIP));  // can fetch again
 }
 
 TEST_F(DOSGuardTest, RequestLimit)
 {
-    EXPECT_TRUE(guard.request(IP));
-    EXPECT_TRUE(guard.request(IP));
-    EXPECT_TRUE(guard.request(IP));
-    EXPECT_TRUE(guard.isOk(IP));
-    EXPECT_FALSE(guard.request(IP));
-    EXPECT_FALSE(guard.isOk(IP));
+    EXPECT_TRUE(guard.request(kIP));
+    EXPECT_TRUE(guard.request(kIP));
+    EXPECT_TRUE(guard.request(kIP));
+    EXPECT_TRUE(guard.isOk(kIP));
+    EXPECT_FALSE(guard.request(kIP));
+    EXPECT_FALSE(guard.isOk(kIP));
     guard.clear();
-    EXPECT_TRUE(guard.isOk(IP));  // can request again
+    EXPECT_TRUE(guard.isOk(kIP));  // can request again
 }
 
 TEST_F(DOSGuardTest, RequestLimitOnTimer)
 {
-    EXPECT_TRUE(guard.request(IP));
-    EXPECT_TRUE(guard.request(IP));
-    EXPECT_TRUE(guard.request(IP));
-    EXPECT_TRUE(guard.isOk(IP));
-    EXPECT_FALSE(guard.request(IP));
-    EXPECT_FALSE(guard.isOk(IP));
+    EXPECT_TRUE(guard.request(kIP));
+    EXPECT_TRUE(guard.request(kIP));
+    EXPECT_TRUE(guard.request(kIP));
+    EXPECT_TRUE(guard.isOk(kIP));
+    EXPECT_FALSE(guard.request(kIP));
+    EXPECT_FALSE(guard.isOk(kIP));
     guard.clear();
-    EXPECT_TRUE(guard.isOk(IP));  // can request again
+    EXPECT_TRUE(guard.isOk(kIP));  // can request again
 }

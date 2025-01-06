@@ -53,7 +53,7 @@ UnsubscribeHandler::UnsubscribeHandler(std::shared_ptr<feed::SubscriptionManager
 RpcSpecConstRef
 UnsubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
 {
-    static auto const booksValidator =
+    static auto const kBOOKS_VALIDATOR =
         validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
             if (!value.is_array())
                 return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
@@ -73,17 +73,17 @@ UnsubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
             return MaybeError{};
         }};
 
-    static auto const rpcSpec = RpcSpec{
-        {JS(streams), validation::CustomValidators::SubscribeStreamValidator},
-        {JS(accounts), validation::CustomValidators::SubscribeAccountsValidator},
-        {JS(accounts_proposed), validation::CustomValidators::SubscribeAccountsValidator},
-        {JS(books), booksValidator},
+    static auto const kRPC_SPEC = RpcSpec{
+        {JS(streams), validation::CustomValidators::subscribeStreamValidator},
+        {JS(accounts), validation::CustomValidators::subscribeAccountsValidator},
+        {JS(accounts_proposed), validation::CustomValidators::subscribeAccountsValidator},
+        {JS(books), kBOOKS_VALIDATOR},
         {JS(url), check::Deprecated{}},
         {JS(rt_accounts), check::Deprecated{}},
         {"rt_transactions", check::Deprecated{}},
     };
 
-    return rpcSpec;
+    return kRPC_SPEC;
 }
 
 UnsubscribeHandler::Result

@@ -56,13 +56,13 @@ public:
     [[nodiscard]] static constexpr std::string_view
     get(std::string_view key)
     {
-        auto const itr = std::ranges::find_if(configDescription, [&](auto const& v) { return v.key == key; });
-        ASSERT(itr != configDescription.end(), "Key {} doesn't exist in config", key);
+        auto const itr = std::ranges::find_if(kCONFIG_DESCRIPTION, [&](auto const& v) { return v.key == key; });
+        ASSERT(itr != kCONFIG_DESCRIPTION.end(), "Key {} doesn't exist in config", key);
         return itr->value;
     }
 
 private:
-    static constexpr auto configDescription = std::array{
+    static constexpr auto kCONFIG_DESCRIPTION = std::array{
         KV{.key = "database.type", .value = "Type of database to use. Default is Scylladb."},
         KV{.key = "database.cassandra.contact_points",
            .value =

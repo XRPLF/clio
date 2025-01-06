@@ -32,6 +32,6 @@
  */
 struct SyncExecutionCtxFixture : virtual public NoLoggerFixture {
 protected:
-    util::async::SyncExecutionContext syncCtx;
-    util::async::AnyExecutionContext ctx{syncCtx};
+    util::async::SyncExecutionContext syncCtx_;
+    util::async::AnyExecutionContext ctx_{syncCtx_};
 };

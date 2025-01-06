@@ -20,6 +20,7 @@
 #pragma once
 
 #include "rpc/Errors.hpp"
+#include "rpc/common/Concepts.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 
@@ -40,7 +41,7 @@ namespace rpc::meta {
  * @brief A meta-processor that acts as a spec for a sub-object/section.
  */
 class Section final {
-    std::vector<FieldSpec> specs;
+    std::vector<FieldSpec> specs_;
 
 public:
     /**
@@ -48,7 +49,7 @@ public:
      *
      * @param specs List of specs @ref FieldSpec
      */
-    explicit Section(std::initializer_list<FieldSpec> specs) : specs{specs}
+    explicit Section(std::initializer_list<FieldSpec> specs) : specs_{specs}
     {
     }
 
@@ -163,8 +164,8 @@ private:
 template <typename RequirementOrModifierType>
     requires SomeRequirement<RequirementOrModifierType> or SomeModifier<RequirementOrModifierType>
 class WithCustomError final {
-    RequirementOrModifierType reqOrModifier;
-    Status error;
+    RequirementOrModifierType reqOrModifier_;
+    Status error_;
 
 public:
     /**
@@ -175,7 +176,7 @@ public:
      * @param err The custom error to return in case `req` fails
      */
     WithCustomError(RequirementOrModifierType reqOrModifier, Status err)
-        : reqOrModifier{std::move(reqOrModifier)}, error{std::move(err)}
+        : reqOrModifier_{std::move(reqOrModifier)}, error_{std::move(err)}
     {
     }
 
@@ -190,8 +191,8 @@ public:
     verify(boost::json::value const& value, std::string_view key) const
         requires SomeRequirement<RequirementOrModifierType>
     {
-        if (auto const res = reqOrModifier.verify(value, key); not res)
-            return Error{error};
+        if (auto const res = reqOrModifier_.verify(value, key); not res)
+            return Error{error_};
 
         return {};
     }
@@ -208,8 +209,8 @@ public:
     verify(boost::json::value& value, std::string_view key) const
         requires SomeRequirement<RequirementOrModifierType>
     {
-        if (auto const res = reqOrModifier.verify(value, key); not res)
-            return Error{error};
+        if (auto const res = reqOrModifier_.verify(value, key); not res)
+            return Error{error_};
 
         return {};
     }
@@ -226,8 +227,8 @@ public:
         requires SomeModifier<RequirementOrModifierType>
 
     {
-        if (auto const res = reqOrModifier.modify(value, key); not res)
-            return Error{error};
+        if (auto const res = reqOrModifier_.modify(value, key); not res)
+            return Error{error_};
         return {};
     }
 };

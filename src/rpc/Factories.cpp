@@ -44,7 +44,7 @@ using namespace util;
 namespace rpc {
 
 std::expected<web::Context, Status>
-make_WsContext(
+makeWsContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
     web::SubscriptionContextPtr session,
@@ -63,18 +63,18 @@ make_WsContext(
     }
 
     if (!commandValue.is_string())
-        return Error{{ClioError::rpcCOMMAND_IS_MISSING, "Method/Command is not specified or is not a string."}};
+        return Error{{ClioError::RpcCommandIsMissing, "Method/Command is not specified or is not a string."}};
 
     auto const apiVersion = apiVersionParser.get().parse(request);
     if (!apiVersion)
-        return Error{{ClioError::rpcINVALID_API_VERSION, apiVersion.error()}};
+        return Error{{ClioError::RpcInvalidApiVersion, apiVersion.error()}};
 
     auto const command = boost::json::value_to<std::string>(commandValue);
     return web::Context(yc, command, *apiVersion, request, std::move(session), tagFactory, range, clientIp, isAdmin);
 }
 
 std::expected<web::Context, Status>
-make_HttpContext(
+makeHttpContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
     util::TagDecoratorFactory const& tagFactory,
@@ -85,13 +85,13 @@ make_HttpContext(
 )
 {
     if (!request.contains("method"))
-        return Error{{ClioError::rpcCOMMAND_IS_MISSING}};
+        return Error{{ClioError::RpcCommandIsMissing}};
 
     if (!request.at("method").is_string())
-        return Error{{ClioError::rpcCOMMAND_NOT_STRING}};
+        return Error{{ClioError::RpcCommandNotString}};
 
     if (request.at("method").as_string().empty())
-        return Error{{ClioError::rpcCOMMAND_IS_EMPTY}};
+        return Error{{ClioError::RpcCommandIsEmpty}};
 
     auto const command = boost::json::value_to<std::string>(request.at("method"));
 
@@ -99,16 +99,16 @@ make_HttpContext(
         return Error{{RippledError::rpcBAD_SYNTAX, "Subscribe and unsubscribe are only allowed for websocket."}};
 
     if (!request.at("params").is_array())
-        return Error{{ClioError::rpcPARAMS_UNPARSEABLE, "Missing params array."}};
+        return Error{{ClioError::RpcParamsUnparseable, "Missing params array."}};
 
     boost::json::array const& array = request.at("params").as_array();
 
     if (array.size() != 1 || !array.at(0).is_object())
-        return Error{{ClioError::rpcPARAMS_UNPARSEABLE}};
+        return Error{{ClioError::RpcParamsUnparseable}};
 
     auto const apiVersion = apiVersionParser.get().parse(request.at("params").as_array().at(0).as_object());
     if (!apiVersion)
-        return Error{{ClioError::rpcINVALID_API_VERSION, apiVersion.error()}};
+        return Error{{ClioError::RpcInvalidApiVersion, apiVersion.error()}};
 
     return web::Context(
         yc, command, *apiVersion, array.at(0).as_object(), nullptr, tagFactory, range, clientIp, isAdmin

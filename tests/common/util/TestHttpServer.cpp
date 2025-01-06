@@ -81,7 +81,7 @@ doSession(
     if (not response)
         return;
 
-    bool const keep_alive = response->keep_alive();
+    bool const keepAlive = response->keep_alive();
 
     http::message_generator messageGenerator{std::move(response).value()};
 
@@ -93,7 +93,7 @@ doSession(
 
     ASSERT_FALSE(errorCode) << errorCode.message();
 
-    if (!keep_alive) {
+    if (!keepAlive) {
         // This means we should close the connection, usually because
         // the response indicated the "Connection: close" semantic.
         return;

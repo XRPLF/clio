@@ -49,6 +49,7 @@ struct GrpcSourceTests : NoLoggerFixture, util::prometheus::WithPrometheus, test
     {
     }
 
+protected:
     std::shared_ptr<testing::StrictMock<MockBackend>> mockBackend_;
     GrpcSource grpcSource_;
 };
@@ -97,6 +98,7 @@ TEST_F(GrpcSourceTests, loadInitialLedgerNoStub)
 }
 
 struct GrpcSourceLoadInitialLedgerTests : GrpcSourceTests {
+protected:
     uint32_t const sequence_ = 123;
     uint32_t const numMarkers_ = 4;
     bool const cacheOnly_ = false;
@@ -123,7 +125,7 @@ TEST_F(GrpcSourceLoadInitialLedgerTests, worksFine)
 {
     auto const key = ripple::uint256{4};
     std::string const keyStr{reinterpret_cast<char const*>(key.data()), ripple::uint256::size()};
-    auto const object = CreateTicketLedgerObject("rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", sequence_);
+    auto const object = createTicketLedgerObject("rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", sequence_);
     auto const objectData = object.getSerializer().peekData();
 
     EXPECT_CALL(mockXrpLedgerAPIService, GetLedgerData)

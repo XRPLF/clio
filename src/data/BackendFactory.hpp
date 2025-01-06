@@ -41,9 +41,9 @@ namespace data {
  * @return A shared_ptr<BackendInterface> with the selected implementation
  */
 inline std::shared_ptr<BackendInterface>
-make_Backend(util::config::ClioConfigDefinition const& config)
+makeBackend(util::config::ClioConfigDefinition const& config)
 {
-    static util::Logger const log{"Backend"};
+    static util::Logger const log{"Backend"};  // NOLINT(readability-identifier-naming)
     LOG(log.info()) << "Constructing BackendInterface";
 
     auto const readOnly = config.get<bool>("read_only");
