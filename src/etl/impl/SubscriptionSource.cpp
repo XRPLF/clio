@@ -162,17 +162,16 @@ void
 SubscriptionSource::subscribe()
 {
     boost::asio::spawn(strand_, [this, _ = boost::asio::make_work_guard(strand_)](boost::asio::yield_context yield) {
-        auto connection = wsConnectionBuilder_.connect(yield);
-        if (not connection) {
+        if (auto connection = wsConnectionBuilder_.connect(yield); connection) {
+            wsConnection_ = std::move(connection).value();
+        } else {
             handleError(connection.error(), yield);
             return;
         }
 
-        wsConnection_ = std::move(connection).value();
-
         auto const& subscribeCommand = getSubscribeCommandJson();
-        auto const writeErrorOpt = wsConnection_->write(subscribeCommand, yield, wsTimeout_);
-        if (writeErrorOpt) {
+
+        if (auto const writeErrorOpt = wsConnection_->write(subscribeCommand, yield, wsTimeout_); writeErrorOpt) {
             handleError(writeErrorOpt.value(), yield);
             return;
         }
@@ -190,8 +189,7 @@ SubscriptionSource::subscribe()
                 return;
             }
 
-            auto const handleErrorOpt = handleMessage(message.value());
-            if (handleErrorOpt) {
+            if (auto const handleErrorOpt = handleMessage(message.value()); handleErrorOpt) {
                 handleError(handleErrorOpt.value(), yield);
                 return;
             }

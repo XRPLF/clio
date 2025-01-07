@@ -39,7 +39,7 @@ StopHelper::asyncWaitForStop(boost::asio::yield_context yield)
     boost::asio::steady_timer timer{yield.get_executor(), std::chrono::steady_clock::duration::max()};
     onStopReady_.connect([&timer]() { timer.cancel(); });
     boost::system::error_code error;
-    if (not*stopped_)
+    if (!*stopped_)
         timer.async_wait(yield[error]);
 }
 
