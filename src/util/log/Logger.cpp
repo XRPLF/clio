@@ -20,6 +20,7 @@
 #include "util/log/Logger.hpp"
 
 #include "util/Assert.hpp"
+#include "util/BytesConverter.hpp"
 #include "util/SourceLocation.hpp"
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
@@ -134,9 +135,11 @@ LogService::init(config::ClioConfigDefinition const& config)
         boost::filesystem::path dirPath{logDir.value()};
         if (!boost::filesystem::exists(dirPath))
             boost::filesystem::create_directories(dirPath);
-        auto const rotationSize = config.get<uint64_t>("log_rotation_size");
         auto const rotationPeriod = config.get<uint32_t>("log_rotation_hour_interval");
-        auto const dirSize = config.get<uint64_t>("log_directory_max_size");
+
+        // the below are taken from user in MB, but boost::log::add_file_log needs it to be in bytes
+        auto const rotationSize = mbToBytes(config.get<uint32_t>("log_rotation_size"));
+        auto const dirSize = mbToBytes(config.get<uint32_t>("log_directory_max_size"));
         auto fileSink = boost::log::add_file_log(
             keywords::file_name = dirPath / "clio.log",
             keywords::target_file_name = dirPath / "clio_%Y-%m-%d_%H-%M-%S.log",
