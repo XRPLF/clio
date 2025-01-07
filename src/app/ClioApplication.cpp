@@ -30,6 +30,7 @@
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
+#include "util/CoroutineGroup.hpp"
 #include "util/build/Build.hpp"
 #include "util/log/Logger.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
@@ -162,20 +163,29 @@ ClioApplication::run(bool const useNgWebServer)
         }
 
         appStopper_.setOnStop([&](boost::asio::yield_context yield) {
-            auto serverStopped = boost::asio::spawn(
-                yield, [&httpServer](auto innerYield) { httpServer->stop(innerYield); }, boost::asio::use_future
-            );
-            auto balancerStopped = boost::asio::spawn(
-                yield, [&balancer](auto innerYield) { balancer->stop(innerYield); }, boost::asio::use_future
-            );
-            serverStopped.get();
-            balancerStopped.get();
-            // etl->stop();
-            // subscriptions->stop();
-            // backend->finishWrites();
+            util::CoroutineGroup coroutineGroup{yield};
+            coroutineGroup.spawn(yield, [&httpServer](auto innerYield) {
+                httpServer->stop(innerYield);
+                LOG(util::LogService::info()) << "Server stopped";
+            });
+            coroutineGroup.spawn(yield, [&balancer](auto innerYield) {
+                balancer->stop(innerYield);
+                LOG(util::LogService::info()) << "LoadBalancer stopped";
+            });
+            coroutineGroup.asyncWait(yield);
+
+            etl->stop();
+            LOG(util::LogService::info()) << "ETL stopped";
+
+            subscriptions->stop();
+            LOG(util::LogService::info()) << "SubscriptionManager stopped";
+
+            backend->waitForWritesToFinish();
+            LOG(util::LogService::info()) << "Backend writes finished";
+
             ioc.stop();
+            LOG(util::LogService::info()) << "io_context stopped";
         });
-        signalsHandler_.subscribeToStop([this]() { appStopper_.stop(); });
 
         // Blocks until stopped.
         // When stopped, shared_ptrs fall out of scope

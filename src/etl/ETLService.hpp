@@ -161,8 +161,18 @@ public:
      */
     ~ETLService()
     {
-        LOG(log_.info()) << "onStop called";
-        LOG(log_.debug()) << "Stopping Reporting ETL";
+        if (not state_.isStopping)
+            stop();
+    }
+
+    /**
+     * @brief Stop the ETL service.
+     * @note This method blocks until the ETL service has stopped.
+     */
+    void
+    stop()
+    {
+        LOG(log_.info()) << "Stop called";
 
         state_.isStopping = true;
         cacheLoader_.stop();

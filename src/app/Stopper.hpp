@@ -36,8 +36,6 @@ class Stopper {
     boost::asio::io_context ctx_;
     std::thread worker_;
 
-    std::function<void(boost::asio::yield_context)> onStop_;
-
 public:
     /**
      * @brief Destroy the Stopper object
@@ -56,7 +54,7 @@ public:
     void
     setOnStop(std::function<void(boost::asio::yield_context)> cb)
     {
-        onStop_ = std::move(cb);
+        boost::asio::spawn(ctx_, std::move(cb));
     }
 
     /**
@@ -65,6 +63,10 @@ public:
     void
     stop()
     {
+        // Do nothing if worker_ is already running
+        if (worker_.joinable())
+            return;
+
         worker_ = std::thread{[this]() { ctx_.run(); }};
     }
 };
