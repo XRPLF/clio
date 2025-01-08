@@ -20,6 +20,7 @@
 #include "util/BytesConverter.hpp"
 
 #include <gtest/gtest.h>
+
 #include <cstdint>
 #include <limits>
 

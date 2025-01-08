@@ -350,8 +350,9 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
      {"server.processing_policy",
       ConfigValue{ConfigType::String}.defaultValue("parallel").withConstraint(gValidateProcessingPolicy)},
-     {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional()},
-     {"server.ws_max_sending_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1500)},
+     {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint16)},
+     {"server.ws_max_sending_queue_size",
+      ConfigValue{ConfigType::Integer}.defaultValue(1500).withConstraint(gValidateUint32)},
      {"server.__ng_web_server", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
      {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
@@ -416,6 +417,7 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
       ConfigValue{ConfigType::Integer}.defaultValue(rpc::kAPI_VERSION_MIN).withConstraint(gValidateApiVersion)},
      {"api_version.max",
       ConfigValue{ConfigType::Integer}.defaultValue(rpc::kAPI_VERSION_MAX).withConstraint(gValidateApiVersion)},
+
      {"migration.full_scan_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint32)},
      {"migration.full_scan_jobs", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint32)},
      {"migration.cursors_per_job", ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(gValidateUint32)}},
