@@ -25,7 +25,6 @@
 
 #include <functional>
 #include <thread>
-#include <utility>
 
 namespace app {
 
@@ -40,35 +39,21 @@ public:
     /**
      * @brief Destroy the Stopper object
      */
-    ~Stopper()
-    {
-        if (worker_.joinable())
-            worker_.join();
-    }
+    ~Stopper();
 
     /**
-     * @brief Set the callabck to be called when the application is stopped.
+     * @brief Set the callback to be called when the application is stopped.
      *
      * @param cb The callback to be called on application stop.
      */
     void
-    setOnStop(std::function<void(boost::asio::yield_context)> cb)
-    {
-        boost::asio::spawn(ctx_, std::move(cb));
-    }
+    setOnStop(std::function<void(boost::asio::yield_context)> cb);
 
     /**
      * @brief Stop the application and run the shutdown tasks.
      */
     void
-    stop()
-    {
-        // Do nothing if worker_ is already running
-        if (worker_.joinable())
-            return;
-
-        worker_ = std::thread{[this]() { ctx_.run(); }};
-    }
+    stop();
 };
 
 }  // namespace app

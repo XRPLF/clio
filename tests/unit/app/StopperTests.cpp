@@ -16,37 +16,35 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-
 #include "app/Stopper.hpp"
+#include "util/LoggerFixtures.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
-#include <functional>
-#include <thread>
-#include <utility>
+using namespace app;
 
-namespace app {
+struct StopperTest : NoLoggerFixture {
+protected:
+    // Order here is important, stopper_ should die before mockCallback_
+    testing::StrictMock<testing::MockFunction<void(boost::asio::yield_context)>> mockCallback_;
+    Stopper stopper_;
+};
 
-Stopper::~Stopper()
+TEST_F(StopperTest, stopCallsCallback)
 {
-    if (worker_.joinable())
-        worker_.join();
+    stopper_.setOnStop(mockCallback_.AsStdFunction());
+    EXPECT_CALL(mockCallback_, Call);
+    stopper_.stop();
 }
 
-void
-Stopper::setOnStop(std::function<void(boost::asio::yield_context)> cb)
+TEST_F(StopperTest, stopCalledMultipleTimes)
 {
-    boost::asio::spawn(ctx_, std::move(cb));
+    stopper_.setOnStop(mockCallback_.AsStdFunction());
+    EXPECT_CALL(mockCallback_, Call);
+    stopper_.stop();
+    stopper_.stop();
+    stopper_.stop();
+    stopper_.stop();
 }
-
-void
-Stopper::stop()
-{
-    // Do nothing if worker_ is already running
-    if (worker_.joinable())
-        return;
-
-    worker_ = std::thread{[this]() { ctx_.run(); }};
-}
-
-}  // namespace app
