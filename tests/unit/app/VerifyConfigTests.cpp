@@ -26,13 +26,18 @@
 using namespace app;
 using namespace util::config;
 
-TEST(VerifyConfigTest, config)
+TEST(VerifyConfigTest, InvalidConfig)
 {
     auto const tmpConfigFile = TmpFile(kJSON_DATA);
 
     // false because json data(kJSON_DATA) is not compatible with current configDefintion
     EXPECT_FALSE(verifyConfig(tmpConfigFile.path));
+}
+
+TEST(VerifyConfigTest, ValidConfig)
+{
+    auto const tmpConfigFile = TmpFile(kVALID_JSON_DATA);
 
     // current example config should always be compatible with configDefinition
-    EXPECT_TRUE(verifyConfig("../docs/examples/config/example-config.json"));
+    EXPECT_TRUE(verifyConfig(tmpConfigFile.path));
 }
