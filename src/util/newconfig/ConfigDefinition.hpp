@@ -350,9 +350,8 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
      {"server.processing_policy",
       ConfigValue{ConfigType::String}.defaultValue("parallel").withConstraint(gValidateProcessingPolicy)},
-     {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint16)},
-     {"server.ws_max_sending_queue_size",
-      ConfigValue{ConfigType::Integer}.defaultValue(1500).withConstraint(gValidateUint32)},
+     {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional()},
+     {"server.ws_max_sending_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1500)},
      {"server.__ng_web_server", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
      {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},

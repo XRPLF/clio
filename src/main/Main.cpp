@@ -19,37 +19,18 @@
 
 #include "app/CliArgs.hpp"
 #include "app/ClioApplication.hpp"
+#include "app/VerifyConfig.hpp"
 #include "migration/MigrationApplication.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
 #include "util/TerminationHandler.hpp"
 #include "util/log/Logger.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigFileJson.hpp"
 
 #include <cstdlib>
 #include <exception>
 #include <iostream>
-#include <string_view>
 
 using namespace util::config;
-
-static int
-handleVerifyConfig(std::string_view configPath)
-{
-    auto const json = ConfigFileJson::makeConfigFileJson(configPath);
-    if (!json.has_value()) {
-        std::cerr << json.error().error << std::endl;
-        return EXIT_FAILURE;
-    }
-    auto const errors = gClioConfig.parse(json.value());
-    if (errors.has_value()) {
-        for (auto const& err : errors.value())
-            std::cerr << err.error << std::endl;
-        return EXIT_FAILURE;
-    }
-    std::cout << "Config is correct" << std::endl;
-    return EXIT_SUCCESS;
-}
 
 int
 main(int argc, char const* argv[])
@@ -59,9 +40,15 @@ try {
     auto const action = app::CliArgs::parse(argc, argv);
     return action.apply(
         [](app::CliArgs::Action::Exit const& exit) { return exit.exitCode; },
-        [](app::CliArgs::Action::VerifyConfig const& verify) { return handleVerifyConfig(verify.configPath); },
+        [](app::CliArgs::Action::VerifyConfig const& verify) {
+            if (app::verifyConfig(verify.configPath)) {
+                std::cout << "Config is correct" << "\n";
+                return EXIT_SUCCESS;
+            }
+            return EXIT_FAILURE;
+        },
         [](app::CliArgs::Action::Run const& run) {
-            auto const res = handleVerifyConfig(run.configPath);
+            auto const res = app::verifyConfig(run.configPath);
             if (res != EXIT_SUCCESS)
                 return EXIT_FAILURE;
 
@@ -70,7 +57,7 @@ try {
             return clio.run(run.useNgWebServer);
         },
         [](app::CliArgs::Action::Migrate const& migrate) {
-            auto const res = handleVerifyConfig(migrate.configPath);
+            auto const res = app::verifyConfig(migrate.configPath);
             if (res != EXIT_SUCCESS)
                 return EXIT_FAILURE;
 
