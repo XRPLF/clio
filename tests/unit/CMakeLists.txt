@@ -144,6 +144,7 @@ target_sources(
           util/RepeatTests.cpp
           util/ResponseExpirationCacheTests.cpp
           util/SignalsHandlerTests.cpp
+          util/StopHelperTests.cpp
           util/TimeUtilsTests.cpp
           util/TxUtilTests.cpp
           util/WithTimeout.cpp

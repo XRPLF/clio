@@ -103,6 +103,14 @@ TEST_F(SourceImplTest, run)
     source_.run();
 }
 
+TEST_F(SourceImplTest, stop)
+{
+    EXPECT_CALL(*subscriptionSourceMock_, stop);
+    boost::asio::io_context ctx;
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) { source_.stop(yield); });
+    ctx.run();
+}
+
 TEST_F(SourceImplTest, isConnected)
 {
     EXPECT_CALL(*subscriptionSourceMock_, isConnected()).WillOnce(testing::Return(true));
