@@ -134,7 +134,7 @@ ETLService::monitor()
             }
         } catch (std::runtime_error const& e) {
             LOG(log_.fatal()) << "Failed to load initial ledger: " << e.what();
-            amendmentBlockHandler_.onAmendmentBlock();
+            amendmentBlockHandler_.notifyAmendmentBlocked();
             return;
         }
 

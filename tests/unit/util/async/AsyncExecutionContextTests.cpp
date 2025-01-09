@@ -34,8 +34,6 @@
 using namespace util::async;
 using ::testing::Types;
 
-using ExecutionContextTypes = Types<CoroExecutionContext, PoolExecutionContext, SyncExecutionContext>;
-
 template <typename T>
 struct ExecutionContextTests : public ::testing::Test {
     using ExecutionContextType = T;
@@ -48,7 +46,15 @@ struct ExecutionContextTests : public ::testing::Test {
     }
 };
 
+// Suite for tests to be ran against all context types but SyncExecutionContext
+template <typename T>
+using AsyncExecutionContextTests = ExecutionContextTests<T>;
+
+using ExecutionContextTypes = Types<CoroExecutionContext, PoolExecutionContext, SyncExecutionContext>;
+using AsyncExecutionContextTypes = Types<CoroExecutionContext, PoolExecutionContext>;
+
 TYPED_TEST_CASE(ExecutionContextTests, ExecutionContextTypes);
+TYPED_TEST_CASE(AsyncExecutionContextTests, AsyncExecutionContextTypes);
 
 TYPED_TEST(ExecutionContextTests, move)
 {
@@ -149,6 +155,26 @@ TYPED_TEST(ExecutionContextTests, timerCancel)
     EXPECT_EQ(value, 42);
 }
 
+TYPED_TEST(ExecutionContextTests, timerAutoCancels)
+{
+    auto value = 0;
+    std::binary_semaphore sem{0};
+    {
+        auto res = this->ctx.scheduleAfter(
+            std::chrono::milliseconds(1),
+            [&value, &sem]([[maybe_unused]] auto stopRequested, auto cancelled) {
+                if (cancelled)
+                    value = 42;
+
+                sem.release();
+            }
+        );
+    }  // res goes out of scope and cancels the timer
+
+    sem.acquire();
+    EXPECT_EQ(value, 42);
+}
+
 TYPED_TEST(ExecutionContextTests, timerStdException)
 {
     auto res =
@@ -245,6 +271,46 @@ TYPED_TEST(ExecutionContextTests, strandWithTimeout)
     );
 
     EXPECT_EQ(res.get().value(), 42);
+}
+
+TYPED_TEST(AsyncExecutionContextTests, executeAutoAborts)
+{
+    auto value = 0;
+    std::binary_semaphore sem{0};
+
+    {
+        auto res = this->ctx.execute([&](auto stopRequested) {
+            while (not stopRequested)
+                ;
+            value = 42;
+            sem.release();
+        });
+    }  // res goes out of scope and aborts operation
+
+    sem.acquire();
+    EXPECT_EQ(value, 42);
+}
+
+TYPED_TEST(AsyncExecutionContextTests, repeatingOperationAutoAborts)
+{
+    auto const repeatDelay = std::chrono::milliseconds{1};
+    auto const timeout = std::chrono::milliseconds{15};
+    auto callCount = 0uz;
+    auto timeSpentMs = 0u;
+
+    {
+        auto res = this->ctx.executeRepeatedly(repeatDelay, [&] { ++callCount; });
+        timeSpentMs = util::timed([timeout] { std::this_thread::sleep_for(timeout); });  // calculate actual time spent
+    }  // res goes out of scope and automatically aborts the repeating operation
+
+    // double the delay so that if abort did not happen we will fail below expectations
+    std::this_thread::sleep_for(timeout);
+
+    auto const expectedPureCalls = timeout.count() / repeatDelay.count();
+    auto const expectedActualCount = timeSpentMs / repeatDelay.count();
+
+    EXPECT_GE(callCount, expectedPureCalls / 2u);  // expect at least half of the scheduled calls
+    EXPECT_LE(callCount, expectedActualCount);     // never should be called more times than possible before timeout
 }
 
 using NoErrorHandlerSyncExecutionContext = BasicExecutionContext<

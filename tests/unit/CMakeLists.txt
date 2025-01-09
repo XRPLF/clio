@@ -34,9 +34,11 @@ target_sources(
           etl/SubscriptionSourceTests.cpp
           etl/TransformerTests.cpp
           # ETLng
+          etlng/AmendmentBlockHandlerTests.cpp
           etlng/ExtractionTests.cpp
           etlng/GrpcSourceTests.cpp
           etlng/RegistryTests.cpp
+          etlng/LoadingTests.cpp
           # Feed
           util/BytesConverterTests.cpp
           feed/BookChangesFeedTests.cpp
@@ -113,8 +115,6 @@ target_sources(
           rpc/RPCHelpersTests.cpp
           rpc/WorkQueueTests.cpp
           test_data/SslCert.cpp
-          util/AccountUtilsTests.cpp
-          util/AssertTests.cpp
           # Async framework
           util/async/AnyExecutionContextTests.cpp
           util/async/AnyOperationTests.cpp
@@ -139,6 +139,10 @@ target_sources(
           util/requests/RequestBuilderTests.cpp
           util/requests/SslContextTests.cpp
           util/requests/WsConnectionTests.cpp
+          # Common utils
+          util/AccountUtilsTests.cpp
+          util/AssertTests.cpp
+          util/MoveTrackerTests.cpp
           util/RandomTests.cpp
           util/RetryTests.cpp
           util/RepeatTests.cpp

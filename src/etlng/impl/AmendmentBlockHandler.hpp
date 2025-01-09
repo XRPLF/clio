@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,9 @@
 #pragma once
 
 #include "etl/SystemState.hpp"
-#include "util/Repeat.hpp"
+#include "etlng/AmendmentBlockHandlerInterface.hpp"
+#include "util/async/AnyExecutionContext.hpp"
+#include "util/async/AnyOperation.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
@@ -28,17 +30,19 @@
 
 #include <chrono>
 #include <functional>
+#include <optional>
 
-namespace etl::impl {
+namespace etlng::impl {
 
-class AmendmentBlockHandler {
+class AmendmentBlockHandler : public AmendmentBlockHandlerInterface {
 public:
     using ActionType = std::function<void()>;
 
 private:
-    std::reference_wrapper<SystemState> state_;
-    util::Repeat repeat_;
+    std::reference_wrapper<etl::SystemState> state_;
     std::chrono::steady_clock::duration interval_;
+    util::async::AnyExecutionContext ctx_;
+    std::optional<util::async::AnyOperation<void>> operation_;
 
     ActionType action_;
 
@@ -46,14 +50,20 @@ public:
     static ActionType const kDEFAULT_AMENDMENT_BLOCK_ACTION;
 
     AmendmentBlockHandler(
-        boost::asio::io_context& ioc,
-        SystemState& state,
+        util::async::AnyExecutionContext&& ctx,
+        etl::SystemState& state,
         std::chrono::steady_clock::duration interval = std::chrono::seconds{1},
         ActionType action = kDEFAULT_AMENDMENT_BLOCK_ACTION
     );
 
+    ~AmendmentBlockHandler() override
+    {
+        if (operation_.has_value())
+            operation_.value().abort();
+    }
+
     void
-    notifyAmendmentBlocked();
+    notifyAmendmentBlocked() override;
 };
 
-}  // namespace etl::impl
+}  // namespace etlng::impl

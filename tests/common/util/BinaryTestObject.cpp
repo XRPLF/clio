@@ -211,7 +211,7 @@ createObject()
         .dataRaw = hexStringToBinaryString(kOBJ_BLOB),
         .successor = hexStringToBinaryString(kOBJ_SUCC),
         .predecessor = hexStringToBinaryString(kOBJ_PRED),
-        .type = {},
+        .type = etlng::model::Object::ModType::Created,
     };
 }
 

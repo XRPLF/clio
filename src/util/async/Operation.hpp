@@ -19,9 +19,9 @@
 
 #pragma once
 
+#include "util/MoveTracker.hpp"
 #include "util/Repeat.hpp"
 #include "util/async/Concepts.hpp"
-#include "util/async/Error.hpp"
 #include "util/async/Outcome.hpp"
 #include "util/async/context/impl/Cancellation.hpp"
 #include "util/async/context/impl/Timer.hpp"
@@ -36,7 +36,6 @@
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <thread>
 
 namespace util::async {
 namespace impl {
@@ -71,7 +70,7 @@ public:
 };
 
 template <typename CtxType, typename OpType>
-struct BasicScheduledOperation {
+struct BasicScheduledOperation : util::MoveTracker {
     class State {
         std::mutex m_;
         std::condition_variable ready_;
@@ -104,6 +103,19 @@ struct BasicScheduledOperation {
         })
     {
     }
+
+    ~BasicScheduledOperation()
+    {
+        if (not wasMoved())
+            abort();
+    }
+
+    BasicScheduledOperation(BasicScheduledOperation const&) = default;
+    BasicScheduledOperation&
+    operator=(BasicScheduledOperation const&) = default;
+    BasicScheduledOperation(BasicScheduledOperation&&) = default;
+    BasicScheduledOperation&
+    operator=(BasicScheduledOperation&&) = default;
 
     [[nodiscard]] auto
     get()
@@ -149,7 +161,8 @@ struct BasicScheduledOperation {
  * @tparam StopSourceType The type of the stop source
  */
 template <typename RetType, typename StopSourceType>
-class StoppableOperation : public impl::BasicOperation<StoppableOutcome<RetType, StopSourceType>> {
+class StoppableOperation : public impl::BasicOperation<StoppableOutcome<RetType, StopSourceType>>,
+                           public util::MoveTracker {
     using OutcomeType = StoppableOutcome<RetType, StopSourceType>;
 
     StopSourceType stopSource_;
@@ -164,6 +177,19 @@ public:
         : impl::BasicOperation<OutcomeType>(outcome), stopSource_(outcome->getStopSource())
     {
     }
+
+    ~StoppableOperation()
+    {
+        if (not wasMoved())
+            requestStop();
+    }
+
+    StoppableOperation(StoppableOperation const&) = delete;
+    StoppableOperation&
+    operator=(StoppableOperation const&) = delete;
+    StoppableOperation(StoppableOperation&&) = default;
+    StoppableOperation&
+    operator=(StoppableOperation&&) = default;
 
     /** @brief Requests the operation to stop */
     void
@@ -199,7 +225,7 @@ using ScheduledOperation = impl::BasicScheduledOperation<CtxType, OpType>;
  * @tparam CtxType The type of the execution context
  */
 template <typename CtxType>
-class RepeatingOperation {
+class RepeatingOperation : public util::MoveTracker {
     util::Repeat repeat_;
 
 public:
@@ -215,6 +241,12 @@ public:
         : repeat_(executor)
     {
         repeat_.start(interval, std::forward<decltype(fn)>(fn));
+    }
+
+    ~RepeatingOperation()
+    {
+        if (not wasMoved())
+            abort();
     }
 
     RepeatingOperation(RepeatingOperation const&) = delete;

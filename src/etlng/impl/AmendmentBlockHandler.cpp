@@ -17,18 +17,17 @@
 */
 //==============================================================================
 
-#include "etl/impl/AmendmentBlockHandler.hpp"
+#include "etlng/impl/AmendmentBlockHandler.hpp"
 
 #include "etl/SystemState.hpp"
+#include "util/async/AnyExecutionContext.hpp"
 #include "util/log/Logger.hpp"
-
-#include <boost/asio/io_context.hpp>
 
 #include <chrono>
 #include <functional>
 #include <utility>
 
-namespace etl::impl {
+namespace etlng::impl {
 
 AmendmentBlockHandler::ActionType const AmendmentBlockHandler::kDEFAULT_AMENDMENT_BLOCK_ACTION = []() {
     static util::Logger const log{"ETL"};  // NOLINT(readability-identifier-naming)
@@ -37,12 +36,12 @@ AmendmentBlockHandler::ActionType const AmendmentBlockHandler::kDEFAULT_AMENDMEN
 };
 
 AmendmentBlockHandler::AmendmentBlockHandler(
-    boost::asio::io_context& ioc,
-    SystemState& state,
+    util::async::AnyExecutionContext&& ctx,
+    etl::SystemState& state,
     std::chrono::steady_clock::duration interval,
     ActionType action
 )
-    : state_{std::ref(state)}, repeat_{ioc}, interval_{interval}, action_{std::move(action)}
+    : state_{std::ref(state)}, interval_{interval}, ctx_{std::move(ctx)}, action_{std::move(action)}
 {
 }
 
@@ -50,7 +49,8 @@ void
 AmendmentBlockHandler::notifyAmendmentBlocked()
 {
     state_.get().isAmendmentBlocked = true;
-    repeat_.start(interval_, action_);
+    if (not operation_.has_value())
+        operation_.emplace(ctx_.executeRepeatedly(interval_, action_));
 }
 
-}  // namespace etl::impl
+}  // namespace etlng::impl

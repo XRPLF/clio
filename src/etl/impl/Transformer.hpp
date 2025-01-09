@@ -203,7 +203,7 @@ private:
         } catch (std::runtime_error const& e) {
             LOG(log_.fatal()) << "Failed to build next ledger: " << e.what();
 
-            amendmentBlockHandler_.get().onAmendmentBlock();
+            amendmentBlockHandler_.get().notifyAmendmentBlocked();
             return {ripple::LedgerHeader{}, false};
         }
 

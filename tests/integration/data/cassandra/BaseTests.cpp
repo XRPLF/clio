@@ -52,7 +52,7 @@ protected:
             R"(
                 CREATE KEYSPACE IF NOT EXISTS {} 
                   WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '1'}} 
-                   AND durable_writes = true
+                   AND durable_writes = True
             )",
             keyspace
         );
@@ -211,7 +211,7 @@ TEST_F(BackendCassandraBaseTest, KeyspaceManipulation)
             R"(
                 CREATE KEYSPACE {} 
                   WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '1'}} 
-                   AND durable_writes = true
+                   AND durable_writes = True
             )",
             keyspace
         );

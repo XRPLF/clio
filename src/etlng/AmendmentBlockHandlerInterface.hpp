@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,20 +19,19 @@
 
 #pragma once
 
-#include "etl/LedgerFetcherInterface.hpp"
-#include "util/FakeFetchResponse.hpp"
+namespace etlng {
 
-#include <gmock/gmock.h>
+/**
+ * @brief The interface of a handler for amendment blocking
+ */
+struct AmendmentBlockHandlerInterface {
+    virtual ~AmendmentBlockHandlerInterface() = default;
 
-#include <cstdint>
-#include <optional>
-
-struct MockLedgerFetcher {
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchData, (uint32_t), ());
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchDataAndDiff, (uint32_t), ());
+    /**
+     * @brief The function to call once an amendment block has been discovered
+     */
+    virtual void
+    notifyAmendmentBlocked() = 0;
 };
 
-struct MockNgLedgerFetcher : etl::LedgerFetcherInterface {
-    MOCK_METHOD(OptionalGetLedgerResponseType, fetchData, (uint32_t), (override));
-    MOCK_METHOD(OptionalGetLedgerResponseType, fetchDataAndDiff, (uint32_t), (override));
-};
+}  // namespace etlng

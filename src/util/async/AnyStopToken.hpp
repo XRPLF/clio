@@ -24,6 +24,7 @@
 
 #include <boost/asio/spawn.hpp>
 
+#include <chrono>
 #include <memory>
 #include <type_traits>
 #include <utility>

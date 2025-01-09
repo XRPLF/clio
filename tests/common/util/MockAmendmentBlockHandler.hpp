@@ -19,8 +19,10 @@
 
 #pragma once
 
+#include "etlng/AmendmentBlockHandlerInterface.hpp"
+
 #include <gmock/gmock.h>
 
-struct MockAmendmentBlockHandler {
-    MOCK_METHOD(void, onAmendmentBlock, (), ());
+struct MockAmendmentBlockHandler : etlng::AmendmentBlockHandlerInterface {
+    MOCK_METHOD(void, notifyAmendmentBlocked, (), (override));
 };

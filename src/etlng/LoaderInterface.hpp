@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,20 +19,34 @@
 
 #pragma once
 
-#include "etl/LedgerFetcherInterface.hpp"
-#include "util/FakeFetchResponse.hpp"
+#include "etlng/Models.hpp"
 
-#include <gmock/gmock.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
-#include <cstdint>
 #include <optional>
 
-struct MockLedgerFetcher {
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchData, (uint32_t), ());
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchDataAndDiff, (uint32_t), ());
+namespace etlng {
+
+/**
+ * @brief An interface for a ETL Loader
+ */
+struct LoaderInterface {
+    virtual ~LoaderInterface() = default;
+
+    /**
+     * @brief Load ledger data
+     * @param data The data to load
+     */
+    virtual void
+    load(model::LedgerData const& data) = 0;
+
+    /**
+     * @brief Load the initial ledger
+     * @param data The data to load
+     * @return Optional ledger header
+     */
+    virtual std::optional<ripple::LedgerHeader>
+    loadInitialLedger(model::LedgerData const& data) = 0;
 };
 
-struct MockNgLedgerFetcher : etl::LedgerFetcherInterface {
-    MOCK_METHOD(OptionalGetLedgerResponseType, fetchData, (uint32_t), (override));
-    MOCK_METHOD(OptionalGetLedgerResponseType, fetchDataAndDiff, (uint32_t), (override));
-};
+}  // namespace etlng

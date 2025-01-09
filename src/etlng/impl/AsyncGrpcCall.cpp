@@ -87,14 +87,14 @@ AsyncGrpcCall::process(
 
     if (abort) {
         LOG(log_.error()) << "AsyncGrpcCall aborted";
-        return CallStatus::ERRORED;
+        return CallStatus::Errored;
     }
 
     if (!status_.ok()) {
         LOG(log_.error()) << "AsyncGrpcCall status_ not ok: code = " << status_.error_code()
                           << " message = " << status_.error_message();
 
-        return CallStatus::ERRORED;
+        return CallStatus::Errored;
     }
 
     if (!next_->is_unlimited()) {
@@ -141,7 +141,7 @@ AsyncGrpcCall::process(
     predecessorKey_ = lastKey_;  // but for ongoing onInitialObjects calls we need to pass along the key we left
                                  // off at so that we can link the two lists correctly
 
-    return more ? CallStatus::MORE : CallStatus::DONE;
+    return more ? CallStatus::More : CallStatus::Done;
 }
 
 void

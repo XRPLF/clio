@@ -30,6 +30,7 @@
 #include <concepts>
 #include <memory>
 #include <semaphore>
+#include <utility>
 
 namespace util {
 
@@ -48,7 +49,7 @@ class Repeat {
         }
     };
 
-    std::unique_ptr<Control> control_;
+    std::shared_ptr<Control> control_;
 
 public:
     /**
@@ -89,23 +90,23 @@ public:
     {
         ASSERT(control_->stopping, "Should be stopped before starting");
         control_->stopping = false;
-        startImpl(interval, std::forward<Action>(action));
+        startImpl(control_, interval, std::forward<Action>(action));
     }
 
 private:
     template <std::invocable Action>
-    void
-    startImpl(std::chrono::steady_clock::duration interval, Action&& action)
+    static void
+    startImpl(std::shared_ptr<Control> control, std::chrono::steady_clock::duration interval, Action&& action)
     {
-        control_->timer.expires_after(interval);
-        control_->timer.async_wait([this, interval, action = std::forward<Action>(action)](auto const& ec) mutable {
-            if (ec or control_->stopping) {
-                control_->semaphore.release();
+        control->timer.expires_after(interval);
+        control->timer.async_wait([control, interval, action = std::forward<Action>(action)](auto const& ec) mutable {
+            if (ec or control->stopping) {
+                control->semaphore.release();
                 return;
             }
             action();
 
-            startImpl(interval, std::forward<Action>(action));
+            startImpl(std::move(control), interval, std::forward<Action>(action));
         });
     }
 };

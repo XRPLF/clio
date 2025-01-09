@@ -26,6 +26,7 @@ Repeat::stop()
 {
     if (control_->stopping)
         return;
+
     control_->stopping = true;
     control_->timer.cancel();
     control_->semaphore.acquire();

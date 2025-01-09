@@ -38,7 +38,7 @@ namespace etlng::impl {
 
 class AsyncGrpcCall {
 public:
-    enum class CallStatus { MORE, DONE, ERRORED };
+    enum class CallStatus { More, Done, Errored };
     using RequestType = org::xrpl::rpc::v1::GetLedgerDataRequest;
     using ResponseType = org::xrpl::rpc::v1::GetLedgerDataResponse;
     using StubType = org::xrpl::rpc::v1::XRPLedgerAPIService::Stub;

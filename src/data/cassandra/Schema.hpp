@@ -74,7 +74,7 @@ public:
                      'class': 'SimpleStrategy',
                      'replication_factor': '{}'
                    }} 
-               AND durable_writes = true
+               AND durable_writes = True
             )",
             settingsProvider_.get().getKeyspace(),
             settingsProvider_.get().getReplicationFactor()
@@ -472,7 +472,7 @@ public:
                 R"(
                 UPDATE {} 
                    SET sequence = ?
-                 WHERE is_latest = false
+                 WHERE is_latest = False
                 )",
                 qualifiedTableName(settingsProvider_.get(), "ledger_range")
             ));
@@ -776,7 +776,7 @@ public:
                 R"(
                 SELECT sequence
                   FROM {}    
-                 WHERE is_latest = true               
+                 WHERE is_latest = True
                 )",
                 qualifiedTableName(settingsProvider_.get(), "ledger_range")
             ));
@@ -787,6 +787,7 @@ public:
                 R"(
                 SELECT sequence
                   FROM {}
+                 WHERE is_latest in (True, False)
                 )",
                 qualifiedTableName(settingsProvider_.get(), "ledger_range")
             ));
