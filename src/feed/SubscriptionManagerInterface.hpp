@@ -46,6 +46,12 @@ public:
     virtual ~SubscriptionManagerInterface() = default;
 
     /**
+     * @brief Stop the SubscriptionManager and wait for all jobs to finish.
+     */
+    virtual void
+    stop() = 0;
+
+    /**
      * @brief Subscribe to the book changes feed.
      * @param subscriber
      */

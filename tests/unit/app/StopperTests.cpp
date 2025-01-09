@@ -17,11 +17,23 @@
 */
 //==============================================================================
 #include "app/Stopper.hpp"
+#include "etl/ETLService.hpp"
+#include "etl/LoadBalancer.hpp"
+#include "util/AsioContextTestFixture.hpp"
 #include "util/LoggerFixtures.hpp"
+#include "util/MockBackend.hpp"
+#include "util/MockPrometheus.hpp"
+#include "util/MockSubscriptionManager.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "web/ng/Server.hpp"
 
+#include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <thread>
 
 using namespace app;
 
@@ -47,4 +59,58 @@ TEST_F(StopperTest, stopCalledMultipleTimes)
     stopper_.stop();
     stopper_.stop();
     stopper_.stop();
+}
+
+struct StopperMakeCallbackTest : util::prometheus::WithPrometheus, SyncAsioContextTest {
+    struct ServerMock : web::ng::ServerTag {
+        MOCK_METHOD(void, stop, (boost::asio::yield_context), ());
+    };
+    struct LoadBalancerMock : etl::LoadBalancerTag {
+        MOCK_METHOD(void, stop, (boost::asio::yield_context), ());
+    };
+    struct ETLServiceMock : etl::ETLServiceTag {
+        MOCK_METHOD(void, stop, (), ());
+    };
+
+protected:
+    testing::StrictMock<ServerMock> serverMock_;
+    testing::StrictMock<LoadBalancerMock> loadBalancerMock_;
+    testing::StrictMock<ETLServiceMock> etlServiceMock_;
+    testing::StrictMock<MockSubscriptionManager> subscriptionManagerMock_;
+    testing::StrictMock<MockBackend> backendMock_{util::config::ClioConfigDefinition{}};
+    boost::asio::io_context ioContextToStop_;
+
+    bool
+    isContextStopped() const
+    {
+        return ioContextToStop_.stopped();
+    }
+};
+
+TEST_F(StopperMakeCallbackTest, makeCallbackTest)
+{
+    auto contextWorkGuard = boost::asio::make_work_guard(ioContextToStop_);
+    std::thread t{[this]() { ioContextToStop_.run(); }};
+
+    auto callback = Stopper::makeOnStopCallback(
+        serverMock_, loadBalancerMock_, etlServiceMock_, subscriptionManagerMock_, backendMock_, ioContextToStop_
+    );
+
+    testing::Sequence s1, s2;
+    EXPECT_CALL(serverMock_, stop).InSequence(s1).WillOnce([this]() { EXPECT_FALSE(isContextStopped()); });
+    EXPECT_CALL(loadBalancerMock_, stop).InSequence(s2).WillOnce([this]() { EXPECT_FALSE(isContextStopped()); });
+    EXPECT_CALL(etlServiceMock_, stop).InSequence(s1, s2).WillOnce([this]() { EXPECT_FALSE(isContextStopped()); });
+    EXPECT_CALL(subscriptionManagerMock_, stop).InSequence(s1, s2).WillOnce([this]() {
+        EXPECT_FALSE(isContextStopped());
+    });
+    EXPECT_CALL(backendMock_, waitForWritesToFinish).InSequence(s1, s2).WillOnce([this]() {
+        EXPECT_FALSE(isContextStopped());
+    });
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        callback(yield);
+        EXPECT_TRUE(isContextStopped());
+    });
+
+    t.join();
 }

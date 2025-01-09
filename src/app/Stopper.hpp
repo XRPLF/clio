@@ -19,6 +19,14 @@
 
 #pragma once
 
+#include "data/BackendInterface.hpp"
+#include "etl/ETLService.hpp"
+#include "etl/LoadBalancer.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
+#include "util/CoroutineGroup.hpp"
+#include "util/log/Logger.hpp"
+#include "web/ng/Server.hpp"
+
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -54,6 +62,57 @@ public:
      */
     void
     stop();
+
+    /**
+     * @brief Create a callback to be called on application stop.
+     *
+     * @param server The server to stop.
+     * @param balancer The load balancer to stop.
+     * @param etl The ETL service to stop.
+     * @param subscriptions The subscription manager to stop.
+     * @param backend The backend to stop.
+     * @param ioc The io_context to stop.
+     * @return The callback to be called on application stop.
+     */
+    template <
+        web::ng::SomeServer ServerType,
+        etl::SomeLoadBalancer LoadBalancerType,
+        etl::SomeETLService ETLServiceType>
+    static std::function<void(boost::asio::yield_context)>
+    makeOnStopCallback(
+        ServerType& server,
+        LoadBalancerType& balancer,
+        ETLServiceType& etl,
+        feed::SubscriptionManagerInterface& subscriptions,
+        data::BackendInterface& backend,
+        boost::asio::io_context& ioc
+    )
+    {
+        return [&](boost::asio::yield_context yield) {
+            util::CoroutineGroup coroutineGroup{yield};
+            coroutineGroup.spawn(yield, [&server](auto innerYield) {
+                server.stop(innerYield);
+                LOG(util::LogService::info()) << "Server stopped";
+            });
+            coroutineGroup.spawn(yield, [&balancer](auto innerYield) {
+                balancer.stop(innerYield);
+                LOG(util::LogService::info()) << "LoadBalancer stopped";
+            });
+            coroutineGroup.asyncWait(yield);
+
+            etl.stop();
+            LOG(util::LogService::info()) << "ETL stopped";
+
+            subscriptions.stop();
+            LOG(util::LogService::info()) << "SubscriptionManager stopped";
+
+            backend.waitForWritesToFinish();
+            LOG(util::LogService::info()) << "Backend writes finished";
+
+            ioc.stop();
+            LOG(util::LogService::info()) << "io_context stopped";
+        };
+    }
 };
 
 }  // namespace app

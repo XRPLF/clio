@@ -123,7 +123,7 @@ public:
      * @brief Stop the SubscriptionManager and wait for all jobs to finish.
      */
     void
-    stop()
+    stop() override
     {
         ctx_.stop();
         ctx_.join();

@@ -19,6 +19,7 @@
 
 #include "app/ClioApplication.hpp"
 
+#include "app/Stopper.hpp"
 #include "app/WebHandlers.hpp"
 #include "data/AmendmentCenter.hpp"
 #include "data/BackendFactory.hpp"
@@ -30,7 +31,6 @@
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
-#include "util/CoroutineGroup.hpp"
 #include "util/build/Build.hpp"
 #include "util/log/Logger.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
@@ -162,30 +162,9 @@ ClioApplication::run(bool const useNgWebServer)
             return EXIT_FAILURE;
         }
 
-        appStopper_.setOnStop([&](boost::asio::yield_context yield) {
-            util::CoroutineGroup coroutineGroup{yield};
-            coroutineGroup.spawn(yield, [&httpServer](auto innerYield) {
-                httpServer->stop(innerYield);
-                LOG(util::LogService::info()) << "Server stopped";
-            });
-            coroutineGroup.spawn(yield, [&balancer](auto innerYield) {
-                balancer->stop(innerYield);
-                LOG(util::LogService::info()) << "LoadBalancer stopped";
-            });
-            coroutineGroup.asyncWait(yield);
-
-            etl->stop();
-            LOG(util::LogService::info()) << "ETL stopped";
-
-            subscriptions->stop();
-            LOG(util::LogService::info()) << "SubscriptionManager stopped";
-
-            backend->waitForWritesToFinish();
-            LOG(util::LogService::info()) << "Backend writes finished";
-
-            ioc.stop();
-            LOG(util::LogService::info()) << "io_context stopped";
-        });
+        appStopper_.setOnStop(
+            Stopper::makeOnStopCallback(httpServer.value(), *balancer, *etl, *subscriptions, *backend, ioc)
+        );
 
         // Blocks until stopped.
         // When stopped, shared_ptrs fall out of scope

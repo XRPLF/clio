@@ -33,6 +33,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 
+#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <optional>
@@ -41,9 +42,19 @@
 namespace web::ng {
 
 /**
+ * @brief A tag class for server to help identify Server in templated code.
+ */
+struct ServerTag {
+    virtual ~ServerTag() = default;
+};
+
+template <typename T>
+concept SomeServer = std::derived_from<T, ServerTag>;
+
+/**
  * @brief Web server class.
  */
-class Server {
+class Server : public ServerTag {
 public:
     /**
      * @brief Check to perform for each new client connection. The check takes client ip as input and returns a Response
