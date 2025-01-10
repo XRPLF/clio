@@ -41,3 +41,23 @@ TEST(VerifyConfigTest, ValidConfig)
     // current example config should always be compatible with configDefinition
     EXPECT_TRUE(verifyConfig(tmpConfigFile.path));
 }
+
+TEST(VerifyConfigTest, ConfigFileNotExist)
+{
+    EXPECT_FALSE(verifyConfig("doesn't exist Config File"));
+}
+
+TEST(VerifyConfigTest, InvalidJsonFile)
+{
+    // invalid json because extra "," after 51233
+    static constexpr auto kINVALID_JSON = R"({
+                                             "server": {
+                                                "ip": "0.0.0.0",
+                                                "port": 51233, 
+                                            }
+                                        })";
+    auto const tmpConfigFile = TmpFile(kINVALID_JSON);
+
+    // current example config should always be compatible with configDefinition
+    EXPECT_FALSE(verifyConfig(tmpConfigFile.path));
+}
