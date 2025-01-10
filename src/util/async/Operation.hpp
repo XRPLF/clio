@@ -104,7 +104,7 @@ struct BasicScheduledOperation : util::MoveTracker {
     {
     }
 
-    ~BasicScheduledOperation()
+    ~BasicScheduledOperation() override
     {
         if (not wasMoved())
             abort();
@@ -178,7 +178,7 @@ public:
     {
     }
 
-    ~StoppableOperation()
+    ~StoppableOperation() override
     {
         if (not wasMoved())
             requestStop();
@@ -243,7 +243,7 @@ public:
         repeat_.start(interval, std::forward<decltype(fn)>(fn));
     }
 
-    ~RepeatingOperation()
+    ~RepeatingOperation() override
     {
         if (not wasMoved())
             abort();
