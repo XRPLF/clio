@@ -40,6 +40,7 @@
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/websocket/error.hpp>
 
+#include <chrono>
 #include <cstddef>
 #include <memory>
 #include <optional>
@@ -139,6 +140,7 @@ ConnectionHandler::onWs(MessageHandler handler)
 void
 ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::yield_context yield)
 {
+    LOG(log_.trace()) << connectionPtr->tag() << "New connection";
     auto& connectionRef = *connectionPtr;
 
     if (isStopping()) {
@@ -203,13 +205,17 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
 void
 ConnectionHandler::stopConnection(Connection& connection, boost::asio::yield_context yield)
 {
+    util::Logger log{"WebServer"};
+    LOG(log.trace()) << connection.tag() << "Stopping connection";
     Response response{
         boost::beast::http::status::service_unavailable,
         "This Clio node is shutting down. Please try another node.",
         connection
     };
     connection.send(std::move(response), yield);
+    connection.setTimeout(std::chrono::milliseconds{500});
     connection.close(yield);
+    LOG(log.trace()) << connection.tag() << "Connection closed";
 }
 
 void
@@ -348,7 +354,10 @@ ConnectionHandler::parallelRequestResponseLoop(
             );
         }
     }
+    LOG(log_.trace()) << connection.tag()
+                      << "Waiting processing tasks to finish. Number of tasks: " << tasksGroup.size();
     tasksGroup.asyncWait(yield);
+    LOG(log_.trace()) << connection.tag() << "Processing is done";
     return closeConnectionGracefully;
 }
 
