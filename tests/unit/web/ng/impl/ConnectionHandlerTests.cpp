@@ -501,6 +501,33 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
     });
 }
 
+TEST_F(ConnectionHandlerSequentialProcessingTest, ProcessCalledAfterStop)
+{
+    testing::StrictMock<testing::MockFunction<
+        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+        wsHandlerMock;
+    connectionHandler.onWs(wsHandlerMock.AsStdFunction());
+
+    runSyncOperation([this](boost::asio::yield_context yield) { connectionHandler.stop(yield); });
+
+    EXPECT_CALL(*mockWsConnection, wasUpgraded).WillOnce(Return(true));
+    EXPECT_CALL(
+        *mockWsConnection,
+        send(
+            testing::ResultOf(
+                [](Response const& r) { return r.message(); }, testing::HasSubstr("This Clio node is shutting down")
+            ),
+            testing::_
+        )
+    );
+
+    EXPECT_CALL(*mockWsConnection, close);
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler.processConnection(std::move(mockWsConnection), yield);
+    });
+}
+
 struct ConnectionHandlerParallelProcessingTest : ConnectionHandlerTest {
     static constexpr size_t kMAX_PARALLEL_REQUESTS = 3;
 
