@@ -362,6 +362,8 @@ static constinit NumberValueConstraint<uint16_t> gValidateUint16{
     std::numeric_limits<uint16_t>::min(),
     std::numeric_limits<uint16_t>::max()
 };
+
+static constinit NumberValueConstraint<uint32_t> gValidateLogs{1, std::numeric_limits<uint32_t>::max()};
 static constinit NumberValueConstraint<uint32_t> gValidateUint32{
     std::numeric_limits<uint32_t>::min(),
     std::numeric_limits<uint32_t>::max()
