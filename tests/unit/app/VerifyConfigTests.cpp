@@ -36,6 +36,13 @@ TEST(VerifyConfigTest, InvalidConfig)
 
 TEST(VerifyConfigTest, ValidConfig)
 {
+    // used to Verify Config test
+    static constexpr auto kVALID_JSON_DATA = R"JSON({
+         "server": {
+            "ip": "0.0.0.0",
+            "port": 51233
+        }
+    })JSON";
     auto const tmpConfigFile = TmpFile(kVALID_JSON_DATA);
 
     // current example config should always be compatible with configDefinition

@@ -41,13 +41,15 @@ verifyConfig(std::string_view configPath)
 
     auto const json = ConfigFileJson::makeConfigFileJson(configPath);
     if (!json.has_value()) {
-        std::cerr << json.error().error << std::endl;
+        std::cerr << "Error parsing json from config: " << configPath << "\n" << json.error().error << std::endl;
         return false;
     }
     auto const errors = gClioConfig.parse(json.value());
     if (errors.has_value()) {
-        for (auto const& err : errors.value())
+        for (auto const& err : errors.value()) {
+            std::cerr << "Issues found in provided config '" << configPath << "':\n";
             std::cerr << err.error << std::endl;
+        }
         return false;
     }
     return true;

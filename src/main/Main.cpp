@@ -42,7 +42,7 @@ try {
         [](app::CliArgs::Action::Exit const& exit) { return exit.exitCode; },
         [](app::CliArgs::Action::VerifyConfig const& verify) {
             if (app::verifyConfig(verify.configPath)) {
-                std::cout << "Config is correct" << "\n";
+                std::cout << "Config " << verify.configPath << " is correct" << "\n";
                 return EXIT_SUCCESS;
             }
             return EXIT_FAILURE;
