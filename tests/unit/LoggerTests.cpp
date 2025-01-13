@@ -102,7 +102,7 @@ protected:
 
 TEST_F(LoggerInitTest, DefaultLogLevel)
 {
-    auto parsingErrors = config_.parse(ConfigFileJson{boost::json::object{{"log_level", "warn"}}});
+    auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::object{{"log_level", "warn"}}});
     ASSERT_FALSE(parsingErrors.has_value());
     std::string const logString = "some log";
 
@@ -121,7 +121,7 @@ TEST_F(LoggerInitTest, DefaultLogLevel)
         log.warn() << logString;
         checkEqual(fmt::format("{}:WRN {}", channel, logString));
 
-        log.error() << "some log";
+        log.error() << logString;
         checkEqual(fmt::format("{}:ERR {}", channel, logString));
     }
 }
@@ -136,12 +136,11 @@ TEST_F(LoggerInitTest, ChannelLogLevel)
                 "channel": "Backend",
                 "log_level": "warning"
             }
-
         ]
     }
     )json";
 
-    auto parsingErrors = config_.parse(ConfigFileJson{boost::json::parse(configStr).as_object()});
+    auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::parse(configStr).as_object()});
     ASSERT_FALSE(parsingErrors.has_value());
     std::string const logString = "some log";
 
