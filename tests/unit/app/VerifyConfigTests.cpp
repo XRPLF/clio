@@ -58,6 +58,5 @@ TEST(VerifyConfigTest, InvalidJsonFile)
                                         })";
     auto const tmpConfigFile = TmpFile(kINVALID_JSON);
 
-    // current example config should always be compatible with configDefinition
     EXPECT_FALSE(verifyConfig(tmpConfigFile.path));
 }
