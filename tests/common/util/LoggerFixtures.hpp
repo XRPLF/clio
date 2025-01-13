@@ -91,7 +91,7 @@ protected:
     checkEqual(std::string expected)
     {
         auto value = buffer_.getStrAndReset();
-        ASSERT_EQ(value, expected + '\n');
+        ASSERT_EQ(value, expected + '\n') << "Got: " << value;
     }
 
     void

@@ -19,8 +19,20 @@
 
 #include "util/LoggerFixtures.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/Array.hpp"
+#include "util/newconfig/ConfigConstraints.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
+#include <boost/json/object.hpp>
+#include <boost/json/parse.hpp>
+#include <fmt/core.h>
 #include <gtest/gtest.h>
+
+#include <string>
+#include <string_view>
 using namespace util;
 
 // Used as a fixture for tests with enabled logging
@@ -54,6 +66,106 @@ TEST_F(LoggerTest, Filtering)
     Logger const tlog{"Trace"};
     tlog.trace() << "Trace line logged for 'Trace' component";
     checkEqual("Trace:TRC Trace line logged for 'Trace' component");
+}
+
+using util::config::Array;
+using util::config::ConfigFileJson;
+using util::config::ConfigType;
+using util::config::ConfigValue;
+
+struct LoggerInitTest : LoggerTest {
+protected:
+    util::config::ClioConfigDefinition config_{
+        {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.optional()}},
+        {"log_channels.[].log_level", Array{ConfigValue{ConfigType::String}.optional()}},
+
+        {"log_level", ConfigValue{ConfigType::String}.defaultValue("info")},
+
+        {"log_format",
+         ConfigValue{ConfigType::String}.defaultValue(
+             R"(%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%)"
+         )},
+
+        {"log_to_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+
+        {"log_directory", ConfigValue{ConfigType::String}.optional()},
+
+        {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048)},
+
+        {"log_directory_max_size", ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024)},
+
+        {"log_rotation_hour_interval", ConfigValue{ConfigType::Integer}.defaultValue(12)},
+
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
+    };
+};
+
+TEST_F(LoggerInitTest, DefaultLogLevel)
+{
+    auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::object{{"log_level", "warn"}}});
+    ASSERT_FALSE(parsingErrors.has_value());
+    std::string const logString = "some log";
+
+    LogService::init(config_);
+    for (auto const& channel : Logger::kCHANNELS) {
+        Logger const log{channel};
+        log.trace() << logString;
+        checkEmpty();
+
+        log.debug() << logString;
+        checkEmpty();
+
+        log.info() << logString;
+        checkEmpty();
+
+        log.warn() << logString;
+        checkEqual(fmt::format("{}:WRN {}", channel, logString));
+
+        log.error() << logString;
+        checkEqual(fmt::format("{}:ERR {}", channel, logString));
+    }
+}
+
+TEST_F(LoggerInitTest, ChannelLogLevel)
+{
+    std::string const configStr = R"json(
+    {
+        "log_level": "error",
+        "log_channels": [
+            {
+                "channel": "Backend",
+                "log_level": "warning"
+            }
+        ]
+    }
+    )json";
+
+    auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::parse(configStr).as_object()});
+    ASSERT_FALSE(parsingErrors.has_value());
+    std::string const logString = "some log";
+
+    LogService::init(config_);
+    for (auto const& channel : Logger::kCHANNELS) {
+        Logger const log{channel};
+        log.trace() << logString;
+        checkEmpty();
+
+        log.debug() << logString;
+        checkEmpty();
+
+        log.info() << logString;
+        checkEmpty();
+
+        log.warn() << logString;
+        if (std::string_view{channel} == "Backend") {
+            checkEqual(fmt::format("{}:WRN {}", channel, logString));
+        } else {
+            checkEmpty();
+        }
+
+        log.error() << "some log";
+        checkEqual(fmt::format("{}:ERR {}", channel, logString));
+    }
 }
 
 #ifndef COVERAGE_ENABLED
