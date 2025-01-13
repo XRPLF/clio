@@ -19,12 +19,12 @@
 
 #include "app/CliArgs.hpp"
 #include "app/ClioApplication.hpp"
+#include "app/VerifyConfig.hpp"
 #include "migration/MigrationApplication.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
 #include "util/TerminationHandler.hpp"
 #include "util/log/Logger.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigFileJson.hpp"
 
 #include <cstdlib>
 #include <exception>
@@ -40,34 +40,27 @@ try {
     auto const action = app::CliArgs::parse(argc, argv);
     return action.apply(
         [](app::CliArgs::Action::Exit const& exit) { return exit.exitCode; },
+        [](app::CliArgs::Action::VerifyConfig const& verify) {
+            if (app::verifyConfig(verify.configPath)) {
+                std::cout << "Config is correct" << "\n";
+                return EXIT_SUCCESS;
+            }
+            return EXIT_FAILURE;
+        },
         [](app::CliArgs::Action::Run const& run) {
-            auto const json = ConfigFileJson::makeConfigFileJson(run.configPath);
-            if (!json.has_value()) {
-                std::cerr << json.error().error << std::endl;
+            auto const res = app::verifyConfig(run.configPath);
+            if (res != EXIT_SUCCESS)
                 return EXIT_FAILURE;
-            }
-            auto const errors = gClioConfig.parse(json.value());
-            if (errors.has_value()) {
-                for (auto const& err : errors.value())
-                    std::cerr << err.error << std::endl;
-                return EXIT_FAILURE;
-            }
+
             util::LogService::init(gClioConfig);
             app::ClioApplication clio{gClioConfig};
             return clio.run(run.useNgWebServer);
         },
         [](app::CliArgs::Action::Migrate const& migrate) {
-            auto const json = ConfigFileJson::makeConfigFileJson(migrate.configPath);
-            if (!json.has_value()) {
-                std::cerr << json.error().error << std::endl;
+            auto const res = app::verifyConfig(migrate.configPath);
+            if (res != EXIT_SUCCESS)
                 return EXIT_FAILURE;
-            }
-            auto const errors = gClioConfig.parse(json.value());
-            if (errors.has_value()) {
-                for (auto const& err : errors.value())
-                    std::cerr << err.error << std::endl;
-                return EXIT_FAILURE;
-            }
+
             util::LogService::init(gClioConfig);
             app::MigratorApplication migrator{gClioConfig, migrate.subCmd};
             return migrator.run();

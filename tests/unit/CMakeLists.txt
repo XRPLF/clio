@@ -6,6 +6,7 @@ target_sources(
           ConfigTests.cpp
           app/CliArgsTests.cpp
           app/StopperTests.cpp
+          app/VerifyConfigTests.cpp
           app/WebHandlersTests.cpp
           data/AmendmentCenterTests.cpp
           data/BackendCountersTests.cpp

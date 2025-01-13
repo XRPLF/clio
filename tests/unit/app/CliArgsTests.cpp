@@ -32,6 +32,7 @@ struct CliArgsTests : testing::Test {
     testing::StrictMock<testing::MockFunction<int(CliArgs::Action::Run)>> onRunMock;
     testing::StrictMock<testing::MockFunction<int(CliArgs::Action::Exit)>> onExitMock;
     testing::StrictMock<testing::MockFunction<int(CliArgs::Action::Migrate)>> onMigrateMock;
+    testing::StrictMock<testing::MockFunction<int(CliArgs::Action::VerifyConfig)>> onVerifyMock;
 };
 
 TEST_F(CliArgsTests, Parse_NoArgs)
@@ -46,7 +47,13 @@ TEST_F(CliArgsTests, Parse_NoArgs)
         return returnCode;
     });
     EXPECT_EQ(
-        action.apply(onRunMock.AsStdFunction(), onExitMock.AsStdFunction(), onMigrateMock.AsStdFunction()), returnCode
+        action.apply(
+            onRunMock.AsStdFunction(),
+            onExitMock.AsStdFunction(),
+            onMigrateMock.AsStdFunction(),
+            onVerifyMock.AsStdFunction()
+        ),
+        returnCode
     );
 }
 
@@ -62,7 +69,12 @@ TEST_F(CliArgsTests, Parse_NgWebServer)
             return returnCode;
         });
         EXPECT_EQ(
-            action.apply(onRunMock.AsStdFunction(), onExitMock.AsStdFunction(), onMigrateMock.AsStdFunction()),
+            action.apply(
+                onRunMock.AsStdFunction(),
+                onExitMock.AsStdFunction(),
+                onMigrateMock.AsStdFunction(),
+                onVerifyMock.AsStdFunction()
+            ),
             returnCode
         );
     }
@@ -79,7 +91,12 @@ TEST_F(CliArgsTests, Parse_VersionHelp)
 
         EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) { return exit.exitCode; });
         EXPECT_EQ(
-            action.apply(onRunMock.AsStdFunction(), onExitMock.AsStdFunction(), onMigrateMock.AsStdFunction()),
+            action.apply(
+                onRunMock.AsStdFunction(),
+                onExitMock.AsStdFunction(),
+                onMigrateMock.AsStdFunction(),
+                onVerifyMock.AsStdFunction()
+            ),
             EXIT_SUCCESS
         );
     }
@@ -97,6 +114,34 @@ TEST_F(CliArgsTests, Parse_Config)
         return returnCode;
     });
     EXPECT_EQ(
-        action.apply(onRunMock.AsStdFunction(), onExitMock.AsStdFunction(), onMigrateMock.AsStdFunction()), returnCode
+        action.apply(
+            onRunMock.AsStdFunction(),
+            onExitMock.AsStdFunction(),
+            onMigrateMock.AsStdFunction(),
+            onVerifyMock.AsStdFunction()
+        ),
+        returnCode
+    );
+}
+
+TEST_F(CliArgsTests, Parse_VerifyConfig)
+{
+    std::string_view configPath = "some_config_path";
+    std::array argv{"clio_server", configPath.data(), "--verify"};  // NOLINT(bugprone-suspicious-stringview-data-usage)
+    auto const action = CliArgs::parse(argv.size(), argv.data());
+
+    int const returnCode = 123;
+    EXPECT_CALL(onVerifyMock, Call).WillOnce([&configPath](CliArgs::Action::VerifyConfig const& verify) {
+        EXPECT_EQ(verify.configPath, configPath);
+        return returnCode;
+    });
+    EXPECT_EQ(
+        action.apply(
+            onRunMock.AsStdFunction(),
+            onExitMock.AsStdFunction(),
+            onMigrateMock.AsStdFunction(),
+            onVerifyMock.AsStdFunction()
+        ),
+        returnCode
     );
 }

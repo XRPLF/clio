@@ -30,15 +30,7 @@
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 
-#include <org/xrpl/rpc/v1/ledger.pb.h>
-#include <xrpl/basics/Slice.h>
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/basics/strHex.h>
-#include <xrpl/proto/org/xrpl/rpc/v1/get_ledger.pb.h>
 #include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/STTx.h>
-#include <xrpl/protocol/Serializer.h>
-#include <xrpl/protocol/TxMeta.h>
 
 #include <chrono>
 #include <cstddef>
