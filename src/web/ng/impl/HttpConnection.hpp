@@ -77,6 +77,7 @@ class HttpConnection : public UpgradableConnection {
     StreamType stream_;
     std::optional<boost::beast::http::request<boost::beast::http::string_body>> request_;
     std::chrono::steady_clock::duration timeout_{kDEFAULT_TIMEOUT};
+    bool closed_{false};
 
 public:
     HttpConnection(
@@ -152,6 +153,12 @@ public:
     void
     close(boost::asio::yield_context yield) override
     {
+        if (closed_)
+            return;
+
+        // Calling async_shutdown() multiple times may lead to hanging coroutines. See WsConnection for more details.
+        closed_ = true;
+
         [[maybe_unused]] boost::system::error_code error;
         if constexpr (IsSslTcpStream<StreamType>) {
             boost::beast::get_lowest_layer(stream_).expires_after(timeout_);

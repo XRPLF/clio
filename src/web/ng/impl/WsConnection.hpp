@@ -64,6 +64,7 @@ template <typename StreamType>
 class WsConnection : public WsConnectionBase {
     boost::beast::websocket::stream<StreamType> stream_;
     boost::beast::http::request<boost::beast::http::string_body> initialRequest_;
+    bool closed_{false};
 
 public:
     WsConnection(
@@ -159,6 +160,13 @@ public:
     void
     close(boost::asio::yield_context yield) override
     {
+        if (closed_)
+            return;
+
+        // This should be set before the async_close(). Otherwise there is a possibility to have multiple coroutines
+        // waiting on async_close(), but only one will be woken up after the actual close happened, others will hang.
+        closed_ = true;
+
         boost::system::error_code error;  // unused
         stream_.async_close(boost::beast::websocket::close_code::normal, yield[error]);
     }

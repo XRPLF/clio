@@ -137,6 +137,10 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, ReceiveError_CloseConnection)
 {
     EXPECT_CALL(*mockHttpConnection, wasUpgraded).WillOnce(Return(false));
     EXPECT_CALL(*mockHttpConnection, receive).WillOnce(Return(makeError(boost::asio::error::timed_out)));
+    EXPECT_CALL(
+        *mockHttpConnection,
+        setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT})
+    );
     EXPECT_CALL(*mockHttpConnection, close);
     EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
         EXPECT_EQ(&c, connectionPtr);
@@ -353,6 +357,10 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SubscriptionContextIsNullForHt
         return std::nullopt;
     });
 
+    EXPECT_CALL(
+        *mockHttpConnection,
+        setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT})
+    );
     EXPECT_CALL(*mockHttpConnection, close);
 
     EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
@@ -395,6 +403,10 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send_Loop)
         return std::nullopt;
     });
 
+    EXPECT_CALL(
+        *mockHttpConnection,
+        setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT})
+    );
     EXPECT_CALL(*mockHttpConnection, close);
 
     EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
@@ -490,6 +502,9 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
         )
     );
 
+    EXPECT_CALL(
+        *mockWsConnection, setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT})
+    );
     EXPECT_CALL(*mockWsConnection, close).WillOnce([&connectionClosed]() { connectionClosed = true; });
 
     EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
@@ -521,6 +536,9 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, ProcessCalledAfterStop)
         )
     );
 
+    EXPECT_CALL(
+        *mockWsConnection, setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT})
+    );
     EXPECT_CALL(*mockWsConnection, close);
 
     runSpawn([this](boost::asio::yield_context yield) {

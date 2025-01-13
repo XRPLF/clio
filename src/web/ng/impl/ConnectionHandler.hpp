@@ -38,6 +38,7 @@
 #include <boost/signals2/variadic_signal.hpp>
 
 #include <atomic>
+#include <chrono>
 #include <cstddef>
 #include <functional>
 #include <memory>
@@ -98,6 +99,8 @@ public:
         std::optional<size_t> maxSubscriptionSendQueueSize,
         OnDisconnectHook onDisconnectHook
     );
+
+    static constexpr std::chrono::milliseconds kCLOSE_CONNECTION_TIMEOUT{500};
 
     void
     onGet(std::string const& target, MessageHandler handler);
