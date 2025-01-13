@@ -47,6 +47,7 @@ CliArgs::parse(int argc, char const* argv[])
         ("conf,c", po::value<std::string>()->default_value(kDEFAULT_CONFIG_PATH), "configuration file")
         ("ng-web-server,w", "Use ng-web-server")
         ("migrate", po::value<std::string>(), "start migration helper")
+        ("verify", "Checks the validity of config values")
     ;
     // clang-format on
     po::positional_options_description positional;
@@ -74,6 +75,9 @@ CliArgs::parse(int argc, char const* argv[])
             return Action{Action::Migrate{.configPath = std::move(configPath), .subCmd = MigrateSubCmd::status()}};
         return Action{Action::Migrate{.configPath = std::move(configPath), .subCmd = MigrateSubCmd::migration(opt)}};
     }
+
+    if (parsed.count("verify") != 0u)
+        return Action{Action::VerifyConfig{.configPath = std::move(configPath)}};
 
     return Action{Action::Run{.configPath = std::move(configPath), .useNgWebServer = parsed.count("ng-web-server") != 0}
     };

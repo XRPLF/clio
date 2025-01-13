@@ -5,6 +5,7 @@ target_sources(
   PRIVATE # Common
           ConfigTests.cpp
           app/CliArgsTests.cpp
+          app/VerifyConfigTests.cpp
           app/WebHandlersTests.cpp
           data/AmendmentCenterTests.cpp
           data/BackendCountersTests.cpp

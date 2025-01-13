@@ -208,3 +208,11 @@ static constexpr auto kINVALID_JSON_DATA = R"JSON({
         "withDefault" : "0.0"
     }
 })JSON";
+
+// used to Verify Config test
+static constexpr auto kVALID_JSON_DATA = R"JSON({
+     "server": {
+        "ip": "0.0.0.0",
+        "port": 51233
+    }
+})JSON";
