@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "util/AsioContextTestFixture.hpp"
+#include "util/CoroutineGroup.hpp"
 #include "util/Taggable.hpp"
 #include "util/TestHttpServer.hpp"
 #include "util/TestWebSocketClient.hpp"
@@ -306,5 +307,30 @@ TEST_F(WebWsConnectionTests, CloseWhenConnectionIsAlreadyClosed)
         boost::asio::post(yield);
         wsConnection->close(yield);
         wsConnection->close(yield);
+    });
+}
+
+TEST_F(WebWsConnectionTests, CloseCalledFromMultipleSubCoroutines)
+{
+    boost::asio::spawn(ctx_, [this](boost::asio::yield_context yield) {
+        auto maybeError = wsClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError.value().message(); }();
+    });
+
+    testing::StrictMock<testing::MockFunction<void()>> closeCalled;
+    EXPECT_CALL(closeCalled, Call).Times(2);
+
+    runSpawnWithTimeout(std::chrono::seconds{1}, [&](boost::asio::yield_context yield) {
+        auto wsConnection = acceptConnection(yield);
+        util::CoroutineGroup coroutines{yield};
+        for ([[maybe_unused]] int i : std::ranges::iota_view{0, 2}) {
+            coroutines.spawn(yield, [&wsConnection, &closeCalled](boost::asio::yield_context innerYield) {
+                wsConnection->close(innerYield);
+                closeCalled.Call();
+            });
+        }
+        auto const receivedMessage = wsConnection->receive(yield);
+        EXPECT_FALSE(receivedMessage.has_value());
+        coroutines.asyncWait(yield);
     });
 }
