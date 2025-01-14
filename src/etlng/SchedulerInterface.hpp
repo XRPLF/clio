@@ -19,39 +19,24 @@
 
 #pragma once
 
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigFileJson.hpp"
+#include "etlng/Models.hpp"
 
-#include <cstdlib>
-#include <iostream>
-#include <string_view>
+#include <optional>
 
-namespace app {
+namespace etlng {
 
 /**
- * @brief Verifies user's config values are correct
- *
- * @param configPath The path to config
- * @return true if config values are all correct, false otherwise
+ * @brief The interface of a scheduler for the extraction proccess
  */
-inline bool
-verifyConfig(std::string_view configPath)
-{
-    using namespace util::config;
+struct SchedulerInterface {
+    virtual ~SchedulerInterface() = default;
 
-    auto const json = ConfigFileJson::makeConfigFileJson(configPath);
-    if (!json.has_value()) {
-        std::cerr << "Error parsing json from config: " << configPath << "\n" << json.error().error << std::endl;
-        return false;
-    }
-    auto const errors = gClioConfig.parse(json.value());
-    if (errors.has_value()) {
-        for (auto const& err : errors.value()) {
-            std::cerr << "Issues found in provided config '" << configPath << "':\n";
-            std::cerr << err.error << std::endl;
-        }
-        return false;
-    }
-    return true;
-}
-}  // namespace app
+    /**
+     * @brief Attempt to obtain the next task
+     * @return A task if one exists; std::nullopt otherwise
+     */
+    [[nodiscard]] virtual std::optional<model::Task>
+    next() = 0;
+};
+
+}  // namespace etlng
