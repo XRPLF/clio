@@ -35,7 +35,7 @@ namespace app {
  * @return true if config values are all correct, false otherwise
  */
 inline bool
-verifyConfig(std::string_view configPath)
+parseConfig(std::string_view configPath)
 {
     using namespace util::config;
 
@@ -54,4 +54,5 @@ verifyConfig(std::string_view configPath)
     }
     return true;
 }
+
 }  // namespace app
