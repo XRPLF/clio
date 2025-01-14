@@ -48,8 +48,7 @@ try {
             return EXIT_FAILURE;
         },
         [](app::CliArgs::Action::Run const& run) {
-            auto const res = app::verifyConfig(run.configPath);
-            if (res != EXIT_SUCCESS)
+            if (app::verifyConfig(verify.configPath))
                 return EXIT_FAILURE;
 
             util::LogService::init(gClioConfig);
@@ -57,8 +56,7 @@ try {
             return clio.run(run.useNgWebServer);
         },
         [](app::CliArgs::Action::Migrate const& migrate) {
-            auto const res = app::verifyConfig(migrate.configPath);
-            if (res != EXIT_SUCCESS)
+            if (app::verifyConfig(verify.configPath))
                 return EXIT_FAILURE;
 
             util::LogService::init(gClioConfig);
