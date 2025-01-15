@@ -91,11 +91,6 @@ SubscriptionSource::SubscriptionSource(
         .setConnectionTimeout(wsTimeout_);
 }
 
-SubscriptionSource::~SubscriptionSource()
-{
-    stop_ = true;
-}
-
 void
 SubscriptionSource::run()
 {

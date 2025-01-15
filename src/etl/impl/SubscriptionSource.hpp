@@ -50,6 +50,7 @@ namespace etl::impl {
 
 /**
  * @brief This class is used to subscribe to a source of ledger data and forward it to the subscription manager.
+ * @note This class is safe to delete only if io_context is stopped.
  */
 class SubscriptionSource {
 public:
@@ -123,13 +124,6 @@ public:
         std::chrono::steady_clock::duration const wsTimeout = SubscriptionSource::kWS_TIMEOUT,
         std::chrono::steady_clock::duration const retryDelay = SubscriptionSource::kRETRY_DELAY
     );
-
-    /**
-     * @brief Destroy the Subscription Source object
-     *
-     * @note This will block to wait for all the async operations to complete. io_context must be still running
-     */
-    ~SubscriptionSource();
 
     /**
      * @brief Run the source

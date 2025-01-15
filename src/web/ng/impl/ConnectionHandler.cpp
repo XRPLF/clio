@@ -265,7 +265,7 @@ ConnectionHandler::handleError(Error const& error, Connection const& connection)
     // Therefore, if we see a short read here, it has occurred
     // after the message has been completed, so it is safe to ignore it.
     if (error == boost::beast::http::error::end_of_stream || error == boost::asio::ssl::error::stream_truncated ||
-        error == boost::asio::error::eof)  // || error == boost::beast::error::timeout)
+        error == boost::asio::error::eof || error == boost::beast::error::timeout)
         return false;
 
     // WebSocket connection was gracefully closed

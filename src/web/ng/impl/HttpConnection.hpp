@@ -153,10 +153,11 @@ public:
     void
     close(boost::asio::yield_context yield) override
     {
+        // This is needed because calling async_shutdown() multiple times may lead to hanging coroutines.
+        // See WsConnection for more details.
         if (closed_)
             return;
 
-        // Calling async_shutdown() multiple times may lead to hanging coroutines. See WsConnection for more details.
         closed_ = true;
 
         [[maybe_unused]] boost::system::error_code error;
