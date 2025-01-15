@@ -388,11 +388,13 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
 
      {"log_directory", ConfigValue{ConfigType::String}.optional()},
 
-     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateLogs)},
+     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateLogSize)},
 
-     {"log_directory_max_size", ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(gValidateLogs)},
+     {"log_directory_max_size",
+      ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(gValidateLogSize)},
 
-     {"log_rotation_hour_interval", ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(gValidateLogs)},
+     {"log_rotation_hour_interval",
+      ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(gValidateLogRotationTime)},
 
      {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none").withConstraint(gValidateLogTag)},
 

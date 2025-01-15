@@ -94,14 +94,14 @@ protected:
 
         {"log_directory", ConfigValue{ConfigType::String}.optional()},
 
-        {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(config::gValidateLogs)
-        },
+        {"log_rotation_size",
+         ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(config::gValidateLogSize)},
 
         {"log_directory_max_size",
-         ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(config::gValidateLogs)},
+         ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(config::gValidateLogSize)},
 
         {"log_rotation_hour_interval",
-         ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(config::gValidateLogs)},
+         ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(config::gValidateLogRotationTime)},
 
         {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
     };
