@@ -41,15 +41,14 @@ try {
     return action.apply(
         [](app::CliArgs::Action::Exit const& exit) { return exit.exitCode; },
         [](app::CliArgs::Action::VerifyConfig const& verify) {
-            if (app::verifyConfig(verify.configPath)) {
+            if (app::parseConfig(verify.configPath)) {
                 std::cout << "Config " << verify.configPath << " is correct" << "\n";
                 return EXIT_SUCCESS;
             }
             return EXIT_FAILURE;
         },
         [](app::CliArgs::Action::Run const& run) {
-            auto const res = app::verifyConfig(run.configPath);
-            if (res != EXIT_SUCCESS)
+            if (not app::parseConfig(run.configPath))
                 return EXIT_FAILURE;
 
             util::LogService::init(gClioConfig);
@@ -57,8 +56,7 @@ try {
             return clio.run(run.useNgWebServer);
         },
         [](app::CliArgs::Action::Migrate const& migrate) {
-            auto const res = app::verifyConfig(migrate.configPath);
-            if (res != EXIT_SUCCESS)
+            if (not app::parseConfig(migrate.configPath))
                 return EXIT_FAILURE;
 
             util::LogService::init(gClioConfig);
