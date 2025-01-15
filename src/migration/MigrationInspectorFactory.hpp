@@ -59,7 +59,7 @@ makeMigrationInspector(
             backend->writeMigratorStatus(name, migrated.toString());
         }
     }
-    return std::move(inspector);
+    return inspector;
 }
 
 }  // namespace migration
