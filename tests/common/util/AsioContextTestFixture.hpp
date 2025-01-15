@@ -83,8 +83,19 @@ struct SyncAsioContextTest : virtual public NoLoggerFixture {
     void
     runSpawn(F&& f, bool allowMockLeak = false)
     {
-        static constexpr std::chrono::seconds kDEFAULT_TIMEOUT{1};
-        runSpawnWithTimeout(kDEFAULT_TIMEOUT, std::forward<F>(f), allowMockLeak);
+        using namespace boost::asio;
+
+        testing::MockFunction<void()> call;
+        if (allowMockLeak)
+            testing::Mock::AllowLeak(&call);
+
+        spawn(ctx_, [&, _ = make_work_guard(ctx_)](yield_context yield) {
+            f(yield);
+            call.Call();
+        });
+
+        EXPECT_CALL(call, Call());
+        runContext();
     }
 
     template <typename F>
