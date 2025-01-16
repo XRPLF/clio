@@ -1037,13 +1037,13 @@ createAcceptNftSellerOfferTxWithMetadata(
         node2.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
 
         ripple::STObject newFields(ripple::sfNewFields);
-        ripple::STArray NFTArray1{1};
+        ripple::STArray nftArray1{1};
 
         auto entry = ripple::STObject(ripple::sfNFToken);
         entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId});
-        NFTArray1.push_back(entry);
+        nftArray1.push_back(entry);
 
-        newFields.setFieldArray(ripple::sfNFTokens, NFTArray1);
+        newFields.setFieldArray(ripple::sfNFTokens, nftArray1);
         node2.emplace_back(std::move(newFields));
         node2.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{pageIndex});
         metaArray.push_back(node2);
@@ -1051,23 +1051,22 @@ createAcceptNftSellerOfferTxWithMetadata(
         ripple::STObject node2(ripple::sfModifiedNode);
         node2.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
 
-        ripple::STObject finalFields(ripple::sfFinalFields);
-        ripple::STArray NFTArray1{2};
+        ripple::STArray nftArray1{2};
 
         // finalFields contain new NFT while previousFields does not
         auto entry = ripple::STObject(ripple::sfNFToken);
         entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId});
-        NFTArray1.push_back(entry);
+        nftArray1.push_back(entry);
 
         auto entry2 = ripple::STObject(ripple::sfNFToken);
         entry2.setFieldH256(ripple::sfNFTokenID, ripple::uint256{kINDEX1});
-        NFTArray1.push_back(entry2);
+        nftArray1.push_back(entry2);
 
-        finalFields.setFieldArray(ripple::sfNFTokens, NFTArray1);
+        finalFields.setFieldArray(ripple::sfNFTokens, nftArray1);
 
-        NFTArray1.erase(NFTArray1.begin());
+        nftArray1.erase(nftArray1.begin());
         ripple::STObject previousFields(ripple::sfPreviousFields);
-        previousFields.setFieldArray(ripple::sfNFTokens, NFTArray1);
+        previousFields.setFieldArray(ripple::sfNFTokens, nftArray1);
 
         node2.emplace_back(std::move(finalFields));
         node2.emplace_back(std::move(previousFields));
