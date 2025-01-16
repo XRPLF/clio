@@ -479,6 +479,17 @@ accountHolds(
     boost::asio::yield_context yield
 );
 
+ripple::STAmount
+ammAccountHolds(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& account,
+    ripple::Currency const& currency,
+    ripple::AccountID const& issuer,
+    bool const zeroIfFrozen,
+    boost::asio::yield_context yield
+);
+
 /**
  * @brief Get the transfer rate
  *

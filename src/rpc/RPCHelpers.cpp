@@ -962,7 +962,6 @@ ripple::XRPAmount
 xrpLiquid(
     BackendInterface const& backend,
     std::uint32_t sequence,
-
     ripple::AccountID const& id,
     boost::asio::yield_context yield
 )
@@ -1008,6 +1007,48 @@ accountFunds(
     }
 
     return accountHolds(backend, sequence, id, amount.getCurrency(), amount.getIssuer(), true, yield);
+}
+
+ripple::STAmount
+ammAccountHolds(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& account,
+    ripple::Currency const& currency,
+    ripple::AccountID const& issuer,
+    bool const zeroIfFrozen,
+    boost::asio::yield_context yield
+)
+{
+    ripple::STAmount amount;
+    if (ripple::isXRP(currency))
+        return {xrpLiquid(backend, sequence, account, yield)};
+
+    auto const key = ripple::keylet::line(account, issuer, currency).key;
+    auto const blob = backend.fetchLedgerObject(key, sequence, yield);
+
+    if (!blob) {
+        amount.setIssue(ripple::Issue(currency, issuer));
+        amount.clear();
+        return amount;
+    }
+
+    ripple::SerialIter it{blob->data(), blob->size()};
+    ripple::SLE const sle{it, key};
+
+    if (zeroIfFrozen && isFrozen(backend, sequence, account, currency, issuer, yield)) {
+        amount.setIssue(ripple::Issue(currency, issuer));
+        amount.clear();
+    } else {
+        amount = sle.getFieldAmount(ripple::sfBalance);
+        if (account > issuer) {
+            // Put balance in account terms.
+            amount.negate();
+        }
+        amount.setIssuer(issuer);
+    }
+
+    return amount;
 }
 
 ripple::STAmount

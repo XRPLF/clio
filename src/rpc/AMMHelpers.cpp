@@ -65,7 +65,7 @@ getAmmLpHolds(
 )
 {
     auto const lptCurrency = ammLPTCurrency(cur1, cur2);
-    return accountHolds(backend, sequence, lpAccount, lptCurrency, ammAccount, true, yield);
+    return ammAccountHolds(backend, sequence, lpAccount, lptCurrency, ammAccount, true, yield);
 }
 
 ripple::STAmount
