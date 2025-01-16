@@ -31,8 +31,12 @@
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <cstdint>
+#include <limits>
 #include <string>
 #include <string_view>
+#include <vector>
 using namespace util;
 
 // Used as a fixture for tests with enabled logging
@@ -90,11 +94,14 @@ protected:
 
         {"log_directory", ConfigValue{ConfigType::String}.optional()},
 
-        {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048)},
+        {"log_rotation_size",
+         ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(config::gValidateLogSize)},
 
-        {"log_directory_max_size", ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024)},
+        {"log_directory_max_size",
+         ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(config::gValidateLogSize)},
 
-        {"log_rotation_hour_interval", ConfigValue{ConfigType::Integer}.defaultValue(12)},
+        {"log_rotation_hour_interval",
+         ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(config::gValidateLogRotationTime)},
 
         {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
     };
@@ -165,6 +172,23 @@ TEST_F(LoggerInitTest, ChannelLogLevel)
 
         log.error() << "some log";
         checkEqual(fmt::format("{}:ERR {}", channel, logString));
+    }
+}
+
+TEST_F(LoggerInitTest, LogSizeAndHourRotationCannotBeZero)
+{
+    std::vector<std::string_view> const keys{
+        "log_rotation_hour_interval", "log_directory_max_size", "log_rotation_size"
+    };
+
+    auto const parsingErrors =
+        config_.parse(ConfigFileJson{boost::json::object{{keys[0], 0}, {keys[1], 0}, {keys[2], 0}}});
+    ASSERT_TRUE(parsingErrors->size() == 3);
+    for (std::size_t i = 0; i < parsingErrors->size(); ++i) {
+        EXPECT_EQ(
+            (*parsingErrors)[i].error,
+            fmt::format("{} Number must be between 1 and {}", keys[i], std::numeric_limits<uint32_t>::max())
+        );
     }
 }
 

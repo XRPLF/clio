@@ -31,7 +31,7 @@ TEST(VerifyConfigTest, InvalidConfig)
     auto const tmpConfigFile = TmpFile(kJSON_DATA);
 
     // false because json data(kJSON_DATA) is not compatible with current configDefintion
-    EXPECT_FALSE(verifyConfig(tmpConfigFile.path));
+    EXPECT_FALSE(parseConfig(tmpConfigFile.path));
 }
 
 TEST(VerifyConfigTest, ValidConfig)
@@ -46,12 +46,12 @@ TEST(VerifyConfigTest, ValidConfig)
     auto const tmpConfigFile = TmpFile(kVALID_JSON_DATA);
 
     // current example config should always be compatible with configDefinition
-    EXPECT_TRUE(verifyConfig(tmpConfigFile.path));
+    EXPECT_TRUE(parseConfig(tmpConfigFile.path));
 }
 
 TEST(VerifyConfigTest, ConfigFileNotExist)
 {
-    EXPECT_FALSE(verifyConfig("doesn't exist Config File"));
+    EXPECT_FALSE(parseConfig("doesn't exist Config File"));
 }
 
 TEST(VerifyConfigTest, InvalidJsonFile)
@@ -65,5 +65,5 @@ TEST(VerifyConfigTest, InvalidJsonFile)
                                         })";
     auto const tmpConfigFile = TmpFile(kINVALID_JSON);
 
-    EXPECT_FALSE(verifyConfig(tmpConfigFile.path));
+    EXPECT_FALSE(parseConfig(tmpConfigFile.path));
 }
