@@ -19,6 +19,7 @@
 
 #include "rpc/RPCHelpers.hpp"
 
+#include "data/AmendmentCenter.hpp"
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
@@ -943,10 +944,25 @@ isFrozen(
     return false;
 }
 
+bool
+isLPTokenFrozen(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& account,
+    ripple::Issue const& asset,
+    ripple::Issue const& asset2,
+    boost::asio::yield_context yield
+)
+{
+    return isFrozen(backend, sequence, account, asset.currency, asset.account, yield) ||
+        isFrozen(backend, sequence, account, asset2.currency, asset2.account, yield);
+}
+
 ripple::XRPAmount
 xrpLiquid(
     BackendInterface const& backend,
     std::uint32_t sequence,
+
     ripple::AccountID const& id,
     boost::asio::yield_context yield
 )
@@ -1021,16 +1037,59 @@ accountHolds(
     ripple::SerialIter it{blob->data(), blob->size()};
     ripple::SLE const sle{it, key};
 
-    if (zeroIfFrozen && isFrozen(backend, sequence, account, currency, issuer, yield)) {
-        amount.setIssue(ripple::Issue(currency, issuer));
-        amount.clear();
-    } else {
+    auto const allowBalance = [&]() {
+        if (!zeroIfFrozen)
+            return true;
+
+        if (isFrozen(backend, sequence, account, currency, issuer, yield))
+            return false;
+
+        auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
+        if (amendmentCenter.isEnabled(ripple::fixFrozenLPTokenTransfer)) {
+            auto const issuerBlob = backend.fetchLedgerObject(ripple::keylet::account(issuer).key, sequence, yield);
+
+            if (!issuerBlob)
+                return false;
+
+            ripple::SLE const issuerSle{
+                ripple::SerialIter{issuerBlob->data(), issuerBlob->size()}, ripple::keylet::account(issuer).key
+            };
+
+            if (issuerSle.isFieldPresent(ripple::sfAMMID)) {
+                auto const ammKeylet = ripple::keylet::amm(issuerSle[ripple::sfAMMID]);
+                auto const ammBlob = backend.fetchLedgerObject(ammKeylet.key, sequence, yield);
+
+                if (!ammBlob)
+                    return false;
+
+                ripple::SLE const ammSle{ripple::SerialIter{ammBlob->data(), ammBlob->size()}, ammKeylet.key};
+
+                if (isLPTokenFrozen(
+                        backend,
+                        sequence,
+                        account,
+                        ammSle[ripple::sfAsset].get<ripple::Issue>(),
+                        ammSle[ripple::sfAsset2].get<ripple::Issue>(),
+                        yield
+                    )) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }();
+
+    if (allowBalance) {
         amount = sle.getFieldAmount(ripple::sfBalance);
         if (account > issuer) {
             // Put balance in account terms.
             amount.negate();
         }
         amount.setIssuer(issuer);
+    } else {
+        amount.setIssue(ripple::Issue(currency, issuer));
+        amount.clear();
     }
 
     return amount;

@@ -427,6 +427,16 @@ isFrozen(
     boost::asio::yield_context yield
 );
 
+bool
+isLPTokenFrozen(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& account,
+    ripple::Issue const& asset,
+    ripple::Issue const& asset2,
+    boost::asio::yield_context yield
+);
+
 /**
  * @brief Get the account funds
  *
