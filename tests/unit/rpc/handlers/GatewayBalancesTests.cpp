@@ -60,6 +60,13 @@ constexpr auto kINDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1
 constexpr auto kINDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 constexpr auto kTXN_ID = "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879";
 
+struct ParameterTestBundle {
+    std::string testName;
+    std::string testJson;
+    std::string expectedError;
+    std::string expectedErrorMessage;
+    std::uint32_t apiVersion = 1u;
+};
 }  // namespace
 
 struct RPCGatewayBalancesHandlerTest : HandlerBaseTest {
@@ -69,13 +76,6 @@ struct RPCGatewayBalancesHandlerTest : HandlerBaseTest {
     }
 };
 
-struct ParameterTestBundle {
-    std::string testName;
-    std::string testJson;
-    std::string expectedError;
-    std::string expectedErrorMessage;
-};
-
 struct ParameterTest : public RPCGatewayBalancesHandlerTest, public WithParamInterface<ParameterTestBundle> {};
 
 TEST_P(ParameterTest, CheckError)
@@ -83,7 +83,8 @@ TEST_P(ParameterTest, CheckError)
     auto bundle = GetParam();
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(json::parse(bundle.testJson), Context{yield});
+        auto const output =
+            handler.process(json::parse(bundle.testJson), Context{.yield = yield, .apiVersion = bundle.apiVersion});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), bundle.expectedError);
@@ -155,7 +156,55 @@ generateParameterTestBundles()
             .expectedErrorMessage = "ledger_hashNotString"
         },
         ParameterTestBundle{
-            .testName = "WalletsNotStringOrArray",
+            .testName = "WalletsNotStringOrArrayV1",
+            .testJson = fmt::format(
+                R"({{
+                    "account": "{}",
+                    "hotwallet": 12
+                }})",
+                kACCOUNT
+            ),
+            .expectedError = "invalidHotWallet",
+            .expectedErrorMessage = "hotwalletNotStringOrArray"
+        },
+        ParameterTestBundle{
+            .testName = "WalletsNotStringAccountV1",
+            .testJson = fmt::format(
+                R"({{
+                    "account": "{}",
+                    "hotwallet": [12]
+                }})",
+                kACCOUNT
+            ),
+            .expectedError = "invalidHotWallet",
+            .expectedErrorMessage = "hotwalletMalformed"
+        },
+        ParameterTestBundle{
+            .testName = "WalletsInvalidAccountV1",
+            .testJson = fmt::format(
+                R"({{
+                    "account": "{}",
+                    "hotwallet": ["12"]
+                }})",
+                kACCOUNT
+            ),
+            .expectedError = "invalidHotWallet",
+            .expectedErrorMessage = "hotwalletMalformed"
+        },
+        ParameterTestBundle{
+            .testName = "WalletInvalidAccountV1",
+            .testJson = fmt::format(
+                R"({{
+                    "account": "{}",
+                    "hotwallet": "12"
+                }})",
+                kACCOUNT
+            ),
+            .expectedError = "invalidHotWallet",
+            .expectedErrorMessage = "hotwalletMalformed"
+        },
+        ParameterTestBundle{
+            .testName = "WalletsNotStringOrArrayV2",
             .testJson = fmt::format(
                 R"({{
                     "account": "{}",
@@ -164,10 +213,11 @@ generateParameterTestBundles()
                 kACCOUNT
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "hotwalletNotStringOrArray"
+            .expectedErrorMessage = "hotwalletNotStringOrArray",
+            .apiVersion = 2u
         },
         ParameterTestBundle{
-            .testName = "WalletsNotStringAccount",
+            .testName = "WalletsNotStringAccountV2",
             .testJson = fmt::format(
                 R"({{
                     "account": "{}",
@@ -176,10 +226,11 @@ generateParameterTestBundles()
                 kACCOUNT
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "hotwalletMalformed"
+            .expectedErrorMessage = "hotwalletMalformed",
+            .apiVersion = 2u
         },
         ParameterTestBundle{
-            .testName = "WalletsInvalidAccount",
+            .testName = "WalletsInvalidAccountV2",
             .testJson = fmt::format(
                 R"({{
                     "account": "{}",
@@ -188,10 +239,11 @@ generateParameterTestBundles()
                 kACCOUNT
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "hotwalletMalformed"
+            .expectedErrorMessage = "hotwalletMalformed",
+            .apiVersion = 2u
         },
         ParameterTestBundle{
-            .testName = "WalletInvalidAccount",
+            .testName = "WalletInvalidAccountV2",
             .testJson = fmt::format(
                 R"({{
                     "account": "{}",
@@ -200,7 +252,8 @@ generateParameterTestBundles()
                 kACCOUNT
             ),
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "hotwalletMalformed"
+            .expectedErrorMessage = "hotwalletMalformed",
+            .apiVersion = 2u
         },
     };
 }
