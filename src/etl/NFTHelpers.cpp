@@ -48,7 +48,7 @@
 namespace etl {
 
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
-getNFTokenMofidyData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
+getNftokenModifyData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     auto const tokenID = sttx.getFieldH256(ripple::sfNFTokenID);
     // note: sfURI is optional, if it is absent, we will update the uri as empty string
@@ -348,7 +348,7 @@ getNFTDataFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
             return getNFTokenCreateOfferData(txMeta, sttx);
 
         case ripple::TxType::ttNFTOKEN_MODIFY:
-            return getNFTokenMofidyData(txMeta, sttx);
+            return getNftokenModifyData(txMeta, sttx);
 
         default:
             return {{}, {}};
