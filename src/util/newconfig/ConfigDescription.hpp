@@ -63,24 +63,30 @@ public:
 
 private:
     static constexpr auto kCONFIG_DESCRIPTION = std::array{
-        KV{.key = "database.type", .value = "Type of database to use. Default is Scylladb."},
+        KV{.key = "database.type",
+           .value = "Type of database to use. We currently support Cassandra and Scylladb. We default to Scylladb."},
         KV{.key = "database.cassandra.contact_points",
-           .value =
-               "A list of IP addresses or hostnames of the initial nodes (Cassandra/Scylladb cluster nodes) that the "
-               "client will connect to when establishing a connection with the database."},
+           .value = "A list of IP addresses or hostnames of the initial nodes (Cassandra/Scylladb cluster nodes) that "
+                    "the client will connect to when establishing a connection with the database. If you're running "
+                    "locally, it should be 'localhost' or 127.0.0.1"},
         KV{.key = "database.cassandra.secure_connect_bundle",
            .value = "Configuration file that contains the necessary security credentials and connection details for "
                     "securely "
                     "connecting to a Cassandra database cluster."},
-        KV{.key = "database.cassandra.port", .value = "Port number to connect to Cassandra."},
-        KV{.key = "database.cassandra.keyspace", .value = "Keyspace to use in Cassandra."},
-        KV{.key = "database.cassandra.replication_factor", .value = "Number of replicated nodes for Scylladb."},
-        KV{.key = "database.cassandra.table_prefix", .value = "Prefix for Cassandra table names."},
+        KV{.key = "database.cassandra.port", .value = "Port number to connect to the database."},
+        KV{.key = "database.cassandra.keyspace", .value = "Keyspace to use for the database."},
+        KV{.key = "database.cassandra.replication_factor",
+           .value = "Number of replicated nodes for Scylladb. Visit “here for more details : "
+                    "https://university.scylladb.com/courses/scylla-essentials-overview/lessons/high-availability/"
+                    "topic/fault-tolerance-replication-factor/ "},
+        KV{.key = "database.cassandra.table_prefix", .value = "Prefix for Database table names."},
         KV{.key = "database.cassandra.max_write_requests_outstanding",
-           .value = "Maximum number of outstanding write requests."},
+           .value = "Maximum number of outstanding write requests. Write requests are api calls that write to database "
+        },
         KV{.key = "database.cassandra.max_read_requests_outstanding",
-           .value = "Maximum number of outstanding read requests."},
-        KV{.key = "database.cassandra.threads", .value = "Number of threads for Cassandra operations."},
+           .value = "Maximum number of outstanding read requests, which reads from database"},
+        KV{.key = "database.cassandra.threads", .value = "Number of threads that will be used for database operations."
+        },
         KV{.key = "database.cassandra.core_connections_per_host",
            .value = "Number of core connections per host for Cassandra."},
         KV{.key = "database.cassandra.queue_size_io", .value = "Queue size for I/O operations in Cassandra."},
@@ -106,9 +112,9 @@ private:
            .value = "Timeout duration for the forwarding cache used in Rippled communication."},
         KV{.key = "forwarding.request_timeout",
            .value = "Timeout duration for the forwarding request used in Rippled communication."},
-        KV{.key = "rpc.cache_timeout", .value = "Timeout duration for the rpc request."},
+        KV{.key = "rpc.cache_timeout", .value = "Timeout duration for RPC requests."},
         KV{.key = "num_markers",
-           .value = "The number of markers is the number of coroutines to load the cache concurrently."},
+           .value = "The number of markers is the number of coroutines to download the initial ledger"},
         KV{.key = "dos_guard.[].whitelist", .value = "List of IP addresses to whitelist for DOS protection."},
         KV{.key = "dos_guard.max_fetches", .value = "Maximum number of fetch operations allowed by DOS guard."},
         KV{.key = "dos_guard.max_connections", .value = "Maximum number of concurrent connections allowed by DOS guard."
@@ -120,8 +126,11 @@ private:
         KV{.key = "server.port", .value = "Port number of the Clio HTTP server."},
         KV{.key = "server.max_queue_size",
            .value = "Maximum size of the server's request queue. Value of 0 is no limit."},
-        KV{.key = "server.local_admin", .value = "Indicates if the server should run with admin privileges."},
-        KV{.key = "server.admin_password", .value = "Password for Clio admin-only APIs."},
+        KV{.key = "server.local_admin",
+           .value = "Indicates if the server should run with admin privileges. Only one of local_admin or "
+                    "admin_password can be set."},
+        KV{.key = "server.admin_password",
+           .value = "Password for Clio admin-only APIs. Only one of local_admin or admin_password can be set."},
         KV{.key = "server.processing_policy",
            .value = R"(Could be "sequent" or "parallel". For the sequent policy, requests from a single client 
         connection are processed one by one, with the next request read only after the previous one is processed. For the parallel policy, Clio will accept
@@ -133,26 +142,37 @@ private:
         KV{.key = "server.ws_max_sending_queue_size", .value = "Maximum size of the websocket sending queue."},
         KV{.key = "prometheus.enabled", .value = "Enable or disable Prometheus metrics."},
         KV{.key = "prometheus.compress_reply", .value = "Enable or disable compression of Prometheus responses."},
-        KV{.key = "io_threads", .value = "Number of I/O threads. Value must be greater than 1"},
+        KV{.key = "io_threads", .value = "Number of I/O threads. Value cannot be less than 1"},
         KV{.key = "subscription_workers",
            .value = "The number of worker threads or processes that are responsible for managing and processing "
-                    "subscription-based tasks."},
+                    "subscription-based tasks from rippled"},
         KV{.key = "graceful_period", .value = "Number of milliseconds server will wait to shutdown gracefully."},
-        KV{.key = "cache.num_diffs", .value = "Number of diffs to cache."},
+        KV{.key = "cache.num_diffs", .value = "Number of diffs to cache. For more info, consult readme.md in etc"},
         KV{.key = "cache.num_markers", .value = "Number of markers to cache."},
         KV{.key = "cache.num_cursors_from_diff", .value = "Num of cursors that are different."},
         KV{.key = "cache.num_cursors_from_account", .value = "Number of cursors from an account."},
         KV{.key = "cache.page_fetch_size", .value = "Page fetch size for cache operations."},
         KV{.key = "cache.load", .value = "Cache loading strategy ('sync' or 'async')."},
-        KV{.key = "log_channels.[].channel", .value = "Name of the log channel."},
-        KV{.key = "log_channels.[].log_level", .value = "Log level for the log channel."},
-        KV{.key = "log_level", .value = "General logging level of Clio."},
+        KV{.key = "log_channels.[].channel",
+           .value = "Name of the log channel. Possible values only include 'Backend', 'Webserver', 'Subscriptions', "
+                    "'RPC', 'ETL', and 'Performance'"},
+        KV{.key = "log_channels.[].log_level",
+           .value = "Log level for the specific log channel. Possible values only include `trace`, `debug`, `info`, "
+                    "`warning`, `error`, `fatal`"},
+        KV{.key = "log_level",
+           .value = "General logging level of Clio. Possible values only include `trace`, `debug`, `info`, `warning`, "
+                    "`error`, `fatal`"},
         KV{.key = "log_format", .value = "Format string for log messages."},
         KV{.key = "log_to_console", .value = "Enable or disable logging to console."},
         KV{.key = "log_directory", .value = "Directory path for log files."},
-        KV{.key = "log_rotation_size", .value = "Log rotation size in megabytes."},
+        KV{.key = "log_rotation_size",
+           .value =
+               "Log rotation size in megabytes. When the log file reaches this particular size, a new log file starts."
+        },
         KV{.key = "log_directory_max_size", .value = "Maximum size of the log directory in megabytes."},
-        KV{.key = "log_rotation_hour_interval", .value = "Interval in hours for log rotation."},
+        KV{.key = "log_rotation_hour_interval",
+           .value = "Interval in hours for log rotation. If the current log file reaches this value in logging, a new "
+                    "log file starts."},
         KV{.key = "log_tag_style", .value = "Style for log tags."},
         KV{.key = "extractor_threads", .value = "Number of extractor threads."},
         KV{.key = "read_only", .value = "Indicates if the server should have read-only privileges."},
@@ -164,8 +184,8 @@ private:
         KV{.key = "api_version.default", .value = "Default API version Clio will run on."},
         KV{.key = "api_version.min", .value = "Minimum API version."},
         KV{.key = "api_version.max", .value = "Maximum API version."},
-        KV{.key = "migration.full_scan_threads", .value = "The number of threads used to scan table."},
-        KV{.key = "migration.full_scan_jobs", .value = "The number of coroutines used to scan table."},
+        KV{.key = "migration.full_scan_threads", .value = "The number of threads used to scan the table."},
+        KV{.key = "migration.full_scan_jobs", .value = "The number of coroutines used to scan the table."},
         KV{.key = "migration.cursors_per_job", .value = "The number of cursors each coroutine will scan."}
     };
 };
