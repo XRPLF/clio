@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "feed/Types.hpp"
@@ -53,6 +54,7 @@ namespace rpc {
 
 class SubscribeHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
+    std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
 
 public:
@@ -102,6 +104,7 @@ public:
      */
     SubscribeHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
+        std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
         std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions
     );
 

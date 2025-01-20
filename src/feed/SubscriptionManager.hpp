@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
@@ -60,6 +61,7 @@ namespace feed {
  */
 class SubscriptionManager : public SubscriptionManagerInterface {
     std::shared_ptr<data::BackendInterface const> backend_;
+    std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
     util::async::AnyExecutionContext ctx_;
     impl::ForwardFeed manifestFeed_;
     impl::ForwardFeed validationsFeed_;
@@ -79,7 +81,8 @@ public:
     static std::shared_ptr<SubscriptionManager>
     makeSubscriptionManager(
         util::config::ClioConfigDefinition const& config,
-        std::shared_ptr<data::BackendInterface const> const& backend
+        std::shared_ptr<data::BackendInterface const> const& backend,
+        std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter
     )
     {
         auto const workersNum = config.get<uint64_t>("subscription_workers");
@@ -87,7 +90,9 @@ public:
         util::Logger const logger{"Subscriptions"};
         LOG(logger.info()) << "Starting subscription manager with " << workersNum << " workers";
 
-        return std::make_shared<feed::SubscriptionManager>(util::async::PoolExecutionContext(workersNum), backend);
+        return std::make_shared<feed::SubscriptionManager>(
+            util::async::PoolExecutionContext(workersNum), backend, amendmentCenter
+        );
     }
 
     /**
@@ -98,9 +103,11 @@ public:
      */
     SubscriptionManager(
         util::async::AnyExecutionContext&& executor,
-        std::shared_ptr<data::BackendInterface const> const& backend
+        std::shared_ptr<data::BackendInterface const> const& backend,
+        std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter
     )
         : backend_(backend)
+        , amendmentCenter_(amendmentCenter)
         , ctx_(std::move(executor))
         , manifestFeed_(ctx_, "manifest")
         , validationsFeed_(ctx_, "validations")

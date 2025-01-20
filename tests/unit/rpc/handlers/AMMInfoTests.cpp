@@ -23,6 +23,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/AMMInfo.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
+#include "util/MockAmendmentCenter.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
@@ -67,6 +68,9 @@ struct RPCAMMInfoHandlerTest : HandlerBaseTest {
     {
         backend_->setRange(10, 30);
     }
+
+protected:
+    StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr_;
 };
 
 struct AMMInfoParamTestCaseBundle {
@@ -150,7 +154,7 @@ TEST_P(AMMInfoParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+        auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -183,7 +187,7 @@ TEST_F(RPCAMMInfoHandlerTest, AccountNotFound)
         kNOTFOUND_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_FALSE(output);
@@ -207,7 +211,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotExist)
         kWRONG_AMM_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_FALSE(output);
@@ -230,7 +234,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotInDBIsMalformed)
         kAMM_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_FALSE(output);
@@ -256,7 +260,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotFoundMissingAmmField)
         kAMM_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_FALSE(output);
@@ -291,7 +295,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAmmBlobNotFound)
         kAMM_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_FALSE(output);
@@ -330,7 +334,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAccBlobNotFound)
         kAMM_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_FALSE(output);
@@ -375,7 +379,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
         kAMM_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto expectedResult = json::parse(fmt::format(
@@ -457,7 +461,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
         kAMM_ACCOUNT2
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto const expectedResult = json::parse(fmt::format(
@@ -529,7 +533,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
         kAMM_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto const expectedResult = json::parse(fmt::format(
@@ -599,7 +603,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
         kAMM_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto const expectedResult = json::parse(fmt::format(
@@ -688,7 +692,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
         kAMM_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto const expectedResult = json::parse(fmt::format(
@@ -778,7 +782,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
         kAMM_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto const expectedResult = json::parse(fmt::format(
@@ -860,7 +864,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
         kAMM_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto expectedResult = json::parse(fmt::format(
@@ -937,7 +941,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
         kAMM_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto expectedResult = json::parse(fmt::format(
@@ -1030,7 +1034,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
         kAMM_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto expectedResult = json::parse(fmt::format(
@@ -1126,7 +1130,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
         kAMM_ACCOUNT2
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto expectedResult = json::parse(fmt::format(
@@ -1236,7 +1240,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
         kAMM_ACCOUNT2
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{backend_}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto expectedResult = json::parse(fmt::format(

@@ -149,8 +149,9 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
         issue2 = amm[sfAsset2].get<Issue>();
     }
 
-    auto const [asset1Balance, asset2Balance] =
-        getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, ammAccountID, issue1, issue2, false, ctx.yield);
+    auto const [asset1Balance, asset2Balance] = getAmmPoolHolds(
+        *sharedPtrBackend_, *amendmentCenter_, lgrInfo.seq, ammAccountID, issue1, issue2, false, ctx.yield
+    );
     auto const lptAMMBalance = input.accountID
         ? getAmmLpHolds(*sharedPtrBackend_, lgrInfo.seq, amm, *input.accountID, ctx.yield)
         : amm[sfLPTokenBalance];

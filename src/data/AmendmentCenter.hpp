@@ -132,6 +132,7 @@ struct Amendments {
     REGISTER(fixAMMv1_2);
     REGISTER(AMMClawback);
     REGISTER(Credentials);
+    REGISTER(fixFrozenLPTokenTransfer);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);

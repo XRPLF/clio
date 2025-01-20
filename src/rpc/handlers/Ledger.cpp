@@ -134,6 +134,7 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                             if (account != amount.getIssuer()) {
                                 auto const ownerFunds = accountHolds(
                                     *sharedPtrBackend_,
+                                    *amendmentCenter_,
                                     lgrInfo.seq,
                                     account,
                                     amount.getCurrency(),

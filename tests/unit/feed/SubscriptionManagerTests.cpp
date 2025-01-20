@@ -21,6 +21,7 @@
 #include "feed/FeedTestUtil.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "util/Assert.hpp"
+#include "util/MockAmendmentCenter.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
@@ -67,9 +68,10 @@ protected:
     }
 
     std::shared_ptr<SubscriptionManager> subscriptionManagerPtr_ =
-        std::make_shared<SubscriptionManager>(Execution(2), backend_);
+        std::make_shared<SubscriptionManager>(Execution(2), backend_, mockAmendmentCenterPtr_);
     web::SubscriptionContextPtr session_ = std::make_shared<MockSession>();
     MockSession* sessionPtr_ = dynamic_cast<MockSession*>(session_.get());
+    StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr_;
 };
 
 using SubscriptionManagerTest = SubscriptionManagerBaseTest<util::async::SyncExecutionContext>;

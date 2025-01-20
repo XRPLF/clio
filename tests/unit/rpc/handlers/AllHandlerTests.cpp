@@ -136,18 +136,17 @@ private:
     HandlerType
     initHandler()
     {
-        if constexpr (std::is_same_v<HandlerType, AccountInfoHandler> || std::is_same_v<HandlerType, FeatureHandler>) {
+        if constexpr (std::is_same_v<HandlerType, AccountInfoHandler> || std::is_same_v<HandlerType, AMMInfoHandler> || std::is_same_v<HandlerType, LedgerHandler> || std::is_same_v<HandlerType, BookOffersHandler> || std::is_same_v<HandlerType, FeatureHandler>) {
             return HandlerType{this->backend_, this->mockAmendmentCenterPtr_};
         } else if constexpr (std::is_same_v<HandlerType, SubscribeHandler>) {
-            return HandlerType{this->backend_, this->mockSubscriptionManagerPtr_};
+            return HandlerType{this->backend_, this->mockAmendmentCenterPtr_, this->mockSubscriptionManagerPtr_};
         } else if constexpr (std::is_same_v<HandlerType, TestServerInfoHandler>) {
             return HandlerType{
                 this->backend_,
                 this->mockSubscriptionManagerPtr_,
                 mockLoadBalancerPtr_,
                 mockETLServicePtr_,
-                *mockCountersPtr_
-            };
+                *mockCountersPtr_};
         } else {
             return HandlerType{this->backend_};
         }
@@ -237,8 +236,7 @@ createInput<SubscribeHandler>()
     SubscribeHandler::Input input{};
 
     input.books = std::vector<SubscribeHandler::OrderBook>{
-        SubscribeHandler::OrderBook{.book = ripple::Book{}, .taker = kACCOUNT, .snapshot = true, .both = true}
-    };
+        SubscribeHandler::OrderBook{.book = ripple::Book{}, .taker = kACCOUNT, .snapshot = true, .both = true}};
     return input;
 }
 

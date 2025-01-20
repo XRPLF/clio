@@ -25,6 +25,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Ledger.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
+#include "util/MockAmendmentCenter.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
@@ -68,6 +69,9 @@ struct RPCLedgerHandlerTest : HandlerBaseTest {
     {
         backend_->setRange(kRANGE_MIN, kRANGE_MAX);
     }
+
+protected:
+    StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr_;
 };
 
 struct LedgerParamTestCaseBundle {
@@ -182,7 +186,7 @@ TEST_P(LedgerParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -198,7 +202,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
     ON_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "ledger_index": {}
@@ -219,7 +223,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
     ON_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "ledger_index": "{}"
@@ -240,7 +244,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "ledger_hash": "{}"
@@ -283,7 +287,7 @@ TEST_F(RPCLedgerHandlerTest, Default)
     ON_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse("{}");
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -300,7 +304,7 @@ TEST_F(RPCLedgerHandlerTest, ConditionallyNotSupportedFieldsDefaultValue)
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "full": false,
@@ -320,7 +324,7 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerIndex)
     ON_CALL(*backend_, fetchLedgerBySequence(15, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(R"({"ledger_index": 15})");
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -335,7 +339,7 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerHash)
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kINDEX1}, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(fmt::format(R"({{"ledger_hash": "{}" }})", kINDEX1));
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -361,7 +365,7 @@ TEST_F(RPCLedgerHandlerTest, BinaryTrue)
     ON_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "binary": true
@@ -409,7 +413,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
     ON_CALL(*backend_, fetchAllTransactionsInLedger(kRANGE_MAX, _)).WillByDefault(Return(std::vector{t1, t1}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "binary": true,
@@ -459,7 +463,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinaryV2)
     EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kRANGE_MAX, _)).WillOnce(Return(std::vector{t1, t1}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "binary": true,
@@ -547,7 +551,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
     ON_CALL(*backend_, fetchAllTransactionsInLedger(kRANGE_MAX, _)).WillByDefault(Return(std::vector{t1}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "binary": false,
@@ -645,7 +649,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
     EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kRANGE_MAX, _)).WillOnce(Return(std::vector{t1}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "binary": false,
@@ -678,7 +682,7 @@ TEST_F(RPCLedgerHandlerTest, TwoRequestInARowTransactionsExpandNotBinaryV2)
     EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kRANGE_MAX - 1, _)).WillOnce(Return(std::vector{t1}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "binary": false,
@@ -718,7 +722,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
         .WillByDefault(Return(std::vector{ripple::uint256{kINDEX1}, ripple::uint256{kINDEX2}}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "transactions": true
@@ -776,7 +780,7 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
     ON_CALL(*backend_, fetchLedgerDiff(kRANGE_MAX, _)).WillByDefault(Return(los));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "diff": true
@@ -820,7 +824,7 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
     ON_CALL(*backend_, fetchLedgerDiff(kRANGE_MAX, _)).WillByDefault(Return(los));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "diff": true,
@@ -907,7 +911,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmtpy)
     ON_CALL(*backend_, fetchAllTransactionsInLedger(kRANGE_MAX, _)).WillByDefault(Return(std::vector{t1}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "binary": false,
@@ -1015,7 +1019,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
     ON_CALL(*backend_, fetchAllTransactionsInLedger(kRANGE_MAX, _)).WillByDefault(Return(std::vector{tx}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "binary": false,
@@ -1084,7 +1088,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
     ON_CALL(*backend_, fetchAllTransactionsInLedger(kRANGE_MAX, _)).WillByDefault(Return(std::vector{tx}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "binary": true,
@@ -1117,7 +1121,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIssuerIsSelf)
     ON_CALL(*backend_, fetchAllTransactionsInLedger(kRANGE_MAX, _)).WillByDefault(Return(std::vector{tx}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "binary": true,
@@ -1186,7 +1190,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
     ON_CALL(*backend_, fetchAllTransactionsInLedger(kRANGE_MAX, _)).WillByDefault(Return(std::vector{tx}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "binary": true,
@@ -1232,7 +1236,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
     ON_CALL(*backend_, fetchAllTransactionsInLedger(kRANGE_MAX, _)).WillByDefault(Return(std::vector{tx}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "binary": true,
@@ -1295,7 +1299,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
     ON_CALL(*backend_, fetchAllTransactionsInLedger(kRANGE_MAX, _)).WillByDefault(Return(std::vector{tx}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerHandler{backend_}};
+        auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
             R"({
                 "binary": true,

@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/MockAmendmentCenter.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
@@ -43,6 +44,7 @@ protected:
     web::SubscriptionContextPtr sessionPtr = std::make_shared<MockSession>();
     std::shared_ptr<TestedFeed> testFeedPtr = std::make_shared<TestedFeed>(ctx_);
     MockSession* mockSessionPtr = dynamic_cast<MockSession*>(sessionPtr.get());
+    StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr_;
 };
 
 namespace impl {

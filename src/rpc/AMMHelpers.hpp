@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -48,6 +49,7 @@ namespace rpc {
 std::pair<ripple::STAmount, ripple::STAmount>
 getAmmPoolHolds(
     BackendInterface const& backend,
+    data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t sequence,
     ripple::AccountID const& ammAccountID,
     ripple::Issue const& issue1,

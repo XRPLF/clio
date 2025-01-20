@@ -24,6 +24,7 @@
  * This file contains a variety of utility functions used when executing the handlers.
  */
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
@@ -450,6 +451,7 @@ isLPTokenFrozen(
 ripple::STAmount
 accountFunds(
     BackendInterface const& backend,
+    data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t sequence,
     ripple::STAmount const& amount,
     ripple::AccountID const& id,
@@ -471,6 +473,7 @@ accountFunds(
 ripple::STAmount
 accountHolds(
     BackendInterface const& backend,
+    data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t sequence,
     ripple::AccountID const& account,
     ripple::Currency const& currency,
@@ -541,6 +544,7 @@ postProcessOrderBook(
     ripple::Book const& book,
     ripple::AccountID const& takerID,
     data::BackendInterface const& backend,
+    data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t ledgerSequence,
     boost::asio::yield_context yield
 );

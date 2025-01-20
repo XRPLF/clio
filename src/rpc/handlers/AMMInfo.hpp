@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "rpc/common/Specs.hpp"
 
@@ -42,6 +43,7 @@ namespace rpc {
  */
 class AMMInfoHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
+    std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 
 public:
     /**
@@ -83,7 +85,11 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    AMMInfoHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
+    AMMInfoHandler(
+        std::shared_ptr<BackendInterface> const& sharedPtrBackend,
+        std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter
+    )
+        : sharedPtrBackend_(sharedPtrBackend), amendmentCenter_{amendmentCenter}
     {
     }
 

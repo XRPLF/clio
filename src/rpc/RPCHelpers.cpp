@@ -20,6 +20,7 @@
 #include "rpc/RPCHelpers.hpp"
 
 #include "data/AmendmentCenter.hpp"
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
@@ -996,6 +997,7 @@ xrpLiquid(
 ripple::STAmount
 accountFunds(
     BackendInterface const& backend,
+    data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t const sequence,
     ripple::STAmount const& amount,
     ripple::AccountID const& id,
@@ -1006,7 +1008,7 @@ accountFunds(
         return amount;
     }
 
-    return accountHolds(backend, sequence, id, amount.getCurrency(), amount.getIssuer(), true, yield);
+    return accountHolds(backend, amendmentCenter, sequence, id, amount.getCurrency(), amount.getIssuer(), true, yield);
 }
 
 ripple::STAmount
@@ -1054,6 +1056,7 @@ ammAccountHolds(
 ripple::STAmount
 accountHolds(
     BackendInterface const& backend,
+    data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t sequence,
     ripple::AccountID const& account,
     ripple::Currency const& currency,
@@ -1085,8 +1088,10 @@ accountHolds(
         if (isFrozen(backend, sequence, account, currency, issuer, yield))
             return false;
 
-        auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
-        if (amendmentCenter.isEnabled(ripple::fixFrozenLPTokenTransfer)) {
+        // data::BackendInterface& nonConstRef = const_cast<data::BackendInterface&>(backend);
+        // std::shared_ptr<data::BackendInterface> const backendPtr(&nonConstRef);
+        // auto amendmentCenter = data::AmendmentCenterInterface(backendPtr);
+        if (amendmentCenter.isEnabled(yield, data::Amendments::fixFrozenLPTokenTransfer, sequence)) {
             auto const issuerBlob = backend.fetchLedgerObject(ripple::keylet::account(issuer).key, sequence, yield);
 
             if (!issuerBlob)
@@ -1096,6 +1101,8 @@ accountHolds(
                 ripple::SerialIter{issuerBlob->data(), issuerBlob->size()}, ripple::keylet::account(issuer).key
             };
 
+            // if the issuer is an amm account, it means the currency is lptoken, so we will need to check if the assets
+            // in the pool are frozen as well
             if (issuerSle.isFieldPresent(ripple::sfAMMID)) {
                 auto const ammKeylet = ripple::keylet::amm(issuerSle[ripple::sfAMMID]);
                 auto const ammBlob = backend.fetchLedgerObject(ammKeylet.key, sequence, yield);
@@ -1164,6 +1171,7 @@ postProcessOrderBook(
     ripple::Book const& book,
     ripple::AccountID const& takerID,
     data::BackendInterface const& backend,
+    data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t const ledgerSequence,
     boost::asio::yield_context yield
 )
@@ -1206,7 +1214,14 @@ postProcessOrderBook(
                     firstOwnerOffer = false;
                 } else {
                     saOwnerFunds = accountHolds(
-                        backend, ledgerSequence, uOfferOwnerID, book.out.currency, book.out.account, true, yield
+                        backend,
+                        amendmentCenter,
+                        ledgerSequence,
+                        uOfferOwnerID,
+                        book.out.currency,
+                        book.out.account,
+                        true,
+                        yield
                     );
 
                     if (saOwnerFunds < beast::zero)
