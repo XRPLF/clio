@@ -408,6 +408,16 @@ createMptIssuanceObject(std::string_view accountId, std::uint32_t seq, std::stri
 createMpTokenObject(std::string_view accountId, ripple::uint192 issuanceID, std::uint64_t mptAmount = 1);
 
 [[nodiscard]] ripple::STObject
+createPermissionedDomainObject(
+    std::string_view accountId,
+    ripple::LedgerIndex ledgerIndex,
+    uint32_t seq,
+    uint64_t ownerNode,
+    ripple::uint256 previousTxId,
+    uint32_t previousTxSeq
+);
+
+[[nodiscard]] ripple::STObject
 createOraclePriceData(
     uint64_t assetPrice,
     ripple::Currency baseAssetCurrency,

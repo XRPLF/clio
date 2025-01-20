@@ -44,6 +44,10 @@ enum class ClioError {
     RpcFieldNotFoundTransaction = 5006,
     RpcMalformedOracleDocumentId = 5007,
     RpcMalformedAuthorizedCredentials = 5008,
+    RpcMalformedObject = 5009,
+    RpcMalformedObjectId = 5010,
+    RpcMalformedAccount = 5011,
+    RpcMalformedSequence = 5012,
 
     // special system errors start with 6000
     RpcInvalidApiVersion = 6000,

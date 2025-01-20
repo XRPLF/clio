@@ -90,6 +90,11 @@ getErrorInfo(ClioError code)
         {.code = ClioError::RpcMalformedAuthorizedCredentials,
          .error = "malformedAuthorizedCredentials",
          .message = "Malformed authorized credentials."},
+        {.code = ClioError::RpcMalformedObject, .error = "malformedObject", .message = "Malformed object."},
+        {.code = ClioError::RpcMalformedObjectId, .error = "malformedObjectId", .message = "Malformed object ID."},
+        {.code = ClioError::RpcMalformedAccount, .error = "malformedAccount", .message = "Malformed account."},
+        {.code = ClioError::RpcMalformedSequence, .error = "malformedSequence", .message = "Malformed sequence."},
+
         // special system errors
         {.code = ClioError::RpcInvalidApiVersion, .error = JS(invalid_API_version), .message = "Invalid API version."},
         {.code = ClioError::RpcCommandIsMissing,

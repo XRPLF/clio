@@ -2136,7 +2136,53 @@ generateTestValuesForParametersTest()
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
-        }
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidPermissionedDomain_NotObject",
+            .testJson = R"json({"permissioned_domain": []})json",
+            .expectedError = "malformedObject",
+            .expectedErrorMessage = "Malformed object.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidPermissionedDomain_InvalidString",
+            .testJson = R"json({"permissioned_domain": "invalid_string"})json",
+            .expectedError = "malformedObjectId",
+            .expectedErrorMessage = "Malformed object ID.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidPermissionedDomain_EmptyObject",
+            .testJson = R"json({"permissioned_domain": {}})json",
+            .expectedError = "malformedAccount",
+            .expectedErrorMessage = "Malformed account.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidPermissionedDomain_BadAccount",
+            .testJson = R"json({"permissioned_domain": {"account": "1234"}})json",
+            .expectedError = "malformedAccount",
+            .expectedErrorMessage = "Malformed account.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidPermissionedDomain_MissingSeq",
+            .testJson = fmt::format(
+                R"json({{
+                    "permissioned_domain": {{ "account": "{}" }}
+                }})json",
+                kACCOUNT
+            ),
+            .expectedError = "malformedSequence",
+            .expectedErrorMessage = "Malformed sequence.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidPermissionedDomain_SeqIsNotUint",
+            .testJson = fmt::format(
+                R"json({{
+                    "permissioned_domain": {{ "account": "{}", "seq": -1 }}
+                }})json",
+                kACCOUNT
+            ),
+            .expectedError = "malformedSequence",
+            .expectedErrorMessage = "Malformed sequence.",
+        },
     };
 }
 
@@ -2872,6 +2918,17 @@ generateTestValuesForNormalPathTest()
             .expectedIndex = ripple::keylet::mptoken(ripple::makeMptID(2, account1), account1).key,
             .mockedEntity = createMpTokenObject(kACCOUNT, ripple::makeMptID(2, account1))
         },
+        NormalPathTestBundle{
+            .testName = "PermissionedDomainViaString",
+            .testJson = fmt::format(
+                R"json({{
+                "permissioned_domain": "{}"
+            }})json",
+                kINDEX1
+            ),
+            .expectedIndex = ripple::uint256(kINDEX1),
+            .mockedEntity = createPermissionedDomainObject(kACCOUNT, kRANGE_MAX, kRANGE_MAX, 0, ripple::uint256{0}, 0)
+        }
     };
 }
 

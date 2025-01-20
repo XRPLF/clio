@@ -92,6 +92,10 @@ public:
                     case rpc::ClioError::RpcFieldNotFoundTransaction:
                     case rpc::ClioError::RpcMalformedOracleDocumentId:
                     case rpc::ClioError::RpcMalformedAuthorizedCredentials:
+                    case rpc::ClioError::RpcMalformedObject:
+                    case rpc::ClioError::RpcMalformedObjectId:
+                    case rpc::ClioError::RpcMalformedAccount:
+                    case rpc::ClioError::RpcMalformedSequence:
                     case rpc::ClioError::EtlConnectionError:
                     case rpc::ClioError::EtlRequestError:
                     case rpc::ClioError::EtlRequestTimeout:

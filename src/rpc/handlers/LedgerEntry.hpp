@@ -103,6 +103,7 @@ public:
         std::optional<boost::json::object> ticket;
         std::optional<boost::json::object> amm;
         std::optional<boost::json::object> mptoken;
+        std::optional<boost::json::object> permissionedDomain;
         std::optional<ripple::STXChainBridge> bridge;
         std::optional<std::string> bridgeAccount;
         std::optional<uint32_t> chainClaimId;
@@ -374,6 +375,25 @@ public:
                      },
                  },
              }},
+            {JS(permissioned_domain),
+             meta::WithCustomError{
+                 validation::Type<std::string, boost::json::object>{}, Status(ClioError::RpcMalformedObject)
+             },
+             meta::IfType<std::string>{meta::WithCustomError{
+                 validation::CustomValidators::uint256HexStringValidator, Status(ClioError::RpcMalformedObjectId)
+             }},
+             meta::IfType<boost::json::object>{meta::Section{
+                 {
+                     JS(account),
+                     meta::WithCustomError{validation::Required{}, Status(ClioError::RpcMalformedAccount)},
+                     meta::WithCustomError{
+                         validation::CustomValidators::accountBase58Validator, Status(ClioError::RpcMalformedAccount)
+                     },
+                 },
+                 {JS(seq),
+                  meta::WithCustomError{validation::Required{}, Status(ClioError::RpcMalformedSequence)},
+                  meta::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::RpcMalformedSequence)}},
+             }}},
             {JS(ledger), check::Deprecated{}},
             {"include_deleted", validation::Type<bool>{}},
         };
