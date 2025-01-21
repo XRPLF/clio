@@ -22,6 +22,8 @@
 #include "util/Assert.hpp"
 #include "util/newconfig/Error.hpp"
 
+#include <fmt/core.h>
+
 #include <algorithm>
 #include <array>
 #include <expected>
@@ -38,6 +40,9 @@ namespace util::config {
  */
 struct ClioConfigDescription {
 public:
+    /** @brief Name of the Markdown file containing detailed descriptions of all configuration values. */
+    constexpr static std::string_view kCONFIG_DESCRIPTION_FILE_NAME = "Config-Descriptions.md";
+
     /** @brief Struct to represent a key-value pair*/
     struct KV {
         std::string_view key;
@@ -68,10 +73,10 @@ public:
     static std::expected<void, Error>
     getMarkdown()
     {
-        std::ofstream file("Config-Descriptions.md");
+        std::ofstream file(kCONFIG_DESCRIPTION_FILE_NAME);
 
         if (!file.is_open())
-            return std::unexpected<Error>{"failed to create file: Config-Descriptions.md "};
+            return std::unexpected<Error>{fmt::format("failed to create file: {}", kCONFIG_DESCRIPTION_FILE_NAME)};
 
         file << "# Config Description Markdown File\n";
         file << "This is a **markdown** file listing all Clio Configurations in detail.\n\n";

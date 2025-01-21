@@ -18,12 +18,14 @@
 //==============================================================================
 
 #include "app/CliArgs.hpp"
+#include "util/newconfig/ConfigDescription.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <array>
 #include <cstdlib>
+#include <filesystem>
 #include <string_view>
 
 using namespace app;
@@ -143,5 +145,26 @@ TEST_F(CliArgsTests, Parse_VerifyConfig)
             onVerifyMock.AsStdFunction()
         ),
         returnCode
+    );
+}
+
+TEST_F(CliArgsTests, Parse_ConfigDescription)
+{
+    using namespace util::config;
+    std::array argv{"clio_server", "--description"};  // NOLINT(bugprone-suspicious-stringview-data-usage)
+    auto const action = CliArgs::parse(argv.size(), argv.data());
+    EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) { return exit.exitCode; });
+
+    ASSERT_TRUE(std::filesystem::exists(ClioConfigDescription::kCONFIG_DESCRIPTION_FILE_NAME));
+    std::filesystem::remove(ClioConfigDescription::kCONFIG_DESCRIPTION_FILE_NAME);
+
+    EXPECT_EQ(
+        action.apply(
+            onRunMock.AsStdFunction(),
+            onExitMock.AsStdFunction(),
+            onMigrateMock.AsStdFunction(),
+            onVerifyMock.AsStdFunction()
+        ),
+        EXIT_SUCCESS
     );
 }
