@@ -67,8 +67,8 @@ TEST_F(MigratorRegisterTests, EmptyMigratorRegister)
     EXPECT_EQ(migratorRegister.getMigratorDescription("unknown"), "No Description");
 }
 
-using MultipleMigratorRegister =
-    migration::impl::MigratorsRegister<MockMigrationBackend, SimpleTestMigrator, SimpleTestMigrator2>;
+using MultipleMigratorRegister = migration::impl::
+    MigratorsRegister<MockMigrationBackend, SimpleTestMigrator, SimpleTestMigrator2, SimpleTestMigrator3>;
 
 struct MultipleMigratorRegisterTests : public util::prometheus::WithMockPrometheus, public MockMigrationBackendTest {
     std::optional<MultipleMigratorRegister> migratorRegister;
@@ -82,17 +82,21 @@ struct MultipleMigratorRegisterTests : public util::prometheus::WithMockPromethe
 TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenError)
 {
     EXPECT_CALL(*backend_, fetchMigratorStatus(testing::_, testing::_))
-        .Times(2)
+        .Times(3)
         .WillRepeatedly(testing::Return(std::nullopt));
 
     auto const status = migratorRegister->getMigratorsStatus();
-    EXPECT_EQ(status.size(), 2);
+    EXPECT_EQ(status.size(), 3);
     EXPECT_TRUE(
         std::ranges::find(status, std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::NotMigrated)) !=
         status.end()
     );
     EXPECT_TRUE(
         std::ranges::find(status, std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)) !=
+        status.end()
+    );
+    EXPECT_TRUE(
+        std::ranges::find(status, std::make_tuple("SimpleTestMigrator3", migration::MigratorStatus::NotMigrated)) !=
         status.end()
     );
 }
@@ -100,17 +104,21 @@ TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenError)
 TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenReturnInvalidStatus)
 {
     EXPECT_CALL(*backend_, fetchMigratorStatus(testing::_, testing::_))
-        .Times(2)
+        .Times(3)
         .WillRepeatedly(testing::Return("Invalid"));
 
     auto const status = migratorRegister->getMigratorsStatus();
-    EXPECT_EQ(status.size(), 2);
+    EXPECT_EQ(status.size(), 3);
     EXPECT_TRUE(
         std::ranges::find(status, std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::NotMigrated)) !=
         status.end()
     );
     EXPECT_TRUE(
         std::ranges::find(status, std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)) !=
+        status.end()
+    );
+    EXPECT_TRUE(
+        std::ranges::find(status, std::make_tuple("SimpleTestMigrator3", migration::MigratorStatus::NotMigrated)) !=
         status.end()
     );
 }
@@ -120,15 +128,21 @@ TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenOneMigrated)
     EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
     EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
         .WillOnce(testing::Return("NotMigrated"));
+    EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator3", testing::_))
+        .WillOnce(testing::Return("NotMigrated"));
 
     auto const status = migratorRegister->getMigratorsStatus();
-    EXPECT_EQ(status.size(), 2);
+    EXPECT_EQ(status.size(), 3);
     EXPECT_TRUE(
         std::ranges::find(status, std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::Migrated)) !=
         status.end()
     );
     EXPECT_TRUE(
         std::ranges::find(status, std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)) !=
+        status.end()
+    );
+    EXPECT_TRUE(
+        std::ranges::find(status, std::make_tuple("SimpleTestMigrator3", migration::MigratorStatus::NotMigrated)) !=
         status.end()
     );
 }
@@ -158,9 +172,10 @@ TEST_F(MultipleMigratorRegisterTests, GetMigratorStatusWhenError)
 TEST_F(MultipleMigratorRegisterTests, Names)
 {
     auto names = migratorRegister->getMigratorNames();
-    EXPECT_EQ(names.size(), 2);
+    EXPECT_EQ(names.size(), 3);
     EXPECT_TRUE(std::ranges::find(names, "SimpleTestMigrator") != names.end());
     EXPECT_TRUE(std::ranges::find(names, "SimpleTestMigrator2") != names.end());
+    EXPECT_TRUE(std::ranges::find(names, "SimpleTestMigrator3") != names.end());
 }
 
 TEST_F(MultipleMigratorRegisterTests, Description)
@@ -180,4 +195,22 @@ TEST_F(MultipleMigratorRegisterTests, MigrateNormalMigrator)
 {
     EXPECT_CALL(*backend_, writeMigratorStatus("SimpleTestMigrator", "Migrated")).Times(1);
     EXPECT_NO_THROW(migratorRegister->runMigrator("SimpleTestMigrator", gCfg.getObject("migration")));
+}
+
+TEST_F(MultipleMigratorRegisterTests, canBlock)
+{
+    auto canBlock = migratorRegister->canMigratorBlockClio("SimpleTestMigrator");
+    EXPECT_TRUE(canBlock);
+    EXPECT_TRUE(*canBlock);
+
+    canBlock = migratorRegister->canMigratorBlockClio("SimpleTestMigrator2");
+    EXPECT_TRUE(canBlock);
+    EXPECT_FALSE(*canBlock);
+
+    canBlock = migratorRegister->canMigratorBlockClio("SimpleTestMigrator3");
+    EXPECT_TRUE(canBlock);
+    EXPECT_FALSE(*canBlock);
+
+    canBlock = migratorRegister->canMigratorBlockClio("NotAMigrator");
+    EXPECT_FALSE(canBlock);
 }

@@ -350,8 +350,9 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
      {"server.processing_policy",
       ConfigValue{ConfigType::String}.defaultValue("parallel").withConstraint(gValidateProcessingPolicy)},
-     {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional()},
-     {"server.ws_max_sending_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1500)},
+     {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint16)},
+     {"server.ws_max_sending_queue_size",
+      ConfigValue{ConfigType::Integer}.defaultValue(1500).withConstraint(gValidateUint32)},
      {"server.__ng_web_server", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
      {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
@@ -387,12 +388,13 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
 
      {"log_directory", ConfigValue{ConfigType::String}.optional()},
 
-     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateUint32)},
+     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateLogSize)},
 
-     {"log_directory_max_size", ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(gValidateUint32)
-     },
+     {"log_directory_max_size",
+      ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(gValidateLogSize)},
 
-     {"log_rotation_hour_interval", ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(gValidateUint32)},
+     {"log_rotation_hour_interval",
+      ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(gValidateLogRotationTime)},
 
      {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none").withConstraint(gValidateLogTag)},
 
