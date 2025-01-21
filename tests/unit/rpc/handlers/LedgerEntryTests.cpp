@@ -2922,11 +2922,30 @@ generateTestValuesForNormalPathTest()
             .testName = "PermissionedDomainViaString",
             .testJson = fmt::format(
                 R"json({{
-                "permissioned_domain": "{}"
-            }})json",
+                    "binary": true,
+                    "permissioned_domain": "{}"
+                }})json",
                 kINDEX1
             ),
             .expectedIndex = ripple::uint256(kINDEX1),
+            .mockedEntity = createPermissionedDomainObject(kACCOUNT, kRANGE_MAX, 0, 0, ripple::uint256{0}, 0)
+        },
+        NormalPathTestBundle{
+            .testName = "PermissionedDomainViaObject",
+            .testJson = fmt::format(
+                R"json({{
+                    "binary": true,
+                    "permissioned_domain": {{
+                        "account": "{}",
+                        "seq": {}
+                    }}
+                }})json",
+                kACCOUNT,
+                kRANGE_MAX
+            ),
+            .expectedIndex =
+                ripple::keylet::permissionedDomain(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX)
+                    .key,
             .mockedEntity = createPermissionedDomainObject(kACCOUNT, kRANGE_MAX, kRANGE_MAX, 0, ripple::uint256{0}, 0)
         }
     };
@@ -2957,15 +2976,14 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result.value().at("ledger_hash").as_string(), kLEDGER_HASH);
-        EXPECT_EQ(output.result.value().at("ledger_index").as_uint64(), kRANGE_MAX);
+        auto const& outputJson = output.result.value();
+        EXPECT_EQ(outputJson.at("ledger_hash").as_string(), kLEDGER_HASH);
+        EXPECT_EQ(outputJson.at("ledger_index").as_uint64(), kRANGE_MAX);
         EXPECT_EQ(
-            output.result.value().at("node_binary").as_string(),
-            ripple::strHex(testBundle.mockedEntity.getSerializer().peekData())
+            outputJson.at("node_binary").as_string(), ripple::strHex(testBundle.mockedEntity.getSerializer().peekData())
         );
         EXPECT_EQ(
-            ripple::uint256(boost::json::value_to<std::string>(output.result.value().at("index")).data()),
-            testBundle.expectedIndex
+            ripple::uint256(boost::json::value_to<std::string>(outputJson.at("index")).data()), testBundle.expectedIndex
         );
     });
 }

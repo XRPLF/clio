@@ -183,7 +183,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         auto const account = ripple::parseBase58<ripple::AccountID>(
             boost::json::value_to<std::string>(input.permissionedDomain->at(JS(account)))
         );
-        auto const seq = input.permissionedDomain->at(JS(seq)).as_uint64();
+        auto const seq = input.permissionedDomain->at(JS(seq)).as_int64();
         key = ripple::keylet::permissionedDomain(*account, seq).key;
     } else {
         // Must specify 1 of the following fields to indicate what type
