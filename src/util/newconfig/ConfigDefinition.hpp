@@ -85,26 +85,6 @@ public:
     parse(ConfigFileInterface const& config);
 
     /**
-     * @brief Validates the configuration file
-     *
-     * Should only check for valid values, without populating
-     *
-     * @param config The configuration file interface
-     * @return An optional vector of Error objects stating all the failures if validation fails
-     */
-    [[nodiscard]] std::optional<std::vector<Error>>
-    validate(ConfigFileInterface const& config) const;
-
-    /**
-     * @brief Generate markdown file of all the clio config descriptions
-     *
-     * @param configDescription The configuration description object
-     * @return An optional Error if generating markdown fails
-     */
-    [[nodiscard]] std::expected<std::string, Error>
-    getMarkdown(ClioConfigDescription const& configDescription) const;
-
-    /**
      * @brief Returns the ObjectView specified with the prefix
      *
      * @param prefix The key prefix for the ObjectView

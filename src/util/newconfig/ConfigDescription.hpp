@@ -20,9 +20,13 @@
 #pragma once
 
 #include "util/Assert.hpp"
+#include "util/newconfig/Error.hpp"
 
 #include <algorithm>
 #include <array>
+#include <expected>
+#include <fstream>
+#include <iostream>
 #include <string_view>
 
 namespace util::config {
@@ -59,6 +63,31 @@ public:
         auto const itr = std::ranges::find_if(kCONFIG_DESCRIPTION, [&](auto const& v) { return v.key == key; });
         ASSERT(itr != kCONFIG_DESCRIPTION.end(), "Key {} doesn't exist in config", key);
         return itr->value;
+    }
+
+    static std::expected<void, Error>
+    getMarkdown()
+    {
+        std::ofstream file("Config-Descriptions.md");
+
+        if (!file.is_open())
+            return std::unexpected<Error>{"failed to create file: Config-Descriptions.md "};
+
+        file << "# Config Description Markdown File\n";
+        file << "This is a **markdown** file listing all Clio Configurations in detail.\n\n";
+        file << "## Configuration Details\n\n";
+
+        for (auto const& [key, val] : kCONFIG_DESCRIPTION) {
+            file << "### " << key << "\n";
+            file << val << "\n\n";
+        }
+        file << "```\n";
+
+        // Close the file
+        file.close();
+
+        std::cout << "Markdown file generated successfully: Config-Descriptions.md" << "\n";
+        return {};
     }
 
 private:

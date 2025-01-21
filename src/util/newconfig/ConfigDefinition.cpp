@@ -65,6 +65,7 @@ ClioConfigDefinition::getObject(std::string_view prefix, std::optional<std::size
         auto const hasPrefix = mapKey.starts_with(prefixWithDot);
         if (idx.has_value() && hasPrefix && std::holds_alternative<Array>(mapVal)) {
             ASSERT(std::get<Array>(mapVal).size() > idx.value(), "Index provided is out of scope");
+
             // we want to support getObject("array") and getObject("array.[]"), so we check if "[]" exists
             if (!prefix.contains("[]"))
                 return ObjectView{prefixWithDot + "[]", idx.value(), *this};
