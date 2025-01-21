@@ -70,7 +70,12 @@ public:
         return itr->value;
     }
 
-    static std::expected<void, Error>
+    /**
+     * @brief Generate markdown file of all the clio config descriptions
+     *
+     * @return An Error if generating markdown fails, otherwise nothing
+     */
+    [[nodiscard]] static std::expected<void, Error>
     getMarkdown()
     {
         std::ofstream file(kCONFIG_DESCRIPTION_FILE_NAME);
