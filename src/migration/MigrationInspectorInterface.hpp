@@ -68,12 +68,12 @@ struct MigrationInspectorInterface {
     getMigratorDescriptionByName(std::string const& name) const = 0;
 
     /**
-     * @brief Return if server is blocked
+     * @brief Return if Clio server is blocked
      *
-     * @return True if server is blocked by migration, false otherwise
+     * @return True if Clio server is blocked by migration, false otherwise
      */
     virtual bool
-    isBlockingServer() const = 0;
+    isBlockingClio() const = 0;
 };
 
 }  // namespace migration

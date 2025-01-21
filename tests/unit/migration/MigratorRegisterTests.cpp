@@ -199,18 +199,18 @@ TEST_F(MultipleMigratorRegisterTests, MigrateNormalMigrator)
 
 TEST_F(MultipleMigratorRegisterTests, canBlock)
 {
-    auto canBlock = migratorRegister->canMigratorBlockServer("SimpleTestMigrator");
+    auto canBlock = migratorRegister->canMigratorBlockClio("SimpleTestMigrator");
     EXPECT_TRUE(canBlock);
     EXPECT_TRUE(*canBlock);
 
-    canBlock = migratorRegister->canMigratorBlockServer("SimpleTestMigrator2");
+    canBlock = migratorRegister->canMigratorBlockClio("SimpleTestMigrator2");
     EXPECT_TRUE(canBlock);
     EXPECT_FALSE(*canBlock);
 
-    canBlock = migratorRegister->canMigratorBlockServer("SimpleTestMigrator3");
+    canBlock = migratorRegister->canMigratorBlockClio("SimpleTestMigrator3");
     EXPECT_TRUE(canBlock);
     EXPECT_FALSE(*canBlock);
 
-    canBlock = migratorRegister->canMigratorBlockServer("NotAMigrator");
+    canBlock = migratorRegister->canMigratorBlockClio("NotAMigrator");
     EXPECT_FALSE(canBlock);
 }

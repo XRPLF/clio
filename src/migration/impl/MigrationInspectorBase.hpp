@@ -106,10 +106,10 @@ public:
      * @return True if server is blocked, false otherwise
      */
     bool
-    isBlockingServer() const override
+    isBlockingClio() const override
     {
         return std::ranges::any_of(migrators_.getMigratorNames(), [&](auto const& migrator) {
-            if (auto canBlock = migrators_.canMigratorBlockServer(migrator); canBlock.has_value() and *canBlock and
+            if (auto canBlock = migrators_.canMigratorBlockClio(migrator); canBlock.has_value() and *canBlock and
                 migrators_.getMigratorStatus(std::string(migrator)) == MigratorStatus::Status::NotMigrated) {
                 return true;
             }

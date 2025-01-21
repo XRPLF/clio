@@ -86,10 +86,10 @@ TEST_F(MigrationInspectorBaseTest, Description)
 TEST_F(MigrationInspectorBaseTest, getMigratorStatusByName)
 {
     EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
+    EXPECT_EQ(migrationInspector_->getMigratorStatusByName("SimpleTestMigrator"), migration::MigratorStatus::Migrated);
+
     EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
         .WillOnce(testing::Return("NotMigrated"));
-
-    EXPECT_EQ(migrationInspector_->getMigratorStatusByName("SimpleTestMigrator"), migration::MigratorStatus::Migrated);
     EXPECT_EQ(
         migrationInspector_->getMigratorStatusByName("SimpleTestMigrator2"), migration::MigratorStatus::NotMigrated
     );
@@ -101,14 +101,14 @@ TEST_F(MigrationInspectorBaseTest, oneMigratorBlockingClio)
         .WillOnce(testing::Return("NotMigrated"));
     EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator2", testing::_)).Times(0);
 
-    EXPECT_TRUE(migrationInspector_->isBlockingServer());
+    EXPECT_TRUE(migrationInspector_->isBlockingClio());
 }
 
 TEST_F(MigrationInspectorBaseTest, oneMigratorBlockingClioGetMigrated)
 {
     EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
     EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator2", testing::_)).Times(0);
-    EXPECT_FALSE(migrationInspector_->isBlockingServer());
+    EXPECT_FALSE(migrationInspector_->isBlockingClio());
 }
 
 TEST_F(MigrationInspectorBaseTest, noMigratorBlockingClio)
@@ -117,7 +117,7 @@ TEST_F(MigrationInspectorBaseTest, noMigratorBlockingClio)
 
     auto const migrations = migration::impl::MigrationInspectorBase<
         migration::impl::MigratorsRegister<data::BackendInterface, SimpleTestMigrator2, SimpleTestMigrator3>>(backend_);
-    EXPECT_FALSE(migrations.isBlockingServer());
+    EXPECT_FALSE(migrations.isBlockingClio());
 }
 
 TEST_F(MigrationInspectorBaseTest, isBlockingClioWhenNoMigrator)
@@ -126,5 +126,5 @@ TEST_F(MigrationInspectorBaseTest, isBlockingClioWhenNoMigrator)
 
     auto const migrations =
         migration::impl::MigrationInspectorBase<migration::impl::MigratorsRegister<data::BackendInterface>>(backend_);
-    EXPECT_FALSE(migrations.isBlockingServer());
+    EXPECT_FALSE(migrations.isBlockingClio());
 }

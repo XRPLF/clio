@@ -39,7 +39,9 @@ protected:
     };
 };
 
-TEST_F(MigrationInspectorFactoryTests, NullBackend)
+struct MigrationInspectorFactoryTestsDeathTest : public MigrationInspectorFactoryTests {};
+
+TEST_F(MigrationInspectorFactoryTestsDeathTest, NullBackend)
 {
     EXPECT_DEATH(migration::makeMigrationInspector(readerConfig_, nullptr), ".*");
 }

@@ -206,14 +206,14 @@ public:
     }
 
     /**
-     * @brief Return if the given migrator can block the server
+     * @brief Return if the given migrator can block Clio server
      *
      * @param name The migrator's name
      * @return std::nullopt if the migrator name is not found, or a boolean value indicating whether the migrator is
-     * blocking the server.
+     * blocking Clio server.
      */
     std::optional<bool>
-    canMigratorBlockServer(std::string_view name) const
+    canMigratorBlockClio(std::string_view name) const
     {
         if constexpr (sizeof...(MigratorType) == 0) {
             return std::nullopt;

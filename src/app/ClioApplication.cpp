@@ -106,10 +106,10 @@ ClioApplication::run(bool const useNgWebServer)
 
     {
         auto const migrationInspector = migration::makeMigrationInspector(config_, backend);
-        // Check if any migration is blocking server starting.
-        if (migrationInspector->isBlockingServer() and backend->hardFetchLedgerRangeNoThrow()) {
+        // Check if any migration is blocking Clio server starting.
+        if (migrationInspector->isBlockingClio() and backend->hardFetchLedgerRangeNoThrow()) {
             LOG(util::LogService::error())
-                << "Existing Migration is blocking server, Please complete the database migration first.";
+                << "Existing Migration is blocking Clio, Please complete the database migration first.";
             return EXIT_FAILURE;
         }
     }
