@@ -26,13 +26,10 @@ struct SimpleTestMigrator {
     using Backend = MockMigrationBackend;
     static constexpr auto kNAME = "SimpleTestMigrator";
     static constexpr auto kDESCRIPTION = "The migrator for version 0 -> 1";
-    static void
-    runMigration(std::shared_ptr<MockMigrationBackend>, util::config::ObjectView const&)
-    {
-    }
+    static constexpr auto kCAN_BLOCK_CLIO = true;
 
     static void
-    reset()
+    runMigration(std::shared_ptr<MockMigrationBackend>, util::config::ObjectView const&)
     {
     }
 };
@@ -45,9 +42,16 @@ struct SimpleTestMigrator2 {
     runMigration(std::shared_ptr<MockMigrationBackend>, util::config::ObjectView const&)
     {
     }
+};
+
+struct SimpleTestMigrator3 {
+    using Backend = MockMigrationBackend;
+    static constexpr auto kNAME = "SimpleTestMigrator3";
+    static constexpr auto kDESCRIPTION = "The migrator for version 3 -> 4";
+    static constexpr auto kCAN_BLOCK_CLIO = false;
 
     static void
-    reset()
+    runMigration(std::shared_ptr<MockMigrationBackend>, util::config::ObjectView const&)
     {
     }
 };

@@ -39,7 +39,6 @@ enum class ClioError {
     RpcMalformedRequest = 5001,
     RpcMalformedOwner = 5002,
     RpcMalformedAddress = 5003,
-    RpcInvalidHotWallet = 5004,
     RpcUnknownOption = 5005,
     RpcFieldNotFoundTransaction = 5006,
     RpcMalformedOracleDocumentId = 5007,

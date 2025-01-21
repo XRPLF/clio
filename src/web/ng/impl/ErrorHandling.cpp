@@ -102,7 +102,6 @@ ErrorHelper::makeError(rpc::Status const& err) const
             case rpc::ClioError::RpcMalformedRequest:
             case rpc::ClioError::RpcMalformedOwner:
             case rpc::ClioError::RpcMalformedAddress:
-            case rpc::ClioError::RpcInvalidHotWallet:
             case rpc::ClioError::RpcFieldNotFoundTransaction:
             case rpc::ClioError::RpcMalformedOracleDocumentId:
             case rpc::ClioError::RpcMalformedAuthorizedCredentials:

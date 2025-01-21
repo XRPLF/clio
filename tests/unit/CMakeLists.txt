@@ -60,6 +60,8 @@ target_sources(
           migration/cassandra/SpecTests.cpp
           migration/MigratorRegisterTests.cpp
           migration/MigratorStatusTests.cpp
+          migration/MigrationInspectorFactoryTests.cpp
+          migration/MigrationInspectorBaseTests.cpp
           migration/MigrationManagerBaseTests.cpp
           migration/MigrationManagerFactoryTests.cpp
           migration/SpecTests.cpp
