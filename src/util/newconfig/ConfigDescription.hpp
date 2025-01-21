@@ -41,7 +41,7 @@ namespace util::config {
 struct ClioConfigDescription {
 public:
     /** @brief Name of the Markdown file containing detailed descriptions of all configuration values. */
-    constexpr static std::string_view kCONFIG_DESCRIPTION_FILE_NAME = "Config-Descriptions.md";
+    static constexpr auto kCONFIG_DESCRIPTION_FILE_NAME = "Config-Descriptions.md";
 
     /** @brief Struct to represent a key-value pair*/
     struct KV {
