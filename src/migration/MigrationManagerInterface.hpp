@@ -19,59 +19,23 @@
 
 #pragma once
 
-#include "migration/MigratiorStatus.hpp"
+#include "migration/MigrationInspectorInterface.hpp"
 
 #include <string>
-#include <tuple>
-#include <vector>
 
 namespace migration {
 
 /**
- * @brief The interface for the migration manager. This interface is tend to be implemented for specific database. The
- * application layer will use this interface to run the migrations.
+ * @brief The interface for the migration manager. The migration application layer will use this interface to run the
+ * migrations. Unlike the MigrationInspectorInterface which only provides the status of migration, this interface
+ * contains the acutal migration running method.
  */
-struct MigrationManagerInterface {
-    virtual ~MigrationManagerInterface() = default;
-
+struct MigrationManagerInterface : virtual public MigrationInspectorInterface {
     /**
      * @brief Run the the migration according to the given migrator's name
      */
     virtual void
     runMigration(std::string const&) = 0;
-
-    /**
-     * @brief Get the status of all the migrators
-     * @return A vector of tuple, the first element is the migrator's name, the second element is the status of the
-     */
-    virtual std::vector<std::tuple<std::string, MigratorStatus>>
-    allMigratorsStatusPairs() const = 0;
-
-    /**
-     * @brief Get all registered migrators' names
-     *
-     * @return A vector of migrators' names
-     */
-    virtual std::vector<std::string>
-    allMigratorsNames() const = 0;
-
-    /**
-     * @brief Get the status of a migrator by its name
-     *
-     * @param name The migrator's name
-     * @return The status of the migrator
-     */
-    virtual MigratorStatus
-    getMigratorStatusByName(std::string const& name) const = 0;
-
-    /**
-     * @brief Get the description of a migrator by its name
-     *
-     * @param name The migrator's name
-     * @return The description of the migrator
-     */
-    virtual std::string
-    getMigratorDescriptionByName(std::string const& name) const = 0;
 };
 
 }  // namespace migration

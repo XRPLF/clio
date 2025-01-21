@@ -26,6 +26,7 @@
 #include "etl/LoadBalancer.hpp"
 #include "etl/NetworkValidatedLedgers.hpp"
 #include "feed/SubscriptionManager.hpp"
+#include "migration/MigrationInspectorFactory.hpp"
 #include "rpc/Counters.hpp"
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
@@ -102,6 +103,16 @@ ClioApplication::run(bool const useNgWebServer)
 
     // Interface to the database
     auto backend = data::makeBackend(config_);
+
+    {
+        auto const migrationInspector = migration::makeMigrationInspector(config_, backend);
+        // Check if any migration is blocking Clio server starting.
+        if (migrationInspector->isBlockingClio() and backend->hardFetchLedgerRangeNoThrow()) {
+            LOG(util::LogService::error())
+                << "Existing Migration is blocking Clio, Please complete the database migration first.";
+            return EXIT_FAILURE;
+        }
+    }
 
     // Manages clients subscribed to streams
     auto subscriptions = feed::SubscriptionManager::makeSubscriptionManager(config_, backend);

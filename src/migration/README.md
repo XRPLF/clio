@@ -40,9 +40,11 @@ A migrator satisfies the `MigratorSpec`(impl/Spec.hpp) concept.
 
 It contains:
 
--  A `name` which will be used to identify the migrator. User will refer this migrator in command-line tool by this name. The name needs to be different with other migrators, otherwise a compilation error will be raised.
+- A `kNAME` which will be used to identify the migrator. User will refer this migrator in command-line tool by this name. The name needs to be different with other migrators, otherwise a compilation error will be raised.
 
--  A `description` which is the detail information of the migrator.
+- A `kDESCRIPTION` which is the detail information of the migrator.
+
+- An optional `kCAN_BLOCK_CLIO` which indicates whether the migrator can block the Clio server. If it's absent, the migrator can't block server. If there is a blocking migrator not completed, the Clio server will fail to start.
 
 - A static function `runMigration`, it will be called when user run `--migrate name`. It accepts two parameters: backend, which provides the DB operations interface, and cfg, which provides migration-related configuration. Each migrator can have its own configuration under `.migration` session.
 
@@ -65,8 +67,8 @@ Most indexes are based on either ledger states or transactions. We provide the `
 If you need to do full scan against other table, you can follow below steps:
 - Describe the table which needs full scan in a struct. It has to satisfy the `TableSpec`(cassandra/Spec.hpp) concept, containing static member:
     - Tuple type `Row`, it's the type of each field in a row. The order of types should match what database will return in a row. Key types should come first, followed by other field types sorted in alphabetical order.
-    - `PARTITION_KEY`, it's the name of the partition key of the table.
-    - `TABLE_NAME`
+    - `kPARTITION_KEY`, it's the name of the partition key of the table.
+    - `kTABLE_NAME`
 
 - Inherent from `FullTableScannerAdapterBase`.
 - Implement `onRowRead`, its parameter is the `Row` we defined. It's the callback function when a row is read.
