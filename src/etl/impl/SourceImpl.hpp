@@ -102,6 +102,12 @@ public:
         subscriptionSource_->run();
     }
 
+    void
+    stop(boost::asio::yield_context yield) final
+    {
+        subscriptionSource_->stop(yield);
+    }
+
     /**
      * @brief Check if source is connected
      *

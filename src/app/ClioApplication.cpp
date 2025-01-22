@@ -19,6 +19,7 @@
 
 #include "app/ClioApplication.hpp"
 
+#include "app/Stopper.hpp"
 #include "app/WebHandlers.hpp"
 #include "data/AmendmentCenter.hpp"
 #include "data/BackendFactory.hpp"
@@ -45,6 +46,8 @@
 #include "web/ng/Server.hpp"
 
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/asio/use_future.hpp>
 
 #include <cstdint>
 #include <cstdlib>
@@ -84,6 +87,7 @@ ClioApplication::ClioApplication(util::config::ClioConfigDefinition const& confi
 {
     LOG(util::LogService::info()) << "Clio version: " << util::build::getClioFullVersionString();
     PrometheusService::init(config);
+    signalsHandler_.subscribeToStop([this]() { appStopper_.stop(); });
 }
 
 int
@@ -168,6 +172,10 @@ ClioApplication::run(bool const useNgWebServer)
             LOG(util::LogService::error()) << "Error starting web server: " << *maybeError;
             return EXIT_FAILURE;
         }
+
+        appStopper_.setOnStop(
+            Stopper::makeOnStopCallback(httpServer.value(), *balancer, *etl, *subscriptions, *backend, ioc)
+        );
 
         // Blocks until stopped.
         // When stopped, shared_ptrs fall out of scope

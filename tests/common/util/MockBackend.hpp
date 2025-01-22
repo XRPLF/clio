@@ -211,6 +211,8 @@ struct MockBackend : public BackendInterface {
 
     MOCK_METHOD(void, doWriteLedgerObject, (std::string&&, std::uint32_t const, std::string&&), (override));
 
+    MOCK_METHOD(void, waitForWritesToFinish, (), (override));
+
     MOCK_METHOD(bool, doFinishWrites, (), (override));
 
     MOCK_METHOD(void, writeMPTHolders, (std::vector<MPTHolderData> const&), (override));

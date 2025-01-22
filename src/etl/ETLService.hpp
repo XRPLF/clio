@@ -42,6 +42,7 @@
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
 #include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -59,6 +60,16 @@ struct NFTsData;
 namespace etl {
 
 /**
+ * @brief A tag class to help identify ETLService in templated code.
+ */
+struct ETLServiceTag {
+    virtual ~ETLServiceTag() = default;
+};
+
+template <typename T>
+concept SomeETLService = std::derived_from<T, ETLServiceTag>;
+
+/**
  * @brief This class is responsible for continuously extracting data from a p2p node, and writing that data to the
  * databases.
  *
@@ -71,7 +82,7 @@ namespace etl {
  * the others will fall back to monitoring/publishing. In this sense, this class dynamically transitions from monitoring
  * to writing and from writing to monitoring, based on the activity of other processes running on different machines.
  */
-class ETLService {
+class ETLService : public ETLServiceTag {
     // TODO: make these template parameters in ETLService
     using LoadBalancerType = LoadBalancer;
     using DataPipeType = etl::impl::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
@@ -159,10 +170,20 @@ public:
     /**
      * @brief Stops components and joins worker thread.
      */
-    ~ETLService()
+    ~ETLService() override
     {
-        LOG(log_.info()) << "onStop called";
-        LOG(log_.debug()) << "Stopping Reporting ETL";
+        if (not state_.isStopping)
+            stop();
+    }
+
+    /**
+     * @brief Stop the ETL service.
+     * @note This method blocks until the ETL service has stopped.
+     */
+    void
+    stop()
+    {
+        LOG(log_.info()) << "Stop called";
 
         state_.isStopping = true;
         cacheLoader_.stop();

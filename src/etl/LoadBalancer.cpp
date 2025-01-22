@@ -26,6 +26,7 @@
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "util/Assert.hpp"
+#include "util/CoroutineGroup.hpp"
 #include "util/Random.hpp"
 #include "util/ResponseExpirationCache.hpp"
 #include "util/log/Logger.hpp"
@@ -334,6 +335,16 @@ LoadBalancer::getETLState() noexcept
         etlState_ = ETLState::fetchETLStateFromSource(*this);
     }
     return etlState_;
+}
+
+void
+LoadBalancer::stop(boost::asio::yield_context yield)
+{
+    util::CoroutineGroup group{yield};
+    std::ranges::for_each(sources_, [&group, yield](auto& source) {
+        group.spawn(yield, [&source](boost::asio::yield_context innerYield) { source->stop(innerYield); });
+    });
+    group.asyncWait(yield);
 }
 
 void

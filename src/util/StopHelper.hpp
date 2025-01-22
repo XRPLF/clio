@@ -19,37 +19,36 @@
 
 #pragma once
 
-#include "app/Stopper.hpp"
-#include "util/SignalsHandler.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include <boost/asio/spawn.hpp>
+#include <boost/signals2/signal.hpp>
+#include <boost/signals2/variadic_signal.hpp>
 
-namespace app {
+#include <atomic>
+#include <memory>
+
+namespace util {
 
 /**
- * @brief The main application class
+ * @brief Helper class to stop a class asynchronously.
  */
-class ClioApplication {
-    util::config::ClioConfigDefinition const& config_;
-    util::SignalsHandler signalsHandler_;
-    Stopper appStopper_;
+class StopHelper {
+    boost::signals2::signal<void()> onStopReady_;
+    std::unique_ptr<std::atomic_bool> stopped_ = std::make_unique<std::atomic_bool>(false);
 
 public:
     /**
-     * @brief Construct a new ClioApplication object
-     *
-     * @param config The configuration of the application
+     * @brief Notify that the class is ready to stop.
      */
-    ClioApplication(util::config::ClioConfigDefinition const& config);
+    void
+    readyToStop();
 
     /**
-     * @brief Run the application
+     * @brief Wait for the class to stop.
      *
-     * @param useNgWebServer Whether to use the new web server
-     *
-     * @return exit code
+     * @param yield The coroutine context
      */
-    int
-    run(bool useNgWebServer);
+    void
+    asyncWaitForStop(boost::asio::yield_context yield);
 };
 
-}  // namespace app
+}  // namespace util

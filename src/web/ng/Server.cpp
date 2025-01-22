@@ -27,6 +27,7 @@
 #include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/ProcessingPolicy.hpp"
+#include "web/ng/Response.hpp"
 #include "web/ng/impl/HttpConnection.hpp"
 #include "web/ng/impl/ServerSslContext.hpp"
 
@@ -42,6 +43,7 @@
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
+#include <boost/beast/http/status.hpp>
 #include <boost/system/system_error.hpp>
 #include <fmt/core.h>
 
@@ -120,7 +122,7 @@ detectSsl(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield)
     return SslDetectionResult{.socket = tcpStream.release_socket(), .isSsl = isSsl, .buffer = std::move(buffer)};
 }
 
-std::expected<ConnectionPtr, std::optional<std::string>>
+std::expected<impl::UpgradableConnectionPtr, std::optional<std::string>>
 makeConnection(
     SslDetectionResult sslDetectionResult,
     std::optional<boost::asio::ssl::context>& sslContext,
@@ -133,7 +135,7 @@ makeConnection(
     impl::UpgradableConnectionPtr connection;
     if (sslDetectionResult.isSsl) {
         if (not sslContext.has_value())
-            return std::unexpected{"SSL is not supported by this server"};
+            return std::unexpected{"Error creating a connection: SSL is not supported by this server"};
 
         connection = std::make_unique<impl::SslHttpConnection>(
             std::move(sslDetectionResult.socket),
@@ -157,7 +159,17 @@ makeConnection(
         connection->close(yield);
         return std::unexpected{std::nullopt};
     }
+    return connection;
+}
 
+std::expected<ConnectionPtr, std::string>
+tryUpgradeConnection(
+    impl::UpgradableConnectionPtr connection,
+    std::optional<boost::asio::ssl::context>& sslContext,
+    util::TagDecoratorFactory& tagDecoratorFactory,
+    boost::asio::yield_context yield
+)
+{
     auto const expectedIsUpgrade = connection->isUpgradeRequested(yield);
     if (not expectedIsUpgrade.has_value()) {
         return std::unexpected{
@@ -256,8 +268,9 @@ Server::run()
 }
 
 void
-Server::stop()
+Server::stop(boost::asio::yield_context yield)
 {
+    connectionHandler_.stop(yield);
 }
 
 void
@@ -288,15 +301,32 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
     );
     if (not connectionExpected.has_value()) {
         if (connectionExpected.error().has_value()) {
-            LOG(log_.info()) << "Error creating a connection: " << *connectionExpected.error();
+            LOG(log_.info()) << *connectionExpected.error();
         }
         return;
     }
     LOG(log_.trace()) << connectionExpected.value()->tag() << "Connection created";
 
+    if (connectionHandler_.isStopping()) {
+        boost::asio::spawn(
+            ctx_.get(),
+            [connection = std::move(connectionExpected).value()](boost::asio::yield_context yield) {
+                web::ng::impl::ConnectionHandler::stopConnection(*connection, yield);
+            }
+        );
+        return;
+    }
+
+    auto connection =
+        tryUpgradeConnection(std::move(connectionExpected).value(), sslContext_, tagDecoratorFactory_, yield);
+    if (not connection.has_value()) {
+        LOG(log_.info()) << connection.error();
+        return;
+    }
+
     boost::asio::spawn(
         ctx_.get(),
-        [this, connection = std::move(connectionExpected).value()](boost::asio::yield_context yield) mutable {
+        [this, connection = std::move(connection).value()](boost::asio::yield_context yield) mutable {
             connectionHandler_.processConnection(std::move(connection), yield);
         }
     );

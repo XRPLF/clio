@@ -21,10 +21,14 @@
 
 #include "util/LoggerFixtures.hpp"
 
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/io_service.hpp>
+#include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <chrono>
 #include <optional>
@@ -94,6 +98,38 @@ struct SyncAsioContextTest : virtual public NoLoggerFixture {
         runContext();
     }
 
+    template <typename F>
+    void
+    runSpawnWithTimeout(std::chrono::steady_clock::duration timeout, F&& f, bool allowMockLeak = false)
+    {
+        using namespace boost::asio;
+
+        boost::asio::io_context timerCtx;
+        steady_timer timer{timerCtx, timeout};
+        spawn(timerCtx, [this, &timer](yield_context yield) {
+            boost::system::error_code errorCode;
+            timer.async_wait(yield[errorCode]);
+            ctx_.stop();
+            EXPECT_TRUE(false) << "Test timed out";
+        });
+        std::thread timerThread{[&timerCtx]() { timerCtx.run(); }};
+
+        testing::MockFunction<void()> call;
+        if (allowMockLeak)
+            testing::Mock::AllowLeak(&call);
+
+        spawn(ctx_, [&](yield_context yield) {
+            f(yield);
+            call.Call();
+        });
+
+        EXPECT_CALL(call, Call());
+        runContext();
+
+        timerCtx.stop();
+        timerThread.join();
+    }
+
     void
     runContext()
     {
@@ -106,6 +142,15 @@ struct SyncAsioContextTest : virtual public NoLoggerFixture {
     {
         ctx_.run_for(duration);
         ctx_.reset();
+    }
+
+    template <typename F>
+    static void
+    runSyncOperation(F&& f)
+    {
+        boost::asio::io_service ioc;
+        boost::asio::spawn(ioc, f);
+        ioc.run();
     }
 
 protected:
