@@ -54,7 +54,7 @@ makeMigrationInspector(
 
     // Database is empty, we need to initialize the migration table if it is a writeable backend
     if (not config.get<bool>("read_only") and not backend->hardFetchLedgerRangeNoThrow()) {
-        migration::MigratorStatus migrated(migration::MigratorStatus::Migrated);
+        migration::MigratorStatus const migrated(migration::MigratorStatus::Migrated);
         for (auto const& name : inspector->allMigratorsNames()) {
             backend->writeMigratorStatus(name, migrated.toString());
         }
