@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "data/AmendmentCenter.hpp"
 #include "data/Types.hpp"
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/TransactionFeed.hpp"
@@ -865,6 +866,10 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRANSACTION_FOR_OWNER_FUND))).Times(1);
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
+        .Times(1);
+    ON_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
+        .WillByDefault(testing::Return(false));
     testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 

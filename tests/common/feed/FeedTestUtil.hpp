@@ -47,7 +47,7 @@ protected:
     StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr_;
 };
 
-namespace impl {
+namespace feed::impl {
 class SharedStringJsonEqMatcher {
     std::string expected_;
 
@@ -76,12 +76,12 @@ public:
         *os << "Expecting json " << expected_;
     }
 };
-}  // namespace impl
+}  // namespace feed::impl
 
 // NOLINTEND(readability-identifier-naming)
 
 inline ::testing::Matcher<std::shared_ptr<std::string>>
 sharedStringJsonEq(std::string const& expected)
 {
-    return impl::SharedStringJsonEqMatcher(expected);
+    return feed::impl::SharedStringJsonEqMatcher(expected);
 }
