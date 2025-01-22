@@ -377,22 +377,20 @@ public:
              }},
             {JS(permissioned_domain),
              meta::WithCustomError{
-                 validation::Type<std::string, boost::json::object>{}, Status(ClioError::RpcMalformedObject)
+                 validation::Type<std::string, boost::json::object>{}, Status(ClioError::RpcMalformedRequest)
              },
-             meta::IfType<std::string>{meta::WithCustomError{
-                 validation::CustomValidators::uint256HexStringValidator, Status(ClioError::RpcMalformedObjectId)
-             }},
+             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
              meta::IfType<boost::json::object>{meta::Section{
+                 {JS(seq),
+                  meta::WithCustomError{validation::Required{}, Status(ClioError::RpcMalformedRequest)},
+                  meta::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::RpcMalformedRequest)}},
                  {
                      JS(account),
-                     meta::WithCustomError{validation::Required{}, Status(ClioError::RpcMalformedAccount)},
+                     meta::WithCustomError{validation::Required{}, Status(ClioError::RpcMalformedRequest)},
                      meta::WithCustomError{
-                         validation::CustomValidators::accountBase58Validator, Status(ClioError::RpcMalformedAccount)
+                         validation::CustomValidators::accountBase58Validator, Status(ClioError::RpcMalformedAddress)
                      },
                  },
-                 {JS(seq),
-                  meta::WithCustomError{validation::Required{}, Status(ClioError::RpcMalformedSequence)},
-                  meta::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::RpcMalformedSequence)}},
              }}},
             {JS(ledger), check::Deprecated{}},
             {"include_deleted", validation::Type<bool>{}},

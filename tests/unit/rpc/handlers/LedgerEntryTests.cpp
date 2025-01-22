@@ -2140,26 +2140,26 @@ generateTestValuesForParametersTest()
         ParamTestCaseBundle{
             .testName = "InvalidPermissionedDomain_NotObject",
             .testJson = R"json({"permissioned_domain": []})json",
-            .expectedError = "malformedObject",
-            .expectedErrorMessage = "Malformed object.",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "InvalidPermissionedDomain_InvalidString",
             .testJson = R"json({"permissioned_domain": "invalid_string"})json",
-            .expectedError = "malformedObjectId",
-            .expectedErrorMessage = "Malformed object ID.",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "InvalidPermissionedDomain_EmptyObject",
             .testJson = R"json({"permissioned_domain": {}})json",
-            .expectedError = "malformedAccount",
-            .expectedErrorMessage = "Malformed account.",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "InvalidPermissionedDomain_BadAccount",
-            .testJson = R"json({"permissioned_domain": {"account": "1234"}})json",
-            .expectedError = "malformedAccount",
-            .expectedErrorMessage = "Malformed account.",
+            .testJson = R"json({"permissioned_domain": {"account": "1234", "seq": 1234}})json",
+            .expectedError = "malformedAddress",
+            .expectedErrorMessage = "Malformed address.",
         },
         ParamTestCaseBundle{
             .testName = "InvalidPermissionedDomain_MissingSeq",
@@ -2169,8 +2169,8 @@ generateTestValuesForParametersTest()
                 }})json",
                 kACCOUNT
             ),
-            .expectedError = "malformedSequence",
-            .expectedErrorMessage = "Malformed sequence.",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "InvalidPermissionedDomain_SeqIsNotUint",
@@ -2180,8 +2180,17 @@ generateTestValuesForParametersTest()
                 }})json",
                 kACCOUNT
             ),
-            .expectedError = "malformedSequence",
-            .expectedErrorMessage = "Malformed sequence.",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidPermissionedDomain_BothAccountAndSeqAreInvalid",
+            .testJson =
+                R"json({
+                    "permissioned_domain": { "account": "", "seq": -1 }
+                })json",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
         },
     };
 }
@@ -2928,7 +2937,7 @@ generateTestValuesForNormalPathTest()
                 kINDEX1
             ),
             .expectedIndex = ripple::uint256(kINDEX1),
-            .mockedEntity = createPermissionedDomainObject(kACCOUNT, kRANGE_MAX, 0, 0, ripple::uint256{0}, 0)
+            .mockedEntity = createPermissionedDomainObject(kACCOUNT, kINDEX1, kRANGE_MAX, 0, ripple::uint256{0}, 0)
         },
         NormalPathTestBundle{
             .testName = "PermissionedDomainViaObject",
@@ -2946,7 +2955,7 @@ generateTestValuesForNormalPathTest()
             .expectedIndex =
                 ripple::keylet::permissionedDomain(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX)
                     .key,
-            .mockedEntity = createPermissionedDomainObject(kACCOUNT, kRANGE_MAX, kRANGE_MAX, 0, ripple::uint256{0}, 0)
+            .mockedEntity = createPermissionedDomainObject(kACCOUNT, kINDEX1, kRANGE_MAX, 0, ripple::uint256{0}, 0)
         }
     };
 }

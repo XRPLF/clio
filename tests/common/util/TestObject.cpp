@@ -1169,8 +1169,8 @@ createMpTokenObject(std::string_view accountId, ripple::uint192 issuanceID, std:
 ripple::STObject
 createPermissionedDomainObject(
     std::string_view accountId,
-    ripple::LedgerIndex ledgerIndex,
-    uint32_t seq,
+    std::string_view ledgerIndex,
+    ripple::LedgerIndex seq,
     uint64_t ownerNode,
     ripple::uint256 previousTxId,
     uint32_t previousTxSeq
