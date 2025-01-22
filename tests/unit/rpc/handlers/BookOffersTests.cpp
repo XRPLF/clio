@@ -68,6 +68,13 @@ constexpr auto kPAYS20_XRP_GETS10_USD_BOOK_DIR = "7B1767D41DBCE79D9585CF9D0262A5
 // transfer rate x2
 constexpr auto kTRANSFER_RATE_X2 = 2000000000;
 
+struct ParameterTestBundle {
+    std::string testName;
+    std::string testJson;
+    std::string expectedError;
+    std::string expectedErrorMessage;
+};
+
 }  // namespace
 
 using namespace rpc;
@@ -79,13 +86,6 @@ struct RPCBookOffersHandlerTest : HandlerBaseTest {
     {
         backend_->setRange(10, 300);
     }
-};
-
-struct ParameterTestBundle {
-    std::string testName;
-    std::string testJson;
-    std::string expectedError;
-    std::string expectedErrorMessage;
 };
 
 struct RPCBookOffersParameterTest : RPCBookOffersHandlerTest, WithParamInterface<ParameterTestBundle> {};
