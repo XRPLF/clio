@@ -262,9 +262,9 @@ createAccountRootObject(
     accountRoot.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxnSeq);
     accountRoot.setFieldU32(ripple::sfTransferRate, transferRate);
 
-    if (ammID != ripple::uint256{0}) 
+    if (ammID != ripple::uint256{0})
         accountRoot.setFieldH256(ripple::sfAMMID, ammID);
-    
+
     return accountRoot;
 }
 

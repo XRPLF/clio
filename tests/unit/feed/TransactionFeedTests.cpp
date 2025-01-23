@@ -1179,7 +1179,8 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
     ON_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
         .WillByDefault(testing::Return(true));
 
-    auto const ammObj = createAmmObject(kAMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), kCURRENCY, kISSUER);
+    auto const ammObj =
+        createAmmObject(kAMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), kCURRENCY, kISSUER);
     EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_)).Times(1);
     ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_))
         .WillByDefault(testing::Return(ammObj.getSerializer().peekData()));
