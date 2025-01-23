@@ -17,39 +17,30 @@
 */
 //==============================================================================
 
-#pragma once
+#include "util/StopHelper.hpp"
 
-#include "app/Stopper.hpp"
-#include "util/SignalsHandler.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include <boost/asio/spawn.hpp>
+#include <boost/asio/steady_timer.hpp>
 
-namespace app {
+#include <chrono>
 
-/**
- * @brief The main application class
- */
-class ClioApplication {
-    util::config::ClioConfigDefinition const& config_;
-    util::SignalsHandler signalsHandler_;
-    Stopper appStopper_;
+namespace util {
 
-public:
-    /**
-     * @brief Construct a new ClioApplication object
-     *
-     * @param config The configuration of the application
-     */
-    ClioApplication(util::config::ClioConfigDefinition const& config);
+void
+StopHelper::readyToStop()
+{
+    onStopReady_();
+    *stopped_ = true;
+}
 
-    /**
-     * @brief Run the application
-     *
-     * @param useNgWebServer Whether to use the new web server
-     *
-     * @return exit code
-     */
-    int
-    run(bool useNgWebServer);
-};
+void
+StopHelper::asyncWaitForStop(boost::asio::yield_context yield)
+{
+    boost::asio::steady_timer timer{yield.get_executor(), std::chrono::steady_clock::duration::max()};
+    onStopReady_.connect([&timer]() { timer.cancel(); });
+    boost::system::error_code error;
+    if (!*stopped_)
+        timer.async_wait(yield[error]);
+}
 
-}  // namespace app
+}  // namespace util

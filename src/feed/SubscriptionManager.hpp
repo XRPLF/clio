@@ -123,6 +123,15 @@ public:
      */
     ~SubscriptionManager() override
     {
+        stop();
+    }
+
+    /**
+     * @brief Stop the SubscriptionManager and wait for all jobs to finish.
+     */
+    void
+    stop() override
+    {
         ctx_.stop();
         ctx_.join();
     }

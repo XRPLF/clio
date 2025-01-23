@@ -54,7 +54,7 @@ struct MockConnectionImpl : web::ng::Connection {
     using ReceiveReturnType = std::expected<web::ng::Request, web::ng::Error>;
     MOCK_METHOD(ReceiveReturnType, receive, (boost::asio::yield_context), (override));
 
-    MOCK_METHOD(void, close, (boost::asio::yield_context));
+    MOCK_METHOD(void, close, (boost::asio::yield_context), (override));
 };
 
 using MockConnection = testing::NiceMock<MockConnectionImpl>;

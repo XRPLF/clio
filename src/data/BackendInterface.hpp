@@ -684,6 +684,12 @@ public:
     finishWrites(std::uint32_t ledgerSequence);
 
     /**
+     * @brief Wait for all pending writes to finish.
+     */
+    virtual void
+    waitForWritesToFinish() = 0;
+
+    /**
      * @brief Mark the migration status of a migrator as Migrated in the database
      *
      * @param migratorName The name of the migrator

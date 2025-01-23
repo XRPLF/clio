@@ -47,7 +47,7 @@ struct MockWsConnectionImpl : web::ng::impl::WsConnectionBase {
     using ReceiveReturnType = std::expected<web::ng::Request, web::ng::Error>;
     MOCK_METHOD(ReceiveReturnType, receive, (boost::asio::yield_context), (override));
 
-    MOCK_METHOD(void, close, (boost::asio::yield_context));
+    MOCK_METHOD(void, close, (boost::asio::yield_context), (override));
 
     using SendBufferReturnType = std::optional<web::ng::Error>;
     MOCK_METHOD(SendBufferReturnType, sendBuffer, (boost::asio::const_buffer, boost::asio::yield_context), (override));

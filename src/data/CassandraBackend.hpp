@@ -188,11 +188,16 @@ public:
         return {txns, {}};
     }
 
+    void
+    waitForWritesToFinish() override
+    {
+        executor_.sync();
+    }
+
     bool
     doFinishWrites() override
     {
-        // wait for other threads to finish their writes
-        executor_.sync();
+        waitForWritesToFinish();
 
         if (!range_) {
             executor_.writeSync(schema_->updateLedgerRange, ledgerSequence_, false, ledgerSequence_);

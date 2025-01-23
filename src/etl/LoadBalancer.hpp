@@ -41,6 +41,7 @@
 #include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <chrono>
+#include <concepts>
 #include <cstdint>
 #include <expected>
 #include <memory>
@@ -52,13 +53,23 @@
 namespace etl {
 
 /**
+ * @brief A tag class to help identify LoadBalancer in templated code.
+ */
+struct LoadBalancerTag {
+    virtual ~LoadBalancerTag() = default;
+};
+
+template <typename T>
+concept SomeLoadBalancer = std::derived_from<T, LoadBalancerTag>;
+
+/**
  * @brief This class is used to manage connections to transaction processing processes.
  *
  * This class spawns a listener for each etl source, which listens to messages on the ledgers stream (to keep track of
  * which ledgers have been validated by the network, and the range of ledgers each etl source has). This class also
  * allows requests for ledger data to be load balanced across all possible ETL sources.
  */
-class LoadBalancer {
+class LoadBalancer : public LoadBalancerTag {
 public:
     using RawLedgerObjectType = org::xrpl::rpc::v1::RawLedgerObject;
     using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;
@@ -132,7 +143,7 @@ public:
         SourceFactory sourceFactory = makeSource
     );
 
-    ~LoadBalancer();
+    ~LoadBalancer() override;
 
     /**
      * @brief Load the initial ledger, writing data to the queue.
@@ -202,6 +213,15 @@ public:
      */
     std::optional<ETLState>
     getETLState() noexcept;
+
+    /**
+     * @brief Stop the load balancer. This will stop all subscription sources.
+     * @note This function will asynchronously wait for all sources to stop.
+     *
+     * @param yield The coroutine context
+     */
+    void
+    stop(boost::asio::yield_context yield);
 
 private:
     /**

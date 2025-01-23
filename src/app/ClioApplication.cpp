@@ -19,6 +19,7 @@
 
 #include "app/ClioApplication.hpp"
 
+#include "app/Stopper.hpp"
 #include "app/WebHandlers.hpp"
 #include "data/AmendmentCenter.hpp"
 #include "data/BackendFactory.hpp"
@@ -26,6 +27,7 @@
 #include "etl/LoadBalancer.hpp"
 #include "etl/NetworkValidatedLedgers.hpp"
 #include "feed/SubscriptionManager.hpp"
+#include "migration/MigrationInspectorFactory.hpp"
 #include "rpc/Counters.hpp"
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
@@ -83,6 +85,7 @@ ClioApplication::ClioApplication(util::config::ClioConfigDefinition const& confi
 {
     LOG(util::LogService::info()) << "Clio version: " << util::build::getClioFullVersionString();
     PrometheusService::init(config);
+    signalsHandler_.subscribeToStop([this]() { appStopper_.stop(); });
 }
 
 int
@@ -104,6 +107,16 @@ ClioApplication::run(bool const useNgWebServer)
     auto backend = data::makeBackend(config_);
 
     auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
+
+    {
+        auto const migrationInspector = migration::makeMigrationInspector(config_, backend);
+        // Check if any migration is blocking Clio server starting.
+        if (migrationInspector->isBlockingClio() and backend->hardFetchLedgerRangeNoThrow()) {
+            LOG(util::LogService::error())
+                << "Existing Migration is blocking Clio, Please complete the database migration first.";
+            return EXIT_FAILURE;
+        }
+    }
 
     // Manages clients subscribed to streams
     auto subscriptions = feed::SubscriptionManager::makeSubscriptionManager(config_, backend, amendmentCenter);
@@ -159,6 +172,10 @@ ClioApplication::run(bool const useNgWebServer)
             LOG(util::LogService::error()) << "Error starting web server: " << *maybeError;
             return EXIT_FAILURE;
         }
+
+        appStopper_.setOnStop(
+            Stopper::makeOnStopCallback(httpServer.value(), *balancer, *etl, *subscriptions, *backend, ioc)
+        );
 
         // Blocks until stopped.
         // When stopped, shared_ptrs fall out of scope

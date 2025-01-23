@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,39 +17,36 @@
 */
 //==============================================================================
 
-#pragma once
-
 #include "app/Stopper.hpp"
-#include "util/SignalsHandler.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+
+#include <boost/asio/spawn.hpp>
+
+#include <functional>
+#include <thread>
+#include <utility>
 
 namespace app {
 
-/**
- * @brief The main application class
- */
-class ClioApplication {
-    util::config::ClioConfigDefinition const& config_;
-    util::SignalsHandler signalsHandler_;
-    Stopper appStopper_;
+Stopper::~Stopper()
+{
+    if (worker_.joinable())
+        worker_.join();
+}
 
-public:
-    /**
-     * @brief Construct a new ClioApplication object
-     *
-     * @param config The configuration of the application
-     */
-    ClioApplication(util::config::ClioConfigDefinition const& config);
+void
+Stopper::setOnStop(std::function<void(boost::asio::yield_context)> cb)
+{
+    boost::asio::spawn(ctx_, std::move(cb));
+}
 
-    /**
-     * @brief Run the application
-     *
-     * @param useNgWebServer Whether to use the new web server
-     *
-     * @return exit code
-     */
-    int
-    run(bool useNgWebServer);
-};
+void
+Stopper::stop()
+{
+    // Do nothing if worker_ is already running
+    if (worker_.joinable())
+        return;
+
+    worker_ = std::thread{[this]() { ctx_.run(); }};
+}
 
 }  // namespace app

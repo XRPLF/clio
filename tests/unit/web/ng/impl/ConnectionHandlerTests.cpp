@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "util/AsioContextTestFixture.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/Taggable.hpp"
 #include "util/UnsupportedType.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
@@ -64,7 +65,7 @@ namespace beast = boost::beast;
 namespace http = boost::beast::http;
 namespace websocket = boost::beast::websocket;
 
-struct ConnectionHandlerTest : SyncAsioContextTest {
+struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
     ConnectionHandlerTest(ProcessingPolicy policy, std::optional<size_t> maxParallelConnections)
         : tagFactory{util::config::ClioConfigDefinition{
               {"log_tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
@@ -136,6 +137,10 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, ReceiveError_CloseConnection)
 {
     EXPECT_CALL(*mockHttpConnection, wasUpgraded).WillOnce(Return(false));
     EXPECT_CALL(*mockHttpConnection, receive).WillOnce(Return(makeError(boost::asio::error::timed_out)));
+    EXPECT_CALL(
+        *mockHttpConnection,
+        setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT})
+    );
     EXPECT_CALL(*mockHttpConnection, close);
     EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
         EXPECT_EQ(&c, connectionPtr);
@@ -352,6 +357,10 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SubscriptionContextIsNullForHt
         return std::nullopt;
     });
 
+    EXPECT_CALL(
+        *mockHttpConnection,
+        setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT})
+    );
     EXPECT_CALL(*mockHttpConnection, close);
 
     EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
@@ -394,6 +403,10 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send_Loop)
         return std::nullopt;
     });
 
+    EXPECT_CALL(
+        *mockHttpConnection,
+        setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT})
+    );
     EXPECT_CALL(*mockHttpConnection, close);
 
     EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
@@ -451,7 +464,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
     std::string const responseMessage = "some response";
     bool connectionClosed = false;
 
-    EXPECT_CALL(*mockWsConnection, wasUpgraded).WillOnce(Return(true));
+    EXPECT_CALL(*mockWsConnection, wasUpgraded).Times(2).WillRepeatedly(Return(true));
     EXPECT_CALL(*mockWsConnection, receive).Times(4).WillRepeatedly([&](auto&&) -> std::expected<Request, Error> {
         if (connectionClosed) {
             return makeError(websocket::error::closed);
@@ -465,21 +478,68 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
     });
 
     size_t numCalls = 0;
-    EXPECT_CALL(*mockWsConnection, send).Times(3).WillRepeatedly([&](Response response, auto&&) {
-        EXPECT_EQ(response.message(), responseMessage);
+    EXPECT_CALL(
+        *mockWsConnection,
+        send(testing::ResultOf([](Response const& r) { return r.message(); }, responseMessage), testing::_)
+    )
+        .Times(3)
+        .WillRepeatedly([&](auto&&, auto&&) {
+            ++numCalls;
+            if (numCalls == 3)
+                boost::asio::spawn(ctx_, [this](auto yield) { connectionHandler.stop(yield); });
 
-        ++numCalls;
-        if (numCalls == 3)
-            connectionHandler.stop();
+            return std::nullopt;
+        });
 
-        return std::nullopt;
-    });
+    EXPECT_CALL(
+        *mockWsConnection,
+        send(
+            testing::ResultOf(
+                [](Response const& r) { return r.message(); },
+                "This Clio node is shutting down. Please try another node."
+            ),
+            testing::_
+        )
+    );
 
+    EXPECT_CALL(
+        *mockWsConnection, setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT})
+    );
     EXPECT_CALL(*mockWsConnection, close).WillOnce([&connectionClosed]() { connectionClosed = true; });
 
     EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
         EXPECT_EQ(&c, connectionPtr);
     });
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler.processConnection(std::move(mockWsConnection), yield);
+    });
+}
+
+TEST_F(ConnectionHandlerSequentialProcessingTest, ProcessCalledAfterStop)
+{
+    testing::StrictMock<testing::MockFunction<
+        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+        wsHandlerMock;
+    connectionHandler.onWs(wsHandlerMock.AsStdFunction());
+
+    runSyncOperation([this](boost::asio::yield_context yield) { connectionHandler.stop(yield); });
+
+    EXPECT_CALL(*mockWsConnection, wasUpgraded).WillOnce(Return(true));
+    EXPECT_CALL(
+        *mockWsConnection,
+        send(
+            testing::ResultOf(
+                [](Response const& r) { return r.message(); }, testing::HasSubstr("This Clio node is shutting down")
+            ),
+            testing::_
+        )
+    );
+
+    EXPECT_CALL(
+        *mockWsConnection, setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT})
+    );
+    EXPECT_CALL(*mockWsConnection, close);
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockWsConnection), yield);

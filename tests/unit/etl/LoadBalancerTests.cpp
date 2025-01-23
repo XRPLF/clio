@@ -318,6 +318,15 @@ TEST_F(LoadBalancerOnConnectHookTests, sourcesConnect_BothSourcesAreNotConnected
     sourceFactory_.callbacksAt(0).onConnect();
 }
 
+struct LoadBalancerStopTests : LoadBalancerOnConnectHookTests, SyncAsioContextTest {};
+
+TEST_F(LoadBalancerStopTests, stopCallsSourcesStop)
+{
+    EXPECT_CALL(sourceFactory_.sourceAt(0), stop);
+    EXPECT_CALL(sourceFactory_.sourceAt(1), stop);
+    runSyncOperation([this](boost::asio::yield_context yield) { loadBalancer_->stop(yield); });
+}
+
 struct LoadBalancerOnDisconnectHookTests : LoadBalancerOnConnectHookTests {
     LoadBalancerOnDisconnectHookTests()
     {

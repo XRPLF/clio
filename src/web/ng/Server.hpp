@@ -33,6 +33,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 
+#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <optional>
@@ -41,9 +42,19 @@
 namespace web::ng {
 
 /**
+ * @brief A tag class for server to help identify Server in templated code.
+ */
+struct ServerTag {
+    virtual ~ServerTag() = default;
+};
+
+template <typename T>
+concept SomeServer = std::derived_from<T, ServerTag>;
+
+/**
  * @brief Web server class.
  */
-class Server {
+class Server : public ServerTag {
 public:
     /**
      * @brief Check to perform for each new client connection. The check takes client ip as input and returns a Response
@@ -147,11 +158,13 @@ public:
     run();
 
     /**
-     * @brief Stop the server.
-     ** @note Stopping the server cause graceful shutdown of all connections. And rejecting new connections.
+     * @brief Stop the server. This method will asynchronously sleep unless all the users are disconnected.
+     * @note Stopping the server cause graceful shutdown of all connections. And rejecting new connections.
+     *
+     * @param yield The coroutine context.
      */
     void
-    stop();
+    stop(boost::asio::yield_context yield);
 
 private:
     void

@@ -20,14 +20,12 @@
 #pragma once
 
 #include "migration/MigrationManagerInterface.hpp"
-#include "migration/MigratiorStatus.hpp"
+#include "migration/impl/MigrationInspectorBase.hpp"
 #include "util/newconfig/ObjectView.hpp"
 
 #include <memory>
 #include <string>
-#include <tuple>
 #include <utility>
-#include <vector>
 
 namespace migration::impl {
 
@@ -38,8 +36,7 @@ namespace migration::impl {
  * @tparam SupportedMigrators The migrators resgister that contains all the migrators
  */
 template <typename SupportedMigrators>
-class MigrationManagerBase : public MigrationManagerInterface {
-    SupportedMigrators migrators_;
+class MigrationManagerBase : public MigrationManagerInterface, public MigrationInspectorBase<SupportedMigrators> {
     // contains only migration related settings
     util::config::ObjectView config_;
 
@@ -54,7 +51,7 @@ public:
         std::shared_ptr<typename SupportedMigrators::BackendType> backend,
         util::config::ObjectView config
     )
-        : migrators_{backend}, config_{std::move(config)}
+        : MigrationInspectorBase<SupportedMigrators>{std::move(backend)}, config_{std::move(config)}
     {
     }
 
@@ -66,55 +63,7 @@ public:
     void
     runMigration(std::string const& name) override
     {
-        migrators_.runMigrator(name, config_);
-    }
-
-    /**
-     * @brief Get the status of all the migrators
-     *
-     * @return A vector of tuple, the first element is the migrator's name, the second element is the status of the
-     * migrator
-     */
-    std::vector<std::tuple<std::string, MigratorStatus>>
-    allMigratorsStatusPairs() const override
-    {
-        return migrators_.getMigratorsStatus();
-    }
-
-    /**
-     * @brief Get the status of a migrator by its name
-     *
-     * @param name The name of the migrator
-     * @return The status of the migrator
-     */
-    MigratorStatus
-    getMigratorStatusByName(std::string const& name) const override
-    {
-        return migrators_.getMigratorStatus(name);
-    }
-
-    /**
-     * @brief Get all registered migrators' names
-     *
-     * @return A vector of string, the names of all the migrators
-     */
-    std::vector<std::string>
-    allMigratorsNames() const override
-    {
-        auto const names = migrators_.getMigratorNames();
-        return std::vector<std::string>{names.begin(), names.end()};
-    }
-
-    /**
-     * @brief Get the description of a migrator by its name
-     *
-     * @param name The name of the migrator
-     * @return The description of the migrator
-     */
-    std::string
-    getMigratorDescriptionByName(std::string const& name) const override
-    {
-        return migrators_.getMigratorDescription(name);
+        this->migrators_.runMigrator(name, config_);
     }
 };
 

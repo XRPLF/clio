@@ -20,6 +20,7 @@
 #include "util/AsioContextTestFixture.hpp"
 #include "util/AssignRandomPort.hpp"
 #include "util/LoggerFixtures.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
 #include "util/TestHttpClient.hpp"
@@ -45,6 +46,7 @@
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
+#include <boost/beast/websocket/error.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
@@ -149,7 +151,7 @@ INSTANTIATE_TEST_CASE_P(
     tests::util::kNAME_GENERATOR
 );
 
-struct ServerTest : SyncAsioContextTest {
+struct ServerTest : util::prometheus::WithPrometheus, SyncAsioContextTest {
     ServerTest()
     {
         [&]() { ASSERT_TRUE(server_.has_value()); }();
@@ -421,6 +423,35 @@ TEST_F(ServerHttpTest, OnDisconnectHook)
     runContext();
 }
 
+TEST_F(ServerHttpTest, ClientIsDisconnectedIfServerStopped)
+{
+    HttpAsyncClient client{ctx_};
+    boost::asio::spawn(ctx_, [&](boost::asio::yield_context yield) {
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        // Have to send a request here because the server does async_detect_ssl() which waits for some data to appear
+        maybeError = client.send(
+            http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
+            yield,
+            std::chrono::milliseconds{100}
+        );
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        auto message = client.receive(yield, std::chrono::milliseconds{100});
+        EXPECT_TRUE(message.has_value()) << message.error().message();
+        EXPECT_EQ(message->result(), http::status::service_unavailable);
+        EXPECT_EQ(message->body(), "This Clio node is shutting down. Please try another node.");
+
+        ctx_.stop();
+    });
+
+    server_->run();
+    runSyncOperation([this](auto yield) { server_->stop(yield); });
+    runContext();
+}
+
 TEST_P(ServerHttpTest, RequestResponse)
 {
     HttpAsyncClient client{ctx_};
@@ -531,5 +562,22 @@ TEST_F(ServerTest, WsRequestResponse)
 
     server_->run();
 
+    runContext();
+}
+
+TEST_F(ServerTest, WsClientIsDisconnectedIfServerStopped)
+{
+    WebSocketAsyncClient client{ctx_};
+    boost::asio::spawn(ctx_, [&](boost::asio::yield_context yield) {
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        EXPECT_TRUE(maybeError.has_value());
+        EXPECT_EQ(maybeError.value().value(), static_cast<int>(boost::beast::websocket::error::upgrade_declined));
+
+        ctx_.stop();
+    });
+
+    server_->run();
+    runSyncOperation([this](auto yield) { server_->stop(yield); });
     runContext();
 }

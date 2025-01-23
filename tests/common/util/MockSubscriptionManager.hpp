@@ -102,6 +102,8 @@ struct MockSubscriptionManager : feed::SubscriptionManagerInterface {
     MOCK_METHOD(void, unsubProposedTransactions, (feed::SubscriberSharedPtr const&), (override));
 
     MOCK_METHOD(boost::json::object, report, (), (const, override));
+
+    MOCK_METHOD(void, stop, (), (override));
 };
 
 template <template <typename> typename MockType = ::testing::NiceMock>
