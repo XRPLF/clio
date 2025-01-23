@@ -436,6 +436,7 @@ isFrozen(
  * @param account The account
  * @param asset The first asset in the pool
  * @param asset2 The second asset in the pool
+ * @param yield The coroutine context
  * @return true if account is frozen for one of the assets
  */
 bool
