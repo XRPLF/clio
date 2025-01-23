@@ -91,6 +91,7 @@ public:
      * @brief Construct a new LedgerHandler object
      *
      * @param sharedPtrBackend The backend to use
+     * @param amendmentCenter The amendmentCenter to use
      */
     LedgerHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,

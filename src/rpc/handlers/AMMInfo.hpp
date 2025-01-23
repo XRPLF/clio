@@ -84,6 +84,7 @@ public:
      * @brief Construct a new AMMInfoHandler object
      *
      * @param sharedPtrBackend The backend to use
+     * @param amendmentCenter The amendmentCenter to use
      */
     AMMInfoHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,

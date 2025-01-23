@@ -100,6 +100,7 @@ public:
      * @brief Construct a new BaseSubscribeHandler object
      *
      * @param sharedPtrBackend The backend to use
+     * @param amendmentCenter The amendmentCenter to use
      * @param subscriptions The subscription manager to use
      */
     SubscribeHandler(

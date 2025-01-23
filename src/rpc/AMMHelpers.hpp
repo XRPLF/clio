@@ -38,6 +38,7 @@ namespace rpc {
  * @brief getAmmPoolHolds returns the balances of the amm asset pair
  *
  * @param backend The backend to use
+ * @param amendmentCenter The amendmentCenter to use
  * @param sequence The sequence number to use
  * @param ammAccountID The amm account
  * @param issue1 The first issue

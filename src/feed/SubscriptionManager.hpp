@@ -76,6 +76,7 @@ public:
      *
      * @param config The configuration to use
      * @param backend The backend to use
+     * @param amendmentCenter The amendmentCenter to use
      * @return A shared pointer to a new instance of SubscriptionManager
      */
     static std::shared_ptr<SubscriptionManager>
@@ -100,6 +101,7 @@ public:
      *
      * @param executor The executor to use to publish the feeds
      * @param backend The backend to use
+     * @param amendmentCenter The amendmentCenter to use
      */
     SubscriptionManager(
         util::async::AnyExecutionContext&& executor,

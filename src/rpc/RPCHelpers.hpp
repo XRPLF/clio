@@ -428,6 +428,16 @@ isFrozen(
     boost::asio::yield_context yield
 );
 
+/**
+ * @brief Whether the account that owns a LPToken is frozen for the assets in the pool
+ *
+ * @param backend The backend to use
+ * @param sequence The sequence
+ * @param account The account
+ * @param asset The first asset in the pool
+ * @param asset2 The second asset in the pool
+ * @return true if account is frozen for one of the assets
+ */
 bool
 isLPTokenFrozen(
     BackendInterface const& backend,
@@ -442,6 +452,7 @@ isLPTokenFrozen(
  * @brief Get the account funds
  *
  * @param backend The backend to use
+ * @param amendmentCenter The amendmentCenter to use
  * @param sequence The sequence
  * @param amount The amount
  * @param id The account ID
@@ -462,6 +473,7 @@ accountFunds(
  * @brief Get the amount that an account holds
  *
  * @param backend The backend to use
+ * @param amendmentCenter The amendmentCenter to use
  * @param sequence The sequence
  * @param account The account
  * @param currency The currency
@@ -482,6 +494,18 @@ accountHolds(
     boost::asio::yield_context yield
 );
 
+/**
+ * @brief Get the amount that an LPToken owner holds
+ *
+ * @param backend The backend to use
+ * @param sequence The sequence
+ * @param account The account
+ * @param currency The currency
+ * @param issuer The issuer
+ * @param zeroIfFrozen Whether to return zero if frozen
+ * @param yield The coroutine context
+ * @return The amount account holds
+ */
 ripple::STAmount
 ammAccountHolds(
     BackendInterface const& backend,
@@ -534,6 +558,7 @@ xrpLiquid(
  * @param book The book
  * @param takerID The taker ID
  * @param backend The backend to use
+ * @param amendmentCenter The amendmentCenter to use
  * @param ledgerSequence The ledger sequence
  * @param yield The coroutine context
  * @return The post processed order book
