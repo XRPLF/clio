@@ -16,6 +16,8 @@ option(coverage "Build test coverage report" FALSE)
 option(packaging "Create distribution packages" FALSE)
 option(lint "Run clang-tidy checks during compilation" FALSE)
 option(static "Statically linked Clio" FALSE)
+option(snapshot "Build snapshot tool" FALSE)
+
 # ========================================================================== #
 set(san "" CACHE STRING "Add sanitizer instrumentation")
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -90,4 +92,8 @@ endif ()
 include(install/install)
 if (packaging)
   include(cmake/packaging.cmake) # This file exists only in build runner
+endif ()
+
+if (snapshot)
+  add_subdirectory(tools/snapshot)
 endif ()

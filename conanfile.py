@@ -19,6 +19,7 @@ class Clio(ConanFile):
         'packaging': [True, False],           # create distribution packages
         'coverage': [True, False],            # build for test coverage report; create custom target `clio_tests-ccov`
         'lint': [True, False],                # run clang-tidy checks during compilation
+        'snapshot': [True, False],            # build export/import snapshot tool
     }
 
     requires = [
@@ -92,6 +93,7 @@ class Clio(ConanFile):
         tc.variables['docs'] = self.options.docs
         tc.variables['packaging'] = self.options.packaging
         tc.variables['benchmark'] = self.options.benchmark
+        tc.variables['snapshot'] = self.options.snapshot
         tc.generate()
 
     def build(self):
