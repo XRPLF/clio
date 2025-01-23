@@ -93,6 +93,7 @@ public:
      * @brief Construct a new BookOffersHandler object
      *
      * @param sharedPtrBackend The backend to use
+     * @param amendmentCenter The amendmentCenter to use
      */
     BookOffersHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
