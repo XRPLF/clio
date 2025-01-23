@@ -96,7 +96,7 @@ TEST_F(StopperMakeCallbackTest, makeCallbackTest)
         serverMock_, loadBalancerMock_, etlServiceMock_, subscriptionManagerMock_, backendMock_, ioContextToStop_
     );
 
-    testing::Sequence s1, s2;
+    testing::Sequence const s1, s2;
     EXPECT_CALL(serverMock_, stop).InSequence(s1).WillOnce([this]() { EXPECT_FALSE(isContextStopped()); });
     EXPECT_CALL(loadBalancerMock_, stop).InSequence(s2).WillOnce([this]() { EXPECT_FALSE(isContextStopped()); });
     EXPECT_CALL(etlServiceMock_, stop).InSequence(s1, s2).WillOnce([this]() { EXPECT_FALSE(isContextStopped()); });
