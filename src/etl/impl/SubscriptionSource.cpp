@@ -35,7 +35,6 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/strand.hpp>
-#include <boost/asio/use_future.hpp>
 #include <boost/beast/http/field.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>

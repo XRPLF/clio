@@ -35,7 +35,6 @@
 #include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/error.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/status.hpp>
@@ -213,7 +212,7 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
 void
 ConnectionHandler::stopConnection(Connection& connection, boost::asio::yield_context yield)
 {
-    util::Logger log{"WebServer"};
+    util::Logger const log{"WebServer"};
     LOG(log.trace()) << connection.tag() << "Stopping connection";
     Response response{
         boost::beast::http::status::service_unavailable,
