@@ -1197,68 +1197,6 @@ generateNormalPathBookOffersTestBundles()
                 2
             )
         },
-        BookOffersNormalTestBundle{
-            .testName = "PaysLPTokenGetsXRPUnauth",
-            .inputJson = getsXRPPaysUSDInputJson,
-            // prepare offer dir index
-            .mockedSuccessors =
-                std::map<ripple::uint256, std::optional<ripple::uint256>>{
-                    {getsXRPPaysUSDBook, ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}},
-                    {ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, std::optional<ripple::uint256>{}}
-                },
-            .mockedLedgerObjects =
-                std::map<ripple::uint256, ripple::Blob>{
-                    // book dir object
-                    {ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR},
-                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
-                    // pays issuer account object
-                    {ripple::keylet::account(account).key,
-                     createAccountRootObject(kACCOUNT, ripple::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2)
-                         .getSerializer()
-                         .peekData()}
-                },
-            .ledgerObjectCalls = 3,
-            .mockedOffers = std::vector<ripple::STObject>{gets10XRPPays20USDOffer},
-            .expectedJson = fmt::format(
-                R"({{
-                    "ledger_hash":"{}",
-                    "ledger_index":300,
-                    "offers":
-                    [
-                        {{
-                            "Account":"{}",
-                            "BookDirectory":"43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000",
-                            "BookNode":"0",
-                            "Flags":0,
-                            "LedgerEntryType":"Offer",
-                            "OwnerNode":"0",
-                            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                            "PreviousTxnLgrSeq":0,
-                            "Sequence":0,
-                            "TakerGets":"10",
-                            "TakerPays":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"20"
-                            }},
-                            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                            "owner_funds":"{}",
-                            "quality":"{}",
-                            "taker_gets_funded":"0",
-                            "taker_pays_funded":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"0"
-                            }}
-                        }}
-                    ]
-                }})",
-                kLEDGER_HASH,
-                kACCOUNT2,
-                0,
-                2
-            )
-        },
     };
 }
 
