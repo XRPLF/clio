@@ -29,8 +29,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <atomic>
 #include <condition_variable>
-#include <cstdint>
 #include <mutex>
 #include <semaphore>
 
@@ -53,14 +53,11 @@ struct WorkQueueTest : WithPrometheus, RPCWorkQueueTestBase {};
 TEST_F(WorkQueueTest, WhitelistedExecutionCountAddsUp)
 {
     static constexpr auto kTOTAL = 512u;
-    uint32_t executeCount = 0u;
-
-    std::mutex mtx;
+    std::atomic_uint32_t executeCount = 0u;
 
     for (auto i = 0u; i < kTOTAL; ++i) {
         queue.postCoro(
-            [&executeCount, &mtx](auto /* yield */) {
-                std::lock_guard const lk(mtx);
+            [&executeCount](auto /* yield */) {
                 ++executeCount;
             },
             true
