@@ -516,7 +516,7 @@ struct BookOffersNormalTestBundle {
     uint32_t ledgerObjectCalls;
     std::vector<ripple::STObject> mockedOffers;
     std::string expectedJson;
-    uint32_t amendmentIsEnabledCalls;
+    uint32_t amendmentIsEnabledCalls = 0;
 };
 
 struct RPCBookOffersNormalPathTest : public RPCBookOffersHandlerTest,
