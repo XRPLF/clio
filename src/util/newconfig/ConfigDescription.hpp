@@ -75,6 +75,7 @@ public:
     /**
      * @brief Generate markdown file of all the clio config descriptions
      *
+     * @param path The path location to generate the Config-description file
      * @return An Error if generating markdown fails, otherwise nothing
      */
     [[nodiscard]] static std::expected<void, Error>
