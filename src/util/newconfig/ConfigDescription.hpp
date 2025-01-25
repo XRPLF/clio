@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/Assert.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/Error.hpp"
 
 #include <fmt/core.h>
@@ -27,6 +28,7 @@
 #include <algorithm>
 #include <array>
 #include <expected>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string_view>
@@ -76,27 +78,42 @@ public:
      * @return An Error if generating markdown fails, otherwise nothing
      */
     [[nodiscard]] static std::expected<void, Error>
-    getMarkdown()
+    getMarkdown(std::string_view path)
     {
-        std::ofstream file(kCONFIG_DESCRIPTION_FILE_NAME);
+        namespace fs = std::filesystem;
 
+        // Construct the full file path
+        auto const fullFilePath = fmt::format("{}/{}", path, kCONFIG_DESCRIPTION_FILE_NAME);
+
+        // Validate the directory exists
+        auto const dir = fs::path(fullFilePath).parent_path();
+        if (!dir.empty() && !fs::exists(dir))
+            return std::unexpected<Error>{fmt::format("Error: File path {} does not exist", fullFilePath)};
+
+        std::ofstream file(fullFilePath);
         if (!file.is_open())
             return std::unexpected<Error>{fmt::format("failed to create file: {}", kCONFIG_DESCRIPTION_FILE_NAME)};
 
-        file << "# Config Description Markdown File\n";
-        file << "This is a **markdown** file listing all Clio Configurations in detail.\n\n";
+        file << "# Clio Config Description\n";
+        file << "This file lists all Clio Configuration definitions in detail.\n\n";
         file << "## Configuration Details\n\n";
 
         for (auto const& [key, val] : kCONFIG_DESCRIPTION) {
-            file << "### " << key << "\n";
-            file << val << "\n\n";
+            file << "### Key: " << key << "\n";
+
+            // Every type of value is directed to operator<< in ConfigValue.hpp
+            // as ConfigValue is the one that holds all the info regarding the config values
+            if (key.contains("[]")) {
+                file << gClioConfig.asArray(key);
+            } else {
+                file << gClioConfig.getValueView(key);
+            }
+            file << " -   **Description**: " << val << "\n";
         }
-        file << "```\n";
+        file << "\n";
 
-        // Close the file
         file.close();
-
-        std::cout << "Markdown file generated successfully: Config-Descriptions.md" << "\n";
+        std::cout << "Markdown file generated successfully: " << fullFilePath << "\n";
         return {};
     }
 
@@ -115,7 +132,7 @@ private:
         KV{.key = "database.cassandra.port", .value = "Port number to connect to the database."},
         KV{.key = "database.cassandra.keyspace", .value = "Keyspace to use for the database."},
         KV{.key = "database.cassandra.replication_factor",
-           .value = "Number of replicated nodes for Scylladb. Visit “here for more details : "
+           .value = "Number of replicated nodes for Scylladb. Visit this link for more details : "
                     "https://university.scylladb.com/courses/scylla-essentials-overview/lessons/high-availability/"
                     "topic/fault-tolerance-replication-factor/ "},
         KV{.key = "database.cassandra.table_prefix", .value = "Prefix for Database table names."},
@@ -154,7 +171,7 @@ private:
         KV{.key = "rpc.cache_timeout", .value = "Timeout duration for RPC requests."},
         KV{.key = "num_markers",
            .value = "The number of markers is the number of coroutines to download the initial ledger"},
-        KV{.key = "dos_guard.[].whitelist", .value = "List of IP addresses to whitelist for DOS protection."},
+        KV{.key = "dos_guard.whitelist.[]", .value = "List of IP addresses to whitelist for DOS protection."},
         KV{.key = "dos_guard.max_fetches", .value = "Maximum number of fetch operations allowed by DOS guard."},
         KV{.key = "dos_guard.max_connections", .value = "Maximum number of concurrent connections allowed by DOS guard."
         },
@@ -175,8 +192,8 @@ private:
         connection are processed one by one, with the next request read only after the previous one is processed. For the parallel policy, Clio will accept
          all requests and process them in parallel, sending a reply for each request as soon as it is ready.)"},
         KV{.key = "server.parallel_requests_limit",
-           .value = R"(Optional parameter, used only if "processing_strategy" is
-         "parallel". It limits the number of requests for a single client connection that are processed in parallel. If not specified, the limit is infinite.)"
+           .value =
+               R"(Optional parameter, used only if processing_strategy `parallel`. It limits the number of requests for a single client connection that are processed in parallel. If not specified, the limit is infinite.)"
         },
         KV{.key = "server.ws_max_sending_queue_size", .value = "Maximum size of the websocket sending queue."},
         KV{.key = "prometheus.enabled", .value = "Enable or disable Prometheus metrics."},
@@ -193,14 +210,14 @@ private:
         KV{.key = "cache.page_fetch_size", .value = "Page fetch size for cache operations."},
         KV{.key = "cache.load", .value = "Cache loading strategy ('sync' or 'async')."},
         KV{.key = "log_channels.[].channel",
-           .value = "Name of the log channel. Possible values only include 'Backend', 'Webserver', 'Subscriptions', "
+           .value = "Name of the log channel."
                     "'RPC', 'ETL', and 'Performance'"},
         KV{.key = "log_channels.[].log_level",
-           .value = "Log level for the specific log channel. Possible values only include `trace`, `debug`, `info`, "
+           .value = "Log level for the specific log channel."
                     "`warning`, `error`, `fatal`"},
         KV{.key = "log_level",
-           .value = "General logging level of Clio. Possible values only include `trace`, `debug`, `info`, `warning`, "
-                    "`error`, `fatal`"},
+           .value = "General logging level of Clio. This level will be applied to all log channels that do not have an "
+                    "explicitly defined logging level."},
         KV{.key = "log_format", .value = "Format string for log messages."},
         KV{.key = "log_to_console", .value = "Enable or disable logging to console."},
         KV{.key = "log_directory", .value = "Directory path for log files."},

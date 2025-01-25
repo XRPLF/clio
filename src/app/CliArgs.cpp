@@ -45,11 +45,11 @@ CliArgs::parse(int argc, char const* argv[])
     description.add_options()
         ("help,h", "print help message and exit")
         ("version,v", "print version and exit")
-        ("description,d", "generate config description")
         ("conf,c", po::value<std::string>()->default_value(kDEFAULT_CONFIG_PATH), "configuration file")
         ("ng-web-server,w", "Use ng-web-server")
         ("migrate", po::value<std::string>(), "start migration helper")
         ("verify", "Checks the validity of config values")
+        ("config-description,d", po::value<std::string>(),"generate config description")
     ;
     // clang-format on
     po::positional_options_description positional;
@@ -69,8 +69,10 @@ CliArgs::parse(int argc, char const* argv[])
         return Action{Action::Exit{EXIT_SUCCESS}};
     }
 
-    if (parsed.count("description") != 0u) {
-        auto const res = util::config::ClioConfigDescription::getMarkdown();
+    if (parsed.count("config-description") != 0u) {
+        auto const& filePath = parsed["config-description"].as<std::string>();
+
+        auto const res = util::config::ClioConfigDescription::getMarkdown(filePath);
         if (res.has_value())
             return Action{Action::Exit{EXIT_SUCCESS}};
 

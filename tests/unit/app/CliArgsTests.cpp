@@ -151,7 +151,7 @@ TEST_F(CliArgsTests, Parse_VerifyConfig)
 TEST_F(CliArgsTests, Parse_ConfigDescription)
 {
     using namespace util::config;
-    std::array argv{"clio_server", "--description"};  // NOLINT(bugprone-suspicious-stringview-data-usage)
+    std::array argv{"clio_server", "--config-description", "."};
     auto const action = CliArgs::parse(argv.size(), argv.data());
     EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) { return exit.exitCode; });
 
@@ -166,5 +166,23 @@ TEST_F(CliArgsTests, Parse_ConfigDescription)
             onVerifyMock.AsStdFunction()
         ),
         EXIT_SUCCESS
+    );
+}
+
+TEST_F(CliArgsTests, Parse_ConfigDescriptionInvalidPath)
+{
+    using namespace util::config;
+    std::array argv{"clio_server", "--config-description", "...."};
+    auto const action = CliArgs::parse(argv.size(), argv.data());
+    EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) { return exit.exitCode; });
+
+    EXPECT_EQ(
+        action.apply(
+            onRunMock.AsStdFunction(),
+            onExitMock.AsStdFunction(),
+            onMigrateMock.AsStdFunction(),
+            onVerifyMock.AsStdFunction()
+        ),
+        EXIT_FAILURE
     );
 }

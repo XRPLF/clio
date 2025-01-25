@@ -22,8 +22,9 @@
 #include "util/UnsupportedType.hpp"
 
 #include <cstdint>
+#include <expected>
+#include <ostream>
 #include <string>
-#include <type_traits>
 #include <variant>
 
 namespace util::config {
@@ -31,8 +32,59 @@ namespace util::config {
 /** @brief Custom clio config types */
 enum class ConfigType { Integer, String, Double, Boolean };
 
+/**
+ * @brief Prints the specified config type to output stream
+ *
+ * @param stream The output stream
+ * @param type The config type
+ * @return The same ostream we were given
+ */
+inline std::ostream&
+operator<<(std::ostream& stream, ConfigType type)
+{
+    switch (type) {
+        case ConfigType::Integer:
+            stream << "int";
+            break;
+        case ConfigType::String:
+            stream << "string";
+            break;
+        case ConfigType::Double:
+            stream << "double";
+            break;
+        case ConfigType::Boolean:
+            stream << "boolean";
+            break;
+        default:
+            stream << "unsupported type";
+    }
+    return stream;
+}
+
 /** @brief Represents the supported Config Values */
 using Value = std::variant<int64_t, std::string, bool, double>;
+
+/**
+ * @brief Prints the specified value to output stream
+ *
+ * @param stream The output stream
+ * @param value The value type
+ * @return The same ostream we were given
+ */
+inline std::ostream&
+operator<<(std::ostream& stream, Value value)
+{
+    if (std::holds_alternative<std::string>(value)) {
+        stream << std::get<std::string>(value) << "\n";
+    } else if (std::holds_alternative<bool>(value)) {
+        stream << (std::get<bool>(value) ? "False" : "True") << "\n";
+    } else if (std::holds_alternative<double>(value)) {
+        stream << std::get<double>(value) << "\n";
+    } else if (std::holds_alternative<int64_t>(value)) {
+        stream << std::get<int64_t>(value) << "\n";
+    }
+    return stream;
+}
 
 /**
  * @brief Get the corresponding clio config type

@@ -25,6 +25,7 @@
 
 #include <cstddef>
 #include <optional>
+#include <ostream>
 #include <string_view>
 #include <vector>
 
@@ -97,6 +98,20 @@ public:
      */
     [[nodiscard]] std::vector<ConfigValue>::const_iterator
     end() const;
+
+    /**
+     * @brief Custom output stream for Array
+     *
+     * @param stream The output stream
+     * @param arr The Array
+     * @return The same ostream we were given
+     */
+    friend std::ostream&
+    operator<<(std::ostream& stream, Array arr)
+    {
+        stream << arr.getArrayPattern();
+        return stream;
+    }
 
 private:
     ConfigValue itemPattern_;

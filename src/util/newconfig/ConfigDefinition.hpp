@@ -23,7 +23,6 @@
 #include "util/Assert.hpp"
 #include "util/newconfig/Array.hpp"
 #include "util/newconfig/ConfigConstraints.hpp"
-#include "util/newconfig/ConfigDescription.hpp"
 #include "util/newconfig/ConfigFileInterface.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Error.hpp"
@@ -31,16 +30,10 @@
 #include "util/newconfig/Types.hpp"
 #include "util/newconfig/ValueView.hpp"
 
-#include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
-#include <fmt/core.h>
-
 #include <algorithm>
-#include <cassert>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <expected>
 #include <initializer_list>
 #include <optional>
 #include <string>
