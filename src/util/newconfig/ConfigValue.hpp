@@ -142,7 +142,7 @@ public:
      *
      * @return An optional reference to the associated Constraint.
      */
-    [[nodiscard]] std::optional<std::reference_wrapper<Constraint const>>
+    [[nodiscard]] constexpr std::optional<std::reference_wrapper<Constraint const>>
     getConstraint() const
     {
         return cons_;

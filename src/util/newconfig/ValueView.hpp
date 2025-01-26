@@ -148,7 +148,8 @@ public:
      *
      * @return An optional reference to the associated Constraint
      */
-    [[nodiscard]] std::optional<std::reference_wrapper<Constraint const>> constexpr getConstraint() const
+    [[nodiscard]] constexpr std::optional<std::reference_wrapper<Constraint const>>
+    getConstraint() const
     {
         return configVal_.get().getConstraint();
     }
