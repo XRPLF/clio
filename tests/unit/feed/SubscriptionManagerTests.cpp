@@ -78,21 +78,21 @@ using SubscriptionManagerTest = SubscriptionManagerBaseTest<util::async::SyncExe
 
 using SubscriptionManagerAsyncTest = SubscriptionManagerBaseTest<util::async::PoolExecutionContext>;
 
-// TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtx)
-// {
-//     EXPECT_CALL(*sessionPtr_, onDisconnect);
-//     subscriptionManagerPtr_->subManifest(session_);
-//     EXPECT_CALL(*sessionPtr_, onDisconnect);
-//     subscriptionManagerPtr_->subValidation(session_);
+TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtx)
+{
+    EXPECT_CALL(*sessionPtr_, onDisconnect);
+    subscriptionManagerPtr_->subManifest(session_);
+    EXPECT_CALL(*sessionPtr_, onDisconnect);
+    subscriptionManagerPtr_->subValidation(session_);
 
-//     static constexpr auto kJSON_MANIFEST = R"({"manifest":"test"})";
-//     static constexpr auto kJSON_VALIDATION = R"({"validation":"test"})";
+    static constexpr auto kJSON_MANIFEST = R"({"manifest":"test"})";
+    static constexpr auto kJSON_VALIDATION = R"({"validation":"test"})";
 
-//     EXPECT_CALL(*sessionPtr_, send(testing::_)).Times(testing::AtMost(2));
+    EXPECT_CALL(*sessionPtr_, send(testing::_)).Times(testing::AtMost(2));
 
-//     subscriptionManagerPtr_->forwardManifest(json::parse(kJSON_MANIFEST).get_object());
-//     subscriptionManagerPtr_->forwardValidation(json::parse(kJSON_VALIDATION).get_object());
-// }
+    subscriptionManagerPtr_->forwardManifest(json::parse(kJSON_MANIFEST).get_object());
+    subscriptionManagerPtr_->forwardValidation(json::parse(kJSON_VALIDATION).get_object());
+}
 
 TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtxSessionDieEarly)
 {
