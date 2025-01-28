@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "app/CliArgs.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigDescription.hpp"
 
 #include <gmock/gmock.h>
@@ -26,6 +27,9 @@
 #include <array>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <string>
 #include <string_view>
 
 using namespace app;
@@ -36,6 +40,8 @@ struct CliArgsTests : testing::Test {
     testing::StrictMock<testing::MockFunction<int(CliArgs::Action::Migrate)>> onMigrateMock;
     testing::StrictMock<testing::MockFunction<int(CliArgs::Action::VerifyConfig)>> onVerifyMock;
 };
+
+static constexpr auto kCONFIG_DESCRIPTION_FILE_NAME = "../configDescription";
 
 TEST_F(CliArgsTests, Parse_NoArgs)
 {
@@ -150,13 +156,13 @@ TEST_F(CliArgsTests, Parse_VerifyConfig)
 
 TEST_F(CliArgsTests, Parse_ConfigDescription)
 {
-    using namespace util::config;
-    std::array argv{"clio_server", "--config-description", "."};
+    std::array argv{"clio_server", "--config-description", kCONFIG_DESCRIPTION_FILE_NAME};
     auto const action = CliArgs::parse(argv.size(), argv.data());
     EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) { return exit.exitCode; });
 
-    ASSERT_TRUE(std::filesystem::exists(ClioConfigDescription::kCONFIG_DESCRIPTION_FILE_NAME));
-    std::filesystem::remove(ClioConfigDescription::kCONFIG_DESCRIPTION_FILE_NAME);
+    // user provide config markdown file name as well
+    ASSERT_TRUE(std::filesystem::exists(kCONFIG_DESCRIPTION_FILE_NAME));
+    std::filesystem::remove(kCONFIG_DESCRIPTION_FILE_NAME);
 
     EXPECT_EQ(
         action.apply(
@@ -169,10 +175,38 @@ TEST_F(CliArgsTests, Parse_ConfigDescription)
     );
 }
 
+TEST_F(CliArgsTests, Parse_ConfigDescriptionFileContent)
+{
+    using namespace util::config;
+
+    std::ofstream file(kCONFIG_DESCRIPTION_FILE_NAME);
+    ASSERT_TRUE(file.is_open());
+    ClioConfigDescription::writeConfigDescriptionToFile(file);
+    file.close();
+
+    std::ifstream inFile(kCONFIG_DESCRIPTION_FILE_NAME);
+    ASSERT_TRUE(inFile.is_open());
+
+    std::stringstream buffer;
+    buffer << inFile.rdbuf();
+    inFile.close();
+
+    auto const fileContent = buffer.str();
+    EXPECT_TRUE(fileContent.find("# Clio Config Description") != std::string::npos);
+    EXPECT_TRUE(fileContent.find("This file lists all Clio Configuration definitions in detail.") != std::string::npos);
+    EXPECT_TRUE(fileContent.find("## Configuration Details") != std::string::npos);
+
+    // all keys that exist in clio config should be listed in config description file
+    for (auto const& key : gClioConfig)
+        EXPECT_TRUE(fileContent.find(key.first));
+
+    std::filesystem::remove(kCONFIG_DESCRIPTION_FILE_NAME);
+}
+
 TEST_F(CliArgsTests, Parse_ConfigDescriptionInvalidPath)
 {
     using namespace util::config;
-    std::array argv{"clio_server", "--config-description", "...."};
+    std::array argv{"clio_server", "--config-description", ""};
     auto const action = CliArgs::parse(argv.size(), argv.data());
     EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) { return exit.exitCode; });
 

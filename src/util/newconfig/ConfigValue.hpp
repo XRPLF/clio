@@ -213,7 +213,7 @@ public:
     operator<<(std::ostream& stream, ConfigValue val)
     {
         stream << "      -   **Required**: " << (val.isOptional() ? "False" : "True") << "\n";
-        stream << "      -   **Type**: : " << val.type() << "\n";
+        stream << "      -   **Type**: " << val.type() << "\n";
         stream << "      -   **Default value**: " << (val.hasValue() ? *val.value_ : "None") << "\n";
         stream << "      -   **Constraints**: ";
 

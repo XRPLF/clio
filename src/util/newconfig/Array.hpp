@@ -99,23 +99,23 @@ public:
     [[nodiscard]] std::vector<ConfigValue>::const_iterator
     end() const;
 
-    /**
-     * @brief Custom output stream for Array
-     *
-     * @param stream The output stream
-     * @param arr The Array
-     * @return The same ostream we were given
-     */
-    friend std::ostream&
-    operator<<(std::ostream& stream, Array arr)
-    {
-        stream << arr.getArrayPattern();
-        return stream;
-    }
-
 private:
     ConfigValue itemPattern_;
     std::vector<ConfigValue> elements_;
 };
+
+/**
+ * @brief Custom output stream for Array
+ *
+ * @param stream The output stream
+ * @param arr The Array
+ * @return The same ostream we were given
+ */
+inline std::ostream&
+operator<<(std::ostream& stream, Array arr)
+{
+    stream << arr.getArrayPattern();
+    return stream;
+}
 
 }  // namespace util::config

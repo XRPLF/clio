@@ -30,6 +30,7 @@
 #include <boost/program_options/variables_map.hpp>
 
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <utility>
@@ -49,7 +50,7 @@ CliArgs::parse(int argc, char const* argv[])
         ("ng-web-server,w", "Use ng-web-server")
         ("migrate", po::value<std::string>(), "start migration helper")
         ("verify", "Checks the validity of config values")
-        ("config-description,d", po::value<std::string>(),"generate config description")
+        ("config-description,d", po::value<std::string>(), "generate config description")
     ;
     // clang-format on
     po::positional_options_description positional;
@@ -70,9 +71,11 @@ CliArgs::parse(int argc, char const* argv[])
     }
 
     if (parsed.count("config-description") != 0u) {
-        auto const& filePath = parsed["config-description"].as<std::string>();
+        std::filesystem::path const& filePath = parsed["config-description"].as<std::string>();
+        if (!filePath.string().ends_with(".md"))
+            filePath.string() += ".md";
 
-        auto const res = util::config::ClioConfigDescription::getMarkdown(filePath);
+        auto const res = util::config::ClioConfigDescription::generateConfigDescriptionToFile(filePath);
         if (res.has_value())
             return Action{Action::Exit{EXIT_SUCCESS}};
 

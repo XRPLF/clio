@@ -42,9 +42,6 @@ namespace util::config {
  */
 struct ClioConfigDescription {
 public:
-    /** @brief Name of the Markdown file containing detailed descriptions of all configuration values. */
-    static constexpr auto kCONFIG_DESCRIPTION_FILE_NAME = "Config-Descriptions.md";
-
     /** @brief Struct to represent a key-value pair*/
     struct KV {
         std::string_view key;
@@ -79,22 +76,37 @@ public:
      * @return An Error if generating markdown fails, otherwise nothing
      */
     [[nodiscard]] static std::expected<void, Error>
-    getMarkdown(std::string_view path)
+    generateConfigDescriptionToFile(std::filesystem::path path)
     {
         namespace fs = std::filesystem;
 
         // Construct the full file path
-        auto const fullFilePath = fmt::format("{}/{}", path, kCONFIG_DESCRIPTION_FILE_NAME);
+        fs::path const fullFilePath = path.string();
 
         // Validate the directory exists
         auto const dir = fs::path(fullFilePath).parent_path();
         if (!dir.empty() && !fs::exists(dir))
-            return std::unexpected<Error>{fmt::format("Error: File path {} does not exist", fullFilePath)};
+            return std::unexpected<Error>{fmt::format("Error: File path {} does not exist", fullFilePath.string())};
 
         std::ofstream file(fullFilePath);
         if (!file.is_open())
-            return std::unexpected<Error>{fmt::format("failed to create file: {}", kCONFIG_DESCRIPTION_FILE_NAME)};
+            return std::unexpected<Error>{fmt::format("failed to create file: {}", fullFilePath.string())};
 
+        writeConfigDescriptionToFile(file);
+        file.close();
+
+        std::cout << "Markdown file generated successfully: " << fullFilePath << "\n";
+        return {};
+    }
+
+    /**
+     * @brief Writes to Config description to file
+     *
+     * @param file The config file to write to
+     */
+    static void
+    writeConfigDescriptionToFile(std::ostream& file)
+    {
         file << "# Clio Config Description\n";
         file << "This file lists all Clio Configuration definitions in detail.\n\n";
         file << "## Configuration Details\n\n";
@@ -112,10 +124,6 @@ public:
             file << " -   **Description**: " << val << "\n";
         }
         file << "\n";
-
-        file.close();
-        std::cout << "Markdown file generated successfully: " << fullFilePath << "\n";
-        return {};
     }
 
 private:
