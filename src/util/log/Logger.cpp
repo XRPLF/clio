@@ -175,6 +175,7 @@ LogService::init(config::ClioConfigDefinition const& config)
     for (auto it = overrides.begin<util::config::ObjectView>(); it != overrides.end<util::config::ObjectView>(); ++it) {
         auto const& channelConfig = *it;
         auto const name = channelConfig.get<std::string>("channel");
+        std::println("{}", name);
         if (std::count(std::begin(Logger::kCHANNELS), std::end(Logger::kCHANNELS), name) == 0)
             return std::unexpected{fmt::format("Can't override settings for log channel {}: invalid channel", name)};
 
