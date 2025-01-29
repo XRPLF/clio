@@ -34,10 +34,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <exception>
+#include <filesystem>
 #include <fstream>
 #include <ios>
-#include <iostream>
-#include <ostream>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -82,7 +81,7 @@ ConfigFileJson::ConfigFileJson(boost::json::object jsonObj)
 }
 
 std::expected<ConfigFileJson, Error>
-ConfigFileJson::makeConfigFileJson(boost::filesystem::path configFilePath)
+ConfigFileJson::makeConfigFileJson(std::filesystem::path const& configFilePath)
 {
     try {
         if (auto const in = std::ifstream(configFilePath.string(), std::ios::in | std::ios::binary); in) {

@@ -23,10 +23,10 @@
 #include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
-#include <boost/filesystem/path.hpp>
 #include <boost/json/object.hpp>
 
 #include <expected>
+#include <filesystem>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -79,7 +79,7 @@ public:
      * @return A ConfigFileJson object if parsing user file is successful. Error otherwise
      */
     [[nodiscard]] static std::expected<ConfigFileJson, Error>
-    makeConfigFileJson(boost::filesystem::path configFilePath);
+    makeConfigFileJson(std::filesystem::path const& configFilePath);
 
 private:
     /**

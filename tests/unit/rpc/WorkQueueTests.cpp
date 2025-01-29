@@ -56,12 +56,7 @@ TEST_F(WorkQueueTest, WhitelistedExecutionCountAddsUp)
     std::atomic_uint32_t executeCount = 0u;
 
     for (auto i = 0u; i < kTOTAL; ++i) {
-        queue.postCoro(
-            [&executeCount](auto /* yield */) {
-                ++executeCount;
-            },
-            true
-        );
+        queue.postCoro([&executeCount](auto /* yield */) { ++executeCount; }, true);
     }
 
     queue.join();

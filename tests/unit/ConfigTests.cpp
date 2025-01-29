@@ -19,6 +19,7 @@
 
 #include "util/Assert.hpp"
 #include "util/LoggerFixtures.hpp"
+#include "util/TmpFile.hpp"
 #include "util/config/Config.hpp"
 
 #include <boost/filesystem/operations.hpp>
@@ -29,8 +30,6 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
-#include <cstdio>
-#include <fstream>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -236,36 +235,10 @@ TEST_F(ConfigTest, Extend)
     ASSERT_EQ(custom.c, true);
 }
 
-/**
- * @brief Simple temporary file util
- */
-class TmpFile {
-public:
-    TmpFile(std::string const& data) : tmpPath_{boost::filesystem::unique_path().string()}
-    {
-        std::ofstream of;
-        of.open(tmpPath_);
-        of << data;
-        of.close();
-    }
-    ~TmpFile()
-    {
-        std::remove(tmpPath_.c_str());
-    }
-    std::string
-    path() const
-    {
-        return tmpPath_;
-    }
-
-private:
-    std::string tmpPath_;
-};
-
 TEST_F(ConfigTest, File)
 {
     auto tmp = TmpFile(kJSON_DATA);
-    auto conf = ConfigReader::open(tmp.path());
+    auto conf = ConfigReader::open(tmp.path);
 
     ASSERT_EQ(conf.value<int64_t>("top"), 420);
 
