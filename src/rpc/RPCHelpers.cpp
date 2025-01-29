@@ -1110,13 +1110,13 @@ accountHolds(
                 ripple::SLE const ammSle{ripple::SerialIter{ammBlob->data(), ammBlob->size()}, ammKeylet.key};
 
                 return !isLPTokenFrozen(
-                        backend,
-                        sequence,
-                        account,
-                        ammSle[ripple::sfAsset].get<ripple::Issue>(),
-                        ammSle[ripple::sfAsset2].get<ripple::Issue>(),
-                        yield
-                    );
+                    backend,
+                    sequence,
+                    account,
+                    ammSle[ripple::sfAsset].get<ripple::Issue>(),
+                    ammSle[ripple::sfAsset2].get<ripple::Issue>(),
+                    yield
+                );
             }
         }
 
