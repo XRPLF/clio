@@ -46,6 +46,7 @@
 
 #include <array>
 #include <cstddef>
+#include <expected>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -279,7 +280,7 @@ public:
      *
      * @param config The configuration to use
      */
-    static void
+    [[nodiscard]] static std::expected<void, std::string>
     init(config::ClioConfigDefinition const& config);
 
     /**
