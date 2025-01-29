@@ -766,14 +766,13 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
-    ON_CALL(*backend_, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
         fetchAccountTransactions(
             testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
         )
     )
-        .Times(1);
+        .WillOnce(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_}};
@@ -797,6 +796,69 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ);
         EXPECT_EQ(output.result->at("limit").as_uint64(), 2);
         EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
+    });
+}
+
+TEST_F(RPCAccountTxHandlerTest, LimitIsCapped)
+{
+    auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    EXPECT_CALL(*backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_))
+        .WillOnce(Return(transCursor));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto static const kINPUT = json::parse(fmt::format(
+            R"({{
+                "account": "{}",
+                "ledger_index_min": {},
+                "ledger_index_max": {},
+                "limit": 100000,
+                "forward": false
+            }})",
+            kACCOUNT,
+            -1,
+            -1
+        ));
+        auto const output = handler.process(kINPUT, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ);
+        EXPECT_EQ(output.result->at("limit").as_uint64(), AccountTxHandler::kLIMIT_MAX);
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
+    });
+}
+
+TEST_F(RPCAccountTxHandlerTest, LimitAllowedUpToCap)
+{
+    auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    EXPECT_CALL(*backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_))
+        .WillOnce(Return(transCursor));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto static const kINPUT = json::parse(fmt::format(
+            R"({{
+                "account": "{}",
+                "ledger_index_min": {},
+                "ledger_index_max": {},
+                "limit": {},
+                "forward": false
+            }})",
+            kACCOUNT,
+            -1,
+            -1,
+            AccountTxHandler::kLIMIT_MAX - 1
+        ));
+        auto const output = handler.process(kINPUT, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ);
+        EXPECT_EQ(output.result->at("limit").as_uint64(), AccountTxHandler::kLIMIT_MAX - 1);
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
     });
 }

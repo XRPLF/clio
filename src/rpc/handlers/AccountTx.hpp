@@ -25,6 +25,7 @@
 #include "rpc/common/JsonBool.hpp"
 #include "rpc/common/MetaProcessors.hpp"
 #include "rpc/common/Modifiers.hpp"
+#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
 #include "util/TxUtils.hpp"
@@ -39,7 +40,6 @@
 #include <xrpl/protocol/jss.h>
 
 #include <cstdint>
-#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -57,8 +57,8 @@ class AccountTxHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    // no max limit
     static constexpr auto kLIMIT_MIN = 1;
+    static constexpr auto kLIMIT_MAX = 1000;
     static constexpr auto kLIMIT_DEFAULT = 200;
 
     /**
@@ -133,7 +133,7 @@ public:
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
-             modifiers::Clamp<int32_t>{kLIMIT_MIN, std::numeric_limits<int32_t>::max()}},
+             modifiers::Clamp<int32_t>{kLIMIT_MIN, kLIMIT_MAX}},
             {JS(marker),
              meta::WithCustomError{
                  validation::Type<boost::json::object>{},
