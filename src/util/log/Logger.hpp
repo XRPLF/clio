@@ -279,6 +279,7 @@ public:
      * @brief Global log core initialization from a @ref Config
      *
      * @param config The configuration to use
+     * @return Void on success, error message on failure
      */
     [[nodiscard]] static std::expected<void, std::string>
     init(config::ClioConfigDefinition const& config);
