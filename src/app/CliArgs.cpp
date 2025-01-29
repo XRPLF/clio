@@ -44,13 +44,13 @@ CliArgs::parse(int argc, char const* argv[])
     // clang-format off
     po::options_description description("Options");
     description.add_options()
-        ("help,h", "print help message and exit")
-        ("version,v", "print version and exit")
-        ("conf,c", po::value<std::string>()->default_value(kDEFAULT_CONFIG_PATH), "configuration file")
+        ("help,h", "Print help message and exit")
+        ("version,v", "Print version and exit")
+        ("conf,c", po::value<std::string>()->default_value(kDEFAULT_CONFIG_PATH), "Configuration file")
         ("ng-web-server,w", "Use ng-web-server")
-        ("migrate", po::value<std::string>(), "start migration helper")
+        ("migrate", po::value<std::string>(), "Start migration helper")
         ("verify", "Checks the validity of config values")
-        ("config-description,d", po::value<std::string>(), "generate config description")
+        ("config-description,d", po::value<std::string>(), "Generate config description markdown file")
     ;
     // clang-format on
     po::positional_options_description positional;
@@ -71,9 +71,9 @@ CliArgs::parse(int argc, char const* argv[])
     }
 
     if (parsed.count("config-description") != 0u) {
-        std::filesystem::path const& filePath = parsed["config-description"].as<std::string>();
-        if (!filePath.string().ends_with(".md"))
-            filePath.string() += ".md";
+        std::filesystem::path filePath = parsed["config-description"].as<std::string>();
+        if (!filePath.empty() && !filePath.string().ends_with(".md"))
+            filePath += ".md";
 
         auto const res = util::config::ClioConfigDescription::generateConfigDescriptionToFile(filePath);
         if (res.has_value())

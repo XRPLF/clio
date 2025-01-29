@@ -41,7 +41,7 @@ struct CliArgsTests : testing::Test {
     testing::StrictMock<testing::MockFunction<int(CliArgs::Action::VerifyConfig)>> onVerifyMock;
 };
 
-static constexpr auto kCONFIG_DESCRIPTION_FILE_NAME = "../configDescription";
+static constexpr auto kCONFIG_DESCRIPTION_FILE_NAME = "../configDescription.md";
 
 TEST_F(CliArgsTests, Parse_NoArgs)
 {

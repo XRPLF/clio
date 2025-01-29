@@ -90,7 +90,7 @@ public:
 
         std::ofstream file(fullFilePath);
         if (!file.is_open())
-            return std::unexpected<Error>{fmt::format("failed to create file: {}", fullFilePath.string())};
+            return std::unexpected<Error>{fmt::format("Failed to create file: {}", fullFilePath.string())};
 
         writeConfigDescriptionToFile(file);
         file.close();

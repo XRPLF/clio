@@ -208,7 +208,7 @@ private:
     void
     print(std::ostream& stream) const override
     {
-        stream << fmt::format("The minimum value is `{}`. The maximum value is `{}`\n", kPORT_MIN, kPORT_MAX);
+        stream << fmt::format("The minimum value is `{}`. The maximum value is `{}", kPORT_MIN, kPORT_MAX);
     }
 
     static constexpr uint32_t kPORT_MIN = 1;
@@ -249,7 +249,7 @@ private:
     void
     print(std::ostream& stream) const override
     {
-        stream << "The value must be a valid IP address\n";
+        stream << "The value must be a valid IP address";
     }
 };
 
@@ -313,7 +313,7 @@ private:
     void
     print(std::ostream& stream) const override
     {
-        stream << fmt::format("The value must be one of the following: `{}`\n", fmt::join(arr_, ", "));
+        stream << fmt::format("The value must be one of the following: `{}`", fmt::join(arr_, ", "));
     }
 
     std::string_view key_;
@@ -376,7 +376,7 @@ private:
     void
     print(std::ostream& stream) const override
     {
-        stream << fmt::format("The minimum value is `{}`. The maximum value is `{}`\n", min_, max_);
+        stream << fmt::format("The minimum value is `{}`. The maximum value is `{}`", min_, max_);
     }
 
     NumType min_;
@@ -417,7 +417,7 @@ private:
     void
     print(std::ostream& stream) const override
     {
-        stream << fmt::format("The value must be a positive double number\n");
+        stream << fmt::format("The value must be a positive double number");
     }
 };
 

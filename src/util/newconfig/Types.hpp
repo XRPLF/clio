@@ -75,13 +75,13 @@ inline std::ostream&
 operator<<(std::ostream& stream, Value value)
 {
     if (std::holds_alternative<std::string>(value)) {
-        stream << std::get<std::string>(value) << "\n";
+        stream << std::get<std::string>(value);
     } else if (std::holds_alternative<bool>(value)) {
-        stream << (std::get<bool>(value) ? "False" : "True") << "\n";
+        stream << (std::get<bool>(value) ? "False" : "True");
     } else if (std::holds_alternative<double>(value)) {
-        stream << std::get<double>(value) << "\n";
+        stream << std::get<double>(value);
     } else if (std::holds_alternative<int64_t>(value)) {
-        stream << std::get<int64_t>(value) << "\n";
+        stream << std::get<int64_t>(value);
     }
     return stream;
 }

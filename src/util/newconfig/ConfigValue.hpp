@@ -212,10 +212,10 @@ public:
     friend std::ostream&
     operator<<(std::ostream& stream, ConfigValue val)
     {
-        stream << "      -   **Required**: " << (val.isOptional() ? "False" : "True") << "\n";
-        stream << "      -   **Type**: " << val.type() << "\n";
-        stream << "      -   **Default value**: " << (val.hasValue() ? *val.value_ : "None") << "\n";
-        stream << "      -   **Constraints**: ";
+        stream << "- **Required**: " << (val.isOptional() ? "False" : "True") << "\n";
+        stream << "- **Type**: " << val.type() << "\n";
+        stream << "- **Default value**: " << (val.hasValue() ? *val.value_ : "None") << "\n";
+        stream << "- **Constraints**: ";
 
         if (val.getConstraint().has_value()) {
             stream << val.getConstraint()->get() << "\n";
