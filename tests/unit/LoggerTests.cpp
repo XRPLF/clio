@@ -179,7 +179,7 @@ TEST_F(LoggerInitTest, ChannelLogLevel)
 
 TEST_F(LoggerInitTest, InitReturnsErrorIfCouldNotCreateLogDirectory)
 {
-    auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::object{{"log_directory", "/root"}}});
+    auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::object{{"log_directory", "/proc/logs"}}});
     ASSERT_FALSE(parsingErrors.has_value());
 
     auto const result = LogService::init(config_);
