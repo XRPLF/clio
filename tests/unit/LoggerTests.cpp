@@ -189,9 +189,16 @@ TEST_F(LoggerInitTest, InitReturnsErrorIfCouldNotCreateLogDirectory)
 
 TEST_F(LoggerInitTest, InitReturnsErrorIfProvidedInvalidChannel)
 {
-    auto const parsingErrors = config_.parse(ConfigFileJson{
-        boost::json::object{{"log_channels", boost::json::array{boost::json::object{{"channel", "SomeChannel"}}}}}
-    });
+    auto const jsonStr = R"json(
+    {
+        "log_channels": [
+            {
+                "channel": "SomeChannel"
+            }
+        ]
+    })json";
+
+    auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::parse(jsonStr).as_object()});
     ASSERT_FALSE(parsingErrors.has_value());
 
     auto const result = LogService::init(config_);
