@@ -1,0 +1,9 @@
+include(clang)
+
+[options]
+boost:extra_b2_flags="cxxflags=\"-fsanitize=address\" linkflags=\"-fsanitize=address\""
+boost:without_stacktrace=True
+[env]
+CFLAGS="-fsanitize=address"
+CXXFLAGS="-fsanitize=address"
+LDFLAGS="-fsanitize=address"

@@ -98,3 +98,10 @@ RUN conan profile new clang --detect \
     && conan profile update "conf.tools.build:compiler_executables={\"c\": \"/usr/bin/clang-16\", \"cpp\": \"/usr/bin/clang++-16\"}" clang 
 
 RUN echo "include(gcc)" >> .conan/profiles/default
+
+COPY conan/gcc.asan /root/.conan/profiles
+COPY conan/gcc.tsan /root/.conan/profiles
+COPY conan/gcc.ubsan /root/.conan/profiles
+COPY conan/clang.asan /root/.conan/profiles
+COPY conan/clang.tsan /root/.conan/profiles
+COPY conan/clang.ubsan /root/.conan/profiles
