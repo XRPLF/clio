@@ -27,6 +27,8 @@
 
 #include <algorithm>
 #include <array>
+#include <cerrno>
+#include <cstring>
 #include <expected>
 #include <filesystem>
 #include <fstream>
@@ -86,11 +88,16 @@ public:
         // Validate the directory exists
         auto const dir = fs::path(fullFilePath).parent_path();
         if (!dir.empty() && !fs::exists(dir))
-            return std::unexpected<Error>{fmt::format("Error: File path {} does not exist", fullFilePath.string())};
+            return std::unexpected<Error>{
+                fmt::format("Error: Directory {} does not exist or provided path is invalid", dir.string())
+            };
 
         std::ofstream file(fullFilePath);
-        if (!file.is_open())
-            return std::unexpected<Error>{fmt::format("Failed to create file: {}", fullFilePath.string())};
+        if (!file.is_open()) {
+            return std::unexpected{
+                fmt::format("Failed to create file '{}': {}", fullFilePath.string(), std::strerror(errno))
+            };
+        }
 
         writeConfigDescriptionToFile(file);
         file.close();

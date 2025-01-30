@@ -72,8 +72,6 @@ CliArgs::parse(int argc, char const* argv[])
 
     if (parsed.count("config-description") != 0u) {
         std::filesystem::path filePath = parsed["config-description"].as<std::string>();
-        if (!filePath.empty() && !filePath.string().ends_with(".md"))
-            filePath += ".md";
 
         auto const res = util::config::ClioConfigDescription::generateConfigDescriptionToFile(filePath);
         if (res.has_value())

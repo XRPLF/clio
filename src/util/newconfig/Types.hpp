@@ -39,27 +39,8 @@ enum class ConfigType { Integer, String, Double, Boolean };
  * @param type The config type
  * @return The same ostream we were given
  */
-inline std::ostream&
-operator<<(std::ostream& stream, ConfigType type)
-{
-    switch (type) {
-        case ConfigType::Integer:
-            stream << "int";
-            break;
-        case ConfigType::String:
-            stream << "string";
-            break;
-        case ConfigType::Double:
-            stream << "double";
-            break;
-        case ConfigType::Boolean:
-            stream << "boolean";
-            break;
-        default:
-            stream << "unsupported type";
-    }
-    return stream;
-}
+std::ostream&
+operator<<(std::ostream& stream, ConfigType type);
 
 /** @brief Represents the supported Config Values */
 using Value = std::variant<int64_t, std::string, bool, double>;
@@ -71,20 +52,8 @@ using Value = std::variant<int64_t, std::string, bool, double>;
  * @param value The value type
  * @return The same ostream we were given
  */
-inline std::ostream&
-operator<<(std::ostream& stream, Value value)
-{
-    if (std::holds_alternative<std::string>(value)) {
-        stream << std::get<std::string>(value);
-    } else if (std::holds_alternative<bool>(value)) {
-        stream << (std::get<bool>(value) ? "False" : "True");
-    } else if (std::holds_alternative<double>(value)) {
-        stream << std::get<double>(value);
-    } else if (std::holds_alternative<int64_t>(value)) {
-        stream << std::get<int64_t>(value);
-    }
-    return stream;
-}
+std::ostream&
+operator<<(std::ostream& stream, Value value);
 
 /**
  * @brief Get the corresponding clio config type
