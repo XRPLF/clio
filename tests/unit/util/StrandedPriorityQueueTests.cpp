@@ -22,7 +22,6 @@
 #include "util/async/AnyOperation.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
 
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <atomic>

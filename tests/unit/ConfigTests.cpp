@@ -22,7 +22,6 @@
 #include "util/TmpFile.hpp"
 #include "util/config/Config.hpp"
 
-#include <boost/filesystem/operations.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>

@@ -28,7 +28,6 @@
 #include "util/async/AnyStrand.hpp"
 #include "util/log/Logger.hpp"
 
-#include <xrpl/protocol/TxFormats.h>
 
 #include <chrono>
 #include <cstddef>
