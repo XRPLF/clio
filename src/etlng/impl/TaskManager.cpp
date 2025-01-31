@@ -28,7 +28,6 @@
 #include "util/async/AnyStrand.hpp"
 #include "util/log/Logger.hpp"
 
-
 #include <chrono>
 #include <cstddef>
 #include <functional>
