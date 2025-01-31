@@ -578,7 +578,7 @@ TEST_F(RPCHelpersTest, AccountHoldsFixLPTAmendmentDisabled)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_)).Times(1);
     ON_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_))
         .WillByDefault(Return(ammAccountRoot.getSerializer().peekData()));
-    
+
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
         .Times(1);
     ON_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
@@ -604,7 +604,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenNotAMMAccount)
 {
     auto account = getAccountIdWithString(kACCOUNT);
     auto account2 = getAccountIdWithString(kACCOUNT2);
-    
+
     auto const usdRippleState =
         createRippleStateLedgerObject("USD", kACCOUNT2, 100, kACCOUNT, 100, kACCOUNT2, 100, kTXN_ID, 3);
     auto const usdRippleStateKk = ripple::keylet::line(account2, account, ripple::to_currency("USD")).key;
@@ -628,14 +628,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenNotAMMAccount)
 
     boost::asio::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
         auto ret = accountHolds(
-            *backend_,
-            *mockAmendmentCenterPtr_,
-            0,
-            account,
-            ripple::to_currency("USD"),
-            account2,
-            true,
-            yield
+            *backend_, *mockAmendmentCenterPtr_, 0, account, ripple::to_currency("USD"), account2, true, yield
         );
         EXPECT_EQ(ret.mantissa(), 1000000000000000);
     });
@@ -672,7 +665,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset1Frozen)
     ON_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_))
         .WillByDefault(Return(ammAccountRoot.getSerializer().peekData()));
 
-    auto const amm = createAmmObject(kAMM_ACCOUNT, "USD", kISSUER ,"XRP", ripple::toBase58(ripple::xrpAccount()));
+    auto const amm = createAmmObject(kAMM_ACCOUNT, "USD", kISSUER, "XRP", ripple::toBase58(ripple::xrpAccount()));
     EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_)).Times(1);
     ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_))
         .WillByDefault(testing::Return(amm.getSerializer().peekData()));
