@@ -182,8 +182,8 @@ TEST_F(CliArgsTestsWithTmpFile, Parse_ConfigDescription)
     EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) { return exit.exitCode; });
 
     // user provide config markdown file name as well
-    ASSERT_TRUE(std::filesystem::exists(tmpFile.path.c_str()));
-    std::filesystem::remove(tmpFile.path.c_str());
+    ASSERT_TRUE(std::filesystem::exists(tmpFile.path));
+    std::filesystem::remove(tmpFile.path);
 
     EXPECT_EQ(
         action.apply(
@@ -200,12 +200,12 @@ TEST_F(CliArgsTestsWithTmpFile, Parse_ConfigDescriptionFileContent)
 {
     using namespace util::config;
 
-    std::ofstream file(tmpFile.path.c_str());
+    std::ofstream file(tmpFile.path);
     ASSERT_TRUE(file.is_open());
     ClioConfigDescription::writeConfigDescriptionToFile(file);
     file.close();
 
-    std::ifstream inFile(tmpFile.path.c_str());
+    std::ifstream inFile(tmpFile.path);
     ASSERT_TRUE(inFile.is_open());
 
     std::stringstream buffer;
@@ -221,5 +221,5 @@ TEST_F(CliArgsTestsWithTmpFile, Parse_ConfigDescriptionFileContent)
     for (auto const& key : gClioConfig)
         EXPECT_TRUE(fileContent.find(key.first));
 
-    std::filesystem::remove(tmpFile.path.c_str());
+    std::filesystem::remove(tmpFile.path);
 }
