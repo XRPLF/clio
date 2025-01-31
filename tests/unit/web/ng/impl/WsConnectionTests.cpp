@@ -323,7 +323,7 @@ TEST_F(WebWsConnectionTests, CloseCalledFromMultipleSubCoroutines)
     runSpawnWithTimeout(std::chrono::seconds{1}, [&](boost::asio::yield_context yield) {
         auto wsConnection = acceptConnection(yield);
         util::CoroutineGroup coroutines{yield};
-        for ([[maybe_unused]] int i : std::ranges::iota_view{0, 2}) {
+        for ([[maybe_unused]] int const i : std::ranges::iota_view{0, 2}) {
             coroutines.spawn(yield, [&wsConnection, &closeCalled](boost::asio::yield_context innerYield) {
                 wsConnection->close(innerYield);
                 closeCalled.Call();

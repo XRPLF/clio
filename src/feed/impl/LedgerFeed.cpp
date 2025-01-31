@@ -94,7 +94,7 @@ LedgerFeed::pub(
     ripple::Fees const& fees,
     std::string const& ledgerRange,
     std::uint32_t const txnCount
-) const
+)
 {
     SingleFeedBase::pub(boost::json::serialize(makeLedgerPubMessage(lgrInfo, fees, ledgerRange, txnCount)));
 }

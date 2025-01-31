@@ -57,6 +57,7 @@ struct FormattedTransactionsData {
     std::vector<NFTTransactionsData> nfTokenTxData;
     std::vector<NFTsData> nfTokensData;
     std::vector<MPTHolderData> mptHoldersData;
+    std::vector<NFTsData> nfTokenURIChanges;
 };
 
 namespace etl::impl {
@@ -111,6 +112,7 @@ public:
     {
         FormattedTransactionsData result;
 
+        std::vector<NFTsData> nfTokenURIChanges;
         for (auto& txn : *(data.mutable_transactions_list()->mutable_transactions())) {
             std::string* raw = txn.mutable_transaction_blob();
 
@@ -123,8 +125,15 @@ public:
 
             auto const [nftTxs, maybeNFT] = getNFTDataFromTx(txMeta, sttx);
             result.nfTokenTxData.insert(result.nfTokenTxData.end(), nftTxs.begin(), nftTxs.end());
-            if (maybeNFT)
-                result.nfTokensData.push_back(*maybeNFT);
+
+            // We need to unique the URI changes separately, in case the URI changes are discarded
+            if (maybeNFT) {
+                if (maybeNFT->onlyUriChanged) {
+                    nfTokenURIChanges.push_back(*maybeNFT);
+                } else {
+                    result.nfTokensData.push_back(*maybeNFT);
+                }
+            }
 
             auto const maybeMPTHolder = getMPTHolderFromTx(txMeta, sttx);
             if (maybeMPTHolder)
@@ -143,6 +152,10 @@ public:
         }
 
         result.nfTokensData = getUniqueNFTsDatas(result.nfTokensData);
+        nfTokenURIChanges = getUniqueNFTsDatas(nfTokenURIChanges);
+
+        // Put uri change at the end to ensure the uri not overwritten
+        result.nfTokensData.insert(result.nfTokensData.end(), nfTokenURIChanges.begin(), nfTokenURIChanges.end());
         return result;
     }
 

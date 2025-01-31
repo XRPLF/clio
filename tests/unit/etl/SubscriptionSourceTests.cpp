@@ -25,7 +25,6 @@
 #include "util/TestWsServer.hpp"
 #include "util/prometheus/Gauge.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>

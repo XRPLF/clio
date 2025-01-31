@@ -23,7 +23,6 @@
 #include <boost/asio/spawn.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <sys/socket.h>
 
 using namespace util;
 

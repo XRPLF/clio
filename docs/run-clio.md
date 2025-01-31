@@ -80,3 +80,15 @@ Clio will fallback to hardcoded defaults when these values are not specified in 
 
 > [!TIP]
 > See the [example-config.json](../docs/examples/config/example-config.json) for more details.
+
+## Prometheus metrics collection
+
+Clio natively supports [Prometheus](https://prometheus.io/) metrics collection. It accepts Prometheus requests on the port configured in the `server` section of the config.
+
+Prometheus metrics are enabled by default, and replies to `/metrics` are compressed. To disable compression, and have human readable metrics, add `"prometheus": { "enabled": true, "compress_reply": false }` to Clio's config.
+
+To completely disable Prometheus metrics add `"prometheus": { "enabled": false }` to Clio's config.
+
+It is important to know that Clio responds to Prometheus request only if they are admin requests. If you are using the admin password feature, the same password should be provided in the Authorization header of Prometheus requests.
+
+You can find an example docker-compose file, with Prometheus and Grafana configs, in [examples/infrastructure](../docs/examples/infrastructure/).

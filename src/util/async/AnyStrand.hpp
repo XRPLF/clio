@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/async/AnyOperation.hpp"
 #include "util/async/AnyStopToken.hpp"
 #include "util/async/Concepts.hpp"
 #include "util/async/impl/ErasedOperation.hpp"
@@ -61,7 +62,7 @@ public:
      * @return The type-erased operation
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWithoutStopToken auto&& fn) const
+    execute(SomeHandlerWithoutStopToken auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn())>;
         static_assert(not std::is_same_v<RetType, std::any>);
@@ -85,7 +86,7 @@ public:
      * @return The type-erased operation
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<AnyStopToken> auto&& fn) const
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, std::any>);
@@ -110,7 +111,7 @@ public:
      * @return The type-erased operation
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout) const
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, std::any>);
@@ -137,7 +138,7 @@ private:
         [[nodiscard]] virtual impl::ErasedOperation
         execute(std::function<std::any(AnyStopToken)>, std::optional<std::chrono::milliseconds> timeout = std::nullopt)
             const = 0;
-        [[nodiscard]] virtual impl::ErasedOperation execute(std::function<std::any()>) const = 0;
+        [[nodiscard]] virtual impl::ErasedOperation execute(std::function<std::any()>) = 0;
     };
 
     template <typename StrandType>
@@ -158,7 +159,7 @@ private:
         }
 
         [[nodiscard]] impl::ErasedOperation
-        execute(std::function<std::any()> fn) const override
+        execute(std::function<std::any()> fn) override
         {
             return strand.execute(std::move(fn));
         }

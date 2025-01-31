@@ -50,7 +50,7 @@ void
 SubscriptionManager::pubBookChanges(
     ripple::LedgerHeader const& lgrInfo,
     std::vector<data::TransactionAndMetadata> const& transactions
-) const
+)
 {
     bookChangesFeed_.pub(lgrInfo, transactions);
 }
@@ -111,7 +111,7 @@ SubscriptionManager::pubLedger(
     ripple::Fees const& fees,
     std::string const& ledgerRange,
     std::uint32_t const txnCount
-) const
+)
 {
     ledgerFeed_.pub(lgrInfo, fees, ledgerRange, txnCount);
 }
@@ -129,7 +129,7 @@ SubscriptionManager::unsubManifest(SubscriberSharedPtr const& subscriber)
 }
 
 void
-SubscriptionManager::forwardManifest(boost::json::object const& manifestJson) const
+SubscriptionManager::forwardManifest(boost::json::object const& manifestJson)
 {
     manifestFeed_.pub(manifestJson);
 }
@@ -147,7 +147,7 @@ SubscriptionManager::unsubValidation(SubscriberSharedPtr const& subscriber)
 }
 
 void
-SubscriptionManager::forwardValidation(boost::json::object const& validationJson) const
+SubscriptionManager::forwardValidation(boost::json::object const& validationJson)
 {
     validationsFeed_.pub(validationJson);
 }

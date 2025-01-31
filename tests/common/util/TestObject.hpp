@@ -302,6 +302,9 @@ createNftTokenPage(
     std::optional<ripple::uint256> previousPage
 );
 
+/**
+ * Create NFToken mint tx, the metadata contained a changed node
+ */
 [[nodiscard]] data::TransactionAndMetadata
 createMintNftTxWithMetadata(
     std::string_view accountId,
@@ -311,8 +314,54 @@ createMintNftTxWithMetadata(
     std::string_view nftID
 );
 
+/**
+ * Create NFToken mint tx, the metadata contained a created node
+ */
 [[nodiscard]] data::TransactionAndMetadata
-createAcceptNftOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee, std::string_view nftId);
+createMintNftTxWithMetadataOfCreatedNode(
+    std::string_view accountId,
+    uint32_t seq,
+    uint32_t fee,
+    uint32_t nfTokenTaxon,
+    std::optional<std::string_view> nftID,
+    std::optional<std::string_view> uri,
+    std::optional<std::string_view> pageIndex
+);
+
+[[nodiscard]] data::TransactionAndMetadata
+createNftModifyTxWithMetadata(std::string_view accountId, std::string_view nftID, ripple::Blob uri);
+
+/**
+ * Create NFToken burn tx, tx causes a nft page node deleted
+ */
+[[nodiscard]] data::TransactionAndMetadata
+createNftBurnTxWithMetadataOfDeletedNode(std::string_view accountId, std::string_view nftID);
+
+/**
+ * Create NFToken mint tx, tx causes a nft page node changed
+ */
+[[nodiscard]] data::TransactionAndMetadata
+createNftBurnTxWithMetadataOfModifiedNode(std::string_view accountId, std::string_view nftID);
+
+[[nodiscard]] data::TransactionAndMetadata
+createAcceptNftBuyerOfferTxWithMetadata(
+    std::string_view accountId,
+    uint32_t seq,
+    uint32_t fee,
+    std::string_view nftId,
+    std::string_view offerId
+);
+
+[[nodiscard]] data::TransactionAndMetadata
+createAcceptNftSellerOfferTxWithMetadata(
+    std::string_view accountId,
+    uint32_t seq,
+    uint32_t fee,
+    std::string_view nftId,
+    std::string_view offerId,
+    std::string_view pageIndex,
+    bool isNewPageCreated
+);
 
 [[nodiscard]] data::TransactionAndMetadata
 createCancelNftOffersTxWithMetadata(
@@ -321,9 +370,6 @@ createCancelNftOffersTxWithMetadata(
     uint32_t fee,
     std::vector<std::string> const& nftOffers
 );
-
-[[nodiscard]] data::TransactionAndMetadata
-createCreateNftOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee, std::string_view offerId);
 
 [[nodiscard]] data::TransactionAndMetadata
 createCreateNftOfferTxWithMetadata(

@@ -26,6 +26,7 @@
 #include "util/Assert.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockXrpLedgerAPIService.hpp"
+#include "util/Mutex.hpp"
 #include "util/TestObject.hpp"
 
 #include <gmock/gmock.h>
@@ -69,9 +70,9 @@ struct GrpcSourceNgTests : NoLoggerFixture, tests::util::WithMockXrpLedgerAPISer
 
     class KeyStore {
         std::vector<ripple::uint256> keys_;
-        std::map<std::string, std::queue<ripple::uint256>, std::greater<>> store_;
+        using Store = std::map<std::string, std::queue<ripple::uint256>, std::greater<>>;
 
-        std::mutex mtx_;
+        util::Mutex<Store> store_;
 
     public:
         KeyStore(std::size_t totalKeys, std::size_t numMarkers) : keys_(etl::getMarkers(totalKeys))
@@ -79,10 +80,11 @@ struct GrpcSourceNgTests : NoLoggerFixture, tests::util::WithMockXrpLedgerAPISer
             auto const totalPerMarker = totalKeys / numMarkers;
             auto const markers = etl::getMarkers(numMarkers);
 
+            auto store = store_.lock();
             for (auto mi = 0uz; mi < markers.size(); ++mi) {
                 for (auto i = 0uz; i < totalPerMarker; ++i) {
                     auto const mapKey = ripple::strHex(markers.at(mi)).substr(0, 2);
-                    store_[mapKey].push(keys_.at((mi * totalPerMarker) + i));
+                    store->operator[](mapKey).push(keys_.at((mi * totalPerMarker) + i));
                 }
             }
         }
@@ -90,11 +92,11 @@ struct GrpcSourceNgTests : NoLoggerFixture, tests::util::WithMockXrpLedgerAPISer
         std::optional<std::string>
         next(std::string const& marker)
         {
-            std::scoped_lock const lock(mtx_);
+            auto store = store_.lock<std::scoped_lock>();
 
             auto const mapKey = ripple::strHex(marker).substr(0, 2);
-            auto it = store_.lower_bound(mapKey);
-            ASSERT(it != store_.end(), "Lower bound not found for '{}'", mapKey);
+            auto it = store->lower_bound(mapKey);
+            ASSERT(it != store->end(), "Lower bound not found for '{}'", mapKey);
 
             auto& queue = it->second;
             if (queue.empty())
@@ -109,11 +111,11 @@ struct GrpcSourceNgTests : NoLoggerFixture, tests::util::WithMockXrpLedgerAPISer
         std::optional<std::string>
         peek(std::string const& marker)
         {
-            std::scoped_lock const lock(mtx_);
+            auto store = store_.lock<std::scoped_lock>();
 
             auto const mapKey = ripple::strHex(marker).substr(0, 2);
-            auto it = store_.lower_bound(mapKey);
-            ASSERT(it != store_.end(), "Lower bound not found for '{}'", mapKey);
+            auto it = store->lower_bound(mapKey);
+            ASSERT(it != store->end(), "Lower bound not found for '{}'", mapKey);
 
             auto& queue = it->second;
             if (queue.empty())
