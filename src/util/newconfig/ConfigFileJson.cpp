@@ -36,6 +36,8 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <optional>
+#include <queue>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -131,6 +133,36 @@ ConfigFileJson::containsKey(std::string_view key) const
     return jsonObject_.contains(key);
 }
 
+boost::json::object const&
+ConfigFileJson::inner() const
+{
+    return jsonObject_;
+}
+
+/*
+{
+    key: [
+        {
+            foo: bar,
+        },
+        {
+            some: 1
+         }
+    ]
+}
+{
+    key.[].foo: {
+        "0": bar,
+        "size": 1
+    }
+    key.[].some: {
+        "0": none,
+        "1": 1,
+        "size": 2
+    }
+}
+
+*/
 void
 ConfigFileJson::flattenJson(boost::json::object const& obj, std::string const& prefix)
 {
@@ -164,5 +196,34 @@ ConfigFileJson::flattenJson(boost::json::object const& obj, std::string const& p
         }
     }
 }
+
+/*
+void
+ConfigFileJson::flattenJsonNonRecursive(boost::json::object const& jsonRootObject)
+{
+struct Task {
+    boost::json::object const& object;
+    std::string prefix;
+    std::optional<size_t> arrayIndex = std::nullopt;
+};
+
+std::queue<Task> tasks;
+tasks.push(Task{.object = jsonRootObject, .prefix = ""});
+
+while (tasks.size() > 0) {
+    auto const task = std::move(tasks.front());
+    tasks.pop();
+
+    for (auto const& [key, value] : task.object) {
+    std::string fullKey = task.prefix.empty() ? std::string(key) : fmt::format("{}.{}", task.prefix, std::string(key));
+        if (value.is_object()) {
+            tasks.push(Task{.object = value, .prefix = std::move(fullKey) });
+        }
+
+    }
+
+}
+}
+*/
 
 }  // namespace util::config

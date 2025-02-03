@@ -183,8 +183,7 @@ target_sources(
           util/newconfig/ClioConfigDefinitionTests.cpp
           util/newconfig/ConfigValueTests.cpp
           util/newconfig/ObjectViewTests.cpp
-          util/newconfig/JsonConfigFileTests.cpp
-          util/newconfig/JsonFileTests.cpp
+          util/newconfig/ConfigFileJsonTests.cpp
           util/newconfig/ValueViewTests.cpp
 )
 
