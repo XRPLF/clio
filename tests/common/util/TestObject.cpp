@@ -761,7 +761,7 @@ createMintNftTxWithMetadataOfCreatedNode(
     node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
 
     ripple::STObject newFields(ripple::sfNewFields);
-    ripple::STArray NFTArray1{1};
+    ripple::STArray nftArray1{1};
 
     if (nftID) {
         // finalFields contain new NFT while previousFields does not
@@ -770,9 +770,9 @@ createMintNftTxWithMetadataOfCreatedNode(
         if (uri)
             entry.setFieldVL(ripple::sfURI, ripple::Slice(uri->data(), uri->size()));
 
-        NFTArray1.push_back(entry);
+        nftArray1.push_back(entry);
     }
-    newFields.setFieldArray(ripple::sfNFTokens, NFTArray1);
+    newFields.setFieldArray(ripple::sfNFTokens, nftArray1);
     node.emplace_back(std::move(newFields));
     if (pageIndex)
         node.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{*pageIndex});
@@ -820,26 +820,26 @@ createNftModifyTxWithMetadata(std::string_view accountId, std::string_view nftID
     node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
 
     ripple::STObject finalFields(ripple::sfFinalFields);
-    ripple::STArray NFTArray1{1};
-    ripple::STArray NFTArray2{1};
+    ripple::STArray nftArray1{1};
+    ripple::STArray nftArray2{1};
 
     // finalFields contain new NFT while previousFields does not
     auto entry = ripple::STObject(ripple::sfNFToken);
     entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
     if (!uri.empty())
         entry.setFieldVL(ripple::sfURI, uri);
-    NFTArray1.push_back(entry);
+    nftArray1.push_back(entry);
 
     auto entry2 = ripple::STObject(ripple::sfNFToken);
     entry2.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
     char const* url = "previous";
     entry2.setFieldVL(ripple::sfURI, ripple::Slice(url, 7));
-    NFTArray2.push_back(entry2);
+    nftArray2.push_back(entry2);
 
-    finalFields.setFieldArray(ripple::sfNFTokens, NFTArray1);
+    finalFields.setFieldArray(ripple::sfNFTokens, nftArray1);
 
     ripple::STObject previousFields(ripple::sfPreviousFields);
-    previousFields.setFieldArray(ripple::sfNFTokens, NFTArray2);
+    previousFields.setFieldArray(ripple::sfNFTokens, nftArray2);
 
     node.emplace_back(std::move(finalFields));
     node.emplace_back(std::move(previousFields));
@@ -877,11 +877,11 @@ createNftBurnTxWithMetadataOfDeletedNode(std::string_view accountId, std::string
     node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
     // deleted node should contain finalFields
     ripple::STObject finalFields(ripple::sfFinalFields);
-    ripple::STArray NFTArray{1};
+    ripple::STArray nftArray{1};
     auto entry = ripple::STObject(ripple::sfNFToken);
     entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
-    NFTArray.push_back(entry);
-    finalFields.setFieldArray(ripple::sfNFTokens, NFTArray);
+    nftArray.push_back(entry);
+    finalFields.setFieldArray(ripple::sfNFTokens, nftArray);
 
     node.emplace_back(std::move(finalFields));
 
@@ -924,12 +924,12 @@ createNftBurnTxWithMetadataOfModifiedNode(std::string_view accountId, std::strin
     node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
 
     ripple::STObject finalFields(ripple::sfFinalFields);
-    ripple::STArray NFTArray{1};
+    ripple::STArray nftArray{1};
     ripple::STObject previousFields(ripple::sfPreviousFields);
     auto entry = ripple::STObject(ripple::sfNFToken);
     entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
-    NFTArray.push_back(entry);
-    previousFields.setFieldArray(ripple::sfNFTokens, NFTArray);
+    nftArray.push_back(entry);
+    previousFields.setFieldArray(ripple::sfNFTokens, nftArray);
 
     node.emplace_back(std::move(previousFields));
     node.emplace_back(std::move(finalFields));
