@@ -79,7 +79,6 @@ getErrorInfo(ClioError code)
         {ClioError::rpcMALFORMED_REQUEST, "malformedRequest", "Malformed request."},
         {ClioError::rpcMALFORMED_OWNER, "malformedOwner", "Malformed owner."},
         {ClioError::rpcMALFORMED_ADDRESS, "malformedAddress", "Malformed address."},
-        {ClioError::rpcINVALID_HOT_WALLET, "invalidHotWallet", "Invalid hot wallet."},
         {ClioError::rpcUNKNOWN_OPTION, "unknownOption", "Unknown option."},
         {ClioError::rpcFIELD_NOT_FOUND_TRANSACTION, "fieldNotFoundTransaction", "Missing field."},
         {ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID, "malformedDocumentID", "Malformed oracle_document_id."},
