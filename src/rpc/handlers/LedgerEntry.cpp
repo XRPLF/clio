@@ -179,6 +179,12 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
             ripple::uint192{std::string_view(boost::json::value_to<std::string>(input.mptoken->at(JS(mpt_issuance_id))))
             };
         key = ripple::keylet::mptoken(mptIssuanceID, *holder).key;
+    } else if (input.permissionedDomain) {
+        auto const account = ripple::parseBase58<ripple::AccountID>(
+            boost::json::value_to<std::string>(input.permissionedDomain->at(JS(account)))
+        );
+        auto const seq = input.permissionedDomain->at(JS(seq)).as_int64();
+        key = ripple::keylet::permissionedDomain(*account, seq).key;
     } else {
         // Must specify 1 of the following fields to indicate what type
         if (ctx.apiVersion == 1)
@@ -313,6 +319,7 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(oracle), ripple::ltORACLE},
         {JS(credential), ripple::ltCREDENTIAL},
         {JS(mptoken), ripple::ltMPTOKEN},
+        {JS(permissioned_domain), ripple::ltPERMISSIONED_DOMAIN}
     };
 
     auto const parseBridgeFromJson = [](boost::json::value const& bridgeJson) {
@@ -399,6 +406,8 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         input.credential = parseCredentialFromJson(jv.at(JS(credential)));
     } else if (jsonObject.contains(JS(mptoken))) {
         input.mptoken = jv.at(JS(mptoken)).as_object();
+    } else if (jsonObject.contains(JS(permissioned_domain))) {
+        input.permissionedDomain = jv.at(JS(permissioned_domain)).as_object();
     }
 
     if (jsonObject.contains("include_deleted"))

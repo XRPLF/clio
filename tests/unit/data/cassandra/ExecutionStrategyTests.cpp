@@ -421,3 +421,37 @@ TEST_F(BackendCassandraExecutionStrategyTest, StatsCallsCountersReport)
     EXPECT_CALL(*counters_, report());
     strat.stats();
 }
+
+TEST_F(BackendCassandraExecutionStrategyTest, WriteEachAndCallSyncSucceeds)
+{
+    auto strat = makeStrategy();
+    auto const totalRequests = 1024u;
+    auto const numStatements = 16u;
+    auto callCount = std::atomic_uint{0u};
+
+    auto work = std::optional<boost::asio::io_context::work>{ctx_};
+    auto thread = std::thread{[this]() { ctx_.run(); }};
+
+    EXPECT_CALL(handle_, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
+        .Times(totalRequests * numStatements)
+        .WillRepeatedly([this, &callCount](auto const&, auto&& cb) {
+            // run on thread to emulate concurrency model of real asyncExecute
+            boost::asio::post(ctx_, [&callCount, cb = std::forward<decltype(cb)>(cb)] {
+                ++callCount;
+                cb({});  // pretend we got data
+            });
+            return FakeFutureWithCallback{};
+        });  // numStatements per write call
+    EXPECT_CALL(*counters_, registerWriteStarted()).Times(totalRequests * numStatements);
+    EXPECT_CALL(*counters_, registerWriteFinished(testing::_)).Times(totalRequests * numStatements);
+
+    auto makeStatements = [] { return std::vector<FakeStatement>(16); };
+    for (auto i = 0u; i < totalRequests; ++i)
+        strat.writeEach(makeStatements());
+
+    strat.sync();                                         // make sure all above writes are finished
+    EXPECT_EQ(callCount, totalRequests * numStatements);  // all requests should finish
+
+    work.reset();
+    thread.join();
+}

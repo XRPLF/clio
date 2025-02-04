@@ -40,6 +40,7 @@ target_sources(
           etlng/GrpcSourceTests.cpp
           etlng/RegistryTests.cpp
           etlng/SchedulingTests.cpp
+          etlng/TaskManagerTests.cpp
           etlng/LoadingTests.cpp
           # Feed
           util/BytesConverterTests.cpp
@@ -129,6 +130,7 @@ target_sources(
           util/ConceptsTests.cpp
           util/CoroutineGroupTests.cpp
           util/LedgerUtilsTests.cpp
+          util/StrandedPriorityQueueTests.cpp
           # Prometheus support
           util/prometheus/BoolTests.cpp
           util/prometheus/CounterTests.cpp

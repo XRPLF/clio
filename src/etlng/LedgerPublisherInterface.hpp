@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,26 +19,31 @@
 
 #pragma once
 
-#include "feed/impl/SingleFeedBase.hpp"
+#include <chrono>
+#include <cstdint>
+#include <optional>
 
-#include <boost/json/object.hpp>
-#include <boost/json/serialize.hpp>
-
-namespace feed::impl {
+namespace etlng {
 
 /**
- * @brief Feed that publishes the json object as it is.
+ * @brief The interface of a scheduler for the extraction proccess
  */
-struct ForwardFeed : public SingleFeedBase {
-    using SingleFeedBase::SingleFeedBase;
+struct LedgerPublisherInterface {
+    virtual ~LedgerPublisherInterface() = default;
 
     /**
-     * @brief Publishes the json object.
+     * @brief Publish the ledger by its sequence number
+     *
+     * @param seq The sequence number of the ledger
+     * @param maxAttempts The maximum number of attempts to publish the ledger; no limit if nullopt
+     * @param attemptsDelay The delay between attempts
      */
-    void
-    pub(boost::json::object const& json)
-    {
-        SingleFeedBase::pub(boost::json::serialize(json));
-    }
+    virtual void
+    publish(
+        uint32_t seq,
+        std::optional<uint32_t> maxAttempts,
+        std::chrono::steady_clock::duration attemptsDelay = std::chrono::seconds{1}
+    ) = 0;
 };
-}  // namespace feed::impl
+
+}  // namespace etlng
