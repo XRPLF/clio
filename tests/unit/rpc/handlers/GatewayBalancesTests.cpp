@@ -322,54 +322,6 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
     });
 }
 
-TEST_F(RPCGatewayBalancesHandlerTest, InvalidHotWallet)
-{
-    auto const seq = 300;
-
-    backend->setRange(10, seq);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return valid ledgerHeader
-    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
-
-    // return valid account
-    auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
-    ON_CALL(*backend, doFetchLedgerObject(accountKk, seq, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
-
-    // return valid owner dir
-    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX2}}, INDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
-    ON_CALL(*backend, doFetchLedgerObject(ownerDirKk, seq, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
-
-    // create a valid line, balance is 0
-    auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 0, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123);
-    std::vector<Blob> bbs;
-    bbs.push_back(line1.getSerializer().peekData());
-    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
-
-    auto const handler = AnyHandler{GatewayBalancesHandler{backend}};
-    runSpawn([&](auto yield) {
-        auto const output = handler.process(
-            json::parse(fmt::format(
-                R"({{
-                    "account": "{}",
-                    "hotwallet": "{}"
-                }})",
-                ACCOUNT,
-                ACCOUNT2
-            )),
-            Context{yield}
-        );
-        ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.result.error());
-        EXPECT_EQ(err.at("error").as_string(), "invalidHotWallet");
-        EXPECT_EQ(err.at("error_message").as_string(), "Invalid hot wallet.");
-    });
-}
-
 struct NormalTestBundle {
     std::string testName;
     ripple::STObject mockedDir;

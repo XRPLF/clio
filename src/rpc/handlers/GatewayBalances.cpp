@@ -142,10 +142,6 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
     if (auto status = std::get_if<Status>(&ret))
         return Error{*status};
 
-    auto inHotbalances = [&](auto const& hw) { return output.hotBalances.contains(hw); };
-    if (not std::all_of(input.hotWallets.begin(), input.hotWallets.end(), inHotbalances))
-        return Error{Status{ClioError::rpcINVALID_HOT_WALLET}};
-
     output.accountID = input.account;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
     output.ledgerIndex = lgrInfo.seq;
