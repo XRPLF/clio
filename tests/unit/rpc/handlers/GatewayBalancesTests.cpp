@@ -49,22 +49,30 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
-constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-constexpr static auto ACCOUNT3 = "raHGBERMka3KZsfpTQUAtumxmvpqhFLyrk";
-constexpr static auto ISSUER = "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD";
-constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
-constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
-constexpr static auto TXNID = "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879";
-
-class RPCGatewayBalancesHandlerTest : public HandlerBaseTest {};
+namespace {
+constexpr auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+constexpr auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+constexpr auto ACCOUNT3 = "raHGBERMka3KZsfpTQUAtumxmvpqhFLyrk";
+constexpr auto ISSUER = "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD";
+constexpr auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
+constexpr auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
+constexpr auto TXNID = "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879";
 
 struct ParameterTestBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
     std::string expectedErrorMessage;
+    std::uint32_t apiVersion = 1u;
+};
+} // namespace
+
+struct RPCGatewayBalancesHandlerTest : HandlerBaseTest {
+    RPCGatewayBalancesHandlerTest()
+    {
+        backend->setRange(10, 300);
+    }
 };
 
 struct ParameterTest : public RPCGatewayBalancesHandlerTest, public WithParamInterface<ParameterTestBundle> {};
@@ -74,7 +82,8 @@ TEST_P(ParameterTest, CheckError)
     auto bundle = GetParam();
     auto const handler = AnyHandler{GatewayBalancesHandler{backend}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(json::parse(bundle.testJson), Context{yield});
+        auto const output =
+            handler.process(json::parse(bundle.testJson), Context{.yield = yield, .apiVersion = bundle.apiVersion});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), bundle.expectedError);
@@ -146,52 +155,104 @@ generateParameterTestBundles()
             "ledger_hashNotString"
         },
         ParameterTestBundle{
-            "WalletsNotStringOrArray",
-            fmt::format(
+            .testName = "WalletsNotStringOrArrayV1",
+            .testJson = fmt::format(
                 R"({{
                     "account": "{}",
                     "hotwallet": 12
                 }})",
                 ACCOUNT
             ),
-            "invalidParams",
-            "hotwalletNotStringOrArray"
+            .expectedError = "invalidHotWallet",
+            .expectedErrorMessage = "hotwalletNotStringOrArray"
         },
         ParameterTestBundle{
-            "WalletsNotStringAccount",
-            fmt::format(
+            .testName = "WalletsNotStringAccountV1",
+            .testJson = fmt::format(
                 R"({{
                     "account": "{}",
                     "hotwallet": [12]
                 }})",
                 ACCOUNT
             ),
-            "invalidParams",
-            "hotwalletMalformed"
+            .expectedError = "invalidHotWallet",
+            .expectedErrorMessage = "hotwalletMalformed"
         },
         ParameterTestBundle{
-            "WalletsInvalidAccount",
-            fmt::format(
+            .testName = "WalletsInvalidAccountV1",
+            .testJson = fmt::format(
                 R"({{
                     "account": "{}",
                     "hotwallet": ["12"]
                 }})",
                 ACCOUNT
             ),
-            "invalidParams",
-            "hotwalletMalformed"
+            .expectedError = "invalidHotWallet",
+            .expectedErrorMessage = "hotwalletMalformed"
         },
         ParameterTestBundle{
-            "WalletInvalidAccount",
-            fmt::format(
+            .testName = "WalletInvalidAccountV1",
+            .testJson = fmt::format(
                 R"({{
                     "account": "{}",
                     "hotwallet": "12"
                 }})",
                 ACCOUNT
             ),
-            "invalidParams",
-            "hotwalletMalformed"
+            .expectedError = "invalidHotWallet",
+            .expectedErrorMessage = "hotwalletMalformed"
+        },
+        ParameterTestBundle{
+            .testName = "WalletsNotStringOrArrayV2",
+            .testJson = fmt::format(
+                R"({{
+                    "account": "{}",
+                    "hotwallet": 12
+                }})",
+                ACCOUNT
+            ),
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "hotwalletNotStringOrArray",
+            .apiVersion = 2u
+        },
+        ParameterTestBundle{
+            .testName = "WalletsNotStringAccountV2",
+            .testJson = fmt::format(
+                R"({{
+                    "account": "{}",
+                    "hotwallet": [12]
+                }})",
+                ACCOUNT
+            ),
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "hotwalletMalformed",
+            .apiVersion = 2u
+        },
+        ParameterTestBundle{
+            .testName = "WalletsInvalidAccountV2",
+            .testJson = fmt::format(
+                R"({{
+                    "account": "{}",
+                    "hotwallet": ["12"]
+                }})",
+                ACCOUNT
+            ),
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "hotwalletMalformed",
+            .apiVersion = 2u
+        },
+        ParameterTestBundle{
+            .testName = "WalletInvalidAccountV2",
+            .testJson = fmt::format(
+                R"({{
+                    "account": "{}",
+                    "hotwallet": "12"
+                }})",
+                ACCOUNT
+            ),
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "hotwalletMalformed",
+            .apiVersion = 2u
         },
     };
 }
@@ -207,7 +268,6 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
 {
     auto const seq = 123;
 
-    backend->setRange(10, 300);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
@@ -236,7 +296,6 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaIntIndex)
 {
     auto const seq = 123;
 
-    backend->setRange(10, 300);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
@@ -263,7 +322,6 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaIntIndex)
 
 TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaHash)
 {
-    backend->setRange(10, 300);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
@@ -293,7 +351,6 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
 {
     auto const seq = 300;
 
-    backend->setRange(10, seq);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return valid ledgerHeader
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
@@ -337,7 +394,6 @@ TEST_P(NormalPathTest, CheckOutput)
     auto const& bundle = GetParam();
     auto const seq = 300;
 
-    backend->setRange(10, seq);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return valid ledgerHeader
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
