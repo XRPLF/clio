@@ -900,6 +900,27 @@ isGlobalFrozen(
 }
 
 bool
+fetchAndCheckAnyFlagsExists(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::Keylet const& keylet,
+    std::vector<std::uint32_t> const& flags,
+    boost::asio::yield_context yield
+)
+{
+    auto const key = keylet.key;
+    auto const blob = backend.fetchLedgerObject(key, sequence, yield);
+
+    if (!blob)
+        return false;
+
+    ripple::SerialIter it{blob->data(), blob->size()};
+    ripple::SLE const sle{it, key};
+
+    return std::ranges::any_of(flags, [sle](std::uint32_t flag) { return sle.isFlag(flag); });
+}
+
+bool
 isFrozen(
     BackendInterface const& backend,
     std::uint32_t sequence,
@@ -912,35 +933,49 @@ isFrozen(
     if (ripple::isXRP(currency))
         return false;
 
-    auto key = ripple::keylet::account(issuer).key;
-    auto blob = backend.fetchLedgerObject(key, sequence, yield);
-
-    if (!blob)
-        return false;
-
-    ripple::SerialIter it{blob->data(), blob->size()};
-    ripple::SLE const sle{it, key};
-
-    if (sle.isFlag(ripple::lsfGlobalFreeze))
+    if (fetchAndCheckAnyFlagsExists(
+            backend, sequence, ripple::keylet::account(issuer), {ripple::lsfGlobalFreeze}, yield
+        ))
         return true;
 
     if (issuer != account) {
-        key = ripple::keylet::line(account, issuer, currency).key;
-        blob = backend.fetchLedgerObject(key, sequence, yield);
+        auto const key = ripple::keylet::line(account, issuer, currency).key;
+        auto const blob = backend.fetchLedgerObject(key, sequence, yield);
 
         if (!blob)
             return false;
 
         ripple::SerialIter issuerIt{blob->data(), blob->size()};
         ripple::SLE const issuerLine{issuerIt, key};
-
-        auto frozen = (issuer > account) ? ripple::lsfHighFreeze : ripple::lsfLowFreeze;
+        auto const frozen = (issuer > account) ? ripple::lsfHighFreeze : ripple::lsfLowFreeze;
 
         if (issuerLine.isFlag(frozen))
             return true;
     }
 
     return false;
+}
+
+bool
+isDeepFrozen(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& account,
+    ripple::Currency const& currency,
+    ripple::AccountID const& issuer,
+    boost::asio::yield_context yield
+)
+{
+    if (ripple::isXRP(currency))
+        return false;
+
+    if (issuer == account)
+        return false;
+
+    // Check if the account is deep frozen
+    return fetchAndCheckAnyFlagsExists(
+        backend, sequence, ripple::keylet::account(issuer), {ripple::lsfHighDeepFreeze, ripple::lsfLowDeepFreeze}, yield
+    );
 }
 
 ripple::XRPAmount
@@ -1021,7 +1056,9 @@ accountHolds(
     ripple::SerialIter it{blob->data(), blob->size()};
     ripple::SLE const sle{it, key};
 
-    if (zeroIfFrozen && isFrozen(backend, sequence, account, currency, issuer, yield)) {
+    if (zeroIfFrozen &&
+        ((isFrozen(backend, sequence, account, currency, issuer, yield)) ||
+         isDeepFrozen(backend, sequence, account, currency, issuer, yield))) {
         amount.setIssue(ripple::Issue(currency, issuer));
         amount.clear();
     } else {

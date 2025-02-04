@@ -817,7 +817,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
     auto const issue2 = getIssue(kCURRENCY, kISSUER);
     line.setFieldAmount(ripple::sfBalance, ripple::STAmount(issue2, 100));
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(4);
     auto const issueAccount = getAccountIdWithString(kISSUER);
     auto const kk = ripple::keylet::account(issueAccount).key;
     ON_CALL(*backend_, doFetchLedgerObject(testing::_, testing::_, testing::_))

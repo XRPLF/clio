@@ -23,8 +23,8 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AsioContextTestFixture.hpp"
+#include "util/HandlerBaseTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
-#include "util/MockPrometheus.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
@@ -38,6 +38,7 @@
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/ErrorCodes.h>
 #include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/UintTypes.h>
@@ -46,6 +47,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -63,13 +65,16 @@ constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr auto kINDEX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 constexpr auto kINDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 constexpr auto kTXN_ID = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
+constexpr auto kLEDGER_SEQ_OBJECT = 50;
+constexpr auto kCURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
 
 }  // namespace
 
-class RPCHelpersTest : public util::prometheus::WithPrometheus, public MockBackendTest, public SyncAsioContextTest {
+class RPCHelpersTest : public HandlerBaseTest {
     void
     SetUp() override
     {
+        backend_->setRange(10, 300);
         SyncAsioContextTest::SetUp();
     }
     void
@@ -545,6 +550,250 @@ TEST_F(RPCHelpersTest, ParseIssue)
         parseIssue(boost::json::parse(R"({"issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"})").as_object()),
         std::runtime_error
     );
+}
+
+TEST_F(RPCHelpersTest, FetchBlobDoesNotExist)
+{
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const issuerKey = ripple::keylet::account(account);
+
+    // returns empty blob
+    ON_CALL(*backend_, doFetchLedgerObject(issuerKey.key, kLEDGER_SEQ_OBJECT, _))
+        .WillByDefault(Return(std::optional<Blob>{}));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        // return false: blob doesn't exist
+        EXPECT_FALSE(
+            fetchAndCheckAnyFlagsExists(*backend_, kLEDGER_SEQ_OBJECT, issuerKey, {ripple::lsfHighDeepFreeze}, yield)
+        );
+    });
+}
+
+TEST_F(RPCHelpersTest, FetchAccountWithCorrectFlag)
+{
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const issuerKey = ripple::keylet::account(account);
+
+    // create account with highDeepFreeze Flag
+    auto const accountObject = createAccountRootObject(kACCOUNT, ripple::lsfHighDeepFreeze, 1, 10, 2, kTXN_ID, 3);
+
+    ON_CALL(*backend_, doFetchLedgerObject(issuerKey.key, kLEDGER_SEQ_OBJECT, _))
+        .WillByDefault(Return(accountObject.getSerializer().peekData()));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        // returns true: accountObject has the highDeepFreeze flag
+        EXPECT_TRUE(
+            fetchAndCheckAnyFlagsExists(*backend_, kLEDGER_SEQ_OBJECT, issuerKey, {ripple::lsfHighDeepFreeze}, yield)
+        );
+    });
+}
+
+TEST_F(RPCHelpersTest, FetchAccountFlagDoesNotExist)
+{
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const issuerKey = ripple::keylet::account(account);
+
+    // create account with highDeepFreeze Flag
+    auto const accountObject = createAccountRootObject(kACCOUNT, ripple::lsfLowDeepFreeze, 1, 10, 2, kTXN_ID, 3);
+
+    ON_CALL(*backend_, doFetchLedgerObject(issuerKey.key, kLEDGER_SEQ_OBJECT, _))
+        .WillByDefault(Return(accountObject.getSerializer().peekData()));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        // returns false: accountObject has the lowDeepFreeze flag
+        EXPECT_FALSE(
+            fetchAndCheckAnyFlagsExists(*backend_, kLEDGER_SEQ_OBJECT, issuerKey, {ripple::lsfHighDeepFreeze}, yield)
+        );
+    });
+}
+
+TEST_F(RPCHelpersTest, AccountIsGlobalFrozen)
+{
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const issuerKey = ripple::keylet::account(account);
+
+    auto const accountObject = createAccountRootObject(kACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, kTXN_ID, 3);
+
+    ON_CALL(*backend_, doFetchLedgerObject(issuerKey.key, kLEDGER_SEQ_OBJECT, _))
+        .WillByDefault(Return(accountObject.getSerializer().peekData()));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        // returns false: accountObject has the lowDeepFreeze flag
+        EXPECT_TRUE(isGlobalFrozen(*backend_, kLEDGER_SEQ_OBJECT, account, yield));
+    });
+}
+
+TEST_F(RPCHelpersTest, AccountIsDeepFrozen)
+{
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const account2 = getAccountIdWithString(kACCOUNT2);
+
+    // account 2 is deep frozen
+    auto const accountObject = createAccountRootObject(kACCOUNT2, ripple::lsfLowDeepFreeze, 1, 10, 2, kTXN_ID, 3);
+    auto const issuerKey = ripple::keylet::account(account2).key;
+
+    ON_CALL(*backend_, doFetchLedgerObject(issuerKey, kLEDGER_SEQ_OBJECT, _))
+        .WillByDefault(Return(accountObject.getSerializer().peekData()));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_TRUE(isDeepFrozen(*backend_, kLEDGER_SEQ_OBJECT, account, ripple::Currency{kCURRENCY}, account2, yield));
+    });
+}
+
+TEST_F(RPCHelpersTest, AccountIsNotDeepFrozen)
+{
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const account2 = getAccountIdWithString(kACCOUNT2);
+
+    // No Deep freeze flag passed
+    auto const accountObject = createAccountRootObject(kACCOUNT2, 0, 1, 10, 2, kTXN_ID, 3);
+    auto const issuerKey = ripple::keylet::account(account2).key;
+
+    ON_CALL(*backend_, doFetchLedgerObject(issuerKey, kLEDGER_SEQ_OBJECT, _))
+        .WillByDefault(Return(accountObject.getSerializer().peekData()));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_FALSE(isDeepFrozen(*backend_, kLEDGER_SEQ_OBJECT, account, ripple::Currency{kCURRENCY}, account2, yield)
+        );
+    });
+}
+
+TEST_F(RPCHelpersTest, IssuerAndAccountIsSameWillNotBeDeepFrozen)
+{
+    auto const account = getAccountIdWithString(kACCOUNT);
+
+    auto const accountObject = createAccountRootObject(kACCOUNT, 0, 1, 10, 2, kTXN_ID, 3);
+    auto const issuerKey = ripple::keylet::account(account).key;
+
+    ON_CALL(*backend_, doFetchLedgerObject(issuerKey, kLEDGER_SEQ_OBJECT, _))
+        .WillByDefault(Return(accountObject.getSerializer().peekData()));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        // both accounts are same so not deep frozen
+        EXPECT_FALSE(isDeepFrozen(*backend_, kLEDGER_SEQ_OBJECT, account, ripple::Currency{kCURRENCY}, account, yield));
+    });
+}
+
+TEST_F(RPCHelpersTest, IssuerAccountIsFrozen)
+{
+    auto const account = getAccountIdWithString(kACCOUNT);
+
+    auto const accountObject = createAccountRootObject(kACCOUNT, ripple::lsfLowFreeze, 1, 10, 2, kTXN_ID, 3);
+    auto const issuerKey = ripple::keylet::account(account).key;
+
+    ON_CALL(*backend_, doFetchLedgerObject(issuerKey, kLEDGER_SEQ_OBJECT, _))
+        .WillByDefault(Return(accountObject.getSerializer().peekData()));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_TRUE(isFrozen(*backend_, kLEDGER_SEQ_OBJECT, account, ripple::Currency{kCURRENCY}, account, yield));
+    });
+}
+
+TEST_F(RPCHelpersTest, IssuerAndAccountIsSameWillNotBeFrozen)
+{
+    auto const account = getAccountIdWithString(kACCOUNT);
+
+    auto const accountObject = createAccountRootObject(kACCOUNT, 0, 1, 10, 2, kTXN_ID, 3);
+    auto const issuerKey = ripple::keylet::account(account).key;
+
+    ON_CALL(*backend_, doFetchLedgerObject(issuerKey, kLEDGER_SEQ_OBJECT, _))
+        .WillByDefault(Return(accountObject.getSerializer().peekData()));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_FALSE(isFrozen(*backend_, kLEDGER_SEQ_OBJECT, account, ripple::Currency{kCURRENCY}, account, yield));
+    });
+}
+
+TEST_F(RPCHelpersTest, IssuerTrustLineIsFrozen)
+{
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const issuer = getAccountIdWithString(kACCOUNT2);
+    ripple::Currency const currency{kCURRENCY};
+
+    auto const accountObject = createAccountRootObject(kACCOUNT, ripple::lsfLowFreeze, 1, 10, 2, kTXN_ID, 3);
+    auto const issuerObject = createAccountRootObject(kACCOUNT2, 0, 1, 10, 2, kTXN_ID, 3);
+
+    auto const issuerKey = ripple::keylet::account(issuer).key;
+    auto const issuerLineKey = ripple::keylet::line(account, issuer, currency).key;
+
+    auto const issuerLineBlob = createRippleStateLedgerObject(
+        kCURRENCY, kACCOUNT2, 1000, kACCOUNT, 10000, kACCOUNT2, 10000, kTXN_ID, 1, ripple::lsfHighFreeze
+    );
+
+    ON_CALL(*backend_, doFetchLedgerObject(issuerKey, kLEDGER_SEQ_OBJECT, _))
+        .WillByDefault(Return(issuerObject.getSerializer().peekData()));
+
+    ON_CALL(*backend_, doFetchLedgerObject(issuerLineKey, kLEDGER_SEQ_OBJECT, _))
+        .WillByDefault(Return(issuerLineBlob.getSerializer().peekData()));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_TRUE(isFrozen(*backend_, kLEDGER_SEQ_OBJECT, account, currency, issuer, yield));
+    });
+}
+
+TEST_F(RPCHelpersTest, AccountHoldsTrustLineNotfrozen)
+{
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const issuer = getAccountIdWithString(kACCOUNT2);
+    ripple::Currency const currency{kCURRENCY};
+
+    auto const trustLine =
+        createRippleStateLedgerObject(kCURRENCY, kACCOUNT2, 500, kACCOUNT, 1000, kACCOUNT2, 1000, kTXN_ID, 1, 0);
+
+    auto const key = ripple::keylet::line(account, issuer, currency).key;
+
+    EXPECT_CALL(*backend_, doFetchLedgerObject(key, kLEDGER_SEQ_OBJECT, _))
+        .WillOnce(Return(trustLine.getSerializer().peekData()));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const result = accountHolds(*backend_, kLEDGER_SEQ_OBJECT, account, currency, issuer, false, yield);
+        // Check issuer has a balance of 500
+        EXPECT_EQ(result, ripple::STAmount(getIssue(kCURRENCY, kACCOUNT2), 500));
+    });
+}
+
+TEST_F(RPCHelpersTest, AccountHoldsNoTrustLine)
+{
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const issuer = getAccountIdWithString(kACCOUNT2);
+    ripple::Currency const currency{kCURRENCY};
+
+    auto const key = ripple::keylet::line(account, issuer, currency).key;
+
+    // return no trustline found
+    EXPECT_CALL(*backend_, doFetchLedgerObject(key, kLEDGER_SEQ_OBJECT, _)).WillOnce(Return(std::nullopt));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const result = accountHolds(*backend_, kLEDGER_SEQ_OBJECT, account, currency, issuer, false, yield);
+        // balance is 0 as trustline is frozen
+        EXPECT_EQ(result, ripple::STAmount(getIssue(kCURRENCY, kACCOUNT2), 0));
+    });
+}
+
+TEST_F(RPCHelpersTest, AccountHoldsTrustLineButFrozen)
+{
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const issuer = getAccountIdWithString(kACCOUNT2);
+    ripple::Currency const currency{kCURRENCY};
+    auto const issuerKey = ripple::keylet::account(account).key;
+
+    // balance of 500, but account is frozen
+    auto const trustLine = createRippleStateLedgerObject(
+        kCURRENCY, kACCOUNT2, 500, kACCOUNT, 1000, kACCOUNT2, 1000, kTXN_ID, 1, ripple::lsfHighFreeze
+    );
+    auto const accountObject = createAccountRootObject(kACCOUNT2, ripple::lsfHighFreeze, 1, 10, 2, kTXN_ID, 3);
+    auto const key = ripple::keylet::line(account, issuer, currency).key;
+
+    ON_CALL(*backend_, doFetchLedgerObject(key, kLEDGER_SEQ_OBJECT, _))
+        .WillByDefault(Return(trustLine.getSerializer().peekData()));
+
+    ON_CALL(*backend_, doFetchLedgerObject(issuerKey, kLEDGER_SEQ_OBJECT, _))
+        .WillByDefault(Return(accountObject.getSerializer().peekData()));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto result = accountHolds(*backend_, kLEDGER_SEQ_OBJECT, account, currency, issuer, true, yield);
+        EXPECT_EQ(result, ripple::STAmount(getIssue(kCURRENCY, kACCOUNT2), 0));
+    });
 }
 
 struct IsAdminCmdParamTestCaseBundle {
