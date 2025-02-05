@@ -938,22 +938,11 @@ isFrozen(
         ))
         return true;
 
-    if (issuer != account) {
-        auto const key = ripple::keylet::line(account, issuer, currency).key;
-        auto const blob = backend.fetchLedgerObject(key, sequence, yield);
-
-        if (!blob)
-            return false;
-
-        ripple::SerialIter issuerIt{blob->data(), blob->size()};
-        ripple::SLE const issuerLine{issuerIt, key};
-        auto const frozen = (issuer > account) ? ripple::lsfHighFreeze : ripple::lsfLowFreeze;
-
-        if (issuerLine.isFlag(frozen))
-            return true;
-    }
-
-    return false;
+    auto const trustLineKeylet = ripple::keylet::line(account, issuer, currency);
+    return issuer != account &&
+        fetchAndCheckAnyFlagsExists(
+               backend, sequence, trustLineKeylet, {ripple::lsfHighFreeze, ripple::lsfLowFreeze}, yield
+        );
 }
 
 bool
@@ -972,9 +961,10 @@ isDeepFrozen(
     if (issuer == account)
         return false;
 
-    // Check if the account is deep frozen
+    auto const trustLineKeylet = ripple::keylet::line(account, issuer, currency);
+
     return fetchAndCheckAnyFlagsExists(
-        backend, sequence, ripple::keylet::account(issuer), {ripple::lsfHighDeepFreeze, ripple::lsfLowDeepFreeze}, yield
+        backend, sequence, trustLineKeylet, {ripple::lsfHighDeepFreeze, ripple::lsfLowDeepFreeze}, yield
     );
 }
 
