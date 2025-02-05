@@ -22,7 +22,6 @@
 #include "util/OverloadSet.hpp"
 #include "util/TmpFile.hpp"
 #include "util/newconfig/ConfigFileJson.hpp"
-#include "util/newconfig/FakeConfigData.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
@@ -34,161 +33,12 @@
 #include <string>
 #include <unordered_map>
 #include <variant>
-#include <vector>
 
-struct ConfigFileJsonOldTest : NoLoggerFixture {};
+using namespace util::config;
 
-TEST_F(ConfigFileJsonOldTest, createUsingCorrectFile)
-{
-    auto const jsonFileObj = ConfigFileJson::makeConfigFileJson(TmpFile(kJSON_DATA).path);
-    EXPECT_TRUE(jsonFileObj.has_value());
-
-    EXPECT_TRUE(jsonFileObj->containsKey("array.[].sub"));
-    auto const arrSub = jsonFileObj->getArray("array.[].sub");
-    EXPECT_EQ(arrSub.size(), 3);
-}
-
-TEST_F(ConfigFileJsonOldTest, createUsingIncorrectFileReturnsError)
-{
-    auto const jsonFileObj = util::config::ConfigFileJson::makeConfigFileJson("123/clio");
-    EXPECT_FALSE(jsonFileObj.has_value());
-}
-
-struct ConfigFileJsonParseOldTest : ConfigFileJsonOldTest {
-    ConfigFileJsonParseOldTest() : jsonFileObj{boost::json::parse(kJSON_DATA).as_object()}
-    {
-    }
-
-    ConfigFileJson const jsonFileObj;
-};
-
-TEST_F(ConfigFileJsonParseOldTest, validateValues)
-{
-    EXPECT_TRUE(jsonFileObj.containsKey("header.text1"));
-    EXPECT_EQ(std::get<std::string>(jsonFileObj.getValue("header.text1")), "value");
-
-    EXPECT_TRUE(jsonFileObj.containsKey("header.sub.sub2Value"));
-    EXPECT_EQ(std::get<std::string>(jsonFileObj.getValue("header.sub.sub2Value")), "TSM");
-
-    EXPECT_TRUE(jsonFileObj.containsKey("dosguard.port"));
-    EXPECT_EQ(std::get<int64_t>(jsonFileObj.getValue("dosguard.port")), 44444);
-
-    EXPECT_FALSE(jsonFileObj.containsKey("idk"));
-    EXPECT_FALSE(jsonFileObj.containsKey("optional.withNoDefault"));
-}
-
-TEST_F(ConfigFileJsonParseOldTest, validateArrayValue)
-{
-    // validate array.[].sub matches expected values
-    EXPECT_TRUE(jsonFileObj.containsKey("array.[].sub"));
-    auto const arrSub = jsonFileObj.getArray("array.[].sub");
-    EXPECT_EQ(arrSub.size(), 3);
-
-    std::vector<double> expectedArrSubVal{111.11, 4321.55, 5555.44};
-    std::vector<double> actualArrSubVal{};
-
-    for (auto it = arrSub.begin(); it != arrSub.end(); ++it) {
-        ASSERT_TRUE(std::holds_alternative<double>(*it));
-        actualArrSubVal.emplace_back(std::get<double>(*it));
-    }
-    EXPECT_TRUE(std::ranges::equal(expectedArrSubVal, actualArrSubVal));
-
-    // validate array.[].sub2 matches expected values
-    EXPECT_TRUE(jsonFileObj.containsKey("array.[].sub2"));
-    auto const arrSub2 = jsonFileObj.getArray("array.[].sub2");
-    EXPECT_EQ(arrSub2.size(), 3);
-    std::vector<std::string> expectedArrSub2Val{"subCategory", "temporary", "london"};
-    std::vector<std::string> actualArrSub2Val{};
-
-    for (auto it = arrSub2.begin(); it != arrSub2.end(); ++it) {
-        ASSERT_TRUE(std::holds_alternative<std::string>(*it));
-        actualArrSub2Val.emplace_back(std::get<std::string>(*it));
-    }
-    EXPECT_TRUE(std::ranges::equal(expectedArrSub2Val, actualArrSub2Val));
-
-    EXPECT_TRUE(jsonFileObj.containsKey("dosguard.whitelist.[]"));
-    auto const whitelistArr = jsonFileObj.getArray("dosguard.whitelist.[]");
-    EXPECT_EQ(whitelistArr.size(), 2);
-    EXPECT_EQ("125.5.5.1", std::get<std::string>(whitelistArr.at(0)));
-    EXPECT_EQ("204.2.2.1", std::get<std::string>(whitelistArr.at(1)));
-}
-
-struct ConfigValueJsonGetArrayDeathTest : ConfigFileJsonParseOldTest {};
-
-TEST_F(ConfigValueJsonGetArrayDeathTest, invalidGetArray)
-{
-    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getArray("header.text1"), ".*");
-}
-
-struct JsonFromTempFile : testing::Test {
-    JsonFromTempFile() : jsonFileObj{util::config::ConfigFileJson::makeConfigFileJson(TmpFile(kJSON_DATA).path).value()}
-    {
-    }
-
-    ConfigFileJson jsonFileObj;
-};
-
-TEST_F(JsonFromTempFile, validateKeys)
-{
-    EXPECT_TRUE(jsonFileObj.containsKey("header.text1"));
-    EXPECT_TRUE(jsonFileObj.containsKey("header.sub.sub2Value"));
-    EXPECT_TRUE(jsonFileObj.containsKey("dosguard.port"));
-    EXPECT_FALSE(jsonFileObj.containsKey("idk"));
-    EXPECT_FALSE(jsonFileObj.containsKey("optional.withNoDefault"));
-}
-
-TEST_F(JsonFromTempFile, validateValues)
-{
-    EXPECT_EQ(std::get<std::string>(jsonFileObj.getValue("header.text1")), "value");
-    EXPECT_EQ(std::get<std::string>(jsonFileObj.getValue("header.sub.sub2Value")), "TSM");
-    EXPECT_EQ(std::get<int64_t>(jsonFileObj.getValue("dosguard.port")), 44444);
-}
-
-TEST_F(JsonFromTempFile, validateArrayValue)
-{
-    // validate array.[].sub matches expected values
-    EXPECT_TRUE(jsonFileObj.containsKey("array.[].sub"));
-    auto const arrSub = jsonFileObj.getArray("array.[].sub");
-    EXPECT_EQ(arrSub.size(), 3);
-
-    std::vector<double> expectedArrSubVal{111.11, 4321.55, 5555.44};
-    std::vector<double> actualArrSubVal{};
-
-    for (auto it = arrSub.begin(); it != arrSub.end(); ++it) {
-        ASSERT_TRUE(std::holds_alternative<double>(*it));
-        actualArrSubVal.emplace_back(std::get<double>(*it));
-    }
-    EXPECT_TRUE(std::ranges::equal(expectedArrSubVal, actualArrSubVal));
-
-    // validate array.[].sub2 matches expected values
-    EXPECT_TRUE(jsonFileObj.containsKey("array.[].sub2"));
-    auto const arrSub2 = jsonFileObj.getArray("array.[].sub2");
-    EXPECT_EQ(arrSub2.size(), 3);
-    std::vector<std::string> expectedArrSub2Val{"subCategory", "temporary", "london"};
-    std::vector<std::string> actualArrSub2Val{};
-
-    for (auto it = arrSub2.begin(); it != arrSub2.end(); ++it) {
-        ASSERT_TRUE(std::holds_alternative<std::string>(*it));
-        actualArrSub2Val.emplace_back(std::get<std::string>(*it));
-    }
-    EXPECT_TRUE(std::ranges::equal(expectedArrSub2Val, actualArrSub2Val));
-
-    EXPECT_TRUE(jsonFileObj.containsKey("dosguard.whitelist.[]"));
-    auto const whitelistArr = jsonFileObj.getArray("dosguard.whitelist.[]");
-    EXPECT_EQ(whitelistArr.size(), 2);
-    EXPECT_EQ("125.5.5.1", std::get<std::string>(whitelistArr.at(0)));
-    EXPECT_EQ("204.2.2.1", std::get<std::string>(whitelistArr.at(1)));
-}
-
-struct JsonValueDeathTest : JsonFromTempFile {};
-
-TEST_F(ConfigValueJsonGetArrayDeathTest, invalidGetValues)
-{
-    // not possible for json value to call a value that doesn't exist
-    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getArray("header.text1"), ".*");
-}
-
-// -------------------------------------------------------------------
+namespace {
+constexpr auto kEPS = 1e-9;
+}  // namespace
 
 struct ConfigFileJsonParseTestBundle {
     using ValidationMap = std::unordered_map<
@@ -204,7 +54,6 @@ struct ConfigFileJsonParseTest : NoLoggerFixture, testing::WithParamInterface<Co
 
 TEST_P(ConfigFileJsonParseTest, parseValues)
 {
-    static constexpr auto kEPS = 1e-9;
     ConfigFileJson const configFile{boost::json::parse(GetParam().configStr).as_object()};
 
     auto const& flatJson = configFile.inner();
@@ -290,7 +139,263 @@ INSTANTIATE_TEST_CASE_P(
                 "array": [1, 2, 3]
             })json",
             .validationMap = {{"array.[]", boost::json::array{1, 2, 3}}}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "nested_array",
+            .configStr = R"json({
+                "level_0": {
+                    "array": [1, 2, 3],
+                    "level_1": {
+                        "array": [4, 5, 6],
+                        "level_2": {
+                            "array": [7, 8, 9]
+                        }
+                    }
+                }
+            })json",
+            .validationMap =
+                {
+                    {"level_0.array.[]", boost::json::array{1, 2, 3}},
+                    {"level_0.level_1.array.[]", boost::json::array{4, 5, 6}},
+                    {"level_0.level_1.level_2.array.[]", boost::json::array{7, 8, 9}},
+                }
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "mixed",
+            .configStr = R"json({
+                "int": 42,
+                "double": 123.456,
+                "bool": true,
+                "string": "some string",
+                "array": [1, 2, 3],
+                "nested": {
+                    "int": 42,
+                    "double": 123.456,
+                    "bool": true,
+                    "string": "some string",
+                    "array": [1, 2, 3]
+                }
+            })json",
+            .validationMap =
+                {
+                    {"int", 42},
+                    {"double", 123.456},
+                    {"bool", true},
+                    {"string", "some string"},
+                    {"array.[]", boost::json::array{1, 2, 3}},
+                    {"nested.int", 42},
+                    {"nested.double", 123.456},
+                    {"nested.bool", true},
+                    {"nested.string", "some string"},
+                    {"nested.array.[]", boost::json::array{1, 2, 3}},
+                }
+        },
+        ConfigFileJsonParseTestBundle{.testName = "empty", .configStr = R"json({})json", .validationMap = {}},
+        ConfigFileJsonParseTestBundle{
+            .testName = "empty_nested",
+            .configStr = R"json({
+                "level_0": {
+                    "level_1": {
+                        "level_2": {
+                            "level_3": {}
+                        }
+                    }
+                }
+            })json",
+            .validationMap = {}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "empty_array",
+            .configStr = R"json({
+                "array": []
+            })json",
+            .validationMap = {{"array.[]", boost::json::array{}}}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "empty_nested_array",
+            .configStr = R"json({
+                "level_0": {
+                    "array": [],
+                    "level_1": {
+                        "array": [],
+                        "level_2": {
+                            "array": []
+                        }
+                    }
+                }
+            })json",
+            .validationMap =
+                {
+                    {"level_0.array.[]", boost::json::array{}},
+                    {"level_0.level_1.array.[]", boost::json::array{}},
+                    {"level_0.level_1.level_2.array.[]", boost::json::array{}},
+                }
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "object_inside_array",
+            .configStr = R"json({
+                "array": [
+                    {"int": 42},
+                ]
+            })json",
+            .validationMap = {{"array.[].int", boost::json::array{42}}}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "object_with_optional_fields_inside_array",
+            .configStr = R"json({
+                "array": [
+                    {"int": 42},
+                    {"int": 42, "bool": true},
+                ]
+            })json",
+            .validationMap =
+                {{"array.[].int", boost::json::array{42, 42}},
+                 {"array.[].bool", boost::json::array{boost::json::value{}, true}}}
         }
     ),
     tests::util::kNAME_GENERATOR
 );
+
+struct ConfigFileJsonTest : NoLoggerFixture {};
+
+TEST_F(ConfigFileJsonTest, getValue)
+{
+    auto const jsonStr = R"json({
+        "int": 42,
+        "object": { "string": "some string" },
+        "bool": true,
+        "double": 123.456
+    })json";
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
+
+    auto const intValue = jsonFileObj.getValue("int");
+    ASSERT_TRUE(std::holds_alternative<int64_t>(intValue));
+    EXPECT_EQ(std::get<int64_t>(intValue), 42);
+
+    auto const stringValue = jsonFileObj.getValue("object.string");
+    ASSERT_TRUE(std::holds_alternative<std::string>(stringValue));
+    EXPECT_EQ(std::get<std::string>(stringValue), "some string");
+
+    auto const boolValue = jsonFileObj.getValue("bool");
+    ASSERT_TRUE(std::holds_alternative<bool>(boolValue));
+    EXPECT_EQ(std::get<bool>(boolValue), true);
+
+    auto const doubleValue = jsonFileObj.getValue("double");
+    ASSERT_TRUE(std::holds_alternative<double>(doubleValue));
+    EXPECT_NEAR(std::get<double>(doubleValue), 123.456, kEPS);
+
+    EXPECT_FALSE(jsonFileObj.containsKey("object.int"));
+}
+
+struct ConfigFileJsonDeathTest : ConfigFileJsonTest {};
+
+TEST_F(ConfigFileJsonDeathTest, getValueInvalidKey)
+{
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse("{}").as_object()};
+    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getValue("some_key"), ".*");
+}
+
+TEST_F(ConfigFileJsonDeathTest, getValueOfArray)
+{
+    auto const jsonStr = R"json({
+        "array": [1, 2, 3]
+    })json";
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
+    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getValue("array"), ".*");
+}
+
+TEST_F(ConfigFileJsonTest, getArray)
+{
+    auto const jsonStr = R"json({
+        "array": [1, "2", 3.14, true],
+        "object": { "array": [3, 4] }
+    })json";
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
+
+    auto const array = jsonFileObj.getArray("array.[]");
+    ASSERT_EQ(array.size(), 4);
+    ASSERT_TRUE(std::holds_alternative<int64_t>(array.at(0)));
+    EXPECT_EQ(std::get<int64_t>(array.at(0)), 1);
+    ASSERT_TRUE(std::holds_alternative<std::string>(array.at(1)));
+    EXPECT_EQ(std::get<std::string>(array.at(1)), "2");
+    ASSERT_TRUE(std::holds_alternative<double>(array.at(2)));
+    EXPECT_NEAR(std::get<double>(array.at(2)), 3.14, kEPS);
+    ASSERT_TRUE(std::holds_alternative<bool>(array.at(3)));
+    EXPECT_EQ(std::get<bool>(array.at(3)), true);
+
+    auto const arrayFromObject = jsonFileObj.getArray("object.array.[]");
+    ASSERT_EQ(arrayFromObject.size(), 2);
+    EXPECT_EQ(std::get<int64_t>(arrayFromObject.at(0)), 3);
+    EXPECT_EQ(std::get<int64_t>(arrayFromObject.at(1)), 4);
+}
+
+TEST_F(ConfigFileJsonDeathTest, getArrayInvalidKey)
+{
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse("{}").as_object()};
+    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getArray("some_key"), ".*");
+}
+
+TEST_F(ConfigFileJsonDeathTest, getArrayNotArray)
+{
+    auto const jsonStr = R"json({
+        "int": 42
+    })json";
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
+    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getArray("int"), ".*");
+}
+
+TEST_F(ConfigFileJsonTest, containsKey)
+{
+    auto const jsonStr = R"json({
+        "int": 42,
+        "object": { "string": "some string", "array": [1, 2, 3] },
+        "array2": [1, 2, 3],
+        "array_of_objects": [ {"int": 42}, {"string": "some string"} ]
+    })json";
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
+
+    EXPECT_TRUE(jsonFileObj.containsKey("int"));
+    EXPECT_FALSE(jsonFileObj.containsKey("other_key"));
+
+    EXPECT_TRUE(jsonFileObj.containsKey("object.string"));
+    EXPECT_FALSE(jsonFileObj.containsKey("object.int"));
+    EXPECT_TRUE(jsonFileObj.containsKey("object.array.[]"));
+    EXPECT_FALSE(jsonFileObj.containsKey("object.array"));
+
+    EXPECT_TRUE(jsonFileObj.containsKey("array2.[]"));
+    EXPECT_FALSE(jsonFileObj.containsKey("array2"));
+    EXPECT_FALSE(jsonFileObj.containsKey("array2.[].int"));
+
+    EXPECT_TRUE(jsonFileObj.containsKey("array_of_objects.[].int"));
+    EXPECT_TRUE(jsonFileObj.containsKey("array_of_objects.[].string"));
+    EXPECT_FALSE(jsonFileObj.containsKey("array_of_objects.[]"));
+    EXPECT_FALSE(jsonFileObj.containsKey("array_of_objects.[].object"));
+}
+
+struct ConfigFileJsonMakeTest : ConfigFileJsonTest {};
+
+TEST_F(ConfigFileJsonMakeTest, invalidFile)
+{
+    auto const jsonFileObj = ConfigFileJson::makeConfigFileJson("does_not_exist");
+    EXPECT_FALSE(jsonFileObj.has_value());
+}
+
+TEST_F(ConfigFileJsonMakeTest, invalidJson)
+{
+    auto const file = TmpFile("invalid json");
+    auto const jsonFileObj = ConfigFileJson::makeConfigFileJson(file.path);
+    EXPECT_FALSE(jsonFileObj.has_value());
+}
+
+TEST_F(ConfigFileJsonMakeTest, validFile)
+{
+    auto const file = TmpFile(R"json({ "int": 42 })json");
+    auto const jsonFileObj = ConfigFileJson::makeConfigFileJson(file.path);
+    ASSERT_TRUE(jsonFileObj.has_value());
+
+    auto const& flatJson = jsonFileObj->inner();
+    ASSERT_EQ(flatJson.size(), 1);
+    ASSERT_TRUE(flatJson.contains("int"));
+    ASSERT_TRUE(flatJson.at("int").is_number());
+    EXPECT_EQ(flatJson.at("int").as_int64(), 42);
+}

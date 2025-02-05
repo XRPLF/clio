@@ -88,8 +88,7 @@ ConfigFileJson::makeConfigFileJson(std::filesystem::path const& configFilePath)
         if (auto const in = std::ifstream(configFilePath.string(), std::ios::in | std::ios::binary); in) {
             std::stringstream contents;
             contents << in.rdbuf();
-            auto opts = boost::json::parse_options{};
-            opts.allow_comments = true;
+            auto const opts = boost::json::parse_options{.allow_comments = true};
             auto const tempObj = boost::json::parse(contents.str(), {}, opts).as_object();
             return ConfigFileJson{tempObj};
         }
@@ -107,7 +106,9 @@ ConfigFileJson::makeConfigFileJson(std::filesystem::path const& configFilePath)
 Value
 ConfigFileJson::getValue(std::string_view key) const
 {
+    ASSERT(containsKey(key), "Key {} not found in ConfigFileJson", key);
     auto const jsonValue = jsonObject_.at(key);
+    ASSERT(jsonValue.is_primitive(), "Key {} has value that is not a primitive", key);
     auto const value = extractJsonValue(jsonValue);
     return value;
 }
@@ -115,14 +116,15 @@ ConfigFileJson::getValue(std::string_view key) const
 std::vector<Value>
 ConfigFileJson::getArray(std::string_view key) const
 {
+    ASSERT(containsKey(key), "Key {} not found in ConfigFileJson", key);
     ASSERT(jsonObject_.at(key).is_array(), "Key {} has value that is not an array", key);
 
     std::vector<Value> configValues;
     auto const arr = jsonObject_.at(key).as_array();
 
     for (auto const& item : arr) {
-        auto const value = extractJsonValue(item);
-        configValues.emplace_back(value);
+        auto value = extractJsonValue(item);
+        configValues.emplace_back(std::move(value));
     }
     return configValues;
 }
