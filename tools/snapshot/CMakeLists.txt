@@ -47,14 +47,15 @@ foreach (proto ${PROTO_FILES})
   list(APPEND GENERATED_GO_FILES ${GO_SOURCE_DIR}/${proto_name}.pb.go)
 endforeach ()
 
+add_custom_target(build_clio_snapshot ALL DEPENDS run_go_tests ${GO_OUTPUT})
+
 add_custom_target(run_go_tests
     COMMAND go test ./unittests
     WORKING_DIRECTORY ${GO_SOURCE_DIR}
     COMMENT "Running clio_snapshot unittests"
     VERBATIM
+    DEPENDS ${GENERATED_GO_FILES}
 )
-
-add_custom_target(build_clio_snapshot ALL DEPENDS run_go_tests ${GO_OUTPUT} ${GENERATED_GO_FILES})
 
 add_custom_command(
   OUTPUT ${GO_OUTPUT}
