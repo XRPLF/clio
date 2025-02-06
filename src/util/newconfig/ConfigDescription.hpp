@@ -82,27 +82,23 @@ public:
     {
         namespace fs = std::filesystem;
 
-        // Construct the full file path
-        fs::path const fullFilePath = path.string();
-
         // Validate the directory exists
-        auto const dir = fs::path(fullFilePath).parent_path();
-        if (!dir.empty() && !fs::exists(dir))
+        auto const dir = path.parent_path();
+        if (!dir.empty() && !fs::exists(dir)) {
             return std::unexpected<Error>{
-                fmt::format("Error: Directory {} does not exist or provided path is invalid", dir.string())
+                fmt::format("Error: Directory '{}' does not exist or provided path is invalid", dir.string())
             };
+        }
 
-        std::ofstream file(fullFilePath);
+        std::ofstream file(path.string());
         if (!file.is_open()) {
-            return std::unexpected{
-                fmt::format("Failed to create file '{}': {}", fullFilePath.string(), std::strerror(errno))
-            };
+            return std::unexpected{fmt::format("Failed to create file '{}': {}", path.string(), std::strerror(errno))};
         }
 
         writeConfigDescriptionToFile(file);
         file.close();
 
-        std::cout << "Markdown file generated successfully: " << fullFilePath << "\n";
+        std::cout << "Markdown file generated successfully: " << path << "\n";
         return {};
     }
 

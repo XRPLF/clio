@@ -183,7 +183,6 @@ TEST_F(CliArgsTestsWithTmpFile, Parse_ConfigDescription)
 
     // user provide config markdown file name as well
     ASSERT_TRUE(std::filesystem::exists(tmpFile.path));
-    std::filesystem::remove(tmpFile.path);
 
     EXPECT_EQ(
         action.apply(
@@ -220,6 +219,4 @@ TEST_F(CliArgsTestsWithTmpFile, Parse_ConfigDescriptionFileContent)
     // all keys that exist in clio config should be listed in config description file
     for (auto const& key : gClioConfig)
         EXPECT_TRUE(fileContent.find(key.first));
-
-    std::filesystem::remove(tmpFile.path);
 }
