@@ -700,11 +700,11 @@ TEST_F(RPCHelpersTest, isFrozen_IssuerAccountIsGlobalFrozen)
 TEST_F(RPCHelpersTest, isFrozen_IssuerAndAccountIsSameWillNotBeFrozen)
 {
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const account2 = getAccountIdWithString(kACCOUNT2);
+    auto const issuer = getAccountIdWithString(kACCOUNT2);
 
-    auto const trustLineKey = ripple::keylet::line(account, account2, ripple::Currency{kCURRENCY}).key;
+    auto const trustLineKey = ripple::keylet::line(account, issuer, ripple::Currency{kCURRENCY}).key;
     auto const trustlineDeepFrozen = createRippleStateLedgerObject(
-        "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, ripple::lsfLowFreeze
+        "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, ripple::lsfHighFreeze
     );
 
     ON_CALL(*backend_, doFetchLedgerObject(trustLineKey, kLEDGER_SEQ_OBJECT, _))
@@ -722,6 +722,29 @@ TEST_F(RPCHelpersTest, isFrozen_IssuerTrustLineIsFrozen)
     ripple::Currency const currency{kCURRENCY};
 
     auto const trustLineKey = ripple::keylet::line(account, issuer, currency).key;
+
+    // issuer is higher than account, so the correct flag to set is High freeze
+    auto const trustlineFrozen = createRippleStateLedgerObject(
+        "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, ripple::lsfHighFreeze
+    );
+
+    ON_CALL(*backend_, doFetchLedgerObject(trustLineKey, kLEDGER_SEQ_OBJECT, _))
+        .WillByDefault(Return(trustlineFrozen.getSerializer().peekData()));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_TRUE(isFrozen(*backend_, kLEDGER_SEQ_OBJECT, account, currency, issuer, yield));
+    });
+}
+
+TEST_F(RPCHelpersTest, isFrozen_IssuerWithLowFreezeIsNotFrozen)
+{
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const issuer = getAccountIdWithString(kACCOUNT2);
+    ripple::Currency const currency{kCURRENCY};
+
+    auto const trustLineKey = ripple::keylet::line(account, issuer, currency).key;
+
+    // issuer is higher than account, but the flag set here is low freeze
     auto const trustlineFrozen = createRippleStateLedgerObject(
         "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, ripple::lsfLowFreeze
     );
@@ -730,7 +753,7 @@ TEST_F(RPCHelpersTest, isFrozen_IssuerTrustLineIsFrozen)
         .WillByDefault(Return(trustlineFrozen.getSerializer().peekData()));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        EXPECT_TRUE(isFrozen(*backend_, kLEDGER_SEQ_OBJECT, account, currency, issuer, yield));
+        EXPECT_FALSE(isFrozen(*backend_, kLEDGER_SEQ_OBJECT, account, currency, issuer, yield));
     });
 }
 

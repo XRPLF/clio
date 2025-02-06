@@ -908,14 +908,13 @@ fetchAndCheckAnyFlagsExists(
     boost::asio::yield_context yield
 )
 {
-    auto const key = keylet.key;
-    auto const blob = backend.fetchLedgerObject(key, sequence, yield);
+    auto const blob = backend.fetchLedgerObject(keylet.key, sequence, yield);
 
     if (!blob)
         return false;
 
     ripple::SerialIter it{blob->data(), blob->size()};
-    ripple::SLE const sle{it, key};
+    ripple::SLE const sle{it, keylet.key};
 
     return std::ranges::any_of(flags, [sle](std::uint32_t flag) { return sle.isFlag(flag); });
 }
@@ -941,7 +940,11 @@ isFrozen(
     auto const trustLineKeylet = ripple::keylet::line(account, issuer, currency);
     return issuer != account &&
         fetchAndCheckAnyFlagsExists(
-               backend, sequence, trustLineKeylet, {ripple::lsfHighFreeze, ripple::lsfLowFreeze}, yield
+               backend,
+               sequence,
+               trustLineKeylet,
+               {(issuer > account) ? ripple::lsfHighFreeze : ripple::lsfLowFreeze},
+               yield
         );
 }
 
@@ -1047,7 +1050,7 @@ accountHolds(
     ripple::SLE const sle{it, key};
 
     if (zeroIfFrozen &&
-        ((isFrozen(backend, sequence, account, currency, issuer, yield)) ||
+        (isFrozen(backend, sequence, account, currency, issuer, yield) ||
          isDeepFrozen(backend, sequence, account, currency, issuer, yield))) {
         amount.setIssue(ripple::Issue(currency, issuer));
         amount.clear();

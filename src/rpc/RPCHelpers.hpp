@@ -432,7 +432,7 @@ isFrozen(
  *
  * @param backend The backend to use
  * @param sequence The sequence
- * @param keylet The keylet representing the account
+ * @param keylet The keylet representing the object
  * @param flags The flags to check on the fetched `SLE`.
  * @param yield The coroutine context
  * @return true if any of the flag in flags are set for this account; false otherwise
@@ -447,7 +447,10 @@ fetchAndCheckAnyFlagsExists(
 );
 
 /**
- * @brief Whether the account is deep frozen
+ * @brief Whether the trustline is deep frozen.
+ *
+ * For deep freeze, (unlike regular freeze) we do not care which account has the high/low deep freeze flag.
+ * We only care about if the trustline is deep frozen or not.
  *
  * @param backend The backend to use
  * @param sequence The sequence
