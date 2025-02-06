@@ -22,6 +22,7 @@
 #include "util/OverloadSet.hpp"
 #include "util/TmpFile.hpp"
 #include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
@@ -303,7 +304,8 @@ TEST_F(ConfigFileJsonTest, getValue)
         "int": 42,
         "object": { "string": "some string" },
         "bool": true,
-        "double": 123.456
+        "double": 123.456,
+        "null": null
     })json";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
 
@@ -322,6 +324,9 @@ TEST_F(ConfigFileJsonTest, getValue)
     auto const doubleValue = jsonFileObj.getValue("double");
     ASSERT_TRUE(std::holds_alternative<double>(doubleValue));
     EXPECT_NEAR(std::get<double>(doubleValue), 123.456, kEPS);
+
+    auto const nullValue = jsonFileObj.getValue("null");
+    EXPECT_TRUE(std::holds_alternative<NullType>(nullValue));
 
     EXPECT_FALSE(jsonFileObj.containsKey("object.int"));
 }
@@ -366,6 +371,29 @@ TEST_F(ConfigFileJsonTest, getArray)
     ASSERT_EQ(arrayFromObject.size(), 2);
     EXPECT_EQ(std::get<int64_t>(arrayFromObject.at(0)), 3);
     EXPECT_EQ(std::get<int64_t>(arrayFromObject.at(1)), 4);
+}
+
+TEST_F(ConfigFileJsonTest, getArrayObjectInArray)
+{
+    auto const jsonStr = R"json({
+        "array": [
+            { "int": 42 },
+            { "string": "some string" }
+        ]
+    })json";
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
+
+    auto const ints = jsonFileObj.getArray("array.[].int");
+    ASSERT_EQ(ints.size(), 2);
+    ASSERT_TRUE(std::holds_alternative<int64_t>(ints.at(0)));
+    EXPECT_EQ(std::get<int64_t>(ints.at(0)), 42);
+    EXPECT_TRUE(std::holds_alternative<NullType>(ints.at(1)));
+
+    auto const strings = jsonFileObj.getArray("array.[].string");
+    ASSERT_EQ(strings.size(), 2);
+    EXPECT_TRUE(std::holds_alternative<NullType>(strings.at(0)));
+    ASSERT_TRUE(std::holds_alternative<std::string>(strings.at(1)));
+    EXPECT_EQ(std::get<std::string>(strings.at(1)), "some string");
 }
 
 TEST_F(ConfigFileJsonDeathTest, getArrayInvalidKey)

@@ -74,6 +74,9 @@ extractJsonValue(boost::json::value const& jsonValue)
     if (jsonValue.is_double()) {
         return jsonValue.as_double();
     }
+    if (jsonValue.is_null()) {
+        return NullType{};
+    }
     ASSERT(false, "Json is not of type int, uint, string, bool or double");
     std::unreachable();
 }
