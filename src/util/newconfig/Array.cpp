@@ -36,6 +36,14 @@ Array::Array(ConfigValue arg) : itemPattern_{std::move(arg)}
 {
 }
 
+std::string_view
+Array::prefix(std::string_view key)
+{
+    ASSERT(key.contains(".[]"), "Provided key is not an array key: {}", key);
+
+    return key.substr(0, key.rfind(".[]") + 3);
+}
+
 std::optional<Error>
 Array::addValue(Value value, std::optional<std::string_view> key)
 {
