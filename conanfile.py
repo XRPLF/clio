@@ -45,6 +45,7 @@ class Clio(ConanFile):
         'coverage': False,
         'lint': False,
         'docs': False,
+        'snapshot': False,
         
         'xrpl/*:tests': False,
         'xrpl/*:rocksdb': False,

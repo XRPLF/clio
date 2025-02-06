@@ -20,16 +20,16 @@ const (
 	markerNum          = 16
 )
 
-type GRPCClient struct {
+type gRPCClient struct {
 	Client pb.XRPLedgerAPIServiceClient
 	conn   *grpc.ClientConn
 }
 
-func (c *GRPCClient) Close() error {
+func (c *gRPCClient) Close() error {
 	return c.conn.Close()
 }
 
-func createGRPCClient(serverAddr string) (*GRPCClient, error) {
+func createGRPCClient(serverAddr string) (*gRPCClient, error) {
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
 	conn, err := grpc.NewClient(serverAddr, opts...)
@@ -38,7 +38,7 @@ func createGRPCClient(serverAddr string) (*GRPCClient, error) {
 	}
 
 	client := pb.NewXRPLedgerAPIServiceClient(conn)
-	return &GRPCClient{
+	return &gRPCClient{
 		Client: client,
 		conn:   conn,
 	}, nil
@@ -73,11 +73,13 @@ func getLedgerDeltaData(client pb.XRPLedgerAPIServiceClient, seq uint32, path st
 }
 
 func roundDown(n uint32, roundTo uint32) uint32 {
+	if roundTo == 0 {
+		return n
+	}
 	return n - (n % roundTo)
 }
 
 func saveLedgerDeltaData(seq uint32, response *pb.GetLedgerResponse, path string) {
-	// create subfolder
 	subPath := filepath.Join(path, fmt.Sprintf("ledger_diff_%d", roundDown(seq, deltaDataFolderDiv)))
 	err := os.MkdirAll(subPath, os.ModePerm)
 	if err != nil {
@@ -97,7 +99,7 @@ func saveLedgerDeltaData(seq uint32, response *pb.GetLedgerResponse, path string
 	}
 }
 
-func generate256Markers(markerNum uint32) [][32]byte {
+func generateMarkers(markerNum uint32) [][32]byte {
 	var byteArray [32]byte
 
 	incr := 256 / markerNum
@@ -112,8 +114,19 @@ func generate256Markers(markerNum uint32) [][32]byte {
 	return byteArrayList
 }
 
-func saveLedgerData(client pb.XRPLedgerAPIServiceClient, seq uint32, marker []byte, end []byte, path string) {
+func saveLedgerData(path string, data *pb.GetLedgerDataResponse) {
+	protoData, err := proto.Marshal(data)
+	if err != nil {
+		log.Fatalf("Error marshalling data: %v", err)
+	}
 
+	err = os.WriteFile(path, protoData, 0644)
+	if err != nil {
+		log.Fatalf("failed to write file: %v", err)
+	}
+}
+
+func getLedgerData(client pb.XRPLedgerAPIServiceClient, seq uint32, marker []byte, end []byte, path string) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -130,7 +143,6 @@ func saveLedgerData(client pb.XRPLedgerAPIServiceClient, seq uint32, marker []by
 	}
 	request.User = grpcUser
 
-	// create subfolder
 	subPath := filepath.Join(path, fmt.Sprintf("ledger_data_%d", seq), fmt.Sprintf("marker_%x", marker))
 	err := os.MkdirAll(subPath, os.ModePerm)
 	if err != nil {
@@ -144,26 +156,15 @@ func saveLedgerData(client pb.XRPLedgerAPIServiceClient, seq uint32, marker []by
 		}
 
 		filePath := filepath.Join(subPath, fmt.Sprintf("%x.dat", request.Marker))
-
-		protoData, err := proto.Marshal(res)
-		if err != nil {
-			log.Fatalf("Error marshalling data: %v", err)
-		}
-
-		err = os.WriteFile(filePath, protoData, 0644)
-		if err != nil {
-			log.Fatalf("failed to write file: %v", err)
-		}
-
+		saveLedgerData(filePath, res)
 		request.Marker = res.Marker
 	}
-
 }
 
 func getLedgerFullData(client pb.XRPLedgerAPIServiceClient, seq uint32, path string) {
 	log.Printf("Processing full sequence: %d\n", seq)
 
-	markers := generate256Markers(markerNum)
+	markers := generateMarkers(markerNum)
 
 	var wg sync.WaitGroup
 
@@ -177,15 +178,14 @@ func getLedgerFullData(client pb.XRPLedgerAPIServiceClient, seq uint32, path str
 
 		fmt.Printf("Got ledger data marker: %x-%x\n", marker, end)
 
-		go func(marker []byte, end []byte) {
+		go func() {
 			defer wg.Done()
-			saveLedgerData(client, seq, marker, end, path)
-		}(marker[:], end)
+			getLedgerData(client, seq, marker[:], end, path)
+		}()
 
 	}
 
 	wg.Wait()
-
 }
 
 func checkPath(path string) {
@@ -208,15 +208,14 @@ func ExportFromFullLedger(grpcServer string, startSeq uint32, endSeq uint32, pat
 
 	defer client.Close()
 
-	ExportFromFullLedgerImpl(client.Client, startSeq, endSeq, path)
-
+	exportFromFullLedgerImpl(client.Client, startSeq, endSeq, path)
 }
 
-func ExportFromFullLedgerImpl(client pb.XRPLedgerAPIServiceClient, startSeq uint32, endSeq uint32, path string) {
+func exportFromFullLedgerImpl(client pb.XRPLedgerAPIServiceClient, startSeq uint32, endSeq uint32, path string) {
 
 	getLedgerFullData(client, startSeq, path)
 
-	//we need to fetch the ledger header and txs for startSeq as well
+	//We need to fetch the ledger header and txs for startSeq as well
 	for i := startSeq; i <= endSeq; i++ {
 		getLedgerDeltaData(client, i, path)
 	}
@@ -234,11 +233,10 @@ func ExportFromDeltaLedger(grpcServer string, startSeq uint32, endSeq uint32, pa
 
 	defer client.Close()
 
-	ExportFromDeltaLedgerImpl(client.Client, startSeq, endSeq, path)
+	exportFromDeltaLedgerImpl(client.Client, startSeq, endSeq, path)
 }
 
-func ExportFromDeltaLedgerImpl(client pb.XRPLedgerAPIServiceClient, startSeq uint32, endSeq uint32, path string) {
-
+func exportFromDeltaLedgerImpl(client pb.XRPLedgerAPIServiceClient, startSeq uint32, endSeq uint32, path string) {
 	for i := startSeq; i <= endSeq; i++ {
 		getLedgerDeltaData(client, i, path)
 	}

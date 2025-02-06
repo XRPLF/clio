@@ -50,7 +50,7 @@ endforeach ()
 add_custom_target(build_clio_snapshot ALL DEPENDS run_go_tests ${GO_OUTPUT})
 
 add_custom_target(run_go_tests
-    COMMAND go test ./unittests
+    COMMAND go test ./...
     WORKING_DIRECTORY ${GO_SOURCE_DIR}
     COMMENT "Running clio_snapshot unittests"
     VERBATIM
