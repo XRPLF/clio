@@ -264,6 +264,32 @@ INSTANTIATE_TEST_CASE_P(
             .validationMap =
                 {{"array.[].int", boost::json::array{42, 2, 4}},
                  {"array.[].bool", boost::json::array{true, boost::json::value{}, boost::json::value{}}}}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "full_object_is_in_the_middle_of_array",
+            .configStr = R"json({
+                "array": [
+                    {"int": 42},
+                    {"int": 2, "bool": true},
+                    {"int": 4}
+                ]
+            })json",
+            .validationMap =
+                {{"array.[].int", boost::json::array{42, 2, 4}},
+                 {"array.[].bool", boost::json::array{boost::json::value{}, true, boost::json::value{}}}}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "no_full_object",
+            .configStr = R"json({
+                "array": [
+                    {"int": 42},
+                    {"int": 2},
+                    {"bool": true}
+                ]
+            })json",
+            .validationMap =
+                {{"array.[].int", boost::json::array{42, 2, boost::json::value{}}},
+                 {"array.[].bool", boost::json::array{boost::json::value{}, boost::json::value{}, true}}}
         }
     ),
     tests::util::kNAME_GENERATOR

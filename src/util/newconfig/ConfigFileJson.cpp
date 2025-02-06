@@ -253,15 +253,17 @@ ConfigFileJson::flattenJsonNonRecursive(boost::json::object const& jsonRootObjec
     }
 
     // adjust length of each array containing objects
-    std::ranges::for_each(arraysSizes, [this](auto const& item) {
-        auto const& prefix = item.first;
-        auto const& size = item.second;
-        for (auto& [key, value] : jsonObject_) {
-            if (key.starts_with(prefix)) {
-                ASSERT(value.is_array(), "Value must be an array for key {}", std::string_view{key});
-                while (value.as_array().size() < size) {
-                    value.as_array().push_back(boost::json::value{});
-                }
+    std::ranges::for_each(jsonObject_, [&arraysSizes](auto& item) {
+        auto const key = item.key();
+        if (not key.contains("[]"))
+            return;
+
+        auto& value = item.value();
+        auto const prefix = std::string{Array::prefix(key)};
+        if (auto const it = arraysSizes.find(prefix); it != arraysSizes.end()) {
+            auto const size = it->second;
+            while (value.as_array().size() < size) {
+                value.as_array().push_back(boost::json::value{});
             }
         }
     });
