@@ -106,7 +106,7 @@ private:
     flattenJson(boost::json::object const& obj, std::string const& prefix);
 
     void
-    flattenJsonNonRecursive(boost::json::object const& obj);
+    flattenJsonNonRecursive(boost::json::object const& jsonRootObject);
 };
 
 }  // namespace util::config

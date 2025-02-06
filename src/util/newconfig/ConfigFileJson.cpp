@@ -20,6 +20,7 @@
 #include "util/newconfig/ConfigFileJson.hpp"
 
 #include "util/Assert.hpp"
+#include "util/newconfig/Array.hpp"
 #include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
@@ -30,6 +31,7 @@
 #include <boost/json/value.hpp>
 #include <fmt/core.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -41,6 +43,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -78,7 +81,7 @@ extractJsonValue(boost::json::value const& jsonValue)
 
 ConfigFileJson::ConfigFileJson(boost::json::object jsonObj)
 {
-    flattenJson(jsonObj, "");
+    flattenJsonNonRecursive(jsonObj);
 }
 
 std::expected<ConfigFileJson, Error>
@@ -141,30 +144,6 @@ ConfigFileJson::inner() const
     return jsonObject_;
 }
 
-/*
-{
-    key: [
-        {
-            foo: bar,
-        },
-        {
-            some: 1
-         }
-    ]
-}
-{
-    key.[].foo: {
-        "0": bar,
-        "size": 1
-    }
-    key.[].some: {
-        "0": none,
-        "1": 1,
-        "size": 2
-    }
-}
-
-*/
 void
 ConfigFileJson::flattenJson(boost::json::object const& obj, std::string const& prefix)
 {
@@ -200,32 +179,92 @@ ConfigFileJson::flattenJson(boost::json::object const& obj, std::string const& p
 }
 
 /*
+{
+    array: [
+        { a: 1},
+        { b: 2}
+    ]
+}
+
+array.[].a
+array.[].b
+
+*/
+
 void
 ConfigFileJson::flattenJsonNonRecursive(boost::json::object const& jsonRootObject)
 {
-struct Task {
-    boost::json::object const& object;
-    std::string prefix;
-    std::optional<size_t> arrayIndex = std::nullopt;
-};
+    struct Task {
+        boost::json::object const& object;
+        std::string prefix;
+        std::optional<size_t> arrayIndex = std::nullopt;
+    };
 
-std::queue<Task> tasks;
-tasks.push(Task{.object = jsonRootObject, .prefix = ""});
+    std::queue<Task> tasks;
+    tasks.push(Task{.object = jsonRootObject, .prefix = ""});
 
-while (tasks.size() > 0) {
-    auto const task = std::move(tasks.front());
-    tasks.pop();
+    std::unordered_map<std::string, size_t> arraysSizes;
 
-    for (auto const& [key, value] : task.object) {
-    std::string fullKey = task.prefix.empty() ? std::string(key) : fmt::format("{}.{}", task.prefix, std::string(key));
-        if (value.is_object()) {
-            tasks.push(Task{.object = value, .prefix = std::move(fullKey) });
+    while (tasks.size() > 0) {
+        auto const task = std::move(tasks.front());
+        tasks.pop();
+
+        for (auto const& [key, value] : task.object) {
+            auto fullKey =
+                task.prefix.empty() ? std::string(key) : fmt::format("{}.{}", task.prefix, std::string_view{key});
+
+            if (value.is_object()) {
+                tasks.push(Task{.object = value.as_object(), .prefix = std::move(fullKey)});
+            } else if (value.is_array()) {
+                fullKey += ".[]";
+                auto const& array = value.as_array();
+
+                if (std::ranges::all_of(array, [](auto const& v) { return v.is_primitive(); })) {
+                    jsonObject_[fullKey] = array;
+                } else if (std::ranges::all_of(array, [](auto const& v) { return v.is_object(); })) {
+                    for (size_t i = 0; i < array.size(); ++i) {
+                        tasks.push(Task{.object = array.at(i).as_object(), .prefix = fullKey, .arrayIndex = i});
+                    }
+                } else {
+                    ASSERT(
+                        false,
+                        "Arrays containing both values and objects are not supported. Please check the array {}",
+                        fullKey
+                    );
+                }
+            } else {
+                if (task.arrayIndex.has_value()) {
+                    if (not jsonObject_.contains(fullKey)) {
+                        jsonObject_[fullKey] = boost::json::array{};
+                    }
+
+                    auto& targetArray = jsonObject_.at(fullKey).as_array();
+                    while (targetArray.size() < (*task.arrayIndex + 1)) {
+                        targetArray.push_back(boost::json::value());
+                    }
+                    targetArray.at(*task.arrayIndex) = value;
+                    auto const prefix = std::string{Array::prefix(fullKey)};
+                    arraysSizes[prefix] = std::max(arraysSizes[prefix], targetArray.size());
+                } else {
+                    jsonObject_[fullKey] = value;
+                }
+            }
         }
-
     }
 
+    // adjust length of each array containing objects
+    std::ranges::for_each(arraysSizes, [this](auto const& item) {
+        auto const& prefix = item.first;
+        auto const& size = item.second;
+        for (auto& [key, value] : jsonObject_) {
+            if (key.starts_with(prefix)) {
+                ASSERT(value.is_array(), "Value must be an array for key {}", std::string_view{key});
+                while (value.as_array().size() < size) {
+                    value.as_array().push_back(boost::json::value{});
+                }
+            }
+        }
+    });
 }
-}
-*/
 
 }  // namespace util::config
