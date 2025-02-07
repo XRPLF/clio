@@ -79,17 +79,10 @@ getType()
 
 }  // namespace util::config
 
-/**
- * @brief fmt::format support for NullType
- */
+/** @cond */
+// Doxygen could not parse this
 template <>
 struct fmt::formatter<util::config::NullType> : fmt::formatter<char const*> {
-    /**
-     * @brief Format the NullType
-     *
-     * @param ctx The format context
-     * @return whatever fmt::formatter<char const*>::format returns
-     */
     [[nodiscard]]
     auto
     format(util::config::NullType const&, fmt::format_context& ctx)
@@ -97,3 +90,4 @@ struct fmt::formatter<util::config::NullType> : fmt::formatter<char const*> {
         return fmt::formatter<char const*>::format("null", ctx);
     }
 };
+/** @endcond */
