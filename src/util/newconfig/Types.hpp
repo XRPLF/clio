@@ -37,7 +37,13 @@ enum class ConfigType { Integer, String, Double, Boolean, Null };
  * @brief A type that represents a null value
  */
 struct NullType {
-    bool
+    /**
+     * @brief Compare two NullType objects
+     *
+     * @param other The other NullType to compare to
+     * @return true always. Any two NullType objects are equal
+     */
+    [[nodiscard]] bool
     operator==(NullType const&) const
     {
         return true;
@@ -74,8 +80,19 @@ getType()
 
 }  // namespace util::config
 
+/**
+ * @brief fmt::format support for NullType
+ */
 template <>
 struct fmt::formatter<util::config::NullType> : fmt::formatter<char const*> {
+    /**
+     * @brief Format the NullType
+     *
+     * @param val The NullType to format
+     * @param ctx The format context
+     * @return whatever fmt::formatter<char const*>::format returns
+     */
+    [[nodiscard]]
     auto
     format(util::config::NullType const&, fmt::format_context& ctx)
     {
