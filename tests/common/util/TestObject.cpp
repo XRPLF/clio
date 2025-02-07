@@ -1027,7 +1027,7 @@ createAcceptNftSellerOfferTxWithMetadata(
     // offer owner is not the nft's new owner for seller offer, we need to create other nodes for processing new owner
     finalFields.setAccountID(ripple::sfOwner, account.value());
 
-    node.emplace_back(std::move(finalFields));
+    node.emplace_back(finalFields);
     node.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{offerId});
     metaArray.push_back(node);
 

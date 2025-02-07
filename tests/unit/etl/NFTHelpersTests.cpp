@@ -479,7 +479,7 @@ TEST_F(NFTHelpersTest, NFTDataFromLedgerObject)
 
     auto const nftDatas = etl::getNFTDataFromObj(
         kSEQ,
-        std::string(static_cast<char const*>(static_cast<void const*>(account.data())), ripple::AccountID::size()),
+        std::string(reinterpret_cast<char const*>(account.data()), ripple::AccountID::size()),
         std::string(static_cast<char const*>(serializerNftPage.getDataPtr()), serializerNftPage.getDataLength())
     );
 
