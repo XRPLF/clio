@@ -291,6 +291,18 @@ INSTANTIATE_TEST_CASE_P(
             .validationMap =
                 {{"array.[].int", boost::json::array{42, 2, boost::json::value{}}},
                  {"array.[].bool", boost::json::array{boost::json::value{}, boost::json::value{}, true}}}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "array_with_nexted_objects",
+            .configStr = R"json({
+                "array": [
+                    { "object": { "int": 42 } },
+                    { "object": { "string": "some string" } }
+                ]
+            })json",
+            .validationMap =
+                {{"array.[].object.int", boost::json::array{42, boost::json::value{}}},
+                 {"array.[].object.string", boost::json::array{boost::json::value{}, "some string"}}}
         }
     ),
     tests::util::kNAME_GENERATOR

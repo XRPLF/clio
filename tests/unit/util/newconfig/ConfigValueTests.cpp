@@ -170,15 +170,15 @@ TEST_F(ConstraintTest, SetValuesOnPortConstraint)
     auto cvPort = ConfigValue{ConfigType::Integer}.defaultValue(4444).withConstraint(gValidatePort);
     auto const err = cvPort.setValue(99999);
     EXPECT_TRUE(err.has_value());
-    EXPECT_EQ(err->error, "Port does not satisfy the constraint bounds");
+    EXPECT_EQ(err->error, "Unknown_key Port does not satisfy the constraint bounds");
     EXPECT_TRUE(cvPort.setValue(33.33).has_value());
-    EXPECT_TRUE(cvPort.setValue(33.33).value().error == "value does not match type integer");
+    EXPECT_EQ(cvPort.setValue(33.33).value().error, "Unknown_key value does not match type integer");
     EXPECT_FALSE(cvPort.setValue(1).has_value());
 
     auto cvPort2 = ConfigValue{ConfigType::String}.defaultValue("4444").withConstraint(gValidatePort);
     auto const strPortError = cvPort2.setValue("100000");
     EXPECT_TRUE(strPortError.has_value());
-    EXPECT_EQ(strPortError->error, "Port does not satisfy the constraint bounds");
+    EXPECT_EQ(strPortError->error, "Unknown_key Port does not satisfy the constraint bounds");
 }
 
 TEST_F(ConstraintTest, OneOfConstraintOneValue)
@@ -221,7 +221,7 @@ TEST_F(ConstraintTest, IpConstraint)
     EXPECT_FALSE(ip.setValue("http://127.0.0.1.com").has_value());
     auto const err = ip.setValue("123.44");
     EXPECT_TRUE(err.has_value());
-    EXPECT_EQ(err->error, "Ip is not a valid ip address");
+    EXPECT_EQ(err->error, "Unknown_key Ip is not a valid ip address");
     EXPECT_FALSE(ip.setValue("126.0.0.2"));
 
     EXPECT_TRUE(ip.setValue("644.3.3.0"));

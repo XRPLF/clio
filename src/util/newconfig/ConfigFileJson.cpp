@@ -217,7 +217,9 @@ ConfigFileJson::flattenJsonNonRecursive(boost::json::object const& jsonRootObjec
                 task.prefix.empty() ? std::string(key) : fmt::format("{}.{}", task.prefix, std::string_view{key});
 
             if (value.is_object()) {
-                tasks.push(Task{.object = value.as_object(), .prefix = std::move(fullKey)});
+                tasks.push(
+                    Task{.object = value.as_object(), .prefix = std::move(fullKey), .arrayIndex = task.arrayIndex}
+                );
             } else if (value.is_array()) {
                 fullKey += ".[]";
                 auto const& array = value.as_array();
