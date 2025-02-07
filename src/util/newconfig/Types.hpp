@@ -40,7 +40,6 @@ struct NullType {
     /**
      * @brief Compare two NullType objects
      *
-     * @param other The other NullType to compare to
      * @return true always. Any two NullType objects are equal
      */
     [[nodiscard]] bool
@@ -88,7 +87,6 @@ struct fmt::formatter<util::config::NullType> : fmt::formatter<char const*> {
     /**
      * @brief Format the NullType
      *
-     * @param val The NullType to format
      * @param ctx The format context
      * @return whatever fmt::formatter<char const*>::format returns
      */
