@@ -47,11 +47,10 @@ Array::prefix(std::string_view key)
 std::optional<Error>
 Array::addValue(Value value, std::optional<std::string_view> key)
 {
-    auto const& configValPattern = itemPattern_;
-    auto const constraint = configValPattern.getConstraint();
+    auto const constraint = itemPattern_.getConstraint();
 
-    auto newElem = constraint.has_value() ? ConfigValue{configValPattern.type()}.withConstraint(constraint->get())
-                                          : ConfigValue{configValPattern.type()};
+    auto newElem = constraint.has_value() ? ConfigValue{itemPattern_.type()}.withConstraint(constraint->get())
+                                          : ConfigValue{itemPattern_.type()};
     if (auto const maybeError = newElem.setValue(value, key); maybeError.has_value())
         return maybeError;
     elements_.emplace_back(std::move(newElem));

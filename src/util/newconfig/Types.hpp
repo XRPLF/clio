@@ -36,7 +36,13 @@ enum class ConfigType { Integer, String, Double, Boolean, Null };
 /**
  * @brief A type that represents a null value
  */
-struct NullType {};
+struct NullType {
+    bool
+    operator==(NullType const&) const
+    {
+        return true;
+    }
+};
 
 /** @brief Represents the supported Config Values */
 using Value = std::variant<int64_t, std::string, bool, double, NullType>;

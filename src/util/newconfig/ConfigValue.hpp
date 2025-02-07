@@ -33,6 +33,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 
 namespace util::config {
@@ -79,18 +80,31 @@ public:
     [[nodiscard]] std::optional<Error>
     setValue(Value value, std::optional<std::string_view> key = std::nullopt)
     {
+        if (std::holds_alternative<NullType>(value)) {
+            if (hasValue()) {
+                // Using default value
+                return std::nullopt;
+            }
+            if (not isOptional()) {
+                return Error{
+                    key.value_or("Unknown_key"),
+                    "Provided value is null but ConfigValue is not optional and doesn't have a default value."
+                };
+            }
+            value_ = std::move(value);
+            return std::nullopt;
+        }
+
         auto err = checkTypeConsistency(type_, value);
         if (err.has_value()) {
-            if (key.has_value())
-                err->error = fmt::format("{} {}", key.value(), err->error);
+            err->error = fmt::format("{} {}", key.value_or("Unknown_key"), err->error);
             return err;
         }
 
         if (cons_.has_value()) {
             auto constraintCheck = cons_->get().checkConstraint(value);
             if (constraintCheck.has_value()) {
-                if (key.has_value())
-                    constraintCheck->error = fmt::format("{} {}", key.value(), constraintCheck->error);
+                constraintCheck->error = fmt::format("{} {}", key.value_or("Unknown_key"), constraintCheck->error);
                 return constraintCheck;
             }
         }
@@ -199,6 +213,7 @@ public:
     [[nodiscard]] Value const&
     getValue() const
     {
+        ASSERT(value_.has_value(), "getValue() is called when there is no value set");
         return value_.value();
     }
 
