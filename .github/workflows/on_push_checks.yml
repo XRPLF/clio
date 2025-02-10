@@ -1,0 +1,129 @@
+name: Check codebase
+on:
+  push:
+    branches: [master, release/*, develop]
+  pull_request:
+    branches: [master, release/*, develop]
+  workflow_dispatch:
+
+jobs:
+  check_format:
+    name: Check format
+    runs-on: ubuntu-20.04
+    container:
+      image: rippleci/clio_ci:latest
+    steps:
+      - name: Fix git permissions on Linux
+        shell: bash
+        run: git config --global --add safe.directory $PWD
+
+      - uses: actions/checkout@v4
+      - name: Run formatters
+        id: run_formatters
+        run: |
+          ./.githooks/check-format --diff
+        shell: bash
+ 
+  check_docs:
+    name: Check documentation
+    runs-on: ubuntu-20.04
+    container:
+      image: rippleci/clio_ci:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run linter
+        id: run_linter
+        run: |
+          ./.githooks/check-docs
+        shell: bash
+
+  build:
+    name: Build
+    needs:
+      - check_format
+      - check_docs
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: heavy
+            conan_profile: gcc
+            build_type: Release
+            container: '{ "image": "rippleci/clio_ci:latest" }'
+            code_coverage: false
+            static: true
+          - os: heavy
+            conan_profile: gcc
+            build_type: Debug
+            container: '{ "image": "rippleci/clio_ci:latest" }'
+            code_coverage: true
+            static: true
+          - os: heavy
+            conan_profile: clang
+            build_type: Release
+            container: '{ "image": "rippleci/clio_ci:latest" }'
+            code_coverage: false
+            static: true
+          - os: heavy
+            conan_profile: clang
+            build_type: Debug
+            container: '{ "image": "rippleci/clio_ci:latest" }'
+            code_coverage: false
+            static: true
+          - os: macos15
+            build_type: Release
+            code_coverage: false
+            static: false
+    uses: ./.github/workflows/build.yml
+    with:
+      runs_on: ${{ matrix.os }}
+      container: ${{ matrix.container }}
+      conan_profile: ${{ matrix.conan_profile }}
+      build_type: ${{ matrix.build_type }}
+      code_coverage: ${{ matrix.code_coverage }}
+      static: ${{ matrix.static }}
+      unit_tests: true
+      integration_tests: true
+      clio_server: true
+
+  test:
+    name: Run Tests
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: heavy
+            conan_profile: gcc
+            build_type: Release
+            container:
+              image: rippleci/clio_ci:latest
+          - os: heavy
+            conan_profile: clang
+            build_type: Release
+            container:
+              image: rippleci/clio_ci:latest
+          - os: heavy
+            conan_profile: clang
+            build_type: Debug
+            container:
+              image: rippleci/clio_ci:latest
+          - os: macos15
+            conan_profile: apple_clang_16
+            build_type: Release
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+
+    steps:
+      - name: Clean workdir
+        if: ${{ runner.os == 'macOS' }}
+        uses: kuznetsss/workspace-cleanup@1.0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
+
+      - name: Run clio_tests
+        run: |
+          chmod +x ./clio_tests
+          ./clio_tests

@@ -40,15 +40,17 @@ target_sources(
 target_link_libraries(
   clio_util
   PUBLIC Boost::headers
-         Boost::stacktrace_backtrace
          dl
-         libbacktrace::libbacktrace
          fmt::fmt
          openssl::openssl
          xrpl::libxrpl
          Threads::Threads
          clio_options
 )
+
+if (!san)
+  target_link_libraries(clio_util PUBLIC Boost::stacktrace_backtrace libbacktrace::libbacktrace)
+endif ()
 
 # FIXME: needed on gcc-12, clang-16 and AppleClang for now (known boost 1.82 issue for some compilers)
 #

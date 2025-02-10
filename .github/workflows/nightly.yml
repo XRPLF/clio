@@ -1,7 +1,7 @@
 name: Nightly release
 on:
   schedule:
-    - cron:  '0 5 * * 1-5'
+    - cron:  '0 8 * * 1-5'
   workflow_dispatch:
   pull_request:
     paths:
@@ -21,68 +21,23 @@ jobs:
           - os: heavy
             build_type: Release
             static: true
-            container:
-              image: rippleci/clio_ci:latest
+            container: '{ "image": "rippleci/clio_ci:latest" }'
           - os: heavy
             build_type: Debug
             static: true
-            container:
-              image: rippleci/clio_ci:latest
-    runs-on: [self-hosted, "${{ matrix.os }}"]
-    container: ${{ matrix.container }}
-
-    steps:
-      - name: Clean workdir
-        if: ${{ runner.os == 'macOS' }}
-        uses: kuznetsss/workspace-cleanup@1.0
-
-      - uses: actions/checkout@v4
-        with:
-            fetch-depth: 0
-
-      - name: Prepare runner
-        uses: ./.github/actions/prepare_runner
-        with:
-            disable_ccache: true
-
-      - name: Setup conan
-        uses: ./.github/actions/setup_conan
-        id: conan
-        with:
-          conan_profile: gcc
-
-      - name: Run conan and cmake
-        uses: ./.github/actions/generate
-        with:
-          conan_profile: ${{ steps.conan.outputs.conan_profile }}
-          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
-          build_type: ${{ matrix.build_type }}
-          static: ${{ matrix.static }}
-
-      - name: Build Clio
-        uses: ./.github/actions/build_clio
-
-      - name: Strip tests
-        run: strip build/clio_tests && strip build/clio_integration_tests
-
-      - name: Upload clio_tests
-        uses: actions/upload-artifact@v4
-        with:
-          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
-          path: build/clio_*tests
-
-      - name: Compress clio_server
-        shell: bash
-        run: |
-            cd build
-            tar czf ./clio_server_${{ runner.os }}_${{ matrix.build_type }}.tar.gz ./clio_server
-
-      - name: Upload clio_server
-        uses: actions/upload-artifact@v4
-        with:
-          name: clio_server_${{ runner.os }}_${{ matrix.build_type }}
-          path: build/clio_server_${{ runner.os }}_${{ matrix.build_type }}.tar.gz
-
+            container: '{ "image": "rippleci/clio_ci:latest" }'
+    uses: ./.github/workflows/build.yml
+    with:
+      runs_on: ${{ matrix.os }}
+      container: ${{ matrix.container }}
+      conan_profile: gcc
+      build_type: ${{ matrix.build_type }}
+      code_coverage: false
+      static: ${{ matrix.static }}
+      unit_tests: true
+      integration_tests: true
+      clio_server: true
+      disable_cache: true
 
   run_tests:
     needs: build
@@ -91,14 +46,17 @@ jobs:
       matrix:
         include:
           - os: macos15
+            conan_profile: apple_clang_16
             build_type: Release
             integration_tests: false
           - os: heavy
+            conan_profile: gcc
             build_type: Release
             container:
               image: rippleci/clio_ci:latest
             integration_tests: true  
           - os: heavy
+            conan_profile: gcc
             build_type: Debug
             container:
               image: rippleci/clio_ci:latest
@@ -122,13 +80,17 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
+          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
 
       - name: Run clio_tests
         run: |
           chmod +x ./clio_tests
           ./clio_tests
   
+      - uses: actions/download-artifact@v4
+        with:
+          name: clio_integration_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
+
   # To be enabled back once docker in mac runner arrives
   # https://github.com/XRPLF/clio/issues/1400
       - name: Run clio_integration_tests
@@ -189,7 +151,7 @@ jobs:
       tags: |
           type=raw,value=nightly
           type=raw,value=${{ github.sha }}
-      artifact_name: clio_server_Linux_Release
+      artifact_name: clio_server_Linux_Release_gcc
       strip_binary: true
       publish_image: ${{ github.event_name != 'pull_request' }}
 

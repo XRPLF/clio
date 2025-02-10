@@ -1,85 +1,82 @@
-name: Build
+name: Reusable build
 on:
-  push:
-    branches: [master, release/*, develop]
-  pull_request:
-    branches: [master, release/*, develop]
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      runs_on:
+        description: Runner to run the job on
+        required: true
+        type: string
+        default: heavy
+
+      container:
+        description: "The container object as a JSON string (leave empty to run natively)"
+        required: true
+        type: string
+        default: ""
+
+      conan_profile:
+        description: Conan profile to use
+        required: true
+        type: string
+
+      build_type:
+        description: Build type
+        required: true
+        type: string
+
+      disable_cache:
+        description: Whether ccache and conan cache should be disabled
+        required: false
+        type: boolean
+        default: false
+
+      code_coverage:
+        description: Whether to enable code coverage
+        required: true
+        type: boolean
+        default: false
+
+      static:
+        description: Whether to build static binaries
+        required: true
+        type: boolean
+        default: true
+
+      unit_tests:
+        description: Whether to run unit tests
+        required: true
+        type: boolean
+        default: false
+
+      integration_tests:
+        description: Whether to run integration tests
+        required: true
+        type: boolean
+        default: false
+
+      clio_server:
+        description: Whether to build clio_server
+        required: true
+        type: boolean
+        default: true
+
+      target:
+        description: Build target name
+        required: false
+        type: string
+        default: all
+
+      sanitizer:
+        description: Sanitizer to use
+        required: false
+        type: string
+        default: 'false'
 
 jobs:
-  check_format:
-    name: Check format
-    runs-on: ubuntu-20.04
-    container:
-      image: rippleci/clio_ci:latest
-    steps:
-      - name: Fix git permissions on Linux
-        shell: bash
-        run: git config --global --add safe.directory $PWD
-
-      - uses: actions/checkout@v4
-      - name: Run formatters
-        id: run_formatters
-        run: |
-          ./.githooks/check-format --diff
-        shell: bash
- 
-  check_docs:
-    name: Check documentation
-    runs-on: ubuntu-20.04
-    container:
-      image: rippleci/clio_ci:latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run linter
-        id: run_linter
-        run: |
-          ./.githooks/check-docs
-        shell: bash
-
   build:
-    name: Build
-    needs:
-      - check_format
-      - check_docs
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: heavy
-            container:
-              image: rippleci/clio_ci:latest
-            build_type: Release
-            conan_profile: gcc
-            code_coverage: false
-            static: true
-          - os: heavy
-            container:
-              image: rippleci/clio_ci:latest
-            build_type: Debug
-            conan_profile: gcc
-            code_coverage: true
-            static: true
-          - os: heavy
-            container:
-              image: rippleci/clio_ci:latest
-            build_type: Release
-            conan_profile: clang
-            code_coverage: false
-            static: true
-          - os: heavy
-            container:
-              image: rippleci/clio_ci:latest
-            build_type: Debug
-            conan_profile: clang
-            code_coverage: false
-            static: true
-          - os: macos15
-            build_type: Release
-            code_coverage: false
-            static: false
-    runs-on: [self-hosted, "${{ matrix.os }}"]
-    container: ${{ matrix.container }}
+    name: Build ${{ inputs.container != '' && 'in container' || 'natively' }}
+    runs-on: ${{ inputs.runs_on }} 
+    container: ${{ inputs.container != '' && fromJson(inputs.container) || null }}
 
     steps:
       - name: Clean workdir
@@ -93,37 +90,42 @@ jobs:
       - name: Prepare runner
         uses: ./.github/actions/prepare_runner
         with:
-          disable_ccache: false
+          disable_ccache: ${{ inputs.disable_cache }}
 
       - name: Setup conan
         uses: ./.github/actions/setup_conan
         id: conan
         with:
-          conan_profile: ${{ matrix.conan_profile }}
+          conan_profile: ${{ inputs.conan_profile }}
 
       - name: Restore cache
+        if: ${{ !inputs.disable_cache }}
         uses: ./.github/actions/restore_cache
         id: restore_cache
         with:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
           conan_profile: ${{ steps.conan.outputs.conan_profile }}
           ccache_dir: ${{ env.CCACHE_DIR }}
-          build_type: ${{ matrix.build_type }}
-          code_coverage: ${{ matrix.code_coverage }}
+          build_type: ${{ inputs.build_type }}
+          code_coverage: ${{ inputs.code_coverage }}
 
       - name: Run conan and cmake
         uses: ./.github/actions/generate
         with:
           conan_profile: ${{ steps.conan.outputs.conan_profile }}
-          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
-          build_type: ${{ matrix.build_type }}
-          code_coverage: ${{ matrix.code_coverage }}
-          static: ${{ matrix.static }}
+          conan_cache_hit: ${{ !inputs.disable_cache && steps.restore_cache.outputs.conan_cache_hit }}
+          build_type: ${{ inputs.build_type }}
+          code_coverage: ${{ inputs.code_coverage }}
+          static: ${{ inputs.static }}
+          sanitizer: ${{ inputs.sanitizer }}
 
       - name: Build Clio
         uses: ./.github/actions/build_clio
+        with:
+          target: ${{ inputs.target }}
 
       - name: Show ccache's statistics
+        if: ${{ !inputs.disable_cache }}
         shell: bash
         id: ccache_stats
         run: |
@@ -132,24 +134,37 @@ jobs:
           echo "miss_rate=${miss_rate}" >> $GITHUB_OUTPUT
           cat /tmp/ccache.stats
 
-      - name: Strip tests
-        if: ${{ !matrix.code_coverage }}
-        run: strip build/clio_tests && strip build/clio_integration_tests
+      - name: Strip unit_tests
+        if: ${{ inputs.unit_tests && !inputs.code_coverage && inputs.sanitizer == 'false' }}
+        run: strip build/clio_tests
+      
+      - name: Strip integration_tests
+        if: ${{ inputs.integration_tests && !inputs.code_coverage }}
+        run: strip build/clio_integration_tests
 
       - name: Upload clio_server
+        if: ${{ inputs.clio_server }}
         uses: actions/upload-artifact@v4
         with:
-          name: clio_server_${{ runner.os }}_${{ matrix.build_type }}_${{ steps.conan.outputs.conan_profile }}
+          name: clio_server_${{ runner.os }}_${{ inputs.build_type }}_${{ steps.conan.outputs.conan_profile }}
           path: build/clio_server
-
+     
       - name: Upload clio_tests
-        if: ${{ !matrix.code_coverage }}
+        if: ${{ inputs.unit_tests && !inputs.code_coverage }}
         uses: actions/upload-artifact@v4
         with:
-          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ steps.conan.outputs.conan_profile }}
-          path: build/clio_*tests
+          name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ steps.conan.outputs.conan_profile }}
+          path: build/clio_tests
+      
+      - name: Upload clio_integration_tests
+        if: ${{ inputs.integration_tests && !inputs.code_coverage }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ steps.conan.outputs.conan_profile }}
+          path: build/clio_integration_tests
 
       - name: Save cache
+        if: ${{ !inputs.disable_cache }}
         uses: ./.github/actions/save_cache
         with:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
@@ -158,61 +173,20 @@ jobs:
           ccache_dir: ${{ env.CCACHE_DIR }}
           ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
           ccache_cache_miss_rate: ${{ steps.ccache_stats.outputs.miss_rate }}
-          build_type: ${{ matrix.build_type }}
-          code_coverage: ${{ matrix.code_coverage }}
+          build_type: ${{ inputs.build_type }}
+          code_coverage: ${{ inputs.code_coverage }}
           conan_profile: ${{ steps.conan.outputs.conan_profile }}
 
       # TODO: This is not a part of build process but it is the easiest way to do it here.
       # It will be refactored in https://github.com/XRPLF/clio/issues/1075
       - name: Run code coverage
-        if: ${{ matrix.code_coverage }}
+        if: ${{ inputs.code_coverage }}
         uses: ./.github/actions/code_coverage
 
   upload_coverage_report:
+    if: ${{ inputs.code_coverage }} 
     name: Codecov
     needs: build
     uses: ./.github/workflows/upload_coverage_report.yml
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-  test:
-    name: Run Tests
-    needs: build
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: heavy
-            container:
-              image: rippleci/clio_ci:latest
-            conan_profile: gcc
-            build_type: Release
-          - os: heavy
-            container:
-              image: rippleci/clio_ci:latest
-            conan_profile: clang
-            build_type: Release
-          - os: heavy
-            container:
-              image: rippleci/clio_ci:latest
-            conan_profile: clang
-            build_type: Debug
-          - os: macos15
-            conan_profile: apple_clang_16
-            build_type: Release
-    runs-on: [self-hosted, "${{ matrix.os }}"]
-    container: ${{ matrix.container }}
-
-    steps:
-      - name: Clean workdir
-        if: ${{ runner.os == 'macOS' }}
-        uses: kuznetsss/workspace-cleanup@1.0
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
-
-      - name: Run clio_tests
-        run: |
-          chmod +x ./clio_tests
-          ./clio_tests

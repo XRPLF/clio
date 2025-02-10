@@ -1,0 +1,106 @@
+name: Run tests with sanitizers
+on:
+  schedule:
+    - cron: "0 4 * * 1-5"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/sanitizers.yml'
+
+jobs:
+  build:
+    name: Build clio tests
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sanitizer: tsan
+            compiler: gcc
+          - sanitizer: asan
+            compiler: gcc
+          # - sanitizer: ubsan # todo: enable when heavy runners are available
+          #   compiler: gcc
+    uses: ./.github/workflows/build.yml
+    with:
+      runs_on: ubuntu-latest # todo: change to heavy
+      container: '{ "image": "rippleci/clio_ci:latest" }'
+      disable_cache: true
+      conan_profile: ${{ matrix.compiler }}.${{ matrix.sanitizer }}
+      build_type: Release
+      code_coverage: false
+      static: false
+      unit_tests: true
+      integration_tests: false
+      clio_server: false
+      target: clio_tests
+      sanitizer: ${{ matrix.sanitizer }}
+
+  # consider combining this with the previous matrix instead
+  run_tests:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sanitizer: tsan
+            compiler: gcc
+          - sanitizer: asan
+            compiler: gcc
+          # - sanitizer: ubsan # todo: enable when heavy runners are available
+          #   compiler: gcc
+    runs-on: ubuntu-latest # todo: change to heavy
+    container:
+      image: rippleci/clio_ci:latest
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: clio_tests_${{ runner.os }}_Release_${{ matrix.compiler }}.${{ matrix.sanitizer }}
+
+      - name: Run clio_tests [${{ matrix.compiler }} / ${{ matrix.sanitizer }}]
+        shell: bash
+        run: |
+          chmod +x ./clio_tests
+          ./.github/scripts/execute-tests-under-sanitizer ./clio_tests
+
+      - name: Check for sanitizer report
+        shell: bash
+        id: check_report
+        run: |
+          if ls .sanitizer-report/* 1> /dev/null 2>&1; then
+            echo "found_report=true" >> $GITHUB_OUTPUT
+          else
+            echo "found_report=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload report
+        if: ${{ steps.check_report.outputs.found_report == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.compiler }}_${{ matrix.sanitizer }}_report
+          path: .sanitizer-report/*
+          include-hidden-files: true
+
+      #
+      # todo: enable when we have fixed all currently existing issues from sanitizers
+      #
+      # - name: Create an issue
+      #   if: ${{ steps.check_report.outputs.found_report == 'true' }}
+      #   uses: ./.github/actions/create_issue
+      #   env:
+      #     GH_TOKEN: ${{ github.token }}
+      #   with:
+      #     labels: 'bug'
+      #     title: '[${{ matrix.sanitizer }}/${{ matrix.compiler }}] reported issues'
+      #     body: >
+      #       Clio tests failed one or more sanitizer checks when built with ${{ matrix.compiler }}`.
+
+      #       Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/
+      #       Reports are available as artifacts.
