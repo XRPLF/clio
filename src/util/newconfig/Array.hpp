@@ -49,7 +49,7 @@ public:
     /**
      * @brief Extract array prefix from a key, For example for a key foo.[].bar the method will return foo.[]
      * @note Provided key must contain '.[]'
-     * @warning Be carriful with string_view! Returned value is valid only while the key is valid
+     * @warning Be careful with string_view! Returned value is valid only while the key is valid
      *
      * @param key The key to extract the array prefix from
      * @return Prefix of array extracted from the key

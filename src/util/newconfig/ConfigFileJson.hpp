@@ -94,19 +94,15 @@ public:
 
 private:
     /**
-     * @brief Recursive function to flatten a JSON object into the same structure as the Clio Config.
+     * @brief Method to flatten a JSON object into the same structure as the Clio Config.
      *
      * The keys will end up having the same naming conventions in Clio Config.
      * Other than the keys specified in user Config file, no new keys are created.
      *
      * @param obj The JSON object to flatten.
-     * @param prefix The prefix to use for the keys in the flattened object.
      */
     void
-    flattenJson(boost::json::object const& obj, std::string const& prefix);
-
-    void
-    flattenJsonNonRecursive(boost::json::object const& jsonRootObject);
+    flattenJson(boost::json::object const& jsonRootObject);
 };
 
 }  // namespace util::config

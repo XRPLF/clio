@@ -39,9 +39,10 @@ Array::Array(ConfigValue arg) : itemPattern_{std::move(arg)}
 std::string_view
 Array::prefix(std::string_view key)
 {
-    ASSERT(key.contains(".[]"), "Provided key is not an array key: {}", key);
+    static constexpr std::string_view kARRAY_SUFFIX = ".[]";
+    ASSERT(key.contains(kARRAY_SUFFIX), "Provided key is not an array key: {}", key);
 
-    return key.substr(0, key.rfind(".[]") + 3);
+    return key.substr(0, key.rfind(kARRAY_SUFFIX) + kARRAY_SUFFIX.size());
 }
 
 std::optional<Error>

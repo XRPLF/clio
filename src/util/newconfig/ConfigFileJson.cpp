@@ -77,14 +77,14 @@ extractJsonValue(boost::json::value const& jsonValue)
     if (jsonValue.is_null()) {
         return NullType{};
     }
-    ASSERT(false, "Json is not of type int, uint, string, bool or double");
+    ASSERT(false, "Json is not of type null, int, uint, string, bool or double");
     std::unreachable();
 }
 }  // namespace
 
 ConfigFileJson::ConfigFileJson(boost::json::object jsonObj)
 {
-    flattenJsonNonRecursive(jsonObj);
+    flattenJson(jsonObj);
 }
 
 std::expected<ConfigFileJson, Error>
@@ -148,54 +148,7 @@ ConfigFileJson::inner() const
 }
 
 void
-ConfigFileJson::flattenJson(boost::json::object const& obj, std::string const& prefix)
-{
-    for (auto const& [key, value] : obj) {
-        std::string const fullKey = prefix.empty() ? std::string(key) : fmt::format("{}.{}", prefix, std::string(key));
-
-        // In ClioConfigDefinition, value must be a primitive or array
-        if (value.is_object()) {
-            flattenJson(value.as_object(), fullKey);
-        } else if (value.is_array()) {
-            auto const& arr = value.as_array();
-            for (std::size_t i = 0; i < arr.size(); ++i) {
-                std::string const arrayPrefix = fullKey + ".[]";
-                if (arr[i].is_object()) {
-                    flattenJson(arr[i].as_object(), arrayPrefix);
-                } else {
-                    jsonObject_[arrayPrefix] = arr;
-                }
-            }
-        } else {
-            // if "[]" is present in key, then value must be an array instead of primitive
-            if (fullKey.contains(".[]") && !jsonObject_.contains(fullKey)) {
-                boost::json::array newArray;
-                newArray.emplace_back(value);
-                jsonObject_[fullKey] = newArray;
-            } else if (fullKey.contains(".[]") && jsonObject_.contains(fullKey)) {
-                jsonObject_[fullKey].as_array().emplace_back(value);
-            } else {
-                jsonObject_[fullKey] = value;
-            }
-        }
-    }
-}
-
-/*
-{
-    array: [
-        { a: 1},
-        { b: 2}
-    ]
-}
-
-array.[].a
-array.[].b
-
-*/
-
-void
-ConfigFileJson::flattenJsonNonRecursive(boost::json::object const& jsonRootObject)
+ConfigFileJson::flattenJson(boost::json::object const& jsonRootObject)
 {
     struct Task {
         boost::json::object const& object;
@@ -208,7 +161,7 @@ ConfigFileJson::flattenJsonNonRecursive(boost::json::object const& jsonRootObjec
 
     std::unordered_map<std::string, size_t> arraysSizes;
 
-    while (tasks.size() > 0) {
+    while (not tasks.empty()) {
         auto const task = std::move(tasks.front());
         tasks.pop();
 
