@@ -24,8 +24,9 @@
 #include <fmt/core.h>
 
 #include <cstdint>
+#include <expected>
+#include <ostream>
 #include <string>
-#include <type_traits>
 #include <variant>
 
 namespace util::config {
@@ -49,8 +50,28 @@ struct NullType {
     }
 };
 
+/**
+ * @brief Prints the specified config type to output stream
+ *
+ * @param stream The output stream
+ * @param type The config type
+ * @return The same ostream we were given
+ */
+std::ostream&
+operator<<(std::ostream& stream, ConfigType type);
+
 /** @brief Represents the supported Config Values */
 using Value = std::variant<int64_t, std::string, bool, double, NullType>;
+
+/**
+ * @brief Prints the specified value to output stream
+ *
+ * @param stream The output stream
+ * @param value The value type
+ * @return The same ostream we were given
+ */
+std::ostream&
+operator<<(std::ostream& stream, Value value);
 
 /**
  * @brief Get the corresponding clio config type

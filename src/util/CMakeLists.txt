@@ -34,6 +34,7 @@ target_sources(
           newconfig/ConfigDefinition.cpp
           newconfig/ConfigFileJson.cpp
           newconfig/ObjectView.cpp
+          newconfig/Types.cpp
           newconfig/ValueView.cpp
 )
 

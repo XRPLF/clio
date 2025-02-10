@@ -37,6 +37,12 @@ struct TmpFile {
         ofs << content;
     }
 
+    static TmpFile
+    empty()
+    {
+        return TmpFile{""};
+    }
+
     TmpFile(TmpFile const&) = delete;
     TmpFile(TmpFile&& other) : path{std::move(other.path)}
     {

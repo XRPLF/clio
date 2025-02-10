@@ -25,6 +25,7 @@
 
 #include <cstddef>
 #include <optional>
+#include <ostream>
 #include <string_view>
 #include <vector>
 
@@ -113,5 +114,19 @@ private:
     ConfigValue itemPattern_;
     std::vector<ConfigValue> elements_;
 };
+
+/**
+ * @brief Custom output stream for Array
+ *
+ * @param stream The output stream
+ * @param arr The Array
+ * @return The same ostream we were given
+ */
+inline std::ostream&
+operator<<(std::ostream& stream, Array arr)
+{
+    stream << arr.getArrayPattern();
+    return stream;
+}
 
 }  // namespace util::config
