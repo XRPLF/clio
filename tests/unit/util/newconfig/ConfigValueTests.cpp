@@ -29,6 +29,7 @@
 
 #include <array>
 #include <optional>
+#include <ostream>
 #include <string>
 
 using namespace util::config;
@@ -106,6 +107,7 @@ struct ConfigValueConstraintTest : ConfigValueTest {
     struct MockConstraint : Constraint {
         MOCK_METHOD(std::optional<Error>, checkTypeImpl, (Value const&), (const, override));
         MOCK_METHOD(std::optional<Error>, checkValueImpl, (Value const&), (const, override));
+        MOCK_METHOD(void, print, (std::ostream&), (const, override));
     };
 
     testing::StrictMock<MockConstraint> constraint;
