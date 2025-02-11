@@ -1,1 +1,1 @@
-{ "method": "server_definitions", "params": [ {} ] }
+{"command":"server_info","id":72421}
