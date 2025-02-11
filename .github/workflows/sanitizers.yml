@@ -20,7 +20,7 @@ jobs:
             compiler: gcc
           # - sanitizer: ubsan # todo: enable when heavy runners are available
           #   compiler: gcc
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/build_impl.yml
     with:
       runs_on: ubuntu-latest # todo: change to heavy
       container: '{ "image": "rippleci/clio_ci:latest" }'

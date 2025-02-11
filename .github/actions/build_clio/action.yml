@@ -15,7 +15,7 @@ runs:
       uses: ./.github/actions/get_number_of_threads
       id: number_of_threads
       with:
-        substract_threads: inputs.substract_threads
+        substract_threads: ${{ inputs.substract_threads }}
 
     - name: Build Clio
       shell: bash
