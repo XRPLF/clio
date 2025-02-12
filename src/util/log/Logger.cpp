@@ -175,14 +175,11 @@ LogService::init(config::ClioConfigDefinition const& config)
     for (auto it = overrides.begin<util::config::ObjectView>(); it != overrides.end<util::config::ObjectView>(); ++it) {
         auto const& channelConfig = *it;
         auto const name = channelConfig.get<std::string>("channel");
-        std::cout << "Channel: " << name << std::endl;
         if (std::count(std::begin(Logger::kCHANNELS), std::end(Logger::kCHANNELS), name) == 0) {
-            std::cout << "Not found" << std::endl;
             return std::unexpected{fmt::format("Can't override settings for log channel {}: invalid channel", name)};
         }
 
         minSeverity[name] = getSeverityLevel(channelConfig.get<std::string>("log_level"));
-        std::cout << "Severity set to: " << minSeverity[name] << std::endl;
     }
 
     auto logFilter = [minSeverity = std::move(minSeverity),

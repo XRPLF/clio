@@ -199,7 +199,6 @@ TEST_F(LoggerInitTest, InitReturnsErrorIfProvidedInvalidChannel)
     })json";
 
     auto json = boost::json::parse(jsonStr).as_object();
-    std::cout << json << std::endl;
     auto const parsingErrors = config_.parse(ConfigFileJson{json});
     ASSERT_FALSE(parsingErrors.has_value());
 
