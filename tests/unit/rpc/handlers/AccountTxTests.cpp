@@ -52,6 +52,7 @@ constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF2
 constexpr auto kNFT_ID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
 constexpr auto kNFT_ID2 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA";
 constexpr auto kNFT_ID3 = "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
+constexpr auto kINDEX = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 
 }  // namespace
 
@@ -471,7 +472,7 @@ genNFTTransactions(uint32_t seq)
     trans1.date = 1;
     transactions.push_back(trans1);
 
-    auto trans2 = createAcceptNftOfferTxWithMetadata(kACCOUNT, 1, 50, kNFT_ID2);
+    auto trans2 = createAcceptNftBuyerOfferTxWithMetadata(kACCOUNT, 1, 50, kNFT_ID2, kINDEX);
     trans2.ledgerSequence = seq;
     trans2.date = 2;
     transactions.push_back(trans2);
@@ -1199,9 +1200,12 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                                 {
                                     "FinalFields": 
                                     {
-                                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
+                                        "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
+
                                     },
-                                    "LedgerEntryType": "NFTokenOffer"
+                                    "LedgerEntryType": "NFTokenOffer",
+                                    "LedgerIndex": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322"
                                 }
                             }
                         ],
@@ -1213,11 +1217,11 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
-                        "NFTokenBuyOffer": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                        "NFTokenBuyOffer": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
                         "Sequence": 1,
                         "SigningPubKey": "74657374",
                         "TransactionType": "NFTokenAcceptOffer",
-                        "hash": "7682BE6BCDE62F8142915DD852936623B68FC3839A8A424A6064B898702B0CDF",
+                        "hash": "C85E486EE308C68D7E601FCEB4FC961BFA914C80ABBF7ECC7E6277B06692B490",
                         "ledger_index": 11,
                         "inLedger": 11,
                         "date": 2
@@ -1431,9 +1435,11 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                                 {
                                     "FinalFields": 
                                     {
-                                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
+                                        "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
                                     },
-                                    "LedgerEntryType": "NFTokenOffer"
+                                    "LedgerEntryType": "NFTokenOffer",
+                                    "LedgerIndex": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322"
                                 }
                             }
                         ],
@@ -1441,7 +1447,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                         "TransactionResult": "tesSUCCESS",
                         "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
                     },
-                    "hash": "7682BE6BCDE62F8142915DD852936623B68FC3839A8A424A6064B898702B0CDF",
+                    "hash": "C85E486EE308C68D7E601FCEB4FC961BFA914C80ABBF7ECC7E6277B06692B490",
                     "ledger_index": 11,
                     "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                     "close_time_iso": "2000-01-01T00:00:00Z",
@@ -1449,7 +1455,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
-                        "NFTokenBuyOffer": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                        "NFTokenBuyOffer": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
                         "Sequence": 1,
                         "SigningPubKey": "74657374",
                         "TransactionType": "NFTokenAcceptOffer",

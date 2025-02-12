@@ -28,7 +28,6 @@ Below are some useful docs to learn more about Clio.
 **For Developers**:
 
 - [How to build Clio](./docs/build-clio.md)
-- [Metrics and static analysis](./docs/metrics-and-static-analysis.md)
 - [Coverage report](./docs/coverage-report.md)
 
 **For Operators**:

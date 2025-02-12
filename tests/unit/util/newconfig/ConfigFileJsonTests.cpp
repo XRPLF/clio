@@ -1,0 +1,480 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2024, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#include "util/LoggerFixtures.hpp"
+#include "util/NameGenerator.hpp"
+#include "util/OverloadSet.hpp"
+#include "util/TmpFile.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/Types.hpp"
+
+#include <boost/json/array.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/parse.hpp>
+#include <gtest/gtest.h>
+
+#include <algorithm>
+#include <cstdint>
+#include <string>
+#include <unordered_map>
+#include <variant>
+
+using namespace util::config;
+
+namespace {
+constexpr auto kEPS = 1e-9;
+}  // namespace
+
+struct ConfigFileJsonParseTestBundle {
+    using ValidationMap = std::unordered_map<
+        std::string,
+        std::variant<int64_t, double, bool, std::string, boost::json::object, boost::json::array>>;
+
+    std::string testName;
+    std::string configStr;
+    ValidationMap validationMap;
+};
+
+struct ConfigFileJsonParseTest : NoLoggerFixture, testing::WithParamInterface<ConfigFileJsonParseTestBundle> {};
+
+TEST_P(ConfigFileJsonParseTest, parseValues)
+{
+    ConfigFileJson const configFile{boost::json::parse(GetParam().configStr).as_object()};
+
+    auto const& flatJson = configFile.inner();
+
+    ASSERT_EQ(GetParam().validationMap.size(), flatJson.size());
+    std::ranges::for_each(GetParam().validationMap, [&flatJson](auto const& kvPair) {
+        auto const& key = kvPair.first;
+        auto const& value = kvPair.second;
+
+        EXPECT_TRUE(flatJson.contains(key));
+
+        std::visit(
+            util::OverloadSet{
+                [&flatJson, &key](int64_t const v) {
+                    EXPECT_TRUE(flatJson.at(key).is_number()) << key << ": " << v;
+                    EXPECT_EQ(flatJson.at(key).as_int64(), v) << key << ": " << v;
+                },
+                [&flatJson, &key](double const v) {
+                    EXPECT_TRUE(flatJson.at(key).is_double()) << key << ": " << v;
+                    EXPECT_NEAR(flatJson.at(key).as_double(), v, kEPS) << key << ": " << v;
+                },
+                [&flatJson, &key](bool const v) {
+                    EXPECT_TRUE(flatJson.at(key).is_bool()) << key << ": " << v;
+                    EXPECT_EQ(flatJson.at(key).as_bool(), v) << key << ": " << v;
+                },
+                [&flatJson, &key](std::string const& v) {
+                    EXPECT_TRUE(flatJson.at(key).is_string()) << key << ": " << v;
+                    EXPECT_EQ(flatJson.at(key).as_string(), v) << key << ": " << v;
+                },
+                [&flatJson, &key](boost::json::object const& v) {
+                    EXPECT_TRUE(flatJson.at(key).is_object()) << key << ": " << v;
+                    EXPECT_EQ(flatJson.at(key).as_object(), v) << key << ": " << v;
+                },
+                [&flatJson, &key](boost::json::array const& v) {
+                    EXPECT_TRUE(flatJson.at(key).is_array()) << key << ": " << v;
+                    EXPECT_EQ(flatJson.at(key).as_array(), v) << key << ": " << v;
+                },
+            },
+            value
+        );
+    });
+}
+
+INSTANTIATE_TEST_CASE_P(
+    ConfigFileJsonParseTestGroup,
+    ConfigFileJsonParseTest,
+    testing::Values(
+        ConfigFileJsonParseTestBundle{
+            .testName = "values",
+            .configStr = R"json({
+                "int": 42,
+                "double": 123.456,
+                "bool": true,
+                "string": "some string"
+            })json",
+            .validationMap = {{"int", 42}, {"double", 123.456}, {"bool", true}, {"string", "some string"}}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "nested",
+            .configStr = R"json({
+                "level_0": {
+                    "int": 42,
+                    "level_1":{
+                        "double": 123.456,
+                        "level_2": {
+                            "bool": true,
+                            "level_3": {
+                                "string": "some string"
+                            }
+                        }
+                    }
+                }
+            })json",
+            .validationMap =
+                {{"level_0.int", 42},
+                 {"level_0.level_1.double", 123.456},
+                 {"level_0.level_1.level_2.bool", true},
+                 {"level_0.level_1.level_2.level_3.string", "some string"}}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "array",
+            .configStr = R"json({
+                "array": [1, 2, 3]
+            })json",
+            .validationMap = {{"array.[]", boost::json::array{1, 2, 3}}}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "nested_array",
+            .configStr = R"json({
+                "level_0": {
+                    "array": [1, 2, 3],
+                    "level_1": {
+                        "array": [4, 5, 6],
+                        "level_2": {
+                            "array": [7, 8, 9]
+                        }
+                    }
+                }
+            })json",
+            .validationMap =
+                {
+                    {"level_0.array.[]", boost::json::array{1, 2, 3}},
+                    {"level_0.level_1.array.[]", boost::json::array{4, 5, 6}},
+                    {"level_0.level_1.level_2.array.[]", boost::json::array{7, 8, 9}},
+                }
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "mixed",
+            .configStr = R"json({
+                "int": 42,
+                "double": 123.456,
+                "bool": true,
+                "string": "some string",
+                "array": [1, 2, 3],
+                "nested": {
+                    "int": 42,
+                    "double": 123.456,
+                    "bool": true,
+                    "string": "some string",
+                    "array": [1, 2, 3]
+                }
+            })json",
+            .validationMap =
+                {
+                    {"int", 42},
+                    {"double", 123.456},
+                    {"bool", true},
+                    {"string", "some string"},
+                    {"array.[]", boost::json::array{1, 2, 3}},
+                    {"nested.int", 42},
+                    {"nested.double", 123.456},
+                    {"nested.bool", true},
+                    {"nested.string", "some string"},
+                    {"nested.array.[]", boost::json::array{1, 2, 3}},
+                }
+        },
+        ConfigFileJsonParseTestBundle{.testName = "empty", .configStr = R"json({})json", .validationMap = {}},
+        ConfigFileJsonParseTestBundle{
+            .testName = "empty_nested",
+            .configStr = R"json({
+                "level_0": {
+                    "level_1": {
+                        "level_2": {
+                            "level_3": {}
+                        }
+                    }
+                }
+            })json",
+            .validationMap = {}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "empty_array",
+            .configStr = R"json({
+                "array": []
+            })json",
+            .validationMap = {{"array.[]", boost::json::array{}}}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "empty_nested_array",
+            .configStr = R"json({
+                "level_0": {
+                    "array": [],
+                    "level_1": {
+                        "array": [],
+                        "level_2": {
+                            "array": []
+                        }
+                    }
+                }
+            })json",
+            .validationMap =
+                {
+                    {"level_0.array.[]", boost::json::array{}},
+                    {"level_0.level_1.array.[]", boost::json::array{}},
+                    {"level_0.level_1.level_2.array.[]", boost::json::array{}},
+                }
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "object_inside_array",
+            .configStr = R"json({
+                "array": [
+                    { "int": 42 }
+                ]
+            })json",
+            .validationMap = {{"array.[].int", boost::json::array{42}}}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "object_with_optional_fields_inside_array",
+            .configStr = R"json({
+                "array": [
+                    {"int": 42},
+                    {"int": 24, "bool": true}
+                ]
+            })json",
+            .validationMap =
+                {{"array.[].int", boost::json::array{42, 24}},
+                 {"array.[].bool", boost::json::array{boost::json::value{}, true}}}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "full_object_is_at_the_front_of_array",
+            .configStr = R"json({
+                "array": [
+                    {"int": 42, "bool": true},
+                    {"int": 2},
+                    {"int": 4}
+                ]
+            })json",
+            .validationMap =
+                {{"array.[].int", boost::json::array{42, 2, 4}},
+                 {"array.[].bool", boost::json::array{true, boost::json::value{}, boost::json::value{}}}}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "full_object_is_in_the_middle_of_array",
+            .configStr = R"json({
+                "array": [
+                    {"int": 42},
+                    {"int": 2, "bool": true},
+                    {"int": 4}
+                ]
+            })json",
+            .validationMap =
+                {{"array.[].int", boost::json::array{42, 2, 4}},
+                 {"array.[].bool", boost::json::array{boost::json::value{}, true, boost::json::value{}}}}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "no_full_object",
+            .configStr = R"json({
+                "array": [
+                    {"int": 42},
+                    {"int": 2},
+                    {"bool": true}
+                ]
+            })json",
+            .validationMap =
+                {{"array.[].int", boost::json::array{42, 2, boost::json::value{}}},
+                 {"array.[].bool", boost::json::array{boost::json::value{}, boost::json::value{}, true}}}
+        },
+        ConfigFileJsonParseTestBundle{
+            .testName = "array_with_nexted_objects",
+            .configStr = R"json({
+                "array": [
+                    { "object": { "int": 42 } },
+                    { "object": { "string": "some string" } }
+                ]
+            })json",
+            .validationMap =
+                {{"array.[].object.int", boost::json::array{42, boost::json::value{}}},
+                 {"array.[].object.string", boost::json::array{boost::json::value{}, "some string"}}}
+        }
+    ),
+    tests::util::kNAME_GENERATOR
+);
+
+struct ConfigFileJsonTest : NoLoggerFixture {};
+
+TEST_F(ConfigFileJsonTest, getValue)
+{
+    auto const jsonStr = R"json({
+        "int": 42,
+        "object": { "string": "some string" },
+        "bool": true,
+        "double": 123.456,
+        "null": null
+    })json";
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
+
+    auto const intValue = jsonFileObj.getValue("int");
+    ASSERT_TRUE(std::holds_alternative<int64_t>(intValue));
+    EXPECT_EQ(std::get<int64_t>(intValue), 42);
+
+    auto const stringValue = jsonFileObj.getValue("object.string");
+    ASSERT_TRUE(std::holds_alternative<std::string>(stringValue));
+    EXPECT_EQ(std::get<std::string>(stringValue), "some string");
+
+    auto const boolValue = jsonFileObj.getValue("bool");
+    ASSERT_TRUE(std::holds_alternative<bool>(boolValue));
+    EXPECT_EQ(std::get<bool>(boolValue), true);
+
+    auto const doubleValue = jsonFileObj.getValue("double");
+    ASSERT_TRUE(std::holds_alternative<double>(doubleValue));
+    EXPECT_NEAR(std::get<double>(doubleValue), 123.456, kEPS);
+
+    auto const nullValue = jsonFileObj.getValue("null");
+    EXPECT_TRUE(std::holds_alternative<NullType>(nullValue));
+
+    EXPECT_FALSE(jsonFileObj.containsKey("object.int"));
+}
+
+struct ConfigFileJsonDeathTest : ConfigFileJsonTest {};
+
+TEST_F(ConfigFileJsonDeathTest, getValueInvalidKey)
+{
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse("{}").as_object()};
+    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getValue("some_key"), ".*");
+}
+
+TEST_F(ConfigFileJsonDeathTest, getValueOfArray)
+{
+    auto const jsonStr = R"json({
+        "array": [1, 2, 3]
+    })json";
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
+    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getValue("array"), ".*");
+}
+
+TEST_F(ConfigFileJsonTest, getArray)
+{
+    auto const jsonStr = R"json({
+        "array": [1, "2", 3.14, true],
+        "object": { "array": [3, 4] }
+    })json";
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
+
+    auto const array = jsonFileObj.getArray("array.[]");
+    ASSERT_EQ(array.size(), 4);
+    ASSERT_TRUE(std::holds_alternative<int64_t>(array.at(0)));
+    EXPECT_EQ(std::get<int64_t>(array.at(0)), 1);
+    ASSERT_TRUE(std::holds_alternative<std::string>(array.at(1)));
+    EXPECT_EQ(std::get<std::string>(array.at(1)), "2");
+    ASSERT_TRUE(std::holds_alternative<double>(array.at(2)));
+    EXPECT_NEAR(std::get<double>(array.at(2)), 3.14, kEPS);
+    ASSERT_TRUE(std::holds_alternative<bool>(array.at(3)));
+    EXPECT_EQ(std::get<bool>(array.at(3)), true);
+
+    auto const arrayFromObject = jsonFileObj.getArray("object.array.[]");
+    ASSERT_EQ(arrayFromObject.size(), 2);
+    EXPECT_EQ(std::get<int64_t>(arrayFromObject.at(0)), 3);
+    EXPECT_EQ(std::get<int64_t>(arrayFromObject.at(1)), 4);
+}
+
+TEST_F(ConfigFileJsonTest, getArrayObjectInArray)
+{
+    auto const jsonStr = R"json({
+        "array": [
+            { "int": 42 },
+            { "string": "some string" }
+        ]
+    })json";
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
+
+    auto const ints = jsonFileObj.getArray("array.[].int");
+    ASSERT_EQ(ints.size(), 2);
+    ASSERT_TRUE(std::holds_alternative<int64_t>(ints.at(0)));
+    EXPECT_EQ(std::get<int64_t>(ints.at(0)), 42);
+    EXPECT_TRUE(std::holds_alternative<NullType>(ints.at(1)));
+
+    auto const strings = jsonFileObj.getArray("array.[].string");
+    ASSERT_EQ(strings.size(), 2);
+    EXPECT_TRUE(std::holds_alternative<NullType>(strings.at(0)));
+    ASSERT_TRUE(std::holds_alternative<std::string>(strings.at(1)));
+    EXPECT_EQ(std::get<std::string>(strings.at(1)), "some string");
+}
+
+TEST_F(ConfigFileJsonDeathTest, getArrayInvalidKey)
+{
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse("{}").as_object()};
+    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getArray("some_key"), ".*");
+}
+
+TEST_F(ConfigFileJsonDeathTest, getArrayNotArray)
+{
+    auto const jsonStr = R"json({
+        "int": 42
+    })json";
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
+    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getArray("int"), ".*");
+}
+
+TEST_F(ConfigFileJsonTest, containsKey)
+{
+    auto const jsonStr = R"json({
+        "int": 42,
+        "object": { "string": "some string", "array": [1, 2, 3] },
+        "array2": [1, 2, 3],
+        "array_of_objects": [ {"int": 42}, {"string": "some string"} ]
+    })json";
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
+
+    EXPECT_TRUE(jsonFileObj.containsKey("int"));
+    EXPECT_FALSE(jsonFileObj.containsKey("other_key"));
+
+    EXPECT_TRUE(jsonFileObj.containsKey("object.string"));
+    EXPECT_FALSE(jsonFileObj.containsKey("object.int"));
+    EXPECT_TRUE(jsonFileObj.containsKey("object.array.[]"));
+    EXPECT_FALSE(jsonFileObj.containsKey("object.array"));
+
+    EXPECT_TRUE(jsonFileObj.containsKey("array2.[]"));
+    EXPECT_FALSE(jsonFileObj.containsKey("array2"));
+    EXPECT_FALSE(jsonFileObj.containsKey("array2.[].int"));
+
+    EXPECT_TRUE(jsonFileObj.containsKey("array_of_objects.[].int"));
+    EXPECT_TRUE(jsonFileObj.containsKey("array_of_objects.[].string"));
+    EXPECT_FALSE(jsonFileObj.containsKey("array_of_objects.[]"));
+    EXPECT_FALSE(jsonFileObj.containsKey("array_of_objects.[].object"));
+}
+
+struct ConfigFileJsonMakeTest : ConfigFileJsonTest {};
+
+TEST_F(ConfigFileJsonMakeTest, invalidFile)
+{
+    auto const jsonFileObj = ConfigFileJson::makeConfigFileJson("does_not_exist");
+    EXPECT_FALSE(jsonFileObj.has_value());
+}
+
+TEST_F(ConfigFileJsonMakeTest, invalidJson)
+{
+    auto const file = TmpFile("invalid json");
+    auto const jsonFileObj = ConfigFileJson::makeConfigFileJson(file.path);
+    EXPECT_FALSE(jsonFileObj.has_value());
+}
+
+TEST_F(ConfigFileJsonMakeTest, validFile)
+{
+    auto const file = TmpFile(R"json({ "int": 42 })json");
+    auto const jsonFileObj = ConfigFileJson::makeConfigFileJson(file.path);
+    ASSERT_TRUE(jsonFileObj.has_value());
+
+    auto const& flatJson = jsonFileObj->inner();
+    ASSERT_EQ(flatJson.size(), 1);
+    ASSERT_TRUE(flatJson.contains("int"));
+    ASSERT_TRUE(flatJson.at("int").is_number());
+    EXPECT_EQ(flatJson.at("int").as_int64(), 42);
+}

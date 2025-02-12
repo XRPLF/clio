@@ -23,8 +23,10 @@
 #include "util/log/Logger.hpp"
 
 #include <boost/log/core/core.hpp>
+#ifndef CLIO_WITHOUT_STACKTRACE
 #include <boost/stacktrace.hpp>
 #include <boost/stacktrace/stacktrace.hpp>
+#endif  // CLIO_WITHOUT_STACKTRACE
 #include <fmt/core.h>
 #include <fmt/format.h>
 
@@ -55,6 +57,7 @@ assertImpl(
 )
 {
     if (!condition) {
+#ifndef CLIO_WITHOUT_STACKTRACE
         auto const resultMessage = fmt::format(
             "Assertion '{}' failed at {}:{}:\n{}\nStacktrace:\n{}",
             expression,
@@ -63,6 +66,15 @@ assertImpl(
             fmt::format(format, std::forward<Args>(args)...),
             boost::stacktrace::to_string(boost::stacktrace::stacktrace())
         );
+#else
+        auto const resultMessage = fmt::format(
+            "Assertion '{}' failed at {}:{}:\n{}",
+            expression,
+            location.file_name(),
+            location.line(),
+            fmt::format(format, std::forward<Args>(args)...)
+        );
+#endif
         if (boost::log::core::get()->get_logging_enabled()) {
             LOG(LogService::fatal()) << resultMessage;
         } else {

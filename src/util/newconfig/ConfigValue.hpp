@@ -31,8 +31,10 @@
 #include <cstdint>
 #include <functional>
 #include <optional>
+#include <ostream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 
 namespace util::config {
@@ -79,18 +81,31 @@ public:
     [[nodiscard]] std::optional<Error>
     setValue(Value value, std::optional<std::string_view> key = std::nullopt)
     {
+        if (std::holds_alternative<NullType>(value)) {
+            if (hasValue()) {
+                // Using default value
+                return std::nullopt;
+            }
+            if (not isOptional()) {
+                return Error{
+                    key.value_or("Unknown_key"),
+                    "Provided value is null but ConfigValue is not optional and doesn't have a default value."
+                };
+            }
+            value_ = std::move(value);
+            return std::nullopt;
+        }
+
         auto err = checkTypeConsistency(type_, value);
         if (err.has_value()) {
-            if (key.has_value())
-                err->error = fmt::format("{} {}", key.value(), err->error);
+            err->error = fmt::format("{} {}", key.value_or("Unknown_key"), err->error);
             return err;
         }
 
         if (cons_.has_value()) {
             auto constraintCheck = cons_->get().checkConstraint(value);
             if (constraintCheck.has_value()) {
-                if (key.has_value())
-                    constraintCheck->error = fmt::format("{} {}", key.value(), constraintCheck->error);
+                constraintCheck->error = fmt::format("{} {}", key.value_or("Unknown_key"), constraintCheck->error);
                 return constraintCheck;
             }
         }
@@ -126,7 +141,8 @@ public:
                         [&type](bool tmp) { type = fmt::format("bool {}", tmp); },
                         [&type](std::string const& tmp) { type = fmt::format("string {}", tmp); },
                         [&type](double tmp) { type = fmt::format("double {}", tmp); },
-                        [&type](int64_t tmp) { type = fmt::format("int {}", tmp); }
+                        [&type](int64_t tmp) { type = fmt::format("int {}", tmp); },
+                        [&type](NullType) { type = "null"; },
                     },
                     value_.value()
                 );
@@ -141,7 +157,7 @@ public:
      *
      * @return An optional reference to the associated Constraint.
      */
-    [[nodiscard]] std::optional<std::reference_wrapper<Constraint const>>
+    [[nodiscard]] constexpr std::optional<std::reference_wrapper<Constraint const>>
     getConstraint() const
     {
         return cons_;
@@ -198,7 +214,31 @@ public:
     [[nodiscard]] Value const&
     getValue() const
     {
+        ASSERT(value_.has_value(), "getValue() is called when there is no value set");
         return value_.value();
+    }
+
+    /**
+     * @brief Prints all the info of this config value to the output stream.
+     *
+     * @param stream The output stream
+     * @param val The config value to output to osstream
+     * @return The same ostream we were given
+     */
+    friend std::ostream&
+    operator<<(std::ostream& stream, ConfigValue val)
+    {
+        stream << "- **Required**: " << (val.isOptional() ? "False" : "True") << "\n";
+        stream << "- **Type**: " << val.type() << "\n";
+        stream << "- **Default value**: " << (val.hasValue() ? *val.value_ : "None") << "\n";
+        stream << "- **Constraints**: ";
+
+        if (val.getConstraint().has_value()) {
+            stream << val.getConstraint()->get() << "\n";
+        } else {
+            stream << "None" << "\n";
+        }
+        return stream;
     }
 
 private:

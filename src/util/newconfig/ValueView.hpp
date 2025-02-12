@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/Assert.hpp"
+#include "util/newconfig/ConfigConstraints.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"
 
@@ -30,6 +31,7 @@
 #include <cstdint>
 #include <functional>
 #include <optional>
+#include <ostream>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -142,6 +144,17 @@ public:
     }
 
     /**
+     * @brief Retrieves the constraint associated with the ConfigValue in this ValueView, if any.
+     *
+     * @return An optional reference to the associated Constraint
+     */
+    [[nodiscard]] constexpr std::optional<std::reference_wrapper<Constraint const>>
+    getConstraint() const
+    {
+        return configVal_.get().getConstraint();
+    }
+
+    /**
      * @brief Retrieves the stored value as the specified type T
      *
      * @tparam T The type to cast the stored value to
@@ -184,6 +197,20 @@ public:
             return std::nullopt;
 
         return std::make_optional(getValueImpl<T>());
+    }
+
+    /**
+     * @brief Custom output stream for ValueView
+     *
+     * @param stream The output stream
+     * @param value The ValueView
+     * @return The same ostream we were given
+     */
+    friend std::ostream&
+    operator<<(std::ostream& stream, ValueView value)
+    {
+        stream << value.configVal_;
+        return stream;
     }
 
 private:

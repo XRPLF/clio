@@ -117,6 +117,7 @@ class LedgerTypes {
         LedgerTypeAttribute::chainLedgerType(JS(nunl), ripple::ltNEGATIVE_UNL),
         LedgerTypeAttribute::deletionBlockerLedgerType(JS(mpt_issuance), ripple::ltMPTOKEN_ISSUANCE),
         LedgerTypeAttribute::deletionBlockerLedgerType(JS(mptoken), ripple::ltMPTOKEN),
+        LedgerTypeAttribute::deletionBlockerLedgerType(JS(permissioned_domain), ripple::ltPERMISSIONED_DOMAIN),
     };
 
 public:

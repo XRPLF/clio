@@ -20,10 +20,10 @@
 #include "util/newconfig/ConfigFileJson.hpp"
 
 #include "util/Assert.hpp"
+#include "util/newconfig/Array.hpp"
 #include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
-#include <boost/filesystem/path.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
@@ -31,16 +31,19 @@
 #include <boost/json/value.hpp>
 #include <fmt/core.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
+#include <filesystem>
 #include <fstream>
 #include <ios>
-#include <iostream>
-#include <ostream>
+#include <optional>
+#include <queue>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -71,25 +74,27 @@ extractJsonValue(boost::json::value const& jsonValue)
     if (jsonValue.is_double()) {
         return jsonValue.as_double();
     }
-    ASSERT(false, "Json is not of type int, uint, string, bool or double");
+    if (jsonValue.is_null()) {
+        return NullType{};
+    }
+    ASSERT(false, "Json is not of type null, int, uint, string, bool or double");
     std::unreachable();
 }
 }  // namespace
 
 ConfigFileJson::ConfigFileJson(boost::json::object jsonObj)
 {
-    flattenJson(jsonObj, "");
+    flattenJson(jsonObj);
 }
 
 std::expected<ConfigFileJson, Error>
-ConfigFileJson::makeConfigFileJson(boost::filesystem::path configFilePath)
+ConfigFileJson::makeConfigFileJson(std::filesystem::path const& configFilePath)
 {
     try {
         if (auto const in = std::ifstream(configFilePath.string(), std::ios::in | std::ios::binary); in) {
             std::stringstream contents;
             contents << in.rdbuf();
-            auto opts = boost::json::parse_options{};
-            opts.allow_comments = true;
+            auto const opts = boost::json::parse_options{.allow_comments = true};
             auto const tempObj = boost::json::parse(contents.str(), {}, opts).as_object();
             return ConfigFileJson{tempObj};
         }
@@ -107,7 +112,9 @@ ConfigFileJson::makeConfigFileJson(boost::filesystem::path configFilePath)
 Value
 ConfigFileJson::getValue(std::string_view key) const
 {
+    ASSERT(containsKey(key), "Key {} not found in ConfigFileJson", key);
     auto const jsonValue = jsonObject_.at(key);
+    ASSERT(jsonValue.is_primitive(), "Key {} has value that is not a primitive", key);
     auto const value = extractJsonValue(jsonValue);
     return value;
 }
@@ -115,14 +122,15 @@ ConfigFileJson::getValue(std::string_view key) const
 std::vector<Value>
 ConfigFileJson::getArray(std::string_view key) const
 {
+    ASSERT(containsKey(key), "Key {} not found in ConfigFileJson", key);
     ASSERT(jsonObject_.at(key).is_array(), "Key {} has value that is not an array", key);
 
     std::vector<Value> configValues;
     auto const arr = jsonObject_.at(key).as_array();
 
     for (auto const& item : arr) {
-        auto const value = extractJsonValue(item);
-        configValues.emplace_back(value);
+        auto value = extractJsonValue(item);
+        configValues.emplace_back(std::move(value));
     }
     return configValues;
 }
@@ -133,38 +141,90 @@ ConfigFileJson::containsKey(std::string_view key) const
     return jsonObject_.contains(key);
 }
 
-void
-ConfigFileJson::flattenJson(boost::json::object const& obj, std::string const& prefix)
+boost::json::object const&
+ConfigFileJson::inner() const
 {
-    for (auto const& [key, value] : obj) {
-        std::string const fullKey = prefix.empty() ? std::string(key) : fmt::format("{}.{}", prefix, std::string(key));
+    return jsonObject_;
+}
 
-        // In ClioConfigDefinition, value must be a primitive or array
-        if (value.is_object()) {
-            flattenJson(value.as_object(), fullKey);
-        } else if (value.is_array()) {
-            auto const& arr = value.as_array();
-            for (std::size_t i = 0; i < arr.size(); ++i) {
-                std::string const arrayPrefix = fullKey + ".[]";
-                if (arr[i].is_object()) {
-                    flattenJson(arr[i].as_object(), arrayPrefix);
+void
+ConfigFileJson::flattenJson(boost::json::object const& jsonRootObject)
+{
+    struct Task {
+        boost::json::object const& object;
+        std::string prefix;
+        std::optional<size_t> arrayIndex = std::nullopt;
+    };
+
+    std::queue<Task> tasks;
+    tasks.push(Task{.object = jsonRootObject, .prefix = ""});
+
+    std::unordered_map<std::string, size_t> arraysSizes;
+
+    while (not tasks.empty()) {
+        auto const task = std::move(tasks.front());
+        tasks.pop();
+
+        for (auto const& [key, value] : task.object) {
+            auto fullKey =
+                task.prefix.empty() ? std::string(key) : fmt::format("{}.{}", task.prefix, std::string_view{key});
+
+            if (value.is_object()) {
+                tasks.push(
+                    Task{.object = value.as_object(), .prefix = std::move(fullKey), .arrayIndex = task.arrayIndex}
+                );
+            } else if (value.is_array()) {
+                fullKey += ".[]";
+                auto const& array = value.as_array();
+
+                if (std::ranges::all_of(array, [](auto const& v) { return v.is_primitive(); })) {
+                    jsonObject_[fullKey] = array;
+                } else if (std::ranges::all_of(array, [](auto const& v) { return v.is_object(); })) {
+                    for (size_t i = 0; i < array.size(); ++i) {
+                        tasks.push(Task{.object = array.at(i).as_object(), .prefix = fullKey, .arrayIndex = i});
+                    }
                 } else {
-                    jsonObject_[arrayPrefix] = arr;
+                    ASSERT(
+                        false,
+                        "Arrays containing both values and objects are not supported. Please check the array {}",
+                        fullKey
+                    );
                 }
-            }
-        } else {
-            // if "[]" is present in key, then value must be an array instead of primitive
-            if (fullKey.contains(".[]") && !jsonObject_.contains(fullKey)) {
-                boost::json::array newArray;
-                newArray.emplace_back(value);
-                jsonObject_[fullKey] = newArray;
-            } else if (fullKey.contains(".[]") && jsonObject_.contains(fullKey)) {
-                jsonObject_[fullKey].as_array().emplace_back(value);
             } else {
-                jsonObject_[fullKey] = value;
+                if (task.arrayIndex.has_value()) {
+                    if (not jsonObject_.contains(fullKey)) {
+                        jsonObject_[fullKey] = boost::json::array{};
+                    }
+
+                    auto& targetArray = jsonObject_.at(fullKey).as_array();
+                    while (targetArray.size() < (*task.arrayIndex + 1)) {
+                        targetArray.push_back(boost::json::value());
+                    }
+                    targetArray.at(*task.arrayIndex) = value;
+                    auto const prefix = std::string{Array::prefix(fullKey)};
+                    arraysSizes[prefix] = std::max(arraysSizes[prefix], targetArray.size());
+                } else {
+                    jsonObject_[fullKey] = value;
+                }
             }
         }
     }
+
+    // adjust length of each array containing objects
+    std::ranges::for_each(jsonObject_, [&arraysSizes](auto& item) {
+        auto const key = item.key();
+        if (not key.contains("[]"))
+            return;
+
+        auto& value = item.value();
+        auto const prefix = std::string{Array::prefix(key)};
+        if (auto const it = arraysSizes.find(prefix); it != arraysSizes.end()) {
+            auto const size = it->second;
+            while (value.as_array().size() < size) {
+                value.as_array().push_back(boost::json::value{});
+            }
+        }
+    });
 }
 
 }  // namespace util::config

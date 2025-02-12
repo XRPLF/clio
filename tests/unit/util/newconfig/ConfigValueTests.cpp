@@ -17,62 +17,173 @@
 */
 //==============================================================================
 
+#include "util/LoggerFixtures.hpp"
 #include "util/newconfig/ConfigConstraints.hpp"
 #include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
 #include <fmt/core.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <array>
+#include <optional>
+#include <ostream>
 #include <string>
 
 using namespace util::config;
 
-TEST(ConfigValue, GetSetString)
+struct ConfigValueTest : NoLoggerFixture {};
+struct ConfigValueDeathTest : ConfigValueTest {};
+
+TEST_F(ConfigValueTest, construct)
 {
-    auto const cvStr = ConfigValue{ConfigType::String}.defaultValue("12345");
-    EXPECT_EQ(cvStr.type(), ConfigType::String);
-    EXPECT_TRUE(cvStr.hasValue());
-    EXPECT_FALSE(cvStr.isOptional());
+    ConfigValue const cv{ConfigType::Integer};
+    EXPECT_FALSE(cv.hasValue());
+    EXPECT_FALSE(cv.isOptional());
+    EXPECT_EQ(cv.type(), ConfigType::Integer);
 }
 
-TEST(ConfigValue, GetSetInteger)
+TEST_F(ConfigValueTest, optional)
 {
-    auto const cvInt = ConfigValue{ConfigType::Integer}.defaultValue(543);
-    EXPECT_EQ(cvInt.type(), ConfigType::Integer);
-    EXPECT_TRUE(cvInt.hasValue());
-    EXPECT_FALSE(cvInt.isOptional());
+    auto const cv = ConfigValue{ConfigType::Integer}.optional();
+    EXPECT_FALSE(cv.hasValue());
+    EXPECT_TRUE(cv.isOptional());
+    EXPECT_EQ(cv.type(), ConfigType::Integer);
+}
 
-    auto const cvOpt = ConfigValue{ConfigType::Integer}.optional();
-    EXPECT_TRUE(cvOpt.isOptional());
+TEST_F(ConfigValueTest, defaultValue)
+{
+    auto const cv = ConfigValue{ConfigType::Integer}.defaultValue(123);
+    EXPECT_TRUE(cv.hasValue());
+    EXPECT_FALSE(cv.isOptional());
+    EXPECT_EQ(cv.type(), ConfigType::Integer);
+}
+
+TEST_F(ConfigValueDeathTest, invalidDefaultValue)
+{
+    EXPECT_DEATH({ [[maybe_unused]] auto const a = ConfigValue{ConfigType::String}.defaultValue(33); }, ".*");
+}
+
+TEST_F(ConfigValueTest, setValueNull)
+{
+    auto cv = ConfigValue{ConfigType::Integer};
+    auto const err = cv.setValue(NullType{});
+    EXPECT_TRUE(err.has_value());
+}
+
+TEST_F(ConfigValueTest, setValueNullOptional)
+{
+    auto cv = ConfigValue{ConfigType::Integer}.optional();
+    auto const err = cv.setValue(NullType{});
+    EXPECT_FALSE(err.has_value());
+}
+
+TEST_F(ConfigValueTest, setValueNullDefault)
+{
+    auto cv = ConfigValue{ConfigType::Integer}.defaultValue(123);
+    auto const err = cv.setValue(NullType{});
+    EXPECT_FALSE(err.has_value());
+    EXPECT_EQ(cv.getValue(), Value{123});
+}
+
+TEST_F(ConfigValueTest, setValueWrongType)
+{
+    auto cv = ConfigValue{ConfigType::Integer};
+    auto const err = cv.setValue("123");
+    EXPECT_TRUE(err.has_value());
+}
+
+TEST_F(ConfigValueTest, setValueNormalPath)
+{
+    auto cv = ConfigValue{ConfigType::Integer};
+    auto const err = cv.setValue(123);
+    EXPECT_FALSE(err.has_value());
+    EXPECT_EQ(cv.getValue(), Value{123});
+}
+
+struct ConfigValueConstraintTest : ConfigValueTest {
+    struct MockConstraint : Constraint {
+        MOCK_METHOD(std::optional<Error>, checkTypeImpl, (Value const&), (const, override));
+        MOCK_METHOD(std::optional<Error>, checkValueImpl, (Value const&), (const, override));
+        MOCK_METHOD(void, print, (std::ostream&), (const, override));
+    };
+
+    testing::StrictMock<MockConstraint> constraint;
+};
+
+TEST_F(ConfigValueConstraintTest, setValueWithConstraint)
+{
+    auto cv = ConfigValue{ConfigType::Integer}.withConstraint(constraint);
+    auto const value = Value{123};
+    EXPECT_CALL(constraint, checkTypeImpl).WillOnce(testing::Return(std::nullopt));
+    EXPECT_CALL(constraint, checkValueImpl).WillOnce(testing::Return(std::nullopt));
+    auto const err = cv.setValue(value);
+    EXPECT_FALSE(err.has_value());
+    EXPECT_EQ(cv.getValue(), value);
+}
+
+TEST_F(ConfigValueConstraintTest, setValueWithConstraintTypeCheckError)
+{
+    auto cv = ConfigValue{ConfigType::Integer}.withConstraint(constraint);
+    auto const value = 123;
+    EXPECT_CALL(constraint, checkTypeImpl).WillOnce(testing::Return(Error{"type error"}));
+    auto const err = cv.setValue(value);
+    EXPECT_TRUE(err.has_value());
+    EXPECT_EQ(err->error, "Unknown_key type error");
+}
+
+TEST_F(ConfigValueConstraintTest, defaultValueWithConstraint)
+{
+    EXPECT_CALL(constraint, checkTypeImpl).WillOnce(testing::Return(std::nullopt));
+    EXPECT_CALL(constraint, checkValueImpl).WillOnce(testing::Return(std::nullopt));
+    auto const cv = ConfigValue{ConfigType::Integer}.defaultValue(123).withConstraint(constraint);
+    EXPECT_EQ(cv.getValue(), Value{123});
+}
+
+struct ConfigValueConstraintDeathTest : ConfigValueConstraintTest {};
+
+TEST_F(ConfigValueConstraintDeathTest, defaultValueWithConstraintCheckError)
+{
+    EXPECT_DEATH(
+        {
+            EXPECT_CALL(constraint, checkTypeImpl).WillOnce(testing::Return(std::nullopt));
+            EXPECT_CALL(constraint, checkValueImpl).WillOnce(testing::Return(Error{"value error"}));
+            [[maybe_unused]] auto const cv =
+                ConfigValue{ConfigType::Integer}.defaultValue(123).withConstraint(constraint);
+        },
+        ".*"
+    );
 }
 
 // A test for each constraint so it's easy to change in the future
-TEST(ConfigValue, PortConstraint)
+struct ConstraintTest : NoLoggerFixture {};
+
+TEST_F(ConstraintTest, PortConstraint)
 {
     auto const portConstraint{PortConstraint{}};
     EXPECT_FALSE(portConstraint.checkConstraint(4444).has_value());
     EXPECT_TRUE(portConstraint.checkConstraint(99999).has_value());
 }
 
-TEST(ConfigValue, SetValuesOnPortConstraint)
+TEST_F(ConstraintTest, SetValuesOnPortConstraint)
 {
     auto cvPort = ConfigValue{ConfigType::Integer}.defaultValue(4444).withConstraint(gValidatePort);
     auto const err = cvPort.setValue(99999);
     EXPECT_TRUE(err.has_value());
-    EXPECT_EQ(err->error, "Port does not satisfy the constraint bounds");
+    EXPECT_EQ(err->error, "Unknown_key Port does not satisfy the constraint bounds");
     EXPECT_TRUE(cvPort.setValue(33.33).has_value());
-    EXPECT_TRUE(cvPort.setValue(33.33).value().error == "value does not match type integer");
+    EXPECT_EQ(cvPort.setValue(33.33).value().error, "Unknown_key value does not match type integer");
     EXPECT_FALSE(cvPort.setValue(1).has_value());
 
     auto cvPort2 = ConfigValue{ConfigType::String}.defaultValue("4444").withConstraint(gValidatePort);
     auto const strPortError = cvPort2.setValue("100000");
     EXPECT_TRUE(strPortError.has_value());
-    EXPECT_EQ(strPortError->error, "Port does not satisfy the constraint bounds");
+    EXPECT_EQ(strPortError->error, "Unknown_key Port does not satisfy the constraint bounds");
 }
 
-TEST(ConfigValue, OneOfConstraintOneValue)
+TEST_F(ConstraintTest, OneOfConstraintOneValue)
 {
     std::array<char const*, 1> const arr = {"tracer"};
     auto const databaseConstraint{OneOf{"database.type", arr}};
@@ -88,7 +199,7 @@ TEST(ConfigValue, OneOfConstraintOneValue)
     );
 }
 
-TEST(ConfigValue, OneOfConstraint)
+TEST_F(ConstraintTest, OneOfConstraint)
 {
     std::array<char const*, 3> const arr = {"123", "trace", "haha"};
     auto const oneOfCons{OneOf{"log_level", arr}};
@@ -105,14 +216,14 @@ TEST(ConfigValue, OneOfConstraint)
     );
 }
 
-TEST(ConfigValue, IpConstraint)
+TEST_F(ConstraintTest, IpConstraint)
 {
     auto ip = ConfigValue{ConfigType::String}.defaultValue("127.0.0.1").withConstraint(gValidateIp);
     EXPECT_FALSE(ip.setValue("http://127.0.0.1").has_value());
     EXPECT_FALSE(ip.setValue("http://127.0.0.1.com").has_value());
     auto const err = ip.setValue("123.44");
     EXPECT_TRUE(err.has_value());
-    EXPECT_EQ(err->error, "Ip is not a valid ip address");
+    EXPECT_EQ(err->error, "Unknown_key Ip is not a valid ip address");
     EXPECT_FALSE(ip.setValue("126.0.0.2"));
 
     EXPECT_TRUE(ip.setValue("644.3.3.0"));
@@ -123,7 +234,7 @@ TEST(ConfigValue, IpConstraint)
     EXPECT_FALSE(ip.setValue("http://example.com:8080/path"));
 }
 
-TEST(ConfigValue, positiveNumConstraint)
+TEST_F(ConstraintTest, positiveNumConstraint)
 {
     auto const numCons{NumberValueConstraint{0, 5}};
     EXPECT_FALSE(numCons.checkConstraint(0));
@@ -136,7 +247,7 @@ TEST(ConfigValue, positiveNumConstraint)
     EXPECT_EQ(numCons.checkConstraint(8)->error, fmt::format("Number must be between {} and {}", 0, 5));
 }
 
-TEST(ConfigValue, SetValuesOnNumberConstraint)
+TEST_F(ConstraintTest, SetValuesOnNumberConstraint)
 {
     auto positiveNum = ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint16);
     auto const err = positiveNum.setValue(-22, "key");
@@ -145,7 +256,7 @@ TEST(ConfigValue, SetValuesOnNumberConstraint)
     EXPECT_FALSE(positiveNum.setValue(99, "key"));
 }
 
-TEST(ConfigValue, PositiveDoubleConstraint)
+TEST_F(ConstraintTest, PositiveDoubleConstraint)
 {
     auto const doubleCons{PositiveDouble{}};
     EXPECT_FALSE(doubleCons.checkConstraint(0.2));
@@ -162,7 +273,7 @@ struct ConstraintTestBundle {
     Constraint const& constraint;
 };
 
-struct ConstraintDeathTest : public testing::Test, public testing::WithParamInterface<ConstraintTestBundle> {};
+struct ConstraintDeathTest : testing::TestWithParam<ConstraintTestBundle> {};
 
 INSTANTIATE_TEST_SUITE_P(
     EachConstraints,
@@ -195,7 +306,7 @@ TEST_P(ConstraintDeathTest, TestEachConstraint)
     );
 }
 
-TEST(ConfigValueDeathTest, SetInvalidValueTypeStringAndBool)
+TEST(ConstraintDeathTest, SetInvalidValueTypeStringAndBool)
 {
     EXPECT_DEATH(
         {
@@ -207,7 +318,7 @@ TEST(ConfigValueDeathTest, SetInvalidValueTypeStringAndBool)
     EXPECT_DEATH({ [[maybe_unused]] auto a = ConfigValue{ConfigType::Boolean}.defaultValue(-66); }, ".*");
 }
 
-TEST(ConfigValueDeathTest, OutOfBounceIntegerConstraint)
+TEST(ConstraintDeathTest, OutOfBounceIntegerConstraint)
 {
     EXPECT_DEATH(
         {

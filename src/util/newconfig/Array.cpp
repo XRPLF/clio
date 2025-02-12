@@ -36,14 +36,22 @@ Array::Array(ConfigValue arg) : itemPattern_{std::move(arg)}
 {
 }
 
+std::string_view
+Array::prefix(std::string_view key)
+{
+    static constexpr std::string_view kARRAY_SUFFIX = ".[]";
+    ASSERT(key.contains(kARRAY_SUFFIX), "Provided key is not an array key: {}", key);
+
+    return key.substr(0, key.rfind(kARRAY_SUFFIX) + kARRAY_SUFFIX.size());
+}
+
 std::optional<Error>
 Array::addValue(Value value, std::optional<std::string_view> key)
 {
-    auto const& configValPattern = itemPattern_;
-    auto const constraint = configValPattern.getConstraint();
+    auto const constraint = itemPattern_.getConstraint();
 
-    auto newElem = constraint.has_value() ? ConfigValue{configValPattern.type()}.withConstraint(constraint->get())
-                                          : ConfigValue{configValPattern.type()};
+    auto newElem = constraint.has_value() ? ConfigValue{itemPattern_.type()}.withConstraint(constraint->get())
+                                          : ConfigValue{itemPattern_.type()};
     if (auto const maybeError = newElem.setValue(value, key); maybeError.has_value())
         return maybeError;
     elements_.emplace_back(std::move(newElem));

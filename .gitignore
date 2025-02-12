@@ -6,6 +6,7 @@
 .vscode
 .python-version
 .DS_Store
+.sanitizer-report
 CMakeUserPresets.json
 config.json
 src/util/build/Build.cpp
