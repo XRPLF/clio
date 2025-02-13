@@ -17,10 +17,13 @@
 */
 //==============================================================================
 
+#include "util/LoggerFixtures.hpp"
+#include "util/newconfig/Array.hpp"
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigDescription.hpp"
 #include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/FakeConfigData.hpp"
 #include "util/newconfig/Types.hpp"
 #include "util/newconfig/ValueView.hpp"
@@ -320,3 +323,54 @@ TEST_F(IncorrectOverrideValues, InvalidJsonErrors)
     }
     EXPECT_EQ(expectedErrors, actualErrors);
 }
+
+struct ClioConfigDefinitionParseArrayTest : NoLoggerFixture {
+    ClioConfigDefinition config{
+        {"array.[].int", Array{ConfigValue{ConfigType::Integer}}},
+        {"array.[].string", Array{ConfigValue{ConfigType::String}.optional()}}
+    };
+};
+
+TEST_F(ClioConfigDefinitionParseArrayTest, emptyArray)
+{
+    auto const configJson = boost::json::parse(R"json({
+        "array": []
+    })json").as_object();
+
+    auto const result = config.parse(ConfigFileJson{configJson});
+    EXPECT_FALSE(result.has_value());
+}
+
+TEST_F(ClioConfigDefinitionParseArrayTest, fullArray)
+{
+    auto const configJson = boost::json::parse(R"json({
+        "array": [
+            {"int": 1, "string": "one"},
+            {"int": 2, "string": "two"}
+        ]
+    })json").as_object();
+
+    auto const result = config.parse(ConfigFileJson{configJson});
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(config.arraySize("array.[]"), 2);
+}
+
+TEST_F(ClioConfigDefinitionParseArrayTest, onlyRequiredFields) {
+    auto const configJson = boost::json::parse(R"json({
+        "array": [
+            {"int": 1},
+            {"int": 2}
+        ]
+    })json").as_object();
+
+    auto const configFile = ConfigFileJson{configJson};
+    auto const result = config.parse(configFile);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(config.arraySize("array.[]"), 2);
+
+    EXPECT_EQ(config.getArray("array.[].int").valueAt(0).asIntType<int>(), 1);
+    EXPECT_EQ(config.getArray("array.[].int").valueAt(1).asIntType<int>(), 2);
+    EXPECT_FALSE(config.getArray("array.[].string").valueAt(0).hasValue());
+    EXPECT_FALSE(config.getArray("array.[].string").valueAt(1).hasValue());
+}
+

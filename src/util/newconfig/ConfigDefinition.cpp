@@ -42,6 +42,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -157,15 +158,18 @@ std::optional<std::vector<Error>>
 ClioConfigDefinition::parse(ConfigFileInterface const& config)
 {
     std::vector<Error> listOfErrors;
+    std::unordered_map<std::string_view, std::vector<std::string_view>> arrayPrefixesToKeysMap;
     for (auto& [key, value] : map_) {
+        if (key.contains(".[]")) {
+            auto const prefix = Array::prefix(key);
+            arrayPrefixesToKeysMap[prefix].push_back(key);
+        }
+
         // if key doesn't exist in user config, makes sure it is marked as ".optional()" or has ".defaultValue()"" in
-        // ClioConfigDefitinion above
+        // ClioConfigDefinition above
         if (!config.containsKey(key)) {
             if (std::holds_alternative<ConfigValue>(value)) {
                 if (!(std::get<ConfigValue>(value).isOptional() || std::get<ConfigValue>(value).hasValue()))
-                    listOfErrors.emplace_back(key, "key is required in user Config");
-            } else if (std::holds_alternative<Array>(value)) {
-                if (!(std::get<Array>(value).getArrayPattern().isOptional()))
                     listOfErrors.emplace_back(key, "key is required in user Config");
             }
             continue;
@@ -186,14 +190,45 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
                               // iterate over each provided value in the array and attempt to set it for the key.
                               [&key, &config, &listOfErrors](Array& arr) {
                                   for (auto const& val : config.getArray(key)) {
-                                      if (auto const maybeError = arr.addValue(val, key); maybeError.has_value())
-                                          listOfErrors.emplace_back(maybeError.value());
+                                      if (val.has_value()) {
+                                          if (auto const maybeError = arr.addValue(*val, key); maybeError.has_value()) {
+                                              listOfErrors.emplace_back(*maybeError);
+                                          }
+                                      } else {
+                                          if (auto const maybeError = arr.addNull(key); maybeError.has_value()) {
+                                              listOfErrors.emplace_back(*maybeError);
+                                          }
+                                      }
                                   }
                               }
             },
             value
         );
     }
+
+    for (auto const& item : arrayPrefixesToKeysMap) {
+        size_t maxSize = 0;
+        std::ranges::for_each(item.second, [&](std::string_view key) {
+            ASSERT(std::holds_alternative<Array>(map_.at(key)), "{} is not array", key);
+            maxSize = std::max(maxSize, arraySize(key));
+        });
+
+        std::ranges::for_each(item.second, [&](std::string_view key) {
+            auto& array = std::get<Array>(map_.at(key));
+            if (array.size() != maxSize) {
+                if (array.getArrayPattern().isOptional()) {
+                    while (array.size() < maxSize) {
+                        auto const err = array.addNull(key);
+                        if (err.has_value())
+                            listOfErrors.emplace_back(*err);
+                    }
+                } else {
+                    listOfErrors.emplace_back(key, "is required for all objects in the array");
+                }
+            }
+        });
+    }
+
     if (!listOfErrors.empty())
         return listOfErrors;
 

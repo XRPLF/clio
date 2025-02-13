@@ -27,6 +27,7 @@
 
 #include <expected>
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -61,7 +62,7 @@ public:
      * @param key The key of the configuration array to retrieve.
      * @return A vector of variants holding the config values specified by user.
      */
-    [[nodiscard]] std::vector<Value>
+    [[nodiscard]] std::vector<std::optional<Value>>
     getArray(std::string_view key) const override;
 
     /**

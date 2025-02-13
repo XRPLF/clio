@@ -74,9 +74,6 @@ extractJsonValue(boost::json::value const& jsonValue)
     if (jsonValue.is_double()) {
         return jsonValue.as_double();
     }
-    if (jsonValue.is_null()) {
-        return NullType{};
-    }
     ASSERT(false, "Json is not of type null, int, uint, string, bool or double");
     std::unreachable();
 }
@@ -119,18 +116,22 @@ ConfigFileJson::getValue(std::string_view key) const
     return value;
 }
 
-std::vector<Value>
+std::vector<std::optional<Value>>
 ConfigFileJson::getArray(std::string_view key) const
 {
     ASSERT(containsKey(key), "Key {} not found in ConfigFileJson", key);
     ASSERT(jsonObject_.at(key).is_array(), "Key {} has value that is not an array", key);
 
-    std::vector<Value> configValues;
+    std::vector<std::optional<Value>> configValues;
     auto const arr = jsonObject_.at(key).as_array();
 
     for (auto const& item : arr) {
-        auto value = extractJsonValue(item);
-        configValues.emplace_back(std::move(value));
+        if (item.is_null()) {
+            configValues.emplace_back(std::nullopt);
+        } else {
+            auto value = extractJsonValue(item);
+            configValues.emplace_back(std::move(value));
+        }
     }
     return configValues;
 }

@@ -21,6 +21,7 @@
 
 #include "util/newconfig/Types.hpp"
 
+#include <optional>
 #include <string_view>
 #include <vector>
 
@@ -49,9 +50,9 @@ public:
      * @brief Retrieves an array of configuration values.
      *
      * @param key The key of the configuration array.
-     * @return A vector of configuration values if found, otherwise std::nullopt.
+     * @return A vector of configuration values some of which could be nullopt
      */
-    virtual std::vector<Value>
+    virtual std::vector<std::optional<Value>>
     getArray(std::string_view key) const = 0;
 
     /**

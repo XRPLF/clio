@@ -80,8 +80,8 @@ using util::config::ConfigValue;
 struct LoggerInitTest : LoggerTest {
 protected:
     util::config::ClioConfigDefinition config_{
-        {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.optional()}},
-        {"log_channels.[].log_level", Array{ConfigValue{ConfigType::String}.optional()}},
+        {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}}},
+        {"log_channels.[].log_level", Array{ConfigValue{ConfigType::String}}},
 
         {"log_level", ConfigValue{ConfigType::String}.defaultValue("info")},
 
