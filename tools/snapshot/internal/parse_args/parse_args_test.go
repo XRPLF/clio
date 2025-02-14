@@ -25,6 +25,7 @@ func TestParse(t *testing.T) {
 				EndSeq:     10,
 				Path:       "/data",
 				GrpcServer: "localhost:50051",
+				WsServer:   "0.0.0.0:6006",
 				ServerMode: false,
 			},
 			expectErr: false,
@@ -34,7 +35,7 @@ func TestParse(t *testing.T) {
 			args:       []string{"cmd", "--export=delta", "--start_seq=1"},
 			want:       nil,
 			expectErr:  true,
-			errMessage: "Invalid usage: --start_seq, --end_seq, --grpc_server and --path are required for export",
+			errMessage: "Invalid usage: --start_seq, --end_seq, --grpc_server and --path are required for export.",
 		},
 		{
 			name:       "Invalid export mode",
@@ -45,17 +46,23 @@ func TestParse(t *testing.T) {
 		},
 		{
 			name: "Server mode with default grpc server flags",
-			args: []string{"cmd", "--server", "--ws_port=1234", "--grpc_port=22", "--path=/server_data"},
+			args: []string{"cmd", "--server", "--path=/server_data"},
 			want: &Args{
 				ServerMode: true,
-				GrpcPort:   22,
-				WsPort:     1234,
 				StartSeq:   0,
 				EndSeq:     0,
 				Path:       "/server_data",
-				GrpcServer: "localhost:50051",
+				GrpcServer: "0.0.0.0:50051",
+				WsServer:   "0.0.0.0:6006",
 			},
 			expectErr: false,
+		},
+		{
+			name:       "Server mode with empty grpc server flag",
+			args:       []string{"cmd", "--server", "--grpc_server=", "--path=/server_data"},
+			want:       nil,
+			expectErr:  true,
+			errMessage: "Invalid usage: --grpc_server and --ws_server and --path are required for server mode.",
 		},
 		{
 			name:       "Server and export mode together (error)",
@@ -63,6 +70,24 @@ func TestParse(t *testing.T) {
 			want:       nil,
 			expectErr:  true,
 			errMessage: "Invalid usage: --server and --export cannot be used at the same time.",
+		},
+		{
+			name:       "Show range without path",
+			args:       []string{"cmd", "--range"},
+			want:       nil,
+			expectErr:  true,
+			errMessage: "Invalid usage: --path is required for show range.",
+		},
+		{
+			name: "Show range",
+			args: []string{"cmd", "--range", "--path=/range_data"},
+			want: &Args{
+				ShowRange:  true,
+				Path:       "/range_data",
+				GrpcServer: "0.0.0.0:50051",
+				WsServer:   "0.0.0.0:6006",
+			},
+			expectErr: false,
 		},
 	}
 
