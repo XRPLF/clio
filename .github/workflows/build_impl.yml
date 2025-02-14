@@ -164,7 +164,7 @@ jobs:
           path: build/clio_integration_tests
 
       - name: Save cache
-        if: ${{ !inputs.disable_cache }}
+        if: ${{ !inputs.disable_cache && github.ref == 'refs/heads/develop' }}
         uses: ./.github/actions/save_cache
         with:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
