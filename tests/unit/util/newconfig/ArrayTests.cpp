@@ -96,3 +96,34 @@ TEST(ArrayTest, iterateValueArray)
 
     EXPECT_TRUE(std::ranges::equal(expected, actual));
 }
+
+TEST(ArrayTest, addNullOptional)
+{
+    Array arr{ConfigValue{ConfigType::Integer}.optional()};
+    ASSERT_FALSE(arr.addNull());
+    ASSERT_FALSE(arr.addValue(1));
+
+    ASSERT_EQ(arr.size(), 2);
+    EXPECT_FALSE(arr.at(0).hasValue());
+    EXPECT_TRUE(arr.at(1).hasValue());
+    EXPECT_EQ(std::get<int64_t>(arr.at(1).getValue()), 1);
+}
+
+TEST(ArrayTest, addNullDefault)
+{
+    Array arr{ConfigValue{ConfigType::Integer}.defaultValue(42)};
+    ASSERT_FALSE(arr.addNull());
+    ASSERT_FALSE(arr.addValue(1));
+
+    ASSERT_EQ(arr.size(), 2);
+    EXPECT_EQ(std::get<int64_t>(arr.at(0).getValue()), 42);
+    EXPECT_EQ(std::get<int64_t>(arr.at(1).getValue()), 1);
+}
+
+TEST(ArrayTest, addNullRequired)
+{
+    Array arr{ConfigValue{ConfigType::Integer}};
+    auto const error = arr.addNull();
+    EXPECT_TRUE(error.has_value());
+}
+

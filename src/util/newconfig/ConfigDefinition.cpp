@@ -183,8 +183,9 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
                               // attempt to set the value from the configuration for the specified key.
                               [&key, &config, &listOfErrors](ConfigValue& val) {
                                   if (auto const maybeError = val.setValue(config.getValue(key), key);
-                                      maybeError.has_value())
+                                      maybeError.has_value()) {
                                       listOfErrors.emplace_back(maybeError.value());
+                                  }
                               },
                               // handle the case where the config value is an array.
                               // iterate over each provided value in the array and attempt to set it for the key.
@@ -206,12 +207,19 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
         );
     }
 
+    if (!listOfErrors.empty())
+        return listOfErrors;
+
     for (auto const& item : arrayPrefixesToKeysMap) {
         size_t maxSize = 0;
         std::ranges::for_each(item.second, [&](std::string_view key) {
             ASSERT(std::holds_alternative<Array>(map_.at(key)), "{} is not array", key);
             maxSize = std::max(maxSize, arraySize(key));
         });
+        if (maxSize == 0) {
+            // empty arrays are allowed
+            continue;
+        }
 
         std::ranges::for_each(item.second, [&](std::string_view key) {
             auto& array = std::get<Array>(map_.at(key));
