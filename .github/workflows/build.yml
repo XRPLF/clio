@@ -152,7 +152,7 @@ jobs:
             exit 1
           fi
           repoConfigHash=$(sha256sum ${repoConfigFile} | cut -d' ' -f1)
-          if [ ${configDescriptionHash} != ${repoConfigHash} ]
+          if [ ${configDescriptionHash} != ${repoConfigHash} ]; then
             diff -u "${repoConfigFile}" "${configDescriptionFile}"
             exit 1
           fi
