@@ -60,7 +60,7 @@ This file lists all Clio Configuration definitions in detail.
 ### Key: database.cassandra.threads
 - **Required**: True
 - **Type**: int
-- **Default value**: 12
+- **Default value**: 32
 - **Constraints**: The minimum value is `0`. The maximum value is `4294967295`
  -   **Description**: Number of threads that will be used for database operations.
 ### Key: database.cassandra.core_connections_per_host
@@ -192,7 +192,7 @@ This file lists all Clio Configuration definitions in detail.
 ### Key: workers
 - **Required**: True
 - **Type**: int
-- **Default value**: 12
+- **Default value**: 32
 - **Constraints**: The minimum value is `0`. The maximum value is `4294967295`
  -   **Description**: Number of threads to process RPC requests.
 ### Key: server.ip

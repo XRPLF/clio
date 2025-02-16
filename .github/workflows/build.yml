@@ -143,19 +143,25 @@ jobs:
         shell: bash
         run: |
           chmod +x ./clio_server
-          configDescriptionFile=config_description_new.md
           repoConfigFile=docs/config-description.md
-          ./clio_server -d ${configDescriptionFile}
-          configDescriptionHash=$(sha256sum ${configDescriptionFile} | cut -d' ' -f1)
+
           if ! [ -f ${repoConfigFile} ]; then
             echo "Config Description markdown file is missing in docs folder"
             exit 1
           fi
+
+          configDescriptionFile=config_description_new.md
+          ./clio_server -d ${configDescriptionFile}
+
+          configDescriptionHash=$(sha256sum ${configDescriptionFile} | cut -d' ' -f1)
           repoConfigHash=$(sha256sum ${repoConfigFile} | cut -d' ' -f1)
+
           if [ ${configDescriptionHash} != ${repoConfigHash} ]; then
             diff -u "${repoConfigFile}" "${configDescriptionFile}"
+            rm -f ${configDescriptionFile}
             exit 1
           fi
+          rm -f ${configDescriptionFile}
           exit 0
                     
 
