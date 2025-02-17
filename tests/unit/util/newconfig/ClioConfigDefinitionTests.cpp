@@ -435,3 +435,18 @@ TEST_F(ClioConfigDefinitionParseArrayTest, missingRequiredFields) {
     EXPECT_EQ(result->size(), 1);
     EXPECT_THAT(result->at(0).error, testing::StartsWith("array.[].int"));
 }
+
+TEST_F(ClioConfigDefinitionParseArrayTest, missingAllRequiredFields) {
+    auto const configJson = boost::json::parse(R"json({
+        "array": [
+            {"string": "one"},
+            {"string": "two"}
+        ]
+    })json").as_object();
+
+    auto const configFile = ConfigFileJson{configJson};
+    auto const result = config.parse(configFile);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->size(), 1);
+    EXPECT_THAT(result->at(0).error, testing::StartsWith("array.[].int"));
+}

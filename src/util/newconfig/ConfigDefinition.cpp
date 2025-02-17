@@ -210,9 +210,12 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
     if (!listOfErrors.empty())
         return listOfErrors;
 
-    for (auto const& item : arrayPrefixesToKeysMap) {
+    // The code above couldn't detect whether some fields in an array are missing.
+    // So to fix it for each array we determine it's size and add empty values if the field is optional
+    // or generate an error.
+    for (auto const& [_, keys] : arrayPrefixesToKeysMap) {
         size_t maxSize = 0;
-        std::ranges::for_each(item.second, [&](std::string_view key) {
+        std::ranges::for_each(keys, [&](std::string_view key) {
             ASSERT(std::holds_alternative<Array>(map_.at(key)), "{} is not array", key);
             maxSize = std::max(maxSize, arraySize(key));
         });
@@ -221,17 +224,15 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
             continue;
         }
 
-        std::ranges::for_each(item.second, [&](std::string_view key) {
+        std::ranges::for_each(keys, [&](std::string_view key) {
             auto& array = std::get<Array>(map_.at(key));
             if (array.size() != maxSize) {
-                if (array.getArrayPattern().isOptional()) {
-                    while (array.size() < maxSize) {
-                        auto const err = array.addNull(key);
-                        if (err.has_value())
-                            listOfErrors.emplace_back(*err);
+                while (array.size() < maxSize) {
+                    auto const err = array.addNull(key);
+                    if (err.has_value()) {
+                        listOfErrors.emplace_back(*err);
+                        break;
                     }
-                } else {
-                    listOfErrors.emplace_back(key, "is required for all objects in the array");
                 }
             }
         });
