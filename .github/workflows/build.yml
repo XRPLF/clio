@@ -142,14 +142,13 @@ jobs:
       - name: Compare Config Description
         shell: bash
         run: |
-          chmod +x ./clio_server
           repoConfigFile=docs/config-description.md
-
           if ! [ -f ${repoConfigFile} ]; then
             echo "Config Description markdown file is missing in docs folder"
             exit 1
           fi
 
+          chmod +x ./clio_server
           configDescriptionFile=config_description_new.md
           ./clio_server -d ${configDescriptionFile}
 
@@ -157,6 +156,7 @@ jobs:
           repoConfigHash=$(sha256sum ${repoConfigFile} | cut -d' ' -f1)
 
           if [ ${configDescriptionHash} != ${repoConfigHash} ]; then
+            echo "Markdown file is not up to date"
             diff -u "${repoConfigFile}" "${configDescriptionFile}"
             rm -f ${configDescriptionFile}
             exit 1
