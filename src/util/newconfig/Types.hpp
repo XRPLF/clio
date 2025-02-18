@@ -32,23 +32,7 @@
 namespace util::config {
 
 /** @brief Custom clio config types */
-enum class ConfigType { Integer, String, Double, Boolean, Null };
-
-/**
- * @brief A type that represents a null value
- */
-struct NullType {
-    /**
-     * @brief Compare two NullType objects
-     *
-     * @return true always. Any two NullType objects are equal
-     */
-    [[nodiscard]] bool
-    operator==(NullType const&) const
-    {
-        return true;
-    }
-};
+enum class ConfigType { Integer, String, Double, Boolean };
 
 /**
  * @brief Prints the specified config type to output stream
@@ -61,7 +45,7 @@ std::ostream&
 operator<<(std::ostream& stream, ConfigType type);
 
 /** @brief Represents the supported Config Values */
-using Value = std::variant<int64_t, std::string, bool, double, NullType>;
+using Value = std::variant<int64_t, std::string, bool, double>;
 
 /**
  * @brief Prints the specified value to output stream
@@ -91,8 +75,6 @@ getType()
         return ConfigType::Double;
     } else if constexpr (std::is_same_v<Type, bool>) {
         return ConfigType::Boolean;
-    } else if constexpr (std::is_same_v<Type, NullType>) {
-        return ConfigType::Null;
     } else {
         static_assert(util::Unsupported<Type>, "Wrong config type");
     }
@@ -100,15 +82,3 @@ getType()
 
 }  // namespace util::config
 
-/** @cond */
-// Doxygen could not parse this
-template <>
-struct fmt::formatter<util::config::NullType> : fmt::formatter<char const*> {
-    [[nodiscard]]
-    auto
-    format(util::config::NullType const&, fmt::format_context& ctx)
-    {
-        return fmt::formatter<char const*>::format("null", ctx);
-    }
-};
-/** @endcond */

@@ -66,28 +66,6 @@ TEST_F(ConfigValueDeathTest, invalidDefaultValue)
     EXPECT_DEATH({ [[maybe_unused]] auto const a = ConfigValue{ConfigType::String}.defaultValue(33); }, ".*");
 }
 
-TEST_F(ConfigValueTest, setValueNull)
-{
-    auto cv = ConfigValue{ConfigType::Integer};
-    auto const err = cv.setValue(NullType{});
-    EXPECT_TRUE(err.has_value());
-}
-
-TEST_F(ConfigValueTest, setValueNullOptional)
-{
-    auto cv = ConfigValue{ConfigType::Integer}.optional();
-    auto const err = cv.setValue(NullType{});
-    EXPECT_FALSE(err.has_value());
-}
-
-TEST_F(ConfigValueTest, setValueNullDefault)
-{
-    auto cv = ConfigValue{ConfigType::Integer}.defaultValue(123);
-    auto const err = cv.setValue(NullType{});
-    EXPECT_FALSE(err.has_value());
-    EXPECT_EQ(cv.getValue(), Value{123});
-}
-
 TEST_F(ConfigValueTest, setValueWrongType)
 {
     auto cv = ConfigValue{ConfigType::Integer};

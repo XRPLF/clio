@@ -46,16 +46,16 @@ TEST(ArrayDeathTest, prefix)
 TEST(ArrayTest, addSingleValue)
 {
     auto arr = Array{ConfigValue{ConfigType::Double}};
-    arr.addValue(111.11);
+    ASSERT_FALSE(arr.addValue(111.11));
     EXPECT_EQ(arr.size(), 1);
 }
 
 TEST(ArrayTest, addAndCheckMultipleValues)
 {
     auto arr = Array{ConfigValue{ConfigType::Double}};
-    arr.addValue(111.11);
-    arr.addValue(222.22);
-    arr.addValue(333.33);
+    ASSERT_FALSE(arr.addValue(111.11));
+    ASSERT_FALSE(arr.addValue(222.22));
+    ASSERT_FALSE(arr.addValue(333.33));
     EXPECT_EQ(arr.size(), 3);
 
     auto const cv = arr.at(0);
@@ -67,7 +67,7 @@ TEST(ArrayTest, addAndCheckMultipleValues)
     EXPECT_EQ(vv2.asDouble(), 222.22);
 
     EXPECT_EQ(arr.size(), 3);
-    arr.addValue(444.44);
+    ASSERT_FALSE(arr.addValue(444.44));
 
     EXPECT_EQ(arr.size(), 4);
     auto const cv4 = arr.at(3);
@@ -88,7 +88,7 @@ TEST(ArrayTest, iterateValueArray)
     std::vector<int64_t> const expected{543, 123, 909};
 
     for (auto const num : expected)
-        arr.addValue(num);
+        ASSERT_FALSE(arr.addValue(num));
 
     std::vector<int64_t> actual;
     for (auto it = arr.begin(); it != arr.end(); ++it)
@@ -96,3 +96,34 @@ TEST(ArrayTest, iterateValueArray)
 
     EXPECT_TRUE(std::ranges::equal(expected, actual));
 }
+
+TEST(ArrayTest, addNullOptional)
+{
+    Array arr{ConfigValue{ConfigType::Integer}.optional()};
+    ASSERT_FALSE(arr.addNull());
+    ASSERT_FALSE(arr.addValue(1));
+
+    ASSERT_EQ(arr.size(), 2);
+    EXPECT_FALSE(arr.at(0).hasValue());
+    EXPECT_TRUE(arr.at(1).hasValue());
+    EXPECT_EQ(std::get<int64_t>(arr.at(1).getValue()), 1);
+}
+
+TEST(ArrayTest, addNullDefault)
+{
+    Array arr{ConfigValue{ConfigType::Integer}.defaultValue(42)};
+    ASSERT_FALSE(arr.addNull());
+    ASSERT_FALSE(arr.addValue(1));
+
+    ASSERT_EQ(arr.size(), 2);
+    EXPECT_EQ(std::get<int64_t>(arr.at(0).getValue()), 42);
+    EXPECT_EQ(std::get<int64_t>(arr.at(1).getValue()), 1);
+}
+
+TEST(ArrayTest, addNullRequired)
+{
+    Array arr{ConfigValue{ConfigType::Integer}};
+    auto const error = arr.addNull();
+    EXPECT_TRUE(error.has_value());
+}
+
