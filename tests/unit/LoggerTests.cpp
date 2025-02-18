@@ -179,6 +179,7 @@ TEST_F(LoggerInitTest, ChannelLogLevel)
 
 TEST_F(LoggerInitTest, InitReturnsErrorIfCouldNotCreateLogDirectory)
 {
+    // "/proc" directory is read only on any unix OS
     auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::object{{"log_directory", "/proc/logs"}}});
     ASSERT_FALSE(parsingErrors.has_value());
 
@@ -199,7 +200,7 @@ TEST_F(LoggerInitTest, InitReturnsErrorIfProvidedInvalidChannel)
         ]
     })json";
 
-    auto json = boost::json::parse(jsonStr).as_object();
+    auto const json = boost::json::parse(jsonStr).as_object();
     auto const parsingErrors = config_.parse(ConfigFileJson{json});
     ASSERT_FALSE(parsingErrors.has_value());
 
