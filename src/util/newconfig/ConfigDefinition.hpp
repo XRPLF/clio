@@ -345,10 +345,10 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(gValidateUint16)},
      {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(gValidateLoadMode)},
 
-     {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateChannelName)}
+     {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.withConstraint(gValidateChannelName)}
      },
      {"log_channels.[].log_level",
-      Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateLogLevelName)}},
+      Array{ConfigValue{ConfigType::String}.withConstraint(gValidateLogLevelName)}},
 
      {"log_level", ConfigValue{ConfigType::String}.defaultValue("info").withConstraint(gValidateLogLevelName)},
 

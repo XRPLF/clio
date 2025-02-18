@@ -26,9 +26,11 @@
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"
 
+#include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <cstddef>
@@ -113,7 +115,7 @@ TEST_F(LoggerInitTest, DefaultLogLevel)
     ASSERT_FALSE(parsingErrors.has_value());
     std::string const logString = "some log";
 
-    LogService::init(config_);
+    EXPECT_TRUE(LogService::init(config_));
     for (auto const& channel : Logger::kCHANNELS) {
         Logger const log{channel};
         log.trace() << logString;
@@ -151,7 +153,7 @@ TEST_F(LoggerInitTest, ChannelLogLevel)
     ASSERT_FALSE(parsingErrors.has_value());
     std::string const logString = "some log";
 
-    LogService::init(config_);
+    EXPECT_TRUE(LogService::init(config_));
     for (auto const& channel : Logger::kCHANNELS) {
         Logger const log{channel};
         log.trace() << logString;
@@ -173,6 +175,38 @@ TEST_F(LoggerInitTest, ChannelLogLevel)
         log.error() << "some log";
         checkEqual(fmt::format("{}:ERR {}", channel, logString));
     }
+}
+
+TEST_F(LoggerInitTest, InitReturnsErrorIfCouldNotCreateLogDirectory)
+{
+    // "/proc" directory is read only on any unix OS
+    auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::object{{"log_directory", "/proc/logs"}}});
+    ASSERT_FALSE(parsingErrors.has_value());
+
+    auto const result = LogService::init(config_);
+    EXPECT_FALSE(result);
+    EXPECT_THAT(result.error(), testing::HasSubstr("Couldn't create logs directory"));
+}
+
+TEST_F(LoggerInitTest, InitReturnsErrorIfProvidedInvalidChannel)
+{
+    auto const jsonStr = R"json(
+    {
+        "log_channels": [
+            {
+                "channel": "SomeChannel",
+                "log_level": "warn"
+            }
+        ]
+    })json";
+
+    auto const json = boost::json::parse(jsonStr).as_object();
+    auto const parsingErrors = config_.parse(ConfigFileJson{json});
+    ASSERT_FALSE(parsingErrors.has_value());
+
+    auto const result = LogService::init(config_);
+    EXPECT_FALSE(result);
+    EXPECT_EQ(result.error(), "Can't override settings for log channel SomeChannel: invalid channel");
 }
 
 TEST_F(LoggerInitTest, LogSizeAndHourRotationCannotBeZero)

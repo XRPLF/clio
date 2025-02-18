@@ -28,8 +28,6 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
 #include <boost/log/attributes/attribute_value_set.hpp>
 #include <boost/log/core/core.hpp>
 #include <boost/log/expressions/filter.hpp>
@@ -48,18 +46,20 @@
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/utility/setup/file.hpp>
 #include <boost/log/utility/setup/formatter_parser.hpp>
+#include <fmt/core.h>
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <ios>
 #include <iostream>
 #include <optional>
 #include <ostream>
-#include <stdexcept>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <unordered_map>
 #include <utility>
 
@@ -111,7 +111,7 @@ getSeverityLevel(std::string_view logLevel)
     std::unreachable();
 }
 
-void
+std::expected<void, std::string>
 LogService::init(config::ClioConfigDefinition const& config)
 {
     namespace keywords = boost::log::keywords;
@@ -132,9 +132,15 @@ LogService::init(config::ClioConfigDefinition const& config)
 
     auto const logDir = config.maybeValue<std::string>("log_directory");
     if (logDir) {
-        boost::filesystem::path dirPath{logDir.value()};
-        if (!boost::filesystem::exists(dirPath))
-            boost::filesystem::create_directories(dirPath);
+        std::filesystem::path dirPath{logDir.value()};
+        if (not std::filesystem::exists(dirPath)) {
+            if (std::error_code error; not std::filesystem::create_directories(dirPath, error)) {
+                return std::unexpected{
+                    fmt::format("Couldn't create logs directory '{}': {}", dirPath.string(), error.message())
+                };
+            }
+        }
+
         auto const rotationPeriod = config.get<uint32_t>("log_rotation_hour_interval");
 
         // the below are taken from user in MB, but boost::log::add_file_log needs it to be in bytes
@@ -169,8 +175,9 @@ LogService::init(config::ClioConfigDefinition const& config)
     for (auto it = overrides.begin<util::config::ObjectView>(); it != overrides.end<util::config::ObjectView>(); ++it) {
         auto const& channelConfig = *it;
         auto const name = channelConfig.get<std::string>("channel");
-        if (std::count(std::begin(Logger::kCHANNELS), std::end(Logger::kCHANNELS), name) == 0)
-            throw std::runtime_error("Can't override settings for log channel " + name + ": invalid channel");
+        if (std::ranges::count(Logger::kCHANNELS, name) == 0) { // TODO: use std::ranges::contains when available
+            return std::unexpected{fmt::format("Can't override settings for log channel {}: invalid channel", name)};
+        }
 
         minSeverity[name] = getSeverityLevel(channelConfig.get<std::string>("log_level"));
     }
@@ -189,6 +196,7 @@ LogService::init(config::ClioConfigDefinition const& config)
     filter = boost::log::filter{std::move(logFilter)};
     boost::log::core::get()->set_filter(filter);
     LOG(LogService::info()) << "Default log level = " << defaultSeverity;
+    return {};
 }
 
 Logger::Pump
