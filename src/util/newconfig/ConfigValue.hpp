@@ -34,7 +34,6 @@
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <variant>
 
 namespace util::config {
@@ -81,21 +80,6 @@ public:
     [[nodiscard]] std::optional<Error>
     setValue(Value value, std::optional<std::string_view> key = std::nullopt)
     {
-        if (std::holds_alternative<NullType>(value)) {
-            if (hasValue()) {
-                // Using default value
-                return std::nullopt;
-            }
-            if (not isOptional()) {
-                return Error{
-                    key.value_or("Unknown_key"),
-                    "Provided value is null but ConfigValue is not optional and doesn't have a default value."
-                };
-            }
-            value_ = std::move(value);
-            return std::nullopt;
-        }
-
         auto err = checkTypeConsistency(type_, value);
         if (err.has_value()) {
             err->error = fmt::format("{} {}", key.value_or("Unknown_key"), err->error);
@@ -142,7 +126,6 @@ public:
                         [&type](std::string const& tmp) { type = fmt::format("string {}", tmp); },
                         [&type](double tmp) { type = fmt::format("double {}", tmp); },
                         [&type](int64_t tmp) { type = fmt::format("int {}", tmp); },
-                        [&type](NullType) { type = "null"; },
                     },
                     value_.value()
                 );

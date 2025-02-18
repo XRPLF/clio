@@ -65,8 +65,18 @@ public:
      * @param key optional string key to include that will show in error message
      * @return optional error if adding config value to array fails. nullopt otherwise
      */
-    std::optional<Error>
+    [[nodiscard]] std::optional<Error>
     addValue(Value value, std::optional<std::string_view> key = std::nullopt);
+
+    /**
+     * @brief Add null value to the array
+     * @note The error will be returned if item pattern of the array is neither optional nor has a default value
+     *
+     * @param key An optional key which will be used for error message only (if any)
+     * @return An error if any or nullopt if the operation succeeded
+     */
+    [[nodiscard]] std::optional<Error>
+    addNull(std::optional<std::string_view> key = std::nullopt);
 
     /**
      * @brief Returns the number of values stored in the Array

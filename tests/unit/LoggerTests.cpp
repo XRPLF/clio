@@ -80,8 +80,8 @@ using util::config::ConfigValue;
 struct LoggerInitTest : LoggerTest {
 protected:
     util::config::ClioConfigDefinition config_{
-        {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.optional()}},
-        {"log_channels.[].log_level", Array{ConfigValue{ConfigType::String}.optional()}},
+        {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}}},
+        {"log_channels.[].log_level", Array{ConfigValue{ConfigType::String}}},
 
         {"log_level", ConfigValue{ConfigType::String}.defaultValue("info")},
 
@@ -181,9 +181,15 @@ TEST_F(LoggerInitTest, LogSizeAndHourRotationCannotBeZero)
         "log_rotation_hour_interval", "log_directory_max_size", "log_rotation_size"
     };
 
+    auto const jsonStr = fmt::format(R"json({{
+        "{}": 0,
+        "{}": 0,
+        "{}": 0
+    }})json", keys[0], keys[1], keys[2]);
+
     auto const parsingErrors =
-        config_.parse(ConfigFileJson{boost::json::object{{keys[0], 0}, {keys[1], 0}, {keys[2], 0}}});
-    ASSERT_TRUE(parsingErrors->size() == 3);
+        config_.parse(ConfigFileJson{boost::json::parse(jsonStr).as_object()});
+    ASSERT_EQ(parsingErrors->size(), 3);
     for (std::size_t i = 0; i < parsingErrors->size(); ++i) {
         EXPECT_EQ(
             (*parsingErrors)[i].error,

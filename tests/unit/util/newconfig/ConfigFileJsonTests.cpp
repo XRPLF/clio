@@ -22,7 +22,6 @@
 #include "util/OverloadSet.hpp"
 #include "util/TmpFile.hpp"
 #include "util/newconfig/ConfigFileJson.hpp"
-#include "util/newconfig/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
@@ -316,8 +315,7 @@ TEST_F(ConfigFileJsonTest, getValue)
         "int": 42,
         "object": { "string": "some string" },
         "bool": true,
-        "double": 123.456,
-        "null": null
+        "double": 123.456
     })json";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
 
@@ -336,9 +334,6 @@ TEST_F(ConfigFileJsonTest, getValue)
     auto const doubleValue = jsonFileObj.getValue("double");
     ASSERT_TRUE(std::holds_alternative<double>(doubleValue));
     EXPECT_NEAR(std::get<double>(doubleValue), 123.456, kEPS);
-
-    auto const nullValue = jsonFileObj.getValue("null");
-    EXPECT_TRUE(std::holds_alternative<NullType>(nullValue));
 
     EXPECT_FALSE(jsonFileObj.containsKey("object.int"));
 }
@@ -360,6 +355,15 @@ TEST_F(ConfigFileJsonDeathTest, getValueOfArray)
     EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getValue("array"), ".*");
 }
 
+TEST_F(ConfigFileJsonDeathTest, nullIsNotSupported)
+{
+    auto const jsonStr = R"json({
+        "null": null
+    })json";
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
+    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getValue("null"), ".*");
+}
+
 TEST_F(ConfigFileJsonTest, getArray)
 {
     auto const jsonStr = R"json({
@@ -370,19 +374,27 @@ TEST_F(ConfigFileJsonTest, getArray)
 
     auto const array = jsonFileObj.getArray("array.[]");
     ASSERT_EQ(array.size(), 4);
-    ASSERT_TRUE(std::holds_alternative<int64_t>(array.at(0)));
-    EXPECT_EQ(std::get<int64_t>(array.at(0)), 1);
-    ASSERT_TRUE(std::holds_alternative<std::string>(array.at(1)));
-    EXPECT_EQ(std::get<std::string>(array.at(1)), "2");
-    ASSERT_TRUE(std::holds_alternative<double>(array.at(2)));
-    EXPECT_NEAR(std::get<double>(array.at(2)), 3.14, kEPS);
-    ASSERT_TRUE(std::holds_alternative<bool>(array.at(3)));
-    EXPECT_EQ(std::get<bool>(array.at(3)), true);
+
+    auto const value0 = array.at(0).value();
+    ASSERT_TRUE(std::holds_alternative<int64_t>(value0));
+    EXPECT_EQ(std::get<int64_t>(value0), 1);
+
+    auto const value1 = array.at(1).value();
+    ASSERT_TRUE(std::holds_alternative<std::string>(value1));
+    EXPECT_EQ(std::get<std::string>(value1), "2");
+
+    auto const value2 = array.at(2).value();
+    ASSERT_TRUE(std::holds_alternative<double>(value2));
+    EXPECT_NEAR(std::get<double>(value2), 3.14, kEPS);
+
+    auto const value3 = array.at(3).value();
+    ASSERT_TRUE(std::holds_alternative<bool>(value3));
+    EXPECT_EQ(std::get<bool>(value3), true);
 
     auto const arrayFromObject = jsonFileObj.getArray("object.array.[]");
     ASSERT_EQ(arrayFromObject.size(), 2);
-    EXPECT_EQ(std::get<int64_t>(arrayFromObject.at(0)), 3);
-    EXPECT_EQ(std::get<int64_t>(arrayFromObject.at(1)), 4);
+    EXPECT_EQ(std::get<int64_t>(arrayFromObject.at(0).value()), 3);
+    EXPECT_EQ(std::get<int64_t>(arrayFromObject.at(1).value()), 4);
 }
 
 TEST_F(ConfigFileJsonTest, getArrayObjectInArray)
@@ -397,15 +409,38 @@ TEST_F(ConfigFileJsonTest, getArrayObjectInArray)
 
     auto const ints = jsonFileObj.getArray("array.[].int");
     ASSERT_EQ(ints.size(), 2);
-    ASSERT_TRUE(std::holds_alternative<int64_t>(ints.at(0)));
-    EXPECT_EQ(std::get<int64_t>(ints.at(0)), 42);
-    EXPECT_TRUE(std::holds_alternative<NullType>(ints.at(1)));
+    ASSERT_TRUE(std::holds_alternative<int64_t>(ints.at(0).value()));
+    EXPECT_EQ(std::get<int64_t>(ints.at(0).value()), 42);
+    EXPECT_FALSE(ints.at(1).has_value());
 
     auto const strings = jsonFileObj.getArray("array.[].string");
     ASSERT_EQ(strings.size(), 2);
-    EXPECT_TRUE(std::holds_alternative<NullType>(strings.at(0)));
-    ASSERT_TRUE(std::holds_alternative<std::string>(strings.at(1)));
-    EXPECT_EQ(std::get<std::string>(strings.at(1)), "some string");
+    EXPECT_FALSE(strings.at(0).has_value());
+    ASSERT_TRUE(std::holds_alternative<std::string>(strings.at(1).value()));
+    EXPECT_EQ(std::get<std::string>(strings.at(1).value()), "some string");
+}
+
+TEST_F(ConfigFileJsonTest, getArrayOptionalInArray) {
+    auto const jsonStr = R"json({
+        "array": [
+            { "int": 42 },
+            { "int": 24, "bool": true }
+        ]
+    })json";
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
+
+    auto const ints = jsonFileObj.getArray("array.[].int");
+    ASSERT_EQ(ints.size(), 2);
+    ASSERT_TRUE(std::holds_alternative<int64_t>(ints.at(0).value()));
+    EXPECT_EQ(std::get<int64_t>(ints.at(0).value()), 42);
+    ASSERT_TRUE(std::holds_alternative<int64_t>(ints.at(1).value()));
+    EXPECT_EQ(std::get<int64_t>(ints.at(1).value()), 24);
+
+    auto const bools = jsonFileObj.getArray("array.[].bool");
+    ASSERT_EQ(bools.size(), 2);
+    EXPECT_FALSE(bools.at(0).has_value());
+    ASSERT_TRUE(std::holds_alternative<bool>(bools.at(1).value()));
+    EXPECT_EQ(std::get<bool>(bools.at(1).value()), true);
 }
 
 TEST_F(ConfigFileJsonDeathTest, getArrayInvalidKey)
