@@ -193,7 +193,8 @@ TEST_F(LoggerInitTest, InitReturnsErrorIfProvidedInvalidChannel)
     {
         "log_channels": [
             {
-                "channel": "SomeChannel"
+                "channel": "SomeChannel",
+                "log_level": "warn"
             }
         ]
     })json";
