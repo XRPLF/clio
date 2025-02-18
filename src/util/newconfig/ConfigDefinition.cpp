@@ -226,13 +226,11 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
 
         std::ranges::for_each(keys, [&](std::string_view key) {
             auto& array = std::get<Array>(map_.at(key));
-            if (array.size() != maxSize) {
-                while (array.size() < maxSize) {
-                    auto const err = array.addNull(key);
-                    if (err.has_value()) {
-                        listOfErrors.emplace_back(*err);
-                        break;
-                    }
+            while (array.size() < maxSize) {
+                auto const err = array.addNull(key);
+                if (err.has_value()) {
+                    listOfErrors.emplace_back(*err);
+                    break;
                 }
             }
         });
