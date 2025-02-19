@@ -1125,7 +1125,7 @@ accountHolds(
     if (allowBalance) {
         ripple::SerialIter it{blob->data(), blob->size()};
         ripple::SLE const sle{it, key};
-        
+
         amount = sle.getFieldAmount(ripple::sfBalance);
         if (account > issuer) {
             // Put balance in account terms.
