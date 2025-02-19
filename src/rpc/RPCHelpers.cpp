@@ -27,6 +27,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
+#include "util/Assert.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
@@ -1023,6 +1024,7 @@ ammAccountHolds(
 )
 {
     ripple::STAmount amount;
+    ASSERT(!ripple::isXRP(currency), "LPToken currency can never be XRP")
     if (ripple::isXRP(currency))
         return {xrpLiquid(backend, sequence, account, yield)};
 
