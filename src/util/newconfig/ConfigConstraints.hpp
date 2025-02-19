@@ -33,6 +33,7 @@
 #include <cstdint>
 #include <limits>
 #include <optional>
+#include <ostream>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -149,6 +150,28 @@ protected:
      */
     virtual std::optional<Error>
     checkValueImpl(Value const& val) const = 0;
+
+    /**
+     * @brief Prints to the output stream for this specific constraint.
+     *
+     * @param stream The output stream
+     */
+    virtual void
+    print(std::ostream& stream) const = 0;
+
+    /**
+     * @brief Custom output stream for constraint
+     *
+     * @param stream The output stream
+     * @param cons The constraint
+     * @return The same ostream we were given
+     */
+    friend std::ostream&
+    operator<<(std::ostream& stream, Constraint const& cons)
+    {
+        cons.print(stream);
+        return stream;
+    }
 };
 
 /**
@@ -176,6 +199,17 @@ private:
      */
     [[nodiscard]] std::optional<Error>
     checkValueImpl(Value const& port) const override;
+
+    /**
+     * @brief Prints to the output stream for this specific constraint.
+     *
+     * @param stream The output stream
+     */
+    void
+    print(std::ostream& stream) const override
+    {
+        stream << fmt::format("The minimum value is `{}`. The maximum value is `{}", kPORT_MIN, kPORT_MAX);
+    }
 
     static constexpr uint32_t kPORT_MIN = 1;
     static constexpr uint32_t kPORT_MAX = 65535;
@@ -206,6 +240,17 @@ private:
      */
     [[nodiscard]] std::optional<Error>
     checkValueImpl(Value const& ip) const override;
+
+    /**
+     * @brief Prints to the output stream for this specific constraint.
+     *
+     * @param stream The output stream
+     */
+    void
+    print(std::ostream& stream) const override
+    {
+        stream << "The value must be a valid IP address";
+    }
 };
 
 /**
@@ -260,6 +305,17 @@ private:
         return Error{makeErrorMsg(key_, val, arr_)};
     }
 
+    /**
+     * @brief Prints to the output stream for this specific constraint.
+     *
+     * @param stream The output stream
+     */
+    void
+    print(std::ostream& stream) const override
+    {
+        stream << fmt::format("The value must be one of the following: `{}`", fmt::join(arr_, ", "));
+    }
+
     std::string_view key_;
     std::array<char const*, ArrSize> arr_;
 };
@@ -312,6 +368,17 @@ private:
         return Error{fmt::format("Number must be between {} and {}", min_, max_)};
     }
 
+    /**
+     * @brief Prints to the output stream for this specific constraint.
+     *
+     * @param stream The output stream
+     */
+    void
+    print(std::ostream& stream) const override
+    {
+        stream << fmt::format("The minimum value is `{}`. The maximum value is `{}`", min_, max_);
+    }
+
     NumType min_;
     NumType max_;
 };
@@ -341,6 +408,17 @@ private:
      */
     [[nodiscard]] std::optional<Error>
     checkValueImpl(Value const& num) const override;
+
+    /**
+     * @brief Prints to the output stream for this specific constraint.
+     *
+     * @param stream The output stream
+     */
+    void
+    print(std::ostream& stream) const override
+    {
+        stream << fmt::format("The value must be a positive double number");
+    }
 };
 
 static constinit PortConstraint gValidatePort{};

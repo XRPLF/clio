@@ -136,6 +136,7 @@ constexpr auto kDEFAULT_OUT2 = R"({
     "close_time_iso": "2000-01-01T00:00:00Z",
     "validated": true
 })";
+constexpr auto kINDEX = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 
 }  // namespace
 
@@ -652,7 +653,7 @@ TEST_F(RPCTxTest, MintNFT)
 
 TEST_F(RPCTxTest, NFTAcceptOffer)
 {
-    TransactionAndMetadata tx = createAcceptNftOfferTxWithMetadata(kACCOUNT, 1, 50, kNFT_ID);
+    TransactionAndMetadata tx = createAcceptNftBuyerOfferTxWithMetadata(kACCOUNT, 1, 50, kNFT_ID, kINDEX);
 
     tx.date = 123456;
     tx.ledgerSequence = 100;

@@ -21,6 +21,7 @@
 
 #include "util/Assert.hpp"
 #include "util/Concepts.hpp"
+#include "util/Mutex.hpp"
 #include "util/prometheus/OStream.hpp"
 
 #include <cstdint>
@@ -61,28 +62,30 @@ public:
     void
     setBuckets(std::vector<ValueType> const& bounds)
     {
-        std::scoped_lock const lock{*mutex_};
-        ASSERT(buckets_.empty(), "Buckets can be set only once.");
-        buckets_.reserve(bounds.size());
+        auto data = data_->template lock<std::scoped_lock>();
+        ASSERT(data->buckets.empty(), "Buckets can be set only once.");
+        data->buckets.reserve(bounds.size());
         for (auto const& bound : bounds) {
-            buckets_.emplace_back(bound);
+            data->buckets.emplace_back(bound);
         }
     }
 
     void
     observe(ValueType const value)
     {
-        auto const bucket =
-            std::lower_bound(buckets_.begin(), buckets_.end(), value, [](Bucket const& bucket, ValueType const& value) {
-                return bucket.upperBound < value;
-            });
-        std::scoped_lock const lock{*mutex_};
-        if (bucket != buckets_.end()) {
+        auto data = data_->template lock<std::scoped_lock>();
+        auto const bucket = std::lower_bound(
+            data->buckets.begin(),
+            data->buckets.end(),
+            value,
+            [](Bucket const& bucket, ValueType const& value) { return bucket.upperBound < value; }
+        );
+        if (bucket != data->buckets.end()) {
             ++bucket->count;
         } else {
-            ++lastBucket_.count;
+            ++data->lastBucket.count;
         }
-        sum_ += value;
+        data->sum += value;
     }
 
     void
@@ -98,15 +101,15 @@ public:
             labelsString.back() = ',';
         }
 
-        std::scoped_lock const lock{*mutex_};
+        auto data = data_->template lock<std::scoped_lock>();
         std::uint64_t cumulativeCount = 0;
 
-        for (auto const& bucket : buckets_) {
+        for (auto const& bucket : data->buckets) {
             cumulativeCount += bucket.count;
             stream << name << "_bucket" << labelsString << "le=\"" << bucket.upperBound << "\"} " << cumulativeCount
                    << '\n';
         }
-        cumulativeCount += lastBucket_.count;
+        cumulativeCount += data->lastBucket.count;
         stream << name << "_bucket" << labelsString << "le=\"+Inf\"} " << cumulativeCount << '\n';
 
         if (labelsString.size() == 1) {
@@ -114,7 +117,7 @@ public:
         } else {
             labelsString.back() = '}';
         }
-        stream << name << "_sum" << labelsString << " " << sum_ << '\n';
+        stream << name << "_sum" << labelsString << " " << data->sum << '\n';
         stream << name << "_count" << labelsString << " " << cumulativeCount << '\n';
     }
 
@@ -128,10 +131,12 @@ private:
         std::uint64_t count = 0;
     };
 
-    std::vector<Bucket> buckets_;
-    Bucket lastBucket_{std::numeric_limits<ValueType>::max()};
-    ValueType sum_ = 0;
-    mutable std::unique_ptr<std::mutex> mutex_ = std::make_unique<std::mutex>();
+    struct Data {
+        std::vector<Bucket> buckets;
+        Bucket lastBucket{std::numeric_limits<ValueType>::max()};
+        ValueType sum = 0;
+    };
+    std::unique_ptr<util::Mutex<Data>> data_ = std::make_unique<util::Mutex<Data>>();
 };
 
 }  // namespace util::prometheus::impl

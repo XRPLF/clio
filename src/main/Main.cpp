@@ -52,7 +52,10 @@ try {
             if (not app::parseConfig(run.configPath))
                 return EXIT_FAILURE;
 
-            util::LogService::init(gClioConfig);
+            if (auto const initSuccess = util::LogService::init(gClioConfig); not initSuccess) {
+                std::cerr << initSuccess.error() << std::endl;
+                return EXIT_FAILURE;
+            }
             app::ClioApplication clio{gClioConfig};
             return clio.run(run.useNgWebServer);
         },
@@ -60,7 +63,10 @@ try {
             if (not app::parseConfig(migrate.configPath))
                 return EXIT_FAILURE;
 
-            util::LogService::init(gClioConfig);
+            if (auto const initSuccess = util::LogService::init(gClioConfig); not initSuccess) {
+                std::cerr << initSuccess.error() << std::endl;
+                return EXIT_FAILURE;
+            }
             app::MigratorApplication migrator{gClioConfig, migrate.subCmd};
             return migrator.run();
         }

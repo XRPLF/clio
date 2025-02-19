@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/Mutex.hpp"
 #include "util/log/Logger.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
@@ -30,7 +31,6 @@
 
 #include <cstdint>
 #include <functional>
-#include <mutex>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -52,9 +52,12 @@ class DOSGuard : public DOSGuardInterface {
         std::uint32_t requestsCount = 0;  /**< Accumulated served requests count */
     };
 
-    mutable std::mutex mtx_;
-    std::unordered_map<std::string, ClientState> ipState_;
-    std::unordered_map<std::string, std::uint32_t> ipConnCount_;
+    struct State {
+        std::unordered_map<std::string, ClientState> ipState;
+        std::unordered_map<std::string, std::uint32_t> ipConnCount;
+    };
+    util::Mutex<State> mtx_;
+
     std::reference_wrapper<WhitelistHandlerInterface const> whitelistHandler_;
 
     std::uint32_t const maxFetches_;

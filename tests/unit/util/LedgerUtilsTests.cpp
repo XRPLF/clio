@@ -54,6 +54,7 @@ TEST(LedgerUtilsTests, LedgerObjectTypeList)
         JS(did),
         JS(mpt_issuance),
         JS(mptoken),
+        JS(permissioned_domain),
         JS(oracle),
         JS(credential),
         JS(nunl)
@@ -88,7 +89,8 @@ TEST(LedgerUtilsTests, AccountOwnedTypeList)
         JS(oracle),
         JS(credential),
         JS(mpt_issuance),
-        JS(mptoken)
+        JS(mptoken),
+        JS(permissioned_domain),
     };
 
     static_assert(std::size(kCORRECT_TYPES) == kACCOUNT_OWNED.size());
@@ -123,7 +125,8 @@ TEST(LedgerUtilsTests, DeletionBlockerTypes)
         ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID,
         ripple::ltBRIDGE,
         ripple::ltMPTOKEN_ISSUANCE,
-        ripple::ltMPTOKEN
+        ripple::ltMPTOKEN,
+        ripple::ltPERMISSIONED_DOMAIN
     };
 
     static_assert(std::size(kDELETION_BLOCKERS) == kTESTED_TYPES.size());

@@ -23,7 +23,6 @@
 #include "util/Assert.hpp"
 #include "util/newconfig/Array.hpp"
 #include "util/newconfig/ConfigConstraints.hpp"
-#include "util/newconfig/ConfigDescription.hpp"
 #include "util/newconfig/ConfigFileInterface.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Error.hpp"
@@ -31,16 +30,10 @@
 #include "util/newconfig/Types.hpp"
 #include "util/newconfig/ValueView.hpp"
 
-#include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
-#include <fmt/core.h>
-
 #include <algorithm>
-#include <cassert>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <expected>
 #include <initializer_list>
 #include <optional>
 #include <string>
@@ -83,26 +76,6 @@ public:
      */
     [[nodiscard]] std::optional<std::vector<Error>>
     parse(ConfigFileInterface const& config);
-
-    /**
-     * @brief Validates the configuration file
-     *
-     * Should only check for valid values, without populating
-     *
-     * @param config The configuration file interface
-     * @return An optional vector of Error objects stating all the failures if validation fails
-     */
-    [[nodiscard]] std::optional<std::vector<Error>>
-    validate(ConfigFileInterface const& config) const;
-
-    /**
-     * @brief Generate markdown file of all the clio config descriptions
-     *
-     * @param configDescription The configuration description object
-     * @return An optional Error if generating markdown fails
-     */
-    [[nodiscard]] std::expected<std::string, Error>
-    getMarkdown(ClioConfigDescription const& configDescription) const;
 
     /**
      * @brief Returns the ObjectView specified with the prefix
@@ -372,10 +345,10 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(gValidateUint16)},
      {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(gValidateLoadMode)},
 
-     {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateChannelName)}
+     {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.withConstraint(gValidateChannelName)}
      },
      {"log_channels.[].log_level",
-      Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateLogLevelName)}},
+      Array{ConfigValue{ConfigType::String}.withConstraint(gValidateLogLevelName)}},
 
      {"log_level", ConfigValue{ConfigType::String}.defaultValue("info").withConstraint(gValidateLogLevelName)},
 

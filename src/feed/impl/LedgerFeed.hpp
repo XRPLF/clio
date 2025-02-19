@@ -76,7 +76,7 @@ public:
     pub(ripple::LedgerHeader const& lgrInfo,
         ripple::Fees const& fees,
         std::string const& ledgerRange,
-        std::uint32_t txnCount) const;
+        std::uint32_t txnCount);
 
 private:
     static boost::json::object

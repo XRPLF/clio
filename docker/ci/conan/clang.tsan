@@ -1,0 +1,9 @@
+include(clang)
+
+[options]
+boost:extra_b2_flags="cxxflags=\"-fsanitize=thread\" linkflags=\"-fsanitize=thread\""
+boost:without_stacktrace=True
+[env]
+CFLAGS="-fsanitize=thread"
+CXXFLAGS="-fsanitize=thread"
+LDFLAGS="-fsanitize=thread"

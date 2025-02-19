@@ -89,9 +89,9 @@ TEST_F(JsonFromTempFile, validateArrayValue)
     EXPECT_EQ("204.2.2.1", std::get<std::string>(whitelistArr.at(1)));
 }
 
-struct JsonValueDeathTest : JsonFromTempFile {};
+struct ConfigValueJsonGetArrayDeathTest : JsonFromTempFile {};
 
-TEST_F(JsonValueDeathTest, invalidGetValues)
+TEST_F(ConfigValueJsonGetArrayDeathTest, invalidGetValues)
 {
     // not possible for json value to call a value that doesn't exist
     EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getArray("header.text1"), ".*");

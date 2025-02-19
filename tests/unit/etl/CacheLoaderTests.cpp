@@ -270,3 +270,18 @@ TEST_F(CacheLoaderTest, DisabledCacheLoaderDoesNotLoadCache)
 
     loader.load(kSEQ);
 }
+
+TEST_F(CacheLoaderTest, DisabledCacheLoaderCanCallStopAndWait)
+{
+    auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"load": "none"}})"));
+    CacheLoader loader{cfg, backend_, cache};
+
+    EXPECT_CALL(cache, updateImp).Times(0);
+    EXPECT_CALL(cache, isFull).WillRepeatedly(Return(false));
+    EXPECT_CALL(cache, setDisabled).Times(1);
+
+    loader.load(kSEQ);
+
+    EXPECT_NO_THROW(loader.stop());
+    EXPECT_NO_THROW(loader.wait());
+}

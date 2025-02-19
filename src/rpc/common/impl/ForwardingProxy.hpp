@@ -116,6 +116,7 @@ public:
             "manifest",
             "channel_authorize",
             "channel_verify",
+            "simulate",
         };
 
         return kPROXIED_COMMANDS.contains(method);

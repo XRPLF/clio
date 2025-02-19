@@ -48,7 +48,7 @@ struct BookChangesFeed : public SingleFeedBase {
      * @param transactions The transactions that were included in the ledger.
      */
     void
-    pub(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions) const
+    pub(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions)
     {
         SingleFeedBase::pub(boost::json::serialize(rpc::computeBookChanges(lgrInfo, transactions)));
     }

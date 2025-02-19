@@ -47,133 +47,44 @@ jobs:
       matrix:
         include:
           - os: heavy
-            container:
-              image: rippleci/clio_ci:latest
-            build_type: Release
             conan_profile: gcc
+            build_type: Release
+            container: '{ "image": "rippleci/clio_ci:latest" }'
             code_coverage: false
             static: true
           - os: heavy
-            container:
-              image: rippleci/clio_ci:latest
-            build_type: Debug
             conan_profile: gcc
+            build_type: Debug
+            container: '{ "image": "rippleci/clio_ci:latest" }'
             code_coverage: true
             static: true
           - os: heavy
-            container:
-              image: rippleci/clio_ci:latest
-            build_type: Release
             conan_profile: clang
+            build_type: Release
+            container: '{ "image": "rippleci/clio_ci:latest" }'
             code_coverage: false
             static: true
           - os: heavy
-            container:
-              image: rippleci/clio_ci:latest
-            build_type: Debug
             conan_profile: clang
+            build_type: Debug
+            container: '{ "image": "rippleci/clio_ci:latest" }'
             code_coverage: false
             static: true
           - os: macos15
             build_type: Release
             code_coverage: false
             static: false
-    runs-on: [self-hosted, "${{ matrix.os }}"]
-    container: ${{ matrix.container }}
-
-    steps:
-      - name: Clean workdir
-        if: ${{ runner.os == 'macOS' }}
-        uses: kuznetsss/workspace-cleanup@1.0
-
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Prepare runner
-        uses: ./.github/actions/prepare_runner
-        with:
-          disable_ccache: false
-
-      - name: Setup conan
-        uses: ./.github/actions/setup_conan
-        id: conan
-        with:
-          conan_profile: ${{ matrix.conan_profile }}
-
-      - name: Restore cache
-        uses: ./.github/actions/restore_cache
-        id: restore_cache
-        with:
-          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
-          conan_profile: ${{ steps.conan.outputs.conan_profile }}
-          ccache_dir: ${{ env.CCACHE_DIR }}
-          build_type: ${{ matrix.build_type }}
-          code_coverage: ${{ matrix.code_coverage }}
-
-      - name: Run conan and cmake
-        uses: ./.github/actions/generate
-        with:
-          conan_profile: ${{ steps.conan.outputs.conan_profile }}
-          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
-          build_type: ${{ matrix.build_type }}
-          code_coverage: ${{ matrix.code_coverage }}
-          static: ${{ matrix.static }}
-
-      - name: Build Clio
-        uses: ./.github/actions/build_clio
-
-      - name: Show ccache's statistics
-        shell: bash
-        id: ccache_stats
-        run: |
-          ccache -s > /tmp/ccache.stats
-          miss_rate=$(cat /tmp/ccache.stats | grep 'Misses' | head -n1 | sed 's/.*(\(.*\)%).*/\1/')
-          echo "miss_rate=${miss_rate}" >> $GITHUB_OUTPUT
-          cat /tmp/ccache.stats
-
-      - name: Strip tests
-        if: ${{ !matrix.code_coverage }}
-        run: strip build/clio_tests && strip build/clio_integration_tests
-
-      - name: Upload clio_server
-        uses: actions/upload-artifact@v4
-        with:
-          name: clio_server_${{ runner.os }}_${{ matrix.build_type }}_${{ steps.conan.outputs.conan_profile }}
-          path: build/clio_server
-
-      - name: Upload clio_tests
-        if: ${{ !matrix.code_coverage }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ steps.conan.outputs.conan_profile }}
-          path: build/clio_*tests
-
-      - name: Save cache
-        uses: ./.github/actions/save_cache
-        with:
-          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
-          conan_hash: ${{ steps.restore_cache.outputs.conan_hash }}
-          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
-          ccache_dir: ${{ env.CCACHE_DIR }}
-          ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
-          ccache_cache_miss_rate: ${{ steps.ccache_stats.outputs.miss_rate }}
-          build_type: ${{ matrix.build_type }}
-          code_coverage: ${{ matrix.code_coverage }}
-          conan_profile: ${{ steps.conan.outputs.conan_profile }}
-
-      # TODO: This is not a part of build process but it is the easiest way to do it here.
-      # It will be refactored in https://github.com/XRPLF/clio/issues/1075
-      - name: Run code coverage
-        if: ${{ matrix.code_coverage }}
-        uses: ./.github/actions/code_coverage
-
-  upload_coverage_report:
-    name: Codecov
-    needs: build
-    uses: ./.github/workflows/upload_coverage_report.yml
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    uses: ./.github/workflows/build_impl.yml
+    with:
+      runs_on: ${{ matrix.os }}
+      container: ${{ matrix.container }}
+      conan_profile: ${{ matrix.conan_profile }}
+      build_type: ${{ matrix.build_type }}
+      code_coverage: ${{ matrix.code_coverage }}
+      static: ${{ matrix.static }}
+      unit_tests: true
+      integration_tests: true
+      clio_server: true
 
   test:
     name: Run Tests
@@ -183,24 +94,24 @@ jobs:
       matrix:
         include:
           - os: heavy
-            container:
-              image: rippleci/clio_ci:latest
             conan_profile: gcc
             build_type: Release
-          - os: heavy
             container:
               image: rippleci/clio_ci:latest
+          - os: heavy
             conan_profile: clang
             build_type: Release
-          - os: heavy
             container:
               image: rippleci/clio_ci:latest
+          - os: heavy
             conan_profile: clang
             build_type: Debug
+            container:
+              image: rippleci/clio_ci:latest
           - os: macos15
             conan_profile: apple_clang_16
             build_type: Release
-    runs-on: [self-hosted, "${{ matrix.os }}"]
+    runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
 
     steps:

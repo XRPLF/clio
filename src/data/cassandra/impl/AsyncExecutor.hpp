@@ -23,6 +23,7 @@
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/RetryPolicy.hpp"
+#include "util/Mutex.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio.hpp>
@@ -64,8 +65,8 @@ class AsyncExecutor : public std::enable_shared_from_this<AsyncExecutor<Statemen
     RetryCallbackType onRetry_;
 
     // does not exist during initial construction, hence optional
-    std::optional<FutureWithCallbackType> future_;
-    std::mutex mtx_;
+    using OptionalFuture = std::optional<FutureWithCallbackType>;
+    util::Mutex<OptionalFuture> future_;
 
 public:
     /**
@@ -127,8 +128,8 @@ private:
             self = nullptr;  // explicitly decrement refcount
         };
 
-        std::scoped_lock const lck{mtx_};
-        future_.emplace(handle.asyncExecute(data_, std::move(handler)));
+        auto future = future_.template lock<std::scoped_lock>();
+        future->emplace(handle.asyncExecute(data_, std::move(handler)));
     }
 };
 

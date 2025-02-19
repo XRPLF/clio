@@ -132,8 +132,8 @@ struct Amendments {
     REGISTER(fixAMMv1_2);
     REGISTER(AMMClawback);
     REGISTER(Credentials);
-    REGISTER(PermissionedDomains);
     REGISTER(DynamicNFT);
+    REGISTER(PermissionedDomains);
     REGISTER(fixFrozenLPTokenTransfer);
 
     // Obsolete but supported by libxrpl

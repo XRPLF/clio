@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "util/Mutex.hpp"
+
 #include <boost/signals2.hpp>
 #include <boost/signals2/connection.hpp>
 #include <boost/signals2/variadic_signal.hpp>
@@ -45,8 +47,8 @@ class TrackableSignal {
 
     // map of connection and signal connection, key is the pointer of the connection object
     // allow disconnect to be called in the destructor of the connection
-    std::unordered_map<ConnectionPtr, boost::signals2::connection> connections_;
-    mutable std::mutex mutex_;
+    using ConnectionsMap = std::unordered_map<ConnectionPtr, boost::signals2::connection>;
+    util::Mutex<ConnectionsMap> connections_;
 
     using SignalType = boost::signals2::signal<void(Args...)>;
     SignalType signal_;
@@ -64,8 +66,8 @@ public:
     bool
     connectTrackableSlot(ConnectionSharedPtr const& trackable, std::function<void(Args...)> slot)
     {
-        std::scoped_lock const lk(mutex_);
-        if (connections_.contains(trackable.get())) {
+        auto connections = connections_.template lock<std::scoped_lock>();
+        if (connections->contains(trackable.get())) {
             return false;
         }
 
@@ -73,7 +75,7 @@ public:
         // the trackable's destructor. However, the trackable can not be destroied when the slot is being called
         // either. track_foreign will hold a weak_ptr to the connection, which makes sure the connection is valid when
         // the slot is called.
-        connections_.emplace(
+        connections->emplace(
             trackable.get(), signal_.connect(typename SignalType::slot_type(slot).track_foreign(trackable))
         );
         return true;
@@ -89,10 +91,9 @@ public:
     bool
     disconnect(ConnectionPtr trackablePtr)
     {
-        std::scoped_lock const lk(mutex_);
-        if (connections_.contains(trackablePtr)) {
-            connections_[trackablePtr].disconnect();
-            connections_.erase(trackablePtr);
+        if (auto connections = connections_.template lock<std::scoped_lock>(); connections->contains(trackablePtr)) {
+            connections->operator[](trackablePtr).disconnect();
+            connections->erase(trackablePtr);
             return true;
         }
         return false;
@@ -115,8 +116,7 @@ public:
     std::size_t
     count() const
     {
-        std::scoped_lock const lk(mutex_);
-        return connections_.size();
+        return connections_.template lock<std::scoped_lock>()->size();
     }
 };
 }  // namespace feed::impl

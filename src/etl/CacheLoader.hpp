@@ -130,7 +130,8 @@ public:
     void
     stop() noexcept
     {
-        loader_->stop();
+        if (loader_ != nullptr)
+            loader_->stop();
     }
 
     /**
@@ -139,7 +140,8 @@ public:
     void
     wait() noexcept
     {
-        loader_->wait();
+        if (loader_ != nullptr)
+            loader_->wait();
     }
 };
 

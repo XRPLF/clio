@@ -34,7 +34,7 @@ class Mutex;
  * @tparam LockType type of lock
  * @tparam MutexType type of mutex
  */
-template <typename ProtectedDataType, template <typename> typename LockType, typename MutexType>
+template <typename ProtectedDataType, template <typename...> typename LockType, typename MutexType>
 class Lock {
     LockType<MutexType> lock_;
     ProtectedDataType& data_;
@@ -129,7 +129,7 @@ public:
      * @tparam LockType The type of lock to use
      * @return A lock on the mutex and a reference to the protected data
      */
-    template <template <typename> typename LockType = std::lock_guard>
+    template <template <typename...> typename LockType = std::lock_guard>
     Lock<ProtectedDataType const, LockType, MutexType>
     lock() const
     {
@@ -142,7 +142,7 @@ public:
      * @tparam LockType The type of lock to use
      * @return A lock on the mutex and a reference to the protected data
      */
-    template <template <typename> typename LockType = std::lock_guard>
+    template <template <typename...> typename LockType = std::lock_guard>
     Lock<ProtectedDataType, LockType, MutexType>
     lock()
     {

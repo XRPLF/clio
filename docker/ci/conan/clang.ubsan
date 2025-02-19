@@ -1,0 +1,9 @@
+include(clang)
+
+[options]
+boost:extra_b2_flags="cxxflags=\"-fsanitize=undefined\" linkflags=\"-fsanitize=undefined\""
+boost:without_stacktrace=True
+[env]
+CFLAGS="-fsanitize=undefined"
+CXXFLAGS="-fsanitize=undefined"
+LDFLAGS="-fsanitize=undefined"

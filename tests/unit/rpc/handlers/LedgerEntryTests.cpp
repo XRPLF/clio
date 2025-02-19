@@ -2136,7 +2136,62 @@ generateTestValuesForParametersTest()
             ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
-        }
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidPermissionedDomain_NotObject",
+            .testJson = R"json({"permissioned_domain": []})json",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidPermissionedDomain_InvalidString",
+            .testJson = R"json({"permissioned_domain": "invalid_string"})json",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidPermissionedDomain_EmptyObject",
+            .testJson = R"json({"permissioned_domain": {}})json",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidPermissionedDomain_BadAccount",
+            .testJson = R"json({"permissioned_domain": {"account": "1234", "seq": 1234}})json",
+            .expectedError = "malformedAddress",
+            .expectedErrorMessage = "Malformed address.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidPermissionedDomain_MissingSeq",
+            .testJson = fmt::format(
+                R"json({{
+                    "permissioned_domain": {{ "account": "{}" }}
+                }})json",
+                kACCOUNT
+            ),
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidPermissionedDomain_SeqIsNotUint",
+            .testJson = fmt::format(
+                R"json({{
+                    "permissioned_domain": {{ "account": "{}", "seq": -1 }}
+                }})json",
+                kACCOUNT
+            ),
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidPermissionedDomain_BothAccountAndSeqAreInvalid",
+            .testJson =
+                R"json({
+                    "permissioned_domain": { "account": "", "seq": -1 }
+                })json",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
     };
 }
 
@@ -2872,6 +2927,36 @@ generateTestValuesForNormalPathTest()
             .expectedIndex = ripple::keylet::mptoken(ripple::makeMptID(2, account1), account1).key,
             .mockedEntity = createMpTokenObject(kACCOUNT, ripple::makeMptID(2, account1))
         },
+        NormalPathTestBundle{
+            .testName = "PermissionedDomainViaString",
+            .testJson = fmt::format(
+                R"json({{
+                    "binary": true,
+                    "permissioned_domain": "{}"
+                }})json",
+                kINDEX1
+            ),
+            .expectedIndex = ripple::uint256(kINDEX1),
+            .mockedEntity = createPermissionedDomainObject(kACCOUNT, kINDEX1, kRANGE_MAX, 0, ripple::uint256{0}, 0)
+        },
+        NormalPathTestBundle{
+            .testName = "PermissionedDomainViaObject",
+            .testJson = fmt::format(
+                R"json({{
+                    "binary": true,
+                    "permissioned_domain": {{
+                        "account": "{}",
+                        "seq": {}
+                    }}
+                }})json",
+                kACCOUNT,
+                kRANGE_MAX
+            ),
+            .expectedIndex =
+                ripple::keylet::permissionedDomain(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX)
+                    .key,
+            .mockedEntity = createPermissionedDomainObject(kACCOUNT, kINDEX1, kRANGE_MAX, 0, ripple::uint256{0}, 0)
+        }
     };
 }
 
@@ -2900,15 +2985,14 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result.value().at("ledger_hash").as_string(), kLEDGER_HASH);
-        EXPECT_EQ(output.result.value().at("ledger_index").as_uint64(), kRANGE_MAX);
+        auto const& outputJson = output.result.value();
+        EXPECT_EQ(outputJson.at("ledger_hash").as_string(), kLEDGER_HASH);
+        EXPECT_EQ(outputJson.at("ledger_index").as_uint64(), kRANGE_MAX);
         EXPECT_EQ(
-            output.result.value().at("node_binary").as_string(),
-            ripple::strHex(testBundle.mockedEntity.getSerializer().peekData())
+            outputJson.at("node_binary").as_string(), ripple::strHex(testBundle.mockedEntity.getSerializer().peekData())
         );
         EXPECT_EQ(
-            ripple::uint256(boost::json::value_to<std::string>(output.result.value().at("index")).data()),
-            testBundle.expectedIndex
+            ripple::uint256(boost::json::value_to<std::string>(outputJson.at("index")).data()), testBundle.expectedIndex
         );
     });
 }

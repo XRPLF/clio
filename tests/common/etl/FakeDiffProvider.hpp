@@ -20,6 +20,7 @@
 #pragma once
 
 #include "data/Types.hpp"
+#include "util/Mutex.hpp"
 
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/base_uint.h>
@@ -27,7 +28,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <map>
-#include <mutex>
 #include <optional>
 #include <thread>
 #include <vector>
@@ -57,14 +57,14 @@ struct DiffProvider {
     nextKey(std::size_t keysSize)
     {
         // mock the result from doFetchSuccessorKey, be aware this function will be called from multiple threads
-        std::lock_guard<std::mutex> const guard(keysMutex_);
-        threadKeysMap_[std::this_thread::get_id()]++;
+        auto keysMap = threadKeysMap_.lock();
+        keysMap->operator[](std::this_thread::get_id())++;
 
-        if (threadKeysMap_[std::this_thread::get_id()] == keysSize - 1) {
+        if (keysMap->operator[](std::this_thread::get_id()) == keysSize - 1) {
             return data::kLAST_KEY;
         }
-        if (threadKeysMap_[std::this_thread::get_id()] == keysSize) {
-            threadKeysMap_[std::this_thread::get_id()] = 0;
+        if (keysMap->operator[](std::this_thread::get_id()) == keysSize) {
+            keysMap->operator[](std::this_thread::get_id()) = 0;
             return std::nullopt;
         }
 
@@ -72,6 +72,5 @@ struct DiffProvider {
     }
 
 private:
-    std::mutex keysMutex_;
-    std::map<std::thread::id, uint32_t> threadKeysMap_;
+    util::Mutex<std::map<std::thread::id, uint32_t>> threadKeysMap_;
 };

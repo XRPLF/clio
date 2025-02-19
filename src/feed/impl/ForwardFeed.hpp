@@ -36,7 +36,7 @@ struct ForwardFeed : public SingleFeedBase {
      * @brief Publishes the json object.
      */
     void
-    pub(boost::json::object const& json) const
+    pub(boost::json::object const& json)
     {
         SingleFeedBase::pub(boost::json::serialize(json));
     }

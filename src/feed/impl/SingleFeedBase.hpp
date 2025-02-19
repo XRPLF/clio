@@ -73,7 +73,7 @@ public:
      * @param msg The message.
      */
     void
-    pub(std::string msg) const;
+    pub(std::string msg);
 
     /**
      * @brief Get the count of subscribers.

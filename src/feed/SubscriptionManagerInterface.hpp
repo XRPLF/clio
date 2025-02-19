@@ -71,8 +71,10 @@ public:
      * @param transactions The transactions in the current ledger.
      */
     virtual void
-    pubBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions)
-        const = 0;
+    pubBookChanges(
+        ripple::LedgerHeader const& lgrInfo,
+        std::vector<data::TransactionAndMetadata> const& transactions
+    ) = 0;
 
     /**
      * @brief Subscribe to the proposed transactions feed.
@@ -141,7 +143,7 @@ public:
         ripple::Fees const& fees,
         std::string const& ledgerRange,
         std::uint32_t txnCount
-    ) const = 0;
+    ) = 0;
 
     /**
      * @brief Subscribe to the manifest feed.
@@ -162,7 +164,7 @@ public:
      * @param manifestJson The manifest json to forward.
      */
     virtual void
-    forwardManifest(boost::json::object const& manifestJson) const = 0;
+    forwardManifest(boost::json::object const& manifestJson) = 0;
 
     /**
      * @brief Subscribe to the validation feed.
@@ -183,7 +185,7 @@ public:
      * @param validationJson The validation feed json to forward.
      */
     virtual void
-    forwardValidation(boost::json::object const& validationJson) const = 0;
+    forwardValidation(boost::json::object const& validationJson) = 0;
 
     /**
      * @brief Subscribe to the transactions feed.

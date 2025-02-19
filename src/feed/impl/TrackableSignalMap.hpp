@@ -20,6 +20,7 @@
 #pragma once
 
 #include "feed/impl/TrackableSignal.hpp"
+#include "util/Mutex.hpp"
 
 #include <boost/signals2.hpp>
 
@@ -49,8 +50,8 @@ class TrackableSignalMap {
     using ConnectionPtr = Session*;
     using ConnectionSharedPtr = std::shared_ptr<Session>;
 
-    mutable std::mutex mutex_;
-    std::unordered_map<Key, TrackableSignal<Session, Args...>> signalsMap_;
+    using SignalsMap = std::unordered_map<Key, TrackableSignal<Session, Args...>>;
+    util::Mutex<SignalsMap> signalsMap_;
 
 public:
     /**
@@ -66,8 +67,8 @@ public:
     bool
     connectTrackableSlot(ConnectionSharedPtr const& trackable, Key const& key, std::function<void(Args...)> slot)
     {
-        std::scoped_lock const lk(mutex_);
-        return signalsMap_[key].connectTrackableSlot(trackable, slot);
+        auto map = signalsMap_.template lock<std::scoped_lock>();
+        return map->operator[](key).connectTrackableSlot(trackable, slot);
     }
 
     /**
@@ -80,14 +81,14 @@ public:
     bool
     disconnect(ConnectionPtr trackablePtr, Key const& key)
     {
-        std::scoped_lock const lk(mutex_);
-        if (!signalsMap_.contains(key))
+        auto map = signalsMap_.template lock<std::scoped_lock>();
+        if (!map->contains(key))
             return false;
 
-        auto const disconnected = signalsMap_[key].disconnect(trackablePtr);
+        auto const disconnected = map->operator[](key).disconnect(trackablePtr);
         // clean the map if there is no connection left.
-        if (disconnected && signalsMap_[key].count() == 0)
-            signalsMap_.erase(key);
+        if (disconnected && map->operator[](key).count() == 0)
+            map->erase(key);
 
         return disconnected;
     }
@@ -101,9 +102,9 @@ public:
     void
     emit(Key const& key, Args const&... args)
     {
-        std::scoped_lock const lk(mutex_);
-        if (signalsMap_.contains(key))
-            signalsMap_[key].emit(args...);
+        auto map = signalsMap_.template lock<std::scoped_lock>();
+        if (map->contains(key))
+            map->operator[](key).emit(args...);
     }
 };
 }  // namespace feed::impl
