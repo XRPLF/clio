@@ -1024,7 +1024,7 @@ ammAccountHolds(
 )
 {
     ripple::STAmount amount;
-    ASSERT(!ripple::isXRP(currency), "LPToken currency can never be XRP")
+    ASSERT(!ripple::isXRP(currency), "LPToken currency can never be XRP");
     if (ripple::isXRP(currency))
         return {xrpLiquid(backend, sequence, account, yield)};
 
