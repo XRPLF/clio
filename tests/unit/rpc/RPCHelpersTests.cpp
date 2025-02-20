@@ -69,6 +69,7 @@ constexpr auto kTXN_ID = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD974
 constexpr auto kAMM_ACCOUNT = "rnW8FAPgpQgA6VoESnVrUVJHBdq9QAtRZs";
 constexpr auto kISSUER = "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD";
 constexpr auto kLPTOKEN_CURRENCY = "037C35306B24AAB7FF90848206E003279AA47090";
+constexpr auto kAMM_ID = 54321;
 
 }  // namespace
 
@@ -567,22 +568,18 @@ TEST_F(RPCHelpersTest, AccountHoldsFixLPTAmendmentDisabled)
     auto const lptRippleStateKk = ripple::keylet::line(ammAccount, account, ripple::to_currency(kLPTOKEN_CURRENCY)).key;
 
     // trustline fetched twice. once in accountHolds and once in isFrozen
-    EXPECT_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_)).Times(2);
-    ON_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_))
-        .WillByDefault(testing::Return(lptRippleState.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_))
+        .Times(2)
+        .WillRepeatedly(Return(lptRippleState.getSerializer().peekData()));
 
-    auto const ammID = ripple::uint256{54321};
+    auto const ammID = ripple::uint256{kAMM_ID};
     auto const ammAccountKk = ripple::keylet::account(ammAccount).key;
     auto const ammAccountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2, 0, ammID);
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_)).Times(1);
-    ON_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_))
-        .WillByDefault(Return(ammAccountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_)).WillOnce(Return(ammAccountRoot.getSerializer().peekData()));
 
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
-        .Times(1);
-    ON_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
-        .WillByDefault(testing::Return(false));
+        .WillOnce(Return(false));
 
     boost::asio::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
         auto ret = accountHolds(
@@ -610,21 +607,19 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenNotAMMAccount)
     auto const usdRippleStateKk = ripple::keylet::line(account2, account, ripple::to_currency("USD")).key;
 
     // trustline fetched twice. once in accountHolds and once in isFrozen
-    EXPECT_CALL(*backend_, doFetchLedgerObject(usdRippleStateKk, testing::_, testing::_)).Times(2);
-    ON_CALL(*backend_, doFetchLedgerObject(usdRippleStateKk, testing::_, testing::_))
-        .WillByDefault(testing::Return(usdRippleState.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(usdRippleStateKk, testing::_, testing::_))
+        .Times(2)
+        .WillRepeatedly(Return(usdRippleState.getSerializer().peekData()));
 
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
-        .Times(1);
-    ON_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
-        .WillByDefault(testing::Return(true));
+        .WillOnce(Return(true));
 
     auto const account2Kk = ripple::keylet::account(account2).key;
     auto const account2Root = createAccountRootObject(kACCOUNT2, 0, 2, 200, 2, kINDEX1, 2, 0);
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject(account2Kk, testing::_, testing::_)).Times(2);
-    ON_CALL(*backend_, doFetchLedgerObject(account2Kk, testing::_, testing::_))
-        .WillByDefault(Return(account2Root.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(account2Kk, testing::_, testing::_))
+        .Times(2)
+        .WillRepeatedly(Return(account2Root.getSerializer().peekData()));
 
     boost::asio::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
         auto ret = accountHolds(
@@ -647,34 +642,29 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset1Frozen)
     auto const lptRippleStateKk = ripple::keylet::line(ammAccount, account, ripple::to_currency(kLPTOKEN_CURRENCY)).key;
 
     // trustline fetched twice. once in accountHolds and once in isFrozen
-    EXPECT_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_)).Times(2);
-    ON_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_))
-        .WillByDefault(testing::Return(lptRippleState.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_))
+        .Times(2)
+        .WillRepeatedly(Return(lptRippleState.getSerializer().peekData()));
 
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
-        .Times(1);
-    ON_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
-        .WillByDefault(testing::Return(true));
+        .WillOnce(Return(true));
 
-    auto const ammID = ripple::uint256{54321};
+    auto const ammID = ripple::uint256{kAMM_ID};
     auto const ammAccountKk = ripple::keylet::account(ammAccount).key;
     auto const ammAccountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2, 0, ammID);
 
     // accountroot fetched twice, once in isFrozen, once in accountHolds
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_)).Times(2);
-    ON_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_))
-        .WillByDefault(Return(ammAccountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_))
+        .Times(2)
+        .WillRepeatedly(Return(ammAccountRoot.getSerializer().peekData()));
 
     auto const amm = createAmmObject(kAMM_ACCOUNT, "USD", kISSUER, "XRP", ripple::toBase58(ripple::xrpAccount()));
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_)).Times(1);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_))
-        .WillByDefault(testing::Return(amm.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_)).Times(1).WillOnce(Return(amm.getSerializer().peekData()));
 
     auto const issuerKk = ripple::keylet::account(issuer).key;
     auto const issuerAccountRoot = createAccountRootObject(kISSUER, ripple::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2, 0);
-    EXPECT_CALL(*backend_, doFetchLedgerObject(issuerKk, testing::_, testing::_)).Times(1);
-    ON_CALL(*backend_, doFetchLedgerObject(issuerKk, testing::_, testing::_))
-        .WillByDefault(Return(issuerAccountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(issuerKk, testing::_, testing::_))
+        .WillOnce(Return(issuerAccountRoot.getSerializer().peekData()));
 
     boost::asio::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
         auto ret = accountHolds(
@@ -709,29 +699,25 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset2Frozen)
         .WillByDefault(testing::Return(lptRippleState.getSerializer().peekData()));
 
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
-        .Times(1);
-    ON_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
-        .WillByDefault(testing::Return(true));
+        .WillOnce(testing::Return(true));
 
-    auto const ammID = ripple::uint256{54321};
+    auto const ammID = ripple::uint256{kAMM_ID};
     auto const ammAccountKk = ripple::keylet::account(ammAccount).key;
     auto const ammAccountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2, 0, ammID);
 
     // accountroot fetched twice, once in isFrozen, once in accountHolds
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_)).Times(2);
-    ON_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_))
-        .WillByDefault(Return(ammAccountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_))
+        .Times(2)
+        .WillRepeatedly(Return(ammAccountRoot.getSerializer().peekData()));
 
     auto const amm = createAmmObject(kAMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "USD", kISSUER);
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_)).Times(1);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_))
-        .WillByDefault(testing::Return(amm.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_))
+        .WillOnce(Return(amm.getSerializer().peekData()));
 
     auto const issuerKk = ripple::keylet::account(issuer).key;
     auto const issuerAccountRoot = createAccountRootObject(kISSUER, ripple::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2, 0);
-    EXPECT_CALL(*backend_, doFetchLedgerObject(issuerKk, testing::_, testing::_)).Times(1);
-    ON_CALL(*backend_, doFetchLedgerObject(issuerKk, testing::_, testing::_))
-        .WillByDefault(Return(issuerAccountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(issuerKk, testing::_, testing::_))
+        .WillOnce(Return(issuerAccountRoot.getSerializer().peekData()));
 
     boost::asio::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
         auto ret = accountHolds(
@@ -761,42 +747,37 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenUnfrozen)
     auto const lptRippleStateKk = ripple::keylet::line(ammAccount, account, ripple::to_currency(kLPTOKEN_CURRENCY)).key;
 
     // trustline fetched twice. once in accountHolds and once in isFrozen
-    EXPECT_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_)).Times(2);
-    ON_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_))
-        .WillByDefault(testing::Return(lptRippleState.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_))
+        .Times(2)
+        .WillRepeatedly(Return(lptRippleState.getSerializer().peekData()));
 
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
-        .Times(1);
-    ON_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
-        .WillByDefault(testing::Return(true));
+        .WillOnce(Return(true));
 
-    auto const ammID = ripple::uint256{54321};
+    auto const ammID = ripple::uint256{kAMM_ID};
     auto const ammAccountKk = ripple::keylet::account(ammAccount).key;
     auto const ammAccountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2, 0, ammID);
 
     // accountroot fetched twice, once in isFrozen, once in accountHolds
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_)).Times(2);
-    ON_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_))
-        .WillByDefault(Return(ammAccountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_))
+        .Times(2)
+        .WillRepeatedly(Return(ammAccountRoot.getSerializer().peekData()));
 
     auto const amm = createAmmObject(kAMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "USD", kISSUER);
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_)).Times(1);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_))
-        .WillByDefault(testing::Return(amm.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_))
+        .WillOnce(Return(amm.getSerializer().peekData()));
 
     auto const issuerKk = ripple::keylet::account(issuer).key;
     auto const issuerAccountRoot = createAccountRootObject(kISSUER, 0, 2, 200, 2, kINDEX1, 2, 0);
-    EXPECT_CALL(*backend_, doFetchLedgerObject(issuerKk, testing::_, testing::_)).Times(1);
-    ON_CALL(*backend_, doFetchLedgerObject(issuerKk, testing::_, testing::_))
-        .WillByDefault(Return(issuerAccountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(issuerKk, testing::_, testing::_))
+        .WillOnce(Return(issuerAccountRoot.getSerializer().peekData()));
 
     auto const usdRippleState =
         createRippleStateLedgerObject("USD", kISSUER, 100, kACCOUNT, 100, kISSUER, 100, kTXN_ID, 3);
     auto const usdRippleStateKk = ripple::keylet::line(issuer, account, ripple::to_currency("USD")).key;
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject(usdRippleStateKk, testing::_, testing::_)).Times(1);
-    ON_CALL(*backend_, doFetchLedgerObject(usdRippleStateKk, testing::_, testing::_))
-        .WillByDefault(testing::Return(usdRippleState.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(usdRippleStateKk, testing::_, testing::_))
+        .WillOnce(Return(usdRippleState.getSerializer().peekData()));
 
     boost::asio::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
         auto ret = accountHolds(

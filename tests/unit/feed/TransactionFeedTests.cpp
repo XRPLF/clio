@@ -868,8 +868,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRANSACTION_FOR_OWNER_FUND))).Times(1);
-    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
-        .Times(1);
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_));
     ON_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
         .WillByDefault(testing::Return(false));
     testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
@@ -1120,9 +1119,9 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
     auto const issue2 = getIssue(kLPTOKEN_CURRENCY, kAMM_ACCOUNT);
     line.setFieldAmount(ripple::sfBalance, ripple::STAmount(issue2, 100));
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject(testing::_, testing::_, testing::_)).Times(2);
-    ON_CALL(*backend_, doFetchLedgerObject(testing::_, testing::_, testing::_))
-        .WillByDefault(testing::Return(line.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(testing::_, testing::_, testing::_))
+        .Times(2)
+        .WillRepeatedly(testing::Return(line.getSerializer().peekData()));
 
     auto const ammID = ripple::uint256{54321};
 
@@ -1130,9 +1129,9 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
     auto const ammAccount = getAccountIdWithString(kAMM_ACCOUNT);
     auto const kk = ripple::keylet::account(ammAccount).key;
     ripple::STObject const ammAccountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 1, 10, 2, kTXN_ID, 3, 0, ammID);
-    EXPECT_CALL(*backend_, doFetchLedgerObject(kk, testing::_, testing::_)).Times(2);
-    ON_CALL(*backend_, doFetchLedgerObject(kk, testing::_, testing::_))
-        .WillByDefault(testing::Return(ammAccountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(kk, testing::_, testing::_))
+        .Times(2)
+        .WillRepeatedly(testing::Return(ammAccountRoot.getSerializer().peekData()));
 
     static constexpr auto kTRANSACTION_FOR_OWNER_FUND =
         R"({
@@ -1175,23 +1174,18 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRANSACTION_FOR_OWNER_FUND))).Times(1);
 
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
-        .Times(1);
-    ON_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
-        .WillByDefault(testing::Return(true));
+        .WillOnce(testing::Return(true));
 
     auto const ammObj =
         createAmmObject(kAMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), kCURRENCY, kISSUER);
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_)).Times(1);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_))
-        .WillByDefault(testing::Return(ammObj.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_))
+        .WillOnce(testing::Return(ammObj.getSerializer().peekData()));
 
     // create the issuer account that enacted global freeze
     auto const issuerAccount = getAccountIdWithString(kISSUER);
     ripple::STObject const issuerAccountRoot = createAccountRootObject(kISSUER, 4194304, 1, 10, 2, kTXN_ID, 3);
     EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(issuerAccount).key, testing::_, testing::_))
-        .Times(1);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(issuerAccount).key, testing::_, testing::_))
-        .WillByDefault(testing::Return(issuerAccountRoot.getSerializer().peekData()));
+        .WillOnce(testing::Return(issuerAccountRoot.getSerializer().peekData()));
 
     testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }

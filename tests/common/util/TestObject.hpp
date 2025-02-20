@@ -147,7 +147,7 @@ createAccountRootObject(
     std::string_view previousTxnID,
     uint32_t previousTxnSeq,
     uint32_t transferRate = 0,
-    ripple::uint256 ammID = ripple::uint256{0}
+    std::optional<ripple::uint256> ammID = std::nullopt
 );
 
 /*
