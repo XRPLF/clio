@@ -576,7 +576,8 @@ TEST_F(RPCHelpersTest, AccountHoldsFixLPTAmendmentDisabled)
     auto const ammAccountKk = ripple::keylet::account(ammAccount).key;
     auto const ammAccountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2, 0, ammID);
 
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_)).WillOnce(Return(ammAccountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ammAccountKk, testing::_, testing::_))
+        .WillOnce(Return(ammAccountRoot.getSerializer().peekData()));
 
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
         .WillOnce(Return(false));
@@ -659,7 +660,9 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset1Frozen)
         .WillRepeatedly(Return(ammAccountRoot.getSerializer().peekData()));
 
     auto const amm = createAmmObject(kAMM_ACCOUNT, "USD", kISSUER, "XRP", ripple::toBase58(ripple::xrpAccount()));
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_)).Times(1).WillOnce(Return(amm.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_))
+        .Times(1)
+        .WillOnce(Return(amm.getSerializer().peekData()));
 
     auto const issuerKk = ripple::keylet::account(issuer).key;
     auto const issuerAccountRoot = createAccountRootObject(kISSUER, ripple::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2, 0);
