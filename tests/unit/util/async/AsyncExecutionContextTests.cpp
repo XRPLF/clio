@@ -24,8 +24,10 @@
 
 #include <gtest/gtest.h>
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <ranges>
 #include <semaphore>
 #include <stdexcept>
 #include <string>
@@ -220,6 +222,24 @@ TYPED_TEST(ExecutionContextTests, repeatingOperation)
     EXPECT_LE(callCount, expectedActualCount);     // never should be called more times than possible before timeout
 }
 
+TYPED_TEST(ExecutionContextTests, repeatingOperationForceInvoke)
+{
+    std::atomic_size_t callCount = 64uz;
+    std::binary_semaphore unblock(0);
+
+    auto res = this->ctx.executeRepeatedly(std::chrono::seconds{10}, [&] {
+        if (--callCount == 0uz)
+            unblock.release();
+    });
+    for ([[maybe_unused]] auto unused : std::views::iota(0uz, callCount.load()))
+        res.invoke();
+
+    unblock.acquire();
+    res.abort();
+
+    EXPECT_EQ(callCount, 0uz);
+}
+
 TYPED_TEST(ExecutionContextTests, strandMove)
 {
     auto strand = this->ctx.makeStrand();
@@ -271,6 +291,43 @@ TYPED_TEST(ExecutionContextTests, strandWithTimeout)
     );
 
     EXPECT_EQ(res.get().value(), 42);
+}
+
+TYPED_TEST(ExecutionContextTests, strandedRepeatingOperation)
+{
+    auto strand = this->ctx.makeStrand();
+    auto const repeatDelay = std::chrono::milliseconds{1};
+    auto const timeout = std::chrono::milliseconds{15};
+    auto callCount = 0uz;
+
+    auto res = strand.executeRepeatedly(repeatDelay, [&] { ++callCount; });
+    auto timeSpent = util::timed([timeout] { std::this_thread::sleep_for(timeout); });  // calculate actual time spent
+
+    res.abort();  // outside of the above stopwatch because it blocks and can take arbitrary time
+    auto const expectedPureCalls = timeout.count() / repeatDelay.count();
+    auto const expectedActualCount = timeSpent / repeatDelay.count();
+
+    EXPECT_GE(callCount, expectedPureCalls / 2u);  // expect at least half of the scheduled calls
+    EXPECT_LE(callCount, expectedActualCount);     // never should be called more times than possible before timeout
+}
+
+TYPED_TEST(ExecutionContextTests, strandedRepeatingOperationForceInvoke)
+{
+    auto strand = this->ctx.makeStrand();
+    auto callCount = 64uz;  // does not need to be atomic since we are on a strand
+    std::binary_semaphore unblock(0);
+
+    auto res = strand.executeRepeatedly(std::chrono::seconds{10}, [&] {
+        if (--callCount == 0uz)
+            unblock.release();
+    });
+    for ([[maybe_unused]] auto unused : std::views::iota(0uz, callCount))
+        res.invoke();
+
+    unblock.acquire();
+    res.abort();
+
+    EXPECT_EQ(callCount, 0uz);
 }
 
 TYPED_TEST(AsyncExecutionContextTests, executeAutoAborts)

@@ -42,6 +42,8 @@ target_sources(
           etlng/SchedulingTests.cpp
           etlng/TaskManagerTests.cpp
           etlng/LoadingTests.cpp
+          etlng/NetworkValidatedLedgersTests.cpp
+          etlng/MonitorTests.cpp
           # Feed
           util/BytesConverterTests.cpp
           feed/BookChangesFeedTests.cpp

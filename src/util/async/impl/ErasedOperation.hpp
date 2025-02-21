@@ -71,6 +71,12 @@ public:
         pimpl_->abort();
     }
 
+    void
+    invoke()
+    {
+        pimpl_->invoke();
+    }
+
 private:
     struct Concept {
         virtual ~Concept() = default;
@@ -81,6 +87,8 @@ private:
         get() = 0;
         virtual void
         abort() = 0;
+        virtual void
+        invoke() = 0;
     };
 
     template <SomeOperation OpType>
@@ -131,6 +139,16 @@ private:
                     if constexpr (SomeStoppableOperation<OpType>)
                         operation.requestStop();
                 }
+            }
+        }
+
+        void
+        invoke() override
+        {
+            if constexpr (not SomeForceInvocableOperation<OpType>) {
+                ASSERT(false, "Called invoke() on an operation that can't be force-invoked");
+            } else {
+                operation.invoke();
             }
         }
     };

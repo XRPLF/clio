@@ -215,14 +215,18 @@ TEST_F(LoggerInitTest, LogSizeAndHourRotationCannotBeZero)
         "log_rotation_hour_interval", "log_directory_max_size", "log_rotation_size"
     };
 
-    auto const jsonStr = fmt::format(R"json({{
+    auto const jsonStr = fmt::format(
+        R"json({{
         "{}": 0,
         "{}": 0,
         "{}": 0
-    }})json", keys[0], keys[1], keys[2]);
+    }})json",
+        keys[0],
+        keys[1],
+        keys[2]
+    );
 
-    auto const parsingErrors =
-        config_.parse(ConfigFileJson{boost::json::parse(jsonStr).as_object()});
+    auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::parse(jsonStr).as_object()});
     ASSERT_EQ(parsingErrors->size(), 3);
     for (std::size_t i = 0; i < parsingErrors->size(); ++i) {
         EXPECT_EQ(
