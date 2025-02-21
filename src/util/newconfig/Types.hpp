@@ -81,4 +81,3 @@ getType()
 }
 
 }  // namespace util::config
-

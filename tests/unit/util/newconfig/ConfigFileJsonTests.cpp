@@ -420,7 +420,8 @@ TEST_F(ConfigFileJsonTest, getArrayObjectInArray)
     EXPECT_EQ(std::get<std::string>(strings.at(1).value()), "some string");
 }
 
-TEST_F(ConfigFileJsonTest, getArrayOptionalInArray) {
+TEST_F(ConfigFileJsonTest, getArrayOptionalInArray)
+{
     auto const jsonStr = R"json({
         "array": [
             { "int": 42 },

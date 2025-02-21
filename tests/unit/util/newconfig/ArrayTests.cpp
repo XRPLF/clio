@@ -126,4 +126,3 @@ TEST(ArrayTest, addNullRequired)
     auto const error = arr.addNull();
     EXPECT_TRUE(error.has_value());
 }
-

@@ -20,6 +20,10 @@
 /** @file */
 #pragma once
 
+#include <boost/signals2/connection.hpp>
+#include <boost/signals2/signal.hpp>
+#include <boost/signals2/variadic_signal.hpp>
+
 #include <cstdint>
 #include <optional>
 namespace etl {
@@ -29,6 +33,8 @@ namespace etl {
  */
 class NetworkValidatedLedgersInterface {
 public:
+    using SignalType = boost::signals2::signal<void(uint32_t)>;
+
     virtual ~NetworkValidatedLedgersInterface() = default;
 
     /**
@@ -46,7 +52,7 @@ public:
      *
      * @return Sequence of most recently validated ledger. empty optional if the datastructure has been stopped
      */
-    virtual std::optional<uint32_t>
+    [[nodiscard]] virtual std::optional<uint32_t>
     getMostRecent() = 0;
 
     /**
@@ -59,6 +65,15 @@ public:
      */
     virtual bool
     waitUntilValidatedByNetwork(uint32_t sequence, std::optional<uint32_t> maxWaitMs = {}) = 0;
+
+    /**
+     * @brief Allows clients to get notified when a new validated ledger becomes known to Clio
+     *
+     * @param subscriber The slot to connect
+     * @return A connection object that automatically disconnects the subscription once destroyed
+     */
+    [[nodiscard]] virtual boost::signals2::scoped_connection
+    subscribe(SignalType::slot_type const& subscriber) = 0;
 };
 
 }  // namespace etl
