@@ -46,11 +46,14 @@
 #include "web/ng/Server.hpp"
 
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/asio/thread_pool.hpp>
 
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
 #include <optional>
+#include <string>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -79,6 +82,38 @@ start(boost::asio::io_context& ioc, std::uint32_t numThreads)
 }
 
 }  // namespace
+
+struct FakeRpcEngine {
+    boost::asio::thread_pool ctx{12};
+
+    ~FakeRpcEngine()
+    {
+        ctx.join();
+    }
+
+    template <typename Fn>
+    bool
+    post(Fn&& fn, std::string const&)
+    {
+        boost::asio::spawn(ctx, [fn = std::forward<Fn>(fn)](boost::asio::yield_context yield) mutable { fn(yield); });
+        return true;
+    }
+
+    void
+    notifyBadSyntax()
+    {
+    }
+
+    void
+    notifyTooBusy()
+    {
+    }
+
+    void
+    notifyInternalError()
+    {
+    }
+};
 
 ClioApplication::ClioApplication(util::config::ClioConfigDefinition const& config)
     : config_(config), signalsHandler_{config_}
@@ -145,7 +180,8 @@ ClioApplication::run(bool const useNgWebServer)
         RPCEngineType::makeRPCEngine(config_, backend, balancer, dosGuard, workQueue, counters, handlerProvider);
 
     if (useNgWebServer or config_.get<bool>("server.__ng_web_server")) {
-        web::ng::RPCServerHandler<RPCEngineType, etl::ETLService> handler{config_, backend, rpcEngine, etl};
+        auto const fakeRpcEngine = std::make_shared<FakeRpcEngine>();
+        web::ng::RPCServerHandler<FakeRpcEngine, etl::ETLService> handler{config_, backend, fakeRpcEngine, etl};
 
         auto expectedAdminVerifier = web::makeAdminVerificationStrategy(config_);
         if (not expectedAdminVerifier.has_value()) {

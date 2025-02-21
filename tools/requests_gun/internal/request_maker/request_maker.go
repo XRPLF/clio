@@ -103,6 +103,10 @@ func (ws *WebSocketClient) SendMessage(message string) (*ResponseData, error) {
     }
 
     var msg []byte
+    err = ws.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+    if err != nil {
+        return nil, errors.New("Error setting timeout: " + err.Error())
+    }
 	_, msg, err = ws.conn.ReadMessage()
 	if err != nil {
 		return nil, errors.New("Error reading message: " + err.Error())

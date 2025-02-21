@@ -35,10 +35,12 @@
 #include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/error.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/websocket/error.hpp>
+#include <boost/json/object.hpp>
 
 #include <chrono>
 #include <cstddef>
@@ -141,6 +143,7 @@ void
 ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::yield_context yield)
 {
     LOG(log_.trace()) << connectionPtr->tag() << "New connection";
+    LOG(log_.trace()) << connectionPtr->tag() << "DEBUG_started";
     auto& connectionRef = *connectionPtr;
 
     if (isStopping()) {
@@ -207,6 +210,7 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
     --connectionsCounter_.get();
     if (connectionsCounter_.get().value() == 0 && stopping_)
         stopHelper_.readyToStop();
+    LOG(log_.trace()) << connectionPtr->tag() << "DEBUG_finished";
 }
 
 void
@@ -294,14 +298,14 @@ ConnectionHandler::sequentRequestResponseLoop(
 
     LOG(log_.trace()) << connection.tag() << "Processing sequentially";
     while (true) {
-        auto expectedRequest = connection.receive(yield);
+        auto const expectedRequest = connection.receive(yield);
         if (not expectedRequest)
             return handleError(expectedRequest.error(), connection);
 
         LOG(log_.info()) << connection.tag() << "Received request from ip = " << connection.ip();
 
         auto maybeReturnValue =
-            processRequest(connection, subscriptionContext, std::move(expectedRequest).value(), yield);
+            processRequest(connection, subscriptionContext, expectedRequest.value(), yield);
         if (maybeReturnValue.has_value())
             return maybeReturnValue.value();
     }
@@ -376,8 +380,10 @@ ConnectionHandler::processRequest(
     boost::asio::yield_context yield
 )
 {
+    LOG(log_.trace()) << connection.tag() << "DEBUG_processing_started";
     LOG(log_.trace()) << connection.tag() << "Processing request: " << request.message();
     auto response = handleRequest(connection, subscriptionContext, request, yield);
+    LOG(log_.trace()) << connection.tag() << "DEBUG_processing_finished";
 
     LOG(log_.trace()) << connection.tag() << "Sending response: " << response.message();
     auto const maybeError = connection.send(std::move(response), yield);
