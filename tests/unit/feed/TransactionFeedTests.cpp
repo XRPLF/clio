@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "data/AmendmentCenter.hpp"
 #include "data/Types.hpp"
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/TransactionFeed.hpp"
@@ -51,6 +52,8 @@ constexpr auto kLEDGER_HASH = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014
 constexpr auto kCURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
 constexpr auto kISSUER = "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD";
 constexpr auto kTXN_ID = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
+constexpr auto kAMM_ACCOUNT = "rnW8FAPgpQgA6VoESnVrUVJHBdq9QAtRZs";
+constexpr auto kLPTOKEN_CURRENCY = "037C35306B24AAB7FF90848206E003279AA47090";
 
 constexpr auto kTRAN_V1 =
     R"({
@@ -183,10 +186,10 @@ TEST_F(FeedTransactionTest, SubTransactionV1)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1)));
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsub(sessionPtr);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 }
 
@@ -205,10 +208,10 @@ TEST_F(FeedTransactionTest, SubTransactionForProposedTx)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1)));
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsubProposed(sessionPtr);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, SubTransactionV2)
@@ -226,12 +229,12 @@ TEST_F(FeedTransactionTest, SubTransactionV2)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2)));
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, SubAccountV1)
@@ -252,12 +255,12 @@ TEST_F(FeedTransactionTest, SubAccountV1)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1)));
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, SubForProposedAccount)
@@ -278,10 +281,10 @@ TEST_F(FeedTransactionTest, SubForProposedAccount)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1)));
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsubProposed(account, sessionPtr);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, SubAccountV2)
@@ -301,12 +304,12 @@ TEST_F(FeedTransactionTest, SubAccountV2)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2)));
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
@@ -328,14 +331,14 @@ TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).Times(2).WillRepeatedly(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(2);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, SubBookV1)
@@ -418,7 +421,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kORDERBOOK_PUBLISH))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     // trigger by offer cancel meta data
     metaObj = createMetaDataForCancelOffer(kCURRENCY, kISSUER, 22, 3, 1);
@@ -474,7 +477,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kORDERBOOK_CANCEL_PUBLISH))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     // trigger by offer create meta data
     static constexpr auto kORDERBOOK_CREATE_PUBLISH =
@@ -531,12 +534,12 @@ TEST_F(FeedTransactionTest, SubBookV1)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kORDERBOOK_CREATE_PUBLISH))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, SubBookV2)
@@ -619,12 +622,12 @@ TEST_F(FeedTransactionTest, SubBookV2)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kORDERBOOK_PUBLISH))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, TransactionContainsBothAccountsSubed)
@@ -649,18 +652,18 @@ TEST_F(FeedTransactionTest, TransactionContainsBothAccountsSubed)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, SubAccountRepeatWithDifferentVersion)
@@ -686,19 +689,19 @@ TEST_F(FeedTransactionTest, SubAccountRepeatWithDifferentVersion)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, SubTransactionRepeatWithDifferentVersion)
@@ -720,12 +723,12 @@ TEST_F(FeedTransactionTest, SubTransactionRepeatWithDifferentVersion)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, SubRepeat)
@@ -865,7 +868,10 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRANSACTION_FOR_OWNER_FUND))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_));
+    ON_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
+        .WillByDefault(testing::Return(false));
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 static constexpr auto kTRAN_FROZEN =
@@ -941,7 +947,7 @@ TEST_F(FeedTransactionTest, PubTransactionOfferCreationFrozenLine)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_FROZEN))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, SubTransactionOfferCreationGlobalFrozen)
@@ -982,7 +988,7 @@ TEST_F(FeedTransactionTest, SubTransactionOfferCreationGlobalFrozen)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_FROZEN))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, SubBothProposedAndValidatedAccount)
@@ -1005,13 +1011,13 @@ TEST_F(FeedTransactionTest, SubBothProposedAndValidatedAccount)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsub(account, sessionPtr);
     testFeedPtr->unsubProposed(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, SubBothProposedAndValidated)
@@ -1032,11 +1038,11 @@ TEST_F(FeedTransactionTest, SubBothProposedAndValidated)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).Times(2).WillRepeatedly(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1))).Times(2);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     testFeedPtr->unsub(sessionPtr);
     testFeedPtr->unsubProposed(sessionPtr);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, SubProposedDisconnect)
@@ -1054,10 +1060,10 @@ TEST_F(FeedTransactionTest, SubProposedDisconnect)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     sessionPtr.reset();
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 TEST_F(FeedTransactionTest, SubProposedAccountDisconnect)
@@ -1077,10 +1083,111 @@ TEST_F(FeedTransactionTest, SubProposedAccountDisconnect)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1))).Times(1);
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 
     sessionPtr.reset();
-    testFeedPtr->pub(trans1, ledgerHeader, backend_);
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
+}
+
+// This test exercises `accountHold` for amendment fixFrozenLPTokenTransfer, so that the output shows "owner_funds: 0"
+// if the currency in the amm pool is frozen
+TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
+{
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(sessionPtr);
+
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto trans1 = TransactionAndMetadata();
+    ripple::STObject const obj =
+        createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kLPTOKEN_CURRENCY, kAMM_ACCOUNT, 1, 3);
+    trans1.transaction = obj.getSerializer().peekData();
+    trans1.ledgerSequence = 32;
+    ripple::STArray const metaArray{0};
+    ripple::STObject metaObj(ripple::sfTransactionMetaData);
+    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
+    metaObj.setFieldU32(ripple::sfTransactionIndex, 22);
+    trans1.metadata = metaObj.getSerializer().peekData();
+
+    ripple::STObject line(ripple::sfIndexes);
+    line.setFieldU16(ripple::sfLedgerEntryType, ripple::ltRIPPLE_STATE);
+    line.setFieldAmount(ripple::sfLowLimit, ripple::STAmount(10, false));
+    line.setFieldAmount(ripple::sfHighLimit, ripple::STAmount(100, false));
+    line.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{kTXN_ID});
+    line.setFieldU32(ripple::sfPreviousTxnLgrSeq, 3);
+    line.setFieldU32(ripple::sfFlags, 0);
+    auto const issue2 = getIssue(kLPTOKEN_CURRENCY, kAMM_ACCOUNT);
+    line.setFieldAmount(ripple::sfBalance, ripple::STAmount(issue2, 100));
+
+    EXPECT_CALL(*backend_, doFetchLedgerObject(testing::_, testing::_, testing::_))
+        .Times(2)
+        .WillRepeatedly(testing::Return(line.getSerializer().peekData()));
+
+    auto const ammID = ripple::uint256{54321};
+
+    // create an amm account because in `accountHolds` checks for the ammID
+    auto const ammAccount = getAccountIdWithString(kAMM_ACCOUNT);
+    auto const kk = ripple::keylet::account(ammAccount).key;
+    ripple::STObject const ammAccountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 1, 10, 2, kTXN_ID, 3, 0, ammID);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(kk, testing::_, testing::_))
+        .Times(2)
+        .WillRepeatedly(testing::Return(ammAccountRoot.getSerializer().peekData()));
+
+    static constexpr auto kTRANSACTION_FOR_OWNER_FUND =
+        R"({
+            "transaction":
+            {
+                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Fee":"1",
+                "Sequence":32,
+                "SigningPubKey":"74657374",
+                "TakerGets":
+                {
+                    "currency":"037C35306B24AAB7FF90848206E003279AA47090",
+                    "issuer":"rnW8FAPgpQgA6VoESnVrUVJHBdq9QAtRZs",
+                    "value":"1"
+                },
+                "TakerPays":"3",
+                "TransactionType":"OfferCreate",
+                "hash":"9CA8BBF209DC4505F593A1EA0DC2135A5FA2C6541AF19D128B046873E0CEB695",
+                "date":0,
+                "owner_funds":"0"
+            },
+            "meta":
+            {
+                "AffectedNodes":[],
+                "TransactionIndex":22,
+                "TransactionResult":"tesSUCCESS"
+            },
+            "type":"transaction",
+            "validated":true,
+            "status":"closed",
+            "ledger_index":33,
+            "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+            "engine_result_code":0,
+            "close_time_iso": "2000-01-01T00:00:00Z",
+            "engine_result":"tesSUCCESS",
+            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+        })";
+
+    EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRANSACTION_FOR_OWNER_FUND))).Times(1);
+
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
+        .WillOnce(testing::Return(true));
+
+    auto const ammObj =
+        createAmmObject(kAMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), kCURRENCY, kISSUER);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_))
+        .WillOnce(testing::Return(ammObj.getSerializer().peekData()));
+
+    // create the issuer account that enacted global freeze
+    auto const issuerAccount = getAccountIdWithString(kISSUER);
+    ripple::STObject const issuerAccountRoot = createAccountRootObject(kISSUER, 4194304, 1, 10, 2, kTXN_ID, 3);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(issuerAccount).key, testing::_, testing::_))
+        .WillOnce(testing::Return(issuerAccountRoot.getSerializer().peekData()));
+
+    testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_);
 }
 
 struct TransactionFeedMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {

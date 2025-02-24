@@ -24,6 +24,7 @@
  * This file contains a variety of utility functions used when executing the handlers.
  */
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
@@ -428,9 +429,31 @@ isFrozen(
 );
 
 /**
+ * @brief Whether the account that owns a LPToken is frozen for the assets in the pool
+ *
+ * @param backend The backend to use
+ * @param sequence The sequence
+ * @param account The account
+ * @param asset The first asset in the pool
+ * @param asset2 The second asset in the pool
+ * @param yield The coroutine context
+ * @return true if account is frozen for one of the assets
+ */
+bool
+isLPTokenFrozen(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& account,
+    ripple::Issue const& asset,
+    ripple::Issue const& asset2,
+    boost::asio::yield_context yield
+);
+
+/**
  * @brief Get the account funds
  *
  * @param backend The backend to use
+ * @param amendmentCenter The amendmentCenter to use
  * @param sequence The sequence
  * @param amount The amount
  * @param id The account ID
@@ -440,6 +463,7 @@ isFrozen(
 ripple::STAmount
 accountFunds(
     BackendInterface const& backend,
+    data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t sequence,
     ripple::STAmount const& amount,
     ripple::AccountID const& id,
@@ -450,6 +474,7 @@ accountFunds(
  * @brief Get the amount that an account holds
  *
  * @param backend The backend to use
+ * @param amendmentCenter The amendmentCenter to use
  * @param sequence The sequence
  * @param account The account
  * @param currency The currency
@@ -461,11 +486,35 @@ accountFunds(
 ripple::STAmount
 accountHolds(
     BackendInterface const& backend,
+    data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t sequence,
     ripple::AccountID const& account,
     ripple::Currency const& currency,
     ripple::AccountID const& issuer,
     bool zeroIfFrozen,
+    boost::asio::yield_context yield
+);
+
+/**
+ * @brief Get the amount that an LPToken owner holds
+ *
+ * @param backend The backend to use
+ * @param sequence The sequence
+ * @param account The account
+ * @param currency The currency
+ * @param issuer The issuer
+ * @param zeroIfFrozen Whether to return zero if frozen
+ * @param yield The coroutine context
+ * @return The amount account holds
+ */
+ripple::STAmount
+ammAccountHolds(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& account,
+    ripple::Currency const& currency,
+    ripple::AccountID const& issuer,
+    bool const zeroIfFrozen,
     boost::asio::yield_context yield
 );
 
@@ -510,6 +559,7 @@ xrpLiquid(
  * @param book The book
  * @param takerID The taker ID
  * @param backend The backend to use
+ * @param amendmentCenter The amendmentCenter to use
  * @param ledgerSequence The ledger sequence
  * @param yield The coroutine context
  * @return The post processed order book
@@ -520,6 +570,7 @@ postProcessOrderBook(
     ripple::Book const& book,
     ripple::AccountID const& takerID,
     data::BackendInterface const& backend,
+    data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t ledgerSequence,
     boost::asio::yield_context yield
 );

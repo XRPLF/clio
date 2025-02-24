@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "data/AmendmentCenter.hpp"
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -24,6 +25,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/BookOffers.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
+#include "util/MockAmendmentCenter.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
@@ -86,6 +88,9 @@ struct RPCBookOffersHandlerTest : HandlerBaseTest {
     {
         backend_->setRange(10, 300);
     }
+
+protected:
+    StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr_;
 };
 
 struct RPCBookOffersParameterTest : RPCBookOffersHandlerTest, WithParamInterface<ParameterTestBundle> {};
@@ -93,7 +98,7 @@ struct RPCBookOffersParameterTest : RPCBookOffersHandlerTest, WithParamInterface
 TEST_P(RPCBookOffersParameterTest, CheckError)
 {
     auto bundle = GetParam();
-    auto const handler = AnyHandler{BookOffersHandler{backend_}};
+    auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(json::parse(bundle.testJson), Context{.yield = yield});
         ASSERT_FALSE(output);
@@ -511,6 +516,7 @@ struct BookOffersNormalTestBundle {
     uint32_t ledgerObjectCalls;
     std::vector<ripple::STObject> mockedOffers;
     std::string expectedJson;
+    uint32_t amendmentIsEnabledCalls = 0;
 };
 
 struct RPCBookOffersNormalPathTest : public RPCBookOffersHandlerTest,
@@ -525,6 +531,11 @@ TEST_P(RPCBookOffersNormalPathTest, CheckOutput)
     // return valid ledgerHeader
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, seq);
     ON_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
+
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::fixFrozenLPTokenTransfer, _))
+        .Times(bundle.amendmentIsEnabledCalls);
+    ON_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::fixFrozenLPTokenTransfer, _))
+        .WillByDefault(Return(false));
 
     // return valid book dir
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(bundle.mockedSuccessors.size());
@@ -548,7 +559,7 @@ TEST_P(RPCBookOffersNormalPathTest, CheckOutput)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const handler = AnyHandler{BookOffersHandler{backend_}};
+    auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(json::parse(bundle.inputJson), Context{.yield = yield});
         ASSERT_TRUE(output);
@@ -963,7 +974,8 @@ generateNormalPathBookOffersTestBundles()
                 kPAYS20_XRP_GETS10_USD_BOOK_DIR,
                 8,
                 2
-            )
+            ),
+            .amendmentIsEnabledCalls = 1,
         },
         BookOffersNormalTestBundle{
             .testName = "PaysXRPGetsUSDWithMultipleOffers",
@@ -1059,7 +1071,8 @@ generateNormalPathBookOffersTestBundles()
                 kACCOUNT2,
                 kPAYS20_XRP_GETS10_USD_BOOK_DIR,
                 2
-            )
+            ),
+            .amendmentIsEnabledCalls = 1,
         },
         BookOffersNormalTestBundle{
             .testName = "PaysXRPGetsUSDSellingOwnCurrency",
@@ -1216,7 +1229,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
         }})",
         kACCOUNT
     ));
-    auto const handler = AnyHandler{BookOffersHandler{backend_}};
+    auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(kINPUT, Context{.yield = yield});
         ASSERT_FALSE(output);
@@ -1247,7 +1260,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
         }})",
         kACCOUNT
     ));
-    auto const handler = AnyHandler{BookOffersHandler{backend_}};
+    auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(kINPUT, Context{.yield = yield});
         ASSERT_FALSE(output);
@@ -1280,7 +1293,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
         kLEDGER_HASH,
         kACCOUNT
     ));
-    auto const handler = AnyHandler{BookOffersHandler{backend_}};
+    auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(kINPUT, Context{.yield = yield});
         ASSERT_FALSE(output);
@@ -1355,7 +1368,7 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
         }})",
         kACCOUNT
     ));
-    auto const handler = AnyHandler{BookOffersHandler{backend_}};
+    auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(kINPUT, Context{.yield = yield});
         ASSERT_TRUE(output);
@@ -1429,7 +1442,7 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
         kACCOUNT,
         BookOffersHandler::kLIMIT_MAX + 1
     ));
-    auto const handler = AnyHandler{BookOffersHandler{backend_}};
+    auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(kINPUT, Context{.yield = yield});
         ASSERT_TRUE(output);

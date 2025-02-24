@@ -38,6 +38,7 @@ namespace rpc {
 std::pair<ripple::STAmount, ripple::STAmount>
 getAmmPoolHolds(
     BackendInterface const& backend,
+    data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t sequence,
     ripple::AccountID const& ammAccountID,
     ripple::Issue const& issue1,
@@ -46,10 +47,12 @@ getAmmPoolHolds(
     boost::asio::yield_context yield
 )
 {
-    auto const assetInBalance =
-        accountHolds(backend, sequence, ammAccountID, issue1.currency, issue1.account, freezeHandling, yield);
-    auto const assetOutBalance =
-        accountHolds(backend, sequence, ammAccountID, issue2.currency, issue2.account, freezeHandling, yield);
+    auto const assetInBalance = accountHolds(
+        backend, amendmentCenter, sequence, ammAccountID, issue1.currency, issue1.account, freezeHandling, yield
+    );
+    auto const assetOutBalance = accountHolds(
+        backend, amendmentCenter, sequence, ammAccountID, issue2.currency, issue2.account, freezeHandling, yield
+    );
     return std::make_pair(assetInBalance, assetOutBalance);
 }
 
@@ -65,7 +68,9 @@ getAmmLpHolds(
 )
 {
     auto const lptCurrency = ammLPTCurrency(cur1, cur2);
-    return accountHolds(backend, sequence, lpAccount, lptCurrency, ammAccount, true, yield);
+
+    // not using accountHolds because we don't need to check if the associated tokens of the LP are frozen
+    return ammAccountHolds(backend, sequence, lpAccount, lptCurrency, ammAccount, true, yield);
 }
 
 ripple::STAmount

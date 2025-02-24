@@ -19,12 +19,15 @@
 
 #include "rpc/RPCHelpers.hpp"
 
+#include "data/AmendmentCenter.hpp"
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
+#include "util/Assert.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
@@ -943,6 +946,20 @@ isFrozen(
     return false;
 }
 
+bool
+isLPTokenFrozen(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& account,
+    ripple::Issue const& asset,
+    ripple::Issue const& asset2,
+    boost::asio::yield_context yield
+)
+{
+    return isFrozen(backend, sequence, account, asset.currency, asset.account, yield) ||
+        isFrozen(backend, sequence, account, asset2.currency, asset2.account, yield);
+}
+
 ripple::XRPAmount
 xrpLiquid(
     BackendInterface const& backend,
@@ -981,6 +998,7 @@ xrpLiquid(
 ripple::STAmount
 accountFunds(
     BackendInterface const& backend,
+    data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t const sequence,
     ripple::STAmount const& amount,
     ripple::AccountID const& id,
@@ -991,11 +1009,11 @@ accountFunds(
         return amount;
     }
 
-    return accountHolds(backend, sequence, id, amount.getCurrency(), amount.getIssuer(), true, yield);
+    return accountHolds(backend, amendmentCenter, sequence, id, amount.getCurrency(), amount.getIssuer(), true, yield);
 }
 
 ripple::STAmount
-accountHolds(
+ammAccountHolds(
     BackendInterface const& backend,
     std::uint32_t sequence,
     ripple::AccountID const& account,
@@ -1006,6 +1024,7 @@ accountHolds(
 )
 {
     ripple::STAmount amount;
+    ASSERT(!ripple::isXRP(currency), "LPToken currency can never be XRP");
     if (ripple::isXRP(currency))
         return {xrpLiquid(backend, sequence, account, yield)};
 
@@ -1031,6 +1050,91 @@ accountHolds(
             amount.negate();
         }
         amount.setIssuer(issuer);
+    }
+
+    return amount;
+}
+
+ripple::STAmount
+accountHolds(
+    BackendInterface const& backend,
+    data::AmendmentCenterInterface const& amendmentCenter,
+    std::uint32_t sequence,
+    ripple::AccountID const& account,
+    ripple::Currency const& currency,
+    ripple::AccountID const& issuer,
+    bool const zeroIfFrozen,
+    boost::asio::yield_context yield
+)
+{
+    ripple::STAmount amount;
+    if (ripple::isXRP(currency))
+        return {xrpLiquid(backend, sequence, account, yield)};
+
+    auto const key = ripple::keylet::line(account, issuer, currency).key;
+    auto const blob = backend.fetchLedgerObject(key, sequence, yield);
+
+    if (!blob) {
+        amount.setIssue(ripple::Issue(currency, issuer));
+        amount.clear();
+        return amount;
+    }
+
+    auto const allowBalance = [&]() {
+        if (!zeroIfFrozen)
+            return true;
+
+        if (isFrozen(backend, sequence, account, currency, issuer, yield))
+            return false;
+
+        if (amendmentCenter.isEnabled(yield, data::Amendments::fixFrozenLPTokenTransfer, sequence)) {
+            auto const issuerBlob = backend.fetchLedgerObject(ripple::keylet::account(issuer).key, sequence, yield);
+
+            if (!issuerBlob)
+                return false;
+
+            ripple::SLE const issuerSle{
+                ripple::SerialIter{issuerBlob->data(), issuerBlob->size()}, ripple::keylet::account(issuer).key
+            };
+
+            // if the issuer is an amm account, then currency is lptoken, so we will need to check if the
+            // assets in the pool are frozen as well
+            if (issuerSle.isFieldPresent(ripple::sfAMMID)) {
+                auto const ammKeylet = ripple::keylet::amm(issuerSle[ripple::sfAMMID]);
+                auto const ammBlob = backend.fetchLedgerObject(ammKeylet.key, sequence, yield);
+
+                if (!ammBlob)
+                    return false;
+
+                ripple::SLE const ammSle{ripple::SerialIter{ammBlob->data(), ammBlob->size()}, ammKeylet.key};
+
+                return !isLPTokenFrozen(
+                    backend,
+                    sequence,
+                    account,
+                    ammSle[ripple::sfAsset].get<ripple::Issue>(),
+                    ammSle[ripple::sfAsset2].get<ripple::Issue>(),
+                    yield
+                );
+            }
+        }
+
+        return true;
+    }();
+
+    if (allowBalance) {
+        ripple::SerialIter it{blob->data(), blob->size()};
+        ripple::SLE const sle{it, key};
+
+        amount = sle.getFieldAmount(ripple::sfBalance);
+        if (account > issuer) {
+            // Put balance in account terms.
+            amount.negate();
+        }
+        amount.setIssuer(issuer);
+    } else {
+        amount.setIssue(ripple::Issue(currency, issuer));
+        amount.clear();
     }
 
     return amount;
@@ -1064,6 +1168,7 @@ postProcessOrderBook(
     ripple::Book const& book,
     ripple::AccountID const& takerID,
     data::BackendInterface const& backend,
+    data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t const ledgerSequence,
     boost::asio::yield_context yield
 )
@@ -1106,7 +1211,14 @@ postProcessOrderBook(
                     firstOwnerOffer = false;
                 } else {
                     saOwnerFunds = accountHolds(
-                        backend, ledgerSequence, uOfferOwnerID, book.out.currency, book.out.account, true, yield
+                        backend,
+                        amendmentCenter,
+                        ledgerSequence,
+                        uOfferOwnerID,
+                        book.out.currency,
+                        book.out.account,
+                        true,
+                        yield
                     );
 
                     if (saOwnerFunds < beast::zero)

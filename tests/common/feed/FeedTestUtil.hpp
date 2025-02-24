@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/MockAmendmentCenter.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
@@ -43,9 +44,10 @@ protected:
     web::SubscriptionContextPtr sessionPtr = std::make_shared<MockSession>();
     std::shared_ptr<TestedFeed> testFeedPtr = std::make_shared<TestedFeed>(ctx_);
     MockSession* mockSessionPtr = dynamic_cast<MockSession*>(sessionPtr.get());
+    StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr_;
 };
 
-namespace impl {
+namespace feed::impl {
 class SharedStringJsonEqMatcher {
     std::string expected_;
 
@@ -74,12 +76,12 @@ public:
         *os << "Expecting json " << expected_;
     }
 };
-}  // namespace impl
+}  // namespace feed::impl
 
 // NOLINTEND(readability-identifier-naming)
 
 inline ::testing::Matcher<std::shared_ptr<std::string>>
 sharedStringJsonEq(std::string const& expected)
 {
-    return impl::SharedStringJsonEqMatcher(expected);
+    return feed::impl::SharedStringJsonEqMatcher(expected);
 }

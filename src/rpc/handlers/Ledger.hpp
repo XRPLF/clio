@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Checkers.hpp"
@@ -45,6 +46,7 @@ namespace rpc {
  */
 class LedgerHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
+    std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 
 public:
     /**
@@ -89,8 +91,13 @@ public:
      * @brief Construct a new LedgerHandler object
      *
      * @param sharedPtrBackend The backend to use
+     * @param amendmentCenter The amendmentCenter to use
      */
-    LedgerHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
+    LedgerHandler(
+        std::shared_ptr<BackendInterface> const& sharedPtrBackend,
+        std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter
+    )
+        : sharedPtrBackend_(sharedPtrBackend), amendmentCenter_(amendmentCenter)
     {
     }
 
