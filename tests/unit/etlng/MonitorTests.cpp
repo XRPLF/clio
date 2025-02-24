@@ -53,7 +53,7 @@ protected:
 TEST_F(MonitorTests, ConsumesAndNotifiesForAllOutstandingSequencesAtOnce)
 {
     uint8_t count = 3;
-    LedgerRange range(kSTART_SEQ, kSTART_SEQ + count - 1);
+    LedgerRange const range(kSTART_SEQ, kSTART_SEQ + count - 1);
 
     std::binary_semaphore unblock(0);
 
@@ -94,7 +94,7 @@ TEST_F(MonitorTests, NotifiesForEachSequence)
 
 TEST_F(MonitorTests, NotifiesWhenForcedByNewSequenceAvailableFromNetwork)
 {
-    LedgerRange range(kSTART_SEQ, kSTART_SEQ);
+    LedgerRange const range(kSTART_SEQ, kSTART_SEQ);
     std::binary_semaphore unblock(0);
     std::function<void(uint32_t)> pusher;
 
