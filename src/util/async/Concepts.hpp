@@ -76,6 +76,14 @@ concept SomeOperationWithData = SomeOperation<T> and requires(T v) {
 };
 
 /**
+ * @brief Specifies the interface for an operation that can force-invoked
+ */
+template <typename T>
+concept SomeForceInvocableOperation = SomeOperation<T> and requires(T v) {
+    { v.invoke() };
+};
+
+/**
  * @brief Specifies the interface for an operation that can be stopped
  */
 template <typename T>

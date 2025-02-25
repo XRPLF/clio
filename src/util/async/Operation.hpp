@@ -32,6 +32,7 @@
 #include <concepts>
 #include <condition_variable>
 #include <expected>
+#include <functional>
 #include <future>
 #include <memory>
 #include <mutex>
@@ -227,6 +228,7 @@ using ScheduledOperation = impl::BasicScheduledOperation<CtxType, OpType>;
 template <typename CtxType>
 class RepeatingOperation : public util::MoveTracker {
     util::Repeat repeat_;
+    std::function<void()> action_;
 
 public:
     /**
@@ -237,10 +239,11 @@ public:
      * @param interval Time to wait before repeating the user-provided block of code
      * @param fn The function to execute repeatedly
      */
-    RepeatingOperation(auto& executor, std::chrono::steady_clock::duration interval, std::invocable auto&& fn)
-        : repeat_(executor)
+    template <std::invocable FnType>
+    RepeatingOperation(auto& executor, std::chrono::steady_clock::duration interval, FnType&& fn)
+        : repeat_(executor), action_([fn = std::forward<FnType>(fn), &executor] { boost::asio::post(executor, fn); })
     {
-        repeat_.start(interval, std::forward<decltype(fn)>(fn));
+        repeat_.start(interval, action_);
     }
 
     ~RepeatingOperation() override
@@ -265,6 +268,18 @@ public:
     abort() noexcept
     {
         repeat_.stop();
+    }
+
+    /**
+     * @brief Force-invoke the operation
+     * @note The action is scheduled on the underlying context/strand
+     * @warning The code of the user-provided action is expected to take care of thread-safety unless this operation is
+     * scheduled through a strand
+     */
+    void
+    invoke()
+    {
+        action_();
     }
 };
 

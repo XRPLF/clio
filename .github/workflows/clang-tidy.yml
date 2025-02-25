@@ -1,7 +1,7 @@
 name: Clang-tidy check
 on:
   schedule:
-    - cron: "0 6 * * 1-5"
+    - cron: "0 9 * * 1-5"
   workflow_dispatch:
   pull_request:
     branches: [develop]
@@ -12,7 +12,7 @@ on:
 
 jobs:
   clang_tidy:
-    runs-on: [self-hosted, Linux]
+    runs-on: heavy
     container:
       image: rippleci/clio_ci:latest
     permissions:

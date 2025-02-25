@@ -41,6 +41,9 @@ struct MockStrand {
     template <typename T>
     using StoppableOperation = MockStoppableOperation<T>;
 
+    template <typename T>
+    using RepeatingOperation = MockRepeatingOperation<T>;
+
     MOCK_METHOD(Operation<std::any> const&, execute, (std::function<std::any()>), (const));
     MOCK_METHOD(
         Operation<std::any> const&,
@@ -58,6 +61,12 @@ struct MockStrand {
         StoppableOperation<std::any> const&,
         execute,
         (std::function<std::any(util::async::AnyStopToken)>, std::optional<std::chrono::milliseconds>),
+        (const)
+    );
+    MOCK_METHOD(
+        RepeatingOperation<std::any> const&,
+        executeRepeatedly,
+        (std::chrono::milliseconds, std::function<std::any()>),
         (const)
     );
 };

@@ -19,6 +19,7 @@
 
 #include "rpc/handlers/Subscribe.hpp"
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
@@ -55,9 +56,10 @@ namespace rpc {
 
 SubscribeHandler::SubscribeHandler(
     std::shared_ptr<BackendInterface> const& sharedPtrBackend,
+    std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
     std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions
 )
-    : sharedPtrBackend_(sharedPtrBackend), subscriptions_(subscriptions)
+    : sharedPtrBackend_(sharedPtrBackend), amendmentCenter_(amendmentCenter), subscriptions_(subscriptions)
 {
 }
 
@@ -216,8 +218,9 @@ SubscribeHandler::subscribeToBooks(
                 // https://github.com/XRPLF/xrpl-dev-portal/issues/1818
                 auto const takerID = internalBook.taker ? accountFromStringStrict(*(internalBook.taker)) : beast::zero;
 
-                auto const orderBook =
-                    postProcessOrderBook(offers, book, *takerID, *sharedPtrBackend_, rng->maxSequence, yield);
+                auto const orderBook = postProcessOrderBook(
+                    offers, book, *takerID, *sharedPtrBackend_, *amendmentCenter_, rng->maxSequence, yield
+                );
                 std::copy(orderBook.begin(), orderBook.end(), std::back_inserter(snapshots));
             };
 

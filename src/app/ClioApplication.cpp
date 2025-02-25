@@ -106,6 +106,8 @@ ClioApplication::run(bool const useNgWebServer)
     // Interface to the database
     auto backend = data::makeBackend(config_);
 
+    auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
+
     {
         auto const migrationInspector = migration::makeMigrationInspector(config_, backend);
         // Check if any migration is blocking Clio server starting.
@@ -117,7 +119,7 @@ ClioApplication::run(bool const useNgWebServer)
     }
 
     // Manages clients subscribed to streams
-    auto subscriptions = feed::SubscriptionManager::makeSubscriptionManager(config_, backend);
+    auto subscriptions = feed::SubscriptionManager::makeSubscriptionManager(config_, backend, amendmentCenter);
 
     // Tracks which ledgers have been validated by the network
     auto ledgers = etl::NetworkValidatedLedgers::makeValidatedLedgers();
@@ -133,7 +135,7 @@ ClioApplication::run(bool const useNgWebServer)
 
     auto workQueue = rpc::WorkQueue::makeWorkQueue(config_);
     auto counters = rpc::Counters::makeCounters(workQueue);
-    auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
+
     auto const handlerProvider = std::make_shared<rpc::impl::ProductionHandlerProvider const>(
         config_, backend, subscriptions, balancer, etl, amendmentCenter, counters
     );

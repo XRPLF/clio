@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/async/Concepts.hpp"
 #include "util/async/Error.hpp"
 #include "util/async/impl/ErasedOperation.hpp"
 
@@ -105,6 +104,18 @@ public:
         } catch (std::bad_any_cast const& e) {
             return std::unexpected{ExecutionError(fmt::format("{}", std::this_thread::get_id()), "Bad any cast")};
         }
+    }
+
+    /**
+     * @brief Force-invoke the operation
+     * @note The action is scheduled on the underlying context/strand
+     * @warning The code of the user-provided action is expected to take care of thread-safety unless this operation is
+     * scheduled through a strand
+     */
+    void
+    invoke()
+    {
+        operation_.invoke();
     }
 
 private:

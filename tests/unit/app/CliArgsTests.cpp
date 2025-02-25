@@ -18,12 +18,19 @@
 //==============================================================================
 
 #include "app/CliArgs.hpp"
+#include "util/TmpFile.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigDescription.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <array>
 #include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <string>
 #include <string_view>
 
 using namespace app;
@@ -144,4 +151,72 @@ TEST_F(CliArgsTests, Parse_VerifyConfig)
         ),
         returnCode
     );
+}
+
+TEST_F(CliArgsTests, Parse_ConfigDescriptionInvalidPath)
+{
+    using namespace util::config;
+    std::array argv{"clio_server", "--config-description", ""};
+    auto const action = CliArgs::parse(argv.size(), argv.data());
+    EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) { return exit.exitCode; });
+
+    EXPECT_EQ(
+        action.apply(
+            onRunMock.AsStdFunction(),
+            onExitMock.AsStdFunction(),
+            onMigrateMock.AsStdFunction(),
+            onVerifyMock.AsStdFunction()
+        ),
+        EXIT_FAILURE
+    );
+}
+
+struct CliArgsTestsWithTmpFile : CliArgsTests {
+    TmpFile tmpFile = TmpFile::empty();
+};
+
+TEST_F(CliArgsTestsWithTmpFile, Parse_ConfigDescription)
+{
+    std::array argv{"clio_server", "--config-description", tmpFile.path.c_str()};
+    auto const action = CliArgs::parse(argv.size(), argv.data());
+    EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) { return exit.exitCode; });
+
+    // user provide config markdown file name as well
+    ASSERT_TRUE(std::filesystem::exists(tmpFile.path));
+
+    EXPECT_EQ(
+        action.apply(
+            onRunMock.AsStdFunction(),
+            onExitMock.AsStdFunction(),
+            onMigrateMock.AsStdFunction(),
+            onVerifyMock.AsStdFunction()
+        ),
+        EXIT_SUCCESS
+    );
+}
+
+TEST_F(CliArgsTestsWithTmpFile, Parse_ConfigDescriptionFileContent)
+{
+    using namespace util::config;
+
+    std::ofstream file(tmpFile.path);
+    ASSERT_TRUE(file.is_open());
+    ClioConfigDescription::writeConfigDescriptionToFile(file);
+    file.close();
+
+    std::ifstream inFile(tmpFile.path);
+    ASSERT_TRUE(inFile.is_open());
+
+    std::stringstream buffer;
+    buffer << inFile.rdbuf();
+    inFile.close();
+
+    auto const fileContent = buffer.str();
+    EXPECT_TRUE(fileContent.find("# Clio Config Description") != std::string::npos);
+    EXPECT_TRUE(fileContent.find("This file lists all Clio Configuration definitions in detail.") != std::string::npos);
+    EXPECT_TRUE(fileContent.find("## Configuration Details") != std::string::npos);
+
+    // all keys that exist in clio config should be listed in config description file
+    for (auto const& key : gClioConfig)
+        EXPECT_TRUE(fileContent.find(key.first));
 }

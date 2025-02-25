@@ -1,5 +1,9 @@
 # Example of clio monitoring infrastructure
 
+> [!WARNING]
+> This is only an example of Grafana dashboard for Clio. It was created for demonstration purposes only and may contain errors.
+> Clio team would not recommend to relate on data from this dashboard or use it for monitoring your Clio instances.
+
 This directory contains an example of docker based infrastructure to collect and visualise metrics from clio.
 
 The structure of the directory:

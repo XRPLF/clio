@@ -42,6 +42,8 @@ target_sources(
           etlng/SchedulingTests.cpp
           etlng/TaskManagerTests.cpp
           etlng/LoadingTests.cpp
+          etlng/NetworkValidatedLedgersTests.cpp
+          etlng/MonitorTests.cpp
           # Feed
           util/BytesConverterTests.cpp
           feed/BookChangesFeedTests.cpp
@@ -183,8 +185,7 @@ target_sources(
           util/newconfig/ClioConfigDefinitionTests.cpp
           util/newconfig/ConfigValueTests.cpp
           util/newconfig/ObjectViewTests.cpp
-          util/newconfig/JsonConfigFileTests.cpp
-          util/newconfig/JsonFileTests.cpp
+          util/newconfig/ConfigFileJsonTests.cpp
           util/newconfig/ValueViewTests.cpp
 )
 

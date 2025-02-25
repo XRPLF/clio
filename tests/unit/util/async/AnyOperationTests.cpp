@@ -128,7 +128,18 @@ TEST_F(AnyOperationTests, RepeatingOpRequestStopCallPropagated)
     repeatingOp.abort();
 }
 
+TEST_F(AnyOperationTests, RepeatingOpInvokeCallPropagated)
+{
+    EXPECT_CALL(mockRepeatingOp, invoke());
+    repeatingOp.invoke();
+}
+
 TEST_F(AnyOperationDeathTest, CallAbortOnNonStoppableOrCancellableOperation)
 {
     EXPECT_DEATH(voidOp.abort(), ".*");
+}
+
+TEST_F(AnyOperationDeathTest, CallInvokeOnNonForceInvocableOperation)
+{
+    EXPECT_DEATH(voidOp.invoke(), ".*");
 }
