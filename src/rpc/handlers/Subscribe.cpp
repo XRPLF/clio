@@ -19,6 +19,7 @@
 
 #include "rpc/handlers/Subscribe.hpp"
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
