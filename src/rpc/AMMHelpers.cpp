@@ -19,6 +19,7 @@
 
 #include "rpc/AMMHelpers.hpp"
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "rpc/RPCHelpers.hpp"
 

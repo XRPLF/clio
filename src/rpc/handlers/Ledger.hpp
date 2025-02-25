@@ -36,6 +36,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 
 namespace rpc {
 
@@ -97,7 +98,7 @@ public:
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
         std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter
     )
-        : sharedPtrBackend_(sharedPtrBackend), amendmentCenter_(amendmentCenter)
+        : sharedPtrBackend_(sharedPtrBackend), amendmentCenter_(std::move(amendmentCenter))
     {
     }
 
