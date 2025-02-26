@@ -30,19 +30,19 @@ func Fire(ammoProvider *ammo_provider.AmmoProvider, args *parse_args.CliArgs) {
 			doShot := func() {
 				defer wg.Done()
 				bullet := ammoProvider.GetBullet()
-                if args.Ws {
-                    wsClient, err := request_maker.NewWebSocketClient(args.Host, args.Port)
-                    if err != nil {
-                        statistics.add(nil, err)
-                        return;
-                    }
-                    responseData, err := wsClient.SendMessage(bullet)
-                    statistics.add(responseData, err)
-                } else { 
-                    requestMaker := request_maker.NewHttp(args.Host, args.Port)
-                    responseData, err := requestMaker.MakeRequest(bullet)
-                    statistics.add(responseData, err)
-                }
+				if args.Ws {
+					wsClient, err := request_maker.NewWebSocketClient(args.Host, args.Port)
+					if err != nil {
+						statistics.add(nil, err)
+						return
+					}
+					responseData, err := wsClient.SendMessage(bullet)
+					statistics.add(responseData, err)
+				} else {
+					requestMaker := request_maker.NewHttp(args.Host, args.Port)
+					responseData, err := requestMaker.MakeRequest(bullet)
+					statistics.add(responseData, err)
+				}
 			}
 
 			secondStart := time.Now()
@@ -85,9 +85,9 @@ func (s *statistics) add(response *request_maker.ResponseData, err error) {
 	if response.StatusCode != 200 || response.Body["error"] != nil {
 		if s.printErrors {
 			if response.Body["error"] != nil {
-                log.Print("Response contains error: ", response.Body["error"])
+				log.Print("Response contains error: ", response.Body["error"])
 			} else {
-                log.Print("Got bad status: ", response.StatusCode, response.StatusStr)
+				log.Print("Got bad status: ", response.StatusCode, response.StatusStr)
 			}
 		}
 		s.counters.badReply.Add(1)

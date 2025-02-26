@@ -18,16 +18,13 @@
 //==============================================================================
 
 #include "rpc/Errors.hpp"
-#include "rpc/common/APIVersion.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AsioContextTestFixture.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockETLService.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockRPCEngine.hpp"
 #include "util/Taggable.hpp"
-#include "util/newconfig/ConfigConstraints.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"
@@ -36,12 +33,7 @@
 #include "web/ng/RPCServerHandler.hpp"
 #include "web/ng/Request.hpp"
 
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/asio/thread_pool.hpp>
-#include <boost/beast/core/flat_buffer.hpp>
-#include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
@@ -52,14 +44,12 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <chrono>
 #include <cstdint>
 #include <iterator>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <thread>
 #include <unordered_set>
 #include <utility>
 
@@ -460,85 +450,4 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest_HasError)
         ASSERT_EQ(jsonResponse.at("warnings").as_array().size(), 1) << jsonResponse;
         EXPECT_EQ(jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(), rpc::WarnRpcClio);
     });
-}
-
-struct Dbg : NoLoggerFixture {
-    struct FakeRpcEngine {
-        boost::asio::thread_pool ctx{12};
-
-        ~FakeRpcEngine()
-        {
-            ctx.join();
-        }
-
-        template <typename Fn>
-        bool
-        post(Fn&& fn, std::string const&)
-        {
-            boost::asio::spawn(ctx, [fn = std::forward<Fn>(fn)](boost::asio::yield_context yield) mutable {
-                fn(yield);
-            });
-            return true;
-        }
-
-        void
-        notifyBadSyntax()
-        {
-        }
-
-        void
-        notifyTooBusy()
-        {
-        }
-
-        void
-        notifyInternalError()
-        {
-        }
-    };
-
-    ClioConfigDefinition config{
-        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none").withConstraint(gValidateLogTag)},
-        {"api_version.default",
-         ConfigValue{ConfigType::Integer}.defaultValue(rpc::kAPI_VERSION_DEFAULT).withConstraint(gValidateApiVersion)},
-        {"api_version.min",
-         ConfigValue{ConfigType::Integer}.defaultValue(rpc::kAPI_VERSION_MIN).withConstraint(gValidateApiVersion)},
-        {"api_version.max",
-         ConfigValue{ConfigType::Integer}.defaultValue(rpc::kAPI_VERSION_MAX).withConstraint(gValidateApiVersion)},
-    };
-
-    util::TagDecoratorFactory tagFactory{config};
-
-    std::shared_ptr<FakeRpcEngine> rpcEngine = std::make_shared<FakeRpcEngine>();
-
-    RPCServerHandler<FakeRpcEngine, void> handler{config, nullptr, rpcEngine, nullptr};
-
-    Request::HttpHeaders const httpHeaders;
-    Request const request{R"json({"command": "server_info"})json", httpHeaders};
-};
-
-TEST_F(Dbg, my_test)
-{
-    boost::asio::thread_pool ctx{12};
-    auto makeConnection = [&ctx, this]() {
-        boost::asio::ip::tcp::socket socket{ctx};
-        boost::beast::http::request<boost::beast::http::string_body> initialRequest{http::verb::get, "/", 11};
-
-        return web::ng::impl::WsConnection<boost::beast::tcp_stream>{
-            std::move(socket), "127.0.0.1", boost::beast::flat_buffer{}, std::move(initialRequest), tagFactory
-        };
-    };
-
-    for (int i = 0; i < 6; ++i) {
-        boost::asio::spawn(ctx, [&](boost::asio::yield_context) {
-            while (true) {
-                boost::asio::spawn(ctx, [&makeConnection, this](boost::asio::yield_context yield) {
-                    auto connection = makeConnection();
-                    auto const response = handler(request, connection, nullptr, yield);
-                });
-                std::this_thread::sleep_for(std::chrono::milliseconds{1});
-            }
-        });
-    }
-    ctx.join();
 }

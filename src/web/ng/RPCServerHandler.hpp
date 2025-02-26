@@ -29,7 +29,6 @@
 #include "util/CoroutineGroup.hpp"
 #include "util/JsonUtils.hpp"
 #include "util/Profiler.hpp"
-#include "util/Random.hpp"
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
 #include "web/SubscriptionContextInterface.hpp"
@@ -54,6 +53,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <ratio>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -67,9 +67,9 @@ namespace web::ng {
  */
 template <typename RPCEngineType, typename ETLType>
 class RPCServerHandler {
-    // std::shared_ptr<BackendInterface const> const backend_;
+    std::shared_ptr<BackendInterface const> const backend_;
     std::shared_ptr<RPCEngineType> const rpcEngine_;
-    //std::shared_ptr<ETLType const> const etl_;
+    std::shared_ptr<ETLType const> const etl_;
     util::TagDecoratorFactory const tagFactory_;
     rpc::impl::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
 
@@ -87,13 +87,13 @@ public:
      */
     RPCServerHandler(
         util::config::ClioConfigDefinition const& config,
-        std::shared_ptr<BackendInterface const> const& ,//backend,
+        std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<RPCEngineType> const& rpcEngine,
-        std::shared_ptr<ETLType const> const& //etl
+        std::shared_ptr<ETLType const> const& etl
     )
-        : //backend_(backend),
-         rpcEngine_(rpcEngine)
-        //, etl_(etl)
+        : backend_(backend)
+        , rpcEngine_(rpcEngine)
+        , etl_(etl)
         , tagFactory_(config)
         , apiVersionParser_(config.getObject("api_version"))
     {
@@ -135,17 +135,13 @@ public:
                     if (not connectionMetadata.wasUpgraded() and shouldReplaceParams(parsedRequest))
                         parsedRequest[JS(params)] = boost::json::array({boost::json::object{}});
 
-                    auto const waitMs = util::Random::uniform<int>(0, 100);
-                    boost::asio::steady_timer t{innerYield.get_executor(), std::chrono::milliseconds{waitMs}};
-                    t.async_wait(innerYield);
-                    response = web::ng::Response{
-                        boost::beast::http::status::ok,
-                        R"({"result":"ok", "warnings":[{"message":"asdfasdfasdfasdfasdfasdfasdfasdfasdfasdf"}]"})",
-                        request
-                    };
-                    // response = handleRequest(
-                    //     yield, request, std::move(parsedRequest), connectionMetadata, std::move(subscriptionContext)
-                    // );
+                    response = handleRequest(
+                        innerYield,
+                        request,
+                        std::move(parsedRequest),
+                        connectionMetadata,
+                        std::move(subscriptionContext)
+                    );
                 } catch (boost::system::system_error const& ex) {
                     // system_error thrown when json parsing failed
                     rpcEngine_->notifyBadSyntax();
@@ -183,7 +179,6 @@ public:
     }
 
 private:
-    /*
     Response
     handleRequest(
         boost::asio::yield_context yield,
@@ -318,7 +313,6 @@ private:
             return impl::ErrorHelper(rawRequest, std::move(request)).makeInternalError();
         }
     }
-    */
 
     bool
     shouldReplaceParams(boost::json::object const& req) const
