@@ -73,10 +73,11 @@ public:
      * @note A foreign coroutine is still counted as a child one, i.e. calling this method increases the size of the
      * group.
      *
+     * @param yield The yield context owning the coroutine group.
      * @return A callback to call on foreign coroutine completes or std::nullopt if the group is already full.
      */
     std::optional<std::function<void()>>
-    registerForeign();
+    registerForeign(boost::asio::yield_context yield);
 
     /**
      * @brief Wait for all the coroutines in the group to finish

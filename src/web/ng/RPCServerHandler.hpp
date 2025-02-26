@@ -118,7 +118,7 @@ public:
     {
         std::optional<Response> response;
         util::CoroutineGroup coroutineGroup{yield, 1};
-        auto const onTaskComplete = coroutineGroup.registerForeign();
+        auto const onTaskComplete = coroutineGroup.registerForeign(yield);
         ASSERT(onTaskComplete.has_value(), "Coroutine group can't be full");
 
         bool const postSuccessful = rpcEngine_->post(

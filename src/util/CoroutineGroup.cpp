@@ -56,13 +56,15 @@ CoroutineGroup::spawn(boost::asio::yield_context yield, std::function<void(boost
 }
 
 std::optional<std::function<void()>>
-CoroutineGroup::registerForeign()
+CoroutineGroup::registerForeign(boost::asio::yield_context yield)
 {
     if (isFull())
         return std::nullopt;
 
     ++childrenCounter_;
-    return [this]() { onCoroutineCompleted(); };
+    // It is important to spawn onCoroutineCompleted() to the same coroutine as will be calling asyncWait().
+    // timer_ here is not thread safe, so without spawn there could be a data race.
+    return [this, yield]() { boost::asio::spawn(yield, [this](auto&&) { onCoroutineCompleted(); }); };
 }
 
 void
