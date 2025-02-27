@@ -38,20 +38,14 @@ target_sources(
           newconfig/ValueView.cpp
 )
 
-target_link_libraries(
-  clio_util
-  PUBLIC Boost::headers
-         dl
-         fmt::fmt
-         openssl::openssl
-         xrpl::libxrpl
-         Threads::Threads
-         clio_options
-)
-
-if (!san)
-  target_link_libraries(clio_util PUBLIC Boost::stacktrace_backtrace libbacktrace::libbacktrace)
+# This must be above the target_link_libraries call otherwise backtrace doesn't work
+if ("${san}" STREQUAL "")
+  target_link_libraries(clio_util PUBLIC Boost::stacktrace_backtrace dl libbacktrace::libbacktrace)
 endif ()
+
+target_link_libraries(
+  clio_util PUBLIC Boost::headers fmt::fmt openssl::openssl xrpl::libxrpl Threads::Threads clio_options
+)
 
 # FIXME: needed on gcc-12, clang-16 and AppleClang for now (known boost 1.82 issue for some compilers)
 #
