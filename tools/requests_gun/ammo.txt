@@ -1,1 +1,4 @@
-{ "method": "server_definitions", "params": [ {} ] }
+{"command":"server_info","id":72421}
+{"account":"rMHDmxRrBAMUgeAriKXXfRN1ZdBs6aoCNY","ledger_index":"486998","queue":false,"signer_lists":false,"command":"account_info","id":5732}
+{"ledger_index":"current","taker":"rGJRHBNZZ5v6gyoxKjt6GtitdBsWtdD79s","taker_gets":{"currency":"GZX","issuer":"r9gTsUB4hBS13QbAUWwYZPykj3wbauf8GX"},"taker_pays":{"currency":"XRP"},"command":"book_offers","id":85757}
+{"ledger_index":"current","account":"r9gTsUB4hBS13QbAUWwYZPykj3wbauf8GX","command":"account_objects","id":32672}

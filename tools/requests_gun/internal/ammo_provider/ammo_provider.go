@@ -3,6 +3,7 @@ package ammo_provider
 import (
 	"bufio"
 	"io"
+	"strings"
 	"sync/atomic"
 )
 
@@ -12,17 +13,17 @@ type AmmoProvider struct {
 }
 
 func (ap *AmmoProvider) getIndex() uint64 {
-	if ap.currentBullet.Load() >= uint64(len(ap.ammo)) {
-		ap.currentBullet.Store(1)
-		return 0
-	}
-	result := ap.currentBullet.Load()
-	ap.currentBullet.Add(1)
-	return result
+    result := ap.currentBullet.Add(1)
+	return result % uint64(len(ap.ammo))
 }
 
 func (ap *AmmoProvider) GetBullet() string {
-	return ap.ammo[ap.getIndex()]
+    for {
+        res := ap.ammo[ap.getIndex()]
+        if !strings.HasPrefix(res, "#") {
+            return res
+        }
+    }
 }
 
 func New(reader io.Reader) *AmmoProvider {

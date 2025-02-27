@@ -118,7 +118,7 @@ public:
     {
         std::optional<Response> response;
         util::CoroutineGroup coroutineGroup{yield, 1};
-        auto const onTaskComplete = coroutineGroup.registerForeign();
+        auto const onTaskComplete = coroutineGroup.registerForeign(yield);
         ASSERT(onTaskComplete.has_value(), "Coroutine group can't be full");
 
         bool const postSuccessful = rpcEngine_->post(
@@ -127,7 +127,7 @@ public:
              &response,
              &onTaskComplete = onTaskComplete.value(),
              &connectionMetadata,
-             subscriptionContext = std::move(subscriptionContext)](boost::asio::yield_context yield) mutable {
+             subscriptionContext = std::move(subscriptionContext)](boost::asio::yield_context innerYield) mutable {
                 try {
                     auto parsedRequest = boost::json::parse(request.message()).as_object();
                     LOG(perfLog_.debug()) << connectionMetadata.tag() << "Adding to work queue";
@@ -136,7 +136,11 @@ public:
                         parsedRequest[JS(params)] = boost::json::array({boost::json::object{}});
 
                     response = handleRequest(
-                        yield, request, std::move(parsedRequest), connectionMetadata, std::move(subscriptionContext)
+                        innerYield,
+                        request,
+                        std::move(parsedRequest),
+                        connectionMetadata,
+                        std::move(subscriptionContext)
                     );
                 } catch (boost::system::system_error const& ex) {
                     // system_error thrown when json parsing failed
