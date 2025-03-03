@@ -276,7 +276,7 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
       ConfigValue{ConfigType::Integer}
           .defaultValue(
               static_cast<uint32_t>(std::thread::hardware_concurrency()),
-              "The number of threads in your hardware system."
+              "The number of available CPU cores."
           )
           .withConstraint(gValidateUint32)},
      {"database.cassandra.core_connections_per_host",
@@ -317,9 +317,8 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
 
      {"workers",
       ConfigValue{ConfigType::Integer}
-          .defaultValue(std::thread::hardware_concurrency(), "The number of threads in your hardware system.")
+          .defaultValue(std::thread::hardware_concurrency(), "The number of available CPU cores.")
           .withConstraint(gValidateUint32)},
-
      {"server.ip", ConfigValue{ConfigType::String}.withConstraint(gValidateIp)},
      {"server.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort)},
      {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateUint32)},

@@ -215,7 +215,7 @@ public:
     {
         stream << "- **Required**: " << (val.isOptional() ? "False" : "True") << "\n";
         stream << "- **Type**: " << val.type() << "\n";
-        if (val.hasValue() && val.description_.has_value()) {
+        if (val.description_.has_value()) {
             stream << "- **Default value**: " << *val.description_ << "\n";
         } else {
             stream << "- **Default value**: " << (val.hasValue() ? *val.value_ : "None") << "\n";
