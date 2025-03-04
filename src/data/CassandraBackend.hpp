@@ -120,7 +120,9 @@ public:
         LOG(log_.info()) << "Created (revamped) CassandraBackend";
     }
 
-    // Move constructor is deleted because handle_ is shared by reference with executor_
+    /*
+     * @brief Move constructor is deleted because handle_ is shared by reference with executor
+     */
     BasicCassandraBackend(BasicCassandraBackend&&) = delete;
 
     TransactionsAndCursor
