@@ -127,3 +127,44 @@ jobs:
         run: |
           chmod +x ./clio_tests
           ./clio_tests
+
+  check_config:
+    name: Check Config Description
+    needs: build
+    runs-on: heavy
+    container: 
+      image: rippleci/clio_ci:latest
+    steps:
+      - uses: actions/checkout@v4 
+      - uses: actions/download-artifact@v4
+        with:
+          name: clio_server_Linux_Release_gcc
+      - name: Compare Config Description
+        shell: bash
+        run: |
+          repoConfigFile=docs/config-description.md
+          if ! [ -f ${repoConfigFile} ]; then
+            echo "Config Description markdown file is missing in docs folder"
+            exit 1
+          fi
+
+          chmod +x ./clio_server
+          configDescriptionFile=config_description_new.md
+          ./clio_server -d ${configDescriptionFile}
+
+          configDescriptionHash=$(sha256sum ${configDescriptionFile} | cut -d' ' -f1)
+          repoConfigHash=$(sha256sum ${repoConfigFile} | cut -d' ' -f1)
+
+          if [ ${configDescriptionHash} != ${repoConfigHash} ]; then
+            echo "Markdown file is not up to date"
+            diff -u "${repoConfigFile}" "${configDescriptionFile}"
+            rm -f ${configDescriptionFile}
+            exit 1
+          fi
+          rm -f ${configDescriptionFile}
+          exit 0
+                    
+
+
+
+

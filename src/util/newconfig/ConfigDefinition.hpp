@@ -274,7 +274,10 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
       ConfigValue{ConfigType::Integer}.defaultValue(100'000).withConstraint(gValidateUint32)},
      {"database.cassandra.threads",
       ConfigValue{ConfigType::Integer}
-          .defaultValue(static_cast<uint32_t>(std::thread::hardware_concurrency()))
+          .defaultValue(
+              static_cast<uint32_t>(std::thread::hardware_concurrency()),
+              "The number of available CPU cores."
+          )
           .withConstraint(gValidateUint32)},
      {"database.cassandra.core_connections_per_host",
       ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint16)},
@@ -313,9 +316,9 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
       ConfigValue{ConfigType::Double}.defaultValue(1.0).withConstraint(gValidatePositiveDouble)},
 
      {"workers",
-      ConfigValue{ConfigType::Integer}.defaultValue(std::thread::hardware_concurrency()).withConstraint(gValidateUint32)
-     },
-
+      ConfigValue{ConfigType::Integer}
+          .defaultValue(std::thread::hardware_concurrency(), "The number of available CPU cores.")
+          .withConstraint(gValidateUint32)},
      {"server.ip", ConfigValue{ConfigType::String}.withConstraint(gValidateIp)},
      {"server.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort)},
      {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateUint32)},
@@ -345,8 +348,10 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(gValidateUint16)},
      {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(gValidateLoadMode)},
 
-     {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.withConstraint(gValidateChannelName)}},
-     {"log_channels.[].log_level", Array{ConfigValue{ConfigType::String}.withConstraint(gValidateLogLevelName)}},
+     {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateChannelName)}
+     },
+     {"log_channels.[].log_level",
+      Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateLogLevelName)}},
 
      {"log_level", ConfigValue{ConfigType::String}.defaultValue("info").withConstraint(gValidateLogLevelName)},
 

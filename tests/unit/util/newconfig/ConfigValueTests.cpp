@@ -61,6 +61,14 @@ TEST_F(ConfigValueTest, defaultValue)
     EXPECT_EQ(cv.type(), ConfigType::Integer);
 }
 
+TEST_F(ConfigValueTest, defaultValueWithDescription)
+{
+    auto const cv = ConfigValue{ConfigType::String}.defaultValue("123", "random description");
+    EXPECT_TRUE(cv.hasValue());
+    EXPECT_FALSE(cv.isOptional());
+    EXPECT_EQ(cv.type(), ConfigType::String);
+}
+
 TEST_F(ConfigValueDeathTest, invalidDefaultValue)
 {
     EXPECT_DEATH({ [[maybe_unused]] auto const a = ConfigValue{ConfigType::String}.defaultValue(33); }, ".*");
