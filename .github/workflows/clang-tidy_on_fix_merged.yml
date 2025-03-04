@@ -6,7 +6,7 @@ on:
 
 jobs:
   restart_clang_tidy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     permissions:
       actions: write

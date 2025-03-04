@@ -71,7 +71,7 @@ jobs:
     name: Create an issue on failure
     needs: [build, run_tests]
     if: ${{ always() && contains(needs.*.result, 'failure') }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       issues: write
