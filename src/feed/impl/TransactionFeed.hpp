@@ -96,6 +96,11 @@ public:
     }
 
     /**
+     * @brief Move constructor is deleted because TransactionSlot takes TransactionFeed by reference
+     */
+    TransactionFeed(TransactionFeed&&) = delete;
+
+    /**
      * @brief Subscribe to the transaction feed.
      * @param subscriber
      */

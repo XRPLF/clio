@@ -100,6 +100,8 @@ public:
         OnDisconnectHook onDisconnectHook
     );
 
+    ConnectionHandler(ConnectionHandler&&) = delete;
+
     static constexpr std::chrono::milliseconds kCLOSE_CONNECTION_TIMEOUT{500};
 
     void
