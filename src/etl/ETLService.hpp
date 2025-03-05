@@ -139,6 +139,11 @@ public:
     );
 
     /**
+     * @brief Move constructor is deleted because ETL service shares its fields by reference
+     */
+    ETLService(ETLService&&) = delete;
+
+    /**
      * @brief A factory function to spawn new ETLService instances.
      *
      * Creates and runs the ETL service.

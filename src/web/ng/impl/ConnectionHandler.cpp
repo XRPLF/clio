@@ -294,14 +294,13 @@ ConnectionHandler::sequentRequestResponseLoop(
 
     LOG(log_.trace()) << connection.tag() << "Processing sequentially";
     while (true) {
-        auto expectedRequest = connection.receive(yield);
+        auto const expectedRequest = connection.receive(yield);
         if (not expectedRequest)
             return handleError(expectedRequest.error(), connection);
 
         LOG(log_.info()) << connection.tag() << "Received request from ip = " << connection.ip();
 
-        auto maybeReturnValue =
-            processRequest(connection, subscriptionContext, std::move(expectedRequest).value(), yield);
+        auto maybeReturnValue = processRequest(connection, subscriptionContext, expectedRequest.value(), yield);
         if (maybeReturnValue.has_value())
             return maybeReturnValue.value();
     }

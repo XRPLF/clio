@@ -54,7 +54,6 @@
 #include <memory>
 #include <optional>
 #include <ratio>
-#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -118,7 +117,7 @@ public:
     {
         std::optional<Response> response;
         util::CoroutineGroup coroutineGroup{yield, 1};
-        auto const onTaskComplete = coroutineGroup.registerForeign();
+        auto const onTaskComplete = coroutineGroup.registerForeign(yield);
         ASSERT(onTaskComplete.has_value(), "Coroutine group can't be full");
 
         bool const postSuccessful = rpcEngine_->post(
@@ -127,28 +126,34 @@ public:
              &response,
              &onTaskComplete = onTaskComplete.value(),
              &connectionMetadata,
-             subscriptionContext = std::move(subscriptionContext)](boost::asio::yield_context yield) mutable {
+             subscriptionContext = std::move(subscriptionContext)](boost::asio::yield_context innerYield) mutable {
                 try {
-                    auto parsedRequest = boost::json::parse(request.message()).as_object();
-                    LOG(perfLog_.debug()) << connectionMetadata.tag() << "Adding to work queue";
+                    boost::system::error_code ec;
+                    auto parsedRequest = boost::json::parse(request.message(), ec);
+                    if (ec.failed() or not parsedRequest.is_object()) {
+                        rpcEngine_->notifyBadSyntax();
+                        response = impl::ErrorHelper{request}.makeJsonParsingError();
+                        if (ec.failed()) {
+                            LOG(log_.warn())
+                                << "Error parsing JSON: " << ec.message() << ". For request: " << request.message();
+                        } else {
+                            LOG(log_.warn()) << "Received not a JSON object. For request: " << request.message();
+                        }
+                    } else {
+                        auto parsedObject = std::move(parsedRequest).as_object();
+                        LOG(perfLog_.debug()) << connectionMetadata.tag() << "Adding to work queue";
 
-                    if (not connectionMetadata.wasUpgraded() and shouldReplaceParams(parsedRequest))
-                        parsedRequest[JS(params)] = boost::json::array({boost::json::object{}});
+                        if (not connectionMetadata.wasUpgraded() and shouldReplaceParams(parsedObject))
+                            parsedObject[JS(params)] = boost::json::array({boost::json::object{}});
 
-                    response = handleRequest(
-                        yield, request, std::move(parsedRequest), connectionMetadata, std::move(subscriptionContext)
-                    );
-                } catch (boost::system::system_error const& ex) {
-                    // system_error thrown when json parsing failed
-                    rpcEngine_->notifyBadSyntax();
-                    response = impl::ErrorHelper{request}.makeJsonParsingError();
-                    LOG(log_.warn()) << "Error parsing JSON: " << ex.what() << ". For request: " << request.message();
-                } catch (std::invalid_argument const& ex) {
-                    // thrown when json parses something that is not an object at top level
-                    rpcEngine_->notifyBadSyntax();
-                    LOG(log_.warn()) << "Invalid argument error: " << ex.what()
-                                     << ". For request: " << request.message();
-                    response = impl::ErrorHelper{request}.makeJsonParsingError();
+                        response = handleRequest(
+                            innerYield,
+                            request,
+                            std::move(parsedObject),
+                            connectionMetadata,
+                            std::move(subscriptionContext)
+                        );
+                    }
                 } catch (std::exception const& ex) {
                     LOG(perfLog_.error()) << connectionMetadata.tag() << "Caught exception: " << ex.what();
                     rpcEngine_->notifyInternalError();

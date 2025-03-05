@@ -116,9 +116,9 @@ public:
     Server(Server const&) = delete;
 
     /**
-     * @brief Move constructor is defaulted.
+     * @brief Move constructor is deleted because connectionHandler_ contains references to some fields of the Server.
      */
-    Server(Server&&) = default;
+    Server(Server&&) = delete;
 
     /**
      * @brief Set handler for GET requests.

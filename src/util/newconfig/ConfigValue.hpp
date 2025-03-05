@@ -59,13 +59,15 @@ public:
      * @brief Sets the default value for the config
      *
      * @param value The default value
+     * @param description Optional description to use instead of default generated description
      * @return Reference to this ConfigValue
      */
     [[nodiscard]] ConfigValue&
-    defaultValue(Value value)
+    defaultValue(Value value, std::optional<std::string_view> description = std::nullopt)
     {
         auto const err = checkTypeConsistency(type_, value);
         ASSERT(!err.has_value(), "{}", err->error);
+        description_ = description;
         value_ = value;
         return *this;
     }
@@ -213,7 +215,11 @@ public:
     {
         stream << "- **Required**: " << (val.isOptional() ? "False" : "True") << "\n";
         stream << "- **Type**: " << val.type() << "\n";
-        stream << "- **Default value**: " << (val.hasValue() ? *val.value_ : "None") << "\n";
+        if (val.description_.has_value()) {
+            stream << "- **Default value**: " << *val.description_ << "\n";
+        } else {
+            stream << "- **Default value**: " << (val.hasValue() ? *val.value_ : "None") << "\n";
+        }
         stream << "- **Constraints**: ";
 
         if (val.getConstraint().has_value()) {
@@ -255,6 +261,7 @@ private:
     bool optional_{false};
     std::optional<Value> value_;
     std::optional<std::reference_wrapper<Constraint const>> cons_;
+    std::optional<std::string_view> description_;
 };
 
 }  // namespace util::config
