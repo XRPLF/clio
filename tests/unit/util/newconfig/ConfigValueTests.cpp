@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "util/LoggerFixtures.hpp"
+#include "util/MockAssert.hpp"
 #include "util/newconfig/ConfigConstraints.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Error.hpp"
@@ -34,8 +35,7 @@
 
 using namespace util::config;
 
-struct ConfigValueTest : NoLoggerFixture {};
-struct ConfigValueDeathTest : ConfigValueTest {};
+struct ConfigValueTest : common::util::WithMockAssert, NoLoggerFixture {};
 
 TEST_F(ConfigValueTest, construct)
 {
@@ -69,9 +69,9 @@ TEST_F(ConfigValueTest, defaultValueWithDescription)
     EXPECT_EQ(cv.type(), ConfigType::String);
 }
 
-TEST_F(ConfigValueDeathTest, invalidDefaultValue)
+TEST_F(ConfigValueTest, invalidDefaultValue)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto const a = ConfigValue{ConfigType::String}.defaultValue(33); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const a = ConfigValue{ConfigType::String}.defaultValue(33); });
 }
 
 TEST_F(ConfigValueTest, setValueWrongType)
@@ -128,19 +128,13 @@ TEST_F(ConfigValueConstraintTest, defaultValueWithConstraint)
     EXPECT_EQ(cv.getValue(), Value{123});
 }
 
-struct ConfigValueConstraintDeathTest : ConfigValueConstraintTest {};
-
-TEST_F(ConfigValueConstraintDeathTest, defaultValueWithConstraintCheckError)
+TEST_F(ConfigValueConstraintTest, defaultValueWithConstraintCheckError)
 {
-    EXPECT_DEATH(
-        {
-            EXPECT_CALL(constraint, checkTypeImpl).WillOnce(testing::Return(std::nullopt));
-            EXPECT_CALL(constraint, checkValueImpl).WillOnce(testing::Return(Error{"value error"}));
-            [[maybe_unused]] auto const cv =
-                ConfigValue{ConfigType::Integer}.defaultValue(123).withConstraint(constraint);
-        },
-        ".*"
-    );
+    EXPECT_CLIO_ASSERT_FAIL({
+        EXPECT_CALL(constraint, checkTypeImpl).WillOnce(testing::Return(std::nullopt));
+        EXPECT_CALL(constraint, checkValueImpl).WillOnce(testing::Return(Error{"value error"}));
+        [[maybe_unused]] auto const cv = ConfigValue{ConfigType::Integer}.defaultValue(123).withConstraint(constraint);
+    });
 }
 
 // A test for each constraint so it's easy to change in the future

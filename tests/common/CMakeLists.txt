@@ -2,7 +2,8 @@ add_library(clio_testing_common)
 
 target_sources(
   clio_testing_common
-  PRIVATE util/AssignRandomPort.cpp
+  PRIVATE util/MockAssert.cpp
+          util/AssignRandomPort.cpp
           util/CallWithTimeout.cpp
           util/StringUtils.cpp
           util/TestHttpClient.cpp
