@@ -20,6 +20,7 @@
 #include "data/AmendmentCenter.hpp"
 #include "data/Types.hpp"
 #include "util/AsioContextTestFixture.hpp"
+#include "util/MockAssert.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestObject.hpp"
@@ -149,12 +150,12 @@ TEST(AmendmentTest, GenerateAmendmentId)
     );
 }
 
-struct AmendmentCenterDeathTest : AmendmentCenterTest {};
+struct AmendmentCenterAssertTest : common::util::WithMockAssert, AmendmentCenterTest {};
 
-TEST_F(AmendmentCenterDeathTest, GetInvalidAmendmentAsserts)
+TEST_F(AmendmentCenterAssertTest, GetInvalidAmendmentAsserts)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto _ = amendmentCenter.getAmendment("invalidAmendmentKey"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto _ = amendmentCenter["invalidAmendmentKey"]; }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = amendmentCenter.getAmendment("invalidAmendmentKey"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = amendmentCenter["invalidAmendmentKey"]; });
 }
 
 struct AmendmentKeyTest : testing::Test {};

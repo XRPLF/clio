@@ -253,11 +253,11 @@ struct ConstraintTestBundle {
     Constraint const& constraint;
 };
 
-struct ConstraintDeathTest : testing::TestWithParam<ConstraintTestBundle> {};
+struct ConstraintAssertTest : common::util::WithMockAssert, testing::WithParamInterface<ConstraintTestBundle> {};
 
 INSTANTIATE_TEST_SUITE_P(
     EachConstraints,
-    ConstraintDeathTest,
+    ConstraintAssertTest,
     testing::Values(
         ConstraintTestBundle{"logTagConstraint", gValidateLogTag},
         ConstraintTestBundle{"portConstraint", gValidatePort},
@@ -275,43 +275,28 @@ INSTANTIATE_TEST_SUITE_P(
     [](testing::TestParamInfo<ConstraintTestBundle> const& info) { return info.param.name; }
 );
 
-TEST_P(ConstraintDeathTest, TestEachConstraint)
+TEST_P(ConstraintAssertTest, TestEachConstraint)
 {
-    EXPECT_DEATH(
-        {
-            [[maybe_unused]] auto const a =
-                ConfigValue{ConfigType::Boolean}.defaultValue(true).withConstraint(GetParam().constraint);
-        },
-        ".*"
-    );
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto const a =
+            ConfigValue{ConfigType::Boolean}.defaultValue(true).withConstraint(GetParam().constraint);
+    });
 }
 
-TEST(ConstraintDeathTest, SetInvalidValueTypeStringAndBool)
+TEST_F(ConstraintAssertTest, SetInvalidValueTypeStringAndBool)
 {
-    EXPECT_DEATH(
-        {
-            [[maybe_unused]] auto a =
-                ConfigValue{ConfigType::String}.defaultValue(33).withConstraint(gValidateLoadMode);
-        },
-        ".*"
-    );
-    EXPECT_DEATH({ [[maybe_unused]] auto a = ConfigValue{ConfigType::Boolean}.defaultValue(-66); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto a = ConfigValue{ConfigType::String}.defaultValue(33).withConstraint(gValidateLoadMode);
+    });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto a = ConfigValue{ConfigType::Boolean}.defaultValue(-66); });
 }
 
-TEST(ConstraintDeathTest, OutOfBounceIntegerConstraint)
+TEST_F(ConstraintAssertTest, OutOfBounceIntegerConstraint)
 {
-    EXPECT_DEATH(
-        {
-            [[maybe_unused]] auto a =
-                ConfigValue{ConfigType::Integer}.defaultValue(999999).withConstraint(gValidateUint16);
-        },
-        ".*"
-    );
-    EXPECT_DEATH(
-        {
-            [[maybe_unused]] auto a =
-                ConfigValue{ConfigType::Integer}.defaultValue(-66).withConstraint(gValidateUint32);
-        },
-        ".*"
-    );
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto a = ConfigValue{ConfigType::Integer}.defaultValue(999999).withConstraint(gValidateUint16);
+    });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto a = ConfigValue{ConfigType::Integer}.defaultValue(-66).withConstraint(gValidateUint32);
+    });
 }

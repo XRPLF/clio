@@ -27,7 +27,7 @@
 
 namespace common::util {
 
-class WithMockAssert : virtual testing::Test {
+class WithMockAssert : virtual public testing::Test {
 public:
     struct MockAssertException {
         std::string message;
@@ -45,15 +45,15 @@ private:
 
 #define EXPECT_CLIO_ASSERT_FAIL(statement) EXPECT_THROW(statement, MockAssertException)
 
-#define EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(statement, message_regex)         \
-    EXPECT_THROW(                                                              \
-        {                                                                      \
-            try {                                                              \
-                statement                                                      \
-            } catch (MockAssertException const& e) {                           \
-                EXPECT_THAT(e.message, testing::ContainsRegex(message_regex)); \
-                throw;                                                         \
-            }                                                                  \
-        },                                                                     \
-        MockAssertException                                                    \
+#define EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(statement, message_regex)             \
+    EXPECT_THROW(                                                                  \
+        {                                                                          \
+            try {                                                                  \
+                statement                                                          \
+            } catch (common::util::WithMockAssert::MockAssertException const& e) { \
+                EXPECT_THAT(e.message, testing::ContainsRegex(message_regex));     \
+                throw;                                                             \
+            }                                                                      \
+        },                                                                         \
+        common::util::WithMockAssert::MockAssertException                          \
     )

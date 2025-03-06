@@ -19,6 +19,7 @@
 
 #include "data/Types.hpp"
 #include "migration/MigrationInspectorFactory.hpp"
+#include "util/MockAssert.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
@@ -32,18 +33,18 @@
 
 using namespace testing;
 
-struct MigrationInspectorFactoryTests : public util::prometheus::WithPrometheus, public MockBackendTest {
+struct MigrationInspectorFactoryTests : util::prometheus::WithPrometheus,
+                                        common::util::WithMockAssert,
+                                        MockBackendTest {
 protected:
     util::config::ClioConfigDefinition const readerConfig_ = util::config::ClioConfigDefinition{
         {"read_only", util::config::ConfigValue{util::config::ConfigType::Boolean}.defaultValue(true)}
     };
 };
 
-struct MigrationInspectorFactoryTestsDeathTest : public MigrationInspectorFactoryTests {};
-
-TEST_F(MigrationInspectorFactoryTestsDeathTest, NullBackend)
+TEST_F(MigrationInspectorFactoryTests, NullBackend)
 {
-    EXPECT_DEATH(migration::makeMigrationInspector(readerConfig_, nullptr), ".*");
+    EXPECT_CLIO_ASSERT_FAIL(migration::makeMigrationInspector(readerConfig_, nullptr));
 }
 
 TEST_F(MigrationInspectorFactoryTests, NotInitMigrationTableIfReader)

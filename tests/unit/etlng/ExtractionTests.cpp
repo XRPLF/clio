@@ -24,6 +24,7 @@
 #include "etlng/impl/Extraction.hpp"
 #include "util/BinaryTestObject.hpp"
 #include "util/LoggerFixtures.hpp"
+#include "util/MockAssert.hpp"
 #include "util/TestObject.hpp"
 
 #include <gmock/gmock.h>
@@ -359,21 +360,17 @@ TEST_F(ExtractionNgTests, SuccessorsWithNoNeighborsIncluded)
     ASSERT_FALSE(res.has_value());
 }
 
-struct ExtractionDeathTest : NoLoggerFixture {};
+struct ExtractionAssertTest : common::util::WithMockAssert, NoLoggerFixture {};
 
-TEST_F(ExtractionDeathTest, InvalidModTypeAsserts)
+TEST_F(ExtractionAssertTest, InvalidModTypeAsserts)
 {
     using namespace etlng::impl;
 
-    EXPECT_DEATH(
-        {
-            [[maybe_unused]] auto _ = extractModType(
-                PBModType::
-                    RawLedgerObject_ModificationType_RawLedgerObject_ModificationType_INT_MIN_SENTINEL_DO_NOT_USE_
-            );
-        },
-        ".*"
-    );
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto _ = extractModType(
+            PBModType::RawLedgerObject_ModificationType_RawLedgerObject_ModificationType_INT_MIN_SENTINEL_DO_NOT_USE_
+        );
+    });
 }
 
 struct MockFetcher : etl::LedgerFetcherInterface {

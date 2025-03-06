@@ -24,6 +24,7 @@
 #include "etlng/impl/Loading.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "util/BinaryTestObject.hpp"
+#include "util/MockAssert.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockETLServiceTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
@@ -71,7 +72,7 @@ protected:
     Loader loader_{backend_, mockLedgerFetcherPtr_, mockRegistryPtr_, mockAmendmentBlockHandlerPtr_};
 };
 
-struct LoadingDeathTest : LoadingTests {};
+struct LoadingAssertTest : common::util::WithMockAssert, LoadingTests {};
 
 auto
 createTestData()
@@ -146,7 +147,7 @@ TEST_F(LoadingTests, OnInitialLoadGotMoreObjectsWithoutKey)
     loader_.onInitialLoadGotMoreObjects(kSEQ, data.objects, lastKey);
 }
 
-TEST_F(LoadingDeathTest, LoadInitialLedgerHasDataInDB)
+TEST_F(LoadingAssertTest, LoadInitialLedgerHasDataInDB)
 {
     auto const data = createTestData();
     auto const range = LedgerRange{.minSequence = kSEQ - 1, .maxSequence = kSEQ};
@@ -156,5 +157,5 @@ TEST_F(LoadingDeathTest, LoadInitialLedgerHasDataInDB)
     testing::Mock::AllowLeak(&*backend_);
     ON_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillByDefault(testing::Return(range));
 
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = loader_.loadInitialLedger(data); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = loader_.loadInitialLedger(data); });
 }

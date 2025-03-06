@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/MockAssert.hpp"
 #include "util/newconfig/Array.hpp"
 #include "util/newconfig/ConfigConstraints.hpp"
 #include "util/newconfig/ConfigValue.hpp"
@@ -38,9 +39,11 @@ TEST(ArrayTest, prefix)
     EXPECT_EQ(Array::prefix("foo.bar.[].baz"), "foo.bar.[]");
 }
 
-TEST(ArrayDeathTest, prefix)
+struct ArrayAssertTest : common::util::WithMockAssert {};
+
+TEST_F(ArrayAssertTest, prefix)
 {
-    EXPECT_DEATH(Array::prefix("foo.bar"), ".*");
+    EXPECT_CLIO_ASSERT_FAIL(Array::prefix("foo.bar"));
 }
 
 TEST(ArrayTest, addSingleValue)

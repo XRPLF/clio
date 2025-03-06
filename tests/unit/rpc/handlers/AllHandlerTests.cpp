@@ -50,6 +50,7 @@
 #include "util/Assert.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
 #include "util/MockAmendmentCenter.hpp"
+#include "util/MockAssert.hpp"
 #include "util/MockCounters.hpp"
 #include "util/MockCountersFixture.hpp"
 #include "util/MockETLService.hpp"
@@ -113,11 +114,12 @@ using AnyHandlerType = Types<
     TransactionEntryHandler>;
 
 template <typename HandlerType>
-struct AllHandlersDeathTest : HandlerBaseTest,
-                              MockLoadBalancerTest,
-                              MockCountersTest,
-                              testing::WithParamInterface<std::string> {
-    AllHandlersDeathTest() : handler_{initHandler()}
+struct AllHandlersAssertTest : common::util::WithMockAssert,
+                               HandlerBaseTest,
+                               MockLoadBalancerTest,
+                               MockCountersTest,
+                               testing::WithParamInterface<std::string> {
+    AllHandlersAssertTest() : handler_{initHandler()}
     {
         ASSERT(mockAmendmentCenterPtr_.amendmentCenterMock != nullptr, "mockAmendmentCenterPtr is not initialized.");
         ASSERT(
@@ -244,9 +246,9 @@ createInput<SubscribeHandler>()
     return input;
 }
 
-TYPED_TEST_CASE(AllHandlersDeathTest, AnyHandlerType);
+TYPED_TEST_CASE(AllHandlersAssertTest, AnyHandlerType);
 
-TYPED_TEST(AllHandlersDeathTest, NoRangeAvailable)
+TYPED_TEST(AllHandlersAssertTest, NoRangeAvailable)
 {
     // doesn't work without 'this'
     this->runSpawn(
@@ -256,7 +258,7 @@ TYPED_TEST(AllHandlersDeathTest, NoRangeAvailable)
             auto const input = createInput<TypeParam>();
             auto const context = Context{yield, this->session_};
 
-            EXPECT_DEATH(
+            EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
                 { [[maybe_unused]] auto unused = handler.process(input, context); }, "Assertion .* failed at .*"
             );
         },
