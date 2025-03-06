@@ -1195,8 +1195,141 @@ generateNormalPathBookOffersTestBundles()
                 kPAYS20_XRP_GETS10_USD_BOOK_DIR,
                 0,
                 2
+            ),
+        },
+        BookOffersNormalTestBundle{
+            .testName = "PaysXRPGetsUSDIsDeepFrozen",
+            .inputJson = paysXRPGetsUSDInputJson,
+            // prepare offer dir index
+            .mockedSuccessors =
+                std::map<ripple::uint256, std::optional<ripple::uint256>>{
+                    {getsUSDPaysXRPBook, ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}},
+                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, std::optional<ripple::uint256>{}}
+                },
+            .mockedLedgerObjects =
+                std::map<ripple::uint256, ripple::Blob>{
+                    // book dir object
+                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
+                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
+                    // gets issuer account object, is deep frozen so unfunded
+                    {ripple::keylet::account(account).key,
+                     createAccountRootObject(
+                         kACCOUNT, ripple::lsfLowDeepFreeze, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2
+                     )
+                         .getSerializer()
+                         .peekData()},
+                },
+            .ledgerObjectCalls = 4,
+            .mockedOffers = std::vector<ripple::STObject>{gets10USDPays20XRPOffer},
+            .expectedJson = fmt::format(
+                R"({{
+                    "ledger_hash":"{}",
+                    "ledger_index":300,
+                    "offers":
+                    [
+                        {{
+                            "Account":"{}",
+                            "BookDirectory":"{}",
+                            "BookNode":"0",
+                            "Flags":0,
+                            "LedgerEntryType":"Offer",
+                            "OwnerNode":"0",
+                            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
+                            "PreviousTxnLgrSeq":0,
+                            "Sequence":0,
+                            "TakerPays":"20",
+                            "TakerGets":{{
+                                "currency":"USD",
+                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value":"10"
+                            }},
+                            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                            "owner_funds":"{}",
+                            "quality":"{}",
+                            "taker_gets_funded":{{
+                                "currency":"USD",
+                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value":"0"
+                            }},
+                            "taker_pays_funded":"0"
+                        }}
+                    ]
+                }})",
+                kLEDGER_HASH,
+                kACCOUNT2,
+                kPAYS20_XRP_GETS10_USD_BOOK_DIR,
+                0,
+                2
             )
         },
+        BookOffersNormalTestBundle{
+            .testName = "PaysXRPGetsUSDTrustLineFrozenAndIsDeepFrozen",
+            .inputJson = paysXRPGetsUSDInputJson,
+            // prepare offer dir index
+            .mockedSuccessors =
+                std::map<ripple::uint256, std::optional<ripple::uint256>>{
+                    {getsUSDPaysXRPBook, ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}},
+                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, std::optional<ripple::uint256>{}}
+                },
+            .mockedLedgerObjects =
+                std::map<ripple::uint256, ripple::Blob>{
+                    // book dir object
+                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
+                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
+                    // gets issuer account object, is deep frozen so unfunded
+                    {ripple::keylet::account(account).key,
+                     createAccountRootObject(
+                         kACCOUNT, ripple::lsfLowDeepFreeze, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2
+                     )
+                         .getSerializer()
+                         .peekData()},
+                    {ripple::keylet::line(account2, account, ripple::to_currency("USD")).key,
+                     frozenTrustLine.getSerializer().peekData()},
+
+                },
+            .ledgerObjectCalls = 6,
+            .mockedOffers = std::vector<ripple::STObject>{gets10USDPays20XRPOffer},
+            .expectedJson = fmt::format(
+                R"({{
+                    "ledger_hash":"{}",
+                    "ledger_index":300,
+                    "offers":
+                    [
+                        {{
+                            "Account":"{}",
+                            "BookDirectory":"{}",
+                            "BookNode":"0",
+                            "Flags":0,
+                            "LedgerEntryType":"Offer",
+                            "OwnerNode":"0",
+                            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
+                            "PreviousTxnLgrSeq":0,
+                            "Sequence":0,
+                            "TakerPays":"20",
+                            "TakerGets":{{
+                                "currency":"USD",
+                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value":"10"
+                            }},
+                            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                            "owner_funds":"{}",
+                            "quality":"{}",
+                            "taker_gets_funded":{{
+                                "currency":"USD",
+                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value":"0"
+                            }},
+                            "taker_pays_funded":"0"
+                        }}
+                    ]
+                }})",
+                kLEDGER_HASH,
+                kACCOUNT2,
+                kPAYS20_XRP_GETS10_USD_BOOK_DIR,
+                0,
+                2
+            )
+        }
     };
 }
 

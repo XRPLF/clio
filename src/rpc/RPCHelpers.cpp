@@ -903,6 +903,26 @@ isGlobalFrozen(
 }
 
 bool
+fetchAndCheckAnyFlagsExists(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::Keylet const& keylet,
+    std::vector<std::uint32_t> const& flags,
+    boost::asio::yield_context yield
+)
+{
+    auto const blob = backend.fetchLedgerObject(keylet.key, sequence, yield);
+
+    if (!blob)
+        return false;
+
+    ripple::SerialIter it{blob->data(), blob->size()};
+    ripple::SLE const sle{it, keylet.key};
+
+    return std::ranges::any_of(flags, [sle](std::uint32_t flag) { return sle.isFlag(flag); });
+}
+
+bool
 isFrozen(
     BackendInterface const& backend,
     std::uint32_t sequence,
@@ -915,35 +935,43 @@ isFrozen(
     if (ripple::isXRP(currency))
         return false;
 
-    auto key = ripple::keylet::account(issuer).key;
-    auto blob = backend.fetchLedgerObject(key, sequence, yield);
-
-    if (!blob)
-        return false;
-
-    ripple::SerialIter it{blob->data(), blob->size()};
-    ripple::SLE const sle{it, key};
-
-    if (sle.isFlag(ripple::lsfGlobalFreeze))
+    if (fetchAndCheckAnyFlagsExists(
+            backend, sequence, ripple::keylet::account(issuer), {ripple::lsfGlobalFreeze}, yield
+        ))
         return true;
 
-    if (issuer != account) {
-        key = ripple::keylet::line(account, issuer, currency).key;
-        blob = backend.fetchLedgerObject(key, sequence, yield);
+    auto const trustLineKeylet = ripple::keylet::line(account, issuer, currency);
+    return issuer != account &&
+        fetchAndCheckAnyFlagsExists(
+               backend,
+               sequence,
+               trustLineKeylet,
+               {(issuer > account) ? ripple::lsfHighFreeze : ripple::lsfLowFreeze},
+               yield
+        );
+}
 
-        if (!blob)
-            return false;
+bool
+isDeepFrozen(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& account,
+    ripple::Currency const& currency,
+    ripple::AccountID const& issuer,
+    boost::asio::yield_context yield
+)
+{
+    if (ripple::isXRP(currency))
+        return false;
 
-        ripple::SerialIter issuerIt{blob->data(), blob->size()};
-        ripple::SLE const issuerLine{issuerIt, key};
+    if (issuer == account)
+        return false;
 
-        auto frozen = (issuer > account) ? ripple::lsfHighFreeze : ripple::lsfLowFreeze;
+    auto const trustLineKeylet = ripple::keylet::line(account, issuer, currency);
 
-        if (issuerLine.isFlag(frozen))
-            return true;
-    }
-
-    return false;
+    return fetchAndCheckAnyFlagsExists(
+        backend, sequence, trustLineKeylet, {ripple::lsfHighDeepFreeze, ripple::lsfLowDeepFreeze}, yield
+    );
 }
 
 bool
@@ -1040,7 +1068,9 @@ ammAccountHolds(
     ripple::SerialIter it{blob->data(), blob->size()};
     ripple::SLE const sle{it, key};
 
-    if (zeroIfFrozen && isFrozen(backend, sequence, account, currency, issuer, yield)) {
+    if (zeroIfFrozen &&
+        (isFrozen(backend, sequence, account, currency, issuer, yield) ||
+         isDeepFrozen(backend, sequence, account, currency, issuer, yield))) {
         amount.setIssue(ripple::Issue(currency, issuer));
         amount.clear();
     } else {

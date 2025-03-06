@@ -1,10 +1,11 @@
 package util
 
 import (
+	"crypto/rand"
 	"fmt"
 	"log"
 	"math"
-	"math/rand"
+	"math/big"
 
 	"github.com/gocql/gocql"
 )
@@ -22,7 +23,8 @@ type StoredRange struct {
 
 func Shuffle(data []*TokenRange) {
 	for i := 1; i < len(data); i++ {
-		r := rand.Intn(i + 1)
+		rBig, _ := rand.Int(rand.Reader, big.NewInt(int64(i+1)))
+		r := int(rBig.Int64())
 		if i != r {
 			data[r], data[i] = data[i], data[r]
 		}

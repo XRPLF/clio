@@ -429,6 +429,49 @@ isFrozen(
 );
 
 /**
+ * @brief Fetches a ledger object and checks if any of the specified flag is set on the account.
+ *
+ * @param backend The backend to use
+ * @param sequence The sequence
+ * @param keylet The keylet representing the object
+ * @param flags The flags to check on the fetched `SLE`.
+ * @param yield The coroutine context
+ * @return true if any of the flag in flags are set for this account; false otherwise
+ */
+bool
+fetchAndCheckAnyFlagsExists(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::Keylet const& keylet,
+    std::vector<std::uint32_t> const& flags,
+    boost::asio::yield_context yield
+);
+
+/**
+ * @brief Whether the trustline is deep frozen.
+ *
+ * For deep freeze, (unlike regular freeze) we do not care which account has the high/low deep freeze flag.
+ * We only care about if the trustline is deep frozen or not.
+ *
+ * @param backend The backend to use
+ * @param sequence The sequence
+ * @param account The account
+ * @param currency The currency
+ * @param issuer The issuer
+ * @param yield The coroutine context
+ * @return true if the account is deep frozen; false otherwise
+ */
+bool
+isDeepFrozen(
+    BackendInterface const& backend,
+    std::uint32_t sequence,
+    ripple::AccountID const& account,
+    ripple::Currency const& currency,
+    ripple::AccountID const& issuer,
+    boost::asio::yield_context yield
+);
+
+/**
  * @brief Whether the account that owns a LPToken is frozen for the assets in the pool
  *
  * @param backend The backend to use
