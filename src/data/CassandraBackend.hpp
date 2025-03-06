@@ -36,6 +36,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <cassandra.h>
+#include <fmt/core.h>
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
@@ -113,8 +114,14 @@ public:
         try {
             schema_.prepareStatements(handle_);
         } catch (std::runtime_error const& ex) {
-            LOG(log_.error()) << "Failed to prepare the statements: " << ex.what() << "; readOnly: " << readOnly;
-            throw;
+            auto const error = fmt::format(
+                "Failed to prepare the statements: {}; readOnly: {}. ReadOnly should be turned off or another Clio "
+                "node with write access to DB should be started first.",
+                ex.what(),
+                readOnly
+            );
+            LOG(log_.error()) << error;
+            throw std::runtime_error(error);
         }
 
         LOG(log_.info()) << "Created (revamped) CassandraBackend";
