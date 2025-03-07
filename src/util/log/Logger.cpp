@@ -199,6 +199,12 @@ LogService::init(config::ClioConfigDefinition const& config)
     return {};
 }
 
+bool
+LogService::enabled()
+{
+    return boost::log::core::get()->get_logging_enabled();
+}
+
 Logger::Pump
 Logger::trace(SourceLocationType const& loc) const
 {

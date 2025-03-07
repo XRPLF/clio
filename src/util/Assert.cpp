@@ -56,7 +56,7 @@ OnAssert::resetAction()
 void
 OnAssert::defaultAction(std::string_view message)
 {
-    if (boost::log::core::get()->get_logging_enabled()) {
+    if (LogService::enabled()) {
         LOG(LogService::fatal()) << message;
     } else {
         std::cerr << message;
