@@ -49,7 +49,7 @@ private:
     EXPECT_THROW(                                                                  \
         {                                                                          \
             try {                                                                  \
-                statement                                                          \
+                statement;                                                         \
             } catch (common::util::WithMockAssert::MockAssertException const& e) { \
                 EXPECT_THAT(e.message, testing::ContainsRegex(message_regex));     \
                 throw;                                                             \

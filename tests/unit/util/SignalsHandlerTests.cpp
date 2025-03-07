@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "util/LoggerFixtures.hpp"
+#include "util/MockAssert.hpp"
 #include "util/SignalsHandler.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigValue.hpp"
@@ -64,7 +65,9 @@ protected:
     bool testCanBeFinished_{false};
 };
 
-TEST(SignalsHandlerDeathTest, CantCreateTwoSignalsHandlers)
+struct SignalsHandlerAssertTest : common::util::WithMockAssert {};
+
+TEST_F(SignalsHandlerAssertTest, CantCreateTwoSignalsHandlers)
 {
     auto makeHandler = []() {
         return SignalsHandler{
@@ -72,7 +75,7 @@ TEST(SignalsHandlerDeathTest, CantCreateTwoSignalsHandlers)
         };
     };
     auto const handler = makeHandler();
-    EXPECT_DEATH({ makeHandler(); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ makeHandler(); });
 }
 
 struct SignalsHandlerTests : SignalsHandlerTestsBase {

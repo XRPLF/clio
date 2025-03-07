@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/MockAssert.hpp"
 #include "util/newconfig/ConfigConstraints.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigValue.hpp"
@@ -32,7 +33,7 @@
 
 using namespace util::config;
 
-struct ValueViewTest : testing::Test {
+struct ValueViewTest : virtual testing::Test {
     ClioConfigDefinition const configData = generateConfig();
 };
 
@@ -106,20 +107,20 @@ TEST_F(ValueViewTest, OptionalValues)
     EXPECT_EQ(vv4.asOptional<std::string>(), "hello");
 }
 
-struct ValueDeathTest : ValueViewTest {};
+struct ValueViewAssertTest : common::util::WithMockAssert, ValueViewTest {};
 
-TEST_F(ValueDeathTest, WrongTypes)
+TEST_F(ValueViewAssertTest, WrongTypes)
 {
     auto const vv = configData.getValueView("header.port");
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = vv.asBool(); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = vv.asString(); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = vv.asBool(); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = vv.asString(); });
 
     auto const cv = ConfigValue{ConfigType::Integer}.defaultValue(-5);
     auto const vv2 = ValueView(cv);
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = vv2.asIntType<uint32_t>(); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = vv2.asIntType<uint32_t>(); });
 
     auto const cv2 = ConfigValue{ConfigType::String}.defaultValue("asdf");
     auto const vv3 = ValueView(cv2);
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = vv3.asDouble(); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = vv3.asFloat(); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = vv3.asDouble(); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = vv3.asFloat(); });
 }
