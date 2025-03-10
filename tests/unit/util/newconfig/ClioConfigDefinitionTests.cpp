@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "util/LoggerFixtures.hpp"
+#include "util/MockAssert.hpp"
 #include "util/newconfig/Array.hpp"
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
@@ -45,7 +46,7 @@
 
 using namespace util::config;
 
-struct NewConfigTest : testing::Test {
+struct NewConfigTest : virtual testing::Test {
     ClioConfigDefinition const configData = generateConfig();
 };
 
@@ -129,41 +130,41 @@ TEST_F(NewConfigTest, CheckAllKeys)
     EXPECT_EQ(expected, actual);
 }
 
-struct NewConfigDeathTest : NewConfigTest {};
+struct NewConfigAssertTest : common::util::WithMockAssert, NewConfigTest {};
 
-TEST_F(NewConfigDeathTest, GetNonExistentKeys)
+TEST_F(NewConfigAssertTest, GetNonExistentKeys)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getValueView("head."); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getValueView("asdf"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("head."); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("asdf"); });
 }
 
-TEST_F(NewConfigDeathTest, GetValueButIsArray)
+TEST_F(NewConfigAssertTest, GetValueButIsArray)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist.[]"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist.[]"); });
 }
 
-TEST_F(NewConfigDeathTest, GetNonExistentObjectKey)
+TEST_F(NewConfigAssertTest, GetNonExistentObjectKey)
 {
     ASSERT_FALSE(configData.contains("head"));
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getObject("head"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getObject("doesNotExist"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("head"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("doesNotExist"); });
 }
 
-TEST_F(NewConfigDeathTest, GetObjectButIsArray)
+TEST_F(NewConfigAssertTest, GetObjectButIsArray)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getObject("array"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getObject("array", 2); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("array"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("array", 2); });
 }
 
-TEST_F(NewConfigDeathTest, GetArrayButIsValue)
+TEST_F(NewConfigAssertTest, GetArrayButIsValue)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getArray("header.text1"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getArray("header.text1"); });
 }
 
-TEST_F(NewConfigDeathTest, GetNonExistentArrayKey)
+TEST_F(NewConfigAssertTest, GetNonExistentArrayKey)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getArray("asdf"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getArray("asdf"); });
 }
 
 TEST(ConfigDescription, GetValues)
@@ -178,12 +179,14 @@ TEST(ConfigDescription, GetValues)
     EXPECT_EQ(definition.get("prometheus.enabled"), "Enable or disable Prometheus metrics.");
 }
 
-TEST(ConfigDescriptionAssertDeathTest, NonExistingKeyTest)
+struct ConfigDescriptionAssertTest : common::util::WithMockAssert {};
+
+TEST_F(ConfigDescriptionAssertTest, NonExistingKeyTest)
 {
     ClioConfigDescription const definition{};
 
-    EXPECT_DEATH({ [[maybe_unused]] auto a = definition.get("data"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto a = definition.get("etl_sources.[]"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto a = definition.get("data"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto a = definition.get("etl_sources.[]"); });
 }
 
 /** @brief Testing override the default values with the ones in Json */

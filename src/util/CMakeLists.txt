@@ -2,7 +2,8 @@ add_library(clio_util)
 
 target_sources(
   clio_util
-  PRIVATE build/Build.cpp
+  PRIVATE Assert.cpp
+          build/Build.cpp
           config/Config.cpp
           CoroutineGroup.cpp
           log/Logger.cpp

@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/MockAssert.hpp"
 #include "util/Taggable.hpp"
 #include "util/build/Build.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
@@ -45,21 +46,21 @@ using namespace web::ng;
 namespace http = boost::beast::http;
 using namespace util::config;
 
-struct ResponseDeathTest : testing::Test {};
+struct ResponseAssertTest : common::util::WithMockAssert {};
 
-TEST_F(ResponseDeathTest, intoHttpResponseWithoutHttpData)
+TEST_F(ResponseAssertTest, intoHttpResponseWithoutHttpData)
 {
     Request::HttpHeaders const headers{};
     Request const request{"some message", headers};
     Response response{boost::beast::http::status::ok, "message", request};
-    EXPECT_DEATH(std::move(response).intoHttpResponse(), "");
+    EXPECT_CLIO_ASSERT_FAIL(std::move(response).intoHttpResponse());
 }
 
-TEST_F(ResponseDeathTest, asConstBufferWithHttpData)
+TEST_F(ResponseAssertTest, asConstBufferWithHttpData)
 {
     Request const request{http::request<http::string_body>{http::verb::get, "/", 11}};
     Response const response{boost::beast::http::status::ok, "message", request};
-    EXPECT_DEATH(response.asWsResponse(), "");
+    EXPECT_CLIO_ASSERT_FAIL(response.asWsResponse());
 }
 
 struct ResponseTest : testing::Test {

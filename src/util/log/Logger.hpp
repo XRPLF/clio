@@ -367,6 +367,14 @@ public:
     {
         return alertLog.warn(loc);
     }
+
+    /**
+     * @brief Whether the LogService is enabled or not
+     *
+     * @return true if the LogService is enabled, false otherwise
+     */
+    [[nodiscard]] static bool
+    enabled();
 };
 
 };  // namespace util

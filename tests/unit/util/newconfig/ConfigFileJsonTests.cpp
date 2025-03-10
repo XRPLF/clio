@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "util/LoggerFixtures.hpp"
+#include "util/MockAssert.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/OverloadSet.hpp"
 #include "util/TmpFile.hpp"
@@ -338,30 +339,30 @@ TEST_F(ConfigFileJsonTest, getValue)
     EXPECT_FALSE(jsonFileObj.containsKey("object.int"));
 }
 
-struct ConfigFileJsonDeathTest : ConfigFileJsonTest {};
+struct ConfigFileJsonAssertTest : common::util::WithMockAssert, ConfigFileJsonTest {};
 
-TEST_F(ConfigFileJsonDeathTest, getValueInvalidKey)
+TEST_F(ConfigFileJsonAssertTest, getValueInvalidKey)
 {
     auto const jsonFileObj = ConfigFileJson{boost::json::parse("{}").as_object()};
-    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getValue("some_key"), ".*");
+    EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto a = jsonFileObj.getValue("some_key"));
 }
 
-TEST_F(ConfigFileJsonDeathTest, getValueOfArray)
+TEST_F(ConfigFileJsonAssertTest, getValueOfArray)
 {
     auto const jsonStr = R"json({
         "array": [1, 2, 3]
     })json";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
-    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getValue("array"), ".*");
+    EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto a = jsonFileObj.getValue("array"));
 }
 
-TEST_F(ConfigFileJsonDeathTest, nullIsNotSupported)
+TEST_F(ConfigFileJsonAssertTest, nullIsNotSupported)
 {
     auto const jsonStr = R"json({
         "null": null
     })json";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
-    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getValue("null"), ".*");
+    EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto a = jsonFileObj.getValue("null"));
 }
 
 TEST_F(ConfigFileJsonTest, getArray)
@@ -444,19 +445,19 @@ TEST_F(ConfigFileJsonTest, getArrayOptionalInArray)
     EXPECT_EQ(std::get<bool>(bools.at(1).value()), true);
 }
 
-TEST_F(ConfigFileJsonDeathTest, getArrayInvalidKey)
+TEST_F(ConfigFileJsonAssertTest, getArrayInvalidKey)
 {
     auto const jsonFileObj = ConfigFileJson{boost::json::parse("{}").as_object()};
-    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getArray("some_key"), ".*");
+    EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto a = jsonFileObj.getArray("some_key"));
 }
 
-TEST_F(ConfigFileJsonDeathTest, getArrayNotArray)
+TEST_F(ConfigFileJsonAssertTest, getArrayNotArray)
 {
     auto const jsonStr = R"json({
         "int": 42
     })json";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
-    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getArray("int"), ".*");
+    EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto a = jsonFileObj.getArray("int"));
 }
 
 TEST_F(ConfigFileJsonTest, containsKey)

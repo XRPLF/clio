@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/MockAssert.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/OStream.hpp"
 
@@ -30,7 +31,7 @@
 
 using namespace util::prometheus;
 
-struct AnyCounterTests : ::testing::Test {
+struct AnyCounterTests : virtual ::testing::Test {
     struct MockCounterImpl {
         using ValueType = std::uint64_t;
         MOCK_METHOD(void, add, (ValueType));
@@ -89,18 +90,15 @@ TEST_F(AnyCounterTests, value)
     EXPECT_EQ(counter.value(), 42);
 }
 
-struct AnyCounterDeathTest : AnyCounterTests {};
+struct AnyCounterAssertTest : common::util::WithMockAssert, AnyCounterTests {};
 
-TEST_F(AnyCounterDeathTest, setLowerValue)
+TEST_F(AnyCounterAssertTest, setLowerValue)
 {
     testing::Mock::AllowLeak(&mockCounterImpl);
-    EXPECT_DEATH(
-        {
-            EXPECT_CALL(mockCounterImpl, value()).WillOnce(::testing::Return(50));
-            counter.set(42);
-        },
-        ".*"
-    );
+    EXPECT_CLIO_ASSERT_FAIL({
+        EXPECT_CALL(mockCounterImpl, value()).WillOnce(::testing::Return(50));
+        counter.set(42);
+    });
 }
 
 struct CounterIntTests : ::testing::Test {

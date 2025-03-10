@@ -77,7 +77,7 @@ public:
      * Used to cancel the timer for scheduled operations and request the operation to be stopped as soon as possible
      */
     void
-    abort() noexcept
+    abort()
     {
         operation_.abort();
     }

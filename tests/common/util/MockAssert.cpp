@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,19 +17,29 @@
 */
 //==============================================================================
 
-#include "util/Assert.hpp"
 #include "util/MockAssert.hpp"
 
-#include <gtest/gtest.h>
+#include "util/Assert.hpp"
 
-struct AssertTest : common::util::WithMockAssert {};
+#include <string>
+#include <string_view>
 
-TEST_F(AssertTest, assertTrue)
+namespace common::util {
+
+WithMockAssert::WithMockAssert()
 {
-    EXPECT_NO_THROW(ASSERT(true, "Should not fail"));
+    ::util::impl::OnAssert::setAction([](std::string_view m) { WithMockAssert::throwOnAssert(m); });
 }
 
-TEST_F(AssertTest, assertFalse)
+WithMockAssert::~WithMockAssert()
 {
-    EXPECT_CLIO_ASSERT_FAIL({ ASSERT(false, "failure"); });
+    ::util::impl::OnAssert::resetAction();
 }
+
+void
+WithMockAssert::throwOnAssert(std::string_view m)
+{
+    throw MockAssertException{.message = std::string{m}};
+}
+
+}  // namespace common::util
