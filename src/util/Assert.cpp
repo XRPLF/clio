@@ -21,7 +21,6 @@
 
 #include "util/log/Logger.hpp"
 
-#include <boost/log/core/core.hpp>
 
 #include <cstdlib>
 #include <iostream>
