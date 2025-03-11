@@ -363,7 +363,8 @@ makeServer(
 
     auto const maxSubscriptionSendQueueSize = serverConfig.get<size_t>("ws_max_sending_queue_size");
 
-    return Server{
+    return std::expected<Server, std::string>{
+        std::in_place,
         context,
         std::move(endpoint).value(),
         std::move(expectedSslContext).value(),

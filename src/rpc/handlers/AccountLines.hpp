@@ -76,6 +76,8 @@ public:
         std::optional<bool> peerAuthorized;
         std::optional<bool> freeze;
         std::optional<bool> freezePeer;
+        std::optional<bool> deepFreeze;
+        std::optional<bool> deepFreezePeer;
     };
 
     /**

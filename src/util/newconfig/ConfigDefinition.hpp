@@ -23,7 +23,6 @@
 #include "util/Assert.hpp"
 #include "util/newconfig/Array.hpp"
 #include "util/newconfig/ConfigConstraints.hpp"
-#include "util/newconfig/ConfigDescription.hpp"
 #include "util/newconfig/ConfigFileInterface.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Error.hpp"
@@ -31,16 +30,10 @@
 #include "util/newconfig/Types.hpp"
 #include "util/newconfig/ValueView.hpp"
 
-#include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
-#include <fmt/core.h>
-
 #include <algorithm>
-#include <cassert>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <expected>
 #include <initializer_list>
 #include <optional>
 #include <string>
@@ -83,26 +76,6 @@ public:
      */
     [[nodiscard]] std::optional<std::vector<Error>>
     parse(ConfigFileInterface const& config);
-
-    /**
-     * @brief Validates the configuration file
-     *
-     * Should only check for valid values, without populating
-     *
-     * @param config The configuration file interface
-     * @return An optional vector of Error objects stating all the failures if validation fails
-     */
-    [[nodiscard]] std::optional<std::vector<Error>>
-    validate(ConfigFileInterface const& config) const;
-
-    /**
-     * @brief Generate markdown file of all the clio config descriptions
-     *
-     * @param configDescription The configuration description object
-     * @return An optional Error if generating markdown fails
-     */
-    [[nodiscard]] std::expected<std::string, Error>
-    getMarkdown(ClioConfigDescription const& configDescription) const;
 
     /**
      * @brief Returns the ObjectView specified with the prefix
@@ -301,7 +274,10 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
       ConfigValue{ConfigType::Integer}.defaultValue(100'000).withConstraint(gValidateUint32)},
      {"database.cassandra.threads",
       ConfigValue{ConfigType::Integer}
-          .defaultValue(static_cast<uint32_t>(std::thread::hardware_concurrency()))
+          .defaultValue(
+              static_cast<uint32_t>(std::thread::hardware_concurrency()),
+              "The number of available CPU cores."
+          )
           .withConstraint(gValidateUint32)},
      {"database.cassandra.core_connections_per_host",
       ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint16)},
@@ -340,9 +316,9 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
       ConfigValue{ConfigType::Double}.defaultValue(1.0).withConstraint(gValidatePositiveDouble)},
 
      {"workers",
-      ConfigValue{ConfigType::Integer}.defaultValue(std::thread::hardware_concurrency()).withConstraint(gValidateUint32)
-     },
-
+      ConfigValue{ConfigType::Integer}
+          .defaultValue(std::thread::hardware_concurrency(), "The number of available CPU cores.")
+          .withConstraint(gValidateUint32)},
      {"server.ip", ConfigValue{ConfigType::String}.withConstraint(gValidateIp)},
      {"server.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort)},
      {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateUint32)},

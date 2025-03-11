@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
@@ -51,6 +52,7 @@ namespace rpc {
  */
 class BookOffersHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
+    std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 
 public:
     static constexpr auto kLIMIT_MIN = 1;
@@ -91,8 +93,13 @@ public:
      * @brief Construct a new BookOffersHandler object
      *
      * @param sharedPtrBackend The backend to use
+     * @param amendmentCenter The amendmentCenter to use
      */
-    BookOffersHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
+    BookOffersHandler(
+        std::shared_ptr<BackendInterface> const& sharedPtrBackend,
+        std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter
+    )
+        : sharedPtrBackend_(sharedPtrBackend), amendmentCenter_{amendmentCenter}
     {
     }
 

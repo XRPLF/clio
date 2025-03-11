@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "feed/Types.hpp"
@@ -93,6 +94,11 @@ public:
         , subBookCount_(getSubscriptionsGaugeInt("book"))
     {
     }
+
+    /**
+     * @brief Move constructor is deleted because TransactionSlot takes TransactionFeed by reference
+     */
+    TransactionFeed(TransactionFeed&&) = delete;
 
     /**
      * @brief Subscribe to the transaction feed.
@@ -180,7 +186,8 @@ public:
     void
     pub(data::TransactionAndMetadata const& txMeta,
         ripple::LedgerHeader const& lgrInfo,
-        std::shared_ptr<data::BackendInterface const> const& backend);
+        std::shared_ptr<data::BackendInterface const> const& backend,
+        std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter);
 
     /**
      * @brief Get the number of subscribers of the transaction feed.

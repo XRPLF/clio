@@ -36,17 +36,34 @@ Array::Array(ConfigValue arg) : itemPattern_{std::move(arg)}
 {
 }
 
+std::string_view
+Array::prefix(std::string_view key)
+{
+    static constexpr std::string_view kARRAY_SUFFIX = ".[]";
+    ASSERT(key.contains(kARRAY_SUFFIX), "Provided key is not an array key: {}", key);
+
+    return key.substr(0, key.rfind(kARRAY_SUFFIX) + kARRAY_SUFFIX.size());
+}
+
 std::optional<Error>
 Array::addValue(Value value, std::optional<std::string_view> key)
 {
-    auto const& configValPattern = itemPattern_;
-    auto const constraint = configValPattern.getConstraint();
+    auto newItem = itemPattern_;
 
-    auto newElem = constraint.has_value() ? ConfigValue{configValPattern.type()}.withConstraint(constraint->get())
-                                          : ConfigValue{configValPattern.type()};
-    if (auto const maybeError = newElem.setValue(value, key); maybeError.has_value())
+    if (auto const maybeError = newItem.setValue(value, key); maybeError.has_value())
         return maybeError;
-    elements_.emplace_back(std::move(newElem));
+    elements_.emplace_back(std::move(newItem));
+    return std::nullopt;
+}
+
+std::optional<Error>
+Array::addNull(std::optional<std::string_view> key)
+{
+    if (not itemPattern_.isOptional() and not itemPattern_.hasValue()) {
+        return Error{key.value_or("Unknown_key"), "value for the array (or object field inside array) is required"};
+    }
+
+    elements_.push_back(itemPattern_);
     return std::nullopt;
 }
 

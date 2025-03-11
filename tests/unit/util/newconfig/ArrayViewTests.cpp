@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/MockAssert.hpp"
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigFileJson.hpp"
@@ -33,7 +34,7 @@
 
 using namespace util::config;
 
-struct ArrayViewTest : testing::Test {
+struct ArrayViewTest : virtual testing::Test {
     ArrayViewTest()
     {
         ConfigFileJson const jsonFileObj{boost::json::parse(kJSON_DATA).as_object()};
@@ -147,31 +148,31 @@ TEST_F(ArrayViewTest, IterateObject)
     EXPECT_EQ(it, arr.end<ObjectView>());
 }
 
-struct ArrayViewDeathTest : ArrayViewTest {};
+struct ArrayViewAssertTest : common::util::WithMockAssert, ArrayViewTest {};
 
-TEST_F(ArrayViewDeathTest, AccessArrayOutOfBounce)
+TEST_F(ArrayViewAssertTest, AccessArrayOutOfBounce)
 {
     // dies because higher only has 1 object (trying to access 2nd element)
-    EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getArray("higher").objectAt(1); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = configData.getArray("higher").objectAt(1); });
 }
 
-TEST_F(ArrayViewDeathTest, AccessIndexOfWrongType)
+TEST_F(ArrayViewAssertTest, AccessIndexOfWrongType)
 {
     auto const& arrVals2 = configData.getArray("array.[].sub2");
     auto const& tempVal = arrVals2.valueAt(0);
 
     // dies as value is not of type int
-    EXPECT_DEATH({ [[maybe_unused]] auto _ = tempVal.asIntType<int>(); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = tempVal.asIntType<int>(); });
 }
 
-TEST_F(ArrayViewDeathTest, GetValueWhenItIsObject)
+TEST_F(ArrayViewAssertTest, GetValueWhenItIsObject)
 {
     ArrayView const arr = configData.getArray("higher");
-    EXPECT_DEATH({ [[maybe_unused]] auto _ = arr.begin<ValueView>(); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = arr.begin<ValueView>(); });
 }
 
-TEST_F(ArrayViewDeathTest, GetObjectWhenItIsValue)
+TEST_F(ArrayViewAssertTest, GetObjectWhenItIsValue)
 {
     ArrayView const dosguardWhitelist = configData.getArray("dosguard.whitelist");
-    EXPECT_DEATH({ [[maybe_unused]] auto _ = dosguardWhitelist.begin<ObjectView>(); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = dosguardWhitelist.begin<ObjectView>(); });
 }

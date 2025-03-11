@@ -19,6 +19,7 @@
 
 #include "migration/cassandra/impl/FullTableScanner.hpp"
 #include "util/LoggerFixtures.hpp"
+#include "util/MockAssert.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <gmock/gmock.h>
@@ -51,29 +52,31 @@ struct TestScannerAdaper {
 };
 }  // namespace
 
-struct FullTableScannerTests : public NoLoggerFixture {};
+struct FullTableScannerAssertTest : common::util::WithMockAssert {};
 
-TEST_F(FullTableScannerTests, workerNumZero)
+TEST_F(FullTableScannerAssertTest, workerNumZero)
 {
     testing::MockFunction<void(migration::cassandra::impl::TokenRange const&, boost::asio::yield_context)> mockCallback;
-    EXPECT_DEATH(
+    EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
         migration::cassandra::impl::FullTableScanner<TestScannerAdaper>(
             {.ctxThreadsNum = 1, .jobsNum = 0, .cursorsPerJob = 100}, TestScannerAdaper(mockCallback)
         ),
-        "jobsNum for full table scanner must be greater than 0"
+        ".*jobsNum for full table scanner must be greater than 0"
     );
 }
 
-TEST_F(FullTableScannerTests, cursorsPerWorkerZero)
+TEST_F(FullTableScannerAssertTest, cursorsPerWorkerZero)
 {
     testing::MockFunction<void(migration::cassandra::impl::TokenRange const&, boost::asio::yield_context)> mockCallback;
-    EXPECT_DEATH(
+    EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
         migration::cassandra::impl::FullTableScanner<TestScannerAdaper>(
             {.ctxThreadsNum = 1, .jobsNum = 1, .cursorsPerJob = 0}, TestScannerAdaper(mockCallback)
         ),
-        "cursorsPerJob for full table scanner must be greater than 0"
+        ".*cursorsPerJob for full table scanner must be greater than 0"
     );
 }
+
+struct FullTableScannerTests : NoLoggerFixture {};
 
 TEST_F(FullTableScannerTests, SingleThreadCtx)
 {

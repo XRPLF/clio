@@ -134,6 +134,9 @@ struct Amendments {
     REGISTER(Credentials);
     REGISTER(DynamicNFT);
     REGISTER(PermissionedDomains);
+    REGISTER(fixInvalidTxFlags);
+    REGISTER(fixFrozenLPTokenTransfer);
+    REGISTER(DeepFreeze);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);

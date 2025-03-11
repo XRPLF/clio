@@ -19,8 +19,9 @@
 
 #pragma once
 
-#include "etl/ETLHelpers.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
 
+#include <boost/signals2/connection.hpp>
 #include <gmock/gmock.h>
 
 #include <cstdint>
@@ -31,6 +32,12 @@ struct MockNetworkValidatedLedgers : public etl::NetworkValidatedLedgersInterfac
     MOCK_METHOD(void, push, (uint32_t), (override));
     MOCK_METHOD(std::optional<uint32_t>, getMostRecent, (), (override));
     MOCK_METHOD(bool, waitUntilValidatedByNetwork, (uint32_t, std::optional<uint32_t>), (override));
+    MOCK_METHOD(
+        boost::signals2::scoped_connection,
+        subscribe,
+        (etl::NetworkValidatedLedgersInterface::SignalType::slot_type const& subscriber),
+        (override)
+    );
 };
 
 template <template <typename> typename MockType>

@@ -17,10 +17,14 @@
 */
 //==============================================================================
 
+#include "util/LoggerFixtures.hpp"
+#include "util/MockAssert.hpp"
+#include "util/newconfig/Array.hpp"
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigDescription.hpp"
 #include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/FakeConfigData.hpp"
 #include "util/newconfig/Types.hpp"
 #include "util/newconfig/ValueView.hpp"
@@ -28,11 +32,13 @@
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <algorithm>
 #include <cstdint>
 #include <optional>
+#include <set>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -40,7 +46,7 @@
 
 using namespace util::config;
 
-struct NewConfigTest : testing::Test {
+struct NewConfigTest : virtual testing::Test {
     ClioConfigDefinition const configData = generateConfig();
 };
 
@@ -124,58 +130,63 @@ TEST_F(NewConfigTest, CheckAllKeys)
     EXPECT_EQ(expected, actual);
 }
 
-struct NewConfigDeathTest : NewConfigTest {};
+struct NewConfigAssertTest : common::util::WithMockAssert, NewConfigTest {};
 
-TEST_F(NewConfigDeathTest, GetNonExistentKeys)
+TEST_F(NewConfigAssertTest, GetNonExistentKeys)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getValueView("head."); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getValueView("asdf"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("head."); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("asdf"); });
 }
 
-TEST_F(NewConfigDeathTest, GetValueButIsArray)
+TEST_F(NewConfigAssertTest, GetValueButIsArray)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist.[]"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist.[]"); });
 }
 
-TEST_F(NewConfigDeathTest, GetNonExistentObjectKey)
+TEST_F(NewConfigAssertTest, GetNonExistentObjectKey)
 {
     ASSERT_FALSE(configData.contains("head"));
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getObject("head"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getObject("doesNotExist"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("head"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("doesNotExist"); });
 }
 
-TEST_F(NewConfigDeathTest, GetObjectButIsArray)
+TEST_F(NewConfigAssertTest, GetObjectButIsArray)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getObject("array"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getObject("array", 2); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("array"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("array", 2); });
 }
 
-TEST_F(NewConfigDeathTest, GetArrayButIsValue)
+TEST_F(NewConfigAssertTest, GetArrayButIsValue)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getArray("header.text1"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getArray("header.text1"); });
 }
 
-TEST_F(NewConfigDeathTest, GetNonExistentArrayKey)
+TEST_F(NewConfigAssertTest, GetNonExistentArrayKey)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getArray("asdf"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getArray("asdf"); });
 }
 
 TEST(ConfigDescription, GetValues)
 {
     ClioConfigDescription const definition{};
 
-    EXPECT_EQ(definition.get("database.type"), "Type of database to use. Default is Scylladb.");
+    EXPECT_EQ(
+        definition.get("database.type"),
+        "Type of database to use. We currently support Cassandra and Scylladb. We default to Scylladb."
+    );
     EXPECT_EQ(definition.get("etl_sources.[].ip"), "IP address of the ETL source.");
     EXPECT_EQ(definition.get("prometheus.enabled"), "Enable or disable Prometheus metrics.");
 }
 
-TEST(ConfigDescriptionAssertDeathTest, NonExistingKeyTest)
+struct ConfigDescriptionAssertTest : common::util::WithMockAssert {};
+
+TEST_F(ConfigDescriptionAssertTest, NonExistingKeyTest)
 {
     ClioConfigDescription const definition{};
 
-    EXPECT_DEATH({ [[maybe_unused]] auto a = definition.get("data"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto a = definition.get("etl_sources.[]"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto a = definition.get("data"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto a = definition.get("etl_sources.[]"); });
 }
 
 /** @brief Testing override the default values with the ones in Json */
@@ -301,19 +312,155 @@ TEST_F(IncorrectOverrideValues, InvalidJsonErrors)
     EXPECT_TRUE(errors.has_value());
 
     // Expected error messages
-    std::unordered_set<std::string_view> const expectedErrors{
+    std::set<std::string_view> const expectedErrors{
         "dosguard.whitelist.[] value does not match type string",
-        "higher.[].low.section key is required in user Config",
-        "higher.[].low.admin key is required in user Config",
-        "array.[].sub key is required in user Config",
         "header.port value does not match type integer",
         "header.admin value does not match type boolean",
         "optional.withDefault value does not match type double"
     };
 
-    std::unordered_set<std::string_view> actualErrors;
+    std::set<std::string_view> actualErrors;
     for (auto const& error : errors.value()) {
         actualErrors.insert(error.error);
     }
     EXPECT_EQ(expectedErrors, actualErrors);
+}
+
+struct ClioConfigDefinitionParseArrayTest : NoLoggerFixture {
+    ClioConfigDefinition config{
+        {"array.[].int", Array{ConfigValue{ConfigType::Integer}}},
+        {"array.[].string", Array{ConfigValue{ConfigType::String}.optional()}}
+    };
+};
+
+TEST_F(ClioConfigDefinitionParseArrayTest, emptyArray)
+{
+    auto const configJson = boost::json::parse(R"json({
+        "array": []
+    })json")
+                                .as_object();
+
+    auto const result = config.parse(ConfigFileJson{configJson});
+    EXPECT_FALSE(result.has_value());
+}
+
+TEST_F(ClioConfigDefinitionParseArrayTest, emptyJson)
+{
+    auto const configJson = boost::json::object{};
+
+    auto const result = config.parse(ConfigFileJson{configJson});
+    EXPECT_FALSE(result.has_value());
+}
+
+TEST_F(ClioConfigDefinitionParseArrayTest, fullArray)
+{
+    auto const configJson = boost::json::parse(R"json({
+        "array": [
+            {"int": 1, "string": "one"},
+            {"int": 2, "string": "two"}
+        ]
+    })json")
+                                .as_object();
+
+    auto const result = config.parse(ConfigFileJson{configJson});
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(config.arraySize("array.[]"), 2);
+}
+
+TEST_F(ClioConfigDefinitionParseArrayTest, onlyRequiredFields)
+{
+    auto const configJson = boost::json::parse(R"json({
+        "array": [
+            {"int": 1},
+            {"int": 2}
+        ]
+    })json")
+                                .as_object();
+
+    auto const configFile = ConfigFileJson{configJson};
+    auto const result = config.parse(configFile);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(config.arraySize("array.[]"), 2);
+
+    EXPECT_EQ(config.getArray("array.[].int").valueAt(0).asIntType<int>(), 1);
+    EXPECT_EQ(config.getArray("array.[].int").valueAt(1).asIntType<int>(), 2);
+    EXPECT_FALSE(config.getArray("array.[].string").valueAt(0).hasValue());
+    EXPECT_FALSE(config.getArray("array.[].string").valueAt(1).hasValue());
+}
+
+TEST_F(ClioConfigDefinitionParseArrayTest, someOptionalFieldsMissing)
+{
+    auto const configJson = boost::json::parse(R"json({
+        "array": [
+            {"int": 1, "string": "one"},
+            {"int": 2}
+        ]
+    })json")
+                                .as_object();
+
+    auto const configFile = ConfigFileJson{configJson};
+    auto const result = config.parse(configFile);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(config.arraySize("array.[]"), 2);
+
+    EXPECT_EQ(config.getArray("array.[].int").valueAt(0).asIntType<int>(), 1);
+    EXPECT_EQ(config.getArray("array.[].int").valueAt(1).asIntType<int>(), 2);
+    EXPECT_EQ(config.getArray("array.[].string").valueAt(0).asString(), "one");
+    EXPECT_FALSE(config.getArray("array.[].string").valueAt(1).hasValue());
+}
+
+TEST_F(ClioConfigDefinitionParseArrayTest, optionalFieldMissingAtFirstPosition)
+{
+    auto const configJson = boost::json::parse(R"json({
+        "array": [
+            {"int": 1},
+            {"int": 2, "string": "two"}
+        ]
+    })json")
+                                .as_object();
+
+    auto const configFile = ConfigFileJson{configJson};
+    auto const result = config.parse(configFile);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(config.arraySize("array.[]"), 2);
+
+    EXPECT_EQ(config.getArray("array.[].int").valueAt(0).asIntType<int>(), 1);
+    EXPECT_EQ(config.getArray("array.[].int").valueAt(1).asIntType<int>(), 2);
+
+    EXPECT_FALSE(config.getArray("array.[].string").valueAt(0).hasValue());
+    EXPECT_EQ(config.getArray("array.[].string").valueAt(1).asString(), "two");
+}
+
+TEST_F(ClioConfigDefinitionParseArrayTest, missingRequiredFields)
+{
+    auto const configJson = boost::json::parse(R"json({
+        "array": [
+            {"int": 1},
+            {"string": "two"}
+        ]
+    })json")
+                                .as_object();
+
+    auto const configFile = ConfigFileJson{configJson};
+    auto const result = config.parse(configFile);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->size(), 1);
+    EXPECT_THAT(result->at(0).error, testing::StartsWith("array.[].int"));
+}
+
+TEST_F(ClioConfigDefinitionParseArrayTest, missingAllRequiredFields)
+{
+    auto const configJson = boost::json::parse(R"json({
+        "array": [
+            {"string": "one"},
+            {"string": "two"}
+        ]
+    })json")
+                                .as_object();
+
+    auto const configFile = ConfigFileJson{configJson};
+    auto const result = config.parse(configFile);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->size(), 1);
+    EXPECT_THAT(result->at(0).error, testing::StartsWith("array.[].int"));
 }

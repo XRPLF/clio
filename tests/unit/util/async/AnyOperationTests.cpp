@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/MockAssert.hpp"
 #include "util/MockOperation.hpp"
 #include "util/async/AnyOperation.hpp"
 #include "util/async/Error.hpp"
@@ -32,7 +33,7 @@
 using namespace util::async;
 using namespace ::testing;
 
-struct AnyOperationTests : Test {
+struct AnyOperationTests : virtual Test {
     using OperationType = MockOperation<std::expected<std::any, ExecutionError>>;
     using StoppableOperationType = MockStoppableOperation<std::expected<std::any, ExecutionError>>;
     using ScheduledOperationType = MockScheduledOperation<std::expected<std::any, ExecutionError>>;
@@ -49,7 +50,6 @@ struct AnyOperationTests : Test {
     AnyOperation<void> scheduledVoidOp{impl::ErasedOperation(static_cast<ScheduledOperationType&>(mockScheduledOp))};
     AnyOperation<void> repeatingOp{impl::ErasedOperation(static_cast<RepeatingOperationType&>(mockRepeatingOp))};
 };
-using AnyOperationDeathTest = AnyOperationTests;
 
 TEST_F(AnyOperationTests, Move)
 {
@@ -128,7 +128,20 @@ TEST_F(AnyOperationTests, RepeatingOpRequestStopCallPropagated)
     repeatingOp.abort();
 }
 
-TEST_F(AnyOperationDeathTest, CallAbortOnNonStoppableOrCancellableOperation)
+TEST_F(AnyOperationTests, RepeatingOpInvokeCallPropagated)
 {
-    EXPECT_DEATH(voidOp.abort(), ".*");
+    EXPECT_CALL(mockRepeatingOp, invoke());
+    repeatingOp.invoke();
+}
+
+struct AnyOperationAssertTest : common::util::WithMockAssert, AnyOperationTests {};
+
+TEST_F(AnyOperationAssertTest, CallAbortOnNonStoppableOrCancellableOperation)
+{
+    EXPECT_CLIO_ASSERT_FAIL(voidOp.abort());
+}
+
+TEST_F(AnyOperationAssertTest, CallInvokeOnNonForceInvocableOperation)
+{
+    EXPECT_CLIO_ASSERT_FAIL(voidOp.invoke());
 }

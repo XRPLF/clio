@@ -739,7 +739,8 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
                 "no_ripple": false,
                 "no_ripple_peer": true,
                 "peer_authorized": true,
-                "freeze_peer": true
+                "freeze_peer": true,
+                "deep_freeze_peer": true
             },
             {
                 "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
@@ -752,7 +753,8 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
                 "no_ripple": true,
                 "no_ripple_peer": false,
                 "authorized": true,
-                "freeze": true
+                "freeze": true,
+                "deep_freeze": true
             }
         ]
     })";
@@ -783,12 +785,14 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
     line1.setFlag(ripple::lsfHighAuth);
     line1.setFlag(ripple::lsfHighNoRipple);
     line1.setFlag(ripple::lsfHighFreeze);
+    line1.setFlag(ripple::lsfHighDeepFreeze);
     bbs.push_back(line1.getSerializer().peekData());
 
     auto line2 = createRippleStateLedgerObject("USD", kACCOUNT2, 20, kACCOUNT, 200, kACCOUNT2, 400, kTXN_ID, 0);
     line2.setFlag(ripple::lsfLowAuth);
     line2.setFlag(ripple::lsfLowNoRipple);
     line2.setFlag(ripple::lsfLowFreeze);
+    line2.setFlag(ripple::lsfLowDeepFreeze);
     bbs.push_back(line2.getSerializer().peekData());
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));

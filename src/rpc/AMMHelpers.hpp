@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -37,6 +38,7 @@ namespace rpc {
  * @brief getAmmPoolHolds returns the balances of the amm asset pair
  *
  * @param backend The backend to use
+ * @param amendmentCenter The amendmentCenter to use
  * @param sequence The sequence number to use
  * @param ammAccountID The amm account
  * @param issue1 The first issue
@@ -48,6 +50,7 @@ namespace rpc {
 std::pair<ripple::STAmount, ripple::STAmount>
 getAmmPoolHolds(
     BackendInterface const& backend,
+    data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t sequence,
     ripple::AccountID const& ammAccountID,
     ripple::Issue const& issue1,

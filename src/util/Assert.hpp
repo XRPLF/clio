@@ -20,18 +20,43 @@
 #pragma once
 
 #include "util/SourceLocation.hpp"
-#include "util/log/Logger.hpp"
 
 #include <boost/log/core/core.hpp>
+
+#include <functional>
+#include <string_view>
+#ifndef CLIO_WITHOUT_STACKTRACE
 #include <boost/stacktrace.hpp>
 #include <boost/stacktrace/stacktrace.hpp>
+#endif  // CLIO_WITHOUT_STACKTRACE
 #include <fmt/core.h>
 #include <fmt/format.h>
 
 #include <cstdlib>
-#include <iostream>
 
-namespace util {
+namespace util::impl {
+
+class OnAssert {
+public:
+    using ActionType = std::function<void(std::string_view)>;
+
+private:
+    static ActionType action;
+
+public:
+    static void
+    call(std::string_view message);
+
+    static void
+    setAction(ActionType newAction);
+
+    static void
+    resetAction();
+
+private:
+    static void
+    defaultAction(std::string_view message);
+};
 
 /**
  * @brief Assert that a condition is true
@@ -55,6 +80,7 @@ assertImpl(
 )
 {
     if (!condition) {
+#ifndef CLIO_WITHOUT_STACKTRACE
         auto const resultMessage = fmt::format(
             "Assertion '{}' failed at {}:{}:\n{}\nStacktrace:\n{}",
             expression,
@@ -63,16 +89,21 @@ assertImpl(
             fmt::format(format, std::forward<Args>(args)...),
             boost::stacktrace::to_string(boost::stacktrace::stacktrace())
         );
-        if (boost::log::core::get()->get_logging_enabled()) {
-            LOG(LogService::fatal()) << resultMessage;
-        } else {
-            std::cerr << resultMessage;
-        }
-        std::exit(EXIT_FAILURE);  // std::abort does not flush gcovr output and causes uncovered lines
+#else
+        auto const resultMessage = fmt::format(
+            "Assertion '{}' failed at {}:{}:\n{}",
+            expression,
+            location.file_name(),
+            location.line(),
+            fmt::format(format, std::forward<Args>(args)...)
+        );
+#endif
+
+        OnAssert::call(resultMessage);
     }
 }
 
-}  // namespace util
+}  // namespace util::impl
 
 #define ASSERT(condition, ...) \
-    util::assertImpl(CURRENT_SRC_LOCATION, #condition, static_cast<bool>(condition), __VA_ARGS__)
+    util::impl::assertImpl(CURRENT_SRC_LOCATION, #condition, static_cast<bool>(condition), __VA_ARGS__)

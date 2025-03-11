@@ -27,7 +27,7 @@
 
 #include <expected>
 #include <filesystem>
-#include <string>
+#include <optional>
 #include <string_view>
 #include <vector>
 
@@ -35,6 +35,8 @@ namespace util::config {
 
 /** @brief Json representation of config */
 class ConfigFileJson final : public ConfigFileInterface {
+    boost::json::object jsonObject_;
+
 public:
     /**
      * @brief Construct a new ConfigJson object and stores the values from
@@ -59,7 +61,7 @@ public:
      * @param key The key of the configuration array to retrieve.
      * @return A vector of variants holding the config values specified by user.
      */
-    [[nodiscard]] std::vector<Value>
+    [[nodiscard]] std::vector<std::optional<Value>>
     getArray(std::string_view key) const override;
 
     /**
@@ -81,20 +83,26 @@ public:
     [[nodiscard]] static std::expected<ConfigFileJson, Error>
     makeConfigFileJson(std::filesystem::path const& configFilePath);
 
+    /**
+     * @brief Get the inner representation of json file.
+     * @note This method is mostly used for testing purposes.
+     *
+     * @return The inner representation of json file.
+     */
+    [[nodiscard]] boost::json::object const&
+    inner() const;
+
 private:
     /**
-     * @brief Recursive function to flatten a JSON object into the same structure as the Clio Config.
+     * @brief Method to flatten a JSON object into the same structure as the Clio Config.
      *
-     * The keys will end up having the same naming convensions in Clio Config.
+     * The keys will end up having the same naming conventions in Clio Config.
      * Other than the keys specified in user Config file, no new keys are created.
      *
      * @param obj The JSON object to flatten.
-     * @param prefix The prefix to use for the keys in the flattened object.
      */
     void
-    flattenJson(boost::json::object const& obj, std::string const& prefix);
-
-    boost::json::object jsonObject_;
+    flattenJson(boost::json::object const& jsonRootObject);
 };
 
 }  // namespace util::config

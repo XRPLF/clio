@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/MockAssert.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
 #include "util/prometheus/Histogram.hpp"
@@ -32,7 +33,9 @@
 
 using namespace util::prometheus;
 
-TEST(MetricBuilderDeathTest, build)
+struct MetricBuilderAssertTest : common::util::WithMockAssert {};
+
+TEST_F(MetricBuilderAssertTest, build)
 {
     std::string const name = "name";
     std::string const labelsString = "{label1=\"value1\"}";
@@ -80,5 +83,5 @@ TEST(MetricBuilderDeathTest, build)
             EXPECT_EQ(metric->labelsString(), labelsString);
         }
     }
-    EXPECT_DEATH({ builder(name, labelsString, MetricType::Summary, std::vector<std::int64_t>{}); }, "");
+    EXPECT_CLIO_ASSERT_FAIL({ builder(name, labelsString, MetricType::Summary, std::vector<std::int64_t>{}); });
 }

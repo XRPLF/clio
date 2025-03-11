@@ -2,7 +2,8 @@ add_library(clio_util)
 
 target_sources(
   clio_util
-  PRIVATE build/Build.cpp
+  PRIVATE Assert.cpp
+          build/Build.cpp
           config/Config.cpp
           CoroutineGroup.cpp
           log/Logger.cpp
@@ -34,20 +35,17 @@ target_sources(
           newconfig/ConfigDefinition.cpp
           newconfig/ConfigFileJson.cpp
           newconfig/ObjectView.cpp
+          newconfig/Types.cpp
           newconfig/ValueView.cpp
 )
 
+# This must be above the target_link_libraries call otherwise backtrace doesn't work
+if ("${san}" STREQUAL "")
+  target_link_libraries(clio_util PUBLIC Boost::stacktrace_backtrace dl libbacktrace::libbacktrace)
+endif ()
+
 target_link_libraries(
-  clio_util
-  PUBLIC Boost::headers
-         Boost::stacktrace_backtrace
-         dl
-         libbacktrace::libbacktrace
-         fmt::fmt
-         openssl::openssl
-         xrpl::libxrpl
-         Threads::Threads
-         clio_options
+  clio_util PUBLIC Boost::headers fmt::fmt openssl::openssl xrpl::libxrpl Threads::Threads clio_options
 )
 
 # FIXME: needed on gcc-12, clang-16 and AppleClang for now (known boost 1.82 issue for some compilers)

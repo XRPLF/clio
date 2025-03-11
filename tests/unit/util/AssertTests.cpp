@@ -18,15 +18,18 @@
 //==============================================================================
 
 #include "util/Assert.hpp"
+#include "util/MockAssert.hpp"
 
 #include <gtest/gtest.h>
 
-TEST(AssertTests, assertTrue)
+struct AssertTest : common::util::WithMockAssert {};
+
+TEST_F(AssertTest, assertTrue)
 {
     EXPECT_NO_THROW(ASSERT(true, "Should not fail"));
 }
 
-TEST(AssertDeathTest, assertFalse)
+TEST_F(AssertTest, assertFalse)
 {
-    EXPECT_DEATH({ ASSERT(false, "failure"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ ASSERT(false, "failure"); });
 }

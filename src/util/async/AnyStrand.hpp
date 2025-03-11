@@ -131,14 +131,43 @@ public:
         );
     }
 
+    /**
+     * @brief Schedule a repeating operation on the execution context
+     *
+     * @param interval The interval at which the operation should be repeated
+     * @param fn The block of code to execute; no args allowed and return type must be void
+     * @return A repeating stoppable operation that can be used to wait for its cancellation
+     */
+    [[nodiscard]] auto
+    executeRepeatedly(SomeStdDuration auto interval, SomeHandlerWithoutStopToken auto&& fn)
+    {
+        using RetType = std::decay_t<decltype(fn())>;
+        static_assert(not std::is_same_v<RetType, std::any>);
+
+        auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(interval);
+        return AnyOperation<RetType>(  //
+            pimpl_->executeRepeatedly(
+                millis,
+                [fn = std::forward<decltype(fn)>(fn)] -> std::any {
+                    fn();
+                    return {};
+                }
+            )
+        );
+    }
+
 private:
     struct Concept {
         virtual ~Concept() = default;
 
         [[nodiscard]] virtual impl::ErasedOperation
-        execute(std::function<std::any(AnyStopToken)>, std::optional<std::chrono::milliseconds> timeout = std::nullopt)
-            const = 0;
+        execute(
+            std::function<std::any(AnyStopToken)>,
+            std::optional<std::chrono::milliseconds> timeout = std::nullopt
+        ) = 0;
         [[nodiscard]] virtual impl::ErasedOperation execute(std::function<std::any()>) = 0;
+        [[nodiscard]] virtual impl::ErasedOperation
+            executeRepeatedly(std::chrono::milliseconds, std::function<std::any()>) = 0;
     };
 
     template <typename StrandType>
@@ -152,8 +181,7 @@ private:
         }
 
         [[nodiscard]] impl::ErasedOperation
-        execute(std::function<std::any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout)
-            const override
+        execute(std::function<std::any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout) override
         {
             return strand.execute(std::move(fn), timeout);
         }
@@ -162,6 +190,12 @@ private:
         execute(std::function<std::any()> fn) override
         {
             return strand.execute(std::move(fn));
+        }
+
+        impl::ErasedOperation
+        executeRepeatedly(std::chrono::milliseconds interval, std::function<std::any()> fn) override
+        {
+            return strand.executeRepeatedly(interval, std::move(fn));
         }
     };
 

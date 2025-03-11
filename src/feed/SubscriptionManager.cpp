@@ -191,7 +191,7 @@ SubscriptionManager::unsubBook(ripple::Book const& book, SubscriberSharedPtr con
 void
 SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& txMeta, ripple::LedgerHeader const& lgrInfo)
 {
-    transactionFeed_.pub(txMeta, lgrInfo, backend_);
+    transactionFeed_.pub(txMeta, lgrInfo, backend_, amendmentCenter_);
 }
 
 boost::json::object

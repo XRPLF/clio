@@ -19,6 +19,7 @@ class Clio(ConanFile):
         'packaging': [True, False],           # create distribution packages
         'coverage': [True, False],            # build for test coverage report; create custom target `clio_tests-ccov`
         'lint': [True, False],                # run clang-tidy checks during compilation
+        'snapshot': [True, False],            # build export/import snapshot tool
     }
 
     requires = [
@@ -28,7 +29,7 @@ class Clio(ConanFile):
         'protobuf/3.21.9',
         'grpc/1.50.1',
         'openssl/1.1.1u',
-        'xrpl/2.4.0-b3',
+        'xrpl/2.4.0-rc4',
         'zlib/1.3.1',
         'libbacktrace/cci.20210118'
     ]
@@ -44,6 +45,7 @@ class Clio(ConanFile):
         'coverage': False,
         'lint': False,
         'docs': False,
+        'snapshot': False,
         
         'xrpl/*:tests': False,
         'xrpl/*:rocksdb': False,
@@ -92,6 +94,7 @@ class Clio(ConanFile):
         tc.variables['docs'] = self.options.docs
         tc.variables['packaging'] = self.options.packaging
         tc.variables['benchmark'] = self.options.benchmark
+        tc.variables['snapshot'] = self.options.snapshot
         tc.generate()
 
     def build(self):

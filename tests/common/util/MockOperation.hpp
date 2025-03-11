@@ -48,4 +48,5 @@ struct MockRepeatingOperation {
     MOCK_METHOD(void, requestStop, (), (const));
     MOCK_METHOD(void, wait, (), (const));
     MOCK_METHOD(ValueType, get, (), (const));
+    MOCK_METHOD(void, invoke, (), (const));
 };

@@ -86,6 +86,8 @@ AccountLinesHandler::addLine(
     bool const lineNoRipplePeer = (flags & (not viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
     bool const lineFreeze = (flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
     bool const lineFreezePeer = (flags & (not viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
+    bool const lineDeepFreeze = (flags & (viewLowest ? ripple::lsfLowDeepFreeze : ripple::lsfHighFreeze)) != 0u;
+    bool const lineDeepFreezePeer = (flags & (not viewLowest ? ripple::lsfLowDeepFreeze : ripple::lsfHighFreeze)) != 0u;
 
     ripple::STAmount const& saBalance = balance;
     ripple::STAmount const& saLimit = lineLimit;
@@ -111,6 +113,12 @@ AccountLinesHandler::addLine(
 
     if (lineFreezePeer)
         line.freezePeer = true;
+
+    if (lineDeepFreeze)
+        line.deepFreeze = true;
+
+    if (lineDeepFreezePeer)
+        line.deepFreezePeer = true;
 
     line.noRipple = lineNoRipple;
     line.noRipplePeer = lineNoRipplePeer;
@@ -263,6 +271,12 @@ tag_invoke(
 
     if (line.freezePeer)
         obj[JS(freeze_peer)] = *(line.freezePeer);
+
+    if (line.deepFreeze)
+        obj[JS(deep_freeze)] = *(line.deepFreeze);
+
+    if (line.deepFreezePeer)
+        obj[JS(deep_freeze_peer)] = *(line.deepFreezePeer);
 
     jv = std::move(obj);
 }

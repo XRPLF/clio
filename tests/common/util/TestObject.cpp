@@ -247,7 +247,8 @@ createAccountRootObject(
     uint32_t ownerCount,
     std::string_view previousTxnID,
     uint32_t previousTxnSeq,
-    uint32_t transferRate
+    uint32_t transferRate,
+    std::optional<ripple::uint256> ammID
 )
 {
     ripple::STObject accountRoot(ripple::sfAccount);
@@ -260,6 +261,10 @@ createAccountRootObject(
     accountRoot.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{previousTxnID});
     accountRoot.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxnSeq);
     accountRoot.setFieldU32(ripple::sfTransferRate, transferRate);
+
+    if (ammID)
+        accountRoot.setFieldH256(ripple::sfAMMID, *ammID);
+
     return accountRoot;
 }
 

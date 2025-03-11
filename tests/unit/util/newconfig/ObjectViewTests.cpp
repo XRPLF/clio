@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/MockAssert.hpp"
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigFileJson.hpp"
@@ -31,7 +32,7 @@
 
 using namespace util::config;
 
-struct ObjectViewTest : testing::Test {
+struct ObjectViewTest : virtual testing::Test {
     ObjectViewTest()
     {
         ConfigFileJson const jsonFileObj{boost::json::parse(kJSON_DATA).as_object()};
@@ -124,27 +125,29 @@ TEST_F(ObjectViewTest, getArrayInObject)
     EXPECT_EQ("204.2.2.1", arr.valueAt(1).asString());
 }
 
-struct ObjectViewDeathTest : ObjectViewTest {};
+struct ObjectViewAssertTest : common::util::WithMockAssert, ObjectViewTest {};
 
-TEST_F(ObjectViewDeathTest, KeyDoesNotExist)
+TEST_F(ObjectViewAssertTest, KeyDoesNotExist)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getObject("head"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = configData.getObject("head"); });
 }
 
-TEST_F(ObjectViewDeathTest, KeyIsValueView)
+TEST_F(ObjectViewAssertTest, KeyIsValueView)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getObject("header.text1"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getArray("header"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = configData.getObject("header.text1"); });
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = configData.getArray("header"); });
 }
 
-TEST_F(ObjectViewDeathTest, KeyisArrayView)
+TEST_F(ObjectViewAssertTest, KeyisArrayView)
 {
     // dies because only 1 object in higher.[].low
-    EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getObject("higher.[].low", 1); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = configData.getObject("higher.[].low", 1); });
 }
 
-TEST_F(ObjectViewDeathTest, KeyisNotOptional)
+TEST_F(ObjectViewAssertTest, KeyisNotOptional)
 {
     // dies because not an optional
-    EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getObject("header").maybeValue<std::string>("text1"); }, ".*");
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto _ = configData.getObject("header").maybeValue<std::string>("text1");
+    });
 }

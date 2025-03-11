@@ -19,6 +19,7 @@
 
 #include "feed/impl/TransactionFeed.hpp"
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "feed/Types.hpp"
@@ -174,7 +175,8 @@ void
 TransactionFeed::pub(
     data::TransactionAndMetadata const& txMeta,
     ripple::LedgerHeader const& lgrInfo,
-    std::shared_ptr<data::BackendInterface const> const& backend
+    std::shared_ptr<data::BackendInterface const> const& backend,
+    std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter
 )
 {
     auto [tx, meta] = rpc::deserializeTxPlusMeta(txMeta, lgrInfo.seq);
@@ -187,7 +189,7 @@ TransactionFeed::pub(
         if (account != amount.issue().account) {
             auto fetchFundsSynchronous = [&]() {
                 data::synchronous([&](boost::asio::yield_context yield) {
-                    ownerFunds = rpc::accountFunds(*backend, lgrInfo.seq, amount, account, yield);
+                    ownerFunds = rpc::accountFunds(*backend, *amendmentCenter, lgrInfo.seq, amount, account, yield);
                 });
             };
             data::retryOnTimeout(fetchFundsSynchronous);
