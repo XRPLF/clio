@@ -198,20 +198,24 @@ TEST_F(ConstraintTest, OneOfConstraint)
 
 TEST_F(ConstraintTest, IpConstraint)
 {
-    auto ip = ConfigValue{ConfigType::String}.defaultValue("127.0.0.1").withConstraint(gValidateIp);
-    EXPECT_FALSE(ip.setValue("http://127.0.0.1").has_value());
-    EXPECT_FALSE(ip.setValue("http://127.0.0.1.com").has_value());
-    auto const err = ip.setValue("123.44");
-    EXPECT_TRUE(err.has_value());
-    EXPECT_EQ(err->error, "Unknown_key Ip is not a valid ip address");
-    EXPECT_FALSE(ip.setValue("126.0.0.2"));
+    auto ip = ConfigValue{ConfigType::String}.withConstraint(gValidateIp);
 
-    EXPECT_TRUE(ip.setValue("644.3.3.0"));
-    EXPECT_TRUE(ip.setValue("127.0.0.1.0"));
-    EXPECT_TRUE(ip.setValue(""));
-    EXPECT_TRUE(ip.setValue("http://example..com"));
+    EXPECT_FALSE(ip.setValue("127.0.0.1"));
     EXPECT_FALSE(ip.setValue("localhost"));
-    EXPECT_FALSE(ip.setValue("http://example.com:8080/path"));
+    EXPECT_FALSE(ip.setValue("some-server.com"));
+    EXPECT_FALSE(ip.setValue("126.0.0.2"));
+    EXPECT_FALSE(ip.setValue("valid.host-name.com"));
+
+    EXPECT_TRUE(ip.setValue("http://127.0.0.1"));
+    EXPECT_TRUE(ip.setValue(""));
+    EXPECT_TRUE(ip.setValue("example..com"));
+    EXPECT_TRUE(ip.setValue("example.com:8080/path"));
+    EXPECT_TRUE(ip.setValue("-invalid.com"));
+    EXPECT_TRUE(ip.setValue("invalid-.com"));
+
+    auto const err = ip.setValue("extra$@symbols");
+    ASSERT_TRUE(err.has_value());
+    EXPECT_EQ(err->error, "Unknown_key Ip is not a valid ip address or hostname");
 }
 
 TEST_F(ConstraintTest, positiveNumConstraint)

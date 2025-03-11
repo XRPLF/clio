@@ -22,6 +22,8 @@
 #include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
+#include <boost/asio/ip/address.hpp>
+
 #include <cstdint>
 #include <optional>
 #include <regex>
@@ -68,20 +70,19 @@ ValidIPConstraint::checkTypeImpl(Value const& ip) const
 std::optional<Error>
 ValidIPConstraint::checkValueImpl(Value const& ip) const
 {
-    if (std::get<std::string>(ip) == "localhost")
+    boost::system::error_code errorCode;
+    boost::asio::ip::make_address(std::get<std::string>(ip), errorCode);
+    if (not errorCode.failed())
         return std::nullopt;
 
-    static std::regex const kIPV4(
-        R"(^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$)"
-    );
+    static std::regex const kHOST{
+        R"regex(^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$)regex"
+    };
 
-    static std::regex const kIP_URL(
-        R"(^((http|https):\/\/)?((([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6})|(((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])))(:\d{1,5})?(\/[^\s]*)?$)"
-    );
-    if (std::regex_match(std::get<std::string>(ip), kIPV4) || std::regex_match(std::get<std::string>(ip), kIP_URL))
+    if (std::regex_match(std::get<std::string>(ip), kHOST))
         return std::nullopt;
 
-    return Error{"Ip is not a valid ip address"};
+    return Error{"Ip is not a valid ip address or hostname"};
 }
 
 std::optional<Error>
