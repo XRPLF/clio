@@ -21,6 +21,7 @@
 
 #include "data/LedgerCacheInterface.hpp"
 #include "data/Types.hpp"
+#include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
@@ -77,8 +78,16 @@ class LedgerCache : public LedgerCacheInterface {
     mutable std::shared_mutex mtx_;
     std::condition_variable_any cv_;
     uint32_t latestSeq_ = 0;
-    std::atomic_bool full_ = false;
-    std::atomic_bool disabled_ = false;
+    util::prometheus::Bool full_{PrometheusService::boolMetric(
+        "ledger_cache_full",
+        util::prometheus::Labels{},
+        "Whether ledger cache full or not"
+    )};
+    util::prometheus::Bool disabled_{PrometheusService::boolMetric(
+        "ledger_cache_disabled",
+        util::prometheus::Labels{},
+        "Whether ledger cache is disabled or not"
+    )};
 
     // temporary set to prevent background thread from writing already deleted data. not used when cache is full
     std::unordered_set<ripple::uint256, ripple::hardened_hash<>> deletes_;
