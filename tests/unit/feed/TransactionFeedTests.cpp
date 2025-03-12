@@ -45,6 +45,8 @@
 #include <memory>
 #include <vector>
 
+using namespace data;
+
 namespace {
 
 constexpr auto kACCOUNT1 = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";

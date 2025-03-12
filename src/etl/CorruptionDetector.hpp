@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/LedgerCacheInterface.hpp"
 #include "etl/SystemState.hpp"
 #include "util/log/Logger.hpp"
 
@@ -31,10 +32,9 @@ namespace etl {
  *
  * @tparam CacheType The type of the cache to disable on corruption
  */
-template <typename CacheType>
 class CorruptionDetector {
     std::reference_wrapper<SystemState> state_;
-    std::reference_wrapper<CacheType> cache_;
+    std::reference_wrapper<data::LedgerCacheInterface> cache_;
 
     util::Logger log_{"ETL"};
 
@@ -45,7 +45,8 @@ public:
      * @param state The system state
      * @param cache The cache to disable on corruption
      */
-    CorruptionDetector(SystemState& state, CacheType& cache) : state_{std::ref(state)}, cache_{std::ref(cache)}
+    CorruptionDetector(SystemState& state, data::LedgerCacheInterface& cache)
+        : state_{std::ref(state)}, cache_{std::ref(cache)}
     {
     }
 

@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "data/BackendFactory.hpp"
+#include "data/LedgerCache.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
@@ -97,7 +98,8 @@ protected:
 TEST_F(BackendCassandraFactoryTest, NoSuchBackend)
 {
     useConfig(R"json( {"database": {"type": "unknown"}} )json");
-    EXPECT_THROW(data::makeBackend(cfg_), std::runtime_error);
+    auto cache = data::LedgerCache{};
+    EXPECT_THROW(data::makeBackend(cfg_, cache), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
@@ -111,13 +113,15 @@ TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
         }}
     )json");
 
-    EXPECT_THROW(data::makeBackend(cfg_), std::runtime_error);
+    auto cache = data::LedgerCache{};
+    EXPECT_THROW(data::makeBackend(cfg_, cache), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
 {
     {
-        auto backend = data::makeBackend(cfg_);
+        auto cache = data::LedgerCache{};
+        auto backend = data::makeBackend(cfg_, cache);
         EXPECT_TRUE(backend);
 
         // empty db does not have ledger range
@@ -131,7 +135,8 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
     }
 
     {
-        auto backend = data::makeBackend(cfg_);
+        auto cache = data::LedgerCache{};
+        auto backend = data::makeBackend(cfg_, cache);
         EXPECT_TRUE(backend);
 
         auto const range = backend->fetchLedgerRange();
@@ -143,7 +148,8 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmptyDB)
 {
     useConfig(R"json( {"read_only": true} )json");
-    EXPECT_THROW(data::makeBackend(cfg_), std::runtime_error);
+    auto cache = data::LedgerCache{};
+    EXPECT_THROW(data::makeBackend(cfg_, cache), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBReady)
@@ -151,6 +157,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBRe
     auto cfgReadOnly = cfg_;
     ASSERT_FALSE(cfgReadOnly.parse(ConfigFileJson{boost::json::parse(R"json( {"read_only": true} )json").as_object()}));
 
-    EXPECT_TRUE(data::makeBackend(cfg_));
-    EXPECT_TRUE(data::makeBackend(cfgReadOnly));
+    auto cache = data::LedgerCache{};
+    EXPECT_TRUE(data::makeBackend(cfg_, cache));
+    EXPECT_TRUE(data::makeBackend(cfgReadOnly, cache));
 }

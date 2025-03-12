@@ -20,9 +20,8 @@
 #pragma once
 
 #include "data/CassandraBackend.hpp"
+#include "data/LedgerCacheInterface.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
-#include "data/cassandra/Types.hpp"
-#include "migration/MigratiorStatus.hpp"
 #include "migration/cassandra/impl/CassandraMigrationSchema.hpp"
 #include "migration/cassandra/impl/Spec.hpp"
 #include "util/log/Logger.hpp"
@@ -49,9 +48,13 @@ public:
      * @brief Construct a new Cassandra Migration Backend object. The backend is not readonly.
      *
      * @param settingsProvider The settings provider
+     * @param cache The ledger cache to use
      */
-    explicit CassandraMigrationBackend(data::cassandra::SettingsProvider settingsProvider)
-        : data::cassandra::CassandraBackend{auto{settingsProvider}, false /* not readonly */}
+    explicit CassandraMigrationBackend(
+        data::cassandra::SettingsProvider settingsProvider,
+        data::LedgerCacheInterface& cache
+    )
+        : data::cassandra::CassandraBackend{auto{settingsProvider}, cache, false /* not readonly */}
         , settingsProvider_(std::move(settingsProvider))
         , migrationSchema_{settingsProvider_}
     {

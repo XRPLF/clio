@@ -32,6 +32,7 @@
 #include <optional>
 
 using namespace testing;
+using namespace data;
 
 struct MigrationInspectorFactoryTests : util::prometheus::WithPrometheus,
                                         common::util::WithMockAssert,

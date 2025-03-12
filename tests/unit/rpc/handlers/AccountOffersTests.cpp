@@ -53,6 +53,7 @@ constexpr auto kINDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1
 }  // namespace
 
 using namespace rpc;
+using namespace data;
 namespace json = boost::json;
 using namespace testing;
 

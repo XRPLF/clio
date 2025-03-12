@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
+#include "data/LedgerCacheInterface.hpp"
 #include "data/Types.hpp"
 #include "data/cassandra/Concepts.hpp"
 #include "data/cassandra/Handle.hpp"
@@ -88,10 +89,12 @@ public:
      * @brief Create a new cassandra/scylla backend instance.
      *
      * @param settingsProvider The settings provider to use
+     * @param cache The ledger cache to use
      * @param readOnly Whether the database should be in readonly mode
      */
-    BasicCassandraBackend(SettingsProviderType settingsProvider, bool readOnly)
-        : settingsProvider_{std::move(settingsProvider)}
+    BasicCassandraBackend(SettingsProviderType settingsProvider, data::LedgerCacheInterface& cache, bool readOnly)
+        : BackendInterface(cache)
+        , settingsProvider_{std::move(settingsProvider)}
         , schema_{settingsProvider_}
         , handle_{settingsProvider_.getSettings()}
         , executor_{settingsProvider_.getSettings(), handle_}

@@ -44,6 +44,7 @@ constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF2
 }  // namespace
 
 using namespace rpc;
+using namespace data;
 namespace json = boost::json;
 using namespace testing;
 

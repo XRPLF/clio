@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
+#include "data/LedgerCache.hpp"
 #include "data/Types.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 
@@ -36,10 +37,8 @@
 #include <string>
 #include <vector>
 
-using namespace data;
-
 struct MockBackend : public BackendInterface {
-    MockBackend(util::config::ClioConfigDefinition)
+    MockBackend(util::config::ClioConfigDefinition) : BackendInterface(cache_)
     {
     }
 
@@ -65,32 +64,32 @@ struct MockBackend : public BackendInterface {
     );
 
     MOCK_METHOD(
-        std::optional<TransactionAndMetadata>,
+        std::optional<data::TransactionAndMetadata>,
         fetchTransaction,
         (ripple::uint256 const&, boost::asio::yield_context),
         (const, override)
     );
 
     MOCK_METHOD(
-        std::vector<TransactionAndMetadata>,
+        std::vector<data::TransactionAndMetadata>,
         fetchTransactions,
         (std::vector<ripple::uint256> const&, boost::asio::yield_context),
         (const, override)
     );
 
     MOCK_METHOD(
-        TransactionsAndCursor,
+        data::TransactionsAndCursor,
         fetchAccountTransactions,
         (ripple::AccountID const&,
          std::uint32_t const,
          bool,
-         std::optional<TransactionsCursor> const&,
+         std::optional<data::TransactionsCursor> const&,
          boost::asio::yield_context),
         (const, override)
     );
 
     MOCK_METHOD(
-        std::vector<TransactionAndMetadata>,
+        std::vector<data::TransactionAndMetadata>,
         fetchAllTransactionsInLedger,
         (std::uint32_t const, boost::asio::yield_context),
         (const, override)
@@ -104,25 +103,25 @@ struct MockBackend : public BackendInterface {
     );
 
     MOCK_METHOD(
-        std::optional<NFT>,
+        std::optional<data::NFT>,
         fetchNFT,
         (ripple::uint256 const&, std::uint32_t const, boost::asio::yield_context),
         (const, override)
     );
 
     MOCK_METHOD(
-        TransactionsAndCursor,
+        data::TransactionsAndCursor,
         fetchNFTTransactions,
         (ripple::uint256 const&,
          std::uint32_t const,
          bool const,
-         std::optional<TransactionsCursor> const&,
+         std::optional<data::TransactionsCursor> const&,
          boost::asio::yield_context),
         (const, override)
     );
 
     MOCK_METHOD(
-        NFTsAndCursor,
+        data::NFTsAndCursor,
         fetchNFTsByIssuer,
         (ripple::AccountID const& issuer,
          std::optional<std::uint32_t> const& taxon,
@@ -134,7 +133,7 @@ struct MockBackend : public BackendInterface {
     );
 
     MOCK_METHOD(
-        std::vector<Blob>,
+        std::vector<data::Blob>,
         doFetchLedgerObjects,
         (std::vector<ripple::uint256> const&, std::uint32_t const, boost::asio::yield_context),
         (const, override)
@@ -148,7 +147,7 @@ struct MockBackend : public BackendInterface {
     );
 
     MOCK_METHOD(
-        std::optional<Blob>,
+        std::optional<data::Blob>,
         doFetchLedgerObject,
         (ripple::uint256 const&, std::uint32_t const, boost::asio::yield_context),
         (const, override)
@@ -162,7 +161,7 @@ struct MockBackend : public BackendInterface {
     );
 
     MOCK_METHOD(
-        std::vector<LedgerObject>,
+        std::vector<data::LedgerObject>,
         fetchLedgerDiff,
         (std::uint32_t const, boost::asio::yield_context),
         (const, override)
@@ -182,7 +181,12 @@ struct MockBackend : public BackendInterface {
         (const, override)
     );
 
-    MOCK_METHOD(std::optional<LedgerRange>, hardFetchLedgerRange, (boost::asio::yield_context), (const, override));
+    MOCK_METHOD(
+        std::optional<data::LedgerRange>,
+        hardFetchLedgerRange,
+        (boost::asio::yield_context),
+        (const, override)
+    );
 
     MOCK_METHOD(void, writeLedger, (ripple::LedgerHeader const&, std::string&&), (override));
 
@@ -218,7 +222,7 @@ struct MockBackend : public BackendInterface {
     MOCK_METHOD(void, writeMPTHolders, (std::vector<MPTHolderData> const&), (override));
 
     MOCK_METHOD(
-        MPTHoldersAndCursor,
+        data::MPTHoldersAndCursor,
         fetchMPTHolders,
         (ripple::uint192 const& mptID,
          std::uint32_t const,
@@ -229,4 +233,7 @@ struct MockBackend : public BackendInterface {
     );
 
     MOCK_METHOD(void, writeMigratorStatus, (std::string const&, std::string const&), (override));
+
+protected:
+    data::LedgerCache cache_;  // TODO: this should probably be injected and MockLedgerCache instead
 };
