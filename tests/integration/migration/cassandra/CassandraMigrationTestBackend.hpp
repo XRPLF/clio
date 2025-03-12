@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/LedgerCacheInterface.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/Schema.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
@@ -50,9 +51,10 @@ public:
      * @brief Construct a new Cassandra Migration Test Backend object
      *
      * @param settingsProvider The settings provider for the Cassandra backend
+     * @param cache The ledger cache to use
      */
-    CassandraMigrationTestBackend(data::cassandra::SettingsProvider settingsProvider)
-        : migration::cassandra::CassandraMigrationBackend(settingsProvider)
+    CassandraMigrationTestBackend(data::cassandra::SettingsProvider settingsProvider, data::LedgerCacheInterface& cache)
+        : migration::cassandra::CassandraMigrationBackend(settingsProvider, cache)
         , settingsProvider_(std::move(settingsProvider))
 
     {

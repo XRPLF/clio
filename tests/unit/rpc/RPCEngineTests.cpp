@@ -56,6 +56,7 @@
 #include <variant>
 #include <vector>
 
+using namespace data;
 using namespace rpc;
 using namespace util;
 namespace json = boost::json;

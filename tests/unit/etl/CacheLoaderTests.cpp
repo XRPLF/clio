@@ -23,7 +23,7 @@
 #include "etl/FakeDiffProvider.hpp"
 #include "etl/impl/CacheLoader.hpp"
 #include "util/MockBackendTestFixture.hpp"
-#include "util/MockCache.hpp"
+#include "util/MockLedgerCache.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
@@ -75,7 +75,7 @@ constexpr auto kSEQ = 30;
 
 struct CacheLoaderTest : util::prometheus::WithPrometheus, MockBackendTest {
     DiffProvider diffProvider;
-    MockCache cache;
+    MockLedgerCache cache;
 };
 
 using Settings = etl::CacheLoaderSettings;
@@ -137,7 +137,7 @@ TEST_P(ParametrizedCacheLoaderTest, LoadCacheWithDifferentSettings)
     async::CoroExecutionContext ctx{settings.numThreads};
     etl::impl::CursorFromFixDiffNumProvider const provider{backend_, settings.numCacheDiffs};
 
-    etl::impl::CacheLoaderImpl<MockCache> loader{
+    etl::impl::CacheLoaderImpl<MockLedgerCache> loader{
         ctx, backend_, cache, kSEQ, settings.numCacheMarkers, settings.cachePageFetchSize, provider.getCursors(kSEQ)
     };
 
@@ -166,7 +166,7 @@ TEST_P(ParametrizedCacheLoaderTest, AutomaticallyCancelledAndAwaitedInDestructor
     async::CoroExecutionContext ctx{settings.numThreads};
     etl::impl::CursorFromFixDiffNumProvider const provider{backend_, settings.numCacheDiffs};
 
-    etl::impl::CacheLoaderImpl<MockCache> const loader{
+    etl::impl::CacheLoaderImpl<MockLedgerCache> const loader{
         ctx, backend_, cache, kSEQ, settings.numCacheMarkers, settings.cachePageFetchSize, provider.getCursors(kSEQ)
     };
 
@@ -195,7 +195,7 @@ TEST_P(ParametrizedCacheLoaderTest, CacheDisabledLeadsToCancellation)
     async::CoroExecutionContext ctx{settings.numThreads};
     etl::impl::CursorFromFixDiffNumProvider const provider{backend_, settings.numCacheDiffs};
 
-    etl::impl::CacheLoaderImpl<MockCache> loader{
+    etl::impl::CacheLoaderImpl<MockLedgerCache> loader{
         ctx, backend_, cache, kSEQ, settings.numCacheMarkers, settings.cachePageFetchSize, provider.getCursors(kSEQ)
     };
 
@@ -208,7 +208,7 @@ TEST_P(ParametrizedCacheLoaderTest, CacheDisabledLeadsToCancellation)
 TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
 {
     auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"load": "sync"}})"));
-    CacheLoader loader{cfg, backend_, cache};
+    CacheLoader<> loader{cfg, backend_, cache};
 
     auto const diffs = diffProvider.getLatestDiff();
     auto const loops = diffs.size() + 1;

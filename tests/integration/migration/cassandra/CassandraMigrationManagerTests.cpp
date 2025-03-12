@@ -19,6 +19,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
+#include "data/LedgerCache.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
 #include "migration/MigrationManagerInterface.hpp"
@@ -75,7 +76,9 @@ makeMigrationTestManagerAndBackend(ClioConfigDefinition const& config)
 {
     auto const cfg = config.getObject("database.cassandra");
 
-    auto const backendPtr = std::make_shared<CassandraMigrationTestBackend>(data::cassandra::SettingsProvider{cfg});
+    auto cache = data::LedgerCache{};
+    auto const backendPtr =
+        std::make_shared<CassandraMigrationTestBackend>(data::cassandra::SettingsProvider{cfg}, cache);
 
     return std::make_pair(
         std::make_shared<CassandraMigrationTestManager>(backendPtr, config.getObject("migration")), backendPtr

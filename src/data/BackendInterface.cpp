@@ -87,7 +87,7 @@ BackendInterface::fetchLedgerObject(
     boost::asio::yield_context yield
 ) const
 {
-    auto obj = cache_.get(key, sequence);
+    auto obj = cache_.get().get(key, sequence);
     if (obj) {
         LOG(gLog.trace()) << "Cache hit - " << ripple::strHex(key);
         return obj;
@@ -126,7 +126,7 @@ BackendInterface::fetchLedgerObjects(
     results.resize(keys.size());
     std::vector<ripple::uint256> misses;
     for (size_t i = 0; i < keys.size(); ++i) {
-        auto obj = cache_.get(keys[i], sequence);
+        auto obj = cache_.get().get(keys[i], sequence);
         if (obj) {
             results[i] = *obj;
         } else {
@@ -156,7 +156,7 @@ BackendInterface::fetchSuccessorKey(
     boost::asio::yield_context yield
 ) const
 {
-    auto succ = cache_.getSuccessor(key, ledgerSequence);
+    auto succ = cache_.get().getSuccessor(key, ledgerSequence);
     if (succ) {
         LOG(gLog.trace()) << "Cache hit - " << ripple::strHex(key);
     } else {

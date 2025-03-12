@@ -21,7 +21,6 @@
 
 #include "util/log/Logger.hpp"
 
-
 #include <cstdlib>
 #include <iostream>
 #include <string_view>

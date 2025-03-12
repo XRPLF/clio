@@ -61,6 +61,7 @@ constexpr auto kRANGE_MAX = 30;
 }  // namespace
 
 using namespace rpc;
+using namespace data;
 namespace json = boost::json;
 using namespace testing;
 

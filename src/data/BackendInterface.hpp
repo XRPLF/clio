@@ -20,7 +20,7 @@
 #pragma once
 
 #include "data/DBHelpers.hpp"
-#include "data/LedgerCache.hpp"
+#include "data/LedgerCacheInterface.hpp"
 #include "data/Types.hpp"
 #include "etl/CorruptionDetector.hpp"
 #include "util/log/Logger.hpp"
@@ -40,6 +40,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <exception>
+#include <functional>
 #include <optional>
 #include <shared_mutex>
 #include <string>
@@ -139,18 +140,27 @@ class BackendInterface {
 protected:
     mutable std::shared_mutex rngMtx_;
     std::optional<LedgerRange> range_;
-    LedgerCache cache_;
-    std::optional<etl::CorruptionDetector<LedgerCache>> corruptionDetector_;
+    std::reference_wrapper<LedgerCacheInterface> cache_;
+    std::optional<etl::CorruptionDetector> corruptionDetector_;
 
 public:
-    BackendInterface() = default;
+    /**
+     * @brief Construct a new backend interface instance.
+     *
+     * @param cache The ledger cache to use
+     */
+    BackendInterface(LedgerCacheInterface& cache) : cache_{cache}
+    {
+    }
     virtual ~BackendInterface() = default;
 
-    // TODO: Remove this hack. Cache should not be exposed thru BackendInterface
+    // TODO: Remove this hack once old ETL is removed.
+    // Cache should not be exposed thru BackendInterface
+
     /**
      * @return Immutable cache
      */
-    LedgerCache const&
+    LedgerCacheInterface const&
     cache() const
     {
         return cache_;
@@ -159,7 +169,7 @@ public:
     /**
      * @return Mutable cache
      */
-    LedgerCache&
+    LedgerCacheInterface&
     cache()
     {
         return cache_;
@@ -171,7 +181,7 @@ public:
      * @param detector The corruption detector to set
      */
     void
-    setCorruptionDetector(etl::CorruptionDetector<LedgerCache> detector)
+    setCorruptionDetector(etl::CorruptionDetector detector)
     {
         corruptionDetector_ = std::move(detector);
     }

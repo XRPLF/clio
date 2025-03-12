@@ -20,7 +20,6 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "data/LedgerCache.hpp"
 #include "etl/CacheLoader.hpp"
 #include "etl/ETLState.hpp"
 #include "etl/LoadBalancer.hpp"
@@ -86,12 +85,11 @@ class ETLService : public ETLServiceTag {
     // TODO: make these template parameters in ETLService
     using LoadBalancerType = LoadBalancer;
     using DataPipeType = etl::impl::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
-    using CacheType = data::LedgerCache;
-    using CacheLoaderType = etl::CacheLoader<CacheType>;
+    using CacheLoaderType = etl::CacheLoader<>;
     using LedgerFetcherType = etl::impl::LedgerFetcher<LoadBalancerType>;
     using ExtractorType = etl::impl::Extractor<DataPipeType, LedgerFetcherType>;
     using LedgerLoaderType = etl::impl::LedgerLoader<LoadBalancerType, LedgerFetcherType>;
-    using LedgerPublisherType = etl::impl::LedgerPublisher<CacheType>;
+    using LedgerPublisherType = etl::impl::LedgerPublisher;
     using AmendmentBlockHandlerType = etl::impl::AmendmentBlockHandler;
     using TransformerType =
         etl::impl::Transformer<DataPipeType, LedgerLoaderType, LedgerPublisherType, AmendmentBlockHandlerType>;

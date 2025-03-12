@@ -42,6 +42,7 @@
 
 using namespace etlng::model;
 using namespace etlng::impl;
+using namespace data;
 
 namespace {
 

@@ -23,7 +23,7 @@
 #include "etl/impl/LedgerPublisher.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
-#include "util/MockCache.hpp"
+#include "util/MockLedgerCache.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/TestObject.hpp"
@@ -41,6 +41,7 @@
 
 using namespace testing;
 using namespace etl;
+using namespace data;
 using namespace std::chrono;
 
 namespace {
@@ -66,7 +67,7 @@ struct ETLLedgerPublisherTest : util::prometheus::WithPrometheus, MockBackendTes
         SyncAsioContextTest::TearDown();
     }
     util::config::ClioConfigDefinition cfg{{}};
-    MockCache mockCache;
+    MockLedgerCache mockCache;
     StrictMockSubscriptionManagerSharedPtr mockSubscriptionManagerPtr;
 };
 

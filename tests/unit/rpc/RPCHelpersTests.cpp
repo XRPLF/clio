@@ -58,6 +58,7 @@
 #include <variant>
 #include <vector>
 
+using namespace data;
 using namespace rpc;
 using namespace testing;
 

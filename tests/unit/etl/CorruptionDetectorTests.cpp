@@ -20,7 +20,7 @@
 #include "etl/CorruptionDetector.hpp"
 #include "etl/SystemState.hpp"
 #include "util/LoggerFixtures.hpp"
-#include "util/MockCache.hpp"
+#include "util/MockLedgerCache.hpp"
 #include "util/MockPrometheus.hpp"
 
 #include <gmock/gmock.h>
@@ -36,7 +36,7 @@ TEST_F(CorruptionDetectorTest, DisableCacheOnCorruption)
 {
     using namespace ripple;
     auto state = etl::SystemState{};
-    auto cache = MockCache{};
+    auto cache = MockLedgerCache{};
     auto detector = etl::CorruptionDetector{state, cache};
 
     EXPECT_CALL(cache, setDisabled()).Times(1);

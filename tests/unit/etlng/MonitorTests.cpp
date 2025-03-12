@@ -36,6 +36,7 @@
 #include <semaphore>
 
 using namespace etlng::impl;
+using namespace data;
 
 namespace {
 constexpr auto kSTART_SEQ = 123u;
