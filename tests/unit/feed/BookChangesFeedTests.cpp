@@ -30,6 +30,7 @@
 #include <vector>
 
 using namespace feed::impl;
+using namespace data;
 
 namespace {
 

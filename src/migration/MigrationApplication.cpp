@@ -41,7 +41,7 @@ MigratorApplication::MigratorApplication(util::config::ClioConfigDefinition cons
 {
     PrometheusService::init(config);
 
-    auto expectedMigrationManager = migration::impl::makeMigrationManager(config);
+    auto expectedMigrationManager = migration::impl::makeMigrationManager(config, cache_);
 
     if (not expectedMigrationManager) {
         throw std::runtime_error("Failed to create migration manager: " + expectedMigrationManager.error());

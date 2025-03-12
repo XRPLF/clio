@@ -23,6 +23,7 @@
 #include "app/WebHandlers.hpp"
 #include "data/AmendmentCenter.hpp"
 #include "data/BackendFactory.hpp"
+#include "data/LedgerCache.hpp"
 #include "etl/ETLService.hpp"
 #include "etl/LoadBalancer.hpp"
 #include "etl/NetworkValidatedLedgers.hpp"
@@ -102,9 +103,10 @@ ClioApplication::run(bool const useNgWebServer)
     auto whitelistHandler = web::dosguard::WhitelistHandler{config_};
     auto dosGuard = web::dosguard::DOSGuard{config_, whitelistHandler};
     auto sweepHandler = web::dosguard::IntervalSweepHandler{config_, ioc, dosGuard};
+    auto cache = data::LedgerCache{};
 
     // Interface to the database
-    auto backend = data::makeBackend(config_);
+    auto backend = data::makeBackend(config_, cache);
 
     auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
 

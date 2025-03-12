@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
+#include "data/LedgerCacheInterface.hpp"
 #include "data/Types.hpp"
 #include "etl/SystemState.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
@@ -38,6 +39,7 @@
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/Serializer.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -64,14 +66,13 @@ namespace etl::impl {
  * includes reading all of the transactions from the database) is done from the application wide asio io_service, and a
  * strand is used to ensure ledgers are published in order.
  */
-template <typename CacheType>
 class LedgerPublisher {
     util::Logger log_{"ETL"};
 
     boost::asio::strand<boost::asio::io_context::executor_type> publishStrand_;
 
     std::shared_ptr<BackendInterface> backend_;
-    std::reference_wrapper<CacheType> cache_;
+    std::reference_wrapper<data::LedgerCacheInterface> cache_;
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
     std::reference_wrapper<SystemState const> state_;  // shared state for ETL
 
@@ -94,7 +95,7 @@ public:
     LedgerPublisher(
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
-        CacheType& cache,
+        data::LedgerCacheInterface& cache,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         SystemState const& state
     )
@@ -205,7 +206,7 @@ public:
                 subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
 
                 // order with transaction index
-                std::sort(transactions.begin(), transactions.end(), [](auto const& t1, auto const& t2) {
+                std::ranges::sort(transactions, [](auto const& t1, auto const& t2) {
                     ripple::SerialIter iter1{t1.metadata.data(), t1.metadata.size()};
                     ripple::STObject const object1(iter1, ripple::sfMetadata);
                     ripple::SerialIter iter2{t2.metadata.data(), t2.metadata.size()};

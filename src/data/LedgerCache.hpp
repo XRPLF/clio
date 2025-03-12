@@ -19,7 +19,9 @@
 
 #pragma once
 
+#include "data/LedgerCacheInterface.hpp"
 #include "data/Types.hpp"
+#include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
@@ -43,7 +45,7 @@ namespace data {
 /**
  * @brief Cache for an entire ledger.
  */
-class LedgerCache {
+class LedgerCache : public LedgerCacheInterface {
     struct CacheEntry {
         uint32_t seq = 0;
         Blob blob;
@@ -76,116 +78,59 @@ class LedgerCache {
     mutable std::shared_mutex mtx_;
     std::condition_variable_any cv_;
     uint32_t latestSeq_ = 0;
-    std::atomic_bool full_ = false;
-    std::atomic_bool disabled_ = false;
+    util::prometheus::Bool full_{PrometheusService::boolMetric(
+        "ledger_cache_full",
+        util::prometheus::Labels{},
+        "Whether ledger cache full or not"
+    )};
+    util::prometheus::Bool disabled_{PrometheusService::boolMetric(
+        "ledger_cache_disabled",
+        util::prometheus::Labels{},
+        "Whether ledger cache is disabled or not"
+    )};
 
     // temporary set to prevent background thread from writing already deleted data. not used when cache is full
     std::unordered_set<ripple::uint256, ripple::hardened_hash<>> deletes_;
 
 public:
-    /**
-     * @brief Update the cache with new ledger objects.
-     *
-     * @param objs The ledger objects to update cache with
-     * @param seq The sequence to update cache for
-     * @param isBackground Should be set to true when writing old data from a background thread
-     */
     void
-    update(std::vector<LedgerObject> const& objs, uint32_t seq, bool isBackground = false);
+    update(std::vector<LedgerObject> const& objs, uint32_t seq, bool isBackground = false) override;
 
-    /**
-     * @brief Fetch a cached object by its key and sequence number.
-     *
-     * @param key The key to fetch for
-     * @param seq The sequence to fetch for
-     * @return If found in cache, will return the cached Blob; otherwise nullopt is returned
-     */
     std::optional<Blob>
-    get(ripple::uint256 const& key, uint32_t seq) const;
+    get(ripple::uint256 const& key, uint32_t seq) const override;
 
-    /**
-     * @brief Gets a cached successor.
-     *
-     * Note: This function always returns std::nullopt when @ref isFull() returns false.
-     *
-     * @param key The key to fetch for
-     * @param seq The sequence to fetch for
-     * @return If found in cache, will return the cached successor; otherwise nullopt is returned
-     */
     std::optional<LedgerObject>
-    getSuccessor(ripple::uint256 const& key, uint32_t seq) const;
+    getSuccessor(ripple::uint256 const& key, uint32_t seq) const override;
 
-    /**
-     * @brief Gets a cached predcessor.
-     *
-     * Note: This function always returns std::nullopt when @ref isFull() returns false.
-     *
-     * @param key The key to fetch for
-     * @param seq The sequence to fetch for
-     * @return If found in cache, will return the cached predcessor; otherwise nullopt is returned
-     */
     std::optional<LedgerObject>
-    getPredecessor(ripple::uint256 const& key, uint32_t seq) const;
+    getPredecessor(ripple::uint256 const& key, uint32_t seq) const override;
 
-    /**
-     * @brief Disables the cache.
-     */
     void
-    setDisabled();
+    setDisabled() override;
 
-    /**
-     * @return true if the cache is disabled; false otherwise
-     */
     bool
-    isDisabled() const;
+    isDisabled() const override;
 
-    /**
-     * @brief Sets the full flag to true.
-     *
-     * This is used when cache loaded in its entirety at startup of the application. This can be either loaded from DB,
-     * populated together with initial ledger download (on first run) or downloaded from a peer node (specified in
-     * config).
-     */
     void
-    setFull();
+    setFull() override;
 
-    /**
-     * @return The latest ledger sequence for which cache is available.
-     */
     uint32_t
-    latestLedgerSequence() const;
+    latestLedgerSequence() const override;
 
-    /**
-     * @return true if the cache has all data for the most recent ledger; false otherwise
-     */
     bool
-    isFull() const;
+    isFull() const override;
 
-    /**
-     * @return The total size of the cache.
-     */
     size_t
-    size() const;
+    size() const override;
 
-    /**
-     * @return A number representing the success rate of hitting an object in the cache versus missing it.
-     */
     float
-    getObjectHitRate() const;
+    getObjectHitRate() const override;
 
-    /**
-     * @return A number representing the success rate of hitting a successor in the cache versus missing it.
-     */
     float
-    getSuccessorHitRate() const;
+    getSuccessorHitRate() const override;
 
-    /**
-     * @brief Waits until the cache contains a specific sequence.
-     *
-     * @param seq The sequence to wait for
-     */
     void
-    waitUntilCacheContainsSeq(uint32_t seq);
+    waitUntilCacheContainsSeq(uint32_t seq) override;
 };
 
 }  // namespace data

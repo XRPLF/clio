@@ -285,6 +285,6 @@ ETLService::ETLService(
     txnThreshold_ = config.get<std::size_t>("txn_threshold");
 
     // This should probably be done in the backend factory but we don't have state available until here
-    backend_->setCorruptionDetector(CorruptionDetector<data::LedgerCache>{state_, backend->cache()});
+    backend_->setCorruptionDetector(CorruptionDetector{state_, backend->cache()});
 }
 }  // namespace etl

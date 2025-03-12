@@ -39,6 +39,7 @@
 #include <vector>
 
 using namespace rpc;
+using namespace data;
 
 namespace {
 

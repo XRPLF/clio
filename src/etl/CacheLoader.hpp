@@ -20,6 +20,7 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "data/LedgerCacheInterface.hpp"
 #include "etl/CacheLoaderSettings.hpp"
 #include "etl/impl/CacheLoader.hpp"
 #include "etl/impl/CursorFromAccountProvider.hpp"
@@ -44,13 +45,13 @@ namespace etl {
  * @tparam CursorProviderType The type of the cursor provider to use
  * @tparam ExecutionContextType The type of the execution context to use
  */
-template <typename CacheType, typename ExecutionContextType = util::async::CoroExecutionContext>
+template <typename ExecutionContextType = util::async::CoroExecutionContext>
 class CacheLoader {
-    using CacheLoaderType = impl::CacheLoaderImpl<CacheType>;
+    using CacheLoaderType = impl::CacheLoaderImpl<data::LedgerCacheInterface>;
 
     util::Logger log_{"ETL"};
     std::shared_ptr<BackendInterface> backend_;
-    std::reference_wrapper<CacheType> cache_;
+    std::reference_wrapper<data::LedgerCacheInterface> cache_;
 
     CacheLoaderSettings settings_;
     ExecutionContextType ctx_;
@@ -67,7 +68,7 @@ public:
     CacheLoader(
         util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface> const& backend,
-        CacheType& cache
+        data::LedgerCacheInterface& cache
     )
         : backend_{backend}, cache_{cache}, settings_{makeCacheLoaderSettings(config)}, ctx_{settings_.numThreads}
     {

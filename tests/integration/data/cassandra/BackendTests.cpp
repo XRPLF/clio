@@ -20,6 +20,7 @@
 #include "data/BackendInterface.hpp"
 #include "data/CassandraBackend.hpp"
 #include "data/DBHelpers.hpp"
+#include "data/LedgerCache.hpp"
 #include "data/Types.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
@@ -104,13 +105,14 @@ protected:
     SettingsProvider settingsProvider_{obj_};
 
     // recreated for each test
+    data::LedgerCache cache_;
     std::unique_ptr<BackendInterface> backend_;
 
     void
     SetUp() override
     {
         SyncAsioContextTest::SetUp();
-        backend_ = std::make_unique<CassandraBackend>(settingsProvider_, false);
+        backend_ = std::make_unique<CassandraBackend>(settingsProvider_, cache_, false);
     }
     void
     TearDown() override
