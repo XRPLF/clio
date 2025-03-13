@@ -217,8 +217,10 @@ public:
         stream << "- **Type**: " << val.type() << "\n";
         if (val.description_.has_value()) {
             stream << "- **Default value**: " << *val.description_ << "\n";
+        } else if (val.hasValue()) {
+            stream << "- **Default value**: `" << *val.value_ << "`\n";
         } else {
-            stream << "- **Default value**: " << (val.hasValue() ? *val.value_ : "None") << "\n";
+            stream << "- **Default value**: None\n";
         }
         stream << "- **Constraints**: ";
 

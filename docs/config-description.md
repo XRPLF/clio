@@ -380,14 +380,14 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `48`
-- **Constraints**: The minimum value is `0`. The maximum value is `65535`
+- **Constraints**: The minimum value is `0`. The maximum value is `65535`.
 - **Description**: The number of markers to cache.
 
 ### cache.num_cursors_from_diff
 
 - **Required**: True
 - **Type**: int
-- **Default value**: 0
+- **Default value**: `0`
 - **Constraints**: The minimum value is `0`. The maximum value is `65535`.
 - **Description**: The number of cursors that are different.
 
@@ -468,7 +468,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `2048`
-- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The log rotation size in megabytes. When the log file reaches this particular size, a new log file starts.
 
 ### log_directory_max_size
@@ -491,7 +491,7 @@ This document provides a list of all available Clio configuration properties in 
 
 - **Required**: True
 - **Type**: string
-- **Default value**: none
+- **Default value**: `none`
 - **Constraints**: The value must be one of the following: `int`, `uint`, `null`, `none`, `uuid`.
 - **Description**: The style for log tags.
 
@@ -524,7 +524,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: False
 - **Type**: int
 - **Default value**: None
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`
+- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
 - **Description**: Starting ledger index.
 
 ### finish_sequence
@@ -532,7 +532,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: False
 - **Type**: int
 - **Default value**: None
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`
+- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
 - **Description**: The ending ledger index.
 
 ### ssl_cert_file

@@ -173,10 +173,11 @@ TEST(ConfigDescription, GetValues)
 
     EXPECT_EQ(
         definition.get("database.type"),
-        "Type of database to use. We currently support Cassandra and Scylladb. We default to Scylladb."
+        "Specifies the type of database to use for storing and retrieving data needed by the Clio server. Supported "
+        "options are Cassandra and ScyllaDB. If you don't provide a value, the Clio server uses ScyllaDB by default."
     );
-    EXPECT_EQ(definition.get("etl_sources.[].ip"), "IP address of the ETL source.");
-    EXPECT_EQ(definition.get("prometheus.enabled"), "Enable or disable Prometheus metrics.");
+    EXPECT_EQ(definition.get("etl_sources.[].ip"), "The IP address of the ETL source.");
+    EXPECT_EQ(definition.get("prometheus.enabled"), "Enables or disables Prometheus metrics.");
 }
 
 struct ConfigDescriptionAssertTest : common::util::WithMockAssert {};

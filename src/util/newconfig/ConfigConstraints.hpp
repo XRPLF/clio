@@ -78,7 +78,7 @@ static constexpr std::array<char const*, 3> kLOAD_CACHE_MODE = {
 /**
  * @brief specific values that are accepted for database type in config.
  */
-static constexpr std::array<char const*, 1> kDATABASE_TYPE = {"cassandra"};
+static constexpr std::array<char const*, 2> kDATABASE_TYPE = {"cassandra", "scylladb"};
 
 /**
  * @brief specific values that are accepted for server's processing_policy in config.
@@ -208,7 +208,7 @@ private:
     void
     print(std::ostream& stream) const override
     {
-        stream << fmt::format("The minimum value is `{}`. The maximum value is `{}", kPORT_MIN, kPORT_MAX);
+        stream << fmt::format("The minimum value is `{}`. The maximum value is `{}`.", kPORT_MIN, kPORT_MAX);
     }
 
     static constexpr uint32_t kPORT_MIN = 1;
@@ -249,7 +249,7 @@ private:
     void
     print(std::ostream& stream) const override
     {
-        stream << "The value must be a valid IP address";
+        stream << "The value must be a valid IP address.";
     }
 };
 
@@ -313,7 +313,11 @@ private:
     void
     print(std::ostream& stream) const override
     {
-        stream << fmt::format("The value must be one of the following: `{}`", fmt::join(arr_, ", "));
+        std::string valuesStream;
+        std::ranges::for_each(arr_, [&valuesStream](std::string elem) { valuesStream += fmt::format(" `{}`,", elem); });
+        // replace the last "," with "."
+        valuesStream.back() = '.';
+        stream << fmt::format("The value must be one of the following:{}", valuesStream);
     }
 
     std::string_view key_;
@@ -376,7 +380,7 @@ private:
     void
     print(std::ostream& stream) const override
     {
-        stream << fmt::format("The minimum value is `{}`. The maximum value is `{}`", min_, max_);
+        stream << fmt::format("The minimum value is `{}`. The maximum value is `{}`.", min_, max_);
     }
 
     NumType min_;
@@ -417,7 +421,7 @@ private:
     void
     print(std::ostream& stream) const override
     {
-        stream << fmt::format("The value must be a positive double number");
+        stream << fmt::format("The value must be a positive double number.");
     }
 };
 
