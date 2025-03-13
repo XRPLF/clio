@@ -57,7 +57,7 @@ struct ETLState {
         });
 
         if (serverInfoRippled && not serverInfoRippled->contains(JS(error))) {
-            return boost::json::value_to<std::optional<ETLState>>(boost::json::value(*serverInfoRippled));
+            return boost::json::value_to<ETLState>(boost::json::value(*serverInfoRippled));
         }
 
         return std::nullopt;
