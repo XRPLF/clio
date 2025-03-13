@@ -385,7 +385,7 @@ insertDeliverMaxAlias(boost::json::object& txJson, std::uint32_t const apiVersio
 {
     if (txJson.contains(JS(TransactionType)) and txJson.at(JS(TransactionType)).is_string() and
         txJson.at(JS(TransactionType)).as_string() == JS(Payment) and txJson.contains(JS(Amount))) {
-        txJson[JS(DeliverMax)] = txJson[JS(Amount)];
+        txJson.insert_or_assign(JS(DeliverMax), txJson[JS(Amount)]);
         if (apiVersion > 1)
             txJson.erase(JS(Amount));
     }

@@ -419,7 +419,8 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV1)
     for (size_t i = 0; i < inputArray.size(); i++) {
         auto req = boost::json::parse(inputArray[i]).as_object();
         insertDeliverMaxAlias(req, 1);
-        EXPECT_EQ(req, boost::json::parse(outputArray[i]).as_object());
+        auto const expectedReq = boost::json::parse(outputArray[i]).as_object();
+        EXPECT_EQ(req, expectedReq) << req << "\n" << expectedReq;
     }
 }
 

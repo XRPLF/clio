@@ -20,12 +20,14 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "rpc/JS.hpp"
 
 #include <boost/json.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <optional>
@@ -54,8 +56,9 @@ struct ETLState {
             return std::nullopt;
         });
 
-        if (serverInfoRippled)
-            return boost::json::value_to<std::optional<ETLState>>(boost::json::value(*serverInfoRippled));
+        if (serverInfoRippled && not serverInfoRippled->contains(JS(error))) {
+            return boost::json::value_to<ETLState>(boost::json::value(*serverInfoRippled));
+        }
 
         return std::nullopt;
     }
@@ -67,7 +70,7 @@ struct ETLState {
  * @param jv The json value to convert
  * @return The ETLState
  */
-std::optional<ETLState>
-tag_invoke(boost::json::value_to_tag<std::optional<ETLState>>, boost::json::value const& jv);
+ETLState
+tag_invoke(boost::json::value_to_tag<ETLState>, boost::json::value const& jv);
 
 }  // namespace etl
