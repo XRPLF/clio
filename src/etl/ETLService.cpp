@@ -20,7 +20,6 @@
 #include "etl/ETLService.hpp"
 
 #include "data/BackendInterface.hpp"
-#include "data/LedgerCache.hpp"
 #include "etl/CorruptionDetector.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
