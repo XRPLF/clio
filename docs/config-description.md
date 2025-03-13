@@ -2,7 +2,7 @@
 
 This document provides a list of all available Clio configuration properties in detail.
 
-> [!INFO]
+> [!NOTE]
 > Dot notation in configuration key names represents nested fields. For example, **database.scylladb** refers to the _scylladb_ field inside the _database_ object. If a key name includes "[]", it indicates that the nested field is an array (e.g., etl_sources.[]).
 
 ## Configuration Details
