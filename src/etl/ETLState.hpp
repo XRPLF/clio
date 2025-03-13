@@ -70,7 +70,7 @@ struct ETLState {
  * @param jv The json value to convert
  * @return The ETLState
  */
-etl::ETLState
-tag_invoke(boost::json::value_to_tag<etl::ETLState>, boost::json::value const& jv);
+ETLState
+tag_invoke(boost::json::value_to_tag<ETLState>, boost::json::value const& jv);
 
 }  // namespace etl
