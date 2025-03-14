@@ -314,7 +314,9 @@ private:
     print(std::ostream& stream) const override
     {
         std::string valuesStream;
-        std::ranges::for_each(arr_, [&valuesStream](std::string elem) { valuesStream += fmt::format(" `{}`,", elem); });
+        std::ranges::for_each(arr_, [&valuesStream](std::string const& elem) {
+            valuesStream += fmt::format(" `{}`,", elem);
+        });
         // replace the last "," with "."
         valuesStream.back() = '.';
         stream << fmt::format("The value must be one of the following:{}", valuesStream);
@@ -421,7 +423,7 @@ private:
     void
     print(std::ostream& stream) const override
     {
-        stream << fmt::format("The value must be a positive double number.");
+        stream << "The value must be a positive double number.";
     }
 };
 
