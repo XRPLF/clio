@@ -102,6 +102,12 @@ AccountLinesHandler::addLine(
     line.qualityIn = lineQualityIn;
     line.qualityOut = lineQualityOut;
 
+    if (lineNoRipple)
+        line.noRipple = true;
+
+    if (lineNoRipplePeer)
+        line.noRipplePeer = true;
+
     if (lineAuth)
         line.authorized = true;
 
@@ -120,8 +126,6 @@ AccountLinesHandler::addLine(
     if (lineDeepFreezePeer)
         line.deepFreezePeer = true;
 
-    line.noRipple = lineNoRipple;
-    line.noRipplePeer = lineNoRipplePeer;
     lines.push_back(line);
 }
 
@@ -257,8 +261,11 @@ tag_invoke(
         {JS(quality_out), line.qualityOut},
     };
 
-    obj[JS(no_ripple)] = line.noRipple;
-    obj[JS(no_ripple_peer)] = line.noRipplePeer;
+    if (line.noRipple)
+        obj[JS(no_ripple)] = *(line.noRipple);
+
+    if (line.noRipplePeer)
+        obj[JS(no_ripple_peer)] = *(line.noRipplePeer);
 
     if (line.authorized)
         obj[JS(authorized)] = *(line.authorized);
