@@ -102,6 +102,12 @@ AccountLinesHandler::addLine(
     line.qualityIn = lineQualityIn;
     line.qualityOut = lineQualityOut;
 
+    if (lineNoRipple)
+        line.noRipple = true;
+
+    if (lineNoRipplePeer)
+        line.noRipplePeer = true;
+
     if (lineAuth)
         line.authorized = true;
 
@@ -119,12 +125,6 @@ AccountLinesHandler::addLine(
 
     if (lineDeepFreezePeer)
         line.deepFreezePeer = true;
-
-    if (lineNoRipple)
-        line.noRipple = true;
-
-    if (lineNoRipplePeer)
-        line.noRipplePeer = true;
 
     lines.push_back(line);
 }
