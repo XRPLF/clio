@@ -35,6 +35,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 struct MockBackend : public BackendInterface {
@@ -181,6 +182,9 @@ struct MockBackend : public BackendInterface {
         (const, override)
     );
 
+    using FetchClioNodeReturnType = std::expected<std::vector<std::pair<std::string, std::string>>, std::string>;
+    MOCK_METHOD(FetchClioNodeReturnType, fetchClioNodesData, (boost::asio::yield_context yield), (const, override));
+
     MOCK_METHOD(
         std::optional<data::LedgerRange>,
         hardFetchLedgerRange,
@@ -206,6 +210,8 @@ struct MockBackend : public BackendInterface {
     MOCK_METHOD(void, writeNFTTransactions, (std::vector<NFTTransactionsData> const&), (override));
 
     MOCK_METHOD(void, writeSuccessor, (std::string && key, std::uint32_t const, std::string&&), (override));
+
+    MOCK_METHOD(void, writeNodeMessage, (std::string const& uuid, std::string&& message), (override));
 
     MOCK_METHOD(void, startWrites, (), (const, override));
 

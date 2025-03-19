@@ -568,6 +568,9 @@ public:
     virtual std::optional<std::string>
     fetchMigratorStatus(std::string const& migratorName, boost::asio::yield_context yield) const = 0;
 
+    virtual std::expected<std::vector<std::pair<std::string, std::string>>, std::string>
+    fetchClioNodesData(boost::asio::yield_context yield) const = 0;
+
     /**
      * @brief Synchronously fetches the ledger range from DB.
      *
@@ -673,6 +676,9 @@ public:
      */
     virtual void
     writeSuccessor(std::string&& key, std::uint32_t seq, std::string&& successor) = 0;
+
+    virtual void
+    writeNodeMessage(std::string const& uuid, std::string&& message) = 0;
 
     /**
      * @brief Starts a write transaction with the DB. No-op for cassandra.

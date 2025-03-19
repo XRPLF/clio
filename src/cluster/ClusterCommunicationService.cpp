@@ -40,6 +40,12 @@ ClusterCommunicationService::ClusterCommunicationService(
 {
 }
 
+ClusterCommunicationService::~ClusterCommunicationService()
+{
+    ctx_.stop();
+    ctx_.join();
+}
+
 ClioNode
 ClusterCommunicationService::selfData() const
 {

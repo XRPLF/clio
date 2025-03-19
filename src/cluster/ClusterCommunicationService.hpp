@@ -53,7 +53,7 @@ public:
         std::chrono::steady_clock::duration writeInterval
     );
 
-    ~ClusterCommunicationService() override = default;
+    ~ClusterCommunicationService() override;
 
     ClusterCommunicationService(ClusterCommunicationService&&) = delete;
     ClusterCommunicationService(ClusterCommunicationService const&) = delete;
