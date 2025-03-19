@@ -39,6 +39,8 @@
 #include <boost/asio/impl/spawn.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <gtest/gtest.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/base_uint.h>
@@ -59,6 +61,7 @@
 #include <optional>
 #include <random>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <tuple>
 #include <unordered_map>
@@ -1295,4 +1298,21 @@ TEST_F(BackendCassandraTest, CacheIntegration)
 
     ctx_.run();
     ASSERT_EQ(done, true);
+}
+
+TEST_F(BackendCassandraTest, NodeMessageUpdateFetch)
+{
+    static boost::uuids::uuid const kUUID{};
+    static constexpr std::string_view kMESSAGE = "some message";
+
+    backend_->writeNodeMessage(boost::uuids::to_string(kUUID), std::string{kMESSAGE});
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const readResult = backend_->fetchClioNodesData(yield);
+        ASSERT_TRUE(readResult) << readResult.error();
+        ASSERT_EQ(readResult->size(), 1);
+        auto const& [uuid, message] = (*readResult)[0];
+        EXPECT_EQ(uuid, boost::uuids::to_string(kUUID));
+        EXPECT_EQ(message, kMESSAGE);
+    });
 }
