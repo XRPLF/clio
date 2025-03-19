@@ -19,36 +19,30 @@
 
 #pragma once
 
+#include "cluster/ClioNode.hpp"
+#include "cluster/ClusterCommunicationServiceInterface.hpp"
 #include "data/BackendInterface.hpp"
+#include "util/Assert.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
 
-#include <boost/uuid/uuid.hpp>
-
 #include <chrono>
+#include <concepts>
 #include <memory>
 #include <vector>
 
 namespace cluster {
 
-struct ClioNode {
-    // enum class WriterRole {
-    //     ReadOnly,
-    //     NotWriter,
-    //     Writer
-    // };
-    boost::uuids::uuid uuid;
-    std::chrono::system_clock::time_point updateTime;
-    bool isSelf;
-    // WriterRole writerRole;
-};
-
-class ClusterCommunicationService {
+class ClusterCommunicationService : public ClusterCommunicationServiceInterface {
     using ContextType = util::async::CoroExecutionContext;
+
     ContextType ctx_;
-    ContextType::Strand strand_ = ctx_.makeStrand();
+    mutable ContextType::Strand strand_ = ctx_.makeStrand();
+
     std::shared_ptr<data::BackendInterface> backend_;
-    ContextType::RepeatedOperation readOperation_;
-    ContextType::RepeatedOperation writeOperation_;
+
+    ContextType::Strand::RepeatedOperation readOperation_;
+    ContextType::Strand::RepeatedOperation writeOperation_;
+
     ClioNode selfData_;
     std::vector<ClioNode> otherNodesData_;
 
@@ -59,8 +53,37 @@ public:
         std::chrono::steady_clock::duration writeInterval
     );
 
+    ~ClusterCommunicationService() override = default;
+
+    ClusterCommunicationService(ClusterCommunicationService&&) = delete;
+    ClusterCommunicationService(ClusterCommunicationService const&) = delete;
+    ClusterCommunicationService&
+    operator=(ClusterCommunicationService&&) = delete;
+    ClusterCommunicationService&
+    operator=(ClusterCommunicationService const&) = delete;
+
+    ClioNode
+    selfData() const override;
+
     std::vector<ClioNode>
-    clusterData() const;
+    clusterData() const override;
+
+private:
+    template <std::invocable Fn>
+    auto
+    executeOnStrand(Fn&& fn) const
+    {
+        auto operation = strand_.execute(std::forward<Fn>(fn));
+        auto result = operation.get();
+        ASSERT(result.has_value(), "Unexpected error in async operation");
+        return std::move(result).value();
+    }
+
+    void
+    doRead();
+
+    void
+    doWrite();
 };
 
 }  // namespace cluster

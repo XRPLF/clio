@@ -17,53 +17,25 @@
 */
 //==============================================================================
 
-#include "cluster/ClusterCommunicationService.hpp"
+#pragma once
 
-#include "cluster/ClioNode.hpp"
-#include "data/BackendInterface.hpp"
+#include <boost/uuid/uuid.hpp>
 
 #include <chrono>
 #include <memory>
-#include <utility>
-#include <vector>
-
 namespace cluster {
 
-ClusterCommunicationService::ClusterCommunicationService(
-    std::shared_ptr<data::BackendInterface> backend,
-    std::chrono::steady_clock::duration readInterval,
-    std::chrono::steady_clock::duration writeInterval
-)
-    : backend_(std::move(backend))
-    , readOperation_(strand_.executeRepeatedly(readInterval, [this]() { doRead(); }))
-    , writeOperation_(strand_.executeRepeatedly(writeInterval, [this]() { doWrite(); }))
-{
-}
+struct ClioNode {
+    // enum class WriterRole {
+    //     ReadOnly,
+    //     NotWriter,
+    //     Writer
+    // };
 
-ClioNode
-ClusterCommunicationService::selfData() const
-{
-    return executeOnStrand([this]() { return selfData_; });
-}
-
-std::vector<ClioNode>
-ClusterCommunicationService::clusterData() const
-{
-    return executeOnStrand([this] {
-        auto nodesData = otherNodesData_;
-        nodesData.push_back(selfData_);
-        return nodesData;
-    });
-}
-
-void
-ClusterCommunicationService::doRead()
-{
-}
-
-void
-doWrite()
-{
-}
+    std::shared_ptr<boost::uuids::uuid> uuid;
+    std::chrono::system_clock::time_point updateTime;
+    bool isSelf;
+    // WriterRole writerRole;
+};
 
 }  // namespace cluster
