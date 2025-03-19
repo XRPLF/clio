@@ -136,8 +136,7 @@ private:
     static constexpr auto kCONFIG_DESCRIPTION = std::array{
         KV{.key = "database.type",
            .value = "Specifies the type of database to use for storing and retrieving data needed by the Clio server. "
-                    "Supported options are Cassandra and ScyllaDB. If you don't provide a value, the Clio server uses "
-                    "ScyllaDB by default."},
+                    "Only `Cassandra` is currently allowed."},
         KV{.key = "database.cassandra.contact_points",
            .value = "A list of IP addresses or hostnames for the initial cluster nodes (Cassandra or ScyllaDB) that "
                     "the client connects to when establishing a database connection. If you're running Clio locally, "
@@ -181,7 +180,7 @@ private:
         KV{.key = "database.cassandra.certfile",
            .value = "The path to the SSL/TLS certificate file used to establish a secure connection between the client "
                     "and the Cassandra database."},
-        KV{.key = "allow_no_etl", .value = "If set to `True`, no ETL nodes will run with Clio."},
+        KV{.key = "allow_no_etl", .value = "If set to `True`, allows `Clio` to start without any ETL source."},
         KV{.key = "etl_sources.[].ip", .value = "The IP address of the ETL source."},
         KV{.key = "etl_sources.[].ws_port", .value = "The WebSocket port of the ETL source."},
         KV{.key = "etl_sources.[].grpc_port", .value = "The gRPC port of the ETL source."},
@@ -192,15 +191,16 @@ private:
            .value =
                "Specifies the timeout duration (in seconds) for the forwarding request used in `rippled` communication."
         },
-        KV{.key = "rpc.cache_timeout", .value = "Specifies the timeout duration (in seconds) for RPC requests."},
+        KV{.key = "rpc.cache_timeout",
+           .value = "Specifies the timeout duration (in seconds) for RPC cache response to timeout."},
         KV{.key = "num_markers", .value = "Specifies the number of coroutines used to download the initial ledger."},
         KV{.key = "dos_guard.whitelist.[]", .value = "The list of IP addresses to whitelist for DOS protection."},
         KV{.key = "dos_guard.max_fetches", .value = "The maximum number of fetch operations allowed by DOS guard."},
         KV{.key = "dos_guard.max_connections",
            .value = "The maximum number of concurrent connections allowed by DOS guard."},
-        KV{.key = "dos_guard.max_requests", .value = "The maximum number of requests allowed by DOS guard."},
-        KV{.key = "dos_guard.sweep_interval", .value = "Interval in seconds for DOS guard to sweep or clear its state."
-        },
+        KV{.key = "dos_guard.max_requests",
+           .value = "The maximum number allowed concurrent number of requests for a specific IP address."},
+        KV{.key = "dos_guard.sweep_interval", .value = "Interval in seconds for DOS guard to sweep(clear) its state."},
         KV{.key = "workers", .value = "The number of threads used to process RPC requests."},
         KV{.key = "server.ip", .value = "The IP address of the Clio HTTP server."},
         KV{.key = "server.port", .value = "The port number of the Clio HTTP server."},
@@ -209,9 +209,9 @@ private:
                "The maximum size of the server's request queue. If set to `0`, this means there is no queue size limit."
         },
         KV{.key = "server.local_admin",
-           .value =
-               "Indicates if the server should run with admin privileges. Note that this setting cannot be enabled "
-               "together with [server.admin_password](#serveradmin_password), you must choose one or the other."},
+           .value = "Indicates if requests from `localhost` are allowed to call Clio admin-only APIs . Note that this "
+                    "setting cannot be enabled "
+                    "together with [server.admin_password](#serveradmin_password), you must choose one or the other."},
         KV{.key = "server.admin_password",
            .value = "The password for Clio admin-only APIs. Note that this setting cannot be enabled together with "
                     "[server.local_admin](#serveradmin_password), you must choose one or the other."},
@@ -232,21 +232,28 @@ private:
         KV{.key = "subscription_workers",
            .value = "The number of worker threads or processes that are responsible for managing and processing "
                     "subscription-based tasks from `rippled`."},
-        KV{.key = "graceful_period", .value = "The number of milliseconds the server waits to shutdown gracefully."},
+        KV{.key = "graceful_period",
+           .value = "The number of milliseconds the server waits to shutdown gracefully. If Clio does not shutdown "
+                    "gracefully after the specified value, it will be killed instead."},
         KV{.key = "cache.num_diffs",
-           .value = "The number of diffs to cache. For more information, see the [README.md](../src/etl/README.md) "
+           .value = "The number of diffs to use to generate cursors. For more information, see the "
+                    "[README.md](../src/etl/README.md) "
                     "under etl."},
-        KV{.key = "cache.num_markers", .value = "The number of markers to cache."},
-        KV{.key = "cache.num_cursors_from_diff", .value = "The number of cursors that are different."},
-        KV{.key = "cache.num_cursors_from_account", .value = "The number of cursors from an account."},
-        KV{.key = "cache.page_fetch_size", .value = "The page fetch size for cache operations."},
+        KV{.key = "cache.num_markers",
+           .value = "The number of markers to use at one time to traverse the ledger. Markers tell the system where to "
+                    "resume fetching data."},
+        KV{.key = "cache.num_cursors_from_diff", .value = "The number of diffs to use to generate cursors."},
+        KV{.key = "cache.num_cursors_from_account", .value = "The number of cursors to fetch from an account."},
+        KV{.key = "cache.page_fetch_size", .value = "The number of ledger objects to fetch concurrently per marker."},
         KV{.key = "cache.load", .value = "The strategy used for Cache loading."},
         KV{.key = "log_channels.[].channel", .value = "The name of the log channel."},
         KV{.key = "log_channels.[].log_level", .value = "The log level for the specific log channel."},
         KV{.key = "log_level",
            .value = "The general logging level of Clio. This level is applied to all log channels that do not have an "
                     "explicitly defined logging level."},
-        KV{.key = "log_format", .value = "The format string for log messages."},
+        KV{.key = "log_format",
+           .value = "The format string for log messages. The format is described here: "
+                    "https://beta.boost.org/doc/libs/1_83_0/libs/log/doc/html/log/tutorial/formatters.html."},
         KV{.key = "log_to_console", .value = "Enables or disables logging to the console."},
         KV{.key = "log_directory", .value = "The directory path for the log files."},
         KV{.key = "log_rotation_size",
@@ -258,10 +265,10 @@ private:
                     "in logging, a new log file starts."},
         KV{.key = "log_tag_style", .value = "The style for log tags."},
         KV{.key = "extractor_threads", .value = "The number of extractor threads."},
-        KV{.key = "read_only", .value = "Indicates if the server should have read-only privileges."},
+        KV{.key = "read_only", .value = "If `True`, does not allow the server to write data to the database."},
         KV{.key = "txn_threshold", .value = "The transaction threshold value."},
-        KV{.key = "start_sequence", .value = "Starting ledger index."},
-        KV{.key = "finish_sequence", .value = "The ending ledger index."},
+        KV{.key = "start_sequence", .value = "The starting ledger index for `Clio` to sync."},
+        KV{.key = "finish_sequence", .value = "The ending ledger index for `Clio` to sync."},
         KV{.key = "ssl_cert_file", .value = "The path to the SSL certificate file."},
         KV{.key = "ssl_key_file", .value = "The path to the SSL key file."},
         KV{.key = "api_version.default", .value = "The default API version that the Clio server will run on."},

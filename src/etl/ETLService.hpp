@@ -114,7 +114,6 @@ class ETLService : public ETLServiceTag {
     size_t numMarkers_ = 2;
     std::optional<uint32_t> startSequence_;
     std::optional<uint32_t> finishSequence_;
-    size_t txnThreshold_ = 0;
 
 public:
     /**

@@ -268,7 +268,7 @@ INSTANTIATE_TEST_SUITE_P(
         ConstraintTestBundle{"ipConstraint", gValidateIp},
         ConstraintTestBundle{"channelConstraint", gValidateChannelName},
         ConstraintTestBundle{"logLevelConstraint", gValidateLogLevelName},
-        ConstraintTestBundle{"cannsandraNameCnstraint", gValidateCassandraName},
+        ConstraintTestBundle{"cassandraNameConstraint", gValidateCassandraName},
         ConstraintTestBundle{"loadModeConstraint", gValidateLoadMode},
         ConstraintTestBundle{"ChannelNameConstraint", gValidateChannelName},
         ConstraintTestBundle{"ApiVersionConstraint", gValidateApiVersion},
