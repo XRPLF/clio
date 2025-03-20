@@ -270,7 +270,7 @@ private:
                "Log tags are unique identifiers for log messages. `uint`/`int` starts logging from 0 and increments, "
                "making it faster. In contrast, `uuid` generates a random unique identifier, which adds overhead."},
         KV{.key = "extractor_threads", .value = "Number of threads used to extract data from ETL source."},
-        KV{.key = "read_only", .value = "If `True`, Clio will not write anything to database."},
+        KV{.key = "read_only", .value = "Indicates if the server is allowed to write data to the database."},
         KV{.key = "start_sequence",
            .value = "If specified, the starting ledger where `Clio` will starts writing to database from."},
         KV{.key = "finish_sequence", .value = "If specified, the final ledger where `Clio` will write to database."},

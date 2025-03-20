@@ -509,7 +509,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: boolean
 - **Default value**: `True`
 - **Constraints**: None
-- **Description**: If `True`, Clio will not write anything to database.
+- **Description**: Indicates if the server is allowed to write data to the database.
 
 ### start_sequence
 
