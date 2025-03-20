@@ -183,7 +183,7 @@ ETLService::publishNextSequence(uint32_t nextSequence)
         if (!success) {
             LOG(log_.warn()) << "Failed to publish ledger with sequence = " << nextSequence << " . Beginning ETL";
 
-            // returns the most recent sequence published empty optional if no sequence was published
+            // returns the most recent sequence published. empty optional if no sequence was published
             std::optional<uint32_t> lastPublished = runETLPipeline(nextSequence, extractorThreads_);
             LOG(log_.info()) << "Aborting ETL. Falling back to publishing";
 

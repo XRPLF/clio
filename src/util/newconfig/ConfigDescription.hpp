@@ -197,9 +197,9 @@ private:
         KV{.key = "dos_guard.whitelist.[]", .value = "The list of IP addresses to whitelist for DOS protection."},
         KV{.key = "dos_guard.max_fetches", .value = "The maximum number of fetch operations allowed by DOS guard."},
         KV{.key = "dos_guard.max_connections",
-           .value = "The maximum number of concurrent connections allowed by DOS guard."},
-        KV{.key = "dos_guard.max_requests",
-           .value = "The maximum number allowed concurrent number of requests for a specific IP address."},
+           .value = "The maximum number of concurrent connections for a specific IP address."},
+        KV{.key = "dos_guard.max_requests", .value = "The maximum number of requests allowed for a specific IP address."
+        },
         KV{.key = "dos_guard.sweep_interval", .value = "Interval in seconds for DOS guard to sweep(clear) its state."},
         KV{.key = "workers", .value = "The number of threads used to process RPC requests."},
         KV{.key = "server.ip", .value = "The IP address of the Clio HTTP server."},
@@ -209,12 +209,12 @@ private:
                "The maximum size of the server's request queue. If set to `0`, this means there is no queue size limit."
         },
         KV{.key = "server.local_admin",
-           .value = "Indicates if requests from `localhost` are allowed to call Clio admin-only APIs . Note that this "
+           .value = "Indicates if requests from `localhost` are allowed to call Clio admin-only APIs. Note that this "
                     "setting cannot be enabled "
-                    "together with [server.admin_password](#serveradmin_password), you must choose one or the other."},
+                    "together with [server.admin_password](#serveradmin_password)."},
         KV{.key = "server.admin_password",
            .value = "The password for Clio admin-only APIs. Note that this setting cannot be enabled together with "
-                    "[server.local_admin](#serveradmin_password), you must choose one or the other."},
+                    "[server.local_admin](#serveradmin_password)."},
         KV{.key = "server.processing_policy",
            .value = "For the `sequent` policy, requests from a single client connection are processed one by one, with "
                     "the next request read only after the previous one is processed. For the `parallel` policy, Clio "
@@ -224,7 +224,9 @@ private:
            .value = "This is an optional parameter, used only if the `processing_strategy` is `parallel`. It limits "
                     "the number of requests processed in parallel for a single client connection. If not specified, no "
                     "limit is enforced."},
-        KV{.key = "server.ws_max_sending_queue_size", .value = "The maximum size of the websocket sending queue."},
+        KV{.key = "server.ws_max_sending_queue_size",
+           .value = "Maximum queue size for sending subscription data to clients. This queue buffers data when a "
+                    "client is slow to receive it, ensuring delivery once the client is ready."},
         KV{.key = "prometheus.enabled", .value = "Enables or disables Prometheus metrics."},
         KV{.key = "prometheus.compress_reply", .value = "Enables or disables compression of Prometheus responses."},
         KV{.key = "io_threads", .value = "The number of input/output (I/O) threads. The value cannot be less than `1`."
@@ -263,20 +265,23 @@ private:
         KV{.key = "log_rotation_hour_interval",
            .value = "Represents the interval (in hours) for log rotation. If the current log file reaches this value "
                     "in logging, a new log file starts."},
-        KV{.key = "log_tag_style", .value = "The style for log tags."},
-        KV{.key = "extractor_threads", .value = "The number of extractor threads."},
-        KV{.key = "read_only", .value = "If `True`, does not allow the server to write data to the database."},
-        KV{.key = "txn_threshold", .value = "The transaction threshold value."},
-        KV{.key = "start_sequence", .value = "The starting ledger index for `Clio` to sync."},
-        KV{.key = "finish_sequence", .value = "The ending ledger index for `Clio` to sync."},
+        KV{.key = "log_tag_style",
+           .value =
+               "Log tags are unique identifiers for log messages. `uint`/`int` starts logging from 0 and increments, "
+               "making it faster. In contrast, `uuid` generates a random unique identifier, which adds overhead."},
+        KV{.key = "extractor_threads", .value = "Number of threads used to extract data from ETL source."},
+        KV{.key = "read_only", .value = "If `True`, Clio will not write anything to database."},
+        KV{.key = "start_sequence",
+           .value = "If specified, the starting ledger where `Clio` will starts writing to database from."},
+        KV{.key = "finish_sequence", .value = "If specified, the final ledger where `Clio` will write to database."},
         KV{.key = "ssl_cert_file", .value = "The path to the SSL certificate file."},
         KV{.key = "ssl_key_file", .value = "The path to the SSL key file."},
         KV{.key = "api_version.default", .value = "The default API version that the Clio server will run on."},
-        KV{.key = "api_version.min", .value = "The minimum API version to use."},
-        KV{.key = "api_version.max", .value = "The maximum API version to use."},
+        KV{.key = "api_version.min", .value = "The minimum API version allowed to use."},
+        KV{.key = "api_version.max", .value = "The maximum API version allowed to use."},
         KV{.key = "migration.full_scan_threads", .value = "The number of threads used to scan the table."},
         KV{.key = "migration.full_scan_jobs", .value = "The number of coroutines used to scan the table."},
-        KV{.key = "migration.cursors_per_job", .value = "The number of cursors each coroutine will scan."}
+        KV{.key = "migration.cursors_per_job", .value = "The number of cursors each job will scan."}
     };
 };
 

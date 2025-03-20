@@ -326,9 +326,10 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
      {"server.processing_policy",
       ConfigValue{ConfigType::String}.defaultValue("parallel").withConstraint(gValidateProcessingPolicy)},
-     {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint16)},
+     {"server.parallel_requests_limit",
+      ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateParallelRequestLimit)},
      {"server.ws_max_sending_queue_size",
-      ConfigValue{ConfigType::Integer}.defaultValue(1500).withConstraint(gValidateUint32)},
+      ConfigValue{ConfigType::Integer}.defaultValue(1500).withConstraint(gValidateSubscriptionSendingQueueSize)},
      {"server.__ng_web_server", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
      {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
@@ -378,8 +379,6 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
 
      {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
-     {"txn_threshold", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateUint16)},
-
      {"start_sequence", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
 
      {"finish_sequence", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
@@ -398,7 +397,6 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"migration.full_scan_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint32)},
      {"migration.full_scan_jobs", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint32)},
      {"migration.cursors_per_job", ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(gValidateUint32)}},
-
 };
 
 }  // namespace util::config

@@ -12,8 +12,8 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: string
 - **Default value**: `cassandra`
-- **Constraints**: The value must be one of the following: `cassandra`, `scylladb`.
-- **Description**: Specifies the type of database to use for storing and retrieving data needed by the Clio server. Supported options are Cassandra and ScyllaDB. If you don't provide a value, the Clio server uses ScyllaDB by default.
+- **Constraints**: The value must be one of the following: `cassandra`.
+- **Description**: Specifies the type of database to use for storing and retrieving data needed by the Clio server. Only `Cassandra` is currently allowed.
 
 ### database.cassandra.contact_points
 
@@ -157,7 +157,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: boolean
 - **Default value**: `True`
 - **Constraints**: None
-- **Description**: If set to `True`, no ETL nodes will run with Clio.
+- **Description**: If set to `True`, allows `Clio` to start without any ETL source.
 
 ### etl_sources.[].ip
 
@@ -205,7 +205,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: double
 - **Default value**: `0`
 - **Constraints**: The value must be a positive double number.
-- **Description**: Specifies the timeout duration (in seconds) for RPC requests.
+- **Description**: Specifies the timeout duration (in seconds) for RPC cache response to timeout.
 
 ### num_markers
 
@@ -237,7 +237,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `20`
 - **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
-- **Description**: The maximum number of concurrent connections allowed by DOS guard.
+- **Description**: The maximum number of concurrent connections for a specific IP address.
 
 ### dos_guard.max_requests
 
@@ -245,7 +245,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `20`
 - **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
-- **Description**: The maximum number of requests allowed by DOS guard.
+- **Description**: The maximum number of requests allowed for a specific IP address.
 
 ### dos_guard.sweep_interval
 
@@ -253,7 +253,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: double
 - **Default value**: `1`
 - **Constraints**: The value must be a positive double number.
-- **Description**: Interval in seconds for DOS guard to sweep or clear its state.
+- **Description**: Interval in seconds for DOS guard to sweep(clear) its state.
 
 ### workers
 
@@ -293,7 +293,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: boolean
 - **Default value**: None
 - **Constraints**: None
-- **Description**: Indicates if the server should run with admin privileges. Note that this setting cannot be enabled together with [server.admin_password](#serveradmin_password), you must choose one or the other.
+- **Description**: Indicates if requests from `localhost` are allowed to call Clio admin-only APIs. Note that this setting cannot be enabled together with [server.admin_password](#serveradmin_password).
 
 ### server.admin_password
 
@@ -301,7 +301,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: string
 - **Default value**: None
 - **Constraints**: None
-- **Description**: The password for Clio admin-only APIs. Note that this setting cannot be enabled together with [server.local_admin](#serveradmin_password), you must choose one or the other.
+- **Description**: The password for Clio admin-only APIs. Note that this setting cannot be enabled together with [server.local_admin](#serveradmin_password).
 
 ### server.processing_policy
 
@@ -316,7 +316,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: False
 - **Type**: int
 - **Default value**: None
-- **Constraints**: The minimum value is `0`. The maximum value is `65535`.
+- **Constraints**: The minimum value is `1`. The maximum value is `65535`.
 - **Description**: This is an optional parameter, used only if the `processing_strategy` is `parallel`. It limits the number of requests processed in parallel for a single client connection. If not specified, no limit is enforced.
 
 ### server.ws_max_sending_queue_size
@@ -324,8 +324,8 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `1500`
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
-- **Description**: The maximum size of the websocket sending queue.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
+- **Description**: Maximum queue size for sending subscription data to clients. This queue buffers data when a client is slow to receive it, ensuring delivery once the client is ready.
 
 ### prometheus.enabled
 
@@ -365,7 +365,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: double
 - **Default value**: `10`
 - **Constraints**: The value must be a positive double number.
-- **Description**: The number of milliseconds the server waits to shutdown gracefully.
+- **Description**: The number of milliseconds the server waits to shutdown gracefully. If Clio does not shutdown gracefully after the specified value, it will be killed instead.
 
 ### cache.num_diffs
 
@@ -373,7 +373,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `32`
 - **Constraints**: The minimum value is `0`. The maximum value is `65535`.
-- **Description**: The number of diffs to cache. For more information, see the [README.md](../src/etl/README.md) under etl.
+- **Description**: The number of diffs to use to generate cursors. For more information, see the [README.md](../src/etl/README.md) under etl.
 
 ### cache.num_markers
 
@@ -381,7 +381,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `48`
 - **Constraints**: The minimum value is `0`. The maximum value is `65535`.
-- **Description**: The number of markers to cache.
+- **Description**: The number of markers to use at one time to traverse the ledger. Markers tell the system where to resume fetching data.
 
 ### cache.num_cursors_from_diff
 
@@ -389,7 +389,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `0`
 - **Constraints**: The minimum value is `0`. The maximum value is `65535`.
-- **Description**: The number of cursors that are different.
+- **Description**: The number of diffs to use to generate cursors.
 
 ### cache.num_cursors_from_account
 
@@ -397,7 +397,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `0`
 - **Constraints**: The minimum value is `0`. The maximum value is `65535`.
-- **Description**: The number of cursors from an account.
+- **Description**: The number of cursors to fetch from an account.
 
 ### cache.page_fetch_size
 
@@ -405,7 +405,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `512`
 - **Constraints**: The minimum value is `0`. The maximum value is `65535`.
-- **Description**: The page fetch size for cache operations.
+- **Description**: The number of ledger objects to fetch concurrently per marker.
 
 ### cache.load
 
@@ -445,7 +445,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: string
 - **Default value**: `%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%`
 - **Constraints**: None
-- **Description**: The format string for log messages.
+- **Description**: The format string for log messages. The format is described here: https://beta.boost.org/doc/libs/1_83_0/libs/log/doc/html/log/tutorial/formatters.html.
 
 ### log_to_console
 
@@ -493,7 +493,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: string
 - **Default value**: `none`
 - **Constraints**: The value must be one of the following: `int`, `uint`, `null`, `none`, `uuid`.
-- **Description**: The style for log tags.
+- **Description**: Log tags are unique identifiers for log messages. `uint`/`int` starts logging from 0 and increments, making it faster. In contrast, `uuid` generates a random unique identifier, which adds overhead.
 
 ### extractor_threads
 
@@ -501,7 +501,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `1`
 - **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
-- **Description**: The number of extractor threads.
+- **Description**: Number of threads used to extract data from ETL source.
 
 ### read_only
 
@@ -509,15 +509,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: boolean
 - **Default value**: `True`
 - **Constraints**: None
-- **Description**: Indicates if the server should have read-only privileges.
-
-### txn_threshold
-
-- **Required**: True
-- **Type**: int
-- **Default value**: `0`
-- **Constraints**: The minimum value is `0`. The maximum value is `65535`.
-- **Description**: The transaction threshold value.
+- **Description**: If `True`, Clio will not write anything to database.
 
 ### start_sequence
 
@@ -525,7 +517,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: None
 - **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
-- **Description**: Starting ledger index.
+- **Description**: If specified, the starting ledger where `Clio` will starts writing to database from.
 
 ### finish_sequence
 
@@ -533,7 +525,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: None
 - **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
-- **Description**: The ending ledger index.
+- **Description**: If specified, the final ledger where `Clio` will write to database.
 
 ### ssl_cert_file
 
@@ -565,7 +557,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `1`
 - **Constraints**: The minimum value is `1`. The maximum value is `3`.
-- **Description**: The minimum API version to use.
+- **Description**: The minimum API version allowed to use.
 
 ### api_version.max
 
@@ -573,7 +565,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `3`
 - **Constraints**: The minimum value is `1`. The maximum value is `3`.
-- **Description**: The maximum API version to use.
+- **Description**: The maximum API version allowed to use.
 
 ### migration.full_scan_threads
 
@@ -597,4 +589,4 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `100`
 - **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
-- **Description**: The number of cursors each coroutine will scan.
+- **Description**: The number of cursors each job will scan.
