@@ -10,7 +10,6 @@ import (
 
 // create a server implement the xrpl rpc v1 server interface
 type Server struct {
-	// The server implementation
 	pb.XRPLedgerAPIServiceServer
 	ledgersHouse *ledgers.LedgersHouse
 }

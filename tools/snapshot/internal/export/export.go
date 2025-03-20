@@ -47,7 +47,6 @@ func createGRPCClient(serverAddr string) (*gRPCClient, error) {
 func getLedgerDeltaDataInParallel(client pb.XRPLedgerAPIServiceClient, startSeq uint32, endSeq uint32, ledgersHouse *ledgers.LedgersHouse) {
 	sem := make(chan struct{}, maxConcurrency)
 	var wg sync.WaitGroup
-
 	for i := startSeq; i <= endSeq; i++ {
 		wg.Add(1)
 		sem <- struct{}{}
@@ -56,7 +55,7 @@ func getLedgerDeltaDataInParallel(client pb.XRPLedgerAPIServiceClient, startSeq 
 			defer wg.Done()
 			log.Printf("Process delta sequence: %d\n", seq)
 			getLedgerDeltaData(client, seq, ledgersHouse)
-			<-sem // Release a slot
+			<-sem
 		}(i)
 	}
 

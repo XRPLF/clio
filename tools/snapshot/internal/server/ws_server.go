@@ -25,7 +25,6 @@ func NewWebSocketServer(serverName string, callback func(message string) string)
 
 func (ws *WebSocketServer) handleConnections() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Upgrade initial GET request to WebSocket
 		conn, err := ws.upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Printf("[%s] Error upgrading to WebSocket: %v", ws.serverName, err)
@@ -35,7 +34,6 @@ func (ws *WebSocketServer) handleConnections() http.HandlerFunc {
 
 		log.Printf("[%s] New WebSocket connection established", ws.serverName)
 
-		// Keep the connection alive and handle messages
 		for {
 			_, msg, err := conn.ReadMessage()
 			if err != nil {
@@ -44,10 +42,8 @@ func (ws *WebSocketServer) handleConnections() http.HandlerFunc {
 			}
 			log.Printf("[%s] Received: %s", ws.serverName, msg)
 
-			// Call the provided callback function
 			response := ws.callback(string(msg))
 
-			// Send the response back to the client
 			err = conn.WriteMessage(websocket.TextMessage, []byte(response))
 			log.Printf("[%s] Sending: %s", ws.serverName, response)
 			if err != nil {
