@@ -9,6 +9,10 @@ target_sources(
           impl/Loading.cpp
           impl/Monitor.cpp
           impl/TaskManager.cpp
+          impl/ext/Cache.cpp
+          impl/ext/Core.cpp
+          impl/ext/NFT.cpp
+          impl/ext/Successor.cpp
 )
 
 target_link_libraries(clio_etlng PUBLIC clio_data)

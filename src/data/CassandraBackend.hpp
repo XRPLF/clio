@@ -46,6 +46,7 @@
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/nft.h>
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstddef>
@@ -906,19 +907,31 @@ public:
         statements.reserve(data.size() * 10);  // assume 10 transactions avg
 
         for (auto& record : data) {
-            std::transform(
-                std::begin(record.accounts),
-                std::end(record.accounts),
-                std::back_inserter(statements),
-                [this, &record](auto&& account) {
-                    return schema_->insertAccountTx.bind(
-                        std::forward<decltype(account)>(account),
-                        std::make_tuple(record.ledgerSequence, record.transactionIndex),
-                        record.txHash
-                    );
-                }
-            );
+            std::ranges::transform(record.accounts, std::back_inserter(statements), [this, &record](auto&& account) {
+                return schema_->insertAccountTx.bind(
+                    std::forward<decltype(account)>(account),
+                    std::make_tuple(record.ledgerSequence, record.transactionIndex),
+                    record.txHash
+                );
+            });
         }
+
+        executor_.write(std::move(statements));
+    }
+
+    void
+    writeAccountTransaction(AccountTransactionsData record) override
+    {
+        std::vector<Statement> statements;
+        statements.reserve(record.accounts.size());
+
+        std::ranges::transform(record.accounts, std::back_inserter(statements), [this, &record](auto&& account) {
+            return schema_->insertAccountTx.bind(
+                std::forward<decltype(account)>(account),
+                std::make_tuple(record.ledgerSequence, record.transactionIndex),
+                record.txHash
+            );
+        });
 
         executor_.write(std::move(statements));
     }
@@ -929,7 +942,7 @@ public:
         std::vector<Statement> statements;
         statements.reserve(data.size());
 
-        std::transform(std::cbegin(data), std::cend(data), std::back_inserter(statements), [this](auto const& record) {
+        std::ranges::transform(data, std::back_inserter(statements), [this](auto const& record) {
             return schema_->insertNFTTx.bind(
                 record.tokenID, std::make_tuple(record.ledgerSequence, record.transactionIndex), record.txHash
             );
@@ -999,7 +1012,7 @@ public:
         std::vector<Statement> statements;
         statements.reserve(data.size());
         for (auto [mptId, holder] : data)
-            statements.push_back(schema_->insertMPTHolder.bind(std::move(mptId), std::move(holder)));
+            statements.push_back(schema_->insertMPTHolder.bind(mptId, holder));
 
         executor_.write(std::move(statements));
     }

@@ -54,7 +54,7 @@ struct AccountTransactionsData {
      * @param meta The transaction metadata
      * @param txHash The transaction hash
      */
-    AccountTransactionsData(ripple::TxMeta& meta, ripple::uint256 const& txHash)
+    AccountTransactionsData(ripple::TxMeta const& meta, ripple::uint256 const& txHash)
         : accounts(meta.getAffectedAccounts())
         , ledgerSequence(meta.getLgrSeq())
         , transactionIndex(meta.getIndex())
