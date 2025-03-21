@@ -19,10 +19,13 @@
 
 #pragma once
 
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
 #include <boost/uuid/uuid.hpp>
 
 #include <chrono>
 #include <memory>
+
 namespace cluster {
 
 struct ClioNode {
@@ -37,5 +40,11 @@ struct ClioNode {
     bool isSelf;
     // WriterRole writerRole;
 };
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, ClioNode const& node);
+
+ClioNode
+tag_invoke(boost::json::value_to_tag<ClioNode>, boost::json::value const& jv);
 
 }  // namespace cluster

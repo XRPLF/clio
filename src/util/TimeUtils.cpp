@@ -23,7 +23,9 @@
 
 #include <chrono>
 #include <ctime>
+#include <iomanip>
 #include <optional>
+#include <sstream>
 #include <string>
 
 namespace util {
@@ -36,6 +38,18 @@ systemTpFromUtcStr(std::string const& dateStr, std::string const& format)
         return std::nullopt;
     }
     return std::chrono::system_clock::from_time_t(timegm(&timeStruct));
+}
+
+[[nodiscard]] std::string
+systemTpToUtcStr(std::chrono::system_clock::time_point const& tp, std::string const& format)
+{
+    auto const timeT = std::chrono::system_clock::to_time_t(tp);
+    std::tm timeStruct{};
+    gmtime_r(&timeT, &timeStruct);
+
+    std::ostringstream oss;
+    oss << std::put_time(&timeStruct, format.c_str());
+    return oss.str();
 }
 
 [[nodiscard]] std::chrono::system_clock::time_point

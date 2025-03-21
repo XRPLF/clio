@@ -25,6 +25,8 @@
 #include "util/Assert.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
 
+#include <boost/asio/spawn.hpp>
+
 #include <chrono>
 #include <concepts>
 #include <memory>
@@ -80,7 +82,7 @@ private:
     }
 
     void
-    doRead();
+    doRead(ContextType::StopToken yield);
 
     void
     doWrite();

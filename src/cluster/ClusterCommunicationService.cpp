@@ -22,6 +22,8 @@
 #include "cluster/ClioNode.hpp"
 #include "data/BackendInterface.hpp"
 
+#include <boost/asio/spawn.hpp>
+
 #include <chrono>
 #include <memory>
 #include <utility>
@@ -35,7 +37,7 @@ ClusterCommunicationService::ClusterCommunicationService(
     std::chrono::steady_clock::duration writeInterval
 )
     : backend_(std::move(backend))
-    , readOperation_(strand_.executeRepeatedly(readInterval, [this]() { doRead(); }))
+    , readOperation_(strand_.executeRepeatedly(readInterval, [this](auto yield) { doRead(yield); }))
     , writeOperation_(strand_.executeRepeatedly(writeInterval, [this]() { doWrite(); }))
 {
 }
@@ -63,13 +65,19 @@ ClusterCommunicationService::clusterData() const
 }
 
 void
-ClusterCommunicationService::doRead()
+ClusterCommunicationService::doRead(ContextType::StopToken yield)
 {
+    // This happens already on the strand_
+    auto expectedResult = backend_->fetchClioNodesData(yield);
+    if (!expectedResult.has_value()) {
+        return;
+    }
 }
 
 void
 doWrite()
 {
+    // This happens already on the strand_
 }
 
 }  // namespace cluster
