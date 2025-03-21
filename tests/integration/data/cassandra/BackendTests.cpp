@@ -39,6 +39,7 @@
 #include <boost/asio/impl/spawn.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <gtest/gtest.h>
@@ -1302,17 +1303,17 @@ TEST_F(BackendCassandraTest, CacheIntegration)
 
 TEST_F(BackendCassandraTest, NodeMessageUpdateFetch)
 {
-    static boost::uuids::uuid const kUUID{};
+    static boost::uuids::uuid const kUUID = boost::uuids::random_generator{}();
     static constexpr std::string_view kMESSAGE = "some message";
 
-    backend_->writeNodeMessage(boost::uuids::to_string(kUUID), std::string{kMESSAGE});
+    EXPECT_NO_THROW({ backend_->writeNodeMessage(kUUID, std::string{kMESSAGE}); });
 
     runSpawn([&](boost::asio::yield_context yield) {
         auto const readResult = backend_->fetchClioNodesData(yield);
         ASSERT_TRUE(readResult) << readResult.error();
         ASSERT_EQ(readResult->size(), 1);
         auto const& [uuid, message] = (*readResult)[0];
-        EXPECT_EQ(uuid, boost::uuids::to_string(kUUID));
+        EXPECT_EQ(uuid, kUUID);
         EXPECT_EQ(message, kMESSAGE);
     });
 }

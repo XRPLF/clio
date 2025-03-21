@@ -27,6 +27,7 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
+#include <boost/uuid/uuid.hpp>
 #include <gmock/gmock.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
@@ -182,7 +183,7 @@ struct MockBackend : public BackendInterface {
         (const, override)
     );
 
-    using FetchClioNodeReturnType = std::expected<std::vector<std::pair<std::string, std::string>>, std::string>;
+    using FetchClioNodeReturnType = std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>;
     MOCK_METHOD(FetchClioNodeReturnType, fetchClioNodesData, (boost::asio::yield_context yield), (const, override));
 
     MOCK_METHOD(
@@ -211,7 +212,7 @@ struct MockBackend : public BackendInterface {
 
     MOCK_METHOD(void, writeSuccessor, (std::string && key, std::uint32_t const, std::string&&), (override));
 
-    MOCK_METHOD(void, writeNodeMessage, (std::string const& uuid, std::string&& message), (override));
+    MOCK_METHOD(void, writeNodeMessage, (boost::uuids::uuid const& uuid, std::string&& message), (override));
 
     MOCK_METHOD(void, startWrites, (), (const, override));
 

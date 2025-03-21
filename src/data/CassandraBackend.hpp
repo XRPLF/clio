@@ -36,6 +36,8 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
+#include <boost/uuid/string_generator.hpp>
+#include <boost/uuid/uuid.hpp>
 #include <cassandra.h>
 #include <fmt/core.h>
 #include <xrpl/basics/Blob.h>
@@ -877,17 +879,17 @@ public:
         return {};
     }
 
-    std::expected<std::vector<std::pair<std::string, std::string>>, std::string>
+    std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>
     fetchClioNodesData(boost::asio::yield_context yield) const override
     {
         auto const readResult = executor_.read(yield, schema_->selectClioNodesData);
         if (not readResult)
             return std::unexpected{readResult.error().message()};
 
-        std::vector<std::pair<std::string, std::string>> result;
+        std::vector<std::pair<boost::uuids::uuid, std::string>> result;
 
-        for (auto [uuid, message] : extract<std::string, std::string>(*readResult)) {
-            result.emplace_back(std::move(uuid), std::move(message));
+        for (auto [uuid, message] : extract<boost::uuids::uuid, std::string>(*readResult)) {
+            result.emplace_back(uuid, std::move(message));
         }
 
         return result;
@@ -1034,12 +1036,11 @@ public:
             schema_->insertMigratorStatus, data::cassandra::Text{migratorName}, data::cassandra::Text(status)
         );
     }
+
     void
-    writeNodeMessage(std::string const& uuid, std::string&& message) override
+    writeNodeMessage(boost::uuids::uuid const& uuid, std::string&& message) override
     {
-        executor_.writeSync(
-            schema_->updateClioNodeMessage, data::cassandra::Text(uuid), data::cassandra::Text{std::move(message)}
-        );
+        executor_.writeSync(schema_->updateClioNodeMessage, data::cassandra::Text{std::move(message)}, uuid);
     }
 
     bool

@@ -31,6 +31,7 @@
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
 #include <boost/utility/result_of.hpp>
+#include <boost/uuid/uuid.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Fees.h>
@@ -568,7 +569,7 @@ public:
     virtual std::optional<std::string>
     fetchMigratorStatus(std::string const& migratorName, boost::asio::yield_context yield) const = 0;
 
-    virtual std::expected<std::vector<std::pair<std::string, std::string>>, std::string>
+    virtual std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>
     fetchClioNodesData(boost::asio::yield_context yield) const = 0;
 
     /**
@@ -678,7 +679,7 @@ public:
     writeSuccessor(std::string&& key, std::uint32_t seq, std::string&& successor) = 0;
 
     virtual void
-    writeNodeMessage(std::string const& uuid, std::string&& message) = 0;
+    writeNodeMessage(boost::uuids::uuid const& uuid, std::string&& message) = 0;
 
     /**
      * @brief Starts a write transaction with the DB. No-op for cassandra.
