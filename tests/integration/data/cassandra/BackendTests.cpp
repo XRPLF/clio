@@ -41,6 +41,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_hash.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <gtest/gtest.h>
 #include <xrpl/basics/Slice.h>
@@ -54,6 +55,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -1301,12 +1303,16 @@ TEST_F(BackendCassandraTest, CacheIntegration)
     ASSERT_EQ(done, true);
 }
 
-TEST_F(BackendCassandraTest, NodeMessageUpdateFetch)
-{
-    static boost::uuids::uuid const kUUID = boost::uuids::random_generator{}();
-    static constexpr std::string_view kMESSAGE = "some message";
+struct BackendCassandraNodeMessageTest : BackendCassandraTest {
+    boost::uuids::random_generator generateUuid;
+};
 
-    EXPECT_NO_THROW({ backend_->writeNodeMessage(kUUID, std::string{kMESSAGE}); });
+TEST_F(BackendCassandraNodeMessageTest, UpdateFetch)
+{
+    static boost::uuids::uuid const kUUID = generateUuid();
+    static constexpr std::string kMESSAGE = "some message";
+
+    EXPECT_NO_THROW({ backend_->writeNodeMessage(kUUID, kMESSAGE); });
 
     runSpawn([&](boost::asio::yield_context yield) {
         auto const readResult = backend_->fetchClioNodesData(yield);
@@ -1315,5 +1321,66 @@ TEST_F(BackendCassandraTest, NodeMessageUpdateFetch)
         auto const& [uuid, message] = (*readResult)[0];
         EXPECT_EQ(uuid, kUUID);
         EXPECT_EQ(message, kMESSAGE);
+    });
+}
+
+TEST_F(BackendCassandraNodeMessageTest, UpdateFetchMultipleMessages)
+{
+    std::unordered_map<boost::uuids::uuid, std::string> kDATA = {
+        {generateUuid(), std::string{"some message"}},
+        {generateUuid(), std::string{"other message"}},
+        {generateUuid(), std::string{"message 3"}}
+    };
+
+    EXPECT_NO_THROW({
+        for (auto const& [uuid, message] : kDATA) {
+            backend_->writeNodeMessage(uuid, message);
+        }
+    });
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const readResult = backend_->fetchClioNodesData(yield);
+        ASSERT_TRUE(readResult) << readResult.error();
+        ASSERT_EQ(readResult->size(), kDATA.size());
+
+        for (size_t i = 0; i < readResult->size(); ++i) {
+            auto const& [uuid, message] = (*readResult)[i];
+            auto const it = kDATA.find(uuid);
+            ASSERT_NE(it, kDATA.end()) << uuid << " not found";
+            EXPECT_EQ(it->second, message);
+        }
+    });
+}
+
+TEST_F(BackendCassandraNodeMessageTest, MessageDisappearsAfterTTL)
+{
+    EXPECT_NO_THROW({ backend_->writeNodeMessage(generateUuid(), "some message"); });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds{2005});
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const readResult = backend_->fetchClioNodesData(yield);
+        ASSERT_TRUE(readResult) << readResult.error();
+        EXPECT_TRUE(readResult->empty());
+    });
+}
+
+TEST_F(BackendCassandraNodeMessageTest, UpdatingMessageKeepsItAlive)
+{
+    static boost::uuids::uuid const kUUID = generateUuid();
+    static constexpr std::string kUPDATED_MESSAGE = "updated message";
+
+    EXPECT_NO_THROW({ backend_->writeNodeMessage(kUUID, "some message"); });
+    std::this_thread::sleep_for(std::chrono::milliseconds{1000});
+
+    EXPECT_NO_THROW({ backend_->writeNodeMessage(kUUID, kUPDATED_MESSAGE); });
+    std::this_thread::sleep_for(std::chrono::milliseconds{1005});
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const readResult = backend_->fetchClioNodesData(yield);
+        ASSERT_TRUE(readResult) << readResult.error();
+        ASSERT_EQ(readResult->size(), 1);
+        auto const& [uuid, message] = (*readResult)[0];
+        EXPECT_EQ(uuid, kUUID);
+        EXPECT_EQ(message, kUPDATED_MESSAGE);
     });
 }

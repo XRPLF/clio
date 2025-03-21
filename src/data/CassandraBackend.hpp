@@ -1038,9 +1038,9 @@ public:
     }
 
     void
-    writeNodeMessage(boost::uuids::uuid const& uuid, std::string&& message) override
+    writeNodeMessage(boost::uuids::uuid const& uuid, std::string const& message) override
     {
-        executor_.writeSync(schema_->updateClioNodeMessage, data::cassandra::Text{std::move(message)}, uuid);
+        executor_.writeSync(schema_->updateClioNodeMessage, data::cassandra::Text{message}, uuid);
     }
 
     bool

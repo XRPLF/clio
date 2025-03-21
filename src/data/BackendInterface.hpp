@@ -679,7 +679,7 @@ public:
     writeSuccessor(std::string&& key, std::uint32_t seq, std::string&& successor) = 0;
 
     virtual void
-    writeNodeMessage(boost::uuids::uuid const& uuid, std::string&& message) = 0;
+    writeNodeMessage(boost::uuids::uuid const& uuid, std::string const& message) = 0;
 
     /**
      * @brief Starts a write transaction with the DB. No-op for cassandra.
