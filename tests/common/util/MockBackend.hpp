@@ -203,6 +203,8 @@ struct MockBackend : public BackendInterface {
 
     MOCK_METHOD(void, writeAccountTransactions, (std::vector<AccountTransactionsData>), (override));
 
+    MOCK_METHOD(void, writeAccountTransaction, (AccountTransactionsData), (override));
+
     MOCK_METHOD(void, writeNFTTransactions, (std::vector<NFTTransactionsData> const&), (override));
 
     MOCK_METHOD(void, writeSuccessor, (std::string && key, std::uint32_t const, std::string&&), (override));
