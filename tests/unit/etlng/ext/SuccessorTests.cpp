@@ -32,10 +32,8 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/TxFormats.h>
-#include <xrpl/protocol/UintTypes.h>
 
 #include <algorithm>
 #include <iterator>
@@ -203,7 +201,7 @@ TEST_F(
     });
     auto const bookBase = getBookBase(createdObj.key);
 
-    [[maybe_unused]] testing::InSequence inSeq;
+    [[maybe_unused]] testing::InSequence const inSeq;
     EXPECT_CALL(cache_, isFull()).WillRepeatedly(testing::Return(true));
     EXPECT_CALL(cache_, latestLedgerSequence()).WillRepeatedly(testing::Return(kSEQ));
 
@@ -239,7 +237,7 @@ TEST_F(
     auto const bookBase = getBookBase(deletedObj.key);
     auto const oldCachedObj = createdObj.data;
 
-    [[maybe_unused]] testing::InSequence inSeq;
+    [[maybe_unused]] testing::InSequence const inSeq;
     EXPECT_CALL(cache_, isFull()).WillRepeatedly(testing::Return(true));
     EXPECT_CALL(cache_, latestLedgerSequence()).WillRepeatedly(testing::Return(kSEQ));
 
@@ -273,7 +271,7 @@ TEST_F(
     auto const bookBase = getBookBase(deletedObj.key);
     auto const oldCachedObj = createdObj.data;
 
-    [[maybe_unused]] testing::InSequence inSeq;
+    [[maybe_unused]] testing::InSequence const inSeq;
     EXPECT_CALL(cache_, isFull()).WillRepeatedly(testing::Return(true));
     EXPECT_CALL(cache_, latestLedgerSequence()).WillRepeatedly(testing::Return(kSEQ));
 
@@ -378,7 +376,7 @@ TEST_F(SuccessorExtTests, OnInitialDataWithSuccessorsButNotBookDirAndNoSuccessor
     successorChain.push(firstKey);
     successorChain.push(secondKey);
 
-    [[maybe_unused]] testing::Sequence inSeq;
+    [[maybe_unused]] testing::Sequence const inSeq;
     EXPECT_CALL(cache_, isFull()).WillOnce(testing::Return(true));
 
     EXPECT_CALL(cache_, getSuccessor(testing::_, kSEQ))
@@ -417,7 +415,7 @@ TEST_F(SuccessorExtTests, OnInitialDataWithSuccessorsButNotBookDirAndSuccessorsF
     successorChain.push(firstKey);
     successorChain.push(secondKey);
 
-    [[maybe_unused]] testing::Sequence inSeq;
+    [[maybe_unused]] testing::Sequence const inSeq;
     EXPECT_CALL(cache_, isFull()).WillOnce(testing::Return(true));
 
     EXPECT_CALL(cache_, getSuccessor(testing::_, kSEQ))
@@ -460,7 +458,7 @@ TEST_F(SuccessorExtTests, OnInitialDataWithSuccessorsAndBookDirAndSuccessorsForE
     auto const bookBaseObj = util::createObjectWithBookBase(Object::ModType::Created);
     auto const bookBase = getBookBase(bookBaseObj.key);
 
-    [[maybe_unused]] testing::Sequence inSeq;
+    [[maybe_unused]] testing::Sequence const inSeq;
     EXPECT_CALL(cache_, isFull()).WillOnce(testing::Return(true));
 
     EXPECT_CALL(cache_, getSuccessor(testing::_, kSEQ))

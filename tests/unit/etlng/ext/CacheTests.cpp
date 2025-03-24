@@ -26,7 +26,6 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <xrpl/protocol/TxFormats.h>
 
 #include <utility>
 #include <vector>
