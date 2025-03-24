@@ -121,7 +121,7 @@ public:
 
             LOG(log_.trace()) << "Inserting transaction = " << sttx.getTransactionID();
 
-            ripple::TxMeta txMeta{sttx.getTransactionID(), ledger.seq, txn.metadata_blob()};
+            ripple::TxMeta const txMeta{sttx.getTransactionID(), ledger.seq, txn.metadata_blob()};
 
             auto const [nftTxs, maybeNFT] = getNFTDataFromTx(txMeta, sttx);
             result.nfTokenTxData.insert(result.nfTokenTxData.end(), nftTxs.begin(), nftTxs.end());
