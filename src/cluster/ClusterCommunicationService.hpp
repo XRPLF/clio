@@ -22,28 +22,26 @@
 #include "cluster/ClioNode.hpp"
 #include "cluster/ClusterCommunicationServiceInterface.hpp"
 #include "data/BackendInterface.hpp"
-#include "util/Assert.hpp"
-#include "util/async/context/BasicExecutionContext.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/asio/thread_pool.hpp>
 
 #include <chrono>
-#include <concepts>
 #include <memory>
 #include <vector>
 
 namespace cluster {
 
 class ClusterCommunicationService : public ClusterCommunicationServiceInterface {
-    using ContextType = util::async::CoroExecutionContext;
+    // TODO: Use util::async::CoroExecutionContext after https://github.com/XRPLF/clio/issues/1973 is implemented
+    boost::asio::thread_pool ctx_{1};
+    boost::asio::strand<boost::asio::thread_pool::executor_type> strand_ = boost::asio::make_strand(ctx_);
 
-    ContextType ctx_;
-    mutable ContextType::Strand strand_ = ctx_.makeStrand();
+    util::Logger log_{"ClusterCommunication"};
 
     std::shared_ptr<data::BackendInterface> backend_;
-
-    ContextType::Strand::RepeatedOperation readOperation_;
-    ContextType::Strand::RepeatedOperation writeOperation_;
 
     ClioNode selfData_;
     std::vector<ClioNode> otherNodesData_;
@@ -71,18 +69,8 @@ public:
     clusterData() const override;
 
 private:
-    template <std::invocable Fn>
-    auto
-    executeOnStrand(Fn&& fn) const
-    {
-        auto operation = strand_.execute(std::forward<Fn>(fn));
-        auto result = operation.get();
-        ASSERT(result.has_value(), "Unexpected error in async operation");
-        return std::move(result).value();
-    }
-
     void
-    doRead(ContextType::StopToken yield);
+    doRead(boost::asio::yield_context yield);
 
     void
     doWrite();

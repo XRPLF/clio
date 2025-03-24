@@ -21,10 +21,18 @@
 
 #include "cluster/ClioNode.hpp"
 #include "data/BackendInterface.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/json/parse.hpp>
+#include <boost/json/serialize.hpp>
+#include <boost/json/value.hpp>
+#include <boost/json/value_from.hpp>
+#include <boost/json/value_to.hpp>
 
 #include <chrono>
+#include <ctime>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -37,9 +45,24 @@ ClusterCommunicationService::ClusterCommunicationService(
     std::chrono::steady_clock::duration writeInterval
 )
     : backend_(std::move(backend))
-    , readOperation_(strand_.executeRepeatedly(readInterval, [this](auto yield) { doRead(yield); }))
-    , writeOperation_(strand_.executeRepeatedly(writeInterval, [this]() { doWrite(); }))
 {
+    boost::asio::spawn(strand_, [this, readInterval](boost::asio::yield_context yield) {
+        boost::asio::steady_timer timer(yield.get_executor());
+        while (true) {
+            doRead(yield);
+            timer.expires_after(readInterval);
+            timer.async_wait(yield);
+        }
+    });
+
+    boost::asio::spawn(strand_, [this, writeInterval](boost::asio::yield_context yield) {
+        boost::asio::steady_timer timer(yield.get_executor());
+        while (true) {
+            doWrite();
+            timer.expires_after(writeInterval);
+            timer.async_wait(yield);
+        }
+    });
 }
 
 ClusterCommunicationService::~ClusterCommunicationService()
@@ -51,33 +74,63 @@ ClusterCommunicationService::~ClusterCommunicationService()
 ClioNode
 ClusterCommunicationService::selfData() const
 {
-    return executeOnStrand([this]() { return selfData_; });
+    ClioNode result{};
+    boost::asio::spawn(strand_, [this, &result](boost::asio::yield_context) { result = selfData_; });
+    return result;
 }
 
 std::vector<ClioNode>
 ClusterCommunicationService::clusterData() const
 {
-    return executeOnStrand([this] {
-        auto nodesData = otherNodesData_;
-        nodesData.push_back(selfData_);
-        return nodesData;
+    std::vector<ClioNode> result;
+    boost::asio::spawn(strand_, [this, &result](boost::asio::yield_context) {
+        result = otherNodesData_;
+        result.push_back(selfData_);
     });
+    return result;
 }
 
 void
-ClusterCommunicationService::doRead(ContextType::StopToken yield)
+ClusterCommunicationService::doRead(boost::asio::yield_context yield)
 {
-    // This happens already on the strand_
+    otherNodesData_.clear();
+
     auto expectedResult = backend_->fetchClioNodesData(yield);
     if (!expectedResult.has_value()) {
+        LOG(log_.error()) << "Failed to fetch nodes data";
         return;
     }
+
+    // Create a new vector here to not have partially parsed data in otherNodesData_
+    std::vector<ClioNode> otherNodesData;
+    for (auto const& [uuid, nodeDataStr] : expectedResult.value()) {
+        if (uuid == *selfData_.uuid) {
+            continue;
+        }
+
+        boost::system::error_code errorCode;
+        auto const json = boost::json::parse(nodeDataStr, errorCode);
+        if (errorCode.failed()) {
+            LOG(log_.error()) << "Error parsing json from DB: " << nodeDataStr;
+            return;
+        }
+
+        auto expectedNodeData = boost::json::try_value_to<ClioNode>(json);
+        if (expectedNodeData.has_error()) {
+            LOG(log_.error()) << "Error converting json to ClioNode: " << json;
+        }
+        otherNodesData.push_back(std::move(expectedNodeData).value());
+    }
+    otherNodesData_ = std::move(otherNodesData);
 }
 
 void
-doWrite()
+ClusterCommunicationService::doWrite()
 {
-    // This happens already on the strand_
+    selfData_.updateTime = std::chrono::system_clock::now();
+    boost::json::value jsonValue{};
+    boost::json::value_from(jsonValue, selfData_);
+    backend_->writeNodeMessage(*selfData_.uuid, boost::json::serialize(jsonValue.as_object()));
 }
 
 }  // namespace cluster

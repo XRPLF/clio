@@ -69,7 +69,6 @@ systemTpFromUtcStr(std::string const& dateStr, std::string const& format);
  */
 [[nodiscard]] std::string
 systemTpToUtcStr(std::chrono::system_clock::time_point const& tp, std::string const& format);
-;
 
 /**
  * @brief Convert a ledger close time which is XRPL network clock to a system_clock::time_point.
