@@ -373,7 +373,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `32`
 - **Constraints**: The minimum value is `0`. The maximum value is `65535`.
-- **Description**: The number of cursors generated is the number of changed objects in the latest `cache.num_diffs` number of ledgers. Deleted objects does not count. For more information, please read [README.md](../src/etl/README.md) under etl.
+- **Description**: The number of cursors generated is the number of changed objects in the latest `cache.num_diffs` number of ledgers. Deleted objects does not count. Cursors are workers that load the ledger cache from the position of markers concurrently. For more information, please read [README.md](../src/etl/README.md) under etl.
 
 ### cache.num_markers
 
@@ -381,7 +381,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `48`
 - **Constraints**: The minimum value is `0`. The maximum value is `65535`.
-- **Description**: The number of corountines to load the cache concurrently.
+- **Description**:  Specifies how many markers are placed randomly within the cache. These markers define the positions on the ledger that will be loaded concurrently by the workers. The higher the number, the more places within the cache we potentially cover.
 
 ### cache.num_cursors_from_diff
 
