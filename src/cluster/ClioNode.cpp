@@ -25,6 +25,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 #include <memory>
 #include <stdexcept>
@@ -32,12 +33,11 @@
 #include <string_view>
 
 namespace cluster {
+
 namespace {
 
-constexpr char const* kTIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ";
-
 struct Fields {
-    static constexpr std::string_view kUPDATE_TIME = "update_time";
+    static constexpr std::string_view const kUPDATE_TIME = "update_time";
 };
 
 }  // namespace
@@ -45,16 +45,16 @@ struct Fields {
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, ClioNode const& node)
 {
-    boost::json::object obj;
-    obj.insert_or_assign(Fields::kUPDATE_TIME, util::systemTpToUtcStr(node.updateTime, kTIME_FORMAT));
-    jv = obj;
+    jv = {
+        {Fields::kUPDATE_TIME, util::systemTpToUtcStr(node.updateTime, ClioNode::kTIME_FORMAT)},
+    };
 }
 
 ClioNode
 tag_invoke(boost::json::value_to_tag<ClioNode>, boost::json::value const& jv)
 {
     auto const& updateTimeStr = jv.as_object().at(Fields::kUPDATE_TIME).as_string();
-    auto const updateTime = util::systemTpFromUtcStr(std::string(updateTimeStr), kTIME_FORMAT);
+    auto const updateTime = util::systemTpFromUtcStr(std::string(updateTimeStr), ClioNode::kTIME_FORMAT);
     if (!updateTime.has_value()) {
         throw std::runtime_error("Failed to parse update time");
     }

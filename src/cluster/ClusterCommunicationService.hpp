@@ -55,6 +55,9 @@ public:
 
     ~ClusterCommunicationService() override;
 
+    void
+    stop();
+
     ClusterCommunicationService(ClusterCommunicationService&&) = delete;
     ClusterCommunicationService(ClusterCommunicationService const&) = delete;
     ClusterCommunicationService&

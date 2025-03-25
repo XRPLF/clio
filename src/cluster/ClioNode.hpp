@@ -29,6 +29,8 @@
 namespace cluster {
 
 struct ClioNode {
+    static constexpr char const* kTIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ";
+
     // enum class WriterRole {
     //     ReadOnly,
     //     NotWriter,

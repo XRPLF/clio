@@ -67,6 +67,12 @@ ClusterCommunicationService::ClusterCommunicationService(
 
 ClusterCommunicationService::~ClusterCommunicationService()
 {
+    stop();
+}
+
+void
+ClusterCommunicationService::stop()
+{
     ctx_.stop();
     ctx_.join();
 }
