@@ -11,6 +11,7 @@ import (
 )
 
 const deltaDataFolderDiv = 10000
+const readWritePerm = 0644
 
 func convertInnerMarkerToMarker(in []byte) []byte {
 	if in == nil {
@@ -84,7 +85,7 @@ func (lh *LedgersHouse) WriteLedgerDeltaData(seq uint32, data *pb.GetLedgerRespo
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, dataBytes, 0644)
+	return os.WriteFile(path, dataBytes, readWritePerm)
 }
 
 func (lh *LedgersHouse) ReadLedgerData(seq uint32, innerMarker []byte) (*pb.GetLedgerDataResponse, error) {
@@ -112,7 +113,7 @@ func (lh *LedgersHouse) WriteLedgerData(seq uint32, innerMarker []byte, data *pb
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, dataBytes, 0644)
+	return os.WriteFile(path, dataBytes, readWritePerm)
 }
 
 func (lh *LedgersHouse) SetRange(startSeq uint32, endSeq uint32) error {

@@ -19,6 +19,9 @@ func StartServer(grpcServerAddr string, wsServerAddr string, path string) {
 	}
 
 	startSeq, endSeq, err := ledgersHouse.GetRange()
+	if err != nil {
+		log.Fatalf("Failed to get range: %v", err)
+	}
 
 	lis, err := net.Listen("tcp", grpcServerAddr)
 
