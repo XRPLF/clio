@@ -104,6 +104,7 @@ public:
         std::optional<boost::json::object> amm;
         std::optional<boost::json::object> mptoken;
         std::optional<boost::json::object> permissionedDomain;
+        std::optional<boost::json::object> vault;
         std::optional<ripple::STXChainBridge> bridge;
         std::optional<std::string> bridgeAccount;
         std::optional<uint32_t> chainClaimId;
@@ -380,6 +381,22 @@ public:
                  validation::Type<std::string, boost::json::object>{}, Status(ClioError::RpcMalformedRequest)
              },
              meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+             meta::IfType<boost::json::object>{meta::Section{
+                 {JS(seq),
+                  meta::WithCustomError{validation::Required{}, Status(ClioError::RpcMalformedRequest)},
+                  meta::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::RpcMalformedRequest)}},
+                 {
+                     JS(account),
+                     meta::WithCustomError{validation::Required{}, Status(ClioError::RpcMalformedRequest)},
+                     meta::WithCustomError{
+                         validation::CustomValidators::accountBase58Validator, Status(ClioError::RpcMalformedAddress)
+                     },
+                 },
+             }}},
+            {JS(vault),
+             meta::WithCustomError{
+                 validation::Type<std::string, boost::json::object>{}, Status(ClioError::RpcMalformedRequest)
+             },
              meta::IfType<boost::json::object>{meta::Section{
                  {JS(seq),
                   meta::WithCustomError{validation::Required{}, Status(ClioError::RpcMalformedRequest)},
