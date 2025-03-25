@@ -173,8 +173,8 @@ TEST(ConfigDescription, GetValues)
 
     EXPECT_EQ(
         definition.get("database.type"),
-        "Specifies the type of database to use for storing and retrieving data needed by the Clio server. "
-        "Only `Cassandra` is currently allowed."
+        "Specifies the type of database used for storing and retrieving data required by the Clio server. Both "
+        "ScyllaDB and Cassandra can serve as backends for Clio; however, this value must be set to `cassandra`."
     );
     EXPECT_EQ(definition.get("etl_sources.[].ip"), "The IP address of the ETL source.");
     EXPECT_EQ(definition.get("prometheus.enabled"), "Enables or disables Prometheus metrics.");

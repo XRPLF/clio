@@ -13,7 +13,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: string
 - **Default value**: `cassandra`
 - **Constraints**: The value must be one of the following: `cassandra`.
-- **Description**: Specifies the type of database to use for storing and retrieving data needed by the Clio server. Only `Cassandra` is currently allowed.
+- **Description**: Specifies the type of database used for storing and retrieving data required by the Clio server. Both ScyllaDB and Cassandra can serve as backends for Clio; however, this value must be set to `cassandra`.
 
 ### database.cassandra.contact_points
 
@@ -157,7 +157,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: boolean
 - **Default value**: `True`
 - **Constraints**: None
-- **Description**: If set to `True`, allows `Clio` to start without any ETL source.
+- **Description**: If set to `True`, allows Clio to start without any ETL source.
 
 ### etl_sources.[].ip
 
@@ -373,7 +373,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `32`
 - **Constraints**: The minimum value is `0`. The maximum value is `65535`.
-- **Description**: The number of cursors generated is the number of changed objects in the latest `cache.num_diffs` number of ledgers. Deleted objects does not count. Cursors are workers that load the ledger cache from the position of markers concurrently. For more information, please read [README.md](../src/etl/README.md) under etl.
+- **Description**: The number of cursors generated is the number of changed (without counting deleted) objects in the latest `cache.num_diffs` number of ledgers. Cursors are workers that load the ledger cache from the position of markers concurrently. For more information, please read [README.md](../src/etl/README.md).
 
 ### cache.num_markers
 
@@ -445,7 +445,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: string
 - **Default value**: `%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%`
 - **Constraints**: None
-- **Description**: The format string for log messages. The format is described here: https://beta.boost.org/doc/libs/1_83_0/libs/log/doc/html/log/tutorial/formatters.html.
+- **Description**: The format string for log messages. The format is described here: https://www.boost.org/doc/libs/1_87_0/libs/log/doc/html/log/tutorial/formatters.html.
 
 ### log_to_console
 
@@ -517,7 +517,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: None
 - **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
-- **Description**: If specified, the starting ledger where `Clio` will starts writing to database from.
+- **Description**: If specified, the ledger index Clio will start writing to the database from.
 
 ### finish_sequence
 
@@ -525,7 +525,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: None
 - **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
-- **Description**: If specified, the final ledger where `Clio` will write to database.
+- **Description**: If specified, the final ledger that Clio will write to the database.
 
 ### ssl_cert_file
 

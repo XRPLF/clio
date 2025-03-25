@@ -135,8 +135,10 @@ public:
 private:
     static constexpr auto kCONFIG_DESCRIPTION = std::array{
         KV{.key = "database.type",
-           .value = "Specifies the type of database to use for storing and retrieving data needed by the Clio server. "
-                    "Only `Cassandra` is currently allowed."},
+           .value =
+               "Specifies the type of database used for storing and retrieving data required by the Clio server. Both "
+               "ScyllaDB and Cassandra can serve as backends for Clio; however, this value must be set to `cassandra`."
+        },
         KV{.key = "database.cassandra.contact_points",
            .value = "A list of IP addresses or hostnames for the initial cluster nodes (Cassandra or ScyllaDB) that "
                     "the client connects to when establishing a database connection. If you're running Clio locally, "
@@ -180,7 +182,7 @@ private:
         KV{.key = "database.cassandra.certfile",
            .value = "The path to the SSL/TLS certificate file used to establish a secure connection between the client "
                     "and the Cassandra database."},
-        KV{.key = "allow_no_etl", .value = "If set to `True`, allows `Clio` to start without any ETL source."},
+        KV{.key = "allow_no_etl", .value = "If set to `True`, allows Clio to start without any ETL source."},
         KV{.key = "etl_sources.[].ip", .value = "The IP address of the ETL source."},
         KV{.key = "etl_sources.[].ws_port", .value = "The WebSocket port of the ETL source."},
         KV{.key = "etl_sources.[].grpc_port", .value = "The gRPC port of the ETL source."},
@@ -238,11 +240,10 @@ private:
            .value = "The number of milliseconds the server waits to shutdown gracefully. If Clio does not shutdown "
                     "gracefully after the specified value, it will be killed instead."},
         KV{.key = "cache.num_diffs",
-           .value = "The number of cursors generated is the number of changed objects in the latest `cache.num_diffs` "
-                    "number of ledgers. Deleted objects does not count. Cursors are workers that load the ledger cache "
+           .value = "The number of cursors generated is the number of changed (without counting deleted) objects in "
+                    "the latest `cache.num_diffs` number of ledgers. Cursors are workers that load the ledger cache "
                     "from the position of markers concurrently. For more information, please read "
-                    "[README.md](../src/etl/README.md) "
-                    "under etl."},
+                    "[README.md](../src/etl/README.md)."},
         KV{.key = "cache.num_markers",
            .value = " Specifies how many markers are placed randomly within the cache. These markers define the "
                     "positions on the ledger that will be loaded concurrently by the workers. The higher the number, "
@@ -263,7 +264,7 @@ private:
                     "explicitly defined logging level."},
         KV{.key = "log_format",
            .value = "The format string for log messages. The format is described here: "
-                    "https://beta.boost.org/doc/libs/1_83_0/libs/log/doc/html/log/tutorial/formatters.html."},
+                    "https://www.boost.org/doc/libs/1_87_0/libs/log/doc/html/log/tutorial/formatters.html."},
         KV{.key = "log_to_console", .value = "Enables or disables logging to the console."},
         KV{.key = "log_directory", .value = "The directory path for the log files."},
         KV{.key = "log_rotation_size",
@@ -280,8 +281,8 @@ private:
         KV{.key = "extractor_threads", .value = "Number of threads used to extract data from ETL source."},
         KV{.key = "read_only", .value = "Indicates if the server is allowed to write data to the database."},
         KV{.key = "start_sequence",
-           .value = "If specified, the starting ledger where `Clio` will starts writing to database from."},
-        KV{.key = "finish_sequence", .value = "If specified, the final ledger where `Clio` will write to database."},
+           .value = "If specified, the ledger index Clio will start writing to the database from."},
+        KV{.key = "finish_sequence", .value = "If specified, the final ledger that Clio will write to the database."},
         KV{.key = "ssl_cert_file", .value = "The path to the SSL certificate file."},
         KV{.key = "ssl_key_file", .value = "The path to the SSL key file."},
         KV{.key = "api_version.default", .value = "The default API version that the Clio server will run on."},
