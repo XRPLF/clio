@@ -13,9 +13,9 @@ type Args struct {
 	EndSeq     uint32
 	Path       string
 	GrpcServer string
+	WsServer   string
 	ServerMode bool
-	GrpcPort   uint32
-	WsPort     uint32
+	ShowRange  bool
 }
 
 func Parse() (*Args, error) {
@@ -27,10 +27,10 @@ func Parse() (*Args, error) {
 	seq := fs.Uint32("start_seq", 0, "Starting sequence number")
 	endSeq := fs.Uint32("end_seq", 0, "Ending sequence number")
 	path := fs.StringP("path", "p", "", "Path to the data")
-	grpcServer := fs.StringP("grpc_server", "g", "localhost:50051", "rippled's gRPC server address")
+	grpcServer := fs.StringP("grpc_server", "g", "0.0.0.0:50051", "rippled's gRPC server address")
+	wsServer := fs.StringP("ws_server", "w", "0.0.0.0:6006", "rippled's gRPC server address")
 	serverMode := fs.BoolP("server", "s", false, "Start server mode")
-	grpcPort := fs.Uint32("grpc_port", 0, "Port for gRPC server to listen on")
-	wsPort := fs.Uint32("ws_port", 0, "Port for WebSocket server to listen on")
+	showRange := fs.BoolP("range", "r", false, "Show the range of the snapshot")
 	fs.Parse(os.Args[1:])
 
 	if *serverMode && *exportMode != "" {
@@ -38,22 +38,26 @@ func Parse() (*Args, error) {
 	}
 
 	if *serverMode {
-		if *grpcPort == 0 || *wsPort == 0 || *path == "" {
-			return nil, fmt.Errorf("Invalid usage: --grpc_port and --ws_port and --path are required for server mode.")
+		if *grpcServer == "" || *wsServer == "" || *path == "" {
+			return nil, fmt.Errorf("Invalid usage: --grpc_server and --ws_server and --path are required for server mode.")
 		}
 	} else if *exportMode != "" {
 		if *exportMode == "full" || *exportMode == "delta" {
 			if *seq == 0 || *endSeq == 0 || *path == "" || *grpcServer == "" {
-				return nil, fmt.Errorf("Invalid usage: --start_seq, --end_seq, --grpc_server and --path are required for export")
+				return nil, fmt.Errorf("Invalid usage: --start_seq, --end_seq, --grpc_server and --path are required for export.")
 			}
 		} else {
 			return nil, fmt.Errorf("Invalid usage: Invalid export mode. Use 'full' or 'delta'.")
 		}
+	} else if *showRange {
+		if *path == "" {
+			return nil, fmt.Errorf("Invalid usage: --path is required for show range.")
+		}
 	} else {
-		return nil, fmt.Errorf("Invalid usage: --export or --server flag is required.")
+		return nil, fmt.Errorf("Invalid usage: --export or --server or --range flag is required.")
 	}
 
-	return &Args{*exportMode, *seq, *endSeq, *path, *grpcServer, *serverMode, *grpcPort, *wsPort}, nil
+	return &Args{*exportMode, *seq, *endSeq, *path, *grpcServer, *wsServer, *serverMode, *showRange}, nil
 }
 
 func PrintUsage() {

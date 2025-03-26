@@ -21,6 +21,7 @@
 
 #include "data/LedgerCacheInterface.hpp"
 #include "data/Types.hpp"
+#include "etlng/Models.hpp"
 #include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Label.hpp"
@@ -29,7 +30,6 @@
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/hardened_hash.h>
 
-#include <atomic>
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
@@ -74,6 +74,7 @@ class LedgerCache : public LedgerCacheInterface {
     )};
 
     std::map<ripple::uint256, CacheEntry> map_;
+    std::map<ripple::uint256, CacheEntry> deleted_;
 
     mutable std::shared_mutex mtx_;
     std::condition_variable_any cv_;
@@ -94,10 +95,16 @@ class LedgerCache : public LedgerCacheInterface {
 
 public:
     void
-    update(std::vector<LedgerObject> const& objs, uint32_t seq, bool isBackground = false) override;
+    update(std::vector<LedgerObject> const& objs, uint32_t seq, bool isBackground) override;
+
+    void
+    update(std::vector<etlng::model::Object> const& objs, uint32_t seq) override;
 
     std::optional<Blob>
     get(ripple::uint256 const& key, uint32_t seq) const override;
+
+    std::optional<Blob>
+    getDeleted(ripple::uint256 const& key, uint32_t seq) const override;
 
     std::optional<LedgerObject>
     getSuccessor(ripple::uint256 const& key, uint32_t seq) const override;

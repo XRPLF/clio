@@ -6,6 +6,7 @@ set(GO_SOURCE_DIR "${CMAKE_SOURCE_DIR}/tools/snapshot")
 set(PROTO_INC_DIR "${xrpl_PACKAGE_FOLDER_RELEASE}/include/xrpl/proto")
 set(PROTO_SOURCE_DIR "${PROTO_INC_DIR}/org/xrpl/rpc/v1/")
 set(GO_OUTPUT "${CMAKE_BINARY_DIR}/clio_snapshot")
+file(GLOB_RECURSE GO_SOURCES ${GO_SOURCE_DIR}/*.go)
 
 set(PROTO_FILES
     ${PROTO_SOURCE_DIR}/xrp_ledger.proto ${PROTO_SOURCE_DIR}/ledger.proto ${PROTO_SOURCE_DIR}/get_ledger.proto
@@ -34,7 +35,7 @@ endforeach()
 foreach (proto ${PROTO_FILES})
   get_filename_component(proto_name ${proto} NAME_WE)
   add_custom_command(
-    OUTPUT ${GO_SOURCE_DIR}/${proto_name}.pb.go
+    OUTPUT ${GO_SOURCE_DIR}/${GO_IMPORT_PATH}/${proto_name}.pb.go
     COMMAND
       protoc ${GO_OPTS} ${GRPC_OPTS} 
       --go-grpc_out=${GO_SOURCE_DIR} -I${PROTO_INC_DIR} ${proto} --plugin=${GOPATH_VALUE}/bin/protoc-gen-go
@@ -44,7 +45,7 @@ foreach (proto ${PROTO_FILES})
     VERBATIM
   )
 
-  list(APPEND GENERATED_GO_FILES ${GO_SOURCE_DIR}/${proto_name}.pb.go)
+  list(APPEND GENERATED_GO_FILES ${GO_SOURCE_DIR}/${GO_IMPORT_PATH}/${proto_name}.pb.go)
 endforeach ()
 
 add_custom_target(build_clio_snapshot ALL DEPENDS run_go_tests ${GO_OUTPUT})
@@ -52,15 +53,16 @@ add_custom_target(build_clio_snapshot ALL DEPENDS run_go_tests ${GO_OUTPUT})
 add_custom_target(run_go_tests
     COMMAND go test ./...
     WORKING_DIRECTORY ${GO_SOURCE_DIR}
+    DEPENDS ${GENERATED_GO_FILES}
     COMMENT "Running clio_snapshot unittests"
     VERBATIM
-    DEPENDS ${GENERATED_GO_FILES}
 )
 
 add_custom_command(
   OUTPUT ${GO_OUTPUT}
   COMMAND ${GO_EXECUTABLE} build -o ${GO_OUTPUT} ${GO_SOURCE_DIR}
   WORKING_DIRECTORY ${GO_SOURCE_DIR}
+  DEPENDS ${GO_SOURCES}
   COMMENT "Building clio_snapshot"
   VERBATIM
 )
