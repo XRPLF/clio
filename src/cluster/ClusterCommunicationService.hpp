@@ -27,6 +27,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/asio/thread_pool.hpp>
+#include <boost/uuid/uuid.hpp>
 
 #include <chrono>
 #include <memory>
@@ -43,8 +44,13 @@ class ClusterCommunicationService : public ClusterCommunicationServiceInterface 
 
     std::shared_ptr<data::BackendInterface> backend_;
 
+    std::chrono::steady_clock::duration readInterval_;
+    std::chrono::steady_clock::duration writeInterval_;
+
     ClioNode selfData_;
     std::vector<ClioNode> otherNodesData_;
+
+    bool stopped_ = false;
 
 public:
     ClusterCommunicationService(
@@ -56,6 +62,9 @@ public:
     ~ClusterCommunicationService() override;
 
     void
+    run();
+
+    void
     stop();
 
     ClusterCommunicationService(ClusterCommunicationService&&) = delete;
@@ -64,6 +73,9 @@ public:
     operator=(ClusterCommunicationService&&) = delete;
     ClusterCommunicationService&
     operator=(ClusterCommunicationService const&) = delete;
+
+    std::shared_ptr<boost::uuids::uuid>
+    selfUuid() const;
 
     ClioNode
     selfData() const override;

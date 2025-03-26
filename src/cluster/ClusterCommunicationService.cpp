@@ -30,6 +30,8 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 #include <boost/json/value_to.hpp>
+#include <boost/uuid/random_generator.hpp>
+#include <boost/uuid/uuid.hpp>
 
 #include <chrono>
 #include <ctime>
@@ -45,21 +47,33 @@ ClusterCommunicationService::ClusterCommunicationService(
     std::chrono::steady_clock::duration writeInterval
 )
     : backend_(std::move(backend))
+    , readInterval_(readInterval)
+    , writeInterval_(writeInterval)
+    , selfData_{ClioNode{
+          .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator{}()),
+          .updateTime = std::chrono::system_clock::time_point{},
+          .isSelf = true
+      }}
 {
-    boost::asio::spawn(strand_, [this, readInterval](boost::asio::yield_context yield) {
+}
+
+void
+ClusterCommunicationService::run()
+{
+    boost::asio::spawn(strand_, [this](boost::asio::yield_context yield) {
         boost::asio::steady_timer timer(yield.get_executor());
         while (true) {
-            doRead(yield);
-            timer.expires_after(readInterval);
+            timer.expires_after(readInterval_);
             timer.async_wait(yield);
+            doRead(yield);
         }
     });
 
-    boost::asio::spawn(strand_, [this, writeInterval](boost::asio::yield_context yield) {
+    boost::asio::spawn(strand_, [this](boost::asio::yield_context yield) {
         boost::asio::steady_timer timer(yield.get_executor());
         while (true) {
             doWrite();
-            timer.expires_after(writeInterval);
+            timer.expires_after(writeInterval_);
             timer.async_wait(yield);
         }
     });
@@ -73,8 +87,19 @@ ClusterCommunicationService::~ClusterCommunicationService()
 void
 ClusterCommunicationService::stop()
 {
+    if (stopped_)
+        return;
+
     ctx_.stop();
     ctx_.join();
+    stopped_ = true;
+}
+
+std::shared_ptr<boost::uuids::uuid>
+ClusterCommunicationService::selfUuid() const
+{
+    // Uuid never changes so it is safe to copy it without using strand_
+    return selfData_.uuid;
 }
 
 ClioNode
@@ -124,7 +149,10 @@ ClusterCommunicationService::doRead(boost::asio::yield_context yield)
         auto expectedNodeData = boost::json::try_value_to<ClioNode>(json);
         if (expectedNodeData.has_error()) {
             LOG(log_.error()) << "Error converting json to ClioNode: " << json;
+            return;
         }
+        *expectedNodeData->uuid = uuid;
+        expectedNodeData->isSelf = false;
         otherNodesData.push_back(std::move(expectedNodeData).value());
     }
     otherNodesData_ = std::move(otherNodesData);
@@ -135,7 +163,7 @@ ClusterCommunicationService::doWrite()
 {
     selfData_.updateTime = std::chrono::system_clock::now();
     boost::json::value jsonValue{};
-    boost::json::value_from(jsonValue, selfData_);
+    boost::json::value_from(selfData_, jsonValue);
     backend_->writeNodeMessage(*selfData_.uuid, boost::json::serialize(jsonValue.as_object()));
 }
 

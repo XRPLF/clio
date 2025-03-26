@@ -212,7 +212,7 @@ struct MockBackend : public BackendInterface {
 
     MOCK_METHOD(void, writeSuccessor, (std::string && key, std::uint32_t const, std::string&&), (override));
 
-    MOCK_METHOD(void, writeNodeMessage, (boost::uuids::uuid const& uuid, std::string const& message), (override));
+    MOCK_METHOD(void, writeNodeMessage, (boost::uuids::uuid const& uuid, std::string message), (override));
 
     MOCK_METHOD(void, startWrites, (), (const, override));
 

@@ -18,6 +18,7 @@ target_sources(
           data/cassandra/SettingsProviderTests.cpp
           # Cluster
           cluster/ClioNodeTests.cpp
+          cluster/ClusterCommunicationServiceTests.cpp
           # ETL
           etl/AmendmentBlockHandlerTests.cpp
           etl/CacheLoaderSettingsTests.cpp
