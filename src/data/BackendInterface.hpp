@@ -569,6 +569,12 @@ public:
     virtual std::optional<std::string>
     fetchMigratorStatus(std::string const& migratorName, boost::asio::yield_context yield) const = 0;
 
+    /**
+     * @brief Fetches the data of all nodes in the cluster.
+     *
+     * @param yield The coroutine context
+     *@return The data of all nodes in the cluster.
+     */
     virtual std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>
     fetchClioNodesData(boost::asio::yield_context yield) const = 0;
 
@@ -686,6 +692,12 @@ public:
     virtual void
     writeSuccessor(std::string&& key, std::uint32_t seq, std::string&& successor) = 0;
 
+    /**
+     * @brief Write a node message. Used by ClusterCommunicationService
+     *
+     * @param uuid The UUID of the node
+     * @param message The message to write
+     */
     virtual void
     writeNodeMessage(boost::uuids::uuid const& uuid, std::string message) = 0;
 

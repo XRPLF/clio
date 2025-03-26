@@ -25,13 +25,26 @@
 
 namespace cluster {
 
+/**
+ * @brief Interface for the cluster communication service.
+ */
 class ClusterCommunicationServiceInterface {
 public:
     virtual ~ClusterCommunicationServiceInterface() = default;
 
+    /**
+     * @brief Get the data of the current node.
+     *
+     * @return The data of the current node.
+     */
     virtual ClioNode
     selfData() const = 0;
 
+    /**
+     * @brief Get the data of all nodes in the cluster (including self).
+     *
+     * @return The data of all nodes in the cluster.
+     */
     virtual std::vector<ClioNode>
     clusterData() const = 0;
 };
