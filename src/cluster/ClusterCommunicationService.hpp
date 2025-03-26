@@ -35,6 +35,9 @@
 
 namespace cluster {
 
+/**
+ * @brief Service to post and read messages to/from the cluster. It uses a backend to communicate with the cluster.
+ */
 class ClusterCommunicationService : public ClusterCommunicationServiceInterface {
     // TODO: Use util::async::CoroExecutionContext after https://github.com/XRPLF/clio/issues/1973 is implemented
     boost::asio::thread_pool ctx_{1};
@@ -53,6 +56,13 @@ class ClusterCommunicationService : public ClusterCommunicationServiceInterface 
     bool stopped_ = false;
 
 public:
+    /**
+     * @brief Construct a new Cluster Communication Service object.
+     *
+     * @param backend The backend to use for communication.
+     * @param readInterval The interval to read messages from the cluster.
+     * @param writeInterval The interval to write messages to the cluster.
+     */
     ClusterCommunicationService(
         std::shared_ptr<data::BackendInterface> backend,
         std::chrono::steady_clock::duration readInterval,
@@ -61,9 +71,15 @@ public:
 
     ~ClusterCommunicationService() override;
 
+    /**
+     * @brief Start the service.
+     */
     void
     run();
 
+    /**
+     * @brief Stop the service.
+     */
     void
     stop();
 
@@ -74,12 +90,27 @@ public:
     ClusterCommunicationService&
     operator=(ClusterCommunicationService const&) = delete;
 
+    /**
+     * @brief Get the UUID of the current node.
+     *
+     * @return The UUID of the current node.
+     */
     std::shared_ptr<boost::uuids::uuid>
     selfUuid() const;
 
+    /**
+     * @brief Get the data of the current node.
+     *
+     * @return The data of the current node.
+     */
     ClioNode
     selfData() const override;
 
+    /**
+     * @brief Get the data of all nodes in the cluster (including self).
+     *
+     * @return The data of all nodes in the cluster.
+     */
     std::vector<ClioNode>
     clusterData() const override;
 

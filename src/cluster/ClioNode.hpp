@@ -28,7 +28,13 @@
 
 namespace cluster {
 
+/**
+ * @brief Represents a node in the cluster.
+ */
 struct ClioNode {
+    /**
+     * @brief The format of the time to store in the database.
+     */
     static constexpr char const* kTIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ";
 
     // enum class WriterRole {
@@ -37,9 +43,9 @@ struct ClioNode {
     //     Writer
     // };
 
-    std::shared_ptr<boost::uuids::uuid> uuid;
-    std::chrono::system_clock::time_point updateTime;
-    bool isSelf;
+    std::shared_ptr<boost::uuids::uuid> uuid;          ///< The UUID of the node.
+    std::chrono::system_clock::time_point updateTime;  ///< The time the data about the node was last updated.
+    bool isSelf;                                       ///< Whether this node is the current node.
     // WriterRole writerRole;
 };
 
