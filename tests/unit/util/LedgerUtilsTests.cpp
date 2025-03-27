@@ -57,6 +57,7 @@ TEST(LedgerUtilsTests, LedgerObjectTypeList)
         JS(permissioned_domain),
         JS(oracle),
         JS(credential),
+        JS(vault),
         JS(nunl)
     };
 
@@ -91,6 +92,7 @@ TEST(LedgerUtilsTests, AccountOwnedTypeList)
         JS(mpt_issuance),
         JS(mptoken),
         JS(permissioned_domain),
+        JS(vault)
     };
 
     static_assert(std::size(kCORRECT_TYPES) == kACCOUNT_OWNED.size());

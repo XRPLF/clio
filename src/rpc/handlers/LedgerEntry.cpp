@@ -187,7 +187,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         key = ripple::keylet::permissionedDomain(*account, seq).key;
     } else if (input.vault) {
         auto const account =
-            ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.vault->at(JS(account))));
+            ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.vault->at(JS(owner))));
         auto const seq = input.vault->at(JS(seq)).as_int64();
         key = ripple::keylet::vault(*account, seq).key;
     } else {
@@ -236,6 +236,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         output.nodeBinary = ripple::strHex(*ledgerObject);
     } else {
         output.node = toJson(sle);
+        if (input.expectedType == ripple::ltVAULT)
+            supplementJson<ripple::ltVAULT>(*sharedPtrBackend_, sle, output.node.value(), lgrInfo.seq, ctx.yield);
     }
 
     return output;

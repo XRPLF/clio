@@ -41,6 +41,7 @@
 #include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STArray.h>
 #include <xrpl/protocol/STIssue.h>
+#include <xrpl/protocol/STNumber.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/STVector256.h>
 #include <xrpl/protocol/TER.h>
@@ -1608,4 +1609,40 @@ createAuthCredentialArray(std::vector<std::string_view> issuer, std::vector<std:
         arr.push_back(credential);
     }
     return arr;
+}
+
+ripple::STObject
+createVault(
+    std::string_view accountId,
+    std::string_view ledgerIndex,
+    ripple::LedgerIndex seq,
+    std::string_view assetCurrency,
+    std::string_view assetIssuer,
+    ripple::uint192 issuanceID,
+    uint64_t ownerNode,
+    ripple::uint256 previousTxId,
+    uint32_t previousTxSeq
+)
+{
+    auto vault = ripple::STObject(ripple::sfLedgerEntry);
+    vault.setFieldH256(ripple::sfLedgerIndex, ripple::uint256(ledgerIndex));
+    vault.setAccountID(ripple::sfOwner, getAccountIdWithString(accountId));
+    vault.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
+    vault.setFieldU32(ripple::sfSequence, seq);
+    vault.setFieldU64(ripple::sfOwnerNode, ownerNode);
+    vault.setFieldH256(ripple::sfPreviousTxnID, previousTxId);
+    vault.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxSeq);
+
+    vault.setFieldIssue(ripple::sfAsset, ripple::STIssue{ripple::sfAsset, getIssue(assetCurrency, assetIssuer)});
+    vault[ripple::sfMPTokenIssuanceID] = issuanceID;
+    vault.setFieldNumber(ripple::sfAssetTotal, ripple::STNumber{ripple::sfAssetTotal, 300});
+    vault.setFieldNumber(ripple::sfAssetAvailable, ripple::STNumber{ripple::sfAssetAvailable, 300});
+    vault.setFieldNumber(ripple::sfLossUnrealized, ripple::STNumber{ripple::sfLossUnrealized, 0});
+    vault.setFieldNumber(ripple::sfAssetTotal, ripple::STNumber{ripple::sfAssetTotal, 300});
+    vault.setFieldU8(ripple::sfWithdrawalPolicy, 200);
+
+    vault.setFieldU32(ripple::sfFlags, 0);
+    vault.setFieldU16(ripple::sfLedgerEntryType, ripple::ltVAULT);
+
+    return vault;
 }

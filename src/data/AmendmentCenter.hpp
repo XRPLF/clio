@@ -137,6 +137,7 @@ struct Amendments {
     REGISTER(fixInvalidTxFlags);
     REGISTER(fixFrozenLPTokenTransfer);
     REGISTER(DeepFreeze);
+    REGISTER(SingleAssetVault);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);

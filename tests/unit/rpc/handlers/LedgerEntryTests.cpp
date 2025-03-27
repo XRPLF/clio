@@ -2193,6 +2193,76 @@ generateTestValuesForParametersTest()
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request.",
         },
+        ParamTestCaseBundle{
+            .testName = "InvalidVault_Type",
+            .testJson =
+                R"json({
+                    "vault": 0
+                })json",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidVault_NotHex",
+            .testJson =
+                R"json({
+                    "vault": "invalid_hex"
+                })json",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "MissingOwner",
+            .testJson =
+                R"json({
+                    "vault": { "seq": 1 }
+                })json",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+
+        ParamTestCaseBundle{
+            .testName = "MissingSeq",
+            .testJson =
+                R"json({
+                    "vault": { "owner": "abcd" }
+                })json",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "SeqNotInteger",
+            .testJson =
+                R"json({
+                 "vault": {
+                    "owner": "abcd",
+                    "seq": "notAnInteger"
+                }})json",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidOwnerFormat",
+            .testJson =
+                R"json({
+                "vault" : {
+                    "owner": "abcd",
+                    "seq": 10
+                }})json",
+            .expectedError = "malformedOwner",
+            .expectedErrorMessage = "Malformed owner.",
+        },
+        ParamTestCaseBundle{
+            .testName = "BothOwnerAndSeqInvalid",
+            .testJson =
+                R"json({
+                "vault" : {
+                    "owner": "abcd",
+                    "seq": -200
+                }})json",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        }
     };
 }
 
@@ -2957,6 +3027,55 @@ generateTestValuesForNormalPathTest()
                 ripple::keylet::permissionedDomain(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX)
                     .key,
             .mockedEntity = createPermissionedDomainObject(kACCOUNT, kINDEX1, kRANGE_MAX, 0, ripple::uint256{0}, 0)
+        },
+        NormalPathTestBundle{
+            .testName = "CreateVaultObjectByHexString",
+            .testJson = fmt::format(
+                R"json({{
+                    "binary": true,
+                    "vault": "{}"
+                }})json",
+                kINDEX1
+            ),
+            .expectedIndex = ripple::uint256(kINDEX1),
+            .mockedEntity = createVault(
+                kACCOUNT,
+                kINDEX1,
+                kRANGE_MAX,
+                "XRP",
+                ripple::toBase58(ripple::xrpAccount()),
+                ripple::makeMptID(2, getAccountIdWithString(kACCOUNT)),
+                0,
+                ripple::uint256{0},
+                0
+            )
+        },
+        NormalPathTestBundle{
+            .testName = "CreateVaultObjectByAccount",
+            .testJson = fmt::format(
+                R"json({{
+                    "binary": true,
+                    "vault": {{
+                        "owner": "{}",
+                        "seq": {}
+                    }}
+                }})json",
+                kACCOUNT,
+                kRANGE_MAX
+            ),
+            .expectedIndex =
+                ripple::keylet::vault(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX).key,
+            .mockedEntity = createVault(
+                kACCOUNT,
+                kINDEX1,
+                kRANGE_MAX,
+                "XRP",
+                ripple::toBase58(ripple::xrpAccount()),
+                ripple::makeMptID(2, getAccountIdWithString(kACCOUNT)),
+                0,
+                ripple::uint256{0},
+                0
+            )
         }
     };
 }

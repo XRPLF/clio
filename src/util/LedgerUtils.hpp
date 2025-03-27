@@ -114,6 +114,7 @@ class LedgerTypes {
         LedgerTypeAttribute::accountOwnedLedgerType(JS(did), ripple::ltDID),
         LedgerTypeAttribute::accountOwnedLedgerType(JS(oracle), ripple::ltORACLE),
         LedgerTypeAttribute::accountOwnedLedgerType(JS(credential), ripple::ltCREDENTIAL),
+        LedgerTypeAttribute::accountOwnedLedgerType(JS(vault), ripple::ltVAULT),
         LedgerTypeAttribute::chainLedgerType(JS(nunl), ripple::ltNEGATIVE_UNL),
         LedgerTypeAttribute::deletionBlockerLedgerType(JS(mpt_issuance), ripple::ltMPTOKEN_ISSUANCE),
         LedgerTypeAttribute::deletionBlockerLedgerType(JS(mptoken), ripple::ltMPTOKEN),

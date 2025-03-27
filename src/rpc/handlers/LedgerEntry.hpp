@@ -397,15 +397,16 @@ public:
              meta::WithCustomError{
                  validation::Type<std::string, boost::json::object>{}, Status(ClioError::RpcMalformedRequest)
              },
+             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
              meta::IfType<boost::json::object>{meta::Section{
                  {JS(seq),
                   meta::WithCustomError{validation::Required{}, Status(ClioError::RpcMalformedRequest)},
                   meta::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::RpcMalformedRequest)}},
                  {
-                     JS(account),
+                     JS(owner),
                      meta::WithCustomError{validation::Required{}, Status(ClioError::RpcMalformedRequest)},
                      meta::WithCustomError{
-                         validation::CustomValidators::accountBase58Validator, Status(ClioError::RpcMalformedAddress)
+                         validation::CustomValidators::accountBase58Validator, Status(ClioError::RpcMalformedOwner)
                      },
                  },
              }}},

@@ -28,6 +28,7 @@
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/JsonUtils.hpp"
 #include "util/log/Logger.hpp"
@@ -41,6 +42,7 @@
 #include <boost/regex/v5/regex_fwd.hpp>
 #include <boost/regex/v5/regex_match.hpp>
 #include <fmt/core.h>
+#include <xrpl/basics/Number.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/json/json_value.h>
 #include <xrpl/protocol/AccountID.h>
@@ -49,9 +51,12 @@
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/Keylet.h>
+#include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/MPTIssue.h>
 #include <xrpl/protocol/PublicKey.h>
 #include <xrpl/protocol/Rate.h>
+#include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STBase.h>
 #include <xrpl/protocol/STLedgerEntry.h>
@@ -59,9 +64,11 @@
 #include <xrpl/protocol/STTx.h>
 #include <xrpl/protocol/SecretKey.h>
 #include <xrpl/protocol/Seed.h>
+#include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/TxMeta.h>
 #include <xrpl/protocol/UintTypes.h>
 #include <xrpl/protocol/XRPAmount.h>
+#include <xrpl/protocol/jss.h>
 
 #include <chrono>
 #include <cstddef>
@@ -840,5 +847,38 @@ getDeliveredAmount(
     std::uint32_t ledgerSequence,
     uint32_t date
 );
+
+/**
+ * @brief Get the delivered amount
+ *
+ * @param txn The transaction
+ * @param meta The metadata
+ * @param ledgerSequence The sequence
+ * @param date The date of the ledger
+ * @return The delivered amount or std::nullopt if not available
+ */
+template <ripple::LedgerEntryType Type>
+inline void
+supplementJson(
+    BackendInterface const& backend,
+    ripple::STLedgerEntry const& vault,
+    boost::json::object& entry,
+    std::uint32_t ledgerSequence,
+    boost::asio::yield_context yield
+)
+{
+    auto const share = vault.at(ripple::sfMPTokenIssuanceID);
+    auto const sleIssuance = backend.fetchLedgerObject(ripple::keylet::mptIssuance(share).key, ledgerSequence, yield);
+    if (!sleIssuance)
+        return;
+
+    // blob to sle
+    ripple::STLedgerEntry const sle{
+        ripple::SerialIter{sleIssuance->data(), sleIssuance->size()}, ripple::keylet::mptIssuance(share).key
+    };
+    if (sle.empty())
+        return;
+    entry.at(JS(ShareTotal)) = sle.getFieldU64(ripple::sfOutstandingAmount);
+};
 
 }  // namespace rpc
