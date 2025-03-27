@@ -55,6 +55,8 @@ ClusterCommunicationService::ClusterCommunicationService(
           .isSelf = true
       }}
 {
+    nodesInClusterMetric_.set(1);  // The node always sees itself
+    isHealthy_ = true;
 }
 
 void
@@ -129,6 +131,7 @@ ClusterCommunicationService::doRead(boost::asio::yield_context yield)
     auto expectedResult = backend_->fetchClioNodesData(yield);
     if (!expectedResult.has_value()) {
         LOG(log_.error()) << "Failed to fetch nodes data";
+        isHealthy_ = false;
         return;
     }
 
@@ -143,12 +146,14 @@ ClusterCommunicationService::doRead(boost::asio::yield_context yield)
         auto const json = boost::json::parse(nodeDataStr, errorCode);
         if (errorCode.failed()) {
             LOG(log_.error()) << "Error parsing json from DB: " << nodeDataStr;
+            isHealthy_ = false;
             return;
         }
 
         auto expectedNodeData = boost::json::try_value_to<ClioNode>(json);
         if (expectedNodeData.has_error()) {
             LOG(log_.error()) << "Error converting json to ClioNode: " << json;
+            isHealthy_ = false;
             return;
         }
         *expectedNodeData->uuid = uuid;
@@ -156,6 +161,8 @@ ClusterCommunicationService::doRead(boost::asio::yield_context yield)
         otherNodesData.push_back(std::move(expectedNodeData).value());
     }
     otherNodesData_ = std::move(otherNodesData);
+    nodesInClusterMetric_.set(otherNodesData_.size() + 1);
+    isHealthy_ = true;
 }
 
 void

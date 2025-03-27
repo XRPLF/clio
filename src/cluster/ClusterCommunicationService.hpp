@@ -23,6 +23,9 @@
 #include "cluster/ClusterCommunicationServiceInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "util/log/Logger.hpp"
+#include "util/prometheus/Bool.hpp"
+#include "util/prometheus/Gauge.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/strand.hpp>
@@ -39,6 +42,17 @@ namespace cluster {
  * @brief Service to post and read messages to/from the cluster. It uses a backend to communicate with the cluster.
  */
 class ClusterCommunicationService : public ClusterCommunicationServiceInterface {
+    util::prometheus::GaugeInt& nodesInClusterMetric_ = PrometheusService::gaugeInt(
+        "cluster_nodes_total_number",
+        {},
+        "Total number of nodes this node can detect in the cluster."
+    );
+    util::prometheus::Bool isHealthy_ = PrometheusService::boolMetric(
+        "cluster_communication_is_healthy",
+        {},
+        "Whether cluster communicaton service is operating healthy (1 - healthy, 0 - we have a problem)"
+    );
+
     // TODO: Use util::async::CoroExecutionContext after https://github.com/XRPLF/clio/issues/1973 is implemented
     boost::asio::thread_pool ctx_{1};
     boost::asio::strand<boost::asio::thread_pool::executor_type> strand_ = boost::asio::make_strand(ctx_);

@@ -22,6 +22,9 @@
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TimeUtils.hpp"
+#include "util/prometheus/Bool.hpp"
+#include "util/prometheus/Gauge.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
@@ -51,6 +54,10 @@ struct ClusterCommunicationServiceTest : util::prometheus::WithPrometheus, MockB
         std::chrono::milliseconds{5},
         std::chrono::milliseconds{9}
     };
+
+    util::prometheus::GaugeInt& nodesInClusterMetric = PrometheusService::gaugeInt("cluster_nodes_total_number", {});
+    util::prometheus::Bool isHealthyMetric = PrometheusService::boolMetric("cluster_communication_is_healthy", {});
+
     std::mutex mtx;
     std::condition_variable cv;
 
@@ -93,6 +100,7 @@ TEST_F(ClusterCommunicationServiceTest, Write)
 
 TEST_F(ClusterCommunicationServiceTest, Read_FetchFailed)
 {
+    EXPECT_TRUE(isHealthyMetric);
     EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([this](auto&&, auto&&) {
         notify();
     });
@@ -100,10 +108,12 @@ TEST_F(ClusterCommunicationServiceTest, Read_FetchFailed)
 
     clusterCommunicationService.run();
     wait();
+    EXPECT_FALSE(isHealthyMetric);
 }
 
 TEST_F(ClusterCommunicationServiceTest, Read_GotInvalidJson)
 {
+    EXPECT_TRUE(isHealthyMetric);
     EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([this](auto&&, auto&&) {
         notify();
     });
@@ -115,10 +125,12 @@ TEST_F(ClusterCommunicationServiceTest, Read_GotInvalidJson)
 
     clusterCommunicationService.run();
     wait();
+    EXPECT_FALSE(isHealthyMetric);
 }
 
 TEST_F(ClusterCommunicationServiceTest, Read_GotInvalidNodeData)
 {
+    EXPECT_TRUE(isHealthyMetric);
     EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([this](auto&&, auto&&) {
         notify();
     });
@@ -128,10 +140,13 @@ TEST_F(ClusterCommunicationServiceTest, Read_GotInvalidNodeData)
 
     clusterCommunicationService.run();
     wait();
+    EXPECT_FALSE(isHealthyMetric);
 }
 
 TEST_F(ClusterCommunicationServiceTest, Read_Success)
 {
+    EXPECT_TRUE(isHealthyMetric);
+    EXPECT_EQ(nodesInClusterMetric.value(), 1);
     std::vector<ClioNode> otherNodesData = {
         ClioNode{
             .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()()),
@@ -176,4 +191,6 @@ TEST_F(ClusterCommunicationServiceTest, Read_Success)
 
     clusterCommunicationService.run();
     wait();
+    EXPECT_TRUE(isHealthyMetric);
+    EXPECT_EQ(nodesInClusterMetric.value(), 3);
 }
