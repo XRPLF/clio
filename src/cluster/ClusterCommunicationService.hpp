@@ -70,6 +70,8 @@ class ClusterCommunicationService : public ClusterCommunicationServiceInterface 
     bool stopped_ = false;
 
 public:
+    static constexpr std::chrono::milliseconds kDEFAULT_READ_INTERVAL{2100};
+    static constexpr std::chrono::milliseconds kDEFAULT_WRITE_INTERVAL{1200};
     /**
      * @brief Construct a new Cluster Communication Service object.
      *
@@ -79,8 +81,8 @@ public:
      */
     ClusterCommunicationService(
         std::shared_ptr<data::BackendInterface> backend,
-        std::chrono::steady_clock::duration readInterval,
-        std::chrono::steady_clock::duration writeInterval
+        std::chrono::steady_clock::duration readInterval = kDEFAULT_READ_INTERVAL,
+        std::chrono::steady_clock::duration writeInterval = kDEFAULT_WRITE_INTERVAL
     );
 
     ~ClusterCommunicationService() override;

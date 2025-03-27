@@ -21,6 +21,7 @@
 
 #include "app/Stopper.hpp"
 #include "app/WebHandlers.hpp"
+#include "cluster/ClusterCommunicationService.hpp"
 #include "data/AmendmentCenter.hpp"
 #include "data/BackendFactory.hpp"
 #include "data/LedgerCache.hpp"
@@ -107,6 +108,9 @@ ClioApplication::run(bool const useNgWebServer)
 
     // Interface to the database
     auto backend = data::makeBackend(config_, cache);
+
+    cluster::ClusterCommunicationService clusterCommunicationService{backend};
+    clusterCommunicationService.run();
 
     auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
 
