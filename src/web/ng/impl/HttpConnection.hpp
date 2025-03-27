@@ -28,10 +28,12 @@
 #include "web/ng/impl/Concepts.hpp"
 #include "web/ng/impl/WsConnection.hpp"
 
+#include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/stream.hpp>
+#include <boost/asio/ssl/stream_base.hpp>
 #include <boost/beast/core/basic_stream.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
@@ -102,6 +104,22 @@ public:
         : UpgradableConnection(std::move(ip), std::move(buffer), tagDecoratorFactory)
         , stream_{std::move(socket), sslCtx}
     {
+    }
+
+    std::optional<Error>
+    sslHandshake(boost::asio::yield_context yield)
+        requires IsSslTcpStream<StreamType>
+    {
+        boost::system::error_code error;
+        boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
+        auto const bytesUsed =
+            stream_.async_handshake(boost::asio::ssl::stream_base::server, buffer_.cdata(), yield[error]);
+        if (error)
+            return error;
+
+        buffer_.consume(bytesUsed);
+
+        return std::nullopt;
     }
 
     bool

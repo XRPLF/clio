@@ -46,6 +46,7 @@
 #include <boost/system/system_error.hpp>
 #include <fmt/core.h>
 
+#include <chrono>
 #include <cstddef>
 #include <functional>
 #include <memory>
@@ -136,13 +137,19 @@ makeConnection(
         if (not sslContext.has_value())
             return std::unexpected{"Error creating a connection: SSL is not supported by this server"};
 
-        connection = std::make_unique<impl::SslHttpConnection>(
+        auto sslConnection = std::make_unique<impl::SslHttpConnection>(
             std::move(sslDetectionResult.socket),
             std::move(ip),
             std::move(sslDetectionResult.buffer),
             *sslContext,
             tagDecoratorFactory
         );
+        sslConnection->setTimeout(std::chrono::seconds{10});
+        auto const maybeError = sslConnection->sslHandshake(yield);
+        if (maybeError.has_value())
+            return std::unexpected{fmt::format("SSL handshake error: {}", maybeError->message())};
+
+        connection = std::move(sslConnection);
     } else {
         connection = std::make_unique<impl::PlainHttpConnection>(
             std::move(sslDetectionResult.socket),
