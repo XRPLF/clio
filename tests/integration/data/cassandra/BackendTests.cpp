@@ -1310,7 +1310,7 @@ struct BackendCassandraNodeMessageTest : BackendCassandraTest {
 TEST_F(BackendCassandraNodeMessageTest, UpdateFetch)
 {
     static boost::uuids::uuid const kUUID = generateUuid();
-    static constexpr std::string kMESSAGE = "some message";
+    static std::string const kMESSAGE = "some message";
 
     EXPECT_NO_THROW({ backend_->writeNodeMessage(kUUID, kMESSAGE); });
 
@@ -1367,7 +1367,7 @@ TEST_F(BackendCassandraNodeMessageTest, MessageDisappearsAfterTTL)
 TEST_F(BackendCassandraNodeMessageTest, UpdatingMessageKeepsItAlive)
 {
     static boost::uuids::uuid const kUUID = generateUuid();
-    static constexpr std::string kUPDATED_MESSAGE = "updated message";
+    static std::string const kUPDATED_MESSAGE = "updated message";
 
     EXPECT_NO_THROW({ backend_->writeNodeMessage(kUUID, "some message"); });
     std::this_thread::sleep_for(std::chrono::milliseconds{1000});
