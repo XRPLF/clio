@@ -45,7 +45,7 @@ struct ClioNode {
 
     std::shared_ptr<boost::uuids::uuid> uuid;          ///< The UUID of the node.
     std::chrono::system_clock::time_point updateTime;  ///< The time the data about the node was last updated.
-    bool isSelf;                                       ///< Whether this node is the current node.
+
     // WriterRole writerRole;
 };
 

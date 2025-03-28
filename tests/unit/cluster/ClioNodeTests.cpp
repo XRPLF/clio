@@ -50,9 +50,7 @@ TEST_F(ClioNodeTest, Serialization)
 {
     // Create a ClioNode with test data
     ClioNode const node{
-        .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()()),
-        .updateTime = updateTime,
-        .isSelf = true
+        .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()()), .updateTime = updateTime
     };
 
     // Serialize to JSON
@@ -73,14 +71,13 @@ TEST_F(ClioNodeTest, Deserialization)
     boost::json::value const jsonValue = {{"update_time", updateTimeStr}};
 
     // Deserialize to ClioNode
-    ClioNode node{.uuid = std::make_shared<boost::uuids::uuid>(), .updateTime = {}, .isSelf = false};
+    ClioNode node{.uuid = std::make_shared<boost::uuids::uuid>(), .updateTime = {}};
     EXPECT_NO_THROW(node = boost::json::value_to<ClioNode>(jsonValue));
 
     // Verify deserialized data
     EXPECT_NE(node.uuid, nullptr);
     EXPECT_EQ(*node.uuid, boost::uuids::uuid{});
     EXPECT_EQ(node.updateTime, updateTime);
-    EXPECT_FALSE(node.isSelf);
 }
 
 TEST_F(ClioNodeTest, DeserializationInvalidTime)

@@ -59,7 +59,7 @@ tag_invoke(boost::json::value_to_tag<ClioNode>, boost::json::value const& jv)
         throw std::runtime_error("Failed to parse update time");
     }
 
-    return ClioNode{.uuid = std::make_shared<boost::uuids::uuid>(), .updateTime = updateTime.value(), .isSelf = false};
+    return ClioNode{.uuid = std::make_shared<boost::uuids::uuid>(), .updateTime = updateTime.value()};
 }
 
 }  // namespace cluster

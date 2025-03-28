@@ -51,8 +51,7 @@ ClusterCommunicationService::ClusterCommunicationService(
     , writeInterval_(writeInterval)
     , selfData_{ClioNode{
           .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator{}()),
-          .updateTime = std::chrono::system_clock::time_point{},
-          .isSelf = true
+          .updateTime = std::chrono::system_clock::time_point{}
       }}
 {
     nodesInClusterMetric_.set(1);  // The node always sees itself
@@ -157,7 +156,6 @@ ClusterCommunicationService::doRead(boost::asio::yield_context yield)
             return;
         }
         *expectedNodeData->uuid = uuid;
-        expectedNodeData->isSelf = false;
         otherNodesData.push_back(std::move(expectedNodeData).value());
     }
     otherNodesData_ = std::move(otherNodesData);

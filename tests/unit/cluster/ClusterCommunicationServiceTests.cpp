@@ -150,13 +150,11 @@ TEST_F(ClusterCommunicationServiceTest, Read_Success)
     std::vector<ClioNode> otherNodesData = {
         ClioNode{
             .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()()),
-            .updateTime = util::systemTpFromUtcStr("2015-05-15T12:00:00Z", ClioNode::kTIME_FORMAT).value(),
-            .isSelf = false,
+            .updateTime = util::systemTpFromUtcStr("2015-05-15T12:00:00Z", ClioNode::kTIME_FORMAT).value()
         },
         ClioNode{
             .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()()),
-            .updateTime = util::systemTpFromUtcStr("2015-05-15T12:00:01Z", ClioNode::kTIME_FORMAT).value(),
-            .isSelf = false,
+            .updateTime = util::systemTpFromUtcStr("2015-05-15T12:00:01Z", ClioNode::kTIME_FORMAT).value()
         },
     };
     auto const selfUuid = *clusterCommunicationService.selfUuid();
@@ -169,9 +167,10 @@ TEST_F(ClusterCommunicationServiceTest, Read_Success)
                 std::ranges::find_if(clusterData, [&](ClioNode const& n) { return *(n.uuid) == *(node.uuid); });
             EXPECT_NE(it, clusterData.cend()) << boost::uuids::to_string(*node.uuid);
         }
-        auto const it = std::ranges::find_if(clusterData, [](auto const& node) { return node.isSelf; });
-        ASSERT_NE(it, clusterData.end());
-        EXPECT_EQ(*(it->uuid), selfUuid);
+        auto const selfUuid = clusterCommunicationService.selfUuid();
+        auto const it =
+            std::ranges::find_if(clusterData, [&selfUuid](ClioNode const& node) { return node.uuid == selfUuid; });
+        EXPECT_NE(it, clusterData.end());
 
         notify();
     });
