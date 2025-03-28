@@ -266,7 +266,7 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"database.cassandra.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort).optional()},
      {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue("clio")},
      {"database.cassandra.replication_factor",
-      ConfigValue{ConfigType::Integer}.defaultValue(3u).withConstraint(gValidateUint16)},
+      ConfigValue{ConfigType::Integer}.defaultValue(3u).withConstraint(gValidateReplicationFactor)},
      {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
      {"database.cassandra.max_write_requests_outstanding",
       ConfigValue{ConfigType::Integer}.defaultValue(10'000).withConstraint(gValidateUint32)},
@@ -321,21 +321,20 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
           .withConstraint(gValidateUint32)},
      {"server.ip", ConfigValue{ConfigType::String}.withConstraint(gValidateIp)},
      {"server.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort)},
-     {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateUint32)},
+     {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint32)},
      {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
      {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
      {"server.processing_policy",
       ConfigValue{ConfigType::String}.defaultValue("parallel").withConstraint(gValidateProcessingPolicy)},
-     {"server.parallel_requests_limit",
-      ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateParallelRequestLimit)},
+     {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint16)},
      {"server.ws_max_sending_queue_size",
-      ConfigValue{ConfigType::Integer}.defaultValue(1500).withConstraint(gValidateSubscriptionSendingQueueSize)},
+      ConfigValue{ConfigType::Integer}.defaultValue(1500).withConstraint(gValidateUint32)},
      {"server.__ng_web_server", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
      {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
      {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
 
-     {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateIOThreads)},
+     {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint16)},
 
      {"subscription_workers", ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint32)},
 
@@ -343,9 +342,10 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
 
      {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32).withConstraint(gValidateUint16)},
      {"cache.num_markers", ConfigValue{ConfigType::Integer}.defaultValue(48).withConstraint(gValidateUint16)},
-     {"cache.num_cursors_from_diff", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateUint16)},
-     {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateUint16)
-     },
+     {"cache.num_cursors_from_diff",
+      ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateNumCursors)},
+     {"cache.num_cursors_from_account",
+      ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateNumCursors)},
      {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(gValidateUint16)},
      {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(gValidateLoadMode)},
 
@@ -365,13 +365,12 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
 
      {"log_directory", ConfigValue{ConfigType::String}.optional()},
 
-     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateLogSize)},
+     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateUint32)},
 
-     {"log_directory_max_size",
-      ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(gValidateLogSize)},
+     {"log_directory_max_size", ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(gValidateUint32)
+     },
 
-     {"log_rotation_hour_interval",
-      ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(gValidateLogRotationTime)},
+     {"log_rotation_hour_interval", ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(gValidateUint32)},
 
      {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none").withConstraint(gValidateLogTag)},
 

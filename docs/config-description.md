@@ -68,7 +68,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `10000`
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: Represents the maximum number of outstanding write requests. Write requests are API calls that write to the database.
 
 ### database.cassandra.max_read_requests_outstanding
@@ -76,7 +76,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `100000`
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: Maximum number of outstanding read requests. Read requests are API calls that read from the database.
 
 ### database.cassandra.threads
@@ -84,7 +84,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: The number of available CPU cores.
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: Represents the number of threads that will be used for database operations.
 
 ### database.cassandra.core_connections_per_host
@@ -92,7 +92,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `1`
-- **Constraints**: The minimum value is `0`. The maximum value is `65535`.
+- **Constraints**: The minimum value is `1`. The maximum value is `65535`.
 - **Description**: The number of core connections per host for the Cassandra database.
 
 ### database.cassandra.queue_size_io
@@ -100,7 +100,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: False
 - **Type**: int
 - **Default value**: None
-- **Constraints**: The minimum value is `0`. The maximum value is `65535`.
+- **Constraints**: The minimum value is `1`. The maximum value is `65535`.
 - **Description**: Defines the queue size of the input/output (I/O) operations in Cassandra.
 
 ### database.cassandra.write_batch_size
@@ -108,7 +108,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `20`
-- **Constraints**: The minimum value is `0`. The maximum value is `65535`.
+- **Constraints**: The minimum value is `1`. The maximum value is `65535`.
 - **Description**: Represents the batch size for write operations in Cassandra.
 
 ### database.cassandra.connect_timeout
@@ -116,7 +116,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: False
 - **Type**: int
 - **Default value**: None
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The maximum amount of time in seconds that the system waits for a database connection to be established.
 
 ### database.cassandra.request_timeout
@@ -124,7 +124,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: False
 - **Type**: int
 - **Default value**: None
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The maximum amount of time in seconds that the system waits for a request to be fetched from the database.
 
 ### database.cassandra.username
@@ -189,7 +189,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: double
 - **Default value**: `0`
 - **Constraints**: The value must be a positive double number.
-- **Description**: Specifies the timeout duration (in seconds) for the forwarding cache used in `rippled` communication.
+- **Description**: Specifies the timeout duration (in seconds) for the forwarding cache used in `rippled` communication. A value of `0` means disabling this feature.
 
 ### forwarding.request_timeout
 
@@ -205,7 +205,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: double
 - **Default value**: `0`
 - **Constraints**: The value must be a positive double number.
-- **Description**: Specifies the timeout duration (in seconds) for RPC cache response to timeout.
+- **Description**: Specifies the timeout duration (in seconds) for RPC cache response to timeout. A value of `0` means disabling this feature.
 
 ### num_markers
 
@@ -228,7 +228,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `1000000`
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The maximum number of fetch operations allowed by DOS guard.
 
 ### dos_guard.max_connections
@@ -236,7 +236,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `20`
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The maximum number of concurrent connections for a specific IP address.
 
 ### dos_guard.max_requests
@@ -244,7 +244,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `20`
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The maximum number of requests allowed for a specific IP address.
 
 ### dos_guard.sweep_interval
@@ -260,7 +260,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: The number of available CPU cores.
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The number of threads used to process RPC requests.
 
 ### server.ip
@@ -283,8 +283,8 @@ This document provides a list of all available Clio configuration properties in 
 
 - **Required**: True
 - **Type**: int
-- **Default value**: `0`
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Default value**: `1`
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The maximum size of the server's request queue. If set to `0`, this means there is no queue size limit.
 
 ### server.local_admin
@@ -356,7 +356,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `1`
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The number of worker threads or processes that are responsible for managing and processing subscription-based tasks from `rippled`.
 
 ### graceful_period
@@ -372,7 +372,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `32`
-- **Constraints**: The minimum value is `0`. The maximum value is `65535`.
+- **Constraints**: The minimum value is `1`. The maximum value is `65535`.
 - **Description**: The number of cursors generated is the number of changed (without counting deleted) objects in the latest `cache.num_diffs` number of ledgers. Cursors are workers that load the ledger cache from the position of markers concurrently. For more information, please read [README.md](../src/etl/README.md).
 
 ### cache.num_markers
@@ -380,7 +380,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `48`
-- **Constraints**: The minimum value is `0`. The maximum value is `65535`.
+- **Constraints**: The minimum value is `1`. The maximum value is `65535`.
 - **Description**:  Specifies how many markers are placed randomly within the cache. These markers define the positions on the ledger that will be loaded concurrently by the workers. The higher the number, the more places within the cache we potentially cover.
 
 ### cache.num_cursors_from_diff
@@ -389,7 +389,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `0`
 - **Constraints**: The minimum value is `0`. The maximum value is `65535`.
-- **Description**: `cache.num_cursors_from_diff` number of cursors are generated by looking at the number of changed objects in the most recent ledger. If number of changed objects in current ledger is not enough, it will keep reading previous ledgers until it hit `cache.num_cursors_from_diff`.
+- **Description**: `cache.num_cursors_from_diff` number of cursors are generated by looking at the number of changed objects in the most recent ledger. If number of changed objects in current ledger is not enough, it will keep reading previous ledgers until it hit `cache.num_cursors_from_diff`. If set to `0`, the system defaults to generating cursors based on `cache.num_diffs`.
 
 ### cache.num_cursors_from_account
 
@@ -397,14 +397,14 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `0`
 - **Constraints**: The minimum value is `0`. The maximum value is `65535`.
-- **Description**: `cache.num_cursors_from_diff` of cursors are generated by reading accounts in `account_tx` table.
+- **Description**: `cache.num_cursors_from_diff` of cursors are generated by reading accounts in `account_tx` table. If set to `0`, the system defaults to generating cursors based on `cache.num_diffs`.
 
 ### cache.page_fetch_size
 
 - **Required**: True
 - **Type**: int
 - **Default value**: `512`
-- **Constraints**: The minimum value is `0`. The maximum value is `65535`.
+- **Constraints**: The minimum value is `1`. The maximum value is `65535`.
 - **Description**: The number of ledger objects to fetch concurrently per marker.
 
 ### cache.load
@@ -500,7 +500,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `1`
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: Number of threads used to extract data from ETL source.
 
 ### read_only
@@ -516,7 +516,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: False
 - **Type**: int
 - **Default value**: None
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: If specified, the ledger index Clio will start writing to the database from.
 
 ### finish_sequence
@@ -524,7 +524,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: False
 - **Type**: int
 - **Default value**: None
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: If specified, the final ledger that Clio will write to the database.
 
 ### ssl_cert_file
@@ -572,7 +572,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `2`
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The number of threads used to scan the table.
 
 ### migration.full_scan_jobs
@@ -580,7 +580,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `4`
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The number of coroutines used to scan the table.
 
 ### migration.cursors_per_job
@@ -588,5 +588,5 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: int
 - **Default value**: `100`
-- **Constraints**: The minimum value is `0`. The maximum value is `4294967295`.
+- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The number of cursors each job will scan.

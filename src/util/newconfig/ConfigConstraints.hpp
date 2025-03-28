@@ -439,27 +439,15 @@ static constinit OneOf gValidateProcessingPolicy{"server.processing_policy", kPR
 
 static constinit PositiveDouble gValidatePositiveDouble{};
 
-static constinit NumberValueConstraint<uint32_t> gValidateNumMarkers{1, 256};
-static constinit NumberValueConstraint<uint32_t> gValidateIOThreads{1, std::numeric_limits<uint16_t>::max()};
-static constinit NumberValueConstraint<uint32_t> gValidateParallelRequestLimit{1, std::numeric_limits<uint16_t>::max()};
+static constinit NumberValueConstraint<uint16_t> gValidateNumMarkers{1, 256};
+static constinit NumberValueConstraint<uint16_t> gValidateNumCursors{0, std::numeric_limits<uint16_t>::max()};
 
-static constinit NumberValueConstraint<uint16_t> gValidateUint16{
-    std::numeric_limits<uint16_t>::min(),
-    std::numeric_limits<uint16_t>::max()
-};
+// replication factor can be 0
+static constinit NumberValueConstraint<uint16_t> gValidateReplicationFactor{0, std::numeric_limits<uint16_t>::max()};
 
-// log file size minimum is 1mb, log rotation time minimum is 1hr, Sending data to user from queue size is minimum 1
-static constinit NumberValueConstraint<uint32_t> gValidateLogSize{1, std::numeric_limits<uint32_t>::max()};
-static constinit NumberValueConstraint<uint32_t> gValidateLogRotationTime{1, std::numeric_limits<uint32_t>::max()};
-static constinit NumberValueConstraint<uint32_t> gValidateSubscriptionSendingQueueSize{
-    1,
-    std::numeric_limits<uint32_t>::max()
-};
+static constinit NumberValueConstraint<uint16_t> gValidateUint16{1, std::numeric_limits<uint16_t>::max()};
 
-static constinit NumberValueConstraint<uint32_t> gValidateUint32{
-    std::numeric_limits<uint32_t>::min(),
-    std::numeric_limits<uint32_t>::max()
-};
+static constinit NumberValueConstraint<uint32_t> gValidateUint32{1, std::numeric_limits<uint32_t>::max()};
 static constinit NumberValueConstraint<uint32_t> gValidateApiVersion{rpc::kAPI_VERSION_MIN, rpc::kAPI_VERSION_MAX};
 
 }  // namespace util::config
