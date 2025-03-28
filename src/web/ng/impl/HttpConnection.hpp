@@ -59,11 +59,7 @@ public:
     isUpgradeRequested(boost::asio::yield_context yield) = 0;
 
     virtual std::expected<ConnectionPtr, Error>
-    upgrade(
-        std::optional<boost::asio::ssl::context>& sslContext,
-        util::TagDecoratorFactory const& tagDecoratorFactory,
-        boost::asio::yield_context yield
-    ) = 0;
+    upgrade(util::TagDecoratorFactory const& tagDecoratorFactory, boost::asio::yield_context yield) = 0;
 
     virtual std::optional<Error>
     sendRaw(
@@ -201,35 +197,18 @@ public:
     }
 
     std::expected<ConnectionPtr, Error>
-    upgrade(
-        [[maybe_unused]] std::optional<boost::asio::ssl::context>& sslContext,
-        util::TagDecoratorFactory const& tagDecoratorFactory,
-        boost::asio::yield_context yield
-    ) override
+    upgrade(util::TagDecoratorFactory const& tagDecoratorFactory, boost::asio::yield_context yield) override
     {
         ASSERT(request_.has_value(), "Request must be present to upgrade the connection");
 
-        if constexpr (IsSslTcpStream<StreamType>) {
-            ASSERT(sslContext.has_value(), "SSL context must be present to upgrade the connection");
-            return makeSslWsConnection(
-                boost::beast::get_lowest_layer(stream_).release_socket(),
-                std::move(ip_),
-                std::move(buffer_),
-                std::move(request_).value(),
-                sslContext.value(),
-                tagDecoratorFactory,
-                yield
-            );
-        } else {
-            return makePlainWsConnection(
-                stream_.release_socket(),
-                std::move(ip_),
-                std::move(buffer_),
-                std::move(request_).value(),
-                tagDecoratorFactory,
-                yield
-            );
-        }
+        return makeWsConnection(
+            std::move(stream_),
+            std::move(ip_),
+            std::move(buffer_),
+            std::move(request_).value(),
+            tagDecoratorFactory,
+            yield
+        );
     }
 
 private:

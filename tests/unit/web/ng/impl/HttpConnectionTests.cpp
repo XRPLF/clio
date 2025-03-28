@@ -300,8 +300,7 @@ TEST_F(HttpConnectionTests, Upgrade)
         [&]() { ASSERT_TRUE(expectedResult.has_value()) << expectedResult.error().message(); }();
         [&]() { ASSERT_TRUE(expectedResult.value()); }();
 
-        std::optional<boost::asio::ssl::context> sslContext;
-        auto expectedWsConnection = connection.upgrade(sslContext, tagDecoratorFactory_, yield);
+        auto expectedWsConnection = connection.upgrade(tagDecoratorFactory_, yield);
         [&]() { ASSERT_TRUE(expectedWsConnection.has_value()) << expectedWsConnection.error().message(); }();
     });
 }

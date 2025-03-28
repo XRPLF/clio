@@ -171,7 +171,6 @@ makeConnection(
 std::expected<ConnectionPtr, std::string>
 tryUpgradeConnection(
     impl::UpgradableConnectionPtr connection,
-    std::optional<boost::asio::ssl::context>& sslContext,
     util::TagDecoratorFactory& tagDecoratorFactory,
     boost::asio::yield_context yield
 )
@@ -184,7 +183,7 @@ tryUpgradeConnection(
     }
 
     if (*expectedIsUpgrade) {
-        auto expectedUpgradedConnection = connection->upgrade(sslContext, tagDecoratorFactory, yield);
+        auto expectedUpgradedConnection = connection->upgrade(tagDecoratorFactory, yield);
         if (expectedUpgradedConnection.has_value())
             return std::move(expectedUpgradedConnection).value();
 
@@ -323,8 +322,7 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
         return;
     }
 
-    auto connection =
-        tryUpgradeConnection(std::move(connectionExpected).value(), sslContext_, tagDecoratorFactory_, yield);
+    auto connection = tryUpgradeConnection(std::move(connectionExpected).value(), tagDecoratorFactory_, yield);
     if (not connection.has_value()) {
         LOG(log_.info()) << connection.error();
         return;
