@@ -23,7 +23,6 @@
 #include "etlng/Models.hpp"
 #include "util/log/Logger.hpp"
 
-
 #include <cstdint>
 #include <memory>
 #include <utility>
