@@ -44,8 +44,10 @@
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/STXChainBridge.h>
+#include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/UintTypes.h>
 
 #include <cstdint>
@@ -3161,6 +3163,62 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));
+    });
+}
+
+TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
+{
+    // return valid ledgerHeader
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
+
+    boost::json::object entry;
+
+    auto const vault = createVault(
+        kACCOUNT,
+        kINDEX1,
+        kRANGE_MAX,
+        "XRP",
+        ripple::toBase58(ripple::xrpAccount()),
+        ripple::makeMptID(30, getAccountIdWithString(kACCOUNT)),
+        0,
+        ripple::uint256{1},
+        0
+    );
+
+    auto const vaultKey =
+        ripple::keylet::vault(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX).key;
+
+    auto const issuance = createMptIssuanceObject(kACCOUNT, kRANGE_MAX, "metadata");
+    ripple::uint256 issuanceKey =
+        ripple::keylet::mptIssuance(ripple::makeMptID(kRANGE_MAX, getAccountIdWithString(kACCOUNT))).key;
+
+    ripple::STLedgerEntry const sle{
+        ripple::SerialIter{vault.getSerializer().peekData().data(), vault.getSerializer().peekData().size()}, vaultKey
+    };
+
+    EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKey, testing::_, testing::_))
+        .WillOnce(Return(vault.getSerializer().peekData()));
+
+    EXPECT_CALL(*backend_, doFetchLedgerObject(issuanceKey, testing::_, testing::_))
+        .WillOnce(Return(issuance.getSerializer().peekData()));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "binary": false,
+                "vault": {{
+                    "owner": "{}",
+                    "seq": {}
+                }}     
+            }})",
+            kACCOUNT,
+            kRANGE_MAX
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(boost::json::value_to<int64_t>(output.result->at("node").at("ShareTotal")), 0);
     });
 }
 

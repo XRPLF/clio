@@ -236,7 +236,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         output.nodeBinary = ripple::strHex(*ledgerObject);
     } else {
         output.node = toJson(sle);
-        if (input.expectedType == ripple::ltVAULT)
+        if (input.vault)
             supplementJson<ripple::ltVAULT>(*sharedPtrBackend_, sle, output.node.value(), lgrInfo.seq, ctx.yield);
     }
 

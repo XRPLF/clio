@@ -33,7 +33,9 @@
 #include <boost/asio/impl/spawn.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
+#include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
+#include <boost/json/value_to.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -43,7 +45,9 @@
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/UintTypes.h>
 #include <xrpl/protocol/jss.h>
 
@@ -1074,6 +1078,74 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenUnfrozen)
         EXPECT_EQ(ret.mantissa(), 1000000000000000);
     });
     ctx_.run();
+}
+
+TEST_F(RPCHelpersTest, SupplementJson_ValidVaultEntry)
+{
+    boost::json::object entry;
+
+    auto const vault = createVault(
+        kACCOUNT,
+        kINDEX1,
+        30,
+        "XRP",
+        ripple::toBase58(ripple::xrpAccount()),
+        ripple::makeMptID(30, getAccountIdWithString(kACCOUNT)),
+        0,
+        ripple::uint256{1},
+        0
+    );
+
+    auto const vaultKey = ripple::keylet::vault(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), 30).key;
+
+    auto const issuance = createMptIssuanceObject(kACCOUNT, 30, "metadata");
+    ripple::uint256 issuanceKey =
+        ripple::keylet::mptIssuance(ripple::makeMptID(30, getAccountIdWithString(kACCOUNT))).key;
+
+    ripple::STLedgerEntry const sle{
+        ripple::SerialIter{vault.getSerializer().peekData().data(), vault.getSerializer().peekData().size()}, vaultKey
+    };
+
+    EXPECT_CALL(*backend_, doFetchLedgerObject(issuanceKey, testing::_, testing::_))
+        .WillOnce(Return(issuance.getSerializer().peekData()));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        supplementJson<ripple::ltVAULT>(*backend_, sle, entry, 100, yield);
+        EXPECT_EQ(boost::json::value_to<int64_t>(entry.at(JS(ShareTotal))), 0);
+    });
+}
+
+TEST_F(RPCHelpersTest, SupplementJson_MissingIssuanceEntry)
+{
+    boost::json::object entry;
+
+    auto const vault = createVault(
+        kACCOUNT,
+        kINDEX1,
+        30,
+        "XRP",
+        ripple::toBase58(ripple::xrpAccount()),
+        ripple::makeMptID(30, getAccountIdWithString(kACCOUNT)),
+        0,
+        ripple::uint256{1},
+        0
+    );
+
+    auto const vaultKey = ripple::keylet::vault(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), 30).key;
+
+    ripple::uint256 issuanceKey =
+        ripple::keylet::mptIssuance(ripple::makeMptID(30, getAccountIdWithString(kACCOUNT))).key;
+
+    ripple::STLedgerEntry const sle{
+        ripple::SerialIter{vault.getSerializer().peekData().data(), vault.getSerializer().peekData().size()}, vaultKey
+    };
+
+    EXPECT_CALL(*backend_, doFetchLedgerObject(issuanceKey, testing::_, testing::_)).WillOnce(Return(std::nullopt));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        supplementJson<ripple::ltVAULT>(*backend_, sle, entry, 100, yield);
+        EXPECT_TRUE(entry.empty());  // Expect no changes to entry
+    });
 }
 
 struct IsAdminCmdParamTestCaseBundle {

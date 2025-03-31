@@ -849,13 +849,14 @@ getDeliveredAmount(
 );
 
 /**
- * @brief Get the delivered amount
+ * @brief Supplements a JSON representation of a ltVAULT ledger entry by looking up its associated MPT issuance entry
+ * and adding the SharesTotal field
  *
- * @param txn The transaction
- * @param meta The metadata
+ * @param backend The backend to use
+ * @param vault The vault ledger entry
+ * @param entry The entry object
  * @param ledgerSequence The sequence
- * @param date The date of the ledger
- * @return The delivered amount or std::nullopt if not available
+ * @param yield The coroutine context
  */
 template <ripple::LedgerEntryType Type>
 inline void
@@ -878,7 +879,8 @@ supplementJson(
     };
     if (sle.empty())
         return;
-    entry.at(JS(ShareTotal)) = sle.getFieldU64(ripple::sfOutstandingAmount);
+
+    entry[JS(ShareTotal)] = sle.getFieldU64(ripple::sfOutstandingAmount);
 };
 
 }  // namespace rpc

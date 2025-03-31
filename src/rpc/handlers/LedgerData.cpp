@@ -141,11 +141,11 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
                 entry[JS(index)] = ripple::to_string(sle.key());
                 output.states.push_back(std::move(entry));
             } else {
-                boost::json::object entry;
+                auto entry = toJson(sle);
                 if (sle.getType() == ripple::ltVAULT)
                     supplementJson<ripple::ltVAULT>(*sharedPtrBackend_, sle, entry, lgrInfo.seq, ctx.yield);
 
-                output.states.push_back(toJson(sle));
+                output.states.push_back(entry);
             }
         }
     }
