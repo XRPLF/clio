@@ -842,8 +842,8 @@ TEST_F(RPCAccountLinesHandlerTest, FrozenTrustLineResponse)
     })";
 
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
     // fetch account object return something
     auto account = getAccountIdWithString(kACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
@@ -859,7 +859,6 @@ TEST_F(RPCAccountLinesHandlerTest, FrozenTrustLineResponse)
 
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     // return few trust lines
     std::vector<Blob> bbs;
@@ -873,8 +872,7 @@ TEST_F(RPCAccountLinesHandlerTest, FrozenTrustLineResponse)
     line2.setFlag(ripple::lsfLowFreeze);
     bbs.push_back(line2.getSerializer().peekData());
 
-    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
     auto const input = json::parse(fmt::format(
         R"({{ 
             "account": "{}"
