@@ -67,9 +67,7 @@ struct MockHttpConnectionImpl : web::ng::impl::UpgradableConnection {
     MOCK_METHOD(
         UpgradeReturnType,
         upgrade,
-        (OptionalSslContext & sslContext,
-         util::TagDecoratorFactory const& tagDecoratorFactory,
-         boost::asio::yield_context yield),
+        (util::TagDecoratorFactory const& tagDecoratorFactory, boost::asio::yield_context yield),
         (override)
     );
 };

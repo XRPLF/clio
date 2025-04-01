@@ -74,8 +74,7 @@ struct WebWsConnectionTests : SyncAsioContextTest {
             ASSERT_TRUE(expectedTrue.value()) << "Expected upgrade request";
         }();
 
-        std::optional<boost::asio::ssl::context> sslContext;
-        auto expectedWsConnection = httpConnection.upgrade(sslContext, tagDecoratorFactory_, yield);
+        auto expectedWsConnection = httpConnection.upgrade(tagDecoratorFactory_, yield);
         [&]() { ASSERT_TRUE(expectedWsConnection.has_value()) << expectedWsConnection.error().message(); }();
         auto connection = std::move(expectedWsConnection).value();
         auto wsConnectionPtr = dynamic_cast<PlainWsConnection*>(connection.release());
