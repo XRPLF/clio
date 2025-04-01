@@ -31,6 +31,7 @@
 #include "data/cassandra/impl/ExecutionStrategy.hpp"
 #include "util/Assert.hpp"
 #include "util/LedgerUtils.hpp"
+#include "util/Mutex.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 
@@ -53,7 +54,9 @@
 #include <cstdint>
 #include <iterator>
 #include <limits>
+#include <mutex>
 #include <optional>
+#include <shared_mutex>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -61,6 +64,14 @@
 #include <vector>
 
 namespace data::cassandra {
+
+/**
+ * @brief Used to cache the result of fetchLedgerBySeq. This way, there will be less read requests to the database.
+ */
+struct FetchLedgerCache {
+    std::optional<ripple::LedgerHeader> ledger;
+    std::atomic_uint32_t seq;
+};
 
 /**
  * @brief Implements @ref BackendInterface for Cassandra/ScyllaDB.
@@ -76,8 +87,8 @@ class BasicCassandraBackend : public BackendInterface {
 
     SettingsProviderType settingsProvider_;
     Schema<SettingsProviderType> schema_;
-
     std::atomic_uint32_t ledgerSequence_ = 0u;
+    mutable util::Mutex<FetchLedgerCache, std::shared_mutex> readMutex_;
 
 protected:
     Handle handle_;
@@ -261,11 +272,21 @@ public:
     std::optional<ripple::LedgerHeader>
     fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context yield) const override
     {
+        auto const lock = readMutex_.lock<std::shared_lock>();
+        if (lock->seq == sequence && lock->ledger.has_value())
+            return lock.get().ledger;
+
+        // release the lock?
+
         auto const res = executor_.read(yield, schema_->selectLedgerBySeq, sequence);
         if (res) {
             if (auto const& result = res.value(); result) {
                 if (auto const maybeValue = result.template get<std::vector<unsigned char>>(); maybeValue) {
-                    return util::deserializeHeader(ripple::makeSlice(*maybeValue));
+                    auto const header = util::deserializeHeader(ripple::makeSlice(*maybeValue));
+                    auto writeLock = readMutex_.lock<std::unique_lock>();
+                    writeLock->seq = sequence;
+                    writeLock->ledger = header;
+                    return header;
                 }
 
                 LOG(log_.error()) << "Could not fetch ledger by sequence - no rows";
