@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/Assert.hpp"
 #include "util/Mutex.hpp"
 
 #include <boost/asio/error.hpp>
@@ -39,9 +40,8 @@
 
 namespace util {
 
-// Helper concepts to constrain template parameters
 template <typename F, typename ValueType>
-concept VerifierConcept = requires(F f, std::optional<ValueType> const& v) {
+concept VerifierConcept = requires(F f, ValueType const& v) {
     { f(v) } -> std::same_as<bool>;
 };
 
@@ -51,59 +51,82 @@ concept UpdaterConcept = requires(F f, boost::asio::yield_context yield) {
 };
 
 template <typename ValueType>
-class BlockingCache2 {
+class BlockingCache {
     util::Mutex<std::optional<ValueType>, std::shared_mutex> value_;
     std::atomic_bool updating_{false};
     boost::signals2::signal<void()> updateFinished_;
 
 public:
+    BlockingCache() = default;
+    BlockingCache(ValueType value) : value_(std::move(value))
+    {
+    }
+
     template <VerifierConcept<ValueType> Verifier, UpdaterConcept<ValueType> Updater>
     std::expected<ValueType, std::string>
     asyncGet(
         boost::asio::yield_context yield,
-        Verifier verifier,
-        Updater updater,
+        Verifier&& verifier,
+        Updater&& updater,
         std::optional<std::chrono::steady_clock::duration> timeout
     )
     {
         {
             auto const value = value_.template lock<std::shared_lock>();
-            if (verifier(value.get())) {
-                return value.get();
+            if (value->has_value() && verifier(value->value())) {
+                return value->value();
             }
         }
 
         if (updating_.exchange(true)) {
-            boost::asio::steady_timer timer{
-                yield.get_executor(), timeout.value_or(boost::asio::steady_timer::duration::max())
-            };
-            boost::system::error_code errorCode;
-
-            boost::signals2::scoped_connection slot = updateFinished_.connect([&timer]() { timer.cancel(); });
-            if (updating_) {
-                timer.async_wait(yield[errorCode]);
-                if (errorCode != boost::asio::error::operation_aborted) {
-                    return std::unexpected{"Waiting timeout"};
-                }
-            }
+            wait(yield, timeout);
         } else {
-            auto const expectedValue = updater(yield);
-            if (not expectedValue.has_value()) {
-                updateFinished_();
-                updating_ = false;
-                return std::unexpected{std::move(expectedValue).error()};
-            }
-            auto value = value_.template lock<std::unique_lock>();
-            value.get() = std::move(expectedValue).value();
+            auto const updateResult = updateValue(yield, std::forward<Updater>(updater));
             updateFinished_();
             updating_ = false;
+            if (not updateResult.has_value()) {
+                return std::unexpected{std::move(updateResult).error()};
+            }
         }
 
         auto const value = value_.template lock<std::shared_lock>();
-        if (!verifier(value.get())) {
+        ASSERT(value->has_value(), "Cache value shouldn't be empty after update");
+        if (!verifier(value->value())) {
             return std::unexpected{"Failed to update cache"};
         }
-        return value.get();
+        return value->value();
+    }
+
+private:
+    std::expected<void, std::string>
+    wait(boost::asio::yield_context yield, std::optional<std::chrono::steady_clock::duration> timeout)
+    {
+        boost::asio::steady_timer timer{
+            yield.get_executor(), timeout.value_or(boost::asio::steady_timer::duration::max())
+        };
+        boost::system::error_code errorCode;
+
+        boost::signals2::scoped_connection slot = updateFinished_.connect([&timer]() { timer.cancel(); });
+        if (updating_) {
+            timer.async_wait(yield[errorCode]);
+            if (errorCode != boost::asio::error::operation_aborted) {
+                return std::unexpected{"Waiting timeout"};
+            }
+        }
+        return {};
+    }
+
+    template <UpdaterConcept<ValueType> Updater>
+    std::expected<void, std::string>
+    updateValue(boost::asio::yield_context yield, Updater&& updater)
+    {
+        auto const expectedValue = updater(yield);
+        if (not expectedValue.has_value()) {
+            return std::unexpected{std::move(expectedValue).error()};
+        }
+        auto value = value_.template lock<std::unique_lock>();
+        value.get() = std::move(expectedValue).value();
+        return {};
     }
 };
 
