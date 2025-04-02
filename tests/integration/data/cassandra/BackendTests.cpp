@@ -39,6 +39,7 @@
 #include <boost/asio/impl/spawn.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/base_uint.h>
@@ -72,6 +73,13 @@ using namespace rpc;
 using namespace prometheus;
 
 using namespace data::cassandra;
+
+constexpr auto kRAWHEADER =
+    "03C3141A01633CD656F91B4EBB5EB89B791BD34DBC8A04BB6F407C5335BC54351E"
+    "DD733898497E809E04074D14D271E4832D7888754F9230800761563A292FA2315A"
+    "6DB6FE30CC5909B285080FCD6773CC883F9FE0EE4D439340AC592AADB973ED3CF5"
+    "3E2232B33EF57CECAC2816E3122816E31A0A00F8377CD95DFA484CFAE282656A58"
+    "CE5AA29652EFFD80AC59CD91416E4E13DBBE";
 
 class BackendCassandraTest : public SyncAsioContextTest, public WithPrometheus {
 protected:
@@ -901,12 +909,6 @@ TEST_F(BackendCassandraTest, CacheIntegration)
     boost::asio::spawn(ctx_, [this, &done, &work](boost::asio::yield_context yield) {
         backend_->cache().setFull();
 
-        std::string const rawHeader =
-            "03C3141A01633CD656F91B4EBB5EB89B791BD34DBC8A04BB6F407C5335BC54351E"
-            "DD733898497E809E04074D14D271E4832D7888754F9230800761563A292FA2315A"
-            "6DB6FE30CC5909B285080FCD6773CC883F9FE0EE4D439340AC592AADB973ED3CF5"
-            "3E2232B33EF57CECAC2816E3122816E31A0A00F8377CD95DFA484CFAE282656A58"
-            "CE5AA29652EFFD80AC59CD91416E4E13DBBE";
         // this account is not related to the above transaction and
         // metadata
         std::string const accountHex =
@@ -915,7 +917,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             "142252F328CF91263417762570D67220CCB33B1370";
         std::string const accountIndexHex = "E0311EB450B6177F969B94DBDDA83E99B7A0576ACD9079573876F16C0C004F06";
 
-        std::string rawHeaderBlob = hexStringToBinaryString(rawHeader);
+        std::string rawHeaderBlob = hexStringToBinaryString(kRAWHEADER);
         std::string accountBlob = hexStringToBinaryString(accountHex);
         std::string const accountIndexBlob = hexStringToBinaryString(accountIndexHex);
         ripple::LedgerHeader const lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
@@ -1293,6 +1295,42 @@ TEST_F(BackendCassandraTest, CacheIntegration)
         work.reset();
     });
 
+    ctx_.run();
+    ASSERT_EQ(done, true);
+}
+
+TEST_F(BackendCassandraTest, FetchLedgerBySeqCache)
+{
+    std::atomic_bool done = false;
+    std::optional<boost::asio::io_context::work> work;
+    work.emplace(ctx_);
+
+    boost::asio::spawn(ctx_, [this, &done, &work](boost::asio::yield_context yield) {
+        auto rawHeaderBlob = hexStringToBinaryString(kRAWHEADER);
+        ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
+
+        backend_->startWrites();
+        backend_->writeLedger(lgrInfo, std::move(rawHeaderBlob));
+        auto const testLedger = lgrInfo.seq;
+        ASSERT_TRUE(backend_->finishWrites(lgrInfo.seq));
+
+        {
+            // backend should cache the result of fetchLedgerBySequence
+            auto const ledger = backend_->fetchLedgerBySequence(testLedger, yield);
+            ASSERT_TRUE(ledger.has_value());
+            EXPECT_EQ(ledger->seq, lgrInfo.seq);
+        }
+
+        {
+            // Second call: should return from cache
+            auto const ledger = backend_->fetchLedgerBySequence(testLedger, yield);
+            ASSERT_TRUE(ledger.has_value());
+            EXPECT_EQ(ledger->seq, lgrInfo.seq);
+        }
+
+        done = true;
+        work.reset();
+    });
     ctx_.run();
     ASSERT_EQ(done, true);
 }
