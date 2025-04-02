@@ -19,6 +19,7 @@
 
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
+#include "rpc/RPCHelpers.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/AccountLines.hpp"
@@ -716,7 +717,7 @@ TEST_F(RPCAccountLinesHandlerTest, EmptyChannel)
     });
 }
 
-TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
+TEST_F(RPCAccountLinesHandlerTest, OptionalResponseFieldWithDeepFreeze)
 {
     static constexpr auto kCORRECT_OUTPUT = R"({
         "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -792,6 +793,86 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+    auto const input = json::parse(fmt::format(
+        R"({{ 
+            "account": "{}"
+        }})",
+        kACCOUNT
+    ));
+    runSpawn([&, this](auto yield) {
+        auto handler = AnyHandler{AccountLinesHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(json::parse(kCORRECT_OUTPUT), *output.result);
+    });
+}
+
+TEST_F(RPCAccountLinesHandlerTest, FrozenTrustLineResponse)
+{
+    static constexpr auto kCORRECT_OUTPUT = R"({
+        "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index": 30,
+        "validated": true,
+        "limit": 200,
+        "lines": [
+            {
+                "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "balance": "10",
+                "currency": "USD",
+                "limit": "100",
+                "limit_peer": "200",
+                "quality_in": 0,
+                "quality_out": 0,
+                "peer_authorized": true,
+                "freeze_peer": true
+            },
+            {
+                "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "balance": "20",
+                "currency": "USD",
+                "limit": "200",
+                "limit_peer": "400",
+                "quality_in": 0,
+                "quality_out": 0,
+                "authorized": true,
+                "freeze": true
+            }
+        ]
+    })";
+
+    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    // fetch account object return something
+    auto account = getAccountIdWithString(kACCOUNT);
+    auto accountKk = ripple::keylet::account(account).key;
+    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto fake = Blob{'f', 'a', 'k', 'e'};
+
+    // return a non empty account
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+
+    // return owner index
+    ripple::STObject const ownerDir =
+        createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX2}}, kINDEX1);
+
+    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+
+    // return few trust lines
+    std::vector<Blob> bbs;
+    auto line1 = createRippleStateLedgerObject("USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 0);
+    line1.setFlag(ripple::lsfHighAuth);
+    line1.setFlag(ripple::lsfHighFreeze);
+    bbs.push_back(line1.getSerializer().peekData());
+
+    auto line2 = createRippleStateLedgerObject("USD", kACCOUNT2, 20, kACCOUNT, 200, kACCOUNT2, 400, kTXN_ID, 0);
+    line2.setFlag(ripple::lsfLowAuth);
+    line2.setFlag(ripple::lsfLowFreeze);
+    bbs.push_back(line2.getSerializer().peekData());
+
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
     auto const input = json::parse(fmt::format(
         R"({{ 
             "account": "{}"
