@@ -68,7 +68,7 @@ public:
         boost::asio::yield_context yield,
         Verifier&& verifier,
         Updater&& updater,
-        std::optional<std::chrono::steady_clock::duration> timeout
+        std::optional<std::chrono::steady_clock::duration> waitTimeout
     )
     {
         {
@@ -79,7 +79,9 @@ public:
         }
 
         if (updating_.exchange(true)) {
-            wait(yield, timeout);
+            if (auto waitResult = wait(yield, waitTimeout); not waitResult.has_value()) {
+                return std::unexpected{std::move(waitResult).error()};
+            }
         } else {
             auto const updateResult = updateValue(yield, std::forward<Updater>(updater));
             updateFinished_();
@@ -92,7 +94,7 @@ public:
         auto const value = value_.template lock<std::shared_lock>();
         ASSERT(value->has_value(), "Cache value shouldn't be empty after update");
         if (!verifier(value->value())) {
-            return std::unexpected{"Failed to update cache"};
+            return std::unexpected{"Invalid value after update"};
         }
         return value->value();
     }
