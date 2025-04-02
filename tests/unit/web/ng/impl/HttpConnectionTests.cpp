@@ -31,7 +31,6 @@
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/asio/ssl/context.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
