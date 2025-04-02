@@ -88,7 +88,7 @@ class BasicCassandraBackend : public BackendInterface {
     SettingsProviderType settingsProvider_;
     Schema<SettingsProviderType> schema_;
     std::atomic_uint32_t ledgerSequence_ = 0u;
-    mutable util::Mutex<FetchLedgerCache, std::shared_mutex> readMutex_;
+    mutable util::Mutex<FetchLedgerCache, std::shared_mutex> ledgerCache_;
 
 protected:
     Handle handle_;
@@ -272,20 +272,20 @@ public:
     std::optional<ripple::LedgerHeader>
     fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context yield) const override
     {
-        auto const lock = readMutex_.lock<std::shared_lock>();
-        if (lock->seq == sequence && lock->ledger.has_value())
-            return lock.get().ledger;
-
-        // release the lock?
+        {
+            auto const lock = ledgerCache_.lock<std::shared_lock>();
+            if (lock->seq == sequence && lock->ledger.has_value())
+                return lock.get().ledger;
+        }
 
         auto const res = executor_.read(yield, schema_->selectLedgerBySeq, sequence);
         if (res) {
             if (auto const& result = res.value(); result) {
                 if (auto const maybeValue = result.template get<std::vector<unsigned char>>(); maybeValue) {
                     auto const header = util::deserializeHeader(ripple::makeSlice(*maybeValue));
-                    auto writeLock = readMutex_.lock<std::unique_lock>();
-                    writeLock->seq = sequence;
-                    writeLock->ledger = header;
+                    auto updateCache = ledgerCache_.lock<std::unique_lock>();
+                    updateCache->seq = sequence;
+                    updateCache->ledger = header;
                     return header;
                 }
 
