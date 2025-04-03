@@ -19,7 +19,6 @@
 
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
-#include "rpc/RPCHelpers.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/AccountLines.hpp"
