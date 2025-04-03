@@ -31,76 +31,94 @@
 
 #include <atomic>
 #include <chrono>
-#include <concepts>
 #include <expected>
-#include <mutex>
 #include <optional>
 #include <shared_mutex>
 #include <string>
+#include <utility>
 
 namespace util {
 
-template <typename F, typename ValueType>
-concept VerifierConcept = requires(F f, ValueType const& v) {
-    { f(v) } -> std::same_as<bool>;
-};
+/*
+    cacheEntry = cache.get(yield, timeout);
+    if (cacheEntry.has_error()) {
+        return error;
+    }
+    updateObject = cache.update();
+    result = forwardToRippled(...);
+    if (result.has_value()) {
+        updateObject.put(result.value());
+        return value;
+    } else {
+        return result.error();
+    }
 
-template <typename F, typename ValueType>
-concept UpdaterConcept = requires(F f, boost::asio::yield_context yield) {
-    { f(yield) } -> std::same_as<std::expected<ValueType, std::string>>;
-};
+}
+*/
 
 template <typename ValueType>
 class BlockingCache {
+public:
+    enum class Error;
+
+private:
+    enum class State { Empty, Updating, Full };
+
+    std::atomic<State> state_{State::Empty};
     util::Mutex<std::optional<ValueType>, std::shared_mutex> value_;
-    std::atomic_bool updating_{false};
     boost::signals2::signal<void()> updateFinished_;
+    boost::signals2::signal<void(Error)> updateFailed_;
 
 public:
     BlockingCache() = default;
-    BlockingCache(ValueType value) : value_(std::move(value))
+    BlockingCache(ValueType initialValue) : state_{State::Full}, value_(std::move(initialValue))
     {
     }
 
-    template <VerifierConcept<ValueType> Verifier, UpdaterConcept<ValueType> Updater>
-    std::expected<ValueType, std::string>
-    asyncGet(
-        boost::asio::yield_context yield,
-        Verifier&& verifier,
-        Updater&& updater,
-        std::optional<std::chrono::steady_clock::duration> waitTimeout
-    )
+    BlockingCache(BlockingCache&&) = delete;
+    BlockingCache(BlockingCache const&) = delete;
+    BlockingCache&
+    operator=(BlockingCache&&) = delete;
+    BlockingCache&
+    operator=(BlockingCache const&) = delete;
+
+    class Result;
+
+    Result
+    asyncGet(boost::asio::yield_context yield, std::optional<std::chrono::steady_clock::duration> waitTimeout)
     {
-        {
-            auto const value = value_.template lock<std::shared_lock>();
-            if (value->has_value() && verifier(value->value())) {
-                return value->value();
+        switch (state_) {
+            case State::Updating: {
+                if (auto waitResult = wait(yield, waitTimeout); not waitResult.has_value())
+                    return std::unexpected{std::move(waitResult).error()};
+                // else
+                [[fallthrough]];
             }
-        }
+            case State::Full: {
+                auto const value = value_.template lock<std::shared_lock>();
+                ASSERT(value->has_value(), "Value should be presented when the cache is full");
+                return value;
+            }
+            case State::Empty: {
+                return std::nullopt;
+            }
+        };
+    }
 
-        if (updating_.exchange(true)) {
-            if (auto waitResult = wait(yield, waitTimeout); not waitResult.has_value()) {
-                return std::unexpected{std::move(waitResult).error()};
-            }
-        } else {
-            auto const updateResult = updateValue(yield, std::forward<Updater>(updater));
-            updateFinished_();
-            updating_ = false;
-            if (not updateResult.has_value()) {
-                return std::unexpected{std::move(updateResult).error()};
-            }
-        }
+    class Update;
+    friend class Update;
 
-        auto const value = value_.template lock<std::shared_lock>();
-        ASSERT(value->has_value(), "Cache value shouldn't be empty after update");
-        if (!verifier(value->value())) {
-            return std::unexpected{"Invalid value after update"};
-        }
-        return value->value();
+    std::expected<Update, Error>
+    update()
+    {
+        if (state_ != State::Updating)
+            return Update{this};
+
+        return std::unexpected{Error::AlreadyUpdating};
     }
 
 private:
-    std::expected<void, std::string>
+    std::expected<void, Error>
     wait(boost::asio::yield_context yield, std::optional<std::chrono::steady_clock::duration> timeout)
     {
         boost::asio::steady_timer timer{
@@ -108,27 +126,110 @@ private:
         };
         boost::system::error_code errorCode;
 
-        boost::signals2::scoped_connection slot = updateFinished_.connect([&timer]() { timer.cancel(); });
-        if (updating_) {
+        boost::signals2::scoped_connection finishSlot = updateFinished_.connect([&timer]() { timer.cancel(); });
+
+        std::optional<std::string> updateError;
+        boost::signals2::scoped_connection failureSlot =
+            updateFinished_.connect([&updateError, &timer](std::string error) {
+                updateError = std::move(error);
+                timer.cancel();
+            });
+
+        if (state_ == State::Updating) {
             timer.async_wait(yield[errorCode]);
-            if (errorCode != boost::asio::error::operation_aborted) {
-                return std::unexpected{"Waiting timeout"};
-            }
+            if (errorCode != boost::asio::error::operation_aborted)
+                return std::unexpected{Error::WaitingTimeout};
+
+            if (updateError.has_value())
+                return std::unexpected{std::move(updateError).value()};
         }
         return {};
     }
+};
 
-    template <UpdaterConcept<ValueType> Updater>
-    std::expected<void, std::string>
-    updateValue(boost::asio::yield_context yield, Updater&& updater)
+template <typename ValueType>
+enum class BlockingCache<ValueType>::Error {
+    WaitingTimeout,
+    UpdateCancelled,
+    AlreadyUpdating
+};
+
+template <typename ValueType>
+class BlockingCache<ValueType>::Result {
+    std::expected<std::optional<ValueType>, BlockingCache::Error> value_;
+
+public:
+    explicit Result(std::optional<ValueType> value) : value_(std::move(value))
     {
-        auto const expectedValue = updater(yield);
-        if (not expectedValue.has_value()) {
-            return std::unexpected{std::move(expectedValue).error()};
+    }
+
+    explicit Result(BlockingCache::Error error) : value_(std::unexpected{error})
+    {
+    }
+
+    bool
+    hasValue() const
+    {
+        return not hasError() && value_->has_value();
+    }
+
+    bool
+    hasError() const
+    {
+        return value_.has_value();
+    }
+
+    ValueType const&
+    value() const
+    {
+        ASSERT(hasValue(), "There must be a value to get");
+        return value_->value();
+    }
+
+    ValueType
+    value() &&
+    {
+        ASSERT(hasValue(), "There must be a value to get");
+        return std::move(value_)->value();
+    }
+
+    BlockingCache::Error
+    error()
+    {
+        ASSERT(hasError(), "There must be an error to get");
+        return value_.error();
+    }
+};
+
+template <typename ValueType>
+class BlockingCache<ValueType>::Update {
+    BlockingCache<ValueType>& cache_;
+    bool wasUpdated_ = false;
+
+public:
+    ~Update()
+    {
+        if (not wasUpdated_) {
+            cache_.state_ = BlockingCache::State::Empty;
+            cache_.updateFailed_(BlockingCache::Error::UpdateCancelled);
         }
-        auto value = value_.template lock<std::unique_lock>();
-        value.get() = std::move(expectedValue).value();
-        return {};
+    }
+
+    void
+    put(ValueType value)
+    {
+        cache_.value_.lock().get() = std::move(value);
+        cache_.state_ = BlockingCache::State::Full;
+        cache_.updateFinished_();
+        wasUpdated_ = true;
+    }
+
+private:
+    friend class BlockingCache<ValueType>;
+
+    Update(BlockingCache<ValueType> cache) : cache_(cache)
+    {
+        cache_->state_ = BlockingCache<ValueType>::State::Updating;
     }
 };
 
