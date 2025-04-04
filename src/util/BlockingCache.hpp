@@ -39,23 +39,6 @@
 
 namespace util {
 
-/*
-    cacheEntry = cache.get(yield, timeout);
-    if (cacheEntry.has_error()) {
-        return error;
-    }
-    updateObject = cache.update();
-    result = forwardToRippled(...);
-    if (result.has_value()) {
-        updateObject.put(result.value());
-        return value;
-    } else {
-        return result.error();
-    }
-
-}
-*/
-
 template <typename ValueType>
 class BlockingCache {
 public:
@@ -126,13 +109,15 @@ private:
         };
         boost::system::error_code errorCode;
 
-        boost::signals2::scoped_connection finishSlot = updateFinished_.connect([&timer]() { timer.cancel(); });
+        boost::signals2::scoped_connection finishSlot = updateFinished_.connect([yield, &timer]() {
+            boost::asio::spawn(yield, [&timer](auto&&) { timer.cancel(); });
+        });
 
         std::optional<std::string> updateError;
         boost::signals2::scoped_connection failureSlot =
-            updateFinished_.connect([&updateError, &timer](std::string error) {
+            updateFinished_.connect([yield, &updateError, &timer](std::string error) {
                 updateError = std::move(error);
-                timer.cancel();
+                boost::asio::spawn(yield, [&timer](auto&&) { timer.cancel(); });
             });
 
         if (state_ == State::Updating) {
