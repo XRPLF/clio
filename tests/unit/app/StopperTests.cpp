@@ -17,11 +17,11 @@
 */
 //==============================================================================
 #include "app/Stopper.hpp"
-#include "etl/ETLService.hpp"
-#include "etl/LoadBalancer.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockBackend.hpp"
+#include "util/MockETLService.hpp"
+#include "util/MockLoadBalancer.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
@@ -65,17 +65,11 @@ struct StopperMakeCallbackTest : util::prometheus::WithPrometheus, SyncAsioConte
     struct ServerMock : web::ng::ServerTag {
         MOCK_METHOD(void, stop, (boost::asio::yield_context), ());
     };
-    struct LoadBalancerMock : etl::LoadBalancerTag {
-        MOCK_METHOD(void, stop, (boost::asio::yield_context), ());
-    };
-    struct ETLServiceMock : etl::ETLServiceTag {
-        MOCK_METHOD(void, stop, (), ());
-    };
 
 protected:
     testing::StrictMock<ServerMock> serverMock_;
-    testing::StrictMock<LoadBalancerMock> loadBalancerMock_;
-    testing::StrictMock<ETLServiceMock> etlServiceMock_;
+    testing::StrictMock<MockNgLoadBalancer> loadBalancerMock_;
+    testing::StrictMock<MockETLService> etlServiceMock_;
     testing::StrictMock<MockSubscriptionManager> subscriptionManagerMock_;
     testing::StrictMock<MockBackend> backendMock_{util::config::ClioConfigDefinition{}};
     boost::asio::io_context ioContextToStop_;

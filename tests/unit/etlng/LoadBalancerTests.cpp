@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,14 +17,16 @@
 */
 //==============================================================================
 
-#include "etl/LoadBalancer.hpp"
-#include "etl/Source.hpp"
+#include "etlng/InitialLoadObserverInterface.hpp"
+#include "etlng/LoadBalancer.hpp"
+#include "etlng/Models.hpp"
+#include "etlng/Source.hpp"
 #include "rpc/Errors.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
 #include "util/MockPrometheus.hpp"
-#include "util/MockSource.hpp"
+#include "util/MockSourceNg.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Random.hpp"
@@ -56,11 +58,13 @@
 #include <utility>
 #include <vector>
 
-using namespace etl;
+using namespace etlng;
 using namespace util::config;
 using testing::Return;
 
-constexpr static auto const kTWO_SOURCES_LEDGER_RESPONSE = R"({
+namespace {
+
+constinit auto const kTWO_SOURCES_LEDGER_RESPONSE = R"({
     "etl_sources": [
         {
             "ip": "127.0.0.1",
@@ -75,7 +79,7 @@ constexpr static auto const kTWO_SOURCES_LEDGER_RESPONSE = R"({
     ]
 })";
 
-constexpr static auto const kTHREE_SOURCES_LEDGER_RESPONSE = R"({
+constinit auto const kTHREE_SOURCES_LEDGER_RESPONSE = R"({
     "etl_sources": [
         {
             "ip": "127.0.0.1",
@@ -95,7 +99,7 @@ constexpr static auto const kTHREE_SOURCES_LEDGER_RESPONSE = R"({
     ]
 })";
 
-inline static ClioConfigDefinition
+inline ClioConfigDefinition
 getParseLoadBalancerConfig(boost::json::value val)
 {
     ClioConfigDefinition config{
@@ -116,7 +120,24 @@ getParseLoadBalancerConfig(boost::json::value val)
     return config;
 }
 
-struct LoadBalancerConstructorTests : util::prometheus::WithPrometheus, MockBackendTestStrict {
+struct InitialLoadObserverMock : etlng::InitialLoadObserverInterface {
+    MOCK_METHOD(
+        void,
+        onInitialLoadGotMoreObjects,
+        (uint32_t, std::vector<etlng::model::Object> const&, std::optional<std::string>),
+        (override)
+    );
+
+    void
+    onInitialLoadGotMoreObjects(uint32_t seq, std::vector<etlng::model::Object> const& data)
+    {
+        onInitialLoadGotMoreObjects(seq, data, std::nullopt);
+    }
+};
+
+}  // namespace
+
+struct LoadBalancerConstructorNgTests : util::prometheus::WithPrometheus, MockBackendTestStrict {
     std::unique_ptr<LoadBalancer>
     makeLoadBalancer()
     {
@@ -134,12 +155,12 @@ struct LoadBalancerConstructorTests : util::prometheus::WithPrometheus, MockBack
 protected:
     StrictMockSubscriptionManagerSharedPtr subscriptionManager_;
     StrictMockNetworkValidatedLedgersPtr networkManager_;
-    StrictMockSourceFactory sourceFactory_{2};
+    StrictMockSourceNgFactory sourceFactory_{2};
     boost::asio::io_context ioContext_;
     boost::json::value configJson_ = boost::json::parse(kTWO_SOURCES_LEDGER_RESPONSE);
 };
 
-TEST_F(LoadBalancerConstructorTests, construct)
+TEST_F(LoadBalancerConstructorNgTests, construct)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
@@ -149,14 +170,13 @@ TEST_F(LoadBalancerConstructorTests, construct)
     makeLoadBalancer();
 }
 
-TEST_F(LoadBalancerConstructorTests, forwardingTimeoutPassedToSourceFactory)
+TEST_F(LoadBalancerConstructorNgTests, forwardingTimeoutPassedToSourceFactory)
 {
     auto const forwardingTimeout = 10;
     configJson_.as_object()["forwarding"] = boost::json::object{{"timeout", float{forwardingTimeout}}};
     EXPECT_CALL(
         sourceFactory_,
         makeSource(
-            testing::_,
             testing::_,
             testing::_,
             testing::_,
@@ -175,7 +195,7 @@ TEST_F(LoadBalancerConstructorTests, forwardingTimeoutPassedToSourceFactory)
     makeLoadBalancer();
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesFail)
+TEST_F(LoadBalancerConstructorNgTests, fetchETLState_AllSourcesFail)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
@@ -185,7 +205,7 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesFail)
     EXPECT_THROW({ makeLoadBalancer(); }, std::logic_error);
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesReturnError)
+TEST_F(LoadBalancerConstructorNgTests, fetchETLState_AllSourcesReturnError)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
@@ -195,7 +215,7 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesReturnError)
     EXPECT_THROW({ makeLoadBalancer(); }, std::logic_error);
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLState_Source1Fails0OK)
+TEST_F(LoadBalancerConstructorNgTests, fetchETLState_Source1Fails0OK)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
@@ -206,7 +226,7 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_Source1Fails0OK)
     makeLoadBalancer();
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLState_Source0Fails1OK)
+TEST_F(LoadBalancerConstructorNgTests, fetchETLState_Source0Fails1OK)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
@@ -217,7 +237,7 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_Source0Fails1OK)
     makeLoadBalancer();
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLState_DifferentNetworkID)
+TEST_F(LoadBalancerConstructorNgTests, fetchETLState_DifferentNetworkID)
 {
     auto const source1Json = boost::json::parse(R"({"result": {"info": {"network_id": 0}}})");
     auto const source2Json = boost::json::parse(R"({"result": {"info": {"network_id": 1}}})");
@@ -228,7 +248,7 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_DifferentNetworkID)
     EXPECT_THROW({ makeLoadBalancer(); }, std::logic_error);
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesFailButAllowNoEtlIsTrue)
+TEST_F(LoadBalancerConstructorNgTests, fetchETLState_AllSourcesFailButAllowNoEtlIsTrue)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
@@ -241,7 +261,7 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesFailButAllowNoEtlIs
     makeLoadBalancer();
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLState_DifferentNetworkIDButAllowNoEtlIsTrue)
+TEST_F(LoadBalancerConstructorNgTests, fetchETLState_DifferentNetworkIDButAllowNoEtlIsTrue)
 {
     auto const source1Json = boost::json::parse(R"({"result": {"info": {"network_id": 0}}})");
     auto const source2Json = boost::json::parse(R"({"result": {"info": {"network_id": 1}}})");
@@ -255,8 +275,8 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_DifferentNetworkIDButAllowNoE
     makeLoadBalancer();
 }
 
-struct LoadBalancerOnConnectHookTests : LoadBalancerConstructorTests {
-    LoadBalancerOnConnectHookTests()
+struct LoadBalancerOnConnectHookNgTests : LoadBalancerConstructorNgTests {
+    LoadBalancerOnConnectHookNgTests()
     {
         EXPECT_CALL(sourceFactory_, makeSource).Times(2);
         EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
@@ -270,7 +290,7 @@ protected:
     std::unique_ptr<LoadBalancer> loadBalancer_;
 };
 
-TEST_F(LoadBalancerOnConnectHookTests, sourcesConnect)
+TEST_F(LoadBalancerOnConnectHookNgTests, sourcesConnect)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(true));
     EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(true));
@@ -279,7 +299,7 @@ TEST_F(LoadBalancerOnConnectHookTests, sourcesConnect)
     sourceFactory_.callbacksAt(1).onConnect();
 }
 
-TEST_F(LoadBalancerOnConnectHookTests, sourcesConnect_Source0IsNotConnected)
+TEST_F(LoadBalancerOnConnectHookNgTests, sourcesConnect_Source0IsNotConnected)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(false));
@@ -297,7 +317,7 @@ TEST_F(LoadBalancerOnConnectHookTests, sourcesConnect_Source0IsNotConnected)
     sourceFactory_.callbacksAt(0).onConnect();
 }
 
-TEST_F(LoadBalancerOnConnectHookTests, sourcesConnect_BothSourcesAreNotConnected)
+TEST_F(LoadBalancerOnConnectHookNgTests, sourcesConnect_BothSourcesAreNotConnected)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(false));
@@ -318,17 +338,17 @@ TEST_F(LoadBalancerOnConnectHookTests, sourcesConnect_BothSourcesAreNotConnected
     sourceFactory_.callbacksAt(0).onConnect();
 }
 
-struct LoadBalancerStopTests : LoadBalancerOnConnectHookTests, SyncAsioContextTest {};
+struct LoadBalancerStopNgTests : LoadBalancerOnConnectHookNgTests, SyncAsioContextTest {};
 
-TEST_F(LoadBalancerStopTests, stopCallsSourcesStop)
+TEST_F(LoadBalancerStopNgTests, stopCallsSourcesStop)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), stop);
     EXPECT_CALL(sourceFactory_.sourceAt(1), stop);
     runSyncOperation([this](boost::asio::yield_context yield) { loadBalancer_->stop(yield); });
 }
 
-struct LoadBalancerOnDisconnectHookTests : LoadBalancerOnConnectHookTests {
-    LoadBalancerOnDisconnectHookTests()
+struct LoadBalancerOnDisconnectHookNgTests : LoadBalancerOnConnectHookNgTests {
+    LoadBalancerOnDisconnectHookNgTests()
     {
         EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(true));
         EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(true));
@@ -340,7 +360,7 @@ struct LoadBalancerOnDisconnectHookTests : LoadBalancerOnConnectHookTests {
     }
 };
 
-TEST_F(LoadBalancerOnDisconnectHookTests, source0Disconnects)
+TEST_F(LoadBalancerOnDisconnectHookNgTests, source0Disconnects)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(false));
@@ -349,12 +369,12 @@ TEST_F(LoadBalancerOnDisconnectHookTests, source0Disconnects)
     sourceFactory_.callbacksAt(0).onDisconnect(true);
 }
 
-TEST_F(LoadBalancerOnDisconnectHookTests, source1Disconnects)
+TEST_F(LoadBalancerOnDisconnectHookNgTests, source1Disconnects)
 {
     sourceFactory_.callbacksAt(1).onDisconnect(false);
 }
 
-TEST_F(LoadBalancerOnDisconnectHookTests, source0DisconnectsAndConnectsBack)
+TEST_F(LoadBalancerOnDisconnectHookNgTests, source0DisconnectsAndConnectsBack)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(false));
@@ -365,13 +385,13 @@ TEST_F(LoadBalancerOnDisconnectHookTests, source0DisconnectsAndConnectsBack)
     sourceFactory_.callbacksAt(0).onConnect();
 }
 
-TEST_F(LoadBalancerOnDisconnectHookTests, source1DisconnectsAndConnectsBack)
+TEST_F(LoadBalancerOnDisconnectHookNgTests, source1DisconnectsAndConnectsBack)
 {
     sourceFactory_.callbacksAt(1).onDisconnect(false);
     sourceFactory_.callbacksAt(1).onConnect();
 }
 
-TEST_F(LoadBalancerOnConnectHookTests, bothSourcesDisconnectAndConnectBack)
+TEST_F(LoadBalancerOnConnectHookNgTests, bothSourcesDisconnectAndConnectBack)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(false));
@@ -388,8 +408,8 @@ TEST_F(LoadBalancerOnConnectHookTests, bothSourcesDisconnectAndConnectBack)
     sourceFactory_.callbacksAt(1).onConnect();
 }
 
-struct LoadBalancer3SourcesTests : LoadBalancerConstructorTests {
-    LoadBalancer3SourcesTests()
+struct LoadBalancer3SourcesNgTests : LoadBalancerConstructorNgTests {
+    LoadBalancer3SourcesNgTests()
     {
         sourceFactory_.setSourcesNumber(3);
         configJson_ = boost::json::parse(kTHREE_SOURCES_LEDGER_RESPONSE);
@@ -408,7 +428,7 @@ protected:
     std::unique_ptr<LoadBalancer> loadBalancer_;
 };
 
-TEST_F(LoadBalancer3SourcesTests, forwardingUpdate)
+TEST_F(LoadBalancer3SourcesNgTests, forwardingUpdate)
 {
     // Source 2 is connected first
     EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(false));
@@ -427,8 +447,8 @@ TEST_F(LoadBalancer3SourcesTests, forwardingUpdate)
     sourceFactory_.callbacksAt(0).onDisconnect(false);
 }
 
-struct LoadBalancerLoadInitialLedgerTests : LoadBalancerOnConnectHookTests {
-    LoadBalancerLoadInitialLedgerTests()
+struct LoadBalancerLoadInitialLedgerNgTests : LoadBalancerOnConnectHookNgTests {
+    LoadBalancerLoadInitialLedgerNgTests()
     {
         util::Random::setSeed(0);
     }
@@ -437,53 +457,59 @@ protected:
     uint32_t const sequence_ = 123;
     uint32_t const numMarkers_ = 16;
     std::pair<std::vector<std::string>, bool> const response_ = {{"1", "2", "3"}, true};
+    testing::StrictMock<InitialLoadObserverMock> observer_;
 };
 
-TEST_F(LoadBalancerLoadInitialLedgerTests, load)
+TEST_F(LoadBalancerLoadInitialLedgerNgTests, load)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, testing::_))
+        .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.first);
 }
 
-TEST_F(LoadBalancerLoadInitialLedgerTests, load_source0DoesntHaveLedger)
+TEST_F(LoadBalancerLoadInitialLedgerNgTests, load_source0DoesntHaveLedger)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, testing::_))
+        .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.first);
 }
 
-TEST_F(LoadBalancerLoadInitialLedgerTests, load_bothSourcesDontHaveLedger)
+TEST_F(LoadBalancerLoadInitialLedgerNgTests, load_bothSourcesDontHaveLedger)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).Times(2).WillRepeatedly(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(false)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, testing::_))
+        .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, std::chrono::milliseconds{1}), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.first);
 }
 
-TEST_F(LoadBalancerLoadInitialLedgerTests, load_source0ReturnsStatusFalse)
+TEST_F(LoadBalancerLoadInitialLedgerNgTests, load_source0ReturnsStatusFalse)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_))
+    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, testing::_))
         .WillOnce(Return(std::make_pair(std::vector<std::string>{}, false)));
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, testing::_))
+        .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.first);
 }
 
-struct LoadBalancerLoadInitialLedgerCustomNumMarkersTests : LoadBalancerConstructorTests {
+struct LoadBalancerLoadInitialLedgerCustomNumMarkersNgTests : LoadBalancerConstructorNgTests {
 protected:
     uint32_t const numMarkers_ = 16;
     uint32_t const sequence_ = 123;
     std::pair<std::vector<std::string>, bool> const response_ = {{"1", "2", "3"}, true};
+    testing::StrictMock<InitialLoadObserverMock> observer_;
 };
 
-TEST_F(LoadBalancerLoadInitialLedgerCustomNumMarkersTests, loadInitialLedger)
+TEST_F(LoadBalancerLoadInitialLedgerCustomNumMarkersNgTests, loadInitialLedger)
 {
     configJson_.as_object()["num_markers"] = numMarkers_;
 
@@ -496,13 +522,14 @@ TEST_F(LoadBalancerLoadInitialLedgerCustomNumMarkersTests, loadInitialLedger)
 
     util::Random::setSeed(0);
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, testing::_))
+        .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer->loadInitialLedger(sequence_), response_.first);
+    EXPECT_EQ(loadBalancer->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.first);
 }
 
-struct LoadBalancerFetchLegerTests : LoadBalancerOnConnectHookTests {
-    LoadBalancerFetchLegerTests()
+struct LoadBalancerFetchLegerNgTests : LoadBalancerOnConnectHookNgTests {
+    LoadBalancerFetchLegerNgTests()
     {
         util::Random::setSeed(0);
         response_.second.set_validated(true);
@@ -516,7 +543,7 @@ protected:
         std::make_pair(grpc::Status::OK, org::xrpl::rpc::v1::GetLedgerResponse{});
 };
 
-TEST_F(LoadBalancerFetchLegerTests, fetch)
+TEST_F(LoadBalancerFetchLegerNgTests, fetch)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
     EXPECT_CALL(sourceFactory_.sourceAt(0), fetchLedger(sequence_, getObjects_, getObjectNeighbors_))
@@ -525,7 +552,7 @@ TEST_F(LoadBalancerFetchLegerTests, fetch)
     EXPECT_TRUE(loadBalancer_->fetchLedger(sequence_, getObjects_, getObjectNeighbors_).has_value());
 }
 
-TEST_F(LoadBalancerFetchLegerTests, fetch_Source0ReturnsBadStatus)
+TEST_F(LoadBalancerFetchLegerNgTests, fetch_Source0ReturnsBadStatus)
 {
     auto source0Response = response_;
     source0Response.first = grpc::Status::CANCELLED;
@@ -541,7 +568,7 @@ TEST_F(LoadBalancerFetchLegerTests, fetch_Source0ReturnsBadStatus)
     EXPECT_TRUE(loadBalancer_->fetchLedger(sequence_, getObjects_, getObjectNeighbors_).has_value());
 }
 
-TEST_F(LoadBalancerFetchLegerTests, fetch_Source0ReturnsNotValidated)
+TEST_F(LoadBalancerFetchLegerNgTests, fetch_Source0ReturnsNotValidated)
 {
     auto source0Response = response_;
     source0Response.second.set_validated(false);
@@ -557,7 +584,7 @@ TEST_F(LoadBalancerFetchLegerTests, fetch_Source0ReturnsNotValidated)
     EXPECT_TRUE(loadBalancer_->fetchLedger(sequence_, getObjects_, getObjectNeighbors_).has_value());
 }
 
-TEST_F(LoadBalancerFetchLegerTests, fetch_bothSourcesFail)
+TEST_F(LoadBalancerFetchLegerNgTests, fetch_bothSourcesFail)
 {
     auto badResponse = response_;
     badResponse.second.set_validated(false);
@@ -575,8 +602,8 @@ TEST_F(LoadBalancerFetchLegerTests, fetch_bothSourcesFail)
                     .has_value());
 }
 
-struct LoadBalancerForwardToRippledTests : LoadBalancerConstructorTests, SyncAsioContextTest {
-    LoadBalancerForwardToRippledTests()
+struct LoadBalancerForwardToRippledNgTests : LoadBalancerConstructorNgTests, SyncAsioContextTest {
+    LoadBalancerForwardToRippledNgTests()
     {
         util::Random::setSeed(0);
         EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
@@ -591,7 +618,7 @@ protected:
     boost::json::object const response_{{"response", "other_value"}};
 };
 
-TEST_F(LoadBalancerForwardToRippledTests, forward)
+TEST_F(LoadBalancerForwardToRippledNgTests, forward)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     auto loadBalancer = makeLoadBalancer();
@@ -606,7 +633,7 @@ TEST_F(LoadBalancerForwardToRippledTests, forward)
     });
 }
 
-TEST_F(LoadBalancerForwardToRippledTests, forwardWithXUserHeader)
+TEST_F(LoadBalancerForwardToRippledNgTests, forwardWithXUserHeader)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     auto loadBalancer = makeLoadBalancer();
@@ -621,7 +648,7 @@ TEST_F(LoadBalancerForwardToRippledTests, forwardWithXUserHeader)
     });
 }
 
-TEST_F(LoadBalancerForwardToRippledTests, source0Fails)
+TEST_F(LoadBalancerForwardToRippledNgTests, source0Fails)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     auto loadBalancer = makeLoadBalancer();
@@ -641,46 +668,46 @@ TEST_F(LoadBalancerForwardToRippledTests, source0Fails)
     });
 }
 
-struct LoadBalancerForwardToRippledErrorTestBundle {
+struct LoadBalancerForwardToRippledErrorNgTestBundle {
     std::string testName;
     rpc::ClioError firstSourceError;
     rpc::ClioError secondSourceError;
     rpc::ClioError responseExpectedError;
 };
 
-struct LoadBalancerForwardToRippledErrorTests
-    : LoadBalancerForwardToRippledTests,
-      testing::WithParamInterface<LoadBalancerForwardToRippledErrorTestBundle> {};
+struct LoadBalancerForwardToRippledErrorNgTests
+    : LoadBalancerForwardToRippledNgTests,
+      testing::WithParamInterface<LoadBalancerForwardToRippledErrorNgTestBundle> {};
 
 INSTANTIATE_TEST_SUITE_P(
-    LoadBalancerForwardToRippledErrorTests,
-    LoadBalancerForwardToRippledErrorTests,
+    LoadBalancerForwardToRippledErrorNgTests,
+    LoadBalancerForwardToRippledErrorNgTests,
     testing::Values(
-        LoadBalancerForwardToRippledErrorTestBundle{
+        LoadBalancerForwardToRippledErrorNgTestBundle{
             "ConnectionError_RequestError",
             rpc::ClioError::EtlConnectionError,
             rpc::ClioError::EtlRequestError,
             rpc::ClioError::EtlRequestError
         },
-        LoadBalancerForwardToRippledErrorTestBundle{
+        LoadBalancerForwardToRippledErrorNgTestBundle{
             "RequestError_RequestTimeout",
             rpc::ClioError::EtlRequestError,
             rpc::ClioError::EtlRequestTimeout,
             rpc::ClioError::EtlRequestTimeout
         },
-        LoadBalancerForwardToRippledErrorTestBundle{
+        LoadBalancerForwardToRippledErrorNgTestBundle{
             "RequestTimeout_InvalidResponse",
             rpc::ClioError::EtlRequestTimeout,
             rpc::ClioError::EtlInvalidResponse,
             rpc::ClioError::EtlInvalidResponse
         },
-        LoadBalancerForwardToRippledErrorTestBundle{
+        LoadBalancerForwardToRippledErrorNgTestBundle{
             "BothRequestTimeout",
             rpc::ClioError::EtlRequestTimeout,
             rpc::ClioError::EtlRequestTimeout,
             rpc::ClioError::EtlRequestTimeout
         },
-        LoadBalancerForwardToRippledErrorTestBundle{
+        LoadBalancerForwardToRippledErrorNgTestBundle{
             "InvalidResponse_RequestError",
             rpc::ClioError::EtlInvalidResponse,
             rpc::ClioError::EtlRequestError,
@@ -690,7 +717,7 @@ INSTANTIATE_TEST_SUITE_P(
     tests::util::kNAME_GENERATOR
 );
 
-TEST_P(LoadBalancerForwardToRippledErrorTests, bothSourcesFail)
+TEST_P(LoadBalancerForwardToRippledErrorNgTests, bothSourcesFail)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     auto loadBalancer = makeLoadBalancer();
@@ -712,7 +739,7 @@ TEST_P(LoadBalancerForwardToRippledErrorTests, bothSourcesFail)
     });
 }
 
-TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheEnabled)
+TEST_F(LoadBalancerForwardToRippledNgTests, forwardingCacheEnabled)
 {
     configJson_.as_object()["forwarding"] = boost::json::object{{"cache_timeout", 10.}};
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
@@ -732,14 +759,14 @@ TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheEnabled)
     });
 }
 
-TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheDisabledOnLedgerClosedHookCalled)
+TEST_F(LoadBalancerForwardToRippledNgTests, forwardingCacheDisabledOnLedgerClosedHookCalled)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     auto loadBalancer = makeLoadBalancer();
     EXPECT_NO_THROW(sourceFactory_.callbacksAt(0).onLedgerClosed());
 }
 
-TEST_F(LoadBalancerForwardToRippledTests, onLedgerClosedHookInvalidatesCache)
+TEST_F(LoadBalancerForwardToRippledNgTests, onLedgerClosedHookInvalidatesCache)
 {
     configJson_.as_object()["forwarding"] = boost::json::object{{"cache_timeout", 10.}};
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
@@ -766,7 +793,7 @@ TEST_F(LoadBalancerForwardToRippledTests, onLedgerClosedHookInvalidatesCache)
     });
 }
 
-TEST_F(LoadBalancerForwardToRippledTests, commandLineMissing)
+TEST_F(LoadBalancerForwardToRippledNgTests, commandLineMissing)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     auto loadBalancer = makeLoadBalancer();
@@ -781,9 +808,9 @@ TEST_F(LoadBalancerForwardToRippledTests, commandLineMissing)
     });
 }
 
-struct LoadBalancerToJsonTests : LoadBalancerOnConnectHookTests {};
+struct LoadBalancerToJsonNgTests : LoadBalancerOnConnectHookNgTests {};
 
-TEST_F(LoadBalancerToJsonTests, toJson)
+TEST_F(LoadBalancerToJsonNgTests, toJson)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), toJson).WillOnce(Return(boost::json::object{{"source1", "value1"}}));
     EXPECT_CALL(sourceFactory_.sourceAt(1), toJson).WillOnce(Return(boost::json::object{{"source2", "value2"}}));

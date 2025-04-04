@@ -2,10 +2,13 @@ add_library(clio_etlng)
 
 target_sources(
   clio_etlng
-  PRIVATE impl/AmendmentBlockHandler.cpp
+  PRIVATE LoadBalancer.cpp
+          Source.cpp
+          impl/AmendmentBlockHandler.cpp
           impl/AsyncGrpcCall.cpp
           impl/Extraction.cpp
           impl/GrpcSource.cpp
+          impl/ForwardingSource.cpp
           impl/Loading.cpp
           impl/Monitor.cpp
           impl/TaskManager.cpp

@@ -44,7 +44,7 @@ using namespace data;
 namespace json = boost::json;
 using namespace testing;
 
-using TestTxHandler = BaseTxHandler<MockETLService>;
+using TestTxHandler = TxHandler;
 
 namespace {
 
@@ -148,7 +148,7 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}",
                 "min_ledger": 1,
@@ -182,7 +182,7 @@ TEST_F(RPCTxTest, InvalidBinaryV1)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}",
                 "binary": 12
@@ -199,7 +199,7 @@ TEST_F(RPCTxTest, InvalidBinaryV2)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}",
                 "binary": 12
@@ -220,7 +220,7 @@ TEST_F(RPCTxTest, InvalidLgrRange)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}",
                 "max_ledger": 1,
@@ -249,7 +249,7 @@ TEST_F(RPCTxTest, TxnNotFound)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}"
             }})",
@@ -277,7 +277,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}",
                 "min_ledger": 1,
@@ -308,7 +308,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}",
                 "min_ledger": 1,
@@ -340,7 +340,7 @@ TEST_F(RPCTxTest, CtidNotFoundSearchAllFalse)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "ctid": "{}",
                 "min_ledger": 1,
                 "max_ledger": 1000
@@ -375,7 +375,7 @@ TEST_F(RPCTxTest, DefaultParameter_API_v1)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}"
             }})",
@@ -405,7 +405,7 @@ TEST_F(RPCTxTest, PaymentTx_API_v1)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}"
             }})",
@@ -436,7 +436,7 @@ TEST_F(RPCTxTest, PaymentTx_API_v2)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}"
             }})",
@@ -470,7 +470,7 @@ TEST_F(RPCTxTest, DefaultParameter_API_v2)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}"
             }})",
@@ -510,7 +510,7 @@ TEST_F(RPCTxTest, ReturnBinary)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}",
                 "binary": true
@@ -553,7 +553,7 @@ TEST_F(RPCTxTest, ReturnBinaryWithCTID)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}",
                 "binary": true
@@ -585,14 +585,14 @@ TEST_F(RPCTxTest, MintNFT)
                     "FinalFields": {{
                         "NFTokens": [
                         {{
-                            "NFToken": 
+                            "NFToken":
                             {{
                                 "NFTokenID": "{}",
                                 "URI": "7465737475726C"
                             }}
                         }},
                         {{
-                            "NFToken": 
+                            "NFToken":
                             {{
                                 "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
                                 "URI": "7465737475726C"
@@ -604,7 +604,7 @@ TEST_F(RPCTxTest, MintNFT)
                     "PreviousFields": {{
                         "NFTokens": [
                         {{
-                            "NFToken": 
+                            "NFToken":
                             {{
                                 "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
                                 "URI": "7465737475726C"
@@ -640,7 +640,7 @@ TEST_F(RPCTxTest, MintNFT)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}"
             }})",
@@ -667,7 +667,7 @@ TEST_F(RPCTxTest, NFTAcceptOffer)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}"
             }})",
@@ -695,7 +695,7 @@ TEST_F(RPCTxTest, NFTCancelOffer)
     runSpawn([this, &ids](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}"
             }})",
@@ -730,7 +730,7 @@ TEST_F(RPCTxTest, NFTCreateOffer)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}"
             }})",
@@ -747,7 +747,7 @@ TEST_F(RPCTxTest, CTIDAndTransactionBothProvided)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}",
                 "ctid": "{}"
@@ -819,7 +819,7 @@ TEST_F(RPCTxTest, CTIDNotMatch)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "ctid": "{}"
             }})",
@@ -899,7 +899,7 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}"
             }})",
@@ -972,7 +972,7 @@ TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvaiable)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "transaction": "{}"
             }})",
@@ -1057,7 +1057,7 @@ TEST_F(RPCTxTest, ViaCTID)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "ctid": "{}"
             }})",
@@ -1095,7 +1095,7 @@ TEST_F(RPCTxTest, ViaLowercaseCTID)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "command": "tx",
                 "ctid": "{}"
             }})",
