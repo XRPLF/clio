@@ -30,27 +30,24 @@
 #include <boost/signals2/variadic_signal.hpp>
 
 #include <atomic>
-#include <chrono>
+#include <concepts>
 #include <expected>
 #include <optional>
 #include <shared_mutex>
-#include <string>
+#include <type_traits>
 #include <utility>
+#include <variant>
 
 namespace util {
 
-template <typename ValueType>
+template <typename ValueType, typename ErrorType>
+    requires(not std::same_as<ValueType, ErrorType>)
 class BlockingCache {
-public:
-    enum class Error;
-
-private:
     enum class State { Empty, Updating, Full };
 
     std::atomic<State> state_{State::Empty};
     util::Mutex<std::optional<ValueType>, std::shared_mutex> value_;
-    boost::signals2::signal<void()> updateFinished_;
-    boost::signals2::signal<void(Error)> updateFailed_;
+    boost::signals2::signal<void(std::expected<ValueType, ErrorType>)> updateFinished_;
 
 public:
     BlockingCache() = default;
@@ -68,153 +65,94 @@ public:
     class Result;
 
     Result
-    asyncGet(boost::asio::yield_context yield, std::optional<std::chrono::steady_clock::duration> waitTimeout)
+    asyncGet(boost::asio::yield_context yield)
     {
         switch (state_) {
             case State::Updating: {
-                if (auto waitResult = wait(yield, waitTimeout); not waitResult.has_value())
-                    return std::unexpected{std::move(waitResult).error()};
-                // else
-                [[fallthrough]];
+                return Result{wait(yield)};
             }
             case State::Full: {
                 auto const value = value_.template lock<std::shared_lock>();
                 ASSERT(value->has_value(), "Value should be presented when the cache is full");
-                return value;
+                return Result{value};
             }
             case State::Empty: {
-                return std::nullopt;
+                return Result{std::nullopt};
             }
         };
     }
 
-    class Update;
-    friend class Update;
-
-    std::expected<Update, Error>
-    update()
+    template <typename Updater>
+        requires(std::invocable<Updater, boost::asio::yield_context> and std::same_as<std::invoke_result_t<Updater, boost::asio::yield_context>, std::expected<std::pair<ValueType, bool>, ErrorType>>)
+    std::expected<ValueType, ErrorType>
+    update(Updater&& updater, boost::asio::yield_context yield)
     {
-        if (state_ != State::Updating)
-            return Update{this};
-
-        return std::unexpected{Error::AlreadyUpdating};
+        if (state_ == State::Updating) {
+            auto result = asyncGet(yield);
+            return std::move(result).valueOrError();
+        }
+        state_ = State::Updating;
+        auto result = updater(yield);
+        if (result.hasValue()) {
+            auto const [value, shouldBeCached] = std::move(result).value().first;
+            if (shouldBeCached) {
+                value_.lock().get() = std::move(value);
+                state_ = State::Full;
+            } else {
+                value_.lock().get() = std::nullopt;
+                state_ = State::Empty;
+            }
+            updateFinished_(value);
+            return value;
+        }
+        return std::unexpected{std::move(result).error()};
     }
 
 private:
-    std::expected<void, Error>
-    wait(boost::asio::yield_context yield, std::optional<std::chrono::steady_clock::duration> timeout)
+    std::expected<ValueType, ErrorType>
+    wait(boost::asio::yield_context yield)
     {
-        boost::asio::steady_timer timer{
-            yield.get_executor(), timeout.value_or(boost::asio::steady_timer::duration::max())
-        };
+        boost::asio::steady_timer timer{yield.get_executor(), boost::asio::steady_timer::duration::max()};
         boost::system::error_code errorCode;
 
-        boost::signals2::scoped_connection finishSlot = updateFinished_.connect([yield, &timer]() {
-            boost::asio::spawn(yield, [&timer](auto&&) { timer.cancel(); });
-        });
-
-        std::optional<std::string> updateError;
-        boost::signals2::scoped_connection failureSlot =
-            updateFinished_.connect([yield, &updateError, &timer](std::string error) {
-                updateError = std::move(error);
-                boost::asio::spawn(yield, [&timer](auto&&) { timer.cancel(); });
+        std::expected<ValueType, ErrorType> result;
+        boost::signals2::scoped_connection slot =
+            updateFinished_.connect([yield, &timer, &result](std::expected<ValueType, ErrorType> value) {
+                boost::asio::spawn(yield, [&timer, &result, value = std::move(value)](auto&&) {
+                    result = std::move(value);
+                    timer.cancel();
+                });
             });
 
         if (state_ == State::Updating) {
             timer.async_wait(yield[errorCode]);
-            if (errorCode != boost::asio::error::operation_aborted)
-                return std::unexpected{Error::WaitingTimeout};
-
-            if (updateError.has_value())
-                return std::unexpected{std::move(updateError).value()};
+            return result;
         }
-        return {};
+        return asyncGet(yield).valueOrError();
     }
 };
 
-template <typename ValueType>
-enum class BlockingCache<ValueType>::Error {
-    WaitingTimeout,
-    UpdateCancelled,
-    AlreadyUpdating
-};
-
-template <typename ValueType>
-class BlockingCache<ValueType>::Result {
-    std::expected<std::optional<ValueType>, BlockingCache::Error> value_;
+template <typename ValueType, typename ErrorType>
+    requires(not std::same_as<ValueType, ErrorType>)
+class BlockingCache<ValueType, ErrorType>::Result {
+    std::optional<std::expected<ValueType, ErrorType>> value_;
 
 public:
-    explicit Result(std::optional<ValueType> value) : value_(std::move(value))
-    {
-    }
-
-    explicit Result(BlockingCache::Error error) : value_(std::unexpected{error})
+    Result(std::optional<std::expected<ValueType, ErrorType>> value) : value_(std::move(value))
     {
     }
 
     bool
     hasValue() const
     {
-        return not hasError() && value_->has_value();
+        return std::holds_alternative<std::expected<ValueType, ErrorType>>(value_);
     }
 
-    bool
-    hasError() const
+    std::expected<ValueType, ErrorType>
+    valueOrError() &&
     {
-        return value_.has_value();
-    }
-
-    ValueType const&
-    value() const
-    {
-        ASSERT(hasValue(), "There must be a value to get");
-        return value_->value();
-    }
-
-    ValueType
-    value() &&
-    {
-        ASSERT(hasValue(), "There must be a value to get");
-        return std::move(value_)->value();
-    }
-
-    BlockingCache::Error
-    error()
-    {
-        ASSERT(hasError(), "There must be an error to get");
-        return value_.error();
-    }
-};
-
-template <typename ValueType>
-class BlockingCache<ValueType>::Update {
-    BlockingCache<ValueType>& cache_;
-    bool wasUpdated_ = false;
-
-public:
-    ~Update()
-    {
-        if (not wasUpdated_) {
-            cache_.state_ = BlockingCache::State::Empty;
-            cache_.updateFailed_(BlockingCache::Error::UpdateCancelled);
-        }
-    }
-
-    void
-    put(ValueType value)
-    {
-        cache_.value_.lock().get() = std::move(value);
-        cache_.state_ = BlockingCache::State::Full;
-        cache_.updateFinished_();
-        wasUpdated_ = true;
-    }
-
-private:
-    friend class BlockingCache<ValueType>;
-
-    Update(BlockingCache<ValueType> cache) : cache_(cache)
-    {
-        cache_->state_ = BlockingCache<ValueType>::State::Updating;
+        ASSERT(value_.has_value(), "Value should be presented");
+        return std::move(value_).value();
     }
 };
 
