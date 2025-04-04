@@ -72,7 +72,7 @@ protected:
     std::shared_ptr<testing::StrictMock<MockRPCEngine>> rpcEngine_ =
         std::make_shared<testing::StrictMock<MockRPCEngine>>();
     std::shared_ptr<StrictMock<MockETLService>> etl_ = std::make_shared<StrictMock<MockETLService>>();
-    RPCServerHandler<MockRPCEngine, MockETLService> rpcServerHandler_{config, backend_, rpcEngine_, etl_};
+    RPCServerHandler<MockRPCEngine> rpcServerHandler_{config, backend_, rpcEngine_, etl_};
 
     util::TagDecoratorFactory tagFactory_{config};
     StrictMockConnectionMetadata connectionMetadata_{"some ip", tagFactory_};

@@ -60,11 +60,10 @@ public:
      *
      * @param sequence Sequence of the ledger to download
      * @param numMarkers Number of markers to generate for async calls
-     * @param cacheOnly Only insert into cache, not the DB; defaults to false
      * @return A std::pair of the data and a bool indicating whether the download was successful
      */
     std::pair<std::vector<std::string>, bool>
-    loadInitialLedger(uint32_t sequence, uint32_t numMarkers, bool cacheOnly = false);
+    loadInitialLedger(uint32_t sequence, uint32_t numMarkers);
 };
 
 }  // namespace etl::impl

@@ -10,7 +10,6 @@ target_sources(
           ng/impl/ErrorHandling.cpp
           ng/impl/ConnectionHandler.cpp
           ng/impl/ServerSslContext.cpp
-          ng/impl/WsConnection.cpp
           ng/Request.cpp
           ng/Response.cpp
           ng/Server.cpp

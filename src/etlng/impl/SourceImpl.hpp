@@ -19,10 +19,11 @@
 
 #pragma once
 
-#include "etl/Source.hpp"
 #include "etl/impl/ForwardingSource.hpp"
-#include "etl/impl/GrpcSource.hpp"
 #include "etl/impl/SubscriptionSource.hpp"
+#include "etlng/InitialLoadObserverInterface.hpp"
+#include "etlng/Source.hpp"
+#include "etlng/impl/GrpcSource.hpp"
 #include "rpc/Errors.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -40,7 +41,7 @@
 #include <utility>
 #include <vector>
 
-namespace etl::impl {
+namespace etlng::impl {
 
 /**
  * @brief Provides an implementation of a ETL source
@@ -51,8 +52,8 @@ namespace etl::impl {
  */
 template <
     typename GrpcSourceType = GrpcSource,
-    typename SubscriptionSourceTypePtr = std::unique_ptr<SubscriptionSource>,
-    typename ForwardingSourceType = ForwardingSource>
+    typename SubscriptionSourceTypePtr = std::unique_ptr<etl::impl::SubscriptionSource>,
+    typename ForwardingSourceType = etl::impl::ForwardingSource>
 class SourceImpl : public SourceBase {
     std::string ip_;
     std::string wsPort_;
@@ -198,13 +199,13 @@ public:
      *
      * @param sequence Sequence of the ledger to download
      * @param numMarkers Number of markers to generate for async calls
-     * @param cacheOnly Only insert into cache, not the DB; defaults to false
+     * @param loader InitialLoadObserverInterface implementation
      * @return A std::pair of the data and a bool indicating whether the download was successful
      */
     std::pair<std::vector<std::string>, bool>
-    loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers) final
+    loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, etlng::InitialLoadObserverInterface& loader) final
     {
-        return grpcSource_.loadInitialLedger(sequence, numMarkers);
+        return grpcSource_.loadInitialLedger(sequence, numMarkers, loader);
     }
 
     /**
@@ -228,4 +229,4 @@ public:
     }
 };
 
-}  // namespace etl::impl
+}  // namespace etlng::impl

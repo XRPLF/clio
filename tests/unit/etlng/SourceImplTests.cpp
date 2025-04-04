@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,9 @@
 */
 //==============================================================================
 
-#include "etl/impl/SourceImpl.hpp"
+#include "etlng/InitialLoadObserverInterface.hpp"
+#include "etlng/Models.hpp"
+#include "etlng/impl/SourceImpl.hpp"
 #include "rpc/Errors.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -38,17 +40,19 @@
 #include <utility>
 #include <vector>
 
-using namespace etl::impl;
+using namespace etlng::impl;
 
 using testing::Return;
 using testing::StrictMock;
+
+namespace {
 
 struct GrpcSourceMock {
     using FetchLedgerReturnType = std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>;
     MOCK_METHOD(FetchLedgerReturnType, fetchLedger, (uint32_t, bool, bool));
 
     using LoadLedgerReturnType = std::pair<std::vector<std::string>, bool>;
-    MOCK_METHOD(LoadLedgerReturnType, loadInitialLedger, (uint32_t, uint32_t));
+    MOCK_METHOD(LoadLedgerReturnType, loadInitialLedger, (uint32_t, uint32_t, etlng::InitialLoadObserverInterface&));
 };
 
 struct SubscriptionSourceMock {
@@ -74,7 +78,24 @@ struct ForwardingSourceMock {
     );
 };
 
-struct SourceImplTest : public ::testing::Test {
+struct InitialLoadObserverMock : etlng::InitialLoadObserverInterface {
+    MOCK_METHOD(
+        void,
+        onInitialLoadGotMoreObjects,
+        (uint32_t, std::vector<etlng::model::Object> const&, std::optional<std::string>),
+        (override)
+    );
+
+    void
+    onInitialLoadGotMoreObjects(uint32_t seq, std::vector<etlng::model::Object> const& data)
+    {
+        onInitialLoadGotMoreObjects(seq, data, std::nullopt);
+    }
+};
+
+}  // namespace
+
+struct SourceImplNgTest : public ::testing::Test {
 protected:
     boost::asio::io_context ioc_;
 
@@ -97,13 +118,13 @@ protected:
         };
 };
 
-TEST_F(SourceImplTest, run)
+TEST_F(SourceImplNgTest, run)
 {
     EXPECT_CALL(*subscriptionSourceMock_, run());
     source_.run();
 }
 
-TEST_F(SourceImplTest, stop)
+TEST_F(SourceImplNgTest, stop)
 {
     EXPECT_CALL(*subscriptionSourceMock_, stop);
     boost::asio::io_context ctx;
@@ -111,19 +132,19 @@ TEST_F(SourceImplTest, stop)
     ctx.run();
 }
 
-TEST_F(SourceImplTest, isConnected)
+TEST_F(SourceImplNgTest, isConnected)
 {
     EXPECT_CALL(*subscriptionSourceMock_, isConnected()).WillOnce(testing::Return(true));
     EXPECT_TRUE(source_.isConnected());
 }
 
-TEST_F(SourceImplTest, setForwarding)
+TEST_F(SourceImplNgTest, setForwarding)
 {
     EXPECT_CALL(*subscriptionSourceMock_, setForwarding(true));
     source_.setForwarding(true);
 }
 
-TEST_F(SourceImplTest, toJson)
+TEST_F(SourceImplNgTest, toJson)
 {
     EXPECT_CALL(*subscriptionSourceMock_, validatedRange()).WillOnce(Return(std::string("some_validated_range")));
     EXPECT_CALL(*subscriptionSourceMock_, isConnected()).WillOnce(Return(true));
@@ -141,7 +162,7 @@ TEST_F(SourceImplTest, toJson)
     EXPECT_GE(std::stoi(lastMessageAgeStr), 0);
 }
 
-TEST_F(SourceImplTest, toString)
+TEST_F(SourceImplNgTest, toString)
 {
     EXPECT_CALL(*subscriptionSourceMock_, validatedRange()).WillOnce(Return(std::string("some_validated_range")));
 
@@ -152,14 +173,14 @@ TEST_F(SourceImplTest, toString)
     );
 }
 
-TEST_F(SourceImplTest, hasLedger)
+TEST_F(SourceImplNgTest, hasLedger)
 {
     uint32_t const ledgerSeq = 123;
     EXPECT_CALL(*subscriptionSourceMock_, hasLedger(ledgerSeq)).WillOnce(Return(true));
     EXPECT_TRUE(source_.hasLedger(ledgerSeq));
 }
 
-TEST_F(SourceImplTest, fetchLedger)
+TEST_F(SourceImplNgTest, fetchLedger)
 {
     uint32_t const ledgerSeq = 123;
 
@@ -169,20 +190,22 @@ TEST_F(SourceImplTest, fetchLedger)
     EXPECT_EQ(actualStatus.error_code(), grpc::StatusCode::OK);
 }
 
-TEST_F(SourceImplTest, loadInitialLedger)
+TEST_F(SourceImplNgTest, loadInitialLedger)
 {
     uint32_t const ledgerSeq = 123;
     uint32_t const numMarkers = 3;
 
-    EXPECT_CALL(grpcSourceMock_, loadInitialLedger(ledgerSeq, numMarkers))
+    auto observerMock = testing::StrictMock<InitialLoadObserverMock>();
+
+    EXPECT_CALL(grpcSourceMock_, loadInitialLedger(ledgerSeq, numMarkers, testing::_))
         .WillOnce(Return(std::make_pair(std::vector<std::string>{}, true)));
-    auto const [actualLedgers, actualSuccess] = source_.loadInitialLedger(ledgerSeq, numMarkers);
+    auto const [actualLedgers, actualSuccess] = source_.loadInitialLedger(ledgerSeq, numMarkers, observerMock);
 
     EXPECT_TRUE(actualLedgers.empty());
     EXPECT_TRUE(actualSuccess);
 }
 
-TEST_F(SourceImplTest, forwardToRippled)
+TEST_F(SourceImplNgTest, forwardToRippled)
 {
     boost::json::object const request = {{"some_key", "some_value"}};
     std::optional<std::string> const clientIp = "some_client_ip";
