@@ -22,9 +22,9 @@
 #include "data/BackendInterface.hpp"
 #include "etl/ETLState.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
-#include "etl/Source.hpp"
 #include "etlng/InitialLoadObserverInterface.hpp"
 #include "etlng/LoadBalancerInterface.hpp"
+#include "etlng/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "util/Assert.hpp"
@@ -53,7 +53,7 @@
 #include <utility>
 #include <vector>
 
-namespace etl {
+namespace etlng {
 
 /**
  * @brief A tag class to help identify LoadBalancer in templated code.
@@ -87,7 +87,7 @@ private:
     std::optional<std::string> forwardingXUserValue_;
 
     std::vector<SourcePtr> sources_;
-    std::optional<ETLState> etlState_;
+    std::optional<etl::ETLState> etlState_;
     std::uint32_t downloadRanges_ =
         kDEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading initial ledger */
 
@@ -121,7 +121,7 @@ public:
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
+        std::shared_ptr<etl::NetworkValidatedLedgersInterface> validatedLedgers,
         SourceFactory sourceFactory = makeSource
     );
 
@@ -142,7 +142,7 @@ public:
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
+        std::shared_ptr<etl::NetworkValidatedLedgersInterface> validatedLedgers,
         SourceFactory sourceFactory = makeSource
     );
 
@@ -157,8 +157,14 @@ public:
      * @return A std::vector<std::string> The ledger data
      */
     std::vector<std::string>
-    loadInitialLedger(uint32_t sequence, std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2})
-        override;
+    loadInitialLedger(
+        [[maybe_unused]] uint32_t sequence,
+        [[maybe_unused]] std::chrono::steady_clock::duration retryAfter
+    ) override
+    {
+        ASSERT(false, "Not available for new ETL");
+        std::unreachable();
+    };
 
     /**
      * @brief Load the initial ledger, writing data to the queue.
@@ -171,14 +177,10 @@ public:
      */
     std::vector<std::string>
     loadInitialLedger(
-        [[maybe_unused]] uint32_t sequence,
-        [[maybe_unused]] etlng::InitialLoadObserverInterface& observer,
-        [[maybe_unused]] std::chrono::steady_clock::duration retryAfter
-    ) override
-    {
-        ASSERT(false, "Not available for old ETL");
-        std::unreachable();
-    }
+        uint32_t sequence,
+        etlng::InitialLoadObserverInterface& observer,
+        std::chrono::steady_clock::duration retryAfter
+    ) override;
 
     /**
      * @brief Fetch data for a specific ledger.
@@ -230,7 +232,7 @@ public:
      * @brief Return state of ETL nodes.
      * @return ETL state, nullopt if etl nodes not available
      */
-    std::optional<ETLState>
+    std::optional<etl::ETLState>
     getETLState() noexcept override;
 
     /**
@@ -266,4 +268,4 @@ private:
     chooseForwardingSource();
 };
 
-}  // namespace etl
+}  // namespace etlng

@@ -18,9 +18,9 @@
 //==============================================================================
 #pragma once
 
-#include "data/BackendInterface.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
-#include "etl/Source.hpp"
+#include "etlng/InitialLoadObserverInterface.hpp"
+#include "etlng/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "util/newconfig/ObjectView.hpp"
@@ -46,7 +46,7 @@
 #include <utility>
 #include <vector>
 
-struct MockSource : etl::SourceBase {
+struct MockSourceNg : etlng::SourceBase {
     MOCK_METHOD(void, run, (), (override));
     MOCK_METHOD(void, stop, (boost::asio::yield_context), (override));
     MOCK_METHOD(bool, isConnected, (), (const, override));
@@ -60,7 +60,12 @@ struct MockSource : etl::SourceBase {
         (uint32_t, bool, bool),
         (override)
     );
-    MOCK_METHOD((std::pair<std::vector<std::string>, bool>), loadInitialLedger, (uint32_t, uint32_t), (override));
+    MOCK_METHOD(
+        (std::pair<std::vector<std::string>, bool>),
+        loadInitialLedger,
+        (uint32_t, uint32_t, etlng::InitialLoadObserverInterface&),
+        (override)
+    );
 
     using ForwardToRippledReturnType = std::expected<boost::json::object, rpc::ClioError>;
     MOCK_METHOD(
@@ -72,14 +77,14 @@ struct MockSource : etl::SourceBase {
 };
 
 template <template <typename> typename MockType>
-using MockSourcePtr = std::shared_ptr<MockType<MockSource>>;
+using MockSourceNgPtr = std::shared_ptr<MockType<MockSourceNg>>;
 
 template <template <typename> typename MockType>
-class MockSourceWrapper : public etl::SourceBase {
-    MockSourcePtr<MockType> mock_;
+class MockSourceNgWrapper : public etlng::SourceBase {
+    MockSourceNgPtr<MockType> mock_;
 
 public:
-    MockSourceWrapper(MockSourcePtr<MockType> mockData) : mock_(std::move(mockData))
+    MockSourceNgWrapper(MockSourceNgPtr<MockType> mockData) : mock_(std::move(mockData))
     {
     }
 
@@ -132,9 +137,9 @@ public:
     }
 
     std::pair<std::vector<std::string>, bool>
-    loadInitialLedger(uint32_t sequence, uint32_t maxLedger) override
+    loadInitialLedger(uint32_t sequence, uint32_t maxLedger, etlng::InitialLoadObserverInterface& observer) override
     {
-        return mock_->loadInitialLedger(sequence, maxLedger);
+        return mock_->loadInitialLedger(sequence, maxLedger, observer);
     }
 
     std::expected<boost::json::object, rpc::ClioError>
@@ -149,24 +154,24 @@ public:
     }
 };
 
-struct MockSourceCallbacks {
-    etl::SourceBase::OnDisconnectHook onDisconnect;
-    etl::SourceBase::OnConnectHook onConnect;
-    etl::SourceBase::OnLedgerClosedHook onLedgerClosed;
+struct MockSourceNgCallbacks {
+    etlng::SourceBase::OnDisconnectHook onDisconnect;
+    etlng::SourceBase::OnConnectHook onConnect;
+    etlng::SourceBase::OnLedgerClosedHook onLedgerClosed;
 };
 
 template <template <typename> typename MockType>
-struct MockSourceData {
-    MockSourcePtr<MockType> source = std::make_shared<MockType<MockSource>>();
-    std::optional<MockSourceCallbacks> callbacks;
+struct MockSourceNgData {
+    MockSourceNgPtr<MockType> source = std::make_shared<MockType<MockSourceNg>>();
+    std::optional<MockSourceNgCallbacks> callbacks;
 };
 
 template <template <typename> typename MockType = testing::NiceMock>
-class MockSourceFactoryImpl {
-    std::vector<MockSourceData<MockType>> mockData_;
+class MockSourceNgFactoryImpl {
+    std::vector<MockSourceNgData<MockType>> mockData_;
 
 public:
-    MockSourceFactoryImpl(size_t numSources)
+    MockSourceNgFactoryImpl(size_t numSources)
     {
         setSourcesNumber(numSources);
 
@@ -174,23 +179,22 @@ public:
             .WillByDefault([this](
                                util::config::ObjectView const&,
                                boost::asio::io_context&,
-                               std::shared_ptr<BackendInterface>,
                                std::shared_ptr<feed::SubscriptionManagerInterface>,
                                std::shared_ptr<etl::NetworkValidatedLedgersInterface>,
                                std::chrono::steady_clock::duration,
-                               etl::SourceBase::OnConnectHook onConnect,
-                               etl::SourceBase::OnDisconnectHook onDisconnect,
-                               etl::SourceBase::OnLedgerClosedHook onLedgerClosed
+                               etlng::SourceBase::OnConnectHook onConnect,
+                               etlng::SourceBase::OnDisconnectHook onDisconnect,
+                               etlng::SourceBase::OnLedgerClosedHook onLedgerClosed
                            ) {
                 auto it = std::ranges::find_if(mockData_, [](auto const& d) { return not d.callbacks.has_value(); });
                 [&]() { ASSERT_NE(it, mockData_.end()) << "Make source called more than expected"; }();
-                it->callbacks = MockSourceCallbacks{
+                it->callbacks = MockSourceNgCallbacks{
                     .onDisconnect = std::move(onDisconnect),
                     .onConnect = std::move(onConnect),
                     .onLedgerClosed = std::move(onLedgerClosed)
                 };
 
-                return std::make_unique<MockSourceWrapper<MockType>>(it->source);
+                return std::make_unique<MockSourceNgWrapper<MockType>>(it->source);
             });
     }
 
@@ -199,37 +203,36 @@ public:
     {
         mockData_.clear();
         mockData_.reserve(numSources);
-        std::ranges::generate_n(std::back_inserter(mockData_), numSources, [] { return MockSourceData<MockType>{}; });
+        std::ranges::generate_n(std::back_inserter(mockData_), numSources, [] { return MockSourceNgData<MockType>{}; });
     }
 
     template <typename... Args>
-    etl::SourcePtr
+    etlng::SourcePtr
     operator()(Args&&... args)
     {
         return makeSource(std::forward<Args>(args)...);
     }
 
     MOCK_METHOD(
-        etl::SourcePtr,
+        etlng::SourcePtr,
         makeSource,
         (util::config::ObjectView const&,
          boost::asio::io_context&,
-         std::shared_ptr<BackendInterface>,
          std::shared_ptr<feed::SubscriptionManagerInterface>,
          std::shared_ptr<etl::NetworkValidatedLedgersInterface>,
          std::chrono::steady_clock::duration,
-         etl::SourceBase::OnConnectHook,
-         etl::SourceBase::OnDisconnectHook,
-         etl::SourceBase::OnLedgerClosedHook)
+         etlng::SourceBase::OnConnectHook,
+         etlng::SourceBase::OnDisconnectHook,
+         etlng::SourceBase::OnLedgerClosedHook)
     );
 
-    MockType<MockSource>&
+    MockType<MockSourceNg>&
     sourceAt(size_t index)
     {
         return *mockData_.at(index).source;
     }
 
-    MockSourceCallbacks&
+    MockSourceNgCallbacks&
     callbacksAt(size_t index)
     {
         auto& callbacks = mockData_.at(index).callbacks;
@@ -238,5 +241,5 @@ public:
     }
 };
 
-using MockSourceFactory = testing::NiceMock<MockSourceFactoryImpl<>>;
-using StrictMockSourceFactory = testing::StrictMock<MockSourceFactoryImpl<testing::StrictMock>>;
+using MockSourceNgFactory = testing::NiceMock<MockSourceNgFactoryImpl<>>;
+using StrictMockSourceNgFactory = testing::StrictMock<MockSourceNgFactoryImpl<testing::StrictMock>>;

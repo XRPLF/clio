@@ -20,6 +20,7 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "etlng/LoadBalancerInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/WorkQueue.hpp"
@@ -55,7 +56,7 @@ namespace rpc {
 /**
  * @brief The RPC engine that ties all RPC-related functionality together.
  */
-template <typename LoadBalancerType, typename CountersType>
+template <typename CountersType>
 class RPCEngine {
     util::Logger perfLog_{"Performance"};
     util::Logger log_{"RPC"};
@@ -67,7 +68,7 @@ class RPCEngine {
 
     std::shared_ptr<HandlerProvider const> handlerProvider_;
 
-    impl::ForwardingProxy<LoadBalancerType, CountersType, HandlerProvider> forwardingProxy_;
+    impl::ForwardingProxy<CountersType, HandlerProvider> forwardingProxy_;
 
     std::optional<util::ResponseExpirationCache> responseCache_;
 
@@ -86,7 +87,7 @@ public:
     RPCEngine(
         util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<LoadBalancerType> const& balancer,
+        std::shared_ptr<etlng::LoadBalancerInterface> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
         CountersType& counters,
@@ -128,7 +129,7 @@ public:
     makeRPCEngine(
         util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<LoadBalancerType> const& balancer,
+        std::shared_ptr<etlng::LoadBalancerInterface> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
         CountersType& counters,

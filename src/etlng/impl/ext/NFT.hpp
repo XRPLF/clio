@@ -20,15 +20,11 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "data/DBHelpers.hpp"
-#include "etl/NFTHelpers.hpp"
 #include "etlng/Models.hpp"
 #include "util/log/Logger.hpp"
 
 #include <cstdint>
 #include <memory>
-#include <utility>
-#include <vector>
 
 namespace etlng::impl {
 

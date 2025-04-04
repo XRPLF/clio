@@ -20,6 +20,7 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "etlng/ETLServiceInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/Factories.hpp"
 #include "rpc/JS.hpp"
@@ -58,11 +59,11 @@ namespace web {
  *
  * Note: see @ref web::SomeServerHandler concept
  */
-template <typename RPCEngineType, typename ETLType>
+template <typename RPCEngineType>
 class RPCServerHandler {
     std::shared_ptr<BackendInterface const> const backend_;
     std::shared_ptr<RPCEngineType> const rpcEngine_;
-    std::shared_ptr<ETLType const> const etl_;
+    std::shared_ptr<etlng::ETLServiceInterface const> const etl_;
     util::TagDecoratorFactory const tagFactory_;
     rpc::impl::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
 
@@ -82,7 +83,7 @@ public:
         util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<RPCEngineType> const& rpcEngine,
-        std::shared_ptr<ETLType const> const& etl
+        std::shared_ptr<etlng::ETLServiceInterface const> const& etl
     )
         : backend_(backend)
         , rpcEngine_(rpcEngine)

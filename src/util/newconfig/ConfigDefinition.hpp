@@ -293,7 +293,7 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
 
      {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-
+     {"__ng_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
      {"etl_sources.[].ip", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)}},
      {"etl_sources.[].ws_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
      {"etl_sources.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},

@@ -24,7 +24,6 @@
 
 #include <xrpl/protocol/TxFormats.h>
 
-#include <concepts>
 #include <cstdint>
 #include <string>
 #include <tuple>
@@ -81,7 +80,7 @@ concept ContainsValidHook = HasLedgerDataHook<T> or HasInitialDataHook<T> or
 
 template <typename T>
 concept NoTwoOfKind = not(HasLedgerDataHook<T> and HasTransactionHook<T>) and
-    not(HasInitialDataHook<T> and HasInitialTransactionHook<T>) and not(HasInitialDataHook<T> and HasObjectHook<T>) and
+    not(HasInitialDataHook<T> and HasInitialTransactionHook<T>) and
     not(HasInitialObjectsHook<T> and HasInitialObjectHook<T>);
 
 template <typename T>
@@ -215,5 +214,11 @@ public:
         }
     }
 };
+
+static auto
+makeRegistry(auto&&... exts)
+{
+    return std::make_unique<Registry<std::decay_t<decltype(exts)>...>>(std::forward<decltype(exts)>(exts)...);
+}
 
 }  // namespace etlng::impl

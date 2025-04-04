@@ -20,21 +20,21 @@
 #pragma once
 
 #include "etl/ETLState.hpp"
+#include "etlng/ETLServiceInterface.hpp"
 
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
 #include <gmock/gmock.h>
 
-#include <chrono>
 #include <cstdint>
 #include <optional>
 
-struct MockETLService {
-    MOCK_METHOD(boost::json::object, getInfo, (), (const));
-    MOCK_METHOD(std::chrono::time_point<std::chrono::system_clock>, getLastPublish, (), (const));
-    MOCK_METHOD(std::uint32_t, lastPublishAgeSeconds, (), (const));
-    MOCK_METHOD(std::uint32_t, lastCloseAgeSeconds, (), (const));
-    MOCK_METHOD(bool, isAmendmentBlocked, (), (const));
-    MOCK_METHOD(bool, isCorruptionDetected, (), (const));
-    MOCK_METHOD(std::optional<etl::ETLState>, getETLState, (), (const));
+struct MockETLService : etlng::ETLServiceInterface {
+    MOCK_METHOD(void, run, (), (override));
+    MOCK_METHOD(void, stop, (), (override));
+    MOCK_METHOD(boost::json::object, getInfo, (), (const, override));
+    MOCK_METHOD(std::uint32_t, lastCloseAgeSeconds, (), (const, override));
+    MOCK_METHOD(bool, isAmendmentBlocked, (), (const, override));
+    MOCK_METHOD(bool, isCorruptionDetected, (), (const, override));
+    MOCK_METHOD(std::optional<etl::ETLState>, getETLState, (), (const, override));
 };

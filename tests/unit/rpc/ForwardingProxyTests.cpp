@@ -60,11 +60,7 @@ protected:
     ClioConfigDefinition const config_{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none")}};
     util::TagDecoratorFactory tagFactory_{config_};
 
-    rpc::impl::ForwardingProxy<MockLoadBalancer, MockCounters, MockHandlerProvider> proxy_{
-        loadBalancer_,
-        counters_,
-        handlerProvider_
-    };
+    rpc::impl::ForwardingProxy<MockCounters, MockHandlerProvider> proxy_{loadBalancer_, counters_, handlerProvider_};
 };
 
 struct ShouldForwardParamTestCaseBundle {

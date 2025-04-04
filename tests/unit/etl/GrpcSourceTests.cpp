@@ -92,7 +92,7 @@ TEST_F(GrpcSourceTests, fetchLedgerNoStub)
 TEST_F(GrpcSourceTests, loadInitialLedgerNoStub)
 {
     GrpcSource wrongGrpcSource{"wrong", "wrong", mockBackend_};
-    auto const [data, success] = wrongGrpcSource.loadInitialLedger(0, 0, false);
+    auto const [data, success] = wrongGrpcSource.loadInitialLedger(0, 0);
     EXPECT_TRUE(data.empty());
     EXPECT_FALSE(success);
 }
@@ -101,7 +101,6 @@ struct GrpcSourceLoadInitialLedgerTests : GrpcSourceTests {
 protected:
     uint32_t const sequence_ = 123;
     uint32_t const numMarkers_ = 4;
-    bool const cacheOnly_ = false;
 };
 
 TEST_F(GrpcSourceLoadInitialLedgerTests, GetLedgerDataFailed)
@@ -116,7 +115,7 @@ TEST_F(GrpcSourceLoadInitialLedgerTests, GetLedgerDataFailed)
             return grpc::Status{grpc::StatusCode::NOT_FOUND, "Not found"};
         });
 
-    auto const [data, success] = grpcSource_.loadInitialLedger(sequence_, numMarkers_, cacheOnly_);
+    auto const [data, success] = grpcSource_.loadInitialLedger(sequence_, numMarkers_);
     EXPECT_TRUE(data.empty());
     EXPECT_FALSE(success);
 }
@@ -147,7 +146,7 @@ TEST_F(GrpcSourceLoadInitialLedgerTests, worksFine)
     EXPECT_CALL(*mockBackend_, writeNFTs).Times(numMarkers_);
     EXPECT_CALL(*mockBackend_, writeLedgerObject).Times(numMarkers_);
 
-    auto const [data, success] = grpcSource_.loadInitialLedger(sequence_, numMarkers_, cacheOnly_);
+    auto const [data, success] = grpcSource_.loadInitialLedger(sequence_, numMarkers_);
 
     EXPECT_TRUE(success);
     EXPECT_EQ(data, std::vector<std::string>(4, keyStr));
