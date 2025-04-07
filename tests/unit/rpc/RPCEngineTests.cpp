@@ -30,7 +30,6 @@
 #include "util/MockCountersFixture.hpp"
 #include "util/MockETLServiceTestFixture.hpp"
 #include "util/MockHandlerProvider.hpp"
-#include "util/MockLoadBalancer.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
