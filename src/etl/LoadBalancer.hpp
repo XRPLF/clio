@@ -245,6 +245,14 @@ private:
      */
     void
     chooseForwardingSource();
+
+    std::expected<util::ResponseExpirationCache::EntryData, rpc::CombinedError>
+    forwardToRippledImpl(
+        boost::json::object const& request,
+        std::optional<std::string> const& clientIp,
+        bool isAdmin,
+        boost::asio::yield_context yield
+    );
 };
 
 }  // namespace etl
