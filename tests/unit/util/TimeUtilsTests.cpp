@@ -49,7 +49,6 @@ TEST(TimeUtilTests, SystemTpFromUTCStrFail)
 
 TEST(TimeUtilTests, SystemTpToUtcStr)
 {
-    // Create a specific time point
     std::tm timeStruct{};
     timeStruct.tm_year = 123;  // 2023 (years since 1900)
     timeStruct.tm_mon = 9;     // October (0-based)
@@ -59,12 +58,10 @@ TEST(TimeUtilTests, SystemTpToUtcStr)
     timeStruct.tm_sec = 45;
     auto timePoint = std::chrono::system_clock::from_time_t(timegm(&timeStruct));
 
-    // Test conversion to ISO format
     std::string const isoFormat = "%Y-%m-%dT%H:%M:%SZ";
     std::string isoStr = util::systemTpToUtcStr(timePoint, isoFormat);
     EXPECT_EQ(isoStr, "2023-10-15T14:30:45Z");
 
-    // Test conversion to custom format
     std::string const customFormat = "%d/%m/%Y %H:%M:%S";
     std::string customStr = util::systemTpToUtcStr(timePoint, customFormat);
     EXPECT_EQ(customStr, "15/10/2023 14:30:45");
@@ -72,7 +69,6 @@ TEST(TimeUtilTests, SystemTpToUtcStr)
 
 TEST(TimeUtilTests, StringToTimePointToString)
 {
-    // Test round trip conversion: string -> time_point -> string
     std::string const isoFormat = "%Y-%m-%dT%H:%M:%SZ";
     std::string const originalStr = "2023-10-15T14:30:45Z";
     auto timePoint = util::systemTpFromUtcStr(originalStr, isoFormat);
@@ -81,7 +77,6 @@ TEST(TimeUtilTests, StringToTimePointToString)
     std::string convertedStr = util::systemTpToUtcStr(*timePoint, isoFormat);
     EXPECT_EQ(originalStr, convertedStr);
 
-    // Test with a different format
     std::string const customFormat = "%d/%m/%Y %H:%M:%S";
     std::string const originalCustomStr = "15/10/2023 14:30:45";
     auto timePoint2 = util::systemTpFromUtcStr(originalCustomStr, customFormat);
@@ -90,7 +85,6 @@ TEST(TimeUtilTests, StringToTimePointToString)
     std::string convertedCustomStr = util::systemTpToUtcStr(*timePoint2, customFormat);
     EXPECT_EQ(originalCustomStr, convertedCustomStr);
 
-    // Verify both representations point to the same time
     EXPECT_EQ(*timePoint, *timePoint2);
 }
 

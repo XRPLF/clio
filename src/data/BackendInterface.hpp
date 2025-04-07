@@ -575,7 +575,7 @@ public:
      * @param yield The coroutine context
      *@return The data of all nodes in the cluster.
      */
-    virtual std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>
+    [[nodiscard]] virtual std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>
     fetchClioNodesData(boost::asio::yield_context yield) const = 0;
 
     /**

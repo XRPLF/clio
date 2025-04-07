@@ -284,13 +284,13 @@ public:
 
         statements.emplace_back(fmt::format(
             R"(
-           CREATE TABLE IF NOT EXISTS {}
+            CREATE TABLE IF NOT EXISTS {}
                   ( 
                    node_id UUID,
                    message TEXT,
                    PRIMARY KEY (node_id)
-                  )
-            WITH default_time_to_live = 2
+                  ) 
+             WITH default_time_to_live = 2
             )",
             qualifiedTableName(settingsProvider_.get(), "nodes_chat")
         ));
@@ -507,7 +507,7 @@ public:
                 R"(
                 UPDATE {}
                    SET message = ?
-                WHERE node_id = ?
+                 WHERE node_id = ?
                 )",
                 qualifiedTableName(settingsProvider_.get(), "nodes_chat")
             ));

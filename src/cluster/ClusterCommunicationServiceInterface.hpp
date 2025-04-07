@@ -37,7 +37,7 @@ public:
      *
      * @return The data of the current node.
      */
-    virtual ClioNode
+    [[nodiscard]] virtual ClioNode
     selfData() const = 0;
 
     /**
@@ -45,7 +45,7 @@ public:
      *
      * @return The data of all nodes in the cluster.
      */
-    virtual std::vector<ClioNode>
+    [[nodiscard]] virtual std::vector<ClioNode>
     clusterData() const = 0;
 };
 

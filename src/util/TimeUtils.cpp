@@ -19,13 +19,14 @@
 
 #include "util/TimeUtils.hpp"
 
+#include <fmt/chrono.h>
+#include <fmt/compile.h>
+#include <fmt/core.h>
 #include <xrpl/basics/chrono.h>
 
 #include <chrono>
 #include <ctime>
-#include <iomanip>
 #include <optional>
-#include <sstream>
 #include <string>
 
 namespace util {
@@ -43,13 +44,8 @@ systemTpFromUtcStr(std::string const& dateStr, std::string const& format)
 [[nodiscard]] std::string
 systemTpToUtcStr(std::chrono::system_clock::time_point const& tp, std::string const& format)
 {
-    auto const timeT = std::chrono::system_clock::to_time_t(tp);
-    std::tm timeStruct{};
-    gmtime_r(&timeT, &timeStruct);
-
-    std::ostringstream oss;
-    oss << std::put_time(&timeStruct, format.c_str());
-    return oss.str();
+    auto const formatWrapped = fmt::format("{{:{}}}", format);
+    return fmt::format(fmt::runtime(formatWrapped), std::chrono::floor<std::chrono::seconds>(tp));
 }
 
 [[nodiscard]] std::chrono::system_clock::time_point

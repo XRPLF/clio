@@ -127,7 +127,7 @@ ClusterCommunicationService::doRead(boost::asio::yield_context yield)
 {
     otherNodesData_.clear();
 
-    auto expectedResult = backend_->fetchClioNodesData(yield);
+    auto const expectedResult = backend_->fetchClioNodesData(yield);
     if (!expectedResult.has_value()) {
         LOG(log_.error()) << "Failed to fetch nodes data";
         isHealthy_ = false;
