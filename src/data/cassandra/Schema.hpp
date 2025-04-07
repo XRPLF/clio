@@ -284,7 +284,7 @@ public:
 
         statements.emplace_back(fmt::format(
             R"(
-            CREATE TABLE IF NOT EXISTS {}
+           CREATE TABLE IF NOT EXISTS {}
                   ( 
                    node_id UUID,
                    message TEXT,
