@@ -164,7 +164,7 @@ public:
             auto const rng = loadInitialLedgerIfNeeded();
 
             LOG(log_.info()) << "Waiting for next ledger to be validated by network...";
-            std::optional<uint32_t> mostRecentValidated = ledgers_->getMostRecent();
+            std::optional<uint32_t> const mostRecentValidated = ledgers_->getMostRecent();
 
             if (not mostRecentValidated) {
                 LOG(log_.info()) << "The wait for the next validated ledger has been aborted. "

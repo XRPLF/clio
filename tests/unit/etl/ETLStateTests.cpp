@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "etl/ETLState.hpp"
-#include "etl/Source.hpp"
 #include "rpc/Errors.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockSource.hpp"
