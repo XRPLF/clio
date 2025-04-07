@@ -50,7 +50,7 @@ class BlockingCache {
 
 public:
     BlockingCache() = default;
-    BlockingCache(ValueType initialValue) : state_{State::Full}, value_(std::move(initialValue))
+    explicit BlockingCache(ValueType initialValue) : state_{State::Full}, value_(std::move(initialValue))
     {
     }
 
@@ -69,12 +69,12 @@ public:
     {
         switch (state_) {
             case State::Updating: {
-                return wait(yield);
+                return wait(yield, std::move(updater), std::move(verifier));
             }
             case State::Full: {
                 auto const value = value_.template lock<std::shared_lock>();
                 ASSERT(value->has_value(), "Value should be presented when the cache is full");
-                return value;
+                return value->value();
             }
             case State::Empty: {
                 return update(yield, std::move(updater), std::move(verifier));
@@ -86,7 +86,7 @@ public:
     update(boost::asio::yield_context yield, Updater updater, Verifier verifier)
     {
         if (state_ == State::Updating) {
-            return asyncGet(yield);
+            return asyncGet(yield, std::move(updater), std::move(verifier));
         }
         state_ = State::Updating;
 
@@ -116,7 +116,7 @@ public:
 
 private:
     std::expected<ValueType, ErrorType>
-    wait(boost::asio::yield_context yield)
+    wait(boost::asio::yield_context yield, Updater updater, Verifier verifier)
     {
         boost::asio::steady_timer timer{yield.get_executor(), boost::asio::steady_timer::duration::max()};
         boost::system::error_code errorCode;
@@ -135,7 +135,7 @@ private:
             ASSERT(result.has_value(), "There should be some value after waiting");
             return std::move(result).value();
         }
-        return asyncGet(yield).valueOrError();
+        return asyncGet(yield, std::move(updater), std::move(verifier));
     }
 };
 

@@ -26,6 +26,7 @@
 #include "rpc/common/HandlerProvider.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/impl/ForwardingProxy.hpp"
+#include "util/OverloadSet.hpp"
 #include "util/ResponseExpirationCache.hpp"
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
@@ -34,6 +35,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/json.hpp>
+#include <boost/json/object.hpp>
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <xrpl/protocol/ErrorCodes.h>
@@ -155,55 +157,44 @@ public:
             return forwardingProxy_.forward(ctx);
         }
 
-        if (not ctx.isAdmin and responseCache_) {
-            if (auto res = responseCache_->get(ctx.method); res.has_value())
-                return Result{std::move(res).value()};
-        }
-
-        if (backend_->isTooBusy()) {
-            LOG(log_.error()) << "Database is too busy. Rejecting request";
-            notifyTooBusy();  // TODO: should we add ctx.method if we have it?
-            return Result{Status{RippledError::rpcTOO_BUSY}};
-        }
-
-        auto const method = handlerProvider_->getHandler(ctx.method);
-        if (!method) {
-            notifyUnknownCommand();
-            return Result{Status{RippledError::rpcUNKNOWN_COMMAND}};
-        }
-
-        try {
-            LOG(perfLog_.debug()) << ctx.tag() << " start executing rpc `" << ctx.method << '`';
-
-            auto const context = Context{
-                .yield = ctx.yield,
-                .session = ctx.session,
-                .isAdmin = ctx.isAdmin,
-                .clientIp = ctx.clientIp,
-                .apiVersion = ctx.apiVersion
+        if (not ctx.isAdmin and responseCache_ and responseCache_->shouldCache(ctx.method)) {
+            auto updater = [this, &ctx](boost::asio::yield_context
+                           ) -> std::expected<util::ResponseExpirationCache::EntryData, rpc::CombinedError> {
+                auto result = buildResponseImpl(ctx);
+                auto extracted = std::visit(
+                    util::OverloadSet{
+                        [](Status status) -> std::expected<boost::json::object, rpc::CombinedError> {
+                            return std::unexpected{status.code};
+                        },
+                        [](boost::json::object obj) -> std::expected<boost::json::object, rpc::CombinedError> {
+                            return obj;
+                        }
+                    },
+                    result.response
+                );
+                if (extracted.has_value()) {
+                    return util::ResponseExpirationCache::EntryData{
+                        .lastUpdated = std::chrono::steady_clock::now(), .response = std::move(extracted).value()
+                    };
+                }
+                return std::unexpected{std::move(extracted).error()};
             };
-            auto v = (*method).process(ctx.params, context);
 
-            LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
-
-            if (not v) {
-                notifyErrored(ctx.method);
-            } else if (not ctx.isAdmin and responseCache_) {
-                responseCache_->put(ctx.method, v.result->as_object());
+            auto result = responseCache_->getOrUpdate(
+                ctx.yield,
+                ctx.method,
+                std::move(updater),
+                [&ctx](util::ResponseExpirationCache::EntryData const& entry) {
+                    return not ctx.isAdmin and not entry.response.contains("error");
+                }
+            );
+            if (result.has_value()) {
+                return Result{std::move(result).value()};
             }
-
-            return Result{std::move(v)};
-        } catch (data::DatabaseTimeout const& t) {
-            LOG(log_.error()) << "Database timeout";
-            notifyTooBusy();
-
-            return Result{Status{RippledError::rpcTOO_BUSY}};
-        } catch (std::exception const& ex) {
-            LOG(log_.error()) << ctx.tag() << "Caught exception: " << ex.what();
-            notifyInternalError();
-
-            return Result{Status{RippledError::rpcINTERNAL}};
+            return Result{Status{std::move(result).error()}};
         }
+
+        return buildResponseImpl(ctx);
     }
 
     /**
@@ -315,6 +306,55 @@ private:
     validHandler(std::string const& method) const
     {
         return handlerProvider_->contains(method) || forwardingProxy_.isProxied(method);
+    }
+
+    Result
+    buildResponseImpl(web::Context const& ctx)
+    {
+        if (backend_->isTooBusy()) {
+            LOG(log_.error()) << "Database is too busy. Rejecting request";
+            notifyTooBusy();  // TODO: should we add ctx.method if we have it?
+            return Result{Status{RippledError::rpcTOO_BUSY}};
+        }
+
+        auto const method = handlerProvider_->getHandler(ctx.method);
+        if (!method) {
+            notifyUnknownCommand();
+            return Result{Status{RippledError::rpcUNKNOWN_COMMAND}};
+        }
+
+        try {
+            LOG(perfLog_.debug()) << ctx.tag() << " start executing rpc `" << ctx.method << '`';
+
+            auto const context = Context{
+                .yield = ctx.yield,
+                .session = ctx.session,
+                .isAdmin = ctx.isAdmin,
+                .clientIp = ctx.clientIp,
+                .apiVersion = ctx.apiVersion
+            };
+            auto v = (*method).process(ctx.params, context);
+
+            LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
+
+            // if (not v) {
+            //     notifyErrored(ctx.method);
+            // } else if (not ctx.isAdmin and responseCache_) {
+            //     responseCache_->put(ctx.method, v.result->as_object());
+            // }
+
+            return Result{std::move(v)};
+        } catch (data::DatabaseTimeout const& t) {
+            LOG(log_.error()) << "Database timeout";
+            notifyTooBusy();
+
+            return Result{Status{RippledError::rpcTOO_BUSY}};
+        } catch (std::exception const& ex) {
+            LOG(log_.error()) << ctx.tag() << "Caught exception: " << ex.what();
+            notifyInternalError();
+
+            return Result{Status{RippledError::rpcINTERNAL}};
+        }
     }
 };
 

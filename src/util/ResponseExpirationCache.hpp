@@ -26,7 +26,7 @@
 #include <boost/json/object.hpp>
 
 #include <chrono>
-#include <optional>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -50,7 +50,7 @@ public:
 
 private:
     std::chrono::steady_clock::duration cacheTimeout_;
-    std::unordered_map<std::string, CacheEntry> cache_;
+    std::unordered_map<std::string, std::unique_ptr<CacheEntry>> cache_;
 
 public:
     /**

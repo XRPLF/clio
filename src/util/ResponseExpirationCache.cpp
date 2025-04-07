@@ -26,6 +26,7 @@
 #include <boost/json/object.hpp>
 
 #include <chrono>
+#include <memory>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -39,7 +40,7 @@ ResponseExpirationCache::ResponseExpirationCache(
     : cacheTimeout_(cacheTimeout)
 {
     for (auto const& command : cmds) {
-        cache_.emplace(command, CacheEntry{});
+        cache_.emplace(command, std::make_unique<CacheEntry>());
     }
 }
 
@@ -62,7 +63,7 @@ ResponseExpirationCache::getOrUpdate(
 
     auto& entry = it->second;
     {
-        auto result = entry.asyncGet(yield, updater, verifier);
+        auto result = entry->asyncGet(yield, updater, verifier);
         if (not result.has_value()) {
             return std::unexpected{std::move(result).error()};
         }
@@ -72,7 +73,7 @@ ResponseExpirationCache::getOrUpdate(
     }
 
     // Force update due to cache timeout
-    auto result = entry.update(yield, std::move(updater), std::move(verifier));
+    auto result = entry->update(yield, std::move(updater), std::move(verifier));
     if (not result.has_value()) {
         return std::unexpected{std::move(result).error()};
     }
@@ -83,7 +84,7 @@ void
 ResponseExpirationCache::invalidate()
 {
     for (auto& [_, entry] : cache_) {
-        entry.invalidate();
+        entry->invalidate();
     }
 }
 
