@@ -23,6 +23,8 @@
 #include "data/cassandra/impl/Tuple.hpp"
 #include "util/UnsupportedType.hpp"
 
+#include <boost/uuid/string_generator.hpp>
+#include <boost/uuid/uuid.hpp>
 #include <cassandra.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
@@ -99,6 +101,14 @@ extractColumn(CassRow const* row, std::size_t idx)
         auto const rc = cass_value_get_int64(cass_row_get_column(row, idx), &out);
         throwErrorIfNeeded(rc, "Extract int64");
         output = static_cast<DecayedType>(out);
+    } else if constexpr (std::is_convertible_v<DecayedType, boost::uuids::uuid>) {
+        CassUuid uuid;
+        auto const rc = cass_value_get_uuid(cass_row_get_column(row, idx), &uuid);
+        throwErrorIfNeeded(rc, "Extract uuid");
+        std::string uuidStr(CASS_UUID_STRING_LENGTH, '0');
+        cass_uuid_string(uuid, uuidStr.data());
+        uuidStr.pop_back();  // remove the last \0 character
+        output = boost::uuids::string_generator{}(uuidStr);
     } else {
         // type not supported for extraction
         static_assert(util::Unsupported<DecayedType>);

@@ -19,6 +19,9 @@
 
 #include "util/TimeUtils.hpp"
 
+#include <fmt/chrono.h>
+#include <fmt/compile.h>
+#include <fmt/core.h>
 #include <xrpl/basics/chrono.h>
 
 #include <chrono>
@@ -36,6 +39,13 @@ systemTpFromUtcStr(std::string const& dateStr, std::string const& format)
         return std::nullopt;
     }
     return std::chrono::system_clock::from_time_t(timegm(&timeStruct));
+}
+
+[[nodiscard]] std::string
+systemTpToUtcStr(std::chrono::system_clock::time_point const& tp, std::string const& format)
+{
+    auto const formatWrapped = fmt::format("{{:{}}}", format);
+    return fmt::format(fmt::runtime(formatWrapped), std::chrono::floor<std::chrono::seconds>(tp));
 }
 
 [[nodiscard]] std::chrono::system_clock::time_point

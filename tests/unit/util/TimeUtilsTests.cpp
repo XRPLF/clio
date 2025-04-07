@@ -24,6 +24,7 @@
 
 #include <chrono>
 #include <ctime>
+#include <string>
 
 TEST(TimeUtilTests, SystemTpFromUTCStrSuccess)
 {
@@ -44,6 +45,47 @@ TEST(TimeUtilTests, SystemTpFromUTCStrFail)
 {
     auto const tp = util::systemTpFromUtcStr("2024-01-01T", "%Y-%m-%dT%H:%M:%SZ");
     ASSERT_FALSE(tp.has_value());
+}
+
+TEST(TimeUtilTests, SystemTpToUtcStr)
+{
+    std::tm timeStruct{};
+    timeStruct.tm_year = 123;  // 2023 (years since 1900)
+    timeStruct.tm_mon = 9;     // October (0-based)
+    timeStruct.tm_mday = 15;
+    timeStruct.tm_hour = 14;
+    timeStruct.tm_min = 30;
+    timeStruct.tm_sec = 45;
+    auto timePoint = std::chrono::system_clock::from_time_t(timegm(&timeStruct));
+
+    std::string const isoFormat = "%Y-%m-%dT%H:%M:%SZ";
+    std::string isoStr = util::systemTpToUtcStr(timePoint, isoFormat);
+    EXPECT_EQ(isoStr, "2023-10-15T14:30:45Z");
+
+    std::string const customFormat = "%d/%m/%Y %H:%M:%S";
+    std::string customStr = util::systemTpToUtcStr(timePoint, customFormat);
+    EXPECT_EQ(customStr, "15/10/2023 14:30:45");
+}
+
+TEST(TimeUtilTests, StringToTimePointToString)
+{
+    std::string const isoFormat = "%Y-%m-%dT%H:%M:%SZ";
+    std::string const originalStr = "2023-10-15T14:30:45Z";
+    auto timePoint = util::systemTpFromUtcStr(originalStr, isoFormat);
+    ASSERT_TRUE(timePoint.has_value());
+
+    std::string convertedStr = util::systemTpToUtcStr(*timePoint, isoFormat);
+    EXPECT_EQ(originalStr, convertedStr);
+
+    std::string const customFormat = "%d/%m/%Y %H:%M:%S";
+    std::string const originalCustomStr = "15/10/2023 14:30:45";
+    auto timePoint2 = util::systemTpFromUtcStr(originalCustomStr, customFormat);
+    ASSERT_TRUE(timePoint2.has_value());
+
+    std::string convertedCustomStr = util::systemTpToUtcStr(*timePoint2, customFormat);
+    EXPECT_EQ(originalCustomStr, convertedCustomStr);
+
+    EXPECT_EQ(*timePoint, *timePoint2);
 }
 
 TEST(TimeUtilTests, SystemTpFromLedgerCloseTime)

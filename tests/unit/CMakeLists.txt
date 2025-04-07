@@ -16,6 +16,9 @@ target_sources(
           data/cassandra/ExecutionStrategyTests.cpp
           data/cassandra/RetryPolicyTests.cpp
           data/cassandra/SettingsProviderTests.cpp
+          # Cluster
+          cluster/ClioNodeTests.cpp
+          cluster/ClusterCommunicationServiceTests.cpp
           # ETL
           etl/AmendmentBlockHandlerTests.cpp
           etl/CacheLoaderSettingsTests.cpp
