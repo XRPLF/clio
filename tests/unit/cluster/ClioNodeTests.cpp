@@ -21,15 +21,11 @@
 #include "util/TimeUtils.hpp"
 
 #include <boost/json/object.hpp>
-#include <boost/json/parse.hpp>
-#include <boost/json/serialize.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 #include <boost/json/value_to.hpp>
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>

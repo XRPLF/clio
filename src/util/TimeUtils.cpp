@@ -19,8 +19,7 @@
 
 #include "util/TimeUtils.hpp"
 
-#include <fmt/chrono.h>
-#include <fmt/compile.h>
+#include <__chrono/time_point.h>
 #include <fmt/core.h>
 #include <xrpl/basics/chrono.h>
 

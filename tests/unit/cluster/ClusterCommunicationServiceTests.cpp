@@ -64,7 +64,7 @@ struct ClusterCommunicationServiceTest : util::prometheus::WithPrometheus, MockB
     void
     notify()
     {
-        std::unique_lock lock{mtx};
+        std::unique_lock const lock{mtx};
         cv.notify_one();
     }
 

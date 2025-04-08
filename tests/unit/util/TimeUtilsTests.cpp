@@ -59,11 +59,11 @@ TEST(TimeUtilTests, SystemTpToUtcStr)
     auto timePoint = std::chrono::system_clock::from_time_t(timegm(&timeStruct));
 
     std::string const isoFormat = "%Y-%m-%dT%H:%M:%SZ";
-    std::string isoStr = util::systemTpToUtcStr(timePoint, isoFormat);
+    std::string const isoStr = util::systemTpToUtcStr(timePoint, isoFormat);
     EXPECT_EQ(isoStr, "2023-10-15T14:30:45Z");
 
     std::string const customFormat = "%d/%m/%Y %H:%M:%S";
-    std::string customStr = util::systemTpToUtcStr(timePoint, customFormat);
+    std::string const customStr = util::systemTpToUtcStr(timePoint, customFormat);
     EXPECT_EQ(customStr, "15/10/2023 14:30:45");
 }
 
@@ -74,7 +74,7 @@ TEST(TimeUtilTests, StringToTimePointToString)
     auto timePoint = util::systemTpFromUtcStr(originalStr, isoFormat);
     ASSERT_TRUE(timePoint.has_value());
 
-    std::string convertedStr = util::systemTpToUtcStr(*timePoint, isoFormat);
+    std::string const convertedStr = util::systemTpToUtcStr(*timePoint, isoFormat);
     EXPECT_EQ(originalStr, convertedStr);
 
     std::string const customFormat = "%d/%m/%Y %H:%M:%S";
@@ -82,7 +82,7 @@ TEST(TimeUtilTests, StringToTimePointToString)
     auto timePoint2 = util::systemTpFromUtcStr(originalCustomStr, customFormat);
     ASSERT_TRUE(timePoint2.has_value());
 
-    std::string convertedCustomStr = util::systemTpToUtcStr(*timePoint2, customFormat);
+    std::string const convertedCustomStr = util::systemTpToUtcStr(*timePoint2, customFormat);
     EXPECT_EQ(originalCustomStr, convertedCustomStr);
 
     EXPECT_EQ(*timePoint, *timePoint2);

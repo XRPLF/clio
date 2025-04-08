@@ -49,7 +49,7 @@ inline Type
 extractColumn(CassRow const* row, std::size_t idx)
 {
     using std::to_string;
-    Type output;
+    Type output{};
 
     auto throwErrorIfNeeded = [](CassError rc, std::string_view label) {
         if (rc != CASS_OK) {
