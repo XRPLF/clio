@@ -228,7 +228,7 @@ LoadBalancer::fetchLedger(
     return response;
 }
 
-std::expected<boost::json::object, rpc::ClioError>
+std::expected<boost::json::object, rpc::CombinedError>
 LoadBalancer::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& clientIp,
@@ -241,12 +241,18 @@ LoadBalancer::forwardToRippled(
 
     auto const cmd = boost::json::value_to<std::string>(request.at("command"));
 
-    auto updater = [this, &request, &clientIp, isAdmin](boost::asio::yield_context yield
-                   ) -> std::expected<util::ResponseExpirationCache::EntryData, rpc::CombinedError> {
-        return forwardToRippledImpl(request, clientIp, isAdmin, yield);
-    };
-
     if (forwardingCache_ and forwardingCache_->shouldCache(cmd)) {
+        auto updater = [this, &request, &clientIp, isAdmin](boost::asio::yield_context yield
+                       ) -> std::expected<util::ResponseExpirationCache::EntryData, rpc::CombinedError> {
+            auto result = forwardToRippledImpl(request, clientIp, isAdmin, yield);
+            if (result.has_value()) {
+                return util::ResponseExpirationCache::EntryData{
+                    .lastUpdated = std::chrono::steady_clock::now(), .response = std::move(result).value()
+                };
+            }
+            return std::unexpected{std::move(result).error()};
+        };
+
         auto result = forwardingCache_->getOrUpdate(
             yield,
             cmd,
@@ -260,12 +266,7 @@ LoadBalancer::forwardToRippled(
         return std::unexpected{std::get<rpc::ClioError>(std::move(result).error())};
     }
 
-    auto result = updater(yield);
-    if (result.has_value()) {
-        return std::move(result).value().response;
-    }
-    ASSERT(std::holds_alternative<rpc::ClioError>(result.error()), "There could be only ClioError here");
-    return std::unexpected{std::get<rpc::ClioError>(std::move(result).error())};
+    return forwardToRippledImpl(request, clientIp, isAdmin, yield);
 }
 
 boost::json::value
@@ -356,7 +357,7 @@ LoadBalancer::chooseForwardingSource()
     }
 }
 
-std::expected<util::ResponseExpirationCache::EntryData, rpc::CombinedError>
+std::expected<boost::json::object, rpc::CombinedError>
 LoadBalancer::forwardToRippledImpl(
     boost::json::object const& request,
     std::optional<std::string> const& clientIp,
@@ -386,9 +387,7 @@ LoadBalancer::forwardToRippledImpl(
     }
 
     if (response.has_value()) {
-        return util::ResponseExpirationCache::EntryData{
-            .lastUpdated = std::chrono::steady_clock::now(), .response = std::move(response).value()
-        };
+        return std::move(response).value();
     }
 
     return std::unexpected{error};
