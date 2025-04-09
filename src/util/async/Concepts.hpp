@@ -170,7 +170,7 @@ template <typename T>
 concept SomeStdDuration = requires {
     // Thank you Ed Catmur for this trick.
     // See https://stackoverflow.com/questions/74383254/concept-that-models-only-the-stdchrono-duration-types
-    []<typename Rep, typename Period>( // 
+    []<typename Rep, typename Period>( //
         std::type_identity<std::chrono::duration<Rep, Period>>
     ) {}(std::type_identity<std::decay_t<T>>());
 };
@@ -180,7 +180,7 @@ concept SomeStdDuration = requires {
  */
 template <typename T>
 concept SomeStdOptional = requires {
-    []<typename Type>( // 
+    []<typename Type>( //
         std::type_identity<std::optional<Type>>
     ) {}(std::type_identity<std::decay_t<T>>());
 };

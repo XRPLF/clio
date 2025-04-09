@@ -8,7 +8,7 @@ If you see the error log message `Could not connect to Cassandra: No hosts avail
 You can use [cqlsh](https://pypi.org/project/cqlsh/) to check the connection to the database.
 If you would like to run a local ScyllaDB, you can call:
 ```sh
-docker run --rm -p 9042:9042 --name clio-scylla -d scylladb/scylla 
+docker run --rm -p 9042:9042 --name clio-scylla -d scylladb/scylla
 ```
 
 ## Check the server status of Clio
@@ -38,10 +38,7 @@ You can check the cache status by calling:
 curl -v -d '{"method":"server_info", "params":[{}]}' 127.0.0.1:51233|python3 -m json.tool|grep is_full
 curl -v -d '{"method":"server_info", "params":[{}]}' 127.0.0.1:51233|python3 -m json.tool|grep is_enabled
 ```
-If `is_full` is false, it means the cache is still loading. Normally, the Clio can respond quicker if cache finishs loading. If `is_enabled` is false, it means the cache is disabled in the configuration file or there is data corruption in the database. 
+If `is_full` is false, it means the cache is still loading. Normally, the Clio can respond quicker if cache finishs loading. If `is_enabled` is false, it means the cache is disabled in the configuration file or there is data corruption in the database.
 
 ## Receive error message `Too many requests`
 If client sees the error message `Too many requests`, this means that the client is blocked by Clio's DosGuard protection. You may want to add the client's IP to the whitelist in the configuration file, Or update other your DosGuard settings.
-
-
-

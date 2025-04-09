@@ -75,7 +75,7 @@ public:
         auto static kINSERT_TX_INDEX_EXAMPLE = [this]() {
             return handle_.prepare(fmt::format(
                 R"(
-                INSERT INTO {} 
+                INSERT INTO {}
                        (hash, tx_type)
                 VALUES (?, ?)
                 )",
@@ -171,7 +171,7 @@ public:
         auto static kINSERT_LEDGER_EXAMPLE = [this]() {
             return handle_.prepare(fmt::format(
                 R"(
-                INSERT INTO {} 
+                INSERT INTO {}
                        (sequence, account_hash)
                 VALUES (?, ?)
                 )",
@@ -319,11 +319,11 @@ private:
         statements.emplace_back(fmt::format(
             R"(
             CREATE TABLE IF NOT EXISTS {}
-                   (      
+                   (
                         hash blob,
                      tx_type text,
-                     PRIMARY KEY (hash) 
-                   ) 
+                     PRIMARY KEY (hash)
+                   )
             )",
             data::cassandra::qualifiedTableName(settingsProvider_, "tx_index_example")
         ));
@@ -331,11 +331,11 @@ private:
         statements.emplace_back(fmt::format(
             R"(
             CREATE TABLE IF NOT EXISTS {}
-                   (      
+                   (
                         sequence bigint,
                     account_hash blob,
-                         PRIMARY KEY (sequence) 
-                   ) 
+                         PRIMARY KEY (sequence)
+                   )
             )",
             data::cassandra::qualifiedTableName(settingsProvider_, "ledger_example")
         ));

@@ -86,8 +86,9 @@ AccountLinesHandler::addLine(
     bool const lineNoRipplePeer = (flags & (not viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
     bool const lineFreeze = (flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
     bool const lineFreezePeer = (flags & (not viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
-    bool const lineDeepFreeze = (flags & (viewLowest ? ripple::lsfLowDeepFreeze : ripple::lsfHighFreeze)) != 0u;
-    bool const lineDeepFreezePeer = (flags & (not viewLowest ? ripple::lsfLowDeepFreeze : ripple::lsfHighFreeze)) != 0u;
+    bool const lineDeepFreeze = (flags & (viewLowest ? ripple::lsfLowDeepFreeze : ripple::lsfHighDeepFreeze)) != 0u;
+    bool const lineDeepFreezePeer =
+        (flags & (not viewLowest ? ripple::lsfLowDeepFreeze : ripple::lsfHighDeepFreeze)) != 0u;
 
     ripple::STAmount const& saBalance = balance;
     ripple::STAmount const& saLimit = lineLimit;

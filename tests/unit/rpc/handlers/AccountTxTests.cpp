@@ -187,7 +187,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 .testName = "MarkerLedgerNotInt",
                 .testJson = R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "marker": 
+                "marker":
                 {
                     "seq": "string",
                     "ledger": 1
@@ -200,7 +200,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 .testName = "MarkerSeqNotInt",
                 .testJson = R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "marker": 
+                "marker":
                 {
                     "ledger": "string",
                     "seq": 1
@@ -318,7 +318,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxMinAndLedgerIndex",
                 .testJson = R"({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_index": 10
@@ -353,7 +353,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 .testName = "LedgerIndexMaxMinAndLedgerHash",
                 .testJson = fmt::format(
                     R"({{
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_hash": "{}"
@@ -367,7 +367,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 .testName = "LedgerIndexMaxMinAndLedgerHash_API_v1",
                 .testJson = fmt::format(
                     R"({{
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_hash": "{}"
@@ -393,7 +393,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 .testName = "InvalidTxType",
                 .testJson = R"({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "tx_type": "unknow"
             })",
                 .expectedError = "invalidParams",
@@ -1130,24 +1130,24 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
             "transactions": [
                 {
                     "meta": {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
-                                "ModifiedNode": 
+                                "ModifiedNode":
                                 {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
-                                        "NFTokens": 
+                                        "NFTokens":
                                         [
                                             {
-                                                "NFToken": 
+                                                "NFToken":
                                                 {
                                                     "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
                                                     "URI": "7465737475726C"
                                                 }
                                             },
                                             {
-                                                "NFToken": 
+                                                "NFToken":
                                                 {
                                                     "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
                                                     "URI": "7465737475726C"
@@ -1156,12 +1156,12 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                                         ]
                                     },
                                     "LedgerEntryType": "NFTokenPage",
-                                    "PreviousFields": 
+                                    "PreviousFields":
                                     {
-                                        "NFTokens": 
+                                        "NFTokens":
                                         [
                                             {
-                                                "NFToken": 
+                                                "NFToken":
                                                 {
                                                     "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
                                                     "URI": "7465737475726C"
@@ -1176,7 +1176,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                         "TransactionResult": "tesSUCCESS",
                         "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
                     },
-                    "tx": 
+                    "tx":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
@@ -1192,14 +1192,14 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                     "validated": true
                 },
                 {
-                    "meta": 
+                    "meta":
                     {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
-                                "DeletedNode": 
+                                "DeletedNode":
                                 {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
                                         "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
                                         "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
@@ -1214,7 +1214,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                         "TransactionResult": "tesSUCCESS",
                         "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
                     },
-                    "tx": 
+                    "tx":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
@@ -1230,13 +1230,13 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                     "validated": true
                 },
                 {
-                    "meta": 
+                    "meta":
                     {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
                                 "DeletedNode": {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
                                         "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
                                     },
@@ -1244,9 +1244,9 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                                 }
                             },
                             {
-                                "DeletedNode": 
+                                "DeletedNode":
                                 {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
                                         "NFTokenID": "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
                                     },
@@ -1256,17 +1256,17 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                         ],
                         "TransactionIndex": 0,
                         "TransactionResult": "tesSUCCESS",
-                        "nftoken_ids": 
+                        "nftoken_ids":
                         [
                             "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
                             "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
                         ]
                     },
-                    "tx": 
+                    "tx":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
-                        "NFTokenOffers": 
+                        "NFTokenOffers":
                         [
                             "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
                             "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
@@ -1282,12 +1282,12 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                     "validated": true
                 },
                 {
-                    "meta": 
+                    "meta":
                     {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
-                                "CreatedNode": 
+                                "CreatedNode":
                                 {
                                     "LedgerEntryType": "NFTokenOffer",
                                     "LedgerIndex": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
@@ -1298,7 +1298,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                         "TransactionResult": "tesSUCCESS",
                         "offer_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
                     },
-                    "tx": 
+                    "tx":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Amount": "123",
@@ -1316,7 +1316,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                 }
             ],
             "validated": true,
-            "marker": 
+            "marker":
             {
                 "ledger": 12,
                 "seq": 34
@@ -1363,24 +1363,24 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
             "transactions": [
                 {
                     "meta": {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
-                                "ModifiedNode": 
+                                "ModifiedNode":
                                 {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
-                                        "NFTokens": 
+                                        "NFTokens":
                                         [
                                             {
-                                                "NFToken": 
+                                                "NFToken":
                                                 {
                                                     "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
                                                     "URI": "7465737475726C"
                                                 }
                                             },
                                             {
-                                                "NFToken": 
+                                                "NFToken":
                                                 {
                                                     "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
                                                     "URI": "7465737475726C"
@@ -1389,12 +1389,12 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                                         ]
                                     },
                                     "LedgerEntryType": "NFTokenPage",
-                                    "PreviousFields": 
+                                    "PreviousFields":
                                     {
-                                        "NFTokens": 
+                                        "NFTokens":
                                         [
                                             {
-                                                "NFToken": 
+                                                "NFToken":
                                                 {
                                                     "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
                                                     "URI": "7465737475726C"
@@ -1413,7 +1413,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                     "ledger_index": 11,
                     "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                     "close_time_iso": "2000-01-01T00:00:00Z",
-                    "tx_json": 
+                    "tx_json":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
@@ -1427,14 +1427,14 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                     "validated": true
                 },
                 {
-                    "meta": 
+                    "meta":
                     {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
-                                "DeletedNode": 
+                                "DeletedNode":
                                 {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
                                         "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
                                         "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
@@ -1452,7 +1452,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                     "ledger_index": 11,
                     "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                     "close_time_iso": "2000-01-01T00:00:00Z",
-                    "tx_json": 
+                    "tx_json":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
@@ -1466,13 +1466,13 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                     "validated": true
                 },
                 {
-                    "meta": 
+                    "meta":
                     {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
                                 "DeletedNode": {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
                                         "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
                                     },
@@ -1480,9 +1480,9 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                                 }
                             },
                             {
-                                "DeletedNode": 
+                                "DeletedNode":
                                 {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
                                         "NFTokenID": "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
                                     },
@@ -1492,7 +1492,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                         ],
                         "TransactionIndex": 0,
                         "TransactionResult": "tesSUCCESS",
-                        "nftoken_ids": 
+                        "nftoken_ids":
                         [
                             "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
                             "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
@@ -1502,11 +1502,11 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                     "ledger_index": 11,
                     "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                     "close_time_iso": "2000-01-01T00:00:00Z",
-                    "tx_json": 
+                    "tx_json":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
-                        "NFTokenOffers": 
+                        "NFTokenOffers":
                         [
                             "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
                             "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
@@ -1520,12 +1520,12 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                     "validated": true
                 },
                 {
-                    "meta": 
+                    "meta":
                     {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
-                                "CreatedNode": 
+                                "CreatedNode":
                                 {
                                     "LedgerEntryType": "NFTokenOffer",
                                     "LedgerIndex": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
@@ -1540,7 +1540,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                     "ledger_index": 11,
                     "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                     "close_time_iso": "2000-01-01T00:00:00Z",
-                    "tx_json": 
+                    "tx_json":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Amount": "123",
@@ -1556,7 +1556,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                 }
             ],
             "validated": true,
-            "marker": 
+            "marker":
             {
                 "ledger": 12,
                 "seq": 34

@@ -1352,7 +1352,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
         R"({{
             "account":"{}",
             "marker":"{},{}",
-            "limit": 12 
+            "limit": 12
         }})",
         kACCOUNT,
         ripple::strHex(marker),

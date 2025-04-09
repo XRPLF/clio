@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "etl/CorruptionDetector.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
+#include "etlng/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Assert.hpp"
 #include "util/Constants.hpp"
@@ -43,6 +44,7 @@
 #include <vector>
 
 namespace etl {
+
 // Database must be populated when this starts
 std::optional<uint32_t>
 ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
@@ -183,7 +185,7 @@ ETLService::publishNextSequence(uint32_t nextSequence)
         if (!success) {
             LOG(log_.warn()) << "Failed to publish ledger with sequence = " << nextSequence << " . Beginning ETL";
 
-            // returns the most recent sequence published empty optional if no sequence was published
+            // returns the most recent sequence published. empty optional if no sequence was published
             std::optional<uint32_t> lastPublished = runETLPipeline(nextSequence, extractorThreads_);
             LOG(log_.info()) << "Aborting ETL. Falling back to publishing";
 
@@ -265,7 +267,7 @@ ETLService::ETLService(
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
-    std::shared_ptr<LoadBalancerType> balancer,
+    std::shared_ptr<etlng::LoadBalancerInterface> balancer,
     std::shared_ptr<NetworkValidatedLedgersInterface> ledgers
 )
     : backend_(backend)
@@ -281,7 +283,6 @@ ETLService::ETLService(
     finishSequence_ = config.maybeValue<uint32_t>("finish_sequence");
     state_.isReadOnly = config.get<bool>("read_only");
     extractorThreads_ = config.get<uint32_t>("extractor_threads");
-    txnThreshold_ = config.get<std::size_t>("txn_threshold");
 
     // This should probably be done in the backend factory but we don't have state available until here
     backend_->setCorruptionDetector(CorruptionDetector{state_, backend->cache()});

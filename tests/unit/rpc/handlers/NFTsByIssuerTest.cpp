@@ -106,8 +106,8 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonHexLedgerHash)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "issuer": "{}", 
+            R"({{
+                "issuer": "{}",
                 "ledger_hash": "xxx"
             }})",
             kACCOUNT
@@ -127,7 +127,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonStringLedgerHash)
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend_}};
         auto const input = json::parse(fmt::format(
             R"({{
-                "issuer": "{}", 
+                "issuer": "{}",
                 "ledger_hash": 123
             }})",
             kACCOUNT
@@ -146,8 +146,8 @@ TEST_F(RPCNFTsByIssuerHandlerTest, InvalidLedgerIndexString)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "issuer": "{}", 
+            R"({{
+                "issuer": "{}",
                 "ledger_index": "notvalidated"
             }})",
             kACCOUNT
@@ -166,7 +166,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerInvalidFormat)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend_}};
-        auto const input = json::parse(R"({ 
+        auto const input = json::parse(R"({
             "issuer": "xxx"
         })");
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -196,7 +196,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerNotString)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend_}};
-        auto const input = json::parse(R"({ 
+        auto const input = json::parse(R"({
             "issuer": 12
         })");
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -241,7 +241,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerStringIndex)
     // mock fetchLedgerBySequence return empty
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "issuer": "{}",
             "ledger_index": "4"
         }})",
@@ -262,7 +262,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIntIndex)
     // mock fetchLedgerBySequence return empty
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "issuer": "{}",
             "ledger_index": 4
         }})",
@@ -287,7 +287,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash2)
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "issuer": "{}",
             "ledger_hash": "{}"
         }})",
@@ -311,7 +311,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIndex2)
     // differ from previous logic
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "issuer": "{}",
             "ledger_index": "31"
         }})",

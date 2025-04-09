@@ -1,0 +1,25 @@
+name: Run pre-commit hooks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  run-hooks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo ⚡️
+        uses: actions/checkout@v4
+      - name: Set Up Python 🐍
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - name: Install pre-commit 📦
+        run: |
+          pip install --upgrade pip
+          pip install --upgrade pre-commit
+      - name: Run pre-commit ✅
+        run: pre-commit run --all-files

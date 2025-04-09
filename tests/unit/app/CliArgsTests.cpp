@@ -213,7 +213,10 @@ TEST_F(CliArgsTestsWithTmpFile, Parse_ConfigDescriptionFileContent)
 
     auto const fileContent = buffer.str();
     EXPECT_TRUE(fileContent.find("# Clio Config Description") != std::string::npos);
-    EXPECT_TRUE(fileContent.find("This file lists all Clio Configuration definitions in detail.") != std::string::npos);
+    EXPECT_TRUE(
+        fileContent.find("This document provides a list of all available Clio configuration properties in detail.") !=
+        std::string::npos
+    );
     EXPECT_TRUE(fileContent.find("## Configuration Details") != std::string::npos);
 
     // all keys that exist in clio config should be listed in config description file

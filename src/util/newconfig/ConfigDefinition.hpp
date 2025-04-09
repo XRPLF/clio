@@ -266,7 +266,7 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"database.cassandra.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort).optional()},
      {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue("clio")},
      {"database.cassandra.replication_factor",
-      ConfigValue{ConfigType::Integer}.defaultValue(3u).withConstraint(gValidateUint16)},
+      ConfigValue{ConfigType::Integer}.defaultValue(3u).withConstraint(gValidateReplicationFactor)},
      {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
      {"database.cassandra.max_write_requests_outstanding",
       ConfigValue{ConfigType::Integer}.defaultValue(10'000).withConstraint(gValidateUint32)},
@@ -293,7 +293,7 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
 
      {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-
+     {"__ng_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
      {"etl_sources.[].ip", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)}},
      {"etl_sources.[].ws_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
      {"etl_sources.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
@@ -321,7 +321,7 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
           .withConstraint(gValidateUint32)},
      {"server.ip", ConfigValue{ConfigType::String}.withConstraint(gValidateIp)},
      {"server.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort)},
-     {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateUint32)},
+     {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint32)},
      {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
      {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
      {"server.processing_policy",
@@ -334,7 +334,7 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
      {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
 
-     {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateIOThreads)},
+     {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint16)},
 
      {"subscription_workers", ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint32)},
 
@@ -342,9 +342,10 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
 
      {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32).withConstraint(gValidateUint16)},
      {"cache.num_markers", ConfigValue{ConfigType::Integer}.defaultValue(48).withConstraint(gValidateUint16)},
-     {"cache.num_cursors_from_diff", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateUint16)},
-     {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateUint16)
-     },
+     {"cache.num_cursors_from_diff",
+      ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateNumCursors)},
+     {"cache.num_cursors_from_account",
+      ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateNumCursors)},
      {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(gValidateUint16)},
      {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(gValidateLoadMode)},
 
@@ -364,21 +365,18 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
 
      {"log_directory", ConfigValue{ConfigType::String}.optional()},
 
-     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateLogSize)},
+     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateUint32)},
 
-     {"log_directory_max_size",
-      ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(gValidateLogSize)},
+     {"log_directory_max_size", ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(gValidateUint32)
+     },
 
-     {"log_rotation_hour_interval",
-      ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(gValidateLogRotationTime)},
+     {"log_rotation_hour_interval", ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(gValidateUint32)},
 
      {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none").withConstraint(gValidateLogTag)},
 
      {"extractor_threads", ConfigValue{ConfigType::Integer}.defaultValue(1u).withConstraint(gValidateUint32)},
 
      {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-
-     {"txn_threshold", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateUint16)},
 
      {"start_sequence", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
 
@@ -398,7 +396,6 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"migration.full_scan_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint32)},
      {"migration.full_scan_jobs", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint32)},
      {"migration.cursors_per_job", ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(gValidateUint32)}},
-
 };
 
 }  // namespace util::config

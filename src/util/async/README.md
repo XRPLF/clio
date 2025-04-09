@@ -70,7 +70,7 @@ Regular, non-stoppable operations, can not be stopped. A non-stoppable operation
 
 #### Scheduled operations
 Scheduled operations are wrappers on top of Stoppable and regular Operations and provide the functionality of a timer that needs to run out before the given block of code will finally be executed on the Execution Context.
-Scheduled operations can be aborted by calling 
+Scheduled operations can be aborted by calling
 - `cancel` - will only cancel the timer. If the timer already fired this will have no effect
 - `requestStop` - will stop the operation if it's already running or as soon as the timer runs out
 - `abort` - will call `cancel` immediatelly followed by `requestStop`
@@ -111,12 +111,12 @@ auto res = ctx.execute([&value]() { value = 42; });
 
 res.wait();
 ASSERT_EQ(value, 42);
-```    
+```
 
 ### Stoppable operation
 #### Requesting stoppage
 The stop token can be used via the `isStopRequested()` member function:
-```cpp 
+```cpp
 auto res = ctx.execute([](auto stopToken) {
     while (not stopToken.isStopRequested())
         ;
@@ -126,9 +126,9 @@ auto res = ctx.execute([](auto stopToken) {
 
 res.requestStop();
 ```
- 
+
 Alternatively, the stop token is implicity convertible to `bool` so you can also use it like so:
-```cpp 
+```cpp
 auto res = ctx.execute([](auto stopRequested) {
     while (not stopRequested)
         ;
@@ -141,7 +141,7 @@ res.requestStop();
 
 #### Automatic stoppage on timeout
 By adding an optional timeout as the last arg to `execute` you can have the framework automatically call `requestStop()`:
-```cpp 
+```cpp
 auto res = ctx.execute([](auto stopRequested) {
     while (not stopRequested)
         ;
@@ -162,11 +162,11 @@ auto res = ctx.scheduleAfter(
     }
 );
 
-res.cancel(); // or .abort() 
+res.cancel(); // or .abort()
 ```
 
 #### Get value after stopping
-```cpp 
+```cpp
 auto res = ctx.scheduleAfter(1ms, [](auto stopRequested) {
     while (not stopRequested)
         ;
@@ -189,7 +189,7 @@ auto res =
 auto const err = res.get().error();
 EXPECT_TRUE(err.message.ends_with("test"));
 EXPECT_TRUE(std::string{err}.ends_with("test"));
-```    
+```
 
 ### Strand
 The APIs are basically the same as with the parent `ExecutionContext`.
@@ -210,7 +210,7 @@ auto anyCtx = AnyExecutionContext{ctx};
 
 auto op = anyCtx.execute([](auto stopToken) {
     while(not stopToken.isStopRequested())
-        std::this_thread::sleep_for(1s);   
+        std::this_thread::sleep_for(1s);
 }, 3s);
 ```
 
@@ -221,11 +221,11 @@ Erased operations only expose the `abort` member function that can be used to bo
 auto op = anyCtx.scheduleAfter(3s, [](auto stopToken, auto cancelled) {
     if (cancelled)
         return;
-    
+
     while(not stopToken.isStopRequested())
-        std::this_thread::sleep_for(1s);   
+        std::this_thread::sleep_for(1s);
 }, 3s);
 
-std::this_thread::sleep_for(2s);   
+std::this_thread::sleep_for(2s);
 op.abort(); // cancels the scheduled operation with 1s to spare
 ```

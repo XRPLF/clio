@@ -13,7 +13,7 @@ The minimum level of severity at which the log message will be outputted by defa
 Each of the variables expands like so:
 
 - `TimeStamp`: The full date and time of the log entry
-- `SourceLocation`: A partial path to the c++ file and the line number in said file (`source/file/path:linenumber`)  
+- `SourceLocation`: A partial path to the c++ file and the line number in said file (`source/file/path:linenumber`)
 - `ThreadID`: The ID of the thread the log entry is written from
 - `Channel`: The channel that this log entry was sent to
 - `Severity`: The severity (aka log level) the entry was sent at

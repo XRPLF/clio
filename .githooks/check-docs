@@ -20,7 +20,7 @@ if [ -z "$DOXYGEN" ]; then
 
                                    WARNING
 -----------------------------------------------------------------------------
-        'doxygen' is required to check documentation. 
+        'doxygen' is required to check documentation.
         Please install it for next time.
 
         Your changes may fail to pass CI once pushed.

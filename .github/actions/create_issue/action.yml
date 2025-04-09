@@ -14,7 +14,7 @@ inputs:
   assignees:
     description: Comma-separated list of assignees
     required: true
-    default: 'cindyyan317,godexsoft,kuznetsss'
+    default: 'godexsoft,kuznetsss,PeterChen13579'
 outputs:
   created_issue_id:
     description: Created issue id
@@ -31,5 +31,3 @@ runs:
           created_issue=$(cat create_issue.log | sed 's|.*/||')
           echo "created_issue=$created_issue" >> $GITHUB_OUTPUT
           rm create_issue.log issue.md
-
-

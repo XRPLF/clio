@@ -50,8 +50,8 @@ protected:
         EXPECT_TRUE(handle.connect());
         auto const query = fmt::format(
             R"(
-                CREATE KEYSPACE IF NOT EXISTS {} 
-                  WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '1'}} 
+                CREATE KEYSPACE IF NOT EXISTS {}
+                  WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '1'}}
                    AND durable_writes = True
             )",
             keyspace
@@ -209,8 +209,8 @@ TEST_F(BackendCassandraBaseTest, KeyspaceManipulation)
     {
         auto const query = fmt::format(
             R"(
-                CREATE KEYSPACE {} 
-                  WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '1'}} 
+                CREATE KEYSPACE {}
+                  WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '1'}}
                    AND durable_writes = True
             )",
             keyspace
@@ -248,7 +248,7 @@ TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
     auto handle = createHandle(TestGlobals::instance().backendHost, "test");
     auto q1 = fmt::format(
         R"(
-            CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
+            CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint)
             WITH default_time_to_live = {}
         )",
         5000
@@ -313,7 +313,7 @@ TEST_F(BackendCassandraBaseTest, BatchInsert)
     auto handle = createHandle(TestGlobals::instance().backendHost, "test");
     auto const q1 = fmt::format(
         R"(
-            CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
+            CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint)
               WITH default_time_to_live = {}
         )",
         5000
@@ -372,7 +372,7 @@ TEST_F(BackendCassandraBaseTest, BatchInsertAsync)
     auto handle = createHandle(TestGlobals::instance().backendHost, "test");
     auto const q1 = fmt::format(
         R"(
-            CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
+            CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint)
               WITH default_time_to_live = {}
         )",
         5000
@@ -418,7 +418,7 @@ TEST_F(BackendCassandraBaseTest, AlterTableAddColumn)
     auto handle = createHandle(TestGlobals::instance().backendHost, "test");
     auto const q1 = fmt::format(
         R"(
-            CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
+            CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint)
               WITH default_time_to_live = {}
         )",
         5000
@@ -438,7 +438,7 @@ TEST_F(BackendCassandraBaseTest, AlterTableMoveToNewTable)
 
     auto const newTable = fmt::format(
         R"(
-            CREATE TABLE IF NOT EXISTS strings_v2 (hash blob PRIMARY KEY, sequence bigint, tmp bigint) 
+            CREATE TABLE IF NOT EXISTS strings_v2 (hash blob PRIMARY KEY, sequence bigint, tmp bigint)
               WITH default_time_to_live = {}
         )",
         5000
