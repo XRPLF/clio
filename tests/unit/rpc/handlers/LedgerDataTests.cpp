@@ -925,6 +925,6 @@ TEST_F(RPCLedgerDataHandlerTest, JsonFetchVaultLedgerData)
         EXPECT_EQ(objects.front().at("LedgerEntryType").as_string(), "Vault");
 
         auto const& firstEntry = objects[0].as_object();
-        ASSERT_TRUE(firstEntry.contains("ShareTotal"));
+        ASSERT_TRUE(firstEntry.contains("SharesTotal"));
     });
 }

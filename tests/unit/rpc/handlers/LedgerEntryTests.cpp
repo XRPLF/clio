@@ -3218,7 +3218,7 @@ TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(boost::json::value_to<int64_t>(output.result->at("node").at("ShareTotal")), 0);
+        EXPECT_EQ(boost::json::value_to<int64_t>(output.result->at("node").at("SharesTotal")), 0);
     });
 }
 

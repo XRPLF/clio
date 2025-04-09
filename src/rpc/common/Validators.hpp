@@ -571,6 +571,13 @@ struct CustomValidators final {
      * Used by AuthorizeCredentialValidator in deposit_preauth.
      */
     static CustomValidator credentialTypeValidator;
+
+    /**
+     * @brief Provides a validator for validating vault object.
+     *
+     * Used by vaultInfo handler.
+     */
+    static CustomValidator vaultObjectValidator;
 };
 
 /**

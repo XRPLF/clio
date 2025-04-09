@@ -330,4 +330,20 @@ CustomValidator CustomValidators::authorizeCredentialValidator =
         return MaybeError{};
     }};
 
+CustomValidator CustomValidators::vaultObjectValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (!value.is_object())
+            return Error{Status{ClioError::RpcMalformedRequest, std::string(key) + " NotString"}};
+
+        auto const& vaultObj = value.as_object();
+        if (!vaultObj.contains("owner") || !vaultObj.contains("seq") || vaultObj.at("owner").is_string() ||
+            vaultObj.at("seq").is_uint64())
+            return Error{Status{ClioError::RpcMalformedRequest}};
+
+        if (ripple::parseBase58<ripple::AccountID>(std::string{vaultObj.at("owner").as_string()}))
+            return Error{ClioError::RpcMalformedOwner};
+
+        return MaybeError{};
+    }};
+
 }  // namespace rpc::validation

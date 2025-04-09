@@ -1111,7 +1111,7 @@ TEST_F(RPCHelpersTest, SupplementJson_ValidVaultEntry)
 
     runSpawn([&](boost::asio::yield_context yield) {
         supplementJson<ripple::ltVAULT>(*backend_, sle, entry, 100, yield);
-        EXPECT_EQ(boost::json::value_to<int64_t>(entry.at(JS(ShareTotal))), 0);
+        EXPECT_EQ(boost::json::value_to<int64_t>(entry.at(JS(SharesTotal))), 0);
     });
 }
 

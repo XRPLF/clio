@@ -880,7 +880,7 @@ supplementJson(
     if (sle.empty())
         return;
 
-    entry[JS(ShareTotal)] = sle.getFieldU64(ripple::sfOutstandingAmount);
+    entry[JS(SharesTotal)] = sle.getFieldU64(ripple::sfOutstandingAmount);
 };
 
 }  // namespace rpc
