@@ -114,7 +114,7 @@ tag_invoke(boost::json::value_to_tag<VaultInfoHandler::Input>, boost::json::valu
     auto const& vaultJson = jsonObject.at(JS(vault)).as_object();
     input.vaultObj = VaultInfoHandler::VaultInfoResponse{
         .owner = std::string{vaultJson.at(JS(owner)).as_string()},
-        .ledgerIndex = static_cast<uint32_t>(vaultJson.at(JS(seq)).as_uint64())
+        .ledgerIndex = static_cast<uint32_t>(vaultJson.at(JS(seq)).as_int64())
     };
     return input;
 }
