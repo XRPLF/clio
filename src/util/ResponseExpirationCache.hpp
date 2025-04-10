@@ -35,15 +35,20 @@ namespace util {
 
 /**
  * @brief Cache of requests' responses with TTL support and configurable cachable commands
+ *
+ * This class implements a time-based expiration cache for RPC responses. It allows
+ * caching responses for specified commands and automatically invalidates them after
+ * a configured timeout period. The cache uses BlockingCache internally to handle
+ * concurrent access and updates.
  */
 class ResponseExpirationCache {
 public:
     /**
-     * @brief A class to store a cache entry.
+     * @brief A data structure to store a cache entry with its timestamp
      */
     struct EntryData {
-        std::chrono::steady_clock::time_point lastUpdated;
-        boost::json::object response;
+        std::chrono::steady_clock::time_point lastUpdated;  ///< When the entry was last updated
+        boost::json::object response;                       ///< The cached response data
     };
 
     using CacheEntry = util::BlockingCache<EntryData, rpc::CombinedError>;
@@ -54,16 +59,22 @@ private:
 
 public:
     /**
-     * @brief Construct a new Cache object
+     * @brief Construct a new ResponseExpirationCache object
      *
-     * @param cacheTimeout The time for cache entries to expire
-     * @param cmds The commands that should be cached
+     * @param cacheTimeout The time period after which cached entries expire
+     * @param cmds The commands that should be cached (requests for other commands won't be cached)
      */
     ResponseExpirationCache(
         std::chrono::steady_clock::duration cacheTimeout,
         std::unordered_set<std::string> const& cmds
     );
 
+    /**
+     * @brief Check if the given command should be cached
+     *
+     * @param cmd The command to check
+     * @return true if the command should be cached, false otherwise
+     */
     bool
     shouldCache(std::string const& cmd);
 
@@ -71,16 +82,29 @@ public:
     using Verifier = CacheEntry::Verifier;
 
     /**
-     * @brief Get a response from the cache
+     * @brief Get a cached response or update the cache if necessary
      *
+     * This method returns a cached response if it exists and hasn't expired.
+     * If the cache entry is expired or doesn't exist, it calls the updater to
+     * generate a new value. If multiple coroutines request the same entry
+     * simultaneously, only one updater will be called while others wait.
+     *
+     * @note cmd must be one of the commands that are cached. There is an ASSERT() inside the function
+     *
+     * @param yield Asio yield context for coroutine suspension
      * @param cmd The command to get the response for
-     * @return The response if it exists or std::nullopt otherwise
+     * @param updater Function to generate the response if not in cache or expired
+     * @param verifier Function to validate if a response should be cached
+     * @return The cached or newly generated response, or an error
      */
     [[nodiscard]] std::expected<boost::json::object, rpc::CombinedError>
     getOrUpdate(boost::asio::yield_context yield, std::string const& cmd, Updater updater, Verifier verifier);
 
     /**
      * @brief Invalidate all entries in the cache
+     *
+     * This causes all cached entries to be cleared, forcing the next access
+     * to generate new responses.
      */
     void
     invalidate();
