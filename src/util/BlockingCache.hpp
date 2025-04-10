@@ -42,8 +42,10 @@ namespace util {
 template <typename ValueType, typename ErrorType>
     requires(not std::same_as<ValueType, ErrorType>)
 class BlockingCache {
+public:
     enum class State { Empty, Updating, Full };
 
+private:
     std::atomic<State> state_{State::Empty};
     util::Mutex<std::optional<ValueType>, std::shared_mutex> value_;
     boost::signals2::signal<void(std::expected<ValueType, ErrorType>)> updateFinished_;
@@ -112,6 +114,12 @@ public:
             state_ = State::Empty;
             value_.lock().get() = std::nullopt;
         }
+    }
+
+    [[nodiscard]] State
+    state() const
+    {
+        return state_;
     }
 
 private:

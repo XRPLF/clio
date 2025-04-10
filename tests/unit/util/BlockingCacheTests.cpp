@@ -18,140 +18,237 @@
 //==============================================================================
 
 #include "util/AsioContextTestFixture.hpp"
+#include "util/Assert.hpp"
 #include "util/BlockingCache.hpp"
+#include "util/NameGenerator.hpp"
 
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/spawn.hpp>
-#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/error.hpp>
+#include <boost/asio/post.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <chrono>
-#include <expected>
-#include <optional>
-#include <string>
+#include <functional>
+#include <memory>
 
-using namespace std::chrono_literals;
 using testing::MockFunction;
 using testing::Return;
 using testing::StrictMock;
 
-/*
-struct BlockingCacheTests : SyncAsioContextTest {
-    util::BlockingCache<int> cache;
-    int const value = 123;
-    StrictMock<MockFunction<std::expected<int, std::string>(boost::asio::yield_context)>> mockUpdater;
-    StrictMock<MockFunction<bool(int const&)>> mockVerifier;
+#include <boost/asio/spawn.hpp>
+#include <boost/asio/steady_timer.hpp>
+
+#include <chrono>
+#include <expected>
+#include <string>
+
+struct BlockingCacheTest : SyncAsioContextTest {
+    using ErrorType = std::string;
+    using ValueType = int;
+    using Cache = util::BlockingCache<ValueType, ErrorType>;
+    using MockUpdater = StrictMock<MockFunction<std::expected<ValueType, ErrorType>(boost::asio::yield_context)>>;
+    using MockVerifier = StrictMock<MockFunction<bool(ValueType const&)>>;
+
+    std::unique_ptr<Cache> cache = std::make_unique<Cache>();
+    MockUpdater mockUpdater;
+    MockVerifier mockVerifier;
+    int const value = 42;
+    std::string error = "some error";
 };
 
-TEST_F(BlockingCacheTests, GetValueWhenValueIsInCacheAndValid)
+TEST_F(BlockingCacheTest, asyncGet_EmptyCacheUpdateSuccess)
 {
-    util::BlockingCache<int> cacheWithValue{value};
+    EXPECT_CALL(mockUpdater, Call).WillOnce(Return(value));
     EXPECT_CALL(mockVerifier, Call(value)).WillOnce(Return(true));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const result =
-            cacheWithValue.asyncGet(yield, mockVerifier.AsStdFunction(), mockUpdater.AsStdFunction(), std::nullopt);
+        auto result = cache->asyncGet(yield, mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), 42);
+    });
+}
+
+TEST_F(BlockingCacheTest, asyncGet_EmptyCacheUpdateFailure)
+{
+    EXPECT_CALL(mockUpdater, Call).WillOnce(Return(std::unexpected{error}));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto result = cache->asyncGet(yield, mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+        ASSERT_FALSE(result.has_value());
+        EXPECT_EQ(result.error(), error);
+    });
+}
+
+TEST_F(BlockingCacheTest, asyncGet_EmptyCacheUpdateSuccessButVerifierRejects)
+{
+    runSpawn([&](boost::asio::yield_context yield) {
+        std::expected<int, std::string> result;
+        {
+            EXPECT_CALL(mockUpdater, Call).WillOnce(Return(value));
+            EXPECT_CALL(mockVerifier, Call(value)).WillOnce(Return(false));
+
+            auto result = cache->asyncGet(yield, mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+            ASSERT_TRUE(result.has_value());
+            EXPECT_EQ(result.value(), value);
+        }
+
+        int const newValue = 24;
+        {
+            EXPECT_CALL(mockUpdater, Call).WillOnce(Return(newValue));
+            EXPECT_CALL(mockVerifier, Call(newValue)).WillOnce(Return(true));
+
+            result = cache->asyncGet(yield, mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+            ASSERT_TRUE(result.has_value());
+            EXPECT_EQ(result.value(), newValue);
+        }
+
+        result = cache->asyncGet(yield, mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), newValue);
+    });
+}
+
+TEST_F(BlockingCacheTest, asyncGet_FullCacheReturnsValue)
+{
+    cache = std::make_unique<Cache>(value);
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto result = cache->asyncGet(yield, mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
 
         ASSERT_TRUE(result.has_value());
         EXPECT_EQ(result.value(), value);
     });
 }
 
-TEST_F(BlockingCacheTests, GetValueWhenCacheIsValid)
+struct BlockingCacheWaitTestBundle {
+    bool updateSuccessful;
+    bool verifierAccepts;
+    std::string testName;
+};
+
+struct BlockingCacheWaitTest : BlockingCacheTest, testing::WithParamInterface<BlockingCacheWaitTestBundle> {};
+
+TEST_P(BlockingCacheWaitTest, WaitForUpdate)
 {
-    EXPECT_CALL(mockVerifier, Call(value)).WillOnce(Return(true));  // Second call succeeds
+    bool waitingCoroutineFinished = false;
 
-    EXPECT_CALL(mockUpdater, Call).WillOnce(Return(value));
+    auto waitingCoroutine = [&](boost::asio::yield_context yield) {
+        auto result = cache->asyncGet(yield, mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
 
-    runSpawn([&](boost::asio::yield_context yield) {
-        auto const result =
-            cache.asyncGet(yield, mockVerifier.AsStdFunction(), mockUpdater.AsStdFunction(), std::nullopt);
+        if (GetParam().updateSuccessful) {
+            ASSERT_TRUE(result.has_value());
+            EXPECT_EQ(result.value(), value);
+        } else {
+            ASSERT_FALSE(result.has_value());
+            EXPECT_EQ(result.error(), error);
+        }
+        waitingCoroutineFinished = true;
+    };
 
-        ASSERT_TRUE(result.has_value());
-        EXPECT_EQ(result.value(), value);
-    });
-}
-
-TEST_F(BlockingCacheTests, FailsWhenVerifierRejectsValue)
-{
-    EXPECT_CALL(mockVerifier, Call(value)).WillOnce(Return(false));
-
-    EXPECT_CALL(mockUpdater, Call).WillOnce(Return(value));
-
-    runSpawn([&](boost::asio::yield_context yield) {
-        auto const result =
-            cache.asyncGet(yield, mockVerifier.AsStdFunction(), mockUpdater.AsStdFunction(), std::nullopt);
-
-        ASSERT_FALSE(result.has_value());
-        EXPECT_EQ(result.error(), "Invalid value after update");
-    });
-}
-
-TEST_F(BlockingCacheTests, UpdaterFailurePropagates)
-{
-    EXPECT_CALL(mockUpdater, Call).WillOnce(Return(std::unexpected<std::string>("Update failed")));
-
-    runSpawn([&](boost::asio::yield_context yield) {
-        auto const result =
-            cache.asyncGet(yield, mockVerifier.AsStdFunction(), mockUpdater.AsStdFunction(), std::nullopt);
-
-        ASSERT_FALSE(result.has_value());
-        EXPECT_EQ(result.error(), "Update failed");
-    });
-}
-
-TEST_F(BlockingCacheTests, SecondCoroutineWaitsForUpdate)
-{
-    testing::Expectation const updateExpectation =
-        EXPECT_CALL(mockUpdater, Call).WillOnce([&](boost::asio::yield_context yield) {
-            boost::asio::steady_timer timer{ctx_, std::chrono::milliseconds{10}};
-            timer.async_wait(yield);
-            return std::expected<int, std::string>{value};
+    EXPECT_CALL(mockUpdater, Call)
+        .WillOnce([this, &waitingCoroutine](boost::asio::yield_context yield) -> std::expected<ValueType, ErrorType> {
+            boost::asio::spawn(yield, waitingCoroutine);
+            if (GetParam().updateSuccessful) {
+                return value;
+            }
+            return std::unexpected{error};
         });
 
-    EXPECT_CALL(mockVerifier, Call(value)).Times(2).After(updateExpectation).WillRepeatedly(Return(true));
+    if (GetParam().updateSuccessful)
+        EXPECT_CALL(mockVerifier, Call(value)).WillOnce(Return(GetParam().verifierAccepts));
 
-    boost::asio::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        auto const result =
-            cache.asyncGet(yield, mockVerifier.AsStdFunction(), mockUpdater.AsStdFunction(), std::nullopt);
+    runSpawnWithTimeout(std::chrono::seconds{1}, [&](boost::asio::yield_context yield) {
+        auto result = cache->asyncGet(yield, mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
 
-        ASSERT_TRUE(result.has_value());
-        EXPECT_EQ(result.value(), value);
-    });
-
-    runSpawn([&](boost::asio::yield_context yield) {
-        auto const result =
-            cache.asyncGet(yield, mockVerifier.AsStdFunction(), mockUpdater.AsStdFunction(), std::nullopt);
-
-        ASSERT_TRUE(result.has_value());
-        EXPECT_EQ(result.value(), value);
+        if (GetParam().updateSuccessful) {
+            ASSERT_TRUE(result.has_value());
+            EXPECT_EQ(result.value(), value);
+        } else {
+            ASSERT_FALSE(result.has_value());
+            EXPECT_EQ(result.error(), error);
+        }
+        ASSERT_FALSE(waitingCoroutineFinished);
     });
 }
 
-TEST_F(BlockingCacheTests, SecondCoroutineTimesOut)
+INSTANTIATE_TEST_SUITE_P(
+    BlockingCacheTest,
+    BlockingCacheWaitTest,
+    testing::Values(
+        BlockingCacheWaitTestBundle{
+            .updateSuccessful = true,
+            .verifierAccepts = true,
+            .testName = "UpdateSucceedsVerifierAccepts"
+        },
+        BlockingCacheWaitTestBundle{
+            .updateSuccessful = true,
+            .verifierAccepts = false,
+            .testName = "UpdateSucceedsVerifierRejects"
+        },
+        BlockingCacheWaitTestBundle{.updateSuccessful = false, .verifierAccepts = false, .testName = "UpdateFails"}
+    ),
+    tests::util::kNAME_GENERATOR
+);
+
+TEST_F(BlockingCacheTest, InvalidateWhenStateIsEmpty)
 {
-    boost::asio::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        EXPECT_CALL(mockUpdater, Call).WillOnce([&](boost::asio::yield_context) {
-            boost::asio::steady_timer timer{ctx_, std::chrono::milliseconds{10}};
-            timer.async_wait(yield);
-            return std::expected<int, std::string>{value};
-        });
-        EXPECT_CALL(mockVerifier, Call(value)).WillOnce(Return(true));
-        auto const result =
-            cache.asyncGet(yield, mockVerifier.AsStdFunction(), mockUpdater.AsStdFunction(), std::nullopt);
+    ASSERT_EQ(cache->state(), Cache::State::Empty);
+    cache->invalidate();
+    ASSERT_EQ(cache->state(), Cache::State::Empty);
+}
 
-        ASSERT_TRUE(result.has_value());
-        EXPECT_EQ(result.value(), value);
+TEST_F(BlockingCacheTest, InvalidateWhenStateIsUpdating)
+{
+    EXPECT_CALL(mockUpdater, Call).WillOnce([this](auto&&) {
+        EXPECT_EQ(cache->state(), Cache::State::Updating);
+        cache->invalidate();
+        EXPECT_EQ(cache->state(), Cache::State::Updating);
+        return value;
     });
+    EXPECT_CALL(mockVerifier, Call(value)).WillOnce(Return(true));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const result = cache.asyncGet(
-            yield, mockVerifier.AsStdFunction(), mockUpdater.AsStdFunction(), std::chrono::milliseconds{5}
-        );
-
-        ASSERT_FALSE(result.has_value());
-        EXPECT_EQ(result.error(), "Waiting timeout");
+        auto result = cache->asyncGet(yield, mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+        ASSERT_TRUE(result.has_value());
+        ASSERT_EQ(result.value(), value);
+        ASSERT_EQ(cache->state(), Cache::State::Full);
     });
 }
-*/
+
+TEST_F(BlockingCacheTest, InvalidateWhenStateIsFull)
+{
+    cache = std::make_unique<Cache>(value);
+    ASSERT_EQ(cache->state(), Cache::State::Full);
+    cache->invalidate();
+    EXPECT_EQ(cache->state(), Cache::State::Empty);
+}
+
+TEST_F(BlockingCacheTest, UpdateFromTwoCoroutinesHappensOnlyOnes)
+{
+    auto waitingCoroutine = [&](boost::asio::yield_context yield) {
+        auto result = cache->update(yield, mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+        ASSERT_TRUE(result.has_value());
+        ASSERT_EQ(result.value(), value);
+    };
+
+    EXPECT_CALL(mockUpdater, Call)
+        .WillOnce([this, &waitingCoroutine](boost::asio::yield_context yield) -> std::expected<ValueType, ErrorType> {
+            boost::asio::spawn(yield, waitingCoroutine);
+            return value;
+        });
+    EXPECT_CALL(mockVerifier, Call(value)).WillOnce(Return(true));
+
+    auto updatingCoroutine = [&](boost::asio::yield_context yield) {
+        auto const result = cache->update(yield, mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+        EXPECT_TRUE(result.has_value());
+        ASSERT_EQ(result.value(), value);
+    };
+
+    runSpawnWithTimeout(std::chrono::seconds{1}, [&](boost::asio::yield_context yield) {
+        boost::asio::spawn(yield, updatingCoroutine);
+    });
+}
