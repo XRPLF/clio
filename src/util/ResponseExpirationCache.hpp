@@ -52,9 +52,12 @@ public:
         boost::json::object response;                       ///< The cached response data
     };
 
+    /**
+     * @brief A data structure to represent errors that can occur during an update of the cache
+     */
     struct Error {
-        rpc::Status status;
-        boost::json::array warnings;
+        rpc::Status status;           ///< The status code and message of the error
+        boost::json::array warnings;  ///< Any warnings related to the request
 
         bool
         operator==(Error const&) const = default;
