@@ -242,15 +242,18 @@ LoadBalancer::forwardToRippled(
     auto const cmd = boost::json::value_to<std::string>(request.at("command"));
 
     if (forwardingCache_ and forwardingCache_->shouldCache(cmd)) {
-        auto updater = [this, &request, &clientIp, isAdmin](boost::asio::yield_context yield
-                       ) -> std::expected<util::ResponseExpirationCache::EntryData, rpc::CombinedError> {
+        auto updater =
+            [this, &request, &clientIp, isAdmin](boost::asio::yield_context yield
+            ) -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
             auto result = forwardToRippledImpl(request, clientIp, isAdmin, yield);
             if (result.has_value()) {
                 return util::ResponseExpirationCache::EntryData{
                     .lastUpdated = std::chrono::steady_clock::now(), .response = std::move(result).value()
                 };
             }
-            return std::unexpected{std::move(result).error()};
+            return std::unexpected{
+                util::ResponseExpirationCache::Error{.status = rpc::Status{result.error()}, .warnings = {}}
+            };
         };
 
         auto result = forwardingCache_->getOrUpdate(
@@ -262,8 +265,9 @@ LoadBalancer::forwardToRippled(
         if (result.has_value()) {
             return std::move(result).value();
         }
-        ASSERT(std::holds_alternative<rpc::ClioError>(result.error()), "There could be only ClioError here");
-        return std::unexpected{std::get<rpc::ClioError>(std::move(result).error())};
+        auto const combinedError = result.error().status.code;
+        ASSERT(std::holds_alternative<rpc::ClioError>(combinedError), "There could be only ClioError here");
+        return std::unexpected{std::get<rpc::ClioError>(combinedError)};
     }
 
     return forwardToRippledImpl(request, clientIp, isAdmin, yield);

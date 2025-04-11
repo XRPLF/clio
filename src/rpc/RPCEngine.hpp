@@ -158,19 +158,22 @@ public:
         }
 
         if (not ctx.isAdmin and responseCache_ and responseCache_->shouldCache(ctx.method)) {
-            auto updater = [this, &ctx](boost::asio::yield_context
-                           ) -> std::expected<util::ResponseExpirationCache::EntryData, rpc::CombinedError> {
+            auto updater =
+                [this, &ctx](boost::asio::yield_context
+                ) -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
                 auto result = buildResponseImpl(ctx);
                 auto extracted = std::visit(
                     util::OverloadSet{
-                        [](Status status) -> std::expected<boost::json::object, rpc::CombinedError> {
-                            return std::unexpected{status.code};
+                        [&result](Status status
+                        ) -> std::expected<boost::json::object, util::ResponseExpirationCache::Error> {
+                            return std::unexpected{util::ResponseExpirationCache::Error{
+                                .status = std::move(status), .warnings = std::move(result.warnings)
+                            }};
                         },
-                        [](boost::json::object obj) -> std::expected<boost::json::object, rpc::CombinedError> {
-                            return obj;
-                        }
+                        [](boost::json::object obj
+                        ) -> std::expected<boost::json::object, util::ResponseExpirationCache::Error> { return obj; }
                     },
-                    result.response
+                    std::move(result.response)
                 );
                 if (extracted.has_value()) {
                     return util::ResponseExpirationCache::EntryData{
@@ -191,7 +194,11 @@ public:
             if (result.has_value()) {
                 return Result{std::move(result).value()};
             }
-            return Result{Status{std::move(result).error()}};
+
+            auto error = std::move(result).error();
+            Result errorResult{std::move(error.status)};
+            errorResult.warnings = std::move(error.warnings);
+            return errorResult;
         }
 
         return buildResponseImpl(ctx);

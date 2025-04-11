@@ -19,7 +19,6 @@
 
 #include "util/ResponseExpirationCache.hpp"
 
-#include "rpc/Errors.hpp"
 #include "util/Assert.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -50,7 +49,7 @@ ResponseExpirationCache::shouldCache(std::string const& cmd)
     return cache_.contains(cmd);
 }
 
-std::expected<boost::json::object, rpc::CombinedError>
+std::expected<boost::json::object, ResponseExpirationCache::Error>
 ResponseExpirationCache::getOrUpdate(
     boost::asio::yield_context yield,
     std::string const& cmd,

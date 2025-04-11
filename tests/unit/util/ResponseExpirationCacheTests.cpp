@@ -39,7 +39,7 @@ using testing::StrictMock;
 
 struct ResponseExpirationCacheTest : SyncAsioContextTest {
     using MockUpdater = StrictMock<MockFunction<
-        std::expected<ResponseExpirationCache::EntryData, rpc::CombinedError>(boost::asio::yield_context)>>;
+        std::expected<ResponseExpirationCache::EntryData, ResponseExpirationCache::Error>(boost::asio::yield_context)>>;
     using MockVerifier = StrictMock<MockFunction<bool(ResponseExpirationCache::EntryData const&)>>;
 
     std::string const cmd = "server_info";
@@ -169,7 +169,10 @@ TEST_F(ResponseExpirationCacheTest, GetOrUpdateHandlesErrorFromUpdater)
 {
     ResponseExpirationCache cache{std::chrono::seconds(10), {cmd}};
 
-    rpc::CombinedError const error{rpc::ClioError::EtlConnectionError};
+    ResponseExpirationCache::Error const error{
+        .status = rpc::Status{rpc::ClioError::EtlConnectionError}, .warnings = {}
+    };
+
     runSpawn([&](boost::asio::yield_context yield) {
         EXPECT_CALL(mockUpdater, Call).WillOnce(Return(std::unexpected(error)));
 
@@ -231,7 +234,7 @@ TEST_F(ResponseExpirationCacheTest, GetOrUpdateMultipleConcurrentUpdates)
     EXPECT_CALL(mockUpdater, Call)
         .WillOnce(
             [this, &waitingCoroutine](boost::asio::yield_context yield
-            ) -> std::expected<ResponseExpirationCache::EntryData, rpc::CombinedError> {
+            ) -> std::expected<ResponseExpirationCache::EntryData, ResponseExpirationCache::Error> {
                 boost::asio::spawn(yield, waitingCoroutine);
                 return ResponseExpirationCache::EntryData{
                     .lastUpdated = std::chrono::steady_clock::now(),

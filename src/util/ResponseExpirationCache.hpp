@@ -23,6 +23,7 @@
 #include "util/BlockingCache.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 
 #include <chrono>
@@ -51,7 +52,15 @@ public:
         boost::json::object response;                       ///< The cached response data
     };
 
-    using CacheEntry = util::BlockingCache<EntryData, rpc::CombinedError>;
+    struct Error {
+        rpc::Status status;
+        boost::json::array warnings;
+
+        bool
+        operator==(Error const&) const = default;
+    };
+
+    using CacheEntry = util::BlockingCache<EntryData, Error>;
 
 private:
     std::chrono::steady_clock::duration cacheTimeout_;
@@ -97,7 +106,7 @@ public:
      * @param verifier Function to validate if a response should be cached
      * @return The cached or newly generated response, or an error
      */
-    [[nodiscard]] std::expected<boost::json::object, rpc::CombinedError>
+    [[nodiscard]] std::expected<boost::json::object, Error>
     getOrUpdate(boost::asio::yield_context yield, std::string const& cmd, Updater updater, Verifier verifier);
 
     /**
