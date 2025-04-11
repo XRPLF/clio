@@ -28,7 +28,6 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <iostream>
 #include <string>
 #include <thread>
 #include <unordered_set>
@@ -101,7 +100,7 @@ TEST_F(ResponseExpirationCacheTest, GetOrUpdateNoValueInCacheCallsUpdaterAndVeri
             cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
 
         ASSERT_TRUE(result.has_value());
-        EXPECT_EQ(result->at("status").as_string(), "success");
+        EXPECT_EQ(result.value(), obj);
     });
 }
 
@@ -221,23 +220,19 @@ TEST_F(ResponseExpirationCacheTest, GetOrUpdateMultipleConcurrentUpdates)
     bool waitingCoroutineFinished = false;
 
     auto waitingCoroutine = [&](boost::asio::yield_context yield) {
-        std::cout << "Waiting coroutine started\n";
         auto result =
             cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
 
         ASSERT_TRUE(result.has_value());
         EXPECT_EQ(result.value(), obj);
         waitingCoroutineFinished = true;
-        std::cout << "Waiting coroutine finished\n";
     };
 
     EXPECT_CALL(mockUpdater, Call)
         .WillOnce(
             [this, &waitingCoroutine](boost::asio::yield_context yield
             ) -> std::expected<ResponseExpirationCache::EntryData, rpc::CombinedError> {
-                std::cout << "First updater called, spawning waiting coroutine\n";
                 boost::asio::spawn(yield, waitingCoroutine);
-                std::cout << "First updater about to return\n";
                 return ResponseExpirationCache::EntryData{
                     .lastUpdated = std::chrono::steady_clock::now(),
                     .response = obj,
@@ -247,14 +242,12 @@ TEST_F(ResponseExpirationCacheTest, GetOrUpdateMultipleConcurrentUpdates)
     EXPECT_CALL(mockVerifier, Call).WillOnce(Return(true));
 
     runSpawnWithTimeout(std::chrono::seconds{1}, [&](boost::asio::yield_context yield) {
-        std::cout << "Main coroutine started\n";
         auto result =
             cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
 
         ASSERT_TRUE(result.has_value());
-        EXPECT_EQ(result->at("status").as_string(), "success");
+        EXPECT_EQ(result.value(), obj);
         ASSERT_FALSE(waitingCoroutineFinished);
-        std::cout << "Main coroutine finished\n";
     });
 }
 
