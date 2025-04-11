@@ -26,6 +26,7 @@
 
 #include <cstdint>
 #include <optional>
+
 namespace etl {
 
 /**

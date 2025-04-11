@@ -31,7 +31,6 @@
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/asio/ssl/context.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
@@ -300,8 +299,7 @@ TEST_F(HttpConnectionTests, Upgrade)
         [&]() { ASSERT_TRUE(expectedResult.has_value()) << expectedResult.error().message(); }();
         [&]() { ASSERT_TRUE(expectedResult.value()); }();
 
-        std::optional<boost::asio::ssl::context> sslContext;
-        auto expectedWsConnection = connection.upgrade(sslContext, tagDecoratorFactory_, yield);
+        auto expectedWsConnection = connection.upgrade(tagDecoratorFactory_, yield);
         [&]() { ASSERT_TRUE(expectedWsConnection.has_value()) << expectedWsConnection.error().message(); }();
     });
 }

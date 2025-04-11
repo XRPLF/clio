@@ -20,6 +20,8 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "etl/LedgerFetcherInterface.hpp"
+#include "etlng/LoadBalancerInterface.hpp"
 #include "util/log/Logger.hpp"
 
 #include <grpcpp/grpcpp.h>
@@ -34,22 +36,18 @@ namespace etl::impl {
 /**
  * @brief GRPC Ledger data fetcher
  */
-template <typename LoadBalancerType>
-class LedgerFetcher {
-public:
-    using OptionalGetLedgerResponseType = typename LoadBalancerType::OptionalGetLedgerResponseType;
-
+class LedgerFetcher : public LedgerFetcherInterface {
 private:
     util::Logger log_{"ETL"};
 
     std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<LoadBalancerType> loadBalancer_;
+    std::shared_ptr<etlng::LoadBalancerInterface> loadBalancer_;
 
 public:
     /**
      * @brief Create an instance of the fetcher
      */
-    LedgerFetcher(std::shared_ptr<BackendInterface> backend, std::shared_ptr<LoadBalancerType> balancer)
+    LedgerFetcher(std::shared_ptr<BackendInterface> backend, std::shared_ptr<etlng::LoadBalancerInterface> balancer)
         : backend_(std::move(backend)), loadBalancer_(std::move(balancer))
     {
     }
@@ -64,7 +62,7 @@ public:
      * @return Ledger header and transaction+metadata blobs; Empty optional if the server is shutting down
      */
     [[nodiscard]] OptionalGetLedgerResponseType
-    fetchData(uint32_t sequence)
+    fetchData(uint32_t sequence) override
     {
         LOG(log_.debug()) << "Attempting to fetch ledger with sequence = " << sequence;
 
@@ -84,7 +82,7 @@ public:
      * @return Ledger data diff between sequance and parent; Empty optional if the server is shutting down
      */
     [[nodiscard]] OptionalGetLedgerResponseType
-    fetchDataAndDiff(uint32_t sequence)
+    fetchDataAndDiff(uint32_t sequence) override
     {
         LOG(log_.debug()) << "Attempting to fetch ledger with sequence = " << sequence;
 

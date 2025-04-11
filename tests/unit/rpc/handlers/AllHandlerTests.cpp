@@ -53,9 +53,7 @@
 #include "util/MockAssert.hpp"
 #include "util/MockCounters.hpp"
 #include "util/MockCountersFixture.hpp"
-#include "util/MockETLService.hpp"
 #include "util/MockETLServiceTestFixture.hpp"
-#include "util/MockLoadBalancer.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/TestObject.hpp"
@@ -74,7 +72,7 @@
 
 using ::testing::Types;
 using namespace rpc;
-using TestServerInfoHandler = BaseServerInfoHandler<MockLoadBalancer, MockETLService, MockCounters>;
+using TestServerInfoHandler = BaseServerInfoHandler<MockCounters>;
 
 constexpr static auto kINDEX1 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 constexpr static auto kAMM_ACCOUNT = "rLcS7XL6nxRAi7JcbJcn1Na179oF3vdfbh";

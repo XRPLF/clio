@@ -30,7 +30,6 @@
 #include "util/MockCountersFixture.hpp"
 #include "util/MockETLServiceTestFixture.hpp"
 #include "util/MockHandlerProvider.hpp"
-#include "util/MockLoadBalancer.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
@@ -65,7 +64,7 @@ using namespace util::config;
 
 namespace {
 constexpr auto kFORWARD_REPLY = R"JSON({
-    "result": 
+    "result":
     {
         "status": "success",
         "forwarded": true
@@ -200,16 +199,15 @@ TEST_P(RPCEngineFlowParameterTest, Test)
 {
     auto const& testBundle = GetParam();
 
-    std::shared_ptr<RPCEngine<MockLoadBalancer, MockCounters>> engine =
-        RPCEngine<MockLoadBalancer, MockCounters>::makeRPCEngine(
-            generateDefaultRPCEngineConfig(),
-            backend_,
-            mockLoadBalancerPtr_,
-            dosGuard,
-            queue,
-            *mockCountersPtr_,
-            handlerProvider
-        );
+    std::shared_ptr<RPCEngine<MockCounters>> engine = RPCEngine<MockCounters>::makeRPCEngine(
+        generateDefaultRPCEngineConfig(),
+        backend_,
+        mockLoadBalancerPtr_,
+        dosGuard,
+        queue,
+        *mockCountersPtr_,
+        handlerProvider
+    );
 
     if (testBundle.forwarded) {
         EXPECT_CALL(*mockLoadBalancerPtr_, forwardToRippled)
@@ -272,10 +270,9 @@ TEST_P(RPCEngineFlowParameterTest, Test)
 TEST_F(RPCEngineTest, ThrowDatabaseError)
 {
     auto const method = "subscribe";
-    std::shared_ptr<RPCEngine<MockLoadBalancer, MockCounters>> engine =
-        RPCEngine<MockLoadBalancer, MockCounters>::makeRPCEngine(
-            cfg, backend_, mockLoadBalancerPtr_, dosGuard, queue, *mockCountersPtr_, handlerProvider
-        );
+    std::shared_ptr<RPCEngine<MockCounters>> engine = RPCEngine<MockCounters>::makeRPCEngine(
+        cfg, backend_, mockLoadBalancerPtr_, dosGuard, queue, *mockCountersPtr_, handlerProvider
+    );
     EXPECT_CALL(*backend_, isTooBusy).WillOnce(Return(false));
     EXPECT_CALL(*handlerProvider, getHandler(method)).WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
     EXPECT_CALL(*mockCountersPtr_, rpcErrored(method)).WillOnce(Throw(data::DatabaseTimeout{}));
@@ -305,10 +302,9 @@ TEST_F(RPCEngineTest, ThrowDatabaseError)
 TEST_F(RPCEngineTest, ThrowException)
 {
     auto const method = "subscribe";
-    std::shared_ptr<RPCEngine<MockLoadBalancer, MockCounters>> engine =
-        RPCEngine<MockLoadBalancer, MockCounters>::makeRPCEngine(
-            cfg, backend_, mockLoadBalancerPtr_, dosGuard, queue, *mockCountersPtr_, handlerProvider
-        );
+    std::shared_ptr<RPCEngine<MockCounters>> engine = RPCEngine<MockCounters>::makeRPCEngine(
+        cfg, backend_, mockLoadBalancerPtr_, dosGuard, queue, *mockCountersPtr_, handlerProvider
+    );
     EXPECT_CALL(*backend_, isTooBusy).WillOnce(Return(false));
     EXPECT_CALL(*handlerProvider, getHandler(method)).WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
     EXPECT_CALL(*mockCountersPtr_, rpcErrored(method)).WillOnce(Throw(std::exception{}));
@@ -353,14 +349,14 @@ generateCacheTestValuesForParametersTest()
          .config = R"JSON({
             "server": {"max_queue_size": 2},
             "workers": 4,
-            "rpc": 
+            "rpc":
             {"cache_timeout": 10}
          })JSON",
          .method = "server_info",
          .isAdmin = false,
          .expectedCacheEnabled = true},
         {.testName = "CacheDisabledWhenNoConfig",
-         .config = R"JSON({      
+         .config = R"JSON({
             "server": {"max_queue_size": 2},
             "workers": 4,
             "rpc": {"cache_timeout": 0}
@@ -369,7 +365,7 @@ generateCacheTestValuesForParametersTest()
          .isAdmin = false,
          .expectedCacheEnabled = false},
         {.testName = "CacheDisabledWhenNoTimeout",
-         .config = R"JSON({      
+         .config = R"JSON({
             "server": {"max_queue_size": 2},
             "workers": 4,
             "rpc": {"cache_timeout": 0}
@@ -378,7 +374,7 @@ generateCacheTestValuesForParametersTest()
          .isAdmin = false,
          .expectedCacheEnabled = false},
         {.testName = "CacheDisabledWhenTimeoutIsZero",
-         .config = R"JSON({      
+         .config = R"JSON({
             "server": {"max_queue_size": 2},
             "workers": 4,
             "rpc": {"cache_timeout": 0}
@@ -387,7 +383,7 @@ generateCacheTestValuesForParametersTest()
          .isAdmin = false,
          .expectedCacheEnabled = false},
         {.testName = "CacheNotWorkForAdmin",
-         .config = R"JSON({      
+         .config = R"JSON({
             "server": {"max_queue_size": 2},
             "workers": 4,
             "rpc": { "cache_timeout": 10}
@@ -396,7 +392,7 @@ generateCacheTestValuesForParametersTest()
          .isAdmin = true,
          .expectedCacheEnabled = false},
         {.testName = "CacheDisabledWhenCmdNotMatch",
-         .config = R"JSON({      
+         .config = R"JSON({
             "server": {"max_queue_size": 2},
             "workers": 4,
             "rpc": {"cache_timeout": 10}
@@ -425,10 +421,9 @@ TEST_P(RPCEngineCacheParameterTest, Test)
 
     auto const admin = testParam.isAdmin;
     auto const method = testParam.method;
-    std::shared_ptr<RPCEngine<MockLoadBalancer, MockCounters>> engine =
-        RPCEngine<MockLoadBalancer, MockCounters>::makeRPCEngine(
-            cfgCache, backend_, mockLoadBalancerPtr_, dosGuard, queue, *mockCountersPtr_, handlerProvider
-        );
+    std::shared_ptr<RPCEngine<MockCounters>> engine = RPCEngine<MockCounters>::makeRPCEngine(
+        cfgCache, backend_, mockLoadBalancerPtr_, dosGuard, queue, *mockCountersPtr_, handlerProvider
+    );
     int callTime = 2;
     EXPECT_CALL(*handlerProvider, isClioOnly).Times(callTime).WillRepeatedly(Return(false));
     if (testParam.expectedCacheEnabled) {
@@ -474,10 +469,9 @@ TEST_F(RPCEngineTest, NotCacheIfErrorHappen)
 
     auto const notAdmin = false;
     auto const method = "server_info";
-    std::shared_ptr<RPCEngine<MockLoadBalancer, MockCounters>> engine =
-        RPCEngine<MockLoadBalancer, MockCounters>::makeRPCEngine(
-            cfgCache, backend_, mockLoadBalancerPtr_, dosGuard, queue, *mockCountersPtr_, handlerProvider
-        );
+    std::shared_ptr<RPCEngine<MockCounters>> engine = RPCEngine<MockCounters>::makeRPCEngine(
+        cfgCache, backend_, mockLoadBalancerPtr_, dosGuard, queue, *mockCountersPtr_, handlerProvider
+    );
 
     int callTime = 2;
     EXPECT_CALL(*backend_, isTooBusy).Times(callTime).WillRepeatedly(Return(false));

@@ -236,7 +236,7 @@ TEST_F(ConstraintTest, SetValuesOnNumberConstraint)
     auto positiveNum = ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint16);
     auto const err = positiveNum.setValue(-22, "key");
     EXPECT_TRUE(err.has_value());
-    EXPECT_EQ(err->error, fmt::format("key Number must be between {} and {}", 0, 65535));
+    EXPECT_EQ(err->error, fmt::format("key Number must be between {} and {}", 1, 65535));
     EXPECT_FALSE(positiveNum.setValue(99, "key"));
 }
 
@@ -268,7 +268,7 @@ INSTANTIATE_TEST_SUITE_P(
         ConstraintTestBundle{"ipConstraint", gValidateIp},
         ConstraintTestBundle{"channelConstraint", gValidateChannelName},
         ConstraintTestBundle{"logLevelConstraint", gValidateLogLevelName},
-        ConstraintTestBundle{"cannsandraNameCnstraint", gValidateCassandraName},
+        ConstraintTestBundle{"cassandraNameConstraint", gValidateCassandraName},
         ConstraintTestBundle{"loadModeConstraint", gValidateLoadMode},
         ConstraintTestBundle{"ChannelNameConstraint", gValidateChannelName},
         ConstraintTestBundle{"ApiVersionConstraint", gValidateApiVersion},

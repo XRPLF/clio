@@ -31,6 +31,7 @@
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
 #include <boost/utility/result_of.hpp>
+#include <boost/uuid/uuid.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Fees.h>
@@ -569,6 +570,15 @@ public:
     fetchMigratorStatus(std::string const& migratorName, boost::asio::yield_context yield) const = 0;
 
     /**
+     * @brief Fetches the data of all nodes in the cluster.
+     *
+     * @param yield The coroutine context
+     *@return The data of all nodes in the cluster.
+     */
+    [[nodiscard]] virtual std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>
+    fetchClioNodesData(boost::asio::yield_context yield) const = 0;
+
+    /**
      * @brief Synchronously fetches the ledger range from DB.
      *
      * This function just wraps hardFetchLedgerRange(boost::asio::yield_context) using synchronous(FnType&&).
@@ -681,6 +691,15 @@ public:
      */
     virtual void
     writeSuccessor(std::string&& key, std::uint32_t seq, std::string&& successor) = 0;
+
+    /**
+     * @brief Write a node message. Used by ClusterCommunicationService
+     *
+     * @param uuid The UUID of the node
+     * @param message The message to write
+     */
+    virtual void
+    writeNodeMessage(boost::uuids::uuid const& uuid, std::string message) = 0;
 
     /**
      * @brief Starts a write transaction with the DB. No-op for cassandra.

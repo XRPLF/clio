@@ -68,31 +68,14 @@ class WsConnection : public WsConnectionBase {
 
 public:
     WsConnection(
-        boost::asio::ip::tcp::socket socket,
+        StreamType&& stream,
         std::string ip,
         boost::beast::flat_buffer buffer,
         boost::beast::http::request<boost::beast::http::string_body> initialRequest,
         util::TagDecoratorFactory const& tagDecoratorFactory
     )
-        requires IsTcpStream<StreamType>
         : WsConnectionBase(std::move(ip), std::move(buffer), tagDecoratorFactory)
-        , stream_(std::move(socket))
-        , initialRequest_(std::move(initialRequest))
-    {
-        setupWsStream();
-    }
-
-    WsConnection(
-        boost::asio::ip::tcp::socket socket,
-        std::string ip,
-        boost::beast::flat_buffer buffer,
-        boost::asio::ssl::context& sslContext,
-        boost::beast::http::request<boost::beast::http::string_body> initialRequest,
-        util::TagDecoratorFactory const& tagDecoratorFactory
-    )
-        requires IsSslTcpStream<StreamType>
-        : WsConnectionBase(std::move(ip), std::move(buffer), tagDecoratorFactory)
-        , stream_(std::move(socket), sslContext)
+        , stream_(std::move(stream))
         , initialRequest_(std::move(initialRequest))
     {
         setupWsStream();
@@ -189,25 +172,24 @@ private:
 using PlainWsConnection = WsConnection<boost::beast::tcp_stream>;
 using SslWsConnection = WsConnection<boost::asio::ssl::stream<boost::beast::tcp_stream>>;
 
-std::expected<std::unique_ptr<PlainWsConnection>, Error>
-makePlainWsConnection(
-    boost::asio::ip::tcp::socket socket,
+template <typename StreamType>
+std::expected<std::unique_ptr<WsConnection<StreamType>>, Error>
+makeWsConnection(
+    StreamType&& stream,
     std::string ip,
     boost::beast::flat_buffer buffer,
     boost::beast::http::request<boost::beast::http::string_body> request,
     util::TagDecoratorFactory const& tagDecoratorFactory,
     boost::asio::yield_context yield
-);
-
-std::expected<std::unique_ptr<SslWsConnection>, Error>
-makeSslWsConnection(
-    boost::asio::ip::tcp::socket socket,
-    std::string ip,
-    boost::beast::flat_buffer buffer,
-    boost::beast::http::request<boost::beast::http::string_body> request,
-    boost::asio::ssl::context& sslContext,
-    util::TagDecoratorFactory const& tagDecoratorFactory,
-    boost::asio::yield_context yield
-);
+)
+{
+    auto connection = std::make_unique<WsConnection<StreamType>>(
+        std::forward<StreamType>(stream), std::move(ip), std::move(buffer), std::move(request), tagDecoratorFactory
+    );
+    auto maybeError = connection->performHandshake(yield);
+    if (maybeError.has_value())
+        return std::unexpected{maybeError.value()};
+    return connection;
+}
 
 }  // namespace web::ng::impl

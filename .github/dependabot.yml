@@ -8,9 +8,9 @@ updates:
       time: "04:00"
       timezone: "Etc/GMT"
     reviewers:
-      - "cindyyan317"
       - "godexsoft"
       - "kuznetsss"
+      - "PeterChen13579"
     commit-message:
       prefix: "[CI] "
     target-branch: "develop"

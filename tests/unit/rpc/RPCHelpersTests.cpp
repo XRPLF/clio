@@ -581,7 +581,7 @@ TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_BlobDoesNotExist)
     });
 }
 
-TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExistsBlobExists_AccountWithCorrectFlag)
+TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_AccountWithCorrectFlag)
 {
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const issuerKey = ripple::keylet::account(account);
@@ -600,12 +600,12 @@ TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExistsBlobExists_AccountWithCorrectFl
     });
 }
 
-TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExistsBlobExists_AccountFlagDoesNotExist)
+TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_TrustLineIsFrozenAndCheckFreezeFlag)
 {
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const issuerKey = ripple::keylet::account(account);
 
-    // create account with highDeepFreeze Flag
+    // create account with lowDeepFreeze Flag
     auto const accountObject = createAccountRootObject(kACCOUNT, ripple::lsfLowDeepFreeze, 1, 10, 2, kTXN_ID, 3);
 
     ON_CALL(*backend_, doFetchLedgerObject(issuerKey.key, kLEDGER_SEQ_OBJECT, _))
