@@ -295,10 +295,8 @@ TEST_F(ResponseExpirationCacheAssertTest, NonCacheableCommandThrowsAssertion)
 {
     ResponseExpirationCache cache{std::chrono::seconds(10), {cmd}};
 
-    // First verify that shouldCache returns false
     ASSERT_FALSE(cache.shouldCache("non_cacheable_command"));
 
-    // Now test the actual assertion
     runSpawn([&](boost::asio::yield_context yield) {
         EXPECT_CLIO_ASSERT_FAIL({
             [[maybe_unused]]
