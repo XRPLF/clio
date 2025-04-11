@@ -337,11 +337,9 @@ private:
 
             LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
 
-            // if (not v) {
-            //     notifyErrored(ctx.method);
-            // } else if (not ctx.isAdmin and responseCache_) {
-            //     responseCache_->put(ctx.method, v.result->as_object());
-            // }
+            if (not v) {
+                notifyErrored(ctx.method);
+            }
 
             return Result{std::move(v)};
         } catch (data::DatabaseTimeout const& t) {
