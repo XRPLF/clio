@@ -1613,7 +1613,8 @@ createAuthCredentialArray(std::vector<std::string_view> issuer, std::vector<std:
 
 ripple::STObject
 createVault(
-    std::string_view accountId,
+    std::string_view owner,
+    std::string_view account,
     std::string_view ledgerIndex,
     ripple::LedgerIndex seq,
     std::string_view assetCurrency,
@@ -1626,8 +1627,8 @@ createVault(
 {
     auto vault = ripple::STObject(ripple::sfLedgerEntry);
     vault.setFieldH256(ripple::sfLedgerIndex, ripple::uint256(ledgerIndex));
-    vault.setAccountID(ripple::sfOwner, getAccountIdWithString(accountId));
-    vault.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
+    vault.setAccountID(ripple::sfOwner, getAccountIdWithString(owner));
+    vault.setAccountID(ripple::sfAccount, getAccountIdWithString(account));
     vault.setFieldU32(ripple::sfSequence, seq);
     vault.setFieldU64(ripple::sfOwnerNode, ownerNode);
     vault.setFieldH256(ripple::sfPreviousTxnID, previousTxId);
@@ -1638,7 +1639,6 @@ createVault(
     vault.setFieldNumber(ripple::sfAssetsTotal, ripple::STNumber{ripple::sfAssetsTotal, 300});
     vault.setFieldNumber(ripple::sfAssetsAvailable, ripple::STNumber{ripple::sfAssetsAvailable, 300});
     vault.setFieldNumber(ripple::sfLossUnrealized, ripple::STNumber{ripple::sfLossUnrealized, 0});
-    vault.setFieldNumber(ripple::sfAssetsTotal, ripple::STNumber{ripple::sfAssetsTotal, 300});
     vault.setFieldU8(ripple::sfWithdrawalPolicy, 200);
 
     vault.setFieldU32(ripple::sfFlags, 0);

@@ -515,7 +515,8 @@ createAuthCredentialArray(std::vector<std::string_view> issuer, std::vector<std:
 
 [[nodiscard]] ripple::STObject
 createVault(
-    std::string_view accountId,
+    std::string_view owner,
+    std::string_view account,
     std::string_view ledgerIndex,
     ripple::LedgerIndex seq,
     std::string_view assetCurrency,

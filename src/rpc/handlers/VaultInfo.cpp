@@ -45,7 +45,8 @@
 
 namespace rpc {
 
-VaultInfoHandler::VaultInfoHandler(std::shared_ptr<BackendInterface> const& backend) : sharedPtrBackend_{backend}
+VaultInfoHandler::VaultInfoHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+    : sharedPtrBackend_{sharedPtrBackend}
 {
 }
 

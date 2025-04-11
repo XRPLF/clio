@@ -883,6 +883,7 @@ TEST_F(RPCLedgerDataHandlerTest, JsonFetchVaultLedgerData)
 
     auto const vault = createVault(
         kACCOUNT,
+        kACCOUNT,
         kINDEX1,
         30,
         "XRP",

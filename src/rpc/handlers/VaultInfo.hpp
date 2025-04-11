@@ -37,12 +37,23 @@
 
 namespace rpc {
 
+/**
+ * @brief The vault_info command retrieves information about a vault, currency, shares etc.
+ */
 class VaultInfoHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    VaultInfoHandler(std::shared_ptr<BackendInterface> const& backend);
+    /**
+     * @brief Construct a new VaultInfo object
+     *
+     * @param sharedPtrBackend The backend to use
+     */
+    VaultInfoHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend);
 
+    /**
+     * @brief A struct to hold the data of vault object
+     */
     struct VaultInfoResponse {
         std::string owner;
         uint32_t ledgerIndex;
@@ -55,6 +66,9 @@ public:
         VaultInfoResponse vaultObj;
     };
 
+    /**
+     * @brief A struct to hold the output data for the command
+     */
     struct Output {
         ripple::STLedgerEntry vault;
         uint32_t ledgerIndex{};

@@ -3042,6 +3042,7 @@ generateTestValuesForNormalPathTest()
             .expectedIndex = ripple::uint256(kINDEX1),
             .mockedEntity = createVault(
                 kACCOUNT,
+                kACCOUNT,
                 kINDEX1,
                 kRANGE_MAX,
                 "XRP",
@@ -3068,6 +3069,7 @@ generateTestValuesForNormalPathTest()
             .expectedIndex =
                 ripple::keylet::vault(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX).key,
             .mockedEntity = createVault(
+                kACCOUNT,
                 kACCOUNT,
                 kINDEX1,
                 kRANGE_MAX,
@@ -3175,6 +3177,7 @@ TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
     boost::json::object entry;
 
     auto const vault = createVault(
+        kACCOUNT,
         kACCOUNT,
         kINDEX1,
         kRANGE_MAX,

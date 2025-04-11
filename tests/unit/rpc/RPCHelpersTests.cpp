@@ -1092,6 +1092,7 @@ TEST_F(RPCHelpersTest, SupplementJson_ValidVaultEntry)
 
     auto const vault = createVault(
         kACCOUNT,
+        kACCOUNT,
         kINDEX1,
         30,
         "XRP",
@@ -1126,6 +1127,7 @@ TEST_F(RPCHelpersTest, SupplementJson_MissingIssuanceEntry)
     boost::json::object entry;
 
     auto const vault = createVault(
+        kACCOUNT,
         kACCOUNT,
         kINDEX1,
         30,
