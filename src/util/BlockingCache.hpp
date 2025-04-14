@@ -121,6 +121,7 @@ public:
                 return update(yield, std::move(updater), std::move(verifier));
             }
         };
+        std::unreachable();
     }
 
     /**
