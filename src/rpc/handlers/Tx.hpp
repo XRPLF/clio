@@ -157,8 +157,10 @@ public:
         }
 
         std::optional<uint32_t> currentNetId = std::nullopt;
-        if (auto const& etlState = etl_->getETLState(); etlState.has_value())
+        if (auto const& etlState = etl_->getETLState(); etlState.has_value()) {
+            ASSERT(etlState->networkID.has_value(), "etl must have network ID value");
             currentNetId = etlState->networkID;
+        }
 
         std::optional<data::TransactionAndMetadata> dbResponse;
 
