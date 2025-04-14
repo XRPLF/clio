@@ -28,6 +28,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/LedgerUtils.hpp"
+#include "util/MockExecutionStrategy.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/Random.hpp"
 #include "util/StringUtils.hpp"
@@ -115,12 +116,15 @@ protected:
     // recreated for each test
     data::LedgerCache cache_;
     std::unique_ptr<BackendInterface> backend_;
+    MockExecutionStrategy execution_{settingsProvider_, cache_};
 
     void
     SetUp() override
     {
         SyncAsioContextTest::SetUp();
-        backend_ = std::make_unique<CassandraBackend>(settingsProvider_, cache_, false);
+        backend_ = std::make_unique<BasicCassandraBackend<SettingsProvider, MockExecutionStrategy>>(
+            settingsProvider_, cache_, false
+        );
     }
     void
     TearDown() override
@@ -1299,17 +1303,12 @@ TEST_F(BackendCassandraTest, CacheIntegration)
     ASSERT_EQ(done, true);
 }
 
-TEST_F(BackendCassandraTest, FetchLedgerBySeqCache)
+TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
 {
-    std::atomic_bool done = false;
-    std::optional<boost::asio::io_context::work> work;
-    work.emplace(ctx_);
-
-    boost::asio::spawn(ctx_, [this, &done, &work](boost::asio::yield_context yield) {
+    runSpawn([&](auto yield) {
         auto rawHeaderBlob = hexStringToBinaryString(kRAWHEADER);
         ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
 
-        backend_->startWrites();
         backend_->writeLedger(lgrInfo, std::move(rawHeaderBlob));
         auto const testLedger = lgrInfo.seq;
         ASSERT_TRUE(backend_->finishWrites(lgrInfo.seq));
@@ -1327,10 +1326,5 @@ TEST_F(BackendCassandraTest, FetchLedgerBySeqCache)
             ASSERT_TRUE(ledger.has_value());
             EXPECT_EQ(ledger->seq, lgrInfo.seq);
         }
-
-        done = true;
-        work.reset();
     });
-    ctx_.run();
-    ASSERT_EQ(done, true);
 }
