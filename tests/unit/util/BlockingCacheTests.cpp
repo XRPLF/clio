@@ -88,7 +88,7 @@ TEST_F(BlockingCacheTest, asyncGet_EmptyCacheUpdateSuccessButVerifierRejects)
             EXPECT_CALL(mockUpdater, Call).WillOnce(Return(value));
             EXPECT_CALL(mockVerifier, Call(value)).WillOnce(Return(false));
 
-            auto result = cache->asyncGet(yield, mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+            result = cache->asyncGet(yield, mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
 
             ASSERT_TRUE(result.has_value());
             EXPECT_EQ(result.value(), value);
