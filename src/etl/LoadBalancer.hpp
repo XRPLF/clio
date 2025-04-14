@@ -44,6 +44,7 @@
 #include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <chrono>
+#include <concepts>
 #include <cstdint>
 #include <expected>
 #include <memory>
