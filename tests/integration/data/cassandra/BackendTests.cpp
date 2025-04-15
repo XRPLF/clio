@@ -24,6 +24,7 @@
 #include "data/Types.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
+#include "data/cassandra/Types.hpp"
 #include "etl/NFTHelpers.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "util/AsioContextTestFixture.hpp"
@@ -1305,13 +1306,21 @@ TEST_F(BackendCassandraTest, CacheIntegration)
 
 TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
 {
-    runSpawn([&](auto yield) {
+    std::atomic_bool done = false;
+    std::optional<boost::asio::io_context::work> work;
+    work.emplace(ctx_);
+
+    boost::asio::spawn(ctx_, [this, &done, &work](boost::asio::yield_context yield) {
         auto rawHeaderBlob = hexStringToBinaryString(kRAWHEADER);
         ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
 
         backend_->writeLedger(lgrInfo, std::move(rawHeaderBlob));
         auto const testLedger = lgrInfo.seq;
         ASSERT_TRUE(backend_->finishWrites(lgrInfo.seq));
+
+        auto&& back = dynamic_cast<BasicCassandraBackend<SettingsProvider, MockExecutionStrategy>*>(backend_.get());
+        EXPECT_CALL(back->getExecutor(), read(testing::_, testing::A<MockExecutionStrategy::StatementType const&>()))
+            .Times(2);
 
         {
             // backend should cache the result of fetchLedgerBySequence
@@ -1326,5 +1335,18 @@ TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
             ASSERT_TRUE(ledger.has_value());
             EXPECT_EQ(ledger->seq, lgrInfo.seq);
         }
+
+        {
+            // Third call: should return from cache
+            auto const ledger = backend_->fetchLedgerBySequence(testLedger, yield);
+            ASSERT_TRUE(ledger.has_value());
+            EXPECT_EQ(ledger->seq, lgrInfo.seq);
+        }
+
+        done = true;
+        work.reset();
     });
+
+    ctx_.run();
+    ASSERT_EQ(done, true);
 }
