@@ -123,6 +123,7 @@ constexpr auto kDEFAULT_OUT2 = R"({
     "ctid": "C000006400640000",
     "tx_json": {
         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+        "ctid": "C000006400640000",
         "date": 123456,
         "Fee": "2",
         "ledger_index": 100,
@@ -179,7 +180,7 @@ TEST_F(RPCTxTest, InvalidBinaryV1)
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
-    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 0}));
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
@@ -246,7 +247,7 @@ TEST_F(RPCTxTest, TxnNotFound)
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
-    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 0}));
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
@@ -274,7 +275,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
-    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 0}));
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
@@ -305,7 +306,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
-    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 0}));
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
@@ -372,7 +373,7 @@ TEST_F(RPCTxTest, DefaultParameter_API_v1)
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
-    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 0}));
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
@@ -402,7 +403,7 @@ TEST_F(RPCTxTest, PaymentTx_API_v1)
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
-    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 0}));
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
@@ -433,7 +434,7 @@ TEST_F(RPCTxTest, PaymentTx_API_v2)
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
-    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 0}));
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
@@ -467,7 +468,7 @@ TEST_F(RPCTxTest, DefaultParameter_API_v2)
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
-    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 0}));
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
@@ -508,7 +509,7 @@ TEST_F(RPCTxTest, ReturnBinary)
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
-    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 0}));
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
@@ -639,7 +640,7 @@ TEST_F(RPCTxTest, MintNFT)
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
-    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 0}));
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
@@ -666,7 +667,7 @@ TEST_F(RPCTxTest, NFTAcceptOffer)
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
-    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 0}));
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
@@ -694,7 +695,7 @@ TEST_F(RPCTxTest, NFTCancelOffer)
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
-    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 0}));
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this, &ids](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
@@ -729,7 +730,7 @@ TEST_F(RPCTxTest, NFTCreateOffer)
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
-    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 0}));
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
@@ -833,7 +834,7 @@ TEST_F(RPCTxTest, CTIDNotMatch)
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
-        // TODO: [PETER13579] change to "WrongNetwork" error string when new libxrpl gets merged
+        // TODO: https://github.com/XRPLF/clio/issues/2002
         EXPECT_EQ(err.at("error_code").as_uint64(), 4);
         EXPECT_EQ(
             err.at("error_message").as_string(),

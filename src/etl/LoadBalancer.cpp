@@ -151,13 +151,6 @@ LoadBalancer::LoadBalancer(
             ));
         } else {
             etlState_ = stateOpt;
-            /*
-             * NOTE: Rippled NetworkID: Mainnet = 0; Testnet = 1; Devnet = 2
-             * However, if rippled is running on neither of these (ie. standalone mode) rippled will show 0, but
-             * is not included in the stateOpt response. Must manually add it here.
-             */
-            if (!etlState_->networkID.has_value())
-                etlState_->networkID = 0;
         }
 
         sources_.push_back(std::move(source));
