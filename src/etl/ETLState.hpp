@@ -40,10 +40,10 @@ namespace etl {
 struct ETLState {
     /*
      * NOTE: Rippled NetworkID: Mainnet = 0; Testnet = 1; Devnet = 2
-     * However, if rippled is running on neither of these (ie. standalone mode) rippled will show 0, but
+     * However, if rippled is running on neither of these (ie. standalone mode) rippled will default to 0, but
      * is not included in the stateOpt response. Must manually add it here.
      */
-    std::optional<uint32_t> networkID{0};
+    uint32_t networkID{0};
 
     /**
      * @brief Fetch the ETL state from the rippled server
