@@ -30,6 +30,7 @@
 #include "rpc/Errors.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/JsonUtils.hpp"
+#include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
 
@@ -749,7 +750,7 @@ decodeCTID(T const ctid) noexcept
  */
 template <typename T>
 void
-logDuration(web::Context const& ctx, T const& dur)
+logDuration(boost::json::object const& request, util::BaseTagDecorator const& tag, T const& dur)
 {
     using boost::json::serialize;
 
@@ -759,15 +760,15 @@ logDuration(web::Context const& ctx, T const& dur)
     auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
     auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
     auto const msg = fmt::format(
-        "Request processing duration = {} milliseconds. request = {}", millis, serialize(util::removeSecret(ctx.params))
+        "Request processing duration = {} milliseconds. request = {}", millis, serialize(util::removeSecret(request))
     );
 
     if (seconds > kDURATION_ERROR_THRESHOLD_SECONDS) {
-        LOG(log.error()) << ctx.tag() << msg;
+        LOG(log.error()) << tag << msg;
     } else if (seconds > 1) {
-        LOG(log.warn()) << ctx.tag() << msg;
+        LOG(log.warn()) << tag << msg;
     } else
-        LOG(log.info()) << ctx.tag() << msg;
+        LOG(log.info()) << tag << msg;
 }
 
 /**
