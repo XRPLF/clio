@@ -71,7 +71,7 @@ constexpr auto kDEFAULT_OUT1 = R"({
     "TakerPays": "300",
     "TransactionType": "OfferCreate",
     "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
-    "ctid":"C000006400640000",
+    "ctid": "C000006400640000",
     "meta": {
         "AffectedNodes": [
             {
@@ -582,7 +582,7 @@ TEST_F(RPCTxTest, MintNFT)
             "SigningPubKey": "74657374",
             "TransactionType": "NFTokenMint",
             "hash": "C74463F49CFDCBEF3E9902672719918CDE5042DC7E7660BEBD1D1105C4B6DFF4",
-            "ctid":"C000006400000000",
+            "ctid": "C000006400000000",
             "meta": {{
                 "AffectedNodes": [
                 {{
