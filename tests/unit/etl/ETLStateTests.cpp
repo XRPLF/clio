@@ -57,7 +57,6 @@ TEST_F(ETLStateTest, NetworkIdValid)
     EXPECT_CALL(source, forwardToRippled).WillOnce(Return(json.as_object()));
     auto const state = etl::ETLState::fetchETLStateFromSource(source);
     ASSERT_TRUE(state.has_value());
-    ASSERT_TRUE(state->networkID);
     EXPECT_EQ(state->networkID, 12);
 }
 
