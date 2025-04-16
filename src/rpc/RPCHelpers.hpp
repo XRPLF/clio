@@ -745,7 +745,8 @@ decodeCTID(T const ctid) noexcept
  * @brief Log the duration of the request processing
  *
  * @tparam T The type of the duration
- * @param ctx The context of the request
+ * @param request The request to log
+ * @param tag The tag of the context of the request
  * @param dur The duration to log
  */
 template <typename T>
