@@ -21,7 +21,6 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
-#include "etl/ETLService.hpp"
 #include "etlng/ETLServiceInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
@@ -39,6 +38,7 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/ErrorCodes.h>
 #include <xrpl/protocol/LedgerHeader.h>
@@ -214,17 +214,15 @@ public:
             // input.transaction might be not available, get hash via tx object
             if (txn.contains(JS(hash)))
                 output.hash = txn.at(JS(hash)).as_string();
+        }
 
-            // append ctid here to mimic rippled 1.12 behavior: return ctid even binary=true
-            // rippled will change it in the future, ctid should be part of tx json which not available in binary
-            // mode
-            auto const txnIdx = boost::json::value_to<uint64_t>(meta.at("TransactionIndex"));
-            if (txnIdx <= 0xFFFFU && dbResponse->ledgerSequence < 0x0FFF'FFFFUL && currentNetId &&
-                *currentNetId <= 0xFFFFU) {
-                output.ctid = rpc::encodeCTID(
-                    dbResponse->ledgerSequence, static_cast<uint16_t>(txnIdx), static_cast<uint16_t>(*currentNetId)
-                );
-            }
+        // append ctid here to mimic rippled behavior
+        auto const txnIdx = boost::json::value_to<uint64_t>(meta.at("TransactionIndex"));
+        if (txnIdx <= 0xFFFFU && dbResponse->ledgerSequence < 0x0FFF'FFFFUL && currentNetId &&
+            *currentNetId <= 0xFFFFU) {
+            output.ctid = rpc::encodeCTID(
+                dbResponse->ledgerSequence, static_cast<uint16_t>(txnIdx), static_cast<uint16_t>(*currentNetId)
+            );
         }
 
         output.date = dbResponse->date;
@@ -281,12 +279,10 @@ private:
             if (output.tx) {
                 obj[JS(tx_json)] = *output.tx;
                 obj[JS(tx_json)].as_object()[JS(date)] = output.date;
+                if (output.ctid)
+                    obj[JS(tx_json)].as_object()[JS(ctid)] = *output.ctid;
+
                 obj[JS(tx_json)].as_object()[JS(ledger_index)] = output.ledgerIndex;
-                // move ctid from tx_json to root
-                if (obj[JS(tx_json)].as_object().contains(JS(ctid))) {
-                    obj[JS(ctid)] = obj[JS(tx_json)].as_object()[JS(ctid)];
-                    obj[JS(tx_json)].as_object().erase(JS(ctid));
-                }
                 // move hash from tx_json to root
                 if (obj[JS(tx_json)].as_object().contains(JS(hash))) {
                     obj[JS(hash)] = obj[JS(tx_json)].as_object()[JS(hash)];
