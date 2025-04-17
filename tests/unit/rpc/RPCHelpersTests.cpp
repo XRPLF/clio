@@ -1204,7 +1204,7 @@ struct RPCHelpersLogDurationTest : LoggerFixture, testing::WithParamInterface<RP
 TEST_P(RPCHelpersLogDurationTest, LogDuration)
 {
     auto const& tag = taggable.tag();
-    // TOOD: Update after https://github.com/XRPLF/clio/issues/1668
+    // TOOD: Update in https://github.com/XRPLF/clio/issues/2008
     auto const tagStr = [&tag]() {
         std::stringstream ss;
         ss << tag;

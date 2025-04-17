@@ -749,9 +749,9 @@ decodeCTID(T const ctid) noexcept
  * @param tag The tag of the context of the request
  * @param dur The duration to log
  */
-template <typename T>
+template <typename DurationType>
 void
-logDuration(boost::json::object const& request, util::BaseTagDecorator const& tag, T const& dur)
+logDuration(boost::json::object const& request, util::BaseTagDecorator const& tag, DurationType const& dur)
 {
     using boost::json::serialize;
 
