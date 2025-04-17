@@ -24,15 +24,21 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AsioContextTestFixture.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/MockAmendmentCenter.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/NameGenerator.hpp"
+#include "util/Taggable.hpp"
 #include "util/TestObject.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <boost/asio/impl/spawn.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
+#include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
@@ -48,9 +54,11 @@
 #include <xrpl/protocol/jss.h>
 
 #include <array>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -1166,3 +1174,71 @@ TEST_P(IsAdminCmdParameterTest, Test)
     auto const testBundle = GetParam();
     EXPECT_EQ(isAdminCmd(testBundle.method, boost::json::parse(testBundle.testJson).as_object()), testBundle.expected);
 }
+
+struct RPCHelpersLogDurationTestBundle {
+    std::string testName;
+    std::chrono::milliseconds duration;
+    std::string expectedLogLevel;
+    bool expectDuration;
+};
+
+struct RPCHelpersLogDurationTest : LoggerFixture, testing::WithParamInterface<RPCHelpersLogDurationTestBundle> {
+    boost::json::object const request = {
+        {"method", "account_info"},
+        {"params",
+         boost::json::array{
+             boost::json::object{{"account", "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"}, {"secret", "should be deleted"}}
+         }}
+    };
+    util::TagDecoratorFactory tagFactory{util::config::ClioConfigDefinition{
+        {"log_tag_style", util::config::ConfigValue{util::config::ConfigType::String}.defaultValue("none")}
+    }};
+    struct DummyTaggable : util::Taggable {
+        DummyTaggable(util::TagDecoratorFactory& f) : util::Taggable(f)
+        {
+        }
+    };
+    DummyTaggable taggable{tagFactory};
+};
+
+TEST_P(RPCHelpersLogDurationTest, LogDuration)
+{
+    auto const& tag = taggable.tag();
+    // TOOD: Update in https://github.com/XRPLF/clio/issues/2008
+    auto const tagStr = [&tag]() {
+        std::stringstream ss;
+        ss << tag;
+        return ss.str();
+    }();
+
+    logDuration(request, tag, GetParam().duration);
+
+    std::string const output = getLoggerString();
+
+    EXPECT_NE(output.find(GetParam().expectedLogLevel), std::string::npos) << output;
+    EXPECT_NE(output.find(tagStr), std::string::npos);
+
+    if (GetParam().expectDuration) {
+        std::string durationStr = std::to_string(GetParam().duration.count()) + " milliseconds";
+        EXPECT_NE(output.find(durationStr), std::string::npos);
+    }
+
+    EXPECT_NE(output.find("account_info"), std::string::npos);
+    EXPECT_EQ(output.find("should be deleted"), std::string::npos);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    RPCHelpersLogDurationTests,
+    RPCHelpersLogDurationTest,
+    testing::Values(
+        RPCHelpersLogDurationTestBundle{"ShortDurationLogsAsInfo", std::chrono::milliseconds(500), "RPC:NFO", true},
+        RPCHelpersLogDurationTestBundle{
+            "MediumDurationLogsAsWarning",
+            std::chrono::milliseconds(5000),
+            "RPC:WRN",
+            true
+        },
+        RPCHelpersLogDurationTestBundle{"LongDurationLogsAsError", std::chrono::milliseconds(15000), "RPC:ERR", true}
+    ),
+    tests::util::kNAME_GENERATOR
+);
