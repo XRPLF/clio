@@ -366,7 +366,7 @@ std::expected<boost::json::object, rpc::CombinedError>
 LoadBalancer::forwardToRippledImpl(
     boost::json::object const& request,
     std::optional<std::string> const& clientIp,
-    bool isAdmin,
+    bool const isAdmin,
     boost::asio::yield_context yield
 )
 {

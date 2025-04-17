@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "util/AsioContextTestFixture.hpp"
-#include "util/Assert.hpp"
 #include "util/BlockingCache.hpp"
 #include "util/NameGenerator.hpp"
 
@@ -27,7 +26,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <functional>
 #include <memory>
 
 using testing::MockFunction;
@@ -83,7 +81,7 @@ TEST_F(BlockingCacheTest, asyncGet_EmptyCacheUpdateFailure)
 TEST_F(BlockingCacheTest, asyncGet_EmptyCacheUpdateSuccessButVerifierRejects)
 {
     runSpawn([&](boost::asio::yield_context yield) {
-        std::expected<int, std::string> result;
+        std::expected<ValueType, ErrorType> result;
         {
             EXPECT_CALL(mockUpdater, Call).WillOnce(Return(value));
             EXPECT_CALL(mockVerifier, Call(value)).WillOnce(Return(false));

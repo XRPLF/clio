@@ -135,7 +135,7 @@ public:
      * Initiates a cache update operation regardless of current state.
      * If another update is already in progress, waits for it to complete.
      */
-    std::expected<ValueType, ErrorType>
+    [[nodiscard]] std::expected<ValueType, ErrorType>
     update(boost::asio::yield_context yield, Updater updater, Verifier verifier)
     {
         if (state_ == State::Updating) {
