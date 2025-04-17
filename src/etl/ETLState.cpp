@@ -27,7 +27,6 @@
 #include <xrpl/protocol/jss.h>
 
 #include <cstdint>
-#include <optional>
 
 namespace etl {
 
