@@ -52,10 +52,10 @@ public:
     /**
      * @brief Possible states of the cache
      */
-    enum class State { Empty, Updating, Full };
+    enum class State { NoValue, Updating, HasValue };
 
 private:
-    std::atomic<State> state_{State::Empty};
+    std::atomic<State> state_{State::NoValue};
     util::Mutex<std::optional<ValueType>, std::shared_mutex> value_;
     boost::signals2::signal<void(std::expected<ValueType, ErrorType>)> updateFinished_;
 
@@ -69,7 +69,7 @@ public:
      * @brief Construct a cache with an initial value
      * @param initialValue The value to initialize the cache with
      */
-    explicit BlockingCache(ValueType initialValue) : state_{State::Full}, value_(std::move(initialValue))
+    explicit BlockingCache(ValueType initialValue) : state_{State::HasValue}, value_(std::move(initialValue))
     {
     }
 
@@ -112,12 +112,12 @@ public:
             case State::Updating: {
                 return wait(yield, std::move(updater), std::move(verifier));
             }
-            case State::Full: {
+            case State::HasValue: {
                 auto const value = value_.template lock<std::shared_lock>();
                 ASSERT(value->has_value(), "Value should be presented when the cache is full");
                 return value->value();
             }
-            case State::Empty: {
+            case State::NoValue: {
                 return update(yield, std::move(updater), std::move(verifier));
             }
         };
@@ -148,9 +148,9 @@ public:
 
         if (shouldBeCached) {
             value_.lock().get() = result.value();
-            state_ = State::Full;
+            state_ = State::HasValue;
         } else {
-            state_ = State::Empty;
+            state_ = State::NoValue;
             value_.lock().get() = std::nullopt;
         }
 
@@ -167,8 +167,8 @@ public:
     void
     invalidate()
     {
-        if (state_ == State::Full) {
-            state_ = State::Empty;
+        if (state_ == State::HasValue) {
+            state_ = State::NoValue;
             value_.lock().get() = std::nullopt;
         }
     }

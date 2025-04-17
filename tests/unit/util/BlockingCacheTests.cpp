@@ -53,7 +53,7 @@ struct BlockingCacheTest : SyncAsioContextTest {
     std::string error = "some error";
 };
 
-TEST_F(BlockingCacheTest, asyncGet_EmptyCacheUpdateSuccess)
+TEST_F(BlockingCacheTest, asyncGet_NoValueCacheUpdateSuccess)
 {
     EXPECT_CALL(mockUpdater, Call).WillOnce(Return(value));
     EXPECT_CALL(mockVerifier, Call(value)).WillOnce(Return(true));
@@ -66,7 +66,7 @@ TEST_F(BlockingCacheTest, asyncGet_EmptyCacheUpdateSuccess)
     });
 }
 
-TEST_F(BlockingCacheTest, asyncGet_EmptyCacheUpdateFailure)
+TEST_F(BlockingCacheTest, asyncGet_NoValueCacheUpdateFailure)
 {
     EXPECT_CALL(mockUpdater, Call).WillOnce(Return(std::unexpected{error}));
 
@@ -78,7 +78,7 @@ TEST_F(BlockingCacheTest, asyncGet_EmptyCacheUpdateFailure)
     });
 }
 
-TEST_F(BlockingCacheTest, asyncGet_EmptyCacheUpdateSuccessButVerifierRejects)
+TEST_F(BlockingCacheTest, asyncGet_NoValueCacheUpdateSuccessButVerifierRejects)
 {
     runSpawn([&](boost::asio::yield_context yield) {
         std::expected<ValueType, ErrorType> result;
@@ -110,7 +110,7 @@ TEST_F(BlockingCacheTest, asyncGet_EmptyCacheUpdateSuccessButVerifierRejects)
     });
 }
 
-TEST_F(BlockingCacheTest, asyncGet_FullCacheReturnsValue)
+TEST_F(BlockingCacheTest, asyncGet_HasValueCacheReturnsValue)
 {
     cache = std::make_unique<Cache>(value);
 
@@ -192,11 +192,11 @@ INSTANTIATE_TEST_SUITE_P(
     tests::util::kNAME_GENERATOR
 );
 
-TEST_F(BlockingCacheTest, InvalidateWhenStateIsEmpty)
+TEST_F(BlockingCacheTest, InvalidateWhenStateIsNoValue)
 {
-    ASSERT_EQ(cache->state(), Cache::State::Empty);
+    ASSERT_EQ(cache->state(), Cache::State::NoValue);
     cache->invalidate();
-    ASSERT_EQ(cache->state(), Cache::State::Empty);
+    ASSERT_EQ(cache->state(), Cache::State::NoValue);
 }
 
 TEST_F(BlockingCacheTest, InvalidateWhenStateIsUpdating)
@@ -213,16 +213,16 @@ TEST_F(BlockingCacheTest, InvalidateWhenStateIsUpdating)
         auto result = cache->asyncGet(yield, mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
         ASSERT_TRUE(result.has_value());
         ASSERT_EQ(result.value(), value);
-        ASSERT_EQ(cache->state(), Cache::State::Full);
+        ASSERT_EQ(cache->state(), Cache::State::HasValue);
     });
 }
 
-TEST_F(BlockingCacheTest, InvalidateWhenStateIsFull)
+TEST_F(BlockingCacheTest, InvalidateWhenStateIsHasValue)
 {
     cache = std::make_unique<Cache>(value);
-    ASSERT_EQ(cache->state(), Cache::State::Full);
+    ASSERT_EQ(cache->state(), Cache::State::HasValue);
     cache->invalidate();
-    EXPECT_EQ(cache->state(), Cache::State::Empty);
+    EXPECT_EQ(cache->state(), Cache::State::NoValue);
 }
 
 TEST_F(BlockingCacheTest, UpdateFromTwoCoroutinesHappensOnlyOnes)
