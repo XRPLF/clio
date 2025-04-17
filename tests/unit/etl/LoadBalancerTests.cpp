@@ -645,7 +645,7 @@ struct LoadBalancerForwardToRippledErrorTestBundle {
     std::string testName;
     rpc::ClioError firstSourceError;
     rpc::ClioError secondSourceError;
-    rpc::ClioError responseExpectedError;
+    rpc::CombinedError responseExpectedError;
 };
 
 struct LoadBalancerForwardToRippledErrorTests
@@ -776,7 +776,7 @@ TEST_F(LoadBalancerForwardToRippledTests, commandLineMissing)
     runSpawn([&](boost::asio::yield_context yield) {
         EXPECT_EQ(
             loadBalancer->forwardToRippled(request, clientIP_, false, yield).error(),
-            rpc::ClioError::RpcCommandIsMissing
+            rpc::CombinedError{rpc::ClioError::RpcCommandIsMissing}
         );
     });
 }

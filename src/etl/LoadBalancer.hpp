@@ -44,6 +44,7 @@
 #include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <chrono>
+#include <concepts>
 #include <cstdint>
 #include <expected>
 #include <memory>
@@ -218,7 +219,7 @@ public:
      * @param yield The coroutine context
      * @return Response received from rippled node as JSON object on success or error on failure
      */
-    std::expected<boost::json::object, rpc::ClioError>
+    std::expected<boost::json::object, rpc::CombinedError>
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,
@@ -264,6 +265,14 @@ private:
      */
     void
     chooseForwardingSource();
+
+    std::expected<boost::json::object, rpc::CombinedError>
+    forwardToRippledImpl(
+        boost::json::object const& request,
+        std::optional<std::string> const& clientIp,
+        bool isAdmin,
+        boost::asio::yield_context yield
+    );
 };
 
 }  // namespace etl

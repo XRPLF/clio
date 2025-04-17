@@ -62,7 +62,7 @@ struct MockNgLoadBalancer : etlng::LoadBalancerInterface {
     MOCK_METHOD(boost::json::value, toJson, (), (const, override));
     MOCK_METHOD(std::optional<etl::ETLState>, getETLState, (), (noexcept, override));
 
-    using ForwardToRippledReturnType = std::expected<boost::json::object, rpc::ClioError>;
+    using ForwardToRippledReturnType = std::expected<boost::json::object, rpc::CombinedError>;
     MOCK_METHOD(
         ForwardToRippledReturnType,
         forwardToRippled,

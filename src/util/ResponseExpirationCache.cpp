@@ -21,40 +21,26 @@
 
 #include "util/Assert.hpp"
 
+#include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 
 #include <chrono>
-#include <mutex>
-#include <optional>
-#include <shared_mutex>
+#include <memory>
 #include <string>
+#include <unordered_set>
 #include <utility>
 
 namespace util {
 
-void
-ResponseExpirationCache::Entry::put(boost::json::object response)
+ResponseExpirationCache::ResponseExpirationCache(
+    std::chrono::steady_clock::duration cacheTimeout,
+    std::unordered_set<std::string> const& cmds
+)
+    : cacheTimeout_(cacheTimeout)
 {
-    response_ = std::move(response);
-    lastUpdated_ = std::chrono::steady_clock::now();
-}
-
-std::optional<boost::json::object>
-ResponseExpirationCache::Entry::get() const
-{
-    return response_;
-}
-
-std::chrono::steady_clock::time_point
-ResponseExpirationCache::Entry::lastUpdated() const
-{
-    return lastUpdated_;
-}
-
-void
-ResponseExpirationCache::Entry::invalidate()
-{
-    response_.reset();
+    for (auto const& command : cmds) {
+        cache_.emplace(command, std::make_unique<CacheEntry>());
+    }
 }
 
 bool
@@ -63,38 +49,41 @@ ResponseExpirationCache::shouldCache(std::string const& cmd)
     return cache_.contains(cmd);
 }
 
-std::optional<boost::json::object>
-ResponseExpirationCache::get(std::string const& cmd) const
+std::expected<boost::json::object, ResponseExpirationCache::Error>
+ResponseExpirationCache::getOrUpdate(
+    boost::asio::yield_context yield,
+    std::string const& cmd,
+    Updater updater,
+    Verifier verifier
+)
 {
     auto it = cache_.find(cmd);
-    if (it == cache_.end())
-        return std::nullopt;
+    ASSERT(it != cache_.end(), "Can't get a value which is not in the cache");
 
-    auto const& entry = it->second.lock<std::shared_lock>();
-    if (std::chrono::steady_clock::now() - entry->lastUpdated() > cacheTimeout_)
-        return std::nullopt;
+    auto& entry = it->second;
+    {
+        auto result = entry->asyncGet(yield, updater, verifier);
+        if (not result.has_value()) {
+            return std::unexpected{std::move(result).error()};
+        }
+        if (std::chrono::steady_clock::now() - result->lastUpdated < cacheTimeout_) {
+            return std::move(result)->response;
+        }
+    }
 
-    return entry->get();
-}
-
-void
-ResponseExpirationCache::put(std::string const& cmd, boost::json::object const& response)
-{
-    if (not shouldCache(cmd))
-        return;
-
-    ASSERT(cache_.contains(cmd), "Command is not in the cache: {}", cmd);
-
-    auto entry = cache_[cmd].lock<std::unique_lock>();
-    entry->put(response);
+    // Force update due to cache timeout
+    auto result = entry->update(yield, std::move(updater), std::move(verifier));
+    if (not result.has_value()) {
+        return std::unexpected{std::move(result).error()};
+    }
+    return std::move(result)->response;
 }
 
 void
 ResponseExpirationCache::invalidate()
 {
     for (auto& [_, entry] : cache_) {
-        auto entryLock = entry.lock<std::unique_lock>();
-        entryLock->invalidate();
+        entry->invalidate();
     }
 }
 

@@ -54,6 +54,7 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <variant>
 #include <vector>
 
 using namespace util::config;
@@ -227,7 +228,7 @@ LoadBalancer::fetchLedger(
     return response;
 }
 
-std::expected<boost::json::object, rpc::ClioError>
+std::expected<boost::json::object, rpc::CombinedError>
 LoadBalancer::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& clientIp,
@@ -239,40 +240,37 @@ LoadBalancer::forwardToRippled(
         return std::unexpected{rpc::ClioError::RpcCommandIsMissing};
 
     auto const cmd = boost::json::value_to<std::string>(request.at("command"));
-    if (forwardingCache_) {
-        if (auto cachedResponse = forwardingCache_->get(cmd); cachedResponse) {
-            return std::move(cachedResponse).value();
+
+    if (forwardingCache_ and forwardingCache_->shouldCache(cmd)) {
+        auto updater =
+            [this, &request, &clientIp, isAdmin](boost::asio::yield_context yield
+            ) -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
+            auto result = forwardToRippledImpl(request, clientIp, isAdmin, yield);
+            if (result.has_value()) {
+                return util::ResponseExpirationCache::EntryData{
+                    .lastUpdated = std::chrono::steady_clock::now(), .response = std::move(result).value()
+                };
+            }
+            return std::unexpected{
+                util::ResponseExpirationCache::Error{.status = rpc::Status{result.error()}, .warnings = {}}
+            };
+        };
+
+        auto result = forwardingCache_->getOrUpdate(
+            yield,
+            cmd,
+            std::move(updater),
+            [](util::ResponseExpirationCache::EntryData const& entry) { return not entry.response.contains("error"); }
+        );
+        if (result.has_value()) {
+            return std::move(result).value();
         }
+        auto const combinedError = result.error().status.code;
+        ASSERT(std::holds_alternative<rpc::ClioError>(combinedError), "There could be only ClioError here");
+        return std::unexpected{std::get<rpc::ClioError>(combinedError)};
     }
 
-    ASSERT(not sources_.empty(), "ETL sources must be configured to forward requests.");
-    std::size_t sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
-
-    auto numAttempts = 0u;
-
-    auto xUserValue = isAdmin ? kADMIN_FORWARDING_X_USER_VALUE : kUSER_FORWARDING_X_USER_VALUE;
-
-    std::optional<boost::json::object> response;
-    rpc::ClioError error = rpc::ClioError::EtlConnectionError;
-    while (numAttempts < sources_.size()) {
-        auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield);
-        if (res) {
-            response = std::move(res).value();
-            break;
-        }
-        error = std::max(error, res.error());  // Choose the best result between all sources
-
-        sourceIdx = (sourceIdx + 1) % sources_.size();
-        ++numAttempts;
-    }
-
-    if (response) {
-        if (forwardingCache_ and not response->contains("error"))
-            forwardingCache_->put(cmd, *response);
-        return std::move(response).value();
-    }
-
-    return std::unexpected{error};
+    return forwardToRippledImpl(request, clientIp, isAdmin, yield);
 }
 
 boost::json::value
@@ -361,6 +359,42 @@ LoadBalancer::chooseForwardingSource()
             source->setForwarding(false);
         }
     }
+}
+
+std::expected<boost::json::object, rpc::CombinedError>
+LoadBalancer::forwardToRippledImpl(
+    boost::json::object const& request,
+    std::optional<std::string> const& clientIp,
+    bool const isAdmin,
+    boost::asio::yield_context yield
+)
+{
+    ASSERT(not sources_.empty(), "ETL sources must be configured to forward requests.");
+    std::size_t sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
+
+    auto numAttempts = 0u;
+
+    auto xUserValue = isAdmin ? kADMIN_FORWARDING_X_USER_VALUE : kUSER_FORWARDING_X_USER_VALUE;
+
+    std::optional<boost::json::object> response;
+    rpc::ClioError error = rpc::ClioError::EtlConnectionError;
+    while (numAttempts < sources_.size()) {
+        auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield);
+        if (res) {
+            response = std::move(res).value();
+            break;
+        }
+        error = std::max(error, res.error());  // Choose the best result between all sources
+
+        sourceIdx = (sourceIdx + 1) % sources_.size();
+        ++numAttempts;
+    }
+
+    if (response.has_value()) {
+        return std::move(response).value();
+    }
+
+    return std::unexpected{error};
 }
 
 }  // namespace etl

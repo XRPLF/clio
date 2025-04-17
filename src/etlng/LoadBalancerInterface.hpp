@@ -115,7 +115,7 @@ public:
      * @param yield The coroutine context
      * @return Response received from rippled node as JSON object on success or error on failure
      */
-    virtual std::expected<boost::json::object, rpc::ClioError>
+    virtual std::expected<boost::json::object, rpc::CombinedError>
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,

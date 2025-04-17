@@ -17,53 +17,292 @@
 */
 //==============================================================================
 
+#include "rpc/Errors.hpp"
+#include "util/AsioContextTestFixture.hpp"
+#include "util/MockAssert.hpp"
 #include "util/ResponseExpirationCache.hpp"
 
+#include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <string>
 #include <thread>
+#include <unordered_set>
 
 using namespace util;
+using testing::MockFunction;
+using testing::Return;
+using testing::StrictMock;
 
-struct ResponseExpirationCacheTests : public ::testing::Test {
-protected:
-    ResponseExpirationCache cache_{std::chrono::seconds{100}, {"key"}};
-    boost::json::object object_{{"key", "value"}};
+struct ResponseExpirationCacheTest : SyncAsioContextTest {
+    using MockUpdater = StrictMock<MockFunction<
+        std::expected<ResponseExpirationCache::EntryData, ResponseExpirationCache::Error>(boost::asio::yield_context)>>;
+    using MockVerifier = StrictMock<MockFunction<bool(ResponseExpirationCache::EntryData const&)>>;
+
+    std::string const cmd = "server_info";
+    boost::json::object const obj = {{"some key", "some value"}};
+    MockUpdater mockUpdater;
+    MockVerifier mockVerifier;
 };
 
-TEST_F(ResponseExpirationCacheTests, PutAndGetNotExpired)
+TEST_F(ResponseExpirationCacheTest, ShouldCacheDeterminesIfCommandIsCacheable)
 {
-    EXPECT_FALSE(cache_.get("key").has_value());
+    std::unordered_set<std::string> cmds = {cmd, "account_info"};
+    ResponseExpirationCache cache{std::chrono::seconds(10), cmds};
 
-    cache_.put("key", object_);
-    auto result = cache_.get("key");
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(*result, object_);
-    result = cache_.get("key2");
-    ASSERT_FALSE(result.has_value());
+    for (auto const& c : cmds) {
+        EXPECT_TRUE(cache.shouldCache(c));
+    }
 
-    cache_.put("key2", object_);
-    result = cache_.get("key2");
-    ASSERT_FALSE(result.has_value());
+    EXPECT_FALSE(cache.shouldCache("account_tx"));
+    EXPECT_FALSE(cache.shouldCache("ledger"));
+    EXPECT_FALSE(cache.shouldCache("submit"));
+    EXPECT_FALSE(cache.shouldCache(""));
 }
 
-TEST_F(ResponseExpirationCacheTests, Invalidate)
+TEST_F(ResponseExpirationCacheTest, ShouldCacheEmptySetMeansNothingCacheable)
 {
-    cache_.put("key", object_);
-    cache_.invalidate();
-    EXPECT_FALSE(cache_.get("key").has_value());
+    std::unordered_set<std::string> const emptyCmds;
+    ResponseExpirationCache cache{std::chrono::seconds(10), emptyCmds};
+
+    EXPECT_FALSE(cache.shouldCache("server_info"));
+    EXPECT_FALSE(cache.shouldCache("account_info"));
+    EXPECT_FALSE(cache.shouldCache("any_command"));
+    EXPECT_FALSE(cache.shouldCache(""));
 }
 
-TEST_F(ResponseExpirationCacheTests, GetExpired)
+TEST_F(ResponseExpirationCacheTest, ShouldCacheCaseMatchingIsRequired)
 {
-    ResponseExpirationCache cache{std::chrono::milliseconds{1}, {"key"}};
-    auto const response = boost::json::object{{"key", "value"}};
+    std::unordered_set<std::string> const specificCmds = {cmd};
+    ResponseExpirationCache cache{std::chrono::seconds(10), specificCmds};
 
-    cache.put("key", response);
-    std::this_thread::sleep_for(std::chrono::milliseconds{2});
+    EXPECT_TRUE(cache.shouldCache(cmd));
+    EXPECT_FALSE(cache.shouldCache("SERVER_INFO"));
+    EXPECT_FALSE(cache.shouldCache("Server_Info"));
+}
 
-    auto const result = cache.get("key");
-    EXPECT_FALSE(result);
+TEST_F(ResponseExpirationCacheTest, GetOrUpdateNoValueInCacheCallsUpdaterAndVerifier)
+{
+    ResponseExpirationCache cache{std::chrono::seconds(10), {cmd}};
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_CALL(mockUpdater, Call)
+            .WillOnce(Return(ResponseExpirationCache::EntryData{
+                .lastUpdated = std::chrono::steady_clock::now(),
+                .response = obj,
+            }));
+        EXPECT_CALL(mockVerifier, Call).WillOnce(Return(true));
+
+        auto result =
+            cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), obj);
+    });
+}
+
+TEST_F(ResponseExpirationCacheTest, GetOrUpdateExpiredValueInCacheCallsUpdaterAndVerifier)
+{
+    ResponseExpirationCache cache{std::chrono::milliseconds(1), {cmd}};
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        boost::json::object const expiredObject = {{"some key", "expired value"}};
+        EXPECT_CALL(mockUpdater, Call)
+            .WillOnce(Return(ResponseExpirationCache::EntryData{
+                .lastUpdated = std::chrono::steady_clock::now(),
+                .response = expiredObject,
+            }));
+        EXPECT_CALL(mockVerifier, Call).WillOnce(Return(true));
+
+        auto result =
+            cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), expiredObject);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+        EXPECT_CALL(mockUpdater, Call)
+            .WillOnce(Return(
+                ResponseExpirationCache::EntryData{.lastUpdated = std::chrono::steady_clock::now(), .response = obj}
+            ));
+        EXPECT_CALL(mockVerifier, Call).WillOnce(Return(true));
+
+        result = cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), obj);
+    });
+}
+
+TEST_F(ResponseExpirationCacheTest, GetOrUpdateCachedValueNotExpiredDoesNotCallUpdaterOrVerifier)
+{
+    ResponseExpirationCache cache{std::chrono::seconds(10), {cmd}};
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        // First call to populate cache
+        EXPECT_CALL(mockUpdater, Call)
+            .WillOnce(Return(ResponseExpirationCache::EntryData{
+                .lastUpdated = std::chrono::steady_clock::now(),
+                .response = obj,
+            }));
+        EXPECT_CALL(mockVerifier, Call).WillOnce(Return(true));
+
+        auto result =
+            cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), obj);
+
+        // Second call should use cached value and not call updater/verifier
+        result = cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), obj);
+    });
+}
+
+TEST_F(ResponseExpirationCacheTest, GetOrUpdateHandlesErrorFromUpdater)
+{
+    ResponseExpirationCache cache{std::chrono::seconds(10), {cmd}};
+
+    ResponseExpirationCache::Error const error{
+        .status = rpc::Status{rpc::ClioError::EtlConnectionError}, .warnings = {}
+    };
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_CALL(mockUpdater, Call).WillOnce(Return(std::unexpected(error)));
+
+        auto result =
+            cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+        ASSERT_FALSE(result.has_value());
+        EXPECT_EQ(result.error(), error);
+    });
+}
+
+TEST_F(ResponseExpirationCacheTest, GetOrUpdateVerifierRejection)
+{
+    ResponseExpirationCache cache{std::chrono::seconds(10), {cmd}};
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_CALL(mockUpdater, Call)
+            .WillOnce(Return(ResponseExpirationCache::EntryData{
+                .lastUpdated = std::chrono::steady_clock::now(),
+                .response = obj,
+            }));
+        EXPECT_CALL(mockVerifier, Call).WillOnce(Return(false));
+
+        auto result =
+            cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), obj);
+
+        boost::json::object const anotherObj = {{"some key", "another value"}};
+        EXPECT_CALL(mockUpdater, Call)
+            .WillOnce(Return(ResponseExpirationCache::EntryData{
+                .lastUpdated = std::chrono::steady_clock::now(),
+                .response = anotherObj,
+            }));
+        EXPECT_CALL(mockVerifier, Call).WillOnce(Return(true));
+
+        result = cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), anotherObj);
+    });
+}
+
+TEST_F(ResponseExpirationCacheTest, GetOrUpdateMultipleConcurrentUpdates)
+{
+    ResponseExpirationCache cache{std::chrono::seconds(10), {cmd}};
+    bool waitingCoroutineFinished = false;
+
+    auto waitingCoroutine = [&](boost::asio::yield_context yield) {
+        auto result =
+            cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), obj);
+        waitingCoroutineFinished = true;
+    };
+
+    EXPECT_CALL(mockUpdater, Call)
+        .WillOnce(
+            [this, &waitingCoroutine](boost::asio::yield_context yield
+            ) -> std::expected<ResponseExpirationCache::EntryData, ResponseExpirationCache::Error> {
+                boost::asio::spawn(yield, waitingCoroutine);
+                return ResponseExpirationCache::EntryData{
+                    .lastUpdated = std::chrono::steady_clock::now(),
+                    .response = obj,
+                };
+            }
+        );
+    EXPECT_CALL(mockVerifier, Call).WillOnce(Return(true));
+
+    runSpawnWithTimeout(std::chrono::seconds{1}, [&](boost::asio::yield_context yield) {
+        auto result =
+            cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), obj);
+        ASSERT_FALSE(waitingCoroutineFinished);
+    });
+}
+
+TEST_F(ResponseExpirationCacheTest, InvalidateForcesRefresh)
+{
+    ResponseExpirationCache cache{std::chrono::seconds(10), {cmd}};
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        boost::json::object oldObject = {{"some key", "old value"}};
+        EXPECT_CALL(mockUpdater, Call)
+            .WillOnce(Return(ResponseExpirationCache::EntryData{
+                .lastUpdated = std::chrono::steady_clock::now(),
+                .response = oldObject,
+            }));
+        EXPECT_CALL(mockVerifier, Call).WillOnce(Return(true));
+
+        auto result =
+            cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), oldObject);
+
+        cache.invalidate();
+
+        EXPECT_CALL(mockUpdater, Call)
+            .WillOnce(Return(ResponseExpirationCache::EntryData{
+                .lastUpdated = std::chrono::steady_clock::now(),
+                .response = obj,
+            }));
+        EXPECT_CALL(mockVerifier, Call).WillOnce(Return(true));
+
+        result = cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
+
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), obj);
+    });
+}
+
+struct ResponseExpirationCacheAssertTest : common::util::WithMockAssert, ResponseExpirationCacheTest {};
+
+TEST_F(ResponseExpirationCacheAssertTest, NonCacheableCommandThrowsAssertion)
+{
+    ResponseExpirationCache cache{std::chrono::seconds(10), {cmd}};
+
+    ASSERT_FALSE(cache.shouldCache("non_cacheable_command"));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_CLIO_ASSERT_FAIL({
+            [[maybe_unused]]
+            auto const v = cache.getOrUpdate(
+                yield, "non_cacheable_command", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction()
+            );
+        });
+    });
 }
