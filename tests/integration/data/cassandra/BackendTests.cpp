@@ -1303,20 +1303,19 @@ TEST_F(BackendCassandraTest, CacheIntegration)
     ASSERT_EQ(done, true);
 }
 
-/*
-class TestNumTimesCacheCalled : public BackendCassandraTest
-{
+class TestNumTimesCacheCalled : public BackendCassandraTest {
 public:
-    MockExecutionStrategy& getExecutor()
+    MockExecutionStrategy&
+    getExecutor()
     {
         auto* backend = dynamic_cast<BasicCassandraBackend<SettingsProvider, MockExecutionStrategy>*>(backend_.get());
-        ASSERT(backend != nullptr, "Can't be nullptr"); 
+        ASSERT(backend != nullptr, "Can't be nullptr");
         return backend->getExecutor();
     }
 };
 
 TEST_F(TestNumTimesCacheCalled, CacheFetchLedgerBySeq)
-{   
+{
     int numCacheCalled = 0;
 
     std::atomic_bool done = false;
@@ -1330,31 +1329,36 @@ TEST_F(TestNumTimesCacheCalled, CacheFetchLedgerBySeq)
         backend_->writeLedger(lgrInfo, std::move(rawHeaderBlob));
         auto const testLedger = lgrInfo.seq;
         ASSERT_TRUE(backend_->finishWrites(lgrInfo.seq));
-        
-        EXPECT_CALL(*backend_, read(testing::_, testing::A<const MockExecutionStrategy::StatementType&>()))
-        .WillRepeatedly(invoke([&numCacheCalled]() -> ResultOrError { // Specify lambda return type
-            ++numCacheCalled;
-            // TODO: Populate successPayload if needed for subsequent logic
-            return ResultOrError{successPayload}; // Return success
-        }));
+
+        backend_ = std::make_unique<BasicCassandraBackend<SettingsProvider, MockExecutionStrategy>>(
+            settingsProvider_, cache_, false
+        );
+        auto* backend = dynamic_cast<BasicCassandraBackend<SettingsProvider, MockExecutionStrategy>*>(backend_.get());
+        auto&& executor = getExecutor();
+
+        EXPECT_CALL(executor, read(testing::_, testing::A<MockExecutionStrategy::StatementType const&>()))
+            .WillOnce(testing::Invoke([&numCacheCalled](auto&&, auto&&) -> ResultOrError {
+                ++numCacheCalled;
+                return data::cassandra::impl::Result{nullptr};
+            }));
 
         {
             // backend should cache the result of fetchLedgerBySequence
-            auto const ledger = backend_->fetchLedgerBySequence(testLedger, yield);
+            auto const ledger = backend->fetchLedgerBySequence(testLedger, yield);
             ASSERT_TRUE(ledger.has_value());
             EXPECT_EQ(ledger->seq, lgrInfo.seq);
         }
 
         {
             // Second call: should return from cache
-            auto const ledger = backend_->fetchLedgerBySequence(testLedger, yield);
+            auto const ledger = backend->fetchLedgerBySequence(testLedger, yield);
             ASSERT_TRUE(ledger.has_value());
             EXPECT_EQ(ledger->seq, lgrInfo.seq);
         }
 
         {
             // Third call: should return from cache
-            auto const ledger = backend_->fetchLedgerBySequence(testLedger, yield);
+            auto const ledger = backend->fetchLedgerBySequence(testLedger, yield);
             ASSERT_TRUE(ledger.has_value());
             EXPECT_EQ(ledger->seq, lgrInfo.seq);
         }
@@ -1366,4 +1370,3 @@ TEST_F(TestNumTimesCacheCalled, CacheFetchLedgerBySeq)
     ctx_.run();
     ASSERT_EQ(done, true);
 }
-*

@@ -68,9 +68,22 @@ namespace data::cassandra {
 /**
  * @brief Used to cache the result of fetchLedgerBySeq. This way, there will be less read requests to the database.
  */
-struct FetchLedgerCache {
-    std::optional<ripple::LedgerHeader> ledger;
-    std::atomic_uint32_t seq;
+class FetchLedgerCache {
+    std::optional<ripple::LedgerHeader>
+    getLedgerHeader() const
+    {
+        return ledger_;
+    }
+
+    uint32_t
+    getSeq() const
+    {
+        return seq_;
+    }
+
+private:
+    std::optional<ripple::LedgerHeader> ledger_;
+    uint32_t seq_{};
 };
 
 /**
@@ -81,14 +94,17 @@ struct FetchLedgerCache {
  * @tparam SettingsProviderType The settings provider type to use
  * @tparam ExecutionStrategyType The execution strategy type to use
  */
-template <SomeSettingsProvider SettingsProviderType, SomeExecutionStrategy ExecutionStrategyType>
+template <
+    SomeSettingsProvider SettingsProviderType,
+    SomeExecutionStrategy ExecutionStrategyType,
+    typename FetchLedgerCacheType = FetchLedgerCache>
 class BasicCassandraBackend : public BackendInterface {
     util::Logger log_{"Backend"};
 
     SettingsProviderType settingsProvider_;
     Schema<SettingsProviderType> schema_;
     std::atomic_uint32_t ledgerSequence_ = 0u;
-    mutable util::Mutex<FetchLedgerCache, std::shared_mutex> ledgerCache_;
+    mutable util::Mutex<FetchLedgerCacheType, std::shared_mutex> ledgerCache_;
 
 protected:
     Handle handle_;
@@ -104,12 +120,19 @@ public:
      * @param cache The ledger cache to use
      * @param readOnly Whether the database should be in readonly mode
      */
-    BasicCassandraBackend(SettingsProviderType settingsProvider, data::LedgerCacheInterface& cache, bool readOnly)
+    // ADD make function
+    BasicCassandraBackend(
+        SettingsProviderType settingsProvider,
+        data::LedgerCacheInterface& cache,
+        bool readOnly,
+        FetchLedgerCacheType cacheLedger = FetchLedgerCache{}
+    )
         : BackendInterface(cache)
         , settingsProvider_{std::move(settingsProvider)}
         , schema_{settingsProvider_}
         , handle_{settingsProvider_.getSettings()}
         , executor_{settingsProvider_.getSettings(), handle_}
+        , ledgerCache_{std::forward<FetchLedgerCacheType>(cacheLedger)}
     {
         if (auto const res = handle_.connect(); not res)
             throw std::runtime_error("Could not connect to database: " + res.error());
@@ -273,9 +296,12 @@ public:
     fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context yield) const override
     {
         {
-            auto const lock = ledgerCache_.lock<std::shared_lock>();
-            if (lock->seq == sequence && lock->ledger.has_value())
+            auto const lock = ledgerCache_.template lock<std::shared_lock>();
+            std::cout << 1;
+            if (lock->seq == sequence && lock->ledger.has_value()) {
+                std::cout << 2;
                 return lock.get().ledger;
+            }
         }
 
         auto const res = executor_.read(yield, schema_->selectLedgerBySeq, sequence);
@@ -283,7 +309,7 @@ public:
             if (auto const& result = res.value(); result) {
                 if (auto const maybeValue = result.template get<std::vector<unsigned char>>(); maybeValue) {
                     auto const header = util::deserializeHeader(ripple::makeSlice(*maybeValue));
-                    auto updateCache = ledgerCache_.lock<std::unique_lock>();
+                    auto updateCache = ledgerCache_.template lock<std::unique_lock>();
                     updateCache->seq = sequence;
                     updateCache->ledger = header;
                     return header;
@@ -1063,6 +1089,12 @@ public:
     stats() const override
     {
         return executor_.stats();
+    }
+
+    ExecutionStrategyType&
+    getExecutor() const
+    {
+        return executor_;
     }
 
 private:
