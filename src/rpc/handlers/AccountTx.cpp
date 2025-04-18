@@ -164,6 +164,21 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
                 obj[txKey].as_object()[JS(date)] = txnPlusMeta.date;
                 obj[txKey].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
 
+                // Put CTID into tx or tx_json
+                auto const txnIdx = retCursor->transactionIndex;
+                std::optional<uint32_t> networkID;
+                if (auto const& etlState = etl_->getETLState(); etlState.has_value())
+                    networkID = etlState->networkID;
+
+                ASSERT(networkID.has_value(), "ETL must be available for networkID to be set in Account_Tx handler.");
+                if (txnIdx <= 0xFFFFU && retCursor->ledgerSequence < 0x0FFF'FFFFUL && *networkID <= 0xFFFFU) {
+                    auto const& encodedCTID = rpc::encodeCTID(
+                        retCursor->ledgerSequence, static_cast<uint16_t>(txnIdx), static_cast<uint16_t>(*networkID)
+                    );
+                    ASSERT(encodedCTID.has_value(), "CTID must have value");
+                    obj[txKey].as_object()[JS(ctid)] = encodedCTID.value();
+                }
+
                 if (ctx.apiVersion < 2u) {
                     obj[txKey].as_object()[JS(inLedger)] = txnPlusMeta.ledgerSequence;
                 } else {
