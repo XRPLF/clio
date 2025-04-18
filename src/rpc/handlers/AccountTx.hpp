@@ -111,6 +111,7 @@ public:
      * @brief Construct a new AccountTxHandler object
      *
      * @param sharedPtrBackend The backend to use
+     * @param etl The ETL service to use
      */
     AccountTxHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
