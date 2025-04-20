@@ -40,6 +40,7 @@
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
+#include <boost/json/value_to.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -375,6 +376,43 @@ TEST_F(RPCHelpersTest, DecodeInvalidCTID)
 {
     EXPECT_FALSE(decodeCTID('c'));
     EXPECT_FALSE(decodeCTID(true));
+}
+
+TEST_F(RPCHelpersTest, ValidInputsInsertsCTIDAndReturnsTrue)
+{
+    boost::json::object testObject;
+    auto const ledgerSeq = 1000;
+    auto const transactionID = 10;
+    auto const networkID = 1;
+    auto const expectedCTID = encodeCTID(ledgerSeq, transactionID, networkID).value();  // "C00003E8000A0001"
+
+    bool const result = insertCTID(testObject, ledgerSeq, transactionID, networkID);
+
+    EXPECT_TRUE(result);
+    ASSERT_TRUE(testObject.contains("ctid"));
+    EXPECT_TRUE(testObject.at("ctid").is_string());
+    EXPECT_EQ(boost::json::value_to<std::string>(testObject.at("ctid")), expectedCTID);
+}
+
+TEST_F(RPCHelpersTest, BoundaryInputsMaxValidInsertsCTIDAndReturnsTrue)
+{
+    boost::json::object testObject;
+    // Max valid values for ledgerSeq, transactionID and network ID
+    uint32_t const ledgerSeq = 0x0FFF'FFFF - 1;
+    uint32_t const transactionID = 0xFFFF;
+    uint32_t const networkID = 0xFFFF;
+
+    auto const encodedOpt =
+        rpc::encodeCTID(ledgerSeq, static_cast<uint16_t>(transactionID), static_cast<uint16_t>(networkID));
+    ASSERT_TRUE(encodedOpt.has_value()) << "Precondition failed: encodeCTID returned nullopt for valid boundary inputs";
+    std::string const expectedCTID = encodedOpt.value();
+
+    bool const result = insertCTID(testObject, ledgerSeq, transactionID, networkID);
+
+    EXPECT_TRUE(result);
+    ASSERT_TRUE(testObject.contains("ctid"));
+    EXPECT_TRUE(testObject.at("ctid").is_string());
+    EXPECT_EQ(boost::json::value_to<std::string>(testObject.at("ctid")), expectedCTID);
 }
 
 TEST_F(RPCHelpersTest, DeliverMaxAliasV1)

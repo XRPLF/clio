@@ -161,23 +161,18 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
                 auto const txKey = ctx.apiVersion < 2u ? JS(tx) : JS(tx_json);
                 obj[JS(meta)] = std::move(meta);
                 obj[txKey] = std::move(txn);
-                obj[txKey].as_object()[JS(date)] = txnPlusMeta.date;
-                obj[txKey].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
 
                 // Put CTID into tx or tx_json
-                auto const txnIdx = retCursor->transactionIndex;
-                std::optional<uint32_t> networkID;
-                if (auto const& etlState = etl_->getETLState(); etlState.has_value())
-                    networkID = etlState->networkID;
+                if (obj[JS(meta)].as_object().contains("TransactionIndex")) {
+                    auto networkID = 0u;
+                    if (auto const& etlState = etl_->getETLState(); etlState.has_value())
+                        networkID = etlState->networkID;
 
-                ASSERT(networkID.has_value(), "ETL must be available for networkID to be set in Account_Tx handler.");
-                if (txnIdx <= 0xFFFFU && retCursor->ledgerSequence < 0x0FFF'FFFFUL && *networkID <= 0xFFFFU) {
-                    auto const& encodedCTID = rpc::encodeCTID(
-                        retCursor->ledgerSequence, static_cast<uint16_t>(txnIdx), static_cast<uint16_t>(*networkID)
-                    );
-                    ASSERT(encodedCTID.has_value(), "CTID must have value");
-                    obj[txKey].as_object()[JS(ctid)] = encodedCTID.value();
+                    auto const txnIdx = obj[JS(meta)].as_object().at("TransactionIndex").as_int64();
+                    rpc::insertCTID(obj[txKey].as_object(), txnPlusMeta.ledgerSequence, txnIdx, networkID);
                 }
+                obj[txKey].as_object()[JS(date)] = txnPlusMeta.date;
+                obj[txKey].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
 
                 if (ctx.apiVersion < 2u) {
                     obj[txKey].as_object()[JS(inLedger)] = txnPlusMeta.ledgerSequence;

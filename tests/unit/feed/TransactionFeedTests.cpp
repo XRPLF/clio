@@ -104,6 +104,7 @@ constexpr auto kTRAN_V1 =
             "TransactionResult":"tesSUCCESS",
             "delivered_amount":"unavailable"
         },
+        "ctid":"C000002100160000",
         "type":"transaction",
         "validated":true,
         "status":"closed",
@@ -155,6 +156,7 @@ constexpr auto kTRAN_V2 =
             "TransactionResult":"tesSUCCESS",
             "delivered_amount":"unavailable"
         },
+        "ctid":"C000002100160000",
         "type":"transaction",
         "validated":true,
         "status":"closed",
@@ -411,6 +413,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
                 "TransactionResult":"tesSUCCESS",
                 "delivered_amount":"unavailable"
             },
+            "ctid":"C000002100160000",
             "type":"transaction",
             "validated":true,
             "status":"closed",
@@ -467,6 +470,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
                 "TransactionResult":"tesSUCCESS",
                 "delivered_amount":"unavailable"
             },
+            "ctid":"C000002100160000",
             "type":"transaction",
             "validated":true,
             "status":"closed",
@@ -522,6 +526,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
                 "TransactionResult":"tesSUCCESS",
                 "delivered_amount":"unavailable"
             },
+            "ctid":"C000002100160000",
             "type":"transaction",
             "validated":true,
             "status":"closed",
@@ -611,6 +616,7 @@ TEST_F(FeedTransactionTest, SubBookV2)
                 "TransactionResult":"tesSUCCESS",
                 "delivered_amount":"unavailable"
             },
+            "ctid":"C000002100160000",
             "type":"transaction",
             "validated":true,
             "status":"closed",
@@ -858,6 +864,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
                 "TransactionIndex":22,
                 "TransactionResult":"tesSUCCESS"
             },
+            "ctid":"C000002100160000",
             "type":"transaction",
             "validated":true,
             "status":"closed",
@@ -902,6 +909,7 @@ static constexpr auto kTRAN_FROZEN =
             "TransactionIndex":22,
             "TransactionResult":"tesSUCCESS"
         },
+        "ctid":"C000002100160000",
         "type":"transaction",
         "validated":true,
         "status":"closed",
@@ -1162,6 +1170,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
                 "TransactionIndex":22,
                 "TransactionResult":"tesSUCCESS"
             },
+            "ctid":"C000002100160000",
             "type":"transaction",
             "validated":true,
             "status":"closed",

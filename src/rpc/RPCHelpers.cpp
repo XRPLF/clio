@@ -380,6 +380,24 @@ insertMPTIssuanceID(
     return false;
 }
 
+bool
+insertCTID(
+    boost::json::object& jsonObject,
+    uint32_t const ledgerSeq,
+    uint32_t const transactionID,
+    uint32_t const networkID
+)
+{
+    if (transactionID <= 0xFFFFU && ledgerSeq < 0x0FFF'FFFFUL && networkID <= 0xFFFFU) {
+        auto const encodedCTID =
+            rpc::encodeCTID(ledgerSeq, static_cast<uint16_t>(transactionID), static_cast<uint16_t>(networkID));
+        ASSERT(encodedCTID.has_value(), "CTID must have value");
+        jsonObject[JS(ctid)] = encodedCTID.value();
+        return true;
+    }
+    return false;
+}
+
 void
 insertDeliverMaxAlias(boost::json::object& txJson, std::uint32_t const apiVersion)
 {

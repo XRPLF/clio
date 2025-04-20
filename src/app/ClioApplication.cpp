@@ -146,6 +146,10 @@ ClioApplication::run(bool const useNgWebServer)
     // ETL is responsible for writing and publishing to streams. In read-only mode, ETL only publishes
     auto etl = etl::ETLService::makeETLService(config_, ioc, backend, subscriptions, balancer, ledgers);
 
+    // inject networkID into subscriptions, as transaction feed require it to inject CTID in response
+    if (auto const state = etl->getETLState(); state)
+        subscriptions->setNetworkID(state->networkID);
+
     auto workQueue = rpc::WorkQueue::makeWorkQueue(config_);
     auto counters = rpc::Counters::makeCounters(workQueue);
 

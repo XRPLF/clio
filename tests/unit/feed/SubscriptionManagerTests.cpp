@@ -388,6 +388,7 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
                 "TransactionResult":"tesSUCCESS",
                 "delivered_amount":"unavailable"
             },
+            "ctid":"C000002100160000",
             "type":"transaction",
             "validated":true,
             "status":"closed",
@@ -477,6 +478,7 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
                 "TransactionResult":"tesSUCCESS",
                 "delivered_amount":"unavailable"
             },
+            "ctid":"C000002100160000",
             "type":"transaction",
             "validated":true,
             "status":"closed",

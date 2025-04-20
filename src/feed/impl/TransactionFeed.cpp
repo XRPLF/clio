@@ -176,7 +176,8 @@ TransactionFeed::pub(
     data::TransactionAndMetadata const& txMeta,
     ripple::LedgerHeader const& lgrInfo,
     std::shared_ptr<data::BackendInterface const> const& backend,
-    std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter
+    std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
+    uint32_t const networkID
 )
 {
     auto [tx, meta] = rpc::deserializeTxPlusMeta(txMeta, lgrInfo.seq);
@@ -204,6 +205,11 @@ TransactionFeed::pub(
         rpc::insertDeliveredAmount(pubObj[JS(meta)].as_object(), tx, meta, txMeta.date);
         rpc::insertDeliverMaxAlias(pubObj[txKey].as_object(), version);
         rpc::insertMPTIssuanceID(pubObj[JS(meta)].as_object(), tx, meta);
+
+        auto const& metaObj = pubObj[JS(meta)];
+        if (metaObj.is_object() && metaObj.as_object().contains("TransactionIndex") &&
+            metaObj.as_object().at("TransactionIndex").is_int64())
+            rpc::insertCTID(pubObj, lgrInfo.seq, metaObj.as_object().at("TransactionIndex").as_int64(), networkID);
 
         pubObj[JS(type)] = "transaction";
         pubObj[JS(validated)] = true;
