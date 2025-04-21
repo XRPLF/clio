@@ -1219,7 +1219,7 @@ TEST_P(RPCHelpersLogDurationTest, LogDuration)
     EXPECT_NE(output.find(tagStr), std::string::npos);
 
     if (GetParam().expectDuration) {
-        std::string durationStr = std::to_string(GetParam().duration.count()) + " milliseconds";
+        std::string const durationStr = std::to_string(GetParam().duration.count()) + " milliseconds";
         EXPECT_NE(output.find(durationStr), std::string::npos);
     }
 

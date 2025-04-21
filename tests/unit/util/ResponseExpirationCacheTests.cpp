@@ -50,7 +50,7 @@ struct ResponseExpirationCacheTest : SyncAsioContextTest {
 
 TEST_F(ResponseExpirationCacheTest, ShouldCacheDeterminesIfCommandIsCacheable)
 {
-    std::unordered_set<std::string> cmds = {cmd, "account_info"};
+    std::unordered_set<std::string> const cmds = {cmd, "account_info"};
     ResponseExpirationCache cache{std::chrono::seconds(10), cmds};
 
     for (auto const& c : cmds) {
@@ -259,7 +259,7 @@ TEST_F(ResponseExpirationCacheTest, InvalidateForcesRefresh)
     ResponseExpirationCache cache{std::chrono::seconds(10), {cmd}};
 
     runSpawn([&](boost::asio::yield_context yield) {
-        boost::json::object oldObject = {{"some key", "old value"}};
+        boost::json::object const oldObject = {{"some key", "old value"}};
         EXPECT_CALL(mockUpdater, Call)
             .WillOnce(Return(ResponseExpirationCache::EntryData{
                 .lastUpdated = std::chrono::steady_clock::now(),

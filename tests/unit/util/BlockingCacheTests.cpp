@@ -21,8 +21,6 @@
 #include "util/BlockingCache.hpp"
 #include "util/NameGenerator.hpp"
 
-#include <boost/asio/error.hpp>
-#include <boost/asio/post.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -33,7 +31,6 @@ using testing::Return;
 using testing::StrictMock;
 
 #include <boost/asio/spawn.hpp>
-#include <boost/asio/steady_timer.hpp>
 
 #include <chrono>
 #include <expected>
