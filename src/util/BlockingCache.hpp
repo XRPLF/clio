@@ -201,7 +201,7 @@ private:
         boost::system::error_code errorCode;
 
         std::optional<std::expected<ValueType, ErrorType>> result;
-        boost::signals2::scoped_connection slot =
+        boost::signals2::scoped_connection const slot =
             updateFinished_.connect([yield, &timer, &result](std::expected<ValueType, ErrorType> value) {
                 boost::asio::spawn(yield, [&timer, &result, value = std::move(value)](auto&&) {
                     result = std::move(value);
