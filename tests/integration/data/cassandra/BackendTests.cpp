@@ -28,9 +28,8 @@
 #include "etl/NFTHelpers.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "util/AsioContextTestFixture.hpp"
-#include "util/Assert.hpp"
 #include "util/LedgerUtils.hpp"
-#include "util/MockExecutionStrategy.hpp"
+#include "util/MockLedgerHeaderCache.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/Random.hpp"
 #include "util/StringUtils.hpp"
@@ -58,7 +57,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -1303,62 +1301,58 @@ TEST_F(BackendCassandraTest, CacheIntegration)
     ASSERT_EQ(done, true);
 }
 
-class TestNumTimesCacheCalled : public BackendCassandraTest {
-public:
-    MockExecutionStrategy&
-    getExecutor()
-    {
-        auto* backend = dynamic_cast<BasicCassandraBackend<SettingsProvider, MockExecutionStrategy>*>(backend_.get());
-        ASSERT(backend != nullptr, "Can't be nullptr");
-        return backend->getExecutor();
-    }
-};
-
-TEST_F(TestNumTimesCacheCalled, CacheFetchLedgerBySeq)
+TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
 {
-    int numCacheCalled = 0;
-
     std::atomic_bool done = false;
     std::optional<boost::asio::io_context::work> work;
     work.emplace(ctx_);
 
-    boost::asio::spawn(ctx_, [this, &done, &work, &numCacheCalled](boost::asio::yield_context yield) {
+    boost::asio::spawn(ctx_, [this, &done, &work](boost::asio::yield_context yield) {
         auto rawHeaderBlob = hexStringToBinaryString(kRAWHEADER);
         ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
 
         backend_->writeLedger(lgrInfo, std::move(rawHeaderBlob));
-        auto const testLedger = lgrInfo.seq;
+        auto const testLedgerSeq = lgrInfo.seq;
         ASSERT_TRUE(backend_->finishWrites(lgrInfo.seq));
 
-        backend_ = std::make_unique<BasicCassandraBackend<SettingsProvider, MockExecutionStrategy>>(
-            settingsProvider_, cache_, false
-        );
-        auto* backend = dynamic_cast<BasicCassandraBackend<SettingsProvider, MockExecutionStrategy>*>(backend_.get());
-        auto&& executor = getExecutor();
+        // use mock cache
+        using TestBackendType = data::cassandra::BasicCassandraBackend<
+            SettingsProvider,
+            data::cassandra::impl::DefaultExecutionStrategy<>,
+            MockLedgerHeaderCache>;
 
-        EXPECT_CALL(executor, read(testing::_, testing::A<MockExecutionStrategy::StatementType const&>()))
-            .WillOnce(testing::Invoke([&numCacheCalled](auto&&, auto&&) -> ResultOrError {
-                ++numCacheCalled;
-                return data::cassandra::impl::Result{nullptr};
-            }));
+        backend_ = std::make_unique<TestBackendType>(settingsProvider_, cache_, false);
+
+        auto* backendPtr = dynamic_cast<TestBackendType*>(backend_.get());
+        ASSERT_NE(backendPtr, nullptr);
+
+        auto& mockCache = backendPtr->getLedgerCache();
+
+        EXPECT_CALL(mockCache, setSeq(testLedgerSeq));
+        EXPECT_CALL(mockCache, setLedgerHeader(testing::_));
+
+        // once checks the ledgerHeader exists, the second time returns ledger header
+        EXPECT_CALL(mockCache, getLedgerHeader()).WillRepeatedly(testing::Return(lgrInfo));
+
+        {
+            testing::InSequence s;
+            // first time, getSeq doesn't match ledger sequence
+            EXPECT_CALL(mockCache, getSeq()).WillOnce(testing::Return(0));
+
+            // second time, it would be cached
+            EXPECT_CALL(mockCache, getSeq()).WillOnce(testing::Return(lgrInfo.seq));
+        }
 
         {
             // backend should cache the result of fetchLedgerBySequence
-            auto const ledger = backend->fetchLedgerBySequence(testLedger, yield);
+            auto const ledger = backendPtr->fetchLedgerBySequence(testLedgerSeq, yield);
             ASSERT_TRUE(ledger.has_value());
             EXPECT_EQ(ledger->seq, lgrInfo.seq);
         }
 
         {
             // Second call: should return from cache
-            auto const ledger = backend->fetchLedgerBySequence(testLedger, yield);
-            ASSERT_TRUE(ledger.has_value());
-            EXPECT_EQ(ledger->seq, lgrInfo.seq);
-        }
-
-        {
-            // Third call: should return from cache
-            auto const ledger = backend->fetchLedgerBySequence(testLedger, yield);
+            auto const ledger = backendPtr->fetchLedgerBySequence(testLedgerSeq, yield);
             ASSERT_TRUE(ledger.has_value());
             EXPECT_EQ(ledger->seq, lgrInfo.seq);
         }

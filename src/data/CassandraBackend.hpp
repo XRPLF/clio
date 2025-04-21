@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
 #include "data/LedgerCacheInterface.hpp"
+#include "data/LedgerHeaderCache.hpp"
 #include "data/Types.hpp"
 #include "data/cassandra/Concepts.hpp"
 #include "data/cassandra/Handle.hpp"
@@ -66,33 +67,13 @@
 namespace data::cassandra {
 
 /**
- * @brief Used to cache the result of fetchLedgerBySeq. This way, there will be less read requests to the database.
- */
-class FetchLedgerCache {
-    std::optional<ripple::LedgerHeader>
-    getLedgerHeader() const
-    {
-        return ledger_;
-    }
-
-    uint32_t
-    getSeq() const
-    {
-        return seq_;
-    }
-
-private:
-    std::optional<ripple::LedgerHeader> ledger_;
-    uint32_t seq_{};
-};
-
-/**
  * @brief Implements @ref BackendInterface for Cassandra/ScyllaDB.
  *
  * Note: This is a safer and more correct rewrite of the original implementation of the backend.
  *
  * @tparam SettingsProviderType The settings provider type to use
  * @tparam ExecutionStrategyType The execution strategy type to use
+ * @tparam FetchLedgerCacheType The ledger header cache type to use
  */
 template <
     SomeSettingsProvider SettingsProviderType,
@@ -104,13 +85,13 @@ class BasicCassandraBackend : public BackendInterface {
     SettingsProviderType settingsProvider_;
     Schema<SettingsProviderType> schema_;
     std::atomic_uint32_t ledgerSequence_ = 0u;
-    mutable util::Mutex<FetchLedgerCacheType, std::shared_mutex> ledgerCache_;
 
 protected:
     Handle handle_;
 
     // have to be mutable because BackendInterface constness :(
     mutable ExecutionStrategyType executor_;
+    mutable util::Mutex<FetchLedgerCacheType, std::shared_mutex> ledgerCache_{};
 
 public:
     /**
@@ -119,20 +100,14 @@ public:
      * @param settingsProvider The settings provider to use
      * @param cache The ledger cache to use
      * @param readOnly Whether the database should be in readonly mode
+     * @param cacheLedger The Cache of latest ledger
      */
-    // ADD make function
-    BasicCassandraBackend(
-        SettingsProviderType settingsProvider,
-        data::LedgerCacheInterface& cache,
-        bool readOnly,
-        FetchLedgerCacheType cacheLedger = FetchLedgerCache{}
-    )
+    BasicCassandraBackend(SettingsProviderType settingsProvider, data::LedgerCacheInterface& cache, bool readOnly)
         : BackendInterface(cache)
         , settingsProvider_{std::move(settingsProvider)}
         , schema_{settingsProvider_}
         , handle_{settingsProvider_.getSettings()}
         , executor_{settingsProvider_.getSettings(), handle_}
-        , ledgerCache_{std::forward<FetchLedgerCacheType>(cacheLedger)}
     {
         if (auto const res = handle_.connect(); not res)
             throw std::runtime_error("Could not connect to database: " + res.error());
@@ -297,11 +272,8 @@ public:
     {
         {
             auto const lock = ledgerCache_.template lock<std::shared_lock>();
-            std::cout << 1;
-            if (lock->seq == sequence && lock->ledger.has_value()) {
-                std::cout << 2;
-                return lock.get().ledger;
-            }
+            if (lock->getSeq() == sequence && lock->getLedgerHeader().has_value())
+                return lock.get().getLedgerHeader().value();
         }
 
         auto const res = executor_.read(yield, schema_->selectLedgerBySeq, sequence);
@@ -310,8 +282,8 @@ public:
                 if (auto const maybeValue = result.template get<std::vector<unsigned char>>(); maybeValue) {
                     auto const header = util::deserializeHeader(ripple::makeSlice(*maybeValue));
                     auto updateCache = ledgerCache_.template lock<std::unique_lock>();
-                    updateCache->seq = sequence;
-                    updateCache->ledger = header;
+                    updateCache->setSeq(sequence);
+                    updateCache->setLedgerHeader(header);
                     return header;
                 }
 
@@ -1097,6 +1069,13 @@ public:
         return executor_;
     }
 
+    FetchLedgerCacheType&
+    getLedgerCache() const
+    {
+        auto lock = ledgerCache_.lock();
+        return *lock;
+    }
+
 private:
     bool
     executeSyncUpdate(Statement statement)
@@ -1123,6 +1102,6 @@ private:
     }
 };
 
-using CassandraBackend = BasicCassandraBackend<SettingsProvider, impl::DefaultExecutionStrategy<>>;
+using CassandraBackend = BasicCassandraBackend<SettingsProvider, impl::DefaultExecutionStrategy<>, FetchLedgerCache>;
 
 }  // namespace data::cassandra
