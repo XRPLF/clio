@@ -79,6 +79,12 @@ using SubscriptionManagerTest = SubscriptionManagerBaseTest<util::async::SyncExe
 
 using SubscriptionManagerAsyncTest = SubscriptionManagerBaseTest<util::async::PoolExecutionContext>;
 
+TEST_F(SubscriptionManagerAsyncTest, SetAndGetNetworkID)
+{
+    subscriptionManagerPtr_->setNetworkID(32u);
+    EXPECT_EQ(subscriptionManagerPtr_->getNetworkID(), 32u);
+}
+
 TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtx)
 {
     EXPECT_CALL(*sessionPtr_, onDisconnect);
