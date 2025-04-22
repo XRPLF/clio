@@ -189,7 +189,7 @@ public:
         ripple::LedgerHeader const& lgrInfo,
         std::shared_ptr<data::BackendInterface const> const& backend,
         std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
-        uint32_t const networkID = 0);
+        uint32_t networkID);
 
     /**
      * @brief Get the number of subscribers of the transaction feed.

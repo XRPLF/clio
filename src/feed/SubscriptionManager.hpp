@@ -339,7 +339,7 @@ public:
      * @param networkID The network id to set.
      */
     void
-    setNetworkID(uint32_t const networkID) final;
+    setNetworkID(uint32_t networkID) final;
 
     /**
      * @brief Get the networkID.

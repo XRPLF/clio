@@ -388,6 +388,7 @@ insertCTID(
     uint32_t const networkID
 )
 {
+    // logic taken from rippled: https://github.com/XRPLF/rippled/blob/develop/src/xrpld/rpc/handlers/Tx.cpp#L179
     if (transactionID <= 0xFFFFU && ledgerSeq < 0x0FFF'FFFFUL && networkID <= 0xFFFFU) {
         auto const encodedCTID =
             rpc::encodeCTID(ledgerSeq, static_cast<uint16_t>(transactionID), static_cast<uint16_t>(networkID));

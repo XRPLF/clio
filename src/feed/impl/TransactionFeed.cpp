@@ -25,6 +25,7 @@
 #include "feed/Types.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
+#include "util/Assert.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -207,8 +208,8 @@ TransactionFeed::pub(
         rpc::insertMPTIssuanceID(pubObj[JS(meta)].as_object(), tx, meta);
 
         auto const& metaObj = pubObj[JS(meta)];
-        if (metaObj.is_object() && metaObj.as_object().contains("TransactionIndex") &&
-            metaObj.as_object().at("TransactionIndex").is_int64())
+        ASSERT(metaObj.is_object(), "meta must be an obj in rippled and clio");
+        if (metaObj.as_object().contains("TransactionIndex") && metaObj.as_object().at("TransactionIndex").is_int64())
             rpc::insertCTID(pubObj, lgrInfo.seq, metaObj.as_object().at("TransactionIndex").as_int64(), networkID);
 
         pubObj[JS(type)] = "transaction";
