@@ -169,8 +169,10 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
                         networkID = etlState->networkID;
 
                     auto const txnIdx = obj[JS(meta)].as_object().at("TransactionIndex").as_int64();
-                    rpc::insertCTID(obj[txKey].as_object(), txnPlusMeta.ledgerSequence, txnIdx, networkID);
+                    if (auto const& ctid = rpc::encodeCTID(txnPlusMeta.ledgerSequence, txnIdx, networkID); ctid)
+                        obj[txKey].as_object()[JS(ctid)] = ctid.value();
                 }
+
                 obj[txKey].as_object()[JS(date)] = txnPlusMeta.date;
                 obj[txKey].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
 

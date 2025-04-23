@@ -209,23 +209,6 @@ insertMPTIssuanceID(
 );
 
 /**
- * @brief Add "CTID" into json object.
- *
- * @param jsonObject The json object to add "ctid".
- * @param ledgerSeq The ledger sequence.
- * @param transactionID The transaction ID.
- * @param networkID The network ID.
- * @return true if the "networkID" is added to the json object.
- */
-bool
-insertCTID(
-    boost::json::object& jsonObject,
-    uint32_t const ledgerSeq,
-    uint32_t const transactionID,
-    uint32_t const networkID
-);
-
-/**
  * @brief Convert STBase object to JSON
  *
  * @param obj The object to convert

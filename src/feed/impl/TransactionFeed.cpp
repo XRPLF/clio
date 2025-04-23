@@ -209,8 +209,12 @@ TransactionFeed::pub(
 
         auto const& metaObj = pubObj[JS(meta)];
         ASSERT(metaObj.is_object(), "meta must be an obj in rippled and clio");
-        if (metaObj.as_object().contains("TransactionIndex") && metaObj.as_object().at("TransactionIndex").is_int64())
-            rpc::insertCTID(pubObj, lgrInfo.seq, metaObj.as_object().at("TransactionIndex").as_int64(), networkID);
+        if (metaObj.as_object().contains("TransactionIndex") && metaObj.as_object().at("TransactionIndex").is_int64()) {
+            if (auto const& ctid =
+                    rpc::encodeCTID(lgrInfo.seq, metaObj.as_object().at("TransactionIndex").as_int64(), networkID);
+                ctid)
+                pubObj[JS(ctid)] = ctid.value();
+        }
 
         pubObj[JS(type)] = "transaction";
         pubObj[JS(validated)] = true;

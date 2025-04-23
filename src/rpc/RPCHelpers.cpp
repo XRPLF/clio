@@ -290,7 +290,10 @@ std::optional<std::string>
 encodeCTID(uint32_t ledgerSeq, uint16_t txnIndex, uint16_t networkId) noexcept
 {
     static constexpr uint32_t kMAX_LEDGER_SEQ = 0x0FFF'FFFF;
-    if (ledgerSeq > kMAX_LEDGER_SEQ)
+    static constexpr uint32_t kMAX_TXN_INDEX = 0xFFFF;
+    static constexpr uint32_t kMAX_NETWORK_ID = 0xFFFF;
+
+    if (ledgerSeq > kMAX_LEDGER_SEQ || txnIndex > kMAX_TXN_INDEX || networkId > kMAX_NETWORK_ID)
         return {};
 
     static constexpr uint64_t kCTID_PREFIX = 0xC000'0000;
@@ -377,25 +380,6 @@ insertMPTIssuanceID(
     }
 
     assert(false);
-    return false;
-}
-
-bool
-insertCTID(
-    boost::json::object& jsonObject,
-    uint32_t const ledgerSeq,
-    uint32_t const transactionID,
-    uint32_t const networkID
-)
-{
-    // logic taken from rippled: https://github.com/XRPLF/rippled/blob/develop/src/xrpld/rpc/handlers/Tx.cpp#L179
-    if (transactionID <= 0xFFFFU && ledgerSeq < 0x0FFF'FFFFUL && networkID <= 0xFFFFU) {
-        auto const encodedCTID =
-            rpc::encodeCTID(ledgerSeq, static_cast<uint16_t>(transactionID), static_cast<uint16_t>(networkID));
-        ASSERT(encodedCTID.has_value(), "CTID must have value");
-        jsonObject[JS(ctid)] = encodedCTID.value();
-        return true;
-    }
     return false;
 }
 
