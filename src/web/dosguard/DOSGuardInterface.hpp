@@ -105,6 +105,9 @@ public:
      */
     [[maybe_unused]] virtual bool
     request(std::string const& ip) noexcept = 0;
+
+    [[maybe_unused]] virtual bool
+    requestCmd(std::string const& ip, std::string const& cmd) = 0;
 };
 
 }  // namespace web::dosguard

@@ -139,6 +139,9 @@ public:
     [[maybe_unused]] bool
     request(std::string const& ip) noexcept override;
 
+    [[maybe_unused]] bool
+    requestCmd(std::string const& ip, std::string const& cmd) override;
+
     /**
      * @brief Instantly clears all fetch counters added by @see add(std::string const&, uint32_t).
      */
