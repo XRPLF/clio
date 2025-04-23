@@ -282,6 +282,19 @@ public:
             qualifiedTableName(settingsProvider_.get(), "migrator_status")
         ));
 
+        statements.emplace_back(fmt::format(
+            R"(
+           CREATE TABLE IF NOT EXISTS {}
+                  ( 
+                   node_id UUID,
+                   message TEXT,
+                   PRIMARY KEY (node_id)
+                  ) 
+             WITH default_time_to_live = 2
+            )",
+            qualifiedTableName(settingsProvider_.get(), "nodes_chat")
+        ));
+
         return statements;
     }();
 
@@ -486,6 +499,17 @@ public:
                 VALUES (?, ?)
                 )",
                 qualifiedTableName(settingsProvider_.get(), "migrator_status")
+            ));
+        }();
+
+        PreparedStatement updateClioNodeMessage = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                UPDATE {}
+                   SET message = ?
+                 WHERE node_id = ?
+                )",
+                qualifiedTableName(settingsProvider_.get(), "nodes_chat")
             ));
         }();
 
@@ -801,6 +825,16 @@ public:
                  WHERE migrator_name = ?
                 )",
                 qualifiedTableName(settingsProvider_.get(), "migrator_status")
+            ));
+        }();
+
+        PreparedStatement selectClioNodesData = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                SELECT node_id, message
+                  FROM {}
+                )",
+                qualifiedTableName(settingsProvider_.get(), "nodes_chat")
             ));
         }();
     };

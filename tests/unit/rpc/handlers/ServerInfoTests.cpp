@@ -46,7 +46,7 @@ using namespace data;
 namespace json = boost::json;
 using namespace testing;
 
-using TestServerInfoHandler = BaseServerInfoHandler<MockLoadBalancer, MockETLService, MockCounters>;
+using TestServerInfoHandler = BaseServerInfoHandler<MockCounters>;
 
 namespace {
 

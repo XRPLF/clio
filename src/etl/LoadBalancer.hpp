@@ -23,8 +23,11 @@
 #include "etl/ETLState.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
+#include "etlng/InitialLoadObserverInterface.hpp"
+#include "etlng/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
+#include "util/Assert.hpp"
 #include "util/Mutex.hpp"
 #include "util/ResponseExpirationCache.hpp"
 #include "util/log/Logger.hpp"
@@ -48,6 +51,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace etl {
@@ -69,7 +73,7 @@ concept SomeLoadBalancer = std::derived_from<T, LoadBalancerTag>;
  * which ledgers have been validated by the network, and the range of ledgers each etl source has). This class also
  * allows requests for ledger data to be load balanced across all possible ETL sources.
  */
-class LoadBalancer : public LoadBalancerTag {
+class LoadBalancer : public etlng::LoadBalancerInterface, LoadBalancerTag {
 public:
     using RawLedgerObjectType = org::xrpl::rpc::v1::RawLedgerObject;
     using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;
@@ -133,7 +137,7 @@ public:
      * @param sourceFactory A factory function to create a source
      * @return A shared pointer to a new instance of LoadBalancer
      */
-    static std::shared_ptr<LoadBalancer>
+    static std::shared_ptr<LoadBalancerInterface>
     makeLoadBalancer(
         util::config::ClioConfigDefinition const& config,
         boost::asio::io_context& ioc,
@@ -150,16 +154,32 @@ public:
      * @note This function will retry indefinitely until the ledger is downloaded.
      *
      * @param sequence Sequence of ledger to download
-     * @param cacheOnly Whether to only write to cache and not to the DB; defaults to false
+     * @param retryAfter Time to wait between retries (2 seconds by default)
+     * @return A std::vector<std::string> The ledger data
+     */
+    std::vector<std::string>
+    loadInitialLedger(uint32_t sequence, std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2})
+        override;
+
+    /**
+     * @brief Load the initial ledger, writing data to the queue.
+     * @note This function will retry indefinitely until the ledger is downloaded.
+     *
+     * @param sequence Sequence of ledger to download
+     * @param observer The observer to notify of progress
      * @param retryAfter Time to wait between retries (2 seconds by default)
      * @return A std::vector<std::string> The ledger data
      */
     std::vector<std::string>
     loadInitialLedger(
-        uint32_t sequence,
-        bool cacheOnly = false,
-        std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2}
-    );
+        [[maybe_unused]] uint32_t sequence,
+        [[maybe_unused]] etlng::InitialLoadObserverInterface& observer,
+        [[maybe_unused]] std::chrono::steady_clock::duration retryAfter
+    ) override
+    {
+        ASSERT(false, "Not available for old ETL");
+        std::unreachable();
+    }
 
     /**
      * @brief Fetch data for a specific ledger.
@@ -180,7 +200,7 @@ public:
         bool getObjects,
         bool getObjectNeighbors,
         std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2}
-    );
+    ) override;
 
     /**
      * @brief Represent the state of this load balancer as a JSON object
@@ -188,7 +208,7 @@ public:
      * @return JSON representation of the state of this load balancer.
      */
     boost::json::value
-    toJson() const;
+    toJson() const override;
 
     /**
      * @brief Forward a JSON RPC request to a randomly selected rippled node.
@@ -199,20 +219,20 @@ public:
      * @param yield The coroutine context
      * @return Response received from rippled node as JSON object on success or error on failure
      */
-    std::expected<boost::json::object, rpc::ClioError>
+    std::expected<boost::json::object, rpc::CombinedError>
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,
         bool isAdmin,
         boost::asio::yield_context yield
-    );
+    ) override;
 
     /**
      * @brief Return state of ETL nodes.
      * @return ETL state, nullopt if etl nodes not available
      */
     std::optional<ETLState>
-    getETLState() noexcept;
+    getETLState() noexcept override;
 
     /**
      * @brief Stop the load balancer. This will stop all subscription sources.
@@ -221,7 +241,7 @@ public:
      * @param yield The coroutine context
      */
     void
-    stop(boost::asio::yield_context yield);
+    stop(boost::asio::yield_context yield) override;
 
 private:
     /**
@@ -245,6 +265,14 @@ private:
      */
     void
     chooseForwardingSource();
+
+    std::expected<boost::json::object, rpc::CombinedError>
+    forwardToRippledImpl(
+        boost::json::object const& request,
+        std::optional<std::string> const& clientIp,
+        bool isAdmin,
+        boost::asio::yield_context yield
+    );
 };
 
 }  // namespace etl

@@ -39,7 +39,6 @@
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/TxMeta.h>
 
-#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>

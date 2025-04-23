@@ -181,7 +181,7 @@ TEST_F(RequestHandlerTest, DosguardRateLimited_Http)
 
         auto const body = boost::json::parse(httpResponse.body()).as_object();
         EXPECT_EQ(body.at("error").as_string(), "slowDown");
-        EXPECT_EQ(body.at("error_code").as_int64(), 10);
+        EXPECT_EQ(body.at("error_code").as_int64(), rpc::RippledError::rpcSLOW_DOWN);
         EXPECT_EQ(body.at("status").as_string(), "error");
         EXPECT_FALSE(body.contains("id"));
         EXPECT_FALSE(body.contains("request"));
@@ -201,7 +201,7 @@ TEST_F(RequestHandlerTest, DosguardRateLimited_Ws)
         auto const message = boost::json::parse(response.message()).as_object();
 
         EXPECT_EQ(message.at("error").as_string(), "slowDown");
-        EXPECT_EQ(message.at("error_code").as_int64(), 10);
+        EXPECT_EQ(message.at("error_code").as_int64(), rpc::RippledError::rpcSLOW_DOWN);
         EXPECT_EQ(message.at("status").as_string(), "error");
         EXPECT_EQ(message.at("id").as_string(), "some id");
         EXPECT_EQ(message.at("request").as_string(), requestMessage);
@@ -221,7 +221,7 @@ TEST_F(RequestHandlerTest, DosguardRateLimited_Ws_ErrorParsing)
         auto const message = boost::json::parse(response.message()).as_object();
 
         EXPECT_EQ(message.at("error").as_string(), "slowDown");
-        EXPECT_EQ(message.at("error_code").as_int64(), 10);
+        EXPECT_EQ(message.at("error_code").as_int64(), rpc::RippledError::rpcSLOW_DOWN);
         EXPECT_EQ(message.at("status").as_string(), "error");
         EXPECT_FALSE(message.contains("id"));
         EXPECT_EQ(message.at("request").as_string(), requestMessage);
@@ -245,7 +245,7 @@ TEST_F(RequestHandlerTest, RpcHandlerThrows)
 
         auto const body = boost::json::parse(httpResponse.body()).as_object();
         EXPECT_EQ(body.at("error").as_string(), "internal");
-        EXPECT_EQ(body.at("error_code").as_int64(), 73);
+        EXPECT_EQ(body.at("error_code").as_int64(), rpc::RippledError::rpcINTERNAL);
         EXPECT_EQ(body.at("status").as_string(), "error");
     });
 }

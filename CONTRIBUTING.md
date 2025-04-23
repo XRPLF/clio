@@ -27,7 +27,7 @@ The pre-commit hook requires `clang-format >= 19.0.0` and `cmake-format` to be i
 The hook will also attempt to automatically use `doxygen` to verify that everything public in the codebase is covered by doc comments. If `doxygen` is not installed, the hook will raise a warning suggesting to install `doxygen` for future commits.
 
 ## Git commands
-This sections offers a detailed look at the git commands you will need to use to get your PR submitted. 
+This sections offers a detailed look at the git commands you will need to use to get your PR submitted.
 Please note that there are more than one way to do this and these commands are provided for your convenience.
 At this point it's assumed that you have already finished working on your feature/bug.
 
@@ -144,12 +144,13 @@ Existing maintainers can resign, or be subject to a vote for removal at the behe
 
 ## Existing Maintainers
 
-* [cindyyan317](https://github.com/cindyyan317) (Ripple)
 * [godexsoft](https://github.com/godexsoft) (Ripple)
 * [kuznetsss](https://github.com/kuznetsss) (Ripple)
 * [legleux](https://github.com/legleux) (Ripple)
+* [PeterChen13579](https://github.com/PeterChen13579) (Ripple)
 
 ## Honorable ex-Maintainers
 
+* [cindyyan317](https://github.com/cindyyan317) (ex-Ripple)
 * [cjcobb23](https://github.com/cjcobb23) (ex-Ripple)
 * [natenichols](https://github.com/natenichols) (ex-Ripple)

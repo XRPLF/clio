@@ -79,8 +79,8 @@ TEST_F(RPCTestHandlerTest, HandlerErrorHandling)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::RippledError::rpcINVALID_PARAMS);
         EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
-        EXPECT_EQ(err.at("error_code").as_uint64(), 31);
     });
 }
 

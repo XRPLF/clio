@@ -16,6 +16,9 @@ target_sources(
           data/cassandra/ExecutionStrategyTests.cpp
           data/cassandra/RetryPolicyTests.cpp
           data/cassandra/SettingsProviderTests.cpp
+          # Cluster
+          cluster/ClioNodeTests.cpp
+          cluster/ClusterCommunicationServiceTests.cpp
           # ETL
           etl/AmendmentBlockHandlerTests.cpp
           etl/CacheLoaderSettingsTests.cpp
@@ -38,13 +41,16 @@ target_sources(
           # ETLng
           etlng/AmendmentBlockHandlerTests.cpp
           etlng/ExtractionTests.cpp
+          etlng/ForwardingSourceTests.cpp
           etlng/GrpcSourceTests.cpp
           etlng/RegistryTests.cpp
           etlng/SchedulingTests.cpp
           etlng/TaskManagerTests.cpp
           etlng/LoadingTests.cpp
+          etlng/LoadBalancerTests.cpp
           etlng/NetworkValidatedLedgersTests.cpp
           etlng/MonitorTests.cpp
+          etlng/SourceImplTests.cpp
           etlng/ext/CoreTests.cpp
           etlng/ext/CacheTests.cpp
           etlng/ext/NFTTests.cpp
@@ -135,6 +141,7 @@ target_sources(
           util/async/AnyStrandTests.cpp
           util/async/AsyncExecutionContextTests.cpp
           util/BatchingTests.cpp
+          util/BlockingCacheTests.cpp
           util/ConceptsTests.cpp
           util/CoroutineGroupTests.cpp
           util/LedgerUtilsTests.cpp

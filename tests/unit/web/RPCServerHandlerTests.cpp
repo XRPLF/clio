@@ -95,8 +95,8 @@ struct WebRPCServerHandlerTest : util::prometheus::WithPrometheus, MockBackendTe
     std::shared_ptr<MockAsyncRPCEngine> rpcEngine = std::make_shared<MockAsyncRPCEngine>();
     std::shared_ptr<MockETLService> etl = std::make_shared<MockETLService>();
     std::shared_ptr<util::TagDecoratorFactory> tagFactory = std::make_shared<util::TagDecoratorFactory>(cfg);
-    std::shared_ptr<RPCServerHandler<MockAsyncRPCEngine, MockETLService>> handler =
-        std::make_shared<RPCServerHandler<MockAsyncRPCEngine, MockETLService>>(cfg, backend_, rpcEngine, etl);
+    std::shared_ptr<RPCServerHandler<MockAsyncRPCEngine>> handler =
+        std::make_shared<RPCServerHandler<MockAsyncRPCEngine>>(cfg, backend_, rpcEngine, etl);
     std::shared_ptr<MockWsBase> session = std::make_shared<MockWsBase>(*tagFactory);
 };
 
@@ -756,8 +756,7 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
     session->upgraded = true;
 
     auto localRpcEngine = std::make_shared<MockRPCEngine>();
-    auto localHandler =
-        std::make_shared<RPCServerHandler<MockRPCEngine, MockETLService>>(cfg, backend_, localRpcEngine, etl);
+    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(cfg, backend_, localRpcEngine, etl);
     static constexpr auto kREQUEST = R"({
                                         "command": "server_info",
                                         "id": 99
@@ -784,8 +783,7 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
 TEST_F(WebRPCServerHandlerTest, HTTPTooBusy)
 {
     auto localRpcEngine = std::make_shared<MockRPCEngine>();
-    auto localHandler =
-        std::make_shared<RPCServerHandler<MockRPCEngine, MockETLService>>(cfg, backend_, localRpcEngine, etl);
+    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(cfg, backend_, localRpcEngine, etl);
     static constexpr auto kREQUEST = R"({
                                         "method": "server_info",
                                         "params": [{}]
@@ -916,10 +914,13 @@ TEST_P(WebRPCServerHandlerInvalidAPIVersionParamTest, WSInvalidAPIVersion)
 
     auto response = boost::json::parse(session->message);
     EXPECT_TRUE(response.is_object());
+
     EXPECT_TRUE(response.as_object().contains("error"));
     EXPECT_EQ(response.at("error").as_string(), "invalid_API_version");
-    EXPECT_TRUE(response.as_object().contains("error_message"));
-    EXPECT_EQ(response.at("error_message").as_string(), GetParam().wsMessage);
+
     EXPECT_TRUE(response.as_object().contains("error_code"));
     EXPECT_EQ(response.at("error_code").as_int64(), static_cast<int64_t>(rpc::ClioError::RpcInvalidApiVersion));
+
+    EXPECT_TRUE(response.as_object().contains("error_message"));
+    EXPECT_EQ(response.at("error_message").as_string(), GetParam().wsMessage);
 }
