@@ -13,4 +13,4 @@ The image is based on Ubuntu 20.04 and contains:
 - and some other useful tools
 
 Conan is set up to build Clio without any additional steps. There are two preset conan profiles: `clang` and `gcc` to use corresponding compiler. By default conan is setup to use `gcc`.
-Sanitizer builds for `ASAN`, `TSAN` and `UBSAN` are enabled via conan profiles for each of the supported compilers. These can be selected using the following pattern (all lowercase): `[compiler].[sanitizer]` (e.g. `--profile gcc.tsan`). 
+Sanitizer builds for `ASAN`, `TSAN` and `UBSAN` are enabled via conan profiles for each of the supported compilers. These can be selected using the following pattern (all lowercase): `[compiler].[sanitizer]` (e.g. `--profile gcc.tsan`).

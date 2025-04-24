@@ -205,7 +205,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_pays": 
+                        "taker_pays":
                         {
                             "currency": "XRP"
                         },
@@ -221,7 +221,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_gets": 
+                        "taker_gets":
                         {
                             "currency": "XRP"
                         },
@@ -237,7 +237,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_gets": 
+                        "taker_gets":
                         {
                             "currency": "XRP"
                         },
@@ -253,7 +253,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_pays": 
+                        "taker_pays":
                         {
                             "currency": "XRP"
                         },
@@ -269,7 +269,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_gets": 
+                        "taker_gets":
                         {
                             "currency": "XRP"
                         },
@@ -288,7 +288,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_pays": 
+                        "taker_pays":
                         {
                             "currency": "XRP"
                         },
@@ -307,7 +307,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_gets": 
+                        "taker_gets":
                         {
                             "currency": "XRP"
                         },
@@ -326,7 +326,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_pays": 
+                        "taker_pays":
                         {
                             "currency": "XRP"
                         },
@@ -345,7 +345,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_gets": 
+                        "taker_gets":
                         {
                             "currency": "XRP"
                         },
@@ -363,7 +363,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_pays": 
+                        "taker_pays":
                         {
                             "currency": "XRP"
                         },
@@ -381,7 +381,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_gets": 
+                        "taker_gets":
                         {
                             "currency": "XRP"
                         },
@@ -400,7 +400,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_pays": 
+                        "taker_pays":
                         {
                             "currency": "XRP"
                         },
@@ -419,7 +419,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_gets": 
+                        "taker_gets":
                         {
                             "currency": "XRP"
                         },
@@ -438,7 +438,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_pays": 
+                        "taker_pays":
                         {
                             "currency": "XRP"
                         },
@@ -457,7 +457,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_pays": 
+                        "taker_pays":
                         {
                             "currency": "USD",
                             "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
@@ -477,7 +477,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_pays": 
+                        "taker_pays":
                         {
                             "currency": "XRP",
                             "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
@@ -497,7 +497,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_pays": 
+                        "taker_pays":
                         {
                             "currency": "XRP"
                         },
@@ -515,7 +515,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_pays": 
+                        "taker_pays":
                         {
                             "currency": "XRP"
                         },
@@ -535,7 +535,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_pays": 
+                        "taker_pays":
                         {
                             "currency": "XRP"
                         },
@@ -555,7 +555,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_pays": 
+                        "taker_pays":
                         {
                             "currency": "XRP"
                         },
@@ -575,7 +575,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                 "books": [
                     {
-                        "taker_pays": 
+                        "taker_pays":
                         {
                             "currency": "XRP"
                         },
@@ -654,7 +654,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsWithoutLedger)
 TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
 {
     static constexpr auto kEXPECTED_OUTPUT =
-        R"({      
+        R"({
             "validated_ledgers":"10-30",
             "ledger_index":30,
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
@@ -734,14 +734,14 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
 {
     auto const input = json::parse(fmt::format(
         R"({{
-            "books": 
+            "books":
             [
                 {{
-                    "taker_pays": 
+                    "taker_pays":
                     {{
                         "currency": "XRP"
                     }},
-                    "taker_gets": 
+                    "taker_gets":
                     {{
                         "currency": "USD",
                         "issuer": "{}"
@@ -766,14 +766,14 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
 {
     auto const input = json::parse(fmt::format(
         R"({{
-            "books": 
+            "books":
             [
                 {{
-                    "taker_pays": 
+                    "taker_pays":
                     {{
                         "currency": "XRP"
                     }},
-                    "taker_gets": 
+                    "taker_gets":
                     {{
                         "currency": "USD",
                         "issuer": "{}"
@@ -799,14 +799,14 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
 {
     auto const input = json::parse(fmt::format(
         R"({{
-            "books": 
+            "books":
             [
                 {{
-                    "taker_gets": 
+                    "taker_gets":
                     {{
                         "currency": "XRP"
                     }},
-                    "taker_pays": 
+                    "taker_pays":
                     {{
                         "currency": "USD",
                         "issuer": "{}"
@@ -970,14 +970,14 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
 {
     auto const input = json::parse(fmt::format(
         R"({{
-            "books": 
+            "books":
             [
                 {{
-                    "taker_gets": 
+                    "taker_gets":
                     {{
                         "currency": "XRP"
                     }},
-                    "taker_pays": 
+                    "taker_pays":
                     {{
                         "currency": "USD",
                         "issuer": "{}"

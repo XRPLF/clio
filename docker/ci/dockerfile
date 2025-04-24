@@ -10,7 +10,7 @@ ENV CCACHE_VERSION=4.10.2 \
     LLVM_TOOLS_VERSION=19 \
     GH_VERSION=2.40.0 \
     DOXYGEN_VERSION=1.12.0
- 
+
 # Add repositories
 RUN apt-get -qq update \
     && apt-get -qq install -y --no-install-recommends --no-install-suggests gnupg wget curl software-properties-common \
@@ -95,7 +95,7 @@ RUN conan profile new clang --detect \
     && conan profile update env.CC=/usr/bin/clang-16 clang \
     && conan profile update env.CXX=/usr/bin/clang++-16 clang \
     && conan profile update env.CXXFLAGS="-DBOOST_ASIO_DISABLE_CONCEPTS" clang \
-    && conan profile update "conf.tools.build:compiler_executables={\"c\": \"/usr/bin/clang-16\", \"cpp\": \"/usr/bin/clang++-16\"}" clang 
+    && conan profile update "conf.tools.build:compiler_executables={\"c\": \"/usr/bin/clang-16\", \"cpp\": \"/usr/bin/clang++-16\"}" clang
 
 RUN echo "include(gcc)" >> .conan/profiles/default
 

@@ -54,13 +54,13 @@ jobs:
             build_type: Release
             container:
               image: rippleci/clio_ci:latest
-            integration_tests: true  
+            integration_tests: true
           - os: heavy
             conan_profile: gcc
             build_type: Debug
             container:
               image: rippleci/clio_ci:latest
-            integration_tests: true  
+            integration_tests: true
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
 
@@ -68,15 +68,15 @@ jobs:
       scylladb:
         image: ${{ (matrix.integration_tests) && 'scylladb/scylla' || '' }}
         options: >-
-          --health-cmd "cqlsh -e 'describe cluster'" 
-          --health-interval 10s 
-          --health-timeout 5s 
+          --health-cmd "cqlsh -e 'describe cluster'"
+          --health-interval 10s
+          --health-timeout 5s
           --health-retries 5
 
     steps:
       - name: Clean workdir
         if: ${{ runner.os == 'macOS' }}
-        uses: kuznetsss/workspace-cleanup@1.0
+        uses: kuznetsss/workspace-cleanup@80b9863b45562c148927c3d53621ef354e5ae7ce #v1.0
 
       - uses: actions/download-artifact@v4
         with:
@@ -86,7 +86,7 @@ jobs:
         run: |
           chmod +x ./clio_tests
           ./clio_tests
-  
+
       - uses: actions/download-artifact@v4
         with:
           name: clio_integration_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
@@ -94,7 +94,7 @@ jobs:
   # To be enabled back once docker in mac runner arrives
   # https://github.com/XRPLF/clio/issues/1400
       - name: Run clio_integration_tests
-        if: matrix.integration_tests 
+        if: matrix.integration_tests
         run: |
           chmod +x ./clio_integration_tests
           ./clio_integration_tests --backend_host=scylladb

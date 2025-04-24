@@ -22,19 +22,19 @@ There are three main types of data in each XRP Ledger version:
 
 Due to the structural differences of the different types of databases, Clio may choose to represent these data types using a different schema for each unique database type.
 
-### Keywords  
+### Keywords
 
 **Sequence**: A unique incrementing identification number used to label the different ledger versions.
 
 **Hash**: The SHA512-half (calculate SHA512 and take the first 256 bits) hash of various ledger data like the entire ledger or specific ledger objects.
 
-**Ledger Object**: The [binary-encoded](https://xrpl.org/serialization.html) STObject containing specific data (i.e. metadata, transaction data).  
+**Ledger Object**: The [binary-encoded](https://xrpl.org/serialization.html) STObject containing specific data (i.e. metadata, transaction data).
 
-**Metadata**: The data containing [detailed information](https://xrpl.org/transaction-metadata.html#transaction-metadata) of the outcome of a specific transaction, regardless of whether the transaction was successful.  
+**Metadata**: The data containing [detailed information](https://xrpl.org/transaction-metadata.html#transaction-metadata) of the outcome of a specific transaction, regardless of whether the transaction was successful.
 
-**Transaction data**: The data containing the [full details](https://xrpl.org/transaction-common-fields.html) of a specific transaction.  
+**Transaction data**: The data containing the [full details](https://xrpl.org/transaction-common-fields.html) of a specific transaction.
 
-**Object Index**: The pseudo-random unique identifier of a ledger object, created by hashing the data of the object.  
+**Object Index**: The pseudo-random unique identifier of a ledger object, created by hashing the data of the object.
 
 ## Cassandra Implementation
 
@@ -59,10 +59,10 @@ Their schemas and how they work are detailed in the following sections.
 ### ledger_transactions
 
 ```
-CREATE TABLE clio.ledger_transactions (  
+CREATE TABLE clio.ledger_transactions (
 	ledger_sequence bigint,  # The sequence number of the ledger version
 	hash blob,               # Hash of all the transactions on this ledger version
-	PRIMARY KEY (ledger_sequence, hash)  
+	PRIMARY KEY (ledger_sequence, hash)
 ) WITH CLUSTERING ORDER BY (hash ASC) ...
 ```
 
@@ -71,7 +71,7 @@ This table stores the hashes of all transactions in a given ledger sequence and 
 ### transactions
 
 ```
-CREATE TABLE clio.transactions (  
+CREATE TABLE clio.transactions (
 	hash blob PRIMARY KEY,   # The transaction hash
 	date bigint,             # Date of the transaction
 	ledger_sequence bigint,  # The sequence that the transaction was validated
@@ -82,7 +82,7 @@ CREATE TABLE clio.transactions (
 
 This table stores the full transaction and metadata of each ledger version with the transaction hash as the primary key.
 
-To lookup all the transactions that were validated in a ledger version with sequence `n`, first get the all the transaction hashes in that ledger version by querying `SELECT * FROM ledger_transactions WHERE ledger_sequence = n;`. Then, iterate through the list of hashes and query `SELECT * FROM transactions WHERE hash = one_of_the_hash_from_the_list;` to get the detailed transaction data.  
+To lookup all the transactions that were validated in a ledger version with sequence `n`, first get the all the transaction hashes in that ledger version by querying `SELECT * FROM ledger_transactions WHERE ledger_sequence = n;`. Then, iterate through the list of hashes and query `SELECT * FROM transactions WHERE hash = one_of_the_hash_from_the_list;` to get the detailed transaction data.
 
 ### ledger_hashes
 
@@ -93,7 +93,7 @@ CREATE TABLE clio.ledger_hashes (
 ) ...
 ```
 
-This table stores the hash of all ledger versions by their sequences. 
+This table stores the hash of all ledger versions by their sequences.
 
 ### ledger_range
 
@@ -270,7 +270,7 @@ CREATE TABLE clio.migrator_status (
     migrator_name TEXT,     # The name of the migrator
     status TEXT,            # The status of the migrator
     PRIMARY KEY (migrator_name)
-) 
+)
 ```
 
 The `migrator_status` table stores the status of the migratior in this database. If a migrator's status is `migrated`, it means this database has finished data migration for this migrator.

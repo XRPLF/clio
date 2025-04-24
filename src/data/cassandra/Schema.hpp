@@ -69,11 +69,11 @@ public:
     std::string createKeyspace = [this]() {
         return fmt::format(
             R"(
-            CREATE KEYSPACE IF NOT EXISTS {} 
+            CREATE KEYSPACE IF NOT EXISTS {}
               WITH replication = {{
                      'class': 'SimpleStrategy',
                      'replication_factor': '{}'
-                   }} 
+                   }}
                AND durable_writes = True
             )",
             settingsProvider_.get().getKeyspace(),
@@ -91,13 +91,13 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  (      
-                         key blob, 
-                    sequence bigint, 
-                      object blob, 
-                     PRIMARY KEY (key, sequence) 
-                  ) 
-             WITH CLUSTERING ORDER BY (sequence DESC) 
+                  (
+                         key blob,
+                    sequence bigint,
+                      object blob,
+                     PRIMARY KEY (key, sequence)
+                  )
+             WITH CLUSTERING ORDER BY (sequence DESC)
             )",
             qualifiedTableName(settingsProvider_.get(), "objects")
         ));
@@ -105,13 +105,13 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  (     
-                        hash blob PRIMARY KEY, 
-             ledger_sequence bigint, 
+                  (
+                        hash blob PRIMARY KEY,
+             ledger_sequence bigint,
                         date bigint,
-                 transaction blob, 
-                    metadata blob 
-                  ) 
+                 transaction blob,
+                    metadata blob
+                  )
             )",
             qualifiedTableName(settingsProvider_.get(), "transactions")
         ));
@@ -119,11 +119,11 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  (     
-             ledger_sequence bigint, 
-                        hash blob, 
-                     PRIMARY KEY (ledger_sequence, hash) 
-                  ) 
+                  (
+             ledger_sequence bigint,
+                        hash blob,
+                     PRIMARY KEY (ledger_sequence, hash)
+                  )
             )",
             qualifiedTableName(settingsProvider_.get(), "ledger_transactions")
         ));
@@ -131,12 +131,12 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  (     
+                  (
                     key blob,
-                    seq bigint, 
-                   next blob, 
-                PRIMARY KEY (key, seq) 
-                  ) 
+                    seq bigint,
+                   next blob,
+                PRIMARY KEY (key, seq)
+                  )
             )",
             qualifiedTableName(settingsProvider_.get(), "successor")
         ));
@@ -144,11 +144,11 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  (     
-                    seq bigint, 
+                  (
+                    seq bigint,
                     key blob,
-                PRIMARY KEY (seq, key) 
-                  ) 
+                PRIMARY KEY (seq, key)
+                  )
             )",
             qualifiedTableName(settingsProvider_.get(), "diff")
         ));
@@ -156,12 +156,12 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  ( 
-                    account blob,    
-                    seq_idx tuple<bigint, bigint>, 
+                  (
+                    account blob,
+                    seq_idx tuple<bigint, bigint>,
                        hash blob,
-                    PRIMARY KEY (account, seq_idx) 
-                  ) 
+                    PRIMARY KEY (account, seq_idx)
+                  )
              WITH CLUSTERING ORDER BY (seq_idx DESC)
             )",
             qualifiedTableName(settingsProvider_.get(), "account_tx")
@@ -170,10 +170,10 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  ( 
+                  (
                     sequence bigint PRIMARY KEY,
                       header blob
-                  ) 
+                  )
             )",
             qualifiedTableName(settingsProvider_.get(), "ledgers")
         ));
@@ -181,10 +181,10 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  ( 
+                  (
                     hash blob PRIMARY KEY,
                 sequence bigint
-                  ) 
+                  )
             )",
             qualifiedTableName(settingsProvider_.get(), "ledger_hashes")
         ));
@@ -192,7 +192,7 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  ( 
+                  (
                     is_latest boolean PRIMARY KEY,
                      sequence bigint
                   )
@@ -203,13 +203,13 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  ( 
-                    token_id blob,    
+                  (
+                    token_id blob,
                     sequence bigint,
                        owner blob,
                    is_burned boolean,
-                     PRIMARY KEY (token_id, sequence) 
-                  ) 
+                     PRIMARY KEY (token_id, sequence)
+                  )
              WITH CLUSTERING ORDER BY (sequence DESC)
             )",
             qualifiedTableName(settingsProvider_.get(), "nf_tokens")
@@ -218,12 +218,12 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  ( 
+                  (
                       issuer blob,
                        taxon bigint,
                     token_id blob,
                      PRIMARY KEY (issuer, taxon, token_id)
-                  ) 
+                  )
              WITH CLUSTERING ORDER BY (taxon ASC, token_id ASC)
             )",
             qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
@@ -232,12 +232,12 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  ( 
+                  (
                     token_id blob,
                     sequence bigint,
                          uri blob,
                      PRIMARY KEY (token_id, sequence)
-                  ) 
+                  )
              WITH CLUSTERING ORDER BY (sequence DESC)
             )",
             qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
@@ -246,12 +246,12 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  ( 
-                    token_id blob,    
+                  (
+                    token_id blob,
                      seq_idx tuple<bigint, bigint>,
                         hash blob,
-                     PRIMARY KEY (token_id, seq_idx) 
-                  ) 
+                     PRIMARY KEY (token_id, seq_idx)
+                  )
              WITH CLUSTERING ORDER BY (seq_idx DESC)
             )",
             qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
@@ -260,11 +260,11 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  ( 
+                  (
                     mpt_id blob,
                     holder blob,
                    PRIMARY KEY (mpt_id, holder)
-                  ) 
+                  )
              WITH CLUSTERING ORDER BY (holder ASC)
             )",
             qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
@@ -273,11 +273,11 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  ( 
+                  (
                    migrator_name TEXT,
                           status TEXT,
                          PRIMARY KEY (migrator_name)
-                  ) 
+                  )
             )",
             qualifiedTableName(settingsProvider_.get(), "migrator_status")
         ));
@@ -285,11 +285,11 @@ public:
         statements.emplace_back(fmt::format(
             R"(
            CREATE TABLE IF NOT EXISTS {}
-                  ( 
+                  (
                    node_id UUID,
                    message TEXT,
                    PRIMARY KEY (node_id)
-                  ) 
+                  )
              WITH default_time_to_live = 2
             )",
             qualifiedTableName(settingsProvider_.get(), "nodes_chat")
@@ -324,7 +324,7 @@ public:
         PreparedStatement insertObject = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                INSERT INTO {} 
+                INSERT INTO {}
                        (key, sequence, object)
                 VALUES (?, ?, ?)
                 )",
@@ -335,7 +335,7 @@ public:
         PreparedStatement insertTransaction = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                INSERT INTO {} 
+                INSERT INTO {}
                        (hash, ledger_sequence, date, transaction, metadata)
                 VALUES (?, ?, ?, ?, ?)
                 )",
@@ -346,7 +346,7 @@ public:
         PreparedStatement insertLedgerTransaction = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                INSERT INTO {} 
+                INSERT INTO {}
                        (ledger_sequence, hash)
                 VALUES (?, ?)
                 )",
@@ -357,7 +357,7 @@ public:
         PreparedStatement insertSuccessor = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                INSERT INTO {} 
+                INSERT INTO {}
                        (key, seq, next)
                 VALUES (?, ?, ?)
                 )",
@@ -368,7 +368,7 @@ public:
         PreparedStatement insertDiff = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                INSERT INTO {} 
+                INSERT INTO {}
                        (seq, key)
                 VALUES (?, ?)
                 )",
@@ -379,7 +379,7 @@ public:
         PreparedStatement insertAccountTx = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                INSERT INTO {} 
+                INSERT INTO {}
                        (account, seq_idx, hash)
                 VALUES (?, ?, ?)
                 )",
@@ -390,7 +390,7 @@ public:
         PreparedStatement insertNFT = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                INSERT INTO {} 
+                INSERT INTO {}
                        (token_id, sequence, owner, is_burned)
                 VALUES (?, ?, ?, ?)
                 )",
@@ -401,7 +401,7 @@ public:
         PreparedStatement insertIssuerNFT = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                INSERT INTO {} 
+                INSERT INTO {}
                        (issuer, taxon, token_id)
                 VALUES (?, ?, ?)
                 )",
@@ -412,7 +412,7 @@ public:
         PreparedStatement insertNFTURI = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                INSERT INTO {} 
+                INSERT INTO {}
                        (token_id, sequence, uri)
                 VALUES (?, ?, ?)
                 )",
@@ -423,7 +423,7 @@ public:
         PreparedStatement insertNFTTx = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                INSERT INTO {} 
+                INSERT INTO {}
                        (token_id, seq_idx, hash)
                 VALUES (?, ?, ?)
                 )",
@@ -434,7 +434,7 @@ public:
         PreparedStatement insertMPTHolder = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                INSERT INTO {} 
+                INSERT INTO {}
                        (mpt_id, holder)
                 VALUES (?, ?)
                 )",
@@ -445,7 +445,7 @@ public:
         PreparedStatement insertLedgerHeader = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                INSERT INTO {} 
+                INSERT INTO {}
                        (sequence, header)
                 VALUES (?, ?)
                 )",
@@ -456,7 +456,7 @@ public:
         PreparedStatement insertLedgerHash = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                INSERT INTO {} 
+                INSERT INTO {}
                        (hash, sequence)
                 VALUES (?, ?)
                 )",
@@ -471,9 +471,9 @@ public:
         PreparedStatement updateLedgerRange = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                UPDATE {} 
+                UPDATE {}
                    SET sequence = ?
-                 WHERE is_latest = ? 
+                 WHERE is_latest = ?
                     IF sequence IN (?, null)
                 )",
                 qualifiedTableName(settingsProvider_.get(), "ledger_range")
@@ -483,7 +483,7 @@ public:
         PreparedStatement deleteLedgerRange = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                UPDATE {} 
+                UPDATE {}
                    SET sequence = ?
                  WHERE is_latest = False
                 )",
@@ -520,11 +520,11 @@ public:
         PreparedStatement selectSuccessor = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                SELECT next 
-                  FROM {}               
+                SELECT next
+                  FROM {}
                  WHERE key = ?
                    AND seq <= ?
-              ORDER BY seq DESC 
+              ORDER BY seq DESC
                  LIMIT 1
                 )",
                 qualifiedTableName(settingsProvider_.get(), "successor")
@@ -534,7 +534,7 @@ public:
         PreparedStatement selectDiff = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                SELECT key 
+                SELECT key
                   FROM {}
                  WHERE seq = ?
                 )",
@@ -545,11 +545,11 @@ public:
         PreparedStatement selectObject = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                SELECT object, sequence 
-                  FROM {}               
+                SELECT object, sequence
+                  FROM {}
                  WHERE key = ?
                    AND sequence <= ?
-              ORDER BY sequence DESC 
+              ORDER BY sequence DESC
                  LIMIT 1
                 )",
                 qualifiedTableName(settingsProvider_.get(), "objects")
@@ -559,7 +559,7 @@ public:
         PreparedStatement selectTransaction = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                SELECT transaction, metadata, ledger_sequence, date 
+                SELECT transaction, metadata, ledger_sequence, date
                   FROM {}
                  WHERE hash = ?
                 )",
@@ -570,9 +570,9 @@ public:
         PreparedStatement selectAllTransactionHashesInLedger = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                SELECT hash 
-                  FROM {}               
-                 WHERE ledger_sequence = ?               
+                SELECT hash
+                  FROM {}
+                 WHERE ledger_sequence = ?
                 )",
                 qualifiedTableName(settingsProvider_.get(), "ledger_transactions")
             ));
@@ -581,11 +581,11 @@ public:
         PreparedStatement selectLedgerPageKeys = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                SELECT key 
-                  FROM {}               
+                SELECT key
+                  FROM {}
                  WHERE TOKEN(key) >= ?
                    AND sequence <= ?
-         PER PARTITION LIMIT 1 
+         PER PARTITION LIMIT 1
                  LIMIT ?
                  ALLOW FILTERING
                 )",
@@ -611,9 +611,9 @@ public:
         PreparedStatement getToken = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                SELECT TOKEN(key) 
-                  FROM {}               
-                 WHERE key = ?               
+                SELECT TOKEN(key)
+                  FROM {}
+                 WHERE key = ?
                  LIMIT 1
                 )",
                 qualifiedTableName(settingsProvider_.get(), "objects")
@@ -623,8 +623,8 @@ public:
         PreparedStatement selectAccountTx = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                SELECT hash, seq_idx 
-                  FROM {}               
+                SELECT hash, seq_idx
+                  FROM {}
                  WHERE account = ?
                    AND seq_idx < ?
                  LIMIT ?
@@ -636,10 +636,10 @@ public:
         PreparedStatement selectAccountFromBegining = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                SELECT account 
-                  FROM {}               
+                SELECT account
+                  FROM {}
                  WHERE token(account) > 0
-                   PER PARTITION LIMIT 1 
+                   PER PARTITION LIMIT 1
                  LIMIT ?
                 )",
                 qualifiedTableName(settingsProvider_.get(), "account_tx")
@@ -649,10 +649,10 @@ public:
         PreparedStatement selectAccountFromToken = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                SELECT account 
-                  FROM {}               
+                SELECT account
+                  FROM {}
                  WHERE token(account) > token(?)
-                   PER PARTITION LIMIT 1 
+                   PER PARTITION LIMIT 1
                  LIMIT ?
                 )",
                 qualifiedTableName(settingsProvider_.get(), "account_tx")
@@ -662,11 +662,11 @@ public:
         PreparedStatement selectAccountTxForward = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                SELECT hash, seq_idx 
-                  FROM {}               
+                SELECT hash, seq_idx
+                  FROM {}
                  WHERE account = ?
                    AND seq_idx > ?
-              ORDER BY seq_idx ASC 
+              ORDER BY seq_idx ASC
                  LIMIT ?
                 )",
                 qualifiedTableName(settingsProvider_.get(), "account_tx")
@@ -677,7 +677,7 @@ public:
             return handle_.get().prepare(fmt::format(
                 R"(
                 SELECT sequence, owner, is_burned
-                  FROM {}    
+                  FROM {}
                  WHERE token_id = ?
                    AND sequence <= ?
               ORDER BY sequence DESC
@@ -691,7 +691,7 @@ public:
             return handle_.get().prepare(fmt::format(
                 R"(
                 SELECT uri
-                  FROM {}    
+                  FROM {}
                  WHERE token_id = ?
                    AND sequence <= ?
               ORDER BY sequence DESC
@@ -705,7 +705,7 @@ public:
             return handle_.get().prepare(fmt::format(
                 R"(
                 SELECT hash, seq_idx
-                  FROM {}    
+                  FROM {}
                  WHERE token_id = ?
                    AND seq_idx < ?
               ORDER BY seq_idx DESC
@@ -719,7 +719,7 @@ public:
             return handle_.get().prepare(fmt::format(
                 R"(
                 SELECT hash, seq_idx
-                  FROM {}    
+                  FROM {}
                  WHERE token_id = ?
                    AND seq_idx >= ?
               ORDER BY seq_idx ASC
@@ -733,7 +733,7 @@ public:
             return handle_.get().prepare(fmt::format(
                 R"(
                 SELECT token_id
-                  FROM {}    
+                  FROM {}
                  WHERE issuer = ?
                    AND (taxon, token_id) > ?
               ORDER BY taxon ASC, token_id ASC
@@ -747,7 +747,7 @@ public:
             return handle_.get().prepare(fmt::format(
                 R"(
                 SELECT token_id
-                  FROM {}    
+                  FROM {}
                  WHERE issuer = ?
                    AND taxon = ?
                    AND token_id > ?
@@ -762,7 +762,7 @@ public:
             return handle_.get().prepare(fmt::format(
                 R"(
                 SELECT holder
-                  FROM {}    
+                  FROM {}
                  WHERE mpt_id = ?
                    AND holder > ?
               ORDER BY holder ASC
@@ -777,7 +777,7 @@ public:
                 R"(
                 SELECT sequence
                   FROM {}
-                 WHERE hash = ?     
+                 WHERE hash = ?
                  LIMIT 1
                 )",
                 qualifiedTableName(settingsProvider_.get(), "ledger_hashes")
@@ -799,7 +799,7 @@ public:
             return handle_.get().prepare(fmt::format(
                 R"(
                 SELECT sequence
-                  FROM {}    
+                  FROM {}
                  WHERE is_latest = True
                 )",
                 qualifiedTableName(settingsProvider_.get(), "ledger_range")

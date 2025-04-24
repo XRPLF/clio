@@ -834,8 +834,8 @@ TEST_F(RPCTxTest, CTIDNotMatch)
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
-        // TODO: https://github.com/XRPLF/clio/issues/2002
-        EXPECT_EQ(err.at("error_code").as_uint64(), 4);
+        EXPECT_EQ(err.at("error").as_string(), "unknown");
+        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::RippledError::rpcWRONG_NETWORK);
         EXPECT_EQ(
             err.at("error_message").as_string(),
             "Wrong network. You should submit this request to a node running on NetworkID: 2"

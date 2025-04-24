@@ -90,7 +90,7 @@ generateTestValuesForParametersTest()
         {
             .testName = "SourceAccountMissing",
             .testJson = R"({
-                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
             })",
             .expectedError = "invalidParams",
@@ -99,8 +99,8 @@ generateTestValuesForParametersTest()
         {
             .testName = "SourceAccountMalformed",
             .testJson = R"({
-                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp", 
-                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp",
+                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
             })",
             .expectedError = "actMalformed",
@@ -109,8 +109,8 @@ generateTestValuesForParametersTest()
         {
             .testName = "SourceAccountNotString",
             .testJson = R"({
-                "source_account": 1234, 
-                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "source_account": 1234,
+                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
             })",
             .expectedError = "invalidParams",
@@ -119,7 +119,7 @@ generateTestValuesForParametersTest()
         {
             .testName = "DestinationAccountMissing",
             .testJson = R"({
-                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
             })",
             .expectedError = "invalidParams",
@@ -128,8 +128,8 @@ generateTestValuesForParametersTest()
         {
             .testName = "DestinationAccountMalformed",
             .testJson = R"({
-                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
-                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp", 
+                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp",
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
             })",
             .expectedError = "actMalformed",
@@ -138,7 +138,7 @@ generateTestValuesForParametersTest()
         {
             .testName = "DestinationAccountNotString",
             .testJson = R"({
-                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "destination_account": 1234,
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
             })",
@@ -148,8 +148,8 @@ generateTestValuesForParametersTest()
         {
             .testName = "LedgerHashInvalid",
             .testJson = R"({
-                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
-                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": "x"
             })",
             .expectedError = "invalidParams",
@@ -158,8 +158,8 @@ generateTestValuesForParametersTest()
         {
             .testName = "LedgerHashNotString",
             .testJson = R"({
-                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
-                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": 123
             })",
             .expectedError = "invalidParams",
@@ -168,8 +168,8 @@ generateTestValuesForParametersTest()
         {
             .testName = "LedgerIndexNotInt",
             .testJson = R"({
-                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
-                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "x"
             })",
             .expectedError = "invalidParams",
@@ -178,8 +178,8 @@ generateTestValuesForParametersTest()
         {
             .testName = "CredentialsNotArray",
             .testJson = R"({
-                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
-                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "credentials": "x"
             })",
             .expectedError = "invalidParams",
@@ -188,8 +188,8 @@ generateTestValuesForParametersTest()
         {
             .testName = "CredentialsNotStringsInArray",
             .testJson = R"({
-                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
-                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "credentials": [123]
             })",
@@ -199,8 +199,8 @@ generateTestValuesForParametersTest()
         {
             .testName = "CredentialsNotHexedStringInArray",
             .testJson = R"({
-                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
-                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "credentials": ["234", "432"]
             })",
@@ -242,8 +242,8 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
-                "source_account": "{}", 
-                "destination_account": "{}", 
+                "source_account": "{}",
+                "destination_account": "{}",
                 "ledger_index": {}
             }})",
             kACCOUNT,
@@ -269,8 +269,8 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
-                "source_account": "{}", 
-                "destination_account": "{}", 
+                "source_account": "{}",
+                "destination_account": "{}",
                 "ledger_index": "{}"
             }})",
             kACCOUNT,
@@ -296,8 +296,8 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"({{
-                "source_account": "{}", 
-                "destination_account": "{}", 
+                "source_account": "{}",
+                "destination_account": "{}",
                 "ledger_hash": "{}"
             }})",
             kACCOUNT,

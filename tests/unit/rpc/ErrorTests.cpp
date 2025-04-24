@@ -32,8 +32,10 @@ using namespace rpc;
 using namespace std;
 
 namespace {
+
+template <typename ErrorCodeType>
 void
-check(boost::json::object const& j, std::string_view error, uint32_t errorCode, std::string_view errorMessage)
+check(boost::json::object const& j, std::string_view error, ErrorCodeType errorCode, std::string_view errorMessage)
 {
     EXPECT_TRUE(j.contains("error"));
     EXPECT_TRUE(j.contains("error_code"));
@@ -51,7 +53,7 @@ check(boost::json::object const& j, std::string_view error, uint32_t errorCode, 
     EXPECT_EQ(boost::json::value_to<std::string>(j.at("type")), "response");
 
     EXPECT_EQ(boost::json::value_to<std::string>(j.at("error")), error.data());
-    EXPECT_EQ(j.at("error_code").as_uint64(), errorCode);
+    EXPECT_EQ(j.at("error_code").as_uint64(), static_cast<uint64_t>(errorCode));
     EXPECT_EQ(boost::json::value_to<std::string>(j.at("error_message")), errorMessage.data());
 }
 }  // namespace
@@ -86,13 +88,13 @@ TEST(RPCErrorsTest, StatusEquals)
 TEST(RPCErrorsTest, SuccessToJSON)
 {
     auto const status = Status{RippledError::rpcSUCCESS};
-    check(makeError(status), "unknown", 0, "An unknown error code.");
+    check(makeError(status), "unknown", RippledError::rpcSUCCESS, "An unknown error code.");
 }
 
 TEST(RPCErrorsTest, RippledErrorToJSON)
 {
     auto const status = Status{RippledError::rpcINVALID_PARAMS};
-    check(makeError(status), "invalidParams", 31, "Invalid parameters.");
+    check(makeError(status), "invalidParams", RippledError::rpcINVALID_PARAMS, "Invalid parameters.");
 }
 
 TEST(RPCErrorsTest, RippledErrorFromStringToJSON)
@@ -104,31 +106,31 @@ TEST(RPCErrorsTest, RippledErrorFromStringToJSON)
 TEST(RPCErrorsTest, RippledErrorToJSONCustomMessage)
 {
     auto const status = Status{RippledError::rpcINVALID_PARAMS, "custom"};
-    check(makeError(status), "invalidParams", 31, "custom");
+    check(makeError(status), "invalidParams", RippledError::rpcINVALID_PARAMS, "custom");
 }
 
 TEST(RPCErrorsTest, RippledErrorToJSONCustomStrCodeAndMessage)
 {
     auto const status = Status{RippledError::rpcINVALID_PARAMS, "customCode", "customMessage"};
-    check(makeError(status), "customCode", 31, "customMessage");
+    check(makeError(status), "customCode", RippledError::rpcINVALID_PARAMS, "customMessage");
 }
 
 TEST(RPCErrorsTest, ClioErrorToJSON)
 {
     auto const status = Status{ClioError::RpcMalformedCurrency};
-    check(makeError(status), "malformedCurrency", 5000, "Malformed currency.");
+    check(makeError(status), "malformedCurrency", ClioError::RpcMalformedCurrency, "Malformed currency.");
 }
 
 TEST(RPCErrorsTest, ClioErrorToJSONCustomMessage)
 {
     auto const status = Status{ClioError::RpcMalformedCurrency, "custom"};
-    check(makeError(status), "malformedCurrency", 5000, "custom");
+    check(makeError(status), "malformedCurrency", ClioError::RpcMalformedCurrency, "custom");
 }
 
 TEST(RPCErrorsTest, ClioErrorToJSONCustomStrCodeAndMessage)
 {
     auto const status = Status{ClioError::RpcMalformedCurrency, "customCode", "customMessage"};
-    check(makeError(status), "customCode", 5000, "customMessage");
+    check(makeError(status), "customCode", ClioError::RpcMalformedCurrency, "customMessage");
 }
 
 TEST(RPCErrorsTest, InvalidClioErrorToJSON)

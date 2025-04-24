@@ -77,8 +77,8 @@ TEST_F(RPCAccountLinesHandlerTest, NonHexLedgerHash)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "account": "{}", 
+            R"({{
+                "account": "{}",
                 "limit": 10,
                 "ledger_hash": "xxx"
             }})",
@@ -99,7 +99,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonStringLedgerHash)
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
         auto const input = json::parse(fmt::format(
             R"({{
-                "account": "{}", 
+                "account": "{}",
                 "limit": 10,
                 "ledger_hash": 123
             }})",
@@ -119,8 +119,8 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidLedgerIndexString)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "account": "{}", 
+            R"({{
+                "account": "{}",
                 "limit": 10,
                 "ledger_index": "notvalidated"
             }})",
@@ -140,8 +140,8 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerNotString)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "account": "{}", 
+            R"({{
+                "account": "{}",
                 "marker": 9
             }})",
             kACCOUNT
@@ -163,7 +163,7 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "account": "{}",
                 "marker": "123invalid"
             }})",
@@ -179,8 +179,8 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "account": "{}", 
+            R"({{
+                "account": "{}",
                 "marker": 401
             }})",
             kACCOUNT
@@ -199,7 +199,7 @@ TEST_F(RPCAccountLinesHandlerTest, AccountInvalidFormat)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
         auto const input = json::parse(
-            R"({ 
+            R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp"
             })"
         );
@@ -217,7 +217,7 @@ TEST_F(RPCAccountLinesHandlerTest, AccountNotString)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
         auto const input = json::parse(
-            R"({ 
+            R"({
                 "account": 12
             })"
         );
@@ -235,7 +235,7 @@ TEST_F(RPCAccountLinesHandlerTest, PeerInvalidFormat)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
         auto const input = json::parse(
-            R"({ 
+            R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "peer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp"
             })"
@@ -253,7 +253,7 @@ TEST_F(RPCAccountLinesHandlerTest, PeerNotString)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
         auto const input = json::parse(
-            R"({ 
+            R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "peer": 12
             })"
@@ -272,7 +272,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitNotInt)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
         auto const input = json::parse(
-            R"({ 
+            R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "limit": "t"
             })"
@@ -290,7 +290,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitNagetive)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
         auto const input = json::parse(
-            R"({ 
+            R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "limit": -1
             })"
@@ -308,7 +308,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitZero)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
         auto const input = json::parse(
-            R"({ 
+            R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "limit": 0
             })"
@@ -355,7 +355,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerStringIndex)
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "account": "{}",
             "ledger_index": "4"
         }})",
@@ -377,7 +377,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIntIndex)
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "account": "{}",
             "ledger_index": 4
         }})",
@@ -402,7 +402,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash2)
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "account": "{}",
             "ledger_hash": "{}"
         }})",
@@ -426,7 +426,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIndex2)
     // differ from previous logic
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "account": "{}",
             "ledger_index": "31"
         }})",
@@ -581,7 +581,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
     runSpawn([this](auto yield) {
         auto handler = AnyHandler{AccountLinesHandler{this->backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "account": "{}",
                 "limit": 20
             }})",
@@ -597,8 +597,8 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "account": "{}", 
+            R"({{
+                "account": "{}",
                 "limit": 9
             }})",
             kACCOUNT
@@ -610,8 +610,8 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "account": "{}", 
+            R"({{
+                "account": "{}",
                 "limit": 401
             }})",
             kACCOUNT
@@ -668,7 +668,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
     auto const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
-            "limit": 30,       
+            "limit": 30,
             "peer": "{}"
         }})",
         kACCOUNT,
@@ -703,7 +703,7 @@ TEST_F(RPCAccountLinesHandlerTest, EmptyChannel)
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "account": "{}"
         }})",
         kACCOUNT
@@ -793,7 +793,7 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseFieldWithDeepFreeze)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "account": "{}"
         }})",
         kACCOUNT
@@ -873,7 +873,7 @@ TEST_F(RPCAccountLinesHandlerTest, FrozenTrustLineResponse)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "account": "{}"
         }})",
         kACCOUNT
@@ -936,7 +936,7 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "account": "{}",
             "limit": {}
         }})",
@@ -991,7 +991,7 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "account": "{}",
             "limit": {},
             "marker": "{},{}"

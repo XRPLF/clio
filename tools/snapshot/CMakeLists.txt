@@ -37,7 +37,7 @@ foreach (proto ${PROTO_FILES})
   add_custom_command(
     OUTPUT ${GO_SOURCE_DIR}/${GO_IMPORT_PATH}/${proto_name}.pb.go
     COMMAND
-      protoc ${GO_OPTS} ${GRPC_OPTS} 
+      protoc ${GO_OPTS} ${GRPC_OPTS}
       --go-grpc_out=${GO_SOURCE_DIR} -I${PROTO_INC_DIR} ${proto} --plugin=${GOPATH_VALUE}/bin/protoc-gen-go
       --plugin=${GOPATH_VALUE}/bin/protoc-gen-go-grpc --go_out=${GO_SOURCE_DIR}/
     DEPENDS ${proto}

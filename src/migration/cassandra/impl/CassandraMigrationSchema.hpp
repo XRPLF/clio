@@ -65,8 +65,8 @@ public:
     {
         return handler.prepare(fmt::format(
             R"(
-            SELECT * 
-              FROM {} 
+            SELECT *
+              FROM {}
              WHERE TOKEN({}) >= ? AND TOKEN({}) <= ?
             )",
             data::cassandra::qualifiedTableName<SettingsProviderType>(settingsProvider_.get(), tableName),
@@ -86,7 +86,7 @@ public:
     {
         static auto kPREPARED = handler.prepare(fmt::format(
             R"(
-            INSERT INTO {} 
+            INSERT INTO {}
                    (migrator_name, status)
             VALUES (?, ?)
             )",

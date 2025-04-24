@@ -1119,7 +1119,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
     auto static const kINPUT = json::parse(fmt::format(
         R"({{
             "asset": {{
-                "currency": "JPY", 
+                "currency": "JPY",
                 "issuer": "{}"
             }},
             "asset2": {{
@@ -1233,7 +1233,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
                 "issuer": "{}"
             }},
             "asset2": {{
-                "currency": "JPY", 
+                "currency": "JPY",
                 "issuer": "{}"
             }}
         }})",

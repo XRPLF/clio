@@ -82,8 +82,8 @@ TEST_F(RPCMPTHoldersHandlerTest, NonHexLedgerHash)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "mpt_issuance_id": "{}", 
+            R"({{
+                "mpt_issuance_id": "{}",
                 "ledger_hash": "xxx"
             }})",
             kMPT_ID
@@ -103,7 +103,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonStringLedgerHash)
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
         auto const input = json::parse(fmt::format(
             R"({{
-                "mpt_issuance_id": "{}", 
+                "mpt_issuance_id": "{}",
                 "ledger_hash": 123
             }})",
             kMPT_ID
@@ -122,8 +122,8 @@ TEST_F(RPCMPTHoldersHandlerTest, InvalidLedgerIndexString)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "mpt_issuance_id": "{}", 
+            R"({{
+                "mpt_issuance_id": "{}",
                 "ledger_index": "notvalidated"
             }})",
             kMPT_ID
@@ -142,7 +142,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTIDInvalidFormat)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
-        auto const input = json::parse(R"({ 
+        auto const input = json::parse(R"({
             "mpt_issuance_id": "xxx"
         })");
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -172,7 +172,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTIDNotString)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
-        auto const input = json::parse(R"({ 
+        auto const input = json::parse(R"({
             "mpt_issuance_id": 12
         })");
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -190,7 +190,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerInvalidFormat)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
+            R"({{
             "mpt_issuance_id": "{}",
             "marker": "xxx"
         }})",
@@ -210,7 +210,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerNotString)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
+            R"({{
             "mpt_issuance_id": "{}",
             "marker": 1
         }})",
@@ -257,7 +257,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerStringIndex)
     // mock fetchLedgerBySequence return empty
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(std::optional<ripple::LedgerInfo>{}));
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "mpt_issuance_id": "{}",
             "ledger_index": "4"
         }})",
@@ -278,7 +278,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerIntIndex)
     // mock fetchLedgerBySequence return empty
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(std::optional<ripple::LedgerInfo>{}));
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "mpt_issuance_id": "{}",
             "ledger_index": 4
         }})",
@@ -303,7 +303,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerHash2)
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerinfo));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "mpt_issuance_id": "{}",
             "ledger_hash": "{}"
         }})",
@@ -327,7 +327,7 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerIndex2)
     // differ from previous logic
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "mpt_issuance_id": "{}",
             "ledger_index": "31"
         }})",

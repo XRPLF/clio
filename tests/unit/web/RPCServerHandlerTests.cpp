@@ -914,10 +914,13 @@ TEST_P(WebRPCServerHandlerInvalidAPIVersionParamTest, WSInvalidAPIVersion)
 
     auto response = boost::json::parse(session->message);
     EXPECT_TRUE(response.is_object());
+
     EXPECT_TRUE(response.as_object().contains("error"));
     EXPECT_EQ(response.at("error").as_string(), "invalid_API_version");
-    EXPECT_TRUE(response.as_object().contains("error_message"));
-    EXPECT_EQ(response.at("error_message").as_string(), GetParam().wsMessage);
+
     EXPECT_TRUE(response.as_object().contains("error_code"));
     EXPECT_EQ(response.at("error_code").as_int64(), static_cast<int64_t>(rpc::ClioError::RpcInvalidApiVersion));
+
+    EXPECT_TRUE(response.as_object().contains("error_message"));
+    EXPECT_EQ(response.at("error_message").as_string(), GetParam().wsMessage);
 }

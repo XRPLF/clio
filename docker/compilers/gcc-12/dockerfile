@@ -63,7 +63,7 @@ COPY --from=build /gcc12.deb /
 
 # Make gcc-12 available but also leave gcc12.deb for others to copy if needed
 RUN apt update && apt-get install -y binutils libc6-dev \
-    && dpkg -i /gcc12.deb 
+    && dpkg -i /gcc12.deb
 
 RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 100 \
     && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-12 100 \
