@@ -99,7 +99,7 @@ public:
      * @param settingsProvider The settings provider to use
      * @param cache The ledger cache to use
      * @param readOnly Whether the database should be in readonly mode
-     * @param cacheLedger The Cache of latest ledger
+     * @param ledgerCache The Cache of latest ledger
      */
     BasicCassandraBackend(
         SettingsProviderType settingsProvider,
@@ -276,7 +276,7 @@ public:
     fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context yield) const override
     {
         {
-            auto const lock = ledgerCache_.read();
+            auto const lock = ledgerCache_.get();
             if (lock.has_value() && lock->seq == sequence)
                 return lock->ledger;
         }

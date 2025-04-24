@@ -31,5 +31,5 @@ struct MockLedgerHeaderCache {
     using CacheEntry = data::cassandra::FetchLedgerCache::CacheEntry;
 
     MOCK_METHOD(void, put, (CacheEntry), ());
-    MOCK_METHOD(std::optional<CacheEntry>, read, (), (const));
+    MOCK_METHOD(std::optional<CacheEntry>, get, (), (const));
 };

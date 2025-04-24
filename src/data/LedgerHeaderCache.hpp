@@ -47,11 +47,19 @@ public:
         mutexPtr_ = std::make_unique<util::Mutex<std::optional<CacheEntry>, std::shared_mutex>>();
     }
 
+    /**
+     * @brief Struct to store ledger header cache entry and the sequence it belongs to
+     */
     struct CacheEntry {
         ripple::LedgerHeader ledger;
         uint32_t seq{0u};
     };
 
+    /**
+     * @brief Put CacheEntry into mutex
+     *
+     * @param cacheEntry The Cache to store into mutex
+     */
     void
     put(CacheEntry const& cacheEntry) const
     {
@@ -59,8 +67,13 @@ public:
         *lock = cacheEntry;
     }
 
+    /**
+     * @brief Read CacheEntry from mutex
+     *
+     * @param cacheEntry The Cache to store into mutex
+     */
     std::optional<CacheEntry>
-    read() const
+    get() const
     {
         auto const lock = mutexPtr_->lock<std::shared_lock>();
         return lock.get();
@@ -70,6 +83,9 @@ private:
     std::unique_ptr<util::Mutex<std::optional<CacheEntry>, std::shared_mutex>> mutexPtr_;
 };
 
+/**
+ * @brief Comparing CacheEntry. Used in testing for EXPECT_CALL
+ */
 inline bool
 operator==(FetchLedgerCache::CacheEntry const& lhs, FetchLedgerCache::CacheEntry const& rhs)
 {

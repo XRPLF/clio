@@ -1339,10 +1339,10 @@ TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
         {
             testing::InSequence s;
             // first time, getSeq doesn't match ledger sequence
-            EXPECT_CALL(mockCache, read()).WillOnce(testing::Return(std::nullopt));
+            EXPECT_CALL(mockCache, get()).WillOnce(testing::Return(std::nullopt));
 
             // second time, it would be cached
-            EXPECT_CALL(mockCache, read())
+            EXPECT_CALL(mockCache, get())
                 .WillOnce(testing::Return(FetchLedgerCache::CacheEntry{.ledger = lgrInfo, .seq = testLedgerSeq}));
         }
 
@@ -1369,7 +1369,7 @@ TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
 }
 
 struct BackendCassandraNodeMessageTest : BackendCassandraTest {
-    boost::uuids::random_generator generateUuid{};
+    boost::uuids::random_generator generateUuid;
 };
 
 TEST_F(BackendCassandraNodeMessageTest, UpdateFetch)
