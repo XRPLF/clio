@@ -56,9 +56,9 @@ public:
     };
 
     /**
-     * @brief Put CacheEntry into mutex
+     * @brief Put CacheEntry into mutex container.
      *
-     * @param cacheEntry The Cache to store into mutex
+     * @param cacheEntry The Cache to store into mutex container.
      */
     void
     put(CacheEntry const& cacheEntry) const
@@ -68,9 +68,10 @@ public:
     }
 
     /**
-     * @brief Read CacheEntry from mutex
+     * @brief Read CacheEntry from mutex container.
      *
-     * @param cacheEntry The Cache to store into mutex
+     * @param cacheEntry The Cache to store into mutex container.
+     * @return Optional CacheEntry, depending on if it exists in mutex container or not.
      */
     std::optional<CacheEntry>
     get() const
@@ -85,6 +86,10 @@ private:
 
 /**
  * @brief Comparing CacheEntry. Used in testing for EXPECT_CALL
+ *
+ * @param lhs A CacheEntry
+ * @param rhs Another CacheEntry
+ * @return true if two CacheEntry is the same, false otherwise
  */
 inline bool
 operator==(FetchLedgerCache::CacheEntry const& lhs, FetchLedgerCache::CacheEntry const& rhs)
