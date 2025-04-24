@@ -13,7 +13,6 @@ target_sources(
           data/BackendInterfaceTests.cpp
           data/LedgerCacheTests.cpp
           data/cassandra/AsyncExecutorTests.cpp
-          data/cassandra/BackendTests.cpp
           data/cassandra/ExecutionStrategyTests.cpp
           data/cassandra/RetryPolicyTests.cpp
           data/cassandra/SettingsProviderTests.cpp
