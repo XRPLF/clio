@@ -19,12 +19,15 @@
 
 #pragma once
 
-#include "data/LedgerHeaderCacheInterface.hpp"
+#include "util/Mutex.hpp"
 
 #include <xrpl/protocol/LedgerHeader.h>
 
 #include <cstdint>
+#include <memory>
+#include <mutex>
 #include <optional>
+#include <shared_mutex>
 
 namespace data::cassandra {
 
@@ -34,38 +37,43 @@ namespace data::cassandra {
  * Used internally by backend implementations. When a ledger header is
  * fetched via `FetchLedgerBySeq` (often triggered by RPC commands),
  * the result can be stored here. Subsequent requests for the same ledger
- * sequence can then retrieve the header from this cache, avoiding unnecessary
+ * sequence can proceed to retrieve the header from this cache, avoiding unnecessary
  * database reads and improving performance.
  */
-class FetchLedgerCache : public LedgerHeaderCacheInterface {
+class FetchLedgerCache {
 public:
-    void
-    setLedgerHeader(ripple::LedgerHeader const& ledgerHeader) override
+    FetchLedgerCache()
     {
-        ledger_ = ledgerHeader;
+        mutexPtr_ = std::make_unique<util::Mutex<std::optional<CacheEntry>, std::shared_mutex>>();
     }
+
+    struct CacheEntry {
+        ripple::LedgerHeader ledger;
+        uint32_t seq{0u};
+    };
 
     void
-    setSeq(uint32_t const seq) override
+    put(CacheEntry const& cacheEntry) const
     {
-        seq_ = seq;
+        auto lock = mutexPtr_->lock<std::unique_lock>();
+        *lock = cacheEntry;
     }
 
-    std::optional<ripple::LedgerHeader>
-    getLedgerHeader() const override
+    std::optional<CacheEntry>
+    read() const
     {
-        return ledger_;
-    }
-
-    uint32_t
-    getSeq() const override
-    {
-        return seq_;
+        auto const lock = mutexPtr_->lock<std::shared_lock>();
+        return lock.get();
     }
 
 private:
-    std::optional<ripple::LedgerHeader> ledger_;
-    uint32_t seq_{};
+    std::unique_ptr<util::Mutex<std::optional<CacheEntry>, std::shared_mutex>> mutexPtr_;
 };
+
+inline bool
+operator==(FetchLedgerCache::CacheEntry const& lhs, FetchLedgerCache::CacheEntry const& rhs)
+{
+    return lhs.ledger.hash == rhs.ledger.hash && lhs.seq == rhs.seq;
+}
 
 }  // namespace data::cassandra

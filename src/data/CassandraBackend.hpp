@@ -32,7 +32,6 @@
 #include "data/cassandra/impl/ExecutionStrategy.hpp"
 #include "util/Assert.hpp"
 #include "util/LedgerUtils.hpp"
-#include "util/Mutex.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 
@@ -55,9 +54,7 @@
 #include <cstdint>
 #include <iterator>
 #include <limits>
-#include <mutex>
 #include <optional>
-#include <shared_mutex>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -91,7 +88,7 @@ protected:
 
     // have to be mutable because BackendInterface constness :(
     mutable ExecutionStrategyType executor_;
-    mutable util::Mutex<FetchLedgerCacheType, std::shared_mutex> ledgerCache_{};
+    FetchLedgerCacheType ledgerCache_;
 
 public:
     /**
@@ -102,12 +99,18 @@ public:
      * @param readOnly Whether the database should be in readonly mode
      * @param cacheLedger The Cache of latest ledger
      */
-    BasicCassandraBackend(SettingsProviderType settingsProvider, data::LedgerCacheInterface& cache, bool readOnly)
+    BasicCassandraBackend(
+        SettingsProviderType settingsProvider,
+        data::LedgerCacheInterface& cache,
+        bool readOnly,
+        FetchLedgerCacheType ledgerCache = FetchLedgerCache{}
+    )
         : BackendInterface(cache)
         , settingsProvider_{std::move(settingsProvider)}
         , schema_{settingsProvider_}
         , handle_{settingsProvider_.getSettings()}
         , executor_{settingsProvider_.getSettings(), handle_}
+        , ledgerCache_{std::forward<FetchLedgerCacheType>(ledgerCache)}
     {
         if (auto const res = handle_.connect(); not res)
             throw std::runtime_error("Could not connect to database: " + res.error());
@@ -271,9 +274,9 @@ public:
     fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context yield) const override
     {
         {
-            auto const lock = ledgerCache_.template lock<std::shared_lock>();
-            if (lock->getSeq() == sequence && lock->getLedgerHeader().has_value())
-                return lock.get().getLedgerHeader().value();
+            auto const lock = ledgerCache_.read();
+            if (lock.has_value() && lock->seq == sequence)
+                return lock->ledger;
         }
 
         auto const res = executor_.read(yield, schema_->selectLedgerBySeq, sequence);
@@ -281,9 +284,7 @@ public:
             if (auto const& result = res.value(); result) {
                 if (auto const maybeValue = result.template get<std::vector<unsigned char>>(); maybeValue) {
                     auto const header = util::deserializeHeader(ripple::makeSlice(*maybeValue));
-                    auto updateCache = ledgerCache_.template lock<std::unique_lock>();
-                    updateCache->setSeq(sequence);
-                    updateCache->setLedgerHeader(header);
+                    ledgerCache_.put(FetchLedgerCache::CacheEntry{header, sequence});
                     return header;
                 }
 
@@ -1061,19 +1062,6 @@ public:
     stats() const override
     {
         return executor_.stats();
-    }
-
-    ExecutionStrategyType&
-    getExecutor() const
-    {
-        return executor_;
-    }
-
-    FetchLedgerCacheType&
-    getLedgerCache() const
-    {
-        auto lock = ledgerCache_.lock();
-        return *lock;
     }
 
 private:

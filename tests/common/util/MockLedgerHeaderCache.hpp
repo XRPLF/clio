@@ -19,19 +19,17 @@
 
 #pragma once
 
-#include "data/LedgerHeaderCacheInterface.hpp"
+#include "data/LedgerHeaderCache.hpp"
 
 #include <gmock/gmock.h>
 #include <xrpl/protocol/LedgerHeader.h>
 
-#include <cstdint>
 #include <optional>
 
-struct MockLedgerHeaderCache : public data::cassandra::LedgerHeaderCacheInterface {
+struct MockLedgerHeaderCache {
     MockLedgerHeaderCache() = default;
+    using CacheEntry = data::cassandra::FetchLedgerCache::CacheEntry;
 
-    MOCK_METHOD(void, setLedgerHeader, (ripple::LedgerHeader const&), (override));
-    MOCK_METHOD(void, setSeq, (uint32_t const), (override));
-    MOCK_METHOD(std::optional<ripple::LedgerHeader>, getLedgerHeader, (), (const, override));
-    MOCK_METHOD(uint32_t, getSeq, (), (const, override));
+    MOCK_METHOD(void, put, (CacheEntry), ());
+    MOCK_METHOD(std::optional<CacheEntry>, read, (), (const));
 };
