@@ -70,7 +70,6 @@ public:
     /**
      * @brief Read CacheEntry from mutex container.
      *
-     * @param cacheEntry The Cache to store into mutex container.
      * @return Optional CacheEntry, depending on if it exists in mutex container or not.
      */
     std::optional<CacheEntry>
