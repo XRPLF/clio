@@ -181,6 +181,10 @@ public:
             ret = std::make_shared<etl::ETLService>(config, ioc, backend, subscriptions, balancer, ledgers);
         }
 
+        // inject networkID into subscriptions, as transaction feed require it to inject CTID in response
+        if (auto const state = ret->getETLState(); state)
+            subscriptions->setNetworkID(state->networkID);
+
         ret->run();
         return ret;
     }

@@ -142,6 +142,8 @@ private:
             return HandlerType{this->backend_, this->mockAmendmentCenterPtr_};
         } else if constexpr (std::is_same_v<HandlerType, SubscribeHandler>) {
             return HandlerType{this->backend_, this->mockAmendmentCenterPtr_, this->mockSubscriptionManagerPtr_};
+        } else if constexpr (std::is_same_v<HandlerType, AccountTxHandler>) {
+            return HandlerType{this->backend_, mockETLServicePtr_};
         } else if constexpr (std::is_same_v<HandlerType, TestServerInfoHandler>) {
             return HandlerType{
                 this->backend_,
@@ -171,6 +173,15 @@ createInput<AccountInfoHandler>()
     AccountInfoHandler::Input input{};
     input.account = kACCOUNT;
     input.ident = "asdf";
+    return input;
+}
+
+template <>
+AccountTxHandler::Input
+createInput<AccountTxHandler>()
+{
+    AccountTxHandler::Input input{};
+    input.account = kACCOUNT;
     return input;
 }
 
