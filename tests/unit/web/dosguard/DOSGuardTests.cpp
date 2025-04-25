@@ -23,11 +23,14 @@
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"
 #include "web/dosguard/DOSGuard.hpp"
+#include "web/dosguard/WeightsInterface.hpp"
 #include "web/dosguard/WhitelistHandlerInterface.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <string>
 #include <string_view>
 
 using namespace testing;
@@ -53,6 +56,9 @@ struct DOSGuardTest : NoLoggerFixture {
     struct MockWhitelistHandler : WhitelistHandlerInterface {
         MOCK_METHOD(bool, isWhiteListed, (std::string_view ip), (const));
     };
+    struct MockWeights : WeightsInterface {
+        MOCK_METHOD(size_t, commandWeight, (std::string const& cmd), (const, override));
+    };
 
     ClioConfigDefinition cfg{
         {{"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(100)},
@@ -61,7 +67,8 @@ struct DOSGuardTest : NoLoggerFixture {
          {"dos_guard.whitelist", Array{ConfigValue{ConfigType::String}}}}
     };
     NiceMock<MockWhitelistHandler> whitelistHandler;
-    DOSGuard guard{cfg, whitelistHandler};
+    StrictMock<MockWeights> weightsMock;
+    DOSGuard guard{cfg, whitelistHandler, weightsMock};
 };
 
 TEST_F(DOSGuardTest, Whitelisting)

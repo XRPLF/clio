@@ -45,6 +45,7 @@
 #include "web/Server.hpp"
 #include "web/dosguard/DOSGuard.hpp"
 #include "web/dosguard/IntervalSweepHandler.hpp"
+#include "web/dosguard/Weights.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
 #include "web/ng/RPCServerHandler.hpp"
 #include "web/ng/Server.hpp"
@@ -104,7 +105,8 @@ ClioApplication::run(bool const useNgWebServer)
 
     // Rate limiter, to prevent abuse
     auto whitelistHandler = web::dosguard::WhitelistHandler{config_};
-    auto dosGuard = web::dosguard::DOSGuard{config_, whitelistHandler};
+    auto const dosguardWeights = web::dosguard::Weights::make(config_);
+    auto dosGuard = web::dosguard::DOSGuard{config_, whitelistHandler, dosguardWeights};
     auto sweepHandler = web::dosguard::IntervalSweepHandler{config_, ioc, dosGuard};
     auto cache = data::LedgerCache{};
 

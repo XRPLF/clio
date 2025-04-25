@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,24 +19,32 @@
 
 #pragma once
 
-#include "web/dosguard/DOSGuardInterface.hpp"
-
-#include <gmock/gmock.h>
-
-#include <cstdint>
-#include <string>
 #include <string_view>
+#include <unordered_set>
 
-struct DOSGuardMockImpl : web::dosguard::DOSGuardInterface {
-    MOCK_METHOD(bool, isWhiteListed, (std::string_view const ip), (const, noexcept, override));
-    MOCK_METHOD(bool, isOk, (std::string const& ip), (const, noexcept, override));
-    MOCK_METHOD(void, increment, (std::string const& ip), (noexcept, override));
-    MOCK_METHOD(void, decrement, (std::string const& ip), (noexcept, override));
-    MOCK_METHOD(bool, add, (std::string const& ip, uint32_t size), (noexcept, override));
-    MOCK_METHOD(bool, request, (std::string const& ip), (noexcept, override));
-    MOCK_METHOD(bool, requestCmd, (std::string const& ip, std::string const& cmd), (override));
-    MOCK_METHOD(void, clear, (), (noexcept, override));
+namespace rpc {
+
+/**
+ * @brief Registry of RPC commands supported by Clio
+ *
+ * The RPCCenter maintains lists of RPC commands that can be handled locally
+ * and those that need to be forwarded to rippled.
+ */
+struct RPCCenter {
+    /** @brief Set of RPC commands that can be handled locally by Clio */
+    static std::unordered_set<std::string_view> const kHANDLED_RPCS;
+
+    /** @brief Set of RPC commands that will be forwarded to rippled */
+    static std::unordered_set<std::string_view> const kFORWARDED_RPCS;
+
+    /**
+     * @brief Checks if a string is a valid RPC command name
+     *
+     * @param s The string to check
+     * @return true if the string is a recognized RPC name, false otherwise
+     */
+    static bool
+    isRpcName(std::string_view s);
 };
 
-using DOSGuardMock = testing::NiceMock<DOSGuardMockImpl>;
-using DOSGuardStrictMock = testing::StrictMock<DOSGuardMockImpl>;
+}  // namespace rpc

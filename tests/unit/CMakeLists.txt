@@ -89,6 +89,7 @@ target_sources(
           rpc/common/CheckersTests.cpp
           rpc/common/SpecsTests.cpp
           rpc/common/TypesTests.cpp
+          rpc/common/impl/HandlerProviderTests.cpp
           rpc/handlers/AccountChannelsTests.cpp
           rpc/handlers/AccountCurrenciesTests.cpp
           rpc/handlers/AccountInfoTests.cpp

@@ -5,6 +5,7 @@ target_sources(
   PRIVATE Errors.cpp
           Factories.cpp
           AMMHelpers.cpp
+          RPCCenter.cpp
           RPCHelpers.cpp
           CredentialHelpers.cpp
           Counters.cpp

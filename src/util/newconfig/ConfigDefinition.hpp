@@ -315,7 +315,7 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"dos_guard.sweep_interval", ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint64)},
      {"dos_guard.__ng_default_weight", ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint64)
      },
-     {"dos_guard.__ng_weights.[].method", Array{ConfigValue{ConfigType::String}}},
+     {"dos_guard.__ng_weights.[].method", Array{ConfigValue{ConfigType::String}}},  // TODO(kuznetsss): add checker
      {"dos_guard.__ng_weights.[].weight",
       Array{ConfigValue{ConfigType::Integer}.withConstraint(gValidatePositiveDouble)}},
 

@@ -24,6 +24,7 @@
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ValueView.hpp"
+#include "web/dosguard/WeightsInterface.hpp"
 #include "web/dosguard/WhitelistHandlerInterface.hpp"
 
 #include <cstdint>
@@ -37,8 +38,13 @@ using namespace util::config;
 
 namespace web::dosguard {
 
-DOSGuard::DOSGuard(ClioConfigDefinition const& config, WhitelistHandlerInterface const& whitelistHandler)
+DOSGuard::DOSGuard(
+    ClioConfigDefinition const& config,
+    WhitelistHandlerInterface const& whitelistHandler,
+    WeightsInterface const& weights
+)
     : whitelistHandler_{std::cref(whitelistHandler)}
+    , weights_(weights)
     , maxFetches_{config.get<uint32_t>("dos_guard.max_fetches")}
     , maxConnCount_{config.get<uint32_t>("dos_guard.max_connections")}
     , maxRequestCount_{config.get<uint32_t>("dos_guard.max_requests")}
@@ -123,6 +129,22 @@ DOSGuard::request(std::string const& ip) noexcept
     {
         auto lock = mtx_.lock<std::scoped_lock>();
         lock->ipState[ip].requestsCount++;
+    }
+
+    return isOk(ip);
+}
+
+[[maybe_unused]] bool
+DOSGuard::requestCmd(std::string const& ip, std::string const& cmd)
+{
+    if (whitelistHandler_.get().isWhiteListed(ip))
+        return true;
+
+    auto const weight = weights_.get().commandWeight(cmd);
+
+    {
+        auto lock = mtx_.lock<std::scoped_lock>();
+        lock->ipState[ip].requestsCount += weight;
     }
 
     return isOk(ip);

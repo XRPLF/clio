@@ -23,6 +23,7 @@
 #include "util/log/Logger.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
+#include "web/dosguard/WeightsInterface.hpp"
 #include "web/dosguard/WhitelistHandlerInterface.hpp"
 
 #include <boost/asio.hpp>
@@ -59,6 +60,7 @@ class DOSGuard : public DOSGuardInterface {
     util::Mutex<State> mtx_;
 
     std::reference_wrapper<WhitelistHandlerInterface const> whitelistHandler_;
+    std::reference_wrapper<WeightsInterface const> weights_;
 
     std::uint32_t const maxFetches_;
     std::uint32_t const maxConnCount_;
@@ -71,8 +73,13 @@ public:
      *
      * @param config Clio config
      * @param whitelistHandler Whitelist handler that checks whitelist for IP addresses
+     * @param weights API methods weights
      */
-    DOSGuard(util::config::ClioConfigDefinition const& config, WhitelistHandlerInterface const& whitelistHandler);
+    DOSGuard(
+        util::config::ClioConfigDefinition const& config,
+        WhitelistHandlerInterface const& whitelistHandler,
+        WeightsInterface const& weights
+    );
 
     /**
      * @brief Check whether an ip address is in the whitelist or not.
