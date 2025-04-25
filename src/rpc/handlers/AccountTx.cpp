@@ -161,6 +161,18 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
                 auto const txKey = ctx.apiVersion < 2u ? JS(tx) : JS(tx_json);
                 obj[JS(meta)] = std::move(meta);
                 obj[txKey] = std::move(txn);
+
+                // Put CTID into tx or tx_json
+                if (obj[JS(meta)].as_object().contains("TransactionIndex")) {
+                    auto networkID = 0u;
+                    if (auto const& etlState = etl_->getETLState(); etlState.has_value())
+                        networkID = etlState->networkID;
+
+                    auto const txnIdx = obj[JS(meta)].as_object().at("TransactionIndex").as_int64();
+                    if (auto const& ctid = rpc::encodeCTID(txnPlusMeta.ledgerSequence, txnIdx, networkID); ctid)
+                        obj[txKey].as_object()[JS(ctid)] = ctid.value();
+                }
+
                 obj[txKey].as_object()[JS(date)] = txnPlusMeta.date;
                 obj[txKey].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
 
