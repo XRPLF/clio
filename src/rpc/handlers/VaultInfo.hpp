@@ -33,6 +33,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace rpc {
@@ -52,18 +53,12 @@ public:
     VaultInfoHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend);
 
     /**
-     * @brief A struct to hold the data of vault object
-     */
-    struct VaultInfoResponse {
-        std::string owner;
-        uint32_t ledgerIndex;
-    };
-
-    /**
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        VaultInfoResponse vaultObj;
+        std::optional<std::string> vaultID;
+        std::optional<std::string> owner;
+        std::optional<uint32_t> ledgerIndex;
     };
 
     /**
@@ -86,8 +81,11 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const kRPC_SPEC =
-            RpcSpec{{JS(vault), validation::Required{}, validation::CustomValidators::vaultObjectValidator}};
+        static auto const kRPC_SPEC = RpcSpec{
+            {JS(vault_id), validation::CustomValidators::uint256HexStringValidator},
+            {JS(owner), validation::CustomValidators::accountBase58Validator},
+            {JS(seq), validation::Type<uint32_t>{}}
+        };
 
         return kRPC_SPEC;
     }

@@ -88,7 +88,7 @@ generateTestValuesForParametersTest()
                 }]
             })",
             .expectedError = "malformedRequest",
-            .expectedErrorMessage = "Required field vault missing"
+            .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "MissingOwnerInVault",
@@ -96,9 +96,7 @@ generateTestValuesForParametersTest()
                 "method": "vault_info",
                 "params": [
                     {
-                        "vault": {
-                            "seq": 4
-                        }
+                        "seq": 4
                     }
                 ]
             })",
@@ -111,9 +109,7 @@ generateTestValuesForParametersTest()
                 "method": "vault_info",
                 "params": [
                     {
-                        "vault": {
-                            "owner": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
-                        }
+                        "owner": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
                     }
                 ]
             })",
@@ -126,10 +122,8 @@ generateTestValuesForParametersTest()
                 "method": "vault_info",
                 "params": [
                     {
-                        "vault": {
-                            "owner": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
-                            "seq": "asdf"
-                        }
+                        "owner": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+                        "seq": "asdf"
                     }
                 ]
             })",
@@ -142,11 +136,8 @@ generateTestValuesForParametersTest()
                 "method": "vault_info",
                 "params": [
                     {
-                        "vault": {
-                            "owner": true,
-                             "seq": 3
-
-                        }
+                        "owner": true,
+                         "seq": 3
                     }
                 ]
             })",
@@ -159,11 +150,8 @@ generateTestValuesForParametersTest()
                 "method": "vault_info",
                 "params": [
                     {
-                        "vault": {
-                            "owner": "asdf",
-                             "seq": 3
-
-                        }
+                        "owner": "asdf",
+                         "seq": 3
                     }
                 ]
             })",
@@ -174,7 +162,7 @@ generateTestValuesForParametersTest()
 }
 
 INSTANTIATE_TEST_CASE_P(
-    RPCAccountInfoGroup1,
+    RPCVaultInfoGroup,
     VaultInfoParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
     tests::util::kNAME_GENERATOR
@@ -195,7 +183,7 @@ TEST_P(VaultInfoParameterTest, InvalidParams)
     });
 }
 
-TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQuery)
+TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
 {
     auto const expectedOutput = fmt::format(
         R"({{
@@ -212,15 +200,12 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQuery)
                     "LedgerEntryType": "Vault",
                     "LedgerIndex": "{}",
                     "LossUnrealized": "0",
-                    "MPTokenIssuanceID": "000000000000000000000000000000000000000000000001",
                     "Owner": "{}",
                     "OwnerNode": "4",
                     "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000002",
                     "PreviousTxnLgrSeq": 3,
                     "Sequence": 30,
-                    "Share": {{
-                        "mpt_issuance_id": "000000000000000000000000000000000000000000000001"
-                    }},
+                    "ShareMPTID":"00000000000000000000000000000000000000000000007B",
                     "WithdrawalPolicy": 200,
                     "index": "1B7BB49E0663E073D1C3EF989271F89E290AAF2D67CEE85F18E2CC76D168F694"
                 }}
@@ -235,32 +220,34 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQuery)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     // Vault params
-    ripple::uint192 issuanceID{1};
+    ripple::uint192 mptSharesID{123};
     ripple::uint256 prevTxId{2};
     uint32_t prevTxSeq = 3;
     uint64_t ownerNode = 4;
 
     // Mock vault object
     auto const vault = createVault(
-        kACCOUNT, kACCOUNT2, kINDEX1, kSEQ, kASSET_CURRENCY, kASSET_ISSUER, issuanceID, ownerNode, prevTxId, prevTxSeq
+        kACCOUNT, kACCOUNT2, kINDEX1, kSEQ, kASSET_CURRENCY, kASSET_ISSUER, mptSharesID, ownerNode, prevTxId, prevTxSeq
     );
 
     auto const accountRoot = createAccountRootObject(kACCOUNT, 0, kSEQ, 200, 2, kINDEX1, 2);
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const accountKeylet = ripple::keylet::account(account).key;
     auto const vaultKeylet = ripple::keylet::vault(account, kSEQ).key;
+    auto const mptIssuance = ripple::keylet::mptIssuance(mptSharesID).key;
+    std::cout << mptIssuance << std::endl;
 
     ON_CALL(*backend_, doFetchLedgerObject(accountKeylet, kSEQ, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(vaultKeylet, _, _)).WillByDefault(Return(vault.getSerializer().peekData()));
+    ON_CALL(*backend_, doFetchLedgerObject(vaultKeylet, kSEQ, _))
+        .WillByDefault(Return(vault.getSerializer().peekData()));
+    ON_CALL(*backend_, doFetchLedgerObject(mptIssuance, kSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     // Input JSON using vault object
     auto static const kINPUT = boost::json::parse(fmt::format(
         R"({{
-        "vault": {{
-            "owner": "{}",
-            "seq": {}
-        }}
+        "owner": "{}",
+        "seq": {}
     }})",
         kACCOUNT,
         kSEQ
@@ -271,6 +258,8 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQuery)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
         ASSERT_TRUE(output);
+        std::cout << boost::json::serialize(*output.result) << std::endl;
+
         EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }

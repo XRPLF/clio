@@ -1619,7 +1619,7 @@ createVault(
     ripple::LedgerIndex seq,
     std::string_view assetCurrency,
     std::string_view assetIssuer,
-    ripple::uint192 issuanceID,
+    ripple::uint192 shareMPTID,
     uint64_t ownerNode,
     ripple::uint256 previousTxId,
     uint32_t previousTxSeq
@@ -1635,7 +1635,7 @@ createVault(
     vault.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxSeq);
 
     vault.setFieldIssue(ripple::sfAsset, ripple::STIssue{ripple::sfAsset, getIssue(assetCurrency, assetIssuer)});
-    vault[ripple::sfMPTokenIssuanceID] = issuanceID;
+    vault[ripple::sfShareMPTID] = shareMPTID;
     vault.setFieldNumber(ripple::sfAssetsTotal, ripple::STNumber{ripple::sfAssetsTotal, 300});
     vault.setFieldNumber(ripple::sfAssetsAvailable, ripple::STNumber{ripple::sfAssetsAvailable, 300});
     vault.setFieldNumber(ripple::sfLossUnrealized, ripple::STNumber{ripple::sfLossUnrealized, 0});

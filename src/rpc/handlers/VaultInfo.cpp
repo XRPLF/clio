@@ -32,6 +32,7 @@
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/jss.h>
@@ -50,14 +51,32 @@ VaultInfoHandler::VaultInfoHandler(std::shared_ptr<BackendInterface> const& shar
 {
 }
 
+static std::expected<void, ClioError>
+parseVaultField(VaultInfoHandler::Input const& input)
+{
+    auto const hasVaultId = input.vaultID.has_value();
+    auto const hasOwner = input.owner.has_value();
+    auto const hasSeq = input.ledgerIndex.has_value();
+
+    // valid vault_info has input of either vault_id or owner & sequence
+    if ((hasVaultId && !hasOwner && !hasSeq) || (!hasVaultId && hasOwner && hasSeq))
+        return {};
+
+    return std::unexpected<ClioError>{ClioError::RpcMalformedRequest};
+}
+
 VaultInfoHandler::Result
 VaultInfoHandler::process(VaultInfoHandler::Input input, Context const& ctx) const
 {
+    // vault info input must either have owner and sequence, or vault_id only.
+    if (auto const res = parseVaultField(input); !res.has_value())
+        return Error{res.error()};
+
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountInfo's ledger range must be available");
 
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, std::nullopt, input.vaultObj.ledgerIndex, range->maxSequence
+        *sharedPtrBackend_, ctx.yield, std::nullopt, input.ledgerIndex, range->maxSequence
     );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
@@ -66,7 +85,7 @@ VaultInfoHandler::process(VaultInfoHandler::Input input, Context const& ctx) con
     auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
 
     // Extract the vault owner and construct a keylet for the vault object
-    auto const accountStr = input.vaultObj.owner;
+    auto const accountStr = *input.owner;
     auto const accountID = accountFromStringStrict(accountStr);
     auto const accountKeylet = ripple::keylet::account(*accountID);
 
@@ -77,21 +96,31 @@ VaultInfoHandler::process(VaultInfoHandler::Input input, Context const& ctx) con
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     // use account to get vault ledger object
-    ripple::STLedgerEntry const sle{
+    ripple::STLedgerEntry const sleObject{
         ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key
     };
 
-    auto const vaultKeylet = ripple::keylet::vault(*accountID, input.vaultObj.ledgerIndex);
+    auto const vaultKeylet = ripple::keylet::vault(*accountID, *input.ledgerIndex);
 
     // Fetch the vault object
     auto const vaultLedgerObject = sharedPtrBackend_->fetchLedgerObject(vaultKeylet.key, lgrInfo.seq, ctx.yield);
 
-    if (!vaultLedgerObject)
-        return Error{Status{"entryNotFound"}};
-
     ripple::STLedgerEntry const vaultSle{
         ripple::SerialIter{vaultLedgerObject->data(), vaultLedgerObject->size()}, vaultKeylet.key
     };
+
+    std::cout << ripple::keylet::mptIssuance(vaultSle[ripple::sfShareMPTID]).key;
+
+    auto const issuanceObject = !vaultLedgerObject.has_value()
+        ? std::nullopt
+        : sharedPtrBackend_->fetchLedgerObject(
+              ripple::keylet::mptIssuance(vaultSle[ripple::sfShareMPTID]).key, lgrInfo.seq, ctx.yield
+          );
+
+    if (!vaultLedgerObject || !issuanceObject)
+        return Error{Status{"entryNotFound"}};
+
+    // todo: vaultSLE
 
     // Prepare output
     return Output(vaultSle, lgrInfo.seq);
@@ -111,12 +140,15 @@ tag_invoke(boost::json::value_to_tag<VaultInfoHandler::Input>, boost::json::valu
     auto input = VaultInfoHandler::Input{};
     auto const& jsonObject = jv.as_object();
 
-    // vault guarentees to exist from spec
-    auto const& vaultJson = jsonObject.at(JS(vault)).as_object();
-    input.vaultObj = VaultInfoHandler::VaultInfoResponse{
-        .owner = std::string{vaultJson.at(JS(owner)).as_string()},
-        .ledgerIndex = static_cast<uint32_t>(vaultJson.at(JS(seq)).as_int64())
-    };
+    if (jsonObject.contains(JS(owner)))
+        input.owner = jsonObject.at(JS(owner)).as_string();
+
+    if (jsonObject.contains(JS(seq)))
+        input.ledgerIndex = static_cast<uint32_t>(jsonObject.at(JS(seq)).as_int64());
+
+    if (jsonObject.contains(JS(vault_id)))
+        input.vaultID = jsonObject.at(JS(vault_id)).as_string();
+
     return input;
 }
 

@@ -850,39 +850,4 @@ getDeliveredAmount(
     uint32_t date
 );
 
-/**
- * @brief Supplements a JSON representation of a ltVAULT ledger entry by looking up its associated MPT issuance entry
- * and adding the SharesTotal field
- *
- * @param backend The backend to use
- * @param vault The vault ledger entry
- * @param entry The entry object
- * @param ledgerSequence The sequence
- * @param yield The coroutine context
- */
-template <ripple::LedgerEntryType Type>
-inline void
-supplementJson(
-    BackendInterface const& backend,
-    ripple::STLedgerEntry const& vault,
-    boost::json::object& entry,
-    std::uint32_t ledgerSequence,
-    boost::asio::yield_context yield
-)
-{
-    auto const share = vault.at(ripple::sfMPTokenIssuanceID);
-    auto const sleIssuance = backend.fetchLedgerObject(ripple::keylet::mptIssuance(share).key, ledgerSequence, yield);
-    if (!sleIssuance)
-        return;
-
-    // blob to sle
-    ripple::STLedgerEntry const sle{
-        ripple::SerialIter{sleIssuance->data(), sleIssuance->size()}, ripple::keylet::mptIssuance(share).key
-    };
-    if (sle.empty())
-        return;
-
-    entry[JS(SharesTotal)] = sle.getFieldU64(ripple::sfOutstandingAmount);
-};
-
 }  // namespace rpc

@@ -3047,7 +3047,7 @@ generateTestValuesForNormalPathTest()
                 kRANGE_MAX,
                 "XRP",
                 ripple::toBase58(ripple::xrpAccount()),
-                ripple::makeMptID(2, getAccountIdWithString(kACCOUNT)),
+                ripple::uint192(0),
                 0,
                 ripple::uint256{0},
                 0
@@ -3075,7 +3075,7 @@ generateTestValuesForNormalPathTest()
                 kRANGE_MAX,
                 "XRP",
                 ripple::toBase58(ripple::xrpAccount()),
-                ripple::makeMptID(2, getAccountIdWithString(kACCOUNT)),
+                ripple::uint192(0),
                 0,
                 ripple::uint256{0},
                 0
@@ -3183,7 +3183,7 @@ TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
         kRANGE_MAX,
         "XRP",
         ripple::toBase58(ripple::xrpAccount()),
-        ripple::makeMptID(30, getAccountIdWithString(kACCOUNT)),
+        ripple::uint192(0),
         0,
         ripple::uint256{1},
         0
@@ -3192,19 +3192,12 @@ TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
     auto const vaultKey =
         ripple::keylet::vault(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX).key;
 
-    auto const issuance = createMptIssuanceObject(kACCOUNT, kRANGE_MAX, "metadata");
-    ripple::uint256 issuanceKey =
-        ripple::keylet::mptIssuance(ripple::makeMptID(kRANGE_MAX, getAccountIdWithString(kACCOUNT))).key;
-
     ripple::STLedgerEntry const sle{
         ripple::SerialIter{vault.getSerializer().peekData().data(), vault.getSerializer().peekData().size()}, vaultKey
     };
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKey, testing::_, testing::_))
         .WillOnce(Return(vault.getSerializer().peekData()));
-
-    EXPECT_CALL(*backend_, doFetchLedgerObject(issuanceKey, testing::_, testing::_))
-        .WillOnce(Return(issuance.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
@@ -3221,7 +3214,9 @@ TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(boost::json::value_to<int64_t>(output.result->at("node").at("SharesTotal")), 0);
+
+        EXPECT_EQ(output.result->at("node").at("Owner").as_string(), kACCOUNT);
+        EXPECT_EQ(output.result->at("node").at("Sequence").as_int64(), kRANGE_MAX);
     });
 }
 
