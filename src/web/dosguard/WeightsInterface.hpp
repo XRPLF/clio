@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <string>
 
 namespace web::dosguard {
@@ -27,7 +28,7 @@ class WeightsInterface {
 public:
     virtual ~WeightsInterface() = default;
 
-    virtual float
+    virtual size_t
     commandWeight(std::string const& cmd) const = 0;
 };
 
