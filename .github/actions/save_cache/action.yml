@@ -28,7 +28,7 @@ inputs:
   code_coverage:
     description: Whether code coverage is on
     required: true
-    default: 'false'
+    default: "false"
 runs:
   using: composite
   steps:

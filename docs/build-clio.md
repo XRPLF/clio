@@ -11,7 +11,7 @@ Clio is built with [CMake](https://cmake.org/) and uses [Conan](https://conan.io
 - [**Optional**] [CCache](https://ccache.dev/): speeds up compilation if you are going to compile Clio often
 
 | Compiler    | Version |
-|-------------|---------|
+| ----------- | ------- |
 | GCC         | 12.3    |
 | Clang       | 16      |
 | Apple Clang | 15      |
@@ -104,10 +104,10 @@ To generate the API docs:
 
 1. First, include `-o docs=True` in the conan install command. For example:
 
-    ```sh
-    mkdir build && cd build
-    conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True -o lint=False -o docs=True
-    ```
+   ```sh
+   mkdir build && cd build
+   conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True -o lint=False -o docs=True
+   ```
 
 2. Once that has completed successfully, run the `cmake` command and add the `--target docs` option:
 
@@ -118,9 +118,9 @@ To generate the API docs:
 
 3. Go to `build/docs/html` to view the generated files.
 
-    Open the `index.html` file in your browser to see the documentation pages.
+   Open the `index.html` file in your browser to see the documentation pages.
 
-    ![API index page](./img/doxygen-docs-output.png "API index page")
+   ![API index page](./img/doxygen-docs-output.png "API index page")
 
 ## Building Clio with Docker
 
@@ -148,39 +148,39 @@ Sometimes, during development, you need to build against a custom version of `li
 
 1. First, pull/clone the appropriate `rippled` fork and switch to the branch you want to build. For example, the following example uses an in-development build with [XLS-33d Multi-Purpose Tokens](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens):
 
-    ```sh
-    git clone https://github.com/shawnxie999/rippled/
-    cd rippled
-    git switch mpt-1.1
-    ```
+   ```sh
+   git clone https://github.com/shawnxie999/rippled/
+   cd rippled
+   git switch mpt-1.1
+   ```
 
 2. Export a custom package to your local Conan store using a user/channel:
 
-    ```sh
-    conan export . my/feature
-    ```
+   ```sh
+   conan export . my/feature
+   ```
 
 3. Patch your local Clio build to use the right package.
 
-    Edit `conanfile.py` (from the Clio repository root). Replace the `xrpl` requirement with the custom package version from the previous step. This must also include the current version number from your `rippled` branch. For example:
+   Edit `conanfile.py` (from the Clio repository root). Replace the `xrpl` requirement with the custom package version from the previous step. This must also include the current version number from your `rippled` branch. For example:
 
-    ```py
-    # ... (excerpt from conanfile.py)
-        requires = [
-        'boost/1.82.0',
-        'cassandra-cpp-driver/2.17.0',
-        'fmt/10.1.1',
-        'protobuf/3.21.9',
-        'grpc/1.50.1',
-        'openssl/1.1.1u',
-        'xrpl/2.3.0-b1@my/feature', # Update this line
-        'libbacktrace/cci.20210118'
-    ]
-    ```
+   ```py
+   # ... (excerpt from conanfile.py)
+       requires = [
+       'boost/1.82.0',
+       'cassandra-cpp-driver/2.17.0',
+       'fmt/10.1.1',
+       'protobuf/3.21.9',
+       'grpc/1.50.1',
+       'openssl/1.1.1u',
+       'xrpl/2.3.0-b1@my/feature', # Update this line
+       'libbacktrace/cci.20210118'
+   ]
+   ```
 
 4. Build Clio as you would have before.
 
-    See [Building Clio](#building-clio) for details.
+   See [Building Clio](#building-clio) for details.
 
 ## Using `clang-tidy` for static analysis
 

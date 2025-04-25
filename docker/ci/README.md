@@ -4,6 +4,7 @@ This image contains an environment to build [Clio](https://github.com/XRPLF/clio
 It is used in [Clio Github Actions](https://github.com/XRPLF/clio/actions) but can also be used to compile Clio locally.
 
 The image is based on Ubuntu 20.04 and contains:
+
 - clang 16.0.6
 - gcc 12.3
 - doxygen 1.12

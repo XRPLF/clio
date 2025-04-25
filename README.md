@@ -16,7 +16,7 @@ Multiple Clio nodes can share access to the same dataset, which allows for a hig
 Clio offers the full `rippled` API, with the caveat that Clio by default only returns validated data. This means that `ledger_index` defaults to `validated` instead of `current` for all requests. Other non-validated data, such as information about queued transactions, is also not returned.
 
 Clio retrieves data from a designated group of `rippled` nodes instead of connecting to the peer-to-peer network.
-For requests that require access to the peer-to-peer network, such as `fee` or `submit`, Clio automatically forwards the request to a `rippled` node and propagates the response back to the client. To access non-validated data for *any* request, simply add `ledger_index: "current"` to the request, and Clio will forward the request to `rippled`.
+For requests that require access to the peer-to-peer network, such as `fee` or `submit`, Clio automatically forwards the request to a `rippled` node and propagates the response back to the client. To access non-validated data for _any_ request, simply add `ledger_index: "current"` to the request, and Clio will forward the request to `rippled`.
 
 > [!NOTE]
 > Clio requires access to at least one `rippled` node, which can run on the same machine as Clio or separately.

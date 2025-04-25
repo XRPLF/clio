@@ -12,7 +12,7 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
-    # `pre-commit sample-config` default hooks
+  # `pre-commit sample-config` default hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
@@ -22,4 +22,11 @@ repos:
       - id: end-of-file-fixer
         exclude: ^docs/doxygen-awesome-theme/
       - id: trailing-whitespace
+        exclude: ^docs/doxygen-awesome-theme/
+
+  # Autoformat: YAML, JSON, Markdown, etc.
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.5.3
+    hooks:
+      - id: prettier
         exclude: ^docs/doxygen-awesome-theme/

@@ -6,7 +6,7 @@ To support additional database types, you can create new classes that implement 
 
 ## Data Model
 
-The data model used by Clio to read and write ledger data is different from what `rippled` uses. `rippled` uses a novel data structure named [*SHAMap*](https://github.com/ripple/rippled/blob/master/src/ripple/shamap/README.md), which is a combination of a Merkle Tree and a Radix Trie. In a SHAMap, ledger objects are stored in the root vertices of the tree. Thus, looking up a record located at the leaf node of the SHAMap executes a tree search, where the path from the root node to the leaf node is the key of the record.
+The data model used by Clio to read and write ledger data is different from what `rippled` uses. `rippled` uses a novel data structure named [_SHAMap_](https://github.com/ripple/rippled/blob/master/src/ripple/shamap/README.md), which is a combination of a Merkle Tree and a Radix Trie. In a SHAMap, ledger objects are stored in the root vertices of the tree. Thus, looking up a record located at the leaf node of the SHAMap executes a tree search, where the path from the root node to the leaf node is the key of the record.
 
 `rippled` nodes can also generate a proof-tree by forming a subtree with all the path nodes and their neighbors, which can then be used to prove the existence of the leaf node data to other `rippled` nodes. In short, the main purpose of the SHAMap data structure is to facilitate the fast validation of data integrity between different decentralized `rippled` nodes.
 
@@ -170,7 +170,7 @@ CREATE TABLE clio.successor (
 
 This table is the important backbone of how histories of ledger objects are stored in Cassandra. The `successor` table stores the object index of all ledger objects that were validated on the XRP network along with the ledger sequence that the object was updated on.
 
-As each key is ordered by the sequence, which is achieved by tracing through the table with a specific sequence number, Clio can recreate a Linked List data structure that represents all the existing ledger objects at that ledger sequence. The special values of `0x00...00` and `0xFF...FF` are used to label the *head* and *tail* of the Linked List in the successor table.
+As each key is ordered by the sequence, which is achieved by tracing through the table with a specific sequence number, Clio can recreate a Linked List data structure that represents all the existing ledger objects at that ledger sequence. The special values of `0x00...00` and `0xFF...FF` are used to label the _head_ and _tail_ of the Linked List in the successor table.
 
 The diagram below showcases how tracing through the same table, but with different sequence parameter filtering, can result in different Linked List data representing the corresponding past state of the ledger objects. A query like `SELECT * FROM successor WHERE key = ? AND seq <= n ORDER BY seq DESC LIMIT 1;` can effectively trace through the successor table and get the Linked List of a specific sequence `n`.
 
@@ -182,12 +182,12 @@ In each new ledger version with sequence `n`, a ledger object `v` can either be 
 
 For all three of these operations, the procedure to update the successor table can be broken down into two steps:
 
- 1. Trace through the Linked List of the previous sequence to find the ledger object `e` with the greatest object index smaller or equal than the `v`'s index. Save `e`'s `next` value (the index of the next ledger object) as `w`.
+1. Trace through the Linked List of the previous sequence to find the ledger object `e` with the greatest object index smaller or equal than the `v`'s index. Save `e`'s `next` value (the index of the next ledger object) as `w`.
 
- 2. If `v` is...
-	 1. Being **created**, add two new records of `seq=n` with one being `e` pointing to `v`, and `v` pointing to `w` (Linked List insertion operation).
-	 2. Being **modified**, do nothing.
-	 3. Being **deleted**, add a record of `seq=n` with `e` pointing to `v`'s `next` value (Linked List deletion operation).
+2. If `v` is...
+   1. Being **created**, add two new records of `seq=n` with one being `e` pointing to `v`, and `v` pointing to `w` (Linked List insertion operation).
+   2. Being **modified**, do nothing.
+   3. Being **deleted**, add a record of `seq=n` with `e` pointing to `v`'s `next` value (Linked List deletion operation).
 
 ## NFT data model
 

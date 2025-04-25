@@ -83,7 +83,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         with:
-          title: 'Clang-tidy found bugs in code 🐛'
+          title: "Clang-tidy found bugs in code 🐛"
           body: >
             Clang-tidy found issues in the code:
 

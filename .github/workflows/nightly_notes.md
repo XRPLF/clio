@@ -3,4 +3,3 @@
 Changelog (including previous releases): https://github.com/XRPLF/clio/commits/nightly
 
 ## SHA256 checksums
-```

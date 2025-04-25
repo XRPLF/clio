@@ -246,7 +246,7 @@ private:
                     "from the position of markers concurrently. For more information, please read "
                     "[README.md](../src/etl/README.md)."},
         KV{.key = "cache.num_markers",
-           .value = " Specifies how many markers are placed randomly within the cache. These markers define the "
+           .value = "Specifies how many markers are placed randomly within the cache. These markers define the "
                     "positions on the ledger that will be loaded concurrently by the workers. The higher the number, "
                     "the more places within the cache we potentially cover."},
         KV{.key = "cache.num_cursors_from_diff",

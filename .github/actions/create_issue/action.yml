@@ -10,11 +10,11 @@ inputs:
   labels:
     description: Comma-separated list of labels
     required: true
-    default: 'bug'
+    default: "bug"
   assignees:
     description: Comma-separated list of assignees
     required: true
-    default: 'godexsoft,kuznetsss,PeterChen13579'
+    default: "godexsoft,kuznetsss,PeterChen13579"
 outputs:
   created_issue_id:
     description: Created issue id
@@ -22,12 +22,12 @@ outputs:
 runs:
   using: composite
   steps:
-      - name: Create an issue
-        id: create_issue
-        shell: bash
-        run: |
-          echo -e '${{ inputs.body }}' > issue.md
-          gh issue create --assignee '${{ inputs.assignees }}' --label '${{ inputs.labels }}' --title '${{ inputs.title }}' --body-file ./issue.md > create_issue.log
-          created_issue=$(cat create_issue.log | sed 's|.*/||')
-          echo "created_issue=$created_issue" >> $GITHUB_OUTPUT
-          rm create_issue.log issue.md
+    - name: Create an issue
+      id: create_issue
+      shell: bash
+      run: |
+        echo -e '${{ inputs.body }}' > issue.md
+        gh issue create --assignee '${{ inputs.assignees }}' --label '${{ inputs.labels }}' --title '${{ inputs.title }}' --body-file ./issue.md > create_issue.log
+        created_issue=$(cat create_issue.log | sed 's|.*/||')
+        echo "created_issue=$created_issue" >> $GITHUB_OUTPUT
+        rm create_issue.log issue.md

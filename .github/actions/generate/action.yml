@@ -7,27 +7,27 @@ inputs:
   conan_cache_hit:
     description: Whether conan cache has been downloaded
     required: true
-    default: 'false'
+    default: "false"
   build_type:
     description: Build type for third-party libraries and clio. Could be 'Release', 'Debug'
     required: true
-    default: 'Release'
+    default: "Release"
   build_integration_tests:
     description: Whether to build integration tests
     required: true
-    default: 'true'
+    default: "true"
   code_coverage:
     description: Whether conan's coverage option should be on or not
     required: true
-    default: 'false'
+    default: "false"
   static:
     description: Whether Clio is to be statically linked
     required: true
-    default: 'false'
+    default: "false"
   sanitizer:
     description: Sanitizer to use
     required: true
-    default: 'false' # false, tsan, asan or ubsan
+    default: "false" # false, tsan, asan or ubsan
 runs:
   using: composite
   steps:

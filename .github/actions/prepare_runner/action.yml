@@ -11,34 +11,34 @@ runs:
       if: ${{ runner.os == 'macOS' }}
       shell: bash
       run: |
-          brew install llvm@14 pkg-config ninja bison ccache jq gh conan@1 ca-certificates
-          echo "/opt/homebrew/opt/conan@1/bin" >> $GITHUB_PATH
+        brew install llvm@14 pkg-config ninja bison ccache jq gh conan@1 ca-certificates
+        echo "/opt/homebrew/opt/conan@1/bin" >> $GITHUB_PATH
 
     - name: Install CMake 3.31.6 on mac
       if: ${{ runner.os == 'macOS' }}
       shell: bash
       run: |
-          # Uninstall any existing cmake
-          brew uninstall cmake --ignore-dependencies || true
+        # Uninstall any existing cmake
+        brew uninstall cmake --ignore-dependencies || true
 
-          # Download specific cmake formula
-          FORMULA_URL="https://raw.githubusercontent.com/Homebrew/homebrew-core/b4e46db74e74a8c1650b38b1da222284ce1ec5ce/Formula/c/cmake.rb"
-          FORMULA_EXPECTED_SHA256="c7ec95d86f0657638835441871e77541165e0a2581b53b3dd657cf13ad4228d4"
+        # Download specific cmake formula
+        FORMULA_URL="https://raw.githubusercontent.com/Homebrew/homebrew-core/b4e46db74e74a8c1650b38b1da222284ce1ec5ce/Formula/c/cmake.rb"
+        FORMULA_EXPECTED_SHA256="c7ec95d86f0657638835441871e77541165e0a2581b53b3dd657cf13ad4228d4"
 
-          mkdir -p /tmp/homebrew-formula
-          curl -s -L $FORMULA_URL -o /tmp/homebrew-formula/cmake.rb
+        mkdir -p /tmp/homebrew-formula
+        curl -s -L $FORMULA_URL -o /tmp/homebrew-formula/cmake.rb
 
-          # Verify the downloaded formula
-          ACTUAL_SHA256=$(shasum -a 256 /tmp/homebrew-formula/cmake.rb | cut -d ' ' -f 1)
-          if [ "$ACTUAL_SHA256" != "$FORMULA_EXPECTED_SHA256" ]; then
-            echo "Error: Formula checksum mismatch"
-            echo "Expected: $FORMULA_EXPECTED_SHA256"
-            echo "Actual: $ACTUAL_SHA256"
-            exit 1
-          fi
+        # Verify the downloaded formula
+        ACTUAL_SHA256=$(shasum -a 256 /tmp/homebrew-formula/cmake.rb | cut -d ' ' -f 1)
+        if [ "$ACTUAL_SHA256" != "$FORMULA_EXPECTED_SHA256" ]; then
+          echo "Error: Formula checksum mismatch"
+          echo "Expected: $FORMULA_EXPECTED_SHA256"
+          echo "Actual: $ACTUAL_SHA256"
+          exit 1
+        fi
 
-          # Install cmake from the specific formula with force flag
-          brew install --force /tmp/homebrew-formula/cmake.rb
+        # Install cmake from the specific formula with force flag
+        brew install --force /tmp/homebrew-formula/cmake.rb
 
     - name: Fix git permissions on Linux
       if: ${{ runner.os == 'Linux' }}

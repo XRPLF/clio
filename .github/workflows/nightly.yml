@@ -1,12 +1,12 @@
 name: Nightly release
 on:
   schedule:
-    - cron:  '0 8 * * 1-5'
+    - cron: "0 8 * * 1-5"
   workflow_dispatch:
   pull_request:
     paths:
-      - '.github/workflows/nightly.yml'
-      - '.github/workflows/build_clio_docker_image.yml'
+      - ".github/workflows/nightly.yml"
+      - ".github/workflows/build_clio_docker_image.yml"
 
 jobs:
   build:
@@ -91,8 +91,8 @@ jobs:
         with:
           name: clio_integration_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
 
-  # To be enabled back once docker in mac runner arrives
-  # https://github.com/XRPLF/clio/issues/1400
+      # To be enabled back once docker in mac runner arrives
+      # https://github.com/XRPLF/clio/issues/1400
       - name: Run clio_integration_tests
         if: matrix.integration_tests
         run: |
@@ -121,6 +121,8 @@ jobs:
         run: |
           cp ${{ github.workspace }}/.github/workflows/nightly_notes.md "${RUNNER_TEMP}/nightly_notes.md"
           cd nightly_release
+          echo '' >> "${RUNNER_TEMP}/nightly_notes.md"
+          echo '```' >> "${RUNNER_TEMP}/nightly_notes.md"
           for d in $(ls); do
             archive_name=$(ls $d)
             mv ${d}/${archive_name} ./
@@ -149,8 +151,8 @@ jobs:
     secrets: inherit
     with:
       tags: |
-          type=raw,value=nightly
-          type=raw,value=${{ github.sha }}
+        type=raw,value=nightly
+        type=raw,value=${{ github.sha }}
       artifact_name: clio_server_Linux_Release_gcc
       strip_binary: true
       publish_image: ${{ github.event_name != 'pull_request' }}
@@ -170,7 +172,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         with:
-          title: 'Nightly release failed 🌙'
+          title: "Nightly release failed 🌙"
           body: >
             Nightly release failed:
 

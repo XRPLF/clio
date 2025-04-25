@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-            fetch-depth: 0
+          fetch-depth: 0
 
       - name: Update libXRPL version requirement
         shell: bash
@@ -23,7 +23,7 @@ jobs:
       - name: Prepare runner
         uses: ./.github/actions/prepare_runner
         with:
-            disable_ccache: true
+          disable_ccache: true
 
       - name: Setup conan
         uses: ./.github/actions/setup_conan
@@ -83,8 +83,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         with:
-          labels: 'compatibility,bug'
-          title: 'Proposed libXRPL check failed'
+          labels: "compatibility,bug"
+          title: "Proposed libXRPL check failed"
           body: >
             Clio build or tests failed against `libXRPL ${{ github.event.client_payload.version }}`.
 

@@ -2,14 +2,16 @@ name: Update CI docker image
 on:
   pull_request:
     paths:
-      - 'docker/ci/**'
-      - 'docker/compilers/**'
+      - "docker/ci/**"
+      - "docker/compilers/**"
       - .github/workflows/update_docker_ci.yml
   push:
     branches: [develop]
     paths:
-      - 'docker/ci/**'        # CI image must update when either its dockerfile changes
-      - 'docker/compilers/**' # or any compilers changed and were pushed by hand
+      # CI image must update when either its dockerfile changes
+      # or any compilers changed and were pushed by hand
+      - "docker/ci/**"
+      - "docker/compilers/**"
       - .github/workflows/update_docker_ci.yml
   workflow_dispatch:
 

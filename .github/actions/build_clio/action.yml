@@ -7,7 +7,7 @@ inputs:
   substract_threads:
     description: An option for the action get_number_of_threads. See get_number_of_threads
     required: true
-    default: '0'
+    default: "0"
 runs:
   using: composite
   steps:
