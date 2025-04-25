@@ -381,7 +381,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: int
 - **Default value**: `48`
 - **Constraints**: The minimum value is `1`. The maximum value is `65535`.
-- **Description**:  Specifies how many markers are placed randomly within the cache. These markers define the positions on the ledger that will be loaded concurrently by the workers. The higher the number, the more places within the cache we potentially cover.
+- **Description**: Specifies how many markers are placed randomly within the cache. These markers define the positions on the ledger that will be loaded concurrently by the workers. The higher the number, the more places within the cache we potentially cover.
 
 ### cache.num_cursors_from_diff
 

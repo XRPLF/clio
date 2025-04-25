@@ -23,7 +23,7 @@ jobs:
         run: |
           ./.githooks/check-format --diff
         shell: bash
- 
+
   check_docs:
     name: Check documentation
     runs-on: ubuntu-latest
@@ -132,10 +132,10 @@ jobs:
     name: Check Config Description
     needs: build
     runs-on: heavy
-    container: 
+    container:
       image: rippleci/clio_ci:latest
     steps:
-      - uses: actions/checkout@v4 
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: clio_server_Linux_Release_gcc
@@ -163,8 +163,3 @@ jobs:
           fi
           rm -f ${configDescriptionFile}
           exit 0
-                    
-
-
-
-

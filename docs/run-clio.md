@@ -3,10 +3,11 @@
 ## Prerequisites
 
 - Access to a Cassandra cluster or ScyllaDB cluster. Can be local or remote.
-> [!IMPORTANT]
-> There are some key considerations when using **ScyllaDB**. By default, Scylla reserves all free RAM on a machine for itself. If you are running `rippled` or other services on the same machine, restrict its memory usage using the `--memory` argument.
->
-> See [ScyllaDB in a Shared Environment](https://docs.scylladb.com/getting-started/scylla-in-a-shared-environment/) to learn more.
+
+  > [!IMPORTANT]
+  > There are some key considerations when using **ScyllaDB**. By default, Scylla reserves all free RAM on a machine for itself. If you are running `rippled` or other services on the same machine, restrict its memory usage using the `--memory` argument.
+  >
+  > See [ScyllaDB in a Shared Environment](https://docs.scylladb.com/getting-started/scylla-in-a-shared-environment/) to learn more.
 
 - Access to one or more `rippled` nodes. Can be local or remote.
 

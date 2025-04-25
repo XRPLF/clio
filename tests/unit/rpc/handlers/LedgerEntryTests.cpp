@@ -912,7 +912,7 @@ generateTestValuesForParametersTest()
             .testName = "EmptyAMMAssetJson",
             .testJson = fmt::format(
                 R"({{
-                    "amm": 
+                    "amm":
                     {{
                         "asset":{{}},
                         "asset2":
@@ -932,7 +932,7 @@ generateTestValuesForParametersTest()
             .testName = "EmptyAMMAsset2Json",
             .testJson = fmt::format(
                 R"({{
-                    "amm": 
+                    "amm":
                     {{
                         "asset2":{{}},
                         "asset":
@@ -952,7 +952,7 @@ generateTestValuesForParametersTest()
             .testName = "MissingAMMAsset2Json",
             .testJson = fmt::format(
                 R"({{
-                    "amm": 
+                    "amm":
                     {{
                         "asset":
                         {{
@@ -971,7 +971,7 @@ generateTestValuesForParametersTest()
             .testName = "MissingAMMAssetJson",
             .testJson = fmt::format(
                 R"({{
-                    "amm": 
+                    "amm":
                     {{
                         "asset2":
                         {{
@@ -990,7 +990,7 @@ generateTestValuesForParametersTest()
             .testName = "AMMAssetNotJson",
             .testJson = fmt::format(
                 R"({{
-                    "amm": 
+                    "amm":
                     {{
                         "asset": "invalid",
                         "asset2":
@@ -1010,7 +1010,7 @@ generateTestValuesForParametersTest()
             .testName = "AMMAsset2NotJson",
             .testJson = fmt::format(
                 R"({{
-                    "amm": 
+                    "amm":
                     {{
                         "asset2": "invalid",
                         "asset":
@@ -1030,7 +1030,7 @@ generateTestValuesForParametersTest()
             .testName = "WrongAMMAssetCurrency",
             .testJson = fmt::format(
                 R"({{
-                    "amm": 
+                    "amm":
                     {{
                         "asset2":
                         {{
@@ -1053,7 +1053,7 @@ generateTestValuesForParametersTest()
             .testName = "WrongAMMAssetIssuer",
             .testJson = fmt::format(
                 R"({{
-                    "amm": 
+                    "amm":
                     {{
                         "asset2":
                         {{
@@ -1076,7 +1076,7 @@ generateTestValuesForParametersTest()
             .testName = "MissingAMMAssetIssuerForNonXRP",
             .testJson = fmt::format(
                 R"({{
-                    "amm": 
+                    "amm":
                     {{
                         "asset2":
                         {{
@@ -1099,7 +1099,7 @@ generateTestValuesForParametersTest()
             .testName = "AMMAssetHasIssuerForXRP",
             .testJson = fmt::format(
                 R"({{
-                    "amm": 
+                    "amm":
                     {{
                         "asset2":
                         {{
@@ -1124,7 +1124,7 @@ generateTestValuesForParametersTest()
             .testName = "MissingAMMAssetCurrency",
             .testJson = fmt::format(
                 R"({{
-                    "amm": 
+                    "amm":
                     {{
                         "asset2":
                         {{
@@ -1145,7 +1145,7 @@ generateTestValuesForParametersTest()
             .testName = "BridgeMissingBridgeAccount",
             .testJson = fmt::format(
                 R"({{
-                    "bridge": 
+                    "bridge":
                     {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
@@ -1173,7 +1173,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"({{
                     "bridge_account": "{}",
-                    "bridge": 
+                    "bridge":
                     {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
@@ -1202,7 +1202,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"({{
                     "bridge_account": "{}",
-                    "bridge": 
+                    "bridge":
                     {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
@@ -1231,7 +1231,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"({{
                     "bridge_account": "{}",
-                    "bridge": 
+                    "bridge":
                     {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
@@ -1254,7 +1254,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"({{
                     "bridge_account": "abcd",
-                    "bridge": 
+                    "bridge":
                     {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
@@ -1282,7 +1282,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"({{
                     "bridge_account": "{}",
-                    "bridge": 
+                    "bridge":
                     {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "abcd",
@@ -1310,7 +1310,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"({{
                     "bridge_account": "{}",
-                    "bridge": 
+                    "bridge":
                     {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
@@ -1338,7 +1338,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"({{
                     "bridge_account": "{}",
-                    "bridge": 
+                    "bridge":
                     {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
@@ -1366,7 +1366,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"({{
                     "bridge_account": "{}",
-                    "bridge": 
+                    "bridge":
                     {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
@@ -1396,7 +1396,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"({{
                     "bridge_account": "{}",
-                    "bridge": 
+                    "bridge":
                     {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
@@ -1422,7 +1422,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"({{
                     "bridge_account": "{}",
-                    "bridge": 
+                    "bridge":
                     {{
                         "IssuingChainDoor": "{}",
                         "LockingChainIssue":
@@ -1450,7 +1450,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"({{
                     "bridge_account": "{}",
-                    "bridge": 
+                    "bridge":
                     {{
                         "LockingChainDoor": "{}",
                         "LockingChainIssue":
@@ -1476,7 +1476,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"({{
                     "bridge_account": "{}",
-                    "bridge": 
+                    "bridge":
                     {{
                         "IssuingChainDoor": "{}",
                         "LockingChainDoor": "{}",
@@ -1500,7 +1500,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"({{
                     "bridge_account": "{}",
-                    "bridge": 
+                    "bridge":
                     {{
                         "IssuingChainDoor": "{}",
                         "LockingChainDoor": "{}",
@@ -1543,7 +1543,7 @@ generateTestValuesForParametersTest()
             .testName = "OwnedClaimIdJsonMissingClaimId",
             .testJson = fmt::format(
                 R"({{
-                    "xchain_owned_claim_id": 
+                    "xchain_owned_claim_id":
                     {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
@@ -1570,7 +1570,7 @@ generateTestValuesForParametersTest()
             .testName = "OwnedClaimIdJsonMissingDoor",
             .testJson = fmt::format(
                 R"({{
-                    "xchain_owned_claim_id": 
+                    "xchain_owned_claim_id":
                     {{
                         "xchain_owned_claim_id": 10,
                         "LockingChainDoor": "{}",
@@ -1596,7 +1596,7 @@ generateTestValuesForParametersTest()
             .testName = "OwnedClaimIdJsonMissingIssue",
             .testJson = fmt::format(
                 R"({{
-                    "xchain_owned_claim_id": 
+                    "xchain_owned_claim_id":
                     {{
                         "xchain_owned_claim_id": 10,
                         "LockingChainDoor": "{}",
@@ -1618,7 +1618,7 @@ generateTestValuesForParametersTest()
             .testName = "OwnedClaimIdJsonInvalidDoor",
             .testJson = fmt::format(
                 R"({{
-                    "xchain_owned_claim_id": 
+                    "xchain_owned_claim_id":
                     {{
                         "xchain_owned_claim_id": 10,
                         "LockingChainDoor": "abcd",
@@ -1645,7 +1645,7 @@ generateTestValuesForParametersTest()
             .testName = "OwnedClaimIdJsonInvalidIssue",
             .testJson = fmt::format(
                 R"({{
-                    "xchain_owned_claim_id": 
+                    "xchain_owned_claim_id":
                     {{
                         "xchain_owned_claim_id": 10,
                         "LockingChainDoor": "{}",
@@ -1679,7 +1679,7 @@ generateTestValuesForParametersTest()
             .testName = "OwnedCreateAccountClaimIdJsonMissingClaimId",
             .testJson = fmt::format(
                 R"({{
-                    "xchain_owned_create_account_claim_id": 
+                    "xchain_owned_create_account_claim_id":
                     {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
@@ -1706,7 +1706,7 @@ generateTestValuesForParametersTest()
             .testName = "OwnedCreateAccountClaimIdJsonMissingDoor",
             .testJson = fmt::format(
                 R"({{
-                    "xchain_owned_create_account_claim_id": 
+                    "xchain_owned_create_account_claim_id":
                     {{
                         "xchain_owned_create_account_claim_id": 10,
                         "LockingChainDoor": "{}",
@@ -1732,7 +1732,7 @@ generateTestValuesForParametersTest()
             .testName = "OwnedCreateAccountClaimIdJsonMissingIssue",
             .testJson = fmt::format(
                 R"({{
-                    "xchain_owned_create_account_claim_id": 
+                    "xchain_owned_create_account_claim_id":
                     {{
                         "xchain_owned_create_account_claim_id": 10,
                         "LockingChainDoor": "{}",
@@ -1754,7 +1754,7 @@ generateTestValuesForParametersTest()
             .testName = "OwnedCreateAccountClaimIdJsonInvalidDoor",
             .testJson = fmt::format(
                 R"({{
-                    "xchain_owned_create_account_claim_id": 
+                    "xchain_owned_create_account_claim_id":
                     {{
                         "xchain_owned_create_account_claim_id": 10,
                         "LockingChainDoor": "abcd",
@@ -1781,7 +1781,7 @@ generateTestValuesForParametersTest()
             .testName = "OwnedCreateAccountClaimIdJsonInvalidIssue",
             .testJson = fmt::format(
                 R"({{
-                    "xchain_owned_create_account_claim_id": 
+                    "xchain_owned_create_account_claim_id":
                     {{
                         "xchain_owned_create_account_claim_id": 10,
                         "LockingChainDoor": "{}",

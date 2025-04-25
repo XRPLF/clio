@@ -67,8 +67,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonHexLedgerHash)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "nft_id": "{}", 
+            R"({{
+                "nft_id": "{}",
                 "ledger_hash": "xxx"
             }})",
             kNFT_ID
@@ -87,8 +87,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, LimitNotInt)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "nft_id": "{}", 
+            R"({{
+                "nft_id": "{}",
                 "limit": "xxx"
             }})",
             kNFT_ID
@@ -106,8 +106,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, LimitNegative)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "nft_id": "{}", 
+            R"({{
+                "nft_id": "{}",
                 "limit": -1
             }})",
             kNFT_ID
@@ -125,8 +125,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, LimitZero)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "nft_id": "{}", 
+            R"({{
+                "nft_id": "{}",
                 "limit": 0
             }})",
             kNFT_ID
@@ -145,7 +145,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonStringLedgerHash)
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
         auto const input = json::parse(fmt::format(
             R"({{
-                "nft_id": "{}", 
+                "nft_id": "{}",
                 "ledger_hash": 123
             }})",
             kNFT_ID
@@ -164,8 +164,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, InvalidLedgerIndexString)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "nft_id": "{}", 
+            R"({{
+                "nft_id": "{}",
                 "ledger_index": "notvalidated"
             }})",
             kNFT_ID
@@ -184,7 +184,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NFTIDInvalidFormat)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
-        auto const input = json::parse(R"({ 
+        auto const input = json::parse(R"({
             "nft_id": "00080000B4F4AFC5FBCBD76873F18006173D2193467D3EE7"
         })");
         auto const output = handler.process(input, Context{.yield = yield});
@@ -200,7 +200,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NFTIDNotString)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
-        auto const input = json::parse(R"({ 
+        auto const input = json::parse(R"({
             "nft_id": 12
         })");
         auto const output = handler.process(input, Context{.yield = yield});
@@ -246,7 +246,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonExistLedgerViaLedgerIndex)
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "nft_id": "{}",
             "ledger_index": "4"
         }})",
@@ -271,7 +271,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonExistLedgerViaLedgerHash2)
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "nft_id": "{}",
             "ledger_hash": "{}"
         }})",
@@ -295,7 +295,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
     // differ from previous logic
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "nft_id": "{}",
             "ledger_index": "31"
         }})",
@@ -342,8 +342,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, MarkerNotString)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "nft_id": "{}", 
+            R"({{
+                "nft_id": "{}",
                 "marker": 9
             }})",
             kNFT_ID
@@ -364,7 +364,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, InvalidMarker)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "nft_id": "{}",
                 "marker": "123invalid"
             }})",
@@ -380,8 +380,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, InvalidMarker)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "nft_id": "{}", 
+            R"({{
+                "nft_id": "{}",
                 "marker": 250
             }})",
             kNFT_ID
@@ -617,8 +617,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLimi
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "nft_id": "{}", 
+            R"({{
+                "nft_id": "{}",
                 "limit": 49
             }})",
             kNFT_ID
@@ -630,8 +630,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLimi
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{ 
-                "nft_id": "{}", 
+            R"({{
+                "nft_id": "{}",
                 "limit": 501
             }})",
             kNFT_ID

@@ -6,7 +6,7 @@ To support additional database types, you can create new classes that implement 
 
 ## Data Model
 
-The data model used by Clio to read and write ledger data is different from what `rippled` uses. `rippled` uses a novel data structure named [*SHAMap*](https://github.com/ripple/rippled/blob/master/src/ripple/shamap/README.md), which is a combination of a Merkle Tree and a Radix Trie. In a SHAMap, ledger objects are stored in the root vertices of the tree. Thus, looking up a record located at the leaf node of the SHAMap executes a tree search, where the path from the root node to the leaf node is the key of the record.
+The data model used by Clio to read and write ledger data is different from what `rippled` uses. `rippled` uses a novel data structure named [_SHAMap_](https://github.com/ripple/rippled/blob/master/src/ripple/shamap/README.md), which is a combination of a Merkle Tree and a Radix Trie. In a SHAMap, ledger objects are stored in the root vertices of the tree. Thus, looking up a record located at the leaf node of the SHAMap executes a tree search, where the path from the root node to the leaf node is the key of the record.
 
 `rippled` nodes can also generate a proof-tree by forming a subtree with all the path nodes and their neighbors, which can then be used to prove the existence of the leaf node data to other `rippled` nodes. In short, the main purpose of the SHAMap data structure is to facilitate the fast validation of data integrity between different decentralized `rippled` nodes.
 
@@ -22,19 +22,19 @@ There are three main types of data in each XRP Ledger version:
 
 Due to the structural differences of the different types of databases, Clio may choose to represent these data types using a different schema for each unique database type.
 
-### Keywords  
+### Keywords
 
 **Sequence**: A unique incrementing identification number used to label the different ledger versions.
 
 **Hash**: The SHA512-half (calculate SHA512 and take the first 256 bits) hash of various ledger data like the entire ledger or specific ledger objects.
 
-**Ledger Object**: The [binary-encoded](https://xrpl.org/serialization.html) STObject containing specific data (i.e. metadata, transaction data).  
+**Ledger Object**: The [binary-encoded](https://xrpl.org/serialization.html) STObject containing specific data (i.e. metadata, transaction data).
 
-**Metadata**: The data containing [detailed information](https://xrpl.org/transaction-metadata.html#transaction-metadata) of the outcome of a specific transaction, regardless of whether the transaction was successful.  
+**Metadata**: The data containing [detailed information](https://xrpl.org/transaction-metadata.html#transaction-metadata) of the outcome of a specific transaction, regardless of whether the transaction was successful.
 
-**Transaction data**: The data containing the [full details](https://xrpl.org/transaction-common-fields.html) of a specific transaction.  
+**Transaction data**: The data containing the [full details](https://xrpl.org/transaction-common-fields.html) of a specific transaction.
 
-**Object Index**: The pseudo-random unique identifier of a ledger object, created by hashing the data of the object.  
+**Object Index**: The pseudo-random unique identifier of a ledger object, created by hashing the data of the object.
 
 ## Cassandra Implementation
 
@@ -59,10 +59,10 @@ Their schemas and how they work are detailed in the following sections.
 ### ledger_transactions
 
 ```
-CREATE TABLE clio.ledger_transactions (  
+CREATE TABLE clio.ledger_transactions (
 	ledger_sequence bigint,  # The sequence number of the ledger version
 	hash blob,               # Hash of all the transactions on this ledger version
-	PRIMARY KEY (ledger_sequence, hash)  
+	PRIMARY KEY (ledger_sequence, hash)
 ) WITH CLUSTERING ORDER BY (hash ASC) ...
 ```
 
@@ -71,7 +71,7 @@ This table stores the hashes of all transactions in a given ledger sequence and 
 ### transactions
 
 ```
-CREATE TABLE clio.transactions (  
+CREATE TABLE clio.transactions (
 	hash blob PRIMARY KEY,   # The transaction hash
 	date bigint,             # Date of the transaction
 	ledger_sequence bigint,  # The sequence that the transaction was validated
@@ -82,7 +82,7 @@ CREATE TABLE clio.transactions (
 
 This table stores the full transaction and metadata of each ledger version with the transaction hash as the primary key.
 
-To lookup all the transactions that were validated in a ledger version with sequence `n`, first get the all the transaction hashes in that ledger version by querying `SELECT * FROM ledger_transactions WHERE ledger_sequence = n;`. Then, iterate through the list of hashes and query `SELECT * FROM transactions WHERE hash = one_of_the_hash_from_the_list;` to get the detailed transaction data.  
+To lookup all the transactions that were validated in a ledger version with sequence `n`, first get the all the transaction hashes in that ledger version by querying `SELECT * FROM ledger_transactions WHERE ledger_sequence = n;`. Then, iterate through the list of hashes and query `SELECT * FROM transactions WHERE hash = one_of_the_hash_from_the_list;` to get the detailed transaction data.
 
 ### ledger_hashes
 
@@ -93,7 +93,7 @@ CREATE TABLE clio.ledger_hashes (
 ) ...
 ```
 
-This table stores the hash of all ledger versions by their sequences. 
+This table stores the hash of all ledger versions by their sequences.
 
 ### ledger_range
 
@@ -170,7 +170,7 @@ CREATE TABLE clio.successor (
 
 This table is the important backbone of how histories of ledger objects are stored in Cassandra. The `successor` table stores the object index of all ledger objects that were validated on the XRP network along with the ledger sequence that the object was updated on.
 
-As each key is ordered by the sequence, which is achieved by tracing through the table with a specific sequence number, Clio can recreate a Linked List data structure that represents all the existing ledger objects at that ledger sequence. The special values of `0x00...00` and `0xFF...FF` are used to label the *head* and *tail* of the Linked List in the successor table.
+As each key is ordered by the sequence, which is achieved by tracing through the table with a specific sequence number, Clio can recreate a Linked List data structure that represents all the existing ledger objects at that ledger sequence. The special values of `0x00...00` and `0xFF...FF` are used to label the _head_ and _tail_ of the Linked List in the successor table.
 
 The diagram below showcases how tracing through the same table, but with different sequence parameter filtering, can result in different Linked List data representing the corresponding past state of the ledger objects. A query like `SELECT * FROM successor WHERE key = ? AND seq <= n ORDER BY seq DESC LIMIT 1;` can effectively trace through the successor table and get the Linked List of a specific sequence `n`.
 
@@ -182,12 +182,12 @@ In each new ledger version with sequence `n`, a ledger object `v` can either be 
 
 For all three of these operations, the procedure to update the successor table can be broken down into two steps:
 
- 1. Trace through the Linked List of the previous sequence to find the ledger object `e` with the greatest object index smaller or equal than the `v`'s index. Save `e`'s `next` value (the index of the next ledger object) as `w`.
+1. Trace through the Linked List of the previous sequence to find the ledger object `e` with the greatest object index smaller or equal than the `v`'s index. Save `e`'s `next` value (the index of the next ledger object) as `w`.
 
- 2. If `v` is...
-	 1. Being **created**, add two new records of `seq=n` with one being `e` pointing to `v`, and `v` pointing to `w` (Linked List insertion operation).
-	 2. Being **modified**, do nothing.
-	 3. Being **deleted**, add a record of `seq=n` with `e` pointing to `v`'s `next` value (Linked List deletion operation).
+2. If `v` is...
+   1. Being **created**, add two new records of `seq=n` with one being `e` pointing to `v`, and `v` pointing to `w` (Linked List insertion operation).
+   2. Being **modified**, do nothing.
+   3. Being **deleted**, add a record of `seq=n` with `e` pointing to `v`'s `next` value (Linked List deletion operation).
 
 ## NFT data model
 
@@ -270,7 +270,7 @@ CREATE TABLE clio.migrator_status (
     migrator_name TEXT,     # The name of the migrator
     status TEXT,            # The status of the migrator
     PRIMARY KEY (migrator_name)
-) 
+)
 ```
 
 The `migrator_status` table stores the status of the migratior in this database. If a migrator's status is `migrated`, it means this database has finished data migration for this migrator.

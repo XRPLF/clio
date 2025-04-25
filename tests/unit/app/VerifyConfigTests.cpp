@@ -60,7 +60,7 @@ TEST(VerifyConfigTest, InvalidJsonFile)
     static constexpr auto kINVALID_JSON = R"({
                                              "server": {
                                                 "ip": "0.0.0.0",
-                                                "port": 51233, 
+                                                "port": 51233,
                                             }
                                         })";
     auto const tmpConfigFile = TmpFile(kINVALID_JSON);

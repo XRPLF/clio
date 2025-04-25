@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - '.github/workflows/sanitizers.yml'
+      - ".github/workflows/sanitizers.yml"
 
 jobs:
   build:

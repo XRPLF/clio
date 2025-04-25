@@ -70,12 +70,12 @@ on:
         description: Sanitizer to use
         required: false
         type: string
-        default: 'false'
+        default: "false"
 
 jobs:
   build:
     name: Build ${{ inputs.container != '' && 'in container' || 'natively' }}
-    runs-on: ${{ inputs.runs_on }} 
+    runs-on: ${{ inputs.runs_on }}
     container: ${{ inputs.container != '' && fromJson(inputs.container) || null }}
 
     steps:
@@ -137,7 +137,7 @@ jobs:
       - name: Strip unit_tests
         if: ${{ inputs.unit_tests && !inputs.code_coverage && inputs.sanitizer == 'false' }}
         run: strip build/clio_tests
-      
+
       - name: Strip integration_tests
         if: ${{ inputs.integration_tests && !inputs.code_coverage }}
         run: strip build/clio_integration_tests
@@ -148,14 +148,14 @@ jobs:
         with:
           name: clio_server_${{ runner.os }}_${{ inputs.build_type }}_${{ steps.conan.outputs.conan_profile }}
           path: build/clio_server
-     
+
       - name: Upload clio_tests
         if: ${{ inputs.unit_tests && !inputs.code_coverage }}
         uses: actions/upload-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ steps.conan.outputs.conan_profile }}
           path: build/clio_tests
-      
+
       - name: Upload clio_integration_tests
         if: ${{ inputs.integration_tests && !inputs.code_coverage }}
         uses: actions/upload-artifact@v4
@@ -184,7 +184,7 @@ jobs:
         uses: ./.github/actions/code_coverage
 
   upload_coverage_report:
-    if: ${{ inputs.code_coverage }} 
+    if: ${{ inputs.code_coverage }}
     name: Codecov
     needs: build
     uses: ./.github/workflows/upload_coverage_report.yml

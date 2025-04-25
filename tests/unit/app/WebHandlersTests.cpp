@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "app/WebHandlers.hpp"
+#include "rpc/Errors.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"

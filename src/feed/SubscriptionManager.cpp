@@ -191,7 +191,7 @@ SubscriptionManager::unsubBook(ripple::Book const& book, SubscriberSharedPtr con
 void
 SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& txMeta, ripple::LedgerHeader const& lgrInfo)
 {
-    transactionFeed_.pub(txMeta, lgrInfo, backend_, amendmentCenter_);
+    transactionFeed_.pub(txMeta, lgrInfo, backend_, amendmentCenter_, networkID_);
 }
 
 boost::json::object
@@ -208,6 +208,18 @@ SubscriptionManager::report() const
         {"books", transactionFeed_.bookSubCount()},
         {"book_changes", bookChangesFeed_.count()},
     };
+}
+
+void
+SubscriptionManager::setNetworkID(uint32_t const networkID)
+{
+    networkID_ = networkID;
+}
+
+uint32_t
+SubscriptionManager::getNetworkID() const
+{
+    return networkID_;
 }
 
 }  // namespace feed

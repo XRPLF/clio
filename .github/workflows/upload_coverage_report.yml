@@ -27,7 +27,7 @@ jobs:
         with:
           action: codecov/codecov-action@v4
           with: |
-            files: build/coverage_report.xml 
+            files: build/coverage_report.xml
             fail_ci_if_error: false
             verbose: true
             token: ${{ secrets.CODECOV_TOKEN }}

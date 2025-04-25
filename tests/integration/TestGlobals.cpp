@@ -40,9 +40,9 @@ TestGlobals::parse(int argc, char* argv[])
     // clang-format off
     po::options_description description("Clio UT options");
     description.add_options()
-        ("backend_host", po::value<std::string>()->default_value(TestGlobals::backendHost), 
+        ("backend_host", po::value<std::string>()->default_value(TestGlobals::backendHost),
             "sets the cassandra/scylladb host for backend tests")
-        ("backend_keyspace", po::value<std::string>()->default_value(TestGlobals::backendKeyspace), 
+        ("backend_keyspace", po::value<std::string>()->default_value(TestGlobals::backendKeyspace),
             "sets the cassandra/scylladb keyspace for backend tests")
     ;
     // clang-format on

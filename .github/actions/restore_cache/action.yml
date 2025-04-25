@@ -17,7 +17,7 @@ inputs:
   code_coverage:
     description: Whether code coverage is on
     required: true
-    default: 'false'
+    default: "false"
 outputs:
   conan_hash:
     description: Hash to use as a part of conan cache key

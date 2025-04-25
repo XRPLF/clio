@@ -8,12 +8,12 @@ The minimum level of severity at which the log message will be outputted by defa
 
 ## `log_format`
 
- The format of log lines produced by Clio. Defaults to `"%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%"`.
+The format of log lines produced by Clio. Defaults to `"%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%"`.
 
 Each of the variables expands like so:
 
 - `TimeStamp`: The full date and time of the log entry
-- `SourceLocation`: A partial path to the c++ file and the line number in said file (`source/file/path:linenumber`)  
+- `SourceLocation`: A partial path to the c++ file and the line number in said file (`source/file/path:linenumber`)
 - `ThreadID`: The ID of the thread the log entry is written from
 - `Channel`: The channel that this log entry was sent to
 - `Severity`: The severity (aka log level) the entry was sent at
@@ -30,8 +30,8 @@ Each object is of this format:
 
 ```json
 {
-    "channel": "Backend",
-    "log_level": "fatal"
+  "channel": "Backend",
+  "log_level": "fatal"
 }
 ```
 
