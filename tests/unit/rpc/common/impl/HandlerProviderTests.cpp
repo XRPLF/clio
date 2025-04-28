@@ -39,6 +39,7 @@
 #include <string>
 
 using namespace rpc;
+
 struct ProductionHandlerProviderTest : util::prometheus::WithPrometheus, MockBackendTestStrict {
     util::config::ClioConfigDefinition config{
         {"api_version.default",

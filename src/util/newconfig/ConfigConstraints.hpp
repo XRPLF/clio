@@ -448,7 +448,7 @@ static constinit NumberValueConstraint<uint16_t> gValidateReplicationFactor{0, s
 static constinit NumberValueConstraint<uint16_t> gValidateUint16{1, std::numeric_limits<uint16_t>::max()};
 
 static constinit NumberValueConstraint<uint32_t> gValidateUint32{1, std::numeric_limits<uint32_t>::max()};
+static constinit NumberValueConstraint<uint32_t> gValidateNonNegativeUint32{0, std::numeric_limits<uint32_t>::max()};
 static constinit NumberValueConstraint<uint32_t> gValidateApiVersion{rpc::kAPI_VERSION_MIN, rpc::kAPI_VERSION_MAX};
 
-static constinit NumberValueConstraint<uint64_t> gValidateUint64{0, std::numeric_limits<uint64_t>::max()};
 }  // namespace util::config

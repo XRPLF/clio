@@ -312,12 +312,13 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      },
      {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)},
      {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)},
-     {"dos_guard.sweep_interval", ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint64)},
-     {"dos_guard.__ng_default_weight", ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint64)
-     },
+     {"dos_guard.sweep_interval",
+      ConfigValue{ConfigType::Double}.defaultValue(1.0).withConstraint(gValidatePositiveDouble)},
+     {"dos_guard.__ng_default_weight",
+      ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateNonNegativeUint32)},
      {"dos_guard.__ng_weights.[].method", Array{ConfigValue{ConfigType::String}}},  // TODO(kuznetsss): add checker
      {"dos_guard.__ng_weights.[].weight",
-      Array{ConfigValue{ConfigType::Integer}.withConstraint(gValidatePositiveDouble)}},
+      Array{ConfigValue{ConfigType::Integer}.withConstraint(gValidateNonNegativeUint32)}},
 
      {"workers",
       ConfigValue{ConfigType::Integer}
