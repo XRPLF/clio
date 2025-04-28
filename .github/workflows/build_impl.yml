@@ -104,7 +104,7 @@ jobs:
         id: restore_cache
         with:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
-          conan_profile: ${{ steps.conan.outputs.conan_profile }}
+          conan_profile: ${{ inputs.conan_profile }}
           ccache_dir: ${{ env.CCACHE_DIR }}
           build_type: ${{ inputs.build_type }}
           code_coverage: ${{ inputs.code_coverage }}
@@ -112,7 +112,7 @@ jobs:
       - name: Run conan and cmake
         uses: ./.github/actions/generate
         with:
-          conan_profile: ${{ steps.conan.outputs.conan_profile }}
+          conan_profile: ${{ inputs.conan_profile }}
           conan_cache_hit: ${{ !inputs.disable_cache && steps.restore_cache.outputs.conan_cache_hit }}
           build_type: ${{ inputs.build_type }}
           code_coverage: ${{ inputs.code_coverage }}
@@ -146,21 +146,21 @@ jobs:
         if: ${{ inputs.clio_server }}
         uses: actions/upload-artifact@v4
         with:
-          name: clio_server_${{ runner.os }}_${{ inputs.build_type }}_${{ steps.conan.outputs.conan_profile }}
+          name: clio_server_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_server
 
       - name: Upload clio_tests
         if: ${{ inputs.unit_tests && !inputs.code_coverage }}
         uses: actions/upload-artifact@v4
         with:
-          name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ steps.conan.outputs.conan_profile }}
+          name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_tests
 
       - name: Upload clio_integration_tests
         if: ${{ inputs.integration_tests && !inputs.code_coverage }}
         uses: actions/upload-artifact@v4
         with:
-          name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ steps.conan.outputs.conan_profile }}
+          name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_integration_tests
 
       - name: Save cache
@@ -175,7 +175,7 @@ jobs:
           ccache_cache_miss_rate: ${{ steps.ccache_stats.outputs.miss_rate }}
           build_type: ${{ inputs.build_type }}
           code_coverage: ${{ inputs.code_coverage }}
-          conan_profile: ${{ steps.conan.outputs.conan_profile }}
+          conan_profile: ${{ inputs.conan_profile }}
 
       # TODO: This is not a part of build process but it is the easiest way to do it here.
       # It will be refactored in https://github.com/XRPLF/clio/issues/1075

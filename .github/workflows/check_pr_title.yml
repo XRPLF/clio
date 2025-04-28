@@ -1,4 +1,5 @@
 name: Check PR title
+
 on:
   pull_request:
     types: [opened, edited, reopened, synchronize]
@@ -7,12 +8,9 @@ on:
 jobs:
   check_title:
     runs-on: ubuntu-latest
-    # permissions:
-    #   pull-requests: write
     steps:
-      - uses: ytanikin/PRConventionalCommits@b628c5a234cc32513014b7bfdd1e47b532124d98 #v1.3.0
+      - uses: ytanikin/pr-conventional-commits@8267db1bacc237419f9ed0228bb9d94e94271a1d #v1.4.1
         with:
           task_types: '["build","feat","fix","docs","test","ci","style","refactor","perf","chore"]'
-          add_label: false
-          # Turned off labelling because it leads to an error, see https://github.com/ytanikin/PRConventionalCommits/issues/19
-          # custom_labels: '{"build":"build", "feat":"enhancement", "fix":"bug", "docs":"documentation", "test":"testability", "ci":"ci", "style":"refactoring", "refactor":"refactoring", "perf":"performance", "chore":"tooling"}'
+          add_label: true
+          custom_labels: '{"build":"build", "feat":"enhancement", "fix":"bug", "docs":"documentation", "test":"testability", "ci":"ci", "style":"refactoring", "refactor":"refactoring", "perf":"performance", "chore":"tooling"}'

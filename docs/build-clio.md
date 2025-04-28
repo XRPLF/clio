@@ -23,9 +23,9 @@ Clio does not require anything other than `compiler.cppstd=20` in your (`~/.cona
 > [!NOTE]
 > Although Clio is built using C++23, it's required to set `compiler.cppstd=20` for the time being as some of Clio's dependencies are not yet capable of building under C++23.
 
-> Mac example:
+**Mac example**:
 
-```
+```text
 [settings]
 os=Macos
 os_build=Macos
@@ -40,9 +40,9 @@ compiler.cppstd=20
 tools.build:cxxflags+=["-DBOOST_ASIO_DISABLE_CONCEPTS"]
 ```
 
-> Linux example:
+**Linux example**:
 
-```
+```text
 [settings]
 os=Linux
 os_build=Linux
@@ -92,6 +92,8 @@ If successful, `conan install` will find the required packages and `cmake` will 
 
 > [!TIP]
 > To generate a Code Coverage report, include `-o coverage=True` in the `conan install` command above, along with `-o tests=True` to enable tests. After running the `cmake` commands, execute `make clio_tests-ccov`. The coverage report will be found at `clio_tests-llvm-cov/index.html`.
+
+<!-- markdownlint-disable-line MD028 -->
 
 > [!NOTE]
 > If you've built Clio before and the build is now failing, it's likely due to updated dependencies. Try deleting the build folder and then rerunning the Conan and CMake commands mentioned above.

@@ -5,14 +5,16 @@ on:
       - "docker/ci/**"
       - "docker/compilers/**"
       - .github/workflows/update_docker_ci.yml
+      - ".github/actions/build_docker_image/**"
   push:
     branches: [develop]
     paths:
-      # CI image must update when either its dockerfile changes
+      # CI image must update when either its Dockerfile changes
       # or any compilers changed and were pushed by hand
       - "docker/ci/**"
       - "docker/compilers/**"
       - .github/workflows/update_docker_ci.yml
+      - ".github/actions/build_docker_image/**"
   workflow_dispatch:
 
 jobs:

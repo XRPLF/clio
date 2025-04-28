@@ -58,11 +58,11 @@ Their schemas and how they work are detailed in the following sections.
 
 ### ledger_transactions
 
-```
+```sql
 CREATE TABLE clio.ledger_transactions (
-	ledger_sequence bigint,  # The sequence number of the ledger version
-	hash blob,               # Hash of all the transactions on this ledger version
-	PRIMARY KEY (ledger_sequence, hash)
+ ledger_sequence bigint,  # The sequence number of the ledger version
+ hash blob,               # Hash of all the transactions on this ledger version
+ PRIMARY KEY (ledger_sequence, hash)
 ) WITH CLUSTERING ORDER BY (hash ASC) ...
 ```
 
@@ -70,13 +70,13 @@ This table stores the hashes of all transactions in a given ledger sequence and 
 
 ### transactions
 
-```
+```sql
 CREATE TABLE clio.transactions (
-	hash blob PRIMARY KEY,   # The transaction hash
-	date bigint,             # Date of the transaction
-	ledger_sequence bigint,  # The sequence that the transaction was validated
-	metadata blob,           # Metadata of the transaction
-	transaction blob         # Data of the transaction
+ hash blob PRIMARY KEY,   # The transaction hash
+ date bigint,             # Date of the transaction
+ ledger_sequence bigint,  # The sequence that the transaction was validated
+ metadata blob,           # Metadata of the transaction
+ transaction blob         # Data of the transaction
 ) ...
 ```
 
@@ -86,10 +86,10 @@ To lookup all the transactions that were validated in a ledger version with sequ
 
 ### ledger_hashes
 
-```
+```sql
 CREATE TABLE clio.ledger_hashes (
-	hash blob PRIMARY KEY,  # Hash of entire ledger version's data
-	sequence bigint         # The sequence of the ledger version
+ hash blob PRIMARY KEY,  # Hash of entire ledger version's data
+ sequence bigint         # The sequence of the ledger version
 ) ...
 ```
 
@@ -97,10 +97,10 @@ This table stores the hash of all ledger versions by their sequences.
 
 ### ledger_range
 
-```
+```sql
 CREATE TABLE clio.ledger_range (
-	is_latest boolean PRIMARY KEY,  # Whether this sequence is the stopping range
-	sequence bigint                 # The sequence number of the starting/stopping range
+ is_latest boolean PRIMARY KEY,  # Whether this sequence is the stopping range
+ sequence bigint                 # The sequence number of the starting/stopping range
 ) ...
 ```
 
@@ -108,12 +108,12 @@ This table marks the range of ledger versions that is stored on this specific Ca
 
 ### objects
 
-```
+```sql
 CREATE TABLE clio.objects (
-	key blob,         # Object index of the object
-	sequence bigint,  # The sequence this object was last updated
-	object blob,      # Data of the object
-	PRIMARY KEY (key, sequence)
+ key blob,         # Object index of the object
+ sequence bigint,  # The sequence this object was last updated
+ object blob,      # Data of the object
+ PRIMARY KEY (key, sequence)
 ) WITH CLUSTERING ORDER BY (sequence DESC) ...
 ```
 
@@ -123,10 +123,10 @@ The table is updated when all data for a given ledger sequence has been written 
 
 ### ledgers
 
-```
+```sql
 CREATE TABLE clio.ledgers (
-	sequence bigint PRIMARY KEY,  # Sequence of the ledger version
-	header blob                   # Data of the header
+ sequence bigint PRIMARY KEY,  # Sequence of the ledger version
+ header blob                   # Data of the header
 ) ...
 ```
 
@@ -134,11 +134,11 @@ This table stores the ledger header data of specific ledger versions by their se
 
 ### diff
 
-```
+```sql
 CREATE TABLE clio.diff (
-	seq bigint,  # Sequence of the ledger version
-	key blob,    # Hash of changes in the ledger version
-	PRIMARY KEY (seq, key)
+ seq bigint,  # Sequence of the ledger version
+ key blob,    # Hash of changes in the ledger version
+ PRIMARY KEY (seq, key)
 ) WITH CLUSTERING ORDER BY (key ASC) ...
 ```
 
@@ -146,12 +146,12 @@ This table stores the object index of all the changes in each ledger version.
 
 ### account_tx
 
-```
+```sql
 CREATE TABLE clio.account_tx (
-	account blob,
-	seq_idx frozen<tuple<bigint, bigint>>,  # Tuple of (ledger_index, transaction_index)
-	hash blob,                              # Hash of the transaction
-	PRIMARY KEY (account, seq_idx)
+ account blob,
+ seq_idx frozen<tuple<bigint, bigint>>,  # Tuple of (ledger_index, transaction_index)
+ hash blob,                              # Hash of the transaction
+ PRIMARY KEY (account, seq_idx)
 ) WITH CLUSTERING ORDER BY (seq_idx DESC) ...
 ```
 
@@ -159,12 +159,12 @@ This table stores the list of transactions affecting a given account. This inclu
 
 ### successor
 
-```
+```sql
 CREATE TABLE clio.successor (
-	key blob,    # Object index
-	seq bigint,  # The sequnce that this ledger object's predecessor and successor was updated
-	next blob,   # Index of the next object that existed in this sequence
-	PRIMARY KEY (key, seq)
+ key blob,    # Object index
+ seq bigint,  # The sequnce that this ledger object's predecessor and successor was updated
+ next blob,   # Index of the next object that existed in this sequence
+ PRIMARY KEY (key, seq)
 ) WITH CLUSTERING ORDER BY (seq ASC) ...
 ```
 
@@ -195,13 +195,13 @@ In `rippled` NFTs are stored in `NFTokenPage` ledger objects. This object is imp
 
 ### nf_tokens
 
-```
+```sql
 CREATE TABLE clio.nf_tokens (
-	token_id blob,         # The NFT's ID
-	sequence bigint,       # Sequence of ledger version
-	owner blob,            # The account ID of the owner of this NFT at this ledger
-	is_burned boolean,     # True if token was burned in this ledger
-	PRIMARY KEY (token_id, sequence)
+ token_id blob,         # The NFT's ID
+ sequence bigint,       # Sequence of ledger version
+ owner blob,            # The account ID of the owner of this NFT at this ledger
+ is_burned boolean,     # True if token was burned in this ledger
+ PRIMARY KEY (token_id, sequence)
 ) WITH CLUSTERING ORDER BY (sequence DESC) ...
 ```
 
@@ -209,7 +209,7 @@ This table indexes NFT IDs with their owner at a given ledger.
 
 The example query below shows how you could search for the owner of token `N` at ledger `Y` and see whether the token was burned.
 
-```
+```sql
 SELECT * FROM nf_tokens
 WHERE token_id = N AND seq <= Y
 ORDER BY seq DESC LIMIT 1;
@@ -219,12 +219,12 @@ If the token is burned, the owner field indicates the account that owned the tok
 
 ### issuer_nf_tokens_v2
 
-```
+```sql
 CREATE TABLE clio.issuer_nf_tokens_v2 (
-	issuer blob,       # The NFT issuer's account ID
-	taxon bigint,      # The NFT's token taxon
-	token_id blob,     # The NFT's ID
-	PRIMARY KEY (issuer, taxon, token_id)
+ issuer blob,       # The NFT issuer's account ID
+ taxon bigint,      # The NFT's token taxon
+ token_id blob,     # The NFT's ID
+ PRIMARY KEY (issuer, taxon, token_id)
 ) WITH CLUSTERING ORDER BY (taxon ASC, token_id ASC) ...
 ```
 
@@ -233,12 +233,12 @@ combination. This is useful for determining all the NFTs a specific account issu
 
 ### nf_token_uris
 
-```
+```sql
 CREATE TABLE clio.nf_token_uris (
-	token_id blob,    # The NFT's ID
-	sequence bigint,  # Sequence of ledger version
-	uri blob,         # The NFT's URI
-	PRIMARY KEY (token_id, sequence)
+ token_id blob,    # The NFT's ID
+ sequence bigint,  # Sequence of ledger version
+ uri blob,         # The NFT's URI
+ PRIMARY KEY (token_id, sequence)
 ) WITH CLUSTERING ORDER BY (sequence DESC) ...
 ```
 
@@ -252,12 +252,12 @@ A given NFT will have only one entry in this table (see caveat below), and will 
 
 ### nf_token_transactions
 
-```
+```sql
 CREATE TABLE clio.nf_token_transactions (
-	token_id blob,                  # The NFT's ID
-	seq_idx tuple<bigint, bigint>,  # Tuple of (ledger_index, transaction_index)
-	hash blob,                      # Hash of the transaction
-	PRIMARY KEY (token_id, seq_idx)
+ token_id blob,                  # The NFT's ID
+ seq_idx tuple<bigint, bigint>,  # Tuple of (ledger_index, transaction_index)
+ hash blob,                      # Hash of the transaction
+ PRIMARY KEY (token_id, seq_idx)
 ) WITH CLUSTERING ORDER BY (seq_idx DESC) ...
 ```
 
@@ -265,7 +265,7 @@ The `nf_token_transactions` table serves as the NFT counterpart to `account_tx`,
 
 ### migrator_status
 
-```
+```sql
 CREATE TABLE clio.migrator_status (
     migrator_name TEXT,     # The name of the migrator
     status TEXT,            # The status of the migrator

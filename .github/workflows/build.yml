@@ -71,6 +71,7 @@ jobs:
             code_coverage: false
             static: true
           - os: macos15
+            conan_profile: default_apple_clang
             build_type: Release
             code_coverage: false
             static: false
@@ -109,7 +110,7 @@ jobs:
             container:
               image: rippleci/clio_ci:latest
           - os: macos15
-            conan_profile: apple_clang_16
+            conan_profile: default_apple_clang
             build_type: Release
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}

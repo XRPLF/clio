@@ -108,7 +108,7 @@ Note: the original context is taken in by reference.
 
 See examples of use below.
 
-#### AnyOperation<T>
+#### AnyOperation
 
 Wraps any type of operations including regular, stoppable and scheduled.
 
@@ -221,7 +221,7 @@ EXPECT_TRUE(err.message.ends_with("test"));
 EXPECT_TRUE(std::string{err}.ends_with("test"));
 ```
 
-### Strand
+### Strand <!-- markdownlint-disable-line MD024 -->
 
 The APIs are basically the same as with the parent `ExecutionContext`.
 
@@ -234,7 +234,7 @@ auto res = strand.execute([] { return 42; });
 EXPECT_EQ(res.get().value(), 42);
 ```
 
-### Type erasure
+### Type erasure <!-- markdownlint-disable-line MD024 -->
 
 #### Simple use
 

@@ -8,22 +8,22 @@ import (
 )
 
 type AmmoProvider struct {
-	ammo           []string
+	ammo          []string
 	currentBullet atomic.Uint64
 }
 
 func (ap *AmmoProvider) getIndex() uint64 {
-    result := ap.currentBullet.Add(1)
+	result := ap.currentBullet.Add(1)
 	return result % uint64(len(ap.ammo))
 }
 
 func (ap *AmmoProvider) GetBullet() string {
-    for {
-        res := ap.ammo[ap.getIndex()]
-        if !strings.HasPrefix(res, "#") {
-            return res
-        }
-    }
+	for {
+		res := ap.ammo[ap.getIndex()]
+		if !strings.HasPrefix(res, "#") {
+			return res
+		}
+	}
 }
 
 func New(reader io.Reader) *AmmoProvider {

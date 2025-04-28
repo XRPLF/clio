@@ -72,7 +72,7 @@ WORKDIR /root
 # Using root by default is not very secure but github checkout action doesn't work with any other user
 # https://github.com/actions/checkout/issues/956
 # And Github Actions doc recommends using root
-# https://docs.github.com/en/actions/creating-actions/dockerfile-support-for-github-actions#user
+# https://docs.github.com/en/actions/sharing-automations/creating-actions/dockerfile-support-for-github-actions#user
 
 # Setup conan
 RUN conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod

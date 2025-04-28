@@ -35,7 +35,7 @@ If you see the error log message `Failed to fetch ETL state from...`, this means
 
 If you would like to run Clio without an avaliable rippled node, you can add below setting to Clio's configuration file:
 
-```
+```text
 "allow_no_etl": true
 ```
 

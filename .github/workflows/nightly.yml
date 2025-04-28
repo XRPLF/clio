@@ -16,13 +16,16 @@ jobs:
       matrix:
         include:
           - os: macos15
+            conan_profile: default_apple_clang
             build_type: Release
             static: false
           - os: heavy
+            conan_profile: gcc
             build_type: Release
             static: true
             container: '{ "image": "rippleci/clio_ci:latest" }'
           - os: heavy
+            conan_profile: gcc
             build_type: Debug
             static: true
             container: '{ "image": "rippleci/clio_ci:latest" }'
@@ -30,7 +33,7 @@ jobs:
     with:
       runs_on: ${{ matrix.os }}
       container: ${{ matrix.container }}
-      conan_profile: gcc
+      conan_profile: ${{ matrix.conan_profile }}
       build_type: ${{ matrix.build_type }}
       code_coverage: false
       static: ${{ matrix.static }}
@@ -46,7 +49,7 @@ jobs:
       matrix:
         include:
           - os: macos15
-            conan_profile: apple_clang_16
+            conan_profile: default_apple_clang
             build_type: Release
             integration_tests: false
           - os: heavy
