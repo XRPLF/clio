@@ -427,6 +427,41 @@ private:
     }
 };
 
+/**
+ * @brief A constraint to ensure the value is a valid RPC command name.
+ */
+class RpcNameConstraint final : public Constraint {
+private:
+    /**
+     * @brief Check if the type of the value is correct for this specific constraint.
+     *
+     * @param value The type to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwise
+     */
+    [[nodiscard]] std::optional<Error>
+    checkTypeImpl(Value const& value) const override;
+
+    /**
+     * @brief Check if the value is a valid RPC command name.
+     *
+     * @param value The value to check
+     * @return An Error object if the constraint is not met, nullopt otherwise
+     */
+    [[nodiscard]] std::optional<Error>
+    checkValueImpl(Value const& value) const override;
+
+    /**
+     * @brief Prints to the output stream for this specific constraint.
+     *
+     * @param stream The output stream
+     */
+    void
+    print(std::ostream& stream) const override
+    {
+        stream << "Invalid RPC command name.";
+    }
+};
+
 static constinit PortConstraint gValidatePort{};
 static constinit ValidIPConstraint gValidateIp{};
 
@@ -451,4 +486,5 @@ static constinit NumberValueConstraint<uint32_t> gValidateUint32{1, std::numeric
 static constinit NumberValueConstraint<uint32_t> gValidateNonNegativeUint32{0, std::numeric_limits<uint32_t>::max()};
 static constinit NumberValueConstraint<uint32_t> gValidateApiVersion{rpc::kAPI_VERSION_MIN, rpc::kAPI_VERSION_MAX};
 
+static constinit RpcNameConstraint gRpcNameConstraint{};
 }  // namespace util::config
