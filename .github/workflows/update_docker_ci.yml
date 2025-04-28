@@ -1,4 +1,5 @@
 name: Update CI docker image
+
 on:
   pull_request:
     paths:
@@ -29,7 +30,10 @@ jobs:
           DOCKERHUB_PW: ${{ secrets.DOCKERHUB_PW }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          image_name: rippleci/clio_ci
+          images: |
+            rippleci/clio_ci
+            ghcr.io/xrplf/clio-ci
+          dockerhub_repo: rippleci/clio_ci
           push_image: ${{ github.event_name != 'pull_request' }}
           directory: docker/ci
           tags: |

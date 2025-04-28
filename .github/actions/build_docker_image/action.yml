@@ -1,8 +1,12 @@
 name: Build and push Docker image
 description: Build and push Docker image to DockerHub and GitHub Container Registry
+
 inputs:
-  image_name:
-    description: Name of the image to build
+  images:
+    description: Name of the images to use as a base name
+    required: true
+  dockerhub_repo:
+    description: DockerHub repository name
     required: true
   push_image:
     description: Whether to push the image to the registry (true/false)
@@ -19,6 +23,7 @@ inputs:
   description:
     description: Short description of the image
     required: true
+
 runs:
   using: composite
   steps:
@@ -45,7 +50,7 @@ runs:
     - uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 #v5.7.0
       id: meta
       with:
-        images: ${{ inputs.image_name }}
+        images: ${{ inputs.images }}
         tags: ${{ inputs.tags }}
 
     - name: Build and push
@@ -62,6 +67,6 @@ runs:
       with:
         username: ${{ env.DOCKERHUB_USER }}
         password: ${{ env.DOCKERHUB_PW }}
-        repository: ${{ inputs.image_name }}
+        repository: ${{ inputs.dockerhub_repo }}
         short-description: ${{ inputs.description }}
         readme-filepath: ${{ inputs.directory }}/README.md

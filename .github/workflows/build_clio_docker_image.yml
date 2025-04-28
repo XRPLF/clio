@@ -87,7 +87,10 @@ jobs:
           DOCKERHUB_PW: ${{ secrets.DOCKERHUB_PW }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          image_name: rippleci/clio
+          images: |
+            rippleci/clio
+            ghcr.io/xrplf/clio
+          dockerhub_repo: rippleci/clio
           push_image: ${{ inputs.publish_image }}
           directory: docker/clio
           tags: ${{ inputs.tags }}
