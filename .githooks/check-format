@@ -2,13 +2,13 @@
 
 # Note: This script is intended to be run from the root of the repository.
 #
-# This script checks the format of the code and cmake files.
+# This script checks the format of the C++ code.
 # In many cases it will automatically fix the issues and abort the commit.
 
 no_formatted_directories_staged() {
     staged_directories=$(git diff-index --cached --name-only HEAD | awk -F/ '{print $1}')
     for sd in $staged_directories; do
-        if [[ "$sd" =~ ^(benchmark|cmake|src|tests)$ ]]; then
+        if [[ "$sd" =~ ^(src|tests)$ ]]; then
             return 1
         fi
     done
@@ -23,51 +23,6 @@ echo "+ Checking code format..."
 
 # paths to check and re-format
 sources="src tests"
-formatter="clang-format -i"
-version=$($formatter --version | grep -o '[0-9\.]*')
-
-if [[ "19.0.0" > "$version" ]]; then
-    cat <<EOF
-
-                                    ERROR
------------------------------------------------------------------------------
-            A minimum of version 19 of `which clang-format` is required.
-            Your version is $version.
-            Please fix paths and run again.
------------------------------------------------------------------------------
-
-EOF
-    exit 3
-fi
-
-# check there is no .h headers, only .hpp
-wrong_headers=$(find $sources -name "*.h" | sed 's/^/        - /')
-if [[ ! -z "$wrong_headers" ]]; then
-    cat <<EOF
-
-                                    ERROR
------------------------------------------------------------------------------
-       Found .h headers in the source code. Please rename them to .hpp:
-
-$wrong_headers
------------------------------------------------------------------------------
-
-EOF
-    exit 2
-fi
-
-if ! command -v cmake-format &> /dev/null; then
-    cat <<EOF
-
-                                    ERROR
------------------------------------------------------------------------------
-        'cmake-format' is required to run this script.
-        Please install it and run again.
------------------------------------------------------------------------------
-
-EOF
-    exit 3
-fi
 
 function grep_code {
     grep -l "${1}" ${sources} -r --include \*.hpp --include \*.cpp
@@ -89,31 +44,4 @@ else
     # make local includes to be "..." style
     main_src_dirs=$(find ./src -maxdepth 1 -type d  -exec basename {} \; | paste -sd '|' | sed 's/|/\\|/g')
     grep_code "#include <\($main_src_dirs\)/.*>" | xargs sed -i -E "s|#include <(($main_src_dirs)/.*)>|#include \"\1\"|g"
-fi
-
-cmake_dirs=$(echo cmake $sources)
-cmake_files=$(find $cmake_dirs -type f \( -name "CMakeLists.txt" -o -name "*.cmake" \))
-cmake_files=$(echo $cmake_files ./CMakeLists.txt)
-
-first=$(git diff $sources $cmake_files)
-find $sources -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.ipp' \) -print0 | xargs -0 $formatter
-cmake-format -i $cmake_files
-second=$(git diff $sources $cmake_files)
-changes=$(diff <(echo "$first") <(echo "$second"))
-changes_number=$(echo -n "$changes" | wc -l | sed -e 's/^[[:space:]]*//')
-
-if [ "$changes_number" != "0" ]; then
-    cat <<\EOF
-
-                                   WARNING
------------------------------------------------------------------------------
-  Automatically re-formatted code with 'clang-format' - commit was aborted.
-  Please manually add any updated files and commit again.
------------------------------------------------------------------------------
-
-EOF
-    if [[ "$1" == "--diff" ]]; then
-        echo "$changes"
-    fi
-    exit 1
 fi

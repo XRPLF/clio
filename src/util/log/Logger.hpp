@@ -285,7 +285,7 @@ public:
     init(config::ClioConfigDefinition const& config);
 
     /**
-     * @brief Globally accesible General logger at Severity::TRC severity
+     * @brief Globally accessible General logger at Severity::TRC severity
      *
      * @param loc The source location of the log message
      * @return The pump to use for logging
@@ -297,7 +297,7 @@ public:
     }
 
     /**
-     * @brief Globally accesible General logger at Severity::DBG severity
+     * @brief Globally accessible General logger at Severity::DBG severity
      *
      * @param loc The source location of the log message
      * @return The pump to use for logging
@@ -309,7 +309,7 @@ public:
     }
 
     /**
-     * @brief Globally accesible General logger at Severity::NFO severity
+     * @brief Globally accessible General logger at Severity::NFO severity
      *
      * @param loc The source location of the log message
      * @return The pump to use for logging
@@ -321,7 +321,7 @@ public:
     }
 
     /**
-     * @brief Globally accesible General logger at Severity::WRN severity
+     * @brief Globally accessible General logger at Severity::WRN severity
      *
      * @param loc The source location of the log message
      * @return The pump to use for logging
@@ -333,7 +333,7 @@ public:
     }
 
     /**
-     * @brief Globally accesible General logger at Severity::ERR severity
+     * @brief Globally accessible General logger at Severity::ERR severity
      *
      * @param loc The source location of the log message
      * @return The pump to use for logging
@@ -345,7 +345,7 @@ public:
     }
 
     /**
-     * @brief Globally accesible General logger at Severity::FTL severity
+     * @brief Globally accessible General logger at Severity::FTL severity
      *
      * @param loc The source location of the log message
      * @return The pump to use for logging
@@ -357,7 +357,7 @@ public:
     }
 
     /**
-     * @brief Globally accesible Alert logger
+     * @brief Globally accessible Alert logger
      *
      * @param loc The source location of the log message
      * @return The pump to use for logging

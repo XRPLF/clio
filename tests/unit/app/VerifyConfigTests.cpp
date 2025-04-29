@@ -30,7 +30,7 @@ TEST(VerifyConfigTest, InvalidConfig)
 {
     auto const tmpConfigFile = TmpFile(kJSON_DATA);
 
-    // false because json data(kJSON_DATA) is not compatible with current configDefintion
+    // false because json data(kJSON_DATA) is not compatible with current configDefinition
     EXPECT_FALSE(parseConfig(tmpConfigFile.path));
 }
 

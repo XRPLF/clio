@@ -340,7 +340,7 @@ private:
     /**
      * @brief Get the number of markers to use during the initial ledger download.
      *
-     * This is equivelent to the degree of parallelism during the initial ledger download.
+     * This is equivalent to the degree of parallelism during the initial ledger download.
      *
      * @return The number of markers
      */

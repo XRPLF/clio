@@ -1,22 +1,19 @@
 name: Setup conan
 description: Setup conan profile and artifactory
+
 inputs:
   conan_profile:
     description: Conan profile name
     required: true
-outputs:
-  conan_profile:
-    description: Created conan profile name
-    value: ${{ steps.conan_export_output.outputs.conan_profile }}
+
 runs:
   using: composite
   steps:
-    - name: On mac
+    - name: Create conan profile on macOS
       if: ${{ runner.os == 'macOS' }}
       shell: bash
       env:
-        CONAN_PROFILE: apple_clang_16
-      id: conan_setup_mac
+        CONAN_PROFILE: ${{ inputs.conan_profile }}
       run: |
         echo "Creating $CONAN_PROFILE conan profile"
         conan profile new $CONAN_PROFILE --detect --force
@@ -24,20 +21,6 @@ runs:
         conan profile update settings.compiler.cppstd=20 $CONAN_PROFILE
         conan profile update env.CXXFLAGS=-DBOOST_ASIO_DISABLE_CONCEPTS $CONAN_PROFILE
         conan profile update "conf.tools.build:cxxflags+=[\"-DBOOST_ASIO_DISABLE_CONCEPTS\"]" $CONAN_PROFILE
-        echo "created_conan_profile=$CONAN_PROFILE" >> $GITHUB_OUTPUT
-
-    - name: On linux
-      if: ${{ runner.os == 'Linux' }}
-      shell: bash
-      id: conan_setup_linux
-      run: |
-        echo "created_conan_profile=${{ inputs.conan_profile }}" >> $GITHUB_OUTPUT
-
-    - name: Export output variable
-      shell: bash
-      id: conan_export_output
-      run: |
-        echo "conan_profile=${{ steps.conan_setup_mac.outputs.created_conan_profile || steps.conan_setup_linux.outputs.created_conan_profile }}" >> $GITHUB_OUTPUT
 
     - name: Add conan-non-prod artifactory
       shell: bash

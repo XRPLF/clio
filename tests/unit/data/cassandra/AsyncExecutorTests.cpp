@@ -81,7 +81,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMa
     auto callCount = std::atomic_int{0};
     auto handle = MockHandle{};
 
-    // emulate successfull execution after some attempts
+    // emulate successful execution after some attempts
     ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([&callCount](auto const&, auto&& cb) {
             ++callCount;
@@ -124,7 +124,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOt
     auto work = std::optional<boost::asio::io_context::work>{threadedCtx};
     auto thread = std::thread{[&threadedCtx] { threadedCtx.run(); }};
 
-    // emulate successfull execution after some attempts
+    // emulate successful execution after some attempts
     ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([&callCount](auto const&, auto&& cb) {
             ++callCount;

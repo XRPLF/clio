@@ -33,9 +33,9 @@ If you see the error log message `Failed to fetch ETL state from...`, this means
 - Make sure the rippled node is running at the specified address and port.
 - Make sure the rippled node is accessible from the machine where Clio is running.
 
-If you would like to run Clio without an avaliable rippled node, you can add below setting to Clio's configuration file:
+If you would like to run Clio without an available rippled node, you can add below setting to Clio's configuration file:
 
-```
+```text
 "allow_no_etl": true
 ```
 
@@ -53,7 +53,7 @@ curl -v -d '{"method":"server_info", "params":[{}]}' 127.0.0.1:51233|python3 -m 
 curl -v -d '{"method":"server_info", "params":[{}]}' 127.0.0.1:51233|python3 -m json.tool|grep is_enabled
 ```
 
-If `is_full` is false, it means the cache is still loading. Normally, the Clio can respond quicker if cache finishs loading. If `is_enabled` is false, it means the cache is disabled in the configuration file or there is data corruption in the database.
+If `is_full` is false, it means the cache is still loading. Normally, the Clio can respond quicker if cache finishes loading. If `is_enabled` is false, it means the cache is disabled in the configuration file or there is data corruption in the database.
 
 ## Receive error message `Too many requests`
 

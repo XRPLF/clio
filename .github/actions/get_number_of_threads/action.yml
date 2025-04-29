@@ -1,8 +1,8 @@
 name: Get number of threads
 description: Determines number of threads to use on macOS and Linux
 inputs:
-  substract_threads:
-    description: How many threads to substract from the calculated number
+  subtract_threads:
+    description: How many threads to subtract from the calculated number
     required: true
     default: "0"
 outputs:
@@ -29,6 +29,6 @@ runs:
       shell: bash
       run: |
         num_of_threads=${{ steps.mac_threads.outputs.num || steps.linux_threads.outputs.num }}
-        shift_by=${{ inputs.substract_threads }}
+        shift_by=${{ inputs.subtract_threads }}
         shifted=$((num_of_threads - shift_by))
         echo "num=$(( shifted > 1 ? shifted : 1 ))" >> $GITHUB_OUTPUT

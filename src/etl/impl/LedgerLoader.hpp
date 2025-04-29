@@ -102,11 +102,11 @@ public:
      * @brief Insert extracted transaction into the ledger
      *
      * Insert all of the extracted transactions into the ledger, returning transactions related to accounts,
-     * transactions related to NFTs, and NFTs themselves for later processsing.
+     * transactions related to NFTs, and NFTs themselves for later processing.
      *
      * @param ledger ledger to insert transactions into
      * @param data data extracted from an ETL source
-     * @return The neccessary info to write the account_transactions/account_tx and nft_token_transactions tables
+     * @return The necessary info to write the account_transactions/account_tx and nft_token_transactions tables
      */
     FormattedTransactionsData
     insertTransactions(ripple::LedgerHeader const& ledger, GetLedgerResponseType& data)
@@ -220,7 +220,7 @@ public:
 
                 ripple::uint256 prev = data::kFIRST_KEY;
                 while (auto cur = backend_->cache().getSuccessor(prev, sequence)) {
-                    ASSERT(cur.has_value(), "Succesor for key {} must exist", ripple::strHex(prev));
+                    ASSERT(cur.has_value(), "Successor for key {} must exist", ripple::strHex(prev));
                     if (prev == data::kFIRST_KEY)
                         backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(cur->key));
 

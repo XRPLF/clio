@@ -1,0 +1,78 @@
+name: Make release
+
+on:
+  workflow_call:
+    inputs:
+      overwrite_release:
+        description: "Overwrite the current release and tag"
+        required: true
+        type: boolean
+
+      title:
+        description: "Release title"
+        required: true
+        type: string
+
+      version:
+        description: "Release version"
+        required: true
+        type: string
+
+      notes_header_file:
+        description: "Release notes header file"
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: release_artifacts
+          pattern: clio_server_*
+
+      - name: Prepare files
+        shell: bash
+        working-directory: release_artifacts
+        run: |
+          cp ${{ github.workspace }}/.github/workflows/${{ inputs.notes_header_file }} "${RUNNER_TEMP}/release_notes.md"
+          echo '' >> "${RUNNER_TEMP}/release_notes.md"
+          echo '```' >> "${RUNNER_TEMP}/release_notes.md"
+
+          for d in $(ls); do
+            archive_name=$(ls $d)
+            mv ${d}/${archive_name} ./
+            rm -r $d
+            sha256sum ./$archive_name > ./${archive_name}.sha256sum
+            cat ./$archive_name.sha256sum >> "${RUNNER_TEMP}/release_notes.md"
+          done
+
+          echo '```' >> "${RUNNER_TEMP}/release_notes.md"
+
+      - name: Remove current release and tag
+        if: ${{ github.event_name != 'pull_request' && inputs.overwrite_release }}
+        shell: bash
+        run: |
+          gh release delete ${{ inputs.version }} --yes || true
+          git push origin :${{ inputs.version }} || true
+
+      - name: Publish release
+        if: ${{ github.event_name != 'pull_request' }}
+        shell: bash
+        run: |
+          gh release create ${{ inputs.version }} \
+            ${{ inputs.overwrite_release && '--prerelease' || '' }} \
+            --title ${{ inputs.title }} \
+            --target $GITHUB_SHA \
+            --notes-file "${RUNNER_TEMP}/release_notes.md" \
+            ./release_artifacts/clio_server*

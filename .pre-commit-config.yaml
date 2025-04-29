@@ -30,3 +30,44 @@ repos:
     hooks:
       - id: prettier
         exclude: ^docs/doxygen-awesome-theme/
+
+  - repo: local
+    hooks:
+      - id: gofmt
+        name: Go Format
+        entry: pre-commit-hooks/run-go-fmt.sh
+        types: [go]
+        language: golang
+        description: "Runs `gofmt`, requires golang"
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.44.0
+    hooks:
+      - id: markdownlint-fix
+        exclude: LICENSE.md
+
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.31.2
+    hooks:
+      - id: typos
+
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v19.1.7
+    hooks:
+      - id: clang-format
+        args: [--style=file]
+        types: [c++]
+
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+        additional_dependencies: [PyYAML]
+
+  - repo: local
+    hooks:
+      - id: check-no-h-files
+        name: No .h files
+        entry: There should be no .h files in this repository
+        language: fail
+        files: \.h$

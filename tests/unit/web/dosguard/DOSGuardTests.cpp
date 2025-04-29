@@ -88,7 +88,7 @@ TEST_F(DOSGuardTest, ConnectionCount)
 
 TEST_F(DOSGuardTest, FetchCount)
 {
-    EXPECT_TRUE(guard.add(kIP, 50));  // half of allowence
+    EXPECT_TRUE(guard.add(kIP, 50));  // half of allowance
     EXPECT_TRUE(guard.add(kIP, 50));  // now fully charged
     EXPECT_FALSE(guard.add(kIP, 1));  // can't add even 1 anymore
     EXPECT_FALSE(guard.isOk(kIP));
@@ -99,7 +99,7 @@ TEST_F(DOSGuardTest, FetchCount)
 
 TEST_F(DOSGuardTest, ClearFetchCountOnTimer)
 {
-    EXPECT_TRUE(guard.add(kIP, 50));  // half of allowence
+    EXPECT_TRUE(guard.add(kIP, 50));  // half of allowance
     EXPECT_TRUE(guard.add(kIP, 50));  // now fully charged
     EXPECT_FALSE(guard.add(kIP, 1));  // can't add even 1 anymore
     EXPECT_FALSE(guard.isOk(kIP));

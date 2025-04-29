@@ -143,7 +143,7 @@ public:
 };
 
 /**
- * @brief Parititions the uint256 keyspace into numMarkers partitions, each of equal size.
+ * @brief Partitions the uint256 keyspace into numMarkers partitions, each of equal size.
  *
  * @param numMarkers Total markers to partition for
  * @return The markers

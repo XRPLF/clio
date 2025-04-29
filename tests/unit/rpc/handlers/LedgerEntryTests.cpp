@@ -174,7 +174,7 @@ generateTestValuesForParametersTest()
         },
 
         ParamTestCaseBundle{
-            .testName = "InvalidDepositPreauthEmtpyJson",
+            .testName = "InvalidDepositPreauthEmptyJson",
             .testJson = R"({
                 "deposit_preauth": {}
             })",
@@ -676,7 +676,7 @@ generateTestValuesForParametersTest()
         },
 
         ParamTestCaseBundle{
-            .testName = "InvalidRippleStateEmtpyJson",
+            .testName = "InvalidRippleStateEmptyJson",
             .testJson = R"({
                 "ripple_state": {}
             })",
@@ -795,7 +795,7 @@ generateTestValuesForParametersTest()
         },
 
         ParamTestCaseBundle{
-            .testName = "InvalidDirectoryEmtpyJson",
+            .testName = "InvalidDirectoryEmptyJson",
             .testJson = R"({
                 "directory": {}
             })",

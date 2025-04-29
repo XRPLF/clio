@@ -34,7 +34,7 @@ namespace migration::impl {
  * @brief The migration inspector implementation for Cassandra. It will report the migration status for Cassandra
  * database.
  *
- * @tparam SupportedMigrators The migrators resgister that contains all the migrators
+ * @tparam SupportedMigrators The migrators register that contains all the migrators
  */
 template <typename SupportedMigrators>
 class MigrationInspectorBase : virtual public MigrationInspectorInterface {
@@ -101,7 +101,7 @@ public:
     }
 
     /**
-     * @brief Return if there is uncomplete migrator blocking the server
+     * @brief Return if there is incomplete migrator blocking the server
      *
      * @return True if server is blocked, false otherwise
      */

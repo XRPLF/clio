@@ -1,4 +1,4 @@
-# <img src='./docs/img/xrpl-logo.svg' width='40' valign="top" /> Clio
+# <img src='./docs/img/xrpl-logo.svg' width='40' valign="top" /> Clio <!-- markdownlint-disable-line MD033 MD045 -->
 
 [![Build status](https://github.com/XRPLF/clio/actions/workflows/build.yml/badge.svg?branch=develop)](https://github.com/XRPLF/clio/actions/workflows/build.yml?query=branch%3Adevelop)
 [![Nightly release status](https://github.com/XRPLF/clio/actions/workflows/nightly.yml/badge.svg?branch=develop)](https://github.com/XRPLF/clio/actions/workflows/nightly.yml?query=branch%3Adevelop)

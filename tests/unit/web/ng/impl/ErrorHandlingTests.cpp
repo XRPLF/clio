@@ -124,10 +124,10 @@ INSTANTIATE_TEST_CASE_P(
             boost::beast::http::status::bad_request
         },
         NgErrorHandlingMakeErrorTestBundle{
-            "HttpRequest_ParamsUnparseable",
+            "HttpRequest_ParamsUnparsable",
             true,
-            rpc::Status{rpc::ClioError::RpcParamsUnparseable},
-            "params unparseable",
+            rpc::Status{rpc::ClioError::RpcParamsUnparsable},
+            "params unparsable",
             boost::beast::http::status::bad_request
         },
         NgErrorHandlingMakeErrorTestBundle{

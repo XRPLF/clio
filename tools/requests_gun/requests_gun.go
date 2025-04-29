@@ -10,25 +10,25 @@ import (
 
 func main() {
 	args, err := parse_args.Parse()
-    if err != nil {
-        fmt.Fprintln(os.Stderr, "Error: ", err)
-        parse_args.PrintUsage()
-        os.Exit(1)
-    }
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error: ", err)
+		parse_args.PrintUsage()
+		os.Exit(1)
+	}
 
-    if args.Help {
-        parse_args.PrintUsage()
-        os.Exit(0)
-    }
+	if args.Help {
+		parse_args.PrintUsage()
+		os.Exit(0)
+	}
 
 	fmt.Print("Loading ammo... ")
-    f, err := os.Open(args.Ammo)
-    if err != nil {
-        fmt.Println("Error opening file '", args.Ammo, "': ", err)
-        os.Exit(1)
-    }
+	f, err := os.Open(args.Ammo)
+	if err != nil {
+		fmt.Println("Error opening file '", args.Ammo, "': ", err)
+		os.Exit(1)
+	}
 	ammoProvider := ammo_provider.New(f)
-    f.Close()
+	f.Close()
 	fmt.Println("Done")
 
 	fmt.Println("Firing requests...")

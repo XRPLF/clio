@@ -184,10 +184,10 @@ INSTANTIATE_TEST_CASE_P(
             boost::beast::http::status::bad_request
         },
         ErrorHandlingSendErrorTestBundle{
-            "NotUpgradedConnection_ParamsUnparseable",
+            "NotUpgradedConnection_ParamsUnparsable",
             false,
-            rpc::Status{rpc::ClioError::RpcParamsUnparseable},
-            "params unparseable",
+            rpc::Status{rpc::ClioError::RpcParamsUnparsable},
+            "params unparsable",
             boost::beast::http::status::bad_request
         },
         ErrorHandlingSendErrorTestBundle{

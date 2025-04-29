@@ -877,7 +877,7 @@ TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
     });
 }
 
-TEST_F(RPCDepositAuthorizedTest, DifferenSubjectAccountForCredentialReturnsFalse)
+TEST_F(RPCDepositAuthorizedTest, DifferentSubjectAccountForCredentialReturnsFalse)
 {
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
 

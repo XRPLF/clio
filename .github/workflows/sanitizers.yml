@@ -23,7 +23,7 @@ jobs:
     uses: ./.github/workflows/build_impl.yml
     with:
       runs_on: ubuntu-latest # todo: change to heavy
-      container: '{ "image": "rippleci/clio_ci:latest" }'
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
       disable_cache: true
       conan_profile: ${{ matrix.compiler }}.${{ matrix.sanitizer }}
       build_type: Release
@@ -50,7 +50,7 @@ jobs:
           #   compiler: gcc
     runs-on: ubuntu-latest # todo: change to heavy
     container:
-      image: rippleci/clio_ci:latest
+      image: ghcr.io/xrplf/clio-ci:latest
     permissions:
       contents: write
       issues: write

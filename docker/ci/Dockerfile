@@ -20,9 +20,8 @@ RUN apt-get -qq update \
 # Install packages
 RUN apt update -qq \
     && apt install -y --no-install-recommends --no-install-suggests python3 python3-pip git git-lfs make ninja-build flex bison jq graphviz \
-    clang-format-${LLVM_TOOLS_VERSION} clang-tidy-${LLVM_TOOLS_VERSION} clang-tools-${LLVM_TOOLS_VERSION} \
-    && update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-${LLVM_TOOLS_VERSION} 100 \
-    && pip3 install -q --upgrade --no-cache-dir pip && pip3 install -q --no-cache-dir conan==1.62 gcovr cmake==3.31.6 cmake-format \
+    clang-tidy-${LLVM_TOOLS_VERSION} clang-tools-${LLVM_TOOLS_VERSION} \
+    && pip3 install -q --upgrade --no-cache-dir pip && pip3 install -q --no-cache-dir conan==1.62 gcovr cmake==3.31.6 \
     && apt-get clean && apt remove -y software-properties-common
 
 # Install gcc-12 and make ldconfig aware of the new libstdc++ location (for gcc)
@@ -72,7 +71,7 @@ WORKDIR /root
 # Using root by default is not very secure but github checkout action doesn't work with any other user
 # https://github.com/actions/checkout/issues/956
 # And Github Actions doc recommends using root
-# https://docs.github.com/en/actions/creating-actions/dockerfile-support-for-github-actions#user
+# https://docs.github.com/en/actions/sharing-automations/creating-actions/dockerfile-support-for-github-actions#user
 
 # Setup conan
 RUN conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod

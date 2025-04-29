@@ -97,8 +97,8 @@ getErrorInfo(ClioError code)
          .message = "Method is not specified or is not a string."},
         {.code = ClioError::RpcCommandNotString, .error = "commandNotString", .message = "Method is not a string."},
         {.code = ClioError::RpcCommandIsEmpty, .error = "emptyCommand", .message = "Method is an empty string."},
-        {.code = ClioError::RpcParamsUnparseable,
-         .error = "paramsUnparseable",
+        {.code = ClioError::RpcParamsUnparsable,
+         .error = "paramsUnparsable",
          .message = "Params must be an array holding exactly one object."},
         // etl related errors
         {.code = ClioError::EtlConnectionError, .error = "connectionError", .message = "Couldn't connect to rippled."},

@@ -184,7 +184,7 @@ public:
     /**
      * @brief Check if value is optional
      *
-     * @return if value is optiona, false otherwise
+     * @return if value is optional, false otherwise
      */
     [[nodiscard]] bool constexpr hasValue() const
     {

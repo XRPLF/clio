@@ -266,7 +266,7 @@ private:
                     "explicitly defined logging level."},
         KV{.key = "log_format",
            .value = "The format string for log messages. The format is described here: "
-                    "https://www.boost.org/doc/libs/1_83_0/libs/log/doc/html/log/tutorial/formatters.html."},
+                    "<https://www.boost.org/doc/libs/1_83_0/libs/log/doc/html/log/tutorial/formatters.html>."},
         KV{.key = "log_to_console", .value = "Enables or disables logging to the console."},
         KV{.key = "log_directory", .value = "The directory path for the log files."},
         KV{.key = "log_rotation_size",

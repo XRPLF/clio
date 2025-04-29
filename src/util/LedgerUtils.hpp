@@ -80,7 +80,7 @@ public:
 }  // namespace impl
 
 /**
- * @brief A helper class that provides lists of different ledger type catagory.
+ * @brief A helper class that provides lists of different ledger type category.
  *
  */
 class LedgerTypes {

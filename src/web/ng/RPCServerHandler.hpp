@@ -204,7 +204,7 @@ private:
 
             auto const context = [&] {
                 if (connectionMetadata.wasUpgraded()) {
-                    ASSERT(subscriptionContext != nullptr, "Subscription context must exist for a WS connecton");
+                    ASSERT(subscriptionContext != nullptr, "Subscription context must exist for a WS connection");
                     return rpc::makeWsContext(
                         yield,
                         request,

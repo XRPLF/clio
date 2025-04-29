@@ -50,7 +50,7 @@ public:
     /**
      * @brief Construct a new Single Feed Base object
      * @param executionCtx The actual publish will be called in the strand of this.
-     * @param name The promethues counter name of the feed.
+     * @param name The prometheus counter name of the feed.
      */
     SingleFeedBase(util::async::AnyExecutionContext& executionCtx, std::string const& name);
 

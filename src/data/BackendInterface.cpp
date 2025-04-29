@@ -61,7 +61,7 @@ BackendInterface::finishWrites(std::uint32_t const ledgerSequence)
     LOG(gLog.debug()) << "Want finish writes for " << ledgerSequence;
     auto commitRes = doFinishWrites();
     if (commitRes) {
-        LOG(gLog.debug()) << "Successfully commited. Updating range now to " << ledgerSequence;
+        LOG(gLog.debug()) << "Successfully committed. Updating range now to " << ledgerSequence;
         updateRange(ledgerSequence);
     }
     return commitRes;
@@ -246,7 +246,7 @@ BackendInterface::fetchBookOffers(
     auto end = std::chrono::system_clock::now();
     LOG(gLog.debug()) << "Fetching " << std::to_string(keys.size()) << " offers took "
                       << std::to_string(getMillis(mid - begin)) << " milliseconds. Fetching next dir took "
-                      << std::to_string(succMillis) << " milliseonds. Fetched next dir " << std::to_string(numSucc)
+                      << std::to_string(succMillis) << " milliseconds. Fetched next dir " << std::to_string(numSucc)
                       << " times"
                       << " Fetching next page of dir took " << std::to_string(pageMillis) << " milliseconds"
                       << ". num pages = " << std::to_string(numPages) << ". Fetching all objects took "

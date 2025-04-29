@@ -26,7 +26,7 @@
 namespace etlng {
 
 /**
- * @brief The interface of a scheduler for the extraction proccess
+ * @brief The interface of a scheduler for the extraction process
  */
 struct LedgerPublisherInterface {
     virtual ~LedgerPublisherInterface() = default;

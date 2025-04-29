@@ -100,7 +100,7 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
 }
 
 // Main loop of ETL.
-// The software begins monitoring the ledgers that are validated by the nework.
+// The software begins monitoring the ledgers that are validated by the network.
 // The member networkValidatedLedgers_ keeps track of the sequences of ledgers validated by the network.
 // Whenever a ledger is validated by the network, the software looks for that ledger in the database. Once the ledger is
 // found in the database, the software publishes that ledger to the ledgers stream. If a network validated ledger is not

@@ -633,7 +633,7 @@ public:
             ));
         }();
 
-        PreparedStatement selectAccountFromBegining = [this]() {
+        PreparedStatement selectAccountFromBeginning = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
                 SELECT account

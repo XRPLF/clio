@@ -1,6 +1,6 @@
 services:
   clio_develop:
-    image: rippleci/clio_ci:latest
+    image: ghcr.io/xrplf/clio-ci:latest
     volumes:
       - clio_develop_conan_data:/root/.conan/data
       - clio_develop_ccache:/root/.ccache

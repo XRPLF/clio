@@ -277,7 +277,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistNFT)
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    // fetch nft return emtpy
+    // fetch nft return empty
     ON_CALL(*backend_, fetchNFT).WillByDefault(Return(std::optional<NFT>{}));
     EXPECT_CALL(*backend_, fetchNFT(ripple::uint256{kNFT_ID}, 30, _)).Times(1);
     auto const input = json::parse(fmt::format(

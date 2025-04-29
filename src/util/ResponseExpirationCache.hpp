@@ -35,7 +35,7 @@
 namespace util {
 
 /**
- * @brief Cache of requests' responses with TTL support and configurable cachable commands
+ * @brief Cache of requests' responses with TTL support and configurable cacheable commands
  *
  * This class implements a time-based expiration cache for RPC responses. It allows
  * caching responses for specified commands and automatically invalidates them after

@@ -50,7 +50,7 @@ class ClusterCommunicationService : public ClusterCommunicationServiceInterface 
     util::prometheus::Bool isHealthy_ = PrometheusService::boolMetric(
         "cluster_communication_is_healthy",
         {},
-        "Whether cluster communicaton service is operating healthy (1 - healthy, 0 - we have a problem)"
+        "Whether cluster communication service is operating healthy (1 - healthy, 0 - we have a problem)"
     );
 
     // TODO: Use util::async::CoroExecutionContext after https://github.com/XRPLF/clio/issues/1973 is implemented
