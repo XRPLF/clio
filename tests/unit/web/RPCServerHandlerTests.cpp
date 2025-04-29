@@ -31,6 +31,7 @@
 #include "util/newconfig/Types.hpp"
 #include "web/RPCServerHandler.hpp"
 #include "web/SubscriptionContextInterface.hpp"
+#include "web/dosguard/DOSGuardMock.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/beast/http/status.hpp>
@@ -94,9 +95,10 @@ struct WebRPCServerHandlerTest : util::prometheus::WithPrometheus, MockBackendTe
     };
     std::shared_ptr<MockAsyncRPCEngine> rpcEngine = std::make_shared<MockAsyncRPCEngine>();
     std::shared_ptr<MockETLService> etl = std::make_shared<MockETLService>();
+    DOSGuardStrictMock dosguard;
     std::shared_ptr<util::TagDecoratorFactory> tagFactory = std::make_shared<util::TagDecoratorFactory>(cfg);
     std::shared_ptr<RPCServerHandler<MockAsyncRPCEngine>> handler =
-        std::make_shared<RPCServerHandler<MockAsyncRPCEngine>>(cfg, backend_, rpcEngine, etl);
+        std::make_shared<RPCServerHandler<MockAsyncRPCEngine>>(cfg, backend_, rpcEngine, etl, dosguard);
     std::shared_ptr<MockWsBase> session = std::make_shared<MockWsBase>(*tagFactory);
 };
 
@@ -756,7 +758,7 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
     session->upgraded = true;
 
     auto localRpcEngine = std::make_shared<MockRPCEngine>();
-    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(cfg, backend_, localRpcEngine, etl);
+    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(cfg, backend_, localRpcEngine, etl, dosguard);
     static constexpr auto kREQUEST = R"({
                                         "command": "server_info",
                                         "id": 99
@@ -783,7 +785,7 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
 TEST_F(WebRPCServerHandlerTest, HTTPTooBusy)
 {
     auto localRpcEngine = std::make_shared<MockRPCEngine>();
-    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(cfg, backend_, localRpcEngine, etl);
+    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(cfg, backend_, localRpcEngine, etl, dosguard);
     static constexpr auto kREQUEST = R"({
                                         "method": "server_info",
                                         "params": [{}]

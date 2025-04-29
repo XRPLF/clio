@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,25 +19,25 @@
 
 #pragma once
 
-#include "web/dosguard/DOSGuardInterface.hpp"
-
-#include <boost/json/object.hpp>
-#include <gmock/gmock.h>
-
-#include <cstdint>
+#include <cstddef>
+#include <functional>
 #include <string>
 #include <string_view>
 
-struct DOSGuardMockImpl : web::dosguard::DOSGuardInterface {
-    MOCK_METHOD(bool, isWhiteListed, (std::string_view const ip), (const, noexcept, override));
-    MOCK_METHOD(bool, isOk, (std::string const& ip), (const, noexcept, override));
-    MOCK_METHOD(void, increment, (std::string const& ip), (noexcept, override));
-    MOCK_METHOD(void, decrement, (std::string const& ip), (noexcept, override));
-    MOCK_METHOD(bool, add, (std::string const& ip, uint32_t size), (noexcept, override));
-    MOCK_METHOD(bool, request, (std::string const& ip), (noexcept, override));
-    MOCK_METHOD(bool, requestCmd, (std::string const& ip, boost::json::object const& request), (override));
-    MOCK_METHOD(void, clear, (), (noexcept, override));
+namespace util {
+
+struct StringHash {
+    using hash_type = std::hash<std::string_view>;
+    using is_transparent = void;
+
+    std::size_t
+    operator()(char const* str) const;
+
+    std::size_t
+    operator()(std::string_view str) const;
+
+    std::size_t
+    operator()(std::string const& str) const;
 };
 
-using DOSGuardMock = testing::NiceMock<DOSGuardMockImpl>;
-using DOSGuardStrictMock = testing::StrictMock<DOSGuardMockImpl>;
+}  // namespace util

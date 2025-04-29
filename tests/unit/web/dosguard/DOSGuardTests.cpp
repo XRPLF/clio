@@ -26,6 +26,7 @@
 #include "web/dosguard/WeightsInterface.hpp"
 #include "web/dosguard/WhitelistHandlerInterface.hpp"
 
+#include <boost/json/object.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -57,7 +58,7 @@ struct DOSGuardTest : NoLoggerFixture {
         MOCK_METHOD(bool, isWhiteListed, (std::string_view ip), (const));
     };
     struct MockWeights : WeightsInterface {
-        MOCK_METHOD(size_t, commandWeight, (std::string const& cmd), (const, override));
+        MOCK_METHOD(size_t, requestWeight, (boost::json::object const& cmd), (const, override));
     };
 
     ClioConfigDefinition cfg{

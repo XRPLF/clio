@@ -24,6 +24,7 @@ target_sources(
           ResponseExpirationCache.cpp
           SignalsHandler.cpp
           StopHelper.cpp
+          StringHash.cpp
           Taggable.cpp
           TerminationHandler.cpp
           TimeUtils.cpp

@@ -17,20 +17,30 @@
 */
 //==============================================================================
 
-#pragma once
-
-#include <boost/json/object.hpp>
+#include "util/StringHash.hpp"
 
 #include <cstddef>
+#include <string>
+#include <string_view>
 
-namespace web::dosguard {
+namespace util {
 
-class WeightsInterface {
-public:
-    virtual ~WeightsInterface() = default;
+size_t
+StringHash::operator()(char const* str) const
+{
+    return hash_type{}(str);
+}
 
-    virtual size_t
-    requestWeight(boost::json::object const& request) const = 0;
-};
+size_t
+StringHash::operator()(std::string_view str) const
+{
+    return hash_type{}(str);
+}
 
-}  // namespace web::dosguard
+size_t
+StringHash::operator()(std::string const& str) const
+{
+    return hash_type{}(str);
+}
+
+}  // namespace util

@@ -27,6 +27,8 @@
 #include "web/dosguard/WeightsInterface.hpp"
 #include "web/dosguard/WhitelistHandlerInterface.hpp"
 
+#include <boost/json/object.hpp>
+
 #include <cstdint>
 #include <functional>
 #include <mutex>
@@ -135,12 +137,12 @@ DOSGuard::request(std::string const& ip) noexcept
 }
 
 [[maybe_unused]] bool
-DOSGuard::requestCmd(std::string const& ip, std::string const& cmd)
+DOSGuard::requestCmd(std::string const& ip, boost::json::object const& request)
 {
     if (whitelistHandler_.get().isWhiteListed(ip))
         return true;
 
-    auto const weight = weights_.get().commandWeight(cmd);
+    auto const weight = weights_.get().requestWeight(request);
 
     {
         auto lock = mtx_.lock<std::scoped_lock>();

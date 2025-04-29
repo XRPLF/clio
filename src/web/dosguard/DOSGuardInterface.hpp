@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <boost/json/object.hpp>
+
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -107,7 +109,7 @@ public:
     request(std::string const& ip) noexcept = 0;
 
     [[maybe_unused]] virtual bool
-    requestCmd(std::string const& ip, std::string const& cmd) = 0;
+    requestCmd(std::string const& ip, boost::json::object const& request) = 0;
 };
 
 }  // namespace web::dosguard

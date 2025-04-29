@@ -28,6 +28,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/iterator/transform_iterator.hpp>
+#include <boost/json/object.hpp>
 #include <boost/system/error_code.hpp>
 
 #include <cstdint>
@@ -147,7 +148,7 @@ public:
     request(std::string const& ip) noexcept override;
 
     [[maybe_unused]] bool
-    requestCmd(std::string const& ip, std::string const& cmd) override;
+    requestCmd(std::string const& ip, boost::json::object const& cmd) override;
 
     /**
      * @brief Instantly clears all fetch counters added by @see add(std::string const&, uint32_t).

@@ -31,6 +31,7 @@
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
+#include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/ErrorHandling.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
@@ -66,7 +67,7 @@ class RPCServerHandler {
     std::shared_ptr<etlng::ETLServiceInterface const> const etl_;
     util::TagDecoratorFactory const tagFactory_;
     rpc::impl::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
-    // std::reference_wrapper<web::dosguard::DOSGuardInterface> dosguard_;
+    std::reference_wrapper<web::dosguard::DOSGuardInterface> dosguard_;
 
     util::Logger log_{"RPC"};
     util::Logger perfLog_{"Performance"};
@@ -84,15 +85,15 @@ public:
         util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<RPCEngineType> const& rpcEngine,
-        std::shared_ptr<etlng::ETLServiceInterface const> const& etl  //,
-        // web::dosguard::DOSGuardInterface& dosguard
+        std::shared_ptr<etlng::ETLServiceInterface const> const& etl,
+        web::dosguard::DOSGuardInterface& dosguard
     )
         : backend_(backend)
         , rpcEngine_(rpcEngine)
         , etl_(etl)
         , tagFactory_(config)
         , apiVersionParser_(config.getObject("api_version"))
-    // , dosguard_(dosguard)
+        , dosguard_(dosguard)
     {
     }
 

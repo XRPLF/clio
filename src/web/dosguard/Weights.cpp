@@ -19,18 +19,24 @@
 
 #include "web/dosguard/Weights.hpp"
 
+#include "rpc/JS.hpp"
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 
+#include <boost/json/object.hpp>
+#include <xrpl/protocol/jss.h>
+
 #include <cstddef>
+#include <iterator>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 
 namespace web::dosguard {
 
 Weights::Weights(size_t defaultWeight, std::unordered_map<std::string, size_t> weights)
-    : defaultWeight_(defaultWeight), weights_(std::move(weights))
+    : defaultWeight_(defaultWeight), weights_(std::move_iterator(weights.begin()), std::move_iterator(weights.end()))
 {
 }
 
@@ -47,8 +53,15 @@ Weights::make(util::config::ClioConfigDefinition const& config)
 }
 
 size_t
-Weights::commandWeight(std::string const& cmd) const
+Weights::requestWeight(boost::json::object const& request) const
 {
+    if ((not request.contains(JS(method)) or not request.at(JS(method)).is_string()) and
+        (not request.contains(JS(params)) or not request.at(JS(params)).is_string())) {
+        return defaultWeight_;
+    }
+    std::string_view cmd =
+        request.contains(JS(method)) ? request.at(JS(method)).as_string() : request.at(JS(params)).as_string();
+
     auto it = weights_.find(cmd);
     return it != weights_.end() ? it->second : defaultWeight_;
 }

@@ -29,6 +29,7 @@
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"
 #include "web/SubscriptionContextInterface.hpp"
+#include "web/dosguard/DOSGuardMock.hpp"
 #include "web/ng/MockConnection.hpp"
 #include "web/ng/RPCServerHandler.hpp"
 #include "web/ng/Request.hpp"
@@ -72,7 +73,8 @@ protected:
     std::shared_ptr<testing::StrictMock<MockRPCEngine>> rpcEngine_ =
         std::make_shared<testing::StrictMock<MockRPCEngine>>();
     std::shared_ptr<StrictMock<MockETLService>> etl_ = std::make_shared<StrictMock<MockETLService>>();
-    RPCServerHandler<MockRPCEngine> rpcServerHandler_{config, backend_, rpcEngine_, etl_};
+    DOSGuardStrictMock dosguard_;
+    RPCServerHandler<MockRPCEngine> rpcServerHandler_{config, backend_, rpcEngine_, etl_, dosguard_};
 
     util::TagDecoratorFactory tagFactory_{config};
     StrictMockConnectionMetadata connectionMetadata_{"some ip", tagFactory_};

@@ -160,7 +160,7 @@ ClioApplication::run(bool const useNgWebServer)
         RPCEngineType::makeRPCEngine(config_, backend, balancer, dosGuard, workQueue, counters, handlerProvider);
 
     if (useNgWebServer or config_.get<bool>("server.__ng_web_server")) {
-        web::ng::RPCServerHandler<RPCEngineType> handler{config_, backend, rpcEngine, etl};
+        web::ng::RPCServerHandler<RPCEngineType> handler{config_, backend, rpcEngine, etl, dosGuard};
 
         auto expectedAdminVerifier = web::makeAdminVerificationStrategy(config_);
         if (not expectedAdminVerifier.has_value()) {
@@ -178,7 +178,7 @@ ClioApplication::run(bool const useNgWebServer)
 
         httpServer->onGet("/metrics", MetricsHandler{adminVerifier});
         httpServer->onGet("/health", HealthCheckHandler{});
-        auto requestHandler = RequestHandler{adminVerifier, handler, dosGuard};
+        auto requestHandler = RequestHandler{adminVerifier, handler};
         httpServer->onPost("/", requestHandler);
         httpServer->onWs(std::move(requestHandler));
 
@@ -201,7 +201,7 @@ ClioApplication::run(bool const useNgWebServer)
     }
 
     // Init the web server
-    auto handler = std::make_shared<web::RPCServerHandler<RPCEngineType>>(config_, backend, rpcEngine, etl);
+    auto handler = std::make_shared<web::RPCServerHandler<RPCEngineType>>(config_, backend, rpcEngine, etl, dosGuard);
 
     auto const httpServer = web::makeHttpServer(config_, ioc, dosGuard, handler);
 

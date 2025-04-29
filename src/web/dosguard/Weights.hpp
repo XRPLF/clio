@@ -19,10 +19,14 @@
 
 #pragma once
 
+#include "util/StringHash.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "web/dosguard/WeightsInterface.hpp"
 
+#include <boost/json/object.hpp>
+
 #include <cstddef>
+#include <functional>
 #include <string>
 #include <unordered_map>
 
@@ -37,7 +41,7 @@ namespace web::dosguard {
  */
 class Weights : public WeightsInterface {
     size_t defaultWeight_;
-    std::unordered_map<std::string, size_t> weights_;
+    std::unordered_map<std::string, size_t, util::StringHash, std::equal_to<>> weights_;
 
 public:
     /**
@@ -60,11 +64,11 @@ public:
     /**
      * @brief Get the weight assigned to a specific command
      *
-     * @param cmd The command name
+     * @param request Json request
      * @return size_t The weight value (specific weight if defined, otherwise default weight)
      */
     size_t
-    commandWeight(std::string const& cmd) const override;
+    requestWeight(boost::json::object const& request) const override;
 };
 
 }  // namespace web::dosguard
