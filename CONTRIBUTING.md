@@ -11,26 +11,27 @@ To contribute, please:
 3. Write and test your code.
 4. Ensure that your code compiles with the provided build engine and update the provided build engine as part of your PR where needed and where appropriate.
 5. Where applicable, write test cases for your code and include those in the relevant subfolder under `tests`.
-6. Ensure your code passes automated checks (e.g. clang-format)
+6. Ensure your code passes [automated checks](#pre-commit-hooks)
 7. Squash your commits (i.e. rebase) into as few commits as is reasonable to describe your changes at a high level (typically a single commit for a small change). See below for more details.
 8. Open a PR to the main repository onto the _develop_ branch, and follow the provided template.
 
 > **Note:** Please read the [Style guide](#style-guide).
 
-### Install git hooks
+### `pre-commit` hooks
 
-Please run the following command in order to use git hooks that are helpful for `clio` development.
+To ensure code quality and style, we use [`pre-commit`](https://pre-commit.com/).
+
+Run the following command to enable `pre-commit` hooks that help with Clio development:
 
 ```bash
-git config --local core.hooksPath .githooks
+pip3 install pre-commit
+pre-commit install
 ```
 
-### Git hooks dependencies
+`pre-commit` takes care of running each tool in [`.pre-commit-config.yaml`](https://github.com/XRPLF/clio/blob/develop/.pre-commit-config.yaml) in a separate environment.
 
-The pre-commit hook requires `clang-format >= 19.0.0` and `cmake-format` to be installed on your machine.
-`clang-format` can be installed using `brew` on macOS and default package manager on Linux.
-`cmake-format` can be installed using `pip`.
-The hook will also attempt to automatically use `doxygen` to verify that everything public in the codebase is covered by doc comments. If `doxygen` is not installed, the hook will raise a warning suggesting to install `doxygen` for future commits.
+`pre-commit` also attempts to automatically use Doxygen to verify that everything public in the codebase has doc comments.
+If Doxygen is not installed, the hook issues a warning and recommends installing Doxygen for future commits.
 
 ### Git commands
 
@@ -120,9 +121,9 @@ This is a non-exhaustive list of recommended style guidelines. These are not alw
 
 ### Formatting
 
-Code must conform to `clang-format` version 19, unless the result would be unreasonably difficult to read or maintain.
-In most cases the pre-commit hook will take care of formatting and will fix any issues automatically.
-To manually format your code, use `clang-format -i <your changed files>` for C++ files and `cmake-format -i <your changed files>` for CMake files.
+Code must conform to `clang-format`, unless the result is unreasonably difficult to read or maintain.
+In most cases the `pre-commit` hook takes care of formatting and fixes any issues automatically.
+To manually format your code, run `pre-commit run clang-format --files <your changed files>` for C++ files, and `pre-commit run cmake-format --files <your changed files>` for CMake files.
 
 ### Documentation
 

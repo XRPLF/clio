@@ -2,27 +2,12 @@
 
 # Note: This script is intended to be run from the root of the repository.
 #
-# This script checks the format of the C++ code.
-# In many cases it will automatically fix the issues and abort the commit.
+# This script checks will fix local includes in the C++ code.
 
-no_formatted_directories_staged() {
-    staged_directories=$(git diff-index --cached --name-only HEAD | awk -F/ '{print $1}')
-    for sd in $staged_directories; do
-        if [[ "$sd" =~ ^(src|tests)$ ]]; then
-            return 1
-        fi
-    done
-    return 0
-}
-
-if no_formatted_directories_staged ; then
-    exit 0
-fi
-
-echo "+ Checking code format..."
-
-# paths to check and re-format
+# paths to fix include statements
 sources="src tests"
+
+echo "+ Fixing local includes..."
 
 function grep_code {
     grep -l "${1}" ${sources} -r --include \*.hpp --include \*.cpp

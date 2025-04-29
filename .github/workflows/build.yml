@@ -7,41 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  check_format:
-    name: Check format
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/xrplf/clio-ci:latest
-    steps:
-      - name: Fix git permissions on Linux
-        shell: bash
-        run: git config --global --add safe.directory $PWD
-
-      - uses: actions/checkout@v4
-      - name: Run formatters
-        id: run_formatters
-        run: |
-          ./.githooks/check-format --diff
-        shell: bash
-
-  check_docs:
-    name: Check documentation
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/xrplf/clio-ci:latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run linter
-        id: run_linter
-        run: |
-          ./.githooks/check-docs
-        shell: bash
-
   build:
     name: Build
-    needs:
-      - check_format
-      - check_docs
     strategy:
       fail-fast: false
       matrix:

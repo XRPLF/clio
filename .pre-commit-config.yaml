@@ -31,15 +31,6 @@ repos:
       - id: prettier
         exclude: ^docs/doxygen-awesome-theme/
 
-  - repo: local
-    hooks:
-      - id: gofmt
-        name: Go Format
-        entry: pre-commit-hooks/run-go-fmt.sh
-        types: [go]
-        language: golang
-        description: "Runs `gofmt`, requires golang"
-
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.44.0
     hooks:
@@ -71,3 +62,57 @@ repos:
         entry: There should be no .h files in this repository
         language: fail
         files: \.h$
+
+  - repo: local
+    hooks:
+      - id: gofmt
+        name: Go Format
+        entry: pre-commit-hooks/run-go-fmt.sh
+        types: [go]
+        language: golang
+        description: "Runs `gofmt`, requires golang"
+      - id: check-docs
+        name: Check Doxygen Documentation
+        entry: pre-commit-hooks/check-doxygen-docs.sh
+        types: [text]
+        language: system
+        pass_filenames: false
+      - id: fix-local-includes
+        name: Fix Local Includes
+        entry: pre-commit-hooks/fix-local-includes.sh
+        types: [c++]
+        language: system
+        pass_filenames: false
+      - id: verify-commits
+        name: Verify Commits
+        entry: pre-commit-hooks/verify-commits.sh
+        types: [text]
+        language: system
+        pass_filenames: false
+
+  - repo: local
+    hooks:
+      - id: lfs-post-checkout
+        name: LFS Post Checkout
+        entry: pre-commit-hooks/lfs/post-checkout
+        types: [text]
+        stages: [post-checkout]
+        language: system
+      - id: lfs-post-commit
+        name: LFS Post Commit
+        entry: pre-commit-hooks/lfs/post-commit
+        types: [text]
+        stages: [post-commit]
+        language: system
+      - id: lfs-post-merge
+        name: LFS Post Merge
+        entry: pre-commit-hooks/lfs/post-merge
+        types: [text]
+        stages: [post-merge]
+        language: system
+      - id: lfs-pre-push
+        name: LFS Pre Push
+        entry: pre-commit-hooks/lfs/pre-push
+        types: [text]
+        stages: [pre-push]
+        language: system

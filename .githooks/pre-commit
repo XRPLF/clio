@@ -1,6 +1,0 @@
-#!/bin/bash
-
-# This script is intended to be run from the root of the repository.
-
-source .githooks/check-format
-source .githooks/check-docs
