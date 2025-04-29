@@ -85,7 +85,7 @@ Scheduled operations can be aborted by calling
 
 - `cancel` - will only cancel the timer. If the timer already fired this will have no effect
 - `requestStop` - will stop the operation if it's already running or as soon as the timer runs out
-- `abort` - will call `cancel` immediatelly followed by `requestStop`
+- `abort` - will call `cancel` immediately followed by `requestStop`
 
 ### Error handling
 
@@ -108,7 +108,7 @@ Note: the original context is taken in by reference.
 
 See examples of use below.
 
-#### AnyOperation<T>
+#### AnyOperation
 
 Wraps any type of operations including regular, stoppable and scheduled.
 
@@ -150,7 +150,7 @@ auto res = ctx.execute([](auto stopToken) {
 res.requestStop();
 ```
 
-Alternatively, the stop token is implicity convertible to `bool` so you can also use it like so:
+Alternatively, the stop token is implicitly convertible to `bool` so you can also use it like so:
 
 ```cpp
 auto res = ctx.execute([](auto stopRequested) {
@@ -221,7 +221,7 @@ EXPECT_TRUE(err.message.ends_with("test"));
 EXPECT_TRUE(std::string{err}.ends_with("test"));
 ```
 
-### Strand
+### Strand <!-- markdownlint-disable-line MD024 -->
 
 The APIs are basically the same as with the parent `ExecutionContext`.
 
@@ -234,7 +234,7 @@ auto res = strand.execute([] { return 42; });
 EXPECT_EQ(res.get().value(), 42);
 ```
 
-### Type erasure
+### Type erasure <!-- markdownlint-disable-line MD024 -->
 
 #### Simple use
 

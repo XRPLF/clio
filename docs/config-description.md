@@ -445,7 +445,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: string
 - **Default value**: `%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%`
 - **Constraints**: None
-- **Description**: The format string for log messages. The format is described here: https://www.boost.org/doc/libs/1_83_0/libs/log/doc/html/log/tutorial/formatters.html.
+- **Description**: The format string for log messages. The format is described here: <https://www.boost.org/doc/libs/1_83_0/libs/log/doc/html/log/tutorial/formatters.html>.
 
 ### log_to_console
 

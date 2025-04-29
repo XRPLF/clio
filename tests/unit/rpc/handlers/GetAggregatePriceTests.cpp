@@ -171,7 +171,7 @@ generateTestValuesForParametersTest()
             .expectedErrorMessage = "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
-            .testName = "emtpy_base_asset",
+            .testName = "empty_base_asset",
             .testJson = R"({
                     "quote_asset" : "USD",
                     "base_asset": "",

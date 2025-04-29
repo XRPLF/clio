@@ -1,5 +1,4 @@
-# Build snapshot tool
-# Need to be installed before building: go protoc-gen-go protoc-gen-go-grpc
+# Build snapshot tool needed to be installed before building: go protoc-gen-go protoc-gen-go-grpc
 
 set(GO_EXECUTABLE "go")
 set(GO_SOURCE_DIR "${CMAKE_SOURCE_DIR}/tools/snapshot")
@@ -24,22 +23,22 @@ set(GO_OPTS "")
 set(GRPC_OPTS "")
 
 # Loop through each proto file
-foreach(proto ${PROTO_FILES})
-    get_filename_component(proto_filename ${proto} NAME)
+foreach (proto ${PROTO_FILES})
+  get_filename_component(proto_filename ${proto} NAME)
 
-    # Build the --go_opt and --go-grpc_opt mappings
-    set(GO_OPTS ${GO_OPTS} --go_opt=M${GO_IMPORT_PATH}/${proto_filename}=${GO_IMPORT_PATH})
-    set(GRPC_OPTS ${GRPC_OPTS} --go-grpc_opt=M${GO_IMPORT_PATH}/${proto_filename}=${GO_IMPORT_PATH})
-endforeach()
+  # Build the --go_opt and --go-grpc_opt mappings
+  set(GO_OPTS ${GO_OPTS} --go_opt=M${GO_IMPORT_PATH}/${proto_filename}=${GO_IMPORT_PATH})
+  set(GRPC_OPTS ${GRPC_OPTS} --go-grpc_opt=M${GO_IMPORT_PATH}/${proto_filename}=${GO_IMPORT_PATH})
+endforeach ()
 
 foreach (proto ${PROTO_FILES})
   get_filename_component(proto_name ${proto} NAME_WE)
   add_custom_command(
     OUTPUT ${GO_SOURCE_DIR}/${GO_IMPORT_PATH}/${proto_name}.pb.go
     COMMAND
-      protoc ${GO_OPTS} ${GRPC_OPTS}
-      --go-grpc_out=${GO_SOURCE_DIR} -I${PROTO_INC_DIR} ${proto} --plugin=${GOPATH_VALUE}/bin/protoc-gen-go
-      --plugin=${GOPATH_VALUE}/bin/protoc-gen-go-grpc --go_out=${GO_SOURCE_DIR}/
+      protoc ${GO_OPTS} ${GRPC_OPTS} --go-grpc_out=${GO_SOURCE_DIR} -I${PROTO_INC_DIR} ${proto}
+      --plugin=${GOPATH_VALUE}/bin/protoc-gen-go --plugin=${GOPATH_VALUE}/bin/protoc-gen-go-grpc
+      --go_out=${GO_SOURCE_DIR}/
     DEPENDS ${proto}
     COMMENT "Generating Go code for ${proto}"
     VERBATIM
@@ -50,12 +49,13 @@ endforeach ()
 
 add_custom_target(build_clio_snapshot ALL DEPENDS run_go_tests ${GO_OUTPUT})
 
-add_custom_target(run_go_tests
-    COMMAND go test ./...
-    WORKING_DIRECTORY ${GO_SOURCE_DIR}
-    DEPENDS ${GENERATED_GO_FILES}
-    COMMENT "Running clio_snapshot unittests"
-    VERBATIM
+add_custom_target(
+  run_go_tests
+  COMMAND go test ./...
+  WORKING_DIRECTORY ${GO_SOURCE_DIR}
+  DEPENDS ${GENERATED_GO_FILES}
+  COMMENT "Running clio_snapshot unittests"
+  VERBATIM
 )
 
 add_custom_command(

@@ -69,7 +69,7 @@ public:
 
 static constexpr std::size_t kDEFAULT_WAIT_BETWEEN_RETRY = 500;
 /**
- * @brief A helper function that catches DatabaseTimout exceptions and retries indefinitely.
+ * @brief A helper function that catches DatabaseTimeout exceptions and retries indefinitely.
  *
  * @tparam FnType The type of function object to execute
  * @param func The function object to execute
@@ -398,7 +398,7 @@ public:
      * @brief Fetches a specific ledger object.
      *
      * Currently the real fetch happens in doFetchLedgerObject and fetchLedgerObject attempts to fetch from Cache first
-     * and only calls out to the real DB if a cache miss ocurred.
+     * and only calls out to the real DB if a cache miss occurred.
      *
      * @param key The key of the object
      * @param sequence The ledger sequence to fetch for
@@ -512,7 +512,7 @@ public:
      * @param key The key to fetch for
      * @param ledgerSequence The ledger sequence to fetch for
      * @param yield The coroutine context
-     * @return The sucessor on success; nullopt otherwise
+     * @return The successor on success; nullopt otherwise
      */
     std::optional<LedgerObject>
     fetchSuccessorObject(ripple::uint256 key, std::uint32_t ledgerSequence, boost::asio::yield_context yield) const;
@@ -526,7 +526,7 @@ public:
      * @param key The key to fetch for
      * @param ledgerSequence The ledger sequence to fetch for
      * @param yield The coroutine context
-     * @return The sucessor key on success; nullopt otherwise
+     * @return The successor key on success; nullopt otherwise
      */
     std::optional<ripple::uint256>
     fetchSuccessorKey(ripple::uint256 key, std::uint32_t ledgerSequence, boost::asio::yield_context yield) const;
@@ -537,7 +537,7 @@ public:
      * @param key The key to fetch for
      * @param ledgerSequence The ledger sequence to fetch for
      * @param yield The coroutine context
-     * @return The sucessor on success; nullopt otherwise
+     * @return The successor on success; nullopt otherwise
      */
     virtual std::optional<ripple::uint256>
     doFetchSuccessorKey(ripple::uint256 key, std::uint32_t ledgerSequence, boost::asio::yield_context yield) const = 0;

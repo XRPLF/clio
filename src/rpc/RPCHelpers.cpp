@@ -1267,7 +1267,7 @@ postProcessOrderBook(
             ripple::STAmount const dirRate = ripple::amountFromQuality(getQuality(bookDir));
 
             if (rate != ripple::parityRate
-                // Have a tranfer fee.
+                // Have a transfer fee.
                 && takerID != book.out.account
                 // Not taking offers of own IOUs.
                 && book.out.account != uOfferOwnerID)

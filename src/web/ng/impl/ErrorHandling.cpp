@@ -93,8 +93,8 @@ ErrorHelper::makeError(rpc::Status const& err) const
                 return Response{http::status::bad_request, "method is empty", rawRequest_};
             case rpc::ClioError::RpcCommandNotString:
                 return Response{http::status::bad_request, "method is not string", rawRequest_};
-            case rpc::ClioError::RpcParamsUnparseable:
-                return Response{http::status::bad_request, "params unparseable", rawRequest_};
+            case rpc::ClioError::RpcParamsUnparsable:
+                return Response{http::status::bad_request, "params unparsable", rawRequest_};
 
             // others are not applicable but we want a compilation error next time we add one
             case rpc::ClioError::RpcUnknownOption:

@@ -11,7 +11,7 @@ jobs:
     name: Check format
     runs-on: ubuntu-latest
     container:
-      image: rippleci/clio_ci:latest
+      image: ghcr.io/xrplf/clio-ci:latest
     steps:
       - name: Fix git permissions on Linux
         shell: bash
@@ -28,7 +28,7 @@ jobs:
     name: Check documentation
     runs-on: ubuntu-latest
     container:
-      image: rippleci/clio_ci:latest
+      image: ghcr.io/xrplf/clio-ci:latest
     steps:
       - uses: actions/checkout@v4
       - name: Run linter
@@ -49,28 +49,29 @@ jobs:
           - os: heavy
             conan_profile: gcc
             build_type: Release
-            container: '{ "image": "rippleci/clio_ci:latest" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
             code_coverage: false
             static: true
           - os: heavy
             conan_profile: gcc
             build_type: Debug
-            container: '{ "image": "rippleci/clio_ci:latest" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
             code_coverage: true
             static: true
           - os: heavy
             conan_profile: clang
             build_type: Release
-            container: '{ "image": "rippleci/clio_ci:latest" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
             code_coverage: false
             static: true
           - os: heavy
             conan_profile: clang
             build_type: Debug
-            container: '{ "image": "rippleci/clio_ci:latest" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
             code_coverage: false
             static: true
           - os: macos15
+            conan_profile: default_apple_clang
             build_type: Release
             code_coverage: false
             static: false
@@ -97,19 +98,19 @@ jobs:
             conan_profile: gcc
             build_type: Release
             container:
-              image: rippleci/clio_ci:latest
+              image: ghcr.io/xrplf/clio-ci:latest
           - os: heavy
             conan_profile: clang
             build_type: Release
             container:
-              image: rippleci/clio_ci:latest
+              image: ghcr.io/xrplf/clio-ci:latest
           - os: heavy
             conan_profile: clang
             build_type: Debug
             container:
-              image: rippleci/clio_ci:latest
+              image: ghcr.io/xrplf/clio-ci:latest
           - os: macos15
-            conan_profile: apple_clang_16
+            conan_profile: default_apple_clang
             build_type: Release
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
@@ -133,7 +134,7 @@ jobs:
     needs: build
     runs-on: heavy
     container:
-      image: rippleci/clio_ci:latest
+      image: ghcr.io/xrplf/clio-ci:latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4

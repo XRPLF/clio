@@ -917,7 +917,7 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
     });
 }
 
-TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvaiable)
+TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvailable)
 {
     static constexpr auto kOUT = R"({
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",

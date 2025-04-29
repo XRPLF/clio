@@ -1,14 +1,18 @@
 name: Check new libXRPL
+
 on:
   repository_dispatch:
     types: [check_libxrpl]
+
+env:
+  CONAN_PROFILE: gcc
 
 jobs:
   build:
     name: Build Clio / `libXRPL ${{ github.event.client_payload.version }}`
     runs-on: [self-hosted, heavy]
     container:
-      image: rippleci/clio_ci:latest
+      image: ghcr.io/xrplf/clio-ci:latest
 
     steps:
       - uses: actions/checkout@v4
@@ -27,14 +31,13 @@ jobs:
 
       - name: Setup conan
         uses: ./.github/actions/setup_conan
-        id: conan
         with:
-          conan_profile: gcc
+          conan_profile: ${{ env.CONAN_PROFILE }}
 
       - name: Run conan and cmake
         uses: ./.github/actions/generate
         with:
-          conan_profile: ${{ steps.conan.outputs.conan_profile }}
+          conan_profile: ${{ env.CONAN_PROFILE }}
           conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
           build_type: Release
 
@@ -55,7 +58,7 @@ jobs:
     needs: build
     runs-on: [self-hosted, heavy]
     container:
-      image: rippleci/clio_ci:latest
+      image: ghcr.io/xrplf/clio-ci:latest
 
     steps:
       - uses: actions/download-artifact@v4

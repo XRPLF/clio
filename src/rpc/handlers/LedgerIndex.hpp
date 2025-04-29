@@ -36,7 +36,7 @@
 namespace rpc {
 
 /**
- * @brief The ledger_index method fetches the lastest closed ledger before the given date.
+ * @brief The ledger_index method fetches the latest closed ledger before the given date.
  *
  */
 class LedgerIndexHandler {

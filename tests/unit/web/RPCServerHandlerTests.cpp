@@ -581,9 +581,9 @@ TEST_F(WebRPCServerHandlerTest, WsMissingCommand)
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(kRESPONSE));
 }
 
-TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparseableNotArray)
+TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparsableNotArray)
 {
-    static constexpr auto kRESPONSE = "params unparseable";
+    static constexpr auto kRESPONSE = "params unparsable";
 
     backend_->setRange(kMIN_SEQ, kMAX_SEQ);
 
@@ -599,9 +599,9 @@ TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparseableNotArray)
     EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
 
-TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparseableArrayWithDigit)
+TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparsableArrayWithDigit)
 {
-    static constexpr auto kRESPONSE = "params unparseable";
+    static constexpr auto kRESPONSE = "params unparsable";
 
     backend_->setRange(kMIN_SEQ, kMAX_SEQ);
 

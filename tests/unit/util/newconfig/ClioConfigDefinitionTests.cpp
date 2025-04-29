@@ -203,7 +203,7 @@ struct OverrideConfigVals : testing::Test {
 
 TEST_F(OverrideConfigVals, ValidateValuesStrings)
 {
-    // make sure the values in configData are overriden
+    // make sure the values in configData are overridden
     EXPECT_TRUE(configData.contains("header.text1"));
     EXPECT_EQ(configData.getValueView("header.text1").asString(), "value");
 

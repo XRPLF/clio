@@ -1,0 +1,22 @@
+[default]
+# This allows to ignore account ids in tests and private keys
+# More info: https://github.com/crate-ci/typos/issues/415
+extend-ignore-re = [
+    "[a-z-A-Z0-9]{33}",
+    "[a-z-A-Z0-9]{34}",
+    "[a-z-A-Z0-9]{64}",
+]
+
+[default.extend-identifiers]
+# (S)tring
+tring = "tring"
+trings = "trings"
+
+ASSERTs = "ASSERTs"
+EXCLUDEs = "EXCLUDEs"
+
+ser = "ser"
+
+[default.extend-words]
+strat = "strat"
+datas = "datas"

@@ -141,7 +141,7 @@ private:
             auto fetchResponse = pipe_.get().popNext(currentSequence);
             ++currentSequence;
 
-            // if fetchResponse is an empty optional, the extracter thread has stopped and the transformer should
+            // if fetchResponse is an empty optional, the extractor thread has stopped and the transformer should
             // stop as well
             if (!fetchResponse)
                 break;

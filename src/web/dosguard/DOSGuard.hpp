@@ -48,8 +48,8 @@ class DOSGuard : public DOSGuardInterface {
      * @brief Accumulated state per IP, state will be reset accordingly
      */
     struct ClientState {
-        std::uint32_t transferedByte = 0; /**< Accumulated transferred byte */
-        std::uint32_t requestsCount = 0;  /**< Accumulated served requests count */
+        std::uint32_t transferredByte = 0; /**< Accumulated transferred byte */
+        std::uint32_t requestsCount = 0;   /**< Accumulated served requests count */
     };
 
     struct State {

@@ -1,4 +1,5 @@
 name: Clang-tidy check
+
 on:
   schedule:
     - cron: "0 9 * * 1-5"
@@ -10,11 +11,14 @@ on:
       - .github/workflows/clang-tidy.yml
   workflow_call:
 
+env:
+  CONAN_PROFILE: clang
+
 jobs:
   clang_tidy:
     runs-on: heavy
     container:
-      image: rippleci/clio_ci:latest
+      image: ghcr.io/xrplf/clio-ci:latest
     permissions:
       contents: write
       issues: write
@@ -32,9 +36,8 @@ jobs:
 
       - name: Setup conan
         uses: ./.github/actions/setup_conan
-        id: conan
         with:
-          conan_profile: clang
+          conan_profile: ${{ env.CONAN_PROFILE }}
 
       - name: Restore cache
         uses: ./.github/actions/restore_cache
@@ -42,12 +45,12 @@ jobs:
         with:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
           ccache_dir: ${{ env.CCACHE_DIR }}
-          conan_profile: ${{ steps.conan.outputs.conan_profile }}
+          conan_profile: ${{ env.CONAN_PROFILE }}
 
       - name: Run conan and cmake
         uses: ./.github/actions/generate
         with:
-          conan_profile: ${{ steps.conan.outputs.conan_profile }}
+          conan_profile: ${{ env.CONAN_PROFILE }}
           conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
           build_type: Release
 

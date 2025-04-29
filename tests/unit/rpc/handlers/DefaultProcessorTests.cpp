@@ -57,7 +57,7 @@ TEST_F(RPCDefaultProcessorTest, ValidInput)
     });
 }
 
-TEST_F(RPCDefaultProcessorTest, NoInputVaildCall)
+TEST_F(RPCDefaultProcessorTest, NoInputValidCall)
 {
     runSpawn([](auto yield) {
         HandlerWithoutInputMock const handler;

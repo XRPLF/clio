@@ -267,7 +267,7 @@ public:
     }
 
     /**
-     * @brief Non-blocking  query execution used for writing data. Constrast with write, this method does not execute
+     * @brief Non-blocking  query execution used for writing data. Contrast with write, this method does not execute
      * the statements in a batch.
      *
      * Retries forever with retry policy specified by @ref AsyncExecutor.

@@ -26,7 +26,7 @@
  * Supported custom command line options for clio_tests:
  *   --backend_host=<host>         - sets the cassandra/scylladb host for backend tests
  *   --backend_keyspace=<keyspace> - sets the cassandra/scylladb keyspace for backend tests
- *   --clean-gcda                  - delete all gcda files defore running tests
+ *   --clean-gcda                  - delete all gcda files before running tests
  */
 int
 main(int argc, char* argv[])

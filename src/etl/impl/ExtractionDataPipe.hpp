@@ -66,7 +66,7 @@ public:
     /**
      * @brief Push new data package for the specified sequence.
      *
-     * Note: Potentially blocks until the underlying queue can accomodate another entry.
+     * Note: Potentially blocks until the underlying queue can accommodate another entry.
      *
      * @param sequence The sequence for which to enqueue the data package
      * @param data The data to store

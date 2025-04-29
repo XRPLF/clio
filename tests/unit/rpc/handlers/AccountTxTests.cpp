@@ -395,7 +395,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 .testName = "InvalidTxType",
                 .testJson = R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "tx_type": "unknow"
+                "tx_type": "unknown"
             })",
                 .expectedError = "invalidParams",
                 .expectedErrorMessage = "Invalid field 'tx_type'."

@@ -1398,7 +1398,7 @@
           "refId": "B"
         }
       ],
-      "title": "DB Opperations Error Rate",
+      "title": "DB Operations Error Rate",
       "type": "timeseries"
     },
     {

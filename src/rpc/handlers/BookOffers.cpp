@@ -65,7 +65,7 @@ BookOffersHandler::process(Input input, Context const& ctx) const
     auto const book = std::get<ripple::Book>(bookMaybe);
     auto const bookKey = getBookBase(book);
 
-    // TODO: Add perfomance metrics if needed in future
+    // TODO: Add performance metrics if needed in future
     auto [offers, _] = sharedPtrBackend_->fetchBookOffers(bookKey, lgrInfo.seq, input.limit, ctx.yield);
 
     auto output = BookOffersHandler::Output{};
