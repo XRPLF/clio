@@ -52,7 +52,7 @@ public:
      */
     struct CacheEntry {
         ripple::LedgerHeader ledger;
-        uint32_t seq{0u};
+        uint32_t seq;
     };
 
     /**
