@@ -834,7 +834,7 @@ TEST_F(RPCTxTest, CTIDNotMatch)
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
-        EXPECT_EQ(err.at("error").as_string(), "unknown");
+        EXPECT_EQ(err.at("error").as_string(), "wrongNetwork");
         EXPECT_EQ(err.at("error_code").as_uint64(), rpc::RippledError::rpcWRONG_NETWORK);
         EXPECT_EQ(
             err.at("error_message").as_string(),

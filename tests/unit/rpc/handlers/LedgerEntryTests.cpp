@@ -3043,7 +3043,6 @@ generateTestValuesForNormalPathTest()
             .mockedEntity = createVault(
                 kACCOUNT,
                 kACCOUNT,
-                kINDEX1,
                 kRANGE_MAX,
                 "XRP",
                 ripple::toBase58(ripple::xrpAccount()),
@@ -3071,7 +3070,6 @@ generateTestValuesForNormalPathTest()
             .mockedEntity = createVault(
                 kACCOUNT,
                 kACCOUNT,
-                kINDEX1,
                 kRANGE_MAX,
                 "XRP",
                 ripple::toBase58(ripple::xrpAccount()),
@@ -3179,7 +3177,6 @@ TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
     auto const vault = createVault(
         kACCOUNT,
         kACCOUNT,
-        kINDEX1,
         kRANGE_MAX,
         "XRP",
         ripple::toBase58(ripple::xrpAccount()),

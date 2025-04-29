@@ -1615,7 +1615,6 @@ ripple::STObject
 createVault(
     std::string_view owner,
     std::string_view account,
-    std::string_view ledgerIndex,
     ripple::LedgerIndex seq,
     std::string_view assetCurrency,
     std::string_view assetIssuer,
@@ -1626,7 +1625,6 @@ createVault(
 )
 {
     auto vault = ripple::STObject(ripple::sfLedgerEntry);
-    vault.setFieldH256(ripple::sfLedgerIndex, ripple::uint256(ledgerIndex));
     vault.setAccountID(ripple::sfOwner, getAccountIdWithString(owner));
     vault.setAccountID(ripple::sfAccount, getAccountIdWithString(account));
     vault.setFieldU32(ripple::sfSequence, seq);

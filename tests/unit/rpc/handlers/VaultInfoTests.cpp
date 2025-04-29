@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
@@ -32,11 +33,13 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -53,6 +56,7 @@ constexpr auto kINDEX1 = "ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF
 constexpr auto kSEQ = 30;
 constexpr auto kASSET_CURRENCY = "XRP";
 constexpr auto kASSET_ISSUER = "rrrrrrrrrrrrrrrrrrrrrhoLvTp";
+constexpr auto kVAULT_ID = "61B03A6F8CEBD3AF9D8F696C3D0A9A9F0493B34BF6B5D93CF0BC009E6BA75303";
 
 }  // namespace
 
@@ -80,12 +84,9 @@ generateTestValuesForParametersTest()
 {
     return std::vector<VaultInfoParamTestCaseBundle>{
         VaultInfoParamTestCaseBundle{
-            .testName = "MissingVaultField",
+            .testName = "RandomField",
             .testJson = R"({
-                "method": "vault_info",
-                "params": [{
-                    "idk" : "idk"
-                }]
+                "idk" : "idk"
             })",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -93,12 +94,7 @@ generateTestValuesForParametersTest()
         VaultInfoParamTestCaseBundle{
             .testName = "MissingOwnerInVault",
             .testJson = R"({
-                "method": "vault_info",
-                "params": [
-                    {
-                        "seq": 4
-                    }
-                ]
+                "seq": 4
             })",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -106,12 +102,7 @@ generateTestValuesForParametersTest()
         VaultInfoParamTestCaseBundle{
             .testName = "MissingSeqInVault",
             .testJson = R"({
-                "method": "vault_info",
-                "params": [
-                    {
-                        "owner": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
-                    }
-                ]
+                "owner": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
             })",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -119,13 +110,8 @@ generateTestValuesForParametersTest()
         VaultInfoParamTestCaseBundle{
             .testName = "SeqNotAnInteger",
             .testJson = R"({
-                "method": "vault_info",
-                "params": [
-                    {
-                        "owner": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
-                        "seq": "asdf"
-                    }
-                ]
+                "owner": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+                "seq": "asdf"
             })",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
@@ -133,28 +119,47 @@ generateTestValuesForParametersTest()
         VaultInfoParamTestCaseBundle{
             .testName = "OwnerNotAString",
             .testJson = R"({
-                "method": "vault_info",
-                "params": [
-                    {
-                        "owner": true,
-                         "seq": 3
-                    }
-                ]
+                "owner": true,
+                "seq": 3
+            })",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "OwnerNotHexString"
+        },
+        VaultInfoParamTestCaseBundle{
+            .testName = "OwnerNotAHexString",
+            .testJson = R"({
+                "owner": "asdf",
+                "seq": 3
+            })",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "OwnerNotHexString"
+        },
+        VaultInfoParamTestCaseBundle{
+            .testName = "vaultIDNotString",
+            .testJson = R"({
+                "vault_id": 3
             })",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
-            .testName = "OwnerNotAHexString",
+            .testName = "vaultIDNotHex256",
             .testJson = R"({
-                "method": "vault_info",
-                "params": [
-                    {
-                        "owner": "asdf",
-                         "seq": 3
-                    }
-                ]
+                "vault_id": "idk"
             })",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request."
+        },
+        VaultInfoParamTestCaseBundle{
+            .testName = "vaultIDWithOwner",
+            .testJson = fmt::format(
+                R"({{
+                "vault_id": "{}",
+                "owner": "{}"
+            }})",
+                kVAULT_ID,
+                kACCOUNT
+            ),
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
         }
@@ -183,38 +188,135 @@ TEST_P(VaultInfoParameterTest, InvalidParams)
     });
 }
 
-TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
+TEST_F(RPCVaultInfoHandlerTest, InputHasOwnerButNotFoundResultsInError)
 {
-    auto const expectedOutput = fmt::format(
+    auto const ledgerHeader = createLedgerHeader(kINDEX1, kSEQ);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    // Input JSON using vault object
+    auto static const kINPUT = boost::json::parse(fmt::format(
         R"({{
-                "ledger_index": 30,
-                "validated": true,
-                "vault": {{
-                    "Account": "{}",
-                    "Asset": {{
-                        "currency": "{}"
-                    }},
-                    "AssetsAvailable": "300",
-                    "AssetsTotal": "300",
-                    "Flags": 0,
-                    "LedgerEntryType": "Vault",
-                    "LedgerIndex": "{}",
-                    "LossUnrealized": "0",
-                    "Owner": "{}",
-                    "OwnerNode": "4",
-                    "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000002",
-                    "PreviousTxnLgrSeq": 3,
-                    "Sequence": 30,
-                    "ShareMPTID":"00000000000000000000000000000000000000000000007B",
-                    "WithdrawalPolicy": 200,
-                    "index": "1B7BB49E0663E073D1C3EF989271F89E290AAF2D67CEE85F18E2CC76D168F694"
-                }}
-            }})",
-        kACCOUNT2,
-        kASSET_CURRENCY,
-        kINDEX1,
+            "owner": "{}",
+            "seq": 3
+        }})",
         kACCOUNT
+    ));
+
+    // Run the handler
+    auto const handler = AnyHandler{VaultInfoHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
+    });
+}
+
+TEST_F(RPCVaultInfoHandlerTest, VaultIDFailsVaultDeserializationReturnsEntryNotFound)
+{
+    auto const ledgerHeader = createLedgerHeader(kINDEX1, kSEQ);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    // Mock: vault_id exists, but data is not a valid vault object
+    ripple::uint256 vaultKey = ripple::uint256{kVAULT_ID};
+    ON_CALL(*backend_, doFetchLedgerObject(vaultKey, kSEQ, _))
+        .WillByDefault(Return(std::nullopt));  // intentionally invalid vault
+
+    auto const kINPUT = boost::json::parse(fmt::format(
+        R"({{
+            "vault_id": "{}"
+        }})",
+        kVAULT_ID
+    ));
+
+    auto const handler = AnyHandler{VaultInfoHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
+
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
+    });
+}
+
+TEST_F(RPCVaultInfoHandlerTest, MissingIssuanceObject)
+{
+    auto const ledgerHeader = createLedgerHeader(kINDEX1, kSEQ);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    ripple::uint192 mptSharesID{123};
+    ripple::uint256 prevTxId{2};
+    uint32_t prevTxSeq = 3;
+    uint64_t ownerNode = 4;
+
+    auto const vault = createVault(
+        kACCOUNT, kACCOUNT2, kSEQ, kASSET_CURRENCY, kASSET_ISSUER, mptSharesID, ownerNode, prevTxId, prevTxSeq
     );
+
+    auto const vaultKeylet = ripple::keylet::vault(ripple::uint256{kVAULT_ID}).key;
+    auto const mptIssuance = ripple::keylet::mptIssuance(mptSharesID).key;
+
+    ON_CALL(*backend_, doFetchLedgerObject(vaultKeylet, kSEQ, _))
+        .WillByDefault(Return(vault.getSerializer().peekData()));
+    ON_CALL(*backend_, doFetchLedgerObject(mptIssuance, kSEQ, _))
+        .WillByDefault(Return(std::nullopt));  // Missing issuance
+
+    auto static const kINPUT = boost::json::parse(fmt::format(
+        R"({{
+            "vault_id": "{}"
+        }})",
+        kVAULT_ID
+    ));
+
+    auto const handler = AnyHandler{VaultInfoHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
+    });
+}
+
+TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
+{
+    constexpr auto kEXPECTED_OUTPUT =
+        R"({
+        "ledger_index": 30,
+        "validated": true,
+        "vault": {
+            "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+            "Asset": {
+                "currency": "XRP"
+            },
+            "AssetsAvailable": "300",
+            "AssetsTotal": "300",
+            "Flags": 0,
+            "LedgerEntryType": "Vault",
+            "LossUnrealized": "0",
+            "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "OwnerNode": "4",
+            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000002",
+            "PreviousTxnLgrSeq": 3,
+            "Sequence": 30,
+            "ShareMPTID": "00000000000000000000000000000000000000000000007B",
+            "WithdrawalPolicy": 200,
+            "index": "61B03A6F8CEBD3AF9D8F696C3D0A9A9F0493B34BF6B5D93CF0BC009E6BA75303",
+            "shares": {
+                "Flags": 0,
+                "Issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "LedgerEntryType": "MPTokenIssuance",
+                "MPTokenMetadata": "6D65746164617461",
+                "MaximumAmount": "0",
+                "OutstandingAmount": "0",
+                "OwnerNode": "0",
+                "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                "PreviousTxnLgrSeq": 0,
+                "Sequence": 30,
+                "index": "87658CA4D4D7A50EE99E632055FE7A879CD9A331880AC21D538FA6E4032804E3",
+                "mpt_issuance_id": "0000001E4B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
+            }
+        }
+    })";
 
     auto const ledgerHeader = createLedgerHeader(kINDEX1, kSEQ);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
@@ -227,28 +329,114 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
 
     // Mock vault object
     auto const vault = createVault(
-        kACCOUNT, kACCOUNT2, kINDEX1, kSEQ, kASSET_CURRENCY, kASSET_ISSUER, mptSharesID, ownerNode, prevTxId, prevTxSeq
+        kACCOUNT, kACCOUNT2, kSEQ, kASSET_CURRENCY, kASSET_ISSUER, mptSharesID, ownerNode, prevTxId, prevTxSeq
     );
+
+    // Set up keylet based on vaultID
+    auto const issuance = createMptIssuanceObject(kACCOUNT, kSEQ, "metadata");
+    auto const vaultKeylet = ripple::keylet::vault(ripple::uint256{kVAULT_ID}).key;
+    auto const mptIssuance = ripple::keylet::mptIssuance(mptSharesID).key;
+
+    ON_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kVAULT_ID}, kSEQ, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    ON_CALL(*backend_, doFetchLedgerObject(vaultKeylet, kSEQ, _))
+        .WillByDefault(Return(vault.getSerializer().peekData()));
+    ON_CALL(*backend_, doFetchLedgerObject(mptIssuance, kSEQ, _))
+        .WillByDefault(Return(issuance.getSerializer().peekData()));
+
+    // Input JSON using vault_id
+    auto static const kINPUT = boost::json::parse(fmt::format(
+        R"({{
+            "vault_id": "{}"
+        }})",
+        kVAULT_ID
+    ));
+
+    // Run the handler
+    auto const handler = AnyHandler{VaultInfoHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUTPUT));
+    });
+}
+
+TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
+{
+    constexpr auto kEXPECTED_OUTPUT =
+        R"({
+        "ledger_index": 30,
+        "validated": true,
+        "vault": {
+            "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+            "Asset": {
+                "currency": "XRP"
+            },
+            "AssetsAvailable": "300",
+            "AssetsTotal": "300",
+            "Flags": 0,
+            "LedgerEntryType": "Vault",
+            "LossUnrealized": "0",
+            "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "OwnerNode": "4",
+            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000002",
+            "PreviousTxnLgrSeq": 3,
+            "Sequence": 30,
+            "ShareMPTID": "00000000000000000000000000000000000000000000007B",
+            "WithdrawalPolicy": 200,
+            "index": "1B7BB49E0663E073D1C3EF989271F89E290AAF2D67CEE85F18E2CC76D168F694",
+            "shares": {
+                "Flags": 0,
+                "Issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "LedgerEntryType": "MPTokenIssuance",
+                "MPTokenMetadata": "6D65746164617461",
+                "MaximumAmount": "0",
+                "OutstandingAmount": "0",
+                "OwnerNode": "0",
+                "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                "PreviousTxnLgrSeq": 0,
+                "Sequence": 30,
+                "index": "87658CA4D4D7A50EE99E632055FE7A879CD9A331880AC21D538FA6E4032804E3",
+                "mpt_issuance_id": "0000001E4B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
+            }
+        }
+    })";
+
+    auto const ledgerHeader = createLedgerHeader(kINDEX1, kSEQ);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    // Vault params
+    ripple::uint192 mptSharesID{123};
+    ripple::uint256 prevTxId{2};
+    uint32_t prevTxSeq = 3;
+    uint64_t ownerNode = 4;
+
+    // Mock vault object
+    auto const vault = createVault(
+        kACCOUNT, kACCOUNT2, kSEQ, kASSET_CURRENCY, kASSET_ISSUER, mptSharesID, ownerNode, prevTxId, prevTxSeq
+    );
+
+    auto const issuance = createMptIssuanceObject(kACCOUNT, kSEQ, "metadata");
 
     auto const accountRoot = createAccountRootObject(kACCOUNT, 0, kSEQ, 200, 2, kINDEX1, 2);
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const accountKeylet = ripple::keylet::account(account).key;
     auto const vaultKeylet = ripple::keylet::vault(account, kSEQ).key;
     auto const mptIssuance = ripple::keylet::mptIssuance(mptSharesID).key;
-    std::cout << mptIssuance << std::endl;
 
     ON_CALL(*backend_, doFetchLedgerObject(accountKeylet, kSEQ, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*backend_, doFetchLedgerObject(vaultKeylet, kSEQ, _))
         .WillByDefault(Return(vault.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(mptIssuance, kSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    ON_CALL(*backend_, doFetchLedgerObject(mptIssuance, kSEQ, _))
+        .WillByDefault(Return(issuance.getSerializer().peekData()));
 
     // Input JSON using vault object
     auto static const kINPUT = boost::json::parse(fmt::format(
         R"({{
-        "owner": "{}",
-        "seq": {}
-    }})",
+            "owner": "{}",
+            "seq": {}
+        }})",
         kACCOUNT,
         kSEQ
     ));
@@ -258,8 +446,6 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
         ASSERT_TRUE(output);
-        std::cout << boost::json::serialize(*output.result) << std::endl;
-
-        EXPECT_EQ(*output.result, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUTPUT));
     });
 }

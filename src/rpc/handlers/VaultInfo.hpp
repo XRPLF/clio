@@ -20,7 +20,9 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
+#include "rpc/common/MetaProcessors.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
@@ -58,6 +60,7 @@ public:
     struct Input {
         std::optional<std::string> vaultID;
         std::optional<std::string> owner;
+        std::optional<uint32_t> tnxSequence;
         std::optional<uint32_t> ledgerIndex;
     };
 
@@ -65,7 +68,7 @@ public:
      * @brief A struct to hold the output data for the command
      */
     struct Output {
-        ripple::STLedgerEntry vault;
+        boost::json::value vault;
         uint32_t ledgerIndex{};
         bool validated = true;
     };
@@ -82,9 +85,16 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const kRPC_SPEC = RpcSpec{
-            {JS(vault_id), validation::CustomValidators::uint256HexStringValidator},
-            {JS(owner), validation::CustomValidators::accountBase58Validator},
-            {JS(seq), validation::Type<uint32_t>{}}
+            {JS(vault_id),
+             meta::WithCustomError{
+                 validation::CustomValidators::uint256HexStringValidator, Status(ClioError::RpcMalformedRequest)
+             }},
+            {JS(owner),
+             meta::WithCustomError{
+                 validation::CustomValidators::accountBase58Validator,
+                 Status(ClioError::RpcMalformedRequest, "OwnerNotHexString")
+             }},
+            {JS(seq), meta::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::RpcMalformedRequest)}}
         };
 
         return kRPC_SPEC;

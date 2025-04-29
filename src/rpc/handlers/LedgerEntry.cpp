@@ -213,13 +213,13 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
 
     if (!ledgerObject || ledgerObject->empty()) {
         if (not input.includeDeleted)
-            return Error{Status{"entryNotFound"}};
+            return Error{Status{ClioError::RpcEntryNotFound}};
         auto const deletedSeq = sharedPtrBackend_->fetchLedgerObjectSeq(key, lgrInfo.seq, ctx.yield);
         if (!deletedSeq)
-            return Error{Status{"entryNotFound"}};
+            return Error{Status{ClioError::RpcEntryNotFound}};
         ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, deletedSeq.value() - 1, ctx.yield);
         if (!ledgerObject || ledgerObject->empty())
-            return Error{Status{"entryNotFound"}};
+            return Error{Status{ClioError::RpcEntryNotFound}};
         output.deletedLedgerIndex = deletedSeq;
     }
 

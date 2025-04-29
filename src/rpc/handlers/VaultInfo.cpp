@@ -29,10 +29,13 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/Keylet.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STBase.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/jss.h>
@@ -42,7 +45,6 @@
 #include <optional>
 #include <string>
 #include <variant>
-#include <vector>
 
 namespace rpc {
 
@@ -56,9 +58,9 @@ parseVaultField(VaultInfoHandler::Input const& input)
 {
     auto const hasVaultId = input.vaultID.has_value();
     auto const hasOwner = input.owner.has_value();
-    auto const hasSeq = input.ledgerIndex.has_value();
+    auto const hasSeq = input.tnxSequence.has_value();
 
-    // valid vault_info has input of either vault_id or owner & sequence
+    // Only valid combinations: (vaultID) or (owner + ledgerIndex)
     if ((hasVaultId && !hasOwner && !hasSeq) || (!hasVaultId && hasOwner && hasSeq))
         return {};
 
@@ -73,7 +75,7 @@ VaultInfoHandler::process(VaultInfoHandler::Input input, Context const& ctx) con
         return Error{res.error()};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
-    ASSERT(range.has_value(), "AccountInfo's ledger range must be available");
+    ASSERT(range.has_value(), "VaultInfo's ledger range must be available");
 
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, std::nullopt, input.ledgerIndex, range->maxSequence
@@ -84,53 +86,69 @@ VaultInfoHandler::process(VaultInfoHandler::Input input, Context const& ctx) con
 
     auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
 
-    // Extract the vault owner and construct a keylet for the vault object
-    auto const accountStr = *input.owner;
-    auto const accountID = accountFromStringStrict(accountStr);
-    auto const accountKeylet = ripple::keylet::account(*accountID);
+    // Extract the vault keylet based on input
+    auto const vaultKeylet = [&]() -> std::expected<ripple::Keylet, Status> {
+        if (input.owner && input.tnxSequence) {
+            auto const accountStr = *input.owner;
+            auto const accountID = accountFromStringStrict(accountStr);
 
-    // Fetch the account ledger object
-    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
+            // checks that account exists
+            {
+                auto const accountKeylet = ripple::keylet::account(*accountID);
+                auto const accountLedgerObject =
+                    sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
 
-    if (!accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+                if (!accountLedgerObject)
+                    return std::unexpected{Status{ClioError::RpcEntryNotFound}};
+            }
 
-    // use account to get vault ledger object
-    ripple::STLedgerEntry const sleObject{
-        ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key
-    };
+            return ripple::keylet::vault(*accountID, *input.tnxSequence);
+        }
+        ripple::uint256 nodeIndex;
+        if (nodeIndex.parseHex(*input.vaultID))
+            return ripple::keylet::vault(nodeIndex);
 
-    auto const vaultKeylet = ripple::keylet::vault(*accountID, *input.ledgerIndex);
+        return std::unexpected{Status{ClioError::RpcEntryNotFound}};
+    }();
 
-    // Fetch the vault object
-    auto const vaultLedgerObject = sharedPtrBackend_->fetchLedgerObject(vaultKeylet.key, lgrInfo.seq, ctx.yield);
+    if (!vaultKeylet.has_value())
+        return Error{vaultKeylet.error()};
+
+    // Fetch the vault object and it's associated issuance ID
+    auto const vaultLedgerObject =
+        sharedPtrBackend_->fetchLedgerObject(vaultKeylet.value().key, lgrInfo.seq, ctx.yield);
+
+    if (!vaultLedgerObject)
+        return Error{Status{ClioError::RpcEntryNotFound, "vault object not found."}};
 
     ripple::STLedgerEntry const vaultSle{
-        ripple::SerialIter{vaultLedgerObject->data(), vaultLedgerObject->size()}, vaultKeylet.key
+        ripple::SerialIter{vaultLedgerObject->data(), vaultLedgerObject->size()}, vaultKeylet.value().key
     };
 
-    std::cout << ripple::keylet::mptIssuance(vaultSle[ripple::sfShareMPTID]).key;
+    auto const issuanceKeylet = ripple::keylet::mptIssuance(vaultSle[ripple::sfShareMPTID]).key;
+    auto const issuanceObject = sharedPtrBackend_->fetchLedgerObject(issuanceKeylet, lgrInfo.seq, ctx.yield);
 
-    auto const issuanceObject = !vaultLedgerObject.has_value()
-        ? std::nullopt
-        : sharedPtrBackend_->fetchLedgerObject(
-              ripple::keylet::mptIssuance(vaultSle[ripple::sfShareMPTID]).key, lgrInfo.seq, ctx.yield
-          );
+    if (!issuanceObject)
+        return Error{Status{ClioError::RpcEntryNotFound, "issuance object not found."}};
 
-    if (!vaultLedgerObject || !issuanceObject)
-        return Error{Status{"entryNotFound"}};
+    ripple::STLedgerEntry const issuanceSle{
+        ripple::SerialIter{issuanceObject->data(), issuanceObject->size()}, issuanceKeylet
+    };
 
-    // todo: vaultSLE
+    // put issuance object into "shares" field of vault object
+    Output response;
+    response.vault = toBoostJson(vaultSle.getJson(ripple::JsonOptions::none));
+    response.vault.as_object()[JS(shares)] = toBoostJson(issuanceSle.getJson(ripple::JsonOptions::none));
+    response.ledgerIndex = lgrInfo.seq;
 
-    // Prepare output
-    return Output(vaultSle, lgrInfo.seq);
+    return response;
 }
 
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, VaultInfoHandler::Output const& output)
 {
     jv = boost::json::object{
-        {JS(ledger_index), output.ledgerIndex}, {JS(validated), output.validated}, {JS(vault), toJson(output.vault)}
+        {JS(ledger_index), output.ledgerIndex}, {JS(validated), output.validated}, {JS(vault), output.vault}
     };
 }
 
@@ -144,10 +162,18 @@ tag_invoke(boost::json::value_to_tag<VaultInfoHandler::Input>, boost::json::valu
         input.owner = jsonObject.at(JS(owner)).as_string();
 
     if (jsonObject.contains(JS(seq)))
-        input.ledgerIndex = static_cast<uint32_t>(jsonObject.at(JS(seq)).as_int64());
+        input.tnxSequence = static_cast<uint32_t>(jsonObject.at(JS(seq)).as_int64());
 
     if (jsonObject.contains(JS(vault_id)))
         input.vaultID = jsonObject.at(JS(vault_id)).as_string();
+
+    if (jsonObject.contains(JS(ledger_index))) {
+        if (!jsonObject.at(JS(ledger_index)).is_string()) {
+            input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
+            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        }
+    }
 
     return input;
 }
