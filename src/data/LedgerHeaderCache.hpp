@@ -42,10 +42,7 @@ namespace data::cassandra {
  */
 class FetchLedgerCache {
 public:
-    FetchLedgerCache()
-    {
-        mutexPtr_ = std::make_unique<util::Mutex<std::optional<CacheEntry>, std::shared_mutex>>();
-    }
+    FetchLedgerCache();
 
     /**
      * @brief Struct to store ledger header cache entry and the sequence it belongs to
@@ -61,11 +58,7 @@ public:
      * @param cacheEntry The Cache to store into mutex container.
      */
     void
-    put(CacheEntry const& cacheEntry) const
-    {
-        auto lock = mutexPtr_->lock<std::unique_lock>();
-        *lock = cacheEntry;
-    }
+    put(CacheEntry const& cacheEntry) const;
 
     /**
      * @brief Read CacheEntry from mutex container.
@@ -73,11 +66,7 @@ public:
      * @return Optional CacheEntry, depending on if it exists in mutex container or not.
      */
     std::optional<CacheEntry>
-    get() const
-    {
-        auto const lock = mutexPtr_->lock<std::shared_lock>();
-        return lock.get();
-    }
+    get() const;
 
 private:
     std::unique_ptr<util::Mutex<std::optional<CacheEntry>, std::shared_mutex>> mutexPtr_;

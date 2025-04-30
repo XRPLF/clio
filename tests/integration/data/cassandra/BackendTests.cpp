@@ -82,13 +82,6 @@ using namespace prometheus;
 
 using namespace data::cassandra;
 
-constexpr auto kRAWHEADER =
-    "03C3141A01633CD656F91B4EBB5EB89B791BD34DBC8A04BB6F407C5335BC54351E"
-    "DD733898497E809E04074D14D271E4832D7888754F9230800761563A292FA2315A"
-    "6DB6FE30CC5909B285080FCD6773CC883F9FE0EE4D439340AC592AADB973ED3CF5"
-    "3E2232B33EF57CECAC2816E3122816E31A0A00F8377CD95DFA484CFAE282656A58"
-    "CE5AA29652EFFD80AC59CD91416E4E13DBBE";
-
 class BackendCassandraTest : public SyncAsioContextTest, public WithPrometheus {
 protected:
     ClioConfigDefinition cfg_{
@@ -116,6 +109,13 @@ protected:
 
         {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)}
     };
+
+    static constexpr auto kRAWHEADER =
+    "03C3141A01633CD656F91B4EBB5EB89B791BD34DBC8A04BB6F407C5335BC54351E"
+    "DD733898497E809E04074D14D271E4832D7888754F9230800761563A292FA2315A"
+    "6DB6FE30CC5909B285080FCD6773CC883F9FE0EE4D439340AC592AADB973ED3CF5"
+    "3E2232B33EF57CECAC2816E3122816E31A0A00F8377CD95DFA484CFAE282656A58"
+    "CE5AA29652EFFD80AC59CD91416E4E13DBBE";
 
     ObjectView obj_ = cfg_.getObject("database.cassandra");
     SettingsProvider settingsProvider_{obj_};
@@ -1309,11 +1309,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
 
 TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
 {
-    std::atomic_bool done = false;
-    std::optional<boost::asio::io_context::work> work;
-    work.emplace(ctx_);
-
-    boost::asio::spawn(ctx_, [this, &done, &work](boost::asio::yield_context yield) {
+    runSpawn([&](boost::asio::yield_context yield) {
         auto rawHeaderBlob = hexStringToBinaryString(kRAWHEADER);
         ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
 
@@ -1327,7 +1323,7 @@ TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
             data::cassandra::impl::DefaultExecutionStrategy<>,
             MockLedgerHeaderCache&>;
 
-        MockLedgerHeaderCache mockCache{};
+        testing::StrictMock<MockLedgerHeaderCache> mockCache{};
 
         backend_ = std::make_unique<TestBackendType>(settingsProvider_, cache_, false, mockCache);
 
@@ -1359,13 +1355,7 @@ TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
             ASSERT_TRUE(ledger.has_value());
             EXPECT_EQ(ledger->seq, lgrInfo.seq);
         }
-
-        done = true;
-        work.reset();
     });
-
-    ctx_.run();
-    ASSERT_EQ(done, true);
 }
 
 struct BackendCassandraNodeMessageTest : BackendCassandraTest {
