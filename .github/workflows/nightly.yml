@@ -1,4 +1,5 @@
 name: Nightly release
+
 on:
   schedule:
     - cron: "0 8 * * 1-5"
@@ -8,9 +9,15 @@ on:
       - ".github/workflows/nightly.yml"
       - ".github/workflows/build_clio_docker_image.yml"
 
+concurrency:
+  # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
-    name: Build clio
+  build-and-test:
+    name: Build and Test
+
     strategy:
       fail-fast: false
       matrix:
@@ -29,7 +36,8 @@ jobs:
             build_type: Debug
             static: true
             container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
-    uses: ./.github/workflows/build_impl.yml
+
+    uses: ./.github/workflows/build_and_test.yml
     with:
       runs_on: ${{ matrix.os }}
       container: ${{ matrix.container }}
@@ -37,73 +45,13 @@ jobs:
       build_type: ${{ matrix.build_type }}
       code_coverage: false
       static: ${{ matrix.static }}
-      unit_tests: true
-      integration_tests: true
+      run_unit_tests: true
+      run_integration_tests: ${{ matrix.os != 'macos15' }}
       clio_server: true
       disable_cache: true
 
-  run_tests:
-    needs: build
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos15
-            conan_profile: default_apple_clang
-            build_type: Release
-            integration_tests: false
-          - os: heavy
-            conan_profile: gcc
-            build_type: Release
-            container:
-              image: ghcr.io/xrplf/clio-ci:latest
-            integration_tests: true
-          - os: heavy
-            conan_profile: gcc
-            build_type: Debug
-            container:
-              image: ghcr.io/xrplf/clio-ci:latest
-            integration_tests: true
-    runs-on: [self-hosted, "${{ matrix.os }}"]
-    container: ${{ matrix.container }}
-
-    services:
-      scylladb:
-        image: ${{ (matrix.integration_tests) && 'scylladb/scylla' || '' }}
-        options: >-
-          --health-cmd "cqlsh -e 'describe cluster'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - name: Clean workdir
-        if: ${{ runner.os == 'macOS' }}
-        uses: kuznetsss/workspace-cleanup@80b9863b45562c148927c3d53621ef354e5ae7ce #v1.0
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
-
-      - name: Run clio_tests
-        run: |
-          chmod +x ./clio_tests
-          ./clio_tests
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: clio_integration_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
-
-      # To be enabled back once docker in mac runner arrives
-      # https://github.com/XRPLF/clio/issues/1400
-      - name: Run clio_integration_tests
-        if: matrix.integration_tests
-        run: |
-          chmod +x ./clio_integration_tests
-          ./clio_integration_tests --backend_host=scylladb
-
   nightly_release:
-    needs: run_tests
+    needs: build-and-test
     uses: ./.github/workflows/release_impl.yml
     with:
       overwrite_release: true
@@ -113,7 +61,7 @@ jobs:
 
   build_and_publish_docker_image:
     uses: ./.github/workflows/build_clio_docker_image.yml
-    needs: run_tests
+    needs: build-and-test
     secrets: inherit
     with:
       tags: |
@@ -124,12 +72,14 @@ jobs:
       publish_image: ${{ github.event_name != 'pull_request' }}
 
   create_issue_on_failure:
-    needs: [build, run_tests, nightly_release, build_and_publish_docker_image]
+    needs: [build-and-test, nightly_release, build_and_publish_docker_image]
     if: ${{ always() && contains(needs.*.result, 'failure') && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
+
     permissions:
       contents: write
       issues: write
+
     steps:
       - uses: actions/checkout@v4
 

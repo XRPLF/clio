@@ -1,5 +1,6 @@
 name: Generate code coverage report
 description: Run tests, generate code coverage report and upload it to codecov.io
+
 runs:
   using: composite
   steps:

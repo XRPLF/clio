@@ -1,4 +1,5 @@
 name: Build
+
 on:
   push:
     branches: [master, release/*, develop]
@@ -6,9 +7,15 @@ on:
     branches: [master, release/*, develop]
   workflow_dispatch:
 
+concurrency:
+  # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
-    name: Build
+  build-and-test:
+    name: Build and Test
+
     strategy:
       fail-fast: false
       matrix:
@@ -42,7 +49,8 @@ jobs:
             build_type: Release
             code_coverage: false
             static: false
-    uses: ./.github/workflows/build_impl.yml
+
+    uses: ./.github/workflows/build_and_test.yml
     with:
       runs_on: ${{ matrix.os }}
       container: ${{ matrix.container }}
@@ -50,63 +58,24 @@ jobs:
       build_type: ${{ matrix.build_type }}
       code_coverage: ${{ matrix.code_coverage }}
       static: ${{ matrix.static }}
-      unit_tests: true
-      integration_tests: true
+      run_unit_tests: true
+      run_integration_tests: false
       clio_server: true
-
-  test:
-    name: Run Tests
-    needs: build
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: heavy
-            conan_profile: gcc
-            build_type: Release
-            container:
-              image: ghcr.io/xrplf/clio-ci:latest
-          - os: heavy
-            conan_profile: clang
-            build_type: Release
-            container:
-              image: ghcr.io/xrplf/clio-ci:latest
-          - os: heavy
-            conan_profile: clang
-            build_type: Debug
-            container:
-              image: ghcr.io/xrplf/clio-ci:latest
-          - os: macos15
-            conan_profile: default_apple_clang
-            build_type: Release
-    runs-on: ${{ matrix.os }}
-    container: ${{ matrix.container }}
-
-    steps:
-      - name: Clean workdir
-        if: ${{ runner.os == 'macOS' }}
-        uses: kuznetsss/workspace-cleanup@80b9863b45562c148927c3d53621ef354e5ae7ce #v1.0
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
-
-      - name: Run clio_tests
-        run: |
-          chmod +x ./clio_tests
-          ./clio_tests
 
   check_config:
     name: Check Config Description
-    needs: build
+    needs: build-and-test
     runs-on: heavy
     container:
       image: ghcr.io/xrplf/clio-ci:latest
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           name: clio_server_Linux_Release_gcc
+
       - name: Compare Config Description
         shell: bash
         run: |

@@ -1,4 +1,5 @@
 name: Reusable build
+
 on:
   workflow_call:
     inputs:
@@ -6,13 +7,11 @@ on:
         description: Runner to run the job on
         required: true
         type: string
-        default: heavy
 
       container:
         description: "The container object as a JSON string (leave empty to run natively)"
         required: true
         type: string
-        default: ""
 
       conan_profile:
         description: Conan profile to use
@@ -28,49 +27,31 @@ on:
         description: Whether ccache and conan cache should be disabled
         required: false
         type: boolean
-        default: false
 
       code_coverage:
         description: Whether to enable code coverage
         required: true
         type: boolean
-        default: false
 
       static:
         description: Whether to build static binaries
         required: true
         type: boolean
-        default: true
-
-      unit_tests:
-        description: Whether to run unit tests
-        required: true
-        type: boolean
-        default: false
-
-      integration_tests:
-        description: Whether to run integration tests
-        required: true
-        type: boolean
-        default: false
 
       clio_server:
         description: Whether to build clio_server
         required: true
         type: boolean
-        default: true
 
-      target:
-        description: Build target name
+      targets:
+        description: Space-separated build target names
         required: false
         type: string
-        default: all
 
       sanitizer:
         description: Sanitizer to use
         required: false
         type: string
-        default: "false"
 
 jobs:
   build:
@@ -81,7 +62,7 @@ jobs:
     steps:
       - name: Clean workdir
         if: ${{ runner.os == 'macOS' }}
-        uses: kuznetsss/workspace-cleanup@80b9863b45562c148927c3d53621ef354e5ae7ce #v1.0
+        uses: kuznetsss/workspace-cleanup@80b9863b45562c148927c3d53621ef354e5ae7ce # v1.0
 
       - uses: actions/checkout@v4
         with:
@@ -121,7 +102,7 @@ jobs:
       - name: Build Clio
         uses: ./.github/actions/build_clio
         with:
-          target: ${{ inputs.target }}
+          targets: ${{ inputs.targets }}
 
       - name: Show ccache's statistics
         if: ${{ !inputs.disable_cache }}
@@ -134,11 +115,11 @@ jobs:
           cat /tmp/ccache.stats
 
       - name: Strip unit_tests
-        if: ${{ inputs.unit_tests && !inputs.code_coverage && inputs.sanitizer == 'false' }}
+        if: ${{ !inputs.code_coverage && inputs.sanitizer == 'false' }}
         run: strip build/clio_tests
 
       - name: Strip integration_tests
-        if: ${{ inputs.integration_tests && !inputs.code_coverage }}
+        if: ${{ !inputs.code_coverage }}
         run: strip build/clio_integration_tests
 
       - name: Upload clio_server
@@ -149,14 +130,14 @@ jobs:
           path: build/clio_server
 
       - name: Upload clio_tests
-        if: ${{ inputs.unit_tests && !inputs.code_coverage }}
+        if: ${{ !inputs.code_coverage }}
         uses: actions/upload-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_tests
 
       - name: Upload clio_integration_tests
-        if: ${{ inputs.integration_tests && !inputs.code_coverage }}
+        if: ${{ !inputs.code_coverage }}
         uses: actions/upload-artifact@v4
         with:
           name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}

@@ -11,6 +11,7 @@ jobs:
   upload_report:
     name: Upload report
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
         with:

@@ -1,9 +1,11 @@
 name: Prepare runner
 description: Install packages, set environment variables, create directories
+
 inputs:
   disable_ccache:
     description: Whether ccache should be disabled
     required: true
+
 runs:
   using: composite
   steps:

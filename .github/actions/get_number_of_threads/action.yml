@@ -1,5 +1,6 @@
 name: Get number of threads
 description: Determines number of threads to use on macOS and Linux
+
 inputs:
   subtract_threads:
     description: How many threads to subtract from the calculated number
@@ -9,6 +10,7 @@ outputs:
   threads_number:
     description: Number of threads to use
     value: ${{ steps.number_of_threads_export.outputs.num }}
+
 runs:
   using: composite
   steps:

@@ -1,5 +1,6 @@
 name: Create an issue
 description: Create an issue
+
 inputs:
   title:
     description: Issue title
@@ -15,10 +16,12 @@ inputs:
     description: Comma-separated list of assignees
     required: true
     default: "godexsoft,kuznetsss,PeterChen13579"
+
 outputs:
   created_issue_id:
     description: Created issue id
     value: ${{ steps.create_issue.outputs.created_issue }}
+
 runs:
   using: composite
   steps:
@@ -27,7 +30,12 @@ runs:
       shell: bash
       run: |
         echo -e '${{ inputs.body }}' > issue.md
-        gh issue create --assignee '${{ inputs.assignees }}' --label '${{ inputs.labels }}' --title '${{ inputs.title }}' --body-file ./issue.md > create_issue.log
+        gh issue create \
+          --assignee '${{ inputs.assignees }}' \
+          --label '${{ inputs.labels }}' \
+          --title '${{ inputs.title }}' \
+          --body-file ./issue.md \
+          > create_issue.log
         created_issue=$(cat create_issue.log | sed 's|.*/||')
         echo "created_issue=$created_issue" >> $GITHUB_OUTPUT
         rm create_issue.log issue.md

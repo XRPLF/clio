@@ -1,4 +1,5 @@
 name: Build and publish Clio docker image
+
 on:
   workflow_call:
     inputs:
@@ -37,10 +38,16 @@ on:
         description: Whether to strip clio binary
         default: true
 
+concurrency:
+  # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build_and_publish_image:
     name: Build and publish image
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
