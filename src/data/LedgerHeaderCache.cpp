@@ -18,16 +18,18 @@
 //==============================================================================
 
 #include "data/LedgerHeaderCache.hpp"
+
 #include "util/Mutex.hpp"
+
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
 
-
 namespace data::cassandra {
 
-FetchLedgerCache::FetchLedgerCache(): mutexPtr_{std::make_unique<util::Mutex<std::optional<CacheEntry>, std::shared_mutex>>()}
+FetchLedgerCache::FetchLedgerCache()
+    : mutexPtr_{std::make_unique<util::Mutex<std::optional<CacheEntry>, std::shared_mutex>>()}
 {
 }
 
@@ -45,5 +47,4 @@ FetchLedgerCache::get() const
     return lock.get();
 }
 
-
-} // namespace data::cassandra
+}  // namespace data::cassandra
