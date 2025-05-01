@@ -59,12 +59,20 @@ jobs:
         with:
           name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
 
-      - name: Run clio_tests
-        run: |
-          chmod +x ./clio_tests
-          ${{ inputs.sanitizer != 'false' && './.github/scripts/execute-tests-under-sanitizer' || '' }} ./clio_tests
+      - name: Make clio_tests executable
+        shell: bash
+        run: chmod +x ./clio_tests
+
+      - name: Run clio_tests (regular)
+        if: inputs.sanitizer == 'false'
+        run: ./clio_tests
+
+      - name: Run clio_tests (sanitizer)
+        if: inputs.sanitizer != 'false'
+        run: ./.github/scripts/execute-tests-under-sanitizer ./clio_tests
 
       - name: Check for sanitizer report
+        if: inputs.sanitizer != 'false'
         shell: bash
         id: check_report
         run: |
@@ -75,7 +83,7 @@ jobs:
           fi
 
       - name: Upload sanitizer report
-        if: ${{ steps.check_report.outputs.found_report == 'true' }}
+        if: inputs.sanitizer != 'false' && steps.check_report.outputs.found_report == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.conan_profile }}_report
@@ -84,7 +92,7 @@ jobs:
 
       # TODO: enable when we have fixed all currently existing issues from sanitizers
       - name: Create an issue
-        if: ${{ false && steps.check_report.outputs.found_report == 'true' }}
+        if: false && inputs.sanitizer != 'false' && steps.check_report.outputs.found_report == 'true'
         uses: ./.github/actions/create_issue
         env:
           GH_TOKEN: ${{ github.token }}

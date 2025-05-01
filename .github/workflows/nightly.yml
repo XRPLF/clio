@@ -47,7 +47,7 @@ jobs:
       static: ${{ matrix.static }}
       run_unit_tests: true
       run_integration_tests: ${{ matrix.os != 'macos15' }}
-      clio_server: true
+      upload_clio_server: true
       disable_cache: true
 
   nightly_release:

@@ -38,8 +38,8 @@ on:
         required: true
         type: boolean
 
-      clio_server:
-        description: Whether to build clio_server
+      upload_clio_server:
+        description: Whether to upload clio_server
         required: true
         type: boolean
 
@@ -115,15 +115,15 @@ jobs:
           cat /tmp/ccache.stats
 
       - name: Strip unit_tests
-        if: ${{ !inputs.code_coverage && inputs.sanitizer == 'false' }}
+        if: inputs.sanitizer == 'false' && !inputs.code_coverage
         run: strip build/clio_tests
 
       - name: Strip integration_tests
-        if: ${{ !inputs.code_coverage }}
+        if: inputs.sanitizer == 'false' && !inputs.code_coverage
         run: strip build/clio_integration_tests
 
       - name: Upload clio_server
-        if: ${{ inputs.clio_server }}
+        if: inputs.upload_clio_server && !inputs.code_coverage
         uses: actions/upload-artifact@v4
         with:
           name: clio_server_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
@@ -157,12 +157,21 @@ jobs:
           code_coverage: ${{ inputs.code_coverage }}
           conan_profile: ${{ inputs.conan_profile }}
 
-      # TODO: This is not a part of build process but it is the easiest way to do it here.
-      # It will be refactored in https://github.com/XRPLF/clio/issues/1075
+      # This is run as part of the build job, because it requires the following:
+      # - source code
+      # - generated source code (Build.cpp)
+      # - conan packages
+      # - .gcno files in build directory
+      #
+      # It's all available in the build job, but not in the test job
       - name: Run code coverage
         if: ${{ inputs.code_coverage }}
         uses: ./.github/actions/code_coverage
 
+  # `codecov/codecov-action` will rerun `gcov` if it's available and build directory is present
+  # To prevent this from happening, we run this action in a separate workflow
+  #
+  # More info: https://github.com/XRPLF/clio/pull/2066
   upload_coverage_report:
     if: ${{ inputs.code_coverage }}
     name: Codecov
