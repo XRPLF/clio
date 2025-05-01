@@ -25,7 +25,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <shared_mutex>
 
@@ -49,40 +48,38 @@ public:
      */
     struct CacheEntry {
         ripple::LedgerHeader ledger;
-        uint32_t seq;
+        uint32_t seq{};
+
+       /**
+        * @brief Comparing CacheEntry. Used in testing for EXPECT_CALL
+        *
+        * @param other The other cacheEntry to compare
+        * @return true if two CacheEntry is the same, false otherwise
+        */
+        bool operator==(CacheEntry const& other) const {
+            return ledger.hash == other.ledger.hash && seq == other.seq;
+        }
     };
 
     /**
-     * @brief Put CacheEntry into mutex container.
+     * @brief Put CacheEntry into thread-safe container
      *
-     * @param cacheEntry The Cache to store into mutex container.
+     * @param cacheEntry The Cache to store into thread-safe container.
      */
     void
     put(CacheEntry const& cacheEntry) const;
 
     /**
-     * @brief Read CacheEntry from mutex container.
+     * @brief Read CacheEntry from thread-safe container.
      *
-     * @return Optional CacheEntry, depending on if it exists in mutex container or not.
+     * @return Optional CacheEntry, depending on if it exists in thread-safe container or not.
      */
     std::optional<CacheEntry>
     get() const;
 
+
 private:
     std::unique_ptr<util::Mutex<std::optional<CacheEntry>, std::shared_mutex>> mutexPtr_;
 };
-
-/**
- * @brief Comparing CacheEntry. Used in testing for EXPECT_CALL
- *
- * @param lhs A CacheEntry
- * @param rhs Another CacheEntry
- * @return true if two CacheEntry is the same, false otherwise
- */
-inline bool
-operator==(FetchLedgerCache::CacheEntry const& lhs, FetchLedgerCache::CacheEntry const& rhs)
-{
-    return lhs.ledger.hash == rhs.ledger.hash && lhs.seq == rhs.seq;
-}
 
 }  // namespace data

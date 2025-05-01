@@ -277,8 +277,7 @@ public:
     fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context yield) const override
     {
         {
-            auto const lock = ledgerCache_.get();
-            if (lock.has_value() && lock->seq == sequence)
+            if (auto const lock = ledgerCache_.get(); lock.has_value() && lock->seq == sequence)
                 return lock->ledger;
         }
 

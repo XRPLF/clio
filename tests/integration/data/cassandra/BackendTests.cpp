@@ -1327,9 +1327,6 @@ TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
 
         backend_ = std::make_unique<TestBackendType>(settingsProvider_, cache_, false, mockCache);
 
-        auto* backendPtr = dynamic_cast<TestBackendType*>(backend_.get());
-        ASSERT_NE(backendPtr, nullptr);
-
         EXPECT_CALL(mockCache, put(data::FetchLedgerCache::CacheEntry{lgrInfo, testLedgerSeq}));
 
         {
@@ -1344,14 +1341,14 @@ TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
 
         {
             // backend should cache the result of fetchLedgerBySequence
-            auto const ledger = backendPtr->fetchLedgerBySequence(testLedgerSeq, yield);
+            auto const ledger = backend_->fetchLedgerBySequence(testLedgerSeq, yield);
             ASSERT_TRUE(ledger.has_value());
             EXPECT_EQ(ledger->seq, lgrInfo.seq);
         }
 
         {
             // Second call: should return from cache
-            auto const ledger = backendPtr->fetchLedgerBySequence(testLedgerSeq, yield);
+            auto const ledger = backend_->fetchLedgerBySequence(testLedgerSeq, yield);
             ASSERT_TRUE(ledger.has_value());
             EXPECT_EQ(ledger->seq, lgrInfo.seq);
         }
