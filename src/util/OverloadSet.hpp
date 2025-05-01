@@ -28,7 +28,8 @@ namespace util {
  */
 template <typename... Ts>
 struct OverloadSet : Ts... {
-    using Ts::operator()...;
+    using Ts::
+    operator()...;
 };
 
 /**

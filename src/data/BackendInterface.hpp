@@ -234,8 +234,12 @@ public:
      * @return A vector of ripple::uint256 representing the account roots
      */
     virtual std::vector<ripple::uint256>
-    fetchAccountRoots(std::uint32_t number, std::uint32_t pageSize, std::uint32_t seq, boost::asio::yield_context yield)
-        const = 0;
+    fetchAccountRoots(
+        std::uint32_t number,
+        std::uint32_t pageSize,
+        std::uint32_t seq,
+        boost::asio::yield_context yield
+    ) const = 0;
 
     /**
      * @brief Updates the range of sequences that are stored in the DB.
@@ -459,8 +463,11 @@ public:
      * @return The sequence in unit32_t on success; nullopt otherwise
      */
     virtual std::optional<std::uint32_t>
-    doFetchLedgerObjectSeq(ripple::uint256 const& key, std::uint32_t sequence, boost::asio::yield_context yield)
-        const = 0;
+    doFetchLedgerObjectSeq(
+        ripple::uint256 const& key,
+        std::uint32_t sequence,
+        boost::asio::yield_context yield
+    ) const = 0;
 
     /**
      * @brief The database-specific implementation for fetching ledger objects.

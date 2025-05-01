@@ -135,17 +135,19 @@ public:
         , fetcher_(std::make_shared<etl::impl::LedgerFetcher>(backend_, balancer_))
         , extractor_(std::make_shared<impl::Extractor>(fetcher_))
         , amendmentBlockHandler_(std::make_shared<etlng::impl::AmendmentBlockHandler>(ctx_, state_))
-        , loader_(std::make_shared<impl::Loader>(
-              backend_,
-              fetcher_,
-              impl::makeRegistry(
-                  impl::CacheExt{backend_->cache()},
-                  impl::CoreExt{backend_},
-                  impl::SuccessorExt{backend_, backend_->cache()},
-                  impl::NFTExt{backend_}
-              ),
-              amendmentBlockHandler_
-          ))
+        , loader_(
+              std::make_shared<impl::Loader>(
+                  backend_,
+                  fetcher_,
+                  impl::makeRegistry(
+                      impl::CacheExt{backend_->cache()},
+                      impl::CoreExt{backend_},
+                      impl::SuccessorExt{backend_, backend_->cache()},
+                      impl::NFTExt{backend_}
+                  ),
+                  amendmentBlockHandler_
+              )
+          )
     {
         LOG(log_.info()) << "Creating ETLng...";
     }
@@ -177,9 +179,10 @@ public:
 
             LOG(log_.debug()) << "Database is populated. Starting monitor loop. sequence = " << nextSequence;
 
-            auto scheduler = impl::makeScheduler(impl::ForwardScheduler{*ledgers_, nextSequence}
-                                                 // impl::BackfillScheduler{nextSequence - 1, nextSequence - 1000},
-                                                 // TODO lift limit and start with rng.minSeq
+            auto scheduler = impl::makeScheduler(
+                impl::ForwardScheduler{*ledgers_, nextSequence}
+                // impl::BackfillScheduler{nextSequence - 1, nextSequence - 1000},
+                // TODO lift limit and start with rng.minSeq
             );
 
             auto man = impl::TaskManager(ctx_, *scheduler, *extractor_, *loader_);

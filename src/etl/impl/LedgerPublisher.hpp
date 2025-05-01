@@ -247,8 +247,8 @@ public:
     std::chrono::time_point<std::chrono::system_clock>
     getLastPublish() const
     {
-        return std::chrono::time_point<std::chrono::system_clock>{std::chrono::seconds{lastPublishSeconds_.get().value()
-        }};
+        return std::chrono::time_point<std::chrono::system_clock>{std::chrono::seconds{lastPublishSeconds_.get().value(
+        )}};
     }
 
     /**

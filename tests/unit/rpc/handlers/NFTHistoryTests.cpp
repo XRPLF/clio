@@ -307,17 +307,19 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto static const kINPUT = json::parse(fmt::format(
-            R"({{
+        auto static const kINPUT = json::parse(
+            fmt::format(
+                R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": true
             }})",
-            kNFT_ID,
-            kMIN_SEQ + 1,
-            kMAX_SEQ - 1
-        ));
+                kNFT_ID,
+                kMIN_SEQ + 1,
+                kMAX_SEQ - 1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
@@ -451,17 +453,19 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV1)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto static const kINPUT = json::parse(fmt::format(
-            R"({{
+        auto static const kINPUT = json::parse(
+            fmt::format(
+                R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
             }})",
-            kNFT_ID,
-            kMIN_SEQ + 1,
-            kMAX_SEQ - 1
-        ));
+                kNFT_ID,
+                kMIN_SEQ + 1,
+                kMAX_SEQ - 1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), boost::json::parse(kOUTPUT));
@@ -605,17 +609,19 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto static const kINPUT = json::parse(fmt::format(
-            R"({{
+        auto static const kINPUT = json::parse(
+            fmt::format(
+                R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
             }})",
-            kNFT_ID,
-            kMIN_SEQ + 1,
-            kMAX_SEQ - 1
-        ));
+                kNFT_ID,
+                kMIN_SEQ + 1,
+                kMAX_SEQ - 1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), boost::json::parse(kOUTPUT));
@@ -637,17 +643,19 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto static const kINPUT = json::parse(fmt::format(
-            R"({{
+        auto static const kINPUT = json::parse(
+            fmt::format(
+                R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": true
             }})",
-            kNFT_ID,
-            -1,
-            -1
-        ));
+                kNFT_ID,
+                -1,
+                -1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
@@ -678,17 +686,19 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto static const kINPUT = json::parse(fmt::format(
-            R"({{
+        auto static const kINPUT = json::parse(
+            fmt::format(
+                R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
             }})",
-            kNFT_ID,
-            -1,
-            -1
-        ));
+                kNFT_ID,
+                -1,
+                -1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
@@ -719,17 +729,19 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV1)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto static const kINPUT = json::parse(fmt::format(
-            R"({{
+        auto static const kINPUT = json::parse(
+            fmt::format(
+                R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "binary": true
             }})",
-            kNFT_ID,
-            -1,
-            -1
-        ));
+                kNFT_ID,
+                -1,
+                -1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
@@ -773,17 +785,19 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto static const kINPUT = json::parse(fmt::format(
-            R"({{
+        auto static const kINPUT = json::parse(
+            fmt::format(
+                R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "binary": true
             }})",
-            kNFT_ID,
-            -1,
-            -1
-        ));
+                kNFT_ID,
+                -1,
+                -1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
@@ -824,8 +838,9 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitAndMarker)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto static const kINPUT = json::parse(fmt::format(
-            R"({{
+        auto static const kINPUT = json::parse(
+            fmt::format(
+                R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
@@ -833,10 +848,11 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitAndMarker)
                 "forward": false,
                 "marker": {{"ledger":10,"seq":11}}
             }})",
-            kNFT_ID,
-            -1,
-            -1
-        ));
+                kNFT_ID,
+                -1,
+                -1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
@@ -872,14 +888,16 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto static const kINPUT = json::parse(fmt::format(
-            R"({{
+        auto static const kINPUT = json::parse(
+            fmt::format(
+                R"({{
                 "nft_id":"{}",
                 "ledger_index":{}
             }})",
-            kNFT_ID,
-            kMAX_SEQ - 1
-        ));
+                kNFT_ID,
+                kMAX_SEQ - 1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
@@ -898,14 +916,16 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerIntIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto static const kINPUT = json::parse(fmt::format(
-            R"({{
+        auto static const kINPUT = json::parse(
+            fmt::format(
+                R"({{
                 "nft_id":"{}",
                 "ledger_index":{}
             }})",
-            kNFT_ID,
-            kMAX_SEQ - 1
-        ));
+                kNFT_ID,
+                kMAX_SEQ - 1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -921,14 +941,16 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerStringIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto static const kINPUT = json::parse(fmt::format(
-            R"({{
+        auto static const kINPUT = json::parse(
+            fmt::format(
+                R"({{
                 "nft_id":"{}",
                 "ledger_index":"{}"
             }})",
-            kNFT_ID,
-            kMAX_SEQ - 1
-        ));
+                kNFT_ID,
+                kMAX_SEQ - 1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -961,14 +983,16 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto static const kINPUT = json::parse(fmt::format(
-            R"({{
+        auto static const kINPUT = json::parse(
+            fmt::format(
+                R"({{
                 "nft_id":"{}",
                 "ledger_hash":"{}"
             }})",
-            kNFT_ID,
-            kLEDGER_HASH
-        ));
+                kNFT_ID,
+                kLEDGER_HASH
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
@@ -999,17 +1023,19 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLessThanMinSeq)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto static const kINPUT = json::parse(fmt::format(
-            R"({{
+        auto static const kINPUT = json::parse(
+            fmt::format(
+                R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
             }})",
-            kNFT_ID,
-            kMIN_SEQ + 2,
-            kMAX_SEQ - 1
-        ));
+                kNFT_ID,
+                kMIN_SEQ + 2,
+                kMAX_SEQ - 1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
@@ -1040,17 +1066,19 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto static const kINPUT = json::parse(fmt::format(
-            R"({{
+        auto static const kINPUT = json::parse(
+            fmt::format(
+                R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
             }})",
-            kNFT_ID,
-            kMIN_SEQ + 1,
-            kMAX_SEQ - 2
-        ));
+                kNFT_ID,
+                kMIN_SEQ + 1,
+                kMAX_SEQ - 2
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
@@ -1081,19 +1109,21 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitMoreThanMax)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
-        auto static const kINPUT = json::parse(fmt::format(
-            R"({{
+        auto static const kINPUT = json::parse(
+            fmt::format(
+                R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false,
                 "limit": {}
             }})",
-            kNFT_ID,
-            kMIN_SEQ + 1,
-            kMAX_SEQ - 1,
-            NFTHistoryHandler::kLIMIT_MAX + 1
-        ));
+                kNFT_ID,
+                kMIN_SEQ + 1,
+                kMAX_SEQ - 1,
+                NFTHistoryHandler::kLIMIT_MAX + 1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);

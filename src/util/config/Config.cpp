@@ -54,7 +54,8 @@ Config::Config(boost::json::value store) : store_(std::move(store))
 {
 }
 
-Config::operator bool() const noexcept
+Config::
+operator bool() const noexcept
 {
     return not store_.is_null();
 }

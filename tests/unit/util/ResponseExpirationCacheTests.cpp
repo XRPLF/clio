@@ -90,10 +90,12 @@ TEST_F(ResponseExpirationCacheTest, GetOrUpdateNoValueInCacheCallsUpdaterAndVeri
 
     runSpawn([&](boost::asio::yield_context yield) {
         EXPECT_CALL(mockUpdater, Call)
-            .WillOnce(Return(ResponseExpirationCache::EntryData{
-                .lastUpdated = std::chrono::steady_clock::now(),
-                .response = obj,
-            }));
+            .WillOnce(Return(
+                ResponseExpirationCache::EntryData{
+                    .lastUpdated = std::chrono::steady_clock::now(),
+                    .response = obj,
+                }
+            ));
         EXPECT_CALL(mockVerifier, Call).WillOnce(Return(true));
 
         auto result =
@@ -111,10 +113,12 @@ TEST_F(ResponseExpirationCacheTest, GetOrUpdateExpiredValueInCacheCallsUpdaterAn
     runSpawn([&](boost::asio::yield_context yield) {
         boost::json::object const expiredObject = {{"some key", "expired value"}};
         EXPECT_CALL(mockUpdater, Call)
-            .WillOnce(Return(ResponseExpirationCache::EntryData{
-                .lastUpdated = std::chrono::steady_clock::now(),
-                .response = expiredObject,
-            }));
+            .WillOnce(Return(
+                ResponseExpirationCache::EntryData{
+                    .lastUpdated = std::chrono::steady_clock::now(),
+                    .response = expiredObject,
+                }
+            ));
         EXPECT_CALL(mockVerifier, Call).WillOnce(Return(true));
 
         auto result =
@@ -145,10 +149,12 @@ TEST_F(ResponseExpirationCacheTest, GetOrUpdateCachedValueNotExpiredDoesNotCallU
     runSpawn([&](boost::asio::yield_context yield) {
         // First call to populate cache
         EXPECT_CALL(mockUpdater, Call)
-            .WillOnce(Return(ResponseExpirationCache::EntryData{
-                .lastUpdated = std::chrono::steady_clock::now(),
-                .response = obj,
-            }));
+            .WillOnce(Return(
+                ResponseExpirationCache::EntryData{
+                    .lastUpdated = std::chrono::steady_clock::now(),
+                    .response = obj,
+                }
+            ));
         EXPECT_CALL(mockVerifier, Call).WillOnce(Return(true));
 
         auto result =
@@ -190,10 +196,12 @@ TEST_F(ResponseExpirationCacheTest, GetOrUpdateVerifierRejection)
 
     runSpawn([&](boost::asio::yield_context yield) {
         EXPECT_CALL(mockUpdater, Call)
-            .WillOnce(Return(ResponseExpirationCache::EntryData{
-                .lastUpdated = std::chrono::steady_clock::now(),
-                .response = obj,
-            }));
+            .WillOnce(Return(
+                ResponseExpirationCache::EntryData{
+                    .lastUpdated = std::chrono::steady_clock::now(),
+                    .response = obj,
+                }
+            ));
         EXPECT_CALL(mockVerifier, Call).WillOnce(Return(false));
 
         auto result =
@@ -204,10 +212,12 @@ TEST_F(ResponseExpirationCacheTest, GetOrUpdateVerifierRejection)
 
         boost::json::object const anotherObj = {{"some key", "another value"}};
         EXPECT_CALL(mockUpdater, Call)
-            .WillOnce(Return(ResponseExpirationCache::EntryData{
-                .lastUpdated = std::chrono::steady_clock::now(),
-                .response = anotherObj,
-            }));
+            .WillOnce(Return(
+                ResponseExpirationCache::EntryData{
+                    .lastUpdated = std::chrono::steady_clock::now(),
+                    .response = anotherObj,
+                }
+            ));
         EXPECT_CALL(mockVerifier, Call).WillOnce(Return(true));
 
         result = cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());
@@ -233,7 +243,8 @@ TEST_F(ResponseExpirationCacheTest, GetOrUpdateMultipleConcurrentUpdates)
 
     EXPECT_CALL(mockUpdater, Call)
         .WillOnce(
-            [this, &waitingCoroutine](boost::asio::yield_context yield
+            [this, &waitingCoroutine](
+                boost::asio::yield_context yield
             ) -> std::expected<ResponseExpirationCache::EntryData, ResponseExpirationCache::Error> {
                 boost::asio::spawn(yield, waitingCoroutine);
                 return ResponseExpirationCache::EntryData{
@@ -261,10 +272,12 @@ TEST_F(ResponseExpirationCacheTest, InvalidateForcesRefresh)
     runSpawn([&](boost::asio::yield_context yield) {
         boost::json::object const oldObject = {{"some key", "old value"}};
         EXPECT_CALL(mockUpdater, Call)
-            .WillOnce(Return(ResponseExpirationCache::EntryData{
-                .lastUpdated = std::chrono::steady_clock::now(),
-                .response = oldObject,
-            }));
+            .WillOnce(Return(
+                ResponseExpirationCache::EntryData{
+                    .lastUpdated = std::chrono::steady_clock::now(),
+                    .response = oldObject,
+                }
+            ));
         EXPECT_CALL(mockVerifier, Call).WillOnce(Return(true));
 
         auto result =
@@ -276,10 +289,12 @@ TEST_F(ResponseExpirationCacheTest, InvalidateForcesRefresh)
         cache.invalidate();
 
         EXPECT_CALL(mockUpdater, Call)
-            .WillOnce(Return(ResponseExpirationCache::EntryData{
-                .lastUpdated = std::chrono::steady_clock::now(),
-                .response = obj,
-            }));
+            .WillOnce(Return(
+                ResponseExpirationCache::EntryData{
+                    .lastUpdated = std::chrono::steady_clock::now(),
+                    .response = obj,
+                }
+            ));
         EXPECT_CALL(mockVerifier, Call).WillOnce(Return(true));
 
         result = cache.getOrUpdate(yield, "server_info", mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());

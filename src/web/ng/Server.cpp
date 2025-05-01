@@ -187,7 +187,8 @@ tryUpgradeConnection(
         if (expectedUpgradedConnection.has_value())
             return std::move(expectedUpgradedConnection).value();
 
-        return std::unexpected{fmt::format("Error upgrading connection: {}", expectedUpgradedConnection.error().what())
+        return std::unexpected{
+            fmt::format("Error upgrading connection: {}", expectedUpgradedConnection.error().what())
         };
     }
 

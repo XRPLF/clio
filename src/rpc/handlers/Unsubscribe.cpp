@@ -130,8 +130,10 @@ UnsubscribeHandler::unsubscribeFromStreams(
 }
 
 void
-UnsubscribeHandler::unsubscribeFromAccounts(std::vector<std::string> accounts, feed::SubscriberSharedPtr const& session)
-    const
+UnsubscribeHandler::unsubscribeFromAccounts(
+    std::vector<std::string> accounts,
+    feed::SubscriberSharedPtr const& session
+) const
 {
     for (auto const& account : accounts) {
         auto const accountID = accountFromStringStrict(account);
@@ -151,8 +153,10 @@ UnsubscribeHandler::unsubscribeFromProposedAccounts(
     }
 }
 void
-UnsubscribeHandler::unsubscribeFromBooks(std::vector<OrderBook> const& books, feed::SubscriberSharedPtr const& session)
-    const
+UnsubscribeHandler::unsubscribeFromBooks(
+    std::vector<OrderBook> const& books,
+    feed::SubscriberSharedPtr const& session
+) const
 {
     for (auto const& orderBook : books) {
         subscriptions_->unsubBook(orderBook.book, session);

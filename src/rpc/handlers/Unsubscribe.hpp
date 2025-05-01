@@ -106,8 +106,10 @@ private:
     unsubscribeFromAccounts(std::vector<std::string> accounts, feed::SubscriberSharedPtr const& session) const;
 
     void
-    unsubscribeFromProposedAccounts(std::vector<std::string> accountsProposed, feed::SubscriberSharedPtr const& session)
-        const;
+    unsubscribeFromProposedAccounts(
+        std::vector<std::string> accountsProposed,
+        feed::SubscriberSharedPtr const& session
+    ) const;
 
     void
     unsubscribeFromBooks(std::vector<OrderBook> const& books, feed::SubscriberSharedPtr const& session) const;

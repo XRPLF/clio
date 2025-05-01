@@ -318,9 +318,11 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_Forwarded)
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
-                .WillOnce(Return(rpc::Result{rpc::ReturnType{boost::json::object{
-                    {"result", boost::json::object{{"some key", "some value"}}}, {"forwarded", true}
-                }}}));
+                .WillOnce(Return(
+                    rpc::Result{rpc::ReturnType{boost::json::object{
+                        {"result", boost::json::object{{"some key", "some value"}}}, {"forwarded", true}
+                    }}}
+                ));
             EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
             fn(yield);
@@ -350,9 +352,11 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_HasError)
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
-                .WillOnce(Return(rpc::Result{
-                    rpc::ReturnType{boost::json::object{{"some key", "some value"}, {"error", "some error"}}}
-                }));
+                .WillOnce(Return(
+                    rpc::Result{
+                        rpc::ReturnType{boost::json::object{{"some key", "some value"}, {"error", "some error"}}}
+                    }
+                ));
             EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
             fn(yield);
@@ -429,9 +433,11 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest_HasError)
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
-                .WillOnce(Return(rpc::Result{
-                    rpc::ReturnType{boost::json::object{{"some key", "some value"}, {"error", "some error"}}}
-                }));
+                .WillOnce(Return(
+                    rpc::Result{
+                        rpc::ReturnType{boost::json::object{{"some key", "some value"}, {"error", "some error"}}}
+                    }
+                ));
             EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
             fn(yield);

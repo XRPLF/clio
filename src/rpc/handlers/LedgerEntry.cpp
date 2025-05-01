@@ -175,9 +175,9 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     } else if (input.mptoken) {
         auto const holder =
             ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.mptoken->at(JS(account))));
-        auto const mptIssuanceID =
-            ripple::uint192{std::string_view(boost::json::value_to<std::string>(input.mptoken->at(JS(mpt_issuance_id))))
-            };
+        auto const mptIssuanceID = ripple::uint192{
+            std::string_view(boost::json::value_to<std::string>(input.mptoken->at(JS(mpt_issuance_id))))
+        };
         key = ripple::keylet::mptoken(mptIssuanceID, *holder).key;
     } else if (input.permissionedDomain) {
         auto const account = ripple::parseBase58<ripple::AccountID>(

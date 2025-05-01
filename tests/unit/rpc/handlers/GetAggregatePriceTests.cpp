@@ -459,8 +459,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, LedgerNotFound)
 {
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillOnce(Return(std::nullopt));
     constexpr auto kDOCUMENT_ID = 1;
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "oracles":
@@ -471,9 +472,10 @@ TEST_F(RPCGetAggregatePriceHandlerTest, LedgerNotFound)
                     }}
                 ]
             }})",
-        kACCOUNT,
-        kDOCUMENT_ID
-    ));
+            kACCOUNT,
+            kDOCUMENT_ID
+        )
+    );
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
@@ -493,8 +495,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntrySinglePriceData)
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID, kTX1, 1e3, 2);  // 10
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "oracles":
@@ -505,12 +508,14 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntrySinglePriceData)
                     }}
                 ]
             }})",
-        kACCOUNT,
-        kDOCUMENT_ID
-    ));
+            kACCOUNT,
+            kDOCUMENT_ID
+        )
+    );
 
-    auto const expected = json::parse(fmt::format(
-        R"({{
+    auto const expected = json::parse(
+        fmt::format(
+            R"({{
                 "entire_set":
                 {{
                     "mean": "10",
@@ -523,9 +528,10 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntrySinglePriceData)
                 "ledger_hash": "{}",
                 "validated": true
             }})",
-        kRANGE_MAX,
-        kLEDGER_HASH
-    ));
+            kRANGE_MAX,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -542,8 +548,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryStrOracleDocumentId)
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID, kTX1, 1e3, 2);  // 10
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "oracles":
@@ -554,12 +561,14 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryStrOracleDocumentId)
                     }}
                 ]
             }})",
-        kACCOUNT,
-        kDOCUMENT_ID
-    ));
+            kACCOUNT,
+            kDOCUMENT_ID
+        )
+    );
 
-    auto const expected = json::parse(fmt::format(
-        R"({{
+    auto const expected = json::parse(
+        fmt::format(
+            R"({{
                 "entire_set":
                 {{
                     "mean": "10",
@@ -572,9 +581,10 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryStrOracleDocumentId)
                 "ledger_hash": "{}",
                 "validated": true
             }})",
-        kRANGE_MAX,
-        kLEDGER_HASH
-    ));
+            kRANGE_MAX,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -591,8 +601,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, PreviousTxNotFound)
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID, kTX1, 1e3, 2);  // 10
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "JPY",
                 "quote_asset": "XRP",
                 "oracles":
@@ -603,12 +614,14 @@ TEST_F(RPCGetAggregatePriceHandlerTest, PreviousTxNotFound)
                     }}
                 ]
             }})",
-        kACCOUNT,
-        kDOCUMENT_ID
-    ));
+            kACCOUNT,
+            kDOCUMENT_ID
+        )
+    );
 
-    auto const expected = json::parse(fmt::format(
-        R"({{
+    auto const expected = json::parse(
+        fmt::format(
+            R"({{
                 "entire_set":
                 {{
                     "mean": "10",
@@ -621,9 +634,10 @@ TEST_F(RPCGetAggregatePriceHandlerTest, PreviousTxNotFound)
                 "ledger_hash": "{}",
                 "validated": true
             }})",
-        kRANGE_MAX,
-        kLEDGER_HASH
-    ));
+            kRANGE_MAX,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -648,16 +662,18 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewLedgerObjectHasNoPricePair)
             123,
             1,
             4321u,
-            createPriceDataSeries({createOraclePriceData(1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2)
-            }),
+            createPriceDataSeries(
+                {createOraclePriceData(1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2)}
+            ),
             kINDEX,
             true,
             kTX2
         )));
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "JPY",
                 "quote_asset": "XRP",
                 "oracles":
@@ -668,12 +684,14 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewLedgerObjectHasNoPricePair)
                     }}
                 ]
             }})",
-        kACCOUNT,
-        kDOCUMENT_ID
-    ));
+            kACCOUNT,
+            kDOCUMENT_ID
+        )
+    );
 
-    auto const expected = json::parse(fmt::format(
-        R"({{
+    auto const expected = json::parse(
+        fmt::format(
+            R"({{
                 "entire_set":
                 {{
                     "mean": "10",
@@ -686,9 +704,10 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewLedgerObjectHasNoPricePair)
                 "ledger_hash": "{}",
                 "validated": true
             }})",
-        kRANGE_MAX,
-        kLEDGER_HASH
-    ));
+            kRANGE_MAX,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -712,8 +731,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesOdd)
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID3, kTX1, 3e3, 1);  // 300
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "oracles":
@@ -732,16 +752,18 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesOdd)
                     }}
                 ]
             }})",
-        kACCOUNT,
-        kDOCUMENT_ID1,
-        kACCOUNT,
-        kDOCUMENT_ID2,
-        kACCOUNT,
-        kDOCUMENT_ID3
-    ));
+            kACCOUNT,
+            kDOCUMENT_ID1,
+            kACCOUNT,
+            kDOCUMENT_ID2,
+            kACCOUNT,
+            kDOCUMENT_ID3
+        )
+    );
 
-    auto const expected = json::parse(fmt::format(
-        R"({{
+    auto const expected = json::parse(
+        fmt::format(
+            R"({{
                 "entire_set":
                 {{
                     "mean": "110",
@@ -754,9 +776,10 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesOdd)
                 "ledger_hash": "{}",
                 "validated": true
             }})",
-        kRANGE_MAX,
-        kLEDGER_HASH
-    ));
+            kRANGE_MAX,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -780,8 +803,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesEven)
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID3, kTX1, 3e3, 1);  // 300
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "oracles":
@@ -804,18 +828,20 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesEven)
                     }}
                 ]
             }})",
-        kACCOUNT,
-        kDOCUMENT_ID1,
-        kACCOUNT,
-        kDOCUMENT_ID2,
-        kACCOUNT,
-        kDOCUMENT_ID3,
-        kACCOUNT,
-        kDOCUMENT_ID4
-    ));
+            kACCOUNT,
+            kDOCUMENT_ID1,
+            kACCOUNT,
+            kDOCUMENT_ID2,
+            kACCOUNT,
+            kDOCUMENT_ID3,
+            kACCOUNT,
+            kDOCUMENT_ID4
+        )
+    );
 
-    auto const expected = json::parse(fmt::format(
-        R"({{
+    auto const expected = json::parse(
+        fmt::format(
+            R"({{
                 "entire_set":
                 {{
                     "mean": "92.5",
@@ -828,9 +854,10 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesEven)
                 "ledger_hash": "{}",
                 "validated": true
             }})",
-        kRANGE_MAX,
-        kLEDGER_HASH
-    ));
+            kRANGE_MAX,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -854,8 +881,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID3, kTX1, 3e3, 1);  // 300
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "trim": {},
@@ -879,19 +907,21 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
                     }}
                 ]
             }})",
-        25,
-        kACCOUNT,
-        kDOCUMENT_ID1,
-        kACCOUNT,
-        kDOCUMENT_ID2,
-        kACCOUNT,
-        kDOCUMENT_ID3,
-        kACCOUNT,
-        kDOCUMENT_ID4
-    ));
+            25,
+            kACCOUNT,
+            kDOCUMENT_ID1,
+            kACCOUNT,
+            kDOCUMENT_ID2,
+            kACCOUNT,
+            kDOCUMENT_ID3,
+            kACCOUNT,
+            kDOCUMENT_ID4
+        )
+    );
 
-    auto const expected = json::parse(fmt::format(
-        R"({{
+    auto const expected = json::parse(
+        fmt::format(
+            R"({{
                 "entire_set":
                 {{
                     "mean": "92.5",
@@ -910,9 +940,10 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
                 "ledger_hash": "{}",
                 "validated": true
             }})",
-        kRANGE_MAX,
-        kLEDGER_HASH
-    ));
+            kRANGE_MAX,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -930,8 +961,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoOracleEntryFound)
     EXPECT_CALL(*backend_, doFetchLedgerObject(oracleIndex, kRANGE_MAX, _)).WillOnce(Return(std::nullopt));
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "oracles":
@@ -942,9 +974,10 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoOracleEntryFound)
                     }}
                 ]
             }})",
-        kACCOUNT,
-        kDOCUMENT_ID
-    ));
+            kACCOUNT,
+            kDOCUMENT_ID
+        )
+    );
 
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
@@ -964,8 +997,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoMatchAssetPair)
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID, kTX1, 1e3, 2);  // 10
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "JPY",
                 "quote_asset": "XRP",
                 "oracles":
@@ -976,9 +1010,10 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoMatchAssetPair)
                     }}
                 ]
             }})",
-        kACCOUNT,
-        kDOCUMENT_ID
-    ));
+            kACCOUNT,
+            kDOCUMENT_ID
+        )
+    );
 
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
@@ -1008,8 +1043,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIsZero)
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID3, kTX1, 3e3, 1, kTIMESTAMP4);  // 300
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "time_threshold": {},
@@ -1033,19 +1069,21 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIsZero)
                     }}
                 ]
             }})",
-        0,
-        kACCOUNT,
-        kDOCUMENT_ID1,
-        kACCOUNT,
-        kDOCUMENT_ID2,
-        kACCOUNT,
-        kDOCUMENT_ID3,
-        kACCOUNT,
-        kDOCUMENT_ID4
-    ));
+            0,
+            kACCOUNT,
+            kDOCUMENT_ID1,
+            kACCOUNT,
+            kDOCUMENT_ID2,
+            kACCOUNT,
+            kDOCUMENT_ID3,
+            kACCOUNT,
+            kDOCUMENT_ID4
+        )
+    );
 
-    auto const expected = json::parse(fmt::format(
-        R"({{
+    auto const expected = json::parse(
+        fmt::format(
+            R"({{
                 "entire_set":
                 {{
                     "mean": "10",
@@ -1058,10 +1096,11 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIsZero)
                 "ledger_hash": "{}",
                 "validated": true
             }})",
-        kTIMESTAMP1,
-        kRANGE_MAX,
-        kLEDGER_HASH
-    ));
+            kTIMESTAMP1,
+            kRANGE_MAX,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -1088,8 +1127,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID3, kTX1, 3e3, 1, kTIMESTAMP4);  // 300
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "time_threshold": {},
@@ -1113,19 +1153,21 @@ TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
                     }}
                 ]
             }})",
-        kTIMESTAMP1 - kTIMESTAMP2,
-        kACCOUNT,
-        kDOCUMENT_ID1,
-        kACCOUNT,
-        kDOCUMENT_ID2,
-        kACCOUNT,
-        kDOCUMENT_ID3,
-        kACCOUNT,
-        kDOCUMENT_ID4
-    ));
+            kTIMESTAMP1 - kTIMESTAMP2,
+            kACCOUNT,
+            kDOCUMENT_ID1,
+            kACCOUNT,
+            kDOCUMENT_ID2,
+            kACCOUNT,
+            kDOCUMENT_ID3,
+            kACCOUNT,
+            kDOCUMENT_ID4
+        )
+    );
 
-    auto const expected = json::parse(fmt::format(
-        R"({{
+    auto const expected = json::parse(
+        fmt::format(
+            R"({{
                 "entire_set":
                 {{
                     "mean": "15",
@@ -1138,10 +1180,11 @@ TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
                 "ledger_hash": "{}",
                 "validated": true
             }})",
-        kTIMESTAMP1,
-        kRANGE_MAX,
-        kLEDGER_HASH
-    ));
+            kTIMESTAMP1,
+            kRANGE_MAX,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -1168,8 +1211,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID3, kTX1, 3e3, 1, kTIMESTAMP4);  // 300
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "time_threshold": {},
@@ -1193,19 +1237,21 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
                     }}
                 ]
             }})",
-        kTIMESTAMP1 + 1,
-        kACCOUNT,
-        kDOCUMENT_ID1,
-        kACCOUNT,
-        kDOCUMENT_ID2,
-        kACCOUNT,
-        kDOCUMENT_ID3,
-        kACCOUNT,
-        kDOCUMENT_ID4
-    ));
+            kTIMESTAMP1 + 1,
+            kACCOUNT,
+            kDOCUMENT_ID1,
+            kACCOUNT,
+            kDOCUMENT_ID2,
+            kACCOUNT,
+            kDOCUMENT_ID3,
+            kACCOUNT,
+            kDOCUMENT_ID4
+        )
+    );
 
-    auto const expected = json::parse(fmt::format(
-        R"({{
+    auto const expected = json::parse(
+        fmt::format(
+            R"({{
                 "entire_set":
                 {{
                     "mean": "92.5",
@@ -1218,9 +1264,10 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
                 "ledger_hash": "{}",
                 "validated": true
             }})",
-        kRANGE_MAX,
-        kLEDGER_HASH
-    ));
+            kRANGE_MAX,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -1247,8 +1294,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIncludeOldest)
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID3, kTX1, 3e3, 1, kTIMESTAMP4);  // 300
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "time_threshold": {},
@@ -1272,19 +1320,21 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIncludeOldest)
                     }}
                 ]
             }})",
-        kTIMESTAMP4 - kTIMESTAMP1,
-        kACCOUNT,
-        kDOCUMENT_ID1,
-        kACCOUNT,
-        kDOCUMENT_ID2,
-        kACCOUNT,
-        kDOCUMENT_ID3,
-        kACCOUNT,
-        kDOCUMENT_ID4
-    ));
+            kTIMESTAMP4 - kTIMESTAMP1,
+            kACCOUNT,
+            kDOCUMENT_ID1,
+            kACCOUNT,
+            kDOCUMENT_ID2,
+            kACCOUNT,
+            kDOCUMENT_ID3,
+            kACCOUNT,
+            kDOCUMENT_ID4
+        )
+    );
 
-    auto const expected = json::parse(fmt::format(
-        R"({{
+    auto const expected = json::parse(
+        fmt::format(
+            R"({{
                 "entire_set":
                 {{
                     "mean": "92.5",
@@ -1297,9 +1347,10 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIncludeOldest)
                 "ledger_hash": "{}",
                 "validated": true
             }})",
-        kRANGE_MAX,
-        kLEDGER_HASH
-    ));
+            kRANGE_MAX,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -1324,16 +1375,18 @@ TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
             123,
             1,
             4321u,
-            createPriceDataSeries({createOraclePriceData(1e3, ripple::to_currency("JPY"), ripple::to_currency("XRP"), 2)
-            }),
+            createPriceDataSeries(
+                {createOraclePriceData(1e3, ripple::to_currency("JPY"), ripple::to_currency("XRP"), 2)}
+            ),
             ripple::to_string(oracleIndex),
             false,
             kTX1
         )));
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "JPY",
                 "quote_asset": "XRP",
                 "oracles":
@@ -1344,12 +1397,14 @@ TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
                     }}
                 ]
             }})",
-        kACCOUNT,
-        kDOCUMENT_ID
-    ));
+            kACCOUNT,
+            kDOCUMENT_ID
+        )
+    );
 
-    auto const expected = json::parse(fmt::format(
-        R"({{
+    auto const expected = json::parse(
+        fmt::format(
+            R"({{
                 "entire_set":
                 {{
                     "mean": "10",
@@ -1362,9 +1417,10 @@ TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
                 "ledger_hash": "{}",
                 "validated": true
             }})",
-        kRANGE_MAX,
-        kLEDGER_HASH
-    ));
+            kRANGE_MAX,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -1387,8 +1443,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
             123,
             1,
             4321u,
-            createPriceDataSeries({createOraclePriceData(1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2)
-            }),
+            createPriceDataSeries(
+                {createOraclePriceData(1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2)}
+            ),
             ripple::to_string(oracleIndex),
             false,
             kTX2
@@ -1401,16 +1458,18 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
             123,
             1,
             4321u,
-            createPriceDataSeries({createOraclePriceData(1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2)
-            }),
+            createPriceDataSeries(
+                {createOraclePriceData(1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2)}
+            ),
             ripple::to_string(oracleIndex),
             false,
             kTX2
         )));
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
-    auto const req = json::parse(fmt::format(
-        R"({{
+    auto const req = json::parse(
+        fmt::format(
+            R"({{
                 "base_asset": "JPY",
                 "quote_asset": "XRP",
                 "oracles":
@@ -1421,9 +1480,10 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
                     }}
                 ]
             }})",
-        kACCOUNT,
-        kDOCUMENT_ID
-    ));
+            kACCOUNT,
+            kDOCUMENT_ID
+        )
+    );
 
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
