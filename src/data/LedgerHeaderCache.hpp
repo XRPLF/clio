@@ -29,7 +29,7 @@
 #include <optional>
 #include <shared_mutex>
 
-namespace data::cassandra {
+namespace data {
 
 /**
  * @brief A simple cache holding one `ripple::LedgerHeader` to reduce DB lookups.
@@ -85,4 +85,4 @@ operator==(FetchLedgerCache::CacheEntry const& lhs, FetchLedgerCache::CacheEntry
     return lhs.ledger.hash == rhs.ledger.hash && lhs.seq == rhs.seq;
 }
 
-}  // namespace data::cassandra
+}  // namespace data

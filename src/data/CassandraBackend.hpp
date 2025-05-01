@@ -90,6 +90,7 @@ protected:
 
     // have to be mutable because BackendInterface constness :(
     mutable ExecutionStrategyType executor_;
+    // TODO: move to interface level
     FetchLedgerCacheType ledgerCache_;
 
 public:

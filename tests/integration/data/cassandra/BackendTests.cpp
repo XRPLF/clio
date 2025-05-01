@@ -1330,7 +1330,7 @@ TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
         auto* backendPtr = dynamic_cast<TestBackendType*>(backend_.get());
         ASSERT_NE(backendPtr, nullptr);
 
-        EXPECT_CALL(mockCache, put(FetchLedgerCache::CacheEntry{lgrInfo, testLedgerSeq}));
+        EXPECT_CALL(mockCache, put(data::FetchLedgerCache::CacheEntry{lgrInfo, testLedgerSeq}));
 
         {
             testing::InSequence s;
@@ -1339,7 +1339,7 @@ TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
 
             // second time, it would be cached
             EXPECT_CALL(mockCache, get())
-                .WillOnce(testing::Return(FetchLedgerCache::CacheEntry{.ledger = lgrInfo, .seq = testLedgerSeq}));
+                .WillOnce(testing::Return(data::FetchLedgerCache::CacheEntry{.ledger = lgrInfo, .seq = testLedgerSeq}));
         }
 
         {

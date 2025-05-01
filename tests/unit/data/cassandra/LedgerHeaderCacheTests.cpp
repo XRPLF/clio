@@ -24,7 +24,7 @@
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/LedgerHeader.h>
 
-using namespace data::cassandra;
+using namespace data;
 using Test = ::testing::Test;
 
 constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
