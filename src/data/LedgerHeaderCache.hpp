@@ -50,13 +50,15 @@ public:
         ripple::LedgerHeader ledger;
         uint32_t seq{};
 
-       /**
-        * @brief Comparing CacheEntry. Used in testing for EXPECT_CALL
-        *
-        * @param other The other cacheEntry to compare
-        * @return true if two CacheEntry is the same, false otherwise
-        */
-        bool operator==(CacheEntry const& other) const {
+        /**
+         * @brief Comparing CacheEntry. Used in testing for EXPECT_CALL
+         *
+         * @param other The other cacheEntry to compare
+         * @return true if two CacheEntry is the same, false otherwise
+         */
+        bool
+        operator==(CacheEntry const& other) const
+        {
             return ledger.hash == other.ledger.hash && seq == other.seq;
         }
     };
@@ -76,7 +78,6 @@ public:
      */
     std::optional<CacheEntry>
     get() const;
-
 
 private:
     std::unique_ptr<util::Mutex<std::optional<CacheEntry>, std::shared_mutex>> mutexPtr_;

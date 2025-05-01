@@ -276,10 +276,8 @@ public:
     std::optional<ripple::LedgerHeader>
     fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context yield) const override
     {
-        {
-            if (auto const lock = ledgerCache_.get(); lock.has_value() && lock->seq == sequence)
-                return lock->ledger;
-        }
+        if (auto const lock = ledgerCache_.get(); lock.has_value() && lock->seq == sequence)
+            return lock->ledger;
 
         auto const res = executor_.read(yield, schema_->selectLedgerBySeq, sequence);
         if (res) {
