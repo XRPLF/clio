@@ -106,12 +106,22 @@ public:
     void
     operator()(std::string const& request, std::shared_ptr<web::ConnectionBase> const& connection)
     {
+        if (not dosguard_.get().isOk(connection->clientIp)) {
+            connection->sendSlowDown(request);
+            return;
+        }
+
         try {
             auto req = boost::json::parse(request).as_object();
             LOG(perfLog_.debug()) << connection->tag() << "Adding to work queue";
 
             if (not connection->upgraded and shouldReplaceParams(req))
                 req[JS(params)] = boost::json::array({boost::json::object{}});
+
+            if (not dosguard_.get().requestCmd(connection->clientIp, req)) {
+                connection->sendSlowDown(request);
+                return;
+            }
 
             if (!rpcEngine_->post(
                     [this, request = std::move(req), connection](boost::asio::yield_context yield) mutable {

@@ -82,6 +82,9 @@ public:
         throw std::logic_error("web server can not send the shared payload");
     }
 
+    virtual void
+    sendSlowDown(std::string const& request) = 0;
+
     /**
      * @brief Get the subscription context for this connection.
      *

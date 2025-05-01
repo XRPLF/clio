@@ -40,6 +40,7 @@ struct ConnectionBaseMock : web::ConnectionBase {
         (util::TagDecoratorFactory const& factory),
         (override)
     );
+    MOCK_METHOD(void, sendSlowDown, (std::string const&), (override));
 };
 
 using ConnectionBaseStrictMockPtr = std::shared_ptr<testing::StrictMock<ConnectionBaseMock>>;
