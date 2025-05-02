@@ -40,6 +40,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
@@ -59,6 +60,7 @@ constexpr auto kMAX_SEQ = 30;
 struct MockWsBase : public web::ConnectionBase {
     std::string message;
     boost::beast::http::status lastStatus = boost::beast::http::status::unknown;
+    size_t slowDownCallsCounter{0};
 
     void
     send(std::shared_ptr<std::string> msgType) override
@@ -78,6 +80,7 @@ struct MockWsBase : public web::ConnectionBase {
     void
     sendSlowDown(std::string const&) override
     {
+        ++slowDownCallsCounter;
     }
 
     SubscriptionContextPtr
@@ -143,6 +146,33 @@ TEST_F(WebRPCServerHandlerTest, HTTPDefaultPath)
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(kRESPONSE));
 }
 
+TEST_F(WebRPCServerHandlerTest, HTTPRejectedByDosguard)
+{
+    static constexpr auto kREQUEST = R"({
+                                        "method": "server_info",
+                                        "params": [{}]
+                                    })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(false));
+
+    (*handler)(kREQUEST, session);
+    EXPECT_EQ(session->slowDownCallsCounter, 1);
+}
+
+TEST_F(WebRPCServerHandlerTest, HTTPRejectedByDosguardAfterParsing)
+{
+    static constexpr auto kREQUEST = R"({
+                                        "method": "server_info",
+                                        "params": [{}]
+                                    })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, requestCmd(session->clientIp, testing::_)).WillOnce(testing::Return(false));
+
+    (*handler)(kREQUEST, session);
+    EXPECT_EQ(session->slowDownCallsCounter, 1);
+}
+
 TEST_F(WebRPCServerHandlerTest, WsNormalPath)
 {
     session->upgraded = true;
@@ -180,6 +210,38 @@ TEST_F(WebRPCServerHandlerTest, WsNormalPath)
 
     (*handler)(kREQUEST, session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(kRESPONSE));
+}
+
+TEST_F(WebRPCServerHandlerTest, WsRejectedByDosguard)
+{
+    session->upgraded = true;
+    static constexpr auto kREQUEST = R"({
+                                        "command": "server_info",
+                                        "id": 99,
+                                        "api_version": 2
+                                    })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(false));
+
+    (*handler)(kREQUEST, session);
+    EXPECT_EQ(session->slowDownCallsCounter, 1);
+}
+
+TEST_F(WebRPCServerHandlerTest, WsRejectedByDosguardAfterParsing)
+{
+    session->upgraded = true;
+    static constexpr auto kREQUEST = R"({
+                                        "command": "server_info",
+                                        "id": 99,
+                                        "api_version": 2
+                                    })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, requestCmd(session->clientIp, boost::json::parse(kREQUEST).as_object()))
+        .WillOnce(testing::Return(false));
+
+    (*handler)(kREQUEST, session);
+    EXPECT_EQ(session->slowDownCallsCounter, 1);
 }
 
 TEST_F(WebRPCServerHandlerTest, HTTPForwardedPath)
