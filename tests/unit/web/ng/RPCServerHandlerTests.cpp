@@ -172,7 +172,7 @@ TEST_F(NgRpcServerHandlerTest, DosguardRejectedParsedRequest)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, requestCmd(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(false));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(false));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             fn(yield);
             return true;
@@ -195,7 +195,7 @@ TEST_F(NgRpcServerHandlerTest, DosguardAddsLoadWarning)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, requestCmd(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(false));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(false));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             fn(yield);
             return true;
@@ -237,7 +237,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_NoRangeFromBackend)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, requestCmd(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillOnce(Return(not request.isHttp()));
@@ -263,7 +263,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_ContextCreationFailed)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, requestCmd(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
@@ -287,7 +287,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_BuildResponseFailed)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, requestCmd(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
@@ -318,7 +318,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_BuildResponseThrewAnException)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, requestCmd(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
@@ -344,7 +344,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, requestCmd(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
@@ -377,7 +377,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_OutdatedWarning)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, requestCmd(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
@@ -416,7 +416,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_Forwarded)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, requestCmd(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
@@ -452,7 +452,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_HasError)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, requestCmd(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
@@ -504,7 +504,7 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest)
         auto const request = Request(requestStr, headers);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, requestCmd(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
@@ -539,7 +539,7 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest_HasError)
         auto const request = Request(requestStr, headers);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, requestCmd(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));

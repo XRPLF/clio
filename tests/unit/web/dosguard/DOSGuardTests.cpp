@@ -70,6 +70,7 @@ struct DOSGuardTest : NoLoggerFixture {
     NiceMock<MockWhitelistHandler> whitelistHandler;
     StrictMock<MockWeights> weightsMock;
     DOSGuard guard{cfg, whitelistHandler, weightsMock};
+    boost::json::object const request;
 };
 
 TEST_F(DOSGuardTest, Whitelisting)
@@ -118,11 +119,20 @@ TEST_F(DOSGuardTest, ClearFetchCountOnTimer)
 
 TEST_F(DOSGuardTest, RequestLimit)
 {
-    EXPECT_TRUE(guard.request(kIP));
-    EXPECT_TRUE(guard.request(kIP));
-    EXPECT_TRUE(guard.request(kIP));
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_TRUE(guard.request(kIP, request));
+
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_TRUE(guard.request(kIP, request));
+
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_TRUE(guard.request(kIP, request));
+
     EXPECT_TRUE(guard.isOk(kIP));
-    EXPECT_FALSE(guard.request(kIP));
+
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_FALSE(guard.request(kIP, request));
+
     EXPECT_FALSE(guard.isOk(kIP));
     guard.clear();
     EXPECT_TRUE(guard.isOk(kIP));  // can request again
@@ -130,11 +140,20 @@ TEST_F(DOSGuardTest, RequestLimit)
 
 TEST_F(DOSGuardTest, RequestLimitOnTimer)
 {
-    EXPECT_TRUE(guard.request(kIP));
-    EXPECT_TRUE(guard.request(kIP));
-    EXPECT_TRUE(guard.request(kIP));
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_TRUE(guard.request(kIP, request));
+
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_TRUE(guard.request(kIP, request));
+
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_TRUE(guard.request(kIP, request));
+
     EXPECT_TRUE(guard.isOk(kIP));
-    EXPECT_FALSE(guard.request(kIP));
+
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_FALSE(guard.request(kIP, request));
+
     EXPECT_FALSE(guard.isOk(kIP));
     guard.clear();
     EXPECT_TRUE(guard.isOk(kIP));  // can request again
