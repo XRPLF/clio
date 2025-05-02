@@ -123,21 +123,7 @@ DOSGuard::add(std::string const& ip, uint32_t numObjects) noexcept
 }
 
 [[maybe_unused]] bool
-DOSGuard::request(std::string const& ip) noexcept
-{
-    if (whitelistHandler_.get().isWhiteListed(ip))
-        return true;
-
-    {
-        auto lock = mtx_.lock<std::scoped_lock>();
-        lock->ipState[ip].requestsCount++;
-    }
-
-    return isOk(ip);
-}
-
-[[maybe_unused]] bool
-DOSGuard::requestCmd(std::string const& ip, boost::json::object const& request)
+DOSGuard::request(std::string const& ip, boost::json::object const& request)
 {
     if (whitelistHandler_.get().isWhiteListed(ip))
         return true;

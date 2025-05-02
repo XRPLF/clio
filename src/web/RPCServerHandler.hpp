@@ -118,7 +118,7 @@ public:
             if (not connection->upgraded and shouldReplaceParams(req))
                 req[JS(params)] = boost::json::array({boost::json::object{}});
 
-            if (not dosguard_.get().requestCmd(connection->clientIp, req)) {
+            if (not dosguard_.get().request(connection->clientIp, req)) {
                 connection->sendSlowDown(request);
                 return;
             }

@@ -319,6 +319,10 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"dos_guard.__ng_weights.[].method", Array{ConfigValue{ConfigType::String}.withConstraint(gRpcNameConstraint)}},
      {"dos_guard.__ng_weights.[].weight",
       Array{ConfigValue{ConfigType::Integer}.withConstraint(gValidateNonNegativeUint32)}},
+     {"dos_guard.__ng_weights.[].weight_ledger_current",
+      Array{ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNonNegativeUint32)}},
+     {"dos_guard.__ng_weights.[].weight_ledger_validated",
+      Array{ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNonNegativeUint32)}},
 
      {"workers",
       ConfigValue{ConfigType::Integer}

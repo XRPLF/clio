@@ -27,6 +27,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -40,8 +41,16 @@ namespace web::dosguard {
  * or fall back to a default weight.
  */
 class Weights : public WeightsInterface {
+public:
+    struct Entry {
+        size_t weight;
+        std::optional<size_t> weightLedgerCurrent;
+        std::optional<size_t> weightLedgerValidated;
+    };
+
+private:
     size_t defaultWeight_;
-    std::unordered_map<std::string, size_t, util::StringHash, std::equal_to<>> weights_;
+    std::unordered_map<std::string, Entry, util::StringHash, std::equal_to<>> weights_;
 
 public:
     /**
@@ -50,7 +59,7 @@ public:
      * @param defaultWeight The default weight to use when a command-specific weight is not defined
      * @param weights Map of command names to their specific weights
      */
-    Weights(size_t defaultWeight, std::unordered_map<std::string, size_t> weights);
+    Weights(size_t defaultWeight, std::unordered_map<std::string, Entry> weights);
 
     /**
      * @brief Create a Weights object from configuration

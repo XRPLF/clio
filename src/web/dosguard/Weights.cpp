@@ -35,7 +35,7 @@
 
 namespace web::dosguard {
 
-Weights::Weights(size_t defaultWeight, std::unordered_map<std::string, size_t> weights)
+Weights::Weights(size_t defaultWeight, std::unordered_map<std::string, Entry> weights)
     : defaultWeight_(defaultWeight), weights_(std::move_iterator(weights.begin()), std::move_iterator(weights.end()))
 {
 }
@@ -43,11 +43,16 @@ Weights::Weights(size_t defaultWeight, std::unordered_map<std::string, size_t> w
 Weights
 Weights::make(util::config::ClioConfigDefinition const& config)
 {
-    std::unordered_map<std::string, size_t> weights;
+    std::unordered_map<std::string, Weights::Entry> weights;
     auto const configWeights = config.getArray("dos_guard.__ng_weights");
     for (size_t i = 0; i < configWeights.size(); ++i) {
         auto const w = configWeights.objectAt(i);
-        weights.emplace(w.get<std::string>("method"), w.get<size_t>("weight"));
+        Weights::Entry const entry{
+            .weight = w.get<size_t>("weight"),
+            .weightLedgerCurrent = w.maybeValue<size_t>("weight_ledger_current"),
+            .weightLedgerValidated = w.maybeValue<size_t>("weight_ledger_validated"),
+        };
+        weights.emplace(w.get<std::string>("method"), entry);
     }
     return Weights{config.get<size_t>("dos_guard.__ng_default_weight"), std::move(weights)};
 }
@@ -55,15 +60,30 @@ Weights::make(util::config::ClioConfigDefinition const& config)
 size_t
 Weights::requestWeight(boost::json::object const& request) const
 {
-    if ((not request.contains(JS(method)) or not request.at(JS(method)).is_string()) and
-        (not request.contains(JS(params)) or not request.at(JS(params)).is_string())) {
+    if (not((request.contains(JS(method)) and request.at(JS(method)).is_string()) or
+            (request.contains(JS(params)) and request.at(JS(params)).is_string()))) {
         return defaultWeight_;
     }
+
     std::string_view cmd =
         request.contains(JS(method)) ? request.at(JS(method)).as_string() : request.at(JS(params)).as_string();
 
     auto it = weights_.find(cmd);
-    return it != weights_.end() ? it->second : defaultWeight_;
+    if (it == weights_.end()) {
+        return defaultWeight_;
+    }
+
+    auto const& entry = it->second;
+    if (request.contains(JS(ledger_index)) and request.at(JS(ledger_index)).is_string()) {
+        auto const& ledgerIndex = request.at(JS(ledger_index)).as_string();
+        if (ledgerIndex == JS(validated)) {
+            return entry.weightLedgerValidated.value_or(entry.weight);
+        }
+        if (ledgerIndex == JS(current)) {
+            return entry.weightLedgerCurrent.value_or(entry.weight);
+        }
+    }
+    return entry.weight;
 }
 
 }  // namespace web::dosguard

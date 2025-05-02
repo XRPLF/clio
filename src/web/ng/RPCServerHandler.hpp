@@ -151,7 +151,7 @@ public:
                     } else {
                         auto parsedObject = std::move(parsedRequest).as_object();
 
-                        if (not dosguard_.get().requestCmd(connectionMetadata.ip(), parsedObject)) {
+                        if (not dosguard_.get().request(connectionMetadata.ip(), parsedObject)) {
                             response = makeSlowDownResponse(request, parsedObject);
                         } else {
                             LOG(perfLog_.debug()) << connectionMetadata.tag() << "Adding to work queue";
