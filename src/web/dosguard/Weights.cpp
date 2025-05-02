@@ -61,12 +61,12 @@ size_t
 Weights::requestWeight(boost::json::object const& request) const
 {
     if (not((request.contains(JS(method)) and request.at(JS(method)).is_string()) or
-            (request.contains(JS(params)) and request.at(JS(params)).is_string()))) {
+            (request.contains(JS(command)) and request.at(JS(command)).is_string()))) {
         return defaultWeight_;
     }
 
     std::string_view cmd =
-        request.contains(JS(method)) ? request.at(JS(method)).as_string() : request.at(JS(params)).as_string();
+        request.contains(JS(method)) ? request.at(JS(method)).as_string() : request.at(JS(command)).as_string();
 
     auto it = weights_.find(cmd);
     if (it == weights_.end()) {
@@ -74,12 +74,23 @@ Weights::requestWeight(boost::json::object const& request) const
     }
 
     auto const& entry = it->second;
-    if (request.contains(JS(ledger_index)) and request.at(JS(ledger_index)).is_string()) {
-        auto const& ledgerIndex = request.at(JS(ledger_index)).as_string();
-        if (ledgerIndex == JS(validated)) {
+
+    boost::json::value const* ledgerIndex = nullptr;
+    if (request.contains(JS(ledger_index))) {
+        ledgerIndex = &request.at(JS(ledger_index));
+    } else if (request.contains(JS(params))) {
+        if (auto const& params = request.at(JS(params)).as_array().at(0).as_object();
+            params.contains(JS(ledger_index))) {
+            ledgerIndex = &params.at(JS(ledger_index));
+        }
+    }
+
+    if (ledgerIndex != nullptr and ledgerIndex->is_string()) {
+        auto const& ledgerIndexString = ledgerIndex->as_string();
+        if (ledgerIndexString == JS(validated)) {
             return entry.weightLedgerValidated.value_or(entry.weight);
         }
-        if (ledgerIndex == JS(current)) {
+        if (ledgerIndexString == JS(current)) {
             return entry.weightLedgerCurrent.value_or(entry.weight);
         }
     }

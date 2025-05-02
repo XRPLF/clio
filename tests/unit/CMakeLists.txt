@@ -177,6 +177,7 @@ target_sources(
           web/AdminVerificationTests.cpp
           web/dosguard/DOSGuardTests.cpp
           web/dosguard/IntervalSweepHandlerTests.cpp
+          web/dosguard/WeightsTests.cpp
           web/dosguard/WhitelistHandlerTests.cpp
           web/impl/ErrorHandlingTests.cpp
           web/ng/ResponseTests.cpp
