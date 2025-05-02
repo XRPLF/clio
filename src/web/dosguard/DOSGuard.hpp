@@ -148,7 +148,7 @@ public:
     request(std::string const& ip) noexcept override;
 
     [[maybe_unused]] bool
-    requestCmd(std::string const& ip, boost::json::object const& cmd) override;
+    requestCmd(std::string const& ip, boost::json::object const& request) override;
 
     /**
      * @brief Instantly clears all fetch counters added by @see add(std::string const&, uint32_t).

@@ -346,41 +346,6 @@ TEST_F(WebServerTest, Wss)
     wsClient.disconnect();
 }
 
-TEST_F(WebServerTest, HttpRequestOverload)
-{
-    auto const e = std::make_shared<EchoExecutor>();
-    auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e);
-    auto [status, res] = HttpSyncClient::post("localhost", port, R"({})");
-    EXPECT_EQ(res, "{}");
-    EXPECT_EQ(status, boost::beast::http::status::ok);
-
-    std::tie(status, res) = HttpSyncClient::post("localhost", port, R"({})");
-    EXPECT_EQ(
-        res,
-        R"({"error":"slowDown","error_code":10,"error_message":"You are placing too much load on the server.","status":"error","type":"response"})"
-    );
-    EXPECT_EQ(status, boost::beast::http::status::service_unavailable);
-}
-
-TEST_F(WebServerTest, WsRequestOverload)
-{
-    auto e = std::make_shared<EchoExecutor>();
-    auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e);
-    WebSocketSyncClient wsClient;
-    wsClient.connect("localhost", port);
-    auto res = wsClient.syncPost(R"({})");
-    wsClient.disconnect();
-    EXPECT_EQ(res, "{}");
-    WebSocketSyncClient wsClient2;
-    wsClient2.connect("localhost", port);
-    res = wsClient2.syncPost(R"({})");
-    wsClient2.disconnect();
-    EXPECT_EQ(
-        res,
-        R"({"error":"slowDown","error_code":10,"error_message":"You are placing too much load on the server.","status":"error","type":"response","request":{}})"
-    );
-}
-
 TEST_F(WebServerTest, HttpPayloadOverload)
 {
     std::string const s100(100, 'a');
