@@ -89,6 +89,8 @@ createLedgerHeader(std::string_view ledgerHash, ripple::LedgerIndex seq, std::op
     ledgerHeader.seq = seq;
 
     if (age) {
+        // Note: be cautious of using age values close to each other as the underlying NetClock precision is seconds
+        // and the small time difference may lead to comparison bugs
         auto const now = duration_cast<seconds>(system_clock::now().time_since_epoch());
         auto const closeTime = (now - seconds{age.value()}).count() - kRIPPLE_EPOCH_START;
         ledgerHeader.closeTime = ripple::NetClock::time_point{seconds{closeTime}};

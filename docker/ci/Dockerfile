@@ -9,7 +9,8 @@ WORKDIR /root
 ENV CCACHE_VERSION=4.10.2 \
     LLVM_TOOLS_VERSION=19 \
     GH_VERSION=2.40.0 \
-    DOXYGEN_VERSION=1.12.0
+    DOXYGEN_VERSION=1.12.0 \
+    CLANG_BUILD_ANALYZER_VERSION=1.6.0
 
 # Add repositories
 RUN apt-get -qq update \
@@ -61,8 +62,14 @@ RUN wget "https://github.com/doxygen/doxygen/releases/download/Release_${DOXYGEN
     && cmake --build . --target install \
     && rm -rf /tmp/* /var/tmp/*
 
+# Install ClangBuildAnalyzer
+RUN wget "https://github.com/aras-p/ClangBuildAnalyzer/releases/download/v${CLANG_BUILD_ANALYZER_VERSION}/ClangBuildAnalyzer-linux" \
+    && chmod +x ClangBuildAnalyzer-linux \
+    && mv ClangBuildAnalyzer-linux /usr/bin/ClangBuildAnalyzer \
+    && rm -rf /tmp/* /var/tmp/*
+
 # Install gh
-RUN wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz \
+RUN wget "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz" \
     && tar xf gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz \
     && mv gh_${GH_VERSION}_linux_${TARGETARCH}/bin/gh /usr/bin/gh \
     && rm -rf /tmp/* /var/tmp/*

@@ -35,7 +35,7 @@ on:
 
       sanitizer:
         description: Sanitizer to use
-        required: false
+        required: true
         type: string
 
 jobs:

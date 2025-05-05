@@ -29,12 +29,6 @@ on:
         type: boolean
         default: false
 
-      code_coverage:
-        description: Whether to enable code coverage
-        required: true
-        type: boolean
-        default: false
-
       static:
         description: Whether to build static binaries
         required: true
@@ -78,16 +72,15 @@ jobs:
       conan_profile: ${{ inputs.conan_profile }}
       build_type: ${{ inputs.build_type }}
       disable_cache: ${{ inputs.disable_cache }}
-      code_coverage: ${{ inputs.code_coverage }}
+      code_coverage: false
       static: ${{ inputs.static }}
       upload_clio_server: ${{ inputs.upload_clio_server }}
       targets: ${{ inputs.targets }}
       sanitizer: ${{ inputs.sanitizer }}
+      analyze_build_time: false
 
   test:
     needs: build
-    # We don't upload tests if code coverage is enabled
-    if: ${{ !inputs.code_coverage }}
     uses: ./.github/workflows/test_impl.yml
     with:
       runs_on: ${{ inputs.runs_on }}

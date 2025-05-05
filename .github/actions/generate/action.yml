@@ -34,6 +34,10 @@ inputs:
       - "tsan"
       - "asan"
       - "ubsan"
+  time_trace:
+    description: Whether to enable compiler trace reports
+    required: true
+    default: "false"
 
 runs:
   using: composite
@@ -49,6 +53,7 @@ runs:
         CODE_COVERAGE: "${{ inputs.code_coverage == 'true' && 'True' || 'False' }}"
         STATIC_OPTION: "${{ inputs.static == 'true' && 'True' || 'False' }}"
         INTEGRATION_TESTS_OPTION: "${{ inputs.build_integration_tests == 'true' && 'True' || 'False' }}"
+        TIME_TRACE: "${{ inputs.time_trace == 'true' && 'True' || 'False' }}"
       run: |
         cd build
         conan \
@@ -61,6 +66,7 @@ runs:
           -o clio:integration_tests="${INTEGRATION_TESTS_OPTION}" \
           -o clio:lint=False \
           -o clio:coverage="${CODE_COVERAGE}" \
+          -o clio:time_trace="${TIME_TRACE}" \
           --profile ${{ inputs.conan_profile }}
 
     - name: Run cmake
