@@ -20,6 +20,7 @@
 #include "web/dosguard/Weights.hpp"
 
 #include "rpc/JS.hpp"
+#include "util/Assert.hpp"
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 
@@ -79,6 +80,11 @@ Weights::requestWeight(boost::json::object const& request) const
     if (request.contains(JS(ledger_index))) {
         ledgerIndex = &request.at(JS(ledger_index));
     } else if (request.contains(JS(params))) {
+        ASSERT(
+            request.at(JS(params)).is_array() and not request.at(JS(params)).as_array().empty() and
+                request.at(JS(params)).as_array().at(0).is_object(),
+            "params should be [{{}}]"
+        );
         if (auto const& params = request.at(JS(params)).as_array().at(0).as_object();
             params.contains(JS(ledger_index))) {
             ledgerIndex = &params.at(JS(ledger_index));
