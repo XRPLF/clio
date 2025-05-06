@@ -1,4 +1,4 @@
-FROM ubuntu:focal 
+FROM ubuntu:focal
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
 

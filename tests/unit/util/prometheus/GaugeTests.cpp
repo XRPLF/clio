@@ -47,7 +47,7 @@ TEST_F(AnyGaugeTests, operatorAdd)
     gauge += 42;
 }
 
-TEST_F(AnyGaugeTests, operatorSubstract)
+TEST_F(AnyGaugeTests, operatorSubtract)
 {
     EXPECT_CALL(mockGaugeImpl, add(-1));
     --gauge;
@@ -78,7 +78,7 @@ TEST_F(GaugeIntTests, operatorAdd)
     EXPECT_EQ(gauge.value(), 25);
 }
 
-TEST_F(GaugeIntTests, operatorSubstract)
+TEST_F(GaugeIntTests, operatorSubtract)
 {
     --gauge;
     EXPECT_EQ(gauge.value(), -1);
@@ -90,14 +90,14 @@ TEST_F(GaugeIntTests, set)
     EXPECT_EQ(gauge.value(), 21);
 }
 
-TEST_F(GaugeIntTests, multithreadAddAndSubstract)
+TEST_F(GaugeIntTests, multithreadAddAndSubtract)
 {
     static constexpr auto kNUM_ADDITIONS = 1000;
     static constexpr auto kNUM_NUMBER_ADDITIONS = 100;
     static constexpr auto kNUMBER_TO_ADD = 11;
-    static constexpr auto kNUM_SUBSTRACTIONS = 2000;
-    static constexpr auto kNUM_NUMBER_SUBSTRACTIONS = 300;
-    static constexpr auto kNUMBER_TO_SUBSTRACT = 300;
+    static constexpr auto kNUM_SUBTRACTIONS = 2000;
+    static constexpr auto kNUM_NUMBER_SUBTRACTIONS = 300;
+    static constexpr auto kNUMBER_TO_SUBTRACT = 300;
     std::thread thread1([&] {
         for (int i = 0; i < kNUM_ADDITIONS; ++i) {
             ++gauge;
@@ -109,13 +109,13 @@ TEST_F(GaugeIntTests, multithreadAddAndSubstract)
         }
     });
     std::thread thread3([&] {
-        for (int i = 0; i < kNUM_SUBSTRACTIONS; ++i) {
+        for (int i = 0; i < kNUM_SUBTRACTIONS; ++i) {
             --gauge;
         }
     });
     std::thread thread4([&] {
-        for (int i = 0; i < kNUM_NUMBER_SUBSTRACTIONS; ++i) {
-            gauge -= kNUMBER_TO_SUBSTRACT;
+        for (int i = 0; i < kNUM_NUMBER_SUBTRACTIONS; ++i) {
+            gauge -= kNUMBER_TO_SUBTRACT;
         }
     });
     thread1.join();
@@ -124,8 +124,8 @@ TEST_F(GaugeIntTests, multithreadAddAndSubstract)
     thread4.join();
     EXPECT_EQ(
         gauge.value(),
-        kNUM_ADDITIONS + (kNUM_NUMBER_ADDITIONS * kNUMBER_TO_ADD) - kNUM_SUBSTRACTIONS -
-            (kNUM_NUMBER_SUBSTRACTIONS * kNUMBER_TO_SUBSTRACT)
+        kNUM_ADDITIONS + (kNUM_NUMBER_ADDITIONS * kNUMBER_TO_ADD) - kNUM_SUBTRACTIONS -
+            (kNUM_NUMBER_SUBTRACTIONS * kNUMBER_TO_SUBTRACT)
     );
 }
 
@@ -152,7 +152,7 @@ TEST_F(GaugeDoubleTests, operatorAdd)
     EXPECT_NEAR(gauge.value(), 25.1234, 1e-9);
 }
 
-TEST_F(GaugeDoubleTests, operatorSubstract)
+TEST_F(GaugeDoubleTests, operatorSubtract)
 {
     --gauge;
     EXPECT_EQ(gauge.value(), -1.0);
@@ -164,14 +164,14 @@ TEST_F(GaugeDoubleTests, set)
     EXPECT_EQ(gauge.value(), 21.1234);
 }
 
-TEST_F(GaugeDoubleTests, multithreadAddAndSubstract)
+TEST_F(GaugeDoubleTests, multithreadAddAndSubtract)
 {
     static constexpr auto kNUM_ADDITIONS = 1000;
     static constexpr auto kNUM_NUMBER_ADDITIONS = 100;
     static constexpr auto kNUMBER_TO_ADD = 11.1234;
-    static constexpr auto kNUM_SUBSTRACTIONS = 2000;
-    static constexpr auto kNUM_NUMBER_SUBSTRACTIONS = 300;
-    static constexpr auto kNUMBER_TO_SUBSTRACT = 300.321;
+    static constexpr auto kNUM_SUBTRACTIONS = 2000;
+    static constexpr auto kNUM_NUMBER_SUBTRACTIONS = 300;
+    static constexpr auto kNUMBER_TO_SUBTRACT = 300.321;
     std::thread thread1([&] {
         for (int i = 0; i < kNUM_ADDITIONS; ++i) {
             ++gauge;
@@ -183,13 +183,13 @@ TEST_F(GaugeDoubleTests, multithreadAddAndSubstract)
         }
     });
     std::thread thread3([&] {
-        for (int i = 0; i < kNUM_SUBSTRACTIONS; ++i) {
+        for (int i = 0; i < kNUM_SUBTRACTIONS; ++i) {
             --gauge;
         }
     });
     std::thread thread4([&] {
-        for (int i = 0; i < kNUM_NUMBER_SUBSTRACTIONS; ++i) {
-            gauge -= kNUMBER_TO_SUBSTRACT;
+        for (int i = 0; i < kNUM_NUMBER_SUBTRACTIONS; ++i) {
+            gauge -= kNUMBER_TO_SUBTRACT;
         }
     });
     thread1.join();
@@ -198,8 +198,8 @@ TEST_F(GaugeDoubleTests, multithreadAddAndSubstract)
     thread4.join();
     EXPECT_NEAR(
         gauge.value(),
-        kNUM_ADDITIONS + (kNUM_NUMBER_ADDITIONS * kNUMBER_TO_ADD) - kNUM_SUBSTRACTIONS -
-            (kNUM_NUMBER_SUBSTRACTIONS * kNUMBER_TO_SUBSTRACT),
+        kNUM_ADDITIONS + (kNUM_NUMBER_ADDITIONS * kNUMBER_TO_ADD) - kNUM_SUBTRACTIONS -
+            (kNUM_NUMBER_SUBTRACTIONS * kNUMBER_TO_SUBTRACT),
         1e-9
     );
 }

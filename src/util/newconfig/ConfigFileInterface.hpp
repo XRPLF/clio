@@ -41,7 +41,7 @@ public:
      * @brief Retrieves the value of configValue.
      *
      * @param key The key of configuration.
-     * @return the value assosiated with key.
+     * @return the value associated with key.
      */
     virtual Value
     getValue(std::string_view key) const = 0;

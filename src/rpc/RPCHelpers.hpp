@@ -660,7 +660,7 @@ ripple::Issue
 parseIssue(boost::json::object const& issue);
 
 /**
- * @brief Check whethe the request specifies the `current` or `closed` ledger
+ * @brief Check whether the request specifies the `current` or `closed` ledger
  * @param request The request to check
  * @return true if the request specifies the `current` or `closed` ledger
  */

@@ -713,9 +713,9 @@ TEST_F(WebRPCServerHandlerTest, WsMissingCommand)
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(kRESPONSE));
 }
 
-TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparseableNotArray)
+TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparsableNotArray)
 {
-    static constexpr auto kRESPONSE = "params unparseable";
+    static constexpr auto kRESPONSE = "params unparsable";
 
     backend_->setRange(kMIN_SEQ, kMAX_SEQ);
 
@@ -734,9 +734,9 @@ TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparseableNotArray)
     EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
 
-TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparseableArrayWithDigit)
+TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparsableArrayWithDigit)
 {
-    static constexpr auto kRESPONSE = "params unparseable";
+    static constexpr auto kRESPONSE = "params unparsable";
 
     backend_->setRange(kMIN_SEQ, kMAX_SEQ);
 
@@ -1090,10 +1090,13 @@ TEST_P(WebRPCServerHandlerInvalidAPIVersionParamTest, WSInvalidAPIVersion)
 
     auto response = boost::json::parse(session->message);
     EXPECT_TRUE(response.is_object());
+
     EXPECT_TRUE(response.as_object().contains("error"));
     EXPECT_EQ(response.at("error").as_string(), "invalid_API_version");
-    EXPECT_TRUE(response.as_object().contains("error_message"));
-    EXPECT_EQ(response.at("error_message").as_string(), GetParam().wsMessage);
+
     EXPECT_TRUE(response.as_object().contains("error_code"));
     EXPECT_EQ(response.at("error_code").as_int64(), static_cast<int64_t>(rpc::ClioError::RpcInvalidApiVersion));
+
+    EXPECT_TRUE(response.as_object().contains("error_message"));
+    EXPECT_EQ(response.at("error_message").as_string(), GetParam().wsMessage);
 }

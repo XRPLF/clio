@@ -167,7 +167,7 @@ public:
     /**
      * @brief Get the size of the queue.
      *
-     * @return The numver of jobs in the queue.
+     * @return The number of jobs in the queue.
      */
     size_t
     size() const;

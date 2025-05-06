@@ -44,7 +44,7 @@ ExampleObjectsMigrator::runMigration(std::shared_ptr<Backend> const& backend, ut
     auto const cursorPerJobsFullScan = config.get<std::uint32_t>("cursors_per_job");
 
     std::unordered_set<ripple::uint256> idx;
-    migration::cassandra::impl::ObjectsScanner scaner(
+    migration::cassandra::impl::ObjectsScanner scanner(
         {.ctxThreadsNum = ctxFullScanThreads, .jobsNum = jobsFullScan, .cursorsPerJob = cursorPerJobsFullScan},
         migration::cassandra::impl::ObjectsAdapter(
             backend,
@@ -61,5 +61,5 @@ ExampleObjectsMigrator::runMigration(std::shared_ptr<Backend> const& backend, ut
             }
         )
     );
-    scaner.wait();
+    scanner.wait();
 }

@@ -182,12 +182,14 @@ public:
      * @param txMeta The transaction and metadata.
      * @param lgrInfo The ledger header.
      * @param backend The backend.
+     * @param networkID The network ID.
      */
     void
     pub(data::TransactionAndMetadata const& txMeta,
         ripple::LedgerHeader const& lgrInfo,
         std::shared_ptr<data::BackendInterface const> const& backend,
-        std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter);
+        std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
+        uint32_t networkID);
 
     /**
      * @brief Get the number of subscribers of the transaction feed.

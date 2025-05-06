@@ -92,7 +92,7 @@ TEST_F(ExtractionModelNgTests, LedgerDataCopyableAndEquatable)
     }
     {
         auto third = second;
-        third.header = createLedgerHeader(kLEDGER_HASH2, kSEQ, 2);
+        third.header = createLedgerHeader(kLEDGER_HASH2, kSEQ, 100);  // Using large age value to avoid flaky test
         EXPECT_NE(first, third);
     }
     {

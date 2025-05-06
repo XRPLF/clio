@@ -251,7 +251,7 @@ public:
     /**
      * @brief Notify the system that specified method failed due to some unrecoverable error.
      *
-     * Used for erors such as database timeout, internal errors, etc.
+     * Used for errors such as database timeout, internal errors, etc.
      *
      * @param method
      */

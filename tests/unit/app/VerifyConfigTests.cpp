@@ -30,7 +30,7 @@ TEST(VerifyConfigTest, InvalidConfig)
 {
     auto const tmpConfigFile = TmpFile(kJSON_DATA);
 
-    // false because json data(kJSON_DATA) is not compatible with current configDefintion
+    // false because json data(kJSON_DATA) is not compatible with current configDefinition
     EXPECT_FALSE(parseConfig(tmpConfigFile.path));
 }
 
@@ -60,7 +60,7 @@ TEST(VerifyConfigTest, InvalidJsonFile)
     static constexpr auto kINVALID_JSON = R"({
                                              "server": {
                                                 "ip": "0.0.0.0",
-                                                "port": 51233, 
+                                                "port": 51233,
                                             }
                                         })";
     auto const tmpConfigFile = TmpFile(kINVALID_JSON);

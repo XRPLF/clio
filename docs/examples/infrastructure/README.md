@@ -7,8 +7,9 @@
 This directory contains an example of docker based infrastructure to collect and visualise metrics from clio.
 
 The structure of the directory:
+
 - `compose.yaml`
-   Docker-compose file with Prometheus and Grafana set up.
+  Docker-compose file with Prometheus and Grafana set up.
 - `prometheus.yaml`
   Defines metrics collection from Clio and Prometheus itself.
   Demonstrates how to setup Clio target and Clio's admin authorisation in Prometheus.
@@ -24,6 +25,6 @@ The structure of the directory:
 1. Make sure you have `docker` and `docker-compose` installed.
 2. Run `docker-compose up -d` from this directory. It will start docker containers with Prometheus and Grafana.
 3. Open [http://localhost:3000/dashboards](http://localhost:3000/dashboards). Grafana login `admin`, password `grafana`.
-There will be preconfigured Clio dashboard.
+   There will be preconfigured Clio dashboard.
 
 If Clio is not running yet launch Clio to see metrics. Some of the metrics may appear only after requests to Clio.

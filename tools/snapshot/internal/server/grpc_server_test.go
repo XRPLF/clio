@@ -11,7 +11,7 @@ import (
 	pb "xrplf/clio/clio_snapshot/org/xrpl/rpc/v1"
 )
 
-func TestUnavaibleMethods(t *testing.T) {
+func TestUnavailableMethods(t *testing.T) {
 	srv := newServer("testdata")
 
 	req := &pb.GetLedgerDiffRequest{}

@@ -70,4 +70,12 @@ endif ()
 # See https://github.com/cpp-best-practices/cppbestpractices/blob/master/02-Use_the_Tools_Available.md#gcc--clang for
 # the flags description
 
+if (time_trace)
+  if (is_clang OR is_appleclang)
+    list(APPEND COMPILER_FLAGS -ftime-trace)
+  else ()
+    message(FATAL_ERROR "Clang or AppleClang is required to use `-ftime-trace`")
+  endif ()
+endif ()
+
 target_compile_options(clio_options INTERFACE ${COMPILER_FLAGS})

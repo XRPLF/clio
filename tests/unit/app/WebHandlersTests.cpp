@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "app/WebHandlers.hpp"
+#include "rpc/Errors.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
@@ -183,7 +184,7 @@ TEST_F(RequestHandlerTest, RpcHandlerThrows)
 
         auto const body = boost::json::parse(httpResponse.body()).as_object();
         EXPECT_EQ(body.at("error").as_string(), "internal");
-        EXPECT_EQ(body.at("error_code").as_int64(), 73);
+        EXPECT_EQ(body.at("error_code").as_int64(), rpc::RippledError::rpcINTERNAL);
         EXPECT_EQ(body.at("status").as_string(), "error");
     });
 }

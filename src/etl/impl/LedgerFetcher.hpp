@@ -55,7 +55,7 @@ public:
     /**
      * @brief Extract data for a particular ledger from an ETL source
      *
-     * This function continously tries to extract the specified ledger (using all available ETL sources) until the
+     * This function continuously tries to extract the specified ledger (using all available ETL sources) until the
      * extraction succeeds, or the server shuts down.
      *
      * @param sequence sequence of the ledger to extract
@@ -75,7 +75,7 @@ public:
     /**
      * @brief Extract diff data for a particular ledger from an ETL source.
      *
-     * This function continously tries to extract the specified ledger (using all available ETL sources) until the
+     * This function continuously tries to extract the specified ledger (using all available ETL sources) until the
      * extraction succeeds, or the server shuts down.
      *
      * @param sequence sequence of the ledger to extract

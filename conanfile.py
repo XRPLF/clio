@@ -1,6 +1,7 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 
+
 class Clio(ConanFile):
     name = 'clio'
     license = 'ISC'
@@ -20,6 +21,7 @@ class Clio(ConanFile):
         'coverage': [True, False],            # build for test coverage report; create custom target `clio_tests-ccov`
         'lint': [True, False],                # run clang-tidy checks during compilation
         'snapshot': [True, False],            # build export/import snapshot tool
+        'time_trace': [True, False]           # build using -ftime-trace to create compiler trace reports
     }
 
     requires = [
@@ -46,7 +48,8 @@ class Clio(ConanFile):
         'lint': False,
         'docs': False,
         'snapshot': False,
-        
+        'time_trace': False,
+
         'xrpl/*:tests': False,
         'xrpl/*:rocksdb': False,
         'cassandra-cpp-driver/*:shared': False,
@@ -78,11 +81,12 @@ class Clio(ConanFile):
 
     def layout(self):
         cmake_layout(self)
-        # Fix this setting to follow the default introduced in Conan 1.48 
+        # Fix this setting to follow the default introduced in Conan 1.48
         # to align with our build instructions.
         self.folders.generators = 'build/generators'
 
     generators = 'CMakeDeps'
+
     def generate(self):
         tc = CMakeToolchain(self)
         tc.variables['verbose'] = self.options.verbose
@@ -95,6 +99,7 @@ class Clio(ConanFile):
         tc.variables['packaging'] = self.options.packaging
         tc.variables['benchmark'] = self.options.benchmark
         tc.variables['snapshot'] = self.options.snapshot
+        tc.variables['time_trace'] = self.options.time_trace
         tc.generate()
 
     def build(self):

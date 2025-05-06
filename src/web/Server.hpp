@@ -326,7 +326,7 @@ using HttpServer = Server<HttpSession, SslHttpSession, HandlerType>;
 /**
  * @brief A factory function that spawns a ready to use HTTP server.
  *
- * @tparam HandlerType The tyep of handler to process the request
+ * @tparam HandlerType The type of handler to process the request
  * @param config The config to create server
  * @param ioc The server will run under this io_context
  * @param dosGuard The dos guard to protect the server

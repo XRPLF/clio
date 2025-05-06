@@ -97,7 +97,7 @@ TEST_F(RPCBaseTest, TypeValidator)
         {"arr", Type<json::array>{}},
     };
 
-    auto passingInput = json::parse(R"({ 
+    auto passingInput = json::parse(R"({
         "uint": 123,
         "int": 321,
         "str": "a string",
@@ -615,10 +615,10 @@ TEST_F(RPCBaseTest, SubscribeStreamValidator)
 {
     auto const spec = RpcSpec{{"streams", CustomValidators::subscribeStreamValidator}};
     auto passingInput = json::parse(
-        R"({ 
-            "streams": 
+        R"({
+            "streams":
             [
-                "ledger", 
+                "ledger",
                 "transactions_proposed",
                 "validations",
                 "transactions",

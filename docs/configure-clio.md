@@ -53,7 +53,7 @@ Here is an example snippet from the config file:
 
 ## SSL
 
-The parameters `ssl_cert_file` and `ssl_key_file` can also be added to the top level of precedence of our Clio config. The `ssl_cert_file` field specifies the filepath for your SSL cert, while `ssl_key_file` specifies the filepath for your SSL key. It is up to you how to change ownership of these folders for your designated Clio user. 
+The parameters `ssl_cert_file` and `ssl_key_file` can also be added to the top level of precedence of our Clio config. The `ssl_cert_file` field specifies the filepath for your SSL cert, while `ssl_key_file` specifies the filepath for your SSL key. It is up to you how to change ownership of these folders for your designated Clio user.
 
 Your options include:
 

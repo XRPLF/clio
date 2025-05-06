@@ -1,19 +1,28 @@
 name: Check new libXRPL
+
 on:
   repository_dispatch:
     types: [check_libxrpl]
+
+concurrency:
+  # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CONAN_PROFILE: gcc
 
 jobs:
   build:
     name: Build Clio / `libXRPL ${{ github.event.client_payload.version }}`
     runs-on: [self-hosted, heavy]
     container:
-      image: rippleci/clio_ci:latest
+      image: ghcr.io/xrplf/clio-ci:latest
 
     steps:
       - uses: actions/checkout@v4
         with:
-            fetch-depth: 0
+          fetch-depth: 0
 
       - name: Update libXRPL version requirement
         shell: bash
@@ -23,18 +32,17 @@ jobs:
       - name: Prepare runner
         uses: ./.github/actions/prepare_runner
         with:
-            disable_ccache: true
+          disable_ccache: true
 
       - name: Setup conan
         uses: ./.github/actions/setup_conan
-        id: conan
         with:
-          conan_profile: gcc
+          conan_profile: ${{ env.CONAN_PROFILE }}
 
       - name: Run conan and cmake
         uses: ./.github/actions/generate
         with:
-          conan_profile: ${{ steps.conan.outputs.conan_profile }}
+          conan_profile: ${{ env.CONAN_PROFILE }}
           conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
           build_type: Release
 
@@ -55,7 +63,7 @@ jobs:
     needs: build
     runs-on: [self-hosted, heavy]
     container:
-      image: rippleci/clio_ci:latest
+      image: ghcr.io/xrplf/clio-ci:latest
 
     steps:
       - uses: actions/download-artifact@v4
@@ -72,9 +80,11 @@ jobs:
     needs: [build, run_tests]
     if: ${{ always() && contains(needs.*.result, 'failure') }}
     runs-on: ubuntu-latest
+
     permissions:
       contents: write
       issues: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -83,8 +93,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         with:
-          labels: 'compatibility,bug'
-          title: 'Proposed libXRPL check failed'
+          labels: "compatibility,bug"
+          title: "Proposed libXRPL check failed"
           body: >
             Clio build or tests failed against `libXRPL ${{ github.event.client_payload.version }}`.
 

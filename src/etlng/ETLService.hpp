@@ -185,7 +185,7 @@ public:
             auto man = impl::TaskManager(ctx_, *scheduler, *extractor_, *loader_);
 
             // TODO: figure out this: std::make_shared<impl::Monitor>(backend_, ledgers_, nextSequence)
-            man.run({});  // TODO: needs to be interruptable and fill out settings
+            man.run({});  // TODO: needs to be interruptible and fill out settings
         }));
     }
 
@@ -250,7 +250,7 @@ private:
                             // TODO: loadInitialLedger in balancer should be called fetchEdgeKeys or similar
                             data.edgeKeys = balancer_->loadInitialLedger(seq, *loader_);
 
-                            // TODO: this should be interruptable for graceful shutdown
+                            // TODO: this should be interruptible for graceful shutdown
                             return loader_->loadInitialLedger(data);
                         });
                     });

@@ -178,7 +178,7 @@ TEST_F(NFTHelpersTest, NFTModifyWithoutURI)
     verifyNFTsData(*nftDatas, sttx, txMeta, kNFT_ID, std::nullopt);
 }
 
-TEST_F(NFTHelpersTest, NFTMintFromModifedNode)
+TEST_F(NFTHelpersTest, NFTMintFromModifiedNode)
 {
     auto const tx = createMintNftTxWithMetadata(kACCOUNT, 1, 20, 1, kNFT_ID);
     ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);

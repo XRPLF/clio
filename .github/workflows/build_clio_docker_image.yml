@@ -1,4 +1,5 @@
 name: Build and publish Clio docker image
+
 on:
   workflow_call:
     inputs:
@@ -41,6 +42,7 @@ jobs:
   build_and_publish_image:
     name: Build and publish image
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -87,7 +89,10 @@ jobs:
           DOCKERHUB_PW: ${{ secrets.DOCKERHUB_PW }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          image_name: rippleci/clio
+          images: |
+            rippleci/clio
+            ghcr.io/xrplf/clio
+          dockerhub_repo: rippleci/clio
           push_image: ${{ inputs.publish_image }}
           directory: docker/clio
           tags: ${{ inputs.tags }}

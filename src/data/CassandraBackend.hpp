@@ -780,7 +780,7 @@ public:
 
         while (liveAccounts.size() < number) {
             Statement const statement = lastItem ? schema_->selectAccountFromToken.bind(*lastItem, Limit{pageSize})
-                                                 : schema_->selectAccountFromBegining.bind(Limit{pageSize});
+                                                 : schema_->selectAccountFromBeginning.bind(Limit{pageSize});
 
             auto const res = executor_.read(yield, statement);
             if (res) {

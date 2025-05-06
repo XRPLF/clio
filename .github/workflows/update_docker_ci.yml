@@ -1,22 +1,33 @@
 name: Update CI docker image
+
 on:
   pull_request:
     paths:
-      - 'docker/ci/**'
-      - 'docker/compilers/**'
+      - "docker/ci/**"
+      - "docker/compilers/**"
       - .github/workflows/update_docker_ci.yml
+      - ".github/actions/build_docker_image/**"
   push:
     branches: [develop]
     paths:
-      - 'docker/ci/**'        # CI image must update when either its dockerfile changes
-      - 'docker/compilers/**' # or any compilers changed and were pushed by hand
+      # CI image must update when either its Dockerfile changes
+      # or any compilers changed and were pushed by hand
+      - "docker/ci/**"
+      - "docker/compilers/**"
       - .github/workflows/update_docker_ci.yml
+      - ".github/actions/build_docker_image/**"
   workflow_dispatch:
+
+concurrency:
+  # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build_and_push:
     name: Build and push docker image
     runs-on: [self-hosted, heavy]
+
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/build_docker_image
@@ -25,7 +36,10 @@ jobs:
           DOCKERHUB_PW: ${{ secrets.DOCKERHUB_PW }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          image_name: rippleci/clio_ci
+          images: |
+            rippleci/clio_ci
+            ghcr.io/xrplf/clio-ci
+          dockerhub_repo: rippleci/clio_ci
           push_image: ${{ github.event_name != 'pull_request' }}
           directory: docker/ci
           tags: |

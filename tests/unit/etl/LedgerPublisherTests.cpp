@@ -216,7 +216,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsTrue)
     EXPECT_FALSE(publisher.publish(kSEQ, {}));
 }
 
-TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttampt)
+TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttempt)
 {
     SystemState dummyState;
     dummyState.isStopping = false;

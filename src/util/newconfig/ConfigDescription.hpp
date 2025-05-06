@@ -246,7 +246,7 @@ private:
                     "from the position of markers concurrently. For more information, please read "
                     "[README.md](../src/etl/README.md)."},
         KV{.key = "cache.num_markers",
-           .value = " Specifies how many markers are placed randomly within the cache. These markers define the "
+           .value = "Specifies how many markers are placed randomly within the cache. These markers define the "
                     "positions on the ledger that will be loaded concurrently by the workers. The higher the number, "
                     "the more places within the cache we potentially cover."},
         KV{.key = "cache.num_cursors_from_diff",
@@ -266,7 +266,7 @@ private:
                     "explicitly defined logging level."},
         KV{.key = "log_format",
            .value = "The format string for log messages. The format is described here: "
-                    "https://www.boost.org/doc/libs/1_83_0/libs/log/doc/html/log/tutorial/formatters.html."},
+                    "<https://www.boost.org/doc/libs/1_83_0/libs/log/doc/html/log/tutorial/formatters.html>."},
         KV{.key = "log_to_console", .value = "Enables or disables logging to the console."},
         KV{.key = "log_directory", .value = "The directory path for the log files."},
         KV{.key = "log_rotation_size",

@@ -1,9 +1,11 @@
 name: Git common ancestor
 description: Find the closest common commit
+
 outputs:
   commit:
     description: Hash of commit
     value: ${{ steps.find_common_ancestor.outputs.commit }}
+
 runs:
   using: composite
   steps:

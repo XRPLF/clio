@@ -178,7 +178,7 @@ generateTestValuesForParametersTest()
             .testName = "MarkerLedgerNotInt",
             .testJson = R"({
                 "nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
-                "marker": 
+                "marker":
                 {
                     "seq": "string",
                     "ledger": 1
@@ -191,7 +191,7 @@ generateTestValuesForParametersTest()
             .testName = "MarkerSeqNotInt",
             .testJson = R"({
                 "nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
-                "marker": 
+                "marker":
                 {
                     "ledger": "string",
                     "seq": 1
@@ -231,7 +231,7 @@ generateTestValuesForParametersTest()
         NFTHistoryParamTestCaseBundle{
             .testName = "LedgerIndexMaxMinAndLedgerIndex",
             .testJson = R"({
-                "nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", 
+                "nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_index": 10

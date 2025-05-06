@@ -1,5 +1,6 @@
 name: Restore cache
 description: Find and restores conan and ccache cache
+
 inputs:
   conan_dir:
     description: Path to .conan directory
@@ -17,7 +18,7 @@ inputs:
   code_coverage:
     description: Whether code coverage is on
     required: true
-    default: 'false'
+    default: "false"
 outputs:
   conan_hash:
     description: Hash to use as a part of conan cache key
@@ -28,6 +29,7 @@ outputs:
   ccache_cache_hit:
     description: True if ccache cache has been downloaded
     value: ${{ steps.ccache_cache.outputs.cache-hit }}
+
 runs:
   using: composite
   steps:

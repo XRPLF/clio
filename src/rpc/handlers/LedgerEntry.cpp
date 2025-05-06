@@ -243,7 +243,7 @@ LedgerEntryHandler::composeKeyFromDirectory(boost::json::object const& directory
     if (directory.contains(JS(dir_root)) && directory.contains(JS(owner)))
         return Status{RippledError::rpcINVALID_PARAMS, "mayNotSpecifyBothDirRootAndOwner"};
 
-    // at least one should availiable
+    // at least one should available
     if (!(directory.contains(JS(dir_root)) || directory.contains(JS(owner))))
         return Status{RippledError::rpcINVALID_PARAMS, "missingOwnerOrDirRoot"};
 
@@ -302,7 +302,7 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
     if (jsonObject.contains(JS(binary)))
         input.binary = jv.at(JS(binary)).as_bool();
 
-    // check all the protential index
+    // check all the potential index
     static auto const kINDEX_FIELD_TYPE_MAP = std::unordered_map<std::string, ripple::LedgerEntryType>{
         {JS(index), ripple::ltANY},
         {JS(directory), ripple::ltDIR_NODE},

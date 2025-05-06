@@ -1,4 +1,5 @@
 name: Build
+
 on:
   push:
     branches: [master, release/*, develop]
@@ -6,139 +7,75 @@ on:
     branches: [master, release/*, develop]
   workflow_dispatch:
 
+concurrency:
+  # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  check_format:
-    name: Check format
-    runs-on: ubuntu-latest
-    container:
-      image: rippleci/clio_ci:latest
-    steps:
-      - name: Fix git permissions on Linux
-        shell: bash
-        run: git config --global --add safe.directory $PWD
+  build-and-test:
+    name: Build and Test
 
-      - uses: actions/checkout@v4
-      - name: Run formatters
-        id: run_formatters
-        run: |
-          ./.githooks/check-format --diff
-        shell: bash
- 
-  check_docs:
-    name: Check documentation
-    runs-on: ubuntu-latest
-    container:
-      image: rippleci/clio_ci:latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run linter
-        id: run_linter
-        run: |
-          ./.githooks/check-docs
-        shell: bash
-
-  build:
-    name: Build
-    needs:
-      - check_format
-      - check_docs
     strategy:
       fail-fast: false
       matrix:
+        os: [heavy]
+        conan_profile: [gcc, clang]
+        build_type: [Release, Debug]
+        container: ['{ "image": "ghcr.io/xrplf/clio-ci:latest" }']
+        static: [true]
+
         include:
-          - os: heavy
-            conan_profile: gcc
-            build_type: Release
-            container: '{ "image": "rippleci/clio_ci:latest" }'
-            code_coverage: false
-            static: true
-          - os: heavy
-            conan_profile: gcc
-            build_type: Debug
-            container: '{ "image": "rippleci/clio_ci:latest" }'
-            code_coverage: true
-            static: true
-          - os: heavy
-            conan_profile: clang
-            build_type: Release
-            container: '{ "image": "rippleci/clio_ci:latest" }'
-            code_coverage: false
-            static: true
-          - os: heavy
-            conan_profile: clang
-            build_type: Debug
-            container: '{ "image": "rippleci/clio_ci:latest" }'
-            code_coverage: false
-            static: true
           - os: macos15
+            conan_profile: default_apple_clang
             build_type: Release
-            code_coverage: false
+            container: ""
             static: false
-    uses: ./.github/workflows/build_impl.yml
+
+    uses: ./.github/workflows/build_and_test.yml
     with:
       runs_on: ${{ matrix.os }}
       container: ${{ matrix.container }}
       conan_profile: ${{ matrix.conan_profile }}
       build_type: ${{ matrix.build_type }}
-      code_coverage: ${{ matrix.code_coverage }}
       static: ${{ matrix.static }}
-      unit_tests: true
-      integration_tests: true
-      clio_server: true
+      run_unit_tests: true
+      run_integration_tests: false
+      upload_clio_server: true
 
-  test:
-    name: Run Tests
-    needs: build
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: heavy
-            conan_profile: gcc
-            build_type: Release
-            container:
-              image: rippleci/clio_ci:latest
-          - os: heavy
-            conan_profile: clang
-            build_type: Release
-            container:
-              image: rippleci/clio_ci:latest
-          - os: heavy
-            conan_profile: clang
-            build_type: Debug
-            container:
-              image: rippleci/clio_ci:latest
-          - os: macos15
-            conan_profile: apple_clang_16
-            build_type: Release
-    runs-on: ${{ matrix.os }}
-    container: ${{ matrix.container }}
+  code_coverage:
+    name: Run Code Coverage
 
-    steps:
-      - name: Clean workdir
-        if: ${{ runner.os == 'macOS' }}
-        uses: kuznetsss/workspace-cleanup@1.0
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
-
-      - name: Run clio_tests
-        run: |
-          chmod +x ./clio_tests
-          ./clio_tests
+    uses: ./.github/workflows/build_impl.yml
+    with:
+      runs_on: heavy
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
+      conan_profile: gcc
+      build_type: Debug
+      disable_cache: false
+      code_coverage: true
+      static: true
+      upload_clio_server: false
+      targets: all
+      sanitizer: "false"
+      analyze_build_time: false
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   check_config:
     name: Check Config Description
-    needs: build
+    needs: build-and-test
     runs-on: heavy
-    container: 
-      image: rippleci/clio_ci:latest
+    container:
+      image: ghcr.io/xrplf/clio-ci:latest
+
     steps:
-      - uses: actions/checkout@v4 
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           name: clio_server_Linux_Release_gcc
+
       - name: Compare Config Description
         shell: bash
         run: |
@@ -163,8 +100,3 @@ jobs:
           fi
           rm -f ${configDescriptionFile}
           exit 0
-                    
-
-
-
-

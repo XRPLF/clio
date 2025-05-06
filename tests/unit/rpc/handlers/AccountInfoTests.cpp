@@ -342,7 +342,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
 {
     auto const expectedOutput = fmt::format(
         R"({{
-            "account_data": 
+            "account_data":
             {{
                 "Account": "{}",
                 "Balance": "200",
@@ -385,7 +385,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
                     "index": "A9C28A28B85CD533217F5C0A0C7767666B093FA58A0F2D80026FCC4CD932DDC7"
                 }}
             ],
-            "account_flags": 
+            "account_flags":
             {{
                 "defaultRipple": false,
                 "depositAuth": false,
@@ -443,7 +443,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
 {
     auto const expectedOutput = fmt::format(
         R"({{
-            "account_data": 
+            "account_data":
             {{
                 "Account": "{}",
                 "Balance": "200",
@@ -486,7 +486,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
                     }}
                 ]
             }},
-            "account_flags": 
+            "account_flags":
             {{
                 "defaultRipple": false,
                 "depositAuth": false,

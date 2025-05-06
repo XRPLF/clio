@@ -58,7 +58,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -1204,19 +1203,13 @@ struct RPCHelpersLogDurationTest : LoggerFixture, testing::WithParamInterface<RP
 TEST_P(RPCHelpersLogDurationTest, LogDuration)
 {
     auto const& tag = taggable.tag();
-    // TOOD: Update in https://github.com/XRPLF/clio/issues/2008
-    auto const tagStr = [&tag]() {
-        std::stringstream ss;
-        ss << tag;
-        return ss.str();
-    }();
 
     logDuration(request, tag, GetParam().duration);
 
     std::string const output = getLoggerString();
 
     EXPECT_NE(output.find(GetParam().expectedLogLevel), std::string::npos) << output;
-    EXPECT_NE(output.find(tagStr), std::string::npos);
+    EXPECT_NE(output.find(tag.toString()), std::string::npos);
 
     if (GetParam().expectDuration) {
         std::string const durationStr = std::to_string(GetParam().duration.count()) + " milliseconds";

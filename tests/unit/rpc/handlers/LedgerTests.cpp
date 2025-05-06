@@ -838,7 +838,7 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
     });
 }
 
-TEST_F(RPCLedgerHandlerTest, OwnerFundsEmtpy)
+TEST_F(RPCLedgerHandlerTest, OwnerFundsEmpty)
 {
     static constexpr auto kEXPECTED_OUT =
         R"({

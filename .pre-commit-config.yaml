@@ -1,0 +1,118 @@
+---
+# pre-commit is a tool to perform a predefined set of tasks manually and/or
+# automatically before git commits are made.
+#
+# Config reference: https://pre-commit.com/#pre-commit-configyaml---top-level
+#
+# Common tasks
+#
+# - Run on all files:   pre-commit run --all-files
+# - Register git hooks: pre-commit install --install-hooks
+#
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  # `pre-commit sample-config` default hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: end-of-file-fixer
+        exclude: ^docs/doxygen-awesome-theme/
+      - id: trailing-whitespace
+        exclude: ^docs/doxygen-awesome-theme/
+
+  # Autoformat: YAML, JSON, Markdown, etc.
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.5.3
+    hooks:
+      - id: prettier
+        exclude: ^docs/doxygen-awesome-theme/
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.44.0
+    hooks:
+      - id: markdownlint-fix
+        exclude: LICENSE.md
+
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.31.2
+    hooks:
+      - id: typos
+
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v19.1.7
+    hooks:
+      - id: clang-format
+        args: [--style=file]
+        types: [c++]
+
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+        additional_dependencies: [PyYAML]
+
+  - repo: local
+    hooks:
+      - id: check-no-h-files
+        name: No .h files
+        entry: There should be no .h files in this repository
+        language: fail
+        files: \.h$
+
+  - repo: local
+    hooks:
+      - id: gofmt
+        name: Go Format
+        entry: pre-commit-hooks/run-go-fmt.sh
+        types: [go]
+        language: golang
+        description: "Runs `gofmt`, requires golang"
+      - id: check-docs
+        name: Check Doxygen Documentation
+        entry: pre-commit-hooks/check-doxygen-docs.sh
+        types: [text]
+        language: system
+        pass_filenames: false
+      - id: fix-local-includes
+        name: Fix Local Includes
+        entry: pre-commit-hooks/fix-local-includes.sh
+        types: [c++]
+        language: system
+        pass_filenames: false
+      - id: verify-commits
+        name: Verify Commits
+        entry: pre-commit-hooks/verify-commits.sh
+        types: [text]
+        language: system
+        pass_filenames: false
+
+  - repo: local
+    hooks:
+      - id: lfs-post-checkout
+        name: LFS Post Checkout
+        entry: pre-commit-hooks/lfs/post-checkout
+        types: [text]
+        stages: [post-checkout]
+        language: system
+      - id: lfs-post-commit
+        name: LFS Post Commit
+        entry: pre-commit-hooks/lfs/post-commit
+        types: [text]
+        stages: [post-commit]
+        language: system
+      - id: lfs-post-merge
+        name: LFS Post Merge
+        entry: pre-commit-hooks/lfs/post-merge
+        types: [text]
+        stages: [post-merge]
+        language: system
+      - id: lfs-pre-push
+        name: LFS Pre Push
+        entry: pre-commit-hooks/lfs/pre-push
+        types: [text]
+        stages: [pre-push]
+        language: system

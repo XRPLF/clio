@@ -63,7 +63,7 @@ LedgerCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool is
         if (seq > latestSeq_) {
             ASSERT(
                 seq == latestSeq_ + 1 || latestSeq_ == 0,
-                "New sequense must be either next or first. seq = {}, latestSeq_ = {}",
+                "New sequence must be either next or first. seq = {}, latestSeq_ = {}",
                 seq,
                 latestSeq_
             );

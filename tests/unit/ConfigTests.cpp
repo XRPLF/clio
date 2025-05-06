@@ -43,7 +43,7 @@ namespace {
 
 constexpr auto kJSON_DATA = R"JSON(
     {
-        "arr": [                
+        "arr": [
             { "first": 1234 },
             { "second": true },
             { "inner_section": [{ "inner": "works" }] },

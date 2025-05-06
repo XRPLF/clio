@@ -2,7 +2,7 @@
 
 # Note: This script is intended to be run from the root of the repository.
 #
-# Not really a hook but should be used to check the completness of documentation for added code, otherwise CI will come for you.
+# Not really a hook but should be used to check the completeness of documentation for added code, otherwise CI will come for you.
 # It's good to have /tmp as the output so that consecutive runs are fast but no clutter in the repository.
 
 echo "+ Checking documentation..."
@@ -20,7 +20,7 @@ if [ -z "$DOXYGEN" ]; then
 
                                    WARNING
 -----------------------------------------------------------------------------
-        'doxygen' is required to check documentation. 
+        'doxygen' is required to check documentation.
         Please install it for next time.
 
         Your changes may fail to pass CI once pushed.

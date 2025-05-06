@@ -9,8 +9,9 @@ WORKDIR /root
 ENV CCACHE_VERSION=4.10.2 \
     LLVM_TOOLS_VERSION=19 \
     GH_VERSION=2.40.0 \
-    DOXYGEN_VERSION=1.12.0
- 
+    DOXYGEN_VERSION=1.12.0 \
+    CLANG_BUILD_ANALYZER_VERSION=1.6.0
+
 # Add repositories
 RUN apt-get -qq update \
     && apt-get -qq install -y --no-install-recommends --no-install-suggests gnupg wget curl software-properties-common \
@@ -20,9 +21,8 @@ RUN apt-get -qq update \
 # Install packages
 RUN apt update -qq \
     && apt install -y --no-install-recommends --no-install-suggests python3 python3-pip git git-lfs make ninja-build flex bison jq graphviz \
-    clang-format-${LLVM_TOOLS_VERSION} clang-tidy-${LLVM_TOOLS_VERSION} clang-tools-${LLVM_TOOLS_VERSION} \
-    && update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-${LLVM_TOOLS_VERSION} 100 \
-    && pip3 install -q --upgrade --no-cache-dir pip && pip3 install -q --no-cache-dir conan==1.62 gcovr cmake cmake-format \
+    clang-tidy-${LLVM_TOOLS_VERSION} clang-tools-${LLVM_TOOLS_VERSION} \
+    && pip3 install -q --upgrade --no-cache-dir pip && pip3 install -q --no-cache-dir conan==1.62 gcovr cmake==3.31.6 pre-commit \
     && apt-get clean && apt remove -y software-properties-common
 
 # Install gcc-12 and make ldconfig aware of the new libstdc++ location (for gcc)
@@ -62,8 +62,14 @@ RUN wget "https://github.com/doxygen/doxygen/releases/download/Release_${DOXYGEN
     && cmake --build . --target install \
     && rm -rf /tmp/* /var/tmp/*
 
+# Install ClangBuildAnalyzer
+RUN wget "https://github.com/aras-p/ClangBuildAnalyzer/releases/download/v${CLANG_BUILD_ANALYZER_VERSION}/ClangBuildAnalyzer-linux" \
+    && chmod +x ClangBuildAnalyzer-linux \
+    && mv ClangBuildAnalyzer-linux /usr/bin/ClangBuildAnalyzer \
+    && rm -rf /tmp/* /var/tmp/*
+
 # Install gh
-RUN wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz \
+RUN wget "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz" \
     && tar xf gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz \
     && mv gh_${GH_VERSION}_linux_${TARGETARCH}/bin/gh /usr/bin/gh \
     && rm -rf /tmp/* /var/tmp/*
@@ -72,7 +78,7 @@ WORKDIR /root
 # Using root by default is not very secure but github checkout action doesn't work with any other user
 # https://github.com/actions/checkout/issues/956
 # And Github Actions doc recommends using root
-# https://docs.github.com/en/actions/creating-actions/dockerfile-support-for-github-actions#user
+# https://docs.github.com/en/actions/sharing-automations/creating-actions/dockerfile-support-for-github-actions#user
 
 # Setup conan
 RUN conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
@@ -95,7 +101,7 @@ RUN conan profile new clang --detect \
     && conan profile update env.CC=/usr/bin/clang-16 clang \
     && conan profile update env.CXX=/usr/bin/clang++-16 clang \
     && conan profile update env.CXXFLAGS="-DBOOST_ASIO_DISABLE_CONCEPTS" clang \
-    && conan profile update "conf.tools.build:compiler_executables={\"c\": \"/usr/bin/clang-16\", \"cpp\": \"/usr/bin/clang++-16\"}" clang 
+    && conan profile update "conf.tools.build:compiler_executables={\"c\": \"/usr/bin/clang-16\", \"cpp\": \"/usr/bin/clang++-16\"}" clang
 
 RUN echo "include(gcc)" >> .conan/profiles/default
 

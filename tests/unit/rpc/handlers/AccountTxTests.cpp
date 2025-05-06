@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "data/Types.hpp"
+#include "etl/ETLState.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
@@ -187,7 +188,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 .testName = "MarkerLedgerNotInt",
                 .testJson = R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "marker": 
+                "marker":
                 {
                     "seq": "string",
                     "ledger": 1
@@ -200,7 +201,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 .testName = "MarkerSeqNotInt",
                 .testJson = R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "marker": 
+                "marker":
                 {
                     "ledger": "string",
                     "seq": 1
@@ -318,7 +319,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxMinAndLedgerIndex",
                 .testJson = R"({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_index": 10
@@ -353,7 +354,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 .testName = "LedgerIndexMaxMinAndLedgerHash",
                 .testJson = fmt::format(
                     R"({{
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_hash": "{}"
@@ -367,7 +368,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 .testName = "LedgerIndexMaxMinAndLedgerHash_API_v1",
                 .testJson = fmt::format(
                     R"({{
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_hash": "{}"
@@ -393,8 +394,8 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 .testName = "InvalidTxType",
                 .testJson = R"({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
-                "tx_type": "unknow"
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "tx_type": "unknown"
             })",
                 .expectedError = "invalidParams",
                 .expectedErrorMessage = "Invalid field 'tx_type'."
@@ -419,7 +420,7 @@ TEST_P(AccountTxParameterTest, CheckParams)
         ASSERT_TRUE(testBundle.expectedErrorMessage.has_value());
 
         runSpawn([&, this](auto yield) {
-            auto const handler = AnyHandler{AccountTxHandler{backend_}};
+            auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
             auto const output = handler.process(req, Context{.yield = yield, .apiVersion = testBundle.apiVersion});
             ASSERT_FALSE(output);
             auto const err = rpc::makeError(output.result.error());
@@ -430,7 +431,7 @@ TEST_P(AccountTxParameterTest, CheckParams)
         EXPECT_CALL(*backend_, fetchAccountTransactions);
 
         runSpawn([&, this](auto yield) {
-            auto const handler = AnyHandler{AccountTxHandler{backend_}};
+            auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
             auto const output = handler.process(req, Context{.yield = yield, .apiVersion = testBundle.apiVersion});
             EXPECT_TRUE(output);
         });
@@ -505,11 +506,12 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
             testing::Optional(testing::Eq(TransactionsCursor{kMIN_SEQ, INT32_MAX})),
             testing::_
         )
-    )
-        .Times(1);
+    );
+
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -546,11 +548,12 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ - 1, INT32_MAX})),
             testing::_
         )
-    )
-        .Times(1);
+    );
+
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -587,11 +590,12 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
             testing::Optional(testing::Eq(TransactionsCursor{kMIN_SEQ - 1, INT32_MAX})),
             testing::_
         )
-    )
-        .Times(1);
+    );
+
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -628,11 +632,12 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})),
             testing::_
         )
-    )
-        .Times(1);
+    );
+
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -669,11 +674,10 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})),
             testing::_
         )
-    )
-        .Times(1);
+    );
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -727,7 +731,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrueV2)
         .WillOnce(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -776,8 +780,10 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
     )
         .WillOnce(Return(transCursor));
 
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -808,9 +814,10 @@ TEST_F(RPCAccountTxHandlerTest, LimitIsCapped)
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     EXPECT_CALL(*backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_))
         .WillOnce(Return(transCursor));
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -839,9 +846,10 @@ TEST_F(RPCAccountTxHandlerTest, LimitAllowedUpToCap)
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     EXPECT_CALL(*backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_))
         .WillOnce(Return(transCursor));
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -880,15 +888,16 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ - 1, INT32_MAX})),
             testing::_
         )
-    )
-        .Times(1);
+    );
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ - 1);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillByDefault(Return(ledgerHeader));
 
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -914,7 +923,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
     ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -937,7 +946,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
     ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -976,8 +985,10 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
 
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -1012,15 +1023,16 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})),
             testing::_
         )
-    )
-        .Times(1);
+    );
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillByDefault(Return(ledgerHeader));
 
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
+
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -1053,11 +1065,12 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ - 1, INT32_MAX})),
             testing::_
         )
-    )
-        .Times(1);
+    );
+
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -1094,11 +1107,12 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ - 2, INT32_MAX})),
             testing::_
         )
-    )
-        .Times(1);
+    );
+
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -1130,24 +1144,24 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
             "transactions": [
                 {
                     "meta": {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
-                                "ModifiedNode": 
+                                "ModifiedNode":
                                 {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
-                                        "NFTokens": 
+                                        "NFTokens":
                                         [
                                             {
-                                                "NFToken": 
+                                                "NFToken":
                                                 {
                                                     "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
                                                     "URI": "7465737475726C"
                                                 }
                                             },
                                             {
-                                                "NFToken": 
+                                                "NFToken":
                                                 {
                                                     "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
                                                     "URI": "7465737475726C"
@@ -1156,12 +1170,12 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                                         ]
                                     },
                                     "LedgerEntryType": "NFTokenPage",
-                                    "PreviousFields": 
+                                    "PreviousFields":
                                     {
-                                        "NFTokens": 
+                                        "NFTokens":
                                         [
                                             {
-                                                "NFToken": 
+                                                "NFToken":
                                                 {
                                                     "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
                                                     "URI": "7465737475726C"
@@ -1176,7 +1190,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                         "TransactionResult": "tesSUCCESS",
                         "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
                     },
-                    "tx": 
+                    "tx":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
@@ -1187,19 +1201,20 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                         "hash": "C74463F49CFDCBEF3E9902672719918CDE5042DC7E7660BEBD1D1105C4B6DFF4",
                         "ledger_index": 11,
                         "inLedger": 11,
+                        "ctid": "C000000B00000000",
                         "date": 1
                     },
                     "validated": true
                 },
                 {
-                    "meta": 
+                    "meta":
                     {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
-                                "DeletedNode": 
+                                "DeletedNode":
                                 {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
                                         "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
                                         "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
@@ -1214,7 +1229,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                         "TransactionResult": "tesSUCCESS",
                         "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
                     },
-                    "tx": 
+                    "tx":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
@@ -1225,18 +1240,19 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                         "hash": "C85E486EE308C68D7E601FCEB4FC961BFA914C80ABBF7ECC7E6277B06692B490",
                         "ledger_index": 11,
                         "inLedger": 11,
+                        "ctid": "C000000B00000000",
                         "date": 2
                     },
                     "validated": true
                 },
                 {
-                    "meta": 
+                    "meta":
                     {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
                                 "DeletedNode": {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
                                         "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
                                     },
@@ -1244,9 +1260,9 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                                 }
                             },
                             {
-                                "DeletedNode": 
+                                "DeletedNode":
                                 {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
                                         "NFTokenID": "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
                                     },
@@ -1256,17 +1272,17 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                         ],
                         "TransactionIndex": 0,
                         "TransactionResult": "tesSUCCESS",
-                        "nftoken_ids": 
+                        "nftoken_ids":
                         [
                             "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
                             "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
                         ]
                     },
-                    "tx": 
+                    "tx":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
-                        "NFTokenOffers": 
+                        "NFTokenOffers":
                         [
                             "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
                             "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
@@ -1277,17 +1293,18 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                         "hash": "9F82743EEB30065FB9CB92C61F0F064B5859C5A590FA811FAAAD9C988E5B47DB",
                         "ledger_index": 11,
                         "inLedger": 11,
+                        "ctid": "C000000B00000000",
                         "date": 3
                     },
                     "validated": true
                 },
                 {
-                    "meta": 
+                    "meta":
                     {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
-                                "CreatedNode": 
+                                "CreatedNode":
                                 {
                                     "LedgerEntryType": "NFTokenOffer",
                                     "LedgerIndex": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
@@ -1298,7 +1315,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                         "TransactionResult": "tesSUCCESS",
                         "offer_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
                     },
-                    "tx": 
+                    "tx":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Amount": "123",
@@ -1310,13 +1327,14 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                         "hash": "ECB1837EB7C7C0AC22ECDCCE59FDD4795C70E0B9D8F4E1C9A9408BB7EC75DA5C",
                         "ledger_index": 11,
                         "inLedger": 11,
+                        "ctid": "C000000B00000000",
                         "date": 4
                     },
                     "validated": true
                 }
             ],
             "validated": true,
-            "marker": 
+            "marker":
             {
                 "ledger": 12,
                 "seq": 34
@@ -1331,11 +1349,12 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
         fetchAccountTransactions(
             testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
         )
-    )
-        .Times(1);
+    );
+
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -1363,24 +1382,24 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
             "transactions": [
                 {
                     "meta": {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
-                                "ModifiedNode": 
+                                "ModifiedNode":
                                 {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
-                                        "NFTokens": 
+                                        "NFTokens":
                                         [
                                             {
-                                                "NFToken": 
+                                                "NFToken":
                                                 {
                                                     "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
                                                     "URI": "7465737475726C"
                                                 }
                                             },
                                             {
-                                                "NFToken": 
+                                                "NFToken":
                                                 {
                                                     "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
                                                     "URI": "7465737475726C"
@@ -1389,12 +1408,12 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                                         ]
                                     },
                                     "LedgerEntryType": "NFTokenPage",
-                                    "PreviousFields": 
+                                    "PreviousFields":
                                     {
-                                        "NFTokens": 
+                                        "NFTokens":
                                         [
                                             {
-                                                "NFToken": 
+                                                "NFToken":
                                                 {
                                                     "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
                                                     "URI": "7465737475726C"
@@ -1413,7 +1432,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                     "ledger_index": 11,
                     "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                     "close_time_iso": "2000-01-01T00:00:00Z",
-                    "tx_json": 
+                    "tx_json":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
@@ -1422,19 +1441,20 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                         "SigningPubKey": "74657374",
                         "TransactionType": "NFTokenMint",
                         "ledger_index": 11,
+                        "ctid": "C000000B00000000",
                         "date": 1
                     },
                     "validated": true
                 },
                 {
-                    "meta": 
+                    "meta":
                     {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
-                                "DeletedNode": 
+                                "DeletedNode":
                                 {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
                                         "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
                                         "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
@@ -1452,7 +1472,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                     "ledger_index": 11,
                     "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                     "close_time_iso": "2000-01-01T00:00:00Z",
-                    "tx_json": 
+                    "tx_json":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
@@ -1461,18 +1481,19 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                         "SigningPubKey": "74657374",
                         "TransactionType": "NFTokenAcceptOffer",
                         "ledger_index": 11,
+                        "ctid": "C000000B00000000",
                         "date": 2
                     },
                     "validated": true
                 },
                 {
-                    "meta": 
+                    "meta":
                     {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
                                 "DeletedNode": {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
                                         "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
                                     },
@@ -1480,9 +1501,9 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                                 }
                             },
                             {
-                                "DeletedNode": 
+                                "DeletedNode":
                                 {
-                                    "FinalFields": 
+                                    "FinalFields":
                                     {
                                         "NFTokenID": "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
                                     },
@@ -1492,7 +1513,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                         ],
                         "TransactionIndex": 0,
                         "TransactionResult": "tesSUCCESS",
-                        "nftoken_ids": 
+                        "nftoken_ids":
                         [
                             "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
                             "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
@@ -1502,11 +1523,11 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                     "ledger_index": 11,
                     "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                     "close_time_iso": "2000-01-01T00:00:00Z",
-                    "tx_json": 
+                    "tx_json":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
-                        "NFTokenOffers": 
+                        "NFTokenOffers":
                         [
                             "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
                             "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
@@ -1515,17 +1536,18 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                         "SigningPubKey": "74657374",
                         "TransactionType": "NFTokenCancelOffer",
                         "ledger_index": 11,
+                        "ctid": "C000000B00000000",
                         "date": 3
                     },
                     "validated": true
                 },
                 {
-                    "meta": 
+                    "meta":
                     {
-                        "AffectedNodes": 
+                        "AffectedNodes":
                         [
                             {
-                                "CreatedNode": 
+                                "CreatedNode":
                                 {
                                     "LedgerEntryType": "NFTokenOffer",
                                     "LedgerIndex": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
@@ -1540,7 +1562,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                     "ledger_index": 11,
                     "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                     "close_time_iso": "2000-01-01T00:00:00Z",
-                    "tx_json": 
+                    "tx_json":
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Amount": "123",
@@ -1550,13 +1572,14 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                         "SigningPubKey": "74657374",
                         "TransactionType": "NFTokenCreateOffer",
                         "ledger_index": 11,
+                        "ctid": "C000000B00000000",
                         "date": 4
                     },
                     "validated": true
                 }
             ],
             "validated": true,
-            "marker": 
+            "marker":
             {
                 "ledger": 12,
                 "seq": 34
@@ -1571,14 +1594,15 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
         fetchAccountTransactions(
             testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
         )
-    )
-        .Times(1);
+    );
+
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 11);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(transactions.size()).WillRepeatedly(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto static const kINPUT = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -1873,6 +1897,7 @@ generateTransactionTypeTestValues()
                         "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
                         "ledger_index": 30,
                         "inLedger": 30,
+                        "ctid": "C000001E00000000",
                         "date": 1
                     },
                     "validated": true
@@ -1925,6 +1950,7 @@ generateTransactionTypeTestValues()
                         "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
                         "ledger_index": 30,
                         "inLedger": 30,
+                        "ctid": "C000001E00000000",
                         "date": 1
                     },
                     "validated": true
@@ -1978,6 +2004,7 @@ generateTransactionTypeTestValues()
                     "SigningPubKey": "74657374",
                     "TransactionType": "Payment",
                     "ledger_index": 30,
+                    "ctid": "C000001E00000000",
                     "date": 1
                 },
                 "validated": true
@@ -2091,16 +2118,17 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
     ON_CALL(*backend_, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_, fetchAccountTransactions(_, _, false, Optional(Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})), _)
-    )
-        .Times(1);
+    );
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
     ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).Times(Between(1, 2));
 
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
+
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{backend_}};
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = testBundle.apiVersion});
         EXPECT_TRUE(output);

@@ -1,4 +1,5 @@
 name: Restart clang-tidy workflow
+
 on:
   push:
     branches: [develop]
