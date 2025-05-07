@@ -111,26 +111,18 @@ protected:
 
     // recreated for each test
     data::LedgerCache cache_;
-    std::unique_ptr<BackendInterface> backend_;
+    std::unique_ptr<BackendInterface> backend_{std::make_unique<CassandraBackend>(settingsProvider_, cache_, false)};
 
-    void
-    SetUp() override
-    {
-        SyncAsioContextTest::SetUp();
-        backend_ = std::make_unique<CassandraBackend>(settingsProvider_, cache_, false);
-    }
-    void
-    TearDown() override
-    {
-        backend_.reset();
+    std::default_random_engine randomEngine_{0};
 
+public:
+    ~BackendCassandraTest() override
+    {
         // drop the keyspace for next test
         Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
         handle.execute("DROP KEYSPACE " + TestGlobals::instance().backendKeyspace);
     }
-
-    std::default_random_engine randomEngine_{0};
 };
 
 TEST_F(BackendCassandraTest, Basic)

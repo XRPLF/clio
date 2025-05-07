@@ -15,6 +15,12 @@ DOCDIR=${TMPDIR}/out
 
 # Check doxygen is at all installed
 if [ -z "$DOXYGEN" ]; then
+    if [[ "${CI}" == "true" ]]; then
+        # If we are in CI, we should fail the check
+        echo "doxygen not found in CI, please install it"
+        exit 1
+    fi
+
     # No hard error if doxygen is not installed yet
     cat <<EOF
 
