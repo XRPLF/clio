@@ -24,7 +24,6 @@
 #include <xrpl/protocol/LedgerHeader.h>
 
 #include <cstdint>
-#include <memory>
 #include <optional>
 #include <shared_mutex>
 
@@ -80,7 +79,7 @@ public:
     get() const;
 
 private:
-    std::unique_ptr<util::Mutex<std::optional<CacheEntry>, std::shared_mutex>> mutexPtr_;
+    mutable util::Mutex<std::optional<CacheEntry>, std::shared_mutex> mutex_;
 };
 
 }  // namespace data

@@ -21,29 +21,25 @@
 
 #include "util/Mutex.hpp"
 
-#include <memory>
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
 
 namespace data {
 
-FetchLedgerCache::FetchLedgerCache()
-    : mutexPtr_{std::make_unique<util::Mutex<std::optional<CacheEntry>, std::shared_mutex>>()}
-{
-}
+FetchLedgerCache::FetchLedgerCache() = default;
 
 void
 FetchLedgerCache::put(CacheEntry const& cacheEntry) const
 {
-    auto lock = mutexPtr_->lock<std::unique_lock>();
+    auto lock = mutex_.lock<std::unique_lock>();
     *lock = cacheEntry;
 }
 
 std::optional<FetchLedgerCache::CacheEntry>
 FetchLedgerCache::get() const
 {
-    auto const lock = mutexPtr_->lock<std::shared_lock>();
+    auto const lock = mutex_.lock<std::shared_lock>();
     return lock.get();
 }
 
