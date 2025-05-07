@@ -42,9 +42,9 @@ runs:
       shell: bash
       run: |
         conan info . -j info.json -o clio:tests=True
-        packages_info=$(cat info.json | jq '.[] | "\(.display_name): \(.id)"' | grep -v 'clio')
+        packages_info="$(cat info.json | jq '.[] | "\(.display_name): \(.id)"' | grep -v 'clio')"
         echo "$packages_info"
-        hash=$(echo "$packages_info" | shasum -a 256 | cut -d ' ' -f 1)
+        hash="$(echo "$packages_info" | shasum -a 256 | cut -d ' ' -f 1)"
         rm info.json
         echo "hash=$hash" >> $GITHUB_OUTPUT
 

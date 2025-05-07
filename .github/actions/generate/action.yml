@@ -60,14 +60,14 @@ runs:
           install .. \
           -of . \
           -b $BUILD_OPTION \
-          -s build_type=${{ inputs.build_type }} \
+          -s build_type="${{ inputs.build_type }}" \
           -o clio:static="${STATIC_OPTION}" \
           -o clio:tests=True \
           -o clio:integration_tests="${INTEGRATION_TESTS_OPTION}" \
           -o clio:lint=False \
           -o clio:coverage="${CODE_COVERAGE}" \
           -o clio:time_trace="${TIME_TRACE}" \
-          --profile ${{ inputs.conan_profile }}
+          --profile "${{ inputs.conan_profile }}"
 
     - name: Run cmake
       shell: bash
@@ -83,6 +83,6 @@ runs:
         cmake \
           -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake \
           -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
-          ${SANITIZER_OPTION} \
+          "${SANITIZER_OPTION}" \
           .. \
           -G Ninja

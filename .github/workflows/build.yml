@@ -80,23 +80,23 @@ jobs:
         shell: bash
         run: |
           repoConfigFile=docs/config-description.md
-          if ! [ -f ${repoConfigFile} ]; then
+          if ! [ -f "${repoConfigFile}" ]; then
             echo "Config Description markdown file is missing in docs folder"
             exit 1
           fi
 
           chmod +x ./clio_server
           configDescriptionFile=config_description_new.md
-          ./clio_server -d ${configDescriptionFile}
+          ./clio_server -d "${configDescriptionFile}"
 
-          configDescriptionHash=$(sha256sum ${configDescriptionFile} | cut -d' ' -f1)
-          repoConfigHash=$(sha256sum ${repoConfigFile} | cut -d' ' -f1)
+          configDescriptionHash=$(sha256sum "${configDescriptionFile}" | cut -d' ' -f1)
+          repoConfigHash=$(sha256sum "${repoConfigFile}" | cut -d' ' -f1)
 
-          if [ ${configDescriptionHash} != ${repoConfigHash} ]; then
+          if [ "${configDescriptionHash}" != "${repoConfigHash}" ]; then
             echo "Markdown file is not up to date"
             diff -u "${repoConfigFile}" "${configDescriptionFile}"
-            rm -f ${configDescriptionFile}
+            rm -f "${configDescriptionFile}"
             exit 1
           fi
-          rm -f ${configDescriptionFile}
+          rm -f "${configDescriptionFile}"
           exit 0

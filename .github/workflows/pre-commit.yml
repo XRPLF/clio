@@ -9,18 +9,20 @@ on:
 
 jobs:
   run-hooks:
-    runs-on: ubuntu-latest
+    runs-on: heavy
+    container:
+      image: ghcr.io/xrplf/clio-ci:latest
 
     steps:
       - name: Checkout Repo ⚡️
         uses: actions/checkout@v4
-      - name: Set Up Python 🐍
-        uses: actions/setup-python@v5
         with:
-          python-version: 3.x
-      - name: Install pre-commit 📦
-        run: |
-          pip install --upgrade pip
-          pip install --upgrade pre-commit
+          fetch-depth: 0
+
+      - name: Prepare runner
+        uses: ./.github/actions/prepare_runner
+        with:
+          disable_ccache: true
+
       - name: Run pre-commit ✅
         run: pre-commit run --all-files

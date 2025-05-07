@@ -142,6 +142,13 @@ protected:
     std::shared_ptr<migration::MigrationManagerInterface> testMigrationManager_;
     std::shared_ptr<CassandraMigrationTestBackend> testMigrationBackend_;
 
+    void
+    SetUp() override
+    {
+        setupDatabase();
+    }
+
+public:
     MigrationCassandraSimpleTest()
     {
         auto const testBundle = makeMigrationTestManagerAndBackend(cfg_);
@@ -149,14 +156,7 @@ protected:
         testMigrationBackend_ = testBundle.second;
     }
 
-    void
-    SetUp() override
-    {
-        setupDatabase();
-    }
-
-    void
-    TearDown() override
+    ~MigrationCassandraSimpleTest() override
     {
         // drop the keyspace
         Handle const handle{TestGlobals::instance().backendHost};

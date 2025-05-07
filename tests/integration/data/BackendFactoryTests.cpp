@@ -84,9 +84,8 @@ protected:
 };
 
 class BackendCassandraFactoryTestWithDB : public BackendCassandraFactoryTest {
-protected:
-    void
-    TearDown() override
+public:
+    ~BackendCassandraFactoryTestWithDB() override
     {
         // drop the keyspace for next test
         data::cassandra::Handle const handle{TestGlobals::instance().backendHost};

@@ -86,16 +86,10 @@ constexpr auto kAMM_ID = 54321;
 }  // namespace
 
 class RPCHelpersTest : public util::prometheus::WithPrometheus, public MockBackendTest, public SyncAsioContextTest {
-    void
-    SetUp() override
+public:
+    RPCHelpersTest()
     {
         backend_->setRange(10, 300);
-        SyncAsioContextTest::SetUp();
-    }
-    void
-    TearDown() override
-    {
-        SyncAsioContextTest::TearDown();
     }
 
 protected:

@@ -57,7 +57,7 @@ jobs:
         if: ${{ inputs.clio_server_binary_url != null }}
         shell: bash
         run: |
-          wget ${{inputs.clio_server_binary_url}} -P ./docker/clio/artifact/
+          wget "${{inputs.clio_server_binary_url}}" -P ./docker/clio/artifact/
           if [ "$(sha256sum ./docker/clio/clio_server | awk '{print $1}')" != "${{inputs.binary_sha256}}" ]; then
             echo "Binary sha256 sum doesn't match"
             exit 1

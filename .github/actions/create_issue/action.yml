@@ -36,6 +36,6 @@ runs:
           --title '${{ inputs.title }}' \
           --body-file ./issue.md \
           > create_issue.log
-        created_issue=$(cat create_issue.log | sed 's|.*/||')
+        created_issue="$(sed 's|.*/||' create_issue.log)"
         echo "created_issue=$created_issue" >> $GITHUB_OUTPUT
         rm create_issue.log issue.md

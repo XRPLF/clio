@@ -89,10 +89,8 @@ mockLedgerObject(
 
 class RPCGetAggregatePriceHandlerTest : public HandlerBaseTest {
 protected:
-    void
-    SetUp() override
+    RPCGetAggregatePriceHandlerTest()
     {
-        HandlerBaseTest::SetUp();
         backend_->setRange(kRANGE_MIN, kRANGE_MAX);
     }
 };
