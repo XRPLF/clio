@@ -1310,14 +1310,6 @@ TEST_F(BackendCassandraTest, CacheIntegration)
 TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
 {
     runSpawn([&](boost::asio::yield_context yield) {
-        auto rawHeaderBlob = hexStringToBinaryString(kRAWHEADER);
-        ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
-
-        backend_->writeLedger(lgrInfo, std::move(rawHeaderBlob));
-        auto const testLedgerSeq = lgrInfo.seq;
-        ASSERT_TRUE(backend_->finishWrites(lgrInfo.seq));
-
-        // use mock cache
         using TestBackendType = data::cassandra::BasicCassandraBackend<
             SettingsProvider,
             data::cassandra::impl::DefaultExecutionStrategy<>,
@@ -1325,7 +1317,15 @@ TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
 
         testing::StrictMock<MockLedgerHeaderCache> mockCache{};
 
+        // use mock cache
         backend_ = std::make_unique<TestBackendType>(settingsProvider_, cache_, false, mockCache);
+
+        auto rawHeaderBlob = hexStringToBinaryString(kRAWHEADER);
+        ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
+
+        backend_->writeLedger(lgrInfo, std::move(rawHeaderBlob));
+        auto const testLedgerSeq = lgrInfo.seq;
+        ASSERT_TRUE(backend_->finishWrites(lgrInfo.seq));
 
         EXPECT_CALL(mockCache, put(data::FetchLedgerCache::CacheEntry{lgrInfo, testLedgerSeq}));
 
