@@ -86,6 +86,7 @@ public:
      * @param backend The backend to use
      * @param rpcEngine The RPC engine to use
      * @param etl The ETL to use
+     * @param dosguard The DOS guard service to use for request rate limiting
      */
     RPCServerHandler(
         util::config::ClioConfigDefinition const& config,

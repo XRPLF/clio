@@ -82,9 +82,13 @@ public:
         throw std::logic_error("web server can not send the shared payload");
     }
 
+    /**
+     * @brief Send a "slow down" error response to the client.
+     *
+     * @param request The original request that triggered the rate limiting
+     */
     virtual void
     sendSlowDown(std::string const& request) = 0;
-
     /**
      * @brief Get the subscription context for this connection.
      *
