@@ -38,7 +38,7 @@ runs:
         FORMULA_EXPECTED_SHA256="c7ec95d86f0657638835441871e77541165e0a2581b53b3dd657cf13ad4228d4"
 
         mkdir -p /tmp/homebrew-formula
-        curl -s -L $FORMULA_URL -o /tmp/homebrew-formula/cmake.rb
+        curl -s -L "$FORMULA_URL" -o /tmp/homebrew-formula/cmake.rb
 
         echo "$FORMULA_EXPECTED_SHA256  /tmp/homebrew-formula/cmake.rb" | shasum -a 256 -c
 
@@ -48,7 +48,7 @@ runs:
     - name: Fix git permissions on Linux
       if: ${{ runner.os == 'Linux' }}
       shell: bash
-      run: git config --global --add safe.directory $PWD
+      run: git config --global --add safe.directory "$PWD"
 
     - name: Set env variables for macOS
       if: ${{ runner.os == 'macOS' }}
@@ -73,5 +73,5 @@ runs:
     - name: Create directories
       shell: bash
       run: |
-        mkdir -p $CCACHE_DIR
-        mkdir -p $CONAN_USER_HOME/.conan
+        mkdir -p "$CCACHE_DIR"
+        mkdir -p "$CONAN_USER_HOME/.conan"

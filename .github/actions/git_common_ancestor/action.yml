@@ -13,4 +13,4 @@ runs:
       id: find_common_ancestor
       shell: bash
       run: |
-        echo "commit=$(git merge-base --fork-point origin/develop)" >> $GITHUB_OUTPUT
+        echo "commit=\"$(git merge-base --fork-point origin/develop)\"" >> $GITHUB_OUTPUT

@@ -25,5 +25,5 @@ runs:
         cd build
         cmake \
           --build . \
-          --parallel ${{ steps.number_of_threads.outputs.threads_number }} \
+          --parallel "${{ steps.number_of_threads.outputs.threads_number }}" \
           --target ${{ inputs.targets }}
