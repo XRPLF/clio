@@ -16,6 +16,7 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #include "web/dosguard/Weights.hpp"
 
 #include <boost/json/array.hpp>
@@ -28,7 +29,6 @@
 #include <string>
 #include <unordered_map>
 
-using namespace web::dosguard;
 using namespace web::dosguard;
 
 struct TestParams {

@@ -107,7 +107,7 @@ public:
     bool
     isProxied(std::string const& method) const
     {
-        return RPCCenter::kFORWARDED_RPCS.contains(method);
+        return RPCCenter::isForwarded(method);
     }
 
 private:

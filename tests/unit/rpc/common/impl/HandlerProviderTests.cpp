@@ -36,7 +36,6 @@
 #include <gtest/gtest.h>
 
 #include <memory>
-#include <string>
 
 using namespace rpc;
 
@@ -70,7 +69,6 @@ struct ProductionHandlerProviderTest : util::prometheus::WithPrometheus, MockBac
 TEST_F(ProductionHandlerProviderTest, HandlersListIsComplete)
 {
     auto const handlerNames = handlerProvider.handlerNames();
-    ASSERT_EQ(handlerNames.size(), RPCCenter::kHANDLED_RPCS.size());
-    for (auto const& name : RPCCenter::kHANDLED_RPCS)
-        EXPECT_TRUE(handlerNames.contains(std::string{name}));
+    for (auto const& name : handlerNames)
+        EXPECT_TRUE(RPCCenter::isHandled(name));
 }

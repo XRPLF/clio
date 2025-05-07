@@ -79,7 +79,19 @@ std::unordered_set<std::string_view> const RPCCenter::kFORWARDED_RPCS = {
 bool
 RPCCenter::isRpcName(std::string_view s)
 {
-    return kHANDLED_RPCS.contains(s) || kFORWARDED_RPCS.contains(s);
+    return isHandled(s) || isForwarded(s);
+}
+
+bool
+RPCCenter::isHandled(std::string_view s)
+{
+    return kHANDLED_RPCS.contains(s);
+}
+
+bool
+RPCCenter::isForwarded(std::string_view s)
+{
+    return kFORWARDED_RPCS.contains(s);
 }
 
 }  // namespace rpc
