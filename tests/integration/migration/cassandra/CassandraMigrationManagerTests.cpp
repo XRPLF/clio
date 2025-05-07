@@ -155,7 +155,7 @@ protected:
         setupDatabase();
     }
 
-    ~MigrationCassandraSimpleTest()
+    () override
     {
         // drop the keyspace
         Handle const handle{TestGlobals::instance().backendHost};
