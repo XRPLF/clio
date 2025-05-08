@@ -1299,19 +1299,28 @@ TEST_F(BackendCassandraTest, CacheIntegration)
     ASSERT_EQ(done, true);
 }
 
-TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
+class MockCacheClassTest : public BackendCassandraTest {
+    using TestBackendType = data::cassandra::BasicCassandraBackend<
+        SettingsProvider,
+        data::cassandra::impl::DefaultExecutionStrategy<>,
+        MockLedgerHeaderCache>;
+
+public:
+    MockCacheClassTest()
+    {
+        backend_ = std::make_unique<TestBackendType>(settingsProvider_, cache_, false);
+    }
+
+    MockLedgerHeaderCache&
+    getMockCache()
+    {
+        return dynamic_cast<TestBackendType&>(*backend_).ledgerCache_;
+    }
+};
+
+TEST_F(MockCacheClassTest, CacheFetchLedgerBySeq)
 {
     runSpawn([&](boost::asio::yield_context yield) {
-        using TestBackendType = data::cassandra::BasicCassandraBackend<
-            SettingsProvider,
-            data::cassandra::impl::DefaultExecutionStrategy<>,
-            MockLedgerHeaderCache&>;
-
-        testing::StrictMock<MockLedgerHeaderCache> mockCache{};
-
-        // use mock cache
-        backend_ = std::make_unique<TestBackendType>(settingsProvider_, cache_, false, mockCache);
-
         auto rawHeaderBlob = hexStringToBinaryString(kRAWHEADER);
         ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
 
@@ -1319,15 +1328,15 @@ TEST_F(BackendCassandraTest, CacheFetchLedgerBySeq)
         auto const testLedgerSeq = lgrInfo.seq;
         ASSERT_TRUE(backend_->finishWrites(lgrInfo.seq));
 
-        EXPECT_CALL(mockCache, put(data::FetchLedgerCache::CacheEntry{lgrInfo, testLedgerSeq}));
+        EXPECT_CALL(getMockCache(), put(data::FetchLedgerCache::CacheEntry{lgrInfo, testLedgerSeq}));
 
         {
             testing::InSequence s;
             // first time, getSeq doesn't match ledger sequence
-            EXPECT_CALL(mockCache, get()).WillOnce(testing::Return(std::nullopt));
+            EXPECT_CALL(getMockCache(), get()).WillOnce(testing::Return(std::nullopt));
 
             // second time, it would be cached
-            EXPECT_CALL(mockCache, get())
+            EXPECT_CALL(getMockCache(), get())
                 .WillOnce(testing::Return(data::FetchLedgerCache::CacheEntry{.ledger = lgrInfo, .seq = testLedgerSeq}));
         }
 

@@ -68,7 +68,7 @@ public:
      * @param cacheEntry The Cache to store into thread-safe container.
      */
     void
-    put(CacheEntry const& cacheEntry) const;
+    put(CacheEntry const& cacheEntry);
 
     /**
      * @brief Read CacheEntry from thread-safe container.

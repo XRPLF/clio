@@ -30,7 +30,7 @@ namespace data {
 FetchLedgerCache::FetchLedgerCache() = default;
 
 void
-FetchLedgerCache::put(CacheEntry const& cacheEntry) const
+FetchLedgerCache::put(CacheEntry const& cacheEntry)
 {
     auto lock = mutex_.lock<std::unique_lock>();
     *lock = cacheEntry;

@@ -63,6 +63,8 @@
 #include <utility>
 #include <vector>
 
+class MockCacheClassTest;
+
 namespace data::cassandra {
 
 /**
@@ -84,6 +86,7 @@ class BasicCassandraBackend : public BackendInterface {
     SettingsProviderType settingsProvider_;
     Schema<SettingsProviderType> schema_;
     std::atomic_uint32_t ledgerSequence_ = 0u;
+    friend class ::MockCacheClassTest;
 
 protected:
     Handle handle_;
@@ -91,7 +94,7 @@ protected:
     // have to be mutable because BackendInterface constness :(
     mutable ExecutionStrategyType executor_;
     // TODO: move to interface level
-    FetchLedgerCacheType ledgerCache_;
+    mutable FetchLedgerCacheType ledgerCache_;
 
 public:
     /**
