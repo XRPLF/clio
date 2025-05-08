@@ -3,7 +3,6 @@ add_executable(clio_tests)
 target_sources(
   clio_tests
   PRIVATE # Common
-          ConfigTests.cpp
           app/CliArgsTests.cpp
           app/StopperTests.cpp
           app/VerifyConfigTests.cpp
