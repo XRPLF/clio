@@ -94,33 +94,9 @@ protected:
     // have to be mutable because BackendInterface constness :(
     mutable ExecutionStrategyType executor_;
     // TODO: move to interface level
-    mutable FetchLedgerCacheType ledgerCache_;
+    mutable FetchLedgerCacheType ledgerCache_{};
 
 public:
-    /**
-     * @brief Create a new cassandra/scylla backend instance.
-     *
-     * @param settingsProvider The settings provider to use
-     * @param cache The ledger cache to use
-     * @param readOnly Whether the database should be in readonly mode
-     * @param ledgerCache The Cache of latest ledger
-     */
-    BasicCassandraBackend(
-        SettingsProviderType settingsProvider,
-        data::LedgerCacheInterface& cache,
-        bool readOnly,
-        FetchLedgerCacheType ledgerCache
-    )
-        : BackendInterface(cache)
-        , settingsProvider_{std::move(settingsProvider)}
-        , schema_{settingsProvider_}
-        , handle_{settingsProvider_.getSettings()}
-        , executor_{settingsProvider_.getSettings(), handle_}
-        , ledgerCache_{ledgerCache}
-    {
-        initializeDatabase(readOnly);
-    }
-
     /**
      * @brief Create a new cassandra/scylla backend instance.
      *
@@ -134,9 +110,35 @@ public:
         , schema_{settingsProvider_}
         , handle_{settingsProvider_.getSettings()}
         , executor_{settingsProvider_.getSettings(), handle_}
-        , ledgerCache_{}
     {
-        initializeDatabase(readOnly);
+        if (auto const res = handle_.connect(); not res)
+            throw std::runtime_error("Could not connect to database: " + res.error());
+
+        if (not readOnly) {
+            if (auto const res = handle_.execute(schema_.createKeyspace); not res) {
+                // on datastax, creation of keyspaces can be configured to only be done thru the admin
+                // interface. this does not mean that the keyspace does not already exist tho.
+                if (res.error().code() != CASS_ERROR_SERVER_UNAUTHORIZED)
+                    throw std::runtime_error("Could not create keyspace: " + res.error());
+            }
+
+            if (auto const res = handle_.executeEach(schema_.createSchema); not res)
+                throw std::runtime_error("Could not create schema: " + res.error());
+        }
+
+        try {
+            schema_.prepareStatements(handle_);
+        } catch (std::runtime_error const& ex) {
+            auto const error = fmt::format(
+                "Failed to prepare the statements: {}; readOnly: {}. ReadOnly should be turned off or another Clio "
+                "node with write access to DB should be started first.",
+                ex.what(),
+                readOnly
+            );
+            LOG(log_.error()) << error;
+            throw std::runtime_error(error);
+        }
+        LOG(log_.info()) << "Created (revamped) CassandraBackend";
     }
 
     /*
@@ -1080,40 +1082,6 @@ public:
     }
 
 private:
-    void
-    initializeDatabase(bool readOnly)
-    {
-        if (auto const res = handle_.connect(); not res)
-            throw std::runtime_error("Could not connect to database: " + res.error());
-
-        if (not readOnly) {
-            if (auto const res = handle_.execute(schema_.createKeyspace); not res) {
-                // on datastax, creation of keyspaces can be configured to only be done thru the admin
-                // interface. this does not mean that the keyspace does not already exist tho.
-                if (res.error().code() != CASS_ERROR_SERVER_UNAUTHORIZED)
-                    throw std::runtime_error("Could not create keyspace: " + res.error());
-            }
-
-            if (auto const res = handle_.executeEach(schema_.createSchema); not res)
-                throw std::runtime_error("Could not create schema: " + res.error());
-        }
-
-        try {
-            schema_.prepareStatements(handle_);
-        } catch (std::runtime_error const& ex) {
-            auto const error = fmt::format(
-                "Failed to prepare the statements: {}; readOnly: {}. ReadOnly should be turned off or another Clio "
-                "node with write access to DB should be started first.",
-                ex.what(),
-                readOnly
-            );
-            LOG(log_.error()) << error;
-            throw std::runtime_error(error);
-        }
-
-        LOG(log_.info()) << "Created (revamped) CassandraBackend";
-    }
-
     bool
     executeSyncUpdate(Statement statement)
     {

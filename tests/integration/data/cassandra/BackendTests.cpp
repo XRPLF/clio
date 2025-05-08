@@ -82,7 +82,7 @@ using namespace prometheus;
 
 using namespace data::cassandra;
 
-class BackendCassandraTest : public SyncAsioContextTest, public WithPrometheus {
+class BackendCassandraTestBase : public SyncAsioContextTest, public WithPrometheus {
 protected:
     ClioConfigDefinition cfg_{
         {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
@@ -122,18 +122,22 @@ protected:
 
     // recreated for each test
     data::LedgerCache cache_;
-    std::unique_ptr<BackendInterface> backend_{std::make_unique<CassandraBackend>(settingsProvider_, cache_, false)};
 
     std::default_random_engine randomEngine_{0};
 
 public:
-    ~BackendCassandraTest() override
+    ~BackendCassandraTestBase() override
     {
         // drop the keyspace for next test
         Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
         handle.execute("DROP KEYSPACE " + TestGlobals::instance().backendKeyspace);
     }
+};
+
+class BackendCassandraTest : public BackendCassandraTestBase {
+protected:
+    std::unique_ptr<BackendInterface> backend_{std::make_unique<CassandraBackend>(settingsProvider_, cache_, false)};
 };
 
 TEST_F(BackendCassandraTest, Basic)
@@ -1299,18 +1303,16 @@ TEST_F(BackendCassandraTest, CacheIntegration)
     ASSERT_EQ(done, true);
 }
 
-class MockCacheClassTest : public BackendCassandraTest {
+class MockCacheClassTest : public BackendCassandraTestBase {
+protected:
     using TestBackendType = data::cassandra::BasicCassandraBackend<
         SettingsProvider,
         data::cassandra::impl::DefaultExecutionStrategy<>,
         MockLedgerHeaderCache>;
 
-public:
-    MockCacheClassTest()
-    {
-        backend_ = std::make_unique<TestBackendType>(settingsProvider_, cache_, false);
-    }
+    std::unique_ptr<BackendInterface> backend_{std::make_unique<TestBackendType>(settingsProvider_, cache_, false)};
 
+public:
     MockLedgerHeaderCache&
     getMockCache()
     {
