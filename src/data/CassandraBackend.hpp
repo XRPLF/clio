@@ -63,7 +63,7 @@
 #include <utility>
 #include <vector>
 
-class MockCacheClassTest;
+class CacheBackendCassandraTest;
 
 namespace data::cassandra {
 
@@ -86,7 +86,7 @@ class BasicCassandraBackend : public BackendInterface {
     SettingsProviderType settingsProvider_;
     Schema<SettingsProviderType> schema_;
     std::atomic_uint32_t ledgerSequence_ = 0u;
-    friend class ::MockCacheClassTest;
+    friend class ::CacheBackendCassandraTest;
 
 protected:
     Handle handle_;

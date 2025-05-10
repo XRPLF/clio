@@ -1303,7 +1303,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
     ASSERT_EQ(done, true);
 }
 
-class MockCacheClassTest : public BackendCassandraTestBase {
+class CacheBackendCassandraTest : public BackendCassandraTestBase {
 protected:
     using TestBackendType = data::cassandra::BasicCassandraBackend<
         SettingsProvider,
@@ -1320,7 +1320,7 @@ public:
     }
 };
 
-TEST_F(MockCacheClassTest, CacheFetchLedgerBySeq)
+TEST_F(CacheBackendCassandraTest, CacheFetchLedgerBySeq)
 {
     runSpawn([&](boost::asio::yield_context yield) {
         auto rawHeaderBlob = hexStringToBinaryString(kRAWHEADER);
