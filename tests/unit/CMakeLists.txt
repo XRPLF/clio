@@ -146,6 +146,7 @@ target_sources(
           util/CoroutineGroupTests.cpp
           util/LedgerUtilsTests.cpp
           util/StrandedPriorityQueueTests.cpp
+          util/StringHashTests.cpp
           # Prometheus support
           util/prometheus/BoolTests.cpp
           util/prometheus/CounterTests.cpp
@@ -197,6 +198,7 @@ target_sources(
           util/newconfig/ArrayTests.cpp
           util/newconfig/ArrayViewTests.cpp
           util/newconfig/ClioConfigDefinitionTests.cpp
+          util/newconfig/ConfigConstraintsTests.cpp
           util/newconfig/ConfigValueTests.cpp
           util/newconfig/ObjectViewTests.cpp
           util/newconfig/ConfigFileJsonTests.cpp

@@ -17,6 +17,11 @@
 */
 //==============================================================================
 
+#include "util/newconfig/Array.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/dosguard/Weights.hpp"
 
 #include <boost/json/array.hpp>
@@ -193,3 +198,80 @@ INSTANTIATE_TEST_SUITE_P(
     ),
     [](::testing::TestParamInfo<TestParams> const& info) { return info.param.testName; }
 );
+
+TEST(WeightsMakeTest, CreateFromConfig)
+{
+    util::config::ClioConfigDefinition mockConfig{
+        {"dos_guard.__ng_default_weight", util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(10)
+        },
+        {"dos_guard.__ng_weights.[].method",
+         util::config::Array{util::config::ConfigValue{util::config::ConfigType::String}}},
+        {"dos_guard.__ng_weights.[].weight",
+         util::config::Array{util::config::ConfigValue{util::config::ConfigType::Integer}}},
+        {"dos_guard.__ng_weights.[].weight_ledger_current",
+         util::config::Array{util::config::ConfigValue{util::config::ConfigType::Integer}.optional()}},
+        {"dos_guard.__ng_weights.[].weight_ledger_validated",
+         util::config::Array{util::config::ConfigValue{util::config::ConfigType::Integer}.optional()}}
+    };
+    std::string const configStr = R"json(
+    {
+        "dos_guard": {
+            "__ng_default_weight": 15,
+            "__ng_weights": [
+                {
+                    "method": "method1",
+                    "weight": 25,
+                    "weight_ledger_current": 30
+                },
+                {
+                    "method": "method2",
+                    "weight": 35,
+                    "weight_ledger_validated": 40
+                },
+                {
+                    "method": "method3",
+                    "weight": 45,
+                    "weight_ledger_current": 50,
+                    "weight_ledger_validated": 55
+                }
+            ]
+        }
+    }
+    )json";
+
+    auto const configJson = boost::json::parse(configStr).as_object();
+
+    ASSERT_FALSE(mockConfig.parse(util::config::ConfigFileJson(configJson)).has_value());
+
+    Weights const weights = Weights::make(mockConfig);
+
+    auto request = boost::json::parse(R"json({"method": "unknown_method"})json").as_object();
+    EXPECT_EQ(weights.requestWeight(request), 15);
+
+    request = boost::json::parse(R"json({"method": "method1"})json").as_object();
+    EXPECT_EQ(weights.requestWeight(request), 25);
+
+    request = boost::json::parse(R"json({"method": "method1", "ledger_index": "current"})json").as_object();
+    EXPECT_EQ(weights.requestWeight(request), 30);
+
+    request = boost::json::parse(R"json({"method": "method1", "ledger_index": "validated"})json").as_object();
+    EXPECT_EQ(weights.requestWeight(request), 25);
+
+    request = boost::json::parse(R"json({"method": "method2"})json").as_object();
+    EXPECT_EQ(weights.requestWeight(request), 35);
+
+    request = boost::json::parse(R"json({"method": "method2", "ledger_index": "current"})json").as_object();
+    EXPECT_EQ(weights.requestWeight(request), 35);
+
+    request = boost::json::parse(R"json({"method": "method2", "ledger_index": "validated"})json").as_object();
+    EXPECT_EQ(weights.requestWeight(request), 40);
+
+    request = boost::json::parse(R"json({"method": "method3"})json").as_object();
+    EXPECT_EQ(weights.requestWeight(request), 45);
+
+    request = boost::json::parse(R"json({"method": "method3", "ledger_index": "current"})json").as_object();
+    EXPECT_EQ(weights.requestWeight(request), 50);
+
+    request = boost::json::parse(R"json({"method": "method3", "ledger_index": "validated"})json").as_object();
+    EXPECT_EQ(weights.requestWeight(request), 55);
+}

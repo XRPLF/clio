@@ -458,7 +458,7 @@ private:
     void
     print(std::ostream& stream) const override
     {
-        stream << "Invalid RPC command name.";
+        stream << "Checks whether provided RPC name is valid";
     }
 };
 

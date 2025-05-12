@@ -35,6 +35,7 @@
 #include "web/ng/Request.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
@@ -79,15 +80,22 @@ protected:
     util::TagDecoratorFactory tagFactory_{config};
     std::string const ip_ = "some ip";
     StrictMockConnectionMetadata connectionMetadata_{ip_, tagFactory_};
+    Request::HttpHeaders const HttpHeaders_;
 
     static Request
     makeHttpRequest(std::string_view body)
     {
         return Request{http::request<http::string_body>{http::verb::post, "/", 11, body}};
     }
+
+    Request
+    makeWsRequest(std::string body)
+    {
+        return Request{std::move(body), HttpHeaders_};
+    }
 };
 
-TEST_F(NgRpcServerHandlerTest, DosguardRejectedRequest)
+TEST_F(NgRpcServerHandlerTest, DosguardRejectedHttpRequest)
 {
     runSpawn([&](boost::asio::yield_context yield) {
         auto const request = makeHttpRequest("some message");
@@ -100,6 +108,41 @@ TEST_F(NgRpcServerHandlerTest, DosguardRejectedRequest)
 
         auto const responseJson = boost::json::parse(responseHttp.body()).as_object();
         EXPECT_EQ(responseJson.at("error_code").as_int64(), rpc::RippledError::rpcSLOW_DOWN);
+    });
+}
+
+TEST_F(NgRpcServerHandlerTest, DosguardRejectedWsRequest)
+{
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const requestStr = "some message";
+        auto const request = makeWsRequest(requestStr);
+
+        EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(false));
+        auto response = rpcServerHandler_(request, connectionMetadata_, nullptr, yield);
+
+        auto const responseWs = boost::beast::buffers_to_string(response.asWsResponse());
+
+        auto const responseJson = boost::json::parse(responseWs).as_object();
+        EXPECT_EQ(responseJson.at("error_code").as_int64(), rpc::RippledError::rpcSLOW_DOWN);
+        EXPECT_EQ(responseJson.at("request").as_string(), requestStr);
+    });
+}
+
+TEST_F(NgRpcServerHandlerTest, DosguardRejectedWsJsonRequest)
+{
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto const requestStr = R"json({"request": "some message", "id": "some id"})json";
+        auto const request = makeWsRequest(requestStr);
+
+        EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(false));
+        auto response = rpcServerHandler_(request, connectionMetadata_, nullptr, yield);
+
+        auto const responseWs = boost::beast::buffers_to_string(response.asWsResponse());
+
+        auto const responseJson = boost::json::parse(responseWs).as_object();
+        EXPECT_EQ(responseJson.at("error_code").as_int64(), rpc::RippledError::rpcSLOW_DOWN);
+        EXPECT_EQ(responseJson.at("request").as_string(), requestStr);
+        EXPECT_EQ(responseJson.at("id").as_string(), "some id");
     });
 }
 
