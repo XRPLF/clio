@@ -32,7 +32,6 @@
 #include "util/ResponseExpirationCache.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
-#include "util/config/ConfigDefinition.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Histogram.hpp"
 

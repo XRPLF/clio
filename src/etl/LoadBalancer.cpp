@@ -35,9 +35,6 @@
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ObjectView.hpp"
 #include "util/log/Logger.hpp"
-#include "util/config/ArrayView.hpp"
-#include "util/config/ConfigDefinition.hpp"
-#include "util/config/ObjectView.hpp"
 #include "util/prometheus/Label.hpp"
 
 #include <boost/asio/io_context.hpp>
