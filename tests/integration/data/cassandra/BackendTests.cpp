@@ -21,13 +21,16 @@
 #include "data/CassandraBackend.hpp"
 #include "data/DBHelpers.hpp"
 #include "data/LedgerCache.hpp"
+#include "data/LedgerHeaderCache.hpp"
 #include "data/Types.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
+#include "data/cassandra/Types.hpp"
 #include "etl/NFTHelpers.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/LedgerUtils.hpp"
+#include "util/MockLedgerHeaderCache.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/Random.hpp"
 #include "util/StringUtils.hpp"
@@ -42,6 +45,7 @@
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_hash.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/base_uint.h>
@@ -78,7 +82,7 @@ using namespace prometheus;
 
 using namespace data::cassandra;
 
-class BackendCassandraTest : public SyncAsioContextTest, public WithPrometheus {
+class BackendCassandraTestBase : public SyncAsioContextTest, public WithPrometheus {
 protected:
     ClioConfigDefinition cfg_{
         {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
@@ -106,23 +110,34 @@ protected:
         {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)}
     };
 
+    static constexpr auto kRAWHEADER =
+        "03C3141A01633CD656F91B4EBB5EB89B791BD34DBC8A04BB6F407C5335BC54351E"
+        "DD733898497E809E04074D14D271E4832D7888754F9230800761563A292FA2315A"
+        "6DB6FE30CC5909B285080FCD6773CC883F9FE0EE4D439340AC592AADB973ED3CF5"
+        "3E2232B33EF57CECAC2816E3122816E31A0A00F8377CD95DFA484CFAE282656A58"
+        "CE5AA29652EFFD80AC59CD91416E4E13DBBE";
+
     ObjectView obj_ = cfg_.getObject("database.cassandra");
     SettingsProvider settingsProvider_{obj_};
 
     // recreated for each test
     data::LedgerCache cache_;
-    std::unique_ptr<BackendInterface> backend_{std::make_unique<CassandraBackend>(settingsProvider_, cache_, false)};
 
     std::default_random_engine randomEngine_{0};
 
 public:
-    ~BackendCassandraTest() override
+    ~BackendCassandraTestBase() override
     {
         // drop the keyspace for next test
         Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
         handle.execute("DROP KEYSPACE " + TestGlobals::instance().backendKeyspace);
     }
+};
+
+class BackendCassandraTest : public BackendCassandraTestBase {
+protected:
+    std::unique_ptr<BackendInterface> backend_{std::make_unique<CassandraBackend>(settingsProvider_, cache_, false)};
 };
 
 TEST_F(BackendCassandraTest, Basic)
@@ -898,12 +913,6 @@ TEST_F(BackendCassandraTest, CacheIntegration)
     boost::asio::spawn(ctx_, [this, &done, &work](boost::asio::yield_context yield) {
         backend_->cache().setFull();
 
-        std::string const rawHeader =
-            "03C3141A01633CD656F91B4EBB5EB89B791BD34DBC8A04BB6F407C5335BC54351E"
-            "DD733898497E809E04074D14D271E4832D7888754F9230800761563A292FA2315A"
-            "6DB6FE30CC5909B285080FCD6773CC883F9FE0EE4D439340AC592AADB973ED3CF5"
-            "3E2232B33EF57CECAC2816E3122816E31A0A00F8377CD95DFA484CFAE282656A58"
-            "CE5AA29652EFFD80AC59CD91416E4E13DBBE";
         // this account is not related to the above transaction and
         // metadata
         std::string const accountHex =
@@ -912,7 +921,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             "142252F328CF91263417762570D67220CCB33B1370";
         std::string const accountIndexHex = "E0311EB450B6177F969B94DBDDA83E99B7A0576ACD9079573876F16C0C004F06";
 
-        std::string rawHeaderBlob = hexStringToBinaryString(rawHeader);
+        std::string rawHeaderBlob = hexStringToBinaryString(kRAWHEADER);
         std::string accountBlob = hexStringToBinaryString(accountHex);
         std::string const accountIndexBlob = hexStringToBinaryString(accountIndexHex);
         ripple::LedgerHeader const lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
@@ -1294,8 +1303,63 @@ TEST_F(BackendCassandraTest, CacheIntegration)
     ASSERT_EQ(done, true);
 }
 
+class CacheBackendCassandraTest : public BackendCassandraTestBase {
+protected:
+    using TestBackendType = data::cassandra::BasicCassandraBackend<
+        SettingsProvider,
+        data::cassandra::impl::DefaultExecutionStrategy<>,
+        MockLedgerHeaderCache>;
+
+    std::unique_ptr<BackendInterface> backend_{std::make_unique<TestBackendType>(settingsProvider_, cache_, false)};
+
+public:
+    MockLedgerHeaderCache&
+    getMockCache()
+    {
+        return dynamic_cast<TestBackendType&>(*backend_).ledgerCache_;
+    }
+};
+
+TEST_F(CacheBackendCassandraTest, CacheFetchLedgerBySeq)
+{
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto rawHeaderBlob = hexStringToBinaryString(kRAWHEADER);
+        ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
+
+        backend_->writeLedger(lgrInfo, std::move(rawHeaderBlob));
+        auto const testLedgerSeq = lgrInfo.seq;
+        ASSERT_TRUE(backend_->finishWrites(lgrInfo.seq));
+
+        EXPECT_CALL(getMockCache(), put(data::FetchLedgerCache::CacheEntry{lgrInfo, testLedgerSeq}));
+
+        {
+            testing::InSequence s;
+            // first time, getSeq doesn't match ledger sequence
+            EXPECT_CALL(getMockCache(), get()).WillOnce(testing::Return(std::nullopt));
+
+            // second time, it would be cached
+            EXPECT_CALL(getMockCache(), get())
+                .WillOnce(testing::Return(data::FetchLedgerCache::CacheEntry{.ledger = lgrInfo, .seq = testLedgerSeq}));
+        }
+
+        {
+            // backend should cache the result of fetchLedgerBySequence
+            auto const ledger = backend_->fetchLedgerBySequence(testLedgerSeq, yield);
+            ASSERT_TRUE(ledger.has_value());
+            EXPECT_EQ(ledger->seq, lgrInfo.seq);
+        }
+
+        {
+            // Second call: should return from cache
+            auto const ledger = backend_->fetchLedgerBySequence(testLedgerSeq, yield);
+            ASSERT_TRUE(ledger.has_value());
+            EXPECT_EQ(ledger->seq, lgrInfo.seq);
+        }
+    });
+}
+
 struct BackendCassandraNodeMessageTest : BackendCassandraTest {
-    boost::uuids::random_generator generateUuid{};
+    boost::uuids::random_generator generateUuid;
 };
 
 TEST_F(BackendCassandraNodeMessageTest, UpdateFetch)

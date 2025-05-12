@@ -14,6 +14,7 @@ target_sources(
           data/LedgerCacheTests.cpp
           data/cassandra/AsyncExecutorTests.cpp
           data/cassandra/ExecutionStrategyTests.cpp
+          data/cassandra/LedgerHeaderCacheTests.cpp
           data/cassandra/RetryPolicyTests.cpp
           data/cassandra/SettingsProviderTests.cpp
           # Cluster

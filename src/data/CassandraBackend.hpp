@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
 #include "data/LedgerCacheInterface.hpp"
+#include "data/LedgerHeaderCache.hpp"
 #include "data/Types.hpp"
 #include "data/cassandra/Concepts.hpp"
 #include "data/cassandra/Handle.hpp"
@@ -62,6 +63,8 @@
 #include <utility>
 #include <vector>
 
+class CacheBackendCassandraTest;
+
 namespace data::cassandra {
 
 /**
@@ -71,21 +74,27 @@ namespace data::cassandra {
  *
  * @tparam SettingsProviderType The settings provider type to use
  * @tparam ExecutionStrategyType The execution strategy type to use
+ * @tparam FetchLedgerCacheType The ledger header cache type to use
  */
-template <SomeSettingsProvider SettingsProviderType, SomeExecutionStrategy ExecutionStrategyType>
+template <
+    SomeSettingsProvider SettingsProviderType,
+    SomeExecutionStrategy ExecutionStrategyType,
+    typename FetchLedgerCacheType = FetchLedgerCache>
 class BasicCassandraBackend : public BackendInterface {
     util::Logger log_{"Backend"};
 
     SettingsProviderType settingsProvider_;
     Schema<SettingsProviderType> schema_;
-
     std::atomic_uint32_t ledgerSequence_ = 0u;
+    friend class ::CacheBackendCassandraTest;
 
 protected:
     Handle handle_;
 
     // have to be mutable because BackendInterface constness :(
     mutable ExecutionStrategyType executor_;
+    // TODO: move to interface level
+    mutable FetchLedgerCacheType ledgerCache_{};
 
 public:
     /**
@@ -129,7 +138,6 @@ public:
             LOG(log_.error()) << error;
             throw std::runtime_error(error);
         }
-
         LOG(log_.info()) << "Created (revamped) CassandraBackend";
     }
 
@@ -263,11 +271,16 @@ public:
     std::optional<ripple::LedgerHeader>
     fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context yield) const override
     {
+        if (auto const lock = ledgerCache_.get(); lock.has_value() && lock->seq == sequence)
+            return lock->ledger;
+
         auto const res = executor_.read(yield, schema_->selectLedgerBySeq, sequence);
         if (res) {
             if (auto const& result = res.value(); result) {
                 if (auto const maybeValue = result.template get<std::vector<unsigned char>>(); maybeValue) {
-                    return util::deserializeHeader(ripple::makeSlice(*maybeValue));
+                    auto const header = util::deserializeHeader(ripple::makeSlice(*maybeValue));
+                    ledgerCache_.put(FetchLedgerCache::CacheEntry{header, sequence});
+                    return header;
                 }
 
                 LOG(log_.error()) << "Could not fetch ledger by sequence - no rows";
