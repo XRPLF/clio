@@ -569,13 +569,17 @@ public:
     virtual std::optional<std::string>
     fetchMigratorStatus(std::string const& migratorName, boost::asio::yield_context yield) const = 0;
 
+    /** @brief Return type for fetchClioNodesData() method */
+    using ClioNodesDataFetchResult =
+        std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>;
+
     /**
      * @brief Fetches the data of all nodes in the cluster.
      *
      * @param yield The coroutine context
      *@return The data of all nodes in the cluster.
      */
-    [[nodiscard]] virtual std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>
+    [[nodiscard]] virtual ClioNodesDataFetchResult
     fetchClioNodesData(boost::asio::yield_context yield) const = 0;
 
     /**

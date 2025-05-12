@@ -36,6 +36,7 @@
 #include <chrono>
 #include <ctime>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -111,9 +112,12 @@ ClusterCommunicationService::selfData() const
     return result;
 }
 
-std::vector<ClioNode>
+std::expected<std::vector<ClioNode>, std::string>
 ClusterCommunicationService::clusterData() const
 {
+    if (not isHealthy_) {
+        return std::unexpected{"Service is not healthy"};
+    }
     std::vector<ClioNode> result;
     boost::asio::spawn(strand_, [this, &result](boost::asio::yield_context) {
         result = otherNodesData_;
@@ -127,7 +131,13 @@ ClusterCommunicationService::doRead(boost::asio::yield_context yield)
 {
     otherNodesData_.clear();
 
-    auto const expectedResult = backend_->fetchClioNodesData(yield);
+    BackendInterface::ClioNodesDataFetchResult expectedResult;
+    try {
+        expectedResult = backend_->fetchClioNodesData(yield);
+    } catch (...) {
+        expectedResult = std::unexpected{"Failed to fecth Clio nodes data"};
+    }
+
     if (!expectedResult.has_value()) {
         LOG(log_.error()) << "Failed to fetch nodes data";
         isHealthy_ = false;
