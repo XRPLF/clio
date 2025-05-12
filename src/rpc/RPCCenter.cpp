@@ -23,7 +23,10 @@
 #include <unordered_set>
 
 namespace rpc {
-std::unordered_set<std::string_view> const RPCCenter::kHANDLED_RPCS = {
+
+namespace {
+
+std::unordered_set<std::string_view> const kHANDLED_RPCS = {
     "account_channels",
     "account_currencies",
     "account_info",
@@ -61,7 +64,7 @@ std::unordered_set<std::string_view> const RPCCenter::kHANDLED_RPCS = {
     "version",
 };
 
-std::unordered_set<std::string_view> const RPCCenter::kFORWARDED_RPCS = {
+std::unordered_set<std::string_view> const kFORWARDED_RPCS = {
     "server_definitions",
     "server_state",
     "submit",
@@ -75,6 +78,8 @@ std::unordered_set<std::string_view> const RPCCenter::kFORWARDED_RPCS = {
     "channel_verify",
     "simulate",
 };
+
+}  // namespace
 
 bool
 RPCCenter::isRpcName(std::string_view s)

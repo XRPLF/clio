@@ -20,7 +20,6 @@
 #pragma once
 
 #include <string_view>
-#include <unordered_set>
 
 namespace rpc {
 
@@ -30,14 +29,7 @@ namespace rpc {
  * The RPCCenter maintains lists of RPC commands that can be handled locally
  * and those that need to be forwarded to rippled.
  */
-class RPCCenter {
-    /** @brief Set of RPC commands that can be handled locally by Clio */
-    static std::unordered_set<std::string_view> const kHANDLED_RPCS;
-
-    /** @brief Set of RPC commands that will be forwarded to rippled */
-    static std::unordered_set<std::string_view> const kFORWARDED_RPCS;
-
-public:
+struct RPCCenter {
     /**
      * @brief Checks if a string is a valid RPC command name
      *
