@@ -21,7 +21,7 @@
 
 #include "migration/cassandra/impl/ObjectsAdapter.hpp"
 #include "migration/cassandra/impl/Types.hpp"
-#include "util/newconfig/ObjectView.hpp"
+#include "util/config/ObjectView.hpp"
 
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/LedgerFormats.h>

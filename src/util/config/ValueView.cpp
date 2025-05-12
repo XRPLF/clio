@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "util/newconfig/ValueView.hpp"
+#include "util/config/ValueView.hpp"
 
 #include "util/Assert.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
 
 #include <cstdint>
 #include <string>

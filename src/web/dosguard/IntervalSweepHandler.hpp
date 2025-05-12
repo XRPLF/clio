@@ -20,7 +20,7 @@
 #pragma once
 
 #include "util/Repeat.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 #include <boost/asio/io_context.hpp>
 

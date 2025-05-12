@@ -20,9 +20,9 @@
 #pragma once
 
 #include "rpc/common/APIVersion.hpp"
+#include "util/config/Error.hpp"
+#include "util/config/Types.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/Error.hpp"
-#include "util/newconfig/Types.hpp"
 
 #include <fmt/core.h>
 #include <fmt/format.h>

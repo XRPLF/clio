@@ -18,13 +18,13 @@
 //==============================================================================
 
 #include "util/MockAssert.hpp"
-#include "util/newconfig/ArrayView.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigFileJson.hpp"
-#include "util/newconfig/FakeConfigData.hpp"
-#include "util/newconfig/ObjectView.hpp"
-#include "util/newconfig/Types.hpp"
-#include "util/newconfig/ValueView.hpp"
+#include "util/config/ArrayView.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigFileJson.hpp"
+#include "util/config/FakeConfigData.hpp"
+#include "util/config/ObjectView.hpp"
+#include "util/config/Types.hpp"
+#include "util/config/ValueView.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gtest/gtest.h>

@@ -191,13 +191,13 @@ target_sources(
           web/ServerTests.cpp
           web/SubscriptionContextTests.cpp
           # New Config
-          util/newconfig/ArrayTests.cpp
-          util/newconfig/ArrayViewTests.cpp
-          util/newconfig/ClioConfigDefinitionTests.cpp
-          util/newconfig/ConfigValueTests.cpp
-          util/newconfig/ObjectViewTests.cpp
-          util/newconfig/ConfigFileJsonTests.cpp
-          util/newconfig/ValueViewTests.cpp
+          util/config/ArrayTests.cpp
+          util/config/ArrayViewTests.cpp
+          util/config/ClioConfigDefinitionTests.cpp
+          util/config/ConfigValueTests.cpp
+          util/config/ObjectViewTests.cpp
+          util/config/ConfigFileJsonTests.cpp
+          util/config/ValueViewTests.cpp
 )
 
 # See https://github.com/google/googletest/issues/3475

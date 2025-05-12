@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
-#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/config/ConfigFileJson.hpp"
 
 #include "util/Assert.hpp"
-#include "util/newconfig/Array.hpp"
-#include "util/newconfig/Error.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/Array.hpp"
+#include "util/config/Error.hpp"
+#include "util/config/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>

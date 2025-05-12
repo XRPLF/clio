@@ -19,7 +19,7 @@
 
 #include "web/ng/impl/ServerSslContext.hpp"
 
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ssl/context.hpp>

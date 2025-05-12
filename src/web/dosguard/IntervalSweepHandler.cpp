@@ -19,7 +19,7 @@
 
 #include "web/dosguard/IntervalSweepHandler.hpp"
 
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 
 #include <boost/asio/io_context.hpp>

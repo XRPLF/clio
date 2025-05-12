@@ -30,8 +30,8 @@
 #include "util/Assert.hpp"
 #include "util/Mutex.hpp"
 #include "util/ResponseExpirationCache.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>

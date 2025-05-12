@@ -20,8 +20,8 @@
 #pragma once
 
 #include "util/Assert.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/Error.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/Error.hpp"
 
 #include <fmt/core.h>
 

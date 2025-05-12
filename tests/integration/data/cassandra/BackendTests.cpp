@@ -31,9 +31,9 @@
 #include "util/MockPrometheus.hpp"
 #include "util/Random.hpp"
 #include "util/StringUtils.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/ObjectView.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/ObjectView.hpp"
+#include "util/config/Types.hpp"
 
 #include <TestGlobals.hpp>
 #include <boost/asio/impl/spawn.hpp>

@@ -20,7 +20,7 @@
 #include "web/AdminVerificationStrategy.hpp"
 
 #include "util/JsonUtils.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 #include <boost/beast/http/field.hpp>
 #include <xrpl/basics/base_uint.h>

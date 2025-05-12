@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "util/newconfig/ConfigFileInterface.hpp"
-#include "util/newconfig/Error.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigFileInterface.hpp"
+#include "util/config/Error.hpp"
+#include "util/config/Types.hpp"
 
 #include <boost/json/object.hpp>
 

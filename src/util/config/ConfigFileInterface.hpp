@@ -19,31 +19,50 @@
 
 #pragma once
 
-#include "util/newconfig/ConfigFileInterface.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/Types.hpp"
 
-#include <boost/filesystem/path.hpp>
-
+#include <optional>
 #include <string_view>
 #include <vector>
 
-// TODO: implement when we support yaml
-
 namespace util::config {
 
-/** @brief Yaml representation of config */
-class ConfigFileYaml final : public ConfigFileInterface {
+/**
+ * @brief The interface for configuration files.
+ *
+ * This class defines the interface for handling configuration files,
+ * which can be implemented for different formats such as JSON or YAML.
+ */
+class ConfigFileInterface {
 public:
-    ConfigFileYaml() = default;
+    virtual ~ConfigFileInterface() = default;
 
-    Value
-    getValue(std::string_view key) const override;
+    /**
+     * @brief Retrieves the value of configValue.
+     *
+     * @param key The key of configuration.
+     * @return the value associated with key.
+     */
+    virtual Value
+    getValue(std::string_view key) const = 0;
 
-    std::vector<Value>
-    getArray(std::string_view key) const override;
+    /**
+     * @brief Retrieves an array of configuration values.
+     *
+     * @param key The key of the configuration array.
+     * @return A vector of configuration values some of which could be nullopt
+     */
+    virtual std::vector<std::optional<Value>>
+    getArray(std::string_view key) const = 0;
 
-    bool
-    containsKey(std::string_view key) const override;
+    /**
+     * @brief Checks if key exist in configuration file.
+     *
+     * @param key The key to search for.
+     * @return true if key exists in configuration file, false otherwise.
+     */
+    virtual bool
+    containsKey(std::string_view key) const = 0;
 };
 
 }  // namespace util::config

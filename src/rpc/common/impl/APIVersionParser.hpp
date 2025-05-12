@@ -20,8 +20,8 @@
 #pragma once
 
 #include "rpc/common/APIVersion.hpp"
+#include "util/config/ObjectView.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ObjectView.hpp"
 
 #include <boost/json/object.hpp>
 

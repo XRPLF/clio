@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Error.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Error.hpp"
+#include "util/config/Types.hpp"
 
 #include <cstddef>
 #include <optional>

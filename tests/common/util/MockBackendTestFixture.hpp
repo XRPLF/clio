@@ -22,7 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockBackend.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 #include <gmock/gmock.h>
 

@@ -18,9 +18,9 @@
 //==============================================================================
 
 #include "util/AsioContextTestFixture.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
 #include "web/dosguard/DOSGuardMock.hpp"
 #include "web/dosguard/IntervalSweepHandler.hpp"
 

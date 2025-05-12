@@ -21,7 +21,7 @@
 
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/Cluster.hpp"
-#include "util/newconfig/ObjectView.hpp"
+#include "util/config/ObjectView.hpp"
 
 #include <cstdint>
 #include <optional>

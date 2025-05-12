@@ -24,8 +24,8 @@
 #include "migration/MigratiorStatus.hpp"
 #include "migration/cassandra/CassandraMigrationManager.hpp"
 #include "util/Assert.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>

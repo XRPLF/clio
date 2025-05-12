@@ -19,7 +19,7 @@
 
 #include "app/VerifyConfig.hpp"
 #include "util/TmpFile.hpp"
-#include "util/newconfig/FakeConfigData.hpp"
+#include "util/config/FakeConfigData.hpp"
 
 #include <gtest/gtest.h>
 

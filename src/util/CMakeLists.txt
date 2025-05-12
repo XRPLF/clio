@@ -28,14 +28,14 @@ target_sources(
           TimeUtils.cpp
           TxUtils.cpp
           LedgerUtils.cpp
-          newconfig/Array.cpp
-          newconfig/ArrayView.cpp
-          newconfig/ConfigConstraints.cpp
-          newconfig/ConfigDefinition.cpp
-          newconfig/ConfigFileJson.cpp
-          newconfig/ObjectView.cpp
-          newconfig/Types.cpp
-          newconfig/ValueView.cpp
+          config/Array.cpp
+          config/ArrayView.cpp
+          config/ConfigConstraints.cpp
+          config/ConfigDefinition.cpp
+          config/ConfigFileJson.cpp
+          config/ObjectView.cpp
+          config/Types.cpp
+          config/ValueView.cpp
 )
 
 # This must be above the target_link_libraries call otherwise backtrace doesn't work

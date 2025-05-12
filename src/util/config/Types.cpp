@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/newconfig/Types.hpp"
+#include "util/config/Types.hpp"
 
 #include <cstdint>
 #include <ostream>

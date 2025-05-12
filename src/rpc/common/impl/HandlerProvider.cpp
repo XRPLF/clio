@@ -61,7 +61,7 @@
 #include "rpc/handlers/Tx.hpp"
 #include "rpc/handlers/Unsubscribe.hpp"
 #include "rpc/handlers/VersionHandler.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 #include <memory>
 #include <optional>

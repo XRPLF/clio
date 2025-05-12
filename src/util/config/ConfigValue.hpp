@@ -21,9 +21,9 @@
 
 #include "util/Assert.hpp"
 #include "util/OverloadSet.hpp"
-#include "util/newconfig/ConfigConstraints.hpp"
-#include "util/newconfig/Error.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigConstraints.hpp"
+#include "util/config/Error.hpp"
+#include "util/config/Types.hpp"
 
 #include <fmt/core.h>
 

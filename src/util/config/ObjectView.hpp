@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/newconfig/ValueView.hpp"
+#include "util/config/ValueView.hpp"
 
 #include <cstddef>
 #include <functional>

@@ -17,20 +17,20 @@
 */
 //==============================================================================
 
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 #include "util/Assert.hpp"
 #include "util/Constants.hpp"
 #include "util/OverloadSet.hpp"
-#include "util/newconfig/Array.hpp"
-#include "util/newconfig/ArrayView.hpp"
-#include "util/newconfig/ConfigConstraints.hpp"
-#include "util/newconfig/ConfigFileInterface.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Error.hpp"
-#include "util/newconfig/ObjectView.hpp"
-#include "util/newconfig/Types.hpp"
-#include "util/newconfig/ValueView.hpp"
+#include "util/config/Array.hpp"
+#include "util/config/ArrayView.hpp"
+#include "util/config/ConfigConstraints.hpp"
+#include "util/config/ConfigFileInterface.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Error.hpp"
+#include "util/config/ObjectView.hpp"
+#include "util/config/Types.hpp"
+#include "util/config/ValueView.hpp"
 
 #include <fmt/core.h>
 

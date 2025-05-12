@@ -22,7 +22,7 @@
 #include "util/NameGenerator.hpp"
 #include "util/OverloadSet.hpp"
 #include "util/TmpFile.hpp"
-#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/config/ConfigFileJson.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>

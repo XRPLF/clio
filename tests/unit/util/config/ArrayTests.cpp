@@ -18,11 +18,11 @@
 //==============================================================================
 
 #include "util/MockAssert.hpp"
-#include "util/newconfig/Array.hpp"
-#include "util/newconfig/ConfigConstraints.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Types.hpp"
-#include "util/newconfig/ValueView.hpp"
+#include "util/config/Array.hpp"
+#include "util/config/ConfigConstraints.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
+#include "util/config/ValueView.hpp"
 
 #include <gtest/gtest.h>
 

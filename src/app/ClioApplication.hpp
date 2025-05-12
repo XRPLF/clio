@@ -21,7 +21,7 @@
 
 #include "app/Stopper.hpp"
 #include "util/SignalsHandler.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 namespace app {
 

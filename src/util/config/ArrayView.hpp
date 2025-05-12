@@ -20,9 +20,9 @@
 #pragma once
 
 #include "util/Assert.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ObjectView.hpp"
-#include "util/newconfig/ValueView.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ObjectView.hpp"
+#include "util/config/ValueView.hpp"
 
 #include <cstddef>
 #include <functional>
