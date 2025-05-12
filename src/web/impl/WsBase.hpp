@@ -173,7 +173,8 @@ public:
     void
     send(std::shared_ptr<std::string> msg) override
     {
-        boost::asio::dispatch(
+        // Note: post used instead of dispatch to guarantee async behavior of wsFail and maybeSendNext
+        boost::asio::post(
             derived().ws().get_executor(),
             [this, self = derived().shared_from_this(), msg = std::move(msg)]() {
                 if (messages_.size() > maxSendingQueueSize_) {
