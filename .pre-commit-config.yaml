@@ -42,6 +42,15 @@ repos:
     hooks:
       - id: typos
 
+  # Running fix-local-includes before clang-format
+  # to ensure that the include order is correct.
+  - repo: local
+    hooks:
+      - id: fix-local-includes
+        name: Fix Local Includes
+        entry: pre-commit-hooks/fix-local-includes.sh
+        types: [c++]
+        language: script
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: v19.1.7
     hooks:
@@ -75,19 +84,13 @@ repos:
         name: Check Doxygen Documentation
         entry: pre-commit-hooks/check-doxygen-docs.sh
         types: [text]
-        language: system
-        pass_filenames: false
-      - id: fix-local-includes
-        name: Fix Local Includes
-        entry: pre-commit-hooks/fix-local-includes.sh
-        types: [c++]
-        language: system
+        language: script
         pass_filenames: false
       - id: verify-commits
         name: Verify Commits
         entry: pre-commit-hooks/verify-commits.sh
         types: [text]
-        language: system
+        language: script
         pass_filenames: false
 
   - repo: local
@@ -97,22 +100,22 @@ repos:
         entry: pre-commit-hooks/lfs/post-checkout
         types: [text]
         stages: [post-checkout]
-        language: system
+        language: script
       - id: lfs-post-commit
         name: LFS Post Commit
         entry: pre-commit-hooks/lfs/post-commit
         types: [text]
         stages: [post-commit]
-        language: system
+        language: script
       - id: lfs-post-merge
         name: LFS Post Merge
         entry: pre-commit-hooks/lfs/post-merge
         types: [text]
         stages: [post-merge]
-        language: system
+        language: script
       - id: lfs-pre-push
         name: LFS Pre Push
         entry: pre-commit-hooks/lfs/pre-push
         types: [text]
         stages: [pre-push]
-        language: system
+        language: script
