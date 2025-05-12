@@ -45,7 +45,7 @@ jobs:
       build_type: ${{ matrix.build_type }}
       static: ${{ matrix.static }}
       run_unit_tests: true
-      run_integration_tests: ${{ matrix.os != 'macos15' }}
+      run_integration_tests: true
       upload_clio_server: true
       disable_cache: true
 

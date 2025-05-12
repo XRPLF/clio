@@ -114,7 +114,7 @@ jobs:
 
     services:
       scylladb:
-        image: "scylladb/scylla"
+        image: ${{ inputs.container != '' && 'scylladb/scylla' || '' }}
         options: >-
           --health-cmd "cqlsh -e 'describe cluster'"
           --health-interval 10s
@@ -126,13 +126,37 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         uses: kuznetsss/workspace-cleanup@80b9863b45562c148927c3d53621ef354e5ae7ce # v1.0
 
+      - name: Spin up scylladb
+        if: ${{ runner.os == 'macOS' }}
+        timeout-minutes: 3
+        run: |
+          docker rm --force scylladb || true
+          docker run \
+            --detach \
+            --name scylladb \
+            --health-cmd "cqlsh -e 'describe cluster'" \
+            --health-interval 10s \
+            --health-timeout 5s \
+            --health-retries 5 \
+            --publish 9042:9042 \
+            --memory 16G \
+            scylladb/scylla
+
+          until [ "$(docker inspect -f '{{.State.Health.Status}}' scylladb)" == "healthy" ]; do
+            sleep 5
+          done
+
       - uses: actions/download-artifact@v4
         with:
           name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
 
-      # To be enabled back once docker in mac runner arrives
-      # https://github.com/XRPLF/clio/issues/1400
       - name: Run clio_integration_tests
         run: |
           chmod +x ./clio_integration_tests
-          ./clio_integration_tests --backend_host=scylladb
+          ./clio_integration_tests ${{ runner.os != 'macOS' && '--backend_host=scylladb' || '' }}
+
+      - name: Show docker logs and stop scylladb
+        if: ${{ always() && runner.os == 'macOS' }}
+        run: |
+          docker logs scylladb
+          docker rm --force scylladb || true
