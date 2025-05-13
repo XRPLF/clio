@@ -26,7 +26,7 @@
 #include <string_view>
 #include <unordered_set>
 
-namespace util {
+using namespace util;
 
 TEST(StringHashTest, HashesConsistently)
 {
@@ -68,5 +68,3 @@ TEST(StringHashTest, EmptyStrings)
     EXPECT_EQ(hasher(emptyStdString), hasher(emptyCString));
     EXPECT_EQ(hasher(emptyStrView), hasher(emptyCString));
 }
-
-}  // namespace util

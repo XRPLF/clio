@@ -80,7 +80,7 @@ protected:
     util::TagDecoratorFactory tagFactory_{config};
     std::string const ip_ = "some ip";
     StrictMockConnectionMetadata connectionMetadata_{ip_, tagFactory_};
-    Request::HttpHeaders const HttpHeaders_;
+    Request::HttpHeaders const httpHeaders_;
 
     static Request
     makeHttpRequest(std::string_view body)
@@ -91,7 +91,7 @@ protected:
     Request
     makeWsRequest(std::string body)
     {
-        return Request{std::move(body), HttpHeaders_};
+        return Request{std::move(body), httpHeaders_};
     }
 };
 
