@@ -70,11 +70,12 @@ jobs:
         run: |
           run-clang-tidy-19 -p build -j "${{ steps.number_of_threads.outputs.threads_number }}" -fix -quiet 1>output.txt
 
-      - name: Fix local includes
+      - name: Fix local includes and clang-format style
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
-        continue-on-error: true
         shell: bash
-        run: pre-commit run --all-files fix-local-includes
+        run: |
+          pre-commit run --all-files fix-local-includes || true
+          pre-commit run --all-files clang-format || true
 
       - name: Print issues found
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}

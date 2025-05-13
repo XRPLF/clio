@@ -67,7 +67,7 @@ namespace etl {
 
 namespace {
 std::vector<std::int64_t> const kHISTOGRAM_BUCKETS{1, 2, 5, 10, 20, 50, 100, 200, 500, 700, 1000};
-} // namespace
+}  // namespace
 
 std::shared_ptr<etlng::LoadBalancerInterface>
 LoadBalancer::makeLoadBalancer(
