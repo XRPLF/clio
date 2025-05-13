@@ -26,58 +26,68 @@ namespace rpc {
 
 namespace {
 
-std::unordered_set<std::string_view> const kHANDLED_RPCS = {
-    "account_channels",
-    "account_currencies",
-    "account_info",
-    "account_lines",
-    "account_nfts",
-    "account_objects",
-    "account_offers",
-    "account_tx",
-    "amm_info",
-    "book_changes",
-    "book_offers",
-    "deposit_authorized",
-    "feature",
-    "gateway_balances",
-    "get_aggregate_price",
-    "ledger",
-    "ledger_data",
-    "ledger_entry",
-    "ledger_index",
-    "ledger_range",
-    "mpt_holders",
-    "nfts_by_issuer",
-    "nft_history",
-    "nft_buy_offers",
-    "nft_info",
-    "nft_sell_offers",
-    "noripple_check",
-    "ping",
-    "random",
-    "server_info",
-    "transaction_entry",
-    "tx",
-    "subscribe",
-    "unsubscribe",
-    "version",
-};
+std::unordered_set<std::string_view> const&
+handledRpcs()
+{
+    static std::unordered_set<std::string_view> kHANDLED_RPCS = {
+        "account_channels",
+        "account_currencies",
+        "account_info",
+        "account_lines",
+        "account_nfts",
+        "account_objects",
+        "account_offers",
+        "account_tx",
+        "amm_info",
+        "book_changes",
+        "book_offers",
+        "deposit_authorized",
+        "feature",
+        "gateway_balances",
+        "get_aggregate_price",
+        "ledger",
+        "ledger_data",
+        "ledger_entry",
+        "ledger_index",
+        "ledger_range",
+        "mpt_holders",
+        "nfts_by_issuer",
+        "nft_history",
+        "nft_buy_offers",
+        "nft_info",
+        "nft_sell_offers",
+        "noripple_check",
+        "ping",
+        "random",
+        "server_info",
+        "transaction_entry",
+        "tx",
+        "subscribe",
+        "unsubscribe",
+        "version",
+    };
+    return kHANDLED_RPCS;
+}
 
-std::unordered_set<std::string_view> const kFORWARDED_RPCS = {
-    "server_definitions",
-    "server_state",
-    "submit",
-    "submit_multisigned",
-    "fee",
-    "ledger_closed",
-    "ledger_current",
-    "ripple_path_find",
-    "manifest",
-    "channel_authorize",
-    "channel_verify",
-    "simulate",
-};
+std::unordered_set<std::string_view> const&
+forwardedRpcs()
+{
+    static std::unordered_set<std::string_view> const kFORWARDED_RPCS = {
+        "server_definitions",
+        "server_state",
+        "submit",
+        "submit_multisigned",
+        "fee",
+        "ledger_closed",
+        "ledger_current",
+        "ripple_path_find",
+        "manifest",
+        "channel_authorize",
+        "channel_verify",
+        "simulate",
+    };
+    return kFORWARDED_RPCS;
+}
 
 }  // namespace
 
@@ -90,13 +100,13 @@ RPCCenter::isRpcName(std::string_view s)
 bool
 RPCCenter::isHandled(std::string_view s)
 {
-    return kHANDLED_RPCS.contains(s);
+    return handledRpcs().contains(s);
 }
 
 bool
 RPCCenter::isForwarded(std::string_view s)
 {
-    return kFORWARDED_RPCS.contains(s);
+    return forwardedRpcs().contains(s);
 }
 
 }  // namespace rpc
