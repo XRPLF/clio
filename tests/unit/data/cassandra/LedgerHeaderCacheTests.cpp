@@ -21,8 +21,6 @@
 #include "util/TestObject.hpp"
 
 #include <gtest/gtest.h>
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/LedgerHeader.h>
 
 using namespace data;
 using Test = ::testing::Test;
@@ -44,7 +42,7 @@ TEST_F(FetchLedgerCacheTest, DefaultCacheIsEmpty)
 TEST_F(FetchLedgerCacheTest, CanStoreAndRetrieveEntry)
 {
     auto const ledger = createLedgerHeader(kLEDGER_HASH, 42);
-    FetchLedgerCache::CacheEntry entry{.ledger = ledger, .seq = 42};
+    FetchLedgerCache::CacheEntry const entry{.ledger = ledger, .seq = 42};
 
     cache_.put(entry);
     auto const result = cache_.get();
@@ -58,8 +56,8 @@ TEST_F(FetchLedgerCacheTest, PutOverwritesPreviousEntry)
     auto const ledger1 = createLedgerHeader(kLEDGER_HASH, 1);
     auto const ledger2 = createLedgerHeader(kLEDGER_HASH2, 2);
 
-    FetchLedgerCache::CacheEntry entry1{.ledger = ledger1, .seq = 1};
-    FetchLedgerCache::CacheEntry entry2{.ledger = ledger2, .seq = 2};
+    FetchLedgerCache::CacheEntry const entry1{.ledger = ledger1, .seq = 1};
+    FetchLedgerCache::CacheEntry const entry2{.ledger = ledger2, .seq = 2};
 
     cache_.put(entry1);
     cache_.put(entry2);
