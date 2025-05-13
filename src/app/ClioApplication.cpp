@@ -44,6 +44,7 @@
 #include "web/Server.hpp"
 #include "web/dosguard/DOSGuard.hpp"
 #include "web/dosguard/IntervalSweepHandler.hpp"
+#include "web/dosguard/Weights.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
 #include "web/ng/RPCServerHandler.hpp"
 #include "web/ng/Server.hpp"
@@ -103,7 +104,8 @@ ClioApplication::run(bool const useNgWebServer)
 
     // Rate limiter, to prevent abuse
     auto whitelistHandler = web::dosguard::WhitelistHandler{config_};
-    auto dosGuard = web::dosguard::DOSGuard{config_, whitelistHandler};
+    auto const dosguardWeights = web::dosguard::Weights::make(config_);
+    auto dosGuard = web::dosguard::DOSGuard{config_, whitelistHandler, dosguardWeights};
     auto sweepHandler = web::dosguard::IntervalSweepHandler{config_, ioc, dosGuard};
     auto cache = data::LedgerCache{};
 
@@ -154,7 +156,7 @@ ClioApplication::run(bool const useNgWebServer)
         RPCEngineType::makeRPCEngine(config_, backend, balancer, dosGuard, workQueue, counters, handlerProvider);
 
     if (useNgWebServer or config_.get<bool>("server.__ng_web_server")) {
-        web::ng::RPCServerHandler<RPCEngineType> handler{config_, backend, rpcEngine, etl};
+        web::ng::RPCServerHandler<RPCEngineType> handler{config_, backend, rpcEngine, etl, dosGuard};
 
         auto expectedAdminVerifier = web::makeAdminVerificationStrategy(config_);
         if (not expectedAdminVerifier.has_value()) {
@@ -172,7 +174,7 @@ ClioApplication::run(bool const useNgWebServer)
 
         httpServer->onGet("/metrics", MetricsHandler{adminVerifier});
         httpServer->onGet("/health", HealthCheckHandler{});
-        auto requestHandler = RequestHandler{adminVerifier, handler, dosGuard};
+        auto requestHandler = RequestHandler{adminVerifier, handler};
         httpServer->onPost("/", requestHandler);
         httpServer->onWs(std::move(requestHandler));
 
@@ -195,7 +197,7 @@ ClioApplication::run(bool const useNgWebServer)
     }
 
     // Init the web server
-    auto handler = std::make_shared<web::RPCServerHandler<RPCEngineType>>(config_, backend, rpcEngine, etl);
+    auto handler = std::make_shared<web::RPCServerHandler<RPCEngineType>>(config_, backend, rpcEngine, etl, dosGuard);
 
     auto const httpServer = web::makeHttpServer(config_, ioc, dosGuard, handler);
 

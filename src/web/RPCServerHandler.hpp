@@ -31,6 +31,7 @@
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
+#include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/ErrorHandling.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
@@ -66,6 +67,7 @@ class RPCServerHandler {
     std::shared_ptr<etlng::ETLServiceInterface const> const etl_;
     util::TagDecoratorFactory const tagFactory_;
     rpc::impl::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
+    std::reference_wrapper<web::dosguard::DOSGuardInterface> dosguard_;
 
     util::Logger log_{"RPC"};
     util::Logger perfLog_{"Performance"};
@@ -78,18 +80,21 @@ public:
      * @param backend The backend to use
      * @param rpcEngine The RPC engine to use
      * @param etl The ETL to use
+     * @param dosguard The DOS guard service to use for request rate limiting
      */
     RPCServerHandler(
         util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<RPCEngineType> const& rpcEngine,
-        std::shared_ptr<etlng::ETLServiceInterface const> const& etl
+        std::shared_ptr<etlng::ETLServiceInterface const> const& etl,
+        web::dosguard::DOSGuardInterface& dosguard
     )
         : backend_(backend)
         , rpcEngine_(rpcEngine)
         , etl_(etl)
         , tagFactory_(config)
         , apiVersionParser_(config.getObject("api_version"))
+        , dosguard_(dosguard)
     {
     }
 
@@ -102,12 +107,22 @@ public:
     void
     operator()(std::string const& request, std::shared_ptr<web::ConnectionBase> const& connection)
     {
+        if (not dosguard_.get().isOk(connection->clientIp)) {
+            connection->sendSlowDown(request);
+            return;
+        }
+
         try {
             auto req = boost::json::parse(request).as_object();
             LOG(perfLog_.debug()) << connection->tag() << "Adding to work queue";
 
             if (not connection->upgraded and shouldReplaceParams(req))
                 req[JS(params)] = boost::json::array({boost::json::object{}});
+
+            if (not dosguard_.get().request(connection->clientIp, req)) {
+                connection->sendSlowDown(request);
+                return;
+            }
 
             if (!rpcEngine_->post(
                     [this, request = std::move(req), connection](boost::asio::yield_context yield) mutable {

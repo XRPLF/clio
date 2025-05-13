@@ -66,6 +66,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_set>
 
 namespace rpc::impl {
 
@@ -137,6 +138,15 @@ bool
 ProductionHandlerProvider::isClioOnly(std::string const& command) const
 {
     return handlerMap_.contains(command) && handlerMap_.at(command).isClioOnly;
+}
+
+std::unordered_set<std::string>
+ProductionHandlerProvider::handlerNames() const
+{
+    std::unordered_set<std::string> result;
+    for (auto const& [name, handler] : handlerMap_)
+        result.insert(name);
+    return result;
 }
 
 }  // namespace rpc::impl

@@ -19,6 +19,7 @@
 
 #include "util/newconfig/ConfigConstraints.hpp"
 
+#include "rpc/RPCCenter.hpp"
 #include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
@@ -101,6 +102,24 @@ PositiveDouble::checkValueImpl(Value const& num) const
     if (std::get<double>(num) >= 0)
         return std::nullopt;
     return Error{"Double number must be greater than or equal to 0"};
+}
+
+std::optional<Error>
+RpcNameConstraint::checkTypeImpl(Value const& value) const
+{
+    if (not std::holds_alternative<std::string>(value))
+        return Error{"RPC command name must be a string"};
+    return std::nullopt;
+}
+
+std::optional<Error>
+RpcNameConstraint::checkValueImpl(Value const& value) const
+{
+    auto const str = std::get<std::string>(value);
+    if (not rpc::RPCCenter::isRpcName(str))
+        return Error{"Invalid RPC command name"};
+
+    return std::nullopt;
 }
 
 }  // namespace util::config

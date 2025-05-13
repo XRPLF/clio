@@ -164,6 +164,12 @@ public:
         doWrite();
     }
 
+    void
+    sendSlowDown(std::string const& request) override
+    {
+        sendError(rpc::RippledError::rpcSLOW_DOWN, request);
+    }
+
     /**
      * @brief Send a message to the client
      * @param msg The message to send, it will keep the string alive until it is sent. It is useful when we have
@@ -280,36 +286,33 @@ public:
 
         LOG(perfLog_.info()) << tag() << "Received request from ip = " << this->clientIp;
 
-        auto sendError = [this](auto error, std::string&& requestStr) {
-            auto e = rpc::makeError(error);
-
-            try {
-                auto request = boost::json::parse(requestStr);
-                if (request.is_object() && request.as_object().contains("id"))
-                    e["id"] = request.as_object().at("id");
-                e["request"] = std::move(request);
-            } catch (std::exception const&) {
-                e["request"] = std::move(requestStr);
-            }
-
-            this->send(std::make_shared<std::string>(boost::json::serialize(e)));
-        };
-
         std::string requestStr{static_cast<char const*>(buffer_.data().data()), buffer_.size()};
 
-        // dosGuard served request++ and check ip address
-        if (!dosGuard_.get().request(clientIp)) {
-            // TODO: could be useful to count in counters in the future too
-            sendError(rpc::RippledError::rpcSLOW_DOWN, std::move(requestStr));
-        } else {
-            try {
-                (*handler_)(requestStr, shared_from_this());
-            } catch (std::exception const&) {
-                sendError(rpc::RippledError::rpcINTERNAL, std::move(requestStr));
-            }
+        try {
+            (*handler_)(requestStr, shared_from_this());
+        } catch (std::exception const&) {
+            sendError(rpc::RippledError::rpcINTERNAL, std::move(requestStr));
         }
 
         doRead();
+    }
+
+private:
+    void
+    sendError(rpc::RippledError error, std::string requestStr)
+    {
+        auto e = rpc::makeError(error);
+
+        try {
+            auto request = boost::json::parse(requestStr);
+            if (request.is_object() && request.as_object().contains("id"))
+                e["id"] = request.as_object().at("id");
+            e["request"] = std::move(request);
+        } catch (std::exception const&) {
+            e["request"] = std::move(requestStr);
+        }
+
+        this->send(std::make_shared<std::string>(boost::json::serialize(e)));
     }
 };
 }  // namespace web::impl

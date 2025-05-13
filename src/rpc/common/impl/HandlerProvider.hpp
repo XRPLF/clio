@@ -33,6 +33,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace rpc {
 class Counters;
@@ -67,6 +68,9 @@ public:
 
     bool
     isClioOnly(std::string const& command) const override;
+
+    std::unordered_set<std::string>
+    handlerNames() const;
 };
 
 }  // namespace rpc::impl

@@ -35,6 +35,7 @@
 #include "web/dosguard/DOSGuard.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/dosguard/IntervalSweepHandler.hpp"
+#include "web/dosguard/Weights.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
@@ -162,12 +163,13 @@ struct WebServerTest : NoLoggerFixture {
     std::string const port = std::to_string(tests::util::generateFreePort());
     ClioConfigDefinition cfg{getParseServerConfig(generateJSONWithDynamicPort(port))};
     dosguard::WhitelistHandler whitelistHandler{cfg};
-    dosguard::DOSGuard dosGuard{cfg, whitelistHandler};
+    dosguard::Weights dosguardWeights{1, {}};
+    dosguard::DOSGuard dosGuard{cfg, whitelistHandler, dosguardWeights};
     dosguard::IntervalSweepHandler sweepHandler{cfg, ctxSync, dosGuard};
 
     ClioConfigDefinition cfgOverload{getParseServerConfig(generateJSONDataOverload(port))};
     dosguard::WhitelistHandler whitelistHandlerOverload{cfgOverload};
-    dosguard::DOSGuard dosGuardOverload{cfgOverload, whitelistHandlerOverload};
+    dosguard::DOSGuard dosGuardOverload{cfgOverload, whitelistHandlerOverload, dosguardWeights};
     dosguard::IntervalSweepHandler sweepHandlerOverload{cfgOverload, ctxSync, dosGuardOverload};
     // this ctx is for http server
     boost::asio::io_context ctx;
@@ -342,41 +344,6 @@ TEST_F(WebServerTest, Wss)
     auto const res = wsClient.syncPost(R"({"Hello":1})");
     EXPECT_EQ(res, R"({"Hello":1})");
     wsClient.disconnect();
-}
-
-TEST_F(WebServerTest, HttpRequestOverload)
-{
-    auto const e = std::make_shared<EchoExecutor>();
-    auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e);
-    auto [status, res] = HttpSyncClient::post("localhost", port, R"({})");
-    EXPECT_EQ(res, "{}");
-    EXPECT_EQ(status, boost::beast::http::status::ok);
-
-    std::tie(status, res) = HttpSyncClient::post("localhost", port, R"({})");
-    EXPECT_EQ(
-        res,
-        R"({"error":"slowDown","error_code":10,"error_message":"You are placing too much load on the server.","status":"error","type":"response"})"
-    );
-    EXPECT_EQ(status, boost::beast::http::status::service_unavailable);
-}
-
-TEST_F(WebServerTest, WsRequestOverload)
-{
-    auto e = std::make_shared<EchoExecutor>();
-    auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e);
-    WebSocketSyncClient wsClient;
-    wsClient.connect("localhost", port);
-    auto res = wsClient.syncPost(R"({})");
-    wsClient.disconnect();
-    EXPECT_EQ(res, "{}");
-    WebSocketSyncClient wsClient2;
-    wsClient2.connect("localhost", port);
-    res = wsClient2.syncPost(R"({})");
-    wsClient2.disconnect();
-    EXPECT_EQ(
-        res,
-        R"({"error":"slowDown","error_code":10,"error_message":"You are placing too much load on the server.","status":"error","type":"response","request":{}})"
-    );
 }
 
 TEST_F(WebServerTest, HttpPayloadOverload)
