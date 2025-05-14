@@ -30,7 +30,7 @@ using namespace util;
 
 TEST(StringHashTest, HashesConsistently)
 {
-    StringHash hasher;
+    StringHash const hasher;
 
     std::string const stdString = "test string";
     std::string_view const strView = "test string";
@@ -43,7 +43,7 @@ TEST(StringHashTest, HashesConsistently)
 
 TEST(StringHashTest, TransparentLookup)
 {
-    std::unordered_set<std::string, StringHash, std::equal_to<>> stringSet{"hello world"};
+    std::unordered_set<std::string, StringHash, std::equal_to<>> const stringSet{"hello world"};
 
     std::string const stdString = "hello world";
     std::string_view const strView = "hello world";
@@ -58,7 +58,7 @@ TEST(StringHashTest, TransparentLookup)
 
 TEST(StringHashTest, EmptyStrings)
 {
-    StringHash hasher;
+    StringHash const hasher;
 
     std::string const emptyStdString;
     std::string_view const emptyStrView;

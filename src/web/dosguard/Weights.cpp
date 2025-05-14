@@ -66,7 +66,7 @@ Weights::requestWeight(boost::json::object const& request) const
         return defaultWeight_;
     }
 
-    std::string_view cmd =
+    std::string_view const cmd =
         request.contains(JS(method)) ? request.at(JS(method)).as_string() : request.at(JS(command)).as_string();
 
     auto it = weights_.find(cmd);

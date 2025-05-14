@@ -309,7 +309,7 @@ private:
                 e["id"] = request.as_object().at("id");
             e["request"] = std::move(request);
         } catch (std::exception const&) {
-            e["request"] = std::move(requestStr);
+            e["request"] = requestStr;
         }
 
         this->send(std::make_shared<std::string>(boost::json::serialize(e)));

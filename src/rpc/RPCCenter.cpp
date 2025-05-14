@@ -29,7 +29,7 @@ namespace {
 std::unordered_set<std::string_view> const&
 handledRpcs()
 {
-    static std::unordered_set<std::string_view> kHANDLED_RPCS = {
+    static std::unordered_set<std::string_view> const kHANDLED_RPCS = {
         "account_channels",
         "account_currencies",
         "account_info",
