@@ -26,7 +26,7 @@ set(COMPILER_FLAGS
     # TODO: Address these and others in https://github.com/XRPLF/clio/issues/1273
 )
 
-# TODO: reenable when we change CI #884 if (is_gcc AND NOT lint) list(APPEND COMPILER_FLAGS -Wduplicated-branches
+# TODO: re-enable when we change CI #884 if (is_gcc AND NOT lint) list(APPEND COMPILER_FLAGS -Wduplicated-branches
 # -Wduplicated-cond -Wlogical-op -Wuseless-cast ) endif ()
 
 if (is_clang)

@@ -21,6 +21,7 @@
 
 #include "etlng/LoadBalancerInterface.hpp"
 #include "rpc/Errors.hpp"
+#include "rpc/RPCCenter.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/log/Logger.hpp"
@@ -106,22 +107,7 @@ public:
     bool
     isProxied(std::string const& method) const
     {
-        static std::unordered_set<std::string> const kPROXIED_COMMANDS{
-            "server_definitions",
-            "server_state",
-            "submit",
-            "submit_multisigned",
-            "fee",
-            "ledger_closed",
-            "ledger_current",
-            "ripple_path_find",
-            "manifest",
-            "channel_authorize",
-            "channel_verify",
-            "simulate",
-        };
-
-        return kPROXIED_COMMANDS.contains(method);
+        return RPCCenter::isForwarded(method);
     }
 
 private:

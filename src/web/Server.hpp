@@ -120,7 +120,7 @@ public:
     }
 
     /**
-     * @brief A helper function that is called when any error ocurs.
+     * @brief A helper function that is called when any error occurs.
      *
      * @param ec The error code
      * @param message The message to include in the log

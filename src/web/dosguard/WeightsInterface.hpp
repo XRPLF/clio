@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,24 +19,30 @@
 
 #pragma once
 
-#include "web/dosguard/DOSGuardInterface.hpp"
-
 #include <boost/json/object.hpp>
-#include <gmock/gmock.h>
 
-#include <cstdint>
-#include <string>
-#include <string_view>
+#include <cstddef>
 
-struct DOSGuardMockImpl : web::dosguard::DOSGuardInterface {
-    MOCK_METHOD(bool, isWhiteListed, (std::string_view const ip), (const, noexcept, override));
-    MOCK_METHOD(bool, isOk, (std::string const& ip), (const, noexcept, override));
-    MOCK_METHOD(void, increment, (std::string const& ip), (noexcept, override));
-    MOCK_METHOD(void, decrement, (std::string const& ip), (noexcept, override));
-    MOCK_METHOD(bool, add, (std::string const& ip, uint32_t size), (noexcept, override));
-    MOCK_METHOD(bool, request, (std::string const& ip, boost::json::object const& request), (override));
-    MOCK_METHOD(void, clear, (), (noexcept, override));
+namespace web::dosguard {
+
+/**
+ * @brief Interface for determining request weights in DOS protection.
+ *
+ * This interface defines the contract for classes that calculate weights for incoming
+ * requests, which is used for DOS protection mechanisms.
+ */
+class WeightsInterface {
+public:
+    virtual ~WeightsInterface() = default;
+
+    /**
+     * @brief Calculate the weight of a request.
+     *
+     * @param request The JSON object representing the request
+     * @return The calculated weight of the request
+     */
+    virtual size_t
+    requestWeight(boost::json::object const& request) const = 0;
 };
 
-using DOSGuardMock = testing::NiceMock<DOSGuardMockImpl>;
-using DOSGuardStrictMock = testing::StrictMock<DOSGuardMockImpl>;
+}  // namespace web::dosguard

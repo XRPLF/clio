@@ -74,6 +74,7 @@ func NewHttp(host string, port uint) *HttpRequestMaker {
 		host = "http://" + host
 	}
 	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.DisableKeepAlives = true
 	client := &http.Client{Transport: transport}
 
 	return &HttpRequestMaker{host + ":" + fmt.Sprintf("%d", port), transport, client}

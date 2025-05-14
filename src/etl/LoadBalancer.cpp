@@ -36,6 +36,7 @@
 #include "util/config/ObjectView.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Label.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -60,13 +61,9 @@
 #include <vector>
 
 using namespace util::config;
-using namespace util::prometheus;
+using util::prometheus::Labels;
 
 namespace etl {
-
-namespace {
-std::vector<std::int64_t> const kHISTOGRAM_BUCKETS{1, 2, 5, 10, 20, 50, 100, 200, 500, 700, 1000};
-}
 
 std::shared_ptr<etlng::LoadBalancerInterface>
 LoadBalancer::makeLoadBalancer(
@@ -91,27 +88,33 @@ LoadBalancer::LoadBalancer(
     std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
     SourceFactory sourceFactory
 )
-    : forwardedDurationHistogram_(PrometheusService::histogramInt(
-          "lb_forwarded_duration_milliseconds_histogram",
-          Labels(),
-          kHISTOGRAM_BUCKETS,
-          "The duration of processing forwarded requests"
-      ))
-    , forwardedRetryCounter_(PrometheusService::counterInt(
-          "lb_forwarded_retry_counter",
-          Labels(),
-          "The number of retries before a forwarded request was successful. Initial attempt excluded"
-      ))
-    , cacheTriedCounter_(PrometheusService::counterInt(
-          "lb_cache_tried_counter",
-          Labels(),
-          "The number of requests that we tried to serve from the cache"
-      ))
-    , cacheMissCounter_(PrometheusService::counterInt(
-          "lb_cache_miss_counter",
-          Labels(),
-          "The number of requests that were not served from the cache"
-      ))
+    : forwardingCounters_{
+          .successDuration = PrometheusService::counterInt(
+              "forwarding_duration_milliseconds_counter",
+              Labels({util::prometheus::Label{"status", "success"}}),
+              "The duration of processing successful forwarded requests"
+          ),
+          .failDuration = PrometheusService::counterInt(
+              "forwarding_duration_milliseconds_counter",
+              Labels({util::prometheus::Label{"status", "fail"}}),
+              "The duration of processing failed forwarded requests"
+          ),
+          .retries = PrometheusService::counterInt(
+              "forwarding_retries_counter",
+              Labels(),
+              "The number of retries before a forwarded request was successful. Initial attempt excluded"
+          ),
+          .cacheHit = PrometheusService::counterInt(
+              "forwarding_cache_hit_counter",
+              Labels(),
+              "The number of requests that we served from the cache"
+          ),
+          .cacheMiss = PrometheusService::counterInt(
+              "forwarding_cache_miss_counter",
+              Labels(),
+              "The number of requests that were not served from the cache"
+          )
+      }
 {
     auto const forwardingCacheTimeout = config.get<float>("forwarding.cache_timeout");
     if (forwardingCacheTimeout > 0.f) {
@@ -265,11 +268,11 @@ LoadBalancer::forwardToRippled(
     auto const cmd = boost::json::value_to<std::string>(request.at("command"));
 
     if (forwardingCache_ and forwardingCache_->shouldCache(cmd)) {
-        ++cacheTriedCounter_.get();
-
+        bool servedFromCache = true;
         auto updater =
-            [this, &request, &clientIp, isAdmin](boost::asio::yield_context yield
+            [this, &request, &clientIp, &servedFromCache, isAdmin](boost::asio::yield_context yield
             ) -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
+            servedFromCache = false;
             auto result = forwardToRippledImpl(request, clientIp, isAdmin, yield);
             if (result.has_value()) {
                 return util::ResponseExpirationCache::EntryData{
@@ -287,6 +290,9 @@ LoadBalancer::forwardToRippled(
             std::move(updater),
             [](util::ResponseExpirationCache::EntryData const& entry) { return not entry.response.contains("error"); }
         );
+        if (servedFromCache) {
+            ++forwardingCounters_.cacheHit.get();
+        }
         if (result.has_value()) {
             return std::move(result).value();
         }
@@ -394,7 +400,7 @@ LoadBalancer::forwardToRippledImpl(
     boost::asio::yield_context yield
 )
 {
-    ++cacheMissCounter_.get();
+    ++forwardingCounters_.cacheMiss.get();
 
     ASSERT(not sources_.empty(), "ETL sources must be configured to forward requests.");
     std::size_t sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
@@ -408,13 +414,14 @@ LoadBalancer::forwardToRippledImpl(
     while (numAttempts < sources_.size()) {
         auto [res, duration] =
             util::timed([&]() { return sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield); });
-        forwardedDurationHistogram_.get().observe(duration);
 
         if (res) {
+            forwardingCounters_.successDuration.get() += duration;
             response = std::move(res).value();
             break;
         }
-        ++forwardedRetryCounter_.get();
+        forwardingCounters_.failDuration.get() += duration;
+        ++forwardingCounters_.retries.get();
         error = std::max(error, res.error());  // Choose the best result between all sources
 
         sourceIdx = (sourceIdx + 1) % sources_.size();

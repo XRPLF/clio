@@ -73,7 +73,7 @@ runs:
       shell: bash
       env:
         BUILD_TYPE: "${{ inputs.build_type }}"
-        SANITIZER_OPTION: |
+        SANITIZER_OPTION: |-
           ${{ inputs.sanitizer == 'tsan' && '-Dsan=thread' ||
               inputs.sanitizer == 'ubsan' && '-Dsan=undefined' ||
               inputs.sanitizer == 'asan' && '-Dsan=address' ||

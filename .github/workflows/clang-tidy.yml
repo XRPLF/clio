@@ -70,11 +70,12 @@ jobs:
         run: |
           run-clang-tidy-19 -p build -j "${{ steps.number_of_threads.outputs.threads_number }}" -fix -quiet 1>output.txt
 
-      - name: Fix local includes
+      - name: Fix local includes and clang-format style
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
-        continue-on-error: true
         shell: bash
-        run: pre-commit run --all-files fix-local-includes
+        run: |
+          pre-commit run --all-files fix-local-includes || true
+          pre-commit run --all-files clang-format || true
 
       - name: Print issues found
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
@@ -119,7 +120,7 @@ jobs:
           delete-branch: true
           title: "style: clang-tidy auto fixes"
           body: "Fixes #${{ steps.create_issue.outputs.created_issue_id }}. Please review and commit clang-tidy fixes."
-          reviewers: "godexsoft,kuznetsss,PeterChen13579"
+          reviewers: "godexsoft,kuznetsss,PeterChen13579,mathbunnyru"
 
       - name: Fail the job
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}

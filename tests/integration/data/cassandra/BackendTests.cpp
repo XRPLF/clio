@@ -1324,7 +1324,7 @@ TEST_F(CacheBackendCassandraTest, CacheFetchLedgerBySeq)
 {
     runSpawn([&](boost::asio::yield_context yield) {
         auto rawHeaderBlob = hexStringToBinaryString(kRAWHEADER);
-        ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
+        ripple::LedgerHeader const lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
 
         backend_->writeLedger(lgrInfo, std::move(rawHeaderBlob));
         auto const testLedgerSeq = lgrInfo.seq;
@@ -1333,7 +1333,7 @@ TEST_F(CacheBackendCassandraTest, CacheFetchLedgerBySeq)
         EXPECT_CALL(getMockCache(), put(data::FetchLedgerCache::CacheEntry{lgrInfo, testLedgerSeq}));
 
         {
-            testing::InSequence s;
+            testing::InSequence const s;
             // first time, getSeq doesn't match ledger sequence
             EXPECT_CALL(getMockCache(), get()).WillOnce(testing::Return(std::nullopt));
 
@@ -1359,7 +1359,7 @@ TEST_F(CacheBackendCassandraTest, CacheFetchLedgerBySeq)
 }
 
 struct BackendCassandraNodeMessageTest : BackendCassandraTest {
-    boost::uuids::random_generator generateUuid;
+    boost::uuids::random_generator generateUuid{};
 };
 
 TEST_F(BackendCassandraNodeMessageTest, UpdateFetch)

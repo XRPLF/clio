@@ -23,8 +23,8 @@ jobs:
           python-version: 3.x
 
       - run: pip install pre-commit
-      - run: pre-commit autoupdate
-      - run: pre-commit run --all-files
+      - run: pre-commit autoupdate --freeze
+      - run: pre-commit run --all-files || true
 
       - uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         if: always()

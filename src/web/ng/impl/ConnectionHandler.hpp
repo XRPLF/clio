@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/StopHelper.hpp"
+#include "util/StringHash.hpp"
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Gauge.hpp"
@@ -44,7 +45,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 
 namespace web::ng::impl {
@@ -52,20 +52,7 @@ namespace web::ng::impl {
 class ConnectionHandler {
 public:
     using OnDisconnectHook = std::function<void(Connection const&)>;
-
-    struct StringHash {
-        using hash_type = std::hash<std::string_view>;
-        using is_transparent = void;
-
-        std::size_t
-        operator()(char const* str) const;
-        std::size_t
-        operator()(std::string_view str) const;
-        std::size_t
-        operator()(std::string const& str) const;
-    };
-
-    using TargetToHandlerMap = std::unordered_map<std::string, MessageHandler, StringHash, std::equal_to<>>;
+    using TargetToHandlerMap = std::unordered_map<std::string, MessageHandler, util::StringHash, std::equal_to<>>;
 
 private:
     util::Logger log_{"WebServer"};

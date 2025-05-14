@@ -32,7 +32,7 @@ There are multiple execution contexts to choose from, each with their own pros a
 
 This context wraps a thread pool and executes blocks of code by means of `boost::asio::spawn` which spawns coroutines.
 
-Deep inside the framework it hides `boost::asio::yield_context` and automatically switches coroutine contexts everytime user’s code is checking `isStopRequested()` on the `StopToken` given to the user-provided lambda.
+Deep inside the framework it hides `boost::asio::yield_context` and automatically switches coroutine contexts every time user’s code is checking `isStopRequested()` on the `StopToken` given to the user-provided lambda.
 
 The benefit is that both timers and async operations can work concurrently on a `CoroExecutionContext` even if internally the thread pool only has 1 thread.
 
