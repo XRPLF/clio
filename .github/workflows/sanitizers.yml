@@ -6,7 +6,21 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - ".github/workflows/sanitizers.yml"
+      - .github/workflows/sanitizers.yml
+
+      - .github/workflows/build_and_test.yml
+      - .github/workflows/build_impl.yml
+      - .github/workflows/test_impl.yml
+
+      - ".github/actions/**"
+      - "!.github/actions/build_docker_image/**"
+      - "!.github/actions/create_issue/**"
+
+      - CMakeLists.txt
+      - "cmake/**"
+      # We don't run sanitizer on code change, because it takes too long
+      # - "src/**"
+      # - "tests/**"
 
 concurrency:
   # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
