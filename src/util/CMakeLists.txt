@@ -42,11 +42,18 @@ target_sources(
 
 # This must be above the target_link_libraries call otherwise backtrace doesn't work
 if ("${san}" STREQUAL "")
-  target_link_libraries(clio_util PUBLIC Boost::stacktrace_backtrace dl libbacktrace::libbacktrace clio_rpc_center)
+  target_link_libraries(clio_util PUBLIC Boost::stacktrace_backtrace dl libbacktrace::libbacktrace)
 endif ()
 
 target_link_libraries(
-  clio_util PUBLIC Boost::headers fmt::fmt openssl::openssl xrpl::libxrpl Threads::Threads clio_options
+  clio_util
+  PUBLIC Boost::headers
+         fmt::fmt
+         openssl::openssl
+         xrpl::libxrpl
+         Threads::Threads
+         clio_options
+         clio_rpc_center
 )
 
 # FIXME: needed on gcc-12, clang-16 and AppleClang for now (known boost 1.82 issue for some compilers)
