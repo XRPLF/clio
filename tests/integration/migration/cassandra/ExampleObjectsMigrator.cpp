@@ -46,20 +46,17 @@ ExampleObjectsMigrator::runMigration(std::shared_ptr<Backend> const& backend, ut
     std::unordered_set<ripple::uint256> idx;
     migration::cassandra::impl::ObjectsScanner scanner(
         {.ctxThreadsNum = ctxFullScanThreads, .jobsNum = jobsFullScan, .cursorsPerJob = cursorPerJobsFullScan},
-        migration::cassandra::impl::ObjectsAdapter(
-            backend,
-            [&](std::uint32_t, std::optional<ripple::SLE> sle) {
-                if (sle.has_value()) {
-                    if (sle->getType() == ripple::ltACCOUNT_ROOT) {
-                        if (!idx.contains(sle->key())) {
-                            ExampleObjectsMigrator::accountCount++;
-                        }
+        migration::cassandra::impl::ObjectsAdapter(backend, [&](std::uint32_t, std::optional<ripple::SLE> sle) {
+            if (sle.has_value()) {
+                if (sle->getType() == ripple::ltACCOUNT_ROOT) {
+                    if (!idx.contains(sle->key())) {
+                        ExampleObjectsMigrator::accountCount++;
                     }
-                    idx.insert(sle->key());
-                    ExampleObjectsMigrator::count++;
                 }
+                idx.insert(sle->key());
+                ExampleObjectsMigrator::count++;
             }
-        )
+        })
     );
     scanner.wait();
 }

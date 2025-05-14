@@ -117,9 +117,20 @@ TEST_F(BackendInterfaceTest, FetchLedgerPageDisablesCacheOnMissingData)
         .Times(10)
         .WillRepeatedly(Return(uint256{"1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"}));
     EXPECT_CALL(*backend_, doFetchLedgerObjects(_, _, _))
-        .WillOnce(Return(std::vector<Blob>{
-            Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{}
-        }));
+        .WillOnce(Return(
+            std::vector<Blob>{
+                Blob{'s'},
+                Blob{'s'},
+                Blob{'s'},
+                Blob{'s'},
+                Blob{'s'},
+                Blob{'s'},
+                Blob{'s'},
+                Blob{'s'},
+                Blob{'s'},
+                Blob{}
+            }
+        ));
 
     runSpawn([this](auto yield) { backend_->fetchLedgerPage(std::nullopt, kMAX_SEQ, 10, false, yield); });
     EXPECT_TRUE(backend_->cache().isDisabled());
@@ -134,9 +145,20 @@ TEST_F(BackendInterfaceTest, FetchLedgerPageWithoutCorruptionDetectorDoesNotDisa
         .Times(10)
         .WillRepeatedly(Return(uint256{"1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"}));
     EXPECT_CALL(*backend_, doFetchLedgerObjects(_, _, _))
-        .WillOnce(Return(std::vector<Blob>{
-            Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{}
-        }));
+        .WillOnce(Return(
+            std::vector<Blob>{
+                Blob{'s'},
+                Blob{'s'},
+                Blob{'s'},
+                Blob{'s'},
+                Blob{'s'},
+                Blob{'s'},
+                Blob{'s'},
+                Blob{'s'},
+                Blob{'s'},
+                Blob{}
+            }
+        ));
 
     runSpawn([this](auto yield) { backend_->fetchLedgerPage(std::nullopt, kMAX_SEQ, 10, false, yield); });
     EXPECT_FALSE(backend_->cache().isDisabled());

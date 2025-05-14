@@ -123,12 +123,9 @@ struct LoadBalancerConstructorTests : util::prometheus::WithPrometheus, MockBack
     {
         auto const cfg = getParseLoadBalancerConfig(configJson_);
         return std::make_unique<LoadBalancer>(
-            cfg,
-            ioContext_,
-            backend_,
-            subscriptionManager_,
-            networkManager_,
-            [this](auto&&... args) -> SourcePtr { return sourceFactory_(std::forward<decltype(args)>(args)...); }
+            cfg, ioContext_, backend_, subscriptionManager_, networkManager_, [this](auto&&... args) -> SourcePtr {
+                return sourceFactory_(std::forward<decltype(args)>(args)...);
+            }
         );
     }
 

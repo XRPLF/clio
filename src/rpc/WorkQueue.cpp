@@ -46,7 +46,8 @@ WorkQueue::OneTimeCallable::operator()()
         called_ = true;
     }
 }
-WorkQueue::OneTimeCallable::operator bool() const
+WorkQueue::OneTimeCallable::
+operator bool() const
 {
     return func_.operator bool();
 }

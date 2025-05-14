@@ -125,8 +125,10 @@ public:
     }
 
     std::optional<Error>
-    sendRaw(boost::beast::http::response<boost::beast::http::string_body> response, boost::asio::yield_context yield)
-        override
+    sendRaw(
+        boost::beast::http::response<boost::beast::http::string_body> response,
+        boost::asio::yield_context yield
+    ) override
     {
         boost::system::error_code error;
         boost::beast::get_lowest_layer(stream_).expires_after(timeout_);

@@ -63,16 +63,18 @@ public:
         std::string const& key
     )
     {
-        return handler.prepare(fmt::format(
-            R"(
+        return handler.prepare(
+            fmt::format(
+                R"(
             SELECT *
               FROM {}
              WHERE TOKEN({}) >= ? AND TOKEN({}) <= ?
             )",
-            data::cassandra::qualifiedTableName<SettingsProviderType>(settingsProvider_.get(), tableName),
-            key,
-            key
-        ));
+                data::cassandra::qualifiedTableName<SettingsProviderType>(settingsProvider_.get(), tableName),
+                key,
+                key
+            )
+        );
     }
 
     /**
@@ -84,14 +86,16 @@ public:
     data::cassandra::PreparedStatement const&
     getPreparedInsertMigratedMigrator(data::cassandra::Handle const& handler)
     {
-        static auto kPREPARED = handler.prepare(fmt::format(
-            R"(
+        static auto kPREPARED = handler.prepare(
+            fmt::format(
+                R"(
             INSERT INTO {}
                    (migrator_name, status)
             VALUES (?, ?)
             )",
-            data::cassandra::qualifiedTableName<SettingsProviderType>(settingsProvider_.get(), "migrator_status")
-        ));
+                data::cassandra::qualifiedTableName<SettingsProviderType>(settingsProvider_.get(), "migrator_status")
+            )
+        );
         return kPREPARED;
     }
 };

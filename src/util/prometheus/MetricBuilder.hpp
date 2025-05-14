@@ -78,8 +78,12 @@ public:
     ) override;
 
     std::unique_ptr<MetricBase>
-    operator()(std::string name, std::string labelsString, MetricType type, std::vector<double> const& buckets)
-        override;
+    operator()(
+        std::string name,
+        std::string labelsString,
+        MetricType type,
+        std::vector<double> const& buckets
+    ) override;
 
 private:
     std::unique_ptr<MetricBase> static makeMetric(std::string name, std::string labelsString, MetricType type);

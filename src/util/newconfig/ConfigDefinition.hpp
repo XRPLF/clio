@@ -259,8 +259,8 @@ private:
  * without default values must be present in the user's config file.
  */
 static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
-    {{"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra").withConstraint(gValidateCassandraName)
-     },
+    {{"database.type",
+      ConfigValue{ConfigType::String}.defaultValue("cassandra").withConstraint(gValidateCassandraName)},
      {"database.cassandra.contact_points", ConfigValue{ConfigType::String}.defaultValue("localhost")},
      {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
      {"database.cassandra.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort).optional()},
@@ -284,10 +284,10 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint16)},
      {"database.cassandra.write_batch_size",
       ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(gValidateUint16)},
-     {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)
-     },
-     {"database.cassandra.request_timeout", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)
-     },
+     {"database.cassandra.connect_timeout",
+      ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
+     {"database.cassandra.request_timeout",
+      ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
      {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
      {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
      {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
@@ -308,8 +308,8 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"num_markers", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNumMarkers)},
 
      {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}.optional()}},
-     {"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(gValidateUint32)
-     },
+     {"dos_guard.max_fetches",
+      ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(gValidateUint32)},
      {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)},
      {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)},
      {"dos_guard.sweep_interval",
@@ -358,8 +358,8 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(gValidateUint16)},
      {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(gValidateLoadMode)},
 
-     {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateChannelName)}
-     },
+     {"log_channels.[].channel",
+      Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateChannelName)}},
      {"log_channels.[].log_level",
       Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateLogLevelName)}},
 
@@ -376,8 +376,8 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
 
      {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateUint32)},
 
-     {"log_directory_max_size", ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(gValidateUint32)
-     },
+     {"log_directory_max_size",
+      ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(gValidateUint32)},
 
      {"log_rotation_hour_interval", ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(gValidateUint32)},
 

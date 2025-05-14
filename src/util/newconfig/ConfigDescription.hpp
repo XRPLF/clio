@@ -134,10 +134,11 @@ public:
 
 private:
     static constexpr auto kCONFIG_DESCRIPTION = std::array{
-        KV{.key = "database.type",
-           .value =
-               "Specifies the type of database used for storing and retrieving data required by the Clio server. Both "
-               "ScyllaDB and Cassandra can serve as backends for Clio; however, this value must be set to `cassandra`."
+        KV{
+            .key = "database.type",
+            .value =
+                "Specifies the type of database used for storing and retrieving data required by the Clio server. Both "
+                "ScyllaDB and Cassandra can serve as backends for Clio; however, this value must be set to `cassandra`."
         },
         KV{.key = "database.cassandra.contact_points",
            .value = "A list of IP addresses or hostnames for the initial cluster nodes (Cassandra or ScyllaDB) that "
@@ -190,9 +191,8 @@ private:
            .value = "Specifies the timeout duration (in seconds) for the forwarding cache used in `rippled` "
                     "communication. A value of `0` means disabling this feature."},
         KV{.key = "forwarding.request_timeout",
-           .value =
-               "Specifies the timeout duration (in seconds) for the forwarding request used in `rippled` communication."
-        },
+           .value = "Specifies the timeout duration (in seconds) for the forwarding request used in `rippled` "
+                    "communication."},
         KV{.key = "rpc.cache_timeout",
            .value = "Specifies the timeout duration (in seconds) for RPC cache response to timeout. A value of `0` "
                     "means disabling this feature."},
@@ -201,16 +201,15 @@ private:
         KV{.key = "dos_guard.max_fetches", .value = "The maximum number of fetch operations allowed by DOS guard."},
         KV{.key = "dos_guard.max_connections",
            .value = "The maximum number of concurrent connections for a specific IP address."},
-        KV{.key = "dos_guard.max_requests", .value = "The maximum number of requests allowed for a specific IP address."
-        },
+        KV{.key = "dos_guard.max_requests",
+           .value = "The maximum number of requests allowed for a specific IP address."},
         KV{.key = "dos_guard.sweep_interval", .value = "Interval in seconds for DOS guard to sweep(clear) its state."},
         KV{.key = "workers", .value = "The number of threads used to process RPC requests."},
         KV{.key = "server.ip", .value = "The IP address of the Clio HTTP server."},
         KV{.key = "server.port", .value = "The port number of the Clio HTTP server."},
         KV{.key = "server.max_queue_size",
-           .value =
-               "The maximum size of the server's request queue. If set to `0`, this means there is no queue size limit."
-        },
+           .value = "The maximum size of the server's request queue. If set to `0`, this means there is no queue size "
+                    "limit."},
         KV{.key = "server.local_admin",
            .value = "Indicates if requests from `localhost` are allowed to call Clio admin-only APIs. Note that this "
                     "setting cannot be enabled "
@@ -232,8 +231,8 @@ private:
                     "client is slow to receive it, ensuring delivery once the client is ready."},
         KV{.key = "prometheus.enabled", .value = "Enables or disables Prometheus metrics."},
         KV{.key = "prometheus.compress_reply", .value = "Enables or disables compression of Prometheus responses."},
-        KV{.key = "io_threads", .value = "The number of input/output (I/O) threads. The value cannot be less than `1`."
-        },
+        KV{.key = "io_threads",
+           .value = "The number of input/output (I/O) threads. The value cannot be less than `1`."},
         KV{.key = "subscription_workers",
            .value = "The number of worker threads or processes that are responsible for managing and processing "
                     "subscription-based tasks from `rippled`."},

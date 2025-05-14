@@ -49,35 +49,45 @@ durationInMillisecondsSince(std::chrono::steady_clock::time_point const startTim
 using namespace util::prometheus;
 
 BackendCounters::BackendCounters()
-    : tooBusyCounter_(PrometheusService::counterInt(
-          "backend_too_busy_total_number",
-          Labels(),
-          "The total number of times the backend was too busy to process a request"
-      ))
-    , writeSyncCounter_(PrometheusService::counterInt(
-          "backend_operations_total_number",
-          Labels({Label{"operation", "write_sync"}}),
-          "The total number of times the backend had to write synchronously"
-      ))
-    , writeSyncRetryCounter_(PrometheusService::counterInt(
-          "backend_operations_total_number",
-          Labels({Label{"operation", "write_sync_retry"}}),
-          "The total number of times the backend had to retry a synchronous write"
-      ))
+    : tooBusyCounter_(
+          PrometheusService::counterInt(
+              "backend_too_busy_total_number",
+              Labels(),
+              "The total number of times the backend was too busy to process a request"
+          )
+      )
+    , writeSyncCounter_(
+          PrometheusService::counterInt(
+              "backend_operations_total_number",
+              Labels({Label{"operation", "write_sync"}}),
+              "The total number of times the backend had to write synchronously"
+          )
+      )
+    , writeSyncRetryCounter_(
+          PrometheusService::counterInt(
+              "backend_operations_total_number",
+              Labels({Label{"operation", "write_sync_retry"}}),
+              "The total number of times the backend had to retry a synchronous write"
+          )
+      )
     , asyncWriteCounters_{"write_async"}
     , asyncReadCounters_{"read_async"}
-    , readDurationHistogram_(PrometheusService::histogramInt(
-          "backend_duration_milliseconds_histogram",
-          Labels({Label{"operation", "read"}}),
-          kHISTOGRAM_BUCKETS,
-          "The duration of backend read operations including retries"
-      ))
-    , writeDurationHistogram_(PrometheusService::histogramInt(
-          "backend_duration_milliseconds_histogram",
-          Labels({Label{"operation", "write"}}),
-          kHISTOGRAM_BUCKETS,
-          "The duration of backend write operations including retries"
-      ))
+    , readDurationHistogram_(
+          PrometheusService::histogramInt(
+              "backend_duration_milliseconds_histogram",
+              Labels({Label{"operation", "read"}}),
+              kHISTOGRAM_BUCKETS,
+              "The duration of backend read operations including retries"
+          )
+      )
+    , writeDurationHistogram_(
+          PrometheusService::histogramInt(
+              "backend_duration_milliseconds_histogram",
+              Labels({Label{"operation", "write"}}),
+              kHISTOGRAM_BUCKETS,
+              "The duration of backend write operations including retries"
+          )
+      )
 {
 }
 
@@ -170,26 +180,34 @@ BackendCounters::report() const
 
 BackendCounters::AsyncOperationCounters::AsyncOperationCounters(std::string name)
     : name_(std::move(name))
-    , pendingCounter_(PrometheusService::gaugeInt(
-          "backend_operations_current_number",
-          Labels({{"operation", name_}, {"status", "pending"}}),
-          "The current number of pending " + name_ + " operations"
-      ))
-    , completedCounter_(PrometheusService::counterInt(
-          "backend_operations_total_number",
-          Labels({{"operation", name_}, {"status", "completed"}}),
-          "The total number of completed " + name_ + " operations"
-      ))
-    , retryCounter_(PrometheusService::counterInt(
-          "backend_operations_total_number",
-          Labels({{"operation", name_}, {"status", "retry"}}),
-          "The total number of retried " + name_ + " operations"
-      ))
-    , errorCounter_(PrometheusService::counterInt(
-          "backend_operations_total_number",
-          Labels({{"operation", name_}, {"status", "error"}}),
-          "The total number of errored " + name_ + " operations"
-      ))
+    , pendingCounter_(
+          PrometheusService::gaugeInt(
+              "backend_operations_current_number",
+              Labels({{"operation", name_}, {"status", "pending"}}),
+              "The current number of pending " + name_ + " operations"
+          )
+      )
+    , completedCounter_(
+          PrometheusService::counterInt(
+              "backend_operations_total_number",
+              Labels({{"operation", name_}, {"status", "completed"}}),
+              "The total number of completed " + name_ + " operations"
+          )
+      )
+    , retryCounter_(
+          PrometheusService::counterInt(
+              "backend_operations_total_number",
+              Labels({{"operation", name_}, {"status", "retry"}}),
+              "The total number of retried " + name_ + " operations"
+          )
+      )
+    , errorCounter_(
+          PrometheusService::counterInt(
+              "backend_operations_total_number",
+              Labels({{"operation", name_}, {"status", "error"}}),
+              "The total number of errored " + name_ + " operations"
+          )
+      )
 {
 }
 

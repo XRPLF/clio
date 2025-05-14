@@ -107,13 +107,15 @@ struct MockPrometheusImpl : PrometheusInterface {
             });
         EXPECT_CALL(*this, histogramInt)
             .WillRepeatedly(
-                [this](std::string name, Labels labels, std::vector<std::int64_t> const&, std::optional<std::string>)
-                    -> HistogramInt& { return getMetric<HistogramInt>(std::move(name), std::move(labels)); }
+                [this](
+                    std::string name, Labels labels, std::vector<std::int64_t> const&, std::optional<std::string>
+                ) -> HistogramInt& { return getMetric<HistogramInt>(std::move(name), std::move(labels)); }
             );
         EXPECT_CALL(*this, histogramDouble)
             .WillRepeatedly(
-                [this](std::string name, Labels labels, std::vector<double> const&, std::optional<std::string>)
-                    -> HistogramDouble& { return getMetric<HistogramDouble>(std::move(name), std::move(labels)); }
+                [this](
+                    std::string name, Labels labels, std::vector<double> const&, std::optional<std::string>
+                ) -> HistogramDouble& { return getMetric<HistogramDouble>(std::move(name), std::move(labels)); }
             );
     }
 

@@ -49,8 +49,11 @@ CacheExt::onInitialData(model::LedgerData const& data) const
 }
 
 void
-CacheExt::onInitialObjects(uint32_t seq, std::vector<model::Object> const& objs, [[maybe_unused]] std::string lastKey)
-    const
+CacheExt::onInitialObjects(
+    uint32_t seq,
+    std::vector<model::Object> const& objs,
+    [[maybe_unused]] std::string lastKey
+) const
 {
     LOG(log_.trace()) << "got initial objects cnt = " << objs.size();
     cache_.get().update(objs, seq);
