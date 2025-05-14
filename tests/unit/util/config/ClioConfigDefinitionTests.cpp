@@ -46,11 +46,11 @@
 
 using namespace util::config;
 
-struct configTest : virtual testing::Test {
+struct ConfigTest : virtual testing::Test {
     ClioConfigDefinition const configData = generateConfig();
 };
 
-TEST_F(configTest, fetchValues)
+TEST_F(ConfigTest, fetchValues)
 {
     auto const v = configData.getValueView("header.port");
     EXPECT_EQ(v.type(), ConfigType::Integer);
@@ -62,7 +62,7 @@ TEST_F(configTest, fetchValues)
     EXPECT_EQ(444.22, configData.getValueView("ip").asDouble());
 }
 
-TEST_F(configTest, fetchValuesByTemplate)
+TEST_F(ConfigTest, fetchValuesByTemplate)
 {
     EXPECT_EQ("value", configData.get<std::string>("header.text1"));
     EXPECT_EQ(123, configData.get<int>("header.port"));
@@ -71,13 +71,13 @@ TEST_F(configTest, fetchValuesByTemplate)
     EXPECT_EQ(444.22, configData.get<double>("ip"));
 }
 
-TEST_F(configTest, fetchOptionalValues)
+TEST_F(ConfigTest, fetchOptionalValues)
 {
     EXPECT_EQ(std::nullopt, configData.maybeValue<double>("optional.withNoDefault"));
     EXPECT_EQ(0.0, configData.maybeValue<double>("optional.withDefault"));
 }
 
-TEST_F(configTest, fetchObjectDirectly)
+TEST_F(ConfigTest, fetchObjectDirectly)
 {
     auto const obj = configData.getObject("header");
     EXPECT_TRUE(obj.containsKey("sub.sub2Value"));
@@ -87,7 +87,7 @@ TEST_F(configTest, fetchObjectDirectly)
     EXPECT_EQ(obj2.getValueView("sub2Value").asString(), "TSM");
 }
 
-TEST_F(configTest, CheckKeys)
+TEST_F(ConfigTest, CheckKeys)
 {
     EXPECT_TRUE(configData.contains("header.port"));
     EXPECT_TRUE(configData.contains("array.[].sub"));
@@ -104,7 +104,7 @@ TEST_F(configTest, CheckKeys)
     EXPECT_EQ(configData.arraySize("dosguard.whitelist"), 0);
 }
 
-TEST_F(configTest, CheckAllKeys)
+TEST_F(ConfigTest, CheckAllKeys)
 {
     auto expected = std::unordered_set<std::string_view>{};
     auto const actual = std::unordered_set<std::string_view>{
@@ -130,39 +130,39 @@ TEST_F(configTest, CheckAllKeys)
     EXPECT_EQ(expected, actual);
 }
 
-struct configAssertTest : common::util::WithMockAssert, configTest {};
+struct ConfigAssertTest : common::util::WithMockAssert, ConfigTest {};
 
-TEST_F(configAssertTest, GetNonExistentKeys)
+TEST_F(ConfigAssertTest, GetNonExistentKeys)
 {
     EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("head."); });
     EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("asdf"); });
 }
 
-TEST_F(configAssertTest, GetValueButIsArray)
+TEST_F(ConfigAssertTest, GetValueButIsArray)
 {
     EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist"); });
     EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist.[]"); });
 }
 
-TEST_F(configAssertTest, GetNonExistentObjectKey)
+TEST_F(ConfigAssertTest, GetNonExistentObjectKey)
 {
     ASSERT_FALSE(configData.contains("head"));
     EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("head"); });
     EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("doesNotExist"); });
 }
 
-TEST_F(configAssertTest, GetObjectButIsArray)
+TEST_F(ConfigAssertTest, GetObjectButIsArray)
 {
     EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("array"); });
     EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getObject("array", 2); });
 }
 
-TEST_F(configAssertTest, GetArrayButIsValue)
+TEST_F(ConfigAssertTest, GetArrayButIsValue)
 {
     EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getArray("header.text1"); });
 }
 
-TEST_F(configAssertTest, GetNonExistentArrayKey)
+TEST_F(ConfigAssertTest, GetNonExistentArrayKey)
 {
     EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = configData.getArray("asdf"); });
 }
