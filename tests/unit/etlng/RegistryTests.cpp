@@ -196,15 +196,17 @@ TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForInitialTransaction)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtNftBurn&, MockExtNftOffer&>(extBurn, extOffer);
-    reg.dispatchInitialData(etlng::model::LedgerData{
-        .transactions = transactions,
-        .objects = {},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ,
-    });
+    reg.dispatchInitialData(
+        etlng::model::LedgerData{
+            .transactions = transactions,
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ,
+        }
+    );
 }
 
 TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForTransaction)
@@ -223,15 +225,17 @@ TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForTransaction)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtTransactionNftBurn&, MockExtTransactionNftOffer&>(extBurn, extOffer);
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = std::move(transactions),
-        .objects = {},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = std::move(transactions),
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, InitialObjectsEmpty)
@@ -266,15 +270,17 @@ TEST_F(RegistryTest, ObjectsDispatched)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtOnObject&>(extObj);
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = {},
-        .objects = {util::createObject(), util::createObject(), util::createObject()},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = {},
+            .objects = {util::createObject(), util::createObject(), util::createObject()},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, OnLedgerDataForBatch)
@@ -291,15 +297,17 @@ TEST_F(RegistryTest, OnLedgerDataForBatch)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtLedgerData&>(ext);
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = std::move(transactions),
-        .objects = {},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = std::move(transactions),
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, InitialObjectsCorrectOrderOfHookCalls)
@@ -332,15 +340,17 @@ TEST_F(RegistryTest, InitialDataCorrectOrderOfHookCalls)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtNftBurn&, MockExtInitialData&>(extInitialTransaction, extInitialData);
-    reg.dispatchInitialData(etlng::model::LedgerData{
-        .transactions = std::move(transactions),
-        .objects = {},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatchInitialData(
+        etlng::model::LedgerData{
+            .transactions = std::move(transactions),
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, LedgerDataCorrectOrderOfHookCalls)
@@ -370,13 +380,15 @@ TEST_F(RegistryTest, LedgerDataCorrectOrderOfHookCalls)
     auto reg = Registry<MockExtOnObject&, MockExtTransactionNftBurn&, MockExtLedgerData&>(
         extOnObject, extOnTransaction, extLedgerData
     );
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = std::move(transactions),
-        .objects = std::move(objects),
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = std::move(transactions),
+            .objects = std::move(objects),
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }

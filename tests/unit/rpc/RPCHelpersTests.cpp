@@ -532,13 +532,15 @@ TEST_F(RPCHelpersTest, TransactionAndMetadataBinaryJsonV2)
 
 TEST_F(RPCHelpersTest, ParseIssue)
 {
-    auto issue = parseIssue(boost::json::parse(
-                                R"({
+    auto issue = parseIssue(
+        boost::json::parse(
+            R"({
                                         "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                                         "currency": "JPY"
                                     })"
-    )
-                                .as_object());
+        )
+            .as_object()
+    );
     EXPECT_TRUE(issue.account == getAccountIdWithString(kACCOUNT2));
 
     issue = parseIssue(boost::json::parse(R"({"currency": "XRP"})").as_object());
@@ -549,13 +551,15 @@ TEST_F(RPCHelpersTest, ParseIssue)
     EXPECT_THROW(parseIssue(boost::json::parse(R"({"currency": "XRP2"})").as_object()), std::runtime_error);
 
     EXPECT_THROW(
-        parseIssue(boost::json::parse(
-                       R"({
+        parseIssue(
+            boost::json::parse(
+                R"({
                                 "issuer": "abcd",
                                 "currency": "JPY"
                             })"
-        )
-                       .as_object()),
+            )
+                .as_object()
+        ),
         std::runtime_error
     );
 
@@ -670,7 +674,8 @@ TEST_F(RPCHelpersTest, isDeepFrozen_TrustLineIsNotDeepFrozen)
         .WillByDefault(Return(trustlineFrozen.getSerializer().peekData()));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        EXPECT_FALSE(isDeepFrozen(*backend_, kLEDGER_SEQ_OBJECT, account, ripple::Currency{kCURRENCY}, account2, yield)
+        EXPECT_FALSE(
+            isDeepFrozen(*backend_, kLEDGER_SEQ_OBJECT, account, ripple::Currency{kCURRENCY}, account2, yield)
         );
     });
 }
@@ -1100,8 +1105,10 @@ generateTestValuesForParametersTest()
          .method = "feature",
          .testJson = R"({"vetoed": false, "feature": "foo"})",
          .expected = true},
-        {.testName = "featureVetoedIsStr", .method = "feature", .testJson = R"({"vetoed": "String"})", .expected = true
-        },
+        {.testName = "featureVetoedIsStr",
+         .method = "feature",
+         .testJson = R"({"vetoed": "String"})",
+         .expected = true},
 
         {.testName = "ledger", .method = "ledger", .testJson = R"({})", .expected = false},
         {.testName = "ledgerWithType", .method = "ledger", .testJson = R"({"type": "fee"})", .expected = false},
@@ -1120,8 +1127,10 @@ generateTestValuesForParametersTest()
         {.testName = "ledgerFullIsEmptyObject", .method = "ledger", .testJson = R"({"full": {}})", .expected = false},
 
         {.testName = "ledgerAccountsTrue", .method = "ledger", .testJson = R"({"accounts": true})", .expected = true},
-        {.testName = "ledgerAccountsFalse", .method = "ledger", .testJson = R"({"accounts": false})", .expected = false
-        },
+        {.testName = "ledgerAccountsFalse",
+         .method = "ledger",
+         .testJson = R"({"accounts": false})",
+         .expected = false},
         {.testName = "ledgerAccountsIsStr",
          .method = "ledger",
          .testJson = R"({"accounts": "String"})",
@@ -1131,14 +1140,22 @@ generateTestValuesForParametersTest()
          .testJson = R"({"accounts": ""})",
          .expected = false},
         {.testName = "ledgerAccountsIsNumber1", .method = "ledger", .testJson = R"({"accounts": 1})", .expected = true},
-        {.testName = "ledgerAccountsIsNumber0", .method = "ledger", .testJson = R"({"accounts": 0})", .expected = false
-        },
-        {.testName = "ledgerAccountsIsNull", .method = "ledger", .testJson = R"({"accounts": null})", .expected = false
-        },
-        {.testName = "ledgerAccountsIsFloat0", .method = "ledger", .testJson = R"({"accounts": 0.0})", .expected = false
-        },
-        {.testName = "ledgerAccountsIsFloat1", .method = "ledger", .testJson = R"({"accounts": 0.1})", .expected = true
-        },
+        {.testName = "ledgerAccountsIsNumber0",
+         .method = "ledger",
+         .testJson = R"({"accounts": 0})",
+         .expected = false},
+        {.testName = "ledgerAccountsIsNull",
+         .method = "ledger",
+         .testJson = R"({"accounts": null})",
+         .expected = false},
+        {.testName = "ledgerAccountsIsFloat0",
+         .method = "ledger",
+         .testJson = R"({"accounts": 0.0})",
+         .expected = false},
+        {.testName = "ledgerAccountsIsFloat1",
+         .method = "ledger",
+         .testJson = R"({"accounts": 0.1})",
+         .expected = true},
         {.testName = "ledgerAccountsIsArray", .method = "ledger", .testJson = R"({"accounts": [1]})", .expected = true},
         {.testName = "ledgerAccountsIsEmptyArray",
          .method = "ledger",

@@ -143,8 +143,7 @@ TYPED_TEST(ExecutionContextTests, timerCancel)
     std::binary_semaphore sem{0};
 
     auto res = this->ctx.scheduleAfter(
-        std::chrono::milliseconds(10),
-        [&value, &sem]([[maybe_unused]] auto stopRequested, auto cancelled) {
+        std::chrono::milliseconds(10), [&value, &sem]([[maybe_unused]] auto stopRequested, auto cancelled) {
             if (cancelled)
                 value = 42;
 
@@ -163,8 +162,7 @@ TYPED_TEST(ExecutionContextTests, timerAutoCancels)
     std::binary_semaphore sem{0};
     {
         auto res = this->ctx.scheduleAfter(
-            std::chrono::milliseconds(1),
-            [&value, &sem]([[maybe_unused]] auto stopRequested, auto cancelled) {
+            std::chrono::milliseconds(1), [&value, &sem]([[maybe_unused]] auto stopRequested, auto cancelled) {
                 if (cancelled)
                     value = 42;
 

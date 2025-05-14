@@ -2243,12 +2243,14 @@ TEST_P(IndexTest, InvalidIndexUint256)
     auto const index = GetParam();
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "{}": "invalid"
             }})",
-            index
-        ));
+                index
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -2263,12 +2265,14 @@ TEST_P(IndexTest, InvalidIndexNotString)
     auto const index = GetParam();
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "{}": 123
             }})",
-            index
-        ));
+                index
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -2290,12 +2294,14 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "account_root": "{}"
             }})",
-            kACCOUNT
-        ));
+                kACCOUNT
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -3033,12 +3039,14 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "payment_channel": "{}"
             }})",
-            kINDEX1
-        ));
+                kINDEX1
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));
@@ -3058,12 +3066,14 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "check": "{}"
             }})",
-            kINDEX1
-        ));
+                kINDEX1
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -3077,14 +3087,16 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "check": "{}",
                 "ledger_index": {}
             }})",
-            kINDEX1,
-            kRANGE_MAX
-        ));
+                kINDEX1,
+                kRANGE_MAX
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -3099,14 +3111,16 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "check": "{}",
                 "ledger_index": "{}"
             }})",
-            kINDEX1,
-            kRANGE_MAX
-        ));
+                kINDEX1,
+                kRANGE_MAX
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -3121,14 +3135,16 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "check": "{}",
                 "ledger_hash": "{}"
             }})",
-            kINDEX1,
-            kLEDGER_HASH
-        ));
+                kINDEX1,
+                kLEDGER_HASH
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -3213,13 +3229,15 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleted)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "index": "{}",
                 "include_deleted": true
             }})",
-            kINDEX1
-        ));
+                kINDEX1
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));
@@ -3261,13 +3279,15 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryDeleted)
         .WillOnce(Return(offer.getSerializer().peekData()));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "index": "{}",
                 "include_deleted": true
             }})",
-            kINDEX1
-        ));
+                kINDEX1
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));
@@ -3289,13 +3309,15 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "index": "{}",
                 "include_deleted": true
             }})",
-            kINDEX1
-        ));
+                kINDEX1
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -3340,13 +3362,15 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleteFalse)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "payment_channel": "{}",
                 "include_deleted": false
             }})",
-            kINDEX1
-        ));
+                kINDEX1
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));
@@ -3400,13 +3424,15 @@ TEST_F(RPCLedgerEntryTest, ObjectUpdateIncludeDelete)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "index": "{}",
                 "include_deleted": true
             }})",
-            kINDEX1
-        ));
+                kINDEX1
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));
@@ -3448,13 +3474,15 @@ TEST_F(RPCLedgerEntryTest, ObjectDeletedPreviously)
         .WillOnce(Return(offer.getSerializer().peekData()));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "index": "{}",
                 "include_deleted": true
             }})",
-            kINDEX1
-        ));
+                kINDEX1
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));
@@ -3474,13 +3502,15 @@ TEST_F(RPCLedgerEntryTest, ObjectSeqNotExist)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "index": "{}",
                 "include_deleted": true
             }})",
-            kINDEX1
-        ));
+                kINDEX1
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -3526,12 +3556,14 @@ TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"({{
+        auto const req = json::parse(
+            fmt::format(
+                R"({{
                 "mpt_issuance": "{}"
             }})",
-            ripple::to_string(mptId)
-        ));
+                ripple::to_string(mptId)
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));

@@ -78,8 +78,7 @@ SignalsHandler::SignalsHandler(config::ClioConfigDefinition const& config, std::
                                 << " milliseconds.";
         setHandler(impl::SignalsHandlerStatic::handleSecondSignal);
         timer_.emplace(context_.scheduleAfter(
-            gracefulPeriod_,
-            [forceExitHandler = std::move(forceExitHandler)](auto&& stopToken, bool canceled) {
+            gracefulPeriod_, [forceExitHandler = std::move(forceExitHandler)](auto&& stopToken, bool canceled) {
                 // TODO: Update this after https://github.com/XRPLF/clio/issues/1380
                 if (not stopToken.isStopRequested() and not canceled) {
                     LOG(LogService::warn()) << "Force exit at the end of graceful period.";

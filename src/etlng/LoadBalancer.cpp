@@ -144,11 +144,14 @@ LoadBalancer::LoadBalancer(
             LOG(log_.warn()) << "Failed to fetch ETL state from source = " << source->toString()
                              << " Please check the configuration and network";
         } else if (etlState_ && etlState_->networkID != stateOpt->networkID) {
-            checkOnETLFailure(fmt::format(
-                "ETL sources must be on the same network. Source network id = {} does not match others network id = {}",
-                stateOpt->networkID,
-                etlState_->networkID
-            ));
+            checkOnETLFailure(
+                fmt::format(
+                    "ETL sources must be on the same network. Source network id = {} does not match others network id "
+                    "= {}",
+                    stateOpt->networkID,
+                    etlState_->networkID
+                )
+            );
         } else {
             etlState_ = stateOpt;
         }
@@ -246,9 +249,8 @@ LoadBalancer::forwardToRippled(
     auto const cmd = boost::json::value_to<std::string>(request.at("command"));
 
     if (forwardingCache_ and forwardingCache_->shouldCache(cmd)) {
-        auto updater =
-            [this, &request, &clientIp, isAdmin](boost::asio::yield_context yield
-            ) -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
+        auto updater = [this, &request, &clientIp, isAdmin](boost::asio::yield_context yield)
+            -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
             auto result = forwardToRippledImpl(request, clientIp, isAdmin, yield);
             if (result.has_value()) {
                 return util::ResponseExpirationCache::EntryData{
@@ -261,10 +263,9 @@ LoadBalancer::forwardToRippled(
         };
 
         auto result = forwardingCache_->getOrUpdate(
-            yield,
-            cmd,
-            std::move(updater),
-            [](util::ResponseExpirationCache::EntryData const& entry) { return not entry.response.contains("error"); }
+            yield, cmd, std::move(updater), [](util::ResponseExpirationCache::EntryData const& entry) {
+                return not entry.response.contains("error");
+            }
         );
         if (result.has_value()) {
             return std::move(result).value();
