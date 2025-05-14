@@ -38,22 +38,6 @@
 #include <string>
 #include <vector>
 
-struct MockLoadBalancer {
-    using RawLedgerObjectType = FakeLedgerObject;
-
-    MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchLedger, (uint32_t, bool, bool), ());
-    MOCK_METHOD(boost::json::value, toJson, (), (const));
-
-    using ForwardToRippledReturnType = std::expected<boost::json::object, rpc::ClioError>;
-    MOCK_METHOD(
-        ForwardToRippledReturnType,
-        forwardToRippled,
-        (boost::json::object const&, std::optional<std::string> const&, bool, boost::asio::yield_context),
-        (const)
-    );
-};
-
 struct MockNgLoadBalancer : etlng::LoadBalancerInterface {
     using RawLedgerObjectType = FakeLedgerObject;
 
@@ -85,4 +69,7 @@ struct MockNgLoadBalancer : etlng::LoadBalancerInterface {
         (boost::json::object const&, std::optional<std::string> const&, bool, boost::asio::yield_context),
         (override)
     );
+    MOCK_METHOD(void, stop, (boost::asio::yield_context), ());
 };
+
+using MockLoadBalancer = MockNgLoadBalancer;

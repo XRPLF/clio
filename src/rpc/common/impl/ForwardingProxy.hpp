@@ -19,7 +19,9 @@
 
 #pragma once
 
+#include "etlng/LoadBalancerInterface.hpp"
 #include "rpc/Errors.hpp"
+#include "rpc/RPCCenter.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/log/Logger.hpp"
@@ -31,20 +33,21 @@
 #include <memory>
 #include <string>
 #include <unordered_set>
+#include <utility>
 
 namespace rpc::impl {
 
-template <typename LoadBalancerType, typename CountersType, typename HandlerProviderType>
+template <typename CountersType, typename HandlerProviderType>
 class ForwardingProxy {
     util::Logger log_{"RPC"};
 
-    std::shared_ptr<LoadBalancerType> balancer_;
+    std::shared_ptr<etlng::LoadBalancerInterface> balancer_;
     std::reference_wrapper<CountersType> counters_;
     std::shared_ptr<HandlerProviderType const> handlerProvider_;
 
 public:
     ForwardingProxy(
-        std::shared_ptr<LoadBalancerType> const& balancer,
+        std::shared_ptr<etlng::LoadBalancerInterface> const& balancer,
         CountersType& counters,
         std::shared_ptr<HandlerProviderType const> const& handlerProvider
     )
@@ -104,22 +107,7 @@ public:
     bool
     isProxied(std::string const& method) const
     {
-        static std::unordered_set<std::string> const kPROXIED_COMMANDS{
-            "server_definitions",
-            "server_state",
-            "submit",
-            "submit_multisigned",
-            "fee",
-            "ledger_closed",
-            "ledger_current",
-            "ripple_path_find",
-            "manifest",
-            "channel_authorize",
-            "channel_verify",
-            "simulate",
-        };
-
-        return kPROXIED_COMMANDS.contains(method);
+        return RPCCenter::isForwarded(method);
     }
 
 private:

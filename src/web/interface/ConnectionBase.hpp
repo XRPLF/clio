@@ -83,6 +83,13 @@ public:
     }
 
     /**
+     * @brief Send a "slow down" error response to the client.
+     *
+     * @param request The original request that triggered the rate limiting
+     */
+    virtual void
+    sendSlowDown(std::string const& request) = 0;
+    /**
      * @brief Get the subscription context for this connection.
      *
      * @param factory Tag TagDecoratorFactory to use to create the context.

@@ -5,12 +5,12 @@ target_sources(
   PRIVATE AdminVerificationStrategy.cpp
           dosguard/DOSGuard.cpp
           dosguard/IntervalSweepHandler.cpp
+          dosguard/Weights.cpp
           dosguard/WhitelistHandler.cpp
           ng/Connection.cpp
           ng/impl/ErrorHandling.cpp
           ng/impl/ConnectionHandler.cpp
           ng/impl/ServerSslContext.cpp
-          ng/impl/WsConnection.cpp
           ng/Request.cpp
           ng/Response.cpp
           ng/Server.cpp

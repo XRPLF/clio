@@ -20,6 +20,7 @@
 #include "data/LedgerCache.hpp"
 
 #include "data/Types.hpp"
+#include "etlng/Models.hpp"
 #include "util/Assert.hpp"
 
 #include <xrpl/basics/base_uint.h>
@@ -87,6 +88,42 @@ LedgerCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool is
     }
 }
 
+void
+LedgerCache::update(std::vector<etlng::model::Object> const& objs, uint32_t seq)
+{
+    if (disabled_)
+        return;
+
+    std::scoped_lock const lck{mtx_};
+    if (seq > latestSeq_) {
+        ASSERT(
+            seq == latestSeq_ + 1 || latestSeq_ == 0,
+            "New sequence must be either next or first. seq = {}, latestSeq_ = {}",
+            seq,
+            latestSeq_
+        );
+        latestSeq_ = seq;
+    }
+
+    deleted_.clear();  // previous update's deletes no longer needed
+
+    for (auto const& obj : objs) {
+        if (!obj.data.empty()) {
+            auto& e = map_[obj.key];
+            if (seq > e.seq)
+                e = {.seq = seq, .blob = obj.data};
+        } else {
+            if (map_.contains(obj.key))
+                deleted_[obj.key] = map_[obj.key];
+
+            map_.erase(obj.key);
+            if (!full_)
+                deletes_.insert(obj.key);
+        }
+    }
+    cv_.notify_all();
+}
+
 std::optional<LedgerObject>
 LedgerCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
 {
@@ -135,6 +172,29 @@ LedgerCache::get(ripple::uint256 const& key, uint32_t seq) const
         return {};
     if (seq < e->second.seq)
         return {};
+    ++objectHitCounter_.get();
+    return {e->second.blob};
+}
+
+std::optional<Blob>
+LedgerCache::getDeleted(ripple::uint256 const& key, uint32_t seq) const
+{
+    if (disabled_)
+        return std::nullopt;
+
+    std::shared_lock const lck{mtx_};
+    if (seq > latestSeq_)
+        return std::nullopt;
+
+    ++objectReqCounter_.get();
+
+    auto e = deleted_.find(key);
+    if (e == deleted_.end())
+        return std::nullopt;
+
+    if (seq < e->second.seq)
+        return std::nullopt;
+
     ++objectHitCounter_.get();
     return {e->second.blob};
 }

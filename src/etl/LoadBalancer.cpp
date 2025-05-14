@@ -23,6 +23,7 @@
 #include "etl/ETLState.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
+#include "etlng/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "util/Assert.hpp"
@@ -59,7 +60,7 @@ using namespace util::config;
 
 namespace etl {
 
-std::shared_ptr<LoadBalancer>
+std::shared_ptr<etlng::LoadBalancerInterface>
 LoadBalancer::makeLoadBalancer(
     ClioConfigDefinition const& config,
     boost::asio::io_context& ioc,
@@ -141,12 +142,11 @@ LoadBalancer::LoadBalancer(
         if (!stateOpt) {
             LOG(log_.warn()) << "Failed to fetch ETL state from source = " << source->toString()
                              << " Please check the configuration and network";
-        } else if (etlState_ && etlState_->networkID && stateOpt->networkID &&
-                   etlState_->networkID != stateOpt->networkID) {
+        } else if (etlState_ && etlState_->networkID != stateOpt->networkID) {
             checkOnETLFailure(fmt::format(
                 "ETL sources must be on the same network. Source network id = {} does not match others network id = {}",
-                *(stateOpt->networkID),
-                *(etlState_->networkID)
+                stateOpt->networkID,
+                etlState_->networkID
             ));
         } else {
             etlState_ = stateOpt;
@@ -175,12 +175,12 @@ LoadBalancer::~LoadBalancer()
 }
 
 std::vector<std::string>
-LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly, std::chrono::steady_clock::duration retryAfter)
+LoadBalancer::loadInitialLedger(uint32_t sequence, std::chrono::steady_clock::duration retryAfter)
 {
     std::vector<std::string> response;
     execute(
-        [this, &response, &sequence, cacheOnly](auto& source) {
-            auto [data, res] = source->loadInitialLedger(sequence, downloadRanges_, cacheOnly);
+        [this, &response, &sequence](auto& source) {
+            auto [data, res] = source->loadInitialLedger(sequence, downloadRanges_);
 
             if (!res) {
                 LOG(log_.error()) << "Failed to download initial ledger."

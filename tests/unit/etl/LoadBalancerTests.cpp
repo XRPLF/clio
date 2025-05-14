@@ -436,56 +436,50 @@ struct LoadBalancerLoadInitialLedgerTests : LoadBalancerOnConnectHookTests {
 protected:
     uint32_t const sequence_ = 123;
     uint32_t const numMarkers_ = 16;
-    bool const cacheOnly_ = true;
     std::pair<std::vector<std::string>, bool> const response_ = {{"1", "2", "3"}, true};
 };
 
 TEST_F(LoadBalancerLoadInitialLedgerTests, load)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, cacheOnly_))
-        .WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, cacheOnly_), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_), response_.first);
 }
 
 TEST_F(LoadBalancerLoadInitialLedgerTests, load_source0DoesntHaveLedger)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, cacheOnly_))
-        .WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, cacheOnly_), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_), response_.first);
 }
 
 TEST_F(LoadBalancerLoadInitialLedgerTests, load_bothSourcesDontHaveLedger)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).Times(2).WillRepeatedly(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(false)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, cacheOnly_))
-        .WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, cacheOnly_, std::chrono::milliseconds{1}), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, std::chrono::milliseconds{1}), response_.first);
 }
 
 TEST_F(LoadBalancerLoadInitialLedgerTests, load_source0ReturnsStatusFalse)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, cacheOnly_))
+    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_))
         .WillOnce(Return(std::make_pair(std::vector<std::string>{}, false)));
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, cacheOnly_))
-        .WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, cacheOnly_), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_), response_.first);
 }
 
 struct LoadBalancerLoadInitialLedgerCustomNumMarkersTests : LoadBalancerConstructorTests {
 protected:
     uint32_t const numMarkers_ = 16;
     uint32_t const sequence_ = 123;
-    bool const cacheOnly_ = true;
     std::pair<std::vector<std::string>, bool> const response_ = {{"1", "2", "3"}, true};
 };
 
@@ -502,10 +496,9 @@ TEST_F(LoadBalancerLoadInitialLedgerCustomNumMarkersTests, loadInitialLedger)
 
     util::Random::setSeed(0);
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, cacheOnly_))
-        .WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer->loadInitialLedger(sequence_, cacheOnly_), response_.first);
+    EXPECT_EQ(loadBalancer->loadInitialLedger(sequence_), response_.first);
 }
 
 struct LoadBalancerFetchLegerTests : LoadBalancerOnConnectHookTests {

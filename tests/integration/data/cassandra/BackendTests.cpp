@@ -402,7 +402,7 @@ TEST_F(BackendCassandraTest, Basic)
 
             ripple::uint256 hash256;
             EXPECT_TRUE(hash256.parseHex(hashHex));
-            ripple::TxMeta txMeta{hash256, lgrInfoNext.seq, metaBlob};
+            ripple::TxMeta const txMeta{hash256, lgrInfoNext.seq, metaBlob};
             auto accountsSet = txMeta.getAffectedAccounts();
             for (auto& a : accountsSet) {
                 affectedAccounts.push_back(a);

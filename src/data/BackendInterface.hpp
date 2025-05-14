@@ -154,7 +154,7 @@ public:
     }
     virtual ~BackendInterface() = default;
 
-    // TODO: Remove this hack once old ETL is removed.
+    // TODO https://github.com/XRPLF/clio/issues/1956: Remove this hack once old ETL is removed.
     // Cache should not be exposed thru BackendInterface
 
     /**
@@ -647,6 +647,14 @@ public:
      */
     virtual void
     writeAccountTransactions(std::vector<AccountTransactionsData> data) = 0;
+
+    /**
+     * @brief Write a new account transaction.
+     *
+     * @param record An object representing the account transaction
+     */
+    virtual void
+    writeAccountTransaction(AccountTransactionsData record) = 0;
 
     /**
      * @brief Write NFTs transactions.

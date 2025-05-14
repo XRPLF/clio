@@ -147,7 +147,6 @@ class RequestHandler {
     util::Logger webServerLog_{"WebServer"};
     std::shared_ptr<web::AdminVerificationStrategy> adminVerifier_;
     std::reference_wrapper<RpcHandlerType> rpcHandler_;
-    std::reference_wrapper<web::dosguard::DOSGuardInterface> dosguard_;
 
 public:
     /**
@@ -155,14 +154,9 @@ public:
      *
      * @param adminVerifier The AdminVerificationStrategy to use for verifying the connection for admin access.
      * @param rpcHandler The RPC handler to use for handling the request.
-     * @param dosguard The DOSGuardInterface to use for checking the connection.
      */
-    RequestHandler(
-        std::shared_ptr<web::AdminVerificationStrategy> adminVerifier,
-        RpcHandlerType& rpcHandler,
-        web::dosguard::DOSGuardInterface& dosguard
-    )
-        : adminVerifier_(std::move(adminVerifier)), rpcHandler_(rpcHandler), dosguard_(dosguard)
+    RequestHandler(std::shared_ptr<web::AdminVerificationStrategy> adminVerifier, RpcHandlerType& rpcHandler)
+        : adminVerifier_(std::move(adminVerifier)), rpcHandler_(rpcHandler)
     {
     }
 
@@ -183,21 +177,6 @@ public:
         boost::asio::yield_context yield
     )
     {
-        if (not dosguard_.get().request(connectionMetadata.ip())) {
-            auto error = rpc::makeError(rpc::RippledError::rpcSLOW_DOWN);
-
-            if (not request.isHttp()) {
-                try {
-                    auto requestJson = boost::json::parse(request.message());
-                    if (requestJson.is_object() && requestJson.as_object().contains("id"))
-                        error["id"] = requestJson.as_object().at("id");
-                    error["request"] = request.message();
-                } catch (std::exception const&) {
-                    error["request"] = request.message();
-                }
-            }
-            return web::ng::Response{boost::beast::http::status::service_unavailable, error, request};
-        }
         LOG(webServerLog_.info()) << connectionMetadata.tag()
                                   << "Received request from ip = " << connectionMetadata.ip()
                                   << " - posting to WorkQueue";
@@ -207,20 +186,7 @@ public:
         });
 
         try {
-            auto response = rpcHandler_(request, connectionMetadata, std::move(subscriptionContext), yield);
-
-            if (not dosguard_.get().add(connectionMetadata.ip(), response.message().size())) {
-                auto jsonResponse = boost::json::parse(response.message()).as_object();
-                jsonResponse["warning"] = "load";
-                if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {
-                    jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::WarnRpcRateLimit));
-                } else {
-                    jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::WarnRpcRateLimit)};
-                }
-                response.setMessage(jsonResponse);
-            }
-
-            return response;
+            return rpcHandler_(request, connectionMetadata, std::move(subscriptionContext), yield);
         } catch (std::exception const&) {
             return web::ng::Response{
                 boost::beast::http::status::internal_server_error,

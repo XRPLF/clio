@@ -293,7 +293,7 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
 
      {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-
+     {"__ng_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
      {"etl_sources.[].ip", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)}},
      {"etl_sources.[].ws_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
      {"etl_sources.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
@@ -314,6 +314,15 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)},
      {"dos_guard.sweep_interval",
       ConfigValue{ConfigType::Double}.defaultValue(1.0).withConstraint(gValidatePositiveDouble)},
+     {"dos_guard.__ng_default_weight",
+      ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateNonNegativeUint32)},
+     {"dos_guard.__ng_weights.[].method", Array{ConfigValue{ConfigType::String}.withConstraint(gRpcNameConstraint)}},
+     {"dos_guard.__ng_weights.[].weight",
+      Array{ConfigValue{ConfigType::Integer}.withConstraint(gValidateNonNegativeUint32)}},
+     {"dos_guard.__ng_weights.[].weight_ledger_current",
+      Array{ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNonNegativeUint32)}},
+     {"dos_guard.__ng_weights.[].weight_ledger_validated",
+      Array{ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNonNegativeUint32)}},
 
      {"workers",
       ConfigValue{ConfigType::Integer}

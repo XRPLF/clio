@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <boost/json/object.hpp>
+
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -99,12 +101,13 @@ public:
      *
      *
      * @param ip
+     * @param request The request as json object
      * @return If the total sums up to a value equal or larger than maxRequestCount_
      * the operation is no longer allowed and false is returned; true is
      * returned otherwise.
      */
     [[maybe_unused]] virtual bool
-    request(std::string const& ip) noexcept = 0;
+    request(std::string const& ip, boost::json::object const& request) = 0;
 };
 
 }  // namespace web::dosguard

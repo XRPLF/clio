@@ -20,6 +20,7 @@
 #pragma once
 
 #include "data/Types.hpp"
+#include "etlng/Models.hpp"
 
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/hardened_hash.h>
@@ -56,6 +57,15 @@ public:
     update(std::vector<LedgerObject> const& objs, uint32_t seq, bool isBackground = false) = 0;
 
     /**
+     * @brief Update the cache with new ledger objects.
+     *
+     * @param objs The ledger objects to update cache with
+     * @param seq The sequence to update cache for
+     */
+    virtual void
+    update(std::vector<etlng::model::Object> const& objs, uint32_t seq) = 0;
+
+    /**
      * @brief Fetch a cached object by its key and sequence number.
      *
      * @param key The key to fetch for
@@ -64,6 +74,16 @@ public:
      */
     virtual std::optional<Blob>
     get(ripple::uint256 const& key, uint32_t seq) const = 0;
+
+    /**
+     * @brief Fetch a recently deleted object by its key and sequence number.
+     *
+     * @param key The key to fetch for
+     * @param seq The sequence to fetch for
+     * @return If found in deleted cache, will return the cached Blob; otherwise nullopt is returned
+     */
+    virtual std::optional<Blob>
+    getDeleted(ripple::uint256 const& key, uint32_t seq) const = 0;
 
     /**
      * @brief Gets a cached successor.
