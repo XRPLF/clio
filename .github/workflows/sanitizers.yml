@@ -15,6 +15,7 @@ on:
       - ".github/actions/**"
       - "!.github/actions/build_docker_image/**"
       - "!.github/actions/create_issue/**"
+      - .github/scripts/execute-tests-under-sanitizer
 
       - CMakeLists.txt
       - "cmake/**"
