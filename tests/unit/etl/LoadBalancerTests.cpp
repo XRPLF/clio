@@ -34,6 +34,7 @@
 #include "util/newconfig/ConfigFileJson.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"
+#include "util/prometheus/Counter.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
