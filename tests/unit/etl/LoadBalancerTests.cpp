@@ -36,7 +36,6 @@
 #include "util/config/Types.hpp"
 #include "util/prometheus/Counter.hpp"
 
-
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
