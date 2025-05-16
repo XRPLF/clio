@@ -38,12 +38,7 @@ namespace etl {
  * @brief This class is responsible for fetching and storing the state of the ETL information, such as the network id
  */
 struct ETLState {
-    /*
-     * NOTE: Rippled NetworkID: Mainnet = 0; Testnet = 1; Devnet = 2
-     * However, if rippled is running on neither of these (ie. standalone mode) rippled will default to 0, but
-     * is not included in the stateOpt response. Must manually add it here.
-     */
-    uint32_t networkID{0};
+    std::optional<uint32_t> networkID;
 
     /**
      * @brief Fetch the ETL state from the rippled server
