@@ -49,9 +49,8 @@
 #include "util/Assert.hpp"
 #include "util/Profiler.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
-#include "util/config/Config.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/json/object.hpp>
 #include <fmt/core.h>

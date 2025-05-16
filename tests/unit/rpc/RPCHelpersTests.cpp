@@ -31,9 +31,9 @@
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
 #include "util/TestObject.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
 
 #include <boost/asio/impl/spawn.hpp>
 #include <boost/asio/spawn.hpp>
@@ -88,16 +88,10 @@ constexpr auto kAMM_ID = 54321;
 }  // namespace
 
 class RPCHelpersTest : public util::prometheus::WithPrometheus, public MockBackendTest, public SyncAsioContextTest {
-    void
-    SetUp() override
+public:
+    RPCHelpersTest()
     {
         backend_->setRange(10, 300);
-        SyncAsioContextTest::SetUp();
-    }
-    void
-    TearDown() override
-    {
-        SyncAsioContextTest::TearDown();
     }
 
 protected:

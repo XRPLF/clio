@@ -19,9 +19,9 @@
 
 #include "util/LoggerFixtures.hpp"
 #include "util/Taggable.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
 #include "web/SubscriptionContext.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/interface/ConnectionBaseMock.hpp"

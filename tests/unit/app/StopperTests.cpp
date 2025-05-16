@@ -24,7 +24,7 @@
 #include "util/MockLoadBalancer.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockSubscriptionManager.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "web/ng/Server.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>

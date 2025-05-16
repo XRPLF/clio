@@ -26,8 +26,8 @@
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Assert.hpp"
 #include "util/Constants.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <xrpl/beast/core/CurrentThreadName.h>

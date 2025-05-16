@@ -21,12 +21,12 @@
 #include "data/cassandra/Types.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/TmpFile.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigFileJson.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/ObjectView.hpp"
+#include "util/config/Types.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigFileJson.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/ObjectView.hpp"
-#include "util/newconfig/Types.hpp"
 
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>

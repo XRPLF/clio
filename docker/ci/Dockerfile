@@ -9,7 +9,8 @@ WORKDIR /root
 ENV CCACHE_VERSION=4.10.2 \
     LLVM_TOOLS_VERSION=19 \
     GH_VERSION=2.40.0 \
-    DOXYGEN_VERSION=1.12.0
+    DOXYGEN_VERSION=1.12.0 \
+    CLANG_BUILD_ANALYZER_VERSION=1.6.0
 
 # Add repositories
 RUN apt-get -qq update \
@@ -21,7 +22,7 @@ RUN apt-get -qq update \
 RUN apt update -qq \
     && apt install -y --no-install-recommends --no-install-suggests python3 python3-pip git git-lfs make ninja-build flex bison jq graphviz \
     clang-tidy-${LLVM_TOOLS_VERSION} clang-tools-${LLVM_TOOLS_VERSION} \
-    && pip3 install -q --upgrade --no-cache-dir pip && pip3 install -q --no-cache-dir conan==1.62 gcovr cmake==3.31.6 \
+    && pip3 install -q --upgrade --no-cache-dir pip && pip3 install -q --no-cache-dir conan==1.62 gcovr cmake==3.31.6 pre-commit \
     && apt-get clean && apt remove -y software-properties-common
 
 # Install gcc-12 and make ldconfig aware of the new libstdc++ location (for gcc)
@@ -61,8 +62,14 @@ RUN wget "https://github.com/doxygen/doxygen/releases/download/Release_${DOXYGEN
     && cmake --build . --target install \
     && rm -rf /tmp/* /var/tmp/*
 
+# Install ClangBuildAnalyzer
+RUN wget "https://github.com/aras-p/ClangBuildAnalyzer/releases/download/v${CLANG_BUILD_ANALYZER_VERSION}/ClangBuildAnalyzer-linux" \
+    && chmod +x ClangBuildAnalyzer-linux \
+    && mv ClangBuildAnalyzer-linux /usr/bin/ClangBuildAnalyzer \
+    && rm -rf /tmp/* /var/tmp/*
+
 # Install gh
-RUN wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz \
+RUN wget "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz" \
     && tar xf gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz \
     && mv gh_${GH_VERSION}_linux_${TARGETARCH}/bin/gh /usr/bin/gh \
     && rm -rf /tmp/* /var/tmp/*

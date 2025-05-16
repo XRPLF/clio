@@ -22,7 +22,7 @@
 #include "rpc/common/APIVersion.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/impl/APIVersionParser.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>

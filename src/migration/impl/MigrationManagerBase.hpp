@@ -21,7 +21,7 @@
 
 #include "migration/MigrationManagerInterface.hpp"
 #include "migration/impl/MigrationInspectorBase.hpp"
-#include "util/newconfig/ObjectView.hpp"
+#include "util/config/ObjectView.hpp"
 
 #include <memory>
 #include <string>

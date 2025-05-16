@@ -26,11 +26,12 @@
 #include "util/MockRPCEngine.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
 #include "web/RPCServerHandler.hpp"
 #include "web/SubscriptionContextInterface.hpp"
+#include "web/dosguard/DOSGuardMock.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/beast/http/status.hpp>
@@ -39,6 +40,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
@@ -58,6 +60,7 @@ constexpr auto kMAX_SEQ = 30;
 struct MockWsBase : public web::ConnectionBase {
     std::string message;
     boost::beast::http::status lastStatus = boost::beast::http::status::unknown;
+    size_t slowDownCallsCounter{0};
 
     void
     send(std::shared_ptr<std::string> msgType) override
@@ -72,6 +75,12 @@ struct MockWsBase : public web::ConnectionBase {
     {
         message += msg;
         lastStatus = status;
+    }
+
+    void
+    sendSlowDown(std::string const&) override
+    {
+        ++slowDownCallsCounter;
     }
 
     SubscriptionContextPtr
@@ -94,9 +103,10 @@ struct WebRPCServerHandlerTest : util::prometheus::WithPrometheus, MockBackendTe
     };
     std::shared_ptr<MockAsyncRPCEngine> rpcEngine = std::make_shared<MockAsyncRPCEngine>();
     std::shared_ptr<MockETLService> etl = std::make_shared<MockETLService>();
+    DOSGuardStrictMock dosguard;
     std::shared_ptr<util::TagDecoratorFactory> tagFactory = std::make_shared<util::TagDecoratorFactory>(cfg);
     std::shared_ptr<RPCServerHandler<MockAsyncRPCEngine>> handler =
-        std::make_shared<RPCServerHandler<MockAsyncRPCEngine>>(cfg, backend_, rpcEngine, etl);
+        std::make_shared<RPCServerHandler<MockAsyncRPCEngine>>(cfg, backend_, rpcEngine, etl, dosguard);
     std::shared_ptr<MockWsBase> session = std::make_shared<MockWsBase>(*tagFactory);
 };
 
@@ -121,6 +131,11 @@ TEST_F(WebRPCServerHandlerTest, HTTPDefaultPath)
                                             }
                                         ]
                                     })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(rpc::Result{boost::json::parse(kRESULT).as_object()}));
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
@@ -129,6 +144,33 @@ TEST_F(WebRPCServerHandlerTest, HTTPDefaultPath)
 
     (*handler)(kREQUEST, session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(kRESPONSE));
+}
+
+TEST_F(WebRPCServerHandlerTest, HTTPRejectedByDosguard)
+{
+    static constexpr auto kREQUEST = R"({
+                                        "method": "server_info",
+                                        "params": [{}]
+                                    })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(false));
+
+    (*handler)(kREQUEST, session);
+    EXPECT_EQ(session->slowDownCallsCounter, 1);
+}
+
+TEST_F(WebRPCServerHandlerTest, HTTPRejectedByDosguardAfterParsing)
+{
+    static constexpr auto kREQUEST = R"({
+                                        "method": "server_info",
+                                        "params": [{}]
+                                    })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, testing::_)).WillOnce(testing::Return(false));
+
+    (*handler)(kREQUEST, session);
+    EXPECT_EQ(session->slowDownCallsCounter, 1);
 }
 
 TEST_F(WebRPCServerHandlerTest, WsNormalPath)
@@ -156,6 +198,10 @@ TEST_F(WebRPCServerHandlerTest, WsNormalPath)
                                             }
                                         ]
                                     })";
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(rpc::Result{boost::json::parse(kRESULT).as_object()}));
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
@@ -164,6 +210,38 @@ TEST_F(WebRPCServerHandlerTest, WsNormalPath)
 
     (*handler)(kREQUEST, session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(kRESPONSE));
+}
+
+TEST_F(WebRPCServerHandlerTest, WsRejectedByDosguard)
+{
+    session->upgraded = true;
+    static constexpr auto kREQUEST = R"({
+                                        "command": "server_info",
+                                        "id": 99,
+                                        "api_version": 2
+                                    })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(false));
+
+    (*handler)(kREQUEST, session);
+    EXPECT_EQ(session->slowDownCallsCounter, 1);
+}
+
+TEST_F(WebRPCServerHandlerTest, WsRejectedByDosguardAfterParsing)
+{
+    session->upgraded = true;
+    static constexpr auto kREQUEST = R"({
+                                        "command": "server_info",
+                                        "id": 99,
+                                        "api_version": 2
+                                    })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST).as_object()))
+        .WillOnce(testing::Return(false));
+
+    (*handler)(kREQUEST, session);
+    EXPECT_EQ(session->slowDownCallsCounter, 1);
 }
 
 TEST_F(WebRPCServerHandlerTest, HTTPForwardedPath)
@@ -195,6 +273,11 @@ TEST_F(WebRPCServerHandlerTest, HTTPForwardedPath)
                                             }
                                         ]
                                     })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(rpc::Result{boost::json::parse(kRESULT).as_object()}));
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
@@ -239,6 +322,11 @@ TEST_F(WebRPCServerHandlerTest, HTTPForwardedErrorPath)
                                             }
                                         ]
                                     })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(rpc::Result{boost::json::parse(kRESULT).as_object()}));
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
@@ -281,6 +369,11 @@ TEST_F(WebRPCServerHandlerTest, WsForwardedPath)
                                             }
                                         ]
                                     })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(rpc::Result{boost::json::parse(kRESULT).as_object()}));
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
@@ -326,6 +419,11 @@ TEST_F(WebRPCServerHandlerTest, WsForwardedErrorPath)
                                             }
                                         ]
                                     })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(rpc::Result{boost::json::parse(kRESULT).as_object()}));
 
@@ -373,6 +471,11 @@ TEST_F(WebRPCServerHandlerTest, HTTPErrorPath)
                                                 }
                                             ]
                                         })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST_JSON).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(rpc::Result{rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}}
         ));
@@ -416,6 +519,11 @@ TEST_F(WebRPCServerHandlerTest, WsErrorPath)
                                             "id": "123",
                                             "api_version": 2
                                         })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST_JSON).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(rpc::Result{rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}}
         ));
@@ -447,6 +555,10 @@ TEST_F(WebRPCServerHandlerTest, HTTPNotReady)
                                         }
                                     })";
 
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, notifyNotReady).Times(1);
 
     (*handler)(kREQUEST, session);
@@ -475,6 +587,10 @@ TEST_F(WebRPCServerHandlerTest, WsNotReady)
                                         }
                                     })";
 
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, notifyNotReady).Times(1);
 
     (*handler)(kREQUEST, session);
@@ -501,6 +617,9 @@ TEST_F(WebRPCServerHandlerTest, HTTPBadSyntaxWhenRequestSubscribe)
                                         }
                                     })";
 
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, testing::_)).WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*handler)(kREQUEST, session);
@@ -514,6 +633,9 @@ TEST_F(WebRPCServerHandlerTest, HTTPMissingCommand)
     backend_->setRange(kMIN_SEQ, kMAX_SEQ);
 
     static constexpr auto kRESPONSE = "Null method";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, testing::_)).WillOnce(testing::Return(true));
 
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
@@ -530,6 +652,9 @@ TEST_F(WebRPCServerHandlerTest, HTTPCommandNotString)
 
     static constexpr auto kRESPONSE = "method is not string";
 
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, testing::_)).WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*handler)(kREQUEST, session);
@@ -544,6 +669,9 @@ TEST_F(WebRPCServerHandlerTest, HTTPCommandIsEmpty)
     backend_->setRange(kMIN_SEQ, kMAX_SEQ);
 
     static constexpr auto kRESPONSE = "method is empty";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, testing::_)).WillOnce(testing::Return(true));
 
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
@@ -575,6 +703,10 @@ TEST_F(WebRPCServerHandlerTest, WsMissingCommand)
                                         }
                                     })";
 
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*handler)(kREQUEST, session);
@@ -591,6 +723,9 @@ TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparsableNotArray)
                                             "method": "ledger",
                                             "params": "wrong"
                                         })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, testing::_)).WillOnce(testing::Return(true));
 
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
@@ -609,6 +744,9 @@ TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparsableArrayWithDigit)
                                             "method": "ledger",
                                             "params": [1]
                                         })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, testing::_)).WillOnce(testing::Return(true));
 
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
@@ -640,6 +778,10 @@ TEST_F(WebRPCServerHandlerTest, HTTPInternalError)
                                             "params": [{}]
                                         })";
 
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST_JSON).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, notifyInternalError).Times(1);
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_)).Times(1).WillOnce(testing::Throw(std::runtime_error("MyError")));
 
@@ -670,6 +812,10 @@ TEST_F(WebRPCServerHandlerTest, WsInternalError)
                                             "command": "ledger",
                                             "id": "123"
                                         })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST_JSON).as_object()))
+        .WillOnce(testing::Return(true));
 
     EXPECT_CALL(*rpcEngine, notifyInternalError).Times(1);
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_)).Times(1).WillOnce(testing::Throw(std::runtime_error("MyError")));
@@ -703,6 +849,11 @@ TEST_F(WebRPCServerHandlerTest, HTTPOutDated)
                                             }
                                         ]
                                     })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(rpc::Result{boost::json::parse(kRESULT).as_object()}));
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
@@ -741,6 +892,11 @@ TEST_F(WebRPCServerHandlerTest, WsOutdated)
                                             }
                                         ]
                                     })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(rpc::Result{boost::json::parse(kRESULT).as_object()}));
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
@@ -756,7 +912,7 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
     session->upgraded = true;
 
     auto localRpcEngine = std::make_shared<MockRPCEngine>();
-    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(cfg, backend_, localRpcEngine, etl);
+    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(cfg, backend_, localRpcEngine, etl, dosguard);
     static constexpr auto kREQUEST = R"({
                                         "command": "server_info",
                                         "id": 99
@@ -773,6 +929,10 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
             "type": "response"
         })";
 
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*localRpcEngine, notifyTooBusy).Times(1);
     EXPECT_CALL(*localRpcEngine, post).WillOnce(testing::Return(false));
 
@@ -783,7 +943,7 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
 TEST_F(WebRPCServerHandlerTest, HTTPTooBusy)
 {
     auto localRpcEngine = std::make_shared<MockRPCEngine>();
-    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(cfg, backend_, localRpcEngine, etl);
+    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(cfg, backend_, localRpcEngine, etl, dosguard);
     static constexpr auto kREQUEST = R"({
                                         "method": "server_info",
                                         "params": [{}]
@@ -800,6 +960,10 @@ TEST_F(WebRPCServerHandlerTest, HTTPTooBusy)
             "type": "response"
         })";
 
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(kREQUEST).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*localRpcEngine, notifyTooBusy).Times(1);
     EXPECT_CALL(*localRpcEngine, post).WillOnce(testing::Return(false));
 
@@ -811,6 +975,8 @@ TEST_F(WebRPCServerHandlerTest, HTTPRequestNotJson)
 {
     static constexpr auto kREQUEST = "not json";
     static constexpr auto kRESPONSE_PREFIX = "Unable to parse JSON from the request";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
 
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
@@ -831,6 +997,8 @@ TEST_F(WebRPCServerHandlerTest, WsRequestNotJson)
             "status": "error",
             "type": "response"
         })";
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
 
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
@@ -888,6 +1056,10 @@ TEST_P(WebRPCServerHandlerInvalidAPIVersionParamTest, HTTPInvalidAPIVersion)
 
     backend_->setRange(kMIN_SEQ, kMAX_SEQ);
 
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(request).as_object()))
+        .WillOnce(testing::Return(true));
+
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
     (*handler)(request, session);
@@ -907,6 +1079,10 @@ TEST_P(WebRPCServerHandlerInvalidAPIVersionParamTest, WSInvalidAPIVersion)
     );
 
     backend_->setRange(kMIN_SEQ, kMAX_SEQ);
+
+    EXPECT_CALL(dosguard, isOk(session->clientIp)).WillOnce(testing::Return(true));
+    EXPECT_CALL(dosguard, request(session->clientIp, boost::json::parse(request).as_object()))
+        .WillOnce(testing::Return(true));
 
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 

@@ -8,10 +8,7 @@ updates:
       time: "04:00"
       timezone: Etc/GMT
     reviewers:
-      - godexsoft
-      - kuznetsss
-      - PeterChen13579
-      - mathbunnyru
+      - XRPLF/clio-dev-team
     commit-message:
       prefix: "ci: [DEPENDABOT] "
     target-branch: develop
@@ -24,10 +21,7 @@ updates:
       time: "04:00"
       timezone: Etc/GMT
     reviewers:
-      - godexsoft
-      - kuznetsss
-      - PeterChen13579
-      - mathbunnyru
+      - XRPLF/clio-dev-team
     commit-message:
       prefix: "ci: [DEPENDABOT] "
     target-branch: develop
@@ -40,10 +34,7 @@ updates:
       time: "04:00"
       timezone: Etc/GMT
     reviewers:
-      - godexsoft
-      - kuznetsss
-      - PeterChen13579
-      - mathbunnyru
+      - XRPLF/clio-dev-team
     commit-message:
       prefix: "ci: [DEPENDABOT] "
     target-branch: develop
@@ -56,10 +47,7 @@ updates:
       time: "04:00"
       timezone: Etc/GMT
     reviewers:
-      - godexsoft
-      - kuznetsss
-      - PeterChen13579
-      - mathbunnyru
+      - XRPLF/clio-dev-team
     commit-message:
       prefix: "ci: [DEPENDABOT] "
     target-branch: develop
@@ -72,10 +60,7 @@ updates:
       time: "04:00"
       timezone: Etc/GMT
     reviewers:
-      - godexsoft
-      - kuznetsss
-      - PeterChen13579
-      - mathbunnyru
+      - XRPLF/clio-dev-team
     commit-message:
       prefix: "ci: [DEPENDABOT] "
     target-branch: develop
@@ -88,10 +73,7 @@ updates:
       time: "04:00"
       timezone: Etc/GMT
     reviewers:
-      - godexsoft
-      - kuznetsss
-      - PeterChen13579
-      - mathbunnyru
+      - XRPLF/clio-dev-team
     commit-message:
       prefix: "ci: [DEPENDABOT] "
     target-branch: develop
@@ -104,10 +86,7 @@ updates:
       time: "04:00"
       timezone: Etc/GMT
     reviewers:
-      - godexsoft
-      - kuznetsss
-      - PeterChen13579
-      - mathbunnyru
+      - XRPLF/clio-dev-team
     commit-message:
       prefix: "ci: [DEPENDABOT] "
     target-branch: develop
@@ -120,10 +99,7 @@ updates:
       time: "04:00"
       timezone: Etc/GMT
     reviewers:
-      - godexsoft
-      - kuznetsss
-      - PeterChen13579
-      - mathbunnyru
+      - XRPLF/clio-dev-team
     commit-message:
       prefix: "ci: [DEPENDABOT] "
     target-branch: develop
@@ -136,10 +112,7 @@ updates:
       time: "04:00"
       timezone: Etc/GMT
     reviewers:
-      - godexsoft
-      - kuznetsss
-      - PeterChen13579
-      - mathbunnyru
+      - XRPLF/clio-dev-team
     commit-message:
       prefix: "ci: [DEPENDABOT] "
     target-branch: develop
@@ -152,10 +125,7 @@ updates:
       time: "04:00"
       timezone: Etc/GMT
     reviewers:
-      - godexsoft
-      - kuznetsss
-      - PeterChen13579
-      - mathbunnyru
+      - XRPLF/clio-dev-team
     commit-message:
       prefix: "ci: [DEPENDABOT] "
     target-branch: develop
@@ -168,10 +138,7 @@ updates:
       time: "04:00"
       timezone: Etc/GMT
     reviewers:
-      - godexsoft
-      - kuznetsss
-      - PeterChen13579
-      - mathbunnyru
+      - XRPLF/clio-dev-team
     commit-message:
       prefix: "ci: [DEPENDABOT] "
     target-branch: develop
@@ -184,10 +151,7 @@ updates:
       time: "04:00"
       timezone: Etc/GMT
     reviewers:
-      - godexsoft
-      - kuznetsss
-      - PeterChen13579
-      - mathbunnyru
+      - XRPLF/clio-dev-team
     commit-message:
       prefix: "ci: [DEPENDABOT] "
     target-branch: develop

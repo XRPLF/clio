@@ -4,10 +4,10 @@
 
 - Access to a Cassandra cluster or ScyllaDB cluster. Can be local or remote.
 
-  > [!IMPORTANT]
-  > There are some key considerations when using **ScyllaDB**. By default, Scylla reserves all free RAM on a machine for itself. If you are running `rippled` or other services on the same machine, restrict its memory usage using the `--memory` argument.
-  >
-  > See [ScyllaDB in a Shared Environment](https://docs.scylladb.com/getting-started/scylla-in-a-shared-environment/) to learn more.
+> [!IMPORTANT]
+> There are some key considerations when using **ScyllaDB**. By default, Scylla reserves all free RAM on a machine for itself. If you are running `rippled` or other services on the same machine, restrict its memory usage using the `--memory` argument.
+>
+> See [ScyllaDB in a Shared Environment](https://docs.scylladb.com/getting-started/scylla-in-a-shared-environment/) to learn more.
 
 - Access to one or more `rippled` nodes. Can be local or remote.
 
@@ -92,4 +92,4 @@ To completely disable Prometheus metrics add `"prometheus": { "enabled": false }
 
 It is important to know that Clio responds to Prometheus request only if they are admin requests. If you are using the admin password feature, the same password should be provided in the Authorization header of Prometheus requests.
 
-You can find an example docker-compose file, with Prometheus and Grafana configs, in [examples/infrastructure](../docs/examples/infrastructure/).
+You can find an example Docker Compose file, with Prometheus and Grafana configs, in [examples/infrastructure](../docs/examples/infrastructure/).

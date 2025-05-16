@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "util/newconfig/ArrayView.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ValueView.hpp"
+#include "util/config/ArrayView.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ValueView.hpp"
 #include "web/Resolver.hpp"
 #include "web/dosguard/WhitelistHandlerInterface.hpp"
 

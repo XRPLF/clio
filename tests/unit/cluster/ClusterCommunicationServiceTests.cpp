@@ -19,6 +19,7 @@
 
 #include "cluster/ClioNode.hpp"
 #include "cluster/ClusterCommunicationService.hpp"
+#include "data/BackendInterface.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TimeUtils.hpp"
@@ -111,6 +112,20 @@ TEST_F(ClusterCommunicationServiceTest, Read_FetchFailed)
     EXPECT_FALSE(isHealthyMetric);
 }
 
+TEST_F(ClusterCommunicationServiceTest, Read_FetchThrew)
+{
+    EXPECT_TRUE(isHealthyMetric);
+    EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([this](auto&&, auto&&) {
+        notify();
+    });
+    EXPECT_CALL(*backend_, fetchClioNodesData).WillOnce(testing::Throw(data::DatabaseTimeout{}));
+
+    clusterCommunicationService.run();
+    wait();
+    EXPECT_FALSE(isHealthyMetric);
+    EXPECT_FALSE(clusterCommunicationService.clusterData().has_value());
+}
+
 TEST_F(ClusterCommunicationServiceTest, Read_GotInvalidJson)
 {
     EXPECT_TRUE(isHealthyMetric);
@@ -126,6 +141,7 @@ TEST_F(ClusterCommunicationServiceTest, Read_GotInvalidJson)
     clusterCommunicationService.run();
     wait();
     EXPECT_FALSE(isHealthyMetric);
+    EXPECT_FALSE(clusterCommunicationService.clusterData().has_value());
 }
 
 TEST_F(ClusterCommunicationServiceTest, Read_GotInvalidNodeData)
@@ -141,6 +157,7 @@ TEST_F(ClusterCommunicationServiceTest, Read_GotInvalidNodeData)
     clusterCommunicationService.run();
     wait();
     EXPECT_FALSE(isHealthyMetric);
+    EXPECT_FALSE(clusterCommunicationService.clusterData().has_value());
 }
 
 TEST_F(ClusterCommunicationServiceTest, Read_Success)
@@ -161,16 +178,17 @@ TEST_F(ClusterCommunicationServiceTest, Read_Success)
 
     EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([&](auto&&, auto&&) {
         auto const clusterData = clusterCommunicationService.clusterData();
-        ASSERT_EQ(clusterData.size(), otherNodesData.size() + 1);
+        ASSERT_TRUE(clusterData.has_value());
+        ASSERT_EQ(clusterData->size(), otherNodesData.size() + 1);
         for (auto const& node : otherNodesData) {
             auto const it =
-                std::ranges::find_if(clusterData, [&](ClioNode const& n) { return *(n.uuid) == *(node.uuid); });
-            EXPECT_NE(it, clusterData.cend()) << boost::uuids::to_string(*node.uuid);
+                std::ranges::find_if(*clusterData, [&](ClioNode const& n) { return *(n.uuid) == *(node.uuid); });
+            EXPECT_NE(it, clusterData->cend()) << boost::uuids::to_string(*node.uuid);
         }
         auto const selfUuid = clusterCommunicationService.selfUuid();
         auto const it =
-            std::ranges::find_if(clusterData, [&selfUuid](ClioNode const& node) { return node.uuid == selfUuid; });
-        EXPECT_NE(it, clusterData.end());
+            std::ranges::find_if(*clusterData, [&selfUuid](ClioNode const& node) { return node.uuid == selfUuid; });
+        EXPECT_NE(it, clusterData->end());
 
         notify();
     });

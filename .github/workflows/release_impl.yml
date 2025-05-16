@@ -72,7 +72,7 @@ jobs:
         run: |
           gh release create ${{ inputs.version }} \
             ${{ inputs.overwrite_release && '--prerelease' || '' }} \
-            --title ${{ inputs.title }} \
+            --title "${{ inputs.title }}" \
             --target $GITHUB_SHA \
             --notes-file "${RUNNER_TEMP}/release_notes.md" \
             ./release_artifacts/clio_server*

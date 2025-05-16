@@ -23,8 +23,8 @@
 #include "migration/MigrationApplication.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
 #include "util/TerminationHandler.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <cstdlib>
 #include <exception>

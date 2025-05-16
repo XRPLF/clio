@@ -21,9 +21,9 @@
 
 #include "util/Assert.hpp"
 #include "util/Taggable.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ObjectView.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ObjectView.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/ProcessingPolicy.hpp"

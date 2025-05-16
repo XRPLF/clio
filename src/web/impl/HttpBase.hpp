@@ -240,19 +240,7 @@ public:
             return sender_(httpResponse(http::status::bad_request, "text/html", "Expected a POST request"));
         }
 
-        // to avoid overwhelm work queue, the request limit check should be
-        // before posting to queue the web socket creation will be guarded via
-        // connection limit
-        if (!dosGuard_.get().request(clientIp)) {
-            // TODO: this looks like it could be useful to count too in the future
-            return sender_(httpResponse(
-                http::status::service_unavailable,
-                "text/plain",
-                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcSLOW_DOWN))
-            ));
-        }
-
-        LOG(log_.info()) << tag() << "Received request from ip = " << clientIp << " - posting to WorkQueue";
+        LOG(log_.info()) << tag() << "Received request from ip = " << clientIp;
 
         try {
             (*handler_)(req_.body(), derived().shared_from_this());
@@ -263,6 +251,16 @@ public:
                 boost::json::serialize(rpc::makeError(rpc::RippledError::rpcINTERNAL))
             ));
         }
+    }
+
+    void
+    sendSlowDown(std::string const&) override
+    {
+        sender_(httpResponse(
+            http::status::service_unavailable,
+            "text/plain",
+            boost::json::serialize(rpc::makeError(rpc::RippledError::rpcSLOW_DOWN))
+        ));
     }
 
     /**

@@ -21,9 +21,9 @@
 
 #include "util/Assert.hpp"
 #include "util/Concepts.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
 #include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"

@@ -214,7 +214,7 @@ SubscribeHandler::subscribeToBooks(
                 auto const [offers, _] =
                     sharedPtrBackend_->fetchBookOffers(bookBase, rng->maxSequence, kFETCH_LIMIT, yield);
 
-                // the taker is not really uesed, same issue with
+                // the taker is not really used, same issue with
                 // https://github.com/XRPLF/xrpl-dev-portal/issues/1818
                 auto const takerID = internalBook.taker ? accountFromStringStrict(*(internalBook.taker)) : beast::zero;
 

@@ -24,8 +24,8 @@
 #include "migration/impl/Spec.hpp"
 #include "util/Assert.hpp"
 #include "util/Concepts.hpp"
+#include "util/config/ObjectView.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ObjectView.hpp"
 
 #include <algorithm>
 #include <array>

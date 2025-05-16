@@ -33,14 +33,15 @@
 #include "util/MockPrometheus.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
-#include "util/newconfig/Array.hpp"
-#include "util/newconfig/ConfigConstraints.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigFileJson.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/Array.hpp"
+#include "util/config/ConfigConstraints.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigFileJson.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
 #include "web/Context.hpp"
 #include "web/dosguard/DOSGuard.hpp"
+#include "web/dosguard/Weights.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
 
 #include <boost/json/object.hpp>
@@ -100,7 +101,8 @@ struct RPCEngineTest : util::prometheus::WithPrometheus,
     util::TagDecoratorFactory tagFactory{cfg};
     WorkQueue queue = WorkQueue::makeWorkQueue(cfg);
     web::dosguard::WhitelistHandler whitelistHandler{cfg};
-    web::dosguard::DOSGuard dosGuard{cfg, whitelistHandler};
+    web::dosguard::Weights weights{1, {}};
+    web::dosguard::DOSGuard dosGuard{cfg, whitelistHandler, weights};
     std::shared_ptr<MockHandlerProvider> handlerProvider = std::make_shared<MockHandlerProvider>();
 };
 

@@ -23,7 +23,7 @@
 #include "etlng/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
-#include "util/newconfig/ObjectView.hpp"
+#include "util/config/ObjectView.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>

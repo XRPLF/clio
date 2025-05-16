@@ -292,7 +292,7 @@ TEST_F(RPCLedgerHandlerTest, Default)
         auto const req = json::parse("{}");
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        // remove human readable time, it is sightly different cross the platform
+        // remove human readable time, it is slightly different cross the platform
         EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
         EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUT));
     });
@@ -562,7 +562,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        // remove human readable time, it is sightly different cross the platform
+        // remove human readable time, it is slightly different cross the platform
         EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
         EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUT));
     });
@@ -660,7 +660,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
         );
         auto output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
-        // remove human readable time, it is sightly different cross the platform
+        // remove human readable time, it is slightly different cross the platform
         EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
         EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUT));
     });
@@ -923,7 +923,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmpty)
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        // remove human readable time, it is sightly different cross the platform
+        // remove human readable time, it is slightly different cross the platform
         EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
         EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUT));
     });
@@ -1031,7 +1031,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        // remove human readable time, it is sightly different cross the platform
+        // remove human readable time, it is slightly different cross the platform
         EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
         EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUT));
     });

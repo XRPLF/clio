@@ -34,6 +34,7 @@
 
 #include <chrono>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace cluster {
@@ -125,9 +126,9 @@ public:
     /**
      * @brief Get the data of all nodes in the cluster (including self).
      *
-     * @return The data of all nodes in the cluster.
+     * @return The data of all nodes in the cluster or error if the service is not healthy.
      */
-    std::vector<ClioNode>
+    std::expected<std::vector<ClioNode>, std::string>
     clusterData() const override;
 
 private:

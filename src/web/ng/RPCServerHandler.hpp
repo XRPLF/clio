@@ -33,6 +33,7 @@
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
 #include "web/SubscriptionContextInterface.hpp"
+#include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
@@ -70,6 +71,7 @@ class RPCServerHandler {
     std::shared_ptr<BackendInterface const> const backend_;
     std::shared_ptr<RPCEngineType> const rpcEngine_;
     std::shared_ptr<etlng::ETLServiceInterface const> const etl_;
+    std::reference_wrapper<dosguard::DOSGuardInterface> dosguard_;
     util::TagDecoratorFactory const tagFactory_;
     rpc::impl::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
 
@@ -84,16 +86,19 @@ public:
      * @param backend The backend to use
      * @param rpcEngine The RPC engine to use
      * @param etl The ETL to use
+     * @param dosguard The DOS guard service to use for request rate limiting
      */
     RPCServerHandler(
         util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<RPCEngineType> const& rpcEngine,
-        std::shared_ptr<etlng::ETLServiceInterface const> const& etl
+        std::shared_ptr<etlng::ETLServiceInterface const> const& etl,
+        dosguard::DOSGuardInterface& dosguard
     )
         : backend_(backend)
         , rpcEngine_(rpcEngine)
         , etl_(etl)
+        , dosguard_(dosguard)
         , tagFactory_(config)
         , apiVersionParser_(config.getObject("api_version"))
     {
@@ -116,6 +121,10 @@ public:
         boost::asio::yield_context yield
     )
     {
+        if (not dosguard_.get().isOk(connectionMetadata.ip())) {
+            return makeSlowDownResponse(request, std::nullopt);
+        }
+
         std::optional<Response> response;
         util::CoroutineGroup coroutineGroup{yield, 1};
         auto const onTaskComplete = coroutineGroup.registerForeign(yield);
@@ -142,18 +151,23 @@ public:
                         }
                     } else {
                         auto parsedObject = std::move(parsedRequest).as_object();
-                        LOG(perfLog_.debug()) << connectionMetadata.tag() << "Adding to work queue";
 
-                        if (not connectionMetadata.wasUpgraded() and shouldReplaceParams(parsedObject))
-                            parsedObject[JS(params)] = boost::json::array({boost::json::object{}});
+                        if (not dosguard_.get().request(connectionMetadata.ip(), parsedObject)) {
+                            response = makeSlowDownResponse(request, parsedObject);
+                        } else {
+                            LOG(perfLog_.debug()) << connectionMetadata.tag() << "Adding to work queue";
 
-                        response = handleRequest(
-                            innerYield,
-                            request,
-                            std::move(parsedObject),
-                            connectionMetadata,
-                            std::move(subscriptionContext)
-                        );
+                            if (not connectionMetadata.wasUpgraded() and shouldReplaceParams(parsedObject))
+                                parsedObject[JS(params)] = boost::json::array({boost::json::object{}});
+
+                            response = handleRequest(
+                                innerYield,
+                                request,
+                                std::move(parsedObject),
+                                connectionMetadata,
+                                std::move(subscriptionContext)
+                            );
+                        }
                     }
                 } catch (std::exception const& ex) {
                     LOG(perfLog_.error()) << connectionMetadata.tag() << "Caught exception: " << ex.what();
@@ -177,6 +191,11 @@ public:
         // Put the coroutine to sleep until the foreign task is done
         coroutineGroup.asyncWait(yield);
         ASSERT(response.has_value(), "Woke up coroutine without setting response");
+
+        if (not dosguard_.get().add(connectionMetadata.ip(), response->message().size())) {
+            response->setMessage(makeLoadWarning(*response));
+        }
+
         return std::move(response).value();
     }
 
@@ -314,6 +333,39 @@ private:
             rpcEngine_->notifyInternalError();
             return impl::ErrorHelper(rawRequest, std::move(request)).makeInternalError();
         }
+    }
+
+    static Response
+    makeSlowDownResponse(Request const& request, std::optional<boost::json::value> requestJson)
+    {
+        auto error = rpc::makeError(rpc::RippledError::rpcSLOW_DOWN);
+
+        if (not request.isHttp()) {
+            try {
+                if (not requestJson.has_value()) {
+                    requestJson = boost::json::parse(request.message());
+                }
+                if (requestJson->is_object() && requestJson->as_object().contains("id"))
+                    error["id"] = requestJson->as_object().at("id");
+                error["request"] = request.message();
+            } catch (std::exception const&) {
+                error["request"] = request.message();
+            }
+        }
+        return web::ng::Response{boost::beast::http::status::service_unavailable, error, request};
+    }
+
+    static boost::json::object
+    makeLoadWarning(Response const& response)
+    {
+        auto jsonResponse = boost::json::parse(response.message()).as_object();
+        jsonResponse["warning"] = "load";
+        if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {
+            jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::WarnRpcRateLimit));
+        } else {
+            jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::WarnRpcRateLimit)};
+        }
+        return jsonResponse;
     }
 
     bool

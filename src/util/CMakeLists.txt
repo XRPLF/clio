@@ -4,7 +4,6 @@ target_sources(
   clio_util
   PRIVATE Assert.cpp
           build/Build.cpp
-          config/Config.cpp
           CoroutineGroup.cpp
           log/Logger.cpp
           prometheus/Http.cpp
@@ -24,19 +23,20 @@ target_sources(
           ResponseExpirationCache.cpp
           SignalsHandler.cpp
           StopHelper.cpp
+          StringHash.cpp
           Taggable.cpp
           TerminationHandler.cpp
           TimeUtils.cpp
           TxUtils.cpp
           LedgerUtils.cpp
-          newconfig/Array.cpp
-          newconfig/ArrayView.cpp
-          newconfig/ConfigConstraints.cpp
-          newconfig/ConfigDefinition.cpp
-          newconfig/ConfigFileJson.cpp
-          newconfig/ObjectView.cpp
-          newconfig/Types.cpp
-          newconfig/ValueView.cpp
+          config/Array.cpp
+          config/ArrayView.cpp
+          config/ConfigConstraints.cpp
+          config/ConfigDefinition.cpp
+          config/ConfigFileJson.cpp
+          config/ObjectView.cpp
+          config/Types.cpp
+          config/ValueView.cpp
 )
 
 # This must be above the target_link_libraries call otherwise backtrace doesn't work
@@ -45,7 +45,14 @@ if ("${san}" STREQUAL "")
 endif ()
 
 target_link_libraries(
-  clio_util PUBLIC Boost::headers fmt::fmt openssl::openssl xrpl::libxrpl Threads::Threads clio_options
+  clio_util
+  PUBLIC Boost::headers
+         fmt::fmt
+         openssl::openssl
+         xrpl::libxrpl
+         Threads::Threads
+         clio_options
+         clio_rpc_center
 )
 
 # FIXME: needed on gcc-12, clang-16 and AppleClang for now (known boost 1.82 issue for some compilers)

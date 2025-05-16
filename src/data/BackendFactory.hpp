@@ -23,8 +23,8 @@
 #include "data/CassandraBackend.hpp"
 #include "data/LedgerCacheInterface.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>

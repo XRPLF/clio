@@ -1,13 +1,15 @@
 name: Build clio
 description: Build clio in build directory
+
 inputs:
-  target:
-    description: Build target name
+  targets:
+    description: Space-separated build target names
     default: all
   subtract_threads:
     description: An option for the action get_number_of_threads. See get_number_of_threads
     required: true
     default: "0"
+
 runs:
   using: composite
   steps:
@@ -17,8 +19,11 @@ runs:
       with:
         subtract_threads: ${{ inputs.subtract_threads }}
 
-    - name: Build Clio
+    - name: Build targets
       shell: bash
       run: |
         cd build
-        cmake --build . --parallel ${{ steps.number_of_threads.outputs.threads_number }} --target ${{ inputs.target }}
+        cmake \
+          --build . \
+          --parallel "${{ steps.number_of_threads.outputs.threads_number }}" \
+          --target ${{ inputs.targets }}

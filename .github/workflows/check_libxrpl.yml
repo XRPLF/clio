@@ -4,6 +4,11 @@ on:
   repository_dispatch:
     types: [check_libxrpl]
 
+concurrency:
+  # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CONAN_PROFILE: gcc
 
@@ -75,9 +80,11 @@ jobs:
     needs: [build, run_tests]
     if: ${{ always() && contains(needs.*.result, 'failure') }}
     runs-on: ubuntu-latest
+
     permissions:
       contents: write
       issues: write
+
     steps:
       - uses: actions/checkout@v4
 

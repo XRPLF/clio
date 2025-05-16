@@ -1,5 +1,6 @@
 name: Run conan and cmake
 description: Run conan and cmake
+
 inputs:
   conan_profile:
     description: Conan profile name
@@ -27,7 +28,17 @@ inputs:
   sanitizer:
     description: Sanitizer to use
     required: true
-    default: "false" # false, tsan, asan or ubsan
+    default: "false"
+    choices:
+      - "false"
+      - "tsan"
+      - "asan"
+      - "ubsan"
+  time_trace:
+    description: Whether to enable compiler trace reports
+    required: true
+    default: "false"
+
 runs:
   using: composite
   steps:
@@ -42,19 +53,36 @@ runs:
         CODE_COVERAGE: "${{ inputs.code_coverage == 'true' && 'True' || 'False' }}"
         STATIC_OPTION: "${{ inputs.static == 'true' && 'True' || 'False' }}"
         INTEGRATION_TESTS_OPTION: "${{ inputs.build_integration_tests == 'true' && 'True' || 'False' }}"
+        TIME_TRACE: "${{ inputs.time_trace == 'true' && 'True' || 'False' }}"
       run: |
         cd build
-        conan install .. -of . -b $BUILD_OPTION -s build_type=${{ inputs.build_type }} -o clio:static="${STATIC_OPTION}" -o clio:tests=True -o clio:integration_tests="${INTEGRATION_TESTS_OPTION}" -o clio:lint=False -o clio:coverage="${CODE_COVERAGE}" --profile ${{ inputs.conan_profile }}
+        conan \
+          install .. \
+          -of . \
+          -b $BUILD_OPTION \
+          -s build_type="${{ inputs.build_type }}" \
+          -o clio:static="${STATIC_OPTION}" \
+          -o clio:tests=True \
+          -o clio:integration_tests="${INTEGRATION_TESTS_OPTION}" \
+          -o clio:lint=False \
+          -o clio:coverage="${CODE_COVERAGE}" \
+          -o clio:time_trace="${TIME_TRACE}" \
+          --profile "${{ inputs.conan_profile }}"
 
     - name: Run cmake
       shell: bash
       env:
         BUILD_TYPE: "${{ inputs.build_type }}"
-        SANITIZER_OPTION: |
+        SANITIZER_OPTION: |-
           ${{ inputs.sanitizer == 'tsan' && '-Dsan=thread' ||
               inputs.sanitizer == 'ubsan' && '-Dsan=undefined' ||
               inputs.sanitizer == 'asan' && '-Dsan=address' ||
               '' }}
       run: |
         cd build
-        cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" ${SANITIZER_OPTION} .. -G Ninja
+        cmake \
+          -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake \
+          -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+          "${SANITIZER_OPTION}" \
+          .. \
+          -G Ninja

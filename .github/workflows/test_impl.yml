@@ -1,0 +1,162 @@
+name: Reusable test
+
+on:
+  workflow_call:
+    inputs:
+      runs_on:
+        description: Runner to run the job on
+        required: true
+        type: string
+
+      container:
+        description: "The container object as a JSON string (leave empty to run natively)"
+        required: true
+        type: string
+
+      conan_profile:
+        description: Conan profile to use
+        required: true
+        type: string
+
+      build_type:
+        description: Build type
+        required: true
+        type: string
+
+      run_unit_tests:
+        description: Whether to run unit tests
+        required: true
+        type: boolean
+
+      run_integration_tests:
+        description: Whether to run integration tests
+        required: true
+        type: boolean
+
+      sanitizer:
+        description: Sanitizer to use
+        required: true
+        type: string
+
+jobs:
+  unit_tests:
+    name: Unit testing ${{ inputs.container != '' && 'in container' || 'natively' }}
+    runs-on: ${{ inputs.runs_on }}
+    container: ${{ inputs.container != '' && fromJson(inputs.container) || null }}
+
+    if: inputs.run_unit_tests
+
+    steps:
+      - name: Clean workdir
+        if: ${{ runner.os == 'macOS' }}
+        uses: kuznetsss/workspace-cleanup@80b9863b45562c148927c3d53621ef354e5ae7ce # v1.0
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+
+      - name: Make clio_tests executable
+        shell: bash
+        run: chmod +x ./clio_tests
+
+      - name: Run clio_tests (regular)
+        if: inputs.sanitizer == 'false'
+        run: ./clio_tests
+
+      - name: Run clio_tests (sanitizer)
+        if: inputs.sanitizer != 'false'
+        run: ./.github/scripts/execute-tests-under-sanitizer ./clio_tests
+
+      - name: Check for sanitizer report
+        if: inputs.sanitizer != 'false'
+        shell: bash
+        id: check_report
+        run: |
+          if ls .sanitizer-report/* 1> /dev/null 2>&1; then
+            echo "found_report=true" >> $GITHUB_OUTPUT
+          else
+            echo "found_report=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload sanitizer report
+        if: inputs.sanitizer != 'false' && steps.check_report.outputs.found_report == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.conan_profile }}_report
+          path: .sanitizer-report/*
+          include-hidden-files: true
+
+      # TODO: enable when we have fixed all currently existing issues from sanitizers
+      - name: Create an issue
+        if: false && inputs.sanitizer != 'false' && steps.check_report.outputs.found_report == 'true'
+        uses: ./.github/actions/create_issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          labels: "bug"
+          title: "[${{ inputs.conan_profile }}] reported issues"
+          body: >
+            Clio tests failed one or more sanitizer checks when built with ${{ inputs.conan_profile }}`.
+
+            Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/
+            Reports are available as artifacts.
+
+  integration_tests:
+    name: Integration testing ${{ inputs.container != '' && 'in container' || 'natively' }}
+    runs-on: ${{ inputs.runs_on }}
+    container: ${{ inputs.container != '' && fromJson(inputs.container) || null }}
+
+    if: inputs.run_integration_tests
+
+    services:
+      scylladb:
+        image: ${{ inputs.container != '' && 'scylladb/scylla' || '' }}
+        options: >-
+          --health-cmd "cqlsh -e 'describe cluster'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Clean workdir
+        if: ${{ runner.os == 'macOS' }}
+        uses: kuznetsss/workspace-cleanup@80b9863b45562c148927c3d53621ef354e5ae7ce # v1.0
+
+      - name: Spin up scylladb
+        if: ${{ runner.os == 'macOS' }}
+        timeout-minutes: 3
+        run: |
+          docker rm --force scylladb || true
+          docker run \
+            --detach \
+            --name scylladb \
+            --health-cmd "cqlsh -e 'describe cluster'" \
+            --health-interval 10s \
+            --health-timeout 5s \
+            --health-retries 5 \
+            --publish 9042:9042 \
+            --memory 16G \
+            scylladb/scylla
+
+          until [ "$(docker inspect -f '{{.State.Health.Status}}' scylladb)" == "healthy" ]; do
+            sleep 5
+          done
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+
+      - name: Run clio_integration_tests
+        run: |
+          chmod +x ./clio_integration_tests
+          ./clio_integration_tests ${{ runner.os != 'macOS' && '--backend_host=scylladb' || '' }}
+
+      - name: Show docker logs and stop scylladb
+        if: ${{ always() && runner.os == 'macOS' }}
+        run: |
+          docker logs scylladb
+          docker rm --force scylladb || true

@@ -17,6 +17,7 @@ option(packaging "Create distribution packages" FALSE)
 option(lint "Run clang-tidy checks during compilation" FALSE)
 option(static "Statically linked Clio" FALSE)
 option(snapshot "Build snapshot tool" FALSE)
+option(time_trace "Build using -ftime-trace to create compiler trace reports" FALSE)
 
 # ========================================================================== #
 set(san "" CACHE STRING "Add sanitizer instrumentation")

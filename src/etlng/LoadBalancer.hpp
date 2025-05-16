@@ -30,8 +30,9 @@
 #include "util/Assert.hpp"
 #include "util/Mutex.hpp"
 #include "util/ResponseExpirationCache.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/prometheus/Counter.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
@@ -92,6 +93,14 @@ private:
     std::uint32_t downloadRanges_ =
         kDEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading initial ledger */
 
+    struct ForwardingCounters {
+        std::reference_wrapper<util::prometheus::CounterInt> successDuration;
+        std::reference_wrapper<util::prometheus::CounterInt> failDuration;
+        std::reference_wrapper<util::prometheus::CounterInt> retries;
+        std::reference_wrapper<util::prometheus::CounterInt> cacheHit;
+        std::reference_wrapper<util::prometheus::CounterInt> cacheMiss;
+    } forwardingCounters_;
+
     // Using mutext instead of atomic_bool because choosing a new source to
     // forward messages should be done with a mutual exclusion otherwise there will be a race condition
     util::Mutex<bool> hasForwardingSource_{false};
@@ -146,8 +155,6 @@ public:
         std::shared_ptr<etl::NetworkValidatedLedgersInterface> validatedLedgers,
         SourceFactory sourceFactory = makeSource
     );
-
-    ~LoadBalancer() override;
 
     /**
      * @brief Load the initial ledger, writing data to the queue.

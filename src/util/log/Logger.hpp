@@ -276,7 +276,7 @@ public:
     LogService() = delete;
 
     /**
-     * @brief Global log core initialization from a @ref Config
+     * @brief Global log core initialization from a @ref config::ClioConfigDefinition
      *
      * @param config The configuration to use
      * @return Void on success, error message on failure
