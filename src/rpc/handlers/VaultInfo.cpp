@@ -53,6 +53,13 @@ VaultInfoHandler::VaultInfoHandler(std::shared_ptr<BackendInterface> const& shar
 {
 }
 
+/**
+ * @brief Ensures that the input contains either a `vaultID` alone, or both `owner` and `tnxSequence`.
+ * Any other combination is considered malformed.
+ *
+ * @param input The input object containing optional fields for the vault request.
+ * @return Returns an empty expected on success (valid combination), else error.
+ */
 static std::expected<void, ClioError>
 parseVaultField(VaultInfoHandler::Input const& input)
 {

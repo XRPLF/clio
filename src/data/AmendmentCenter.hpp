@@ -138,12 +138,14 @@ struct Amendments {
     REGISTER(fixFrozenLPTokenTransfer);
     REGISTER(DeepFreeze);
     REGISTER(SingleAssetVault);
+    REGISTER(PermissionDelegation);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);
     REGISTER(NonFungibleTokensV1);
     REGISTER(fixNFTokenDirV1);
     REGISTER(fixNFTokenNegOffer);
+    REGISTER(fixPayChanCancelAfter);
 
     // Retired amendments
     REGISTER(MultiSign);
