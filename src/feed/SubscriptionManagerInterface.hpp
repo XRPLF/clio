@@ -244,25 +244,10 @@ public:
     /**
      * @brief Get the number of subscribers.
      *
-     * @return The report of the number of subscribers.
+     * @return The report of the number of subscribers
      */
     virtual boost::json::object
     report() const = 0;
-
-    /**
-     * @brief Set the networkID.
-     * @param networkID The network id to set.
-     */
-    virtual void
-    setNetworkID(uint32_t networkID) = 0;
-
-    /**
-     * @brief Get the networkID.
-     *
-     * @return The network id.
-     */
-    virtual uint32_t
-    getNetworkID() const = 0;
 };
 
 }  // namespace feed

@@ -103,10 +103,6 @@ struct MockSubscriptionManager : feed::SubscriptionManagerInterface {
 
     MOCK_METHOD(boost::json::object, report, (), (const, override));
 
-    MOCK_METHOD(void, setNetworkID, (uint32_t), (override));
-
-    MOCK_METHOD(uint32_t, getNetworkID, (), (const, override));
-
     MOCK_METHOD(void, stop, (), (override));
 };
 

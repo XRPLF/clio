@@ -290,10 +290,7 @@ std::optional<std::string>
 encodeCTID(uint32_t ledgerSeq, uint16_t txnIndex, uint16_t networkId) noexcept
 {
     static constexpr uint32_t kMAX_LEDGER_SEQ = 0x0FFF'FFFF;
-    static constexpr uint32_t kMAX_TXN_INDEX = 0xFFFF;
-    static constexpr uint32_t kMAX_NETWORK_ID = 0xFFFF;
-
-    if (ledgerSeq > kMAX_LEDGER_SEQ || txnIndex > kMAX_TXN_INDEX || networkId > kMAX_NETWORK_ID)
+    if (ledgerSeq > kMAX_LEDGER_SEQ)
         return {};
 
     static constexpr uint64_t kCTID_PREFIX = 0xC000'0000;
