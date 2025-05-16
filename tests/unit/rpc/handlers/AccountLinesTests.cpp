@@ -523,7 +523,9 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
                         "limit": "100",
                         "limit_peer": "200",
                         "quality_in": 0,
-                        "quality_out": 0
+                        "quality_out": 0,
+                        "no_ripple": false,
+                        "no_ripple_peer": false
                     },
                     {
                         "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
@@ -532,7 +534,9 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
                         "limit": "200",
                         "limit_peer": "100",
                         "quality_in": 0,
-                        "quality_out": 0
+                        "quality_out": 0,
+                        "no_ripple": false,
+                        "no_ripple_peer": false
                     }
                 ]
             })";
@@ -734,6 +738,7 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseFieldWithDeepFreeze)
                 "limit_peer": "200",
                 "quality_in": 0,
                 "quality_out": 0,
+                "no_ripple": false,
                 "no_ripple_peer": true,
                 "peer_authorized": true,
                 "freeze_peer": true,
@@ -748,6 +753,7 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseFieldWithDeepFreeze)
                 "quality_in": 0,
                 "quality_out": 0,
                 "no_ripple": true,
+                "no_ripple_peer": false,
                 "authorized": true,
                 "freeze": true,
                 "deep_freeze": true
@@ -1067,7 +1073,9 @@ TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
                         "limit": "100",
                         "limit_peer": "200",
                         "quality_in": 0,
-                        "quality_out": 0
+                        "quality_out": 0,
+                        "no_ripple": false,
+                        "no_ripple_peer": false
                     }},
                     {{
                         "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
@@ -1076,7 +1084,9 @@ TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
                         "limit": "200",
                         "limit_peer": "100",
                         "quality_in": 0,
-                        "quality_out": 0
+                        "quality_out": 0,
+                        "no_ripple": false,
+                        "no_ripple_peer": false
                     }}
                 ]
             }})",
@@ -1144,7 +1154,9 @@ TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
                         "limit": "100",
                         "limit_peer": "200",
                         "quality_in": 0,
-                        "quality_out": 0
+                        "quality_out": 0,
+                        "no_ripple": false,
+                        "no_ripple_peer": false
                     }},
                     {{
                         "account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
@@ -1153,7 +1165,9 @@ TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
                         "limit": "200",
                         "limit_peer": "100",
                         "quality_in": 0,
-                        "quality_out": 0
+                        "quality_out": 0,
+                        "no_ripple": false,
+                        "no_ripple_peer": false
                     }}
                 ]
             }})",
