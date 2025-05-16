@@ -47,11 +47,11 @@ func main() {
 			Password: args.Password,
 		}
 
-		from, to, err := util.GetLedgerRange(cluster)
+		dbRange, err := util.GetLedgerRange(cluster)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Range: %d -> %d\n", from, to)
+		fmt.Printf("Range: %d -> %d\n", dbRange.FirstLedgerIdx, dbRange.LatestLedgerIdx)
 	}
 }

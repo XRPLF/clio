@@ -36,7 +36,7 @@ func Parse() (*Args, error) {
 	wsServer := fs.StringP("ws_server", "w", "0.0.0.0:6006", "rippled's gRPC server address")
 	serverMode := fs.BoolP("server", "s", false, "Start server mode")
 	showRange := fs.BoolP("range", "r", false, "Show the range of the snapshot")
-	getRange := fs.Bool("getRange", false, "Show the range of the snapshot")
+	getRange := fs.Bool("getRange", false, "Get the available DB range of the host")
 
 	host := fs.String("host", "", "Database host (e.g., 127.0.0.1)")
 	username := fs.String("username", "", "Database username")
@@ -72,7 +72,20 @@ func Parse() (*Args, error) {
 		return nil, fmt.Errorf("invalid usage: --export or --server or --range flag is required")
 	}
 
-	return &Args{*exportMode, *seq, *endSeq, *path, *grpcServer, *wsServer, *serverMode, *showRange, *getRange, *host, *username, *password}, nil
+	return &Args{
+		ExportMode: *exportMode,
+		StartSeq:   *seq,
+		EndSeq:     *endSeq,
+		Path:       *path,
+		GrpcServer: *grpcServer,
+		WsServer:   *wsServer,
+		ServerMode: *serverMode,
+		ShowRange:  *showRange,
+		GetRange:   *getRange,
+		Host:       *host,
+		Username:   *username,
+		Password:   *password,
+	}, nil
 }
 
 func PrintUsage() {
