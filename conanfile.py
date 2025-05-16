@@ -1,13 +1,13 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 
-
-class Clio(ConanFile):
+class ClioConan(ConanFile):
     name = 'clio'
     license = 'ISC'
     author = 'Alex Kremer <akremer@ripple.com>, John Freeman <jfreeman@ripple.com>'
     url = 'https://github.com/xrplf/clio'
     description = 'Clio RPC server'
+
     settings = 'os', 'compiler', 'build_type', 'arch'
     options = {
         'static': [True, False],              # static linkage
@@ -28,7 +28,7 @@ class Clio(ConanFile):
         'boost/1.83.0',
         'cassandra-cpp-driver/2.17.0',
         'fmt/10.1.1',
-        'protobuf/3.21.9',
+        'protobuf/3.21.12',
         'grpc/1.50.1',
         'openssl/1.1.1v',
         'xrpl/2.4.0',
@@ -48,8 +48,9 @@ class Clio(ConanFile):
         'lint': False,
         'docs': False,
         'snapshot': False,
-        'time_trace': False,
-
+    }
+    # check that these can all be defined in build_options
+    build_options = {
         'xrpl/*:tests': False,
         'xrpl/*:rocksdb': False,
         'cassandra-cpp-driver/*:shared': False,
@@ -89,17 +90,23 @@ class Clio(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables['verbose'] = self.options.verbose
-        tc.variables['static'] = self.options.static
-        tc.variables['tests'] = self.options.tests
-        tc.variables['integration_tests'] = self.options.integration_tests
-        tc.variables['coverage'] = self.options.coverage
-        tc.variables['lint'] = self.options.lint
-        tc.variables['docs'] = self.options.docs
-        tc.variables['packaging'] = self.options.packaging
-        tc.variables['benchmark'] = self.options.benchmark
-        tc.variables['snapshot'] = self.options.snapshot
-        tc.variables['time_trace'] = self.options.time_trace
+        for opt in [
+            "benchmark",
+            "coverage",
+            "docs",
+            "integration_tests",
+            "lint",
+            "packaging",
+            "snapshot",
+            "static",
+            "tests",
+            "verbose",
+        ]:
+            tc.variables[opt] = getattr(self.options, opt)
+
+        if self.settings.compiler == 'clang' and self.settings.compiler.version == 16:
+            tc.extra_cxxflags = ["-DBOOST_ASIO_DISABLE_CONCEPTS"]
+
         tc.generate()
 
     def build(self):
