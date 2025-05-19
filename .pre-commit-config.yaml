@@ -37,6 +37,15 @@ repos:
       - id: markdownlint-fix
         exclude: LICENSE.md
 
+  - repo: https://github.com/hadolint/hadolint
+    rev: c3dc18df7a501f02a560a2cc7ba3c69a85ca01d3 # frozen: v2.13.1-beta
+    hooks:
+      - id: hadolint-docker
+        # hadolint-docker is a special hook that runs hadolint in a Docker container
+        # Docker is not installed in the environment where pre-commit is run
+        stages: [manual]
+        entry: hadolint/hadolint:v2.12.1-beta hadolint
+
   - repo: https://github.com/codespell-project/codespell
     rev: 63c8f8312b7559622c0d82815639671ae42132ac # frozen: v2.4.1
     hooks:

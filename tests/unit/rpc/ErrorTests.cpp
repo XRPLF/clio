@@ -184,5 +184,8 @@ TEST_P(WarningCodeTest, WarningToJSON)
 
 TEST(RPCErrorsTest, InvalidWarningToJSON)
 {
-    EXPECT_ANY_THROW((void)makeWarning(static_cast<WarningCode>(999999)));
+    auto notSanitizedMakeWarning = []() __attribute__((no_sanitize("undefined"))) {
+        return makeWarning(static_cast<WarningCode>(999999));
+    };
+    EXPECT_ANY_THROW((void)notSanitizedMakeWarning());
 }
