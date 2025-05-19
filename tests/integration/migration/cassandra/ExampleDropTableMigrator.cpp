@@ -19,7 +19,7 @@
 
 #include "migration/cassandra/ExampleDropTableMigrator.hpp"
 
-#include "util/newconfig/ObjectView.hpp"
+#include "util/config/ObjectView.hpp"
 
 #include <memory>
 

@@ -20,7 +20,7 @@
 #pragma once
 
 #include "util/Assert.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/json.hpp>

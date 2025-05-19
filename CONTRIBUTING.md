@@ -17,6 +17,16 @@ To contribute, please:
 
 > **Note:** Please read the [Style guide](#style-guide).
 
+### `git lfs` hooks
+
+Install `git lfs` hooks using the following command:
+
+```bash
+git lfs install
+```
+
+> **Note:** You need to install Git LFS hooks before installing `pre-commit` hooks.
+
 ### `pre-commit` hooks
 
 To ensure code quality and style, we use [`pre-commit`](https://pre-commit.com/).
@@ -25,7 +35,7 @@ Run the following command to enable `pre-commit` hooks that help with Clio devel
 
 ```bash
 pip3 install pre-commit
-pre-commit install
+pre-commit install --hook-type pre-commit --hook-type pre-push
 ```
 
 `pre-commit` takes care of running each tool in [`.pre-commit-config.yaml`](https://github.com/XRPLF/clio/blob/develop/.pre-commit-config.yaml) in a separate environment.

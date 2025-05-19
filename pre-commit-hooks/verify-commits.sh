@@ -39,16 +39,14 @@ verify_tag_signed() {
     fi
 }
 
-while read local_ref local_oid remote_ref remote_oid; do
-    # Check some things if we're pushing a branch called "release/"
-    if echo "$remote_ref" | grep ^refs\/heads\/release\/ &> /dev/null ; then
-        version=$(git tag --points-at HEAD)
-        echo "Looks like you're trying to push a $version release..."
-        echo "Making sure you've signed and tagged it."
-        if verify_commit_signed && verify_tag && verify_tag_signed ; then
-            : # Ok, I guess you can push
-        else
-            exit 1
-        fi
+# Check some things if we're pushing a branch called "release/"
+if echo "$PRE_COMMIT_REMOTE_BRANCH" | grep ^refs\/heads\/release\/ &> /dev/null ; then
+    version=$(git tag --points-at HEAD)
+    echo "Looks like you're trying to push a $version release..."
+    echo "Making sure you've signed and tagged it."
+    if verify_commit_signed && verify_tag && verify_tag_signed ; then
+        : # Ok, I guess you can push
+    else
+        exit 1
     fi
-done
+fi

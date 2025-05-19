@@ -22,8 +22,8 @@
 #include "migration/MigratiorStatus.hpp"
 #include "migration/impl/MigrationManagerFactory.hpp"
 #include "util/OverloadSet.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
 #include <cstdlib>

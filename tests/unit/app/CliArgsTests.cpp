@@ -19,8 +19,8 @@
 
 #include "app/CliArgs.hpp"
 #include "util/TmpFile.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigDescription.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigDescription.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

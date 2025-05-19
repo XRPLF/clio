@@ -20,8 +20,8 @@
 #include "util/SignalsHandler.hpp"
 
 #include "util/Assert.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <chrono>
 #include <csignal>

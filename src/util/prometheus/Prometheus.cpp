@@ -20,7 +20,7 @@
 #include "util/prometheus/Prometheus.hpp"
 
 #include "util/Assert.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"

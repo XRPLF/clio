@@ -34,9 +34,9 @@
 #include "util/MockPrometheus.hpp"
 #include "util/Random.hpp"
 #include "util/StringUtils.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/ObjectView.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/ObjectView.hpp"
+#include "util/config/Types.hpp"
 
 #include <TestGlobals.hpp>
 #include <boost/asio/impl/spawn.hpp>
@@ -101,8 +101,8 @@ protected:
         {"database.cassandra.core_connections_per_host", ConfigValue{ConfigType::Integer}.defaultValue(1)},
         {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional()},
         {"database.cassandra.write_batch_size", ConfigValue{ConfigType::Integer}.defaultValue(20)},
-        {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.defaultValue(1).optional()},
-        {"database.cassandra.request_timeout", ConfigValue{ConfigType::Integer}.defaultValue(1).optional()},
+        {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.defaultValue(10).optional()},
+        {"database.cassandra.request_timeout", ConfigValue{ConfigType::Integer}.defaultValue(10).optional()},
         {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},

@@ -20,10 +20,10 @@
 #include "web/dosguard/DOSGuard.hpp"
 
 #include "util/Assert.hpp"
+#include "util/config/ArrayView.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ValueView.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ArrayView.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ValueView.hpp"
 #include "web/dosguard/WeightsInterface.hpp"
 #include "web/dosguard/WhitelistHandlerInterface.hpp"
 

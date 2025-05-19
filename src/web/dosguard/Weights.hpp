@@ -20,7 +20,7 @@
 #pragma once
 
 #include "util/StringHash.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "web/dosguard/WeightsInterface.hpp"
 
 #include <boost/json/object.hpp>

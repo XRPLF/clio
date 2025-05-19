@@ -3,6 +3,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
 
 SHELL ["/bin/bash", "-c"]
+
+# hadolint ignore=DL3002
 USER root
 WORKDIR /root
 

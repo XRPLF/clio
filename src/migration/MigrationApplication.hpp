@@ -21,7 +21,7 @@
 
 #include "data/LedgerCache.hpp"
 #include "migration/MigrationManagerInterface.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 #include <memory>
 #include <string>

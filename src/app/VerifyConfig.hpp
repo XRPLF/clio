@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigFileJson.hpp"
 
 #include <cstdlib>
 #include <iostream>

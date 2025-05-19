@@ -30,10 +30,9 @@
 #include "util/Assert.hpp"
 #include "util/Mutex.hpp"
 #include "util/ResponseExpirationCache.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
 #include "util/prometheus/Counter.hpp"
-#include "util/prometheus/Histogram.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
@@ -94,10 +93,13 @@ private:
     std::uint32_t downloadRanges_ =
         kDEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading initial ledger */
 
-    std::reference_wrapper<util::prometheus::HistogramInt> forwardedDurationHistogram_;
-    std::reference_wrapper<util::prometheus::CounterInt> forwardedRetryCounter_;
-    std::reference_wrapper<util::prometheus::CounterInt> cacheTriedCounter_;
-    std::reference_wrapper<util::prometheus::CounterInt> cacheMissCounter_;
+    struct ForwardingCounters {
+        std::reference_wrapper<util::prometheus::CounterInt> successDuration;
+        std::reference_wrapper<util::prometheus::CounterInt> failDuration;
+        std::reference_wrapper<util::prometheus::CounterInt> retries;
+        std::reference_wrapper<util::prometheus::CounterInt> cacheHit;
+        std::reference_wrapper<util::prometheus::CounterInt> cacheMiss;
+    } forwardingCounters_;
 
     // Using mutex instead of atomic_bool because choosing a new source to
     // forward messages should be done with a mutual exclusion otherwise there will be a race condition

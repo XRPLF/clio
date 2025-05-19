@@ -19,8 +19,8 @@
 
 #include "rpc/common/impl/APIVersionParser.hpp"
 
+#include "util/config/ObjectView.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ObjectView.hpp"
 
 #include <boost/json/object.hpp>
 #include <fmt/core.h>

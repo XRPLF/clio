@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 #include <boost/asio/ssl/context.hpp>
 

@@ -19,7 +19,7 @@
 
 #include "etl/CacheLoaderSettings.hpp"
 
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 

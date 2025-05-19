@@ -21,7 +21,7 @@
 
 #include "util/LoggerFixtures.hpp"
 #include "util/MockMigrationBackend.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 #include <gmock/gmock.h>
 
