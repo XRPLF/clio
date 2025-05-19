@@ -3068,9 +3068,7 @@ generateTestValuesForNormalPathTest()
                 kINDEX1
             ),
             .expectedIndex = ripple::uint256{kINDEX1},
-            .mockedEntity = createDelegateObject(
-                kACCOUNT, kACCOUNT2, kINDEX1, 0, ripple::uint256{0}, 0
-            )
+            .mockedEntity = createDelegateObject(kACCOUNT, kACCOUNT2, kINDEX1, 0, ripple::uint256{0}, 0)
         },
         NormalPathTestBundle{
             .testName = "DelegateViaObject",

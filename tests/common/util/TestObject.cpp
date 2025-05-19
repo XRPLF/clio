@@ -1516,7 +1516,6 @@ createPermissionedDomainObject(
     return object;
 }
 
-
 ripple::STObject
 createDelegateObject(
     std::string_view accountId,
