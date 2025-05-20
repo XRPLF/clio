@@ -98,7 +98,7 @@ GrpcSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighb
 }
 
 std::pair<std::vector<std::string>, bool>
-GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers, bool const cacheOnly)
+GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers)
 {
     if (!stub_)
         return {{}, false};
@@ -130,7 +130,7 @@ GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers
 
         LOG(log_.trace()) << "Marker prefix = " << ptr->getMarkerPrefix();
 
-        auto result = ptr->process(stub_, cq, *backend_, abort, cacheOnly);
+        auto result = ptr->process(stub_, cq, *backend_, abort);
         if (result != etl::impl::AsyncCallData::CallStatus::MORE) {
             ++numFinished;
             LOG(log_.debug()) << "Finished a marker. Current number of finished = " << numFinished;

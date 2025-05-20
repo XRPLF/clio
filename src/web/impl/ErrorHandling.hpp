@@ -78,8 +78,8 @@ public:
                     case rpc::ClioError::RpcCommandNotString:
                         connection_->send("method is not string", boost::beast::http::status::bad_request);
                         break;
-                    case rpc::ClioError::RpcParamsUnparseable:
-                        connection_->send("params unparseable", boost::beast::http::status::bad_request);
+                    case rpc::ClioError::RpcParamsUnparsable:
+                        connection_->send("params unparsable", boost::beast::http::status::bad_request);
                         break;
 
                     // others are not applicable but we want a compilation error next time we add one

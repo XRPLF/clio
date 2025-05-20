@@ -31,6 +31,7 @@
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
 #include <boost/utility/result_of.hpp>
+#include <boost/uuid/uuid.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Fees.h>
@@ -68,7 +69,7 @@ public:
 
 static constexpr std::size_t kDEFAULT_WAIT_BETWEEN_RETRY = 500;
 /**
- * @brief A helper function that catches DatabaseTimout exceptions and retries indefinitely.
+ * @brief A helper function that catches DatabaseTimeout exceptions and retries indefinitely.
  *
  * @tparam FnType The type of function object to execute
  * @param func The function object to execute
@@ -397,7 +398,7 @@ public:
      * @brief Fetches a specific ledger object.
      *
      * Currently the real fetch happens in doFetchLedgerObject and fetchLedgerObject attempts to fetch from Cache first
-     * and only calls out to the real DB if a cache miss ocurred.
+     * and only calls out to the real DB if a cache miss occurred.
      *
      * @param key The key of the object
      * @param sequence The ledger sequence to fetch for
@@ -511,7 +512,7 @@ public:
      * @param key The key to fetch for
      * @param ledgerSequence The ledger sequence to fetch for
      * @param yield The coroutine context
-     * @return The sucessor on success; nullopt otherwise
+     * @return The successor on success; nullopt otherwise
      */
     std::optional<LedgerObject>
     fetchSuccessorObject(ripple::uint256 key, std::uint32_t ledgerSequence, boost::asio::yield_context yield) const;
@@ -525,7 +526,7 @@ public:
      * @param key The key to fetch for
      * @param ledgerSequence The ledger sequence to fetch for
      * @param yield The coroutine context
-     * @return The sucessor key on success; nullopt otherwise
+     * @return The successor key on success; nullopt otherwise
      */
     std::optional<ripple::uint256>
     fetchSuccessorKey(ripple::uint256 key, std::uint32_t ledgerSequence, boost::asio::yield_context yield) const;
@@ -536,7 +537,7 @@ public:
      * @param key The key to fetch for
      * @param ledgerSequence The ledger sequence to fetch for
      * @param yield The coroutine context
-     * @return The sucessor on success; nullopt otherwise
+     * @return The successor on success; nullopt otherwise
      */
     virtual std::optional<ripple::uint256>
     doFetchSuccessorKey(ripple::uint256 key, std::uint32_t ledgerSequence, boost::asio::yield_context yield) const = 0;
@@ -567,6 +568,19 @@ public:
      */
     virtual std::optional<std::string>
     fetchMigratorStatus(std::string const& migratorName, boost::asio::yield_context yield) const = 0;
+
+    /** @brief Return type for fetchClioNodesData() method */
+    using ClioNodesDataFetchResult =
+        std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>;
+
+    /**
+     * @brief Fetches the data of all nodes in the cluster.
+     *
+     * @param yield The coroutine context
+     *@return The data of all nodes in the cluster.
+     */
+    [[nodiscard]] virtual ClioNodesDataFetchResult
+    fetchClioNodesData(boost::asio::yield_context yield) const = 0;
 
     /**
      * @brief Synchronously fetches the ledger range from DB.
@@ -681,6 +695,15 @@ public:
      */
     virtual void
     writeSuccessor(std::string&& key, std::uint32_t seq, std::string&& successor) = 0;
+
+    /**
+     * @brief Write a node message. Used by ClusterCommunicationService
+     *
+     * @param uuid The UUID of the node
+     * @param message The message to write
+     */
+    virtual void
+    writeNodeMessage(boost::uuids::uuid const& uuid, std::string message) = 0;
 
     /**
      * @brief Starts a write transaction with the DB. No-op for cassandra.

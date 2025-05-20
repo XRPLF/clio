@@ -1,167 +1,123 @@
 name: Nightly release
+
 on:
   schedule:
-    - cron:  '0 8 * * 1-5'
+    - cron: "0 8 * * 1-5"
   workflow_dispatch:
   pull_request:
     paths:
-      - '.github/workflows/nightly.yml'
-      - '.github/workflows/build_clio_docker_image.yml'
+      - .github/workflows/nightly.yml
+
+      - .github/workflows/release_impl.yml
+      - .github/workflows/build_and_test.yml
+      - .github/workflows/build_impl.yml
+      - .github/workflows/build_clio_docker_image.yml
+
+      - ".github/actions/**"
+      - "!.github/actions/code_coverage/**"
+
+concurrency:
+  # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build clio
+  build-and-test:
+    name: Build and Test
+
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: macos15
+            conan_profile: default_apple_clang
             build_type: Release
             static: false
           - os: heavy
+            conan_profile: gcc
             build_type: Release
             static: true
-            container: '{ "image": "rippleci/clio_ci:latest" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
           - os: heavy
+            conan_profile: gcc
             build_type: Debug
             static: true
-            container: '{ "image": "rippleci/clio_ci:latest" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
+
+    uses: ./.github/workflows/build_and_test.yml
+    with:
+      runs_on: ${{ matrix.os }}
+      container: ${{ matrix.container }}
+      conan_profile: ${{ matrix.conan_profile }}
+      build_type: ${{ matrix.build_type }}
+      static: ${{ matrix.static }}
+      run_unit_tests: true
+      run_integration_tests: true
+      upload_clio_server: true
+      disable_cache: true
+
+  analyze_build_time:
+    name: Analyze Build Time
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # TODO: Enable when we have at least ubuntu 22.04
+          # as ClangBuildAnalyzer requires relatively modern glibc
+          #
+          # - os: heavy
+          #   conan_profile: clang
+          #   container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
+          #   static: true
+          - os: macos15
+            conan_profile: default_apple_clang
+            container: ""
+            static: false
     uses: ./.github/workflows/build_impl.yml
     with:
       runs_on: ${{ matrix.os }}
       container: ${{ matrix.container }}
-      conan_profile: gcc
-      build_type: ${{ matrix.build_type }}
+      conan_profile: ${{ matrix.conan_profile }}
+      build_type: Release
+      disable_cache: true
       code_coverage: false
       static: ${{ matrix.static }}
-      unit_tests: true
-      integration_tests: true
-      clio_server: true
-      disable_cache: true
-
-  run_tests:
-    needs: build
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos15
-            conan_profile: apple_clang_16
-            build_type: Release
-            integration_tests: false
-          - os: heavy
-            conan_profile: gcc
-            build_type: Release
-            container:
-              image: rippleci/clio_ci:latest
-            integration_tests: true  
-          - os: heavy
-            conan_profile: gcc
-            build_type: Debug
-            container:
-              image: rippleci/clio_ci:latest
-            integration_tests: true  
-    runs-on: [self-hosted, "${{ matrix.os }}"]
-    container: ${{ matrix.container }}
-
-    services:
-      scylladb:
-        image: ${{ (matrix.integration_tests) && 'scylladb/scylla' || '' }}
-        options: >-
-          --health-cmd "cqlsh -e 'describe cluster'" 
-          --health-interval 10s 
-          --health-timeout 5s 
-          --health-retries 5
-
-    steps:
-      - name: Clean workdir
-        if: ${{ runner.os == 'macOS' }}
-        uses: kuznetsss/workspace-cleanup@1.0
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
-
-      - name: Run clio_tests
-        run: |
-          chmod +x ./clio_tests
-          ./clio_tests
-  
-      - uses: actions/download-artifact@v4
-        with:
-          name: clio_integration_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
-
-  # To be enabled back once docker in mac runner arrives
-  # https://github.com/XRPLF/clio/issues/1400
-      - name: Run clio_integration_tests
-        if: matrix.integration_tests 
-        run: |
-          chmod +x ./clio_integration_tests
-          ./clio_integration_tests --backend_host=scylladb
+      upload_clio_server: false
+      targets: all
+      sanitizer: "false"
+      analyze_build_time: true
 
   nightly_release:
-    if: ${{ github.event_name != 'pull_request' }}
-    needs: run_tests
-    runs-on: ubuntu-latest
-    env:
-      GH_REPO: ${{ github.repository }}
-      GH_TOKEN: ${{ github.token }}
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@v4
-        with:
-          path: nightly_release
-          pattern: clio_server_*
-
-      - name: Prepare files
-        shell: bash
-        run: |
-          cp ${{ github.workspace }}/.github/workflows/nightly_notes.md "${RUNNER_TEMP}/nightly_notes.md"
-          cd nightly_release
-          for d in $(ls); do
-            archive_name=$(ls $d)
-            mv ${d}/${archive_name} ./
-            rm -r $d
-            sha256sum ./$archive_name > ./${archive_name}.sha256sum
-            cat ./$archive_name.sha256sum >> "${RUNNER_TEMP}/nightly_notes.md"
-          done
-          echo '```' >> "${RUNNER_TEMP}/nightly_notes.md"
-
-      - name: Remove current nightly release and nightly tag
-        shell: bash
-        run: |
-          gh release delete nightly --yes || true
-          git push origin :nightly || true
-
-      - name: Publish nightly release
-        shell: bash
-        run: |
-          gh release create nightly --prerelease --title "Clio development (nightly) build" \
-            --target $GITHUB_SHA --notes-file "${RUNNER_TEMP}/nightly_notes.md" \
-            ./nightly_release/clio_server*
+    needs: build-and-test
+    uses: ./.github/workflows/release_impl.yml
+    with:
+      overwrite_release: true
+      title: "Clio development (nightly) build"
+      version: nightly
+      notes_header_file: nightly_notes.md
 
   build_and_publish_docker_image:
     uses: ./.github/workflows/build_clio_docker_image.yml
-    needs: run_tests
+    needs: build-and-test
     secrets: inherit
     with:
       tags: |
-          type=raw,value=nightly
-          type=raw,value=${{ github.sha }}
+        type=raw,value=nightly
+        type=raw,value=${{ github.sha }}
       artifact_name: clio_server_Linux_Release_gcc
       strip_binary: true
       publish_image: ${{ github.event_name != 'pull_request' }}
 
   create_issue_on_failure:
-    needs: [build, run_tests, nightly_release, build_and_publish_docker_image]
+    needs: [build-and-test, nightly_release, build_and_publish_docker_image]
     if: ${{ always() && contains(needs.*.result, 'failure') && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
+
     permissions:
       contents: write
       issues: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -170,7 +126,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         with:
-          title: 'Nightly release failed 🌙'
+          title: "Nightly release failed 🌙"
           body: >
             Nightly release failed:
 

@@ -99,12 +99,12 @@ makeHttpContext(
         return Error{{RippledError::rpcBAD_SYNTAX, "Subscribe and unsubscribe are only allowed for websocket."}};
 
     if (!request.at("params").is_array())
-        return Error{{ClioError::RpcParamsUnparseable, "Missing params array."}};
+        return Error{{ClioError::RpcParamsUnparsable, "Missing params array."}};
 
     boost::json::array const& array = request.at("params").as_array();
 
     if (array.size() != 1 || !array.at(0).is_object())
-        return Error{{ClioError::RpcParamsUnparseable}};
+        return Error{{ClioError::RpcParamsUnparsable}};
 
     auto const apiVersion = apiVersionParser.get().parse(request.at("params").as_array().at(0).as_object());
     if (!apiVersion)

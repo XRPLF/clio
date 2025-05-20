@@ -38,7 +38,7 @@
 namespace data::cassandra::impl {
 
 /**
- * @brief A query executor with a changable retry policy
+ * @brief A query executor with a changeable retry policy
  *
  * Note: this is a bit of an anti-pattern and should be done differently
  * eventually.

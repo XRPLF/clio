@@ -45,7 +45,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 
 namespace web::ng::impl {
@@ -85,24 +84,6 @@ handleWsRequest(
 }
 
 }  // namespace
-
-size_t
-ConnectionHandler::StringHash::operator()(char const* str) const
-{
-    return hash_type{}(str);
-}
-
-size_t
-ConnectionHandler::StringHash::operator()(std::string_view str) const
-{
-    return hash_type{}(str);
-}
-
-size_t
-ConnectionHandler::StringHash::operator()(std::string const& str) const
-{
-    return hash_type{}(str);
-}
 
 ConnectionHandler::ConnectionHandler(
     ProcessingPolicy processingPolicy,

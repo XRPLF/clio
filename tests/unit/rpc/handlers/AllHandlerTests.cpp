@@ -53,9 +53,7 @@
 #include "util/MockAssert.hpp"
 #include "util/MockCounters.hpp"
 #include "util/MockCountersFixture.hpp"
-#include "util/MockETLService.hpp"
 #include "util/MockETLServiceTestFixture.hpp"
-#include "util/MockLoadBalancer.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/TestObject.hpp"
@@ -74,7 +72,7 @@
 
 using ::testing::Types;
 using namespace rpc;
-using TestServerInfoHandler = BaseServerInfoHandler<MockLoadBalancer, MockETLService, MockCounters>;
+using TestServerInfoHandler = BaseServerInfoHandler<MockCounters>;
 
 constexpr static auto kINDEX1 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 constexpr static auto kAMM_ACCOUNT = "rLcS7XL6nxRAi7JcbJcn1Na179oF3vdfbh";
@@ -144,6 +142,8 @@ private:
             return HandlerType{this->backend_, this->mockAmendmentCenterPtr_};
         } else if constexpr (std::is_same_v<HandlerType, SubscribeHandler>) {
             return HandlerType{this->backend_, this->mockAmendmentCenterPtr_, this->mockSubscriptionManagerPtr_};
+        } else if constexpr (std::is_same_v<HandlerType, AccountTxHandler>) {
+            return HandlerType{this->backend_, mockETLServicePtr_};
         } else if constexpr (std::is_same_v<HandlerType, TestServerInfoHandler>) {
             return HandlerType{
                 this->backend_,
@@ -173,6 +173,15 @@ createInput<AccountInfoHandler>()
     AccountInfoHandler::Input input{};
     input.account = kACCOUNT;
     input.ident = "asdf";
+    return input;
+}
+
+template <>
+AccountTxHandler::Input
+createInput<AccountTxHandler>()
+{
+    AccountTxHandler::Input input{};
+    input.account = kACCOUNT;
     return input;
 }
 

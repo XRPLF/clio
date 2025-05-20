@@ -58,7 +58,7 @@ WorkQueue::WorkQueue(std::uint32_t numWorkers, uint32_t maxSize)
           "The total number of tasks queued for processing"
       )}
     , durationUs_{PrometheusService::counterInt(
-          "work_queue_cumulitive_tasks_duration_us",
+          "work_queue_cumulative_tasks_duration_us",
           util::prometheus::Labels(),
           "The total number of microseconds tasks were waiting to be executed"
       )}

@@ -1,9 +1,11 @@
 name: Git common ancestor
 description: Find the closest common commit
+
 outputs:
   commit:
     description: Hash of commit
     value: ${{ steps.find_common_ancestor.outputs.commit }}
+
 runs:
   using: composite
   steps:
@@ -11,4 +13,4 @@ runs:
       id: find_common_ancestor
       shell: bash
       run: |
-        echo "commit=$(git merge-base --fork-point origin/develop)" >> $GITHUB_OUTPUT
+        echo "commit=\"$(git merge-base --fork-point origin/develop)\"" >> $GITHUB_OUTPUT

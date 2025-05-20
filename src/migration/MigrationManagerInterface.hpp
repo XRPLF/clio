@@ -28,7 +28,7 @@ namespace migration {
 /**
  * @brief The interface for the migration manager. The migration application layer will use this interface to run the
  * migrations. Unlike the MigrationInspectorInterface which only provides the status of migration, this interface
- * contains the acutal migration running method.
+ * contains the actual migration running method.
  */
 struct MigrationManagerInterface : virtual public MigrationInspectorInterface {
     /**

@@ -21,7 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
-#include "etl/ETLService.hpp"
+#include "etlng/ETLServiceInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -37,7 +37,9 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <fmt/core.h>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/ErrorCodes.h>
 #include <xrpl/protocol/LedgerHeader.h>
@@ -52,14 +54,13 @@
 namespace rpc {
 
 /**
- * @brief Contains common functionality for handling the `tx` command
+ * @brief The tx method retrieves information on a single transaction, by its identifying hash.
  *
- * @tparam ETLServiceType The type of the ETL service to use
+ * For more details see: https://xrpl.org/tx.html
  */
-template <typename ETLServiceType>
-class BaseTxHandler {
+class TxHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
-    std::shared_ptr<ETLServiceType const> etl_;
+    std::shared_ptr<etlng::ETLServiceInterface const> etl_;
 
 public:
     /**
@@ -95,14 +96,14 @@ public:
     using Result = HandlerReturnType<Output>;
 
     /**
-     * @brief Construct a new BaseTxHandler object
+     * @brief Construct a new TxHandler object
      *
      * @param sharedPtrBackend The backend to use
      * @param etl The ETL service to use
      */
-    BaseTxHandler(
+    TxHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
-        std::shared_ptr<ETLServiceType const> const& etl
+        std::shared_ptr<etlng::ETLServiceInterface const> const& etl
     )
         : sharedPtrBackend_(sharedPtrBackend), etl_(etl)
     {
@@ -183,7 +184,7 @@ public:
             dbResponse = sharedPtrBackend_->fetchTransaction(ripple::uint256{input.transaction->c_str()}, ctx.yield);
         }
 
-        auto output = BaseTxHandler::Output{.apiVersion = ctx.apiVersion};
+        auto output = TxHandler::Output{.apiVersion = ctx.apiVersion};
 
         if (!dbResponse) {
             if (rangeSupplied && input.transaction)  // ranges not for ctid
@@ -214,17 +215,15 @@ public:
             // input.transaction might be not available, get hash via tx object
             if (txn.contains(JS(hash)))
                 output.hash = txn.at(JS(hash)).as_string();
+        }
 
-            // append ctid here to mimic rippled 1.12 behavior: return ctid even binary=true
-            // rippled will change it in the future, ctid should be part of tx json which not available in binary
-            // mode
-            auto const txnIdx = boost::json::value_to<uint64_t>(meta.at("TransactionIndex"));
-            if (txnIdx <= 0xFFFFU && dbResponse->ledgerSequence < 0x0FFF'FFFFUL && currentNetId &&
-                *currentNetId <= 0xFFFFU) {
-                output.ctid = rpc::encodeCTID(
-                    dbResponse->ledgerSequence, static_cast<uint16_t>(txnIdx), static_cast<uint16_t>(*currentNetId)
-                );
-            }
+        // append ctid here to mimic rippled behavior
+        auto const txnIdx = boost::json::value_to<uint64_t>(meta.at("TransactionIndex"));
+        if (txnIdx <= 0xFFFFU && dbResponse->ledgerSequence < 0x0FFF'FFFFUL && currentNetId &&
+            *currentNetId <= 0xFFFFU) {
+            output.ctid = rpc::encodeCTID(
+                dbResponse->ledgerSequence, static_cast<uint16_t>(txnIdx), static_cast<uint16_t>(*currentNetId)
+            );
         }
 
         output.date = dbResponse->date;
@@ -281,12 +280,10 @@ private:
             if (output.tx) {
                 obj[JS(tx_json)] = *output.tx;
                 obj[JS(tx_json)].as_object()[JS(date)] = output.date;
+                if (output.ctid)
+                    obj[JS(tx_json)].as_object()[JS(ctid)] = *output.ctid;
+
                 obj[JS(tx_json)].as_object()[JS(ledger_index)] = output.ledgerIndex;
-                // move ctid from tx_json to root
-                if (obj[JS(tx_json)].as_object().contains(JS(ctid))) {
-                    obj[JS(ctid)] = obj[JS(tx_json)].as_object()[JS(ctid)];
-                    obj[JS(tx_json)].as_object().erase(JS(ctid));
-                }
                 // move hash from tx_json to root
                 if (obj[JS(tx_json)].as_object().contains(JS(hash))) {
                     obj[JS(hash)] = obj[JS(tx_json)].as_object()[JS(hash)];
@@ -320,7 +317,7 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv)
     {
-        auto input = BaseTxHandler::Input{};
+        auto input = TxHandler::Input{};
         auto const& jsonObject = jv.as_object();
 
         if (jsonObject.contains(JS(transaction)))
@@ -344,10 +341,4 @@ private:
     }
 };
 
-/**
- * @brief The tx method retrieves information on a single transaction, by its identifying hash.
- *
- * For more details see: https://xrpl.org/tx.html
- */
-using TxHandler = BaseTxHandler<etl::ETLService>;
 }  // namespace rpc

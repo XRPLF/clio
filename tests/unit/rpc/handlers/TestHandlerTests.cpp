@@ -40,8 +40,8 @@ TEST_F(RPCTestHandlerTest, HandlerSuccess)
 {
     runSpawn([](auto yield) {
         auto const handler = AnyHandler{HandlerFake{}};
-        auto const input = json::parse(R"({ 
-            "hello": "world", 
+        auto const input = json::parse(R"({
+            "hello": "world",
             "limit": 10
         })");
 
@@ -69,8 +69,8 @@ TEST_F(RPCTestHandlerTest, HandlerErrorHandling)
 {
     runSpawn([](auto yield) {
         auto const handler = AnyHandler{HandlerFake{}};
-        auto const input = json::parse(R"({ 
-            "hello": "not world", 
+        auto const input = json::parse(R"({
+            "hello": "not world",
             "limit": 10
         })");
 
@@ -79,8 +79,8 @@ TEST_F(RPCTestHandlerTest, HandlerErrorHandling)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::RippledError::rpcINVALID_PARAMS);
         EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
-        EXPECT_EQ(err.at("error_code").as_uint64(), 31);
     });
 }
 
@@ -88,8 +88,8 @@ TEST_F(RPCTestHandlerTest, HandlerInnerErrorHandling)
 {
     runSpawn([](auto yield) {
         auto const handler = AnyHandler{FailingHandlerFake{}};
-        auto const input = json::parse(R"({ 
-            "hello": "world", 
+        auto const input = json::parse(R"({
+            "hello": "world",
             "limit": 10
         })");
 

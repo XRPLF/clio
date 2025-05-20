@@ -151,9 +151,9 @@ TEST_F(RPCCountersMockPrometheusTests, rpcForwarded)
 
 TEST_F(RPCCountersMockPrometheusTests, rpcFailedToForwarded)
 {
-    auto& failedForwadMock =
+    auto& failedForwardMock =
         makeMock<CounterInt>("rpc_method_total_number", "{method=\"test\",status=\"failed_forward\"}");
-    EXPECT_CALL(failedForwadMock, add(1));
+    EXPECT_CALL(failedForwardMock, add(1));
     counters.rpcFailedToForward("test");
 }
 

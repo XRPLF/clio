@@ -7,7 +7,7 @@ import (
 )
 
 type CliArgs struct {
-	Host         string
+	Host        string
 	Port        uint
 	TargetLoad  uint
 	Ammo        string
@@ -23,7 +23,7 @@ func Parse() (*CliArgs, error) {
 	target_load := flag.UintP("load", "l", 100, "Target requests per second load")
 	print_errors := flag.BoolP("print-errors", "e", false, "Print errors")
 	help := flag.BoolP("help", "h", false, "Print help message")
-    ws := flag.BoolP("ws", "w", false, "Use websocket")
+	ws := flag.BoolP("ws", "w", false, "Use websocket")
 
 	flag.Parse()
 

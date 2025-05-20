@@ -1,16 +1,157 @@
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: weekly
+      day: monday
       time: "04:00"
-      timezone: "Etc/GMT"
+      timezone: Etc/GMT
     reviewers:
-      - "cindyyan317"
-      - "godexsoft"
-      - "kuznetsss"
+      - XRPLF/clio-dev-team
     commit-message:
-      prefix: "[CI] "
-    target-branch: "develop"
+      prefix: "ci: [DEPENDABOT] "
+    target-branch: develop
+
+  - package-ecosystem: github-actions
+    directory: .github/actions/build_clio/
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Etc/GMT
+    reviewers:
+      - XRPLF/clio-dev-team
+    commit-message:
+      prefix: "ci: [DEPENDABOT] "
+    target-branch: develop
+
+  - package-ecosystem: github-actions
+    directory: .github/actions/build_docker_image/
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Etc/GMT
+    reviewers:
+      - XRPLF/clio-dev-team
+    commit-message:
+      prefix: "ci: [DEPENDABOT] "
+    target-branch: develop
+
+  - package-ecosystem: github-actions
+    directory: .github/actions/code_coverage/
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Etc/GMT
+    reviewers:
+      - XRPLF/clio-dev-team
+    commit-message:
+      prefix: "ci: [DEPENDABOT] "
+    target-branch: develop
+
+  - package-ecosystem: github-actions
+    directory: .github/actions/create_issue/
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Etc/GMT
+    reviewers:
+      - XRPLF/clio-dev-team
+    commit-message:
+      prefix: "ci: [DEPENDABOT] "
+    target-branch: develop
+
+  - package-ecosystem: github-actions
+    directory: .github/actions/generate/
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Etc/GMT
+    reviewers:
+      - XRPLF/clio-dev-team
+    commit-message:
+      prefix: "ci: [DEPENDABOT] "
+    target-branch: develop
+
+  - package-ecosystem: github-actions
+    directory: .github/actions/get_number_of_threads/
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Etc/GMT
+    reviewers:
+      - XRPLF/clio-dev-team
+    commit-message:
+      prefix: "ci: [DEPENDABOT] "
+    target-branch: develop
+
+  - package-ecosystem: github-actions
+    directory: .github/actions/git_common_ancestor/
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Etc/GMT
+    reviewers:
+      - XRPLF/clio-dev-team
+    commit-message:
+      prefix: "ci: [DEPENDABOT] "
+    target-branch: develop
+
+  - package-ecosystem: github-actions
+    directory: .github/actions/prepare_runner/
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Etc/GMT
+    reviewers:
+      - XRPLF/clio-dev-team
+    commit-message:
+      prefix: "ci: [DEPENDABOT] "
+    target-branch: develop
+
+  - package-ecosystem: github-actions
+    directory: .github/actions/restore_cache/
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Etc/GMT
+    reviewers:
+      - XRPLF/clio-dev-team
+    commit-message:
+      prefix: "ci: [DEPENDABOT] "
+    target-branch: develop
+
+  - package-ecosystem: github-actions
+    directory: .github/actions/save_cache/
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Etc/GMT
+    reviewers:
+      - XRPLF/clio-dev-team
+    commit-message:
+      prefix: "ci: [DEPENDABOT] "
+    target-branch: develop
+
+  - package-ecosystem: github-actions
+    directory: .github/actions/setup_conan/
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Etc/GMT
+    reviewers:
+      - XRPLF/clio-dev-team
+    commit-message:
+      prefix: "ci: [DEPENDABOT] "
+    target-branch: develop

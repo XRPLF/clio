@@ -89,10 +89,8 @@ mockLedgerObject(
 
 class RPCGetAggregatePriceHandlerTest : public HandlerBaseTest {
 protected:
-    void
-    SetUp() override
+    RPCGetAggregatePriceHandlerTest()
     {
-        HandlerBaseTest::SetUp();
         backend_->setRange(kRANGE_MIN, kRANGE_MAX);
     }
 };
@@ -143,7 +141,7 @@ generateTestValuesForParametersTest()
             .testName = "no_base_asset",
             .testJson = R"({
                     "quote_asset": "USD",
-                    "oracles": 
+                    "oracles":
                     [
                         {
                             "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
@@ -159,7 +157,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                     "quote_asset" : "USD",
                     "base_asset": "asdf",
-                    "oracles": 
+                    "oracles":
                     [
                         {
                             "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
@@ -171,11 +169,11 @@ generateTestValuesForParametersTest()
             .expectedErrorMessage = "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
-            .testName = "emtpy_base_asset",
+            .testName = "empty_base_asset",
             .testJson = R"({
                     "quote_asset" : "USD",
                     "base_asset": "",
-                    "oracles": 
+                    "oracles":
                     [
                         {
                             "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
@@ -191,7 +189,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                     "quote_asset" : "USD",
                     "base_asset": "+aa",
-                    "oracles": 
+                    "oracles":
                     [
                         {
                             "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
@@ -206,7 +204,7 @@ generateTestValuesForParametersTest()
             .testName = "no_quote_asset",
             .testJson = R"({
                     "base_asset": "USD",
-                    "oracles": 
+                    "oracles":
                     [
                         {
                             "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
@@ -222,7 +220,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                     "quote_asset" : "asdf",
                     "base_asset": "USD",
-                    "oracles": 
+                    "oracles":
                     [
                         {
                             "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
@@ -238,7 +236,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                     "quote_asset" : "",
                     "base_asset": "USD",
-                    "oracles": 
+                    "oracles":
                     [
                         {
                             "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
@@ -254,7 +252,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                     "quote_asset" : "+aa",
                     "base_asset": "USD",
-                    "oracles": 
+                    "oracles":
                     [
                         {
                             "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
@@ -290,7 +288,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                     "base_asset": "USD",
                     "quote_asset": "XRP",
-                    "oracles": 
+                    "oracles":
                     [
                         {
                             "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
@@ -307,7 +305,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                     "base_asset": "USD",
                     "quote_asset": "XRP",
-                    "oracles": 
+                    "oracles":
                     [
                         {
                             "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
@@ -341,7 +339,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                     "base_asset": "USD",
                     "quote_asset": "XRP",
-                    "oracles": 
+                    "oracles":
                     [
                         {
                             "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
@@ -358,7 +356,7 @@ generateTestValuesForParametersTest()
             .testJson = R"({
                     "base_asset": "USD",
                     "quote_asset": "XRP",
-                    "oracles": 
+                    "oracles":
                     [
                         {
                             "account": "invalid",
@@ -463,7 +461,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, LedgerNotFound)
         R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
-                "oracles": 
+                "oracles":
                 [
                     {{
                         "account": "{}",
@@ -497,7 +495,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntrySinglePriceData)
         R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
-                "oracles": 
+                "oracles":
                 [
                     {{
                         "account": "{}",
@@ -511,7 +509,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntrySinglePriceData)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-                "entire_set": 
+                "entire_set":
                 {{
                     "mean": "10",
                     "size": 1,
@@ -546,7 +544,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryStrOracleDocumentId)
         R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
-                "oracles": 
+                "oracles":
                 [
                     {{
                         "account": "{}",
@@ -560,7 +558,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryStrOracleDocumentId)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-                "entire_set": 
+                "entire_set":
                 {{
                     "mean": "10",
                     "size": 1,
@@ -595,7 +593,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, PreviousTxNotFound)
         R"({{
                 "base_asset": "JPY",
                 "quote_asset": "XRP",
-                "oracles": 
+                "oracles":
                 [
                     {{
                         "account": "{}",
@@ -609,7 +607,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, PreviousTxNotFound)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-                "entire_set": 
+                "entire_set":
                 {{
                     "mean": "10",
                     "size": 1,
@@ -674,7 +672,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewLedgerObjectHasNoPricePair)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-                "entire_set": 
+                "entire_set":
                 {{
                     "mean": "10",
                     "size": 1,
@@ -716,7 +714,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesOdd)
         R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
-                "oracles": 
+                "oracles":
                 [
                     {{
                         "account": "{}",
@@ -742,7 +740,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesOdd)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-                "entire_set": 
+                "entire_set":
                 {{
                     "mean": "110",
                     "size": 3,
@@ -784,7 +782,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesEven)
         R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
-                "oracles": 
+                "oracles":
                 [
                     {{
                         "account": "{}",
@@ -816,7 +814,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesEven)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-                "entire_set": 
+                "entire_set":
                 {{
                     "mean": "92.5",
                     "size": 4,
@@ -859,7 +857,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "trim": {},
-                "oracles": 
+                "oracles":
                 [
                     {{
                         "account": "{}",
@@ -892,13 +890,13 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-                "entire_set": 
+                "entire_set":
                 {{
                     "mean": "92.5",
                     "size": 4,
                     "standard_deviation": "138.8944443333378"
                 }},
-                "trimmed_set": 
+                "trimmed_set":
                 {{
                     "mean": "30",
                     "size": 2,
@@ -934,7 +932,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoOracleEntryFound)
         R"({{
                 "base_asset": "USD",
                 "quote_asset": "XRP",
-                "oracles": 
+                "oracles":
                 [
                     {{
                         "account": "{}",
@@ -968,7 +966,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoMatchAssetPair)
         R"({{
                 "base_asset": "JPY",
                 "quote_asset": "XRP",
-                "oracles": 
+                "oracles":
                 [
                     {{
                         "account": "{}",
@@ -1013,7 +1011,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIsZero)
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "time_threshold": {},
-                "oracles": 
+                "oracles":
                 [
                     {{
                         "account": "{}",
@@ -1046,7 +1044,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIsZero)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-                "entire_set": 
+                "entire_set":
                 {{
                     "mean": "10",
                     "size": 1,
@@ -1093,7 +1091,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "time_threshold": {},
-                "oracles": 
+                "oracles":
                 [
                     {{
                         "account": "{}",
@@ -1126,7 +1124,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-                "entire_set": 
+                "entire_set":
                 {{
                     "mean": "15",
                     "size": 2,
@@ -1173,7 +1171,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "time_threshold": {},
-                "oracles": 
+                "oracles":
                 [
                     {{
                         "account": "{}",
@@ -1206,7 +1204,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-                "entire_set": 
+                "entire_set":
                 {{
                     "mean": "92.5",
                     "size": 4,
@@ -1252,7 +1250,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIncludeOldest)
                 "base_asset": "USD",
                 "quote_asset": "XRP",
                 "time_threshold": {},
-                "oracles": 
+                "oracles":
                 [
                     {{
                         "account": "{}",
@@ -1285,7 +1283,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIncludeOldest)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-                "entire_set": 
+                "entire_set":
                 {{
                     "mean": "92.5",
                     "size": 4,
@@ -1336,7 +1334,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
         R"({{
                 "base_asset": "JPY",
                 "quote_asset": "XRP",
-                "oracles": 
+                "oracles":
                 [
                     {{
                         "account": "{}",
@@ -1350,7 +1348,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-                "entire_set": 
+                "entire_set":
                 {{
                     "mean": "10",
                     "size": 1,
@@ -1413,7 +1411,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
         R"({{
                 "base_asset": "JPY",
                 "quote_asset": "XRP",
-                "oracles": 
+                "oracles":
                 [
                     {{
                         "account": "{}",

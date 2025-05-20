@@ -247,7 +247,7 @@ func prepareResume(cmd *string) {
 	/*
 	 Previous user command (must match the same command to resume deletion)
 	 Table name (ie. objects, ledger_hashes etc)
-	 Values of token_ranges (each pair of values seperated line by line)
+	 Values of token_ranges (each pair of values separated line by line)
 	*/
 
 	file, err := os.Open("continue.txt")
@@ -276,7 +276,7 @@ func prepareResume(cmd *string) {
 	}
 
 	scanner.Scan()
-	// skip the neccessary tables based on where the program aborted
+	// skip the necessary tables based on where the program aborted
 	// for example if account_tx, all tables before account_tx
 	// should be already deleted so we skip for deletion
 	tableFound := false

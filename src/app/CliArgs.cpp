@@ -21,7 +21,7 @@
 
 #include "migration/MigrationApplication.hpp"
 #include "util/build/Build.hpp"
-#include "util/newconfig/ConfigDescription.hpp"
+#include "util/config/ConfigDescription.hpp"
 
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>

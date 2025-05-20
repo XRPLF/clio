@@ -21,7 +21,7 @@
 
 #include "migration/MigrationManagerInterface.hpp"
 #include "migration/impl/MigrationInspectorBase.hpp"
-#include "util/newconfig/ObjectView.hpp"
+#include "util/config/ObjectView.hpp"
 
 #include <memory>
 #include <string>
@@ -33,7 +33,7 @@ namespace migration::impl {
  * @brief The migration manager implementation for Cassandra. It will run the migration for the Cassandra
  * database.
  *
- * @tparam SupportedMigrators The migrators resgister that contains all the migrators
+ * @tparam SupportedMigrators The migrators register that contains all the migrators
  */
 template <typename SupportedMigrators>
 class MigrationManagerBase : public MigrationManagerInterface, public MigrationInspectorBase<SupportedMigrators> {

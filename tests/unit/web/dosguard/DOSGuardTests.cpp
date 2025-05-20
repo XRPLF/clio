@@ -18,16 +18,20 @@
 //==============================================================================
 
 #include "util/LoggerFixtures.hpp"
-#include "util/newconfig/Array.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/Array.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
 #include "web/dosguard/DOSGuard.hpp"
+#include "web/dosguard/WeightsInterface.hpp"
 #include "web/dosguard/WhitelistHandlerInterface.hpp"
 
+#include <boost/json/object.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <string>
 #include <string_view>
 
 using namespace testing;
@@ -53,6 +57,9 @@ struct DOSGuardTest : NoLoggerFixture {
     struct MockWhitelistHandler : WhitelistHandlerInterface {
         MOCK_METHOD(bool, isWhiteListed, (std::string_view ip), (const));
     };
+    struct MockWeights : WeightsInterface {
+        MOCK_METHOD(size_t, requestWeight, (boost::json::object const& cmd), (const, override));
+    };
 
     ClioConfigDefinition cfg{
         {{"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(100)},
@@ -61,7 +68,9 @@ struct DOSGuardTest : NoLoggerFixture {
          {"dos_guard.whitelist", Array{ConfigValue{ConfigType::String}}}}
     };
     NiceMock<MockWhitelistHandler> whitelistHandler;
-    DOSGuard guard{cfg, whitelistHandler};
+    StrictMock<MockWeights> weightsMock;
+    DOSGuard guard{cfg, whitelistHandler, weightsMock};
+    boost::json::object const request;
 };
 
 TEST_F(DOSGuardTest, Whitelisting)
@@ -88,7 +97,7 @@ TEST_F(DOSGuardTest, ConnectionCount)
 
 TEST_F(DOSGuardTest, FetchCount)
 {
-    EXPECT_TRUE(guard.add(kIP, 50));  // half of allowence
+    EXPECT_TRUE(guard.add(kIP, 50));  // half of allowance
     EXPECT_TRUE(guard.add(kIP, 50));  // now fully charged
     EXPECT_FALSE(guard.add(kIP, 1));  // can't add even 1 anymore
     EXPECT_FALSE(guard.isOk(kIP));
@@ -99,7 +108,7 @@ TEST_F(DOSGuardTest, FetchCount)
 
 TEST_F(DOSGuardTest, ClearFetchCountOnTimer)
 {
-    EXPECT_TRUE(guard.add(kIP, 50));  // half of allowence
+    EXPECT_TRUE(guard.add(kIP, 50));  // half of allowance
     EXPECT_TRUE(guard.add(kIP, 50));  // now fully charged
     EXPECT_FALSE(guard.add(kIP, 1));  // can't add even 1 anymore
     EXPECT_FALSE(guard.isOk(kIP));
@@ -110,11 +119,20 @@ TEST_F(DOSGuardTest, ClearFetchCountOnTimer)
 
 TEST_F(DOSGuardTest, RequestLimit)
 {
-    EXPECT_TRUE(guard.request(kIP));
-    EXPECT_TRUE(guard.request(kIP));
-    EXPECT_TRUE(guard.request(kIP));
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_TRUE(guard.request(kIP, request));
+
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_TRUE(guard.request(kIP, request));
+
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_TRUE(guard.request(kIP, request));
+
     EXPECT_TRUE(guard.isOk(kIP));
-    EXPECT_FALSE(guard.request(kIP));
+
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_FALSE(guard.request(kIP, request));
+
     EXPECT_FALSE(guard.isOk(kIP));
     guard.clear();
     EXPECT_TRUE(guard.isOk(kIP));  // can request again
@@ -122,11 +140,20 @@ TEST_F(DOSGuardTest, RequestLimit)
 
 TEST_F(DOSGuardTest, RequestLimitOnTimer)
 {
-    EXPECT_TRUE(guard.request(kIP));
-    EXPECT_TRUE(guard.request(kIP));
-    EXPECT_TRUE(guard.request(kIP));
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_TRUE(guard.request(kIP, request));
+
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_TRUE(guard.request(kIP, request));
+
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_TRUE(guard.request(kIP, request));
+
     EXPECT_TRUE(guard.isOk(kIP));
-    EXPECT_FALSE(guard.request(kIP));
+
+    EXPECT_CALL(weightsMock, requestWeight(request)).WillOnce(Return(1));
+    EXPECT_FALSE(guard.request(kIP, request));
+
     EXPECT_FALSE(guard.isOk(kIP));
     guard.clear();
     EXPECT_TRUE(guard.isOk(kIP));  // can request again

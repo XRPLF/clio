@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include <string>
-
 namespace tests::util {
 
 static auto const kNAME_GENERATOR = [](auto const& info) { return info.param.testName; };

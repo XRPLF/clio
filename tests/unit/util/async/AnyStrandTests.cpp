@@ -140,7 +140,7 @@ TEST_F(AnyStrandTests, ExecuteWithTimeoutAndStopTokenAndReturnValue)
     ASSERT_EQ(op.get().value(), 42);
 }
 
-TEST_F(AnyStrandTests, ExecuteWithTimoutAndStopTokenAndReturnValueThrowsException)
+TEST_F(AnyStrandTests, ExecuteWithTimeoutAndStopTokenAndReturnValueThrowsException)
 {
     EXPECT_CALL(mockStrand, execute(An<std::function<std::any(AnyStopToken)>>(), _))
         .WillOnce([](auto&&, auto) -> StoppableOperationType<std::any> const& { throw 0; });

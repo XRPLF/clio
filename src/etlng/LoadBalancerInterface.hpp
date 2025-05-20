@@ -115,7 +115,7 @@ public:
      * @param yield The coroutine context
      * @return Response received from rippled node as JSON object on success or error on failure
      */
-    virtual std::expected<boost::json::object, rpc::ClioError>
+    virtual std::expected<boost::json::object, rpc::CombinedError>
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,
@@ -129,6 +129,15 @@ public:
      */
     virtual std::optional<etl::ETLState>
     getETLState() noexcept = 0;
+
+    /**
+     * @brief Stop the load balancer. This will stop all subscription sources.
+     * @note This function will asynchronously wait for all sources to stop.
+     *
+     * @param yield The coroutine context
+     */
+    virtual void
+    stop(boost::asio::yield_context yield) = 0;
 };
 
 }  // namespace etlng

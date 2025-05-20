@@ -49,7 +49,7 @@ enum class ClioError {
     RpcCommandIsMissing = 6001,
     RpcCommandNotString = 6002,
     RpcCommandIsEmpty = 6003,
-    RpcParamsUnparseable = 6004,
+    RpcParamsUnparsable = 6004,
 
     // TODO: Since it is not only rpc errors here now, we should move it to util
     // etl related errors start with 7000

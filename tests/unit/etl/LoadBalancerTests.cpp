@@ -28,12 +28,13 @@
 #include "util/MockSubscriptionManager.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Random.hpp"
-#include "util/newconfig/Array.hpp"
-#include "util/newconfig/ConfigConstraints.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigFileJson.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/Array.hpp"
+#include "util/config/ConfigConstraints.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigFileJson.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
+#include "util/prometheus/Counter.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -59,6 +60,7 @@
 using namespace etl;
 using namespace util::config;
 using testing::Return;
+using namespace util::prometheus;
 
 constexpr static auto const kTWO_SOURCES_LEDGER_RESPONSE = R"({
     "etl_sources": [
@@ -436,56 +438,50 @@ struct LoadBalancerLoadInitialLedgerTests : LoadBalancerOnConnectHookTests {
 protected:
     uint32_t const sequence_ = 123;
     uint32_t const numMarkers_ = 16;
-    bool const cacheOnly_ = true;
     std::pair<std::vector<std::string>, bool> const response_ = {{"1", "2", "3"}, true};
 };
 
 TEST_F(LoadBalancerLoadInitialLedgerTests, load)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, cacheOnly_))
-        .WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, cacheOnly_), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_), response_.first);
 }
 
 TEST_F(LoadBalancerLoadInitialLedgerTests, load_source0DoesntHaveLedger)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, cacheOnly_))
-        .WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, cacheOnly_), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_), response_.first);
 }
 
 TEST_F(LoadBalancerLoadInitialLedgerTests, load_bothSourcesDontHaveLedger)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).Times(2).WillRepeatedly(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(false)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, cacheOnly_))
-        .WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, cacheOnly_, std::chrono::milliseconds{1}), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, std::chrono::milliseconds{1}), response_.first);
 }
 
 TEST_F(LoadBalancerLoadInitialLedgerTests, load_source0ReturnsStatusFalse)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, cacheOnly_))
+    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_))
         .WillOnce(Return(std::make_pair(std::vector<std::string>{}, false)));
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, cacheOnly_))
-        .WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, cacheOnly_), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_), response_.first);
 }
 
 struct LoadBalancerLoadInitialLedgerCustomNumMarkersTests : LoadBalancerConstructorTests {
 protected:
     uint32_t const numMarkers_ = 16;
     uint32_t const sequence_ = 123;
-    bool const cacheOnly_ = true;
     std::pair<std::vector<std::string>, bool> const response_ = {{"1", "2", "3"}, true};
 };
 
@@ -502,10 +498,9 @@ TEST_F(LoadBalancerLoadInitialLedgerCustomNumMarkersTests, loadInitialLedger)
 
     util::Random::setSeed(0);
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, cacheOnly_))
-        .WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer->loadInitialLedger(sequence_, cacheOnly_), response_.first);
+    EXPECT_EQ(loadBalancer->loadInitialLedger(sequence_), response_.first);
 }
 
 struct LoadBalancerFetchLegerTests : LoadBalancerOnConnectHookTests {
@@ -648,11 +643,76 @@ TEST_F(LoadBalancerForwardToRippledTests, source0Fails)
     });
 }
 
+struct LoadBalancerForwardToRippledPrometheusTests : LoadBalancerForwardToRippledTests, WithMockPrometheus {};
+
+TEST_F(LoadBalancerForwardToRippledPrometheusTests, forwardingCacheEnabled)
+{
+    configJson_.as_object()["forwarding"] = boost::json::object{{"cache_timeout", 10.}};
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
+    auto loadBalancer = makeLoadBalancer();
+
+    auto const request = boost::json::object{{"command", "server_info"}};
+
+    auto& cacheHitCounter = makeMock<CounterInt>("forwarding_cache_hit_counter", "");
+    auto& cacheMissCounter = makeMock<CounterInt>("forwarding_cache_miss_counter", "");
+    auto& successDurationCounter =
+        makeMock<CounterInt>("forwarding_duration_milliseconds_counter", "{status=\"success\"}");
+
+    EXPECT_CALL(cacheMissCounter, add(1));
+    EXPECT_CALL(cacheHitCounter, add(1)).Times(3);
+    EXPECT_CALL(successDurationCounter, add(testing::_));
+
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0),
+        forwardToRippled(request, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_)
+    )
+        .WillOnce(Return(response_));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), response_);
+        EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), response_);
+        EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), response_);
+        EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), response_);
+    });
+}
+
+TEST_F(LoadBalancerForwardToRippledPrometheusTests, source0Fails)
+{
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
+    auto loadBalancer = makeLoadBalancer();
+
+    auto& cacheMissCounter = makeMock<CounterInt>("forwarding_cache_miss_counter", "");
+    auto& retriesCounter = makeMock<CounterInt>("forwarding_retries_counter", "");
+    auto& successDurationCounter =
+        makeMock<CounterInt>("forwarding_duration_milliseconds_counter", "{status=\"success\"}");
+    auto& failDurationCounter = makeMock<CounterInt>("forwarding_duration_milliseconds_counter", "{status=\"fail\"}");
+
+    EXPECT_CALL(cacheMissCounter, add(1));
+    EXPECT_CALL(retriesCounter, add(1));
+    EXPECT_CALL(successDurationCounter, add(testing::_));
+    EXPECT_CALL(failDurationCounter, add(testing::_));
+
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0),
+        forwardToRippled(request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_)
+    )
+        .WillOnce(Return(std::unexpected{rpc::ClioError::EtlConnectionError}));
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(1),
+        forwardToRippled(request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_)
+    )
+        .WillOnce(Return(response_));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_EQ(loadBalancer->forwardToRippled(request_, clientIP_, false, yield), response_);
+    });
+}
+
 struct LoadBalancerForwardToRippledErrorTestBundle {
     std::string testName;
     rpc::ClioError firstSourceError;
     rpc::ClioError secondSourceError;
-    rpc::ClioError responseExpectedError;
+    rpc::CombinedError responseExpectedError;
 };
 
 struct LoadBalancerForwardToRippledErrorTests
@@ -783,7 +843,7 @@ TEST_F(LoadBalancerForwardToRippledTests, commandLineMissing)
     runSpawn([&](boost::asio::yield_context yield) {
         EXPECT_EQ(
             loadBalancer->forwardToRippled(request, clientIP_, false, yield).error(),
-            rpc::ClioError::RpcCommandIsMissing
+            rpc::CombinedError{rpc::ClioError::RpcCommandIsMissing}
         );
     });
 }

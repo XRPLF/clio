@@ -20,9 +20,9 @@
 #include "migration/impl/MigrationManagerFactory.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockLedgerCache.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
 
 #include <gtest/gtest.h>
 

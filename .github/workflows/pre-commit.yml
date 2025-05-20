@@ -1,0 +1,28 @@
+name: Run pre-commit hooks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  run-hooks:
+    runs-on: heavy
+    container:
+      image: ghcr.io/xrplf/clio-ci:latest
+
+    steps:
+      - name: Checkout Repo ⚡️
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare runner
+        uses: ./.github/actions/prepare_runner
+        with:
+          disable_ccache: true
+
+      - name: Run pre-commit ✅
+        run: pre-commit run --all-files

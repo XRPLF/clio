@@ -45,7 +45,7 @@ public:
     /**
      * @brief Construct a new priority queue on a strand
      * @param strand The strand to use
-     * @param limit The limit of items allowed simultaniously in the queue
+     * @param limit The limit of items allowed simultaneously in the queue
      */
     StrandedPriorityQueue(util::async::AnyStrand&& strand, std::optional<std::size_t> limit = std::nullopt)
         : strand_(std::move(strand)), limit_(limit.value_or(0uz))

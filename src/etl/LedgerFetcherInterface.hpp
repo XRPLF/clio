@@ -40,7 +40,7 @@ struct LedgerFetcherInterface {
     /**
      * @brief Extract data for a particular ledger from an ETL source
      *
-     * This function continously tries to extract the specified ledger (using all available ETL sources) until the
+     * This function continuously tries to extract the specified ledger (using all available ETL sources) until the
      * extraction succeeds, or the server shuts down.
      *
      * @param seq sequence of the ledger to extract
@@ -52,7 +52,7 @@ struct LedgerFetcherInterface {
     /**
      * @brief Extract diff data for a particular ledger from an ETL source.
      *
-     * This function continously tries to extract the specified ledger (using all available ETL sources) until the
+     * This function continuously tries to extract the specified ledger (using all available ETL sources) until the
      * extraction succeeds, or the server shuts down.
      *
      * @param seq sequence of the ledger to extract

@@ -21,7 +21,7 @@
 
 #include "data/LedgerCacheInterface.hpp"
 #include "migration/MigrationManagerInterface.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 #include <expected>
 #include <memory>
@@ -30,7 +30,7 @@
 namespace migration::impl {
 
 /**
- * @brief The factory to create a MigrationManagerInferface
+ * @brief The factory to create a MigrationManagerInterface
  *
  * @param config The configuration of the migration application, it contains the database connection configuration and
  * other migration specific configurations

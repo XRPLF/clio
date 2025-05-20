@@ -23,9 +23,7 @@
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
-#include "util/log/Logger.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ObjectView.hpp"
+#include "util/config/ObjectView.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -130,11 +128,10 @@ public:
      *
      * @param sequence Sequence of the ledger to download
      * @param numMarkers Number of markers to generate for async calls
-     * @param cacheOnly Only insert into cache, not the DB; defaults to false
      * @return A std::pair of the data and a bool indicating whether the download was successful
      */
     virtual std::pair<std::vector<std::string>, bool>
-    loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, bool cacheOnly = false) = 0;
+    loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers) = 0;
 
     /**
      * @brief Forward a request to rippled.

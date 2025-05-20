@@ -20,6 +20,7 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "etlng/ETLServiceInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/JsonBool.hpp"
@@ -55,6 +56,7 @@ namespace rpc {
 class AccountTxHandler {
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
+    std::shared_ptr<etlng::ETLServiceInterface const> etl_;
 
 public:
     static constexpr auto kLIMIT_MIN = 1;
@@ -109,8 +111,13 @@ public:
      * @brief Construct a new AccountTxHandler object
      *
      * @param sharedPtrBackend The backend to use
+     * @param etl The ETL service to use
      */
-    AccountTxHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
+    AccountTxHandler(
+        std::shared_ptr<BackendInterface> const& sharedPtrBackend,
+        std::shared_ptr<etlng::ETLServiceInterface const> const& etl
+    )
+        : sharedPtrBackend_(sharedPtrBackend), etl_{etl}
     {
     }
 
@@ -130,6 +137,7 @@ public:
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
             {JS(ledger_index_min), validation::Type<int32_t>{}},
             {JS(ledger_index_max), validation::Type<int32_t>{}},
+            {JS(ctid), validation::Type<std::string>{}},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),

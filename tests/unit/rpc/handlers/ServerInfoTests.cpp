@@ -46,7 +46,7 @@ using namespace data;
 namespace json = boost::json;
 using namespace testing;
 
-using TestServerInfoHandler = BaseServerInfoHandler<MockLoadBalancer, MockETLService, MockCounters>;
+using TestServerInfoHandler = BaseServerInfoHandler<MockCounters>;
 
 namespace {
 
@@ -56,22 +56,9 @@ constexpr auto kCLIENT_IP = "1.1.1.1";
 }  // namespace
 
 struct RPCServerInfoHandlerTest : HandlerBaseTest, MockLoadBalancerTest, MockCountersTest {
-    void
-    SetUp() override
+    RPCServerInfoHandlerTest()
     {
-        HandlerBaseTest::SetUp();
-        MockLoadBalancerTest::SetUp();
-        MockCountersTest::SetUp();
-
         backend_->setRange(10, 30);
-    }
-
-    void
-    TearDown() override
-    {
-        MockCountersTest::TearDown();
-        MockLoadBalancerTest::TearDown();
-        HandlerBaseTest::TearDown();
     }
 
     static void

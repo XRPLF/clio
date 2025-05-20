@@ -182,7 +182,7 @@ private:
 };
 
 /**
- * @brief Implemetation of PrometheusInterface
+ * @brief Implementation of PrometheusInterface
  *
  * @note When prometheus is disabled, all metrics will still counted but collection is disabled
  */

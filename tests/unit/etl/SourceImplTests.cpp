@@ -48,7 +48,7 @@ struct GrpcSourceMock {
     MOCK_METHOD(FetchLedgerReturnType, fetchLedger, (uint32_t, bool, bool));
 
     using LoadLedgerReturnType = std::pair<std::vector<std::string>, bool>;
-    MOCK_METHOD(LoadLedgerReturnType, loadInitialLedger, (uint32_t, uint32_t, bool));
+    MOCK_METHOD(LoadLedgerReturnType, loadInitialLedger, (uint32_t, uint32_t));
 };
 
 struct SubscriptionSourceMock {
@@ -174,7 +174,7 @@ TEST_F(SourceImplTest, loadInitialLedger)
     uint32_t const ledgerSeq = 123;
     uint32_t const numMarkers = 3;
 
-    EXPECT_CALL(grpcSourceMock_, loadInitialLedger(ledgerSeq, numMarkers, false))
+    EXPECT_CALL(grpcSourceMock_, loadInitialLedger(ledgerSeq, numMarkers))
         .WillOnce(Return(std::make_pair(std::vector<std::string>{}, true)));
     auto const [actualLedgers, actualSuccess] = source_.loadInitialLedger(ledgerSeq, numMarkers);
 

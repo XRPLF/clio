@@ -26,6 +26,7 @@
 #include "etl/NFTHelpers.hpp"
 #include "etl/SystemState.hpp"
 #include "etl/impl/LedgerFetcher.hpp"
+#include "etlng/LoadBalancerInterface.hpp"
 #include "util/Assert.hpp"
 #include "util/LedgerUtils.hpp"
 #include "util/Profiler.hpp"
@@ -65,18 +66,18 @@ namespace etl::impl {
 /**
  * @brief Loads ledger data into the DB
  */
-template <typename LoadBalancerType, typename LedgerFetcherType>
+template <typename LedgerFetcherType>
 class LedgerLoader {
 public:
-    using GetLedgerResponseType = typename LoadBalancerType::GetLedgerResponseType;
-    using OptionalGetLedgerResponseType = typename LoadBalancerType::OptionalGetLedgerResponseType;
-    using RawLedgerObjectType = typename LoadBalancerType::RawLedgerObjectType;
+    using GetLedgerResponseType = etlng::LoadBalancerInterface::GetLedgerResponseType;
+    using OptionalGetLedgerResponseType = etlng::LoadBalancerInterface::OptionalGetLedgerResponseType;
+    using RawLedgerObjectType = etlng::LoadBalancerInterface::RawLedgerObjectType;
 
 private:
     util::Logger log_{"ETL"};
 
     std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<LoadBalancerType> loadBalancer_;
+    std::shared_ptr<etlng::LoadBalancerInterface> loadBalancer_;
     std::reference_wrapper<LedgerFetcherType> fetcher_;
     std::reference_wrapper<SystemState const> state_;  // shared state for ETL
 
@@ -86,7 +87,7 @@ public:
      */
     LedgerLoader(
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<LoadBalancerType> balancer,
+        std::shared_ptr<etlng::LoadBalancerInterface> balancer,
         LedgerFetcherType& fetcher,
         SystemState const& state
     )
@@ -101,11 +102,11 @@ public:
      * @brief Insert extracted transaction into the ledger
      *
      * Insert all of the extracted transactions into the ledger, returning transactions related to accounts,
-     * transactions related to NFTs, and NFTs themselves for later processsing.
+     * transactions related to NFTs, and NFTs themselves for later processing.
      *
      * @param ledger ledger to insert transactions into
      * @param data data extracted from an ETL source
-     * @return The neccessary info to write the account_transactions/account_tx and nft_token_transactions tables
+     * @return The necessary info to write the account_transactions/account_tx and nft_token_transactions tables
      */
     FormattedTransactionsData
     insertTransactions(ripple::LedgerHeader const& ledger, GetLedgerResponseType& data)
@@ -219,7 +220,7 @@ public:
 
                 ripple::uint256 prev = data::kFIRST_KEY;
                 while (auto cur = backend_->cache().getSuccessor(prev, sequence)) {
-                    ASSERT(cur.has_value(), "Succesor for key {} must exist", ripple::strHex(prev));
+                    ASSERT(cur.has_value(), "Successor for key {} must exist", ripple::strHex(prev));
                     if (prev == data::kFIRST_KEY)
                         backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(cur->key));
 

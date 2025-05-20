@@ -1,12 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"strings"
 
 	"xrplf/clio/clio_snapshot/internal/export"
 	"xrplf/clio/clio_snapshot/internal/ledgers"
 	"xrplf/clio/clio_snapshot/internal/parse_args"
 	"xrplf/clio/clio_snapshot/internal/server"
+	"xrplf/clio/clio_snapshot/internal/util"
+
+	"github.com/gocql/gocql"
 )
 
 func main() {
@@ -33,5 +38,20 @@ func main() {
 		} else {
 			log.Fatalf("Failed to get snapshot range: %v", err)
 		}
+	} else if args.GetRange {
+		hosts := strings.Split(args.Host, ",")
+		cluster := gocql.NewCluster(hosts...)
+
+		cluster.Authenticator = gocql.PasswordAuthenticator{
+			Username: args.Username,
+			Password: args.Password,
+		}
+
+		dbRange, err := util.GetLedgerRange(cluster)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("Range: %d -> %d\n", dbRange.FirstLedgerIdx, dbRange.LatestLedgerIdx)
 	}
 }

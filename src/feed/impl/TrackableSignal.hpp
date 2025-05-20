@@ -72,7 +72,7 @@ public:
         }
 
         // This class can't hold the trackable's shared_ptr, because disconnect should be able to be called in the
-        // the trackable's destructor. However, the trackable can not be destroied when the slot is being called
+        // the trackable's destructor. However, the trackable can not be destroyed when the slot is being called
         // either. track_foreign will hold a weak_ptr to the connection, which makes sure the connection is valid when
         // the slot is called.
         connections->emplace(

@@ -20,8 +20,8 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "etl/ETLService.hpp"
-#include "etl/LoadBalancer.hpp"
+#include "etlng/ETLServiceInterface.hpp"
+#include "etlng/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/CoroutineGroup.hpp"
 #include "util/log/Logger.hpp"
@@ -74,15 +74,12 @@ public:
      * @param ioc The io_context to stop.
      * @return The callback to be called on application stop.
      */
-    template <
-        web::ng::SomeServer ServerType,
-        etl::SomeLoadBalancer LoadBalancerType,
-        etl::SomeETLService ETLServiceType>
+    template <web::ng::SomeServer ServerType>
     static std::function<void(boost::asio::yield_context)>
     makeOnStopCallback(
         ServerType& server,
-        LoadBalancerType& balancer,
-        ETLServiceType& etl,
+        etlng::LoadBalancerInterface& balancer,
+        etlng::ETLServiceInterface& etl,
         feed::SubscriptionManagerInterface& subscriptions,
         data::BackendInterface& backend,
         boost::asio::io_context& ioc

@@ -23,16 +23,20 @@
 #include "etl/ETLState.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
+#include "etlng/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "util/Assert.hpp"
 #include "util/CoroutineGroup.hpp"
+#include "util/Profiler.hpp"
 #include "util/Random.hpp"
 #include "util/ResponseExpirationCache.hpp"
+#include "util/config/ArrayView.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ObjectView.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ArrayView.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ObjectView.hpp"
+#include "util/prometheus/Label.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -53,13 +57,15 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <variant>
 #include <vector>
 
 using namespace util::config;
+using util::prometheus::Labels;
 
 namespace etl {
 
-std::shared_ptr<LoadBalancer>
+std::shared_ptr<etlng::LoadBalancerInterface>
 LoadBalancer::makeLoadBalancer(
     ClioConfigDefinition const& config,
     boost::asio::io_context& ioc,
@@ -82,6 +88,33 @@ LoadBalancer::LoadBalancer(
     std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
     SourceFactory sourceFactory
 )
+    : forwardingCounters_{
+          .successDuration = PrometheusService::counterInt(
+              "forwarding_duration_milliseconds_counter",
+              Labels({util::prometheus::Label{"status", "success"}}),
+              "The duration of processing successful forwarded requests"
+          ),
+          .failDuration = PrometheusService::counterInt(
+              "forwarding_duration_milliseconds_counter",
+              Labels({util::prometheus::Label{"status", "fail"}}),
+              "The duration of processing failed forwarded requests"
+          ),
+          .retries = PrometheusService::counterInt(
+              "forwarding_retries_counter",
+              Labels(),
+              "The number of retries before a forwarded request was successful. Initial attempt excluded"
+          ),
+          .cacheHit = PrometheusService::counterInt(
+              "forwarding_cache_hit_counter",
+              Labels(),
+              "The number of requests that we served from the cache"
+          ),
+          .cacheMiss = PrometheusService::counterInt(
+              "forwarding_cache_miss_counter",
+              Labels(),
+              "The number of requests that were not served from the cache"
+          )
+      }
 {
     auto const forwardingCacheTimeout = config.get<float>("forwarding.cache_timeout");
     if (forwardingCacheTimeout > 0.f) {
@@ -141,12 +174,11 @@ LoadBalancer::LoadBalancer(
         if (!stateOpt) {
             LOG(log_.warn()) << "Failed to fetch ETL state from source = " << source->toString()
                              << " Please check the configuration and network";
-        } else if (etlState_ && etlState_->networkID && stateOpt->networkID &&
-                   etlState_->networkID != stateOpt->networkID) {
+        } else if (etlState_ && etlState_->networkID != stateOpt->networkID) {
             checkOnETLFailure(fmt::format(
                 "ETL sources must be on the same network. Source network id = {} does not match others network id = {}",
-                *(stateOpt->networkID),
-                *(etlState_->networkID)
+                stateOpt->networkID,
+                etlState_->networkID
             ));
         } else {
             etlState_ = stateOpt;
@@ -169,18 +201,13 @@ LoadBalancer::LoadBalancer(
     }
 }
 
-LoadBalancer::~LoadBalancer()
-{
-    sources_.clear();
-}
-
 std::vector<std::string>
-LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly, std::chrono::steady_clock::duration retryAfter)
+LoadBalancer::loadInitialLedger(uint32_t sequence, std::chrono::steady_clock::duration retryAfter)
 {
     std::vector<std::string> response;
     execute(
-        [this, &response, &sequence, cacheOnly](auto& source) {
-            auto [data, res] = source->loadInitialLedger(sequence, downloadRanges_, cacheOnly);
+        [this, &response, &sequence](auto& source) {
+            auto [data, res] = source->loadInitialLedger(sequence, downloadRanges_);
 
             if (!res) {
                 LOG(log_.error()) << "Failed to download initial ledger."
@@ -227,7 +254,7 @@ LoadBalancer::fetchLedger(
     return response;
 }
 
-std::expected<boost::json::object, rpc::ClioError>
+std::expected<boost::json::object, rpc::CombinedError>
 LoadBalancer::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& clientIp,
@@ -239,40 +266,42 @@ LoadBalancer::forwardToRippled(
         return std::unexpected{rpc::ClioError::RpcCommandIsMissing};
 
     auto const cmd = boost::json::value_to<std::string>(request.at("command"));
-    if (forwardingCache_) {
-        if (auto cachedResponse = forwardingCache_->get(cmd); cachedResponse) {
-            return std::move(cachedResponse).value();
+
+    if (forwardingCache_ and forwardingCache_->shouldCache(cmd)) {
+        bool servedFromCache = true;
+        auto updater =
+            [this, &request, &clientIp, &servedFromCache, isAdmin](boost::asio::yield_context yield
+            ) -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
+            servedFromCache = false;
+            auto result = forwardToRippledImpl(request, clientIp, isAdmin, yield);
+            if (result.has_value()) {
+                return util::ResponseExpirationCache::EntryData{
+                    .lastUpdated = std::chrono::steady_clock::now(), .response = std::move(result).value()
+                };
+            }
+            return std::unexpected{
+                util::ResponseExpirationCache::Error{.status = rpc::Status{result.error()}, .warnings = {}}
+            };
+        };
+
+        auto result = forwardingCache_->getOrUpdate(
+            yield,
+            cmd,
+            std::move(updater),
+            [](util::ResponseExpirationCache::EntryData const& entry) { return not entry.response.contains("error"); }
+        );
+        if (servedFromCache) {
+            ++forwardingCounters_.cacheHit.get();
         }
-    }
-
-    ASSERT(not sources_.empty(), "ETL sources must be configured to forward requests.");
-    std::size_t sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
-
-    auto numAttempts = 0u;
-
-    auto xUserValue = isAdmin ? kADMIN_FORWARDING_X_USER_VALUE : kUSER_FORWARDING_X_USER_VALUE;
-
-    std::optional<boost::json::object> response;
-    rpc::ClioError error = rpc::ClioError::EtlConnectionError;
-    while (numAttempts < sources_.size()) {
-        auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield);
-        if (res) {
-            response = std::move(res).value();
-            break;
+        if (result.has_value()) {
+            return std::move(result).value();
         }
-        error = std::max(error, res.error());  // Choose the best result between all sources
-
-        sourceIdx = (sourceIdx + 1) % sources_.size();
-        ++numAttempts;
+        auto const combinedError = result.error().status.code;
+        ASSERT(std::holds_alternative<rpc::ClioError>(combinedError), "There could be only ClioError here");
+        return std::unexpected{std::get<rpc::ClioError>(combinedError)};
     }
 
-    if (response) {
-        if (forwardingCache_ and not response->contains("error"))
-            forwardingCache_->put(cmd, *response);
-        return std::move(response).value();
-    }
-
-    return std::unexpected{error};
+    return forwardToRippledImpl(request, clientIp, isAdmin, yield);
 }
 
 boost::json::value
@@ -361,6 +390,49 @@ LoadBalancer::chooseForwardingSource()
             source->setForwarding(false);
         }
     }
+}
+
+std::expected<boost::json::object, rpc::CombinedError>
+LoadBalancer::forwardToRippledImpl(
+    boost::json::object const& request,
+    std::optional<std::string> const& clientIp,
+    bool const isAdmin,
+    boost::asio::yield_context yield
+)
+{
+    ++forwardingCounters_.cacheMiss.get();
+
+    ASSERT(not sources_.empty(), "ETL sources must be configured to forward requests.");
+    std::size_t sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
+
+    auto numAttempts = 0u;
+
+    auto xUserValue = isAdmin ? kADMIN_FORWARDING_X_USER_VALUE : kUSER_FORWARDING_X_USER_VALUE;
+
+    std::optional<boost::json::object> response;
+    rpc::ClioError error = rpc::ClioError::EtlConnectionError;
+    while (numAttempts < sources_.size()) {
+        auto [res, duration] =
+            util::timed([&]() { return sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield); });
+
+        if (res) {
+            forwardingCounters_.successDuration.get() += duration;
+            response = std::move(res).value();
+            break;
+        }
+        forwardingCounters_.failDuration.get() += duration;
+        ++forwardingCounters_.retries.get();
+        error = std::max(error, res.error());  // Choose the best result between all sources
+
+        sourceIdx = (sourceIdx + 1) % sources_.size();
+        ++numAttempts;
+    }
+
+    if (response.has_value()) {
+        return std::move(response).value();
+    }
+
+    return std::unexpected{error};
 }
 
 }  // namespace etl

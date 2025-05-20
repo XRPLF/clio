@@ -30,7 +30,7 @@ namespace migration::cassandra::impl {
 template <typename T>
 concept TableSpec = requires {
     // Check that 'row' exists and is a tuple
-    // keys types are at the begining and the other fields types sort in alphabetical order
+    // keys types are at the beginning and the other fields types sort in alphabetical order
     typename T::Row;
     requires std::tuple_size<typename T::Row>::value >= 0;  // Ensures 'row' is a tuple
 

@@ -291,7 +291,7 @@ TEST_F(RPCNoRippleCheckTest, AccountNotExist)
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    // fetch account object return emtpy
+    // fetch account object return empty
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
     auto const input = json::parse(fmt::format(

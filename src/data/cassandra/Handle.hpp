@@ -89,7 +89,7 @@ public:
     asyncConnect() const;
 
     /**
-     * @brief Synchonous version of the above.
+     * @brief Synchronous version of the above.
      *
      * See @ref asyncConnect() const for how this works.
      *
@@ -108,7 +108,7 @@ public:
     asyncConnect(std::string_view keyspace) const;
 
     /**
-     * @brief Synchonous version of the above.
+     * @brief Synchronous version of the above.
      *
      * See @ref asyncConnect(std::string_view) const for how this works.
      *
@@ -127,7 +127,7 @@ public:
     asyncDisconnect() const;
 
     /**
-     * @brief Synchonous version of the above.
+     * @brief Synchronous version of the above.
      *
      * See @ref asyncDisconnect() const for how this works.
      *
@@ -146,7 +146,7 @@ public:
     asyncReconnect(std::string_view keyspace) const;
 
     /**
-     * @brief Synchonous version of the above.
+     * @brief Synchronous version of the above.
      *
      * See @ref asyncReconnect(std::string_view) const for how this works.
      *
@@ -172,7 +172,7 @@ public:
     }
 
     /**
-     * @brief Synchonous version of the above.
+     * @brief Synchronous version of the above.
      *
      * See asyncExecute(std::string_view, Args&&...) const for how this works.
      *
@@ -201,7 +201,7 @@ public:
     asyncExecuteEach(std::vector<StatementType> const& statements) const;
 
     /**
-     * @brief Synchonous version of the above.
+     * @brief Synchronous version of the above.
      *
      * See @ref asyncExecuteEach(std::vector<StatementType> const&) const for how this works.
      *
@@ -227,7 +227,7 @@ public:
     }
 
     /**
-     * @brief Synchonous version of the above.
+     * @brief Synchronous version of the above.
      *
      * See asyncExecute(std::vector<StatementType> const&, Args&&...) const for how this works.
      *
@@ -262,7 +262,7 @@ public:
     asyncExecute(StatementType const& statement, std::function<void(ResultOrErrorType)>&& cb) const;
 
     /**
-     * @brief Synchonous version of the above.
+     * @brief Synchronous version of the above.
      *
      * See @ref asyncExecute(StatementType const&) const for how this works.
      *
@@ -282,7 +282,7 @@ public:
     asyncExecute(std::vector<StatementType> const& statements) const;
 
     /**
-     * @brief Synchonous version of the above.
+     * @brief Synchronous version of the above.
      *
      * See @ref asyncExecute(std::vector<StatementType> const&) const for how this works.
      *

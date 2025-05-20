@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
 #include "data/LedgerCacheInterface.hpp"
+#include "data/LedgerHeaderCache.hpp"
 #include "data/Types.hpp"
 #include "data/cassandra/Concepts.hpp"
 #include "data/cassandra/Handle.hpp"
@@ -36,6 +37,8 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
+#include <boost/uuid/string_generator.hpp>
+#include <boost/uuid/uuid.hpp>
 #include <cassandra.h>
 #include <fmt/core.h>
 #include <xrpl/basics/Blob.h>
@@ -60,6 +63,8 @@
 #include <utility>
 #include <vector>
 
+class CacheBackendCassandraTest;
+
 namespace data::cassandra {
 
 /**
@@ -69,21 +74,27 @@ namespace data::cassandra {
  *
  * @tparam SettingsProviderType The settings provider type to use
  * @tparam ExecutionStrategyType The execution strategy type to use
+ * @tparam FetchLedgerCacheType The ledger header cache type to use
  */
-template <SomeSettingsProvider SettingsProviderType, SomeExecutionStrategy ExecutionStrategyType>
+template <
+    SomeSettingsProvider SettingsProviderType,
+    SomeExecutionStrategy ExecutionStrategyType,
+    typename FetchLedgerCacheType = FetchLedgerCache>
 class BasicCassandraBackend : public BackendInterface {
     util::Logger log_{"Backend"};
 
     SettingsProviderType settingsProvider_;
     Schema<SettingsProviderType> schema_;
-
     std::atomic_uint32_t ledgerSequence_ = 0u;
+    friend class ::CacheBackendCassandraTest;
 
 protected:
     Handle handle_;
 
     // have to be mutable because BackendInterface constness :(
     mutable ExecutionStrategyType executor_;
+    // TODO: move to interface level
+    mutable FetchLedgerCacheType ledgerCache_{};
 
 public:
     /**
@@ -127,7 +138,6 @@ public:
             LOG(log_.error()) << error;
             throw std::runtime_error(error);
         }
-
         LOG(log_.info()) << "Created (revamped) CassandraBackend";
     }
 
@@ -261,11 +271,16 @@ public:
     std::optional<ripple::LedgerHeader>
     fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context yield) const override
     {
+        if (auto const lock = ledgerCache_.get(); lock.has_value() && lock->seq == sequence)
+            return lock->ledger;
+
         auto const res = executor_.read(yield, schema_->selectLedgerBySeq, sequence);
         if (res) {
             if (auto const& result = res.value(); result) {
                 if (auto const maybeValue = result.template get<std::vector<unsigned char>>(); maybeValue) {
-                    return util::deserializeHeader(ripple::makeSlice(*maybeValue));
+                    auto const header = util::deserializeHeader(ripple::makeSlice(*maybeValue));
+                    ledgerCache_.put(FetchLedgerCache::CacheEntry{header, sequence});
+                    return header;
                 }
 
                 LOG(log_.error()) << "Could not fetch ledger by sequence - no rows";
@@ -778,7 +793,7 @@ public:
 
         while (liveAccounts.size() < number) {
             Statement const statement = lastItem ? schema_->selectAccountFromToken.bind(*lastItem, Limit{pageSize})
-                                                 : schema_->selectAccountFromBegining.bind(Limit{pageSize});
+                                                 : schema_->selectAccountFromBeginning.bind(Limit{pageSize});
 
             auto const res = executor_.read(yield, statement);
             if (res) {
@@ -876,6 +891,22 @@ public:
             return statusString;
 
         return {};
+    }
+
+    std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>
+    fetchClioNodesData(boost::asio::yield_context yield) const override
+    {
+        auto const readResult = executor_.read(yield, schema_->selectClioNodesData);
+        if (not readResult)
+            return std::unexpected{readResult.error().message()};
+
+        std::vector<std::pair<boost::uuids::uuid, std::string>> result;
+
+        for (auto [uuid, message] : extract<boost::uuids::uuid, std::string>(*readResult)) {
+            result.emplace_back(uuid, std::move(message));
+        }
+
+        return result;
     }
 
     void
@@ -1030,6 +1061,12 @@ public:
         executor_.writeSync(
             schema_->insertMigratorStatus, data::cassandra::Text{migratorName}, data::cassandra::Text(status)
         );
+    }
+
+    void
+    writeNodeMessage(boost::uuids::uuid const& uuid, std::string message) override
+    {
+        executor_.writeSync(schema_->updateClioNodeMessage, data::cassandra::Text{std::move(message)}, uuid);
     }
 
     bool

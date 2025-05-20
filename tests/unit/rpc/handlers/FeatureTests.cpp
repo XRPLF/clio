@@ -280,14 +280,14 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathViaNameWithSingleSupportedAndEnabledRes
 
     auto const expectedOutput = fmt::format(
         R"({{
-            "2E2FB9CF8A44EB80F4694D38AADAE9B8B7ADAFD2F092E10068E61C98C4F092B0": 
+            "2E2FB9CF8A44EB80F4694D38AADAE9B8B7ADAFD2F092E10068E61C98C4F092B0":
             {{
-                "name": "fixUniversalNumber", 
-                "enabled": true, 
+                "name": "fixUniversalNumber",
+                "enabled": true,
                 "supported": true
             }},
-            "ledger_hash": "{}", 
-            "ledger_index": {}, 
+            "ledger_hash": "{}",
+            "ledger_index": {},
             "validated": true
         }})",
         kLEDGER_HASH,
@@ -330,14 +330,14 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathViaHashWithSingleResult)
 
     auto const expectedOutput = fmt::format(
         R"({{
-            "2E2FB9CF8A44EB80F4694D38AADAE9B8B7ADAFD2F092E10068E61C98C4F092B0": 
+            "2E2FB9CF8A44EB80F4694D38AADAE9B8B7ADAFD2F092E10068E61C98C4F092B0":
             {{
-                "name": "fixUniversalNumber", 
-                "enabled": true, 
+                "name": "fixUniversalNumber",
+                "enabled": true,
                 "supported": true
             }},
-            "ledger_hash": "{}", 
-            "ledger_index": {}, 
+            "ledger_hash": "{}",
+            "ledger_index": {},
             "validated": true
         }})",
         kLEDGER_HASH,
@@ -414,21 +414,21 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathWithMultipleResults)
     auto const expectedOutput = fmt::format(
         R"({{
             "features": {{
-                "2E2FB9CF8A44EB80F4694D38AADAE9B8B7ADAFD2F092E10068E61C98C4F092B0": 
+                "2E2FB9CF8A44EB80F4694D38AADAE9B8B7ADAFD2F092E10068E61C98C4F092B0":
                 {{
-                    "name": "fixUniversalNumber", 
-                    "enabled": true, 
+                    "name": "fixUniversalNumber",
+                    "enabled": true,
                     "supported": true
                 }},
                 "DF8B4536989BDACE3F934F29423848B9F1D76D09BE6A1FCFE7E7F06AA26ABEAD":
                 {{
-                    "name": "fixRemoveNFTokenAutoTrustLine", 
-                    "enabled": false, 
+                    "name": "fixRemoveNFTokenAutoTrustLine",
+                    "enabled": false,
                     "supported": false
                 }}
             }},
-            "ledger_hash": "{}", 
-            "ledger_index": {}, 
+            "ledger_hash": "{}",
+            "ledger_index": {},
             "validated": true
         }})",
         kLEDGER_HASH,

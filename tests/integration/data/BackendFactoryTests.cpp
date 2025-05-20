@@ -22,11 +22,11 @@
 #include "data/cassandra/Handle.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
-#include "util/newconfig/ConfigConstraints.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigFileJson.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigConstraints.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigFileJson.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
 
 #include <TestGlobals.hpp>
 #include <boost/json/parse.hpp>
@@ -84,9 +84,8 @@ protected:
 };
 
 class BackendCassandraFactoryTestWithDB : public BackendCassandraFactoryTest {
-protected:
-    void
-    TearDown() override
+public:
+    ~BackendCassandraFactoryTestWithDB() override
     {
         // drop the keyspace for next test
         data::cassandra::Handle const handle{TestGlobals::instance().backendHost};

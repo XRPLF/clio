@@ -25,6 +25,8 @@
 #include "data/cassandra/impl/Tuple.hpp"
 #include "util/UnsupportedType.hpp"
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <cassandra.h>
 #include <fmt/core.h>
 #include <xrpl/basics/base_uint.h>
@@ -135,9 +137,15 @@ public:
         } else if constexpr (std::is_same_v<DecayedType, Limit>) {
             auto const rc = cass_statement_bind_int32(*this, idx, value.limit);
             throwErrorIfNeeded(rc, "Bind limit (int32)");
-        }
-        // clio only uses bigint (int64_t) so we convert any incoming type
-        else if constexpr (std::is_convertible_v<DecayedType, int64_t>) {
+        } else if constexpr (std::is_convertible_v<DecayedType, boost::uuids::uuid>) {
+            auto const uuidStr = boost::uuids::to_string(value);
+            CassUuid cassUuid;
+            auto rc = cass_uuid_from_string(uuidStr.c_str(), &cassUuid);
+            throwErrorIfNeeded(rc, "CassUuid from string");
+            rc = cass_statement_bind_uuid(*this, idx, cassUuid);
+            throwErrorIfNeeded(rc, "Bind boost::uuid");
+            // clio only uses bigint (int64_t) so we convert any incoming type
+        } else if constexpr (std::is_convertible_v<DecayedType, int64_t>) {
             auto const rc = cass_statement_bind_int64(*this, idx, value);
             throwErrorIfNeeded(rc, "Bind int64");
         } else {

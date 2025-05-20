@@ -57,7 +57,7 @@ TEST_F(BackendCassandraRetryPolicyTest, RetryCorrectlyExecuted)
     }
 }
 
-TEST_F(BackendCassandraRetryPolicyTest, MutlipleRetryCancelPreviousCalls)
+TEST_F(BackendCassandraRetryPolicyTest, MultipleRetryCancelPreviousCalls)
 {
     StrictMock<MockFunction<void()>> callback;
     EXPECT_CALL(callback, Call());

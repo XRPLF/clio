@@ -20,7 +20,7 @@
 #pragma once
 
 #include "util/Assert.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/json.hpp>
@@ -96,6 +96,19 @@ public:
         decorator.decorate(os);
         return os;
     }
+
+    /**
+     * @brief Gets the string representation of the tag.
+     *
+     * @return The string representation of the tag
+     */
+    std::string
+    toString() const
+    {
+        std::ostringstream oss;
+        decorate(oss);
+        return std::move(oss).str();
+    }
 };
 
 /**
@@ -146,7 +159,7 @@ public:
 /**
  * @brief Specialization for a nop/null decorator.
  *
- * This generates a pass-thru decorate member function which can be optimized away by the compiler.
+ * This generates a pass-through decorate member function which can be optimized away by the compiler.
  */
 template <>
 class TagDecorator<impl::NullTagGenerator> final : public BaseTagDecorator {

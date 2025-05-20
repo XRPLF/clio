@@ -18,7 +18,8 @@ Clio needs access to a `rippled` server in order to work. The following configur
 
    - A port to handle gRPC requests, with the IP(s) of Clio specified in the `secure_gateway` entry
 
-The example configs of [rippled](https://github.com/XRPLF/rippled/blob/develop/cfg/rippled-example.cfg) and [Clio](../docs/examples/config/example-config.json) are set up in a way that minimal changes are required.
+The example configs of [rippled](https://github.com/XRPLF/rippled/blob/develop/cfg/rippled-example.cfg) and [Clio](../docs/examples/config/example-config.json) are set up in a way that minimal changes are required. However, if you want to view all configuration keys available in Clio, see [config-description.md](./config-description.md).
+
 When running locally, the only change needed is to uncomment the `port_grpc` section of the `rippled` config.
 
 If you're running Clio and `rippled` on separate machines, in addition to uncommenting the `port_grpc` section, a few other steps must be taken:
@@ -52,7 +53,7 @@ Here is an example snippet from the config file:
 
 ## SSL
 
-The parameters `ssl_cert_file` and `ssl_key_file` can also be added to the top level of precedence of our Clio config. The `ssl_cert_file` field specifies the filepath for your SSL cert, while `ssl_key_file` specifies the filepath for your SSL key. It is up to you how to change ownership of these folders for your designated Clio user. 
+The parameters `ssl_cert_file` and `ssl_key_file` can also be added to the top level of precedence of our Clio config. The `ssl_cert_file` field specifies the filepath for your SSL cert, while `ssl_key_file` specifies the filepath for your SSL key. It is up to you how to change ownership of these folders for your designated Clio user.
 
 Your options include:
 

@@ -21,9 +21,9 @@
 #include "util/LoggerFixtures.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
 #include "web/impl/ErrorHandling.hpp"
 #include "web/interface/ConnectionBaseMock.hpp"
 
@@ -184,10 +184,10 @@ INSTANTIATE_TEST_CASE_P(
             boost::beast::http::status::bad_request
         },
         ErrorHandlingSendErrorTestBundle{
-            "NotUpgradedConnection_ParamsUnparseable",
+            "NotUpgradedConnection_ParamsUnparsable",
             false,
-            rpc::Status{rpc::ClioError::RpcParamsUnparseable},
-            "params unparseable",
+            rpc::Status{rpc::ClioError::RpcParamsUnparsable},
+            "params unparsable",
             boost::beast::http::status::bad_request
         },
         ErrorHandlingSendErrorTestBundle{

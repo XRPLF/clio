@@ -112,7 +112,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
-        R"({{ 
+        R"({{
             "ledger_index": "4",
             "tx_hash": "{}"
         }})",
@@ -138,7 +138,7 @@ TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "tx_hash": "{}"
             }})",
             kTXN_ID
@@ -168,7 +168,7 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "tx_hash": "{}",
                 "ledger_index": "30"
             }})",
@@ -245,7 +245,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "tx_hash": "{}",
                 "ledger_index": {}
             }})",
@@ -319,7 +319,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{ 
+            R"({{
                 "tx_hash": "{}",
                 "ledger_index": {}
             }})",

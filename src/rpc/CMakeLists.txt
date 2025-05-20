@@ -1,3 +1,8 @@
+# Have to use RPCCenter as a separate library since it is used in util
+add_library(clio_rpc_center)
+target_sources(clio_rpc_center PRIVATE RPCCenter.cpp)
+target_include_directories(clio_rpc_center PUBLIC "${CMAKE_SOURCE_DIR}/src")
+
 add_library(clio_rpc)
 
 target_sources(

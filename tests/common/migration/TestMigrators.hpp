@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "util/MockMigrationBackend.hpp"
-#include "util/newconfig/ObjectView.hpp"
+#include "util/config/ObjectView.hpp"
 
 #include <memory>
 

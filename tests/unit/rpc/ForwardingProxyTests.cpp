@@ -25,9 +25,9 @@
 #include "util/MockLoadBalancer.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
 #include "web/Context.hpp"
 
 #include <boost/json/object.hpp>
@@ -60,11 +60,7 @@ protected:
     ClioConfigDefinition const config_{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none")}};
     util::TagDecoratorFactory tagFactory_{config_};
 
-    rpc::impl::ForwardingProxy<MockLoadBalancer, MockCounters, MockHandlerProvider> proxy_{
-        loadBalancer_,
-        counters_,
-        handlerProvider_
-    };
+    rpc::impl::ForwardingProxy<MockCounters, MockHandlerProvider> proxy_{loadBalancer_, counters_, handlerProvider_};
 };
 
 struct ShouldForwardParamTestCaseBundle {

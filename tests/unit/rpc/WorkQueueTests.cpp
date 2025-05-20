@@ -20,9 +20,9 @@
 #include "rpc/WorkQueue.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Types.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
 
@@ -154,7 +154,7 @@ struct WorkQueueMockPrometheusTest : WithMockPrometheus, RPCWorkQueueTestBase {}
 TEST_F(WorkQueueMockPrometheusTest, postCoroCouhters)
 {
     auto& queuedMock = makeMock<CounterInt>("work_queue_queued_total_number", "");
-    auto& durationMock = makeMock<CounterInt>("work_queue_cumulitive_tasks_duration_us", "");
+    auto& durationMock = makeMock<CounterInt>("work_queue_cumulative_tasks_duration_us", "");
     auto& curSizeMock = makeMock<GaugeInt>("work_queue_current_size", "");
 
     std::binary_semaphore semaphore{0};

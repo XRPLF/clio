@@ -137,6 +137,8 @@ struct Amendments {
     REGISTER(fixInvalidTxFlags);
     REGISTER(fixFrozenLPTokenTransfer);
     REGISTER(DeepFreeze);
+    REGISTER(PermissionDelegation);
+    REGISTER(fixPayChanCancelAfter);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);
