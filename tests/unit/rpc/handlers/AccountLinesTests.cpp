@@ -830,6 +830,8 @@ TEST_F(RPCAccountLinesHandlerTest, FrozenTrustLineResponse)
                 "limit_peer": "200",
                 "quality_in": 0,
                 "quality_out": 0,
+                "no_ripple": false,
+                "no_ripple_peer": false,
                 "peer_authorized": true,
                 "freeze_peer": true
             },
@@ -842,7 +844,9 @@ TEST_F(RPCAccountLinesHandlerTest, FrozenTrustLineResponse)
                 "quality_in": 0,
                 "quality_out": 0,
                 "authorized": true,
-                "freeze": true
+                "freeze": true,
+                "no_ripple": false,
+                "no_ripple_peer": false
             }
         ]
     })";
