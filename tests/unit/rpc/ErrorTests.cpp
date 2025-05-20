@@ -67,7 +67,6 @@ TEST(RPCErrorsTest, StatusAsBool)
         RippledError::rpcUNKNOWN_COMMAND,
         RippledError::rpcTOO_BUSY,
         RippledError::rpcNO_NETWORK,
-        RippledError::rpcWRONG_NETWORK,
         RippledError::rpcACT_MALFORMED,
         RippledError::rpcBAD_MARKET,
         ClioError::RpcMalformedCurrency,

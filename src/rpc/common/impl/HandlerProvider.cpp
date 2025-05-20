@@ -87,7 +87,7 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"account_nfts", {.handler = AccountNFTsHandler{backend}}},
           {"account_objects", {.handler = AccountObjectsHandler{backend}}},
           {"account_offers", {.handler = AccountOffersHandler{backend}}},
-          {"account_tx", {.handler = AccountTxHandler{backend, etl}}},
+          {"account_tx", {.handler = AccountTxHandler{backend}}},
           {"amm_info", {.handler = AMMInfoHandler{backend, amendmentCenter}}},
           {"book_changes", {.handler = BookChangesHandler{backend}}},
           {"book_offers", {.handler = BookOffersHandler{backend, amendmentCenter}}},

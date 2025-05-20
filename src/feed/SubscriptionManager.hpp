@@ -69,7 +69,6 @@ class SubscriptionManager : public SubscriptionManagerInterface {
     impl::BookChangesFeed bookChangesFeed_;
     impl::TransactionFeed transactionFeed_;
     impl::ProposedTransactionFeed proposedTransactionFeed_;
-    uint32_t networkID_{0};
 
 public:
     /**
@@ -333,21 +332,6 @@ public:
      */
     boost::json::object
     report() const final;
-
-    /**
-     * @brief Set the networkID.
-     * @param networkID The network id to set.
-     */
-    void
-    setNetworkID(uint32_t networkID) final;
-
-    /**
-     * @brief Get the networkID.
-     *
-     * @return The network id.
-     */
-    uint32_t
-    getNetworkID() const final;
 };
 
 }  // namespace feed

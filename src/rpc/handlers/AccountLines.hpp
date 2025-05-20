@@ -70,8 +70,8 @@ public:
         std::string limitPeer;
         uint32_t qualityIn{};
         uint32_t qualityOut{};
-        std::optional<bool> noRipple;
-        std::optional<bool> noRipplePeer;
+        bool noRipple{};
+        bool noRipplePeer{};
         std::optional<bool> authorized;
         std::optional<bool> peerAuthorized;
         std::optional<bool> freeze;
