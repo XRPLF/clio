@@ -174,6 +174,7 @@ target_sources(
           util/TimeUtilsTests.cpp
           util/TxUtilTests.cpp
           util/WithTimeout.cpp
+          util/CancellationPlayground.cpp
           # Webserver
           web/AdminVerificationTests.cpp
           web/dosguard/DOSGuardTests.cpp
