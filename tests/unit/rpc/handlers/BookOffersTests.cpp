@@ -333,7 +333,7 @@ generateParameterBookOffersTestBundles()
             .expectedErrorMessage = "Invalid parameters."
         },
         ParameterTestBundle{
-            .testName = "LimitNagetive",
+            .testName = "LimitNegative",
             .testJson = R"({
                 "taker_pays" :
                 {
