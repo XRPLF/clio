@@ -47,11 +47,9 @@
 #include "util/config/ConfigValue.hpp"
 #include "util/config/Types.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <boost/json/array.hpp>
-#include <boost/json/kind.hpp>
 #include <boost/json/object.hpp>
-#include <boost/json/serialize.hpp>
+#include <boost/json/parse.hpp>
 #include <boost/signals2/connection.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -262,7 +260,7 @@ TEST_F(ETLServiceTests, RunWithEmptyDatabase)
     auto mockTaskManager = std::make_unique<testing::NiceMock<MockTaskManager>>();
     auto ledgerData = createTestData(kSEQ);
 
-    testing::Sequence s;
+    testing::Sequence const s;
     EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_)).InSequence(s).WillOnce(testing::Return(std::nullopt));
     EXPECT_CALL(*ledgers_, getMostRecent()).WillRepeatedly(testing::Return(kSEQ));
     EXPECT_CALL(*extractor_, extractLedgerOnly(kSEQ)).WillOnce(testing::Return(ledgerData));
@@ -326,7 +324,7 @@ TEST_F(ETLServiceAssertTests, FailToLoadInitialLedger)
 
 TEST_F(ETLServiceAssertTests, WaitForValidatedLedgerIsAbortedLeadToFailToLoadInitialLedger)
 {
-    testing::Sequence s;
+    testing::Sequence const s;
     EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillOnce(testing::Return(std::nullopt));
     EXPECT_CALL(*ledgers_, getMostRecent()).InSequence(s).WillOnce(testing::Return(std::nullopt));
     EXPECT_CALL(*ledgers_, getMostRecent()).InSequence(s).WillOnce(testing::Return(kSEQ));

@@ -47,11 +47,7 @@
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
-#include <boost/json/object.hpp>
-#include <grpcpp/grpcpp.h>
-#include <org/xrpl/rpc/v1/get_ledger.pb.h>
 #include <xrpl/beast/core/CurrentThreadName.h>
-#include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 #include <xrpl/protocol/LedgerHeader.h>
 
 #include <chrono>

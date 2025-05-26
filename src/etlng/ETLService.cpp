@@ -54,19 +54,9 @@
 #include "util/async/AnyExecutionContext.hpp"
 #include "util/log/Logger.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <boost/json/object.hpp>
 #include <boost/signals2/connection.hpp>
 #include <fmt/core.h>
-#include <xrpl/basics/Blob.h>
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/basics/strHex.h>
-#include <xrpl/proto/org/xrpl/rpc/v1/get_ledger.pb.h>
-#include <xrpl/proto/org/xrpl/rpc/v1/ledger.pb.h>
-#include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/STTx.h>
-#include <xrpl/protocol/TxFormats.h>
-#include <xrpl/protocol/TxMeta.h>
 
 #include <chrono>
 #include <cstddef>
