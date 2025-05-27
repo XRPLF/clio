@@ -100,6 +100,7 @@ class ClioConan(ConanFile):
             "snapshot",
             "static",
             "tests",
+            "time_trace",
             "verbose",
         ]:
             tc.variables[opt] = getattr(self.options, opt)
