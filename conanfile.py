@@ -1,6 +1,7 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 
+
 class ClioConan(ConanFile):
     name = 'clio'
     license = 'ISC'
