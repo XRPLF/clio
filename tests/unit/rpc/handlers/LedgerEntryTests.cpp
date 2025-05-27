@@ -2193,6 +2193,106 @@ generateTestValuesForParametersTest()
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request.",
         },
+        ParamTestCaseBundle{
+            .testName = "Delegate_InvalidType",
+            .testJson = R"json({"delegate": 123})json",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request."
+        },
+        ParamTestCaseBundle{
+            .testName = "Delegate_InvalidStringIndex",
+            .testJson = R"json({"delegate": "invalid_hex_string"})json",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request."
+        },
+        ParamTestCaseBundle{
+            .testName = "Delegate_EmptyObject",
+            .testJson = R"json({"delegate": {}})json",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request."
+        },
+        ParamTestCaseBundle{
+            .testName = "Delegate_MissingAccount",
+            .testJson = fmt::format(
+                R"json({{
+                    "delegate": {{
+                        "authorize": "{}"
+                    }}
+                }})json",
+                kACCOUNT2
+            ),
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request."
+        },
+        ParamTestCaseBundle{
+            .testName = "Delegate_AccountNotString",
+            .testJson = fmt::format(
+                R"json({{
+                    "delegate": {{
+                        "account": 123,
+                        "authorize": "{}"
+                    }}
+                }})json",
+                kACCOUNT2
+            ),
+            .expectedError = "malformedAddress",
+            .expectedErrorMessage = "Malformed address."
+        },
+        ParamTestCaseBundle{
+            .testName = "Delegate_AccountInvalid",
+            .testJson = fmt::format(
+                R"json({{
+                    "delegate": {{
+                        "account": "invalid_address",
+                        "authorize": "{}"
+                    }}
+                }})json",
+                kACCOUNT2
+            ),
+            .expectedError = "malformedAddress",
+            .expectedErrorMessage = "Malformed address."
+        },
+        ParamTestCaseBundle{
+            .testName = "Delegate_MissingAuthorize",
+            .testJson = fmt::format(
+                R"json({{
+                    "delegate": {{
+                        "account": "{}"
+                    }}
+                }})json",
+                kACCOUNT
+            ),
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request."
+        },
+        ParamTestCaseBundle{
+            .testName = "Delegate_AuthorizeNotString",
+            .testJson = fmt::format(
+                R"json({{
+                    "delegate": {{
+                        "account": "{}",
+                        "authorize": 123
+                    }}
+                }})json",
+                kACCOUNT
+            ),
+            .expectedError = "malformedAddress",
+            .expectedErrorMessage = "Malformed address."
+        },
+        ParamTestCaseBundle{
+            .testName = "Delegate_AuthorizeInvalid",
+            .testJson = fmt::format(
+                R"json({{
+                    "delegate": {{
+                        "account": "{}",
+                        "authorize": "invalid_address"
+                    }}
+                }})json",
+                kACCOUNT
+            ),
+            .expectedError = "malformedAddress",
+            .expectedErrorMessage = "Malformed address."
+        },
     };
 }
 
@@ -2957,7 +3057,36 @@ generateTestValuesForNormalPathTest()
                 ripple::keylet::permissionedDomain(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX)
                     .key,
             .mockedEntity = createPermissionedDomainObject(kACCOUNT, kINDEX1, kRANGE_MAX, 0, ripple::uint256{0}, 0)
-        }
+        },
+        NormalPathTestBundle{
+            .testName = "DelegateViaStringIndex",
+            .testJson = fmt::format(
+                R"json({{
+                    "binary": true,
+                    "delegate": "{}"
+                }})json",
+                kINDEX1
+            ),
+            .expectedIndex = ripple::uint256{kINDEX1},
+            .mockedEntity = createDelegateObject(kACCOUNT, kACCOUNT2, kINDEX1, 0, ripple::uint256{0}, 0)
+        },
+        NormalPathTestBundle{
+            .testName = "DelegateViaObject",
+            .testJson = fmt::format(
+                R"json({{
+                    "binary": true,
+                    "delegate": {{
+                        "account": "{}",
+                        "authorize": "{}"
+                    }}
+                }})json",
+                kACCOUNT,
+                kACCOUNT2
+            ),
+            .expectedIndex =
+                ripple::keylet::delegate(getAccountIdWithString(kACCOUNT), getAccountIdWithString(kACCOUNT2)).key,
+            .mockedEntity = createDelegateObject(kACCOUNT, kACCOUNT2, kINDEX1, 0, ripple::uint256{0}, 0)
+        },
     };
 }
 

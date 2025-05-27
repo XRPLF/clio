@@ -2,7 +2,14 @@ FROM rippleci/clio_clang:16
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
 
-SHELL ["/bin/bash", "-c"]
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Using root by default is not very secure but github checkout action doesn't work with any other user
+# https://github.com/actions/checkout/issues/956
+# And Github Actions doc recommends using root
+# https://docs.github.com/en/actions/sharing-automations/creating-actions/dockerfile-support-for-github-actions#user
+
+# hadolint ignore=DL3002
 USER root
 WORKDIR /root
 
@@ -17,7 +24,8 @@ ENV CCACHE_VERSION=4.10.2 \
 RUN apt-get -qq update \
     && apt-get -qq install -y --no-install-recommends --no-install-suggests gnupg wget curl software-properties-common \
     && echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-${LLVM_TOOLS_VERSION} main" >> /etc/apt/sources.list \
-    && wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+    && wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install packages
 RUN apt update -qq \
@@ -82,10 +90,6 @@ RUN wget "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VE
     && rm -rf /tmp/* /var/tmp/*
 
 WORKDIR /root
-# Using root by default is not very secure but github checkout action doesn't work with any other user
-# https://github.com/actions/checkout/issues/956
-# And Github Actions doc recommends using root
-# https://docs.github.com/en/actions/sharing-automations/creating-actions/dockerfile-support-for-github-actions#user
 
 # Setup conan
 RUN conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod

@@ -61,6 +61,7 @@ pushd ${DOCDIR} > /dev/null 2>&1
 cat ${ROOT}/docs/Doxyfile | \
 sed \
     -e "s/\${LINT}/YES/" \
+    -e "s/\${WARN_AS_ERROR}/NO/" \
     -e "s!\${SOURCE}!${ROOT}!" \
     -e "s/\${USE_DOT}/NO/" \
     -e "s/\${EXCLUDES}/impl/" \

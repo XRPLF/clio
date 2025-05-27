@@ -1517,6 +1517,31 @@ createPermissionedDomainObject(
 }
 
 ripple::STObject
+createDelegateObject(
+    std::string_view accountId,
+    std::string_view authorize,
+    std::string_view ledgerIndex,
+    uint64_t ownerNode,
+    ripple::uint256 previousTxId,
+    uint32_t previousTxSeq
+)
+{
+    ripple::STObject object(ripple::sfLedgerEntry);
+
+    object.setFieldH256(ripple::sfLedgerIndex, ripple::uint256(ledgerIndex));
+    object.setFieldU16(ripple::sfLedgerEntryType, ripple::ltDELEGATE);
+    object.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
+    object.setAccountID(ripple::sfAuthorize, getAccountIdWithString(authorize));
+    object.setFieldArray(ripple::sfPermissions, ripple::STArray{});
+    object.setFieldU64(ripple::sfOwnerNode, ownerNode);
+    object.setFieldH256(ripple::sfPreviousTxnID, previousTxId);
+    object.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxSeq);
+    object.setFieldU32(ripple::sfFlags, 0);
+
+    return object;
+}
+
+ripple::STObject
 createOraclePriceData(
     uint64_t assetPrice,
     ripple::Currency baseAssetCurrency,

@@ -40,9 +40,11 @@ target_sources(
           etl/TransformerTests.cpp
           # ETLng
           etlng/AmendmentBlockHandlerTests.cpp
+          etlng/ETLServiceTests.cpp
           etlng/ExtractionTests.cpp
           etlng/ForwardingSourceTests.cpp
           etlng/GrpcSourceTests.cpp
+          etlng/LedgerPublisherTests.cpp
           etlng/RegistryTests.cpp
           etlng/SchedulingTests.cpp
           etlng/TaskManagerTests.cpp
@@ -53,6 +55,7 @@ target_sources(
           etlng/SourceImplTests.cpp
           etlng/ext/CoreTests.cpp
           etlng/ext/CacheTests.cpp
+          etlng/ext/MPTTests.cpp
           etlng/ext/NFTTests.cpp
           etlng/ext/SuccessorTests.cpp
           # Feed
@@ -145,7 +148,6 @@ target_sources(
           util/ConceptsTests.cpp
           util/CoroutineGroupTests.cpp
           util/LedgerUtilsTests.cpp
-          util/StrandedPriorityQueueTests.cpp
           util/StringHashTests.cpp
           # Prometheus support
           util/prometheus/BoolTests.cpp

@@ -93,7 +93,7 @@ public:
     makeJsonParsingError() const;
 
     /**
-     * @beirf Compose an error into json object from a status.
+     * @brief Compose an error into json object from a status.
      *
      * @param error The status to compose into a json object.
      * @return The composed json object.

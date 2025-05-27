@@ -83,7 +83,7 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitNotInt)
     });
 }
 
-TEST_F(RPCAccountChannelsHandlerTest, LimitNagetive)
+TEST_F(RPCAccountChannelsHandlerTest, LimitNegative)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};

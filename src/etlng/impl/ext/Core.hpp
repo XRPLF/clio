@@ -39,20 +39,20 @@ public:
     CoreExt(std::shared_ptr<BackendInterface> backend);
 
     void
-    onLedgerData(model::LedgerData const& data) const;
+    onLedgerData(model::LedgerData const& data);
 
     void
-    onInitialData(model::LedgerData const& data) const;
+    onInitialData(model::LedgerData const& data);
 
     void
-    onInitialObject(uint32_t seq, model::Object const& obj) const;
+    onInitialObject(uint32_t seq, model::Object const& obj);
 
     void
-    onObject(uint32_t seq, model::Object const& obj) const;
+    onObject(uint32_t seq, model::Object const& obj);
 
 private:
     void
-    insertTransactions(model::LedgerData const& data) const;
+    insertTransactions(model::LedgerData const& data);
 };
 
 }  // namespace etlng::impl

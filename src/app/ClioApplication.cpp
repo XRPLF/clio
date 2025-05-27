@@ -36,6 +36,7 @@
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
+#include "util/async/context/BasicExecutionContext.hpp"
 #include "util/build/Build.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
@@ -103,6 +104,10 @@ ClioApplication::run(bool const useNgWebServer)
     // This is not the only io context in the application.
     boost::asio::io_context ioc{threads};
 
+    // Similarly we need a context to run ETLng on
+    // In the future we can remove the raw ioc and use ctx instead
+    util::async::CoroExecutionContext ctx{threads};
+
     // Rate limiter, to prevent abuse
     auto whitelistHandler = web::dosguard::WhitelistHandler{config_};
     auto const dosguardWeights = web::dosguard::Weights::make(config_);
@@ -146,7 +151,7 @@ ClioApplication::run(bool const useNgWebServer)
     }();
 
     // ETL is responsible for writing and publishing to streams. In read-only mode, ETL only publishes
-    auto etl = etl::ETLService::makeETLService(config_, ioc, backend, subscriptions, balancer, ledgers);
+    auto etl = etl::ETLService::makeETLService(config_, ioc, ctx, backend, subscriptions, balancer, ledgers);
 
     auto workQueue = rpc::WorkQueue::makeWorkQueue(config_);
     auto counters = rpc::Counters::makeCounters(workQueue);

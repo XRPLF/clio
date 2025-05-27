@@ -43,7 +43,7 @@ RUN /gcc-$GCC_VERSION/configure \
     --disable-multilib \
     --without-cuda-driver \
     --enable-checking=release \
-    && make -j`nproc` \
+    && make -j "$(nproc)" \
     && make install-strip DESTDIR=/gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION \
     && mkdir -p /gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION/usr/share/gdb/auto-load/usr/lib64 \
     && mv /gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION/usr/lib64/libstdc++.so.6.0.30-gdb.py /gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION/usr/share/gdb/auto-load/usr/lib64/libstdc++.so.6.0.30-gdb.py

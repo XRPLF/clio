@@ -465,6 +465,16 @@ createPermissionedDomainObject(
 );
 
 [[nodiscard]] ripple::STObject
+createDelegateObject(
+    std::string_view accountId,
+    std::string_view authorize,
+    std::string_view ledgerIndex,
+    uint64_t ownerNode,
+    ripple::uint256 previousTxId,
+    uint32_t previousTxSeq
+);
+
+[[nodiscard]] ripple::STObject
 createOraclePriceData(
     uint64_t assetPrice,
     ripple::Currency baseAssetCurrency,

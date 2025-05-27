@@ -19,33 +19,41 @@
 
 #pragma once
 
-#include "data/LedgerCacheInterface.hpp"
+#include "etlng/CacheUpdaterInterface.hpp"
 #include "etlng/Models.hpp"
+#include "etlng/impl/CacheUpdater.hpp"
 #include "util/log/Logger.hpp"
 
 #include <cstdint>
-#include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
 namespace etlng::impl {
 
 class CacheExt {
-    std::reference_wrapper<data::LedgerCacheInterface> cache_;
+    std::shared_ptr<CacheUpdaterInterface> cacheUpdater_;
 
     util::Logger log_{"ETL"};
 
 public:
-    CacheExt(data::LedgerCacheInterface& cache);
+    CacheExt(std::shared_ptr<CacheUpdaterInterface> cacheUpdater);
 
     void
-    onLedgerData(model::LedgerData const& data) const;
+    onLedgerData(model::LedgerData const& data);
 
     void
-    onInitialData(model::LedgerData const& data) const;
+    onInitialData(model::LedgerData const& data);
 
     void
-    onInitialObjects(uint32_t seq, std::vector<model::Object> const& objs, [[maybe_unused]] std::string lastKey) const;
+    onInitialObjects(uint32_t seq, std::vector<model::Object> const& objs, [[maybe_unused]] std::string lastKey);
+
+    // We want cache updates through ETL if we are a potential writer but currently are not writing to DB
+    static bool
+    allowInReadonly()
+    {
+        return true;
+    }
 };
 
 }  // namespace etlng::impl

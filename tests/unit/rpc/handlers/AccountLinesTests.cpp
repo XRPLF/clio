@@ -285,7 +285,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitNotInt)
     });
 }
 
-TEST_F(RPCAccountLinesHandlerTest, LimitNagetive)
+TEST_F(RPCAccountLinesHandlerTest, LimitNegative)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountLinesHandler{backend_}};

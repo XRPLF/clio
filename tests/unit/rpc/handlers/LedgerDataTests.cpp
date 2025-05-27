@@ -111,7 +111,7 @@ generateTestValuesForParametersTest()
             .expectedErrorMessage = "Invalid parameters."
         },
         LedgerDataParamTestCaseBundle{
-            .testName = "limitNagetive",
+            .testName = "limitNegative",
             .testJson = R"({"limit": -1})",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."

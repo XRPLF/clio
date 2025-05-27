@@ -32,7 +32,7 @@ class ClioConan(ConanFile):
         'protobuf/3.21.12',
         'grpc/1.50.1',
         'openssl/1.1.1v',
-        'xrpl/2.4.0',
+        'xrpl/2.5.0-b1',
         'zlib/1.3.1',
         'libbacktrace/cci.20210118'
     ]

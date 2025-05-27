@@ -149,7 +149,7 @@ generateTestValuesForParametersTest()
             .expectedErrorMessage = "Invalid parameters."
         },
         AccountObjectsParamTestCaseBundle{
-            .testName = "LimitNagetive",
+            .testName = "LimitNegative",
             .testJson = R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":-1})",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."

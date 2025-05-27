@@ -50,7 +50,7 @@ public:
     static ActionType const kDEFAULT_AMENDMENT_BLOCK_ACTION;
 
     AmendmentBlockHandler(
-        util::async::AnyExecutionContext&& ctx,
+        util::async::AnyExecutionContext ctx,
         etl::SystemState& state,
         std::chrono::steady_clock::duration interval = std::chrono::seconds{1},
         ActionType action = kDEFAULT_AMENDMENT_BLOCK_ACTION
