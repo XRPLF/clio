@@ -26,9 +26,6 @@
 #include "util/log/Logger.hpp"
 
 #include <xrpl/basics/strHex.h>
-#include <xrpl/protocol/AccountID.h>
-#include <xrpl/protocol/STTx.h>
-#include <xrpl/protocol/TxMeta.h>
 
 #include <cstdint>
 #include <memory>
