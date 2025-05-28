@@ -49,6 +49,7 @@ class ClioConan(ConanFile):
         'lint': False,
         'docs': False,
         'snapshot': False,
+        'time_trace': False,
     }
     # check that these can all be defined in build_options
     build_options = {
