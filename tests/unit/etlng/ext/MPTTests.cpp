@@ -27,19 +27,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <xrpl/basics/Blob.h>
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/basics/strHex.h>
-#include <xrpl/protocol/AMMCore.h>
-#include <xrpl/protocol/AccountID.h>
-#include <xrpl/protocol/LedgerFormats.h>
-#include <xrpl/protocol/SField.h>
-#include <xrpl/protocol/STObject.h>
-#include <xrpl/protocol/STTx.h>
-#include <xrpl/protocol/TER.h>
 #include <xrpl/protocol/TxFormats.h>
-#include <xrpl/protocol/TxMeta.h>
-#include <xrpl/protocol/serialize.h>
 
 #include <algorithm>
 #include <utility>
