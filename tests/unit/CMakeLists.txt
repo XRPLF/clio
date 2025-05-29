@@ -164,6 +164,7 @@ target_sources(
           # Common utils
           util/AccountUtilsTests.cpp
           util/AssertTests.cpp
+          util/Coroutine.cpp
           util/MoveTrackerTests.cpp
           util/RandomTests.cpp
           util/RetryTests.cpp
@@ -174,7 +175,6 @@ target_sources(
           util/TimeUtilsTests.cpp
           util/TxUtilTests.cpp
           util/WithTimeout.cpp
-          util/CancellationPlayground.cpp
           # Webserver
           web/AdminVerificationTests.cpp
           web/dosguard/DOSGuardTests.cpp
