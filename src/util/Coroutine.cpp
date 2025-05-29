@@ -80,4 +80,5 @@ Coroutine::yieldContext() const
 {
     return cyield_;
 }
+
 }  // namespace util

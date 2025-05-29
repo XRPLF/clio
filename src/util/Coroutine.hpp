@@ -36,8 +36,21 @@
 
 namespace util {
 
+/**
+ * @brief Manages a coroutine execution context, allowing for cooperative multitasking
+ *        and cancellation.
+ *
+ * The Coroutine class wraps a Boost.Asio yield_context and provides mechanisms
+ * for spawning new coroutines, child coroutines, and managing their lifecycle,
+ * including cancellation. It integrates with a signal system to propagate
+ * cancellation requests across related coroutines.
+ */
 class Coroutine {
 public:
+    /**
+     * @brief Type alias for a yield_context that is bound to a cancellation slot.
+     * This allows asynchronous operations initiated with this context to be cancelled.
+     */
     using cancellable_yield_context_type =
         boost::asio::cancellation_slot_binder<boost::asio::yield_context, boost::asio::cancellation_slot>;
 
@@ -52,6 +65,12 @@ private:
     std::shared_ptr<GlobalSignal> signal_;
     boost::signals2::connection connection_;
 
+    /**
+     * @brief Private constructor to create a Coroutine instance.
+     * @param yield The Boost.Asio yield_context for this coroutine.
+     * @param signal A shared signal used for propagating cancellation requests among related coroutines.
+     * @param generation The generation number of this coroutine, used to manage parent/child relationships.
+     */
     explicit Coroutine(
         boost::asio::yield_context&& yield,
         std::shared_ptr<GlobalSignal> signal = std::make_shared<GlobalSignal>(),
@@ -59,6 +78,10 @@ private:
     );
 
 public:
+    /**
+     * @brief Destructor for the Coroutine.
+     * Handles cleanup, such as disconnecting from the cancellation signal.
+     */
     ~Coroutine();
 
     Coroutine(Coroutine const&) = delete;
@@ -70,6 +93,13 @@ public:
     Coroutine&
     operator==(Coroutine const&) = delete;
 
+    /**
+     * @brief Spawns a new top-level coroutine.
+     * @tparam ExecutionContext The type of the I/O execution context (e.g., boost::asio::io_context).
+     * @tparam Fn The type of the invocable function that represents the coroutine body.
+     * @param ioContext The I/O execution context on which to spawn the coroutine.
+     * @param fn The function to be executed as the coroutine. It will receive a Coroutine& argument.
+     */
     template <typename ExecutionContext, std::invocable<Coroutine&> Fn>
     static void
     spawnNew(ExecutionContext& ioContext, Fn&& fn)
@@ -80,6 +110,12 @@ public:
         });
     }
 
+    /**
+     * @brief Spawns a child coroutine from this coroutine.
+     * The child coroutine shares the same cancellation signal and has an incremented generation number.
+     * @tparam Fn The type of the invocable function that represents the child coroutine body.
+     * @param fn The function to be executed as the child coroutine. It will receive a Coroutine& argument.
+     */
     template <std::invocable<Coroutine&> Fn>
     void
     spawnChild(Fn&& fn)
@@ -92,18 +128,43 @@ public:
         });
     }
 
+    /**
+     * @brief Returns the error code, if any, associated with the last operation in this coroutine.
+     * @return A boost::system::error_code indicating the status.
+     */
     boost::system::error_code
     error() const;
 
+    /**
+     * @brief Cancels this specific coroutine and its direct children.
+     * @param cancellationType The type of cancellation to perform (e.g., terminal, partial).
+     *                         Defaults to boost::asio::cancellation_type::terminal.
+     */
     void
     cancel(boost::asio::cancellation_type_t cancellationType = boost::asio::cancellation_type::terminal);
 
+    /**
+     * @brief Cancels this coroutine, all its children, and all related coroutines (siblings, parent).
+     * This effectively cancels all coroutines sharing the same root cancellation signal.
+     * @param cancellationType The type of cancellation to perform.
+     *                         Defaults to boost::asio::cancellation_type::terminal.
+     */
     void
     cancelAll(boost::asio::cancellation_type_t cancellationType = boost::asio::cancellation_type::terminal);
 
+    /**
+     * @brief Checks if this coroutine has been cancelled.
+     * @return True if the coroutine is cancelled, false otherwise.
+     */
     bool
     isCancelled() const;
 
+    /**
+     * @brief Returns the cancellable yield context associated with this coroutine.
+     * This context should be used for Boost.Asio asynchronous operations within the coroutine
+     * to enable cancellation.
+     * @return A cancellable_yield_context_type object.
+     */
     cancellable_yield_context_type
     yieldContext() const;
 };
