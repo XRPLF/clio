@@ -46,6 +46,10 @@ jobs:
 
     if: inputs.run_unit_tests
 
+    env:
+      # TODO: remove when we have fixed all currently existing issues from sanitizers
+      SANITIZER_IGNORE_ERRORS: ${{ inputs.sanitizer != 'false' && inputs.sanitizer != 'ubsan' }}
+
     steps:
       - name: Clean workdir
         if: ${{ runner.os == 'macOS' }}
@@ -64,15 +68,15 @@ jobs:
         run: chmod +x ./clio_tests
 
       - name: Run clio_tests (regular)
-        if: inputs.sanitizer == 'false'
+        if: env.SANITIZER_IGNORE_ERRORS == 'false'
         run: ./clio_tests
 
-      - name: Run clio_tests (sanitizer)
-        if: inputs.sanitizer != 'false'
+      - name: Run clio_tests (sanitizer errors ignored)
+        if: env.SANITIZER_IGNORE_ERRORS == 'true'
         run: ./.github/scripts/execute-tests-under-sanitizer ./clio_tests
 
       - name: Check for sanitizer report
-        if: inputs.sanitizer != 'false'
+        if: env.SANITIZER_IGNORE_ERRORS == 'true'
         shell: bash
         id: check_report
         run: |
@@ -83,16 +87,15 @@ jobs:
           fi
 
       - name: Upload sanitizer report
-        if: inputs.sanitizer != 'false' && steps.check_report.outputs.found_report == 'true'
+        if: env.SANITIZER_IGNORE_ERRORS == 'true' && steps.check_report.outputs.found_report == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.conan_profile }}_report
           path: .sanitizer-report/*
           include-hidden-files: true
 
-      # TODO: enable when we have fixed all currently existing issues from sanitizers
       - name: Create an issue
-        if: false && inputs.sanitizer != 'false' && steps.check_report.outputs.found_report == 'true'
+        if: false && env.SANITIZER_IGNORE_ERRORS == 'true' && steps.check_report.outputs.found_report == 'true'
         uses: ./.github/actions/create_issue
         env:
           GH_TOKEN: ${{ github.token }}

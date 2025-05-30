@@ -69,7 +69,7 @@ TEST_F(CacheLoaderSettingsTest, DefaultSettingsParsedCorrectly)
 
 TEST_F(CacheLoaderSettingsTest, NumThreadsCorrectlyPropagatedThroughConfig)
 {
-    auto const cfg = getParseCacheConfig(json::parse(R"({"io_threads": 42})"));
+    auto const cfg = getParseCacheConfig(json::parse(R"JSON({"io_threads": 42})JSON"));
     auto const settings = makeCacheLoaderSettings(cfg);
 
     EXPECT_EQ(settings.numThreads, 42);
@@ -77,7 +77,7 @@ TEST_F(CacheLoaderSettingsTest, NumThreadsCorrectlyPropagatedThroughConfig)
 
 TEST_F(CacheLoaderSettingsTest, NumDiffsCorrectlyPropagatedThroughConfig)
 {
-    auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"num_diffs": 42}})"));
+    auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"num_diffs": 42}})JSON"));
     auto const settings = makeCacheLoaderSettings(cfg);
 
     EXPECT_EQ(settings.numCacheDiffs, 42);
@@ -85,7 +85,7 @@ TEST_F(CacheLoaderSettingsTest, NumDiffsCorrectlyPropagatedThroughConfig)
 
 TEST_F(CacheLoaderSettingsTest, NumMarkersCorrectlyPropagatedThroughConfig)
 {
-    auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"num_markers": 42}})"));
+    auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"num_markers": 42}})JSON"));
     auto const settings = makeCacheLoaderSettings(cfg);
 
     EXPECT_EQ(settings.numCacheMarkers, 42);
@@ -93,7 +93,7 @@ TEST_F(CacheLoaderSettingsTest, NumMarkersCorrectlyPropagatedThroughConfig)
 
 TEST_F(CacheLoaderSettingsTest, PageFetchSizeCorrectlyPropagatedThroughConfig)
 {
-    auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"page_fetch_size": 42}})"));
+    auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"page_fetch_size": 42}})JSON"));
     auto const settings = makeCacheLoaderSettings(cfg);
 
     EXPECT_EQ(settings.cachePageFetchSize, 42);
@@ -101,7 +101,7 @@ TEST_F(CacheLoaderSettingsTest, PageFetchSizeCorrectlyPropagatedThroughConfig)
 
 TEST_F(CacheLoaderSettingsTest, SyncLoadStyleCorrectlyPropagatedThroughConfig)
 {
-    auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"load": "sYNC"}})"));
+    auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "sYNC"}})JSON"));
     auto const settings = makeCacheLoaderSettings(cfg);
 
     EXPECT_EQ(settings.loadStyle, CacheLoaderSettings::LoadStyle::SYNC);
@@ -110,7 +110,7 @@ TEST_F(CacheLoaderSettingsTest, SyncLoadStyleCorrectlyPropagatedThroughConfig)
 
 TEST_F(CacheLoaderSettingsTest, AsyncLoadStyleCorrectlyPropagatedThroughConfig)
 {
-    auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"load": "aSynC"}})"));
+    auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "aSynC"}})JSON"));
     auto const settings = makeCacheLoaderSettings(cfg);
 
     EXPECT_EQ(settings.loadStyle, CacheLoaderSettings::LoadStyle::ASYNC);
@@ -120,14 +120,14 @@ TEST_F(CacheLoaderSettingsTest, AsyncLoadStyleCorrectlyPropagatedThroughConfig)
 TEST_F(CacheLoaderSettingsTest, NoLoadStyleCorrectlyPropagatedThroughConfig)
 {
     {
-        auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"load": "nONe"}})"));
+        auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "nONe"}})JSON"));
         auto const settings = makeCacheLoaderSettings(cfg);
 
         EXPECT_EQ(settings.loadStyle, CacheLoaderSettings::LoadStyle::NONE);
         EXPECT_TRUE(settings.isDisabled());
     }
     {
-        auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"load": "nO"}})"));
+        auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "nO"}})JSON"));
         auto const settings = makeCacheLoaderSettings(cfg);
 
         EXPECT_EQ(settings.loadStyle, CacheLoaderSettings::LoadStyle::NONE);

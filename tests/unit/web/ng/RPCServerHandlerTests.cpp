@@ -131,7 +131,7 @@ TEST_F(NgRpcServerHandlerTest, DosguardRejectedWsRequest)
 TEST_F(NgRpcServerHandlerTest, DosguardRejectedWsJsonRequest)
 {
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const requestStr = R"json({"request": "some message", "id": "some id"})json";
+        auto const requestStr = R"JSON({"request": "some message", "id": "some id"})JSON";
         auto const request = makeWsRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(false));
@@ -326,7 +326,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_BuildResponseFailed)
 {
     backend_->setRange(0, 1);
     runSpawn([&](boost::asio::yield_context yield) {
-        std::string const requestStr = R"json({"method":"some_method"})json";
+        std::string const requestStr = R"JSON({"method":"some_method"})JSON";
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
@@ -357,7 +357,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_BuildResponseThrewAnException)
 {
     backend_->setRange(0, 1);
     runSpawn([&](boost::asio::yield_context yield) {
-        std::string const requestStr = R"json({"method":"some_method"})json";
+        std::string const requestStr = R"JSON({"method":"some_method"})JSON";
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
@@ -383,7 +383,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest)
 {
     backend_->setRange(0, 1);
     runSpawn([&](boost::asio::yield_context yield) {
-        std::string const requestStr = R"json({"method":"some_method"})json";
+        std::string const requestStr = R"JSON({"method":"some_method"})JSON";
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
@@ -416,7 +416,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_OutdatedWarning)
 {
     backend_->setRange(0, 1);
     runSpawn([&](boost::asio::yield_context yield) {
-        std::string const requestStr = R"json({"method":"some_method"})json";
+        std::string const requestStr = R"JSON({"method":"some_method"})JSON";
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
@@ -455,7 +455,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_Forwarded)
 {
     backend_->setRange(0, 1);
     runSpawn([&](boost::asio::yield_context yield) {
-        std::string const requestStr = R"json({"method":"some_method"})json";
+        std::string const requestStr = R"JSON({"method":"some_method"})JSON";
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
@@ -491,7 +491,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_HasError)
 {
     backend_->setRange(0, 1);
     runSpawn([&](boost::asio::yield_context yield) {
-        std::string const requestStr = R"json({"method":"some_method"})json";
+        std::string const requestStr = R"JSON({"method":"some_method"})JSON";
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
@@ -543,7 +543,7 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest)
     backend_->setRange(0, 1);
     runSpawn([&](boost::asio::yield_context yield) {
         Request::HttpHeaders const headers;
-        std::string const requestStr = R"json({"method":"some_method", "id": 1234, "api_version": 1})json";
+        std::string const requestStr = R"JSON({"method":"some_method", "id": 1234, "api_version": 1})JSON";
         auto const request = Request(requestStr, headers);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
@@ -578,7 +578,7 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest_HasError)
     backend_->setRange(0, 1);
     runSpawn([&](boost::asio::yield_context yield) {
         Request::HttpHeaders const headers;
-        std::string const requestStr = R"json({"method":"some_method", "id": 1234, "api_version": 1})json";
+        std::string const requestStr = R"JSON({"method":"some_method", "id": 1234, "api_version": 1})JSON";
         auto const request = Request(requestStr, headers);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));

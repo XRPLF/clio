@@ -111,6 +111,7 @@ public:
         std::optional<uint32_t> createAccountClaimId;
         std::optional<ripple::uint256> oracleNode;
         std::optional<ripple::uint256> credential;
+        std::optional<boost::json::object> delegate;
         bool includeDeleted = false;
     };
 
@@ -409,6 +410,23 @@ public:
                          validation::CustomValidators::accountBase58Validator, Status(ClioError::RpcMalformedOwner)
                      },
                  },
+             }}},
+            {JS(delegate),
+             meta::WithCustomError{
+                 validation::Type<std::string, boost::json::object>{}, Status(ClioError::RpcMalformedRequest)
+             },
+             meta::IfType<std::string>{kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+             meta::IfType<boost::json::object>{meta::Section{
+                 {JS(account),
+                  meta::WithCustomError{validation::Required{}, Status(ClioError::RpcMalformedRequest)},
+                  meta::WithCustomError{
+                      validation::CustomValidators::accountBase58Validator, Status(ClioError::RpcMalformedAddress)
+                  }},
+                 {JS(authorize),
+                  meta::WithCustomError{validation::Required{}, Status(ClioError::RpcMalformedRequest)},
+                  meta::WithCustomError{
+                      validation::CustomValidators::accountBase58Validator, Status(ClioError::RpcMalformedAddress)
+                  }}
              }}},
             {JS(ledger), check::Deprecated{}},
             {"include_deleted", validation::Type<bool>{}},

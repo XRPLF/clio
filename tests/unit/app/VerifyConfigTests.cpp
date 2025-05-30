@@ -57,12 +57,12 @@ TEST(VerifyConfigTest, ConfigFileNotExist)
 TEST(VerifyConfigTest, InvalidJsonFile)
 {
     // invalid json because extra "," after 51233
-    static constexpr auto kINVALID_JSON = R"({
+    static constexpr auto kINVALID_JSON = R"JSON({
                                              "server": {
                                                 "ip": "0.0.0.0",
                                                 "port": 51233,
                                             }
-                                        })";
+                                        })JSON";
     auto const tmpConfigFile = TmpFile(kINVALID_JSON);
 
     EXPECT_FALSE(parseConfig(tmpConfigFile.path));

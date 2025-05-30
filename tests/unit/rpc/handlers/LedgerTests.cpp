@@ -91,85 +91,85 @@ generateTestValuesForParametersTest()
     return std::vector<LedgerParamTestCaseBundle>{
         {
             .testName = "AccountsInvalidBool",
-            .testJson = R"({"accounts": true})",
+            .testJson = R"JSON({"accounts": true})JSON",
             .expectedError = "notSupported",
             .expectedErrorMessage = "Not supported field 'accounts's value 'true'",
         },
         {
             .testName = "AccountsInvalidInt",
-            .testJson = R"({"accounts": 123})",
+            .testJson = R"JSON({"accounts": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
         {
             .testName = "FullInvalidBool",
-            .testJson = R"({"full": true})",
+            .testJson = R"JSON({"full": true})JSON",
             .expectedError = "notSupported",
             .expectedErrorMessage = "Not supported field 'full's value 'true'",
         },
         {
             .testName = "FullInvalidInt",
-            .testJson = R"({"full": 123})",
+            .testJson = R"JSON({"full": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
         {
             .testName = "QueueExist",
-            .testJson = R"({"queue": true})",
+            .testJson = R"JSON({"queue": true})JSON",
             .expectedError = "notSupported",
             .expectedErrorMessage = "Not supported field 'queue's value 'true'",
         },
         {
             .testName = "QueueNotBool",
-            .testJson = R"({"queue": 123})",
+            .testJson = R"JSON({"queue": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
         {
             .testName = "OwnerFundsNotBool",
-            .testJson = R"({"owner_funds": 123})",
+            .testJson = R"JSON({"owner_funds": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
         {
             .testName = "LedgerHashInvalid",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashMalformed",
         },
         {
             .testName = "LedgerHashNotString",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashNotString",
         },
         {
             .testName = "LedgerIndexNotInt",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledgerIndexMalformed",
         },
         {
             .testName = "TransactionsNotBool",
-            .testJson = R"({"transactions": "x"})",
+            .testJson = R"JSON({"transactions": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
         {
             .testName = "ExpandNotBool",
-            .testJson = R"({"expand": "x"})",
+            .testJson = R"JSON({"expand": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
         {
             .testName = "BinaryNotBool",
-            .testJson = R"({"binary": "x"})",
+            .testJson = R"JSON({"binary": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
         {
             .testName = "DiffNotBool",
-            .testJson = R"({"diff": "x"})",
+            .testJson = R"JSON({"diff": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
@@ -205,9 +205,9 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "ledger_index": {}
-            }})",
+            }})JSON",
             kRANGE_MAX
         ));
         auto const output = handler.process(req, Context{yield});
@@ -226,9 +226,9 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "ledger_index": "{}"
-            }})",
+            }})JSON",
             kRANGE_MAX
         ));
         auto const output = handler.process(req, Context{yield});
@@ -247,9 +247,9 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "ledger_hash": "{}"
-            }})",
+            }})JSON",
             kLEDGER_HASH
         ));
         auto const output = handler.process(req, Context{yield});
@@ -263,7 +263,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
 TEST_F(RPCLedgerHandlerTest, Default)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"({
+        R"JSON({
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index":30,
             "validated":true,
@@ -281,7 +281,7 @@ TEST_F(RPCLedgerHandlerTest, Default)
                 "total_coins":"0",
                 "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000"
             }
-        })";
+        })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
@@ -307,11 +307,11 @@ TEST_F(RPCLedgerHandlerTest, ConditionallyNotSupportedFieldsDefaultValue)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "full": false,
                 "accounts": false,
                 "queue": false
-            })"
+            })JSON"
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -326,7 +326,7 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(R"({"ledger_index": 15})");
+        auto const req = json::parse(R"JSON({"ledger_index": 15})JSON");
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("ledger"));
@@ -341,7 +341,7 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerHash)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = json::parse(fmt::format(R"({{"ledger_hash": "{}" }})", kINDEX1));
+        auto const req = json::parse(fmt::format(R"JSON({{"ledger_hash": "{}" }})JSON", kINDEX1));
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("ledger"));
@@ -351,7 +351,7 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerHash)
 TEST_F(RPCLedgerHandlerTest, BinaryTrue)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"({
+        R"JSON({
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index":30,
             "validated":true,
@@ -359,7 +359,7 @@ TEST_F(RPCLedgerHandlerTest, BinaryTrue)
                 "ledger_data":"0000001E000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
                 "closed":true
             }
-        })";
+        })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
@@ -368,9 +368,9 @@ TEST_F(RPCLedgerHandlerTest, BinaryTrue)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "binary": true
-            })"
+            })JSON"
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -381,7 +381,7 @@ TEST_F(RPCLedgerHandlerTest, BinaryTrue)
 TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"({
+        R"JSON({
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index":30,
             "validated":true,
@@ -399,7 +399,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
                     }
                 ]
             }
-        })";
+        })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
@@ -416,11 +416,11 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "binary": true,
                 "expand": true,
                 "transactions": true
-            })"
+            })JSON"
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -431,7 +431,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
 TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinaryV2)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"({
+        R"JSON({
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index": 30,
             "validated": true,
@@ -451,7 +451,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinaryV2)
                     }
                 ]
             }
-        })";
+        })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillOnce(Return(ledgerHeader));
@@ -466,11 +466,11 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinaryV2)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "binary": true,
                 "expand": true,
                 "transactions": true
-            })"
+            })JSON"
         );
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
@@ -481,7 +481,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinaryV2)
 TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"({
+        R"JSON({
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index":30,
             "validated":true,
@@ -537,7 +537,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
                     }
                 ]
             }
-        })";
+        })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
@@ -554,11 +554,11 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "binary": false,
                 "expand": true,
                 "transactions": true
-            })"
+            })JSON"
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -571,7 +571,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
 TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"({
+        R"JSON({
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index": 30,
             "validated": true,
@@ -637,7 +637,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
                     }
                 ]
             }
-        })";
+        })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillOnce(Return(ledgerHeader));
@@ -652,11 +652,11 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "binary": false,
                 "expand": true,
                 "transactions": true
-            })"
+            })JSON"
         );
         auto output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
@@ -685,22 +685,22 @@ TEST_F(RPCLedgerHandlerTest, TwoRequestInARowTransactionsExpandNotBinaryV2)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "binary": false,
                 "expand": true,
                 "transactions": true
-            })"
+            })JSON"
         );
         auto output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
 
         auto const req2 = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "binary": false,
                 "expand": true,
                 "transactions": true,
                 "ledger_index": {}
-            }})",
+            }})JSON",
             kRANGE_MAX - 1
         ));
         auto output2 = handler.process(req2, Context{.yield = yield, .apiVersion = 2u});
@@ -725,15 +725,15 @@ TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "transactions": true
-            })"
+            })JSON"
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
             output.result->as_object().at("ledger").at("transactions"),
-            json::parse(fmt::format(R"(["{}","{}"])", kINDEX1, kINDEX2))
+            json::parse(fmt::format(R"JSON(["{}","{}"])JSON", kINDEX1, kINDEX2))
         );
     });
 }
@@ -741,7 +741,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
 TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"([
+        R"JSON([
             {
                 "object_id":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515B1",
                 "object":""
@@ -761,7 +761,7 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
                 "index":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
                 }
             }
-        ])";
+        ])JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
@@ -783,9 +783,9 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "diff": true
-            })"
+            })JSON"
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -796,7 +796,7 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
 TEST_F(RPCLedgerHandlerTest, DiffBinary)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"([
+        R"JSON([
             {
                 "object_id":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515B1",
                 "object":""
@@ -805,7 +805,7 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
                 "object_id":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
                 "object":"1100612200400000240000000125000000032B000000002D00000002551B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC62400000000000000A81144B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
             }
-        ])";
+        ])JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
@@ -827,10 +827,10 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "diff": true,
                 "binary": true
-            })"
+            })JSON"
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -841,7 +841,7 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
 TEST_F(RPCLedgerHandlerTest, OwnerFundsEmpty)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"({
+        R"JSON({
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index":30,
             "validated":true,
@@ -897,7 +897,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmpty)
                     }
                 ]
             }
-        })";
+        })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
@@ -914,12 +914,12 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmpty)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "binary": false,
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })"
+            })JSON"
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -932,7 +932,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmpty)
 TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"({
+        R"JSON({
             "ledger": {
                 "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
                 "close_flags": 0,
@@ -986,7 +986,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index": 30,
             "validated": true
-        })";
+        })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
@@ -1022,12 +1022,12 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "binary": false,
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })"
+            })JSON"
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -1040,7 +1040,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
 TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"({
+        R"JSON({
             "ledger": {
                 "closed": true,
                 "ledger_data": "0000001E000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -1055,7 +1055,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index": 30,
             "validated": true
-        })";
+        })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
@@ -1091,12 +1091,12 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "binary": true,
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })"
+            })JSON"
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -1124,12 +1124,12 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIssuerIsSelf)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "binary": true,
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })"
+            })JSON"
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -1144,7 +1144,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIssuerIsSelf)
 TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"({
+        R"JSON({
             "ledger": {
                 "closed": true,
                 "ledger_data": "0000001E000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -1159,7 +1159,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index": 30,
             "validated": true
-        })";
+        })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
@@ -1193,12 +1193,12 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "binary": true,
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })"
+            })JSON"
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -1239,12 +1239,12 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "binary": true,
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })"
+            })JSON"
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -1302,12 +1302,12 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "binary": true,
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })"
+            })JSON"
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);

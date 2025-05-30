@@ -81,67 +81,67 @@ generateTestValuesForParametersTest()
     return std::vector<AccountOfferParamTestCaseBundle>{
         {
             .testName = "AccountMissing",
-            .testJson = R"({})",
+            .testJson = R"JSON({})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Required field 'account' missing",
         },
         {
             .testName = "AccountNotString",
-            .testJson = R"({"account": 123})",
+            .testJson = R"JSON({"account": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "accountNotString",
         },
         {
             .testName = "AccountInvalid",
-            .testJson = R"({"account": "123"})",
+            .testJson = R"JSON({"account": "123"})JSON",
             .expectedError = "actMalformed",
             .expectedErrorMessage = "accountMalformed",
         },
         {
             .testName = "LedgerHashInvalid",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashMalformed",
         },
         {
             .testName = "LedgerHashNotString",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashNotString",
         },
         {
             .testName = "LedgerIndexNotInt",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledgerIndexMalformed",
         },
         {
             .testName = "LimitNotInt",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": "x"})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
         {
             .testName = "LimitNegative",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": -1})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": -1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
         {
             .testName = "LimitZero",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": 0})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": 0})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
         {
             .testName = "MarkerNotString",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 123})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "markerNotString",
         },
         {
             .testName = "MarkerInvalid",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": "12;xxx"})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": "12;xxx"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Malformed cursor.",
         },
@@ -177,10 +177,10 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaHash)
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "ledger_hash":"{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH
     ));
@@ -203,10 +203,10 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaStringIndex)
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "ledger_index":"{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kSEQ
     ));
@@ -229,10 +229,10 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaIntIndex)
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "ledger_index":{}
-        }})",
+        }})JSON",
         kACCOUNT,
         kSEQ
     ));
@@ -256,9 +256,9 @@ TEST_F(RPCAccountOffersHandlerTest, AccountNotFound)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountOffersHandler{backend_}};
@@ -274,7 +274,7 @@ TEST_F(RPCAccountOffersHandlerTest, AccountNotFound)
 TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
 {
     auto const expectedOutput = fmt::format(
-        R"({{
+        R"JSON({{
             "ledger_hash":"{}",
             "ledger_index":30,
             "validated":true,
@@ -295,7 +295,7 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
                     "expiration":123
                 }}
             ]
-        }})",
+        }})JSON",
         kLEDGER_HASH,
         kACCOUNT,
         kACCOUNT2
@@ -333,9 +333,9 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountOffersHandler{backend_}};
@@ -381,10 +381,10 @@ TEST_F(RPCAccountOffersHandlerTest, Limit)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "limit":10
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountOffersHandler{backend_}};
@@ -434,10 +434,10 @@ TEST_F(RPCAccountOffersHandlerTest, Marker)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "marker":"{},{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kINDEX1,
         startPage
@@ -470,10 +470,10 @@ TEST_F(RPCAccountOffersHandlerTest, MarkerNotExists)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "marker":"{},{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kINDEX1,
         startPage
@@ -528,10 +528,10 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "limit":{}
-        }})",
+        }})JSON",
         kACCOUNT,
         AccountOffersHandler::kLIMIT_MIN - 1
     ));
@@ -583,10 +583,10 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "limit":{}
-        }})",
+        }})JSON",
         kACCOUNT,
         AccountOffersHandler::kLIMIT_MAX + 1
     ));

@@ -41,7 +41,7 @@ struct AnyCounterTests : virtual ::testing::Test {
 
     ::testing::StrictMock<MockCounterImpl> mockCounterImpl;
     std::string const name = "test_counter";
-    std::string labelsString = R"({label1="value1",label2="value2"})";
+    std::string labelsString = R"JSON({label1="value1",label2="value2"})JSON";
     CounterInt counter{name, labelsString, static_cast<MockCounterImpl&>(mockCounterImpl)};
 };
 

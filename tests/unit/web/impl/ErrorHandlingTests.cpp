@@ -152,7 +152,7 @@ INSTANTIATE_TEST_CASE_P(
             "UpgradedConnection",
             true,
             rpc::Status{rpc::RippledError::rpcTOO_BUSY},
-            R"({"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"})",
+            R"JSON({"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"})JSON",
             boost::beast::http::status::ok
         },
         ErrorHandlingSendErrorTestBundle{
@@ -194,7 +194,7 @@ INSTANTIATE_TEST_CASE_P(
             "NotUpgradedConnection_RippledError",
             false,
             rpc::Status{rpc::RippledError::rpcTOO_BUSY},
-            R"({"result":{"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"}})",
+            R"JSON({"result":{"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"}})JSON",
             boost::beast::http::status::bad_request
         },
     }),
@@ -209,7 +209,7 @@ TEST_F(ErrorHandlingTests, sendInternalError)
         *connection_,
         send(
             std::string{
-                R"({"result":{"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"}})"
+                R"JSON({"result":{"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"}})JSON"
             },
             boost::beast::http::status::internal_server_error
         )
@@ -224,7 +224,7 @@ TEST_F(ErrorHandlingTests, sendNotReadyError)
         *connection_,
         send(
             std::string{
-                R"({"result":{"error":"notReady","error_code":13,"error_message":"Not ready to handle this request.","status":"error","type":"response"}})"
+                R"JSON({"result":{"error":"notReady","error_code":13,"error_message":"Not ready to handle this request.","status":"error","type":"response"}})JSON"
             },
             boost::beast::http::status::ok
         )
@@ -240,7 +240,7 @@ TEST_F(ErrorHandlingTests, sendTooBusyError_UpgradedConnection)
         *connection_,
         send(
             std::string{
-                R"({"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"})"
+                R"JSON({"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"})JSON"
             },
             boost::beast::http::status::ok
         )
@@ -256,7 +256,7 @@ TEST_F(ErrorHandlingTests, sendTooBusyError_NotUpgradedConnection)
         *connection_,
         send(
             std::string{
-                R"({"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"})"
+                R"JSON({"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"})JSON"
             },
             boost::beast::http::status::service_unavailable
         )
@@ -272,7 +272,7 @@ TEST_F(ErrorHandlingTests, sendJsonParsingError_UpgradedConnection)
         *connection_,
         send(
             std::string{
-                R"({"error":"badSyntax","error_code":1,"error_message":"Syntax error.","status":"error","type":"response"})"
+                R"JSON({"error":"badSyntax","error_code":1,"error_message":"Syntax error.","status":"error","type":"response"})JSON"
             },
             boost::beast::http::status::ok
         )

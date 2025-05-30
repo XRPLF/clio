@@ -89,121 +89,121 @@ generateTestValuesForParametersTest()
     return std::vector<DepositAuthorizedTestCaseBundle>{
         {
             .testName = "SourceAccountMissing",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Required field 'source_account' missing",
         },
         {
             .testName = "SourceAccountMalformed",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp",
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
-            })",
+            })JSON",
             .expectedError = "actMalformed",
             .expectedErrorMessage = "source_accountMalformed",
         },
         {
             .testName = "SourceAccountNotString",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "source_account": 1234,
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "source_accountNotString",
         },
         {
             .testName = "DestinationAccountMissing",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Required field 'destination_account' missing",
         },
         {
             .testName = "DestinationAccountMalformed",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp",
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
-            })",
+            })JSON",
             .expectedError = "actMalformed",
             .expectedErrorMessage = "destination_accountMalformed",
         },
         {
             .testName = "DestinationAccountNotString",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "destination_account": 1234,
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "destination_accountNotString",
         },
         {
             .testName = "LedgerHashInvalid",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": "x"
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashMalformed",
         },
         {
             .testName = "LedgerHashNotString",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": 123
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashNotString",
         },
         {
             .testName = "LedgerIndexNotInt",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "x"
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledgerIndexMalformed",
         },
         {
             .testName = "CredentialsNotArray",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "credentials": "x"
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
         {
             .testName = "CredentialsNotStringsInArray",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "credentials": [123]
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Item is not a valid uint256 type.",
         },
         {
             .testName = "CredentialsNotHexedStringInArray",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "credentials": ["234", "432"]
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Item is not a valid uint256 type.",
         }
@@ -241,11 +241,11 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "source_account": "{}",
                 "destination_account": "{}",
                 "ledger_index": {}
-            }})",
+            }})JSON",
             kACCOUNT,
             kACCOUNT2,
             kRANGE_MAX
@@ -268,11 +268,11 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "source_account": "{}",
                 "destination_account": "{}",
                 "ledger_index": "{}"
-            }})",
+            }})JSON",
             kACCOUNT,
             kACCOUNT2,
             kRANGE_MAX
@@ -295,11 +295,11 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "source_account": "{}",
                 "destination_account": "{}",
                 "ledger_hash": "{}"
-            }})",
+            }})JSON",
             kACCOUNT,
             kACCOUNT2,
             kLEDGER_HASH
@@ -325,11 +325,11 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kACCOUNT2,
         kLEDGER_HASH
@@ -362,11 +362,11 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kACCOUNT2,
         kLEDGER_HASH
@@ -387,14 +387,14 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
 TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"({
+        R"JSON({
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index": 30,
             "validated": true,
             "deposit_authorized": true,
             "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
-        })";
+        })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
 
@@ -406,11 +406,11 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kACCOUNT,
         kLEDGER_HASH
@@ -428,14 +428,14 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
 TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"({
+        R"JSON({
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index": 30,
             "validated": true,
             "deposit_authorized": true,
             "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
-        })";
+        })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
 
@@ -452,11 +452,11 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kACCOUNT2,
         kLEDGER_HASH
@@ -474,14 +474,14 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
 TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFalse)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"({
+        R"JSON({
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index": 30,
             "validated": true,
             "deposit_authorized": false,
             "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
-        })";
+        })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
 
@@ -499,11 +499,11 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kACCOUNT2,
         kLEDGER_HASH
@@ -521,14 +521,14 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
 TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"({
+        R"JSON({
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index": 30,
             "validated": true,
             "deposit_authorized": true,
             "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
-        })";
+        })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
 
@@ -546,11 +546,11 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kACCOUNT2,
         kLEDGER_HASH
@@ -568,7 +568,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
 TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
 {
     static auto const kEXPECTED_OUT = fmt::format(
-        R"({{
+        R"JSON({{
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index": 30,
             "validated": true,
@@ -576,7 +576,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
             "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
             "credentials": ["{}"]
-        }})",
+        }})JSON",
         kCREDENTIAL_HASH  // CREDENTIALHASH should match credentialIndex
     );
 
@@ -604,12 +604,12 @@ TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(4);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}",
             "credentials": ["{}"]
-        }})",
+        }})JSON",
         kACCOUNT,
         kACCOUNT2,
         kLEDGER_HASH,
@@ -652,12 +652,12 @@ TEST_F(RPCDepositAuthorizedTest, CredentialNotAuthorizedReturnsFalse)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}",
             "credentials": ["{}"]
-        }})",
+        }})JSON",
         kACCOUNT,
         kACCOUNT2,
         kLEDGER_HASH,
@@ -708,12 +708,12 @@ TEST_F(RPCDepositAuthorizedTest, CredentialExpiredReturnsFalse)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}",
             "credentials": ["{}"]
-        }})",
+        }})JSON",
         kACCOUNT,
         kACCOUNT2,
         kLEDGER_HASH,
@@ -758,12 +758,12 @@ TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}",
             "credentials": ["{}", "{}"]
-        }})",
+        }})JSON",
         kACCOUNT,
         kACCOUNT2,
         kLEDGER_HASH,
@@ -800,12 +800,12 @@ TEST_F(RPCDepositAuthorizedTest, NoElementsInCredentialsReturnsFalse)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}",
             "credentials": []
-        }})",
+        }})JSON",
         kACCOUNT,
         kACCOUNT2,
         kLEDGER_HASH
@@ -851,12 +851,12 @@ TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
     std::vector<std::string> credentials(9, ripple::strHex(credentialIndex));
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}",
             "credentials": [{}]
-        }})",
+        }})JSON",
         kACCOUNT,
         kACCOUNT2,
         kLEDGER_HASH,
@@ -905,12 +905,12 @@ TEST_F(RPCDepositAuthorizedTest, DifferentSubjectAccountForCredentialReturnsFals
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}",
             "credentials": ["{}"]
-        }})",
+        }})JSON",
         kACCOUNT,
         kACCOUNT2,
         kLEDGER_HASH,

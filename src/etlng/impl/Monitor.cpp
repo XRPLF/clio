@@ -55,6 +55,15 @@ Monitor::~Monitor()
     stop();
 }
 
+// TODO: think about using signals perhaps? maybe combining with onNextSequence?
+// also, how do we not double invoke or does it not matter
+void
+Monitor::notifyLedgerLoaded(uint32_t seq)
+{
+    LOG(log_.debug()) << "Loader notified about newly committed ledger " << seq;
+    repeatedTask_->invoke();  // force-invoke immediately
+};
+
 void
 Monitor::run(std::chrono::steady_clock::duration repeatInterval)
 {

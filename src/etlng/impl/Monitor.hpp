@@ -61,6 +61,9 @@ public:
     ~Monitor() override;
 
     void
+    notifyLedgerLoaded(uint32_t seq) override;
+
+    void
     run(std::chrono::steady_clock::duration repeatInterval) override;
 
     void

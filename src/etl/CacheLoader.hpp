@@ -26,6 +26,7 @@
 #include "etl/impl/CursorFromAccountProvider.hpp"
 #include "etl/impl/CursorFromDiffProvider.hpp"
 #include "etl/impl/CursorFromFixDiffNumProvider.hpp"
+#include "etlng/CacheLoaderInterface.hpp"
 #include "util/Assert.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
 #include "util/log/Logger.hpp"
@@ -33,6 +34,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <utility>
 
 namespace etl {
 
@@ -46,7 +48,7 @@ namespace etl {
  * @tparam ExecutionContextType The type of the execution context to use
  */
 template <typename ExecutionContextType = util::async::CoroExecutionContext>
-class CacheLoader {
+class CacheLoader : public etlng::CacheLoaderInterface {
     using CacheLoaderType = impl::CacheLoaderImpl<data::LedgerCacheInterface>;
 
     util::Logger log_{"ETL"};
@@ -67,10 +69,13 @@ public:
      */
     CacheLoader(
         util::config::ClioConfigDefinition const& config,
-        std::shared_ptr<BackendInterface> const& backend,
+        std::shared_ptr<BackendInterface> backend,
         data::LedgerCacheInterface& cache
     )
-        : backend_{backend}, cache_{cache}, settings_{makeCacheLoaderSettings(config)}, ctx_{settings_.numThreads}
+        : backend_{std::move(backend)}
+        , cache_{cache}
+        , settings_{makeCacheLoaderSettings(config)}
+        , ctx_{settings_.numThreads}
     {
     }
 
@@ -83,7 +88,7 @@ public:
      * @param seq The sequence number to load cache for
      */
     void
-    load(uint32_t const seq)
+    load(uint32_t const seq) override
     {
         ASSERT(not cache_.get().isFull(), "Cache must not be full. seq = {}", seq);
 
@@ -129,7 +134,7 @@ public:
      * @brief Requests the loader to stop asap
      */
     void
-    stop() noexcept
+    stop() noexcept override
     {
         if (loader_ != nullptr)
             loader_->stop();
@@ -139,7 +144,7 @@ public:
      * @brief Waits for the loader to finish background work
      */
     void
-    wait() noexcept
+    wait() noexcept override
     {
         if (loader_ != nullptr)
             loader_->wait();

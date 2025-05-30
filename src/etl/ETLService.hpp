@@ -22,7 +22,6 @@
 #include "data/BackendInterface.hpp"
 #include "etl/CacheLoader.hpp"
 #include "etl/ETLState.hpp"
-#include "etl/LoadBalancer.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/SystemState.hpp"
 #include "etl/impl/AmendmentBlockHandler.hpp"
@@ -32,12 +31,12 @@
 #include "etl/impl/LedgerLoader.hpp"
 #include "etl/impl/LedgerPublisher.hpp"
 #include "etl/impl/Transformer.hpp"
-#include "etlng/ETLService.hpp"
 #include "etlng/ETLServiceInterface.hpp"
-#include "etlng/LoadBalancer.hpp"
 #include "etlng/LoadBalancerInterface.hpp"
+#include "etlng/impl/LedgerPublisher.hpp"
+#include "etlng/impl/TaskManagerProvider.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
-#include "util/Assert.hpp"
+#include "util/async/AnyExecutionContext.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -150,6 +149,7 @@ public:
      *
      * @param config The configuration to use
      * @param ioc io context to run on
+     * @param ctx Execution context for asynchronous operations
      * @param backend BackendInterface implementation
      * @param subscriptions Subscription manager
      * @param balancer Load balancer to use
@@ -160,34 +160,12 @@ public:
     makeETLService(
         util::config::ClioConfigDefinition const& config,
         boost::asio::io_context& ioc,
+        util::async::AnyExecutionContext ctx,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         std::shared_ptr<etlng::LoadBalancerInterface> balancer,
         std::shared_ptr<NetworkValidatedLedgersInterface> ledgers
-    )
-    {
-        std::shared_ptr<etlng::ETLServiceInterface> ret;
-
-        if (config.get<bool>("__ng_etl")) {
-            ASSERT(
-                std::dynamic_pointer_cast<etlng::LoadBalancer>(balancer),
-                "LoadBalancer type must be etlng::LoadBalancer"
-            );
-            ret = std::make_shared<etlng::ETLService>(config, backend, subscriptions, balancer, ledgers);
-        } else {
-            ASSERT(
-                std::dynamic_pointer_cast<etl::LoadBalancer>(balancer), "LoadBalancer type must be etl::LoadBalancer"
-            );
-            ret = std::make_shared<etl::ETLService>(config, ioc, backend, subscriptions, balancer, ledgers);
-        }
-
-        // inject networkID into subscriptions, as transaction feed require it to inject CTID in response
-        if (auto const state = ret->getETLState(); state)
-            subscriptions->setNetworkID(state->networkID);
-
-        ret->run();
-        return ret;
-    }
+    );
 
     /**
      * @brief Stops components and joins worker thread.

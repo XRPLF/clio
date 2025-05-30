@@ -115,79 +115,79 @@ generateParameterBookOffersTestBundles()
     return std::vector<ParameterTestBundle>{
         ParameterTestBundle{
             .testName = "MissingTakerGets",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "USD",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 }
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Required field 'taker_gets' missing"
         },
         ParameterTestBundle{
             .testName = "MissingTakerPays",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_gets" :
                 {
                     "currency" : "USD",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 }
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Required field 'taker_pays' missing"
         },
         ParameterTestBundle{
             .testName = "WrongTypeTakerPays",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" : "wrong",
                 "taker_gets" :
                 {
                     "currency" : "XRP"
                 }
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         ParameterTestBundle{
             .testName = "WrongTypeTakerGets",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_gets" : "wrong",
                 "taker_pays" :
                 {
                     "currency" : "XRP"
                 }
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         ParameterTestBundle{
             .testName = "TakerPaysMissingCurrency",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" : {},
                 "taker_gets" :
                 {
                     "currency" : "XRP"
                 }
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Required field 'currency' missing"
         },
         ParameterTestBundle{
             .testName = "TakerGetsMissingCurrency",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_gets" : {},
                 "taker_pays" :
                 {
                     "currency" : "XRP"
                 }
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Required field 'currency' missing"
         },
         ParameterTestBundle{
             .testName = "TakerGetsWrongCurrency",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_gets" :
                 {
                     "currency" : "CNYY",
@@ -197,13 +197,13 @@ generateParameterBookOffersTestBundles()
                 {
                     "currency" : "XRP"
                 }
-            })",
+            })JSON",
             .expectedError = "dstAmtMalformed",
             .expectedErrorMessage = "Destination amount/currency/issuer is malformed."
         },
         ParameterTestBundle{
             .testName = "TakerPaysWrongCurrency",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "CNYY",
@@ -213,13 +213,13 @@ generateParameterBookOffersTestBundles()
                 {
                     "currency" : "XRP"
                 }
-            })",
+            })JSON",
             .expectedError = "srcCurMalformed",
             .expectedErrorMessage = "Source currency is malformed."
         },
         ParameterTestBundle{
             .testName = "TakerGetsCurrencyNotString",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_gets" :
                 {
                     "currency" : 123,
@@ -229,13 +229,13 @@ generateParameterBookOffersTestBundles()
                 {
                     "currency" : "XRP"
                 }
-            })",
+            })JSON",
             .expectedError = "dstAmtMalformed",
             .expectedErrorMessage = "Destination amount/currency/issuer is malformed."
         },
         ParameterTestBundle{
             .testName = "TakerPaysCurrencyNotString",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : 123,
@@ -245,13 +245,13 @@ generateParameterBookOffersTestBundles()
                 {
                     "currency" : "XRP"
                 }
-            })",
+            })JSON",
             .expectedError = "srcCurMalformed",
             .expectedErrorMessage = "Source currency is malformed."
         },
         ParameterTestBundle{
             .testName = "TakerGetsWrongIssuer",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_gets" :
                 {
                     "currency" : "CNY",
@@ -261,13 +261,13 @@ generateParameterBookOffersTestBundles()
                 {
                     "currency" : "XRP"
                 }
-            })",
+            })JSON",
             .expectedError = "dstIsrMalformed",
             .expectedErrorMessage = "Destination issuer is malformed."
         },
         ParameterTestBundle{
             .testName = "TakerPaysWrongIssuer",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "CNY",
@@ -277,13 +277,13 @@ generateParameterBookOffersTestBundles()
                 {
                     "currency" : "XRP"
                 }
-            })",
+            })JSON",
             .expectedError = "srcIsrMalformed",
             .expectedErrorMessage = "Source issuer is malformed."
         },
         ParameterTestBundle{
             .testName = "InvalidTaker",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "CNY",
@@ -294,13 +294,13 @@ generateParameterBookOffersTestBundles()
                     "currency" : "XRP"
                 },
                 "taker": "123"
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid field 'taker'."
         },
         ParameterTestBundle{
             .testName = "TakerNotString",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "CNY",
@@ -311,13 +311,13 @@ generateParameterBookOffersTestBundles()
                     "currency" : "XRP"
                 },
                 "taker": 123
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid field 'taker'."
         },
         ParameterTestBundle{
             .testName = "LimitNotInt",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "CNY",
@@ -328,13 +328,13 @@ generateParameterBookOffersTestBundles()
                     "currency" : "XRP"
                 },
                 "limit": "123"
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         ParameterTestBundle{
-            .testName = "LimitNagetive",
-            .testJson = R"({
+            .testName = "LimitNegative",
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "CNY",
@@ -345,13 +345,13 @@ generateParameterBookOffersTestBundles()
                     "currency" : "XRP"
                 },
                 "limit": -1
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         ParameterTestBundle{
             .testName = "LimitZero",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "CNY",
@@ -362,13 +362,13 @@ generateParameterBookOffersTestBundles()
                     "currency" : "XRP"
                 },
                 "limit": 0
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         ParameterTestBundle{
             .testName = "LedgerIndexInvalid",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "CNY",
@@ -379,13 +379,13 @@ generateParameterBookOffersTestBundles()
                     "currency" : "XRP"
                 },
                 "ledger_index": "xxx"
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledgerIndexMalformed"
         },
         ParameterTestBundle{
             .testName = "LedgerHashInvalid",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "CNY",
@@ -396,13 +396,13 @@ generateParameterBookOffersTestBundles()
                     "currency" : "XRP"
                 },
                 "ledger_hash": "xxx"
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashMalformed"
         },
         ParameterTestBundle{
             .testName = "LedgerHashNotString",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "CNY",
@@ -413,13 +413,13 @@ generateParameterBookOffersTestBundles()
                     "currency" : "XRP"
                 },
                 "ledger_hash": 123
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashNotString"
         },
         ParameterTestBundle{
             .testName = "GetsPaysXRPWithIssuer",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "XRP",
@@ -430,13 +430,13 @@ generateParameterBookOffersTestBundles()
                     "currency" : "CNY",
                     "issuer" : "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
                 }
-            })",
+            })JSON",
             .expectedError = "srcIsrMalformed",
             .expectedErrorMessage = "Unneeded field 'taker_pays.issuer' for XRP currency specification."
         },
         ParameterTestBundle{
             .testName = "PaysCurrencyWithXRPIssuer",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "JPY"
@@ -446,13 +446,13 @@ generateParameterBookOffersTestBundles()
                     "currency" : "CNY",
                     "issuer" : "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
                 }
-            })",
+            })JSON",
             .expectedError = "srcIsrMalformed",
             .expectedErrorMessage = "Invalid field 'taker_pays.issuer', expected non-XRP issuer."
         },
         ParameterTestBundle{
             .testName = "GetsCurrencyWithXRPIssuer",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "XRP"
@@ -461,13 +461,13 @@ generateParameterBookOffersTestBundles()
                 {
                     "currency" : "CNY"
                 }
-            })",
+            })JSON",
             .expectedError = "dstIsrMalformed",
             .expectedErrorMessage = "Invalid field 'taker_gets.issuer', expected non-XRP issuer."
         },
         ParameterTestBundle{
             .testName = "GetsXRPWithIssuer",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "CNY",
@@ -478,13 +478,13 @@ generateParameterBookOffersTestBundles()
                     "currency" : "XRP",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 }
-            })",
+            })JSON",
             .expectedError = "dstIsrMalformed",
             .expectedErrorMessage = "Unneeded field 'taker_gets.issuer' for XRP currency specification."
         },
         ParameterTestBundle{
             .testName = "BadMarket",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "taker_pays" :
                 {
                     "currency" : "CNY",
@@ -495,7 +495,7 @@ generateParameterBookOffersTestBundles()
                     "currency" : "CNY",
                     "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 }
-            })",
+            })JSON",
             .expectedError = "badMarket",
             .expectedErrorMessage = "badMarket"
         }
@@ -619,7 +619,7 @@ generateNormalPathBookOffersTestBundles()
     ));
 
     auto const getsXRPPaysUSDInputJson = fmt::format(
-        R"({{
+        R"JSON({{
             "taker_gets":
             {{
                 "currency": "XRP"
@@ -629,12 +629,12 @@ generateNormalPathBookOffersTestBundles()
                 "currency": "USD",
                 "issuer": "{}"
             }}
-        }})",
+        }})JSON",
         kACCOUNT
     );
 
     auto const paysXRPGetsUSDInputJson = fmt::format(
-        R"({{
+        R"JSON({{
             "taker_pays":
             {{
                 "currency": "XRP"
@@ -644,7 +644,7 @@ generateNormalPathBookOffersTestBundles()
                 "currency": "USD",
                 "issuer": "{}"
             }}
-        }})",
+        }})JSON",
         kACCOUNT
     );
 
@@ -685,7 +685,7 @@ generateNormalPathBookOffersTestBundles()
             .ledgerObjectCalls = 5,
             .mockedOffers = std::vector<ripple::STObject>{gets10XRPPays20USDOffer},
             .expectedJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
                     "offers":[
@@ -710,7 +710,7 @@ generateNormalPathBookOffersTestBundles()
                             "quality":"{}"
                         }}
                     ]
-                }})",
+                }})JSON",
                 kLEDGER_HASH,
                 kACCOUNT2,
                 193,
@@ -745,7 +745,7 @@ generateNormalPathBookOffersTestBundles()
             .ledgerObjectCalls = 5,
             .mockedOffers = std::vector<ripple::STObject>{gets10XRPPays20USDOffer},
             .expectedJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
                     "offers":
@@ -777,7 +777,7 @@ generateNormalPathBookOffersTestBundles()
                             }}
                         }}
                     ]
-                }})",
+                }})JSON",
                 kLEDGER_HASH,
                 kACCOUNT2,
                 5,
@@ -807,7 +807,7 @@ generateNormalPathBookOffersTestBundles()
             .ledgerObjectCalls = 3,
             .mockedOffers = std::vector<ripple::STObject>{gets10XRPPays20USDOffer},
             .expectedJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
                     "offers":
@@ -839,7 +839,7 @@ generateNormalPathBookOffersTestBundles()
                             }}
                         }}
                     ]
-                }})",
+                }})JSON",
                 kLEDGER_HASH,
                 kACCOUNT2,
                 0,
@@ -871,7 +871,7 @@ generateNormalPathBookOffersTestBundles()
             .ledgerObjectCalls = 3,
             .mockedOffers = std::vector<ripple::STObject>{gets10USDPays20XRPOffer},
             .expectedJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
                     "offers":
@@ -903,7 +903,7 @@ generateNormalPathBookOffersTestBundles()
                             }}
                         }}
                     ]
-                }})",
+                }})JSON",
                 kLEDGER_HASH,
                 kACCOUNT2,
                 kPAYS20_XRP_GETS10_USD_BOOK_DIR,
@@ -937,7 +937,7 @@ generateNormalPathBookOffersTestBundles()
             .ledgerObjectCalls = 6,
             .mockedOffers = std::vector<ripple::STObject>{gets10USDPays20XRPOffer},
             .expectedJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
                     "offers":
@@ -969,7 +969,7 @@ generateNormalPathBookOffersTestBundles()
                             "taker_pays_funded":"8"
                         }}
                     ]
-                }})",
+                }})JSON",
                 kLEDGER_HASH,
                 kACCOUNT2,
                 kPAYS20_XRP_GETS10_USD_BOOK_DIR,
@@ -1012,7 +1012,7 @@ generateNormalPathBookOffersTestBundles()
                                               gets10USDPays20XRPOffer
                 },
             .expectedJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
                     "offers":
@@ -1063,7 +1063,7 @@ generateNormalPathBookOffersTestBundles()
                             "quality":"{}"
                         }}
                     ]
-                }})",
+                }})JSON",
                 kLEDGER_HASH,
                 kACCOUNT2,
                 kPAYS20_XRP_GETS10_USD_BOOK_DIR,
@@ -1098,7 +1098,7 @@ generateNormalPathBookOffersTestBundles()
             .ledgerObjectCalls = 3,
             .mockedOffers = std::vector<ripple::STObject>{gets10USDPays20XRPOwnerOffer},
             .expectedJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
                     "offers":
@@ -1124,7 +1124,7 @@ generateNormalPathBookOffersTestBundles()
                             "quality":"{}"
                         }}
                     ]
-                }})",
+                }})JSON",
                 kLEDGER_HASH,
                 kACCOUNT,
                 kPAYS20_XRP_GETS10_USD_BOOK_DIR,
@@ -1158,7 +1158,7 @@ generateNormalPathBookOffersTestBundles()
             .ledgerObjectCalls = 6,
             .mockedOffers = std::vector<ripple::STObject>{gets10USDPays20XRPOffer},
             .expectedJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
                     "offers":
@@ -1190,7 +1190,7 @@ generateNormalPathBookOffersTestBundles()
                             "taker_pays_funded":"0"
                         }}
                     ]
-                }})",
+                }})JSON",
                 kLEDGER_HASH,
                 kACCOUNT2,
                 kPAYS20_XRP_GETS10_USD_BOOK_DIR,
@@ -1223,7 +1223,7 @@ generateNormalPathBookOffersTestBundles()
             .ledgerObjectCalls = 4,
             .mockedOffers = std::vector<ripple::STObject>{gets10USDPays20XRPOffer},
             .expectedJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
                     "offers":
@@ -1255,7 +1255,7 @@ generateNormalPathBookOffersTestBundles()
                             "taker_pays_funded":"0"
                         }}
                     ]
-                }})",
+                }})JSON",
                 kLEDGER_HASH,
                 kACCOUNT2,
                 kPAYS20_XRP_GETS10_USD_BOOK_DIR,
@@ -1291,7 +1291,7 @@ generateNormalPathBookOffersTestBundles()
             .ledgerObjectCalls = 6,
             .mockedOffers = std::vector<ripple::STObject>{gets10USDPays20XRPOffer},
             .expectedJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "ledger_hash":"{}",
                     "ledger_index":300,
                     "offers":
@@ -1323,7 +1323,7 @@ generateNormalPathBookOffersTestBundles()
                             "taker_pays_funded":"0"
                         }}
                     ]
-                }})",
+                }})JSON",
                 kLEDGER_HASH,
                 kACCOUNT2,
                 kPAYS20_XRP_GETS10_USD_BOOK_DIR,
@@ -1349,7 +1349,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
     ON_CALL(*backend_, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "ledger_index": 30,
             "taker_gets":
             {{
@@ -1360,7 +1360,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
                 "currency": "USD",
                 "issuer": "{}"
             }}
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
@@ -1380,7 +1380,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
     ON_CALL(*backend_, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "ledger_index": "30",
             "taker_gets":
             {{
@@ -1391,7 +1391,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
                 "currency": "USD",
                 "issuer": "{}"
             }}
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
@@ -1412,7 +1412,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "ledger_hash": "{}",
             "taker_gets":
             {{
@@ -1423,7 +1423,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
                 "currency": "USD",
                 "issuer": "{}"
             }}
-        }})",
+        }})JSON",
         kLEDGER_HASH,
         kACCOUNT
     ));
@@ -1488,7 +1488,7 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "taker_gets":
             {{
                 "currency": "XRP"
@@ -1499,7 +1499,7 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
                 "issuer": "{}"
             }},
             "limit": 5
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
@@ -1561,7 +1561,7 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "taker_gets":
             {{
                 "currency": "XRP"
@@ -1572,7 +1572,7 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
                 "issuer": "{}"
             }},
             "limit": {}
-        }})",
+        }})JSON",
         kACCOUNT,
         BookOffersHandler::kLIMIT_MAX + 1
     ));

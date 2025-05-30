@@ -2,7 +2,8 @@ add_library(clio_etlng)
 
 target_sources(
   clio_etlng
-  PRIVATE LoadBalancer.cpp
+  PRIVATE ETLService.cpp
+          LoadBalancer.cpp
           Source.cpp
           impl/AmendmentBlockHandler.cpp
           impl/AsyncGrpcCall.cpp
@@ -14,6 +15,7 @@ target_sources(
           impl/TaskManager.cpp
           impl/ext/Cache.cpp
           impl/ext/Core.cpp
+          impl/ext/MPT.cpp
           impl/ext/NFT.cpp
           impl/ext/Successor.cpp
 )

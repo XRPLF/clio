@@ -82,76 +82,76 @@ generateTestValuesForParametersTest()
     return std::vector<LedgerDataParamTestCaseBundle>{
         LedgerDataParamTestCaseBundle{
             .testName = "ledger_indexInvalid",
-            .testJson = R"({"ledger_index": "x"})",
+            .testJson = R"JSON({"ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledgerIndexMalformed"
         },
         LedgerDataParamTestCaseBundle{
             .testName = "ledger_hashInvalid",
-            .testJson = R"({"ledger_hash": "x"})",
+            .testJson = R"JSON({"ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashMalformed"
         },
         LedgerDataParamTestCaseBundle{
             .testName = "ledger_hashNotString",
-            .testJson = R"({"ledger_hash": 123})",
+            .testJson = R"JSON({"ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashNotString"
         },
         LedgerDataParamTestCaseBundle{
             .testName = "binaryNotBool",
-            .testJson = R"({"binary": 123})",
+            .testJson = R"JSON({"binary": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         LedgerDataParamTestCaseBundle{
             .testName = "limitNotInt",
-            .testJson = R"({"limit": "xxx"})",
+            .testJson = R"JSON({"limit": "xxx"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         LedgerDataParamTestCaseBundle{
-            .testName = "limitNagetive",
-            .testJson = R"({"limit": -1})",
+            .testName = "limitNegative",
+            .testJson = R"JSON({"limit": -1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         LedgerDataParamTestCaseBundle{
             .testName = "limitZero",
-            .testJson = R"({"limit": 0})",
+            .testJson = R"JSON({"limit": 0})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         LedgerDataParamTestCaseBundle{
             .testName = "markerInvalid",
-            .testJson = R"({"marker": "xxx"})",
+            .testJson = R"JSON({"marker": "xxx"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "markerMalformed"
         },
         LedgerDataParamTestCaseBundle{
             .testName = "markerOutOfOrder",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "marker": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "out_of_order": true
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "outOfOrderMarkerNotInt"
         },
         LedgerDataParamTestCaseBundle{
             .testName = "markerNotString",
-            .testJson = R"({"marker": 123})",
+            .testJson = R"JSON({"marker": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "markerNotString"
         },
         LedgerDataParamTestCaseBundle{
             .testName = "typeNotString",
-            .testJson = R"({"type": 123})",
+            .testJson = R"JSON({"type": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid field 'type', not string."
         },
         LedgerDataParamTestCaseBundle{
             .testName = "typeNotValid",
-            .testJson = R"({"type": "xxx"})",
+            .testJson = R"JSON({"type": "xxx"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid field 'type'."
         },
@@ -187,9 +187,9 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaIntSequence)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "ledger_index": {}
-            }})",
+            }})JSON",
             kRANGE_MAX
         ));
         auto const output = handler.process(req, Context{yield});
@@ -208,9 +208,9 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaStringSequence)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "ledger_index": "{}"
-            }})",
+            }})JSON",
             kRANGE_MAX
         ));
         auto const output = handler.process(req, Context{yield});
@@ -229,9 +229,9 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaHash)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "ledger_hash": "{}"
-            }})",
+            }})JSON",
             kLEDGER_HASH
         ));
         auto const output = handler.process(req, Context{yield});
@@ -255,9 +255,9 @@ TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "marker": "{}"
-            }})",
+            }})JSON",
             kINDEX1
         ));
         auto const output = handler.process(req, Context{yield});
@@ -270,7 +270,7 @@ TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
 
 TEST_F(RPCLedgerDataHandlerTest, NoMarker)
 {
-    static auto const kLEDGER_EXPECTED = R"({
+    static auto const kLEDGER_EXPECTED = R"JSON({
       "account_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "close_flags":0,
       "close_time":0,
@@ -283,7 +283,7 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
       "total_coins":"0",
       "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "closed":true
-   })";
+   })JSON";
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(createLedgerHeader(kLEDGER_HASH, kRANGE_MAX)));
 
@@ -310,7 +310,7 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(R"({"limit":10})");
+        auto const req = json::parse(R"JSON({"limit":10})JSON");
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("ledger"));
@@ -328,7 +328,7 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
 
 TEST_F(RPCLedgerDataHandlerTest, Version2)
 {
-    static auto const kLEDGER_EXPECTED = R"({
+    static auto const kLEDGER_EXPECTED = R"JSON({
       "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
       "close_flags": 0,
       "close_time": 0,
@@ -341,7 +341,7 @@ TEST_F(RPCLedgerDataHandlerTest, Version2)
       "total_coins": "0",
       "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000",
       "closed": true
-   })";
+   })JSON";
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(createLedgerHeader(kLEDGER_HASH, kRANGE_MAX)));
 
@@ -368,7 +368,7 @@ TEST_F(RPCLedgerDataHandlerTest, Version2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(R"({"limit":10})");
+        auto const req = json::parse(R"JSON({"limit":10})JSON");
         auto output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("ledger"));
@@ -382,7 +382,7 @@ TEST_F(RPCLedgerDataHandlerTest, Version2)
 
 TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
 {
-    static auto const kLEDGER_EXPECTED = R"({
+    static auto const kLEDGER_EXPECTED = R"JSON({
       "account_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "close_flags":0,
       "close_time":0,
@@ -395,7 +395,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
       "total_coins":"0",
       "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "closed":true
-   })";
+   })JSON";
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _))
@@ -424,10 +424,10 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(R"({
+        auto const req = json::parse(R"JSON({
             "limit":10,
             "type":"state"
-        })");
+        })JSON");
 
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -446,7 +446,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
 
 TEST_F(RPCLedgerDataHandlerTest, TypeFilterAMM)
 {
-    static auto const kLEDGER_EXPECTED = R"({
+    static auto const kLEDGER_EXPECTED = R"JSON({
       "account_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "close_flags":0,
       "close_time":0,
@@ -459,7 +459,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterAMM)
       "total_coins":"0",
       "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "closed":true
-   })";
+   })JSON";
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _))
@@ -485,10 +485,10 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterAMM)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(R"({
+        auto const req = json::parse(R"JSON({
             "limit":6,
             "type":"amm"
-        })");
+        })JSON");
 
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -507,7 +507,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterAMM)
 
 TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
 {
-    static auto const kLEDGER_EXPECTED = R"({
+    static auto const kLEDGER_EXPECTED = R"JSON({
       "account_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "close_flags":0,
       "close_time":0,
@@ -520,7 +520,7 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
       "total_coins":"0",
       "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "closed":true
-   })";
+   })JSON";
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _))
@@ -542,7 +542,7 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(R"({"limit":10, "out_of_order":true})");
+        auto const req = json::parse(R"JSON({"limit":10, "out_of_order":true})JSON");
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("ledger"));
@@ -589,10 +589,10 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "limit":10,
                 "marker": "{}"
-            }})",
+            }})JSON",
             kINDEX1
         ));
         auto const output = handler.process(req, Context{yield});
@@ -632,11 +632,11 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "limit":10,
                 "marker": {},
                 "out_of_order": true
-            }})",
+            }})JSON",
             kRANGE_MAX
         ));
         auto const output = handler.process(req, Context{yield});
@@ -673,10 +673,10 @@ TEST_F(RPCLedgerDataHandlerTest, Binary)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(
-            R"({
+            R"JSON({
                 "limit":10,
                 "binary": true
-            })"
+            })JSON"
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -713,10 +713,10 @@ TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "limit":{},
                 "binary": true
-            }})",
+            }})JSON",
             LedgerDataHandler::kLIMIT_BINARY + 1
         ));
         auto const output = handler.process(req, Context{yield});
@@ -754,10 +754,10 @@ TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "limit":{},
                 "binary": false
-            }})",
+            }})JSON",
             LedgerDataHandler::kLIMIT_JSON + 1
         ));
         auto const output = handler.process(req, Context{yield});
@@ -788,10 +788,10 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPTIssuance)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(R"({
+        auto const req = json::parse(R"JSON({
             "limit":1,
             "type":"mpt_issuance"
-        })");
+        })JSON");
 
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -830,10 +830,10 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPToken)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(R"({
+        auto const req = json::parse(R"JSON({
             "limit":1,
             "type":"mptoken"
-        })");
+        })JSON");
 
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);

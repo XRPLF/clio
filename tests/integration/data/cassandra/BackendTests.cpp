@@ -624,6 +624,7 @@ TEST_F(BackendCassandraTest, Basic)
         };
         auto generateAccountTx = [&](uint32_t ledgerSequence, auto txns) {
             std::vector<AccountTransactionsData> ret;
+            util::MTRandomGenerator randomGenerator;
             auto accounts = generateAccounts(ledgerSequence, 10);
             uint32_t idx = 0;
             for (auto& [hash, txn, meta] : txns) {
@@ -632,7 +633,7 @@ TEST_F(BackendCassandraTest, Basic)
                 data.transactionIndex = idx;
                 data.txHash = hash;
                 for (size_t i = 0; i < 3; ++i) {
-                    data.accounts.insert(accounts[util::Random::uniform(0ul, accounts.size() - 1)]);
+                    data.accounts.insert(accounts[randomGenerator.uniform(0ul, accounts.size() - 1)]);
                 }
                 ++idx;
                 ret.push_back(data);
@@ -1421,6 +1422,9 @@ TEST_F(BackendCassandraNodeMessageTest, MessageDisappearsAfterTTL)
 
 TEST_F(BackendCassandraNodeMessageTest, UpdatingMessageKeepsItAlive)
 {
+#if defined(__APPLE__)
+    GTEST_SKIP() << "Skipping test on Apple platform due to slow DB";
+#endif
     static boost::uuids::uuid const kUUID = generateUuid();
     static std::string const kUPDATED_MESSAGE = "updated message";
 

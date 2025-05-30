@@ -336,9 +336,9 @@ struct ClioConfigDefinitionParseArrayTest : NoLoggerFixture {
 
 TEST_F(ClioConfigDefinitionParseArrayTest, emptyArray)
 {
-    auto const configJson = boost::json::parse(R"json({
+    auto const configJson = boost::json::parse(R"JSON({
         "array": []
-    })json")
+    })JSON")
                                 .as_object();
 
     auto const result = config.parse(ConfigFileJson{configJson});
@@ -355,12 +355,12 @@ TEST_F(ClioConfigDefinitionParseArrayTest, emptyJson)
 
 TEST_F(ClioConfigDefinitionParseArrayTest, fullArray)
 {
-    auto const configJson = boost::json::parse(R"json({
+    auto const configJson = boost::json::parse(R"JSON({
         "array": [
             {"int": 1, "string": "one"},
             {"int": 2, "string": "two"}
         ]
-    })json")
+    })JSON")
                                 .as_object();
 
     auto const result = config.parse(ConfigFileJson{configJson});
@@ -370,12 +370,12 @@ TEST_F(ClioConfigDefinitionParseArrayTest, fullArray)
 
 TEST_F(ClioConfigDefinitionParseArrayTest, onlyRequiredFields)
 {
-    auto const configJson = boost::json::parse(R"json({
+    auto const configJson = boost::json::parse(R"JSON({
         "array": [
             {"int": 1},
             {"int": 2}
         ]
-    })json")
+    })JSON")
                                 .as_object();
 
     auto const configFile = ConfigFileJson{configJson};
@@ -391,12 +391,12 @@ TEST_F(ClioConfigDefinitionParseArrayTest, onlyRequiredFields)
 
 TEST_F(ClioConfigDefinitionParseArrayTest, someOptionalFieldsMissing)
 {
-    auto const configJson = boost::json::parse(R"json({
+    auto const configJson = boost::json::parse(R"JSON({
         "array": [
             {"int": 1, "string": "one"},
             {"int": 2}
         ]
-    })json")
+    })JSON")
                                 .as_object();
 
     auto const configFile = ConfigFileJson{configJson};
@@ -412,12 +412,12 @@ TEST_F(ClioConfigDefinitionParseArrayTest, someOptionalFieldsMissing)
 
 TEST_F(ClioConfigDefinitionParseArrayTest, optionalFieldMissingAtFirstPosition)
 {
-    auto const configJson = boost::json::parse(R"json({
+    auto const configJson = boost::json::parse(R"JSON({
         "array": [
             {"int": 1},
             {"int": 2, "string": "two"}
         ]
-    })json")
+    })JSON")
                                 .as_object();
 
     auto const configFile = ConfigFileJson{configJson};
@@ -434,12 +434,12 @@ TEST_F(ClioConfigDefinitionParseArrayTest, optionalFieldMissingAtFirstPosition)
 
 TEST_F(ClioConfigDefinitionParseArrayTest, missingRequiredFields)
 {
-    auto const configJson = boost::json::parse(R"json({
+    auto const configJson = boost::json::parse(R"JSON({
         "array": [
             {"int": 1},
             {"string": "two"}
         ]
-    })json")
+    })JSON")
                                 .as_object();
 
     auto const configFile = ConfigFileJson{configJson};
@@ -451,12 +451,12 @@ TEST_F(ClioConfigDefinitionParseArrayTest, missingRequiredFields)
 
 TEST_F(ClioConfigDefinitionParseArrayTest, missingAllRequiredFields)
 {
-    auto const configJson = boost::json::parse(R"json({
+    auto const configJson = boost::json::parse(R"JSON({
         "array": [
             {"string": "one"},
             {"string": "two"}
         ]
-    })json")
+    })JSON")
                                 .as_object();
 
     auto const configFile = ConfigFileJson{configJson};

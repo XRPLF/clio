@@ -34,7 +34,7 @@ CoreExt::CoreExt(std::shared_ptr<BackendInterface> backend) : backend_(std::move
 }
 
 void
-CoreExt::onLedgerData(model::LedgerData const& data) const
+CoreExt::onLedgerData(model::LedgerData const& data)
 {
     LOG(log_.debug()) << "Loading ledger data for " << data.seq;
     backend_->writeLedger(data.header, auto{data.rawHeader});
@@ -42,7 +42,7 @@ CoreExt::onLedgerData(model::LedgerData const& data) const
 }
 
 void
-CoreExt::onInitialData(model::LedgerData const& data) const
+CoreExt::onInitialData(model::LedgerData const& data)
 {
     LOG(log_.info()) << "Loading initial ledger data for " << data.seq;
     backend_->writeLedger(data.header, auto{data.rawHeader});
@@ -50,21 +50,21 @@ CoreExt::onInitialData(model::LedgerData const& data) const
 }
 
 void
-CoreExt::onInitialObject(uint32_t seq, model::Object const& obj) const
+CoreExt::onInitialObject(uint32_t seq, model::Object const& obj)
 {
     LOG(log_.trace()) << "got initial OBJ = " << obj.key << " for seq " << seq;
     backend_->writeLedgerObject(auto{obj.keyRaw}, seq, auto{obj.dataRaw});
 }
 
 void
-CoreExt::onObject(uint32_t seq, model::Object const& obj) const
+CoreExt::onObject(uint32_t seq, model::Object const& obj)
 {
     LOG(log_.trace()) << "got OBJ = " << obj.key << " for seq " << seq;
     backend_->writeLedgerObject(auto{obj.keyRaw}, seq, auto{obj.dataRaw});
 }
 
 void
-CoreExt::insertTransactions(model::LedgerData const& data) const
+CoreExt::insertTransactions(model::LedgerData const& data)
 {
     for (auto const& txn : data.transactions) {
         LOG(log_.trace()) << "Inserting transaction = " << txn.sttx.getTransactionID();

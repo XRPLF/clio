@@ -24,6 +24,7 @@
 #include "data/LedgerCacheInterface.hpp"
 #include "data/Types.hpp"
 #include "etl/SystemState.hpp"
+#include "etlng/LedgerPublisherInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Assert.hpp"
 #include "util/log/Logger.hpp"
@@ -31,6 +32,7 @@
 #include "util/prometheus/Prometheus.hpp"
 
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/post.hpp>
 #include <boost/asio/strand.hpp>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/protocol/Fees.h>
@@ -66,7 +68,7 @@ namespace etl::impl {
  * includes reading all of the transactions from the database) is done from the application wide asio io_service, and a
  * strand is used to ensure ledgers are published in order.
  */
-class LedgerPublisher {
+class LedgerPublisher : public etlng::LedgerPublisherInterface {
     util::Logger log_{"ETL"};
 
     boost::asio::strand<boost::asio::io_context::executor_type> publishStrand_;
@@ -121,7 +123,7 @@ public:
         uint32_t ledgerSequence,
         std::optional<uint32_t> maxAttempts,
         std::chrono::steady_clock::duration attemptsDelay = std::chrono::seconds{1}
-    )
+    ) override
     {
         LOG(log_.info()) << "Attempting to publish ledger = " << ledgerSequence;
         size_t numAttempts = 0;
@@ -235,7 +237,7 @@ public:
      * @brief Get time passed since last publish, in seconds
      */
     std::uint32_t
-    lastPublishAgeSeconds() const
+    lastPublishAgeSeconds() const override
     {
         return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - getLastPublish())
             .count();
@@ -245,7 +247,7 @@ public:
      * @brief Get last publish time as a time point
      */
     std::chrono::time_point<std::chrono::system_clock>
-    getLastPublish() const
+    getLastPublish() const override
     {
         return std::chrono::time_point<std::chrono::system_clock>{std::chrono::seconds{lastPublishSeconds_.get().value()
         }};
@@ -255,7 +257,7 @@ public:
      * @brief Get time passed since last ledger close, in seconds
      */
     std::uint32_t
-    lastCloseAgeSeconds() const
+    lastCloseAgeSeconds() const override
     {
         std::shared_lock const lck(closeTimeMtx_);
         auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())

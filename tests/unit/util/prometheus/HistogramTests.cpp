@@ -44,7 +44,7 @@ struct AnyHistogramTests : ::testing::Test {
 
     ::testing::StrictMock<MockHistogramImpl> mockHistogramImpl;
     std::string const name = "test_histogram";
-    std::string labelsString = R"({label1="value1",label2="value2"})";
+    std::string labelsString = R"JSON({label1="value1",label2="value2"})JSON";
     HistogramInt histogram{name, labelsString, {1, 2, 3}, static_cast<MockHistogramImpl&>(mockHistogramImpl)};
 };
 
@@ -72,7 +72,7 @@ TEST_F(AnyHistogramTests, serializeValue)
 }
 
 struct HistogramTests : ::testing::Test {
-    std::string labelsString = R"({label1="value1",label2="value2"})";
+    std::string labelsString = R"JSON({label1="value1",label2="value2"})JSON";
     HistogramInt histogram{"t", labelsString, {1, 2, 3}};
 
     std::string

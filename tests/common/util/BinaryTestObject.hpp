@@ -144,10 +144,10 @@ static constexpr auto kDEFAULT_HASH = "6C7F69A6D25A13AC4A2E9145999F45D4674F93990
 static constexpr auto kDEFAULT_OBJ_KEY = "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960D";
 
 [[maybe_unused, nodiscard]] std::pair<std::string, std::string>
-createNftTxAndMetaBlobs(std::string metaStr = kDEFAULT_TXN_META, std::string txnStr = kDEFAULT_TXN_HEX);
+createTxAndMetaBlobs(std::string metaStr = kDEFAULT_TXN_META, std::string txnStr = kDEFAULT_TXN_HEX);
 
 [[maybe_unused, nodiscard]] std::pair<ripple::STTx, ripple::TxMeta>
-createNftTxAndMeta(
+createTxAndMeta(
     std::string hashStr = kDEFAULT_HASH,
     std::string metaStr = kDEFAULT_TXN_META,
     std::string txnStr = kDEFAULT_TXN_HEX
@@ -175,6 +175,9 @@ createObjectWithBookBase(
 
 [[maybe_unused, nodiscard]] etlng::model::Object
 createObjectWithTwoNFTs();
+
+[[maybe_unused, nodiscard]] etlng::model::Object
+createObjectWithMPT();
 
 [[maybe_unused, nodiscard]] etlng::model::BookSuccessor
 createSuccessor();

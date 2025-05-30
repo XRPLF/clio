@@ -41,6 +41,13 @@ public:
     virtual ~MonitorInterface() = default;
 
     /**
+     * @brief Allows the loading process to notify of a freshly committed ledger
+     * @param seq The ledger sequence loaded
+     */
+    virtual void
+    notifyLedgerLoaded(uint32_t seq) = 0;
+
+    /**
      * @brief Allows clients to get notified when a new ledger becomes available in Clio's database
      *
      * @param subscriber The slot to connect

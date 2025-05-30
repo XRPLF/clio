@@ -11,6 +11,8 @@
 #
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+exclude: ^docs/doxygen-awesome-theme/
+
 repos:
   # `pre-commit sample-config` default hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -20,22 +22,28 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable
       - id: end-of-file-fixer
-        exclude: ^docs/doxygen-awesome-theme/
       - id: trailing-whitespace
-        exclude: ^docs/doxygen-awesome-theme/
 
   # Autoformat: YAML, JSON, Markdown, etc.
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: 787fb9f542b140ba0b2aced38e6a3e68021647a3 # frozen: v3.5.3
     hooks:
       - id: prettier
-        exclude: ^docs/doxygen-awesome-theme/
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: 586c3ea3f51230da42bab657c6a32e9e66c364f0 # frozen: v0.44.0
     hooks:
       - id: markdownlint-fix
         exclude: LICENSE.md
+
+  - repo: https://github.com/hadolint/hadolint
+    rev: c3dc18df7a501f02a560a2cc7ba3c69a85ca01d3 # frozen: v2.13.1-beta
+    hooks:
+      - id: hadolint-docker
+        # hadolint-docker is a special hook that runs hadolint in a Docker container
+        # Docker is not installed in the environment where pre-commit is run
+        stages: [manual]
+        entry: hadolint/hadolint:v2.12.1-beta hadolint
 
   - repo: https://github.com/codespell-project/codespell
     rev: 63c8f8312b7559622c0d82815639671ae42132ac # frozen: v2.4.1

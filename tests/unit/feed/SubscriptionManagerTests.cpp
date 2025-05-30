@@ -92,8 +92,8 @@ TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtx)
     EXPECT_CALL(*sessionPtr_, onDisconnect);
     subscriptionManagerPtr_->subValidation(session_);
 
-    static constexpr auto kJSON_MANIFEST = R"({"manifest":"test"})";
-    static constexpr auto kJSON_VALIDATION = R"({"validation":"test"})";
+    static constexpr auto kJSON_MANIFEST = R"JSON({"manifest":"test"})JSON";
+    static constexpr auto kJSON_VALIDATION = R"JSON({"validation":"test"})JSON";
 
     EXPECT_CALL(*sessionPtr_, send(testing::_)).Times(testing::AtMost(2));
 
@@ -111,14 +111,14 @@ TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtxSessionDieEarly)
     EXPECT_CALL(*sessionPtr_, send(testing::_)).Times(0);
     session_.reset();
 
-    subscriptionManagerPtr_->forwardManifest(json::parse(R"({"manifest":"test"})").get_object());
-    subscriptionManagerPtr_->forwardValidation(json::parse(R"({"validation":"test"})").get_object());
+    subscriptionManagerPtr_->forwardManifest(json::parse(R"JSON({"manifest":"test"})JSON").get_object());
+    subscriptionManagerPtr_->forwardValidation(json::parse(R"JSON({"validation":"test"})JSON").get_object());
 }
 
 TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
 {
     static constexpr auto kREPORT_RETURN =
-        R"({
+        R"JSON({
             "ledger":0,
             "transactions":2,
             "transactions_proposed":2,
@@ -128,7 +128,7 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
             "accounts_proposed":2,
             "books":2,
             "book_changes":2
-        })";
+        })JSON";
     web::SubscriptionContextPtr const session1 = std::make_shared<MockSession>();
     MockSession* mockSession1 = dynamic_cast<MockSession*>(session1.get());
 
@@ -200,7 +200,7 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
 
 TEST_F(SubscriptionManagerTest, ManifestTest)
 {
-    static constexpr auto kDUMMY_MANIFEST = R"({"manifest":"test"})";
+    static constexpr auto kDUMMY_MANIFEST = R"JSON({"manifest":"test"})JSON";
     EXPECT_CALL(*sessionPtr_, onDisconnect);
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kDUMMY_MANIFEST)));
     subscriptionManagerPtr_->subManifest(session_);
@@ -213,7 +213,7 @@ TEST_F(SubscriptionManagerTest, ManifestTest)
 
 TEST_F(SubscriptionManagerTest, ValidationTest)
 {
-    static constexpr auto kDUMMY = R"({"validation":"test"})";
+    static constexpr auto kDUMMY = R"JSON({"validation":"test"})JSON";
     EXPECT_CALL(*sessionPtr_, onDisconnect);
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kDUMMY)));
     subscriptionManagerPtr_->subValidation(session_);
@@ -240,7 +240,7 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
     static constexpr auto kBOOK_CHANGE_PUBLISH =
-        R"({
+        R"JSON({
             "type":"bookChanges",
             "ledger_index":32,
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
@@ -258,7 +258,7 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
                     "close":"-1"
                 }
             ]
-        })";
+        })JSON";
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kBOOK_CHANGE_PUBLISH)));
 
     subscriptionManagerPtr_->pubBookChanges(ledgerHeader, transactions);
@@ -280,7 +280,7 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
     // includes the same fields as a ledger stream message, except that it omits
     // the type and txn_count fields
     static constexpr auto kLEDGER_RESPONSE =
-        R"({
+        R"JSON({
             "validated_ledgers":"10-30",
             "ledger_index":30,
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
@@ -288,7 +288,7 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
             "fee_base":1,
             "reserve_base":3,
             "reserve_inc":2
-        })";
+        })JSON";
     boost::asio::io_context ctx;
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         EXPECT_CALL(*sessionPtr_, onDisconnect);
@@ -304,7 +304,7 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
     auto fee2 = ripple::Fees();
     fee2.reserve = 10;
     static constexpr auto kLEDGER_PUB =
-        R"({
+        R"JSON({
             "type":"ledgerClosed",
             "ledger_index":31,
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
@@ -314,7 +314,7 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
             "reserve_inc":0,
             "validated_ledgers":"10-31",
             "txn_count":8
-        })";
+        })JSON";
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kLEDGER_PUB)));
     subscriptionManagerPtr_->pubLedger(ledgerHeader2, fee2, "10-31", 8);
 
@@ -345,7 +345,7 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
     auto const metaObj = createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
     static constexpr auto kORDERBOOK_PUBLISH =
-        R"({
+        R"JSON({
             "transaction":
             {
                 "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -404,7 +404,7 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
             "engine_result":"tesSUCCESS",
             "close_time_iso": "2000-01-01T00:00:00Z",
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-        })";
+        })JSON";
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kORDERBOOK_PUBLISH))).Times(3);
     EXPECT_CALL(*sessionPtr_, apiSubversion).Times(3).WillRepeatedly(testing::Return(1));
     subscriptionManagerPtr_->pubTransaction(trans1, ledgerHeader);
@@ -427,15 +427,15 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
     EXPECT_EQ(subscriptionManagerPtr_->report()["transactions_proposed"], 1);
 
     static constexpr auto kDUMMY_TRANSACTION =
-        R"({
+        R"JSON({
             "transaction":
             {
                 "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
             }
-        })";
+        })JSON";
     static constexpr auto kORDERBOOK_PUBLISH =
-        R"({
+        R"JSON({
             "transaction":
             {
                 "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -494,7 +494,7 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
             "engine_result":"tesSUCCESS",
             "close_time_iso": "2000-01-01T00:00:00Z",
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-        })";
+        })JSON";
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kDUMMY_TRANSACTION))).Times(2);
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kORDERBOOK_PUBLISH))).Times(2);
     subscriptionManagerPtr_->forwardProposedTransaction(json::parse(kDUMMY_TRANSACTION).get_object());

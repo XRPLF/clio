@@ -191,8 +191,9 @@ generateData()
     constexpr auto kTOTAL = 10'000;
     std::vector<uint64_t> data;
     data.reserve(kTOTAL);
+    util::MTRandomGenerator randomGenerator;
     for (auto i = 0; i < kTOTAL; ++i)
-        data.push_back(util::Random::uniform(1, 100'000'000));
+        data.push_back(randomGenerator.uniform(1, 100'000'000));
 
     return data;
 }

@@ -81,7 +81,7 @@ class SettingsProviderTest : public NoLoggerFixture {};
 
 TEST_F(SettingsProviderTest, Defaults)
 {
-    auto const cfg = getParseSettingsConfig(json::parse(R"({"contact_points": "127.0.0.1"})"));
+    auto const cfg = getParseSettingsConfig(json::parse(R"JSON({"contact_points": "127.0.0.1"})JSON"));
     SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
     auto const settings = provider.getSettings();
@@ -110,14 +110,14 @@ TEST_F(SettingsProviderTest, Defaults)
 
 TEST_F(SettingsProviderTest, SimpleConfig)
 {
-    auto const cfg = getParseSettingsConfig(json::parse(R"({
+    auto const cfg = getParseSettingsConfig(json::parse(R"JSON({
         "database.cassandra.contact_points": "123.123.123.123",
         "database.cassandra.port": 1234,
         "database.cassandra.keyspace": "test",
         "database.cassandra.replication_factor": 42,
         "database.cassandra.table_prefix": "prefix",
         "database.cassandra.threads": 24
-    })"));
+    })JSON"));
     SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
     auto const settings = provider.getSettings();
@@ -135,10 +135,10 @@ TEST_F(SettingsProviderTest, SimpleConfig)
 
 TEST_F(SettingsProviderTest, DriverOptionalOptionsSpecified)
 {
-    auto const cfg = getParseSettingsConfig(json::parse(R"({
+    auto const cfg = getParseSettingsConfig(json::parse(R"JSON({
         "database.cassandra.contact_points": "123.123.123.123",
         "database.cassandra.queue_size_io": 2
-    })"));
+    })JSON"));
     SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
     auto const settings = provider.getSettings();
@@ -148,7 +148,7 @@ TEST_F(SettingsProviderTest, DriverOptionalOptionsSpecified)
 TEST_F(SettingsProviderTest, SecureBundleConfig)
 {
     auto const cfg =
-        getParseSettingsConfig(json::parse(R"({"database.cassandra.secure_connect_bundle": "bundleData"})"));
+        getParseSettingsConfig(json::parse(R"JSON({"database.cassandra.secure_connect_bundle": "bundleData"})JSON"));
     SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
     auto const settings = provider.getSettings();
@@ -161,10 +161,10 @@ TEST_F(SettingsProviderTest, CertificateConfig)
 {
     TmpFile const file{"certificateData"};
     auto const cfg = getParseSettingsConfig(json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "database.cassandra.contact_points": "127.0.0.1",
             "database.cassandra.certfile": "{}"
-        }})",
+        }})JSON",
         file.path
     )));
     SettingsProvider const provider{cfg.getObject("database.cassandra")};
