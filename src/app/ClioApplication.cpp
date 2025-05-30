@@ -36,6 +36,7 @@
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
+#include "util/Random.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
 #include "util/build/Build.hpp"
 #include "util/config/ConfigDefinition.hpp"
@@ -144,10 +145,11 @@ ClioApplication::run(bool const useNgWebServer)
     // The server uses the balancer to forward RPCs to a rippled node.
     // The balancer itself publishes to streams (transactions_proposed and accounts_proposed)
     auto balancer = [&] -> std::shared_ptr<etlng::LoadBalancerInterface> {
-        if (config_.get<bool>("__ng_etl"))
+        if (config_.get<bool>("__ng_etl")) {
             return etlng::LoadBalancer::makeLoadBalancer(
                 config_, ioc, backend, subscriptions, std::make_unique<util::MTRandomGenerator>(), ledgers
             );
+        }
 
         return etl::LoadBalancer::makeLoadBalancer(
             config_, ioc, backend, subscriptions, std::make_unique<util::MTRandomGenerator>(), ledgers

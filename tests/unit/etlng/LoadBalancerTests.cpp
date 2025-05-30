@@ -30,7 +30,6 @@
 #include "util/MockSourceNg.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/NameGenerator.hpp"
-#include "util/Random.hpp"
 #include "util/config/Array.hpp"
 #include "util/config/ConfigConstraints.hpp"
 #include "util/config/ConfigDefinition.hpp"
