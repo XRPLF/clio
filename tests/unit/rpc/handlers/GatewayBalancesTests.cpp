@@ -277,14 +277,16 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(
-            json::parse(fmt::format(
-                R"JSON({{
+            json::parse(
+                fmt::format(
+                    R"JSON({{
                     "account": "{}",
                     "ledger_index": "{}"
                 }})JSON",
-                kACCOUNT,
-                seq
-            )),
+                    kACCOUNT,
+                    seq
+                )
+            ),
             Context{yield}
         );
         ASSERT_FALSE(output);
@@ -305,14 +307,16 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaIntIndex)
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(
-            json::parse(fmt::format(
-                R"JSON({{
+            json::parse(
+                fmt::format(
+                    R"JSON({{
                     "account": "{}",
                     "ledger_index": {}
                 }})JSON",
-                kACCOUNT,
-                seq
-            )),
+                    kACCOUNT,
+                    seq
+                )
+            ),
             Context{yield}
         );
         ASSERT_FALSE(output);
@@ -332,14 +336,16 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaHash)
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(
-            json::parse(fmt::format(
-                R"JSON({{
+            json::parse(
+                fmt::format(
+                    R"JSON({{
                     "account": "{}",
                     "ledger_hash": "{}"
                 }})JSON",
-                kACCOUNT,
-                kLEDGER_HASH
-            )),
+                    kACCOUNT,
+                    kLEDGER_HASH
+                )
+            ),
             Context{yield}
         );
         ASSERT_FALSE(output);
@@ -366,12 +372,14 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(
-            json::parse(fmt::format(
-                R"JSON({{
+            json::parse(
+                fmt::format(
+                    R"JSON({{
                     "account": "{}"
                 }})JSON",
-                kACCOUNT
-            )),
+                    kACCOUNT
+                )
+            ),
             Context{yield}
         );
         ASSERT_FALSE(output);
@@ -425,14 +433,16 @@ TEST_P(NormalPathTest, CheckOutput)
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(
-            json::parse(fmt::format(
-                R"JSON({{
+            json::parse(
+                fmt::format(
+                    R"JSON({{
                     "account": "{}",
                     {}
                 }})JSON",
-                kACCOUNT,
-                bundle.hotwallet
-            )),
+                    kACCOUNT,
+                    bundle.hotwallet
+                )
+            ),
             Context{yield}
         );
         ASSERT_TRUE(output);
@@ -563,8 +573,10 @@ generateNormalPathTestBundles()
         NormalTestBundle{
             .testName = "HighID",
             .mockedDir = createOwnerDirLedgerObject(
-                {ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}
-                },
+                {ripple::uint256{kINDEX2},
+                 ripple::uint256{kINDEX2},
+                 ripple::uint256{kINDEX2},
+                 ripple::uint256{kINDEX2}},
                 kINDEX1
             ),
             .mockedObjects =

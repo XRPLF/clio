@@ -45,7 +45,8 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), k
 
     cass_cluster_set_token_aware_routing(*this, cass_true);
     if (auto const rc = cass_cluster_set_protocol_version(*this, CASS_PROTOCOL_VERSION_V4); rc != CASS_OK) {
-        throw std::runtime_error(fmt::format("Error setting cassandra protocol version to v4: {}", cass_error_desc(rc))
+        throw std::runtime_error(
+            fmt::format("Error setting cassandra protocol version to v4: {}", cass_error_desc(rc))
         );
     }
 

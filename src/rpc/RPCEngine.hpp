@@ -159,20 +159,19 @@ public:
         }
 
         if (not ctx.isAdmin and responseCache_ and responseCache_->shouldCache(ctx.method)) {
-            auto updater =
-                [this, &ctx](boost::asio::yield_context
-                ) -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
+            auto updater = [this, &ctx](boost::asio::yield_context)
+                -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
                 auto result = buildResponseImpl(ctx);
                 auto extracted = std::visit(
                     util::OverloadSet{
-                        [&result](Status status
-                        ) -> std::expected<boost::json::object, util::ResponseExpirationCache::Error> {
+                        [&result](Status status)
+                            -> std::expected<boost::json::object, util::ResponseExpirationCache::Error> {
                             return std::unexpected{util::ResponseExpirationCache::Error{
                                 .status = std::move(status), .warnings = std::move(result.warnings)
                             }};
                         },
-                        [](boost::json::object obj
-                        ) -> std::expected<boost::json::object, util::ResponseExpirationCache::Error> { return obj; }
+                        [](boost::json::object obj)
+                            -> std::expected<boost::json::object, util::ResponseExpirationCache::Error> { return obj; }
                     },
                     std::move(result.response)
                 );

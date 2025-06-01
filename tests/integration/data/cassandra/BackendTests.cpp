@@ -390,10 +390,10 @@ TEST_F(BackendCassandraTest, Basic)
             "6C7F69A6D25A13AC4A2E9145999F45D4674F939900017A96885FDC2757"
             "E9284E";
         ripple::uint256 nftID;
-        EXPECT_TRUE(
-            nftID.parseHex("000800006203F49C21D5D6E022CB16DE3538F248662"
-                           "FC73CEF7FF5C60000002C")
-        );
+        EXPECT_TRUE(nftID.parseHex(
+            "000800006203F49C21D5D6E022CB16DE3538F248662"
+            "FC73CEF7FF5C60000002C"
+        ));
 
         std::string metaBlob = hexStringToBinaryString(metaHex);
         std::string txnBlob = hexStringToBinaryString(txnHex);

@@ -160,12 +160,14 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "ledger_hash":"{}"
         }})JSON",
-        kLEDGER_HASH
-    ));
+            kLEDGER_HASH
+        )
+    );
     auto const handler = AnyHandler{BookChangesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});

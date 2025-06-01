@@ -38,8 +38,8 @@ namespace {
 constexpr auto kSEQ = 30;
 
 std::vector<data::LedgerObject> const kDIFFS_FOR_SEQ = {
-    {.key = ripple::uint256{"05E1EAC2574BE082B00B16F907CE32E6058DEB8F9E81CF34A00E80A5D71FA4FE"}, .blob = Blob{}
-    },  // This object is removed in Seq while it exists in Seq-1
+    {.key = ripple::uint256{"05E1EAC2574BE082B00B16F907CE32E6058DEB8F9E81CF34A00E80A5D71FA4FE"},
+     .blob = Blob{}},  // This object is removed in Seq while it exists in Seq-1
     {.key = ripple::uint256{"110872C7196EE6EF7032952F1852B11BB461A96FF2D7E06A8003B4BB30FD130B"}, .blob = Blob{'s'}},
     {.key = ripple::uint256{"3B3A84E850C724E914293271785A31D0BFC8B9DD1B6332E527B149AD72E80E18"}, .blob = Blob{'s'}},
     {.key = ripple::uint256{"4EC98C5C3F34C44409BC058998CBD64F6AED3FF6C0CAAEC15F7F42DF14EE9F04"}, .blob = Blob{'s'}},
@@ -57,8 +57,8 @@ std::vector<data::LedgerObject> const kDIFFS_FOR_SEQ_MINUS1 = {
     {.key = ripple::uint256{"110872C7196EE6EF7032952F1852B11BB461A96FF2D7E06A8003B4BB30FD1301"}, .blob = Blob{'s'}},
     {.key = ripple::uint256{"3B3A84E850C724E914293271785A31D0BFC8B9DD1B6332E527B149AD72E80E12"}, .blob = Blob{'s'}},
     {.key = ripple::uint256{"4EC98C5C3F34C44409BC058998CBD64F6AED3FF6C0CAAEC15F7F42DF14EE9F03"}, .blob = Blob{'s'}},
-    {.key = ripple::uint256{"58CEC9F17733EA7BA68C88E6179B8F207D001EE04D4E0366F958CC04FF6AB834"}, .blob = Blob{'s'}
-    },  // This object is changed in both Seq and Seq-1
+    {.key = ripple::uint256{"58CEC9F17733EA7BA68C88E6179B8F207D001EE04D4E0366F958CC04FF6AB834"},
+     .blob = Blob{'s'}},  // This object is changed in both Seq and Seq-1
     {.key = ripple::uint256{"64FB1712146BA604C274CC335C5DE7ADFE52D1F8C3E904A9F9765FE8158A3E05"}, .blob = Blob{'s'}},
     {.key = ripple::uint256{"700BE23B1D9EE3E6BF52543D05843D5345B85D9EDB3D33BBD6B4C3A13C54B386"}, .blob = Blob{'s'}},
     {.key = ripple::uint256{"82C297FCBCD634C4424F263D17480AA2F13975DF5846A5BB57246022CEEBE447"}, .blob = Blob{'s'}},

@@ -73,12 +73,14 @@ TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExist)
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "account":"{}"
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     auto const handler = AnyHandler{AccountCurrenciesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
@@ -95,12 +97,14 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaIntSequence)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "account":"{}"
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     auto const handler = AnyHandler{AccountCurrenciesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
@@ -119,14 +123,16 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaStringSequence)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(12, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "account":"{}",
             "ledger_index":"{}"
         }})JSON",
-        kACCOUNT,
-        kSEQ
-    ));
+            kACCOUNT,
+            kSEQ
+        )
+    );
     auto const handler = AnyHandler{AccountCurrenciesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
@@ -144,14 +150,16 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "account":"{}",
             "ledger_hash":"{}"
         }})JSON",
-        kACCOUNT,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
     auto const handler = AnyHandler{AccountCurrenciesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
@@ -210,12 +218,14 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "account":"{}"
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     auto const handler = AnyHandler{AccountCurrenciesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
@@ -245,14 +255,16 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "account":"{}",
             "ledger_hash":"{}"
         }})JSON",
-        kACCOUNT,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
     auto const handler = AnyHandler{AccountCurrenciesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
@@ -282,14 +294,16 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "account":"{}",
             "ledger_index":{}
         }})JSON",
-        kACCOUNT,
-        ledgerSeq
-    ));
+            kACCOUNT,
+            ledgerSeq
+        )
+    );
     auto const handler = AnyHandler{AccountCurrenciesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});

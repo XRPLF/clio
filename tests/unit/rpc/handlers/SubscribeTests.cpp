@@ -685,14 +685,16 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
 
 TEST_F(RPCSubscribeHandlerTest, Accounts)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "accounts": ["{}","{}","{}"]
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kACCOUNT2
-    ));
+            kACCOUNT,
+            kACCOUNT2,
+            kACCOUNT2
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler =
             AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
@@ -708,14 +710,16 @@ TEST_F(RPCSubscribeHandlerTest, Accounts)
 
 TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "accounts_proposed": ["{}","{}","{}"]
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kACCOUNT2
-    ));
+            kACCOUNT,
+            kACCOUNT2,
+            kACCOUNT2
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler =
             AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
@@ -732,8 +736,9 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
 
 TEST_F(RPCSubscribeHandlerTest, JustBooks)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "books":
             [
                 {{
@@ -749,8 +754,9 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
                 }}
             ]
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler =
             AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
@@ -764,8 +770,9 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
 
 TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "books":
             [
                 {{
@@ -782,8 +789,9 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
                 }}
             ]
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler =
             AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
@@ -797,8 +805,9 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
 
 TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "books":
             [
                 {{
@@ -816,19 +825,24 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
                 }}
             ]
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     backend_->setRange(kMIN_SEQ, kMAX_SEQ);
 
     auto const issuer = getAccountIdWithString(kACCOUNT);
 
-    auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
-        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())
-    ));
+    auto const getsXRPPaysUSDBook = getBookBase(
+        std::get<ripple::Book>(
+            rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())
+        )
+    );
 
-    auto const reversedBook = getBookBase(std::get<ripple::Book>(
-        rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)
-    ));
+    auto const reversedBook = getBookBase(
+        std::get<ripple::Book>(
+            rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)
+        )
+    );
 
     ON_CALL(*backend_, doFetchSuccessorKey(getsXRPPaysUSDBook, kMAX_SEQ, _))
         .WillByDefault(Return(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}));
@@ -968,8 +982,9 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
 
 TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "books":
             [
                 {{
@@ -986,19 +1001,24 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
                 }}
             ]
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     backend_->setRange(kMIN_SEQ, kMAX_SEQ);
 
     auto const issuer = getAccountIdWithString(kACCOUNT);
 
-    auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
-        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())
-    ));
+    auto const getsXRPPaysUSDBook = getBookBase(
+        std::get<ripple::Book>(
+            rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())
+        )
+    );
 
-    auto const reversedBook = getBookBase(std::get<ripple::Book>(
-        rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)
-    ));
+    auto const reversedBook = getBookBase(
+        std::get<ripple::Book>(
+            rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)
+        )
+    );
 
     ON_CALL(*backend_, doFetchSuccessorKey(getsXRPPaysUSDBook, kMAX_SEQ, _))
         .WillByDefault(Return(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}));

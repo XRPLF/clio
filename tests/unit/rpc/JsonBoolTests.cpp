@@ -53,8 +53,9 @@ public:
             {.testName = "StringFalseValue", .json = R"JSON({ "test_bool": "false" })JSON", .expectedBool = true},
             {.testName = "ArrayTrueValue", .json = R"JSON({ "test_bool": [0] })JSON", .expectedBool = true},
             {.testName = "ArrayFalseValue", .json = R"JSON({ "test_bool": [] })JSON", .expectedBool = false},
-            {.testName = "ObjectTrueValue", .json = R"JSON({ "test_bool": { "key": null } })JSON", .expectedBool = true
-            },
+            {.testName = "ObjectTrueValue",
+             .json = R"JSON({ "test_bool": { "key": null } })JSON",
+             .expectedBool = true},
             {.testName = "ObjectFalseValue", .json = R"JSON({ "test_bool": {} })JSON", .expectedBool = false}
         };
     }

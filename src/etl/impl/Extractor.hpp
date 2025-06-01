@@ -94,8 +94,8 @@ private:
         double totalTime = 0.0;
         auto currentSequence = startSequence_;
 
-        while (!shouldFinish(currentSequence) && networkValidatedLedgers_->waitUntilValidatedByNetwork(currentSequence)
-        ) {
+        while (!shouldFinish(currentSequence) &&
+               networkValidatedLedgers_->waitUntilValidatedByNetwork(currentSequence)) {
             auto [fetchResponse, time] = ::util::timed<std::chrono::duration<double>>([this, currentSequence]() {
                 return ledgerFetcher_.get().fetchDataAndDiff(currentSequence);
             });

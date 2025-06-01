@@ -179,14 +179,16 @@ TEST_F(RPCAMMInfoHandlerTest, AccountNotFound)
     ON_CALL(*backend_, doFetchLedgerObject(accountKey, testing::_, testing::_))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "amm_account": "{}",
             "account": "{}"
         }})JSON",
-        kAMM_ACCOUNT,
-        kNOTFOUND_ACCOUNT
-    ));
+            kAMM_ACCOUNT,
+            kNOTFOUND_ACCOUNT
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
@@ -205,12 +207,14 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotExist)
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "amm_account": "{}"
         }})JSON",
-        kWRONG_AMM_ACCOUNT
-    ));
+            kWRONG_AMM_ACCOUNT
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
@@ -228,12 +232,14 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotInDBIsMalformed)
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "amm_account": "{}"
         }})JSON",
-        kAMM_ACCOUNT
-    ));
+            kAMM_ACCOUNT
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
@@ -254,12 +260,14 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotFoundMissingAmmField)
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(accountRoot.getSerializer().peekData()));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "amm_account": "{}"
         }})JSON",
-        kAMM_ACCOUNT
-    ));
+            kAMM_ACCOUNT
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
@@ -289,12 +297,14 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAmmBlobNotFound)
     ON_CALL(*backend_, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(std::optional<Blob>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "amm_account": "{}"
         }})JSON",
-        kAMM_ACCOUNT
-    ));
+            kAMM_ACCOUNT
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
@@ -328,12 +338,14 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAccBlobNotFound)
     ON_CALL(*backend_, doFetchLedgerObject(account2Key, testing::_, testing::_))
         .WillByDefault(Return(std::optional<Blob>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "amm_account": "{}"
         }})JSON",
-        kAMM_ACCOUNT
-    ));
+            kAMM_ACCOUNT
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
@@ -373,18 +385,21 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
     ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSEQ, _)).WillByDefault(Return(feesObj));
     ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _)).WillByDefault(Return(std::optional<Blob>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "amm_account": "{}"
         }})JSON",
-        kAMM_ACCOUNT
-    ));
+            kAMM_ACCOUNT
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
-        auto expectedResult = json::parse(fmt::format(
-            R"JSON({{
+        auto expectedResult = json::parse(
+            fmt::format(
+                R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -405,13 +420,14 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
                 "ledger_hash": "{}",
                 "validated": true
             }})JSON",
-            kLP_ISSUE_CURRENCY,
-            kAMM_ACCOUNT,
-            "JPY",
-            kAMM_ACCOUNT2,
-            kAMM_ACCOUNT,
-            kLEDGER_HASH
-        ));
+                kLP_ISSUE_CURRENCY,
+                kAMM_ACCOUNT,
+                "JPY",
+                kAMM_ACCOUNT2,
+                kAMM_ACCOUNT,
+                kLEDGER_HASH
+            )
+        );
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), expectedResult);
@@ -453,20 +469,23 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
     ON_CALL(*backend_, doFetchLedgerObject(accountHoldsKeylet.key, kSEQ, _))
         .WillByDefault(Return(trustline.getSerializer().peekData()));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "amm_account": "{}",
             "account": "{}"
         }})JSON",
-        kAMM_ACCOUNT,
-        kAMM_ACCOUNT2
-    ));
+            kAMM_ACCOUNT,
+            kAMM_ACCOUNT2
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
-        auto const expectedResult = json::parse(fmt::format(
-            R"JSON({{
+        auto const expectedResult = json::parse(
+            fmt::format(
+                R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -487,13 +506,14 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
                 "ledger_hash": "{}",
                 "validated": true
             }})JSON",
-            kLP_ISSUE_CURRENCY,
-            kAMM_ACCOUNT2,
-            "JPY",
-            kAMM_ACCOUNT,
-            kAMM_ACCOUNT2,
-            kLEDGER_HASH
-        ));
+                kLP_ISSUE_CURRENCY,
+                kAMM_ACCOUNT2,
+                "JPY",
+                kAMM_ACCOUNT,
+                kAMM_ACCOUNT2,
+                kLEDGER_HASH
+            )
+        );
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), expectedResult);
@@ -527,18 +547,21 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
     ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSEQ, _)).WillByDefault(Return(feesObj));
     ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _)).WillByDefault(Return(std::optional<Blob>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "amm_account": "{}"
         }})JSON",
-        kAMM_ACCOUNT
-    ));
+            kAMM_ACCOUNT
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
-        auto const expectedResult = json::parse(fmt::format(
-            R"JSON({{
+        auto const expectedResult = json::parse(
+            fmt::format(
+                R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -559,13 +582,14 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
                 "ledger_hash": "{}",
                 "validated": true
             }})JSON",
-            kLP_ISSUE_CURRENCY,
-            kAMM_ACCOUNT,
-            "JPY",
-            kAMM_ACCOUNT2,
-            kAMM_ACCOUNT,
-            kLEDGER_HASH
-        ));
+                kLP_ISSUE_CURRENCY,
+                kAMM_ACCOUNT,
+                "JPY",
+                kAMM_ACCOUNT2,
+                kAMM_ACCOUNT,
+                kLEDGER_HASH
+            )
+        );
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), expectedResult);
@@ -597,18 +621,21 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
     ON_CALL(*backend_, doFetchLedgerObject(feesKey, kSEQ, _)).WillByDefault(Return(feesObj));
     ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _)).WillByDefault(Return(std::optional<Blob>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "amm_account": "{}"
         }})JSON",
-        kAMM_ACCOUNT
-    ));
+            kAMM_ACCOUNT
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
-        auto const expectedResult = json::parse(fmt::format(
-            R"JSON({{
+        auto const expectedResult = json::parse(
+            fmt::format(
+                R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -634,15 +661,16 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
                 "ledger_hash": "{}",
                 "validated": true
             }})JSON",
-            kLP_ISSUE_CURRENCY,
-            kAMM_ACCOUNT,
-            "USD",
-            kAMM_ACCOUNT,
-            "JPY",
-            kAMM_ACCOUNT2,
-            kAMM_ACCOUNT,
-            kLEDGER_HASH
-        ));
+                kLP_ISSUE_CURRENCY,
+                kAMM_ACCOUNT,
+                "USD",
+                kAMM_ACCOUNT,
+                "JPY",
+                kAMM_ACCOUNT2,
+                kAMM_ACCOUNT,
+                kLEDGER_HASH
+            )
+        );
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), expectedResult);
@@ -686,18 +714,21 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
     ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _))
         .WillByDefault(Return(trustline2BalanceFrozen.getSerializer().peekData()));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "amm_account": "{}"
         }})JSON",
-        kAMM_ACCOUNT
-    ));
+            kAMM_ACCOUNT
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
-        auto const expectedResult = json::parse(fmt::format(
-            R"JSON({{
+        auto const expectedResult = json::parse(
+            fmt::format(
+                R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -723,15 +754,16 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
                 "ledger_hash": "{}",
                 "validated": true
             }})JSON",
-            kLP_ISSUE_CURRENCY,
-            kAMM_ACCOUNT,
-            "USD",
-            kAMM_ACCOUNT,
-            "JPY",
-            kAMM_ACCOUNT2,
-            kAMM_ACCOUNT,
-            kLEDGER_HASH
-        ));
+                kLP_ISSUE_CURRENCY,
+                kAMM_ACCOUNT,
+                "USD",
+                kAMM_ACCOUNT,
+                "JPY",
+                kAMM_ACCOUNT2,
+                kAMM_ACCOUNT,
+                kLEDGER_HASH
+            )
+        );
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), expectedResult);
@@ -776,18 +808,21 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
     ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _))
         .WillByDefault(Return(trustline2BalanceFrozen.getSerializer().peekData()));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "amm_account": "{}"
         }})JSON",
-        kAMM_ACCOUNT
-    ));
+            kAMM_ACCOUNT
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
-        auto const expectedResult = json::parse(fmt::format(
-            R"JSON({{
+        auto const expectedResult = json::parse(
+            fmt::format(
+                R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -813,15 +848,16 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
                 "ledger_hash": "{}",
                 "validated": true
             }})JSON",
-            kLP_ISSUE_CURRENCY,
-            kAMM_ACCOUNT,
-            "USD",
-            kAMM_ACCOUNT,
-            "JPY",
-            kAMM_ACCOUNT2,
-            kAMM_ACCOUNT,
-            kLEDGER_HASH
-        ));
+                kLP_ISSUE_CURRENCY,
+                kAMM_ACCOUNT,
+                "USD",
+                kAMM_ACCOUNT,
+                "JPY",
+                kAMM_ACCOUNT2,
+                kAMM_ACCOUNT,
+                kLEDGER_HASH
+            )
+        );
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), expectedResult);
@@ -858,18 +894,21 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
     ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _))
         .WillByDefault(Return(trustlineBalance.getSerializer().peekData()));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "amm_account": "{}"
         }})JSON",
-        kAMM_ACCOUNT
-    ));
+            kAMM_ACCOUNT
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
-        auto expectedResult = json::parse(fmt::format(
-            R"JSON({{
+        auto expectedResult = json::parse(
+            fmt::format(
+                R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -890,13 +929,14 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
                 "ledger_hash": "{}",
                 "validated": true
             }})JSON",
-            kLP_ISSUE_CURRENCY,
-            kAMM_ACCOUNT,
-            "JPY",
-            kAMM_ACCOUNT2,
-            kAMM_ACCOUNT,
-            kLEDGER_HASH
-        ));
+                kLP_ISSUE_CURRENCY,
+                kAMM_ACCOUNT,
+                "JPY",
+                kAMM_ACCOUNT2,
+                kAMM_ACCOUNT,
+                kLEDGER_HASH
+            )
+        );
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), expectedResult);
@@ -935,18 +975,21 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
     ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _))
         .WillByDefault(Return(trustlineBalance.getSerializer().peekData()));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "amm_account": "{}"
         }})JSON",
-        kAMM_ACCOUNT
-    ));
+            kAMM_ACCOUNT
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
-        auto expectedResult = json::parse(fmt::format(
-            R"JSON({{
+        auto expectedResult = json::parse(
+            fmt::format(
+                R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -979,15 +1022,16 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
                 "ledger_hash": "{}",
                 "validated": true
             }})JSON",
-            kLP_ISSUE_CURRENCY,
-            kAMM_ACCOUNT,
-            "JPY",
-            kAMM_ACCOUNT2,
-            kAMM_ACCOUNT,
-            kAMM_ACCOUNT,
-            kAMM_ACCOUNT2,
-            kLEDGER_HASH
-        ));
+                kLP_ISSUE_CURRENCY,
+                kAMM_ACCOUNT,
+                "JPY",
+                kAMM_ACCOUNT2,
+                kAMM_ACCOUNT,
+                kAMM_ACCOUNT,
+                kAMM_ACCOUNT2,
+                kLEDGER_HASH
+            )
+        );
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), expectedResult);
@@ -1028,18 +1072,21 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
     ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _))
         .WillByDefault(Return(trustlineBalance.getSerializer().peekData()));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "amm_account": "{}"
         }})JSON",
-        kAMM_ACCOUNT
-    ));
+            kAMM_ACCOUNT
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
-        auto expectedResult = json::parse(fmt::format(
-            R"JSON({{
+        auto expectedResult = json::parse(
+            fmt::format(
+                R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -1075,16 +1122,17 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
                 "ledger_hash": "{}",
                 "validated": true
             }})JSON",
-            kLP_ISSUE_CURRENCY,
-            kAMM_ACCOUNT,
-            "JPY",
-            kAMM_ACCOUNT2,
-            kAMM_ACCOUNT,
-            kAMM_ACCOUNT2,
-            kAMM_ACCOUNT,
-            kAMM_ACCOUNT2,
-            kLEDGER_HASH
-        ));
+                kLP_ISSUE_CURRENCY,
+                kAMM_ACCOUNT,
+                "JPY",
+                kAMM_ACCOUNT2,
+                kAMM_ACCOUNT,
+                kAMM_ACCOUNT2,
+                kAMM_ACCOUNT,
+                kAMM_ACCOUNT2,
+                kLEDGER_HASH
+            )
+        );
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), expectedResult);
@@ -1116,8 +1164,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
     ON_CALL(*backend_, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(ammObj.getSerializer().peekData()));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "asset": {{
                 "currency": "JPY",
                 "issuer": "{}"
@@ -1127,15 +1176,17 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
                 "issuer": "{}"
             }}
         }})JSON",
-        kAMM_ACCOUNT,
-        kAMM_ACCOUNT2
-    ));
+            kAMM_ACCOUNT,
+            kAMM_ACCOUNT2
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
-        auto expectedResult = json::parse(fmt::format(
-            R"JSON({{
+        auto expectedResult = json::parse(
+            fmt::format(
+                R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -1180,20 +1231,21 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
                 "ledger_hash": "{}",
                 "validated": true
             }})JSON",
-            kLP_ISSUE_CURRENCY,
-            kAMM_ACCOUNT,
-            "JPY",
-            kAMM_ACCOUNT,
-            "USD",
-            kAMM_ACCOUNT2,
-            kAMM_ACCOUNT,
-            kLP_ISSUE_CURRENCY,
-            kAMM_ACCOUNT,
-            kAMM_ACCOUNT2,
-            kAMM_ACCOUNT,
-            kAMM_ACCOUNT2,
-            kLEDGER_HASH
-        ));
+                kLP_ISSUE_CURRENCY,
+                kAMM_ACCOUNT,
+                "JPY",
+                kAMM_ACCOUNT,
+                "USD",
+                kAMM_ACCOUNT2,
+                kAMM_ACCOUNT,
+                kLP_ISSUE_CURRENCY,
+                kAMM_ACCOUNT,
+                kAMM_ACCOUNT2,
+                kAMM_ACCOUNT,
+                kAMM_ACCOUNT2,
+                kLEDGER_HASH
+            )
+        );
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), expectedResult);
@@ -1226,8 +1278,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
     ON_CALL(*backend_, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(ammObj.getSerializer().peekData()));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "asset": {{
                 "currency": "USD",
                 "issuer": "{}"
@@ -1237,15 +1290,17 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
                 "issuer": "{}"
             }}
         }})JSON",
-        kAMM_ACCOUNT,
-        kAMM_ACCOUNT2
-    ));
+            kAMM_ACCOUNT,
+            kAMM_ACCOUNT2
+        )
+    );
 
     auto const handler = AnyHandler{AMMInfoHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
-        auto expectedResult = json::parse(fmt::format(
-            R"JSON({{
+        auto expectedResult = json::parse(
+            fmt::format(
+                R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -1290,20 +1345,21 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
                 "ledger_hash": "{}",
                 "validated": true
             }})JSON",
-            kLP_ISSUE_CURRENCY,
-            kAMM_ACCOUNT,
-            "USD",
-            kAMM_ACCOUNT,
-            "JPY",
-            kAMM_ACCOUNT2,
-            kAMM_ACCOUNT,
-            kLP_ISSUE_CURRENCY,
-            kAMM_ACCOUNT,
-            kAMM_ACCOUNT2,
-            kAMM_ACCOUNT,
-            kAMM_ACCOUNT2,
-            kLEDGER_HASH
-        ));
+                kLP_ISSUE_CURRENCY,
+                kAMM_ACCOUNT,
+                "USD",
+                kAMM_ACCOUNT,
+                "JPY",
+                kAMM_ACCOUNT2,
+                kAMM_ACCOUNT,
+                kLP_ISSUE_CURRENCY,
+                kAMM_ACCOUNT,
+                kAMM_ACCOUNT2,
+                kAMM_ACCOUNT,
+                kAMM_ACCOUNT2,
+                kLEDGER_HASH
+            )
+        );
 
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), expectedResult);

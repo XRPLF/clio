@@ -213,15 +213,17 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaHash)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(std::nullopt));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "role": "gateway",
             "ledger_hash": "{}"
         }})JSON",
-        kACCOUNT,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
     auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
@@ -240,15 +242,17 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaIntIndex)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::nullopt));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "role": "gateway",
             "ledger_index": {}
         }})JSON",
-        kACCOUNT,
-        kSEQ
-    ));
+            kACCOUNT,
+            kSEQ
+        )
+    );
     auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
@@ -267,15 +271,17 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::nullopt));
 
-    auto static const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "role": "gateway",
             "ledger_index": "{}"
         }})JSON",
-        kACCOUNT,
-        kSEQ
-    ));
+            kACCOUNT,
+            kSEQ
+        )
+    );
     auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
@@ -294,15 +300,17 @@ TEST_F(RPCNoRippleCheckTest, AccountNotExist)
     // fetch account object return empty
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "gateway"
         }})JSON",
-        kACCOUNT,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -357,15 +365,17 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "user"
         }})JSON",
-        kACCOUNT,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -412,15 +422,17 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "user"
         }})JSON",
-        kACCOUNT,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -474,15 +486,17 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "gateway"
         }})JSON",
-        kACCOUNT,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -529,15 +543,17 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "gateway"
         }})JSON",
-        kACCOUNT,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -576,16 +592,18 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "gateway",
             "transactions": true
         }})JSON",
-        kACCOUNT,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -629,16 +647,18 @@ TEST_F(RPCNoRippleCheckTest, NormalPathLimit)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "gateway",
             "limit": 1
         }})JSON",
-        kACCOUNT,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -734,16 +754,18 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "gateway",
             "transactions": true
         }})JSON",
-        kACCOUNT,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -786,17 +808,19 @@ TEST_F(RPCNoRippleCheckTest, LimitMoreThanMax)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "gateway",
             "limit": {}
         }})JSON",
-        kACCOUNT,
-        kLEDGER_HASH,
-        NoRippleCheckHandler::kLIMIT_MAX + 1
-    ));
+            kACCOUNT,
+            kLEDGER_HASH,
+            NoRippleCheckHandler::kLIMIT_MAX + 1
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NoRippleCheckHandler{backend_}};
         auto const output = handler.process(input, Context{yield});

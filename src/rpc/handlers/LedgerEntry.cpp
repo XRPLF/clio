@@ -76,9 +76,9 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
 
         key = std::get<ripple::uint256>(keyOrStatus);
     } else if (input.offer) {
-        auto const id =
-            util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(input.offer->at(JS(account)))
-            );
+        auto const id = util::parseBase58Wrapper<ripple::AccountID>(
+            boost::json::value_to<std::string>(input.offer->at(JS(account)))
+        );
         key = ripple::keylet::offer(*id, boost::json::value_to<std::uint32_t>(input.offer->at(JS(seq)))).key;
     } else if (input.rippleStateAccount) {
         auto const id1 = util::parseBase58Wrapper<ripple::AccountID>(
@@ -92,9 +92,9 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
 
         key = ripple::keylet::line(*id1, *id2, currency).key;
     } else if (input.escrow) {
-        auto const id =
-            util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(input.escrow->at(JS(owner)))
-            );
+        auto const id = util::parseBase58Wrapper<ripple::AccountID>(
+            boost::json::value_to<std::string>(input.escrow->at(JS(owner)))
+        );
         key = ripple::keylet::escrow(*id, input.escrow->at(JS(seq)).as_int64()).key;
     } else if (input.depositPreauth) {
         auto const owner = util::parseBase58Wrapper<ripple::AccountID>(
@@ -125,9 +125,9 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
             key = ripple::keylet::depositPreauth(owner.value(), authCreds).key;
         }
     } else if (input.ticket) {
-        auto const id =
-            util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(input.ticket->at(JS(account))
-            ));
+        auto const id = util::parseBase58Wrapper<ripple::AccountID>(
+            boost::json::value_to<std::string>(input.ticket->at(JS(account)))
+        );
 
         key = ripple::getTicketIndex(*id, input.ticket->at(JS(ticket_seq)).as_int64());
     } else if (input.amm) {
@@ -137,9 +137,9 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
             if (ripple::isXRP(currency)) {
                 return ripple::xrpIssue();
             }
-            auto const issuer =
-                util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(assetJson.at(JS(issuer)))
-                );
+            auto const issuer = util::parseBase58Wrapper<ripple::AccountID>(
+                boost::json::value_to<std::string>(assetJson.at(JS(issuer)))
+            );
             return ripple::Issue{currency, *issuer};
         };
 
@@ -175,9 +175,9 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     } else if (input.mptoken) {
         auto const holder =
             ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.mptoken->at(JS(account))));
-        auto const mptIssuanceID =
-            ripple::uint192{std::string_view(boost::json::value_to<std::string>(input.mptoken->at(JS(mpt_issuance_id))))
-            };
+        auto const mptIssuanceID = ripple::uint192{
+            std::string_view(boost::json::value_to<std::string>(input.mptoken->at(JS(mpt_issuance_id))))
+        };
         key = ripple::keylet::mptoken(mptIssuanceID, *holder).key;
     } else if (input.permissionedDomain) {
         auto const account = ripple::parseBase58<ripple::AccountID>(
@@ -188,9 +188,9 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     } else if (input.delegate) {
         auto const account =
             ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.delegate->at(JS(account))));
-        auto const authorize =
-            ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.delegate->at(JS(authorize)))
-            );
+        auto const authorize = ripple::parseBase58<ripple::AccountID>(
+            boost::json::value_to<std::string>(input.delegate->at(JS(authorize)))
+        );
         key = ripple::keylet::delegate(*account, *authorize).key;
     } else {
         // Must specify 1 of the following fields to indicate what type

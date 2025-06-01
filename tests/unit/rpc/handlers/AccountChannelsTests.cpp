@@ -68,13 +68,15 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitNotInt)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(fmt::format(
-            R"JSON({{
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "limit": "t"
             }})JSON",
-            kACCOUNT
-        ));
+                kACCOUNT
+            )
+        );
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -87,13 +89,15 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitNegative)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(fmt::format(
-            R"JSON({{
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "limit": -1
             }})JSON",
-            kACCOUNT
-        ));
+                kACCOUNT
+            )
+        );
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -106,13 +110,15 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitZero)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(fmt::format(
-            R"JSON({{
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "limit": 0
             }})JSON",
-            kACCOUNT
-        ));
+                kACCOUNT
+            )
+        );
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -125,14 +131,16 @@ TEST_F(RPCAccountChannelsHandlerTest, NonHexLedgerHash)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(fmt::format(
-            R"JSON({{
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "limit": 10,
                 "ledger_hash": "xxx"
             }})JSON",
-            kACCOUNT
-        ));
+                kACCOUNT
+            )
+        );
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -146,14 +154,16 @@ TEST_F(RPCAccountChannelsHandlerTest, NonStringLedgerHash)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(fmt::format(
-            R"JSON({{
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "limit": 10,
                 "ledger_hash": 123
             }})JSON",
-            kACCOUNT
-        ));
+                kACCOUNT
+            )
+        );
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -167,14 +177,16 @@ TEST_F(RPCAccountChannelsHandlerTest, InvalidLedgerIndexString)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(fmt::format(
-            R"JSON({{
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "limit": 10,
                 "ledger_index": "notvalidated"
             }})JSON",
-            kACCOUNT
-        ));
+                kACCOUNT
+            )
+        );
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -188,13 +200,15 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerNotString)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(fmt::format(
-            R"JSON({{
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "marker": 9
             }})JSON",
-            kACCOUNT
-        ));
+                kACCOUNT
+            )
+        );
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -211,13 +225,15 @@ TEST_F(RPCAccountChannelsHandlerTest, InvalidMarker)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(fmt::format(
-            R"JSON({{
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "marker": "123invalid"
             }})JSON",
-            kACCOUNT
-        ));
+                kACCOUNT
+            )
+        );
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -227,13 +243,15 @@ TEST_F(RPCAccountChannelsHandlerTest, InvalidMarker)
     });
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(fmt::format(
-            R"JSON({{
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "marker": 401
             }})JSON",
-            kACCOUNT
-        ));
+                kACCOUNT
+            )
+        );
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -283,14 +301,16 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash)
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "ledger_hash": "{}"
         }})JSON",
-        kACCOUNT,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -308,13 +328,15 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerStringIndex)
     // mock fetchLedgerBySequence return empty
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "ledger_index": "4"
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -330,13 +352,15 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIntIndex)
     // mock fetchLedgerBySequence return empty
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
                 "account": "{}",
                 "ledger_index": 4
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -355,14 +379,16 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash2)
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 31);
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "ledger_hash": "{}"
         }})JSON",
-        kACCOUNT,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -379,13 +405,15 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIndex2)
     // no need to check from db,call fetchLedgerBySequence 0 time
     // differ from previous logic
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "ledger_index": "31"
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -405,14 +433,16 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistAccount)
     // fetch account object return empty
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "ledger_hash": "{}"
         }})JSON",
-        kACCOUNT,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -483,12 +513,14 @@ TEST_F(RPCAccountChannelsHandlerTest, DefaultParameterTest)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}"
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -534,13 +566,15 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
 
     runSpawn([this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
-        auto const input = json::parse(fmt::format(
-            R"JSON({{
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "limit": 20
             }})JSON",
-            kACCOUNT
-        ));
+                kACCOUNT
+            )
+        );
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
 
@@ -550,26 +584,30 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(fmt::format(
-            R"JSON({{
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "limit": 9
             }})JSON",
-            kACCOUNT
-        ));
+                kACCOUNT
+            )
+        );
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);  // todo: check limit?
     });
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{backend_}};
-        auto const input = json::parse(fmt::format(
-            R"JSON({{
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "limit": 401
             }})JSON",
-            kACCOUNT
-        ));
+                kACCOUNT
+            )
+        );
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);  // todo: check limit?
     });
@@ -619,15 +657,17 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "limit": 30,
             "destination_account":"{}"
         }})JSON",
-        kACCOUNT,
-        kACCOUNT3
-    ));
+            kACCOUNT,
+            kACCOUNT3
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -656,12 +696,14 @@ TEST_F(RPCAccountChannelsHandlerTest, EmptyChannel)
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}"
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -741,12 +783,14 @@ TEST_F(RPCAccountChannelsHandlerTest, OptionalResponseField)
     bbs.push_back(channel1.getSerializer().peekData());
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}"
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -803,14 +847,16 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "limit": {}
         }})JSON",
-        kACCOUNT,
-        kLIMIT
-    ));
+            kACCOUNT,
+            kLIMIT
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -858,17 +904,19 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerInput)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "limit": {},
             "marker": "{},{}"
         }})JSON",
-        kACCOUNT,
-        kLIMIT,
-        kINDEX1,
-        kNEXT_PAGE
-    ));
+            kACCOUNT,
+            kLIMIT,
+            kINDEX1,
+            kNEXT_PAGE
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -909,14 +957,16 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitLessThanMin)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "limit": {}
         }})JSON",
-        kACCOUNT,
-        AccountChannelsHandler::kLIMIT_MIN - 1
-    ));
+            kACCOUNT,
+            AccountChannelsHandler::kLIMIT_MIN - 1
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
@@ -955,14 +1005,16 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitMoreThanMax)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "account": "{}",
             "limit": {}
         }})JSON",
-        kACCOUNT,
-        AccountChannelsHandler::kLIMIT_MAX + 1
-    ));
+            kACCOUNT,
+            AccountChannelsHandler::kLIMIT_MAX + 1
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});

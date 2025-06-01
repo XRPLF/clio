@@ -477,8 +477,9 @@ TEST_F(WebRPCServerHandlerTest, HTTPErrorPath)
         .WillOnce(testing::Return(true));
 
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
-        .WillOnce(testing::Return(rpc::Result{rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}}
-        ));
+        .WillOnce(
+            testing::Return(rpc::Result{rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}})
+        );
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
@@ -525,8 +526,9 @@ TEST_F(WebRPCServerHandlerTest, WsErrorPath)
         .WillOnce(testing::Return(true));
 
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
-        .WillOnce(testing::Return(rpc::Result{rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}}
-        ));
+        .WillOnce(
+            testing::Return(rpc::Result{rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}})
+        );
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
@@ -1026,8 +1028,8 @@ generateInvalidVersions()
          .wsMessage = fmt::format("Requested API version is lower than minimum supported ({})", rpc::kAPI_VERSION_MIN)},
         {.testName = "v4",
          .version = "4",
-         .wsMessage = fmt::format("Requested API version is higher than maximum supported ({})", rpc::kAPI_VERSION_MAX)
-        },
+         .wsMessage =
+             fmt::format("Requested API version is higher than maximum supported ({})", rpc::kAPI_VERSION_MAX)},
         {.testName = "null", .version = "null", .wsMessage = "API version must be an integer"},
         {.testName = "str", .version = "\"bogus\"", .wsMessage = "API version must be an integer"},
         {.testName = "bool", .version = "false", .wsMessage = "API version must be an integer"},

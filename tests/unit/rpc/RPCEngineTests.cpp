@@ -79,14 +79,14 @@ generateDefaultRPCEngineConfig()
     return ClioConfigDefinition{
         {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
         {"workers", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint16)},
-        {"rpc.cache_timeout", ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(gValidatePositiveDouble)
-        },
+        {"rpc.cache_timeout",
+         ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(gValidatePositiveDouble)},
         {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
         {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}.optional()}},
         {"dos_guard.max_fetches",
          ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(gValidateUint32)},
-        {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)
-        },
+        {"dos_guard.max_connections",
+         ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)},
         {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)}
     };
 }
@@ -213,8 +213,9 @@ TEST_P(RPCEngineFlowParameterTest, Test)
 
     if (testBundle.forwarded) {
         EXPECT_CALL(*mockLoadBalancerPtr_, forwardToRippled)
-            .WillOnce(Return(std::expected<boost::json::object, rpc::ClioError>(json::parse(kFORWARD_REPLY).as_object())
-            ));
+            .WillOnce(
+                Return(std::expected<boost::json::object, rpc::ClioError>(json::parse(kFORWARD_REPLY).as_object()))
+            );
         EXPECT_CALL(*handlerProvider, contains).WillOnce(Return(true));
         EXPECT_CALL(*mockCountersPtr_, rpcForwarded(testBundle.method));
     }
@@ -465,8 +466,8 @@ TEST_F(RPCEngineTest, NotCacheIfErrorHappen)
     auto const cfgCache = ClioConfigDefinition{
         {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
         {"workers", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint16)},
-        {"rpc.cache_timeout", ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(gValidatePositiveDouble)
-        }
+        {"rpc.cache_timeout",
+         ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(gValidatePositiveDouble)}
     };
 
     auto const notAdmin = false;

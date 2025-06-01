@@ -31,7 +31,7 @@ repos:
       - id: prettier
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: 586c3ea3f51230da42bab657c6a32e9e66c364f0 # frozen: v0.44.0
+    rev: 192ad822316c3a22fb3d3cc8aa6eafa0b8488360 # frozen: v0.45.0
     hooks:
       - id: markdownlint-fix
         exclude: LICENSE.md
@@ -65,7 +65,7 @@ repos:
         types: [c++]
         language: script
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: f9a52e87b6cdcb01b0a62b8611d9ba9f2dad0067 # frozen: v19.1.7
+    rev: c8ab0f80399e63a4fabbf5313c0606831f09742e # frozen: v20.1.5
     hooks:
       - id: clang-format
         args: [--style=file]

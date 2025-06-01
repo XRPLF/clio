@@ -186,12 +186,14 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaIntSequence)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "ledger_index": {}
             }})JSON",
-            kRANGE_MAX
-        ));
+                kRANGE_MAX
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -207,12 +209,14 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaStringSequence)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "ledger_index": "{}"
             }})JSON",
-            kRANGE_MAX
-        ));
+                kRANGE_MAX
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -228,12 +232,14 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaHash)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "ledger_hash": "{}"
             }})JSON",
-            kLEDGER_HASH
-        ));
+                kLEDGER_HASH
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -254,12 +260,14 @@ TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "marker": "{}"
             }})JSON",
-            kINDEX1
-        ));
+                kINDEX1
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -588,13 +596,15 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "limit":10,
                 "marker": "{}"
             }})JSON",
-            kINDEX1
-        ));
+                kINDEX1
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_FALSE(output.result->as_object().contains("ledger"));
@@ -621,7 +631,8 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
         auto const line =
             createRippleStateLedgerObject("USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123);
         bbs.push_back(line.getSerializer().peekData());
-        los.emplace_back(LedgerObject{.key = ripple::uint256{kINDEX2}, .blob = Blob{}}
+        los.emplace_back(
+            LedgerObject{.key = ripple::uint256{kINDEX2}, .blob = Blob{}}
         );  // NOLINT(modernize-use-emplace)
     }
     ON_CALL(*backend_, fetchLedgerDiff(kRANGE_MAX, _)).WillByDefault(Return(los));
@@ -631,14 +642,16 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "limit":10,
                 "marker": {},
                 "out_of_order": true
             }})JSON",
-            kRANGE_MAX
-        ));
+                kRANGE_MAX
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_FALSE(output.result->as_object().contains("ledger"));
@@ -712,13 +725,15 @@ TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "limit":{},
                 "binary": true
             }})JSON",
-            LedgerDataHandler::kLIMIT_BINARY + 1
-        ));
+                LedgerDataHandler::kLIMIT_BINARY + 1
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("ledger"));
@@ -753,13 +768,15 @@ TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "limit":{},
                 "binary": false
             }})JSON",
-            LedgerDataHandler::kLIMIT_JSON + 1
-        ));
+                LedgerDataHandler::kLIMIT_JSON + 1
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("ledger"));

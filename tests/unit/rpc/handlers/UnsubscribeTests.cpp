@@ -589,13 +589,15 @@ TEST_F(RPCUnsubscribeTest, Streams)
 
 TEST_F(RPCUnsubscribeTest, Accounts)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "accounts": ["{}","{}"]
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2
-    ));
+            kACCOUNT,
+            kACCOUNT2
+        )
+    );
 
     EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubAccount(rpc::accountFromStringStrict(kACCOUNT).value(), _)).Times(1);
     EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubAccount(rpc::accountFromStringStrict(kACCOUNT2).value(), _))
@@ -611,13 +613,15 @@ TEST_F(RPCUnsubscribeTest, Accounts)
 
 TEST_F(RPCUnsubscribeTest, AccountsProposed)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "accounts_proposed": ["{}","{}"]
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2
-    ));
+            kACCOUNT,
+            kACCOUNT2
+        )
+    );
 
     EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubProposedAccount(rpc::accountFromStringStrict(kACCOUNT).value(), _))
         .Times(1);
@@ -634,8 +638,9 @@ TEST_F(RPCUnsubscribeTest, AccountsProposed)
 
 TEST_F(RPCUnsubscribeTest, Books)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "books": [
                 {{
                     "taker_pays": {{
@@ -649,8 +654,9 @@ TEST_F(RPCUnsubscribeTest, Books)
                 }}
             ]
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
 
     auto const parsedBookMaybe = rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
     auto const book = std::get<ripple::Book>(parsedBookMaybe);
@@ -668,8 +674,9 @@ TEST_F(RPCUnsubscribeTest, Books)
 
 TEST_F(RPCUnsubscribeTest, SingleBooks)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "books": [
                 {{
                     "taker_pays": {{
@@ -682,8 +689,9 @@ TEST_F(RPCUnsubscribeTest, SingleBooks)
                 }}
             ]
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
 
     auto const parsedBookMaybe = rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
     auto const book = std::get<ripple::Book>(parsedBookMaybe);
