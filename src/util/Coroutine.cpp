@@ -22,6 +22,7 @@
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_type.hpp>
 #include <boost/asio/error.hpp>
+#include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
 
 #include <cstddef>
@@ -39,6 +40,7 @@ Coroutine::Coroutine(boost::asio::yield_context&& yield, std::shared_ptr<GlobalS
           signal_->connect([this](size_t generationToCancel, boost::asio::cancellation_type_t cancellationType) {
               if (generation_ >= generationToCancel) {
                   cancellationSignal_.emit(cancellationType);
+                  isCancelled_ = true;
               }
           })
       }
@@ -58,27 +60,38 @@ Coroutine::error() const
 }
 
 void
-Coroutine::cancel(boost::asio::cancellation_type_t cancellationType)
+Coroutine::cancelChildren(boost::asio::cancellation_type_t cancellationType)
 {
-    signal_->operator()(generation_, cancellationType);
+    if (isCancelled())
+        return;
+
+    signal_->operator()(generation_ + 1, cancellationType);
 }
 
 void
 Coroutine::cancelAll(boost::asio::cancellation_type_t cancellationType)
 {
+    if (isCancelled())
+        return;
     signal_->operator()(0, cancellationType);
 }
 
 bool
 Coroutine::isCancelled() const
 {
-    return error_ == boost::asio::error::operation_aborted;
+    return error_ == boost::asio::error::operation_aborted || isCancelled_;
 }
 
 Coroutine::cancellable_yield_context_type
 Coroutine::yieldContext() const
 {
     return cyield_;
+}
+
+void
+Coroutine::yield() const
+{
+    boost::asio::post(yield_);
 }
 
 }  // namespace util

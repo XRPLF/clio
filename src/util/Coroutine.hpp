@@ -28,6 +28,7 @@
 #include <boost/signals2/signal.hpp>
 #include <boost/signals2/variadic_signal.hpp>
 
+#include <atomic>
 #include <concepts>
 #include <csignal>
 #include <cstddef>
@@ -35,6 +36,16 @@
 #include <utility>
 
 namespace util {
+
+class Coroutine;
+
+/**
+ * @brief Concept for functions that can be used as coroutine bodies.
+ * Such functions must be invocable with a `Coroutine&` argument.
+ * @tparam Fn The function type to check.
+ */
+template <typename Fn>
+concept CoroutineFunction = std::invocable<Fn, Coroutine&>;
 
 /**
  * @brief Manages a coroutine execution context, allowing for cooperative multitasking
@@ -60,6 +71,7 @@ private:
     boost::asio::cancellation_signal cancellationSignal_;
     cancellable_yield_context_type cyield_;
     size_t generation_;
+    std::atomic_bool isCancelled_{false};
 
     using GlobalSignal = boost::signals2::signal<void(size_t, boost::asio::cancellation_type_t)>;
     std::shared_ptr<GlobalSignal> signal_;
@@ -100,7 +112,7 @@ public:
      * @param ioContext The I/O execution context on which to spawn the coroutine.
      * @param fn The function to be executed as the coroutine. It will receive a Coroutine& argument.
      */
-    template <typename ExecutionContext, std::invocable<Coroutine&> Fn>
+    template <typename ExecutionContext, CoroutineFunction Fn>
     static void
     spawnNew(ExecutionContext& ioContext, Fn&& fn)
     {
@@ -116,16 +128,22 @@ public:
      * @tparam Fn The type of the invocable function that represents the child coroutine body.
      * @param fn The function to be executed as the child coroutine. It will receive a Coroutine& argument.
      */
-    template <std::invocable<Coroutine&> Fn>
+    template <CoroutineFunction Fn>
     void
     spawnChild(Fn&& fn)
     {
-        boost::asio::spawn([nextGeneration = generation_ + 1,
-                            signal = signal_,
-                            fn = std::forward<Fn>(fn)](boost::asio::yield_context yield) mutable {
-            Coroutine coroutine(std::move(yield), std::move(signal), nextGeneration);
-            fn(coroutine);
-        });
+        if (isCancelled_)
+            return;
+
+        boost::asio::spawn(
+            yield_,
+            [nextGeneration = generation_ + 1,
+             signal = signal_,
+             fn = std::forward<Fn>(fn)](boost::asio::yield_context yield) mutable {
+                Coroutine coroutine(std::move(yield), std::move(signal), nextGeneration);
+                fn(coroutine);
+            }
+        );
     }
 
     /**
@@ -141,7 +159,7 @@ public:
      *                         Defaults to boost::asio::cancellation_type::terminal.
      */
     void
-    cancel(boost::asio::cancellation_type_t cancellationType = boost::asio::cancellation_type::terminal);
+    cancelChildren(boost::asio::cancellation_type_t cancellationType = boost::asio::cancellation_type::terminal);
 
     /**
      * @brief Cancels this coroutine, all its children, and all related coroutines (siblings, parent).
@@ -167,6 +185,23 @@ public:
      */
     cancellable_yield_context_type
     yieldContext() const;
+
+    /**
+     * @brief Returns the executor associated with this coroutine's yield context.
+     * @return The executor.
+     */
+    auto
+    executor() const
+    {
+        return cyield_.get().get_executor();
+    }
+
+    /**
+     * @brief Explicitly yields execution back to the scheduler.
+     * This can be used to allow other tasks to run.
+     */
+    void
+    yield() const;
 };
 
 }  // namespace util

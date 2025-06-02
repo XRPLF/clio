@@ -164,7 +164,7 @@ target_sources(
           # Common utils
           util/AccountUtilsTests.cpp
           util/AssertTests.cpp
-          util/Coroutine.cpp
+          util/CoroutineTest.cpp
           util/MoveTrackerTests.cpp
           util/RandomTests.cpp
           util/RetryTests.cpp
