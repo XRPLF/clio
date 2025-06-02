@@ -123,7 +123,7 @@ TEST_F(CoroutineTest, CancelChildrenCalledMultipleTimes)
             EXPECT_LT(duration, 1000);
         });
 
-        for (auto _ : std::ranges::iota_view(0, 10)) {
+        for ([[maybe_unused]] auto const i : std::ranges::iota_view(0, 10)) {
             coroutine.cancelChildren();
             EXPECT_FALSE(coroutine.isCancelled());
         }
@@ -176,7 +176,7 @@ TEST_F(CoroutineTest, CancelAllCalledMultipleTimes)
     runCoroutine([&](Coroutine& coroutine) {
         coroutine.spawnChild([](Coroutine& childCoroutine) {
             childCoroutine.yield();
-            for (auto _ : std::ranges::iota_view(0, 10)) {
+            for ([[maybe_unused]] auto const i : std::ranges::iota_view(0, 10)) {
                 childCoroutine.cancelAll();
             }
             EXPECT_TRUE(childCoroutine.isCancelled());
