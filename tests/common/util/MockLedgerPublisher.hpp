@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "etlng/LedgerPublisherInterface.hpp"
+
 #include <gmock/gmock.h>
 #include <xrpl/protocol/LedgerHeader.h>
 
@@ -26,11 +28,11 @@
 #include <cstdint>
 #include <optional>
 
-struct MockLedgerPublisher {
-    MOCK_METHOD(bool, publish, (uint32_t, std::optional<uint32_t>), ());
+struct MockLedgerPublisher : public etlng::LedgerPublisherInterface {
+    MOCK_METHOD(bool, publish, (uint32_t, std::optional<uint32_t>, std::chrono::steady_clock::duration), (override));
     MOCK_METHOD(void, publish, (ripple::LedgerHeader const&), ());
     MOCK_METHOD(std::uint32_t, lastPublishAgeSeconds, (), (const));
-    MOCK_METHOD(std::chrono::time_point<std::chrono::system_clock>, getLastPublish, (), (const));
-    MOCK_METHOD(std::uint32_t, lastCloseAgeSeconds, (), (const));
+    MOCK_METHOD(std::chrono::time_point<std::chrono::system_clock>, getLastPublish, (), (const, override));
+    MOCK_METHOD(std::uint32_t, lastCloseAgeSeconds, (), (const, override));
     MOCK_METHOD(std::optional<uint32_t>, getLastPublishedSequence, (), (const));
 };

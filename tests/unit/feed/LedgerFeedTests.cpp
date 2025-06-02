@@ -52,7 +52,7 @@ TEST_F(FeedLedgerTest, SubPub)
     // includes the same fields as a ledger stream message, except that it omits
     // the type and txn_count fields
     static constexpr auto kLEDGER_RESPONSE =
-        R"({
+        R"JSON({
             "validated_ledgers":"10-30",
             "ledger_index":30,
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
@@ -60,7 +60,7 @@ TEST_F(FeedLedgerTest, SubPub)
             "fee_base":1,
             "reserve_base":3,
             "reserve_inc":2
-        })";
+        })JSON";
     boost::asio::io_context ioContext;
     boost::asio::spawn(ioContext, [this](boost::asio::yield_context yield) {
         EXPECT_CALL(*mockSessionPtr, onDisconnect);
@@ -72,7 +72,7 @@ TEST_F(FeedLedgerTest, SubPub)
     EXPECT_EQ(testFeedPtr->count(), 1);
 
     static constexpr auto kLEDGER_PUB =
-        R"({
+        R"JSON({
             "type":"ledgerClosed",
             "ledger_index":31,
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
@@ -82,7 +82,7 @@ TEST_F(FeedLedgerTest, SubPub)
             "reserve_inc":0,
             "validated_ledgers":"10-31",
             "txn_count":8
-        })";
+        })JSON";
 
     // test publish
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kLEDGER_PUB))).Times(1);
@@ -107,7 +107,7 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
     auto const feeBlob = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     EXPECT_CALL(*backend_, doFetchLedgerObject).WillOnce(testing::Return(feeBlob));
     static constexpr auto kLEDGER_RESPONSE =
-        R"({
+        R"JSON({
             "validated_ledgers":"10-30",
             "ledger_index":30,
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
@@ -115,7 +115,7 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
             "fee_base":1,
             "reserve_base":3,
             "reserve_inc":2
-        })";
+        })JSON";
 
     web::SubscriptionContextInterface::OnDisconnectSlot slot;
     EXPECT_CALL(*mockSessionPtr, onDisconnect).WillOnce(testing::SaveArg<0>(&slot));

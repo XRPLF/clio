@@ -36,17 +36,17 @@ public:
     NFTExt(std::shared_ptr<BackendInterface> backend);
 
     void
-    onLedgerData(model::LedgerData const& data) const;
+    onLedgerData(model::LedgerData const& data);
 
     void
-    onInitialObject(uint32_t seq, model::Object const& obj) const;
+    onInitialObject(uint32_t seq, model::Object const& obj);
 
     void
-    onInitialData(model::LedgerData const& data) const;
+    onInitialData(model::LedgerData const& data);
 
 private:
     void
-    writeNFTs(model::LedgerData const& data) const;
+    writeNFTs(model::LedgerData const& data);
 };
 
 }  // namespace etlng::impl

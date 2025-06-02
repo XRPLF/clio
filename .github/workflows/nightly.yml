@@ -11,6 +11,7 @@ on:
       - .github/workflows/release_impl.yml
       - .github/workflows/build_and_test.yml
       - .github/workflows/build_impl.yml
+      - .github/workflows/test_impl.yml
       - .github/workflows/build_clio_docker_image.yml
 
       - ".github/actions/**"

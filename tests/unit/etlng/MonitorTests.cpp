@@ -66,7 +66,7 @@ TEST_F(MonitorTests, ConsumesAndNotifiesForAllOutstandingSequencesAtOnce)
     });
 
     auto subscription = monitor_.subscribe(actionMock_.AsStdFunction());
-    monitor_.run(std::chrono::milliseconds{1});
+    monitor_.run(std::chrono::milliseconds{10});
     unblock.acquire();
 }
 
@@ -109,5 +109,20 @@ TEST_F(MonitorTests, NotifiesWhenForcedByNewSequenceAvailableFromNetwork)
     auto subscription = monitor_.subscribe(actionMock_.AsStdFunction());
     monitor_.run(std::chrono::seconds{10});  // expected to be force-invoked sooner than in 10 sec
     pusher(kSTART_SEQ);                      // pretend network validated a new ledger
+    unblock.acquire();
+}
+
+TEST_F(MonitorTests, NotifiesWhenForcedByLedgerLoaded)
+{
+    LedgerRange const range(kSTART_SEQ, kSTART_SEQ);
+    std::binary_semaphore unblock(0);
+
+    EXPECT_CALL(*ledgers_, subscribe(testing::_));
+    EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillOnce(testing::Return(range));
+    EXPECT_CALL(actionMock_, Call).WillOnce([&] { unblock.release(); });
+
+    auto subscription = monitor_.subscribe(actionMock_.AsStdFunction());
+    monitor_.run(std::chrono::seconds{10});   // expected to be force-invoked sooner than in 10 sec
+    monitor_.notifyLedgerLoaded(kSTART_SEQ);  // notify about newly committed ledger
     unblock.acquire();
 }

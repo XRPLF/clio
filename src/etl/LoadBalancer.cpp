@@ -71,12 +71,19 @@ LoadBalancer::makeLoadBalancer(
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+    std::unique_ptr<util::RandomGeneratorInterface> randomGenerator,
     std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
     SourceFactory sourceFactory
 )
 {
     return std::make_shared<LoadBalancer>(
-        config, ioc, std::move(backend), std::move(subscriptions), std::move(validatedLedgers), std::move(sourceFactory)
+        config,
+        ioc,
+        std::move(backend),
+        std::move(subscriptions),
+        std::move(randomGenerator),
+        std::move(validatedLedgers),
+        std::move(sourceFactory)
     );
 }
 
@@ -85,10 +92,12 @@ LoadBalancer::LoadBalancer(
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+    std::unique_ptr<util::RandomGeneratorInterface> randomGenerator,
     std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
     SourceFactory sourceFactory
 )
-    : forwardingCounters_{
+    : randomGenerator_(std::move(randomGenerator))
+    , forwardingCounters_{
           .successDuration = PrometheusService::counterInt(
               "forwarding_duration_milliseconds_counter",
               Labels({util::prometheus::Label{"status", "success"}}),
@@ -319,7 +328,7 @@ void
 LoadBalancer::execute(Func f, uint32_t ledgerSequence, std::chrono::steady_clock::duration retryAfter)
 {
     ASSERT(not sources_.empty(), "ETL sources must be configured to execute functions.");
-    size_t sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
+    size_t sourceIdx = randomGenerator_->uniform(0ul, sources_.size() - 1);
 
     size_t numAttempts = 0;
 
@@ -403,7 +412,7 @@ LoadBalancer::forwardToRippledImpl(
     ++forwardingCounters_.cacheMiss.get();
 
     ASSERT(not sources_.empty(), "ETL sources must be configured to forward requests.");
-    std::size_t sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
+    std::size_t sourceIdx = randomGenerator_->uniform(0ul, sources_.size() - 1);
 
     auto numAttempts = 0u;
 

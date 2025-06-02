@@ -72,7 +72,7 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
-        auto const output = handler.process(json::parse(R"({"tx_hash":"123"})"), Context{yield});
+        auto const output = handler.process(json::parse(R"JSON({"tx_hash":"123"})JSON"), Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -88,10 +88,10 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "ledger_hash": "{}",
             "tx_hash": "{}"
-        }})",
+        }})JSON",
         kINDEX,
         kTXN_ID
     ));
@@ -112,10 +112,10 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "ledger_index": "4",
             "tx_hash": "{}"
-        }})",
+        }})JSON",
         kTXN_ID
     ));
     runSpawn([&, this](auto yield) {
@@ -138,9 +138,9 @@ TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "tx_hash": "{}"
-            }})",
+            }})JSON",
             kTXN_ID
         ));
         auto const output = handler.process(req, Context{yield});
@@ -168,10 +168,10 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "tx_hash": "{}",
                 "ledger_index": "30"
-            }})",
+            }})JSON",
             kTXN_ID
         ));
         auto const output = handler.process(req, Context{yield});
@@ -184,7 +184,7 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
 
 TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
 {
-    static constexpr auto kOUTPUT = R"({
+    static constexpr auto kOUTPUT = R"JSON({
                                         "metadata":
                                         {
                                             "AffectedNodes":
@@ -228,7 +228,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
                                         "ledger_index": 30,
                                         "ledger_hash": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
                                         "validated": true
-                                    })";
+                                    })JSON";
 
     TransactionAndMetadata tx;
     tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
@@ -245,10 +245,10 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "tx_hash": "{}",
                 "ledger_index": {}
-            }})",
+            }})JSON",
             kTXN_ID,
             tx.ledgerSequence
         ));
@@ -260,7 +260,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
 
 TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
 {
-    static constexpr auto kOUTPUT = R"({
+    static constexpr auto kOUTPUT = R"JSON({
                                         "meta":
                                         {
                                             "AffectedNodes":
@@ -305,7 +305,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
                                         "close_time_iso": "2000-01-01T00:00:00Z",
                                         "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
                                         "validated": true
-                                    })";
+                                    })JSON";
 
     TransactionAndMetadata tx;
     tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
@@ -319,10 +319,10 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "tx_hash": "{}",
                 "ledger_index": {}
-            }})",
+            }})JSON",
             kTXN_ID,
             tx.ledgerSequence
         ));

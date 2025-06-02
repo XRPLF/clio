@@ -19,12 +19,15 @@
 
 #pragma once
 
+#include "etl/SystemState.hpp"
 #include "etlng/Models.hpp"
 #include "etlng/RegistryInterface.hpp"
 
 #include <xrpl/protocol/TxFormats.h>
 
+#include <concepts>
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -88,6 +91,7 @@ concept SomeExtension = NoTwoOfKind<T> and ContainsValidHook<T>;
 
 template <SomeExtension... Ps>
 class Registry : public RegistryInterface {
+    std::reference_wrapper<etl::SystemState const> state_;
     std::tuple<Ps...> store_;
 
     static_assert(
@@ -101,9 +105,9 @@ class Registry : public RegistryInterface {
     );
 
 public:
-    explicit constexpr Registry(SomeExtension auto&&... exts)
+    explicit constexpr Registry(etl::SystemState const& state, SomeExtension auto&&... exts)
         requires(std::is_same_v<std::decay_t<decltype(exts)>, std::decay_t<Ps>> and ...)
-        : store_(std::forward<Ps>(exts)...)
+        : state_{state}, store_(std::forward<Ps>(exts)...)
     {
     }
 
@@ -121,9 +125,8 @@ public:
         // send entire batch of data at once
         {
             auto const expand = [&](auto& p) {
-                if constexpr (requires { p.onLedgerData(data); }) {
-                    p.onLedgerData(data);
-                }
+                if constexpr (requires { p.onLedgerData(data); })
+                    executeIfAllowed(p, [&data](auto& p) { p.onLedgerData(data); });
             };
 
             std::apply([&expand](auto&&... xs) { (expand(xs), ...); }, store_);
@@ -134,7 +137,7 @@ public:
             auto const expand = [&]<typename P>(P& p, model::Transaction const& t) {
                 if constexpr (requires { p.onTransaction(data.seq, t); }) {
                     if (std::decay_t<P>::spec::wants(t.type))
-                        p.onTransaction(data.seq, t);
+                        executeIfAllowed(p, [&data, &t](auto& p) { p.onTransaction(data.seq, t); });
                 }
             };
 
@@ -146,9 +149,8 @@ public:
         // send per object path
         {
             auto const expand = [&]<typename P>(P&& p, model::Object const& o) {
-                if constexpr (requires { p.onObject(data.seq, o); }) {
-                    p.onObject(data.seq, o);
-                }
+                if constexpr (requires { p.onObject(data.seq, o); })
+                    executeIfAllowed(p, [&data, &o](auto& p) { p.onObject(data.seq, o); });
             };
 
             for (auto const& obj : data.objects) {
@@ -163,9 +165,8 @@ public:
         // send entire vector path
         {
             auto const expand = [&](auto&& p) {
-                if constexpr (requires { p.onInitialObjects(seq, data, lastKey); }) {
-                    p.onInitialObjects(seq, data, lastKey);
-                }
+                if constexpr (requires { p.onInitialObjects(seq, data, lastKey); })
+                    executeIfAllowed(p, [seq, &data, &lastKey](auto& p) { p.onInitialObjects(seq, data, lastKey); });
             };
 
             std::apply([&expand](auto&&... xs) { (expand(xs), ...); }, store_);
@@ -174,9 +175,8 @@ public:
         // send per object path
         {
             auto const expand = [&]<typename P>(P&& p, model::Object const& o) {
-                if constexpr (requires { p.onInitialObject(seq, o); }) {
-                    p.onInitialObject(seq, o);
-                }
+                if constexpr (requires { p.onInitialObject(seq, o); })
+                    executeIfAllowed(p, [seq, &o](auto& p) { p.onInitialObject(seq, o); });
             };
 
             for (auto const& obj : data) {
@@ -191,9 +191,8 @@ public:
         // send entire batch path
         {
             auto const expand = [&](auto&& p) {
-                if constexpr (requires { p.onInitialData(data); }) {
-                    p.onInitialData(data);
-                }
+                if constexpr (requires { p.onInitialData(data); })
+                    executeIfAllowed(p, [&data](auto& p) { p.onInitialData(data); });
             };
 
             std::apply([&expand](auto&&... xs) { (expand(xs), ...); }, store_);
@@ -204,7 +203,7 @@ public:
             auto const expand = [&]<typename P>(P&& p, model::Transaction const& tx) {
                 if constexpr (requires { p.onInitialTransaction(data.seq, tx); }) {
                     if (std::decay_t<P>::spec::wants(tx.type))
-                        p.onInitialTransaction(data.seq, tx);
+                        executeIfAllowed(p, [&data, &tx](auto& p) { p.onInitialTransaction(data.seq, tx); });
                 }
             };
 
@@ -213,12 +212,25 @@ public:
             }
         }
     }
+
+private:
+    void
+    executeIfAllowed(auto& p, auto&& fn)
+    {
+        if constexpr (requires { p.allowInReadonly(); }) {
+            if (state_.get().isWriting or p.allowInReadonly())
+                fn(p);
+        } else {
+            if (state_.get().isWriting)
+                fn(p);
+        }
+    }
 };
 
 static auto
-makeRegistry(auto&&... exts)
+makeRegistry(etl::SystemState const& state, auto&&... exts)
 {
-    return std::make_unique<Registry<std::decay_t<decltype(exts)>...>>(std::forward<decltype(exts)>(exts)...);
+    return std::make_unique<Registry<std::decay_t<decltype(exts)>...>>(state, std::forward<decltype(exts)>(exts)...);
 }
 
 }  // namespace etlng::impl

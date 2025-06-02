@@ -26,10 +26,52 @@
 namespace util {
 
 /**
- * @brief Random number generator
+ * @brief Random number generator interface
  */
-class Random {
+class RandomGeneratorInterface {
 public:
+    virtual ~RandomGeneratorInterface() = default;
+
+    using SeedType = typename std::mt19937_64::result_type;
+
+    /**
+     * @brief Generate a random number between min and max
+     *
+     * @param min Minimum value
+     * @param max Maximum value
+     * @return Random number between min and max
+     */
+    [[nodiscard]]
+    virtual size_t
+    uniform(size_t min, size_t max) = 0;
+
+    /**
+     * @brief Set the seed for the random number generator
+     *
+     * @param seed Seed to set
+     */
+    virtual void
+    setSeed(SeedType seed) = 0;
+};
+
+/**
+ * @brief Mersenne Twister random number generator
+ */
+class MTRandomGenerator : public RandomGeneratorInterface {
+public:
+    MTRandomGenerator();
+
+    /**
+     * @brief Generate a random number between min and max
+     *
+     * @param min Minimum value
+     * @param max Maximum value
+     * @return Random number between min and max
+     */
+    [[nodiscard]]
+    size_t
+    uniform(size_t min, size_t max) override;
+
     /**
      * @brief Generate a random number between min and max
      *
@@ -39,16 +81,17 @@ public:
      * @return Random number between min and max
      */
     template <typename T>
-    static T
-    uniform(T min, T max)
+    [[nodiscard]]
+    T
+    uniformImpl(T min, T max)
     {
         ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
         if constexpr (std::is_floating_point_v<T>) {
             std::uniform_real_distribution<T> distribution(min, max);
-            return distribution(generator);
+            return distribution(generator_);
         }
         std::uniform_int_distribution<T> distribution(min, max);
-        return distribution(generator);
+        return distribution(generator_);
     }
 
     /**
@@ -56,11 +99,11 @@ public:
      *
      * @param seed Seed to set
      */
-    static void
-    setSeed(size_t seed);
+    void
+    setSeed(SeedType seed) override;
 
 private:
-    static std::mt19937_64 generator;
+    std::mt19937_64 generator_;
 };
 
 }  // namespace util

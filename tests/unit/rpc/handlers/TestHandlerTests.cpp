@@ -40,10 +40,10 @@ TEST_F(RPCTestHandlerTest, HandlerSuccess)
 {
     runSpawn([](auto yield) {
         auto const handler = AnyHandler{HandlerFake{}};
-        auto const input = json::parse(R"({
+        auto const input = json::parse(R"JSON({
             "hello": "world",
             "limit": 10
-        })");
+        })JSON");
 
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
@@ -57,7 +57,7 @@ TEST_F(RPCTestHandlerTest, NoInputHandlerSuccess)
 {
     runSpawn([](auto yield) {
         auto const handler = AnyHandler{NoInputHandlerFake{}};
-        auto const output = handler.process(json::parse(R"({})"), Context{yield});
+        auto const output = handler.process(json::parse(R"JSON({})JSON"), Context{yield});
         ASSERT_TRUE(output);
 
         auto const val = output.result.value();
@@ -69,10 +69,10 @@ TEST_F(RPCTestHandlerTest, HandlerErrorHandling)
 {
     runSpawn([](auto yield) {
         auto const handler = AnyHandler{HandlerFake{}};
-        auto const input = json::parse(R"({
+        auto const input = json::parse(R"JSON({
             "hello": "not world",
             "limit": 10
-        })");
+        })JSON");
 
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
@@ -88,10 +88,10 @@ TEST_F(RPCTestHandlerTest, HandlerInnerErrorHandling)
 {
     runSpawn([](auto yield) {
         auto const handler = AnyHandler{FailingHandlerFake{}};
-        auto const input = json::parse(R"({
+        auto const input = json::parse(R"JSON({
             "hello": "world",
             "limit": 10
-        })");
+        })JSON");
 
         // validation succeeds but handler itself returns error
         auto const output = handler.process(input, Context{yield});

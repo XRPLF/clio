@@ -35,7 +35,7 @@ TEST_F(RPCRandomHandlerTest, Default)
 {
     runSpawn([](auto yield) {
         auto const handler = AnyHandler{RandomHandler{}};
-        auto const output = handler.process(boost::json::parse(R"({})"), Context{yield});
+        auto const output = handler.process(boost::json::parse(R"JSON({})JSON"), Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains(JS(random)));
         EXPECT_EQ(output.result->as_object().at(JS(random)).as_string().size(), 64u);

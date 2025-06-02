@@ -24,12 +24,12 @@
 
 TEST(JsonUtils, RemoveSecrets)
 {
-    auto json = boost::json::parse(R"({
+    auto json = boost::json::parse(R"JSON({
         "secret": "snoopy",
         "seed": "woodstock",
         "seed_hex": "charlie",
         "passphrase": "lucy"
-    })")
+    })JSON")
                     .as_object();
 
     auto json2 = util::removeSecret(json);
@@ -38,7 +38,7 @@ TEST(JsonUtils, RemoveSecrets)
     EXPECT_EQ(json2.at("seed_hex").as_string(), "*");
     EXPECT_EQ(json2.at("passphrase").as_string(), "*");
 
-    json = boost::json::parse(R"({
+    json = boost::json::parse(R"JSON({
         "params": [
             {
                 "secret": "snoopy",
@@ -47,7 +47,7 @@ TEST(JsonUtils, RemoveSecrets)
                 "passphrase": "lucy"
             }
         ]
-    })")
+    })JSON")
                .as_object();
 
     json2 = util::removeSecret(json);

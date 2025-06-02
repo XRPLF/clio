@@ -53,7 +53,7 @@ constexpr auto kNFT_ID2 = "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F16E5D
 constexpr auto kNFT_ID3 = "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F5B974D9E00000004";  // taxon 1
 
 std::string const kNFT1_OUT =
-    R"({
+    R"JSON({
         "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F0000099B00000000",
         "ledger_index": 29,
         "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
@@ -64,9 +64,9 @@ std::string const kNFT1_OUT =
         "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
         "nft_taxon": 0,
         "nft_serial": 0
-    })";
+    })JSON";
 std::string const kNFT2_OUT =
-    R"({
+    R"JSON({
         "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F16E5DA9C00000001",
         "ledger_index": 29,
         "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
@@ -77,9 +77,9 @@ std::string const kNFT2_OUT =
         "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
         "nft_taxon": 0,
         "nft_serial": 1
-    })";
+    })JSON";
 std::string const kNFT3_OUT =
-    R"({
+    R"JSON({
         "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F5B974D9E00000004",
         "ledger_index": 29,
         "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
@@ -90,7 +90,7 @@ std::string const kNFT3_OUT =
         "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
         "nft_taxon": 1,
         "nft_serial": 4
-    })";
+    })JSON";
 
 }  // namespace
 
@@ -106,10 +106,10 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonHexLedgerHash)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "issuer": "{}",
                 "ledger_hash": "xxx"
-            }})",
+            }})JSON",
             kACCOUNT
         ));
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -126,10 +126,10 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonStringLedgerHash)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "issuer": "{}",
                 "ledger_hash": 123
-            }})",
+            }})JSON",
             kACCOUNT
         ));
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -146,10 +146,10 @@ TEST_F(RPCNFTsByIssuerHandlerTest, InvalidLedgerIndexString)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "issuer": "{}",
                 "ledger_index": "notvalidated"
-            }})",
+            }})JSON",
             kACCOUNT
         ));
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -166,9 +166,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerInvalidFormat)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend_}};
-        auto const input = json::parse(R"({
+        auto const input = json::parse(R"JSON({
             "issuer": "xxx"
-        })");
+        })JSON");
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -182,7 +182,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerMissing)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend_}};
-        auto const input = json::parse(R"({})");
+        auto const input = json::parse(R"JSON({})JSON");
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -196,9 +196,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerNotString)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{backend_}};
-        auto const input = json::parse(R"({
+        auto const input = json::parse(R"JSON({
             "issuer": 12
-        })");
+        })JSON");
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
 
@@ -217,10 +217,10 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash)
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "ledger_hash": "{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH
     ));
@@ -241,10 +241,10 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerStringIndex)
     // mock fetchLedgerBySequence return empty
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "ledger_index": "4"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
@@ -262,10 +262,10 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIntIndex)
     // mock fetchLedgerBySequence return empty
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "ledger_index": 4
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
@@ -287,10 +287,10 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash2)
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "ledger_hash": "{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH
     ));
@@ -311,10 +311,10 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIndex2)
     // differ from previous logic
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "ledger_index": "31"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
@@ -337,10 +337,10 @@ TEST_F(RPCNFTsByIssuerHandlerTest, AccountNotFound)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "ledger_hash": "{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH
     ));
@@ -358,13 +358,13 @@ TEST_F(RPCNFTsByIssuerHandlerTest, AccountNotFound)
 TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
 {
     auto const currentOutput = fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "limit": 50,
             "ledger_index": 30,
             "nfts": [{}],
             "validated": true
-        }})",
+        }})JSON",
         kACCOUNT,
         kNFT1_OUT
     );
@@ -380,9 +380,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
     EXPECT_CALL(*backend_, fetchNFTsByIssuer(account, Eq(std::nullopt), Const(30), _, Eq(std::nullopt), _)).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     runSpawn([&, this](auto& yield) {
@@ -397,7 +397,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, SpecificLedgerIndex)
 {
     auto const specificLedger = 20;
     auto const currentOutput = fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "limit": 50,
             "ledger_index": {},
@@ -414,7 +414,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, SpecificLedgerIndex)
                 "nft_serial": 0
             }}],
             "validated": true
-        }})",
+        }})JSON",
         kACCOUNT,
         specificLedger
     );
@@ -433,10 +433,10 @@ TEST_F(RPCNFTsByIssuerHandlerTest, SpecificLedgerIndex)
         .Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "ledger_index": {}
-        }})",
+        }})JSON",
         kACCOUNT,
         specificLedger
     ));
@@ -451,14 +451,14 @@ TEST_F(RPCNFTsByIssuerHandlerTest, SpecificLedgerIndex)
 TEST_F(RPCNFTsByIssuerHandlerTest, TaxonParameter)
 {
     auto const currentOutput = fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "limit": 50,
             "ledger_index": 30,
             "nfts": [{}],
             "validated": true,
             "nft_taxon": 0
-        }})",
+        }})JSON",
         kACCOUNT,
         kNFT1_OUT
     );
@@ -474,10 +474,10 @@ TEST_F(RPCNFTsByIssuerHandlerTest, TaxonParameter)
     EXPECT_CALL(*backend_, fetchNFTsByIssuer(account, Optional(0), Const(30), _, Eq(std::nullopt), _)).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "nft_taxon": 0
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     runSpawn([&, this](auto& yield) {
@@ -491,14 +491,14 @@ TEST_F(RPCNFTsByIssuerHandlerTest, TaxonParameter)
 TEST_F(RPCNFTsByIssuerHandlerTest, MarkerParameter)
 {
     auto const currentOutput = fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "limit": 50,
             "ledger_index": 30,
             "nfts": [{}],
             "validated": true,
             "marker": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F5B974D9E00000004"
-        }})",
+        }})JSON",
         kACCOUNT,
         kNFT3_OUT
     );
@@ -515,10 +515,10 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MarkerParameter)
     EXPECT_CALL(*backend_, fetchNFTsByIssuer(account, _, Const(30), _, Eq(ripple::uint256{kNFT_ID1}), _)).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "marker": "{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kNFT_ID1
     ));
@@ -533,13 +533,13 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MarkerParameter)
 TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
 {
     auto const currentOutput = fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "limit":50,
             "ledger_index": 30,
             "nfts": [{}, {}, {}],
             "validated": true
-        }})",
+        }})JSON",
         kACCOUNT,
         kNFT1_OUT,
         kNFT2_OUT,
@@ -559,9 +559,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
     EXPECT_CALL(*backend_, fetchNFTsByIssuer(account, Eq(std::nullopt), Const(30), _, Eq(std::nullopt), _)).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     runSpawn([&, this](auto& yield) {
@@ -575,13 +575,13 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
 TEST_F(RPCNFTsByIssuerHandlerTest, LimitMoreThanMax)
 {
     auto const currentOutput = fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "limit": 100,
             "ledger_index": 30,
             "nfts": [{}],
             "validated": true
-        }})",
+        }})JSON",
         kACCOUNT,
         kNFT1_OUT
     );
@@ -601,10 +601,10 @@ TEST_F(RPCNFTsByIssuerHandlerTest, LimitMoreThanMax)
         .Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "issuer": "{}",
             "limit": {}
-        }})",
+        }})JSON",
         kACCOUNT,
         NFTsByIssuerHandler::kLIMIT_MAX + 1
     ));

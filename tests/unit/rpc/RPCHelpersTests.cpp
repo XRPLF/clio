@@ -373,28 +373,28 @@ TEST_F(RPCHelpersTest, DecodeInvalidCTID)
 TEST_F(RPCHelpersTest, DeliverMaxAliasV1)
 {
     std::array<std::string, 3> const inputArray = {
-        R"({
+        R"JSON({
             "TransactionType": "Payment",
             "Amount": {
                 "test": "test"
             }
-        })",
-        R"({
+        })JSON",
+        R"JSON({
             "TransactionType": "OfferCreate",
             "Amount": {
                 "test": "test"
             }
-        })",
-        R"({
+        })JSON",
+        R"JSON({
             "TransactionType": "Payment",
             "Amount1": {
                 "test": "test"
             }
-        })"
+        })JSON"
     };
 
     std::array<std::string, 3> outputArray = {
-        R"({
+        R"JSON({
             "TransactionType": "Payment",
             "Amount": {
                 "test": "test"
@@ -402,19 +402,19 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV1)
             "DeliverMax": {
                 "test": "test"
             }
-        })",
-        R"({
+        })JSON",
+        R"JSON({
             "TransactionType": "OfferCreate",
             "Amount": {
                 "test": "test"
             }
-        })",
-        R"({
+        })JSON",
+        R"JSON({
             "TransactionType": "Payment",
             "Amount1": {
                 "test": "test"
             }
-        })"
+        })JSON"
     };
 
     for (size_t i = 0; i < inputArray.size(); i++) {
@@ -428,12 +428,12 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV1)
 TEST_F(RPCHelpersTest, DeliverMaxAliasV2)
 {
     auto req = boost::json::parse(
-                   R"({
+                   R"JSON({
                         "TransactionType": "Payment",
                         "Amount": {
                             "test": "test"
                         }
-                    })"
+                    })JSON"
     )
                    .as_object();
 
@@ -441,12 +441,12 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV2)
     EXPECT_EQ(
         req,
         boost::json::parse(
-            R"({
+            R"JSON({
                 "TransactionType": "Payment",
                 "DeliverMax": {
                     "test": "test"
                 }
-            })"
+            })JSON"
         )
     );
 }
@@ -456,14 +456,14 @@ TEST_F(RPCHelpersTest, LedgerHeaderJson)
     auto const ledgerHeader = createLedgerHeader(kINDEX1, 30);
     auto const binJson = toJson(ledgerHeader, true, 1u);
 
-    constexpr auto kEXPECT_BIN = R"({
+    constexpr auto kEXPECT_BIN = R"JSON({
                                     "ledger_data": "0000001E000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
                                     "closed": true
-                                })";
+                                })JSON";
     EXPECT_EQ(binJson, boost::json::parse(kEXPECT_BIN));
 
     auto const expectJson = fmt::format(
-        R"({{
+        R"JSON({{
             "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
             "close_flags": 0,
             "close_time": 0,
@@ -476,7 +476,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderJson)
             "total_coins": "0",
             "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000",
             "closed": true
-        }})",
+        }})JSON",
         kINDEX1,
         30
     );
@@ -491,7 +491,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderJsonV2)
     auto const ledgerHeader = createLedgerHeader(kINDEX1, 30);
 
     auto const expectJson = fmt::format(
-        R"({{
+        R"JSON({{
             "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
             "close_flags": 0,
             "close_time": 0,
@@ -504,7 +504,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderJsonV2)
             "total_coins": "0",
             "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000",
             "closed": true
-        }})",
+        }})JSON",
         kINDEX1,
         30
     );
@@ -533,34 +533,34 @@ TEST_F(RPCHelpersTest, TransactionAndMetadataBinaryJsonV2)
 TEST_F(RPCHelpersTest, ParseIssue)
 {
     auto issue = parseIssue(boost::json::parse(
-                                R"({
+                                R"JSON({
                                         "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                                         "currency": "JPY"
-                                    })"
+                                    })JSON"
     )
                                 .as_object());
     EXPECT_TRUE(issue.account == getAccountIdWithString(kACCOUNT2));
 
-    issue = parseIssue(boost::json::parse(R"({"currency": "XRP"})").as_object());
+    issue = parseIssue(boost::json::parse(R"JSON({"currency": "XRP"})JSON").as_object());
     EXPECT_TRUE(ripple::isXRP(issue.currency));
 
-    EXPECT_THROW(parseIssue(boost::json::parse(R"({"currency": 2})").as_object()), std::runtime_error);
+    EXPECT_THROW(parseIssue(boost::json::parse(R"JSON({"currency": 2})JSON").as_object()), std::runtime_error);
 
-    EXPECT_THROW(parseIssue(boost::json::parse(R"({"currency": "XRP2"})").as_object()), std::runtime_error);
+    EXPECT_THROW(parseIssue(boost::json::parse(R"JSON({"currency": "XRP2"})JSON").as_object()), std::runtime_error);
 
     EXPECT_THROW(
         parseIssue(boost::json::parse(
-                       R"({
+                       R"JSON({
                                 "issuer": "abcd",
                                 "currency": "JPY"
-                            })"
+                            })JSON"
         )
                        .as_object()),
         std::runtime_error
     );
 
     EXPECT_THROW(
-        parseIssue(boost::json::parse(R"({"issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"})").as_object()),
+        parseIssue(boost::json::parse(R"JSON({"issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"})JSON").as_object()),
         std::runtime_error
     );
 }
@@ -1090,67 +1090,111 @@ static auto
 generateTestValuesForParametersTest()
 {
     return std::vector<IsAdminCmdParamTestCaseBundle>{
-        {.testName = "ledgerEntry", .method = "ledger_entry", .testJson = R"({"type": false})", .expected = false},
+        {.testName = "ledgerEntry",
+         .method = "ledger_entry",
+         .testJson = R"JSON({"type": false})JSON",
+         .expected = false},
 
         {.testName = "featureVetoedTrue",
          .method = "feature",
-         .testJson = R"({"vetoed": true, "feature": "foo"})",
+         .testJson = R"JSON({"vetoed": true, "feature": "foo"})JSON",
          .expected = true},
         {.testName = "featureVetoedFalse",
          .method = "feature",
-         .testJson = R"({"vetoed": false, "feature": "foo"})",
+         .testJson = R"JSON({"vetoed": false, "feature": "foo"})JSON",
          .expected = true},
-        {.testName = "featureVetoedIsStr", .method = "feature", .testJson = R"({"vetoed": "String"})", .expected = true
-        },
+        {.testName = "featureVetoedIsStr",
+         .method = "feature",
+         .testJson = R"JSON({"vetoed": "String"})JSON",
+         .expected = true},
 
-        {.testName = "ledger", .method = "ledger", .testJson = R"({})", .expected = false},
-        {.testName = "ledgerWithType", .method = "ledger", .testJson = R"({"type": "fee"})", .expected = false},
-        {.testName = "ledgerFullTrue", .method = "ledger", .testJson = R"({"full": true})", .expected = true},
-        {.testName = "ledgerFullFalse", .method = "ledger", .testJson = R"({"full": false})", .expected = false},
-        {.testName = "ledgerFullIsStr", .method = "ledger", .testJson = R"({"full": "String"})", .expected = true},
-        {.testName = "ledgerFullIsEmptyStr", .method = "ledger", .testJson = R"({"full": ""})", .expected = false},
-        {.testName = "ledgerFullIsNumber1", .method = "ledger", .testJson = R"({"full": 1})", .expected = true},
-        {.testName = "ledgerFullIsNumber0", .method = "ledger", .testJson = R"({"full": 0})", .expected = false},
-        {.testName = "ledgerFullIsNull", .method = "ledger", .testJson = R"({"full": null})", .expected = false},
-        {.testName = "ledgerFullIsFloat0", .method = "ledger", .testJson = R"({"full": 0.0})", .expected = false},
-        {.testName = "ledgerFullIsFloat1", .method = "ledger", .testJson = R"({"full": 0.1})", .expected = true},
-        {.testName = "ledgerFullIsArray", .method = "ledger", .testJson = R"({"full": [1]})", .expected = true},
-        {.testName = "ledgerFullIsEmptyArray", .method = "ledger", .testJson = R"({"full": []})", .expected = false},
-        {.testName = "ledgerFullIsObject", .method = "ledger", .testJson = R"({"full": {"key": 1}})", .expected = true},
-        {.testName = "ledgerFullIsEmptyObject", .method = "ledger", .testJson = R"({"full": {}})", .expected = false},
-
-        {.testName = "ledgerAccountsTrue", .method = "ledger", .testJson = R"({"accounts": true})", .expected = true},
-        {.testName = "ledgerAccountsFalse", .method = "ledger", .testJson = R"({"accounts": false})", .expected = false
+        {.testName = "ledger", .method = "ledger", .testJson = R"JSON({})JSON", .expected = false},
+        {.testName = "ledgerWithType", .method = "ledger", .testJson = R"JSON({"type": "fee"})JSON", .expected = false},
+        {.testName = "ledgerFullTrue", .method = "ledger", .testJson = R"JSON({"full": true})JSON", .expected = true},
+        {.testName = "ledgerFullFalse", .method = "ledger", .testJson = R"JSON({"full": false})JSON", .expected = false
         },
+        {.testName = "ledgerFullIsStr",
+         .method = "ledger",
+         .testJson = R"JSON({"full": "String"})JSON",
+         .expected = true},
+        {.testName = "ledgerFullIsEmptyStr",
+         .method = "ledger",
+         .testJson = R"JSON({"full": ""})JSON",
+         .expected = false},
+        {.testName = "ledgerFullIsNumber1", .method = "ledger", .testJson = R"JSON({"full": 1})JSON", .expected = true},
+        {.testName = "ledgerFullIsNumber0", .method = "ledger", .testJson = R"JSON({"full": 0})JSON", .expected = false
+        },
+        {.testName = "ledgerFullIsNull", .method = "ledger", .testJson = R"JSON({"full": null})JSON", .expected = false
+        },
+        {.testName = "ledgerFullIsFloat0", .method = "ledger", .testJson = R"JSON({"full": 0.0})JSON", .expected = false
+        },
+        {.testName = "ledgerFullIsFloat1", .method = "ledger", .testJson = R"JSON({"full": 0.1})JSON", .expected = true
+        },
+        {.testName = "ledgerFullIsArray", .method = "ledger", .testJson = R"JSON({"full": [1]})JSON", .expected = true},
+        {.testName = "ledgerFullIsEmptyArray",
+         .method = "ledger",
+         .testJson = R"JSON({"full": []})JSON",
+         .expected = false},
+        {.testName = "ledgerFullIsObject",
+         .method = "ledger",
+         .testJson = R"JSON({"full": {"key": 1}})JSON",
+         .expected = true},
+        {.testName = "ledgerFullIsEmptyObject",
+         .method = "ledger",
+         .testJson = R"JSON({"full": {}})JSON",
+         .expected = false},
+
+        {.testName = "ledgerAccountsTrue",
+         .method = "ledger",
+         .testJson = R"JSON({"accounts": true})JSON",
+         .expected = true},
+        {.testName = "ledgerAccountsFalse",
+         .method = "ledger",
+         .testJson = R"JSON({"accounts": false})JSON",
+         .expected = false},
         {.testName = "ledgerAccountsIsStr",
          .method = "ledger",
-         .testJson = R"({"accounts": "String"})",
+         .testJson = R"JSON({"accounts": "String"})JSON",
          .expected = true},
         {.testName = "ledgerAccountsIsEmptyStr",
          .method = "ledger",
-         .testJson = R"({"accounts": ""})",
+         .testJson = R"JSON({"accounts": ""})JSON",
          .expected = false},
-        {.testName = "ledgerAccountsIsNumber1", .method = "ledger", .testJson = R"({"accounts": 1})", .expected = true},
-        {.testName = "ledgerAccountsIsNumber0", .method = "ledger", .testJson = R"({"accounts": 0})", .expected = false
-        },
-        {.testName = "ledgerAccountsIsNull", .method = "ledger", .testJson = R"({"accounts": null})", .expected = false
-        },
-        {.testName = "ledgerAccountsIsFloat0", .method = "ledger", .testJson = R"({"accounts": 0.0})", .expected = false
-        },
-        {.testName = "ledgerAccountsIsFloat1", .method = "ledger", .testJson = R"({"accounts": 0.1})", .expected = true
-        },
-        {.testName = "ledgerAccountsIsArray", .method = "ledger", .testJson = R"({"accounts": [1]})", .expected = true},
+        {.testName = "ledgerAccountsIsNumber1",
+         .method = "ledger",
+         .testJson = R"JSON({"accounts": 1})JSON",
+         .expected = true},
+        {.testName = "ledgerAccountsIsNumber0",
+         .method = "ledger",
+         .testJson = R"JSON({"accounts": 0})JSON",
+         .expected = false},
+        {.testName = "ledgerAccountsIsNull",
+         .method = "ledger",
+         .testJson = R"JSON({"accounts": null})JSON",
+         .expected = false},
+        {.testName = "ledgerAccountsIsFloat0",
+         .method = "ledger",
+         .testJson = R"JSON({"accounts": 0.0})JSON",
+         .expected = false},
+        {.testName = "ledgerAccountsIsFloat1",
+         .method = "ledger",
+         .testJson = R"JSON({"accounts": 0.1})JSON",
+         .expected = true},
+        {.testName = "ledgerAccountsIsArray",
+         .method = "ledger",
+         .testJson = R"JSON({"accounts": [1]})JSON",
+         .expected = true},
         {.testName = "ledgerAccountsIsEmptyArray",
          .method = "ledger",
-         .testJson = R"({"accounts": []})",
+         .testJson = R"JSON({"accounts": []})JSON",
          .expected = false},
         {.testName = "ledgerAccountsIsObject",
          .method = "ledger",
-         .testJson = R"({"accounts": {"key": 1}})",
+         .testJson = R"JSON({"accounts": {"key": 1}})JSON",
          .expected = true},
         {.testName = "ledgerAccountsIsEmptyObject",
          .method = "ledger",
-         .testJson = R"({"accounts": {}})",
+         .testJson = R"JSON({"accounts": {}})JSON",
          .expected = false},
     };
 }

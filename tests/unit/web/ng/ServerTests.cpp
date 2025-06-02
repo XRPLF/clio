@@ -103,48 +103,48 @@ INSTANTIATE_TEST_CASE_P(
     testing::Values(
         MakeServerTestBundle{
             "BadEndpoint",
-            R"json(
+            R"JSON(
                 {
                     "server": {"ip": "wrong", "port": 12345}
                 }
-            )json",
+            )JSON",
             false
         },
         MakeServerTestBundle{
             "BadSslConfig",
-            R"json(
+            R"JSON(
         {
             "server": {"ip": "127.0.0.1", "port": 12345},
             "ssl_cert_file": "some_file"
         }
-            )json",
+            )JSON",
             false
         },
         MakeServerTestBundle{
             "BadProcessingPolicy",
-            R"json(
+            R"JSON(
         {
             "server": {"ip": "127.0.0.1", "port": 12345, "processing_policy": "wrong"}
         }
-            )json",
+            )JSON",
             false
         },
         MakeServerTestBundle{
             "CorrectConfig_ParallelPolicy",
-            R"json(
+            R"JSON(
         {
             "server": {"ip": "127.0.0.1", "port": 12345, "processing_policy": "parallel"}
         }
-            )json",
+            )JSON",
             true
         },
         MakeServerTestBundle{
             "CorrectConfig_SequentPolicy",
-            R"json(
+            R"JSON(
         {
             "server": {"ip": "127.0.0.1", "port": 12345, "processing_policy": "sequent"}
         }
-            )json",
+            )JSON",
             true
         }
     ),
@@ -358,7 +358,7 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
         auto const response = client.receive(yield, std::chrono::milliseconds{100});
         [&]() { ASSERT_TRUE(response.has_value()) << response.error().message(); }();
         EXPECT_EQ(response->result(), http::status::too_many_requests);
-        EXPECT_EQ(response->body(), R"json({"error":"some error"})json");
+        EXPECT_EQ(response->body(), R"JSON({"error":"some error"})JSON");
         EXPECT_EQ(response->version(), 11);
 
         client.gracefulShutdown();

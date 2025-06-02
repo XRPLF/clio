@@ -49,7 +49,6 @@ namespace etlng::impl {
 
 class Loader : public LoaderInterface, public InitialLoadObserverInterface {
     std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<etl::LedgerFetcherInterface> fetcher_;
     std::shared_ptr<RegistryInterface> registry_;
     std::shared_ptr<AmendmentBlockHandlerInterface> amendmentBlockHandler_;
 
@@ -62,10 +61,16 @@ public:
 
     Loader(
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<etl::LedgerFetcherInterface> fetcher,
         std::shared_ptr<RegistryInterface> registry,
         std::shared_ptr<AmendmentBlockHandlerInterface> amendmentBlockHandler
     );
+
+    Loader(Loader const&) = delete;
+    Loader(Loader&&) = delete;
+    Loader&
+    operator=(Loader const&) = delete;
+    Loader&
+    operator=(Loader&&) = delete;
 
     void
     load(model::LedgerData const& data) override;

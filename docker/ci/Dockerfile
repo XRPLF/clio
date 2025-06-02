@@ -29,9 +29,26 @@ RUN apt-get -qq update \
 
 # Install packages
 RUN apt update -qq \
-    && apt install -y --no-install-recommends --no-install-suggests python3 python3-pip git git-lfs make ninja-build flex bison jq graphviz \
-    clang-tidy-${LLVM_TOOLS_VERSION} clang-tools-${LLVM_TOOLS_VERSION} \
-    && pip3 install -q --upgrade --no-cache-dir pip && pip3 install -q --no-cache-dir conan==1.62 gcovr cmake==3.31.6 pre-commit \
+    && apt install -y --no-install-recommends --no-install-suggests \
+        bison \
+        clang-tidy-${LLVM_TOOLS_VERSION} \
+        clang-tools-${LLVM_TOOLS_VERSION} \
+        flex \
+        git \
+        git-lfs \
+        graphviz \
+        jq \
+        make \
+        ninja-build \
+        python3 \
+        python3-pip \
+        zip \
+    && pip3 install -q --upgrade --no-cache-dir pip \
+    && pip3 install -q --no-cache-dir \
+        cmake==3.31.6 \
+        conan==1.62 \
+        gcovr \
+        pre-commit \
     && apt-get clean && apt remove -y software-properties-common
 
 # Install gcc-12 and make ldconfig aware of the new libstdc++ location (for gcc)
