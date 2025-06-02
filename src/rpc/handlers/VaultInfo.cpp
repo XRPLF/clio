@@ -143,6 +143,8 @@ VaultInfoHandler::process(VaultInfoHandler::Input input, Context const& ctx) con
     };
 
     // put issuance object into "shares" field of vault object
+    // follows same logic as rippled:
+    // https://github.com/XRPLF/rippled/pull/5224/files#diff-6cb544622c7942261f097d628f61f1c1fcf34a1bcfd954aedbada4238fc28f69R107
     Output response;
     response.vault = toBoostJson(vaultSle.getJson(ripple::JsonOptions::none));
     response.vault.as_object()[JS(shares)] = toBoostJson(issuanceSle.getJson(ripple::JsonOptions::none));

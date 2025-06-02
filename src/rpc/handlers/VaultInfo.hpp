@@ -94,7 +94,8 @@ public:
                  validation::CustomValidators::accountBase58Validator,
                  Status(ClioError::RpcMalformedRequest, "OwnerNotHexString")
              }},
-            {JS(seq), meta::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::RpcMalformedRequest)}}
+            {JS(seq), meta::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::RpcMalformedRequest)}},
+            {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
         };
 
         return kRPC_SPEC;

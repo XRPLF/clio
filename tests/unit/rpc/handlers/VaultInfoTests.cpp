@@ -435,7 +435,8 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
     auto static const kINPUT = boost::json::parse(fmt::format(
         R"({{
             "owner": "{}",
-            "seq": {}
+            "seq": {},
+            "ledger_index": 30
         }})",
         kACCOUNT,
         kSEQ
