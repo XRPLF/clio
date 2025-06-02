@@ -33,6 +33,7 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <ranges>
 #include <string>
 
 using namespace util;
@@ -111,6 +112,23 @@ TEST_F(CoroutineTest, CancelChildren)
     });
 }
 
+TEST_F(CoroutineTest, CancelChildrenCalledMultipleTimes)
+{
+    runCoroutine([&](Coroutine& coroutine) {
+        coroutine.spawnChild([](Coroutine& childCoroutine) {
+            auto const duration = util::timed([&childCoroutine]() {
+                asyncOperation(childCoroutine.yieldContext(), std::chrono::seconds{5});
+            });
+            EXPECT_TRUE(childCoroutine.isCancelled());
+            EXPECT_LT(duration, 1000);
+        });
+
+        for (auto _ : std::ranges::iota_view(0, 10)) {
+            coroutine.cancelChildren();
+            EXPECT_FALSE(coroutine.isCancelled());
+        }
+    });
+}
 TEST_F(CoroutineTest, CancelChildrenDoesntCancelItselfOrParent)
 {
     runCoroutine([&](Coroutine& coroutine) {
@@ -143,6 +161,24 @@ TEST_F(CoroutineTest, CancelAllCancelsParent)
         coroutine.spawnChild([](Coroutine& childCoroutine) {
             childCoroutine.yield();
             childCoroutine.cancelAll();
+            EXPECT_TRUE(childCoroutine.isCancelled());
+        });
+
+        auto const duration =
+            util::timed([&coroutine]() { asyncOperation(coroutine.yieldContext(), std::chrono::seconds{5}); });
+        EXPECT_TRUE(coroutine.isCancelled());
+        EXPECT_LT(duration, 1000);
+    });
+}
+
+TEST_F(CoroutineTest, CancelAllCalledMultipleTimes)
+{
+    runCoroutine([&](Coroutine& coroutine) {
+        coroutine.spawnChild([](Coroutine& childCoroutine) {
+            childCoroutine.yield();
+            for (auto _ : std::ranges::iota_view(0, 10)) {
+                childCoroutine.cancelAll();
+            }
             EXPECT_TRUE(childCoroutine.isCancelled());
         });
 

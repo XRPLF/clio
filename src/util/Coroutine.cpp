@@ -31,13 +31,17 @@
 
 namespace util {
 
-Coroutine::Coroutine(boost::asio::yield_context&& yield, std::shared_ptr<GlobalSignal> signal, size_t generation)
+Coroutine::Coroutine(
+    boost::asio::yield_context&& yield,
+    std::shared_ptr<FamilyCancellationSignal> signal,
+    size_t generation
+)
     : yield_(std::move(yield))
     , cyield_(boost::asio::bind_cancellation_slot(cancellationSignal_.slot(), yield_[error_]))
     , generation_{generation}
-    , signal_{std::move(signal)}
+    , familySignal_{std::move(signal)}
     , connection_{
-          signal_->connect([this](size_t generationToCancel, boost::asio::cancellation_type_t cancellationType) {
+          familySignal_->connect([this](size_t generationToCancel, boost::asio::cancellation_type_t cancellationType) {
               if (generation_ >= generationToCancel) {
                   cancellationSignal_.emit(cancellationType);
                   isCancelled_ = true;
@@ -64,8 +68,7 @@ Coroutine::cancelChildren(boost::asio::cancellation_type_t cancellationType)
 {
     if (isCancelled())
         return;
-
-    signal_->operator()(generation_ + 1, cancellationType);
+    familySignal_->operator()(generation_ + 1, cancellationType);
 }
 
 void
@@ -73,7 +76,7 @@ Coroutine::cancelAll(boost::asio::cancellation_type_t cancellationType)
 {
     if (isCancelled())
         return;
-    signal_->operator()(0, cancellationType);
+    familySignal_->operator()(0, cancellationType);
 }
 
 bool

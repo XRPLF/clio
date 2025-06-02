@@ -73,8 +73,8 @@ private:
     size_t generation_;
     std::atomic_bool isCancelled_{false};
 
-    using GlobalSignal = boost::signals2::signal<void(size_t, boost::asio::cancellation_type_t)>;
-    std::shared_ptr<GlobalSignal> signal_;
+    using FamilyCancellationSignal = boost::signals2::signal<void(size_t, boost::asio::cancellation_type_t)>;
+    std::shared_ptr<FamilyCancellationSignal> familySignal_;
     boost::signals2::connection connection_;
 
     /**
@@ -85,7 +85,7 @@ private:
      */
     explicit Coroutine(
         boost::asio::yield_context&& yield,
-        std::shared_ptr<GlobalSignal> signal = std::make_shared<GlobalSignal>(),
+        std::shared_ptr<FamilyCancellationSignal> signal = std::make_shared<FamilyCancellationSignal>(),
         size_t generation = 0
     );
 
@@ -138,7 +138,7 @@ public:
         boost::asio::spawn(
             yield_,
             [nextGeneration = generation_ + 1,
-             signal = signal_,
+             signal = familySignal_,
              fn = std::forward<Fn>(fn)](boost::asio::yield_context yield) mutable {
                 Coroutine coroutine(std::move(yield), std::move(signal), nextGeneration);
                 fn(coroutine);
