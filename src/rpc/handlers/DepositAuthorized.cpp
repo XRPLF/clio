@@ -45,7 +45,6 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <variant>
 
 namespace rpc {
 

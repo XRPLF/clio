@@ -54,7 +54,6 @@
 #include <numeric>
 #include <optional>
 #include <string>
-#include <variant>
 
 namespace rpc {
 

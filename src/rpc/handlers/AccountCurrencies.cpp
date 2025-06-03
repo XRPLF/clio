@@ -40,7 +40,6 @@
 #include <cstdint>
 #include <limits>
 #include <string>
-#include <variant>
 
 namespace rpc {
 AccountCurrenciesHandler::Result

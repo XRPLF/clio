@@ -45,7 +45,6 @@
 #include <ranges>
 #include <string>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace rpc {
