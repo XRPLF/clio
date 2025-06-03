@@ -266,7 +266,7 @@ private:
 
             if (!result.response.has_value()) {
                 // note: error statuses are counted/notified in buildResponse itself
-                response = impl::ErrorHelper(rawRequest, request).composeError(*status);
+                response = impl::ErrorHelper(rawRequest, request).composeError(result.response.error());
                 auto const responseStr = boost::json::serialize(response);
 
                 LOG(perfLog_.debug()) << context->tag() << "Encountered error: " << responseStr;
