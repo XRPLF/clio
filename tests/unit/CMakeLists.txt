@@ -182,17 +182,16 @@ target_sources(
           web/dosguard/IntervalSweepHandlerTests.cpp
           web/dosguard/WeightsTests.cpp
           web/dosguard/WhitelistHandlerTests.cpp
+          web/ResponseTests.cpp
+          web/RequestTests.cpp
+          web/RPCServerHandlerTests.cpp
+          web/ServerTests.cpp
+          web/SubscriptionContextTests.cpp
+          web/impl/ConnectionHandlerTests.cpp
           web/impl/ErrorHandlingTests.cpp
-          web/ng/ResponseTests.cpp
-          web/ng/RequestTests.cpp
-          web/ng/RPCServerHandlerTests.cpp
-          web/ng/ServerTests.cpp
-          web/ng/SubscriptionContextTests.cpp
-          web/ng/impl/ConnectionHandlerTests.cpp
-          web/ng/impl/ErrorHandlingTests.cpp
-          web/ng/impl/HttpConnectionTests.cpp
-          web/ng/impl/ServerSslContextTests.cpp
-          web/ng/impl/WsConnectionTests.cpp
+          web/impl/HttpConnectionTests.cpp
+          web/impl/ServerSslContextTests.cpp
+          web/impl/WsConnectionTests.cpp
           web/RPCServerHandlerTests.cpp
           web/ServerTests.cpp
           web/SubscriptionContextTests.cpp

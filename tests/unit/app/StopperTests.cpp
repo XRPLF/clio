@@ -25,7 +25,7 @@
 #include "util/MockPrometheus.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/config/ConfigDefinition.hpp"
-#include "web/ng/Server.hpp"
+#include "web/Server.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
@@ -62,7 +62,7 @@ TEST_F(StopperTest, stopCalledMultipleTimes)
 }
 
 struct StopperMakeCallbackTest : util::prometheus::WithPrometheus, SyncAsioContextTest {
-    struct ServerMock : web::ng::ServerTag {
+    struct ServerMock : web::ServerTag {
         MOCK_METHOD(void, stop, (boost::asio::yield_context), ());
     };
 

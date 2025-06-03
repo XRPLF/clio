@@ -43,12 +43,12 @@
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Prometheus.hpp"
 #include "web/AdminVerificationStrategy.hpp"
+#include "web/RPCServerHandler.hpp"
+#include "web/Server.hpp"
 #include "web/dosguard/DOSGuard.hpp"
 #include "web/dosguard/IntervalSweepHandler.hpp"
 #include "web/dosguard/Weights.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
-#include "web/ng/RPCServerHandler.hpp"
-#include "web/ng/Server.hpp"
 
 #include <boost/asio/io_context.hpp>
 
@@ -168,7 +168,7 @@ ClioApplication::run()
     auto const rpcEngine =
         RPCEngineType::makeRPCEngine(config_, backend, balancer, dosGuard, workQueue, counters, handlerProvider);
 
-    web::ng::RPCServerHandler<RPCEngineType> handler{config_, backend, rpcEngine, etl, dosGuard};
+    web::RPCServerHandler<RPCEngineType> handler{config_, backend, rpcEngine, etl, dosGuard};
 
     auto expectedAdminVerifier = web::makeAdminVerificationStrategy(config_);
     if (not expectedAdminVerifier.has_value()) {
@@ -177,7 +177,7 @@ ClioApplication::run()
     }
     auto const adminVerifier = std::move(expectedAdminVerifier).value();
 
-    auto httpServer = web::ng::makeServer(config_, OnConnectCheck{dosGuard}, DisconnectHook{dosGuard}, ioc);
+    auto httpServer = web::makeServer(config_, OnConnectCheck{dosGuard}, DisconnectHook{dosGuard}, ioc);
 
     if (not httpServer.has_value()) {
         LOG(util::LogService::error()) << "Error creating web server: " << httpServer.error();
