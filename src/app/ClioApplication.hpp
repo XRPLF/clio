@@ -44,12 +44,10 @@ public:
     /**
      * @brief Run the application
      *
-     * @param useNgWebServer Whether to use the new web server
-     *
      * @return exit code
      */
     int
-    run(bool useNgWebServer);
+    run();
 };
 
 }  // namespace app
