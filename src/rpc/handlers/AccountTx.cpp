@@ -94,14 +94,14 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
         if (!input.ledgerIndexMax && !input.ledgerIndexMin) {
             // mimic rippled, when both range and index specified, respect the range.
             // take ledger from ledgerHash or ledgerIndex only when range is not specified
-            auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+            auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
                 *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
             );
 
-            if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
-                return Error{*status};
+            if (!expectedLgrInfo.has_value())
+                return Error{expectedLgrInfo.error()};
 
-            maxIndex = minIndex = std::get<ripple::LedgerHeader>(lgrInfoOrStatus).seq;
+            maxIndex = minIndex = expectedLgrInfo.value().seq;
         }
     }
 

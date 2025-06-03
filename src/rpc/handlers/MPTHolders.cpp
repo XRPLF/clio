@@ -52,13 +52,13 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input input, Context const& ctx) c
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "MPTHolder's ledger range must be available");
 
-    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
-    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
-        return Error{*status};
+    if (!expectedLgrInfo.has_value())
+        return Error{expectedLgrInfo.error()};
 
-    auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
+    auto const& lgrInfo = expectedLgrInfo.value();
     auto const limit = input.limit.value_or(MPTHoldersHandler::kLIMIT_DEFAULT);
     auto const mptID = ripple::uint192{input.mptID.c_str()};
 

@@ -86,14 +86,14 @@ AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context con
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountChannel's ledger range must be available");
-    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
-        return Error{*status};
+    if (!expectedLgrInfo.has_value())
+        return Error{expectedLgrInfo.error()};
 
-    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
+    auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
@@ -114,19 +114,19 @@ AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context con
         return true;
     };
 
-    auto const next = traverseOwnedNodes(
+    auto const expectedNext = traverseOwnedNodes(
         *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse
     );
 
-    if (auto status = std::get_if<Status>(&next))
-        return Error{*status};
+    if (!expectedNext.has_value())
+        return Error{expectedNext.error()};
 
     response.account = input.account;
     response.limit = input.limit;
     response.ledgerHash = ripple::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
-    auto const nextMarker = std::get<AccountCursor>(next);
+    auto const nextMarker = expectedNext.value();
     if (nextMarker.isNonZero())
         response.marker = nextMarker.toString();
 

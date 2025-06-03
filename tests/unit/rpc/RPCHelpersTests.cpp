@@ -103,10 +103,9 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidIndexNotHex)
         auto ret = traverseOwnedNodes(*backend_, account, 9, 10, "nothex,10", yield, [](auto) {
 
         });
-        auto status = std::get_if<Status>(&ret);
-        EXPECT_TRUE(status != nullptr);
-        EXPECT_EQ(*status, ripple::rpcINVALID_PARAMS);
-        EXPECT_EQ(status->message, "Malformed cursor.");
+        EXPECT_FALSE(ret.has_value());
+        EXPECT_EQ(ret.error(), ripple::rpcINVALID_PARAMS);
+        EXPECT_EQ(ret.error().message, "Malformed cursor.");
     });
     ctx_.run();
 }
@@ -118,10 +117,9 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidPageNotInt)
         auto ret = traverseOwnedNodes(*backend_, account, 9, 10, "nothex,abc", yield, [](auto) {
 
         });
-        auto status = std::get_if<Status>(&ret);
-        EXPECT_TRUE(status != nullptr);
-        EXPECT_EQ(*status, ripple::rpcINVALID_PARAMS);
-        EXPECT_EQ(status->message, "Malformed cursor.");
+        EXPECT_FALSE(ret.has_value());
+        EXPECT_EQ(ret.error(), ripple::rpcINVALID_PARAMS);
+        EXPECT_EQ(ret.error().message, "Malformed cursor.");
     });
     ctx_.run();
 }
@@ -148,13 +146,10 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     boost::asio::spawn(ctx_, [this, &account](boost::asio::yield_context yield) {
-        auto ret = traverseOwnedNodes(*backend_, account, 9, 10, {}, yield, [](auto) {
-
-        });
-        auto cursor = std::get_if<AccountCursor>(&ret);
-        EXPECT_TRUE(cursor != nullptr);
+        auto ret = traverseOwnedNodes(*backend_, account, 9, 10, {}, yield, [](auto) {});
+        EXPECT_TRUE(ret.has_value());
         EXPECT_EQ(
-            cursor->toString(),
+            ret.value().toString(),
             "0000000000000000000000000000000000000000000000000000000000000000,"
             "0"
         );
@@ -192,10 +187,9 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
     boost::asio::spawn(ctx_, [this, &account](boost::asio::yield_context yield) {
         auto count = 0;
         auto ret = traverseOwnedNodes(*backend_, account, 9, 10, {}, yield, [&](auto) { count++; });
-        auto cursor = std::get_if<AccountCursor>(&ret);
-        EXPECT_TRUE(cursor != nullptr);
+        EXPECT_TRUE(ret.has_value());
         EXPECT_EQ(count, 10);
-        EXPECT_EQ(cursor->toString(), fmt::format("{},0", kINDEX1));
+        EXPECT_EQ(ret.value().toString(), fmt::format("{},0", kINDEX1));
     });
     ctx_.run();
 }
@@ -244,10 +238,9 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
     boost::asio::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
         auto count = 0;
         auto ret = traverseOwnedNodes(*backend_, account, 9, kLIMIT, {}, yield, [&](auto) { count++; });
-        auto cursor = std::get_if<AccountCursor>(&ret);
-        EXPECT_TRUE(cursor != nullptr);
+        EXPECT_TRUE(ret.has_value());
         EXPECT_EQ(count, kLIMIT);
-        EXPECT_EQ(cursor->toString(), fmt::format("{},{}", kINDEX1, kNEXT_PAGE));
+        EXPECT_EQ(ret.value().toString(), fmt::format("{},{}", kINDEX1, kNEXT_PAGE));
     });
     ctx_.run();
 }
@@ -291,10 +284,9 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
         auto ret = traverseOwnedNodes(
             *backend_, account, 9, kLIMIT, fmt::format("{},{}", kINDEX1, kPAGE_NUM), yield, [&](auto) { count++; }
         );
-        auto cursor = std::get_if<AccountCursor>(&ret);
-        EXPECT_TRUE(cursor != nullptr);
+        EXPECT_TRUE(ret.has_value());
         EXPECT_EQ(count, kLIMIT);
-        EXPECT_EQ(cursor->toString(), fmt::format("{},{}", kINDEX1, kPAGE_NUM));
+        EXPECT_EQ(ret.value().toString(), fmt::format("{},{}", kINDEX1, kPAGE_NUM));
     });
     ctx_.run();
 }
@@ -328,10 +320,9 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
         auto ret = traverseOwnedNodes(
             *backend_, account, 9, kLIMIT, fmt::format("{},{}", kINDEX2, kPAGE_NUM), yield, [&](auto) { count++; }
         );
-        auto status = std::get_if<Status>(&ret);
-        EXPECT_TRUE(status != nullptr);
-        EXPECT_EQ(*status, ripple::rpcINVALID_PARAMS);
-        EXPECT_EQ(status->message, "Invalid marker.");
+        EXPECT_FALSE(ret.has_value());
+        EXPECT_EQ(ret.error(), ripple::rpcINVALID_PARAMS);
+        EXPECT_EQ(ret.error().message, "Invalid marker.");
     });
     ctx_.run();
 }

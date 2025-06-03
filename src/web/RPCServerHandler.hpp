@@ -216,9 +216,9 @@ private:
 
             boost::json::object response;
 
-            if (auto const status = std::get_if<rpc::Status>(&result.response)) {
+            if (!result.response.has_value()) {
                 // note: error statuses are counted/notified in buildResponse itself
-                response = web::impl::ErrorHelper(connection, request).composeError(*status);
+                response = web::impl::ErrorHelper(connection, request).composeError(result.response.error());
                 auto const responseStr = boost::json::serialize(response);
 
                 LOG(perfLog_.debug()) << context->tag() << "Encountered error: " << responseStr;
@@ -227,7 +227,7 @@ private:
                 // This can still technically be an error. Clio counts forwarded requests as successful.
                 rpcEngine_->notifyComplete(context->method, us);
 
-                auto& json = std::get<boost::json::object>(result.response);
+                auto& json = result.response.value();
                 auto const isForwarded =
                     json.contains("forwarded") && json.at("forwarded").is_bool() && json.at("forwarded").as_bool();
 

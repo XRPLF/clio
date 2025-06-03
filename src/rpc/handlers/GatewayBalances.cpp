@@ -62,15 +62,15 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "GatewayBalances' ledger range must be available");
 
-    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
-        return Error{*status};
+    if (!expectedLgrInfo.has_value())
+        return Error{expectedLgrInfo.error()};
 
     // check account
-    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
+    auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
@@ -142,8 +142,8 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
         addToResponse
     );
 
-    if (auto status = std::get_if<Status>(&ret))
-        return Error{*status};
+    if (!ret.has_value())
+        return Error{ret.error()};
 
     output.accountID = input.account;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);

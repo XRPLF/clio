@@ -100,7 +100,7 @@ struct ReturnType {
      */
     operator bool() const
     {
-        return result.operator bool();
+        return result.has_value();
     }
 
     std::expected<boost::json::value, Status> result;
@@ -137,7 +137,7 @@ struct Result {
         if (returnType) {
             response = std::move(returnType.result).value().as_object();
         } else {
-            response = std::move(returnType.result).error();
+            response = std::unexpected{std::move(returnType.result).error()};
         }
         warnings = std::move(returnType.warnings);
     }
@@ -147,7 +147,7 @@ struct Result {
      *
      * @param status The status to construct the result from
      */
-    explicit Result(Status status) : response{std::move(status)}
+    explicit Result(Status status) : response{std::unexpected{std::move(status)}}
     {
     }
 
@@ -160,7 +160,7 @@ struct Result {
     {
     }
 
-    std::variant<Status, boost::json::object> response;
+    std::expected<boost::json::object, Status> response;
     boost::json::array warnings;
 };
 

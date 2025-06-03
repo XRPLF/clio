@@ -70,11 +70,11 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     } else if (input.did) {
         key = ripple::keylet::did(*util::parseBase58Wrapper<ripple::AccountID>(*(input.did))).key;
     } else if (input.directory) {
-        auto const keyOrStatus = composeKeyFromDirectory(*input.directory);
-        if (auto const status = std::get_if<Status>(&keyOrStatus))
-            return Error{*status};
+        auto const expectedkey = composeKeyFromDirectory(*input.directory);
+        if (!expectedkey.has_value())
+            return Error{expectedkey.error()};
 
-        key = std::get<ripple::uint256>(keyOrStatus);
+        key = expectedkey.value();
     } else if (input.offer) {
         auto const id =
             util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(input.offer->at(JS(account)))
@@ -202,14 +202,14 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     // check ledger exists
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "LedgerEntry's ledger range must be available");
-    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
-        return Error{*status};
+    if (!expectedLgrInfo.has_value())
+        return Error{expectedLgrInfo.error()};
 
-    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
+    auto const& lgrInfo = expectedLgrInfo.value();
     auto output = LedgerEntryHandler::Output{};
     auto ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
 
@@ -243,16 +243,16 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     return output;
 }
 
-std::variant<ripple::uint256, Status>
+std::expected<ripple::uint256, Status>
 LedgerEntryHandler::composeKeyFromDirectory(boost::json::object const& directory) noexcept
 {
     // can not specify both dir_root and owner.
     if (directory.contains(JS(dir_root)) && directory.contains(JS(owner)))
-        return Status{RippledError::rpcINVALID_PARAMS, "mayNotSpecifyBothDirRootAndOwner"};
+        return std::unexpected{Status{RippledError::rpcINVALID_PARAMS, "mayNotSpecifyBothDirRootAndOwner"}};
 
     // at least one should available
     if (!(directory.contains(JS(dir_root)) || directory.contains(JS(owner))))
-        return Status{RippledError::rpcINVALID_PARAMS, "missingOwnerOrDirRoot"};
+        return std::unexpected{Status{RippledError::rpcINVALID_PARAMS, "missingOwnerOrDirRoot"}};
 
     uint64_t const subIndex =
         directory.contains(JS(sub_index)) ? boost::json::value_to<uint64_t>(directory.at(JS(sub_index))) : 0;
