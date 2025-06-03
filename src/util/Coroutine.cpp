@@ -76,7 +76,7 @@ Coroutine::cancelAll(boost::asio::cancellation_type_t cancellationType)
 {
     if (isCancelled())
         return;
-    familySignal_->operator()(0, cancellationType);
+    familySignal_->operator()(kFIRST_GENERATION, cancellationType);
 }
 
 bool

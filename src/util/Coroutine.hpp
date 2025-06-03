@@ -45,7 +45,7 @@ class Coroutine;
  * @tparam Fn The function type to check.
  */
 template <typename Fn>
-concept CoroutineFunction = std::invocable<Fn, Coroutine&>;
+concept CoroutineFunction = std::invocable<Fn, Coroutine&> and not std::is_reference_v<Fn>;
 
 /**
  * @brief Manages a coroutine execution context, allowing for cooperative multitasking
@@ -66,6 +66,7 @@ public:
         boost::asio::cancellation_slot_binder<boost::asio::yield_context, boost::asio::cancellation_slot>;
 
 private:
+    static constexpr size_t kFIRST_GENERATION = 0;
     boost::asio::yield_context yield_;
     boost::system::error_code error_;
     boost::asio::cancellation_signal cancellationSignal_;
@@ -86,7 +87,7 @@ private:
     explicit Coroutine(
         boost::asio::yield_context&& yield,
         std::shared_ptr<FamilyCancellationSignal> signal = std::make_shared<FamilyCancellationSignal>(),
-        size_t generation = 0
+        size_t generation = kFIRST_GENERATION
     );
 
 public:
@@ -114,9 +115,9 @@ public:
      */
     template <typename ExecutionContext, CoroutineFunction Fn>
     static void
-    spawnNew(ExecutionContext& ioContext, Fn&& fn)
+    spawnNew(ExecutionContext& ioContext, Fn fn)
     {
-        boost::asio::spawn(ioContext, [fn = std::forward<Fn>(fn)](boost::asio::yield_context yield) {
+        boost::asio::spawn(ioContext, [fn = std::move(fn)](boost::asio::yield_context yield) {
             Coroutine thisCoroutine{std::move(yield)};
             fn(thisCoroutine);
         });
@@ -130,7 +131,7 @@ public:
      */
     template <CoroutineFunction Fn>
     void
-    spawnChild(Fn&& fn)
+    spawnChild(Fn fn)
     {
         if (isCancelled_)
             return;
@@ -139,7 +140,7 @@ public:
             yield_,
             [nextGeneration = generation_ + 1,
              signal = familySignal_,
-             fn = std::forward<Fn>(fn)](boost::asio::yield_context yield) mutable {
+             fn = std::move(fn)](boost::asio::yield_context yield) mutable {
                 Coroutine coroutine(std::move(yield), std::move(signal), nextGeneration);
                 fn(coroutine);
             }
@@ -150,11 +151,11 @@ public:
      * @brief Returns the error code, if any, associated with the last operation in this coroutine.
      * @return A boost::system::error_code indicating the status.
      */
-    boost::system::error_code
+    [[nodiscard]] boost::system::error_code
     error() const;
 
     /**
-     * @brief Cancels this specific coroutine and its direct children.
+     * @brief Cancels its direct children.
      * @param cancellationType The type of cancellation to perform (e.g., terminal, partial).
      *                         Defaults to boost::asio::cancellation_type::terminal.
      */
@@ -174,7 +175,7 @@ public:
      * @brief Checks if this coroutine has been cancelled.
      * @return True if the coroutine is cancelled, false otherwise.
      */
-    bool
+    [[nodiscard]] bool
     isCancelled() const;
 
     /**
@@ -183,14 +184,14 @@ public:
      * to enable cancellation.
      * @return A cancellable_yield_context_type object.
      */
-    cancellable_yield_context_type
+    [[nodiscard]] cancellable_yield_context_type
     yieldContext() const;
 
     /**
      * @brief Returns the executor associated with this coroutine's yield context.
      * @return The executor.
      */
-    auto
+    [[nodiscard]] auto
     executor() const
     {
         return cyield_.get().get_executor();
