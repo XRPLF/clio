@@ -45,7 +45,7 @@
 using namespace web;
 using namespace util::config;
 
-struct NgSubscriptionContextTests : SyncAsioContextTest {
+struct SubscriptionContextTests : SyncAsioContextTest {
     SubscriptionContext
     makeSubscriptionContext(boost::asio::yield_context yield, std::optional<size_t> maxSendQueueSize = std::nullopt)
     {
@@ -60,7 +60,7 @@ protected:
     testing::StrictMock<testing::MockFunction<bool(web::Error const&, Connection const&)>> errorHandler_;
 };
 
-TEST_F(NgSubscriptionContextTests, Send)
+TEST_F(SubscriptionContextTests, Send)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto subscriptionContext = makeSubscriptionContext(yield);
@@ -75,7 +75,7 @@ TEST_F(NgSubscriptionContextTests, Send)
     });
 }
 
-TEST_F(NgSubscriptionContextTests, SendOrder)
+TEST_F(SubscriptionContextTests, SendOrder)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto subscriptionContext = makeSubscriptionContext(yield);
@@ -102,7 +102,7 @@ TEST_F(NgSubscriptionContextTests, SendOrder)
     });
 }
 
-TEST_F(NgSubscriptionContextTests, SendFailed)
+TEST_F(SubscriptionContextTests, SendFailed)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto subscriptionContext = makeSubscriptionContext(yield);
@@ -119,7 +119,7 @@ TEST_F(NgSubscriptionContextTests, SendFailed)
     });
 }
 
-TEST_F(NgSubscriptionContextTests, SendTooManySubscriptions)
+TEST_F(SubscriptionContextTests, SendTooManySubscriptions)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto subscriptionContext = makeSubscriptionContext(yield, 1);
@@ -140,7 +140,7 @@ TEST_F(NgSubscriptionContextTests, SendTooManySubscriptions)
     });
 }
 
-TEST_F(NgSubscriptionContextTests, SendAfterDisconnect)
+TEST_F(SubscriptionContextTests, SendAfterDisconnect)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto subscriptionContext = makeSubscriptionContext(yield);
@@ -150,7 +150,7 @@ TEST_F(NgSubscriptionContextTests, SendAfterDisconnect)
     });
 }
 
-TEST_F(NgSubscriptionContextTests, OnDisconnect)
+TEST_F(SubscriptionContextTests, OnDisconnect)
 {
     testing::StrictMock<testing::MockFunction<void(web::SubscriptionContextInterface*)>> onDisconnect;
 
@@ -162,7 +162,7 @@ TEST_F(NgSubscriptionContextTests, OnDisconnect)
     });
 }
 
-TEST_F(NgSubscriptionContextTests, SetApiSubversion)
+TEST_F(SubscriptionContextTests, SetApiSubversion)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto subscriptionContext = makeSubscriptionContext(yield);

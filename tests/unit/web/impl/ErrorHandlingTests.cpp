@@ -43,7 +43,7 @@ using namespace web;
 
 namespace http = boost::beast::http;
 
-struct NgErrorHandlingTests : NoLoggerFixture {
+struct ErrorHandlingTests : NoLoggerFixture {
     static Request
     makeRequest(bool isHttp, std::optional<std::string> body = std::nullopt)
     {
@@ -54,7 +54,7 @@ struct NgErrorHandlingTests : NoLoggerFixture {
     }
 };
 
-struct NgErrorHandlingMakeErrorTestBundle {
+struct ErrorHandlingMakeErrorTestBundle {
     std::string testName;
     bool isHttp;
     rpc::Status status;
@@ -62,10 +62,10 @@ struct NgErrorHandlingMakeErrorTestBundle {
     boost::beast::http::status expectedStatus;
 };
 
-struct NgErrorHandlingMakeErrorTest : NgErrorHandlingTests,
-                                      testing::WithParamInterface<NgErrorHandlingMakeErrorTestBundle> {};
+struct ErrorHandlingMakeErrorTest : ErrorHandlingTests,
+                                    testing::WithParamInterface<ErrorHandlingMakeErrorTestBundle> {};
 
-TEST_P(NgErrorHandlingMakeErrorTest, MakeError)
+TEST_P(ErrorHandlingMakeErrorTest, MakeError)
 {
     auto const request = makeRequest(GetParam().isHttp);
     ErrorHelper const errorHelper{request};
@@ -85,52 +85,52 @@ TEST_P(NgErrorHandlingMakeErrorTest, MakeError)
 }
 
 INSTANTIATE_TEST_CASE_P(
-    ng_ErrorHandlingMakeErrorTestGroup,
-    NgErrorHandlingMakeErrorTest,
+    ErrorHandlingMakeErrorTestGroup,
+    ErrorHandlingMakeErrorTest,
     testing::ValuesIn({
-        NgErrorHandlingMakeErrorTestBundle{
+        ErrorHandlingMakeErrorTestBundle{
             "WsRequest",
             false,
             rpc::Status{rpc::RippledError::rpcTOO_BUSY},
             R"JSON({"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"})JSON",
             boost::beast::http::status::ok
         },
-        NgErrorHandlingMakeErrorTestBundle{
+        ErrorHandlingMakeErrorTestBundle{
             "HttpRequest_InvalidApiVersion",
             true,
             rpc::Status{rpc::ClioError::RpcInvalidApiVersion},
             "invalid_API_version",
             boost::beast::http::status::bad_request
         },
-        NgErrorHandlingMakeErrorTestBundle{
+        ErrorHandlingMakeErrorTestBundle{
             "HttpRequest_CommandIsMissing",
             true,
             rpc::Status{rpc::ClioError::RpcCommandIsMissing},
             "Null method",
             boost::beast::http::status::bad_request
         },
-        NgErrorHandlingMakeErrorTestBundle{
+        ErrorHandlingMakeErrorTestBundle{
             "HttpRequest_CommandIsEmpty",
             true,
             rpc::Status{rpc::ClioError::RpcCommandIsEmpty},
             "method is empty",
             boost::beast::http::status::bad_request
         },
-        NgErrorHandlingMakeErrorTestBundle{
+        ErrorHandlingMakeErrorTestBundle{
             "HttpRequest_CommandNotString",
             true,
             rpc::Status{rpc::ClioError::RpcCommandNotString},
             "method is not string",
             boost::beast::http::status::bad_request
         },
-        NgErrorHandlingMakeErrorTestBundle{
+        ErrorHandlingMakeErrorTestBundle{
             "HttpRequest_ParamsUnparsable",
             true,
             rpc::Status{rpc::ClioError::RpcParamsUnparsable},
             "params unparsable",
             boost::beast::http::status::bad_request
         },
-        NgErrorHandlingMakeErrorTestBundle{
+        ErrorHandlingMakeErrorTestBundle{
             "HttpRequest_RippledError",
             true,
             rpc::Status{rpc::RippledError::rpcTOO_BUSY},
@@ -141,18 +141,17 @@ INSTANTIATE_TEST_CASE_P(
     tests::util::kNAME_GENERATOR
 );
 
-struct NgErrorHandlingMakeInternalErrorTestBundle {
+struct ErrorHandlingMakeInternalErrorTestBundle {
     std::string testName;
     bool isHttp;
     std::optional<std::string> request;
     boost::json::object expectedResult;
 };
 
-struct NgErrorHandlingMakeInternalErrorTest : NgErrorHandlingTests,
-                                              testing::WithParamInterface<NgErrorHandlingMakeInternalErrorTestBundle> {
-};
+struct ErrorHandlingMakeInternalErrorTest : ErrorHandlingTests,
+                                            testing::WithParamInterface<ErrorHandlingMakeInternalErrorTestBundle> {};
 
-TEST_P(NgErrorHandlingMakeInternalErrorTest, ComposeError)
+TEST_P(ErrorHandlingMakeInternalErrorTest, ComposeError)
 {
     auto const request = makeRequest(GetParam().isHttp, GetParam().request);
     std::optional<boost::json::object> const requestJson = GetParam().request.has_value()
@@ -171,10 +170,10 @@ TEST_P(NgErrorHandlingMakeInternalErrorTest, ComposeError)
 }
 
 INSTANTIATE_TEST_CASE_P(
-    ng_ErrorHandlingComposeErrorTestGroup,
-    NgErrorHandlingMakeInternalErrorTest,
+    ErrorHandlingComposeErrorTestGroup,
+    ErrorHandlingMakeInternalErrorTest,
     testing::ValuesIn(
-        {NgErrorHandlingMakeInternalErrorTestBundle{
+        {ErrorHandlingMakeInternalErrorTestBundle{
              "NoRequest_WebsocketConnection",
              false,
              std::nullopt,
@@ -184,7 +183,7 @@ INSTANTIATE_TEST_CASE_P(
               {"status", "error"},
               {"type", "response"}}
          },
-         NgErrorHandlingMakeInternalErrorTestBundle{
+         ErrorHandlingMakeInternalErrorTestBundle{
              "NoRequest_HttpConnection",
              true,
              std::nullopt,
@@ -195,7 +194,7 @@ INSTANTIATE_TEST_CASE_P(
                 {"status", "error"},
                 {"type", "response"}}}}
          },
-         NgErrorHandlingMakeInternalErrorTestBundle{
+         ErrorHandlingMakeInternalErrorTestBundle{
              "Request_WebsocketConnection",
              false,
              std::string{R"JSON({"id": 1, "api_version": 2})JSON"},
@@ -208,7 +207,7 @@ INSTANTIATE_TEST_CASE_P(
               {"api_version", 2},
               {"request", {{"id", 1}, {"api_version", 2}}}}
          },
-         NgErrorHandlingMakeInternalErrorTestBundle{
+         ErrorHandlingMakeInternalErrorTestBundle{
              "Request_WebsocketConnection_NoId",
              false,
              std::string{R"JSON({"api_version": 2})JSON"},
@@ -220,7 +219,7 @@ INSTANTIATE_TEST_CASE_P(
               {"api_version", 2},
               {"request", {{"api_version", 2}}}}
          },
-         NgErrorHandlingMakeInternalErrorTestBundle{
+         ErrorHandlingMakeInternalErrorTestBundle{
              "Request_HttpConnection",
              true,
              std::string{R"JSON({"id": 1, "api_version": 2})JSON"},
@@ -237,7 +236,7 @@ INSTANTIATE_TEST_CASE_P(
     tests::util::kNAME_GENERATOR
 );
 
-TEST_F(NgErrorHandlingTests, MakeNotReadyError)
+TEST_F(ErrorHandlingTests, MakeNotReadyError)
 {
     auto const request = makeRequest(true);
     auto response = ErrorHelper{request}.makeNotReadyError();
@@ -252,7 +251,7 @@ TEST_F(NgErrorHandlingTests, MakeNotReadyError)
     EXPECT_EQ(httpResponse.at(http::field::content_type), "application/json");
 }
 
-TEST_F(NgErrorHandlingTests, MakeTooBusyError_WebsocketRequest)
+TEST_F(ErrorHandlingTests, MakeTooBusyError_WebsocketRequest)
 {
     auto const request = makeRequest(false);
     auto response = ErrorHelper{request}.makeTooBusyError();
@@ -264,7 +263,7 @@ TEST_F(NgErrorHandlingTests, MakeTooBusyError_WebsocketRequest)
     );
 }
 
-TEST_F(NgErrorHandlingTests, sendTooBusyError_HttpConnection)
+TEST_F(ErrorHandlingTests, sendTooBusyError_HttpConnection)
 {
     auto const request = makeRequest(true);
     auto response = ErrorHelper{request}.makeTooBusyError();
@@ -279,7 +278,7 @@ TEST_F(NgErrorHandlingTests, sendTooBusyError_HttpConnection)
     EXPECT_EQ(httpResponse.at(http::field::content_type), "application/json");
 }
 
-TEST_F(NgErrorHandlingTests, makeJsonParsingError_WebsocketConnection)
+TEST_F(ErrorHandlingTests, makeJsonParsingError_WebsocketConnection)
 {
     auto const request = makeRequest(false);
     auto response = ErrorHelper{request}.makeJsonParsingError();
@@ -291,7 +290,7 @@ TEST_F(NgErrorHandlingTests, makeJsonParsingError_WebsocketConnection)
     );
 }
 
-TEST_F(NgErrorHandlingTests, makeJsonParsingError_HttpConnection)
+TEST_F(ErrorHandlingTests, makeJsonParsingError_HttpConnection)
 {
     auto const request = makeRequest(true);
     auto response = ErrorHelper{request}.makeJsonParsingError();
@@ -301,17 +300,17 @@ TEST_F(NgErrorHandlingTests, makeJsonParsingError_HttpConnection)
     EXPECT_EQ(httpResponse.at(http::field::content_type), "text/html");
 }
 
-struct NgErrorHandlingComposeErrorTestBundle {
+struct ErrorHandlingComposeErrorTestBundle {
     std::string testName;
     bool isHttp;
     std::optional<boost::json::object> request;
     std::string expectedMessage;
 };
 
-struct NgErrorHandlingComposeErrorTest : NgErrorHandlingTests,
-                                         testing::WithParamInterface<NgErrorHandlingComposeErrorTestBundle> {};
+struct ErrorHandlingComposeErrorTest : ErrorHandlingTests,
+                                       testing::WithParamInterface<ErrorHandlingComposeErrorTestBundle> {};
 
-TEST_P(NgErrorHandlingComposeErrorTest, ComposeError)
+TEST_P(ErrorHandlingComposeErrorTest, ComposeError)
 {
     auto const request = makeRequest(GetParam().isHttp);
     ErrorHelper const errorHelper{request, GetParam().request};
@@ -320,34 +319,34 @@ TEST_P(NgErrorHandlingComposeErrorTest, ComposeError)
 }
 
 INSTANTIATE_TEST_CASE_P(
-    ng_ErrorHandlingComposeErrorTestGroup,
-    NgErrorHandlingComposeErrorTest,
+    ErrorHandlingComposeErrorTestGroup,
+    ErrorHandlingComposeErrorTest,
     testing::ValuesIn(
-        {NgErrorHandlingComposeErrorTestBundle{
+        {ErrorHandlingComposeErrorTestBundle{
              "NoRequest_WebsocketConnection",
              false,
              std::nullopt,
              R"JSON({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"})JSON"
          },
-         NgErrorHandlingComposeErrorTestBundle{
+         ErrorHandlingComposeErrorTestBundle{
              "NoRequest_HttpConnection",
              true,
              std::nullopt,
              R"JSON({"result":{"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"}})JSON"
          },
-         NgErrorHandlingComposeErrorTestBundle{
+         ErrorHandlingComposeErrorTestBundle{
              "Request_WebsocketConnection",
              false,
              boost::json::object{{"id", 1}, {"api_version", 2}},
              R"JSON({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","id":1,"api_version":2,"request":{"id":1,"api_version":2}})JSON",
          },
-         NgErrorHandlingComposeErrorTestBundle{
+         ErrorHandlingComposeErrorTestBundle{
              "Request_WebsocketConnection_NoId",
              false,
              boost::json::object{{"api_version", 2}},
              R"JSON({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","api_version":2,"request":{"api_version":2}})JSON",
          },
-         NgErrorHandlingComposeErrorTestBundle{
+         ErrorHandlingComposeErrorTestBundle{
              "Request_HttpConnection",
              true,
              boost::json::object{{"id", 1}, {"api_version", 2}},
