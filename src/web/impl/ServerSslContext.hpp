@@ -19,35 +19,20 @@
 
 #pragma once
 
-#include "app/Stopper.hpp"
-#include "util/SignalsHandler.hpp"
 #include "util/config/ConfigDefinition.hpp"
 
-namespace app {
+#include <boost/asio/ssl/context.hpp>
 
-/**
- * @brief The main application class
- */
-class ClioApplication {
-    util::config::ClioConfigDefinition const& config_;
-    util::SignalsHandler signalsHandler_;
-    Stopper appStopper_;
+#include <expected>
+#include <optional>
+#include <string>
 
-public:
-    /**
-     * @brief Construct a new ClioApplication object
-     *
-     * @param config The configuration of the application
-     */
-    ClioApplication(util::config::ClioConfigDefinition const& config);
+namespace web::impl {
 
-    /**
-     * @brief Run the application
-     *
-     * @return exit code
-     */
-    int
-    run();
-};
+std::expected<std::optional<boost::asio::ssl::context>, std::string>
+makeServerSslContext(util::config::ClioConfigDefinition const& config);
 
-}  // namespace app
+std::expected<boost::asio::ssl::context, std::string>
+makeServerSslContext(std::string const& certData, std::string const& keyData);
+
+}  // namespace web::impl

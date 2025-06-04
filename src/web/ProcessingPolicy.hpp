@@ -19,35 +19,11 @@
 
 #pragma once
 
-#include "app/Stopper.hpp"
-#include "util/SignalsHandler.hpp"
-#include "util/config/ConfigDefinition.hpp"
-
-namespace app {
+namespace web {
 
 /**
- * @brief The main application class
+ * @brief Requests processing policy.
  */
-class ClioApplication {
-    util::config::ClioConfigDefinition const& config_;
-    util::SignalsHandler signalsHandler_;
-    Stopper appStopper_;
+enum class ProcessingPolicy { Sequential, Parallel };
 
-public:
-    /**
-     * @brief Construct a new ClioApplication object
-     *
-     * @param config The configuration of the application
-     */
-    ClioApplication(util::config::ClioConfigDefinition const& config);
-
-    /**
-     * @brief Run the application
-     *
-     * @return exit code
-     */
-    int
-    run();
-};
-
-}  // namespace app
+}  // namespace web

@@ -19,35 +19,13 @@
 
 #pragma once
 
-#include "app/Stopper.hpp"
-#include "util/SignalsHandler.hpp"
-#include "util/config/ConfigDefinition.hpp"
+#include <boost/system/detail/error_code.hpp>
 
-namespace app {
+namespace web {
 
 /**
- * @brief The main application class
+ * @brief Error of any async operation.
  */
-class ClioApplication {
-    util::config::ClioConfigDefinition const& config_;
-    util::SignalsHandler signalsHandler_;
-    Stopper appStopper_;
+using Error = boost::system::error_code;
 
-public:
-    /**
-     * @brief Construct a new ClioApplication object
-     *
-     * @param config The configuration of the application
-     */
-    ClioApplication(util::config::ClioConfigDefinition const& config);
-
-    /**
-     * @brief Run the application
-     *
-     * @return exit code
-     */
-    int
-    run();
-};
-
-}  // namespace app
+}  // namespace web

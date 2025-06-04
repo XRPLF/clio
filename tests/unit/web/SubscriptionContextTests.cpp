@@ -17,62 +17,156 @@
 */
 //==============================================================================
 
-#include "util/LoggerFixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
 #include "util/Taggable.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigValue.hpp"
 #include "util/config/Types.hpp"
+#include "web/Connection.hpp"
+#include "web/Error.hpp"
 #include "web/SubscriptionContext.hpp"
 #include "web/SubscriptionContextInterface.hpp"
-#include "web/interface/ConnectionBaseMock.hpp"
+#include "web/impl/MockWsConnection.hpp"
 
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/post.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/beast/core/buffers_to_string.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/system/errc.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
 
 using namespace web;
 using namespace util::config;
 
-struct SubscriptionContextTests : NoLoggerFixture {
+struct SubscriptionContextTests : SyncAsioContextTest {
+    SubscriptionContext
+    makeSubscriptionContext(boost::asio::yield_context yield, std::optional<size_t> maxSendQueueSize = std::nullopt)
+    {
+        return SubscriptionContext{tagFactory_, connection_, maxSendQueueSize, yield, errorHandler_.AsStdFunction()};
+    }
+
 protected:
     util::TagDecoratorFactory tagFactory_{ClioConfigDefinition{
         {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
     }};
-    ConnectionBaseStrictMockPtr connection_ =
-        std::make_shared<testing::StrictMock<ConnectionBaseMock>>(tagFactory_, "some ip");
-
-    SubscriptionContext subscriptionContext_{tagFactory_, connection_};
-    testing::StrictMock<testing::MockFunction<void(SubscriptionContextInterface*)>> callbackMock_;
+    MockWsConnectionImpl connection_{"some ip", boost::beast::flat_buffer{}, tagFactory_};
+    testing::StrictMock<testing::MockFunction<bool(web::Error const&, Connection const&)>> errorHandler_;
 };
 
-TEST_F(SubscriptionContextTests, send)
+TEST_F(SubscriptionContextTests, Send)
 {
-    auto message = std::make_shared<std::string>("message");
-    EXPECT_CALL(*connection_, send(message));
-    subscriptionContext_.send(message);
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto subscriptionContext = makeSubscriptionContext(yield);
+        auto const message = std::make_shared<std::string>("some message");
+
+        EXPECT_CALL(connection_, sendBuffer).WillOnce([&message](boost::asio::const_buffer buffer, auto&&) {
+            EXPECT_EQ(boost::beast::buffers_to_string(buffer), *message);
+            return std::nullopt;
+        });
+        subscriptionContext.send(message);
+        subscriptionContext.disconnect(yield);
+    });
 }
 
-TEST_F(SubscriptionContextTests, sendConnectionExpired)
+TEST_F(SubscriptionContextTests, SendOrder)
 {
-    auto message = std::make_shared<std::string>("message");
-    connection_.reset();
-    subscriptionContext_.send(message);
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto subscriptionContext = makeSubscriptionContext(yield);
+        auto const message1 = std::make_shared<std::string>("message1");
+        auto const message2 = std::make_shared<std::string>("message2");
+
+        testing::Sequence const sequence;
+        EXPECT_CALL(connection_, sendBuffer)
+            .InSequence(sequence)
+            .WillOnce([&message1](boost::asio::const_buffer buffer, auto&&) {
+                EXPECT_EQ(boost::beast::buffers_to_string(buffer), *message1);
+                return std::nullopt;
+            });
+        EXPECT_CALL(connection_, sendBuffer)
+            .InSequence(sequence)
+            .WillOnce([&message2](boost::asio::const_buffer buffer, auto&&) {
+                EXPECT_EQ(boost::beast::buffers_to_string(buffer), *message2);
+                return std::nullopt;
+            });
+
+        subscriptionContext.send(message1);
+        subscriptionContext.send(message2);
+        subscriptionContext.disconnect(yield);
+    });
 }
 
-TEST_F(SubscriptionContextTests, onDisconnect)
+TEST_F(SubscriptionContextTests, SendFailed)
 {
-    auto localContext = std::make_unique<SubscriptionContext>(tagFactory_, connection_);
-    localContext->onDisconnect(callbackMock_.AsStdFunction());
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto subscriptionContext = makeSubscriptionContext(yield);
+        auto const message = std::make_shared<std::string>("some message");
 
-    EXPECT_CALL(callbackMock_, Call(localContext.get()));
-    localContext.reset();
+        EXPECT_CALL(connection_, sendBuffer).WillOnce([&message](boost::asio::const_buffer buffer, auto&&) {
+            EXPECT_EQ(boost::beast::buffers_to_string(buffer), *message);
+            return boost::system::errc::make_error_code(boost::system::errc::not_supported);
+        });
+        EXPECT_CALL(errorHandler_, Call).WillOnce(testing::Return(true));
+        EXPECT_CALL(connection_, close);
+        subscriptionContext.send(message);
+        subscriptionContext.disconnect(yield);
+    });
 }
 
-TEST_F(SubscriptionContextTests, setApiSubversion)
+TEST_F(SubscriptionContextTests, SendTooManySubscriptions)
 {
-    EXPECT_EQ(subscriptionContext_.apiSubversion(), 0);
-    subscriptionContext_.setApiSubversion(42);
-    EXPECT_EQ(subscriptionContext_.apiSubversion(), 42);
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto subscriptionContext = makeSubscriptionContext(yield, 1);
+        auto const message = std::make_shared<std::string>("message1");
+
+        EXPECT_CALL(connection_, sendBuffer)
+            .WillOnce([&message](boost::asio::const_buffer buffer, boost::asio::yield_context innerYield) {
+                boost::asio::post(innerYield);  // simulate send is slow by switching to another coroutine
+                EXPECT_EQ(boost::beast::buffers_to_string(buffer), *message);
+                return std::nullopt;
+            });
+        EXPECT_CALL(connection_, close);
+
+        subscriptionContext.send(message);
+        subscriptionContext.send(message);
+        subscriptionContext.send(message);
+        subscriptionContext.disconnect(yield);
+    });
+}
+
+TEST_F(SubscriptionContextTests, SendAfterDisconnect)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto subscriptionContext = makeSubscriptionContext(yield);
+        auto const message = std::make_shared<std::string>("some message");
+        subscriptionContext.disconnect(yield);
+        subscriptionContext.send(message);
+    });
+}
+
+TEST_F(SubscriptionContextTests, OnDisconnect)
+{
+    testing::StrictMock<testing::MockFunction<void(web::SubscriptionContextInterface*)>> onDisconnect;
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto subscriptionContext = makeSubscriptionContext(yield);
+        subscriptionContext.onDisconnect(onDisconnect.AsStdFunction());
+        EXPECT_CALL(onDisconnect, Call(&subscriptionContext));
+        subscriptionContext.disconnect(yield);
+    });
+}
+
+TEST_F(SubscriptionContextTests, SetApiSubversion)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto subscriptionContext = makeSubscriptionContext(yield);
+        subscriptionContext.setApiSubversion(42);
+        EXPECT_EQ(subscriptionContext.apiSubversion(), 42);
+    });
 }

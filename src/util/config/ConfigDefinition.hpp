@@ -338,7 +338,6 @@ static ClioConfigDefinition gClioConfig = ClioConfigDefinition{
      {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint16)},
      {"server.ws_max_sending_queue_size",
       ConfigValue{ConfigType::Integer}.defaultValue(1500).withConstraint(gValidateUint32)},
-     {"server.__ng_web_server", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
      {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
      {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},

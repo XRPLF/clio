@@ -50,7 +50,6 @@ TEST_F(CliArgsTests, Parse_NoArgs)
     int const returnCode = 123;
     EXPECT_CALL(onRunMock, Call).WillOnce([](CliArgs::Action::Run const& run) {
         EXPECT_EQ(run.configPath, CliArgs::kDEFAULT_CONFIG_PATH);
-        EXPECT_FALSE(run.useNgWebServer);
         return returnCode;
     });
     EXPECT_EQ(
@@ -62,29 +61,6 @@ TEST_F(CliArgsTests, Parse_NoArgs)
         ),
         returnCode
     );
-}
-
-TEST_F(CliArgsTests, Parse_NgWebServer)
-{
-    for (auto& argv : {std::array{"clio_server", "-w"}, std::array{"clio_server", "--ng-web-server"}}) {
-        auto const action = CliArgs::parse(argv.size(), const_cast<char const**>(argv.data()));
-
-        int const returnCode = 123;
-        EXPECT_CALL(onRunMock, Call).WillOnce([](CliArgs::Action::Run const& run) {
-            EXPECT_EQ(run.configPath, CliArgs::kDEFAULT_CONFIG_PATH);
-            EXPECT_TRUE(run.useNgWebServer);
-            return returnCode;
-        });
-        EXPECT_EQ(
-            action.apply(
-                onRunMock.AsStdFunction(),
-                onExitMock.AsStdFunction(),
-                onMigrateMock.AsStdFunction(),
-                onVerifyMock.AsStdFunction()
-            ),
-            returnCode
-        );
-    }
 }
 
 TEST_F(CliArgsTests, Parse_VersionHelp)

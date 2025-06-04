@@ -49,8 +49,6 @@
 #include "web/dosguard/IntervalSweepHandler.hpp"
 #include "web/dosguard/Weights.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
-#include "web/ng/RPCServerHandler.hpp"
-#include "web/ng/Server.hpp"
 
 #include <boost/asio/io_context.hpp>
 
@@ -96,7 +94,7 @@ ClioApplication::ClioApplication(util::config::ClioConfigDefinition const& confi
 }
 
 int
-ClioApplication::run(bool const useNgWebServer)
+ClioApplication::run()
 {
     auto const threads = config_.get<uint16_t>("io_threads");
     LOG(util::LogService::info()) << "Number of io threads = " << threads;
@@ -170,51 +168,37 @@ ClioApplication::run(bool const useNgWebServer)
     auto const rpcEngine =
         RPCEngineType::makeRPCEngine(config_, backend, balancer, dosGuard, workQueue, counters, handlerProvider);
 
-    if (useNgWebServer or config_.get<bool>("server.__ng_web_server")) {
-        web::ng::RPCServerHandler<RPCEngineType> handler{config_, backend, rpcEngine, etl, dosGuard};
+    web::RPCServerHandler<RPCEngineType> handler{config_, backend, rpcEngine, etl, dosGuard};
 
-        auto expectedAdminVerifier = web::makeAdminVerificationStrategy(config_);
-        if (not expectedAdminVerifier.has_value()) {
-            LOG(util::LogService::error()) << "Error creating admin verifier: " << expectedAdminVerifier.error();
-            return EXIT_FAILURE;
-        }
-        auto const adminVerifier = std::move(expectedAdminVerifier).value();
+    auto expectedAdminVerifier = web::makeAdminVerificationStrategy(config_);
+    if (not expectedAdminVerifier.has_value()) {
+        LOG(util::LogService::error()) << "Error creating admin verifier: " << expectedAdminVerifier.error();
+        return EXIT_FAILURE;
+    }
+    auto const adminVerifier = std::move(expectedAdminVerifier).value();
 
-        auto httpServer = web::ng::makeServer(config_, OnConnectCheck{dosGuard}, DisconnectHook{dosGuard}, ioc);
+    auto httpServer = web::makeServer(config_, OnConnectCheck{dosGuard}, DisconnectHook{dosGuard}, ioc);
 
-        if (not httpServer.has_value()) {
-            LOG(util::LogService::error()) << "Error creating web server: " << httpServer.error();
-            return EXIT_FAILURE;
-        }
-
-        httpServer->onGet("/metrics", MetricsHandler{adminVerifier});
-        httpServer->onGet("/health", HealthCheckHandler{});
-        auto requestHandler = RequestHandler{adminVerifier, handler};
-        httpServer->onPost("/", requestHandler);
-        httpServer->onWs(std::move(requestHandler));
-
-        auto const maybeError = httpServer->run();
-        if (maybeError.has_value()) {
-            LOG(util::LogService::error()) << "Error starting web server: " << *maybeError;
-            return EXIT_FAILURE;
-        }
-
-        appStopper_.setOnStop(
-            Stopper::makeOnStopCallback(httpServer.value(), *balancer, *etl, *subscriptions, *backend, ioc)
-        );
-
-        // Blocks until stopped.
-        // When stopped, shared_ptrs fall out of scope
-        // Calls destructors on all resources, and destructs in order
-        start(ioc, threads);
-
-        return EXIT_SUCCESS;
+    if (not httpServer.has_value()) {
+        LOG(util::LogService::error()) << "Error creating web server: " << httpServer.error();
+        return EXIT_FAILURE;
     }
 
-    // Init the web server
-    auto handler = std::make_shared<web::RPCServerHandler<RPCEngineType>>(config_, backend, rpcEngine, etl, dosGuard);
+    httpServer->onGet("/metrics", MetricsHandler{adminVerifier});
+    httpServer->onGet("/health", HealthCheckHandler{});
+    auto requestHandler = RequestHandler{adminVerifier, handler};
+    httpServer->onPost("/", requestHandler);
+    httpServer->onWs(std::move(requestHandler));
 
-    auto const httpServer = web::makeHttpServer(config_, ioc, dosGuard, handler);
+    auto const maybeError = httpServer->run();
+    if (maybeError.has_value()) {
+        LOG(util::LogService::error()) << "Error starting web server: " << *maybeError;
+        return EXIT_FAILURE;
+    }
+
+    appStopper_.setOnStop(
+        Stopper::makeOnStopCallback(httpServer.value(), *balancer, *etl, *subscriptions, *backend, ioc)
+    );
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope

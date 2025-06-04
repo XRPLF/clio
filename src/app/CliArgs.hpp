@@ -45,7 +45,6 @@ public:
         /** @brief Run action. */
         struct Run {
             std::string configPath;  ///< Configuration file path.
-            bool useNgWebServer;     ///< Whether to use a ng web server
         };
 
         /** @brief Exit action. */

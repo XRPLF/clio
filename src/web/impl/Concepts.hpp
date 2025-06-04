@@ -19,35 +19,17 @@
 
 #pragma once
 
-#include "app/Stopper.hpp"
-#include "util/SignalsHandler.hpp"
-#include "util/config/ConfigDefinition.hpp"
+#include <boost/beast/core/basic_stream.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
 
-namespace app {
+#include <type_traits>
 
-/**
- * @brief The main application class
- */
-class ClioApplication {
-    util::config::ClioConfigDefinition const& config_;
-    util::SignalsHandler signalsHandler_;
-    Stopper appStopper_;
+namespace web::impl {
 
-public:
-    /**
-     * @brief Construct a new ClioApplication object
-     *
-     * @param config The configuration of the application
-     */
-    ClioApplication(util::config::ClioConfigDefinition const& config);
+template <typename T>
+concept IsTcpStream = std::is_same_v<std::decay_t<T>, boost::beast::tcp_stream>;
 
-    /**
-     * @brief Run the application
-     *
-     * @return exit code
-     */
-    int
-    run();
-};
+template <typename T>
+concept IsSslTcpStream = std::is_same_v<std::decay_t<T>, boost::asio::ssl::stream<boost::beast::tcp_stream>>;
 
-}  // namespace app
+}  // namespace web::impl

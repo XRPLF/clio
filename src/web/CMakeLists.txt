@@ -7,14 +7,14 @@ target_sources(
           dosguard/IntervalSweepHandler.cpp
           dosguard/Weights.cpp
           dosguard/WhitelistHandler.cpp
-          ng/Connection.cpp
-          ng/impl/ErrorHandling.cpp
-          ng/impl/ConnectionHandler.cpp
-          ng/impl/ServerSslContext.cpp
-          ng/Request.cpp
-          ng/Response.cpp
-          ng/Server.cpp
-          ng/SubscriptionContext.cpp
+          Connection.cpp
+          impl/ErrorHandling.cpp
+          impl/ConnectionHandler.cpp
+          impl/ServerSslContext.cpp
+          Request.cpp
+          Response.cpp
+          Server.cpp
+          SubscriptionContext.cpp
           Resolver.cpp
           SubscriptionContext.cpp
 )

@@ -17,37 +17,41 @@
 */
 //==============================================================================
 
-#pragma once
+#include "web/Connection.hpp"
 
-#include "app/Stopper.hpp"
-#include "util/SignalsHandler.hpp"
-#include "util/config/ConfigDefinition.hpp"
+#include "util/Taggable.hpp"
 
-namespace app {
+#include <boost/beast/core/flat_buffer.hpp>
 
-/**
- * @brief The main application class
- */
-class ClioApplication {
-    util::config::ClioConfigDefinition const& config_;
-    util::SignalsHandler signalsHandler_;
-    Stopper appStopper_;
+#include <string>
+#include <utility>
 
-public:
-    /**
-     * @brief Construct a new ClioApplication object
-     *
-     * @param config The configuration of the application
-     */
-    ClioApplication(util::config::ClioConfigDefinition const& config);
+namespace web {
 
-    /**
-     * @brief Run the application
-     *
-     * @return exit code
-     */
-    int
-    run();
-};
+ConnectionMetadata::ConnectionMetadata(std::string ip, util::TagDecoratorFactory const& tagDecoratorFactory)
+    : util::Taggable(tagDecoratorFactory), ip_{std::move(ip)}
+{
+}
 
-}  // namespace app
+std::string const&
+ConnectionMetadata::ip() const
+{
+    return ip_;
+}
+
+bool
+ConnectionMetadata::isAdmin() const
+{
+    return isAdmin_.value_or(false);
+}
+
+Connection::Connection(
+    std::string ip,
+    boost::beast::flat_buffer buffer,
+    util::TagDecoratorFactory const& tagDecoratorFactory
+)
+    : ConnectionMetadata{std::move(ip), tagDecoratorFactory}, buffer_{std::move(buffer)}
+{
+}
+
+}  // namespace web

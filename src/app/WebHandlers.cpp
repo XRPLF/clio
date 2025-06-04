@@ -22,11 +22,11 @@
 #include "util/Assert.hpp"
 #include "util/prometheus/Http.hpp"
 #include "web/AdminVerificationStrategy.hpp"
+#include "web/Connection.hpp"
+#include "web/Request.hpp"
+#include "web/Response.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
-#include "web/ng/Connection.hpp"
-#include "web/ng/Request.hpp"
-#include "web/ng/Response.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/http/status.hpp>
@@ -41,13 +41,13 @@ OnConnectCheck::OnConnectCheck(web::dosguard::DOSGuardInterface& dosguard) : dos
 {
 }
 
-std::expected<void, web::ng::Response>
-OnConnectCheck::operator()(web::ng::Connection const& connection)
+std::expected<void, web::Response>
+OnConnectCheck::operator()(web::Connection const& connection)
 {
     dosguard_.get().increment(connection.ip());
     if (not dosguard_.get().isOk(connection.ip())) {
         return std::unexpected{
-            web::ng::Response{boost::beast::http::status::too_many_requests, "Too many requests", connection}
+            web::Response{boost::beast::http::status::too_many_requests, "Too many requests", connection}
         };
     }
 
@@ -59,7 +59,7 @@ DisconnectHook::DisconnectHook(web::dosguard::DOSGuardInterface& dosguard) : dos
 }
 
 void
-DisconnectHook::operator()(web::ng::Connection const& connection)
+DisconnectHook::operator()(web::Connection const& connection)
 {
     dosguard_.get().decrement(connection.ip());
 }
@@ -69,10 +69,10 @@ MetricsHandler::MetricsHandler(std::shared_ptr<web::AdminVerificationStrategy> a
 {
 }
 
-web::ng::Response
+web::Response
 MetricsHandler::operator()(
-    web::ng::Request const& request,
-    web::ng::ConnectionMetadata& connectionMetadata,
+    web::Request const& request,
+    web::ConnectionMetadata& connectionMetadata,
     web::SubscriptionContextPtr,
     boost::asio::yield_context
 )
@@ -86,13 +86,13 @@ MetricsHandler::operator()(
         httpRequest, adminVerifier_->isAdmin(httpRequest, connectionMetadata.ip())
     );
     ASSERT(maybeResponse.has_value(), "Got unexpected request for Prometheus");
-    return web::ng::Response{std::move(maybeResponse).value(), request};
+    return web::Response{std::move(maybeResponse).value(), request};
 }
 
-web::ng::Response
+web::Response
 HealthCheckHandler::operator()(
-    web::ng::Request const& request,
-    web::ng::ConnectionMetadata&,
+    web::Request const& request,
+    web::ConnectionMetadata&,
     web::SubscriptionContextPtr,
     boost::asio::yield_context
 )
@@ -105,7 +105,7 @@ HealthCheckHandler::operator()(
     </html>
 )html";
 
-    return web::ng::Response{boost::beast::http::status::ok, kHEALTH_CHECK_HTML, request};
+    return web::Response{boost::beast::http::status::ok, kHEALTH_CHECK_HTML, request};
 }
 
 }  // namespace app

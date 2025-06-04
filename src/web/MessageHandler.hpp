@@ -19,35 +19,21 @@
 
 #pragma once
 
-#include "app/Stopper.hpp"
-#include "util/SignalsHandler.hpp"
-#include "util/config/ConfigDefinition.hpp"
+#include "web/Connection.hpp"
+#include "web/Request.hpp"
+#include "web/Response.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 
-namespace app {
+#include <boost/asio/spawn.hpp>
+
+#include <functional>
+
+namespace web {
 
 /**
- * @brief The main application class
+ * @brief Handler for messages.
  */
-class ClioApplication {
-    util::config::ClioConfigDefinition const& config_;
-    util::SignalsHandler signalsHandler_;
-    Stopper appStopper_;
+using MessageHandler =
+    std::function<Response(Request const&, ConnectionMetadata&, SubscriptionContextPtr, boost::asio::yield_context)>;
 
-public:
-    /**
-     * @brief Construct a new ClioApplication object
-     *
-     * @param config The configuration of the application
-     */
-    ClioApplication(util::config::ClioConfigDefinition const& config);
-
-    /**
-     * @brief Run the application
-     *
-     * @return exit code
-     */
-    int
-    run();
-};
-
-}  // namespace app
+}  // namespace web

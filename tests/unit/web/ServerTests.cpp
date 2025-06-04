@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,729 +17,567 @@
 */
 //==============================================================================
 
+#include "util/AsioContextTestFixture.hpp"
 #include "util/AssignRandomPort.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
+#include "util/NameGenerator.hpp"
+#include "util/Taggable.hpp"
 #include "util/TestHttpClient.hpp"
 #include "util/TestWebSocketClient.hpp"
-#include "util/TmpFile.hpp"
-#include "util/config/Array.hpp"
+#include "util/config/ConfigConstraints.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigFileJson.hpp"
 #include "util/config/ConfigValue.hpp"
 #include "util/config/Types.hpp"
-#include "util/prometheus/Label.hpp"
-#include "util/prometheus/Prometheus.hpp"
-#include "web/AdminVerificationStrategy.hpp"
+#include "web/Connection.hpp"
+#include "web/ProcessingPolicy.hpp"
+#include "web/Request.hpp"
+#include "web/Response.hpp"
 #include "web/Server.hpp"
-#include "web/dosguard/DOSGuard.hpp"
-#include "web/dosguard/DOSGuardInterface.hpp"
-#include "web/dosguard/IntervalSweepHandler.hpp"
-#include "web/dosguard/Weights.hpp"
-#include "web/dosguard/WhitelistHandler.hpp"
-#include "web/interface/ConnectionBase.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/io_service.hpp>
-#include <boost/beast/core/error.hpp>
-#include <boost/beast/http/field.hpp>
+#include <boost/asio/ip/address_v4.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
+#include <boost/beast/http/string_body.hpp>
+#include <boost/beast/http/verb.hpp>
 #include <boost/beast/websocket/error.hpp>
+#include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
-#include <boost/json/value.hpp>
-#include <boost/system/system_error.hpp>
-#include <fmt/core.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <test_data/SslCert.hpp>
 
-#include <condition_variable>
+#include <chrono>
 #include <cstdint>
-#include <memory>
-#include <mutex>
 #include <optional>
-#include <stdexcept>
+#include <ranges>
 #include <string>
-#include <string_view>
-#include <thread>
-#include <tuple>
-#include <utility>
-#include <vector>
 
-using namespace util;
-using namespace util::config;
-using namespace web::impl;
 using namespace web;
+using namespace util::config;
 
-static boost::json::value
-generateJSONWithDynamicPort(std::string_view port)
-{
-    return boost::json::parse(fmt::format(
-        R"JSON({{
-            "server": {{
-                "ip": "0.0.0.0",
-                "port": {}
-            }},
-            "dos_guard": {{
-                "max_fetches": 100,
-                "sweep_interval": 1000,
-                "max_connections": 2,
-                "max_requests": 3,
-                "whitelist": ["127.0.0.1"]
-            }}
-        }})JSON",
-        port
-    ));
-}
+namespace http = boost::beast::http;
 
-static boost::json::value
-generateJSONDataOverload(std::string_view port)
-{
-    return boost::json::parse(fmt::format(
-        R"JSON({{
-            "server": {{
-                "ip": "0.0.0.0",
-                "port": {}
-            }},
-            "dos_guard": {{
-                "max_fetches": 100,
-                "sweep_interval": 1000,
-                "max_connections": 2,
-                "max_requests": 1
-            }}
-        }})JSON",
-        port
-    ));
-}
-
-inline static ClioConfigDefinition
-getParseServerConfig(boost::json::value val)
-{
-    ConfigFileJson const jsonVal{val.as_object()};
-    auto config = ClioConfigDefinition{
-        {"server.ip", ConfigValue{ConfigType::String}},
-        {"server.port", ConfigValue{ConfigType::Integer}},
-        {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
-        {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
-        {"server.ws_max_sending_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1500)},
-        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
-        {"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}},
-        {"dos_guard.sweep_interval", ConfigValue{ConfigType::Integer}},
-        {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}},
-        {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}},
-        {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}.optional()}},
-        {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
-        {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
-    };
-    auto const errors = config.parse(jsonVal);
-    [&]() { ASSERT_FALSE(errors.has_value()); }();
-    return config;
+struct MakeServerTestBundle {
+    std::string testName;
+    std::string configJson;
+    bool expectSuccess;
 };
 
-struct WebServerTest : NoLoggerFixture {
-    ~WebServerTest() override
-    {
-        work_.reset();
-        ctx.stop();
-        if (runner_->joinable())
-            runner_->join();
-    }
-
-    WebServerTest()
-    {
-        work_.emplace(ctx);  // make sure ctx does not stop on its own
-        runner_.emplace([this] { ctx.run(); });
-    }
-
-    boost::json::value
-    addSslConfig(boost::json::value config) const
-    {
-        config.as_object()["ssl_key_file"] = sslKeyFile.path;
-        config.as_object()["ssl_cert_file"] = sslCertFile.path;
-        return config;
-    }
-
-    // this ctx is for dos timer
-    boost::asio::io_context ctxSync;
-    std::string const port = std::to_string(tests::util::generateFreePort());
-    ClioConfigDefinition cfg{getParseServerConfig(generateJSONWithDynamicPort(port))};
-    dosguard::WhitelistHandler whitelistHandler{cfg};
-    dosguard::Weights dosguardWeights{1, {}};
-    dosguard::DOSGuard dosGuard{cfg, whitelistHandler, dosguardWeights};
-    dosguard::IntervalSweepHandler sweepHandler{cfg, ctxSync, dosGuard};
-
-    ClioConfigDefinition cfgOverload{getParseServerConfig(generateJSONDataOverload(port))};
-    dosguard::WhitelistHandler whitelistHandlerOverload{cfgOverload};
-    dosguard::DOSGuard dosGuardOverload{cfgOverload, whitelistHandlerOverload, dosguardWeights};
-    dosguard::IntervalSweepHandler sweepHandlerOverload{cfgOverload, ctxSync, dosGuardOverload};
-    // this ctx is for http server
-    boost::asio::io_context ctx;
-
-    TmpFile sslCertFile{tests::sslCertFile()};
-    TmpFile sslKeyFile{tests::sslKeyFile()};
-
-private:
-    std::optional<boost::asio::io_service::work> work_;
-    std::optional<std::thread> runner_;
+struct MakeServerTest : NoLoggerFixture, testing::WithParamInterface<MakeServerTestBundle> {
+protected:
+    boost::asio::io_context ioContext_;
 };
 
-class EchoExecutor {
-public:
-    void
-    operator()(std::string const& reqStr, std::shared_ptr<web::ConnectionBase> const& ws)
-    {
-        ws->send(std::string(reqStr), http::status::ok);
-    }
-
-    void
-    operator()(boost::beast::error_code /* ec */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
-    {
-    }
-};
-
-class ExceptionExecutor {
-public:
-    void
-    operator()(std::string const& /* req */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
-    {
-        throw std::runtime_error("MyError");
-    }
-
-    void
-    operator()(boost::beast::error_code /* ec */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
-    {
-    }
-};
-
-namespace {
-
-template <class Executor>
-std::shared_ptr<web::HttpServer<Executor>>
-makeServerSync(
-    util::config::ClioConfigDefinition const& config,
-    boost::asio::io_context& ioc,
-    web::dosguard::DOSGuardInterface& dosGuard,
-    std::shared_ptr<Executor> const& handler
-)
+TEST_P(MakeServerTest, Make)
 {
-    auto server = std::shared_ptr<web::HttpServer<Executor>>();
-    std::mutex m;
-    std::condition_variable cv;
-    bool ready = false;
-    boost::asio::dispatch(ioc.get_executor(), [&]() mutable {
-        server = web::makeHttpServer(config, ioc, dosGuard, handler);
-        {
-            std::lock_guard const lk(m);
-            ready = true;
-        }
-        cv.notify_one();
-    });
-    {
-        std::unique_lock lk(m);
-        cv.wait(lk, [&] { return ready; });
-    }
-    return server;
-}
+    ConfigFileJson const json{boost::json::parse(GetParam().configJson).as_object()};
 
-}  // namespace
-
-TEST_F(WebServerTest, Http)
-{
-    auto const e = std::make_shared<EchoExecutor>();
-    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
-    auto const [status, res] = HttpSyncClient::post("localhost", port, R"JSON({"Hello":1})JSON");
-    EXPECT_EQ(res, R"JSON({"Hello":1})JSON");
-    EXPECT_EQ(status, boost::beast::http::status::ok);
-}
-
-TEST_F(WebServerTest, Ws)
-{
-    auto e = std::make_shared<EchoExecutor>();
-    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
-    WebSocketSyncClient wsClient;
-    wsClient.connect("localhost", port);
-    auto const res = wsClient.syncPost(R"JSON({"Hello":1})JSON");
-    EXPECT_EQ(res, R"JSON({"Hello":1})JSON");
-    wsClient.disconnect();
-}
-
-TEST_F(WebServerTest, HttpInternalError)
-{
-    auto const e = std::make_shared<ExceptionExecutor>();
-    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
-    auto const [status, res] = HttpSyncClient::post("localhost", port, R"JSON({})JSON");
-    EXPECT_EQ(
-        res,
-        R"JSON({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"})JSON"
-    );
-    EXPECT_EQ(status, boost::beast::http::status::internal_server_error);
-}
-
-TEST_F(WebServerTest, WsInternalError)
-{
-    auto e = std::make_shared<ExceptionExecutor>();
-    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
-    WebSocketSyncClient wsClient;
-    wsClient.connect("localhost", port);
-    auto const res = wsClient.syncPost(R"JSON({"id":"id1"})JSON");
-    wsClient.disconnect();
-    EXPECT_EQ(
-        res,
-        R"JSON({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","id":"id1","request":{"id":"id1"}})JSON"
-    );
-}
-
-TEST_F(WebServerTest, WsInternalErrorNotJson)
-{
-    auto e = std::make_shared<ExceptionExecutor>();
-    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
-    WebSocketSyncClient wsClient;
-    wsClient.connect("localhost", port);
-    auto const res = wsClient.syncPost("not json");
-    wsClient.disconnect();
-    EXPECT_EQ(
-        res,
-        R"JSON({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","request":"not json"})JSON"
-    );
-}
-
-TEST_F(WebServerTest, IncompleteSslConfig)
-{
-    auto const e = std::make_shared<EchoExecutor>();
-
-    auto jsonConfig = generateJSONWithDynamicPort(port);
-    jsonConfig.as_object()["ssl_key_file"] = sslKeyFile.path;
-
-    auto const server = makeServerSync(getParseServerConfig(jsonConfig), ctx, dosGuard, e);
-    EXPECT_EQ(server, nullptr);
-}
-
-TEST_F(WebServerTest, WrongSslConfig)
-{
-    auto const e = std::make_shared<EchoExecutor>();
-
-    auto jsonConfig = generateJSONWithDynamicPort(port);
-    jsonConfig.as_object()["ssl_key_file"] = sslKeyFile.path;
-    jsonConfig.as_object()["ssl_cert_file"] = "wrong_path";
-
-    auto const server = makeServerSync(getParseServerConfig(jsonConfig), ctx, dosGuard, e);
-    EXPECT_EQ(server, nullptr);
-}
-
-TEST_F(WebServerTest, Https)
-{
-    auto const e = std::make_shared<EchoExecutor>();
-    cfg = getParseServerConfig(addSslConfig(generateJSONWithDynamicPort(port)));
-    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
-    auto const res = HttpsSyncClient::syncPost("localhost", port, R"JSON({"Hello":1})JSON");
-    EXPECT_EQ(res, R"JSON({"Hello":1})JSON");
-}
-
-TEST_F(WebServerTest, Wss)
-{
-    auto e = std::make_shared<EchoExecutor>();
-    cfg = getParseServerConfig(addSslConfig(generateJSONWithDynamicPort(port)));
-    auto server = makeServerSync(cfg, ctx, dosGuard, e);
-    WebServerSslSyncClient wsClient;
-    wsClient.connect("localhost", port);
-    auto const res = wsClient.syncPost(R"JSON({"Hello":1})JSON");
-    EXPECT_EQ(res, R"JSON({"Hello":1})JSON");
-    wsClient.disconnect();
-}
-
-TEST_F(WebServerTest, HttpPayloadOverload)
-{
-    std::string const s100(100, 'a');
-    auto const e = std::make_shared<EchoExecutor>();
-    auto server = makeServerSync(cfg, ctx, dosGuardOverload, e);
-    auto const [status, res] =
-        HttpSyncClient::post("localhost", port, fmt::format(R"JSON({{"payload":"{}"}})JSON", s100));
-    EXPECT_EQ(
-        res,
-        R"JSON({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})JSON"
-    );
-    EXPECT_EQ(status, boost::beast::http::status::ok);
-}
-
-TEST_F(WebServerTest, WsPayloadOverload)
-{
-    std::string const s100(100, 'a');
-    auto const e = std::make_shared<EchoExecutor>();
-    auto server = makeServerSync(cfg, ctx, dosGuardOverload, e);
-    WebSocketSyncClient wsClient;
-    wsClient.connect("localhost", port);
-    auto const res = wsClient.syncPost(fmt::format(R"JSON({{"payload":"{}"}})JSON", s100));
-    wsClient.disconnect();
-    EXPECT_EQ(
-        res,
-        R"JSON({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})JSON"
-    );
-}
-
-TEST_F(WebServerTest, WsTooManyConnection)
-{
-    auto const e = std::make_shared<EchoExecutor>();
-    auto server = makeServerSync(cfg, ctx, dosGuardOverload, e);
-    // max connection is 2, exception should happen when the third connection is made
-    WebSocketSyncClient wsClient1;
-    wsClient1.connect("localhost", port);
-    WebSocketSyncClient wsClient2;
-    wsClient2.connect("localhost", port);
-    bool exceptionThrown = false;
-    try {
-        WebSocketSyncClient wsClient3;
-        wsClient3.connect("localhost", port);
-    } catch (boost::system::system_error const& ex) {
-        exceptionThrown = true;
-        EXPECT_EQ(ex.code(), boost::beast::websocket::error::upgrade_declined);
-    }
-    wsClient1.disconnect();
-    wsClient2.disconnect();
-    EXPECT_TRUE(exceptionThrown);
-}
-
-TEST_F(WebServerTest, HealthCheck)
-{
-    auto e = std::make_shared<ExceptionExecutor>();  // request handled before we get to executor
-    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
-    auto const [status, res] = HttpSyncClient::get("localhost", port, "", "/health");
-
-    EXPECT_FALSE(res.empty());
-    EXPECT_EQ(status, boost::beast::http::status::ok);
-}
-
-TEST_F(WebServerTest, GetOtherThanHealthCheck)
-{
-    auto e = std::make_shared<ExceptionExecutor>();  // request handled before we get to executor
-    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
-    auto const [status, res] = HttpSyncClient::get("localhost", port, "", "/");
-
-    EXPECT_FALSE(res.empty());
-    EXPECT_EQ(status, boost::beast::http::status::bad_request);
-}
-
-namespace {
-
-std::string
-jsonServerConfigWithAdminPassword(uint32_t const port)
-{
-    return fmt::format(
-        R"JSON({{
-            "server": {{
-                "ip": "0.0.0.0",
-                "port": {},
-                "admin_password": "secret"
-            }}
-        }})JSON",
-        port
-    );
-}
-
-std::string
-jsonServerConfigWithLocalAdmin(uint32_t const port)
-{
-    return fmt::format(
-        R"JSON({{
-            "server": {{
-                "ip": "0.0.0.0",
-                "port": {},
-                "local_admin": true
-            }}
-        }})JSON",
-        port
-    );
-}
-
-std::string
-jsonServerConfigWithBothAdminPasswordAndLocalAdminFalse(uint32_t const port)
-{
-    return fmt::format(
-        R"JSON({{
-            "server": {{
-                "ip": "0.0.0.0",
-                "port": {},
-                "admin_password": "secret",
-                "local_admin": false
-            }}
-        }})JSON",
-        port
-    );
-}
-
-std::string
-jsonServerConfigWithNoSpecifiedAdmin(uint32_t const port)
-{
-    return fmt::format(
-        R"JSON({{
-            "server": {{
-                "ip": "0.0.0.0",
-                "port": {}
-            }}
-        }})JSON",
-        port
-    );
-}
-
-// get this value from online sha256 generator
-constexpr auto kSECRET_SHA256 = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
-
-}  // namespace
-
-class AdminCheckExecutor {
-public:
-    void
-    operator()(std::string const& reqStr, std::shared_ptr<web::ConnectionBase> const& ws)
-    {
-        auto response = fmt::format("{} {}", reqStr, ws->isAdmin() ? "admin" : "user");
-        ws->send(std::move(response), http::status::ok);
-    }
-
-    void
-    operator()(boost::beast::error_code /* ec */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
-    {
-    }
-};
-
-struct WebServerAdminTestParams {
-    std::string config;
-    std::vector<WebHeader> headers;
-    std::string expectedResponse;
-};
-
-inline static ClioConfigDefinition
-getParseAdminServerConfig(boost::json::value val)
-{
-    ConfigFileJson const jsonVal{val.as_object()};
-    auto config = ClioConfigDefinition{
-        {"server.ip", ConfigValue{ConfigType::String}},
-        {"server.port", ConfigValue{ConfigType::Integer}},
-        {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
-        {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
+    util::config::ClioConfigDefinition config{
+        {"server.ip", ConfigValue{ConfigType::String}.optional()},
+        {"server.port", ConfigValue{ConfigType::Integer}.optional()},
         {"server.processing_policy", ConfigValue{ConfigType::String}.defaultValue("parallel")},
         {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional()},
         {"server.ws_max_sending_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1500)},
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
         {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
-        {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
-        {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
-        {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
-        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+        {"ssl_key_file", ConfigValue{ConfigType::String}.optional()}
+
     };
-    auto const errors = config.parse(jsonVal);
-    [&]() { ASSERT_FALSE(errors.has_value()); }();
-    return config;
-};
+    auto const errors = config.parse(json);
+    ASSERT_TRUE(!errors.has_value());
 
-class WebServerAdminTest : public WebServerTest, public ::testing::WithParamInterface<WebServerAdminTestParams> {};
-
-TEST_P(WebServerAdminTest, WsAdminCheck)
-{
-    auto e = std::make_shared<AdminCheckExecutor>();
-    ClioConfigDefinition const serverConfig{getParseAdminServerConfig(boost::json::parse(GetParam().config))};
-    auto server = makeServerSync(serverConfig, ctx, dosGuardOverload, e);
-    WebSocketSyncClient wsClient;
-    uint32_t const webServerPort = serverConfig.get<uint32_t>("server.port");
-    wsClient.connect("localhost", std::to_string(webServerPort), GetParam().headers);
-    std::string const request = "Why hello";
-    auto const res = wsClient.syncPost(request);
-    wsClient.disconnect();
-    EXPECT_EQ(res, fmt::format("{} {}", request, GetParam().expectedResponse));
-}
-
-TEST_P(WebServerAdminTest, HttpAdminCheck)
-{
-    auto const e = std::make_shared<AdminCheckExecutor>();
-    ClioConfigDefinition const serverConfig{getParseAdminServerConfig(boost::json::parse(GetParam().config))};
-    auto server = makeServerSync(serverConfig, ctx, dosGuardOverload, e);
-    std::string const request = "Why hello";
-    uint32_t const webServerPort = serverConfig.get<uint32_t>("server.port");
-    auto const [status, res] =
-        HttpSyncClient::post("localhost", std::to_string(webServerPort), request, GetParam().headers);
-
-    EXPECT_EQ(res, fmt::format("{} {}", request, GetParam().expectedResponse));
-    EXPECT_EQ(status, boost::beast::http::status::ok);
+    auto const expectedServer =
+        makeServer(config, [](auto&&) -> std::expected<void, Response> { return {}; }, [](auto&&) {}, ioContext_);
+    EXPECT_EQ(expectedServer.has_value(), GetParam().expectSuccess);
 }
 
 INSTANTIATE_TEST_CASE_P(
-    WebServerAdminTestsSuit,
-    WebServerAdminTest,
-    ::testing::Values(
-        WebServerAdminTestParams{
-            .config = jsonServerConfigWithAdminPassword(tests::util::generateFreePort()),
-            .headers = {},
-            .expectedResponse = "user"
+    MakeServerTests,
+    MakeServerTest,
+    testing::Values(
+        MakeServerTestBundle{
+            "BadEndpoint",
+            R"JSON(
+                {
+                    "server": {"ip": "wrong", "port": 12345}
+                }
+            )JSON",
+            false
         },
-        WebServerAdminTestParams{
-            .config = jsonServerConfigWithAdminPassword(tests::util::generateFreePort()),
-            .headers = {WebHeader(http::field::authorization, "")},
-            .expectedResponse = "user"
-        },
-        WebServerAdminTestParams{
-            .config = jsonServerConfigWithAdminPassword(tests::util::generateFreePort()),
-            .headers = {WebHeader(http::field::authorization, "s")},
-            .expectedResponse = "user"
-        },
-        WebServerAdminTestParams{
-            .config = jsonServerConfigWithAdminPassword(tests::util::generateFreePort()),
-            .headers = {WebHeader(http::field::authorization, kSECRET_SHA256)},
-            .expectedResponse = "user"
-        },
-        WebServerAdminTestParams{
-            .config = jsonServerConfigWithAdminPassword(tests::util::generateFreePort()),
-            .headers = {WebHeader(
-                http::field::authorization,
-                fmt::format("{}{}", PasswordAdminVerificationStrategy::kPASSWORD_PREFIX, kSECRET_SHA256)
-            )},
-            .expectedResponse = "admin"
-        },
-        WebServerAdminTestParams{
-            .config = jsonServerConfigWithBothAdminPasswordAndLocalAdminFalse(tests::util::generateFreePort()),
-            .headers = {WebHeader(http::field::authorization, kSECRET_SHA256)},
-            .expectedResponse = "user"
-        },
-        WebServerAdminTestParams{
-            .config = jsonServerConfigWithBothAdminPasswordAndLocalAdminFalse(tests::util::generateFreePort()),
-            .headers = {WebHeader(
-                http::field::authorization,
-                fmt::format("{}{}", PasswordAdminVerificationStrategy::kPASSWORD_PREFIX, kSECRET_SHA256)
-            )},
-            .expectedResponse = "admin"
-        },
-        WebServerAdminTestParams{
-            .config = jsonServerConfigWithAdminPassword(tests::util::generateFreePort()),
-            .headers = {WebHeader(
-                http::field::authentication_info,
-                fmt::format("{}{}", PasswordAdminVerificationStrategy::kPASSWORD_PREFIX, kSECRET_SHA256)
-            )},
-            .expectedResponse = "user"
-        },
-        WebServerAdminTestParams{
-            .config = jsonServerConfigWithLocalAdmin(tests::util::generateFreePort()),
-            .headers = {},
-            .expectedResponse = "admin"
-        },
-        WebServerAdminTestParams{
-            .config = jsonServerConfigWithNoSpecifiedAdmin(tests::util::generateFreePort()),
-            .headers = {},
-            .expectedResponse = "admin"
+        MakeServerTestBundle{
+            "BadSslConfig",
+            R"JSON(
+        {
+            "server": {"ip": "127.0.0.1", "port": 12345},
+            "ssl_cert_file": "some_file"
         }
-
-    )
+            )JSON",
+            false
+        },
+        MakeServerTestBundle{
+            "BadProcessingPolicy",
+            R"JSON(
+        {
+            "server": {"ip": "127.0.0.1", "port": 12345, "processing_policy": "wrong"}
+        }
+            )JSON",
+            false
+        },
+        MakeServerTestBundle{
+            "CorrectConfig_ParallelPolicy",
+            R"JSON(
+        {
+            "server": {"ip": "127.0.0.1", "port": 12345, "processing_policy": "parallel"}
+        }
+            )JSON",
+            true
+        },
+        MakeServerTestBundle{
+            "CorrectConfig_SequentPolicy",
+            R"JSON(
+        {
+            "server": {"ip": "127.0.0.1", "port": 12345, "processing_policy": "sequent"}
+        }
+            )JSON",
+            true
+        }
+    ),
+    tests::util::kNAME_GENERATOR
 );
 
-TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminSet)
-{
-    uint32_t webServerPort = tests::util::generateFreePort();
-    std::string const jsonServerConfigWithBothAdminPasswordAndLocalAdmin = fmt::format(
-        R"JSON({{
-        "server":{{
-                "ip": "0.0.0.0",
-                "port": {},
-                "admin_password": "secret",
-                "local_admin": true
-            }}
-    }})JSON",
-        webServerPort
-    );
+struct ServerTest : util::prometheus::WithPrometheus, SyncAsioContextTest {
+    ServerTest()
+    {
+        [&]() { ASSERT_TRUE(server_.has_value()); }();
+        server_->onGet("/", getHandler_.AsStdFunction());
+        server_->onPost("/", postHandler_.AsStdFunction());
+        server_->onWs(wsHandler_.AsStdFunction());
+    }
 
-    auto const e = std::make_shared<AdminCheckExecutor>();
-    ClioConfigDefinition const serverConfig{
-        getParseAdminServerConfig(boost::json::parse(jsonServerConfigWithBothAdminPasswordAndLocalAdmin))
+protected:
+    uint32_t const serverPort_ = tests::util::generateFreePort();
+
+    ClioConfigDefinition const config_{
+        {"server.ip", ConfigValue{ConfigType::String}.defaultValue("127.0.0.1").withConstraint(gValidateIp)},
+        {"server.port", ConfigValue{ConfigType::Integer}.defaultValue(serverPort_).withConstraint(gValidatePort)},
+        {"server.processing_policy", ConfigValue{ConfigType::String}.defaultValue("parallel")},
+        {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
+        {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
+        {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional()},
+        {"server.ws_max_sending_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1500)},
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+        {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
+        {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()}
     };
-    EXPECT_THROW(web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e), std::logic_error);
+
+    Server::OnConnectCheck emptyOnConnectCheck_ = [](auto&&) -> std::expected<void, Response> { return {}; };
+    std::expected<Server, std::string> server_ = makeServer(config_, emptyOnConnectCheck_, [](auto&&) {}, ctx_);
+
+    std::string requestMessage_ = "some request";
+    std::string const headerName_ = "Some-header";
+    std::string const headerValue_ = "some value";
+
+    testing::StrictMock<testing::MockFunction<
+        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+        getHandler_;
+    testing::StrictMock<testing::MockFunction<
+        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+        postHandler_;
+    testing::StrictMock<testing::MockFunction<
+        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+        wsHandler_;
+};
+
+TEST_F(ServerTest, BadEndpoint)
+{
+    boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("1.2.3.4"), 0};
+    util::TagDecoratorFactory const tagDecoratorFactory{
+        ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
+    };
+    Server server{
+        ctx_,
+        endpoint,
+        std::nullopt,
+        ProcessingPolicy::Sequential,
+        std::nullopt,
+        tagDecoratorFactory,
+        std::nullopt,
+        emptyOnConnectCheck_,
+        [](auto&&) {}
+    };
+
+    auto maybeError = server.run();
+    ASSERT_TRUE(maybeError.has_value());
+    EXPECT_THAT(*maybeError, testing::HasSubstr("Error creating TCP acceptor"));
 }
 
-TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
-{
-    uint32_t webServerPort = tests::util::generateFreePort();
-    std::string const jsonServerConfigWithNoAdminPasswordAndLocalAdminFalse = fmt::format(
-        R"JSON({{
-        "server": {{
-            "ip": "0.0.0.0",
-            "port": {},
-            "local_admin": false
-        }}
-    }})JSON",
-        webServerPort
-    );
+struct ServerHttpTestBundle {
+    std::string testName;
+    http::verb method;
 
-    auto const e = std::make_shared<AdminCheckExecutor>();
-    ClioConfigDefinition const serverConfig{
-        getParseAdminServerConfig(boost::json::parse(jsonServerConfigWithNoAdminPasswordAndLocalAdminFalse))
-    };
-    EXPECT_THROW(web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e), std::logic_error);
+    Request::Method
+    expectedMethod() const
+    {
+        switch (method) {
+            case http::verb::get:
+                return Request::Method::Get;
+            case http::verb::post:
+                return Request::Method::Post;
+            default:
+                return Request::Method::Unsupported;
+        }
+    }
+};
+
+struct ServerHttpTest : ServerTest, testing::WithParamInterface<ServerHttpTestBundle> {};
+
+TEST_F(ServerHttpTest, ClientDisconnects)
+{
+    HttpAsyncClient client{ctx_};
+    boost::asio::spawn(ctx_, [&](boost::asio::yield_context yield) {
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        client.disconnect();
+        ctx_.stop();
+    });
+
+    server_->run();
+    runContext();
 }
 
-struct WebServerPrometheusTest : util::prometheus::WithPrometheus, WebServerTest {};
-
-TEST_F(WebServerPrometheusTest, rejectedWithoutAdminPassword)
+TEST_F(ServerHttpTest, OnConnectCheck)
 {
-    auto const e = std::make_shared<EchoExecutor>();
-    uint32_t const webServerPort = tests::util::generateFreePort();
-    ClioConfigDefinition const serverConfig{
-        getParseAdminServerConfig(boost::json::parse(jsonServerConfigWithAdminPassword(webServerPort)))
+    auto const serverPort = tests::util::generateFreePort();
+    boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("0.0.0.0"), serverPort};
+    util::TagDecoratorFactory const tagDecoratorFactory{
+        ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
     };
-    auto server = makeServerSync(serverConfig, ctx, dosGuard, e);
-    auto const [status, res] = HttpSyncClient::get("localhost", std::to_string(webServerPort), "", "/metrics");
 
-    EXPECT_EQ(res, "Only admin is allowed to collect metrics");
-    EXPECT_EQ(status, boost::beast::http::status::unauthorized);
+    testing::StrictMock<testing::MockFunction<std::expected<void, Response>(Connection const&)>> onConnectCheck;
+
+    Server server{
+        ctx_,
+        endpoint,
+        std::nullopt,
+        ProcessingPolicy::Sequential,
+        std::nullopt,
+        tagDecoratorFactory,
+        std::nullopt,
+        onConnectCheck.AsStdFunction(),
+        [](auto&&) {}
+    };
+
+    HttpAsyncClient client{ctx_};
+
+    boost::asio::spawn(ctx_, [&](boost::asio::yield_context yield) {
+        boost::asio::steady_timer timer{yield.get_executor()};
+
+        EXPECT_CALL(onConnectCheck, Call)
+            .WillOnce([&timer](Connection const& connection) -> std::expected<void, Response> {
+                EXPECT_EQ(connection.ip(), "127.0.0.1");
+                timer.cancel();
+                return {};
+            });
+
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        // Have to send a request here because the server does async_detect_ssl() which waits for some data to appear
+        client.send(
+            http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
+            yield,
+            std::chrono::milliseconds{100}
+        );
+
+        // Wait for the onConnectCheck to be called
+        timer.expires_after(std::chrono::milliseconds{100});
+        boost::system::error_code error;  // Unused
+        timer.async_wait(yield[error]);
+
+        client.gracefulShutdown();
+        ctx_.stop();
+    });
+
+    server.run();
+
+    runContext();
 }
 
-TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
+TEST_F(ServerHttpTest, OnConnectCheckFailed)
 {
-    uint32_t webServerPort = tests::util::generateFreePort();
-    std::string const jsonServerConfigWithDisabledPrometheus = fmt::format(
-        R"JSON({{
-        "server":{{
-                "ip": "0.0.0.0",
-                "port": {},
-                "admin_password": "secret",
-                "ws_max_sending_queue_size": 1500
-            }},
-        "prometheus": {{ "enabled": false }}
-    }})JSON",
-        webServerPort
-    );
-
-    auto const e = std::make_shared<EchoExecutor>();
-    ClioConfigDefinition const serverConfig{
-        getParseAdminServerConfig(boost::json::parse(jsonServerConfigWithDisabledPrometheus))
+    auto const serverPort = tests::util::generateFreePort();
+    boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("0.0.0.0"), serverPort};
+    util::TagDecoratorFactory const tagDecoratorFactory{
+        ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
     };
-    PrometheusService::init(serverConfig);
-    auto server = makeServerSync(serverConfig, ctx, dosGuard, e);
-    auto const [status, res] = HttpSyncClient::get(
-        "localhost",
-        std::to_string(webServerPort),
-        "",
-        "/metrics",
-        {WebHeader(
-            http::field::authorization,
-            fmt::format("{}{}", PasswordAdminVerificationStrategy::kPASSWORD_PREFIX, kSECRET_SHA256)
-        )}
-    );
-    EXPECT_EQ(res, "Prometheus is disabled in clio config");
-    EXPECT_EQ(status, boost::beast::http::status::forbidden);
+
+    testing::StrictMock<testing::MockFunction<std::expected<void, Response>(Connection const&)>> onConnectCheck;
+
+    Server server{
+        ctx_,
+        endpoint,
+        std::nullopt,
+        ProcessingPolicy::Sequential,
+        std::nullopt,
+        tagDecoratorFactory,
+        std::nullopt,
+        onConnectCheck.AsStdFunction(),
+        [](auto&&) {}
+    };
+
+    HttpAsyncClient client{ctx_};
+
+    EXPECT_CALL(onConnectCheck, Call).WillOnce([](Connection const& connection) {
+        EXPECT_EQ(connection.ip(), "127.0.0.1");
+        return std::unexpected{
+            Response{http::status::too_many_requests, boost::json::object{{"error", "some error"}}, connection}
+        };
+    });
+
+    boost::asio::spawn(ctx_, [&](boost::asio::yield_context yield) {
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        // Have to send a request here because the server does async_detect_ssl() which waits for some data to appear
+        client.send(
+            http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
+            yield,
+            std::chrono::milliseconds{100}
+        );
+
+        auto const response = client.receive(yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_TRUE(response.has_value()) << response.error().message(); }();
+        EXPECT_EQ(response->result(), http::status::too_many_requests);
+        EXPECT_EQ(response->body(), R"JSON({"error":"some error"})JSON");
+        EXPECT_EQ(response->version(), 11);
+
+        client.gracefulShutdown();
+        ctx_.stop();
+    });
+
+    server.run();
+
+    runContext();
 }
 
-TEST_F(WebServerPrometheusTest, validResponse)
+TEST_F(ServerHttpTest, OnDisconnectHook)
 {
-    uint32_t const webServerPort = tests::util::generateFreePort();
-    auto& testCounter = PrometheusService::counterInt("test_counter", util::prometheus::Labels());
-    ++testCounter;
-    auto const e = std::make_shared<EchoExecutor>();
-    ClioConfigDefinition const serverConfig{
-        getParseAdminServerConfig(boost::json::parse(jsonServerConfigWithAdminPassword(webServerPort)))
+    auto const serverPort = tests::util::generateFreePort();
+    boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("0.0.0.0"), serverPort};
+    util::TagDecoratorFactory const tagDecoratorFactory{
+        ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
     };
-    auto server = makeServerSync(serverConfig, ctx, dosGuard, e);
-    auto const [status, res] = HttpSyncClient::get(
-        "localhost",
-        std::to_string(webServerPort),
-        "",
-        "/metrics",
-        {WebHeader(
-            http::field::authorization,
-            fmt::format("{}{}", PasswordAdminVerificationStrategy::kPASSWORD_PREFIX, kSECRET_SHA256)
-        )}
-    );
-    EXPECT_EQ(res, "# TYPE test_counter counter\ntest_counter 1\n\n");
-    EXPECT_EQ(status, boost::beast::http::status::ok);
+
+    testing::StrictMock<testing::MockFunction<void(Connection const&)>> onDisconnectHookMock;
+
+    Server server{
+        ctx_,
+        endpoint,
+        std::nullopt,
+        ProcessingPolicy::Sequential,
+        std::nullopt,
+        tagDecoratorFactory,
+        std::nullopt,
+        emptyOnConnectCheck_,
+        onDisconnectHookMock.AsStdFunction()
+    };
+
+    HttpAsyncClient client{ctx_};
+
+    boost::asio::spawn(ctx_, [&](boost::asio::yield_context yield) {
+        boost::asio::steady_timer timer{ctx_.get_executor(), std::chrono::milliseconds{100}};
+
+        EXPECT_CALL(onDisconnectHookMock, Call).WillOnce([&timer](auto&&) { timer.cancel(); });
+
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        client.send(
+            http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
+            yield,
+            std::chrono::milliseconds{100}
+        );
+
+        client.gracefulShutdown();
+
+        // Wait for OnDisconnectHook is called
+        boost::system::error_code error;
+        timer.async_wait(yield[error]);
+
+        ctx_.stop();
+    });
+
+    server.run();
+
+    runContext();
+}
+
+TEST_F(ServerHttpTest, ClientIsDisconnectedIfServerStopped)
+{
+    HttpAsyncClient client{ctx_};
+    boost::asio::spawn(ctx_, [&](boost::asio::yield_context yield) {
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        // Have to send a request here because the server does async_detect_ssl() which waits for some data to appear
+        maybeError = client.send(
+            http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
+            yield,
+            std::chrono::milliseconds{100}
+        );
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        auto message = client.receive(yield, std::chrono::milliseconds{100});
+        EXPECT_TRUE(message.has_value()) << message.error().message();
+        EXPECT_EQ(message->result(), http::status::service_unavailable);
+        EXPECT_EQ(message->body(), "This Clio node is shutting down. Please try another node.");
+
+        ctx_.stop();
+    });
+
+    server_->run();
+    runSyncOperation([this](auto yield) { server_->stop(yield); });
+    runContext();
+}
+
+TEST_P(ServerHttpTest, RequestResponse)
+{
+    HttpAsyncClient client{ctx_};
+
+    http::request<http::string_body> request{GetParam().method, "/", 11, requestMessage_};
+    request.set(headerName_, headerValue_);
+
+    Response const response{http::status::ok, "some response", Request{request}};
+
+    boost::asio::spawn(ctx_, [&](boost::asio::yield_context yield) {
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
+            maybeError = client.send(request, yield, std::chrono::milliseconds{100});
+            EXPECT_FALSE(maybeError.has_value()) << maybeError->message();
+
+            auto const expectedResponse = client.receive(yield, std::chrono::milliseconds{100});
+            [&]() { ASSERT_TRUE(expectedResponse.has_value()) << expectedResponse.error().message(); }();
+            EXPECT_EQ(expectedResponse->result(), http::status::ok);
+            EXPECT_EQ(expectedResponse->body(), response.message());
+        }
+
+        client.gracefulShutdown();
+        ctx_.stop();
+    });
+
+    auto& handler = GetParam().method == http::verb::get ? getHandler_ : postHandler_;
+
+    EXPECT_CALL(handler, Call)
+        .Times(3)
+        .WillRepeatedly([&, response = response](Request const& receivedRequest, auto&&, auto&&, auto&&) {
+            EXPECT_TRUE(receivedRequest.isHttp());
+            EXPECT_EQ(receivedRequest.method(), GetParam().expectedMethod());
+            EXPECT_EQ(receivedRequest.message(), request.body());
+            EXPECT_EQ(receivedRequest.target(), request.target());
+            EXPECT_EQ(receivedRequest.headerValue(headerName_), request.at(headerName_));
+
+            return response;
+        });
+
+    server_->run();
+
+    runContext();
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    ServerHttpTests,
+    ServerHttpTest,
+    testing::Values(ServerHttpTestBundle{"GET", http::verb::get}, ServerHttpTestBundle{"POST", http::verb::post}),
+    tests::util::kNAME_GENERATOR
+);
+
+TEST_F(ServerTest, WsClientDisconnects)
+{
+    WebSocketAsyncClient client{ctx_};
+
+    boost::asio::spawn(ctx_, [&](boost::asio::yield_context yield) {
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        client.close();
+        ctx_.stop();
+    });
+
+    server_->run();
+
+    runContext();
+}
+
+TEST_F(ServerTest, WsRequestResponse)
+{
+    WebSocketAsyncClient client{ctx_};
+
+    Request::HttpHeaders const headers{};
+    Response const response{http::status::ok, "some response", Request{requestMessage_, headers}};
+
+    boost::asio::spawn(ctx_, [&](boost::asio::yield_context yield) {
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
+            maybeError = client.send(yield, requestMessage_, std::chrono::milliseconds{100});
+            EXPECT_FALSE(maybeError.has_value()) << maybeError->message();
+
+            auto const expectedResponse = client.receive(yield, std::chrono::milliseconds{100});
+            [&]() { ASSERT_TRUE(expectedResponse.has_value()) << expectedResponse.error().message(); }();
+            EXPECT_EQ(expectedResponse.value(), response.message());
+        }
+
+        client.gracefulClose(yield, std::chrono::milliseconds{100});
+        ctx_.stop();
+    });
+
+    EXPECT_CALL(wsHandler_, Call)
+        .Times(3)
+        .WillRepeatedly([&, response = response](Request const& receivedRequest, auto&&, auto&&, auto&&) {
+            EXPECT_FALSE(receivedRequest.isHttp());
+            EXPECT_EQ(receivedRequest.method(), Request::Method::Websocket);
+            EXPECT_EQ(receivedRequest.message(), requestMessage_);
+            EXPECT_EQ(receivedRequest.target(), std::nullopt);
+
+            return response;
+        });
+
+    server_->run();
+
+    runContext();
+}
+
+TEST_F(ServerTest, WsClientIsDisconnectedIfServerStopped)
+{
+    WebSocketAsyncClient client{ctx_};
+    boost::asio::spawn(ctx_, [&](boost::asio::yield_context yield) {
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        EXPECT_TRUE(maybeError.has_value());
+        EXPECT_EQ(maybeError.value().value(), static_cast<int>(boost::beast::websocket::error::upgrade_declined));
+
+        ctx_.stop();
+    });
+
+    server_->run();
+    runSyncOperation([this](auto yield) { server_->stop(yield); });
+    runContext();
 }
