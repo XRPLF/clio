@@ -21,7 +21,6 @@
 
 #include "data/Types.hpp"
 #include "rpc/BookChangesHelper.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
@@ -37,7 +36,6 @@
 #include <xrpl/protocol/jss.h>
 
 #include <string>
-#include <variant>
 #include <vector>
 
 namespace rpc {

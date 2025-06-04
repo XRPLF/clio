@@ -20,7 +20,6 @@
 #include "rpc/handlers/Ledger.hpp"
 
 #include "data/Types.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
@@ -46,7 +45,6 @@
 #include <iterator>
 #include <string>
 #include <utility>
-#include <variant>
 
 namespace rpc {
 LedgerHandler::Result

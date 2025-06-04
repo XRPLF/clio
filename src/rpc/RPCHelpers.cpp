@@ -99,7 +99,6 @@
 #include <string>
 #include <string_view>
 #include <utility>
-#include <variant>
 #include <vector>
 
 // local to compilation unit loggers
@@ -1417,10 +1416,11 @@ parseBook(boost::json::object const& request)
         if (!takerGets["issuer"].is_string())
             return std::unexpected{Status{RippledError::rpcINVALID_PARAMS, "taker_gets.issuer should be string"}};
 
-        if (!ripple::to_issuer(getIssuer, boost::json::value_to<std::string>(takerGets.at("issuer"))))
+        if (!ripple::to_issuer(getIssuer, boost::json::value_to<std::string>(takerGets.at("issuer")))) {
             return std::unexpected{
                 Status{RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', bad issuer."}
             };
+        }
 
         if (getIssuer == ripple::noAccount()) {
             return std::unexpected{

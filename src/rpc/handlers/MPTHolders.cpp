@@ -40,7 +40,6 @@
 
 #include <optional>
 #include <string>
-#include <variant>
 
 using namespace ripple;
 

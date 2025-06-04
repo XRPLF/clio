@@ -19,7 +19,6 @@
 
 #include "rpc/handlers/BookOffers.hpp"
 
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
@@ -39,7 +38,6 @@
 #include <xrpl/protocol/jss.h>
 
 #include <string>
-#include <variant>
 
 namespace rpc {
 
