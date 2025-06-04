@@ -155,7 +155,7 @@ public:
     error() const;
 
     /**
-     * @brief Cancels its direct children.
+     * @brief Cancels its descendants.
      * @param cancellationType The type of cancellation to perform (e.g., terminal, partial).
      *                         Defaults to boost::asio::cancellation_type::terminal.
      */
