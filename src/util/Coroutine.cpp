@@ -19,6 +19,7 @@
 
 #include "util/Coroutine.hpp"
 
+#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_type.hpp>
 #include <boost/asio/error.hpp>
@@ -72,6 +73,12 @@ Coroutine::cancellable_yield_context_type
 Coroutine::yieldContext() const
 {
     return cyield_;
+}
+
+boost::asio::any_io_executor
+Coroutine::executor() const
+{
+    return cyield_.get().get_executor();
 }
 
 void

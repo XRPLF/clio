@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/cancellation_type.hpp>
@@ -149,8 +150,7 @@ public:
     error() const;
 
     /**
-     * @brief Cancels this coroutine, all its children, and all related coroutines (siblings, parent).
-     * This effectively cancels all coroutines sharing the same root cancellation signal.
+     * @brief Cancels all coroutines sharing the same root cancellation signal.
      * @param cancellationType The type of cancellation to perform.
      *                         Defaults to boost::asio::cancellation_type::terminal.
      */
@@ -177,11 +177,8 @@ public:
      * @brief Returns the executor associated with this coroutine's yield context.
      * @return The executor.
      */
-    [[nodiscard]] auto
-    executor() const
-    {
-        return cyield_.get().get_executor();
-    }
+    [[nodiscard]] boost::asio::any_io_executor
+    executor() const;
 
     /**
      * @brief Explicitly yields execution back to the scheduler.
