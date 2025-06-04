@@ -45,7 +45,6 @@
 #include <cstdint>
 #include <optional>
 #include <string>
-#include <variant>
 
 namespace rpc {
 

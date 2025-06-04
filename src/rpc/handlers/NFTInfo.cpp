@@ -37,7 +37,6 @@
 #include <xrpl/protocol/nft.h>
 
 #include <string>
-#include <variant>
 
 using namespace ripple;
 

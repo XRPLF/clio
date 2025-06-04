@@ -166,12 +166,12 @@ public:
 
                 auto const extracted =
                     [&result]() -> std::expected<boost::json::object, util::ResponseExpirationCache::Error> {
-                    if (result.response.has_value())
+                    if (result.response.has_value()) {
                         return std::move(result.response).value();
-                    else
-                        return std::unexpected{util::ResponseExpirationCache::Error{
-                            .status = std::move(result.response).error(), .warnings = std::move(result.warnings)
-                        }};
+                    }
+                    return std::unexpected{util::ResponseExpirationCache::Error{
+                        .status = std::move(result.response).error(), .warnings = std::move(result.warnings)
+                    }};
                 }();
 
                 if (extracted.has_value()) {

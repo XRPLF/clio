@@ -41,7 +41,6 @@
 #include <xrpl/protocol/jss.h>
 
 #include <string>
-#include <variant>
 #include <vector>
 
 namespace rpc {
