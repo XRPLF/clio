@@ -66,15 +66,13 @@ public:
         boost::asio::cancellation_slot_binder<boost::asio::yield_context, boost::asio::cancellation_slot>;
 
 private:
-    static constexpr size_t kFIRST_GENERATION = 0;
     boost::asio::yield_context yield_;
     boost::system::error_code error_;
     boost::asio::cancellation_signal cancellationSignal_;
     cancellable_yield_context_type cyield_;
-    size_t generation_;
     std::atomic_bool isCancelled_{false};
 
-    using FamilyCancellationSignal = boost::signals2::signal<void(size_t, boost::asio::cancellation_type_t)>;
+    using FamilyCancellationSignal = boost::signals2::signal<void(boost::asio::cancellation_type_t)>;
     std::shared_ptr<FamilyCancellationSignal> familySignal_;
     boost::signals2::connection connection_;
 
@@ -82,12 +80,10 @@ private:
      * @brief Private constructor to create a Coroutine instance.
      * @param yield The Boost.Asio yield_context for this coroutine.
      * @param signal A shared signal used for propagating cancellation requests among related coroutines.
-     * @param generation The generation number of this coroutine, used to manage parent/child relationships.
      */
     explicit Coroutine(
         boost::asio::yield_context&& yield,
-        std::shared_ptr<FamilyCancellationSignal> signal = std::make_shared<FamilyCancellationSignal>(),
-        size_t generation = kFIRST_GENERATION
+        std::shared_ptr<FamilyCancellationSignal> signal = std::make_shared<FamilyCancellationSignal>()
     );
 
 public:
@@ -125,7 +121,7 @@ public:
 
     /**
      * @brief Spawns a child coroutine from this coroutine.
-     * The child coroutine shares the same cancellation signal and has an incremented generation number.
+     * The child coroutine shares the same cancellation signal.
      * @tparam Fn The type of the invocable function that represents the child coroutine body.
      * @param fn The function to be executed as the child coroutine. It will receive a Coroutine& argument.
      */
@@ -138,10 +134,8 @@ public:
 
         boost::asio::spawn(
             yield_,
-            [nextGeneration = generation_ + 1,
-             signal = familySignal_,
-             fn = std::move(fn)](boost::asio::yield_context yield) mutable {
-                Coroutine coroutine(std::move(yield), std::move(signal), nextGeneration);
+            [signal = familySignal_, fn = std::move(fn)](boost::asio::yield_context yield) mutable {
+                Coroutine coroutine(std::move(yield), std::move(signal));
                 fn(coroutine);
             }
         );
@@ -153,14 +147,6 @@ public:
      */
     [[nodiscard]] boost::system::error_code
     error() const;
-
-    /**
-     * @brief Cancels its descendants.
-     * @param cancellationType The type of cancellation to perform (e.g., terminal, partial).
-     *                         Defaults to boost::asio::cancellation_type::terminal.
-     */
-    void
-    cancelChildren(boost::asio::cancellation_type_t cancellationType = boost::asio::cancellation_type::terminal);
 
     /**
      * @brief Cancels this coroutine, all its children, and all related coroutines (siblings, parent).

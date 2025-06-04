@@ -97,49 +97,6 @@ TEST_F(CoroutineTest, ErrorReturnsErrorOfLastOperation)
     });
 }
 
-TEST_F(CoroutineTest, CancelChildren)
-{
-    runCoroutine([&](Coroutine& coroutine) {
-        coroutine.spawnChild([](Coroutine& childCoroutine) {
-            auto const duration = util::timed([&childCoroutine]() {
-                asyncOperation(childCoroutine.yieldContext(), std::chrono::seconds{5});
-            });
-            EXPECT_TRUE(childCoroutine.isCancelled());
-            EXPECT_LT(duration, 1000);
-        });
-        coroutine.cancelChildren();
-        EXPECT_FALSE(coroutine.isCancelled());
-    });
-}
-
-TEST_F(CoroutineTest, CancelChildrenCalledMultipleTimes)
-{
-    runCoroutine([&](Coroutine& coroutine) {
-        coroutine.spawnChild([](Coroutine& childCoroutine) {
-            auto const duration = util::timed([&childCoroutine]() {
-                asyncOperation(childCoroutine.yieldContext(), std::chrono::seconds{5});
-            });
-            EXPECT_TRUE(childCoroutine.isCancelled());
-            EXPECT_LT(duration, 1000);
-        });
-
-        for ([[maybe_unused]] auto const i : std::ranges::iota_view(0, 10)) {
-            coroutine.cancelChildren();
-            EXPECT_FALSE(coroutine.isCancelled());
-        }
-    });
-}
-TEST_F(CoroutineTest, CancelChildrenDoesntCancelItselfOrParent)
-{
-    runCoroutine([&](Coroutine& coroutine) {
-        coroutine.spawnChild([](Coroutine& childCoroutine) {
-            childCoroutine.cancelChildren();
-            EXPECT_FALSE(childCoroutine.isCancelled());
-        });
-        EXPECT_FALSE(coroutine.isCancelled());
-    });
-}
-
 TEST_F(CoroutineTest, CancelAllCancelsChildren)
 {
     runCoroutine([&](Coroutine& coroutine) {
