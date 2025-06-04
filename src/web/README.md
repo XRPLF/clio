@@ -10,7 +10,7 @@ The web server subsystem:
 - Supports SSL/TLS encryption if certificate and key files are specified in the config
 - Processes all types of requests on a single port
 - Implements asynchronous request handling using [Boost Asio](https://www.boost.org/doc/libs/1_83_0/doc/html/boost_asio.html)
-- Provides request rate limiting through a built-in DOS Guard mechanism
+- Provides request rate limiting through a built-in Denial-of-Service (DoS) Guard mechanism
 - Supports both sequential and parallel request processing policies
 
 ## Key Components
@@ -18,10 +18,10 @@ The web server subsystem:
 ### Core Components
 
 - **Server** (`Server.hpp/cpp`): The main web server class that manages connections and routes requests
-- **Connection** (`Connection.hpp/cpp`): Represents a client connection, provides abstraction over HTTP and WebSocket connections
+- **Connection** (`Connection.hpp/cpp`): Represents a client connection and provides an abstraction layer over HTTP and WebSocket connections
 - **Request/Response** (`Request.hpp/cpp`, `Response.hpp/cpp`): Classes for handling HTTP requests and responses
-- **MessageHandler** (`MessageHandler.hpp`): The interface for handling different types of messages (HTTP GET, POST, WebSocket)
-- **RPCServerHandler** (`RPCServerHandler.hpp`): Handles RPC requests, integrates with the RPC engine
+- **MessageHandler** (`MessageHandler.hpp`): An interface for handling different types of messages (e.g., HTTP GET/POST, WebSocket)
+- **RPCServerHandler** (`RPCServerHandler.hpp`): Handles RPC requests and integrates with the RPC engine
 
 ### Connection Processing
 
@@ -31,8 +31,8 @@ The web server subsystem:
 
 ### Security Features
 
-- **DOSGuard** (`dosguard/DOSGuard.hpp/cpp`): Denial-of-service protection system that implements rate limiting
-- **IntervalSweepHandler** (`dosguard/IntervalSweepHandler.hpp/cpp`): Periodically clears DOS guard state
+- **DOSGuard** (`dosguard/DOSGuard.hpp/cpp`): Denial-of-Service protection system that implements rate limiting
+- **IntervalSweepHandler** (`dosguard/IntervalSweepHandler.hpp/cpp`): Periodically clears DoS guard state
 - **WhitelistHandler** (`dosguard/WhitelistHandler.hpp/cpp`): Manages IP address whitelisting for bypass of rate limits
 - **AdminVerificationStrategy** (`AdminVerificationStrategy.hpp/cpp`): Handles verification of admin privileges
 
@@ -58,7 +58,7 @@ The server creates an SSL context if certificate and key files are specified in 
 ## Request Flow
 
 1. Client connects to the server
-2. Server performs security checks (DOSGuard, admin verification if needed)
+2. Server performs security checks (e.g., DoS Guard, admin verification if needed)
 3. Server reads the request asynchronously
 4. Request is routed to appropriate handler based on HTTP method and target
 5. Handler processes the request and generates a response
