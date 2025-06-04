@@ -1338,7 +1338,7 @@ parseBook(ripple::Currency pays, ripple::AccountID payIssuer, ripple::Currency g
     if (pays == gets && payIssuer == getIssuer)
         return std::unexpected{Status{RippledError::rpcBAD_MARKET, "badMarket"}};
 
-    return ripple::Book{{pays, payIssuer}, {gets, getIssuer}};
+    return ripple::Book{{pays, payIssuer}, {gets, getIssuer}, std::nullopt};
 }
 
 std::expected<ripple::Book, Status>
@@ -1446,7 +1446,7 @@ parseBook(boost::json::object const& request)
     if (payCurrency == getCurrency && payIssuer == getIssuer)
         return std::unexpected{Status{RippledError::rpcBAD_MARKET, "badMarket"}};
 
-    return ripple::Book{{payCurrency, payIssuer}, {getCurrency, getIssuer}};
+    return ripple::Book{{payCurrency, payIssuer}, {getCurrency, getIssuer}, std::nullopt};
 }
 
 std::expected<ripple::AccountID, Status>

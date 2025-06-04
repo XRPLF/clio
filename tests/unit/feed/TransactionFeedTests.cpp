@@ -43,6 +43,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 
 using namespace data;
@@ -350,7 +351,7 @@ TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
 TEST_F(FeedTransactionTest, SubBookV1)
 {
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1};
+    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(book, sessionPtr);
@@ -554,7 +555,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
 TEST_F(FeedTransactionTest, SubBookV2)
 {
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1};
+    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(book, sessionPtr);
@@ -785,7 +786,7 @@ TEST_F(FeedTransactionTest, SubRepeat)
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1};
+    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(book, sessionPtr);
@@ -1233,7 +1234,7 @@ TEST_F(TransactionFeedMockPrometheusTest, subUnsub)
     testFeedPtr_->unsub(account, sessionPtr_);
 
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1};
+    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
     EXPECT_CALL(*mockSessionPtr_, onDisconnect);
     testFeedPtr_->sub(book, sessionPtr_);
     testFeedPtr_->unsub(book, sessionPtr_);
@@ -1263,7 +1264,7 @@ TEST_F(TransactionFeedMockPrometheusTest, AutoDisconnect)
     testFeedPtr_->sub(account, sessionPtr_);
 
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1};
+    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
     testFeedPtr_->sub(book, sessionPtr_);
 
     // Emulate onDisconnect signal is called

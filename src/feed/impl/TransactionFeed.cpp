@@ -277,7 +277,8 @@ TransactionFeed::pub(
                     // determine the OrderBook
                     ripple::Book const book{
                         data->getFieldAmount(ripple::sfTakerGets).issue(),
-                        data->getFieldAmount(ripple::sfTakerPays).issue()
+                        data->getFieldAmount(ripple::sfTakerPays).issue(),
+                        std::nullopt
                     };
                     if (affectedBooks.find(book) == affectedBooks.end()) {
                         affectedBooks.insert(book);

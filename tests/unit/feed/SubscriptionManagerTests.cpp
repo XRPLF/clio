@@ -43,6 +43,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace {
@@ -161,7 +162,7 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
     subscriptionManagerPtr_->subProposedAccount(account, session1);
     subscriptionManagerPtr_->subProposedAccount(account, session2);
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1};
+    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
     subscriptionManagerPtr_->subBook(book, session1);
     subscriptionManagerPtr_->subBook(book, session2);
     EXPECT_EQ(subscriptionManagerPtr_->report(), json::parse(kREPORT_RETURN));
@@ -327,7 +328,7 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
 {
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
     auto const account = getAccountIdWithString(kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1};
+    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
     EXPECT_CALL(*sessionPtr_, onDisconnect).Times(3);
     subscriptionManagerPtr_->subBook(book, session_);
     subscriptionManagerPtr_->subTransactions(session_);

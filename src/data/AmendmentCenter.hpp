@@ -140,6 +140,11 @@ struct Amendments {
     REGISTER(PermissionDelegation);
     REGISTER(fixPayChanCancelAfter);
     REGISTER(Batch);
+    REGISTER(PermissionedDEX);
+    REGISTER(SingleAssetVault);
+    REGISTER(TokenEscrow);
+    REGISTER(fixAMMv1_3);
+    REGISTER(fixEnforceNFTokenTrustlineV2);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);
