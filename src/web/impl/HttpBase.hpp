@@ -1,0 +1,327 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2023, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#pragma once
+
+#include "rpc/Errors.hpp"
+#include "util/Assert.hpp"
+#include "util/Taggable.hpp"
+#include "util/build/Build.hpp"
+#include "util/log/Logger.hpp"
+#include "util/prometheus/Http.hpp"
+#include "web/AdminVerificationStrategy.hpp"
+#include "web/SubscriptionContextInterface.hpp"
+#include "web/dosguard/DOSGuardInterface.hpp"
+#include "web/interface/Concepts.hpp"
+#include "web/interface/ConnectionBase.hpp"
+
+#include <boost/asio/error.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl/error.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/http.hpp>
+#include <boost/beast/http/error.hpp>
+#include <boost/beast/http/field.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/status.hpp>
+#include <boost/beast/http/string_body.hpp>
+#include <boost/beast/http/verb.hpp>
+#include <boost/beast/ssl.hpp>
+#include <boost/core/ignore_unused.hpp>
+#include <boost/json.hpp>
+#include <boost/json/array.hpp>
+#include <boost/json/parse.hpp>
+#include <boost/json/serialize.hpp>
+#include <xrpl/protocol/ErrorCodes.h>
+
+#include <chrono>
+#include <cstddef>
+#include <exception>
+#include <functional>
+#include <memory>
+#include <string>
+#include <utility>
+
+namespace web::impl {
+
+static auto constexpr kHEALTH_CHECK_HTML = R"html(
+    <!DOCTYPE html>
+    <html>
+        <head><title>Test page for Clio</title></head>
+        <body><h1>Clio Test</h1><p>This page shows Clio http(s) connectivity is working.</p></body>
+    </html>
+)html";
+
+using tcp = boost::asio::ip::tcp;
+
+/**
+ * @brief This is the implementation class for http sessions
+ *
+ * @tparam Derived The derived class
+ * @tparam HandlerType The handler class, will be called when a request is received.
+ */
+template <template <typename> typename Derived, SomeServerHandler HandlerType>
+class HttpBase : public ConnectionBase {
+    Derived<HandlerType>&
+    derived()
+    {
+        return static_cast<Derived<HandlerType>&>(*this);
+    }
+
+    // TODO: this should be rewritten using http::message_generator instead
+    struct SendLambda {
+        HttpBase& self;
+
+        explicit SendLambda(HttpBase& self) : self(self)
+        {
+        }
+
+        template <bool IsRequest, typename Body, typename Fields>
+        void
+        operator()(http::message<IsRequest, Body, Fields>&& msg) const
+        {
+            if (self.dead())
+                return;
+
+            // The lifetime of the message has to extend for the duration of the async operation so we use a shared_ptr
+            // to manage it.
+            auto sp = std::make_shared<http::message<IsRequest, Body, Fields>>(std::move(msg));
+
+            // Store a type-erased version of the shared pointer in the class to keep it alive.
+            self.res_ = sp;
+
+            // Write the response
+            http::async_write(
+                self.derived().stream(),
+                *sp,
+                boost::beast::bind_front_handler(&HttpBase::onWrite, self.derived().shared_from_this(), sp->need_eof())
+            );
+        }
+    };
+
+    std::shared_ptr<void> res_;
+    SendLambda sender_;
+    std::shared_ptr<AdminVerificationStrategy> adminVerification_;
+
+protected:
+    boost::beast::flat_buffer buffer_;
+    http::request<http::string_body> req_;
+    std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard_;
+    std::shared_ptr<HandlerType> const handler_;
+    util::Logger log_{"WebServer"};
+    util::Logger perfLog_{"Performance"};
+
+    void
+    httpFail(boost::beast::error_code ec, char const* what)
+    {
+        // ssl::error::stream_truncated, also known as an SSL "short read",
+        // indicates the peer closed the connection without performing the
+        // required closing handshake (for example, Google does this to
+        // improve performance). Generally this can be a security issue,
+        // but if your communication protocol is self-terminated (as
+        // it is with both HTTP and WebSocket) then you may simply
+        // ignore the lack of close_notify.
+        //
+        // https://github.com/boostorg/beast/issues/38
+        //
+        // https://security.stackexchange.com/questions/91435/how-to-handle-a-malicious-ssl-tls-shutdown
+        //
+        // When a short read would cut off the end of an HTTP message,
+        // Beast returns the error boost::beast::http::error::partial_message.
+        // Therefore, if we see a short read here, it has occurred
+        // after the message has been completed, so it is safe to ignore it.
+
+        if (ec == boost::asio::ssl::error::stream_truncated)
+            return;
+
+        if (!ec_ && ec != boost::asio::error::operation_aborted) {
+            ec_ = ec;
+            LOG(perfLog_.info()) << tag() << ": " << what << ": " << ec.message();
+            boost::beast::get_lowest_layer(derived().stream()).socket().close(ec);
+        }
+    }
+
+public:
+    HttpBase(
+        std::string const& ip,
+        std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
+        std::shared_ptr<AdminVerificationStrategy> adminVerification,
+        std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
+        std::shared_ptr<HandlerType> handler,
+        boost::beast::flat_buffer buffer
+    )
+        : ConnectionBase(tagFactory, ip)
+        , sender_(*this)
+        , adminVerification_(std::move(adminVerification))
+        , buffer_(std::move(buffer))
+        , dosGuard_(dosGuard)
+        , handler_(std::move(handler))
+    {
+        LOG(perfLog_.debug()) << tag() << "http session created";
+        dosGuard_.get().increment(ip);
+    }
+
+    ~HttpBase() override
+    {
+        LOG(perfLog_.debug()) << tag() << "http session closed";
+        if (not upgraded)
+            dosGuard_.get().decrement(this->clientIp);
+    }
+
+    void
+    doRead()
+    {
+        if (dead())
+            return;
+
+        // Make the request empty before reading, otherwise the operation behavior is undefined.
+        req_ = {};
+
+        // Set the timeout.
+        boost::beast::get_lowest_layer(derived().stream()).expires_after(std::chrono::seconds(30));
+
+        http::async_read(
+            derived().stream(),
+            buffer_,
+            req_,
+            boost::beast::bind_front_handler(&HttpBase::onRead, derived().shared_from_this())
+        );
+    }
+
+    void
+    onRead(boost::beast::error_code ec, [[maybe_unused]] std::size_t bytesTransferred)
+    {
+        if (ec == http::error::end_of_stream)
+            return derived().doClose();
+
+        if (ec)
+            return httpFail(ec, "read");
+
+        if (req_.method() == http::verb::get and req_.target() == "/health")
+            return sender_(httpResponse(http::status::ok, "text/html", kHEALTH_CHECK_HTML));
+
+        // Update isAdmin property of the connection
+        ConnectionBase::isAdmin_ = adminVerification_->isAdmin(req_, this->clientIp);
+
+        if (boost::beast::websocket::is_upgrade(req_)) {
+            if (dosGuard_.get().isOk(this->clientIp)) {
+                // Disable the timeout. The websocket::stream uses its own timeout settings.
+                boost::beast::get_lowest_layer(derived().stream()).expires_never();
+
+                upgraded = true;
+                return derived().upgrade();
+            }
+
+            return sender_(httpResponse(http::status::too_many_requests, "text/html", "Too many requests"));
+        }
+
+        if (auto response = util::prometheus::handlePrometheusRequest(req_, isAdmin()); response.has_value())
+            return sender_(std::move(response.value()));
+
+        if (req_.method() != http::verb::post) {
+            return sender_(httpResponse(http::status::bad_request, "text/html", "Expected a POST request"));
+        }
+
+        LOG(log_.info()) << tag() << "Received request from ip = " << clientIp;
+
+        try {
+            (*handler_)(req_.body(), derived().shared_from_this());
+        } catch (std::exception const&) {
+            return sender_(httpResponse(
+                http::status::internal_server_error,
+                "application/json",
+                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcINTERNAL))
+            ));
+        }
+    }
+
+    void
+    sendSlowDown(std::string const&) override
+    {
+        sender_(httpResponse(
+            http::status::service_unavailable,
+            "text/plain",
+            boost::json::serialize(rpc::makeError(rpc::RippledError::rpcSLOW_DOWN))
+        ));
+    }
+
+    /**
+     * @brief Send a response to the client
+     * The message length will be added to the DOSGuard, if the limit is reached, a warning will be added to the
+     * response
+     */
+    void
+    send(std::string&& msg, http::status status = http::status::ok) override
+    {
+        if (!dosGuard_.get().add(clientIp, msg.size())) {
+            auto jsonResponse = boost::json::parse(msg).as_object();
+            jsonResponse["warning"] = "load";
+            if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {
+                jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::WarnRpcRateLimit));
+            } else {
+                jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::WarnRpcRateLimit)};
+            }
+
+            // Reserialize when we need to include this warning
+            msg = boost::json::serialize(jsonResponse);
+        }
+        sender_(httpResponse(status, "application/json", std::move(msg)));
+    }
+
+    SubscriptionContextPtr
+    makeSubscriptionContext(util::TagDecoratorFactory const&) override
+    {
+        ASSERT(false, "SubscriptionContext can't be created for a HTTP connection");
+        std::unreachable();
+    }
+
+    void
+    onWrite(bool close, boost::beast::error_code ec, std::size_t bytesTransferred)
+    {
+        boost::ignore_unused(bytesTransferred);
+
+        if (ec)
+            return httpFail(ec, "write");
+
+        // This means we should close the connection, usually because
+        // the response indicated the "Connection: close" semantic.
+        if (close)
+            return derived().doClose();
+
+        res_ = nullptr;
+        doRead();
+    }
+
+private:
+    http::response<http::string_body>
+    httpResponse(http::status status, std::string contentType, std::string message) const
+    {
+        http::response<http::string_body> res{status, req_.version()};
+        res.set(http::field::server, "clio-server-" + util::build::getClioVersionString());
+        res.set(http::field::content_type, contentType);
+        res.keep_alive(req_.keep_alive());
+        res.body() = std::move(message);
+        res.prepare_payload();
+        return res;
+    };
+};
+
+}  // namespace web::impl

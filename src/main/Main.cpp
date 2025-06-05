@@ -57,7 +57,7 @@ try {
                 return EXIT_FAILURE;
             }
             app::ClioApplication clio{gClioConfig};
-            return clio.run();
+            return clio.run(run.useNgWebServer);
         },
         [](app::CliArgs::Action::Migrate const& migrate) {
             if (not app::parseConfig(migrate.configPath))

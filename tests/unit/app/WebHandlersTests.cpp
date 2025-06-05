@@ -27,12 +27,12 @@
 #include "util/config/ConfigValue.hpp"
 #include "util/config/Types.hpp"
 #include "web/AdminVerificationStrategy.hpp"
-#include "web/Connection.hpp"
-#include "web/MockConnection.hpp"
-#include "web/Request.hpp"
-#include "web/Response.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuardMock.hpp"
+#include "web/ng/Connection.hpp"
+#include "web/ng/MockConnection.hpp"
+#include "web/ng/Request.hpp"
+#include "web/ng/Response.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
@@ -108,7 +108,7 @@ struct MetricsHandlerTests : util::prometheus::WithPrometheus, SyncAsioContextTe
     };
 
     MetricsHandler metricsHandler{adminVerifier};
-    web::Request request{http::request<http::string_body>{http::verb::get, "/metrics", 11}};
+    web::ng::Request request{http::request<http::string_body>{http::verb::get, "/metrics", 11}};
 };
 
 TEST_F(MetricsHandlerTests, Call)
@@ -122,7 +122,7 @@ TEST_F(MetricsHandlerTests, Call)
 }
 
 struct HealthCheckHandlerTests : SyncAsioContextTest, WebHandlersTest {
-    web::Request request{http::request<http::string_body>{http::verb::get, "/", 11}};
+    web::ng::Request request{http::request<http::string_body>{http::verb::get, "/", 11}};
     HealthCheckHandler healthCheckHandler;
 };
 
@@ -142,19 +142,19 @@ struct RequestHandlerTest : SyncAsioContextTest, WebHandlersTest {
 
     struct RpcHandlerMock {
         MOCK_METHOD(
-            web::Response,
+            web::ng::Response,
             call,
-            (web::Request const&,
-             web::ConnectionMetadata const&,
+            (web::ng::Request const&,
+             web::ng::ConnectionMetadata const&,
              web::SubscriptionContextPtr,
              boost::asio::yield_context),
             ()
         );
 
-        web::Response
+        web::ng::Response
         operator()(
-            web::Request const& request,
-            web::ConnectionMetadata const& connectionMetadata,
+            web::ng::Request const& request,
+            web::ng::ConnectionMetadata const& connectionMetadata,
             web::SubscriptionContextPtr subscriptionContext,
             boost::asio::yield_context yield
         )
@@ -170,7 +170,7 @@ struct RequestHandlerTest : SyncAsioContextTest, WebHandlersTest {
 
 TEST_F(RequestHandlerTest, RpcHandlerThrows)
 {
-    web::Request const request{http::request<http::string_body>{http::verb::get, "/", 11}};
+    web::ng::Request const request{http::request<http::string_body>{http::verb::get, "/", 11}};
 
     EXPECT_CALL(*adminVerifier, isAdmin).WillOnce(testing::Return(true));
     EXPECT_CALL(rpcHandler, call).WillOnce(testing::Throw(std::runtime_error{"some error"}));
@@ -191,9 +191,9 @@ TEST_F(RequestHandlerTest, RpcHandlerThrows)
 
 TEST_F(RequestHandlerTest, NoErrors)
 {
-    web::Request const request{http::request<http::string_body>{http::verb::get, "/", 11}};
-    web::Response const response{http::status::ok, "some response", request};
-    auto const httpResponse = web::Response{response}.intoHttpResponse();
+    web::ng::Request const request{http::request<http::string_body>{http::verb::get, "/", 11}};
+    web::ng::Response const response{http::status::ok, "some response", request};
+    auto const httpResponse = web::ng::Response{response}.intoHttpResponse();
 
     EXPECT_CALL(*adminVerifier, isAdmin).WillOnce(testing::Return(true));
     EXPECT_CALL(rpcHandler, call).WillOnce(testing::Return(response));

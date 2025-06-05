@@ -26,23 +26,17 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/impl/APIVersionParser.hpp"
-#include "util/Assert.hpp"
-#include "util/CoroutineGroup.hpp"
 #include "util/JsonUtils.hpp"
 #include "util/Profiler.hpp"
 #include "util/Taggable.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
-#include "web/Connection.hpp"
-#include "web/Request.hpp"
-#include "web/Response.hpp"
-#include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/ErrorHandling.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/asio/spawn.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <boost/beast/core/error.hpp>
-#include <boost/beast/http/status.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
@@ -54,8 +48,8 @@
 #include <exception>
 #include <functional>
 #include <memory>
-#include <optional>
 #include <ratio>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -71,9 +65,9 @@ class RPCServerHandler {
     std::shared_ptr<BackendInterface const> const backend_;
     std::shared_ptr<RPCEngineType> const rpcEngine_;
     std::shared_ptr<etlng::ETLServiceInterface const> const etl_;
-    std::reference_wrapper<dosguard::DOSGuardInterface> dosguard_;
     util::TagDecoratorFactory const tagFactory_;
     rpc::impl::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
+    std::reference_wrapper<web::dosguard::DOSGuardInterface> dosguard_;
 
     util::Logger log_{"RPC"};
     util::Logger perfLog_{"Performance"};
@@ -93,14 +87,14 @@ public:
         std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<RPCEngineType> const& rpcEngine,
         std::shared_ptr<etlng::ETLServiceInterface const> const& etl,
-        dosguard::DOSGuardInterface& dosguard
+        web::dosguard::DOSGuardInterface& dosguard
     )
         : backend_(backend)
         , rpcEngine_(rpcEngine)
         , etl_(etl)
-        , dosguard_(dosguard)
         , tagFactory_(config)
         , apiVersionParser_(config.getObject("api_version"))
+        , dosguard_(dosguard)
     {
     }
 
@@ -108,165 +102,123 @@ public:
      * @brief The callback when server receives a request.
      *
      * @param request The request
-     * @param connectionMetadata The connection metadata
-     * @param subscriptionContext The subscription context
-     * @param yield The yield context
-     * @return The response
+     * @param connection The connection
      */
-    [[nodiscard]] Response
-    operator()(
-        Request const& request,
-        ConnectionMetadata const& connectionMetadata,
-        SubscriptionContextPtr subscriptionContext,
-        boost::asio::yield_context yield
-    )
+    void
+    operator()(std::string const& request, std::shared_ptr<web::ConnectionBase> const& connection)
     {
-        if (not dosguard_.get().isOk(connectionMetadata.ip())) {
-            return makeSlowDownResponse(request, std::nullopt);
+        if (not dosguard_.get().isOk(connection->clientIp)) {
+            connection->sendSlowDown(request);
+            return;
         }
 
-        std::optional<Response> response;
-        util::CoroutineGroup coroutineGroup{yield, 1};
-        auto const onTaskComplete = coroutineGroup.registerForeign(yield);
-        ASSERT(onTaskComplete.has_value(), "Coroutine group can't be full");
+        try {
+            auto req = boost::json::parse(request).as_object();
+            LOG(perfLog_.debug()) << connection->tag() << "Adding to work queue";
 
-        bool const postSuccessful = rpcEngine_->post(
-            [this,
-             &request,
-             &response,
-             &onTaskComplete = onTaskComplete.value(),
-             &connectionMetadata,
-             subscriptionContext = std::move(subscriptionContext)](boost::asio::yield_context innerYield) mutable {
-                try {
-                    boost::system::error_code ec;
-                    auto parsedRequest = boost::json::parse(request.message(), ec);
-                    if (ec.failed() or not parsedRequest.is_object()) {
-                        rpcEngine_->notifyBadSyntax();
-                        response = impl::ErrorHelper{request}.makeJsonParsingError();
-                        if (ec.failed()) {
-                            LOG(log_.warn())
-                                << "Error parsing JSON: " << ec.message() << ". For request: " << request.message();
-                        } else {
-                            LOG(log_.warn()) << "Received not a JSON object. For request: " << request.message();
-                        }
-                    } else {
-                        auto parsedObject = std::move(parsedRequest).as_object();
+            if (not connection->upgraded and shouldReplaceParams(req))
+                req[JS(params)] = boost::json::array({boost::json::object{}});
 
-                        if (not dosguard_.get().request(connectionMetadata.ip(), parsedObject)) {
-                            response = makeSlowDownResponse(request, parsedObject);
-                        } else {
-                            LOG(perfLog_.debug()) << connectionMetadata.tag() << "Adding to work queue";
+            if (not dosguard_.get().request(connection->clientIp, req)) {
+                connection->sendSlowDown(request);
+                return;
+            }
 
-                            if (not connectionMetadata.wasUpgraded() and shouldReplaceParams(parsedObject))
-                                parsedObject[JS(params)] = boost::json::array({boost::json::object{}});
-
-                            response = handleRequest(
-                                innerYield,
-                                request,
-                                std::move(parsedObject),
-                                connectionMetadata,
-                                std::move(subscriptionContext)
-                            );
-                        }
-                    }
-                } catch (std::exception const& ex) {
-                    LOG(perfLog_.error()) << connectionMetadata.tag() << "Caught exception: " << ex.what();
-                    rpcEngine_->notifyInternalError();
-                    response = impl::ErrorHelper{request}.makeInternalError();
-                }
-
-                // notify the coroutine group that the foreign task is done
-                onTaskComplete();
-            },
-            connectionMetadata.ip()
-        );
-
-        if (not postSuccessful) {
-            // onTaskComplete must be called to notify coroutineGroup that the foreign task is done
-            onTaskComplete->operator()();
-            rpcEngine_->notifyTooBusy();
-            return impl::ErrorHelper{request}.makeTooBusyError();
+            if (!rpcEngine_->post(
+                    [this, request = std::move(req), connection](boost::asio::yield_context yield) mutable {
+                        handleRequest(yield, std::move(request), connection);
+                    },
+                    connection->clientIp
+                )) {
+                rpcEngine_->notifyTooBusy();
+                web::impl::ErrorHelper(connection).sendTooBusyError();
+            }
+        } catch (boost::system::system_error const& ex) {
+            // system_error thrown when json parsing failed
+            rpcEngine_->notifyBadSyntax();
+            web::impl::ErrorHelper(connection).sendJsonParsingError();
+            LOG(log_.warn()) << "Error parsing JSON: " << ex.what() << ". For request: " << request;
+        } catch (std::invalid_argument const& ex) {
+            // thrown when json parses something that is not an object at top level
+            rpcEngine_->notifyBadSyntax();
+            LOG(log_.warn()) << "Invalid argument error: " << ex.what() << ". For request: " << request;
+            web::impl::ErrorHelper(connection).sendJsonParsingError();
+        } catch (std::exception const& ex) {
+            LOG(perfLog_.error()) << connection->tag() << "Caught exception: " << ex.what();
+            rpcEngine_->notifyInternalError();
+            throw;
         }
-
-        // Put the coroutine to sleep until the foreign task is done
-        coroutineGroup.asyncWait(yield);
-        ASSERT(response.has_value(), "Woke up coroutine without setting response");
-
-        if (not dosguard_.get().add(connectionMetadata.ip(), response->message().size())) {
-            response->setMessage(makeLoadWarning(*response));
-        }
-
-        return std::move(response).value();
     }
 
 private:
-    Response
+    void
     handleRequest(
         boost::asio::yield_context yield,
-        Request const& rawRequest,
         boost::json::object&& request,
-        ConnectionMetadata const& connectionMetadata,
-        SubscriptionContextPtr subscriptionContext
+        std::shared_ptr<web::ConnectionBase> const& connection
     )
     {
-        LOG(log_.info()) << connectionMetadata.tag() << (connectionMetadata.wasUpgraded() ? "ws" : "http")
+        LOG(log_.info()) << connection->tag() << (connection->upgraded ? "ws" : "http")
                          << " received request from work queue: " << util::removeSecret(request)
-                         << " ip = " << connectionMetadata.ip();
+                         << " ip = " << connection->clientIp;
 
         try {
             auto const range = backend_->fetchLedgerRange();
             if (!range) {
                 // for error that happened before the handler, we don't attach any warnings
                 rpcEngine_->notifyNotReady();
-                return impl::ErrorHelper{rawRequest, std::move(request)}.makeNotReadyError();
+                web::impl::ErrorHelper(connection, std::move(request)).sendNotReadyError();
+
+                return;
             }
 
             auto const context = [&] {
-                if (connectionMetadata.wasUpgraded()) {
-                    ASSERT(subscriptionContext != nullptr, "Subscription context must exist for a WS connection");
+                if (connection->upgraded) {
                     return rpc::makeWsContext(
                         yield,
                         request,
-                        std::move(subscriptionContext),
-                        tagFactory_.with(connectionMetadata.tag()),
+                        connection->makeSubscriptionContext(tagFactory_),
+                        tagFactory_.with(connection->tag()),
                         *range,
-                        connectionMetadata.ip(),
+                        connection->clientIp,
                         std::cref(apiVersionParser_),
-                        connectionMetadata.isAdmin()
+                        connection->isAdmin()
                     );
                 }
                 return rpc::makeHttpContext(
                     yield,
                     request,
-                    tagFactory_.with(connectionMetadata.tag()),
+                    tagFactory_.with(connection->tag()),
                     *range,
-                    connectionMetadata.ip(),
+                    connection->clientIp,
                     std::cref(apiVersionParser_),
-                    connectionMetadata.isAdmin()
+                    connection->isAdmin()
                 );
             }();
 
             if (!context) {
                 auto const err = context.error();
-                LOG(perfLog_.warn()) << connectionMetadata.tag() << "Could not create Web context: " << err;
-                LOG(log_.warn()) << connectionMetadata.tag() << "Could not create Web context: " << err;
+                LOG(perfLog_.warn()) << connection->tag() << "Could not create Web context: " << err;
+                LOG(log_.warn()) << connection->tag() << "Could not create Web context: " << err;
 
                 // we count all those as BadSyntax - as the WS path would.
                 // Although over HTTP these will yield a 400 status with a plain text response (for most).
                 rpcEngine_->notifyBadSyntax();
-                return impl::ErrorHelper(rawRequest, std::move(request)).makeError(err);
+                web::impl::ErrorHelper(connection, std::move(request)).sendError(err);
+
+                return;
             }
 
             auto [result, timeDiff] = util::timed([&]() { return rpcEngine_->buildResponse(*context); });
 
-            auto us = std::chrono::duration<int, std::milli>(timeDiff);
+            auto const us = std::chrono::duration<int, std::milli>(timeDiff);
             rpc::logDuration(request, context->tag(), us);
 
             boost::json::object response;
 
             if (!result.response.has_value()) {
                 // note: error statuses are counted/notified in buildResponse itself
-                response = impl::ErrorHelper(rawRequest, request).composeError(result.response.error());
+                response = web::impl::ErrorHelper(connection, request).composeError(result.response.error());
                 auto const responseStr = boost::json::serialize(response);
 
                 LOG(perfLog_.debug()) << context->tag() << "Encountered error: " << responseStr;
@@ -285,7 +237,7 @@ private:
                 // if the result is forwarded - just use it as is
                 // if forwarded request has error, for http, error should be in "result"; for ws, error should
                 // be at top
-                if (isForwarded && (json.contains(JS(result)) || connectionMetadata.wasUpgraded())) {
+                if (isForwarded && (json.contains(JS(result)) || connection->upgraded)) {
                     for (auto const& [k, v] : json)
                         response.insert_or_assign(k, v);
                 } else {
@@ -297,7 +249,7 @@ private:
 
                 // for ws there is an additional field "status" in the response,
                 // otherwise the "status" is in the "result" field
-                if (connectionMetadata.wasUpgraded()) {
+                if (connection->upgraded) {
                     auto const appendFieldIfExist = [&](auto const& field) {
                         if (request.contains(field) and not request.at(field).is_null())
                             response[field] = request.at(field);
@@ -323,49 +275,18 @@ private:
                 warnings.emplace_back(rpc::makeWarning(rpc::WarnRpcOutdated));
 
             response["warnings"] = warnings;
-            return Response{boost::beast::http::status::ok, response, rawRequest};
+            connection->send(boost::json::serialize(response));
         } catch (std::exception const& ex) {
             // note: while we are catching this in buildResponse too, this is here to make sure
             // that any other code that may throw is outside of buildResponse is also worked around.
-            LOG(perfLog_.error()) << connectionMetadata.tag() << "Caught exception: " << ex.what();
-            LOG(log_.error()) << connectionMetadata.tag() << "Caught exception: " << ex.what();
+            LOG(perfLog_.error()) << connection->tag() << "Caught exception: " << ex.what();
+            LOG(log_.error()) << connection->tag() << "Caught exception: " << ex.what();
 
             rpcEngine_->notifyInternalError();
-            return impl::ErrorHelper(rawRequest, std::move(request)).makeInternalError();
-        }
-    }
+            web::impl::ErrorHelper(connection, std::move(request)).sendInternalError();
 
-    static Response
-    makeSlowDownResponse(Request const& request, std::optional<boost::json::value> requestJson)
-    {
-        auto error = rpc::makeError(rpc::RippledError::rpcSLOW_DOWN);
-
-        if (not request.isHttp()) {
-            try {
-                if (not requestJson.has_value()) {
-                    requestJson = boost::json::parse(request.message());
-                }
-                if (requestJson->is_object() && requestJson->as_object().contains("id"))
-                    error["id"] = requestJson->as_object().at("id");
-                error["request"] = request.message();
-            } catch (std::exception const&) {
-                error["request"] = request.message();
-            }
+            return;
         }
-        return web::Response{boost::beast::http::status::service_unavailable, error, request};
-    }
-
-    static boost::json::object
-    makeLoadWarning(Response const& response)
-    {
-        auto jsonResponse = boost::json::parse(response.message()).as_object();
-        jsonResponse["warning"] = "load";
-        if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {
-            jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::WarnRpcRateLimit));
-        } else {
-            jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::WarnRpcRateLimit)};
-        }
-        return jsonResponse;
     }
 
     bool

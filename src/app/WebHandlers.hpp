@@ -22,11 +22,11 @@
 #include "rpc/Errors.hpp"
 #include "util/log/Logger.hpp"
 #include "web/AdminVerificationStrategy.hpp"
-#include "web/Connection.hpp"
-#include "web/Request.hpp"
-#include "web/Response.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
+#include "web/ng/Connection.hpp"
+#include "web/ng/Request.hpp"
+#include "web/ng/Response.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/http/status.hpp>
@@ -60,8 +60,8 @@ public:
      * @param connection The connection to check.
      * @return A response if the connection is not allowed to proceed or void otherwise.
      */
-    std::expected<void, web::Response>
-    operator()(web::Connection const& connection);
+    std::expected<void, web::ng::Response>
+    operator()(web::ng::Connection const& connection);
 };
 
 /**
@@ -84,7 +84,7 @@ public:
      * @param connection The connection which has disconnected.
      */
     void
-    operator()(web::Connection const& connection);
+    operator()(web::ng::Connection const& connection);
 };
 
 /**
@@ -108,10 +108,10 @@ public:
      * @param connectionMetadata The connection metadata.
      * @return The response to the request.
      */
-    web::Response
+    web::ng::Response
     operator()(
-        web::Request const& request,
-        web::ConnectionMetadata& connectionMetadata,
+        web::ng::Request const& request,
+        web::ng::ConnectionMetadata& connectionMetadata,
         web::SubscriptionContextPtr,
         boost::asio::yield_context
     );
@@ -128,10 +128,10 @@ public:
      * @param request The request to handle.
      * @return The response to the request
      */
-    web::Response
+    web::ng::Response
     operator()(
-        web::Request const& request,
-        web::ConnectionMetadata&,
+        web::ng::Request const& request,
+        web::ng::ConnectionMetadata&,
         web::SubscriptionContextPtr,
         boost::asio::yield_context
     );
@@ -169,10 +169,10 @@ public:
      * @param yield The yield context.
      * @return The response to the request.
      */
-    web::Response
+    web::ng::Response
     operator()(
-        web::Request const& request,
-        web::ConnectionMetadata& connectionMetadata,
+        web::ng::Request const& request,
+        web::ng::ConnectionMetadata& connectionMetadata,
         web::SubscriptionContextPtr subscriptionContext,
         boost::asio::yield_context yield
     )
@@ -188,7 +188,7 @@ public:
         try {
             return rpcHandler_(request, connectionMetadata, std::move(subscriptionContext), yield);
         } catch (std::exception const&) {
-            return web::Response{
+            return web::ng::Response{
                 boost::beast::http::status::internal_server_error,
                 rpc::makeError(rpc::RippledError::rpcINTERNAL),
                 request

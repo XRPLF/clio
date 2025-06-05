@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -20,8 +20,9 @@
 #pragma once
 
 #include "rpc/Errors.hpp"
-#include "web/Request.hpp"
-#include "web/Response.hpp"
+#include "rpc/JS.hpp"
+#include "util/Assert.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/beast/http/status.hpp>
 #include <boost/json/object.hpp>
@@ -30,8 +31,11 @@
 #include <xrpl/protocol/ErrorCodes.h>
 #include <xrpl/protocol/jss.h>
 
-#include <functional>
+#include <memory>
 #include <optional>
+#include <string>
+#include <utility>
+#include <variant>
 
 namespace web::impl {
 
@@ -39,76 +43,137 @@ namespace web::impl {
  * @brief A helper that attempts to match rippled reporting mode HTTP errors as close as possible.
  */
 class ErrorHelper {
-    std::reference_wrapper<Request const> rawRequest_;
+    std::shared_ptr<web::ConnectionBase> connection_;
     std::optional<boost::json::object> request_;
 
 public:
-    /**
-     * @brief Construct a new Error Helper object
-     *
-     * @param rawRequest The request that caused the error.
-     * @param request The parsed request that caused the error.
-     */
-    ErrorHelper(Request const& rawRequest, std::optional<boost::json::object> request = std::nullopt);
+    ErrorHelper(
+        std::shared_ptr<web::ConnectionBase> const& connection,
+        std::optional<boost::json::object> request = std::nullopt
+    )
+        : connection_{connection}, request_{std::move(request)}
+    {
+    }
 
-    /**
-     * @brief Make an error response from a status.
-     *
-     * @param err The status to make an error response from.
-     * @return
-     */
-    [[nodiscard]] Response
-    makeError(rpc::Status const& err) const;
+    void
+    sendError(rpc::Status const& err) const
+    {
+        if (connection_->upgraded) {
+            connection_->send(boost::json::serialize(composeError(err)));
+        } else {
+            // Note: a collection of crutches to match rippled output follows
+            if (auto const clioCode = std::get_if<rpc::ClioError>(&err.code)) {
+                switch (*clioCode) {
+                    case rpc::ClioError::RpcInvalidApiVersion:
+                        connection_->send(
+                            std::string{rpc::getErrorInfo(*clioCode).error}, boost::beast::http::status::bad_request
+                        );
+                        break;
+                    case rpc::ClioError::RpcCommandIsMissing:
+                        connection_->send("Null method", boost::beast::http::status::bad_request);
+                        break;
+                    case rpc::ClioError::RpcCommandIsEmpty:
+                        connection_->send("method is empty", boost::beast::http::status::bad_request);
+                        break;
+                    case rpc::ClioError::RpcCommandNotString:
+                        connection_->send("method is not string", boost::beast::http::status::bad_request);
+                        break;
+                    case rpc::ClioError::RpcParamsUnparsable:
+                        connection_->send("params unparsable", boost::beast::http::status::bad_request);
+                        break;
 
-    /**
-     * @brief Make an internal error response.
-     *
-     * @return A response with an internal error.
-     */
-    [[nodiscard]] Response
-    makeInternalError() const;
+                    // others are not applicable but we want a compilation error next time we add one
+                    case rpc::ClioError::RpcUnknownOption:
+                    case rpc::ClioError::RpcMalformedCurrency:
+                    case rpc::ClioError::RpcMalformedRequest:
+                    case rpc::ClioError::RpcMalformedOwner:
+                    case rpc::ClioError::RpcMalformedAddress:
+                    case rpc::ClioError::RpcFieldNotFoundTransaction:
+                    case rpc::ClioError::RpcMalformedOracleDocumentId:
+                    case rpc::ClioError::RpcMalformedAuthorizedCredentials:
+                    case rpc::ClioError::EtlConnectionError:
+                    case rpc::ClioError::EtlRequestError:
+                    case rpc::ClioError::EtlRequestTimeout:
+                    case rpc::ClioError::EtlInvalidResponse:
+                        ASSERT(
+                            false, "Unknown rpc error code {}", static_cast<int>(*clioCode)
+                        );  // this should never happen
+                        break;
+                }
+            } else {
+                connection_->send(boost::json::serialize(composeError(err)), boost::beast::http::status::bad_request);
+            }
+        }
+    }
 
-    /**
-     * @brief Make a response for when the server is not ready.
-     *
-     * @return A response with a not ready error.
-     */
-    [[nodiscard]] Response
-    makeNotReadyError() const;
+    void
+    sendInternalError() const
+    {
+        connection_->send(
+            boost::json::serialize(composeError(rpc::RippledError::rpcINTERNAL)),
+            boost::beast::http::status::internal_server_error
+        );
+    }
 
-    /**
-     * @brief Make a response for when the server is too busy.
-     *
-     * @return A response with a too busy error.
-     */
-    [[nodiscard]] Response
-    makeTooBusyError() const;
+    void
+    sendNotReadyError() const
+    {
+        connection_->send(
+            boost::json::serialize(composeError(rpc::RippledError::rpcNOT_READY)), boost::beast::http::status::ok
+        );
+    }
 
-    /**
-     * @brief Make a response when json parsing fails.
-     *
-     * @return A response with a json parsing error.
-     */
-    [[nodiscard]] Response
-    makeJsonParsingError() const;
+    void
+    sendTooBusyError() const
+    {
+        if (connection_->upgraded) {
+            connection_->send(
+                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcTOO_BUSY)), boost::beast::http::status::ok
+            );
+        } else {
+            connection_->send(
+                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcTOO_BUSY)),
+                boost::beast::http::status::service_unavailable
+            );
+        }
+    }
 
-    /**
-     * @brief Compose an error into json object from a status.
-     *
-     * @param error The status to compose into a json object.
-     * @return The composed json object.
-     */
-    [[nodiscard]] boost::json::object
-    composeError(rpc::Status const& error) const;
+    void
+    sendJsonParsingError() const
+    {
+        if (connection_->upgraded) {
+            connection_->send(boost::json::serialize(rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX)));
+        } else {
+            connection_->send(
+                fmt::format("Unable to parse JSON from the request"), boost::beast::http::status::bad_request
+            );
+        }
+    }
 
-    /**
-     * @brief Compose an error into json object from a rippled error.
-     *
-     * @param error The rippled error to compose into a json object.
-     * @return The composed json object.
-     */
-    [[nodiscard]] boost::json::object
-    composeError(rpc::RippledError error) const;
+    boost::json::object
+    composeError(auto const& error) const
+    {
+        auto e = rpc::makeError(error);
+
+        if (request_) {
+            auto const appendFieldIfExist = [&](auto const& field) {
+                if (request_->contains(field) and not request_->at(field).is_null())
+                    e[field] = request_->at(field);
+            };
+
+            appendFieldIfExist(JS(id));
+
+            if (connection_->upgraded)
+                appendFieldIfExist(JS(api_version));
+
+            e[JS(request)] = request_.value();
+        }
+
+        if (connection_->upgraded) {
+            return e;
+        }
+        return {{JS(result), e}};
+    }
 };
 
 }  // namespace web::impl
