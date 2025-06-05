@@ -16,6 +16,7 @@ on:
 
       - ".github/actions/**"
       - "!.github/actions/code_coverage/**"
+      - .github/scripts/prepare-release-artifacts.sh
 
 concurrency:
   # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
@@ -96,7 +97,14 @@ jobs:
       overwrite_release: true
       title: "Clio development (nightly) build"
       version: nightly
-      notes_header_file: nightly_notes.md
+      header: >
+        # Release notes
+
+        > **Note:** Please remember that this is a development release and it is not recommended for production use.
+
+        Changelog (including previous releases): <https://github.com/XRPLF/clio/commits/nightly>
+      generate_changelog: false
+      draft: false
 
   build_and_publish_docker_image:
     uses: ./.github/workflows/build_clio_docker_image.yml

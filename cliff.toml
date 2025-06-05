@@ -8,15 +8,24 @@
 [changelog]
 # template for the changelog header
 header = """
-# Changelog\n
-All notable changes to this project will be documented in this file.\n
 """
 # template for the changelog body
 # https://keats.github.io/tera/docs/#introduction
+
 body = """
 {% if version %}\
-    ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+  Version {{ version | trim_start_matches(pat="v") }} of Clio, an XRP Ledger API server optimized for HTTP and WebSocket API calls, is now available.
 {% else %}\
+  Clio, an XRP Ledger API server optimized for HTTP and WebSocket API calls, is under active development.
+{% endif %}\
+
+<!-- Please, remove one of the 2 following lines -->
+This release adds new features and bug fixes.
+This release adds bug fixes.
+\
+{% if version %}
+    ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}
     ## [unreleased]
 {% endif %}\
 {% for group, commits in commits | filter(attribute="merge_commit", value=false) | group_by(attribute="group") %}
@@ -24,7 +33,7 @@ body = """
     {% for commit in commits %}
         - {% if commit.scope %}*({{ commit.scope }})* {% endif %}\
             {% if commit.breaking %}[**breaking**] {% endif %}\
-            {{ commit.message | upper_first }} {% if commit.remote.username %}by @{{ commit.remote.username }}{% endif %}\
+            {{ commit.message | upper_first }}{% if commit.remote.username %} by @{{ commit.remote.username }}{% endif %}\
     {% endfor %}
 {% endfor %}\n
 """
