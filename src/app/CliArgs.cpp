@@ -47,6 +47,7 @@ CliArgs::parse(int argc, char const* argv[])
         ("help,h", "Print help message and exit")
         ("version,v", "Print version and exit")
         ("conf,c", po::value<std::string>()->default_value(kDEFAULT_CONFIG_PATH), "Configuration file")
+        ("ng-web-server,w", "Use ng-web-server")
         ("migrate", po::value<std::string>(), "Start migration helper")
         ("verify", "Checks the validity of config values")
         ("config-description,d", po::value<std::string>(), "Generate config description markdown file")
@@ -92,7 +93,8 @@ CliArgs::parse(int argc, char const* argv[])
     if (parsed.count("verify") != 0u)
         return Action{Action::VerifyConfig{.configPath = std::move(configPath)}};
 
-    return Action{Action::Run{.configPath = std::move(configPath)}};
+    return Action{Action::Run{.configPath = std::move(configPath), .useNgWebServer = parsed.count("ng-web-server") != 0}
+    };
 }
 
 }  // namespace app

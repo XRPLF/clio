@@ -65,13 +65,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # TODO: Enable when we have at least ubuntu 22.04
-          # as ClangBuildAnalyzer requires relatively modern glibc
-          #
-          # - os: heavy
-          #   conan_profile: clang
-          #   container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
-          #   static: true
+          - os: heavy
+            conan_profile: clang
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
+            static: true
           - os: macos15
             conan_profile: default_apple_clang
             container: ""

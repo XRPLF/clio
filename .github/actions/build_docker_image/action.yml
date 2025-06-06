@@ -5,9 +5,6 @@ inputs:
   images:
     description: Name of the images to use as a base name
     required: true
-  dockerhub_repo:
-    description: DockerHub repository name
-    required: true
   push_image:
     description: Whether to push the image to the registry (true/false)
     required: true
@@ -20,15 +17,19 @@ inputs:
   platforms:
     description: Platforms to build the image for (e.g. linux/amd64,linux/arm64)
     required: true
-  description:
+
+  dockerhub_repo:
+    description: DockerHub repository name
+    required: false
+  dockerhub_description:
     description: Short description of the image
-    required: true
+    required: false
 
 runs:
   using: composite
   steps:
     - name: Login to DockerHub
-      if: ${{ inputs.push_image == 'true' }}
+      if: ${{ inputs.push_image == 'true' && inputs.dockerhub_repo != '' }}
       uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
       with:
         username: ${{ env.DOCKERHUB_USER }}
@@ -62,11 +63,11 @@ runs:
         tags: ${{ steps.meta.outputs.tags }}
 
     - name: Update DockerHub description
-      if: ${{ inputs.push_image == 'true' }}
+      if: ${{ inputs.push_image == 'true' && inputs.dockerhub_repo != '' }}
       uses: peter-evans/dockerhub-description@432a30c9e07499fd01da9f8a49f0faf9e0ca5b77 # v4.0.2
       with:
         username: ${{ env.DOCKERHUB_USER }}
         password: ${{ env.DOCKERHUB_PW }}
         repository: ${{ inputs.dockerhub_repo }}
-        short-description: ${{ inputs.description }}
+        short-description: ${{ inputs.dockerhub_description }}
         readme-filepath: ${{ inputs.directory }}/README.md

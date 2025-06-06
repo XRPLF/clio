@@ -5,12 +5,14 @@ It is used in [Clio Github Actions](https://github.com/XRPLF/clio/actions) but c
 
 The image is based on Ubuntu 20.04 and contains:
 
+- ccache 4.11.3
 - clang 16.0.6
-- gcc 12.3
-- doxygen 1.12
-- gh 2.40
-- ccache 4.10.2
+- ClangBuildAnalyzer 1.6.0
 - conan 1.62
+- doxygen 1.12
+- gcc 12.3.0
+- gh 2.74
+- git-cliff 2.9.1
 - and some other useful tools
 
 Conan is set up to build Clio without any additional steps. There are two preset conan profiles: `clang` and `gcc` to use corresponding compiler. By default conan is setup to use `gcc`.

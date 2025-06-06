@@ -25,7 +25,7 @@
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/CoroutineGroup.hpp"
 #include "util/log/Logger.hpp"
-#include "web/Server.hpp"
+#include "web/ng/Server.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
@@ -74,7 +74,7 @@ public:
      * @param ioc The io_context to stop.
      * @return The callback to be called on application stop.
      */
-    template <web::SomeServer ServerType>
+    template <web::ng::SomeServer ServerType>
     static std::function<void(boost::asio::yield_context)>
     makeOnStopCallback(
         ServerType& server,

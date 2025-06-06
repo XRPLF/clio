@@ -1,6 +1,10 @@
-FROM rippleci/clio_clang:16
+# TODO: change this when we are able to push gcc image to ghcr.io
+FROM rippleci/clio_gcc:12.3.0 AS clio-gcc
+FROM ghcr.io/xrplf/clio-tools:latest AS clio-tools
+
+FROM ghcr.io/xrplf/clio-clang:16
+
 ARG DEBIAN_FRONTEND=noninteractive
-ARG TARGETARCH
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -13,23 +17,22 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 USER root
 WORKDIR /root
 
-ENV CCACHE_VERSION=4.10.2 \
-    LLVM_TOOLS_VERSION=19 \
-    GH_VERSION=2.40.0 \
-    DOXYGEN_VERSION=1.12.0 \
-    CLANG_BUILD_ANALYZER_VERSION=1.6.0 \
-    GIT_CLIFF_VERSION=2.8.0
+ARG LLVM_TOOLS_VERSION=19
 
 # Add repositories
-RUN apt-get -qq update \
-    && apt-get -qq install -y --no-install-recommends --no-install-suggests gnupg wget curl software-properties-common \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends --no-install-suggests \
+        curl \
+        gnupg \
+        wget \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
     && echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-${LLVM_TOOLS_VERSION} main" >> /etc/apt/sources.list \
-    && wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    && wget --progress=dot:giga -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 
 # Install packages
-RUN apt update -qq \
-    && apt install -y --no-install-recommends --no-install-suggests \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends --no-install-suggests \
         bison \
         clang-tidy-${LLVM_TOOLS_VERSION} \
         clang-tools-${LLVM_TOOLS_VERSION} \
@@ -49,12 +52,18 @@ RUN apt update -qq \
         conan==1.62 \
         gcovr \
         pre-commit \
-    && apt-get clean && apt remove -y software-properties-common
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install gcc-12 and make ldconfig aware of the new libstdc++ location (for gcc)
 # Note: Clang is using libc++ instead
-COPY --from=rippleci/clio_gcc:12.3.0 /gcc12.deb /
-RUN apt update && apt-get install -y binutils libc6-dev \
+COPY --from=clio-gcc /gcc12.deb /
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends --no-install-suggests \
+        binutils \
+        libc6-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
     && dpkg -i /gcc12.deb \
     && rm -rf /gcc12.deb \
     && ldconfig
@@ -68,43 +77,13 @@ RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 100 \
     && update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-12 100 \
     && update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-12 100
 
-WORKDIR /tmp
-
-# Install ccache from source
-RUN wget "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}.tar.gz" \
-    && tar xf "ccache-${CCACHE_VERSION}.tar.gz" \
-    && cd "ccache-${CCACHE_VERSION}" \
-    && mkdir build && cd build \
-    && cmake -GNinja -DCMAKE_BUILD_TYPE=Release .. \
-    && cmake --build . --target install \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Install doxygen from source
-RUN wget "https://github.com/doxygen/doxygen/releases/download/Release_${DOXYGEN_VERSION//./_}/doxygen-${DOXYGEN_VERSION}.src.tar.gz" \
-    && tar xf "doxygen-${DOXYGEN_VERSION}.src.tar.gz" \
-    && cd "doxygen-${DOXYGEN_VERSION}" \
-    && mkdir build && cd build \
-    && cmake -GNinja -DCMAKE_BUILD_TYPE=Release .. \
-    && cmake --build . --target install \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Install ClangBuildAnalyzer
-RUN wget "https://github.com/aras-p/ClangBuildAnalyzer/releases/download/v${CLANG_BUILD_ANALYZER_VERSION}/ClangBuildAnalyzer-linux" \
-    && chmod +x ClangBuildAnalyzer-linux \
-    && mv ClangBuildAnalyzer-linux /usr/bin/ClangBuildAnalyzer \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Install git-cliff
-RUN wget "https://github.com/orhun/git-cliff/releases/download/v${GIT_CLIFF_VERSION}/git-cliff-${GIT_CLIFF_VERSION}-x86_64-unknown-linux-musl.tar.gz" \
-    && tar xf git-cliff-${GIT_CLIFF_VERSION}-x86_64-unknown-linux-musl.tar.gz \
-    && mv git-cliff-${GIT_CLIFF_VERSION}/git-cliff /usr/bin/git-cliff \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Install gh
-RUN wget "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz" \
-    && tar xf gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz \
-    && mv gh_${GH_VERSION}_linux_${TARGETARCH}/bin/gh /usr/bin/gh \
-    && rm -rf /tmp/* /var/tmp/*
+COPY --from=clio-tools \
+    /usr/local/bin/ccache \
+    /usr/local/bin/doxygen \
+    /usr/local/bin/ClangBuildAnalyzer \
+    /usr/local/bin/git-cliff \
+    /usr/local/bin/gh \
+    /usr/local/bin/
 
 WORKDIR /root
 
