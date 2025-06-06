@@ -24,11 +24,7 @@
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/post.hpp>
-#include <boost/asio/read.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/system/error_code.hpp>
-#include <boost/system/system_error.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -177,7 +173,7 @@ TEST_F(CoroutineTest, CancelAllCancelsSiblingsAndParent)
 TEST_F(CoroutineTest, Yield)
 {
     testing::StrictMock<testing::MockFunction<void()>> anotherFnMock;
-    testing::Sequence sequence;
+    testing::Sequence const sequence;
     EXPECT_CALL(fnMock_, Call).InSequence(sequence);
     EXPECT_CALL(anotherFnMock, Call).InSequence(sequence);
 
