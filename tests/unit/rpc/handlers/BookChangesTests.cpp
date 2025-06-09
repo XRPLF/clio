@@ -79,19 +79,19 @@ generateTestValuesForParametersTest()
     return std::vector<BookChangesParamTestCaseBundle>{
         BookChangesParamTestCaseBundle{
             .testName = "LedgerHashInvalid",
-            .testJson = R"({"ledger_hash":"1"})",
+            .testJson = R"JSON({"ledger_hash":"1"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashMalformed"
         },
         BookChangesParamTestCaseBundle{
             .testName = "LedgerHashNotString",
-            .testJson = R"({"ledger_hash":1})",
+            .testJson = R"JSON({"ledger_hash":1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashNotString"
         },
         BookChangesParamTestCaseBundle{
             .testName = "LedgerIndexInvalid",
-            .testJson = R"({"ledger_index":"a"})",
+            .testJson = R"JSON({"ledger_index":"a"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledgerIndexMalformed"
         },
@@ -125,7 +125,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaIntSequence)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    auto static const kINPUT = json::parse(R"({"ledger_index":30})");
+    auto static const kINPUT = json::parse(R"JSON({"ledger_index":30})JSON");
     auto const handler = AnyHandler{BookChangesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
@@ -142,7 +142,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaStringSequence)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillByDefault(Return(std::nullopt));
 
-    auto static const kINPUT = json::parse(R"({"ledger_index":"30"})");
+    auto static const kINPUT = json::parse(R"JSON({"ledger_index":"30"})JSON");
     auto const handler = AnyHandler{BookChangesHandler{backend_}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
@@ -161,9 +161,9 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "ledger_hash":"{}"
-        }})",
+        }})JSON",
         kLEDGER_HASH
     ));
     auto const handler = AnyHandler{BookChangesHandler{backend_}};
@@ -179,7 +179,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
 TEST_F(RPCBookChangesHandlerTest, NormalPath)
 {
     static constexpr auto kEXPECTED_OUT =
-        R"({
+        R"JSON({
             "type":"bookChanges",
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index":30,
@@ -197,7 +197,7 @@ TEST_F(RPCBookChangesHandlerTest, NormalPath)
                     "close":"-1"
                 }
             ]
-        })";
+        })JSON";
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _))

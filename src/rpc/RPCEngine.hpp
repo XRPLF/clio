@@ -163,19 +163,17 @@ public:
                 [this, &ctx](boost::asio::yield_context
                 ) -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
                 auto result = buildResponseImpl(ctx);
-                auto extracted = std::visit(
-                    util::OverloadSet{
-                        [&result](Status status
-                        ) -> std::expected<boost::json::object, util::ResponseExpirationCache::Error> {
-                            return std::unexpected{util::ResponseExpirationCache::Error{
-                                .status = std::move(status), .warnings = std::move(result.warnings)
-                            }};
-                        },
-                        [](boost::json::object obj
-                        ) -> std::expected<boost::json::object, util::ResponseExpirationCache::Error> { return obj; }
-                    },
-                    std::move(result.response)
-                );
+
+                auto const extracted =
+                    [&result]() -> std::expected<boost::json::object, util::ResponseExpirationCache::Error> {
+                    if (result.response.has_value()) {
+                        return std::move(result.response).value();
+                    }
+                    return std::unexpected{util::ResponseExpirationCache::Error{
+                        .status = std::move(result.response).error(), .warnings = std::move(result.warnings)
+                    }};
+                }();
+
                 if (extracted.has_value()) {
                     return util::ResponseExpirationCache::EntryData{
                         .lastUpdated = std::chrono::steady_clock::now(), .response = std::move(extracted).value()

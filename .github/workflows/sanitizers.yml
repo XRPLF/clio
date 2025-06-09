@@ -18,6 +18,7 @@ on:
       - .github/scripts/execute-tests-under-sanitizer
 
       - CMakeLists.txt
+      - conanfile.py
       - "cmake/**"
       # We don't run sanitizer on code change, because it takes too long
       # - "src/**"

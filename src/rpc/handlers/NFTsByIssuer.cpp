@@ -39,7 +39,6 @@
 
 #include <optional>
 #include <string>
-#include <variant>
 
 using namespace ripple;
 
@@ -51,13 +50,13 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ct
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "NFTsByIssuer's ledger range must be available");
 
-    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
-    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
-        return Error{*status};
+    if (!expectedLgrInfo.has_value())
+        return Error{expectedLgrInfo.error()};
 
-    auto const lgrInfo = std::get<LedgerHeader>(lgrInfoOrStatus);
+    auto const& lgrInfo = expectedLgrInfo.value();
 
     auto const limit = input.limit.value_or(NFTsByIssuerHandler::kLIMIT_DEFAULT);
 

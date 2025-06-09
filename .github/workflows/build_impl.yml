@@ -92,7 +92,7 @@ jobs:
         uses: ./.github/actions/restore_cache
         id: restore_cache
         with:
-          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          conan_dir: ${{ env.CONAN_HOME }}
           conan_profile: ${{ inputs.conan_profile }}
           ccache_dir: ${{ env.CCACHE_DIR }}
           build_type: ${{ inputs.build_type }}
@@ -172,7 +172,7 @@ jobs:
         if: ${{ !inputs.disable_cache && github.ref == 'refs/heads/develop' }}
         uses: ./.github/actions/save_cache
         with:
-          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          conan_dir: ${{ env.CONAN_HOME }}
           conan_hash: ${{ steps.restore_cache.outputs.conan_hash }}
           conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
           ccache_dir: ${{ env.CCACHE_DIR }}

@@ -11,6 +11,8 @@
 #
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+exclude: ^docs/doxygen-awesome-theme/
+
 repos:
   # `pre-commit sample-config` default hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -20,16 +22,13 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable
       - id: end-of-file-fixer
-        exclude: ^docs/doxygen-awesome-theme/
       - id: trailing-whitespace
-        exclude: ^docs/doxygen-awesome-theme/
 
   # Autoformat: YAML, JSON, Markdown, etc.
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: 787fb9f542b140ba0b2aced38e6a3e68021647a3 # frozen: v3.5.3
     hooks:
       - id: prettier
-        exclude: ^docs/doxygen-awesome-theme/
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: 586c3ea3f51230da42bab657c6a32e9e66c364f0 # frozen: v0.44.0

@@ -95,49 +95,49 @@ generateTestValuesForParametersTest()
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AMMAccountNotString",
-            .testJson = R"({"amm_account": 1})",
+            .testJson = R"JSON({"amm_account": 1})JSON",
             .expectedError = "actMalformed",
             .expectedErrorMessage = "Account malformed."
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AccountNotString",
-            .testJson = R"({"account": 1})",
+            .testJson = R"JSON({"account": 1})JSON",
             .expectedError = "actMalformed",
             .expectedErrorMessage = "Account malformed."
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AMMAccountInvalid",
-            .testJson = R"({"amm_account": "xxx"})",
+            .testJson = R"JSON({"amm_account": "xxx"})JSON",
             .expectedError = "actMalformed",
             .expectedErrorMessage = "Account malformed."
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AccountInvalid",
-            .testJson = R"({"account": "xxx"})",
+            .testJson = R"JSON({"account": "xxx"})JSON",
             .expectedError = "actMalformed",
             .expectedErrorMessage = "Account malformed."
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AMMAssetNotStringOrObject",
-            .testJson = R"({"asset": 1})",
+            .testJson = R"JSON({"asset": 1})JSON",
             .expectedError = "issueMalformed",
             .expectedErrorMessage = "Issue is malformed."
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AMMAssetEmptyObject",
-            .testJson = R"({"asset": {}})",
+            .testJson = R"JSON({"asset": {}})JSON",
             .expectedError = "issueMalformed",
             .expectedErrorMessage = "Issue is malformed."
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AMMAsset2NotStringOrObject",
-            .testJson = R"({"asset2": 1})",
+            .testJson = R"JSON({"asset2": 1})JSON",
             .expectedError = "issueMalformed",
             .expectedErrorMessage = "Issue is malformed."
         },
         AMMInfoParamTestCaseBundle{
             .testName = "AMMAsset2EmptyObject",
-            .testJson = R"({"asset2": {}})",
+            .testJson = R"JSON({"asset2": {}})JSON",
             .expectedError = "issueMalformed",
             .expectedErrorMessage = "Issue is malformed."
         },
@@ -180,10 +180,10 @@ TEST_F(RPCAMMInfoHandlerTest, AccountNotFound)
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "amm_account": "{}",
             "account": "{}"
-        }})",
+        }})JSON",
         kAMM_ACCOUNT,
         kNOTFOUND_ACCOUNT
     ));
@@ -206,9 +206,9 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotExist)
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "amm_account": "{}"
-        }})",
+        }})JSON",
         kWRONG_AMM_ACCOUNT
     ));
 
@@ -229,9 +229,9 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotInDBIsMalformed)
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "amm_account": "{}"
-        }})",
+        }})JSON",
         kAMM_ACCOUNT
     ));
 
@@ -255,9 +255,9 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotFoundMissingAmmField)
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(accountRoot.getSerializer().peekData()));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "amm_account": "{}"
-        }})",
+        }})JSON",
         kAMM_ACCOUNT
     ));
 
@@ -290,9 +290,9 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAmmBlobNotFound)
         .WillByDefault(Return(std::optional<Blob>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "amm_account": "{}"
-        }})",
+        }})JSON",
         kAMM_ACCOUNT
     ));
 
@@ -329,9 +329,9 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAccBlobNotFound)
         .WillByDefault(Return(std::optional<Blob>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "amm_account": "{}"
-        }})",
+        }})JSON",
         kAMM_ACCOUNT
     ));
 
@@ -374,9 +374,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
     ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _)).WillByDefault(Return(std::optional<Blob>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "amm_account": "{}"
-        }})",
+        }})JSON",
         kAMM_ACCOUNT
     ));
 
@@ -384,7 +384,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto expectedResult = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -404,7 +404,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
                 "ledger_index": 30,
                 "ledger_hash": "{}",
                 "validated": true
-            }})",
+            }})JSON",
             kLP_ISSUE_CURRENCY,
             kAMM_ACCOUNT,
             "JPY",
@@ -454,10 +454,10 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
         .WillByDefault(Return(trustline.getSerializer().peekData()));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "amm_account": "{}",
             "account": "{}"
-        }})",
+        }})JSON",
         kAMM_ACCOUNT,
         kAMM_ACCOUNT2
     ));
@@ -466,7 +466,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto const expectedResult = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -486,7 +486,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
                 "ledger_index": 30,
                 "ledger_hash": "{}",
                 "validated": true
-            }})",
+            }})JSON",
             kLP_ISSUE_CURRENCY,
             kAMM_ACCOUNT2,
             "JPY",
@@ -528,9 +528,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
     ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _)).WillByDefault(Return(std::optional<Blob>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "amm_account": "{}"
-        }})",
+        }})JSON",
         kAMM_ACCOUNT
     ));
 
@@ -538,7 +538,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto const expectedResult = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -558,7 +558,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
                 "ledger_index": 30,
                 "ledger_hash": "{}",
                 "validated": true
-            }})",
+            }})JSON",
             kLP_ISSUE_CURRENCY,
             kAMM_ACCOUNT,
             "JPY",
@@ -598,9 +598,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
     ON_CALL(*backend_, doFetchLedgerObject(issue2LineKey, kSEQ, _)).WillByDefault(Return(std::optional<Blob>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "amm_account": "{}"
-        }})",
+        }})JSON",
         kAMM_ACCOUNT
     ));
 
@@ -608,7 +608,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto const expectedResult = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -633,7 +633,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
                 "ledger_index": 30,
                 "ledger_hash": "{}",
                 "validated": true
-            }})",
+            }})JSON",
             kLP_ISSUE_CURRENCY,
             kAMM_ACCOUNT,
             "USD",
@@ -687,9 +687,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
         .WillByDefault(Return(trustline2BalanceFrozen.getSerializer().peekData()));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "amm_account": "{}"
-        }})",
+        }})JSON",
         kAMM_ACCOUNT
     ));
 
@@ -697,7 +697,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto const expectedResult = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -722,7 +722,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
                 "ledger_index": 30,
                 "ledger_hash": "{}",
                 "validated": true
-            }})",
+            }})JSON",
             kLP_ISSUE_CURRENCY,
             kAMM_ACCOUNT,
             "USD",
@@ -777,9 +777,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
         .WillByDefault(Return(trustline2BalanceFrozen.getSerializer().peekData()));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "amm_account": "{}"
-        }})",
+        }})JSON",
         kAMM_ACCOUNT
     ));
 
@@ -787,7 +787,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto const expectedResult = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -812,7 +812,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
                 "ledger_index": 30,
                 "ledger_hash": "{}",
                 "validated": true
-            }})",
+            }})JSON",
             kLP_ISSUE_CURRENCY,
             kAMM_ACCOUNT,
             "USD",
@@ -859,9 +859,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
         .WillByDefault(Return(trustlineBalance.getSerializer().peekData()));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "amm_account": "{}"
-        }})",
+        }})JSON",
         kAMM_ACCOUNT
     ));
 
@@ -869,7 +869,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto expectedResult = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -889,7 +889,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
                 "ledger_index": 30,
                 "ledger_hash": "{}",
                 "validated": true
-            }})",
+            }})JSON",
             kLP_ISSUE_CURRENCY,
             kAMM_ACCOUNT,
             "JPY",
@@ -936,9 +936,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
         .WillByDefault(Return(trustlineBalance.getSerializer().peekData()));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "amm_account": "{}"
-        }})",
+        }})JSON",
         kAMM_ACCOUNT
     ));
 
@@ -946,7 +946,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto expectedResult = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -978,7 +978,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
                 "ledger_index": 30,
                 "ledger_hash": "{}",
                 "validated": true
-            }})",
+            }})JSON",
             kLP_ISSUE_CURRENCY,
             kAMM_ACCOUNT,
             "JPY",
@@ -1029,9 +1029,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
         .WillByDefault(Return(trustlineBalance.getSerializer().peekData()));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "amm_account": "{}"
-        }})",
+        }})JSON",
         kAMM_ACCOUNT
     ));
 
@@ -1039,7 +1039,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto expectedResult = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -1074,7 +1074,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
                 "ledger_index": 30,
                 "ledger_hash": "{}",
                 "validated": true
-            }})",
+            }})JSON",
             kLP_ISSUE_CURRENCY,
             kAMM_ACCOUNT,
             "JPY",
@@ -1117,7 +1117,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
         .WillByDefault(Return(ammObj.getSerializer().peekData()));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "asset": {{
                 "currency": "JPY",
                 "issuer": "{}"
@@ -1126,7 +1126,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
                 "currency": "USD",
                 "issuer": "{}"
             }}
-        }})",
+        }})JSON",
         kAMM_ACCOUNT,
         kAMM_ACCOUNT2
     ));
@@ -1135,7 +1135,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto expectedResult = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -1179,7 +1179,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
                 "ledger_index": 30,
                 "ledger_hash": "{}",
                 "validated": true
-            }})",
+            }})JSON",
             kLP_ISSUE_CURRENCY,
             kAMM_ACCOUNT,
             "JPY",
@@ -1227,7 +1227,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
         .WillByDefault(Return(ammObj.getSerializer().peekData()));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "asset": {{
                 "currency": "USD",
                 "issuer": "{}"
@@ -1236,7 +1236,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
                 "currency": "JPY",
                 "issuer": "{}"
             }}
-        }})",
+        }})JSON",
         kAMM_ACCOUNT,
         kAMM_ACCOUNT2
     ));
@@ -1245,7 +1245,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         auto expectedResult = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "amm": {{
                     "lp_token": {{
                         "currency": "{}",
@@ -1289,7 +1289,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
                 "ledger_index": 30,
                 "ledger_hash": "{}",
                 "validated": true
-            }})",
+            }})JSON",
             kLP_ISSUE_CURRENCY,
             kAMM_ACCOUNT,
             "USD",

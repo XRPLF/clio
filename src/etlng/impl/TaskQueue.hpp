@@ -19,36 +19,58 @@
 
 #pragma once
 
-#include "util/async/AnyStrand.hpp"
+#include "etlng/Models.hpp"
+#include "util/Mutex.hpp"
 
 #include <cstddef>
-#include <functional>
+#include <cstdint>
 #include <optional>
 #include <queue>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
-namespace util {
+namespace etlng::impl {
+
+struct ReverseOrderComparator {
+    [[nodiscard]] bool
+    operator()(model::LedgerData const& lhs, model::LedgerData const& rhs) const noexcept
+    {
+        return lhs.seq > rhs.seq;
+    }
+};
 
 /**
- * @brief A wrapper for std::priority_queue that serialises operations using a strand
+ * @brief A wrapper for std::priority_queue that serialises operations using a mutex
  * @note This may be a candidate for future improvements if performance proves to be poor (e.g. use a lock free queue)
  */
-template <typename T, typename Compare = std::less<T>>
-class StrandedPriorityQueue {
-    util::async::AnyStrand strand_;
+class TaskQueue {
     std::size_t limit_;
-    std::priority_queue<T, std::vector<T>, Compare> queue_;
+    std::uint32_t increment_;
+
+    struct Data {
+        std::uint32_t expectedSequence;
+        std::priority_queue<model::LedgerData, std::vector<model::LedgerData>, ReverseOrderComparator> forwardLoadQueue;
+
+        Data(std::uint32_t seq) : expectedSequence(seq)
+        {
+        }
+    };
+
+    util::Mutex<Data> data_;
 
 public:
+    struct Settings {
+        std::uint32_t startSeq = 0u;   // sequence to start from (for dequeue)
+        std::uint32_t increment = 1u;  // increment sequence by this value once dequeue was successful
+        std::optional<std::size_t> limit = std::nullopt;
+    };
+
     /**
-     * @brief Construct a new priority queue on a strand
-     * @param strand The strand to use
+     * @brief Construct a new priority queue
      * @param limit The limit of items allowed simultaneously in the queue
      */
-    StrandedPriorityQueue(util::async::AnyStrand&& strand, std::optional<std::size_t> limit = std::nullopt)
-        : strand_(std::move(strand)), limit_(limit.value_or(0uz))
+    explicit TaskQueue(Settings settings)
+        : limit_(settings.limit.value_or(0uz)), increment_(settings.increment), data_(settings.startSeq)
     {
     }
 
@@ -56,25 +78,20 @@ public:
      * @brief Enqueue a new item onto the queue if space is available
      * @note This function blocks until the item is attempted to be added to the queue
      *
-     * @tparam I Type of the item to add
      * @param item The item to add
      * @return true if item added to the queue; false otherwise
      */
-    template <typename I>
     [[nodiscard]] bool
-    enqueue(I&& item)
-        requires std::is_same_v<std::decay_t<I>, T>
+    enqueue(model::LedgerData item)
     {
-        return strand_
-            .execute([&item, this] {
-                if (limit_ == 0uz or queue_.size() < limit_) {
-                    queue_.push(std::forward<I>(item));
-                    return true;
-                }
-                return false;
-            })
-            .get()
-            .value_or(false);  // if some exception happens - failed to add
+        auto lock = data_.lock();
+
+        if (limit_ == 0uz or lock->forwardLoadQueue.size() < limit_) {
+            lock->forwardLoadQueue.push(std::move(item));
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -82,22 +99,19 @@ public:
      * @note This function blocks until the item is taken off the queue
      * @return An item if available; nullopt otherwise
      */
-    [[nodiscard]] std::optional<T>
+    [[nodiscard]] std::optional<model::LedgerData>
     dequeue()
     {
-        return strand_
-            .execute([this] -> std::optional<T> {
-                std::optional<T> out;
+        auto lock = data_.lock();
+        std::optional<model::LedgerData> out;
 
-                if (not queue_.empty()) {
-                    out.emplace(queue_.top());
-                    queue_.pop();
-                }
+        if (not lock->forwardLoadQueue.empty() && lock->forwardLoadQueue.top().seq == lock->expectedSequence) {
+            out.emplace(lock->forwardLoadQueue.top());
+            lock->forwardLoadQueue.pop();
+            lock->expectedSequence += increment_;
+        }
 
-                return out;
-            })
-            .get()
-            .value_or(std::nullopt);
+        return out;
     }
 
     /**
@@ -109,8 +123,8 @@ public:
     [[nodiscard]] bool
     empty()
     {
-        return strand_.execute([this] { return queue_.empty(); }).get().value();
+        return data_.lock()->forwardLoadQueue.empty();
     }
 };
 
-}  // namespace util
+}  // namespace etlng::impl

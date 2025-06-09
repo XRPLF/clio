@@ -85,6 +85,7 @@ public:
         // accountID will be filled by input converter, if no issuer is given, will use XRP issuer
         ripple::AccountID paysID = ripple::xrpAccount();
         ripple::AccountID getsID = ripple::xrpAccount();
+        std::optional<std::string> domain;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -147,6 +148,11 @@ public:
                  validation::CustomValidators::accountValidator,
                  Status(RippledError::rpcINVALID_PARAMS, "Invalid field 'taker'.")
              }},
+            {
+                JS(domain),
+                validation::Type<std::string>{},
+                validation::CustomValidators::uint256HexStringValidator,
+            },
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),

@@ -58,7 +58,7 @@ struct RPCLedgerIndexTest : HandlerBaseTestStrict {
 TEST_F(RPCLedgerIndexTest, DateStrNotValid)
 {
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
-    auto const req = json::parse(R"({"date": "not_a_number"})");
+    auto const req = json::parse(R"JSON({"date": "not_a_number"})JSON");
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -74,7 +74,7 @@ TEST_F(RPCLedgerIndexTest, NoDateGiven)
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillOnce(Return(ledgerHeader));
 
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
-    auto const req = json::parse(R"({})");
+    auto const req = json::parse(R"JSON({})JSON");
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
@@ -87,7 +87,7 @@ TEST_F(RPCLedgerIndexTest, NoDateGiven)
 TEST_F(RPCLedgerIndexTest, EarlierThanMinLedger)
 {
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
-    auto const req = json::parse(R"({"date": "2024-06-25T12:23:05Z"})");
+    auto const req = json::parse(R"JSON({"date": "2024-06-25T12:23:05Z"})JSON");
     auto const ledgerHeader =
         createLedgerHeaderWithUnixTime(kLEDGER_HASH, kRANGE_MIN, 1719318190);  //"2024-06-25T12:23:10Z"
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MIN, _)).WillOnce(Return(ledgerHeader));
@@ -104,7 +104,7 @@ TEST_F(RPCLedgerIndexTest, ChangeTimeZone)
     // Note: setenv/unsetenv are included with <cstdlib> but misc-include-cleaner still angry
     setenv("TZ", "EST+5", 1);  // NOLINT(misc-include-cleaner)
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
-    auto const req = json::parse(R"({"date": "2024-06-25T12:23:05Z"})");
+    auto const req = json::parse(R"JSON({"date": "2024-06-25T12:23:05Z"})JSON");
     auto const ledgerHeader =
         createLedgerHeaderWithUnixTime(kLEDGER_HASH, kRANGE_MIN, 1719318190);  //"2024-06-25T12:23:10Z"
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MIN, _)).WillOnce(Return(ledgerHeader));
@@ -132,27 +132,27 @@ public:
         // start from 2024-06-25T12:23:10Z to 2024-06-25T12:23:50Z with step 2
         return std::vector<LedgerIndexTestsCaseBundle>{
             {.testName = "LaterThanMaxLedger",
-             .json = R"({"date": "2024-06-25T12:23:55Z"})",
+             .json = R"JSON({"date": "2024-06-25T12:23:55Z"})JSON",
              .expectedLedgerIndex = kRANGE_MAX,
              .closeTimeIso = "2024-06-25T12:23:50Z"},
             {.testName = "GreaterThanMinLedger",
-             .json = R"({"date": "2024-06-25T12:23:11Z"})",
+             .json = R"JSON({"date": "2024-06-25T12:23:11Z"})JSON",
              .expectedLedgerIndex = kRANGE_MIN,
              .closeTimeIso = "2024-06-25T12:23:10Z"},
             {.testName = "IsMinLedger",
-             .json = R"({"date": "2024-06-25T12:23:10Z"})",
+             .json = R"JSON({"date": "2024-06-25T12:23:10Z"})JSON",
              .expectedLedgerIndex = kRANGE_MIN,
              .closeTimeIso = "2024-06-25T12:23:10Z"},
             {.testName = "IsMaxLedger",
-             .json = R"({"date": "2024-06-25T12:23:50Z"})",
+             .json = R"JSON({"date": "2024-06-25T12:23:50Z"})JSON",
              .expectedLedgerIndex = kRANGE_MAX,
              .closeTimeIso = "2024-06-25T12:23:50Z"},
             {.testName = "IsMidLedger",
-             .json = R"({"date": "2024-06-25T12:23:30Z"})",
+             .json = R"JSON({"date": "2024-06-25T12:23:30Z"})JSON",
              .expectedLedgerIndex = 20,
              .closeTimeIso = "2024-06-25T12:23:30Z"},
             {.testName = "BetweenLedgers",
-             .json = R"({"date": "2024-06-25T12:23:29Z"})",
+             .json = R"JSON({"date": "2024-06-25T12:23:29Z"})JSON",
              .expectedLedgerIndex = 19,
              .closeTimeIso = "2024-06-25T12:23:28Z"}
         };

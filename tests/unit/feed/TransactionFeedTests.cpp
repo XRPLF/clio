@@ -43,6 +43,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 
 using namespace data;
@@ -60,7 +61,7 @@ constexpr auto kLPTOKEN_CURRENCY = "037C35306B24AAB7FF90848206E003279AA47090";
 constexpr auto kNETWORK_ID = 0u;
 
 constexpr auto kTRAN_V1 =
-    R"({
+    R"JSON({
         "transaction":
         {
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -115,10 +116,10 @@ constexpr auto kTRAN_V1 =
         "engine_result_code":0,
         "engine_result":"tesSUCCESS",
         "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-    })";
+    })JSON";
 
 constexpr auto kTRAN_V2 =
-    R"({
+    R"JSON({
         "tx_json":
         {
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -168,7 +169,7 @@ constexpr auto kTRAN_V2 =
         "engine_result_code":0,
         "engine_result":"tesSUCCESS",
         "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-    })";
+    })JSON";
 
 }  // namespace
 
@@ -350,7 +351,7 @@ TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
 TEST_F(FeedTransactionTest, SubBookV1)
 {
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1};
+    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(book, sessionPtr);
@@ -366,7 +367,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
     trans1.metadata = metaObj.getSerializer().peekData();
 
     static constexpr auto kORDERBOOK_PUBLISH =
-        R"({
+        R"JSON({
             "transaction":
             {
                 "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -424,7 +425,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
             "engine_result":"tesSUCCESS",
             "close_time_iso": "2000-01-01T00:00:00Z",
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-        })";
+        })JSON";
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kORDERBOOK_PUBLISH))).Times(1);
@@ -435,7 +436,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
     trans1.metadata = metaObj.getSerializer().peekData();
 
     static constexpr auto kORDERBOOK_CANCEL_PUBLISH =
-        R"({
+        R"JSON({
             "transaction":{
                 "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "Amount":"1",
@@ -481,7 +482,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
             "engine_result":"tesSUCCESS",
             "close_time_iso": "2000-01-01T00:00:00Z",
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-        })";
+        })JSON";
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kORDERBOOK_CANCEL_PUBLISH))).Times(1);
@@ -489,7 +490,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
 
     // trigger by offer create meta data
     static constexpr auto kORDERBOOK_CREATE_PUBLISH =
-        R"({
+        R"JSON({
             "transaction":
             {
                 "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -537,7 +538,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
             "engine_result":"tesSUCCESS",
             "close_time_iso": "2000-01-01T00:00:00Z",
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-        })";
+        })JSON";
     metaObj = createMetaDataForCreateOffer(kCURRENCY, kISSUER, 22, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
 
@@ -554,7 +555,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
 TEST_F(FeedTransactionTest, SubBookV2)
 {
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1};
+    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(book, sessionPtr);
@@ -570,7 +571,7 @@ TEST_F(FeedTransactionTest, SubBookV2)
     trans1.metadata = metaObj.getSerializer().peekData();
 
     static constexpr auto kORDERBOOK_PUBLISH =
-        R"({
+        R"JSON({
             "tx_json":
             {
                 "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -628,7 +629,7 @@ TEST_F(FeedTransactionTest, SubBookV2)
             "close_time_iso": "2000-01-01T00:00:00Z",
             "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-        })";
+        })JSON";
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kORDERBOOK_PUBLISH))).Times(1);
@@ -785,7 +786,7 @@ TEST_F(FeedTransactionTest, SubRepeat)
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1};
+    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
 
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(book, sessionPtr);
@@ -840,7 +841,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
 
     static constexpr auto kTRANSACTION_FOR_OWNER_FUND =
-        R"({
+        R"JSON({
             "transaction":
             {
                 "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -875,7 +876,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
             "close_time_iso": "2000-01-01T00:00:00Z",
             "engine_result":"tesSUCCESS",
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-        })";
+        })JSON";
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRANSACTION_FOR_OWNER_FUND))).Times(1);
@@ -886,7 +887,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
 }
 
 static constexpr auto kTRAN_FROZEN =
-    R"({
+    R"JSON({
         "transaction":
         {
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -920,7 +921,7 @@ static constexpr auto kTRAN_FROZEN =
         "engine_result_code":0,
         "engine_result":"tesSUCCESS",
         "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-    })";
+    })JSON";
 
 TEST_F(FeedTransactionTest, PubTransactionOfferCreationFrozenLine)
 {
@@ -1146,7 +1147,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
         .WillRepeatedly(testing::Return(ammAccountRoot.getSerializer().peekData()));
 
     static constexpr auto kTRANSACTION_FOR_OWNER_FUND =
-        R"({
+        R"JSON({
             "transaction":
             {
                 "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -1181,7 +1182,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
             "close_time_iso": "2000-01-01T00:00:00Z",
             "engine_result":"tesSUCCESS",
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-        })";
+        })JSON";
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRANSACTION_FOR_OWNER_FUND))).Times(1);
@@ -1233,7 +1234,7 @@ TEST_F(TransactionFeedMockPrometheusTest, subUnsub)
     testFeedPtr_->unsub(account, sessionPtr_);
 
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1};
+    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
     EXPECT_CALL(*mockSessionPtr_, onDisconnect);
     testFeedPtr_->sub(book, sessionPtr_);
     testFeedPtr_->unsub(book, sessionPtr_);
@@ -1263,7 +1264,7 @@ TEST_F(TransactionFeedMockPrometheusTest, AutoDisconnect)
     testFeedPtr_->sub(account, sessionPtr_);
 
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1};
+    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
     testFeedPtr_->sub(book, sessionPtr_);
 
     // Emulate onDisconnect signal is called

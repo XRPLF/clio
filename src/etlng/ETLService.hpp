@@ -20,22 +20,27 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "data/LedgerCache.hpp"
 #include "data/Types.hpp"
-#include "etl/CacheLoader.hpp"
 #include "etl/ETLState.hpp"
-#include "etl/LedgerFetcherInterface.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/SystemState.hpp"
 #include "etl/impl/AmendmentBlockHandler.hpp"
 #include "etl/impl/LedgerFetcher.hpp"
-#include "etl/impl/LedgerPublisher.hpp"
-#include "etlng/AmendmentBlockHandlerInterface.hpp"
+#include "etlng/CacheLoaderInterface.hpp"
+#include "etlng/CacheUpdaterInterface.hpp"
 #include "etlng/ETLServiceInterface.hpp"
 #include "etlng/ExtractorInterface.hpp"
+#include "etlng/InitialLoadObserverInterface.hpp"
+#include "etlng/LedgerPublisherInterface.hpp"
 #include "etlng/LoadBalancerInterface.hpp"
+#include "etlng/LoaderInterface.hpp"
+#include "etlng/MonitorInterface.hpp"
+#include "etlng/TaskManagerInterface.hpp"
+#include "etlng/TaskManagerProviderInterface.hpp"
 #include "etlng/impl/AmendmentBlockHandler.hpp"
+#include "etlng/impl/CacheUpdater.hpp"
 #include "etlng/impl/Extraction.hpp"
+#include "etlng/impl/LedgerPublisher.hpp"
 #include "etlng/impl/Loading.hpp"
 #include "etlng/impl/Monitor.hpp"
 #include "etlng/impl/Registry.hpp"
@@ -45,14 +50,14 @@
 #include "etlng/impl/ext/Core.hpp"
 #include "etlng/impl/ext/NFT.hpp"
 #include "etlng/impl/ext/Successor.hpp"
-#include "feed/SubscriptionManagerInterface.hpp"
-#include "util/Assert.hpp"
-#include "util/Profiler.hpp"
-#include "util/async/context/BasicExecutionContext.hpp"
+#include "util/async/AnyExecutionContext.hpp"
+#include "util/async/AnyOperation.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
 
+#include <boost/asio/io_context.hpp>
 #include <boost/json/object.hpp>
+#include <boost/signals2/connection.hpp>
 #include <fmt/core.h>
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/base_uint.h>
@@ -64,15 +69,12 @@
 #include <xrpl/protocol/TxFormats.h>
 #include <xrpl/protocol/TxMeta.h>
 
-#include <chrono>
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
-#include <ranges>
-#include <stdexcept>
 #include <string>
-#include <tuple>
-#include <utility>
 
 namespace etlng {
 
@@ -92,191 +94,94 @@ namespace etlng {
 class ETLService : public ETLServiceInterface {
     util::Logger log_{"ETL"};
 
+    util::async::AnyExecutionContext ctx_;
+    std::reference_wrapper<util::config::ClioConfigDefinition const> config_;
     std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
-    std::shared_ptr<etlng::LoadBalancerInterface> balancer_;
+    std::shared_ptr<LoadBalancerInterface> balancer_;
     std::shared_ptr<etl::NetworkValidatedLedgersInterface> ledgers_;
-    std::shared_ptr<etl::CacheLoader<>> cacheLoader_;
-
-    std::shared_ptr<etl::LedgerFetcherInterface> fetcher_;
+    std::shared_ptr<LedgerPublisherInterface> publisher_;
+    std::shared_ptr<CacheLoaderInterface> cacheLoader_;
+    std::shared_ptr<CacheUpdaterInterface> cacheUpdater_;
     std::shared_ptr<ExtractorInterface> extractor_;
+    std::shared_ptr<LoaderInterface> loader_;
+    std::shared_ptr<InitialLoadObserverInterface> initialLoadObserver_;
+    std::shared_ptr<etlng::TaskManagerProviderInterface> taskManagerProvider_;
+    std::shared_ptr<etl::SystemState> state_;
 
-    etl::SystemState state_;
-    util::async::CoroExecutionContext ctx_{8};
+    std::unique_ptr<MonitorInterface> monitor_;
+    std::unique_ptr<TaskManagerInterface> taskMan_;
 
-    std::shared_ptr<AmendmentBlockHandlerInterface> amendmentBlockHandler_;
-    std::shared_ptr<impl::Loader> loader_;
+    boost::signals2::scoped_connection monitorSubscription_;
 
-    std::optional<util::async::CoroExecutionContext::Operation<void>> mainLoop_;
+    std::optional<util::async::AnyOperation<void>> mainLoop_;
 
 public:
     /**
      * @brief Create an instance of ETLService.
      *
-     * @param config The configuration to use
-     * @param backend BackendInterface implementation
-     * @param subscriptions Subscription manager
-     * @param balancer Load balancer to use
-     * @param ledgers The network validated ledgers datastructure
+     * @param ctx The execution context for asynchronous operations
+     * @param config The Clio configuration definition
+     * @param backend Interface to the backend database
+     * @param balancer Load balancer for distributing work
+     * @param ledgers Interface for accessing network validated ledgers
+     * @param publisher Interface for publishing ledger data
+     * @param cacheLoader Interface for loading cache data
+     * @param cacheUpdater Interface for updating cache data
+     * @param extractor The extractor to use
+     * @param loader Interface for loading data
+     * @param initialLoadObserver The observer for initial data loading
+     * @param taskManagerProvider The provider of the task manager instance
+     * @param state System state tracking object
      */
     ETLService(
-        util::config::ClioConfigDefinition const& config,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
-        std::shared_ptr<etlng::LoadBalancerInterface> balancer,
-        std::shared_ptr<etl::NetworkValidatedLedgersInterface> ledgers
-    )
-        : backend_(std::move(backend))
-        , subscriptions_(std::move(subscriptions))
-        , balancer_(std::move(balancer))
-        , ledgers_(std::move(ledgers))
-        , cacheLoader_(std::make_shared<etl::CacheLoader<>>(config, backend_, backend_->cache()))
-        , fetcher_(std::make_shared<etl::impl::LedgerFetcher>(backend_, balancer_))
-        , extractor_(std::make_shared<impl::Extractor>(fetcher_))
-        , amendmentBlockHandler_(std::make_shared<etlng::impl::AmendmentBlockHandler>(ctx_, state_))
-        , loader_(std::make_shared<impl::Loader>(
-              backend_,
-              fetcher_,
-              impl::makeRegistry(
-                  impl::CacheExt{backend_->cache()},
-                  impl::CoreExt{backend_},
-                  impl::SuccessorExt{backend_, backend_->cache()},
-                  impl::NFTExt{backend_}
-              ),
-              amendmentBlockHandler_
-          ))
-    {
-        LOG(log_.info()) << "Creating ETLng...";
-    }
+        util::async::AnyExecutionContext ctx,
+        std::reference_wrapper<util::config::ClioConfigDefinition const> config,
+        std::shared_ptr<data::BackendInterface> backend,
+        std::shared_ptr<LoadBalancerInterface> balancer,
+        std::shared_ptr<etl::NetworkValidatedLedgersInterface> ledgers,
+        std::shared_ptr<LedgerPublisherInterface> publisher,
+        std::shared_ptr<CacheLoaderInterface> cacheLoader,
+        std::shared_ptr<CacheUpdaterInterface> cacheUpdater,
+        std::shared_ptr<ExtractorInterface> extractor,
+        std::shared_ptr<LoaderInterface> loader,
+        std::shared_ptr<InitialLoadObserverInterface> initialLoadObserver,
+        std::shared_ptr<etlng::TaskManagerProviderInterface> taskManagerProvider,
+        std::shared_ptr<etl::SystemState> state
+    );
 
-    ~ETLService() override
-    {
-        LOG(log_.debug()) << "Stopping ETLng";
-    }
+    ~ETLService() override;
 
     void
-    run() override
-    {
-        LOG(log_.info()) << "run() in ETLng...";
-
-        mainLoop_.emplace(ctx_.execute([this] {
-            auto const rng = loadInitialLedgerIfNeeded();
-
-            LOG(log_.info()) << "Waiting for next ledger to be validated by network...";
-            std::optional<uint32_t> const mostRecentValidated = ledgers_->getMostRecent();
-
-            if (not mostRecentValidated) {
-                LOG(log_.info()) << "The wait for the next validated ledger has been aborted. "
-                                    "Exiting monitor loop";
-                return;
-            }
-
-            ASSERT(rng.has_value(), "Ledger range can't be null");
-            auto const nextSequence = rng->maxSequence + 1;
-
-            LOG(log_.debug()) << "Database is populated. Starting monitor loop. sequence = " << nextSequence;
-
-            auto scheduler = impl::makeScheduler(impl::ForwardScheduler{*ledgers_, nextSequence}
-                                                 // impl::BackfillScheduler{nextSequence - 1, nextSequence - 1000},
-                                                 // TODO lift limit and start with rng.minSeq
-            );
-
-            auto man = impl::TaskManager(ctx_, *scheduler, *extractor_, *loader_);
-
-            // TODO: figure out this: std::make_shared<impl::Monitor>(backend_, ledgers_, nextSequence)
-            man.run({});  // TODO: needs to be interruptible and fill out settings
-        }));
-    }
+    run() override;
 
     void
-    stop() override
-    {
-        LOG(log_.info()) << "Stop called";
-        // TODO: stop the service correctly
-    }
+    stop() override;
 
     boost::json::object
-    getInfo() const override
-    {
-        // TODO
-        return {{"ok", true}};
-    }
+    getInfo() const override;
 
     bool
-    isAmendmentBlocked() const override
-    {
-        // TODO
-        return false;
-    }
+    isAmendmentBlocked() const override;
 
     bool
-    isCorruptionDetected() const override
-    {
-        // TODO
-        return false;
-    }
+    isCorruptionDetected() const override;
 
     std::optional<etl::ETLState>
-    getETLState() const override
-    {
-        // TODO
-        return std::nullopt;
-    }
+    getETLState() const override;
 
     std::uint32_t
-    lastCloseAgeSeconds() const override
-    {
-        // TODO
-        return 0;
-    }
+    lastCloseAgeSeconds() const override;
 
 private:
     // TODO: this better be std::expected
     std::optional<data::LedgerRange>
-    loadInitialLedgerIfNeeded()
-    {
-        if (auto rng = backend_->hardFetchLedgerRangeNoThrow(); not rng.has_value()) {
-            LOG(log_.info()) << "Database is empty. Will download a ledger from the network.";
+    loadInitialLedgerIfNeeded();
 
-            try {
-                LOG(log_.info()) << "Waiting for next ledger to be validated by network...";
-                if (auto const mostRecentValidated = ledgers_->getMostRecent(); mostRecentValidated.has_value()) {
-                    auto const seq = *mostRecentValidated;
-                    LOG(log_.info()) << "Ledger " << seq << " has been validated. Downloading... ";
+    void
+    startMonitor(uint32_t seq);
 
-                    auto [ledger, timeDiff] = ::util::timed<std::chrono::duration<double>>([this, seq]() {
-                        return extractor_->extractLedgerOnly(seq).and_then([this, seq](auto&& data) {
-                            // TODO: loadInitialLedger in balancer should be called fetchEdgeKeys or similar
-                            data.edgeKeys = balancer_->loadInitialLedger(seq, *loader_);
-
-                            // TODO: this should be interruptible for graceful shutdown
-                            return loader_->loadInitialLedger(data);
-                        });
-                    });
-
-                    LOG(log_.debug()) << "Time to download and store ledger = " << timeDiff;
-                    LOG(log_.info()) << "Finished loadInitialLedger. cache size = " << backend_->cache().size();
-
-                    if (ledger.has_value())
-                        return backend_->hardFetchLedgerRangeNoThrow();
-
-                    LOG(log_.error()) << "Failed to load initial ledger. Exiting monitor loop";
-                } else {
-                    LOG(log_.info()) << "The wait for the next validated ledger has been aborted. "
-                                        "Exiting monitor loop";
-                }
-            } catch (std::runtime_error const& e) {
-                LOG(log_.fatal()) << "Failed to load initial ledger: " << e.what();
-                amendmentBlockHandler_->notifyAmendmentBlocked();
-            }
-        } else {
-            LOG(log_.info()) << "Database already populated. Picking up from the tip of history";
-            cacheLoader_->load(rng->maxSequence);
-
-            return rng;
-        }
-
-        return std::nullopt;
-    }
+    void
+    startLoading(uint32_t seq);
 };
+
 }  // namespace etlng

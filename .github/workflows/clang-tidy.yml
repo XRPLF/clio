@@ -49,7 +49,7 @@ jobs:
         uses: ./.github/actions/restore_cache
         id: restore_cache
         with:
-          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          conan_dir: ${{ env.CONAN_HOME }}
           ccache_dir: ${{ env.CCACHE_DIR }}
           conan_profile: ${{ env.CONAN_PROFILE }}
 

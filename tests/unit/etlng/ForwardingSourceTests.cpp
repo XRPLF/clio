@@ -71,7 +71,7 @@ struct ForwardingSourceOperationsNgTests : ForwardingSourceNgTests {
     }
 
 protected:
-    std::string const message_ = R"({"data": "some_data"})";
+    std::string const message_ = R"JSON({"data": "some_data"})JSON";
     boost::json::object const reply_ = {{"reply", "some_reply"}};
 };
 

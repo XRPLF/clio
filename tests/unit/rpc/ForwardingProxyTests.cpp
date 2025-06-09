@@ -39,7 +39,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <variant>
 #include <vector>
 
 using namespace rpc;
@@ -120,7 +119,7 @@ generateTestValuesForParametersTest()
         {.testName = "ShouldForwardReturnsTrueIsNotAdminRipplePathFind",
          .apiVersion = 2u,
          .method = "ripple_path_find",
-         .testJson = R"({"force_forward": true})",
+         .testJson = R"JSON({"force_forward": true})JSON",
          .mockedIsClioOnly = !isClioOnly,
          .called = 1,
          .isAdmin = !isAdmin,
@@ -128,7 +127,7 @@ generateTestValuesForParametersTest()
         {.testName = "ShouldForwardReturnsTrueIsAdminRipplePathFind",
          .apiVersion = 2u,
          .method = "ripple_path_find",
-         .testJson = R"({"force_forward": true})",
+         .testJson = R"JSON({"force_forward": true})JSON",
          .mockedIsClioOnly = !isClioOnly,
          .called = 1,
          .isAdmin = isAdmin,
@@ -136,7 +135,7 @@ generateTestValuesForParametersTest()
         {.testName = "ShouldForwardReturnsTrueIfCurrentLedgerSpecified",
          .apiVersion = 2u,
          .method = "anymethod",
-         .testJson = R"({"ledger_index": "current"})",
+         .testJson = R"JSON({"ledger_index": "current"})JSON",
          .mockedIsClioOnly = !isClioOnly,
          .called = 1,
          .isAdmin = !isAdmin,
@@ -144,7 +143,7 @@ generateTestValuesForParametersTest()
         {.testName = "ShouldForwardReturnsTrueIfClosedLedgerSpecified",
          .apiVersion = 2u,
          .method = "anymethod",
-         .testJson = R"({"ledger_index": "closed"})",
+         .testJson = R"JSON({"ledger_index": "closed"})JSON",
          .mockedIsClioOnly = !isClioOnly,
          .called = 1,
          .isAdmin = !isAdmin,
@@ -152,7 +151,7 @@ generateTestValuesForParametersTest()
         {.testName = "ShouldForwardReturnsTrueIfAccountInfoWithQueueSpecified",
          .apiVersion = 2u,
          .method = "account_info",
-         .testJson = R"({"queue": true})",
+         .testJson = R"JSON({"queue": true})JSON",
          .mockedIsClioOnly = !isClioOnly,
          .called = 1,
          .isAdmin = !isAdmin,
@@ -160,7 +159,7 @@ generateTestValuesForParametersTest()
         {.testName = "ShouldForwardReturnsFalseIfAccountInfoQueueIsFalse",
          .apiVersion = 2u,
          .method = "account_info",
-         .testJson = R"({"queue": false})",
+         .testJson = R"JSON({"queue": false})JSON",
          .mockedIsClioOnly = !isClioOnly,
          .called = 1,
          .isAdmin = !isAdmin,
@@ -168,7 +167,7 @@ generateTestValuesForParametersTest()
         {.testName = "ShouldForwardReturnsTrueIfLedgerWithQueueSpecified",
          .apiVersion = 2u,
          .method = "ledger",
-         .testJson = R"({"queue": true})",
+         .testJson = R"JSON({"queue": true})JSON",
          .mockedIsClioOnly = !isClioOnly,
          .called = 1,
          .isAdmin = !isAdmin,
@@ -176,7 +175,7 @@ generateTestValuesForParametersTest()
         {.testName = "ShouldForwardReturnsFalseIfLedgerQueueIsFalse",
          .apiVersion = 2u,
          .method = "ledger",
-         .testJson = R"({"queue": false})",
+         .testJson = R"JSON({"queue": false})JSON",
          .mockedIsClioOnly = !isClioOnly,
          .called = 1,
          .isAdmin = !isAdmin,
@@ -216,7 +215,7 @@ generateTestValuesForParametersTest()
         {.testName = "ForceForwardTrue",
          .apiVersion = 1u,
          .method = "any_method",
-         .testJson = R"({"force_forward": true})",
+         .testJson = R"JSON({"force_forward": true})JSON",
          .mockedIsClioOnly = !isClioOnly,
          .called = 1,
          .isAdmin = isAdmin,
@@ -224,7 +223,7 @@ generateTestValuesForParametersTest()
         {.testName = "ForceForwardFalse",
          .apiVersion = 1u,
          .method = "any_method",
-         .testJson = R"({"force_forward": false})",
+         .testJson = R"JSON({"force_forward": false})JSON",
          .mockedIsClioOnly = !isClioOnly,
          .called = 1,
          .isAdmin = isAdmin,
@@ -232,7 +231,7 @@ generateTestValuesForParametersTest()
         {.testName = "ForceForwardNotAdmin",
          .apiVersion = 1u,
          .method = "any_method",
-         .testJson = R"({"force_forward": true})",
+         .testJson = R"JSON({"force_forward": true})JSON",
          .mockedIsClioOnly = !isClioOnly,
          .called = 1,
          .isAdmin = !isAdmin,
@@ -240,7 +239,7 @@ generateTestValuesForParametersTest()
         {.testName = "ForceForwardSubscribe",
          .apiVersion = 1u,
          .method = "subscribe",
-         .testJson = R"({"force_forward": true})",
+         .testJson = R"JSON({"force_forward": true})JSON",
          .mockedIsClioOnly = !isClioOnly,
          .called = 0,
          .isAdmin = isAdmin,
@@ -248,7 +247,7 @@ generateTestValuesForParametersTest()
         {.testName = "ForceForwardUnsubscribe",
          .apiVersion = 1u,
          .method = "unsubscribe",
-         .testJson = R"({"force_forward": true})",
+         .testJson = R"JSON({"force_forward": true})JSON",
          .mockedIsClioOnly = !isClioOnly,
          .called = 0,
          .isAdmin = isAdmin,
@@ -256,7 +255,7 @@ generateTestValuesForParametersTest()
         {.testName = "ForceForwardClioOnly",
          .apiVersion = 1u,
          .method = "clio_only_method",
-         .testJson = R"({"force_forward": true})",
+         .testJson = R"JSON({"force_forward": true})JSON",
          .mockedIsClioOnly = isClioOnly,
          .called = 1,
          .isAdmin = isAdmin,
@@ -299,8 +298,8 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
     auto const rawBalancerPtr = loadBalancer_.get();
     auto const apiVersion = 2u;
     auto const method = "submit";
-    auto const params = json::parse(R"({"test": true})");
-    auto const forwarded = json::parse(R"({"test": true, "command": "submit"})");
+    auto const params = json::parse(R"JSON({"test": true})JSON");
+    auto const forwarded = json::parse(R"JSON({"test": true, "command": "submit"})JSON");
 
     EXPECT_CALL(
         *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(kCLIENT_IP), true, _)
@@ -318,8 +317,7 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
 
         auto const res = proxy_.forward(ctx);
 
-        auto const data = std::get_if<json::object>(&res.response);
-        EXPECT_TRUE(data != nullptr);
+        EXPECT_TRUE(res.response.has_value());
     });
 }
 
@@ -329,8 +327,8 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
     auto const rawBalancerPtr = loadBalancer_.get();
     auto const apiVersion = 2u;
     auto const method = "submit";
-    auto const params = json::parse(R"({"test": true})");
-    auto const forwarded = json::parse(R"({"test": true, "command": "submit"})");
+    auto const params = json::parse(R"JSON({"test": true})JSON");
+    auto const forwarded = json::parse(R"JSON({"test": true, "command": "submit"})JSON");
 
     EXPECT_CALL(
         *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(kCLIENT_IP), true, _)
@@ -348,8 +346,7 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
 
         auto const res = proxy_.forward(ctx);
 
-        auto const status = std::get_if<Status>(&res.response);
-        EXPECT_TRUE(status != nullptr);
-        EXPECT_EQ(*status, rpc::ClioError::EtlInvalidResponse);
+        EXPECT_FALSE(res.response.has_value());
+        EXPECT_EQ(res.response.error(), rpc::ClioError::EtlInvalidResponse);
     });
 }

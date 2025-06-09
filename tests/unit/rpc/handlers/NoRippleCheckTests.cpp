@@ -78,84 +78,84 @@ generateTestValuesForParametersTest()
     return std::vector<NoRippleParamTestCaseBundle>{
         NoRippleParamTestCaseBundle{
             .testName = "AccountNotExists",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "role": "gateway"
-             })",
+             })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Required field 'account' missing"
         },
         NoRippleParamTestCaseBundle{
             .testName = "AccountNotString",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "account": 123,
                 "role": "gateway"
-             })",
+             })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "accountNotString"
         },
         NoRippleParamTestCaseBundle{
             .testName = "InvalidAccount",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "account": "123",
                 "role": "gateway"
-             })",
+             })JSON",
             .expectedError = "actMalformed",
             .expectedErrorMessage = "accountMalformed"
         },
         NoRippleParamTestCaseBundle{
             .testName = "InvalidRole",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "role": "notrole"
-             })",
+             })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "role field is invalid"
         },
         NoRippleParamTestCaseBundle{
             .testName = "RoleNotExists",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
-             })",
+             })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Required field 'role' missing"
         },
         NoRippleParamTestCaseBundle{
             .testName = "LimitNotInt",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "role": "gateway",
                 "limit": "gg"
-             })",
+             })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         NoRippleParamTestCaseBundle{
             .testName = "LimitNegative",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "role": "gateway",
                 "limit": -1
-             })",
+             })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         NoRippleParamTestCaseBundle{
             .testName = "LimitZero",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "role": "gateway",
                 "limit": 0
-             })",
+             })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         NoRippleParamTestCaseBundle{
             .testName = "TransactionsNotBool",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "role": "gateway",
                 "transactions": "gg"
-             })",
+             })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
@@ -186,13 +186,13 @@ TEST_P(NoRippleCheckParameterTest, InvalidParams)
 
 TEST_F(NoRippleCheckParameterTest, V1ApiTransactionsIsNotBool)
 {
-    static constexpr auto kREQ_JSON = R"(
+    static constexpr auto kREQ_JSON = R"JSON(
         {
             "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "role": "gateway",
             "transactions": "gg"
          }
-    )";
+    )JSON";
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence);
     runSpawn([&, this](auto yield) {
@@ -214,11 +214,11 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaHash)
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(std::nullopt));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "role": "gateway",
             "ledger_hash": "{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH
     ));
@@ -241,11 +241,11 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaIntIndex)
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::nullopt));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "role": "gateway",
             "ledger_index": {}
-        }})",
+        }})JSON",
         kACCOUNT,
         kSEQ
     ));
@@ -268,11 +268,11 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::nullopt));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "role": "gateway",
             "ledger_index": "{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kSEQ
     ));
@@ -295,11 +295,11 @@ TEST_F(RPCNoRippleCheckTest, AccountNotExist)
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "gateway"
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH
     ));
@@ -317,7 +317,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
 {
     static constexpr auto kSEQ = 30;
     static constexpr auto kEXPECTED_OUTPUT =
-        R"({
+        R"JSON({
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index":30,
             "problems":
@@ -325,7 +325,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
                 "You appear to have set your default ripple flag even though you are not a gateway. This is not recommended unless you are experimenting"
             ],
             "validated":true
-        })";
+        })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ);
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
@@ -358,11 +358,11 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "user"
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH
     ));
@@ -378,7 +378,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
 {
     static constexpr auto kSEQ = 30;
     static constexpr auto kEXPECTED_OUTPUT =
-        R"({
+        R"JSON({
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index":30,
             "problems":[
@@ -386,7 +386,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
                 "You should probably set the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
             ],
             "validated":true
-        })";
+        })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ);
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
@@ -413,11 +413,11 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "user"
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH
     ));
@@ -433,7 +433,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
 {
     static constexpr auto kSEQ = 30;
     static constexpr auto kEXPECTED_OUTPUT =
-        R"({
+        R"JSON({
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index":30,
             "problems":
@@ -442,7 +442,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
                 "You should clear the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
             ],
             "validated":true
-        })";
+        })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ);
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
@@ -475,11 +475,11 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "gateway"
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH
     ));
@@ -495,7 +495,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
 {
     static constexpr auto kSEQ = 30;
     static constexpr auto kEXPECTED_OUTPUT =
-        R"({
+        R"JSON({
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index":30,
             "problems":
@@ -503,7 +503,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
                 "You should immediately set your default ripple flag"
             ],
             "validated":true
-        })";
+        })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ);
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
@@ -530,11 +530,11 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "gateway"
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH
     ));
@@ -577,12 +577,12 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "gateway",
             "transactions": true
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH
     ));
@@ -630,12 +630,12 @@ TEST_F(RPCNoRippleCheckTest, NormalPathLimit)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "gateway",
             "limit": 1
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH
     ));
@@ -652,7 +652,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
     constexpr auto kSEQ = 30;
     constexpr auto kTRANSACTION_SEQ = 123;
     auto const expectedOutput = fmt::format(
-        R"({{
+        R"JSON({{
                 "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "ledger_index":30,
                 "problems":[
@@ -694,7 +694,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
                     }}
                 ],
                 "validated":true
-        }})",
+        }})JSON",
         kTRANSACTION_SEQ,
         kTRANSACTION_SEQ + 1,
         ripple::tfClearNoRipple,
@@ -735,12 +735,12 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "gateway",
             "transactions": true
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH
     ));
@@ -787,12 +787,12 @@ TEST_F(RPCNoRippleCheckTest, LimitMoreThanMax)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "ledger_hash": "{}",
             "role": "gateway",
             "limit": {}
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH,
         NoRippleCheckHandler::kLIMIT_MAX + 1

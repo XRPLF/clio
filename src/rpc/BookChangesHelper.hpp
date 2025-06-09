@@ -62,6 +62,7 @@ struct BookChange {
     ripple::STAmount lowRate;
     ripple::STAmount openRate;
     ripple::STAmount closeRate;
+    std::optional<ripple::uint256> domain;
 };
 
 /**
@@ -145,11 +146,15 @@ private:
             auto const deltaPays =
                 finalFields.getFieldAmount(ripple::sfTakerPays) - previousFields.getFieldAmount(ripple::sfTakerPays);
 
-            transformAndStore(deltaGets, deltaPays);
+            transformAndStore(deltaGets, deltaPays, finalFields[~ripple::sfDomainID]);
         }
 
         void
-        transformAndStore(ripple::STAmount const& deltaGets, ripple::STAmount const& deltaPays)
+        transformAndStore(
+            ripple::STAmount const& deltaGets,
+            ripple::STAmount const& deltaPays,
+            std::optional<ripple::uint256> const& domain
+        )
         {
             auto const g = to_string(deltaGets.issue());
             auto const p = to_string(deltaPays.issue());
@@ -189,6 +194,7 @@ private:
                     entry.lowRate = rate;
 
                 entry.closeRate = rate;
+                entry.domain = domain;
             } else {
                 tally_[key] = {
                     .sideAVolume = first,
@@ -197,6 +203,7 @@ private:
                     .lowRate = rate,
                     .openRate = rate,
                     .closeRate = rate,
+                    .domain = domain,
                 };
             }
         }

@@ -86,67 +86,67 @@ generateTestValuesForParametersTest()
     return std::vector<AccountNFTParamTestCaseBundle>{
         {
             .testName = "AccountMissing",
-            .testJson = R"({})",
+            .testJson = R"JSON({})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Required field 'account' missing",
         },
         {
             .testName = "AccountNotString",
-            .testJson = R"({"account": 123})",
+            .testJson = R"JSON({"account": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "accountNotString",
         },
         {
             .testName = "AccountInvalid",
-            .testJson = R"({"account": "123"})",
+            .testJson = R"JSON({"account": "123"})JSON",
             .expectedError = "actMalformed",
             .expectedErrorMessage = "accountMalformed",
         },
         {
             .testName = "LedgerHashInvalid",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashMalformed",
         },
         {
             .testName = "LedgerHashNotString",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashNotString",
         },
         {
             .testName = "LedgerIndexNotInt",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledgerIndexMalformed",
         },
         {
             .testName = "LimitNotInt",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": "x"})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
         {
             .testName = "LimitNegative",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": -1})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": -1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
         {
             .testName = "LimitZero",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": 0})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": 0})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
         {
             .testName = "MarkerNotString",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 123})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "markerNotString",
         },
         {
             .testName = "MarkerInvalid",
-            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": "12;xxx"})",
+            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": "12;xxx"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "markerMalformed",
         },
@@ -182,10 +182,10 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaHash)
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "ledger_hash":"{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH
     ));
@@ -208,10 +208,10 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaStringIndex)
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "ledger_index":"{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kSEQ
     ));
@@ -234,10 +234,10 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "ledger_index":{}
-        }})",
+        }})JSON",
         kACCOUNT,
         kSEQ
     ));
@@ -261,9 +261,9 @@ TEST_F(RPCAccountNFTsHandlerTest, AccountNotFound)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountNFTsHandler{backend_}};
@@ -279,7 +279,7 @@ TEST_F(RPCAccountNFTsHandlerTest, AccountNotFound)
 TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
 {
     static auto const kEXPECTED_OUTPUT = fmt::format(
-        R"({{
+        R"JSON({{
             "ledger_hash":"{}",
             "ledger_index":30,
             "validated":true,
@@ -296,7 +296,7 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
                 }}
             ],
             "limit":100
-        }})",
+        }})JSON",
         kLEDGER_HASH,
         kACCOUNT,
         kTOKEN_ID,
@@ -324,9 +324,9 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountNFTsHandler{backend_}};
@@ -358,10 +358,10 @@ TEST_F(RPCAccountNFTsHandlerTest, Limit)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1 + kLIMIT);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "limit":{}
-        }})",
+        }})JSON",
         kACCOUNT,
         kLIMIT
     ));
@@ -393,10 +393,10 @@ TEST_F(RPCAccountNFTsHandlerTest, Marker)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "marker":"{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kPAGE
     ));
@@ -420,10 +420,10 @@ TEST_F(RPCAccountNFTsHandlerTest, InvalidMarker)
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "marker":"{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kINVALID_PAGE
     ));
@@ -449,9 +449,9 @@ TEST_F(RPCAccountNFTsHandlerTest, AccountWithNoNFT)
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountNFTsHandler{backend_}};
@@ -481,10 +481,10 @@ TEST_F(RPCAccountNFTsHandlerTest, invalidPage)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "marker":"{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kPAGE
     ));
@@ -501,7 +501,7 @@ TEST_F(RPCAccountNFTsHandlerTest, invalidPage)
 TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
 {
     static auto const kEXPECTED_OUTPUT = fmt::format(
-        R"({{
+        R"JSON({{
             "ledger_hash":"{}",
             "ledger_index":30,
             "validated":true,
@@ -518,7 +518,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
                 }}
             ],
             "limit":{}
-        }})",
+        }})JSON",
         kLEDGER_HASH,
         kACCOUNT,
         kTOKEN_ID,
@@ -547,10 +547,10 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "limit":{}
-        }})",
+        }})JSON",
         kACCOUNT,
         AccountNFTsHandler::kLIMIT_MIN - 1
     ));
@@ -565,7 +565,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
 TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
 {
     static auto const kEXPECTED_OUTPUT = fmt::format(
-        R"({{
+        R"JSON({{
             "ledger_hash":"{}",
             "ledger_index":30,
             "validated":true,
@@ -582,7 +582,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
                 }}
             ],
             "limit":{}
-        }})",
+        }})JSON",
         kLEDGER_HASH,
         kACCOUNT,
         kTOKEN_ID,
@@ -611,10 +611,10 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account":"{}",
             "limit":{}
-        }})",
+        }})JSON",
         kACCOUNT,
         AccountNFTsHandler::kLIMIT_MAX + 1
     ));

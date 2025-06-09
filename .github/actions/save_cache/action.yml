@@ -42,13 +42,13 @@ runs:
       if: ${{ inputs.conan_cache_hit != 'true' }}
       shell: bash
       run: |
-        conan remove "*" -s -b -f
+        conan cache clean --source --build --temp
 
     - name: Save conan cache
       if: ${{ inputs.conan_cache_hit != 'true' }}
       uses: actions/cache/save@v4
       with:
-        path: ${{ inputs.conan_dir }}/data
+        path: ${{ inputs.conan_dir }}/p
         key: clio-conan_data-${{ runner.os }}-${{ inputs.build_type }}-${{ inputs.conan_profile }}-develop-${{ inputs.conan_hash }}
 
     - name: Save ccache cache

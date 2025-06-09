@@ -29,6 +29,7 @@
 #include "rpc/Errors.hpp"
 #include "util/Assert.hpp"
 #include "util/Mutex.hpp"
+#include "util/Random.hpp"
 #include "util/ResponseExpirationCache.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
@@ -88,6 +89,8 @@ private:
     std::optional<util::ResponseExpirationCache> forwardingCache_;
     std::optional<std::string> forwardingXUserValue_;
 
+    std::unique_ptr<util::RandomGeneratorInterface> randomGenerator_;
+
     std::vector<SourcePtr> sources_;
     std::optional<etl::ETLState> etlState_;
     std::uint32_t downloadRanges_ =
@@ -123,6 +126,7 @@ public:
      * @param ioc The io_context to run on
      * @param backend BackendInterface implementation
      * @param subscriptions Subscription manager
+     * @param randomGenerator A random generator to use for selecting sources
      * @param validatedLedgers The network validated ledgers datastructure
      * @param sourceFactory A factory function to create a source
      */
@@ -131,6 +135,7 @@ public:
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+        std::unique_ptr<util::RandomGeneratorInterface> randomGenerator,
         std::shared_ptr<etl::NetworkValidatedLedgersInterface> validatedLedgers,
         SourceFactory sourceFactory = makeSource
     );
@@ -142,6 +147,7 @@ public:
      * @param ioc The io_context to run on
      * @param backend BackendInterface implementation
      * @param subscriptions Subscription manager
+     * @param randomGenerator A random generator to use for selecting sources
      * @param validatedLedgers The network validated ledgers datastructure
      * @param sourceFactory A factory function to create a source
      * @return A shared pointer to a new instance of LoadBalancer
@@ -152,6 +158,7 @@ public:
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+        std::unique_ptr<util::RandomGeneratorInterface> randomGenerator,
         std::shared_ptr<etl::NetworkValidatedLedgersInterface> validatedLedgers,
         SourceFactory sourceFactory = makeSource
     );

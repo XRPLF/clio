@@ -257,7 +257,8 @@ createOfferLedgerObject(
     std::string_view paysCurrency,
     std::string_view getsIssueId,
     std::string_view paysIssueId,
-    std::string_view bookDirId
+    std::string_view bookDirId,
+    std::optional<std::string_view> const& domain = std::nullopt
 );
 
 [[nodiscard]] ripple::STObject

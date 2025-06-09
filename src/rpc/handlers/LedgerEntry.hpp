@@ -430,7 +430,7 @@ public:
 private:
     // dir_root and owner can not be both empty or filled at the same time
     // This function will return an error if this is the case
-    static std::variant<ripple::uint256, Status>
+    static std::expected<ripple::uint256, Status>
     composeKeyFromDirectory(boost::json::object const& directory) noexcept;
 
     /**

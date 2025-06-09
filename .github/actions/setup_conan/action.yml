@@ -12,22 +12,11 @@ runs:
     - name: Create conan profile on macOS
       if: ${{ runner.os == 'macOS' }}
       shell: bash
-      env:
-        CONAN_PROFILE: ${{ inputs.conan_profile }}
       run: |
-        echo "Creating \"$CONAN_PROFILE\" conan profile"
-        conan profile new "$CONAN_PROFILE" --detect --force
-        conan profile update settings.compiler.libcxx=libc++ "$CONAN_PROFILE"
-        conan profile update settings.compiler.cppstd=20 "$CONAN_PROFILE"
-        conan profile update env.CXXFLAGS=-DBOOST_ASIO_DISABLE_CONCEPTS "$CONAN_PROFILE"
-        conan profile update "conf.tools.build:cxxflags+=[\"-DBOOST_ASIO_DISABLE_CONCEPTS\"]" "$CONAN_PROFILE"
+        conan profile detect --name "${{ inputs.conan_profile }}" --force
+        sed -i '' 's/compiler.cppstd=[^ ]*/compiler.cppstd=20/' "${{ env.CONAN_HOME }}/profiles/${{ inputs.conan_profile }}"
 
-    - name: Add conan-non-prod artifactory
+    - name: Add artifactory remote
       shell: bash
       run: |
-        if [[ -z "$(conan remote list | grep conan-non-prod)" ]]; then
-            echo "Adding conan-non-prod"
-            conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
-        else
-            echo "Conan-non-prod is available"
-        fi
+        conan remote add --index 0 --force ripple http://18.143.149.228:8081/artifactory/api/conan/dev

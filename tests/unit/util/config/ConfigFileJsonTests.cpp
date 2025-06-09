@@ -104,17 +104,17 @@ INSTANTIATE_TEST_CASE_P(
     testing::Values(
         ConfigFileJsonParseTestBundle{
             .testName = "values",
-            .configStr = R"json({
+            .configStr = R"JSON({
                 "int": 42,
                 "double": 123.456,
                 "bool": true,
                 "string": "some string"
-            })json",
+            })JSON",
             .validationMap = {{"int", 42}, {"double", 123.456}, {"bool", true}, {"string", "some string"}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "nested",
-            .configStr = R"json({
+            .configStr = R"JSON({
                 "level_0": {
                     "int": 42,
                     "level_1":{
@@ -127,7 +127,7 @@ INSTANTIATE_TEST_CASE_P(
                         }
                     }
                 }
-            })json",
+            })JSON",
             .validationMap =
                 {{"level_0.int", 42},
                  {"level_0.level_1.double", 123.456},
@@ -136,14 +136,14 @@ INSTANTIATE_TEST_CASE_P(
         },
         ConfigFileJsonParseTestBundle{
             .testName = "array",
-            .configStr = R"json({
+            .configStr = R"JSON({
                 "array": [1, 2, 3]
-            })json",
+            })JSON",
             .validationMap = {{"array.[]", boost::json::array{1, 2, 3}}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "nested_array",
-            .configStr = R"json({
+            .configStr = R"JSON({
                 "level_0": {
                     "array": [1, 2, 3],
                     "level_1": {
@@ -153,7 +153,7 @@ INSTANTIATE_TEST_CASE_P(
                         }
                     }
                 }
-            })json",
+            })JSON",
             .validationMap =
                 {
                     {"level_0.array.[]", boost::json::array{1, 2, 3}},
@@ -163,7 +163,7 @@ INSTANTIATE_TEST_CASE_P(
         },
         ConfigFileJsonParseTestBundle{
             .testName = "mixed",
-            .configStr = R"json({
+            .configStr = R"JSON({
                 "int": 42,
                 "double": 123.456,
                 "bool": true,
@@ -176,7 +176,7 @@ INSTANTIATE_TEST_CASE_P(
                     "string": "some string",
                     "array": [1, 2, 3]
                 }
-            })json",
+            })JSON",
             .validationMap =
                 {
                     {"int", 42},
@@ -191,10 +191,10 @@ INSTANTIATE_TEST_CASE_P(
                     {"nested.array.[]", boost::json::array{1, 2, 3}},
                 }
         },
-        ConfigFileJsonParseTestBundle{.testName = "empty", .configStr = R"json({})json", .validationMap = {}},
+        ConfigFileJsonParseTestBundle{.testName = "empty", .configStr = R"JSON({})JSON", .validationMap = {}},
         ConfigFileJsonParseTestBundle{
             .testName = "empty_nested",
-            .configStr = R"json({
+            .configStr = R"JSON({
                 "level_0": {
                     "level_1": {
                         "level_2": {
@@ -202,19 +202,19 @@ INSTANTIATE_TEST_CASE_P(
                         }
                     }
                 }
-            })json",
+            })JSON",
             .validationMap = {}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "empty_array",
-            .configStr = R"json({
+            .configStr = R"JSON({
                 "array": []
-            })json",
+            })JSON",
             .validationMap = {{"array.[]", boost::json::array{}}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "empty_nested_array",
-            .configStr = R"json({
+            .configStr = R"JSON({
                 "level_0": {
                     "array": [],
                     "level_1": {
@@ -224,7 +224,7 @@ INSTANTIATE_TEST_CASE_P(
                         }
                     }
                 }
-            })json",
+            })JSON",
             .validationMap =
                 {
                     {"level_0.array.[]", boost::json::array{}},
@@ -234,72 +234,72 @@ INSTANTIATE_TEST_CASE_P(
         },
         ConfigFileJsonParseTestBundle{
             .testName = "object_inside_array",
-            .configStr = R"json({
+            .configStr = R"JSON({
                 "array": [
                     { "int": 42 }
                 ]
-            })json",
+            })JSON",
             .validationMap = {{"array.[].int", boost::json::array{42}}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "object_with_optional_fields_inside_array",
-            .configStr = R"json({
+            .configStr = R"JSON({
                 "array": [
                     {"int": 42},
                     {"int": 24, "bool": true}
                 ]
-            })json",
+            })JSON",
             .validationMap =
                 {{"array.[].int", boost::json::array{42, 24}},
                  {"array.[].bool", boost::json::array{boost::json::value{}, true}}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "full_object_is_at_the_front_of_array",
-            .configStr = R"json({
+            .configStr = R"JSON({
                 "array": [
                     {"int": 42, "bool": true},
                     {"int": 2},
                     {"int": 4}
                 ]
-            })json",
+            })JSON",
             .validationMap =
                 {{"array.[].int", boost::json::array{42, 2, 4}},
                  {"array.[].bool", boost::json::array{true, boost::json::value{}, boost::json::value{}}}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "full_object_is_in_the_middle_of_array",
-            .configStr = R"json({
+            .configStr = R"JSON({
                 "array": [
                     {"int": 42},
                     {"int": 2, "bool": true},
                     {"int": 4}
                 ]
-            })json",
+            })JSON",
             .validationMap =
                 {{"array.[].int", boost::json::array{42, 2, 4}},
                  {"array.[].bool", boost::json::array{boost::json::value{}, true, boost::json::value{}}}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "no_full_object",
-            .configStr = R"json({
+            .configStr = R"JSON({
                 "array": [
                     {"int": 42},
                     {"int": 2},
                     {"bool": true}
                 ]
-            })json",
+            })JSON",
             .validationMap =
                 {{"array.[].int", boost::json::array{42, 2, boost::json::value{}}},
                  {"array.[].bool", boost::json::array{boost::json::value{}, boost::json::value{}, true}}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "array_with_nexted_objects",
-            .configStr = R"json({
+            .configStr = R"JSON({
                 "array": [
                     { "object": { "int": 42 } },
                     { "object": { "string": "some string" } }
                 ]
-            })json",
+            })JSON",
             .validationMap =
                 {{"array.[].object.int", boost::json::array{42, boost::json::value{}}},
                  {"array.[].object.string", boost::json::array{boost::json::value{}, "some string"}}}
@@ -312,12 +312,12 @@ struct ConfigFileJsonTest : NoLoggerFixture {};
 
 TEST_F(ConfigFileJsonTest, getValue)
 {
-    auto const jsonStr = R"json({
+    auto const jsonStr = R"JSON({
         "int": 42,
         "object": { "string": "some string" },
         "bool": true,
         "double": 123.456
-    })json";
+    })JSON";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
 
     auto const intValue = jsonFileObj.getValue("int");
@@ -349,28 +349,28 @@ TEST_F(ConfigFileJsonAssertTest, getValueInvalidKey)
 
 TEST_F(ConfigFileJsonAssertTest, getValueOfArray)
 {
-    auto const jsonStr = R"json({
+    auto const jsonStr = R"JSON({
         "array": [1, 2, 3]
-    })json";
+    })JSON";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
     EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto a = jsonFileObj.getValue("array"));
 }
 
 TEST_F(ConfigFileJsonAssertTest, nullIsNotSupported)
 {
-    auto const jsonStr = R"json({
+    auto const jsonStr = R"JSON({
         "null": null
-    })json";
+    })JSON";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
     EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto a = jsonFileObj.getValue("null"));
 }
 
 TEST_F(ConfigFileJsonTest, getArray)
 {
-    auto const jsonStr = R"json({
+    auto const jsonStr = R"JSON({
         "array": [1, "2", 3.14, true],
         "object": { "array": [3, 4] }
-    })json";
+    })JSON";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
 
     auto const array = jsonFileObj.getArray("array.[]");
@@ -400,12 +400,12 @@ TEST_F(ConfigFileJsonTest, getArray)
 
 TEST_F(ConfigFileJsonTest, getArrayObjectInArray)
 {
-    auto const jsonStr = R"json({
+    auto const jsonStr = R"JSON({
         "array": [
             { "int": 42 },
             { "string": "some string" }
         ]
-    })json";
+    })JSON";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
 
     auto const ints = jsonFileObj.getArray("array.[].int");
@@ -423,12 +423,12 @@ TEST_F(ConfigFileJsonTest, getArrayObjectInArray)
 
 TEST_F(ConfigFileJsonTest, getArrayOptionalInArray)
 {
-    auto const jsonStr = R"json({
+    auto const jsonStr = R"JSON({
         "array": [
             { "int": 42 },
             { "int": 24, "bool": true }
         ]
-    })json";
+    })JSON";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
 
     auto const ints = jsonFileObj.getArray("array.[].int");
@@ -453,21 +453,21 @@ TEST_F(ConfigFileJsonAssertTest, getArrayInvalidKey)
 
 TEST_F(ConfigFileJsonAssertTest, getArrayNotArray)
 {
-    auto const jsonStr = R"json({
+    auto const jsonStr = R"JSON({
         "int": 42
-    })json";
+    })JSON";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
     EXPECT_CLIO_ASSERT_FAIL([[maybe_unused]] auto a = jsonFileObj.getArray("int"));
 }
 
 TEST_F(ConfigFileJsonTest, containsKey)
 {
-    auto const jsonStr = R"json({
+    auto const jsonStr = R"JSON({
         "int": 42,
         "object": { "string": "some string", "array": [1, 2, 3] },
         "array2": [1, 2, 3],
         "array_of_objects": [ {"int": 42}, {"string": "some string"} ]
-    })json";
+    })JSON";
     auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
 
     EXPECT_TRUE(jsonFileObj.containsKey("int"));
@@ -505,7 +505,7 @@ TEST_F(ConfigFileJsonMakeTest, invalidJson)
 
 TEST_F(ConfigFileJsonMakeTest, validFile)
 {
-    auto const file = TmpFile(R"json({ "int": 42 })json");
+    auto const file = TmpFile(R"JSON({ "int": 42 })JSON");
     auto const jsonFileObj = ConfigFileJson::makeConfigFileJson(file.path);
     ASSERT_TRUE(jsonFileObj.has_value());
 

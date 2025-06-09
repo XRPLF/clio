@@ -2,10 +2,10 @@ from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 
 
-class Clio(ConanFile):
+class ClioConan(ConanFile):
     name = 'clio'
     license = 'ISC'
-    author = 'Alex Kremer <akremer@ripple.com>, John Freeman <jfreeman@ripple.com>'
+    author = 'Alex Kremer <akremer@ripple.com>, John Freeman <jfreeman@ripple.com>, Ayaz Salikhov <asalikhov@ripple.com>'
     url = 'https://github.com/xrplf/clio'
     description = 'Clio RPC server'
     settings = 'os', 'compiler', 'build_type', 'arch'
@@ -28,10 +28,10 @@ class Clio(ConanFile):
         'boost/1.83.0',
         'cassandra-cpp-driver/2.17.0',
         'fmt/10.1.1',
-        'protobuf/3.21.9',
+        'protobuf/3.21.12',
         'grpc/1.50.1',
         'openssl/1.1.1v',
-        'xrpl/2.5.0-b1',
+        'xrpl/2.5.0-rc1',
         'zlib/1.3.1',
         'libbacktrace/cci.20210118'
     ]
@@ -100,6 +100,10 @@ class Clio(ConanFile):
         tc.variables['benchmark'] = self.options.benchmark
         tc.variables['snapshot'] = self.options.snapshot
         tc.variables['time_trace'] = self.options.time_trace
+
+        if self.settings.compiler == 'clang' and self.settings.compiler.version == 16:
+            tc.extra_cxxflags = ["-DBOOST_ASIO_DISABLE_CONCEPTS"]
+
         tc.generate()
 
     def build(self):

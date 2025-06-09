@@ -5,13 +5,17 @@ It is used in [Clio Github Actions](https://github.com/XRPLF/clio/actions) but c
 
 The image is based on Ubuntu 20.04 and contains:
 
+- ccache 4.11.3
 - clang 16.0.6
-- gcc 12.3
+- ClangBuildAnalyzer 1.6.0
+- conan 2.17.0
 - doxygen 1.12
-- gh 2.40
-- ccache 4.10.2
-- conan 1.62
+- gcc 12.3.0
+- gh 2.74
+- git-cliff 2.9.1
 - and some other useful tools
 
-Conan is set up to build Clio without any additional steps. There are two preset conan profiles: `clang` and `gcc` to use corresponding compiler. By default conan is setup to use `gcc`.
-Sanitizer builds for `ASAN`, `TSAN` and `UBSAN` are enabled via conan profiles for each of the supported compilers. These can be selected using the following pattern (all lowercase): `[compiler].[sanitizer]` (e.g. `--profile gcc.tsan`).
+Conan is set up to build Clio without any additional steps.
+There are two preset conan profiles: `clang` and `gcc` to use corresponding compiler.
+`ASan`, `TSan` and `UBSan` sanitizer builds are enabled via conan profiles for each of the supported compilers.
+These can be selected using the following pattern (all lowercase): `[compiler].[sanitizer]` (e.g. `--profile:all gcc.tsan`).

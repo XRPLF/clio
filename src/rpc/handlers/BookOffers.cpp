@@ -19,7 +19,6 @@
 
 #include "rpc/handlers/BookOffers.hpp"
 
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
@@ -39,30 +38,29 @@
 #include <xrpl/protocol/jss.h>
 
 #include <string>
-#include <variant>
 
 namespace rpc {
 
 BookOffersHandler::Result
 BookOffersHandler::process(Input input, Context const& ctx) const
 {
-    auto bookMaybe = parseBook(input.paysCurrency, input.paysID, input.getsCurrency, input.getsID);
-    if (auto const status = std::get_if<Status>(&bookMaybe))
-        return Error{*status};
+    auto bookMaybe = parseBook(input.paysCurrency, input.paysID, input.getsCurrency, input.getsID, input.domain);
+    if (!bookMaybe.has_value())
+        return Error{bookMaybe.error()};
 
     // check ledger
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "BookOffer's ledger range must be available");
 
-    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
-        return Error{*status};
+    if (!expectedLgrInfo.has_value())
+        return Error{expectedLgrInfo.error()};
 
-    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
-    auto const book = std::get<ripple::Book>(bookMaybe);
+    auto const& lgrInfo = expectedLgrInfo.value();
+    auto const book = bookMaybe.value();
     auto const bookKey = getBookBase(book);
 
     // TODO: Add performance metrics if needed in future
@@ -132,6 +130,9 @@ tag_invoke(boost::json::value_to_tag<BookOffersHandler::Input>, boost::json::val
 
     if (jsonObject.contains(JS(taker)))
         input.taker = accountFromStringStrict(boost::json::value_to<std::string>(jv.at(JS(taker))));
+
+    if (jsonObject.contains(JS(domain)))
+        input.domain = boost::json::value_to<std::string>(jv.at(JS(domain)));
 
     if (jsonObject.contains(JS(limit)))
         input.limit = jv.at(JS(limit)).as_int64();

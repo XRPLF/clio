@@ -84,55 +84,55 @@ generateTestValuesForParametersTest()
     return std::vector<AccountInfoParamTestCaseBundle>{
         AccountInfoParamTestCaseBundle{
             .testName = "MissingAccountAndIdent",
-            .testJson = R"({})",
+            .testJson = R"JSON({})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Missing field 'account'."
         },
         AccountInfoParamTestCaseBundle{
             .testName = "AccountNotString",
-            .testJson = R"({"account":1})",
+            .testJson = R"JSON({"account":1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "accountNotString"
         },
         AccountInfoParamTestCaseBundle{
             .testName = "AccountInvalid",
-            .testJson = R"({"account":"xxx"})",
+            .testJson = R"JSON({"account":"xxx"})JSON",
             .expectedError = "actMalformed",
             .expectedErrorMessage = "accountMalformed"
         },
         AccountInfoParamTestCaseBundle{
             .testName = "IdentNotString",
-            .testJson = R"({"ident":1})",
+            .testJson = R"JSON({"ident":1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "identNotString"
         },
         AccountInfoParamTestCaseBundle{
             .testName = "IdentInvalid",
-            .testJson = R"({"ident":"xxx"})",
+            .testJson = R"JSON({"ident":"xxx"})JSON",
             .expectedError = "actMalformed",
             .expectedErrorMessage = "identMalformed"
         },
         AccountInfoParamTestCaseBundle{
             .testName = "SignerListsInvalid",
-            .testJson = R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists":1})",
+            .testJson = R"JSON({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists":1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         AccountInfoParamTestCaseBundle{
             .testName = "LedgerHashInvalid",
-            .testJson = R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":"1"})",
+            .testJson = R"JSON({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":"1"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashMalformed"
         },
         AccountInfoParamTestCaseBundle{
             .testName = "LedgerHashNotString",
-            .testJson = R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":1})",
+            .testJson = R"JSON({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashNotString"
         },
         AccountInfoParamTestCaseBundle{
             .testName = "LedgerIndexInvalid",
-            .testJson = R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index":"a"})",
+            .testJson = R"JSON({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index":"a"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledgerIndexMalformed"
         },
@@ -163,9 +163,9 @@ TEST_P(AccountInfoParameterTest, InvalidParams)
 
 TEST_F(AccountInfoParameterTest, ApiV1SignerListIsNotBool)
 {
-    static constexpr auto kREQ_JSON = R"(
+    static constexpr auto kREQ_JSON = R"JSON(
         {"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists":1}
-    )";
+    )JSON";
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence);
 
@@ -188,10 +188,10 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
     ON_CALL(*backend_, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "ledger_index": 30
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountInfoHandler{backend_, mockAmendmentCenterPtr_}};
@@ -211,10 +211,10 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
     ON_CALL(*backend_, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::nullopt));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "ledger_index": "30"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountInfoHandler{backend_, mockAmendmentCenterPtr_}};
@@ -235,10 +235,10 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "ledger_hash": "{}"
-        }})",
+        }})JSON",
         kACCOUNT,
         kLEDGER_HASH
     ));
@@ -262,9 +262,9 @@ TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountInfoHandler{backend_, mockAmendmentCenterPtr_}};
@@ -288,9 +288,9 @@ TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountInfoHandler{backend_, mockAmendmentCenterPtr_}};
@@ -322,10 +322,10 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "signer_lists": true
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountInfoHandler{backend_, mockAmendmentCenterPtr_}};
@@ -341,7 +341,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
 TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
 {
     auto const expectedOutput = fmt::format(
-        R"({{
+        R"JSON({{
             "account_data":
             {{
                 "Account": "{}",
@@ -400,7 +400,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
             "ledger_hash": "{}",
             "ledger_index": 30,
             "validated": true
-        }})",
+        }})JSON",
         kACCOUNT,
         kINDEX1,
         kACCOUNT1,
@@ -425,10 +425,10 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "signer_lists": true
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountInfoHandler{backend_, mockAmendmentCenterPtr_}};
@@ -442,7 +442,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
 TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
 {
     auto const expectedOutput = fmt::format(
-        R"({{
+        R"JSON({{
             "account_data":
             {{
                 "Account": "{}",
@@ -501,7 +501,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
             "ledger_hash": "{}",
             "ledger_index": 30,
             "validated": true
-        }})",
+        }})JSON",
         kACCOUNT,
         kINDEX1,
         kACCOUNT1,
@@ -526,10 +526,10 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}",
             "signer_lists": true
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountInfoHandler{backend_, mockAmendmentCenterPtr_}};
@@ -543,7 +543,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
 TEST_F(RPCAccountInfoHandlerTest, Flags)
 {
     auto const expectedOutput = fmt::format(
-        R"({{
+        R"JSON({{
             "account_data": {{
                 "Account": "{}",
                 "Balance": "200",
@@ -570,7 +570,7 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
             "ledger_hash": "{}",
             "ledger_index": 30,
             "validated": true
-        }})",
+        }})JSON",
         kACCOUNT,
         kINDEX1,
         kLEDGER_HASH
@@ -600,9 +600,9 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
     EXPECT_CALL(*backend_, doFetchLedgerObject);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountInfoHandler{backend_, mockAmendmentCenterPtr_}};
@@ -629,9 +629,9 @@ TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
     EXPECT_CALL(*backend_, doFetchLedgerObject);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "ident": "{}"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountInfoHandler{backend_, mockAmendmentCenterPtr_}};
@@ -645,7 +645,7 @@ TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
 TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
 {
     auto const expectedOutput = fmt::format(
-        R"({{
+        R"JSON({{
             "account_data": {{
                 "Account": "{}",
                 "Balance": "200",
@@ -676,7 +676,7 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
             "ledger_hash": "{}",
             "ledger_index": 30,
             "validated": true
-        }})",
+        }})JSON",
         kACCOUNT,
         kINDEX1,
         kLEDGER_HASH
@@ -707,9 +707,9 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
     EXPECT_CALL(*backend_, doFetchLedgerObject);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountInfoHandler{backend_, mockAmendmentCenterPtr_}};
@@ -723,7 +723,7 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
 TEST_F(RPCAccountInfoHandlerTest, Clawback)
 {
     auto const expectedOutput = fmt::format(
-        R"({{
+        R"JSON({{
             "account_data": {{
                 "Account": "{}",
                 "Balance": "200",
@@ -751,7 +751,7 @@ TEST_F(RPCAccountInfoHandlerTest, Clawback)
             "ledger_hash": "{}",
             "ledger_index": 30,
             "validated": true
-        }})",
+        }})JSON",
         kACCOUNT,
         kINDEX1,
         kLEDGER_HASH
@@ -781,9 +781,9 @@ TEST_F(RPCAccountInfoHandlerTest, Clawback)
     EXPECT_CALL(*backend_, doFetchLedgerObject);
 
     auto static const kINPUT = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "account": "{}"
-        }})",
+        }})JSON",
         kACCOUNT
     ));
     auto const handler = AnyHandler{AccountInfoHandler{backend_, mockAmendmentCenterPtr_}};

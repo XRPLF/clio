@@ -36,7 +36,7 @@ AmendmentBlockHandler::ActionType const AmendmentBlockHandler::kDEFAULT_AMENDMEN
 };
 
 AmendmentBlockHandler::AmendmentBlockHandler(
-    util::async::AnyExecutionContext&& ctx,
+    util::async::AnyExecutionContext ctx,
     etl::SystemState& state,
     std::chrono::steady_clock::duration interval,
     ActionType action

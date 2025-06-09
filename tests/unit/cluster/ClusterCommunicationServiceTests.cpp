@@ -195,7 +195,7 @@ TEST_F(ClusterCommunicationServiceTest, Read_Success)
 
     EXPECT_CALL(*backend_, fetchClioNodesData).WillOnce([&](auto&&) {
         std::vector<std::pair<boost::uuids::uuid, std::string>> result = {
-            {selfUuid, R"json({"update_time": "2015-05-15:12:00:00"})json"},
+            {selfUuid, R"JSON({"update_time": "2015-05-15:12:00:00"})JSON"},
         };
 
         for (auto const& node : otherNodesData) {

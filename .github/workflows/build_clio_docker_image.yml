@@ -85,16 +85,16 @@ jobs:
       - name: Build Docker image
         uses: ./.github/actions/build_docker_image
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
           DOCKERHUB_PW: ${{ secrets.DOCKERHUB_PW }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           images: |
-            rippleci/clio
             ghcr.io/xrplf/clio
-          dockerhub_repo: rippleci/clio
+            rippleci/clio
           push_image: ${{ inputs.publish_image }}
           directory: docker/clio
           tags: ${{ inputs.tags }}
           platforms: linux/amd64
-          description: Clio is an XRP Ledger API server.
+          dockerhub_repo: rippleci/clio
+          dockerhub_description: Clio is an XRP Ledger API server.

@@ -26,10 +26,10 @@
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
 #include "util/MockPrometheus.hpp"
+#include "util/MockRandomGenerator.hpp"
 #include "util/MockSourceNg.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/NameGenerator.hpp"
-#include "util/Random.hpp"
 #include "util/config/Array.hpp"
 #include "util/config/ConfigConstraints.hpp"
 #include "util/config/ConfigDefinition.hpp"
@@ -66,7 +66,7 @@ using namespace util::prometheus;
 
 namespace {
 
-constinit auto const kTWO_SOURCES_LEDGER_RESPONSE = R"({
+constinit auto const kTWO_SOURCES_LEDGER_RESPONSE = R"JSON({
     "etl_sources": [
         {
             "ip": "127.0.0.1",
@@ -79,9 +79,9 @@ constinit auto const kTWO_SOURCES_LEDGER_RESPONSE = R"({
             "grpc_port": "source2"
         }
     ]
-})";
+})JSON";
 
-constinit auto const kTHREE_SOURCES_LEDGER_RESPONSE = R"({
+constinit auto const kTHREE_SOURCES_LEDGER_RESPONSE = R"JSON({
     "etl_sources": [
         {
             "ip": "127.0.0.1",
@@ -99,7 +99,7 @@ constinit auto const kTHREE_SOURCES_LEDGER_RESPONSE = R"({
             "grpc_port": "source3"
         }
     ]
-})";
+})JSON";
 
 inline ClioConfigDefinition
 getParseLoadBalancerConfig(boost::json::value val)
@@ -144,17 +144,23 @@ struct LoadBalancerConstructorNgTests : util::prometheus::WithPrometheus, MockBa
     makeLoadBalancer()
     {
         auto const cfg = getParseLoadBalancerConfig(configJson_);
+
+        auto randomGenerator = std::make_unique<MockRandomGenerator>();
+        randomGenerator_ = randomGenerator.get();
+
         return std::make_unique<LoadBalancer>(
             cfg,
             ioContext_,
             backend_,
             subscriptionManager_,
+            std::move(randomGenerator),
             networkManager_,
             [this](auto&&... args) -> SourcePtr { return sourceFactory_(std::forward<decltype(args)>(args)...); }
         );
     }
 
 protected:
+    MockRandomGenerator* randomGenerator_ = nullptr;
     StrictMockSubscriptionManagerSharedPtr subscriptionManager_;
     StrictMockNetworkValidatedLedgersPtr networkManager_;
     StrictMockSourceNgFactory sourceFactory_{2};
@@ -241,8 +247,8 @@ TEST_F(LoadBalancerConstructorNgTests, fetchETLState_Source0Fails1OK)
 
 TEST_F(LoadBalancerConstructorNgTests, fetchETLState_DifferentNetworkID)
 {
-    auto const source1Json = boost::json::parse(R"({"result": {"info": {"network_id": 0}}})");
-    auto const source2Json = boost::json::parse(R"({"result": {"info": {"network_id": 1}}})");
+    auto const source1Json = boost::json::parse(R"JSON({"result": {"info": {"network_id": 0}}})JSON");
+    auto const source2Json = boost::json::parse(R"JSON({"result": {"info": {"network_id": 1}}})JSON");
 
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(source1Json.as_object()));
@@ -265,8 +271,8 @@ TEST_F(LoadBalancerConstructorNgTests, fetchETLState_AllSourcesFailButAllowNoEtl
 
 TEST_F(LoadBalancerConstructorNgTests, fetchETLState_DifferentNetworkIDButAllowNoEtlIsTrue)
 {
-    auto const source1Json = boost::json::parse(R"({"result": {"info": {"network_id": 0}}})");
-    auto const source2Json = boost::json::parse(R"({"result": {"info": {"network_id": 1}}})");
+    auto const source1Json = boost::json::parse(R"JSON({"result": {"info": {"network_id": 0}}})JSON");
+    auto const source2Json = boost::json::parse(R"JSON({"result": {"info": {"network_id": 1}}})JSON");
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(source1Json.as_object()));
     EXPECT_CALL(sourceFactory_.sourceAt(0), run);
@@ -450,11 +456,6 @@ TEST_F(LoadBalancer3SourcesNgTests, forwardingUpdate)
 }
 
 struct LoadBalancerLoadInitialLedgerNgTests : LoadBalancerOnConnectHookNgTests {
-    LoadBalancerLoadInitialLedgerNgTests()
-    {
-        util::Random::setSeed(0);
-    }
-
 protected:
     uint32_t const sequence_ = 123;
     uint32_t const numMarkers_ = 16;
@@ -522,7 +523,6 @@ TEST_F(LoadBalancerLoadInitialLedgerCustomNumMarkersNgTests, loadInitialLedger)
     EXPECT_CALL(sourceFactory_.sourceAt(1), run);
     auto loadBalancer = makeLoadBalancer();
 
-    util::Random::setSeed(0);
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
     EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, testing::_))
         .WillOnce(Return(response_));
@@ -533,7 +533,6 @@ TEST_F(LoadBalancerLoadInitialLedgerCustomNumMarkersNgTests, loadInitialLedger)
 struct LoadBalancerFetchLegerNgTests : LoadBalancerOnConnectHookNgTests {
     LoadBalancerFetchLegerNgTests()
     {
-        util::Random::setSeed(0);
         response_.second.set_validated(true);
     }
 
@@ -607,7 +606,6 @@ TEST_F(LoadBalancerFetchLegerNgTests, fetch_bothSourcesFail)
 struct LoadBalancerForwardToRippledNgTests : LoadBalancerConstructorNgTests, SyncAsioContextTest {
     LoadBalancerForwardToRippledNgTests()
     {
-        util::Random::setSeed(0);
         EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
         EXPECT_CALL(sourceFactory_.sourceAt(0), run);
         EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(boost::json::object{}));
@@ -840,6 +838,8 @@ TEST_F(LoadBalancerForwardToRippledNgTests, onLedgerClosedHookInvalidatesCache)
     auto loadBalancer = makeLoadBalancer();
 
     auto const request = boost::json::object{{"command", "server_info"}};
+
+    EXPECT_CALL(*randomGenerator_, uniform(0, 1)).WillOnce(Return(0)).WillOnce(Return(1));
 
     EXPECT_CALL(
         sourceFactory_.sourceAt(0),

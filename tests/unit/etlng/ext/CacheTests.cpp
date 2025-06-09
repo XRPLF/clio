@@ -18,8 +18,10 @@
 //==============================================================================
 
 #include "etlng/Models.hpp"
+#include "etlng/impl/CacheUpdater.hpp"
 #include "etlng/impl/ext/Cache.hpp"
 #include "util/BinaryTestObject.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/MockLedgerCache.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestObject.hpp"
@@ -27,6 +29,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -56,10 +59,11 @@ createTestData()
 
 }  // namespace
 
-struct CacheExtTests : util::prometheus::WithPrometheus {
+struct CacheExtTests : NoLoggerFixture, util::prometheus::WithPrometheus {
 protected:
     MockLedgerCache cache_;
-    etlng::impl::CacheExt ext_{cache_};
+    std::shared_ptr<etlng::impl::CacheUpdater> updater_ = std::make_shared<etlng::impl::CacheUpdater>(cache_);
+    etlng::impl::CacheExt ext_{updater_};
 };
 
 TEST_F(CacheExtTests, OnLedgerDataUpdatesCache)
@@ -88,4 +92,9 @@ TEST_F(CacheExtTests, OnInitialObjectsUpdateCache)
     EXPECT_CALL(cache_, update(objects, kSEQ));
 
     ext_.onInitialObjects(kSEQ, objects, kUNUSED_LAST_KEY);
+}
+
+TEST_F(CacheExtTests, AllowInReadonlyReturnsTrue)
+{
+    EXPECT_TRUE(ext_.allowInReadonly());
 }

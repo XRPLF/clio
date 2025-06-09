@@ -483,7 +483,8 @@ createOfferLedgerObject(
     std::string_view paysCurrency,
     std::string_view getsIssueId,
     std::string_view paysIssueId,
-    std::string_view dirId
+    std::string_view dirId,
+    std::optional<std::string_view> const& domain
 )
 {
     ripple::STObject offer(ripple::sfLedgerEntry);
@@ -501,6 +502,8 @@ createOfferLedgerObject(
     offer.setFieldH256(ripple::sfBookDirectory, ripple::uint256{dirId});
     offer.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
     offer.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    if (domain.has_value())
+        offer.setFieldH256(ripple::sfDomainID, ripple::uint256{*domain});
     return offer;
 }
 

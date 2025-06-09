@@ -99,34 +99,34 @@ generateParameterTestBundles()
     return std::vector<ParameterTestBundle>{
         ParameterTestBundle{
             .testName = "AccountNotString",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "account": 1213
-            })",
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "accountNotString"
         },
         ParameterTestBundle{
             .testName = "AccountMissing",
-            .testJson = R"({
-            })",
+            .testJson = R"JSON({
+            })JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Required field 'account' missing"
         },
         ParameterTestBundle{
             .testName = "AccountInvalid",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "account": "1213"
-            })",
+            })JSON",
             .expectedError = "actMalformed",
             .expectedErrorMessage = "accountMalformed"
         },
         ParameterTestBundle{
             .testName = "LedgerIndexInvalid",
             .testJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}",
                     "ledger_index": "meh"
-                }})",
+                }})JSON",
                 kACCOUNT
             ),
             .expectedError = "invalidParams",
@@ -135,10 +135,10 @@ generateParameterTestBundles()
         ParameterTestBundle{
             .testName = "LedgerHashInvalid",
             .testJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}",
                     "ledger_hash": "meh"
-                }})",
+                }})JSON",
                 kACCOUNT
             ),
             .expectedError = "invalidParams",
@@ -147,10 +147,10 @@ generateParameterTestBundles()
         ParameterTestBundle{
             .testName = "LedgerHashNotString",
             .testJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}",
                     "ledger_hash": 12
-                }})",
+                }})JSON",
                 kACCOUNT
             ),
             .expectedError = "invalidParams",
@@ -159,10 +159,10 @@ generateParameterTestBundles()
         ParameterTestBundle{
             .testName = "WalletsNotStringOrArrayV1",
             .testJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}",
                     "hotwallet": 12
-                }})",
+                }})JSON",
                 kACCOUNT
             ),
             .expectedError = "invalidHotWallet",
@@ -171,10 +171,10 @@ generateParameterTestBundles()
         ParameterTestBundle{
             .testName = "WalletsNotStringAccountV1",
             .testJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}",
                     "hotwallet": [12]
-                }})",
+                }})JSON",
                 kACCOUNT
             ),
             .expectedError = "invalidHotWallet",
@@ -183,10 +183,10 @@ generateParameterTestBundles()
         ParameterTestBundle{
             .testName = "WalletsInvalidAccountV1",
             .testJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}",
                     "hotwallet": ["12"]
-                }})",
+                }})JSON",
                 kACCOUNT
             ),
             .expectedError = "invalidHotWallet",
@@ -195,10 +195,10 @@ generateParameterTestBundles()
         ParameterTestBundle{
             .testName = "WalletInvalidAccountV1",
             .testJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}",
                     "hotwallet": "12"
-                }})",
+                }})JSON",
                 kACCOUNT
             ),
             .expectedError = "invalidHotWallet",
@@ -207,10 +207,10 @@ generateParameterTestBundles()
         ParameterTestBundle{
             .testName = "WalletsNotStringOrArrayV2",
             .testJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}",
                     "hotwallet": 12
-                }})",
+                }})JSON",
                 kACCOUNT
             ),
             .expectedError = "invalidParams",
@@ -220,10 +220,10 @@ generateParameterTestBundles()
         ParameterTestBundle{
             .testName = "WalletsNotStringAccountV2",
             .testJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}",
                     "hotwallet": [12]
-                }})",
+                }})JSON",
                 kACCOUNT
             ),
             .expectedError = "invalidParams",
@@ -233,10 +233,10 @@ generateParameterTestBundles()
         ParameterTestBundle{
             .testName = "WalletsInvalidAccountV2",
             .testJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}",
                     "hotwallet": ["12"]
-                }})",
+                }})JSON",
                 kACCOUNT
             ),
             .expectedError = "invalidParams",
@@ -246,10 +246,10 @@ generateParameterTestBundles()
         ParameterTestBundle{
             .testName = "WalletInvalidAccountV2",
             .testJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}",
                     "hotwallet": "12"
-                }})",
+                }})JSON",
                 kACCOUNT
             ),
             .expectedError = "invalidParams",
@@ -278,10 +278,10 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
     runSpawn([&](auto yield) {
         auto const output = handler.process(
             json::parse(fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}",
                     "ledger_index": "{}"
-                }})",
+                }})JSON",
                 kACCOUNT,
                 seq
             )),
@@ -306,10 +306,10 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaIntIndex)
     runSpawn([&](auto yield) {
         auto const output = handler.process(
             json::parse(fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}",
                     "ledger_index": {}
-                }})",
+                }})JSON",
                 kACCOUNT,
                 seq
             )),
@@ -333,10 +333,10 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaHash)
     runSpawn([&](auto yield) {
         auto const output = handler.process(
             json::parse(fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}",
                     "ledger_hash": "{}"
-                }})",
+                }})JSON",
                 kACCOUNT,
                 kLEDGER_HASH
             )),
@@ -367,9 +367,9 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
     runSpawn([&](auto yield) {
         auto const output = handler.process(
             json::parse(fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}"
-                }})",
+                }})JSON",
                 kACCOUNT
             )),
             Context{yield}
@@ -426,10 +426,10 @@ TEST_P(NormalPathTest, CheckOutput)
     runSpawn([&](auto yield) {
         auto const output = handler.process(
             json::parse(fmt::format(
-                R"({{
+                R"JSON({{
                     "account": "{}",
                     {}
-                }})",
+                }})JSON",
                 kACCOUNT,
                 bundle.hotwallet
             )),
@@ -477,7 +477,7 @@ generateNormalPathTestBundles()
 
                 },
             .expectedJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "obligations":{{
                         "JPY":"50"
                     }},
@@ -516,7 +516,7 @@ generateNormalPathTestBundles()
                     "account":"{}",
                     "ledger_index":300,
                     "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
-                }})",
+                }})JSON",
                 kACCOUNT2,
                 kACCOUNT3,
                 kACCOUNT3,
@@ -531,14 +531,14 @@ generateNormalPathTestBundles()
                 "JPY", kISSUER, -50, kACCOUNT, 10, kACCOUNT3, 20, kTXN_ID, 123
             )},
             .expectedJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "obligations":{{
                         "JPY":"50"
                     }},
                     "account":"{}",
                     "ledger_index":300,
                     "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
-                }})",
+                }})JSON",
                 kACCOUNT
             ),
             .hotwallet = R"("ledger_index" : "validated")"
@@ -548,14 +548,14 @@ generateNormalPathTestBundles()
             .mockedDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}}, kINDEX1),
             .mockedObjects = std::vector{overflowState, overflowState},
             .expectedJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "obligations":{{
                         "JPY":"9999999999999999e80"
                     }},
                     "account":"{}",
                     "ledger_index":300,
                     "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
-                }})",
+                }})JSON",
                 kACCOUNT
             ),
             .hotwallet = R"("ledger_index" : "validated")"
@@ -577,7 +577,7 @@ generateNormalPathTestBundles()
                     createRippleStateLedgerObject("JPY", kISSUER, -50, kACCOUNT3, 10, kACCOUNT, 20, kTXN_ID, 123)
                 },
             .expectedJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "obligations":{{
                         "EUR":"30"
                     }},
@@ -604,7 +604,7 @@ generateNormalPathTestBundles()
                     "account":"{}",
                     "ledger_index":300,
                     "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
-                }})",
+                }})JSON",
                 kACCOUNT2,
                 kACCOUNT3,
                 kACCOUNT
@@ -624,7 +624,7 @@ generateNormalPathTestBundles()
 
                 },
             .expectedJson = fmt::format(
-                R"({{
+                R"JSON({{
                     "balances":{{
                         "{}":[
                             {{
@@ -646,7 +646,7 @@ generateNormalPathTestBundles()
                     "account":"{}",
                     "ledger_index":300,
                     "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
-                }})",
+                }})JSON",
                 kACCOUNT3,
                 kACCOUNT2,
                 kACCOUNT

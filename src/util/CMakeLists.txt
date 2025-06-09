@@ -4,6 +4,7 @@ target_sources(
   clio_util
   PRIVATE Assert.cpp
           build/Build.cpp
+          Coroutine.cpp
           CoroutineGroup.cpp
           log/Logger.cpp
           prometheus/Http.cpp

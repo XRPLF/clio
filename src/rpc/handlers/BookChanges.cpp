@@ -21,7 +21,6 @@
 
 #include "data/Types.hpp"
 #include "rpc/BookChangesHelper.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
@@ -37,7 +36,6 @@
 #include <xrpl/protocol/jss.h>
 
 #include <string>
-#include <variant>
 #include <vector>
 
 namespace rpc {
@@ -48,14 +46,14 @@ BookChangesHandler::process(BookChangesHandler::Input input, Context const& ctx)
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "BookChanges' ledger range must be available");
 
-    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
-        return Error{*status};
+    if (!expectedLgrInfo.has_value())
+        return Error{expectedLgrInfo.error()};
 
-    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
+    auto const& lgrInfo = expectedLgrInfo.value();
     auto const transactions = sharedPtrBackend_->fetchAllTransactionsInLedger(lgrInfo.seq, ctx.yield);
 
     Output response;

@@ -61,7 +61,7 @@ TEST_F(FeedBookChangeTest, Pub)
     transactions.push_back(trans1);
 
     static constexpr auto kBOOK_CHANGE_PUBLISH =
-        R"({
+        R"JSON({
             "type":"bookChanges",
             "ledger_index":32,
             "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
@@ -79,7 +79,7 @@ TEST_F(FeedBookChangeTest, Pub)
                     "close":"-1"
                 }
             ]
-        })";
+        })JSON";
 
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kBOOK_CHANGE_PUBLISH))).Times(1);
     testFeedPtr->pub(ledgerHeader, transactions);

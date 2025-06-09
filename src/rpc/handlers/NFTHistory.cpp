@@ -44,7 +44,6 @@
 #include <optional>
 #include <string>
 #include <utility>
-#include <variant>
 
 namespace rpc {
 
@@ -80,14 +79,14 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
         if (input.ledgerIndexMax || input.ledgerIndexMin)
             return Error{Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}};
 
-        auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+        auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
             *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
         );
 
-        if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
-            return Error{*status};
+        if (!expectedLgrInfo.has_value())
+            return Error{expectedLgrInfo.error()};
 
-        maxIndex = minIndex = std::get<ripple::LedgerHeader>(lgrInfoOrStatus).seq;
+        maxIndex = minIndex = expectedLgrInfo.value().seq;
     }
 
     std::optional<data::TransactionsCursor> cursor;

@@ -90,6 +90,13 @@ public:
     {
     }
 
+    Extractor(Extractor const&) = delete;
+    Extractor(Extractor&&) = delete;
+    Extractor&
+    operator=(Extractor const&) = delete;
+    Extractor&
+    operator=(Extractor&&) = delete;
+
     [[nodiscard]] std::optional<model::LedgerData>
     extractLedgerWithDiff(uint32_t seq) override;
 

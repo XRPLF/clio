@@ -49,7 +49,6 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <variant>
 #include <vector>
 
 namespace rpc {
@@ -92,8 +91,8 @@ SubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
                 }
 
                 auto const parsedBook = parseBook(book.as_object());
-                if (auto const status = std::get_if<Status>(&parsedBook))
-                    return Error(*status);
+                if (!parsedBook)
+                    return Error(parsedBook.error());
             }
 
             return MaybeError{};
@@ -288,17 +287,18 @@ tag_invoke(boost::json::value_to_tag<SubscribeHandler::Input>, boost::json::valu
             auto internalBook = SubscribeHandler::OrderBook{};
             auto const& bookObject = book.as_object();
 
-            if (auto const& taker = bookObject.find(JS(taker)); taker != bookObject.end())
+            if (auto const taker = bookObject.find(JS(taker)); taker != bookObject.end())
                 internalBook.taker = boost::json::value_to<std::string>(taker->value());
 
-            if (auto const& both = bookObject.find(JS(both)); both != bookObject.end())
+            if (auto const both = bookObject.find(JS(both)); both != bookObject.end())
                 internalBook.both = both->value().as_bool();
 
-            if (auto const& snapshot = bookObject.find(JS(snapshot)); snapshot != bookObject.end())
+            if (auto const snapshot = bookObject.find(JS(snapshot)); snapshot != bookObject.end())
                 internalBook.snapshot = snapshot->value().as_bool();
 
             auto const parsedBookMaybe = parseBook(book.as_object());
-            internalBook.book = std::get<ripple::Book>(parsedBookMaybe);
+            ASSERT(parsedBookMaybe.has_value(), "Book parsing failed");
+            internalBook.book = parsedBookMaybe.value();
             input.books->push_back(internalBook);
         }
     }

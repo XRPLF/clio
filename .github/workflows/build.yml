@@ -18,6 +18,7 @@ on:
       - "!.github/actions/create_issue/**"
 
       - CMakeLists.txt
+      - conanfile.py
       - "cmake/**"
       - "src/**"
       - "tests/**"

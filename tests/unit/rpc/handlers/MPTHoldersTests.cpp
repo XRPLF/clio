@@ -53,20 +53,20 @@ constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF2
 constexpr auto kMPT_ID = "000004C463C52827307480341125DA0577DEFC38405B0E3E";
 
 std::string const kMPT_OUT1 =
-    R"({
+    R"JSON({
         "account": "rrnAZCqMahreZrKMcZU3t2DZ6yUndT4ubN",
         "flags": 0,
         "mpt_amount": "1",
         "mptoken_index": "D137F2E5A5767A06CB7A8F060ADE442A30CFF95028E1AF4B8767E3A56877205A"
-    })";
+    })JSON";
 
 std::string const kMPT_OUT2 =
-    R"({
+    R"JSON({
         "account": "rEiNkzogdHEzUxPfsri5XSMqtXUixf2Yx",
         "flags": 0,
         "mpt_amount": "1",
         "mptoken_index": "36D91DEE5EFE4A93119A8B84C944A528F2B444329F3846E49FE921040DE17E65"
-    })";
+    })JSON";
 
 }  // namespace
 
@@ -82,10 +82,10 @@ TEST_F(RPCMPTHoldersHandlerTest, NonHexLedgerHash)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "mpt_issuance_id": "{}",
                 "ledger_hash": "xxx"
-            }})",
+            }})JSON",
             kMPT_ID
         ));
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -102,10 +102,10 @@ TEST_F(RPCMPTHoldersHandlerTest, NonStringLedgerHash)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "mpt_issuance_id": "{}",
                 "ledger_hash": 123
-            }})",
+            }})JSON",
             kMPT_ID
         ));
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -122,10 +122,10 @@ TEST_F(RPCMPTHoldersHandlerTest, InvalidLedgerIndexString)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "mpt_issuance_id": "{}",
                 "ledger_index": "notvalidated"
-            }})",
+            }})JSON",
             kMPT_ID
         ));
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -142,9 +142,9 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTIDInvalidFormat)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
-        auto const input = json::parse(R"({
+        auto const input = json::parse(R"JSON({
             "mpt_issuance_id": "xxx"
-        })");
+        })JSON");
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -158,7 +158,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTIDMissing)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
-        auto const input = json::parse(R"({})");
+        auto const input = json::parse(R"JSON({})JSON");
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -172,9 +172,9 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTIDNotString)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
-        auto const input = json::parse(R"({
+        auto const input = json::parse(R"JSON({
             "mpt_issuance_id": 12
-        })");
+        })JSON");
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
         ASSERT_FALSE(output);
 
@@ -190,10 +190,10 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerInvalidFormat)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
             "mpt_issuance_id": "{}",
             "marker": "xxx"
-        }})",
+        }})JSON",
             kMPT_ID
         ));
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -210,10 +210,10 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerNotString)
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend_}};
         auto const input = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
             "mpt_issuance_id": "{}",
             "marker": 1
-        }})",
+        }})JSON",
             kMPT_ID
         ));
         auto const output = handler.process(input, Context{.yield = std::ref(yield)});
@@ -233,10 +233,10 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerHash)
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "mpt_issuance_id": "{}",
             "ledger_hash": "{}"
-        }})",
+        }})JSON",
         kMPT_ID,
         kLEDGER_HASH
     ));
@@ -257,10 +257,10 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerStringIndex)
     // mock fetchLedgerBySequence return empty
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(std::optional<ripple::LedgerInfo>{}));
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "mpt_issuance_id": "{}",
             "ledger_index": "4"
-        }})",
+        }})JSON",
         kMPT_ID
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
@@ -278,10 +278,10 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerIntIndex)
     // mock fetchLedgerBySequence return empty
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(std::optional<ripple::LedgerInfo>{}));
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "mpt_issuance_id": "{}",
             "ledger_index": 4
-        }})",
+        }})JSON",
         kMPT_ID
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
@@ -303,10 +303,10 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerHash2)
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerinfo));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "mpt_issuance_id": "{}",
             "ledger_hash": "{}"
-        }})",
+        }})JSON",
         kMPT_ID,
         kLEDGER_HASH
     ));
@@ -327,10 +327,10 @@ TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerIndex2)
     // differ from previous logic
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "mpt_issuance_id": "{}",
             "ledger_index": "31"
-        }})",
+        }})JSON",
         kMPT_ID
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
@@ -353,10 +353,10 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTNotFound)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "mpt_issuance_id": "{}",
             "ledger_hash": "{}"
-        }})",
+        }})JSON",
         kMPT_ID,
         kLEDGER_HASH
     ));
@@ -374,13 +374,13 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTNotFound)
 TEST_F(RPCMPTHoldersHandlerTest, DefaultParameters)
 {
     auto const currentOutput = fmt::format(
-        R"({{
+        R"JSON({{
         "mpt_issuance_id": "{}",
         "limit":50,
         "ledger_index": 30,
         "mptokens": [{}],
         "validated": true
-    }})",
+    }})JSON",
         kMPT_ID,
         kMPT_OUT1
     );
@@ -400,9 +400,9 @@ TEST_F(RPCMPTHoldersHandlerTest, DefaultParameters)
         .Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "mpt_issuance_id": "{}"
-        }})",
+        }})JSON",
         kMPT_ID
     ));
     runSpawn([&, this](auto& yield) {
@@ -418,7 +418,7 @@ TEST_F(RPCMPTHoldersHandlerTest, CustomAmounts)
     // it's not possible to have locked_amount to be greater than mpt_amount,
     // we are simply testing the response parsing of the api
     auto const currentOutput = fmt::format(
-        R"({{
+        R"JSON({{
         "mpt_issuance_id": "{}",
         "limit":50,
         "ledger_index": 30,
@@ -429,7 +429,7 @@ TEST_F(RPCMPTHoldersHandlerTest, CustomAmounts)
             "mptoken_index": "D137F2E5A5767A06CB7A8F060ADE442A30CFF95028E1AF4B8767E3A56877205A"
         }}],
         "validated": true
-    }})",
+    }})JSON",
         kMPT_ID
     );
 
@@ -448,9 +448,9 @@ TEST_F(RPCMPTHoldersHandlerTest, CustomAmounts)
         .Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "mpt_issuance_id": "{}"
-        }})",
+        }})JSON",
         kMPT_ID
     ));
     runSpawn([&, this](auto& yield) {
@@ -465,13 +465,13 @@ TEST_F(RPCMPTHoldersHandlerTest, SpecificLedgerIndex)
 {
     auto const specificLedger = 20;
     auto const currentOutput = fmt::format(
-        R"({{
+        R"JSON({{
         "mpt_issuance_id": "{}",
         "limit":50,
         "ledger_index": {},
         "mptokens": [{}],
         "validated": true
-    }})",
+    }})JSON",
         kMPT_ID,
         specificLedger,
         kMPT_OUT1
@@ -496,10 +496,10 @@ TEST_F(RPCMPTHoldersHandlerTest, SpecificLedgerIndex)
         .Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "mpt_issuance_id": "{}",
             "ledger_index": {}
-        }})",
+        }})JSON",
         kMPT_ID,
         specificLedger
     ));
@@ -514,14 +514,14 @@ TEST_F(RPCMPTHoldersHandlerTest, SpecificLedgerIndex)
 TEST_F(RPCMPTHoldersHandlerTest, MarkerParameter)
 {
     auto const currentOutput = fmt::format(
-        R"({{
+        R"JSON({{
         "mpt_issuance_id": "{}",
         "limit":50,
         "ledger_index": 30,
         "mptokens": [{}],
         "validated": true,
         "marker": "{}"
-    }})",
+    }})JSON",
         kMPT_ID,
         kMPT_OUT2,
         ripple::strHex(getAccountIdWithString(kHOLDE_R1_ACCOUNT))
@@ -543,10 +543,10 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerParameter)
 
     auto const holder1AccountId = ripple::strHex(getAccountIdWithString(kHOLDE_R1_ACCOUNT));
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "mpt_issuance_id": "{}",
             "marker": "{}"
-        }})",
+        }})JSON",
         kMPT_ID,
         holder1AccountId
     ));
@@ -561,13 +561,13 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerParameter)
 TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
 {
     auto const currentOutput = fmt::format(
-        R"({{
+        R"JSON({{
         "mpt_issuance_id": "{}",
         "limit":50,
         "ledger_index": 30,
         "mptokens": [{}, {}],
         "validated": true
-    }})",
+    }})JSON",
         kMPT_ID,
         kMPT_OUT1,
         kMPT_OUT2
@@ -589,9 +589,9 @@ TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
         .Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "mpt_issuance_id": "{}"
-        }})",
+        }})JSON",
         kMPT_ID
     ));
     runSpawn([&, this](auto& yield) {
@@ -605,13 +605,13 @@ TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
 TEST_F(RPCMPTHoldersHandlerTest, LimitMoreThanMAx)
 {
     auto const currentOutput = fmt::format(
-        R"({{
+        R"JSON({{
         "mpt_issuance_id": "{}",
         "limit":100,
         "ledger_index": 30,
         "mptokens": [{}],
         "validated": true
-    }})",
+    }})JSON",
         kMPT_ID,
         kMPT_OUT1
     );
@@ -637,10 +637,10 @@ TEST_F(RPCMPTHoldersHandlerTest, LimitMoreThanMAx)
         .Times(1);
 
     auto const input = json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "mpt_issuance_id": "{}",
             "limit": {}
-        }})",
+        }})JSON",
         kMPT_ID,
         MPTHoldersHandler::kLIMIT_MAX + 1
     ));

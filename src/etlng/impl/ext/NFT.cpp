@@ -37,27 +37,28 @@ NFTExt::NFTExt(std::shared_ptr<BackendInterface> backend) : backend_(std::move(b
 }
 
 void
-NFTExt::onLedgerData(model::LedgerData const& data) const
+NFTExt::onLedgerData(model::LedgerData const& data)
 {
+    LOG(log_.trace()) << "got TXS cnt = " << data.transactions.size() << "; OBJS size = " << data.objects.size();
     writeNFTs(data);
 }
 
 void
-NFTExt::onInitialObject(uint32_t seq, model::Object const& obj) const
+NFTExt::onInitialObject(uint32_t seq, model::Object const& obj)
 {
     LOG(log_.trace()) << "got initial object with key = " << obj.key;
     backend_->writeNFTs(etl::getNFTDataFromObj(seq, obj.keyRaw, obj.dataRaw));
 }
 
 void
-NFTExt::onInitialData(model::LedgerData const& data) const
+NFTExt::onInitialData(model::LedgerData const& data)
 {
     LOG(log_.trace()) << "got initial TXS cnt = " << data.transactions.size();
     writeNFTs(data);
 }
 
 void
-NFTExt::writeNFTs(model::LedgerData const& data) const
+NFTExt::writeNFTs(model::LedgerData const& data)
 {
     std::vector<NFTsData> nfts;
     std::vector<NFTTransactionsData> nftTxs;

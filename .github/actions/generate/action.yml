@@ -49,7 +49,7 @@ runs:
     - name: Run conan
       shell: bash
       env:
-        BUILD_OPTION: "${{ inputs.conan_cache_hit == 'true' && 'missing' || '' }}"
+        BUILD_OPTION: "${{ inputs.conan_cache_hit == 'true' && 'missing' || '*' }}"
         CODE_COVERAGE: "${{ inputs.code_coverage == 'true' && 'True' || 'False' }}"
         STATIC_OPTION: "${{ inputs.static == 'true' && 'True' || 'False' }}"
         INTEGRATION_TESTS_OPTION: "${{ inputs.build_integration_tests == 'true' && 'True' || 'False' }}"
@@ -59,15 +59,15 @@ runs:
         conan \
           install .. \
           -of . \
-          -b $BUILD_OPTION \
-          -s build_type="${{ inputs.build_type }}" \
-          -o clio:static="${STATIC_OPTION}" \
-          -o clio:tests=True \
-          -o clio:integration_tests="${INTEGRATION_TESTS_OPTION}" \
-          -o clio:lint=False \
-          -o clio:coverage="${CODE_COVERAGE}" \
-          -o clio:time_trace="${TIME_TRACE}" \
-          --profile "${{ inputs.conan_profile }}"
+          -b "$BUILD_OPTION" \
+          -s "build_type=${{ inputs.build_type }}" \
+          -o "&:static=${STATIC_OPTION}" \
+          -o "&:tests=True" \
+          -o "&:integration_tests=${INTEGRATION_TESTS_OPTION}" \
+          -o "&:lint=False" \
+          -o "&:coverage=${CODE_COVERAGE}" \
+          -o "&:time_trace=${TIME_TRACE}" \
+          --profile:all "${{ inputs.conan_profile }}"
 
     - name: Run cmake
       shell: bash

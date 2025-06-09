@@ -1,0 +1,56 @@
+name: Create release
+
+on:
+  push:
+    tags:
+      - "*.*.*"
+  pull_request:
+    paths:
+      - .github/workflows/release.yml
+
+concurrency:
+  # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and Test
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos15
+            conan_profile: default_apple_clang
+            build_type: Release
+            static: false
+          - os: heavy
+            conan_profile: gcc
+            build_type: Release
+            static: true
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
+
+    uses: ./.github/workflows/build_and_test.yml
+    with:
+      runs_on: ${{ matrix.os }}
+      container: ${{ matrix.container }}
+      conan_profile: ${{ matrix.conan_profile }}
+      build_type: ${{ matrix.build_type }}
+      static: ${{ matrix.static }}
+      run_unit_tests: true
+      run_integration_tests: true
+      upload_clio_server: true
+      disable_cache: true
+
+  release:
+    needs: build-and-test
+    uses: ./.github/workflows/release_impl.yml
+    with:
+      overwrite_release: false
+      title: "${{ github.ref_name}}"
+      version: "${{ github.ref_name }}"
+      header: >
+        # Introducing Clio version ${{ github.ref_name }}
+      generate_changelog: true
+      draft: true

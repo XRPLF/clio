@@ -40,7 +40,7 @@ constexpr auto kACCOUNT1 = "rh1HPuRVsYYvThxG2Bs1MfjmrVC73S16Fb";
 constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr auto kACCOUNT3 = "r92yNeoiCdwULRbjh6cUBEbD71iHcqe1hE";
 constexpr auto kDUMMY_TRANSACTION =
-    R"({
+    R"JSON({
         "transaction":
         {
             "Account":"rh1HPuRVsYYvThxG2Bs1MfjmrVC73S16Fb",
@@ -54,7 +54,7 @@ constexpr auto kDUMMY_TRANSACTION =
             "TxnSignature":"30450221009BD0D563B24E50B26A42F30455AD21C3D5CD4D80174C41F7B54969FFC08DE94C02201FC35320B56D56D1E34D1D281D48AC68CBEDDD6EE9DFA639CCB08BB251453A87",
             "hash":"F44393295DB860C6860769C16F5B23887762F09F87A8D1174E0FCFF9E7247F07"
         }
-    })";
+    })JSON";
 
 }  // namespace
 
