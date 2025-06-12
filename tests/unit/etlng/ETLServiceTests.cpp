@@ -397,7 +397,7 @@ TEST_F(ETLServiceTests, NormalFlowInMonitorSubscription)
 
     service_.run();
     systemState_->isWriting = false;
-    std::vector<data::LedgerObject> dummyDiff = {};
+    std::vector<data::LedgerObject> const dummyDiff = {};
 
     EXPECT_CALL(*backend_, fetchLedgerDiff(kSEQ + 1, testing::_)).WillOnce(testing::Return(dummyDiff));
     EXPECT_CALL(*cacheUpdater_, update(kSEQ + 1, testing::A<std::vector<data::LedgerObject> const&>()));

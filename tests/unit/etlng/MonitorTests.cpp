@@ -143,7 +143,7 @@ TEST_F(MonitorTests, ResumesMonitoringFromNextSequenceAfterWriteConflict)
     EXPECT_CALL(*ledgers_, subscribe(testing::_));
 
     {
-        testing::InSequence seq;  // second call will produce conflict
+        testing::InSequence const seq;  // second call will produce conflict
         EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillOnce(testing::Return(rangeBeforeConflict));
         EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillRepeatedly(testing::Return(rangeAfterConflict));
     }
