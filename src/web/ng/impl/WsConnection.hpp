@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/AsyncMutex.hpp"
 #include "util/Taggable.hpp"
 #include "util/build/Build.hpp"
 #include "web/ng/Connection.hpp"
@@ -27,11 +28,13 @@
 #include "web/ng/Response.hpp"
 #include "web/ng/impl/Concepts.hpp"
 
+#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/stream.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/role.hpp>
@@ -65,6 +68,8 @@ class WsConnection : public WsConnectionBase {
     boost::beast::websocket::stream<StreamType> stream_;
     boost::beast::http::request<boost::beast::http::string_body> initialRequest_;
     bool closed_{false};
+    util::AsyncMutex readMutex_;
+    util::AsyncMutex writeMutex_;
 
 public:
     WsConnection(
@@ -77,6 +82,8 @@ public:
         : WsConnectionBase(std::move(ip), std::move(buffer), tagDecoratorFactory)
         , stream_(std::move(stream))
         , initialRequest_(std::move(initialRequest))
+        , readMutex_(stream_.get_executor())
+        , writeMutex_(stream_.get_executor())
     {
         setupWsStream();
     }
@@ -100,9 +107,7 @@ public:
     std::optional<Error>
     sendBuffer(boost::asio::const_buffer buffer, boost::asio::yield_context yield) override
     {
-        boost::beast::websocket::stream_base::timeout timeoutOption{};
-        stream_.get_option(timeoutOption);
-
+        auto const lock = writeMutex_.lock(yield);
         boost::system::error_code error;
         stream_.async_write(buffer, yield[error]);
         if (error)
@@ -129,6 +134,7 @@ public:
     std::expected<Request, Error>
     receive(boost::asio::yield_context yield) override
     {
+        auto const lock = readMutex_.lock(yield);
         Error error;
         stream_.async_read(buffer_, yield[error]);
         if (error)

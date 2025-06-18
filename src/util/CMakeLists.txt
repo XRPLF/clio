@@ -3,6 +3,7 @@ add_library(clio_util)
 target_sources(
   clio_util
   PRIVATE Assert.cpp
+          AsyncMutex.cpp
           build/Build.cpp
           Coroutine.cpp
           CoroutineGroup.cpp

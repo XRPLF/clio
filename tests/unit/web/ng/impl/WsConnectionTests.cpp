@@ -31,6 +31,7 @@
 #include "web/ng/impl/HttpConnection.hpp"
 #include "web/ng/impl/WsConnection.hpp"
 
+#include <boost/asio/buffer.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
@@ -331,4 +332,29 @@ TEST_F(WebWsConnectionTests, CloseCalledFromMultipleSubCoroutines)
         EXPECT_FALSE(receivedMessage.has_value());
         coroutines.asyncWait(yield);
     });
+}
+
+TEST_F(WebWsConnectionTests, WriteSocketClosed)
+{
+    boost::asio::io_context clientCtx;
+    boost::asio::spawn(clientCtx, [this](boost::asio::yield_context yield) {
+        auto maybeError = wsClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError.value().message(); }();
+        boost::asio::steady_timer timer{yield.get_executor(), std::chrono::milliseconds{1000}};
+        timer.async_wait(yield);
+        wsClient_.close();
+    });
+    std::thread t{[&clientCtx]() { clientCtx.run(); }};
+
+    runSpawnWithTimeout(std::chrono::seconds{5}, [this](boost::asio::yield_context yield) {
+        auto wsConnection = acceptConnection(yield);
+        util::CoroutineGroup coroutines{yield};
+        for ([[maybe_unused]] auto i : std::ranges::iota_view(0, 10)) {
+            coroutines.spawn(yield, [&wsConnection](boost::asio::yield_context innerYield) {
+                wsConnection->sendBuffer(boost::asio::buffer(std::string(1024, 'a')), innerYield);
+            });
+        }
+        coroutines.asyncWait(yield);
+    });
+    t.join();
 }

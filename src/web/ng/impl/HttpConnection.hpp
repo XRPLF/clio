@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/Assert.hpp"
+#include "util/AsyncMutex.hpp"
 #include "util/Taggable.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
@@ -76,6 +77,8 @@ class HttpConnection : public UpgradableConnection {
     std::optional<boost::beast::http::request<boost::beast::http::string_body>> request_;
     std::chrono::steady_clock::duration timeout_{kDEFAULT_TIMEOUT};
     bool closed_{false};
+    util::AsyncMutex readMutex_;
+    util::AsyncMutex writeMutex_;
 
 public:
     HttpConnection(
@@ -85,7 +88,10 @@ public:
         util::TagDecoratorFactory const& tagDecoratorFactory
     )
         requires IsTcpStream<StreamType>
-        : UpgradableConnection(std::move(ip), std::move(buffer), tagDecoratorFactory), stream_{std::move(socket)}
+        : UpgradableConnection(std::move(ip), std::move(buffer), tagDecoratorFactory)
+        , stream_{std::move(socket)}
+        , readMutex_(stream_.get_executor())
+        , writeMutex_(stream_.get_executor())
     {
     }
 
@@ -99,6 +105,8 @@ public:
         requires IsSslTcpStream<StreamType>
         : UpgradableConnection(std::move(ip), std::move(buffer), tagDecoratorFactory)
         , stream_{std::move(socket), sslCtx}
+        , readMutex_(stream_.get_executor())
+        , writeMutex_(stream_.get_executor())
     {
     }
 
@@ -128,6 +136,7 @@ public:
     sendRaw(boost::beast::http::response<boost::beast::http::string_body> response, boost::asio::yield_context yield)
         override
     {
+        auto const lock = writeMutex_.lock(yield);
         boost::system::error_code error;
         boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
         boost::beast::http::async_write(stream_, response, yield[error]);
@@ -215,6 +224,7 @@ private:
     std::expected<boost::beast::http::request<boost::beast::http::string_body>, Error>
     fetch(boost::asio::yield_context yield)
     {
+        auto const lock = readMutex_.lock(yield);
         boost::beast::http::request<boost::beast::http::string_body> request{};
         boost::system::error_code error;
         boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
