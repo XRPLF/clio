@@ -56,7 +56,7 @@ os=Linux
 tools.build:compiler_executables={'c': '/usr/bin/gcc-12', 'cpp': '/usr/bin/g++-12'}
 ```
 
-Add the following to the `~/.conan2/global.conf file`:
+Add the following to the `~/.conan2/global.conf` file:
 
 ```text
 tools.info.package_id:confs = ["tools.build:cflags", "tools.build:cxxflags", "tools.build:exelinkflags", "tools.build:sharedlinkflags"]
