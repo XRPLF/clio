@@ -34,7 +34,6 @@
 #include "etlng/LedgerPublisherInterface.hpp"
 #include "etlng/LoadBalancerInterface.hpp"
 #include "etlng/LoaderInterface.hpp"
-#include "etlng/Models.hpp"
 #include "etlng/MonitorInterface.hpp"
 #include "etlng/MonitorProviderInterface.hpp"
 #include "etlng/TaskManagerProviderInterface.hpp"
@@ -68,7 +67,6 @@
 #include <optional>
 #include <string>
 #include <utility>
-#include <vector>
 
 namespace etlng {
 

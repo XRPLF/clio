@@ -319,7 +319,7 @@ TEST_F(GrpcSourceStopTests, LoadInitialLedgerStopsWhenRequested)
             EXPECT_EQ(request->user(), "ETL");
 
             {
-                std::unique_lock lk(mtx);
+                std::unique_lock const lk(mtx);
                 grpcCallIsActive = true;
             }
             cvGrpcCallActive.notify_one();
@@ -347,7 +347,7 @@ TEST_F(GrpcSourceStopTests, LoadInitialLedgerStopsWhenRequested)
     runSyncOperation([&](boost::asio::yield_context yield) {
         grpcSource_.stop(yield);
         {
-            std::unique_lock lk(mtx);
+            std::unique_lock const lk(mtx);
             stopHasBeenCalled = true;
         }
         cvStopCalled.notify_one();

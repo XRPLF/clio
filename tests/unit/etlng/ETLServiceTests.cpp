@@ -35,7 +35,6 @@
 #include "etlng/TaskManagerInterface.hpp"
 #include "etlng/TaskManagerProviderInterface.hpp"
 #include "util/BinaryTestObject.hpp"
-#include "util/MockAssert.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockLedgerPublisher.hpp"
 #include "util/MockLoadBalancer.hpp"
