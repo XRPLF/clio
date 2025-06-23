@@ -38,10 +38,13 @@ class AsyncMutexLock {
     AsyncMutex& mutex_;
 
 public:
-    AsyncMutexLock(AsyncMutex& mutex);
     ~AsyncMutexLock();
     AsyncMutexLock(AsyncMutexLock&&) = delete;
     AsyncMutexLock(AsyncMutexLock const&) = delete;
+
+private:
+    friend AsyncMutex;
+    AsyncMutexLock(AsyncMutex& mutex);
 };
 
 /**
