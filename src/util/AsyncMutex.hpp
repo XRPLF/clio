@@ -75,19 +75,25 @@ class AsyncMutex {
 public:
     /**
      * @brief Constructs an AsyncMutex
+     *
      * @param executor The boost::asio executor to use for async operations
      */
     AsyncMutex(boost::asio::any_io_executor executor);
 
     ~AsyncMutex() = default;
 
-    /** @brief AsyncMutex is safe to move when it is not locked (there is an assert inside) */
-    AsyncMutex(AsyncMutex&&);
+    /**
+     * @brief AsyncMutex is safe to move when it is not locked (there is an assert inside)
+     *
+     * @param other AsyncMutex to construct from
+     */
+    AsyncMutex(AsyncMutex&& other);
 
     AsyncMutex(AsyncMutex const&) = delete;
 
     /**
      * @brief Acquires the mutex, suspending the coroutine if the mutex is already locked
+     *
      * @param yield The boost::asio yield context from the calling coroutine
      * @return An AsyncMutexLock that will automatically release the mutex when destroyed
      *
