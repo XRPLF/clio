@@ -44,7 +44,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <variant>
 
 namespace rpc {
 
@@ -88,10 +87,10 @@ VaultInfoHandler::process(VaultInfoHandler::Input input, Context const& ctx) con
         *sharedPtrBackend_, ctx.yield, std::nullopt, input.ledgerIndex, range->maxSequence
     );
 
-    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
-        return Error{*status};
+    if (not lgrInfoOrStatus.has_value())
+        return Error{lgrInfoOrStatus.error()};
 
-    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
+    auto const lgrInfo = *lgrInfoOrStatus;
 
     // Extract the vault keylet based on input
     auto const vaultKeylet = [&]() -> std::expected<ripple::Keylet, Status> {
