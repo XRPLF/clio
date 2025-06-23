@@ -177,14 +177,14 @@ public:
 
     /**
      * @brief Load the initial ledger, writing data to the queue.
-     * @note This function will retry indefinitely until the ledger is downloaded.
+     * @note This function will retry indefinitely until the ledger is downloaded or the download is cancelled.
      *
      * @param sequence Sequence of ledger to download
      * @param observer The observer to notify of progress
      * @param retryAfter Time to wait between retries (2 seconds by default)
-     * @return A std::vector<std::string> The ledger data
+     * @return A std::expected with ledger edge keys on success, or InitialLedgerLoadError on failure
      */
-    std::vector<std::string>
+    etlng::InitialLedgerLoadResult
     loadInitialLedger(
         [[maybe_unused]] uint32_t sequence,
         [[maybe_unused]] etlng::InitialLoadObserverInterface& observer,

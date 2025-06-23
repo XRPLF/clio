@@ -24,7 +24,7 @@ on:
         type: string
 
       disable_cache:
-        description: Whether ccache and conan cache should be disabled
+        description: Whether ccache should be disabled
         required: false
         type: boolean
 
@@ -48,11 +48,6 @@ on:
         required: true
         type: string
 
-      sanitizer:
-        description: Sanitizer to use
-        required: true
-        type: string
-
       analyze_build_time:
         description: Whether to enable build time analysis
         required: true
@@ -64,7 +59,7 @@ on:
 
 jobs:
   build:
-    name: Build ${{ inputs.container != '' && 'in container' || 'natively' }}
+    name: Build
     runs-on: ${{ inputs.runs_on }}
     container: ${{ inputs.container != '' && fromJson(inputs.container) || null }}
 
@@ -83,16 +78,16 @@ jobs:
           disable_ccache: ${{ inputs.disable_cache }}
 
       - name: Setup conan
-        uses: ./.github/actions/setup_conan
+        if: runner.os == 'macOS'
+        uses: ./.github/actions/setup_conan_macos
         with:
-          conan_profile: ${{ inputs.conan_profile }}
+          conan_files_dir: docker/ci/conan/
 
       - name: Restore cache
         if: ${{ !inputs.disable_cache }}
         uses: ./.github/actions/restore_cache
         id: restore_cache
         with:
-          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
           conan_profile: ${{ inputs.conan_profile }}
           ccache_dir: ${{ env.CCACHE_DIR }}
           build_type: ${{ inputs.build_type }}
@@ -102,11 +97,9 @@ jobs:
         uses: ./.github/actions/generate
         with:
           conan_profile: ${{ inputs.conan_profile }}
-          conan_cache_hit: ${{ !inputs.disable_cache && steps.restore_cache.outputs.conan_cache_hit }}
           build_type: ${{ inputs.build_type }}
           code_coverage: ${{ inputs.code_coverage }}
           static: ${{ inputs.static }}
-          sanitizer: ${{ inputs.sanitizer }}
           time_trace: ${{ inputs.analyze_build_time }}
 
       - name: Build Clio
@@ -140,11 +133,11 @@ jobs:
           cat /tmp/ccache.stats
 
       - name: Strip unit_tests
-        if: inputs.sanitizer == 'false' && !inputs.code_coverage && !inputs.analyze_build_time
+        if: ${{ !endsWith(inputs.conan_profile, 'san') && !inputs.code_coverage && !inputs.analyze_build_time }}
         run: strip build/clio_tests
 
       - name: Strip integration_tests
-        if: inputs.sanitizer == 'false' && !inputs.code_coverage && !inputs.analyze_build_time
+        if: ${{ !endsWith(inputs.conan_profile, 'san') && !inputs.code_coverage && !inputs.analyze_build_time }}
         run: strip build/clio_integration_tests
 
       - name: Upload clio_server
@@ -172,15 +165,13 @@ jobs:
         if: ${{ !inputs.disable_cache && github.ref == 'refs/heads/develop' }}
         uses: ./.github/actions/save_cache
         with:
-          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
-          conan_hash: ${{ steps.restore_cache.outputs.conan_hash }}
-          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+          conan_profile: ${{ inputs.conan_profile }}
           ccache_dir: ${{ env.CCACHE_DIR }}
-          ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
-          ccache_cache_miss_rate: ${{ steps.ccache_stats.outputs.miss_rate }}
           build_type: ${{ inputs.build_type }}
           code_coverage: ${{ inputs.code_coverage }}
-          conan_profile: ${{ inputs.conan_profile }}
+
+          ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
+          ccache_cache_miss_rate: ${{ steps.ccache_stats.outputs.miss_rate }}
 
       # This is run as part of the build job, because it requires the following:
       # - source code

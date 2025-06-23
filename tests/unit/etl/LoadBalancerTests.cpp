@@ -62,7 +62,7 @@ using namespace util::config;
 using testing::Return;
 using namespace util::prometheus;
 
-constexpr static auto const kTWO_SOURCES_LEDGER_RESPONSE = R"JSON({
+static constexpr auto kTWO_SOURCES_LEDGER_RESPONSE = R"JSON({
     "etl_sources": [
         {
             "ip": "127.0.0.1",
@@ -77,7 +77,7 @@ constexpr static auto const kTWO_SOURCES_LEDGER_RESPONSE = R"JSON({
     ]
 })JSON";
 
-constexpr static auto const kTHREE_SOURCES_LEDGER_RESPONSE = R"JSON({
+static constexpr auto kTHREE_SOURCES_LEDGER_RESPONSE = R"JSON({
     "etl_sources": [
         {
             "ip": "127.0.0.1",

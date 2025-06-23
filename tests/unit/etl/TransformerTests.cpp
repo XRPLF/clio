@@ -64,7 +64,7 @@ struct ETLTransformerTest : util::prometheus::WithPrometheus, MockBackendTest {
     {
         state_.isStopping = false;
         state_.writeConflict = false;
-        state_.isReadOnly = false;
+        state_.isStrictReadonly = false;
         state_.isWriting = false;
     }
 

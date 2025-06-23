@@ -74,7 +74,7 @@ makeWarning(WarningCode code)
 ClioErrorInfo const&
 getErrorInfo(ClioError code)
 {
-    constexpr static ClioErrorInfo kINFOS[]{
+    static constexpr ClioErrorInfo kINFOS[]{
         {.code = ClioError::RpcMalformedCurrency, .error = "malformedCurrency", .message = "Malformed currency."},
         {.code = ClioError::RpcMalformedRequest, .error = "malformedRequest", .message = "Malformed request."},
         {.code = ClioError::RpcMalformedOwner, .error = "malformedOwner", .message = "Malformed owner."},

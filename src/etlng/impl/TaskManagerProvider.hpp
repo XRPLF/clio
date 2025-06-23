@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <utility>
 
 namespace etlng::impl {
@@ -62,12 +63,19 @@ public:
     }
 
     std::unique_ptr<TaskManagerInterface>
-    make(util::async::AnyExecutionContext ctx, std::reference_wrapper<MonitorInterface> monitor, uint32_t seq) override
+    make(
+        util::async::AnyExecutionContext ctx,
+        std::reference_wrapper<MonitorInterface> monitor,
+        uint32_t startSeq,
+        std::optional<uint32_t> finishSeq
+    ) override
     {
-        auto scheduler = impl::makeScheduler(impl::ForwardScheduler{ledgers_, seq});
-        // TODO: add impl::BackfillScheduler{seq - 1, seq - 1000},
+        auto scheduler = impl::makeScheduler(impl::ForwardScheduler{ledgers_, startSeq, finishSeq});
+        // TODO: add impl::BackfillScheduler{startSeq - 1, startSeq - ...},
 
-        return std::make_unique<TaskManager>(std::move(ctx), std::move(scheduler), *extractor_, *loader_, monitor, seq);
+        return std::make_unique<TaskManager>(
+            std::move(ctx), std::move(scheduler), *extractor_, *loader_, monitor, startSeq
+        );
     }
 };
 

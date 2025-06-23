@@ -223,7 +223,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
     // return empty ledgerHeader
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "ledger_index":30
@@ -245,7 +245,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
     // return empty ledgerHeader
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillOnce(Return(std::nullopt));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "ledger_index":"30"
@@ -268,7 +268,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
     EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
         .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "ledger_hash":"{}"
@@ -293,7 +293,7 @@ TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
     EXPECT_CALL(*backend_, doFetchLedgerObject).WillOnce(Return(std::optional<Blob>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}"
         }})JSON",
@@ -365,7 +365,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}"
         }})JSON",
@@ -409,7 +409,7 @@ TEST_F(RPCAccountObjectsHandlerTest, Limit)
     }
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "limit":{}
@@ -453,7 +453,7 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
     }
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "marker":"{},{}"
@@ -507,7 +507,7 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
     }
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "limit":{}
@@ -561,7 +561,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "type":"offer"
@@ -605,7 +605,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterAmmType)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "type": "amm"
@@ -658,7 +658,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "type": "check"
@@ -713,7 +713,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "deletion_blockers_only": true
@@ -756,7 +756,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "deletion_blockers_only": true,
@@ -818,7 +818,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "deletion_blockers_only": true
@@ -878,7 +878,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleT
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "deletion_blockers_only": true,
@@ -992,7 +992,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}"
         }})JSON",
@@ -1031,7 +1031,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
         current = previous;
     }
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "limit":{}
@@ -1080,7 +1080,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(current, 30, _)).WillOnce(Return(nftpage11.getSerializer().peekData()));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "limit":{}
@@ -1158,7 +1158,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "marker":"{},{}"
@@ -1214,7 +1214,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "marker":"{},{}"
@@ -1242,7 +1242,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
     auto const accountKk = ripple::keylet::account(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, kMAX_SEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "marker" : "{},{}"
@@ -1275,7 +1275,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
     auto const accountNftMax = ripple::keylet::nftpage_max(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountNftMax, kMAX_SEQ, _)).WillOnce(Return(std::nullopt));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "marker" : "{},{}"
@@ -1349,7 +1349,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "marker":"{},{}",
@@ -1445,7 +1445,7 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "type": "nft_page"
@@ -1486,7 +1486,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
     }
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "limit":{},
@@ -1566,7 +1566,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "limit": {}
@@ -1642,7 +1642,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "limit": {}
@@ -1684,7 +1684,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTIssuanceType)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "type": "mpt_issuance"
@@ -1733,7 +1733,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTokenType)
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "type": "mptoken"

@@ -21,7 +21,6 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
-#include "data/Types.hpp"
 #include "etl/SystemState.hpp"
 #include "etlng/LedgerPublisherInterface.hpp"
 #include "etlng/impl/Loading.hpp"
@@ -35,6 +34,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/strand.hpp>
+#include <fmt/core.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/protocol/Fees.h>
 #include <xrpl/protocol/LedgerHeader.h>
@@ -163,10 +163,6 @@ public:
     {
         boost::asio::post(publishStrand_, [this, lgrInfo = lgrInfo]() {
             LOG(log_.info()) << "Publishing ledger " << std::to_string(lgrInfo.seq);
-
-            // TODO: This should probably not be part of publisher in the future
-            if (not state_.get().isWriting)
-                backend_->updateRange(lgrInfo.seq);  // This can't be unit tested atm.
 
             setLastClose(lgrInfo.closeTime);
             auto age = lastCloseAgeSeconds();

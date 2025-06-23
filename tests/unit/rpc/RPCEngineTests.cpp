@@ -53,7 +53,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <variant>
 #include <vector>
 
 using namespace data;
@@ -258,13 +257,11 @@ TEST_P(RPCEngineFlowParameterTest, Test)
         );
 
         auto const res = engine->buildResponse(ctx);
-        auto const status = std::get_if<rpc::Status>(&res.response);
-        auto const response = std::get_if<boost::json::object>(&res.response);
-        ASSERT_EQ(status == nullptr, testBundle.response.has_value());
+        ASSERT_EQ(res.response.has_value(), testBundle.response.has_value());
         if (testBundle.response.has_value()) {
-            EXPECT_EQ(*response, testBundle.response.value());
+            EXPECT_EQ(res.response.value(), testBundle.response.value());
         } else {
-            EXPECT_EQ(*status, testBundle.status.value());
+            EXPECT_EQ(res.response.error(), testBundle.status.value());
         }
     });
 }
@@ -295,9 +292,8 @@ TEST_F(RPCEngineTest, ThrowDatabaseError)
         );
 
         auto const res = engine->buildResponse(ctx);
-        auto const status = std::get_if<rpc::Status>(&res.response);
-        ASSERT_TRUE(status != nullptr);
-        EXPECT_EQ(*status, Status{RippledError::rpcTOO_BUSY});
+        ASSERT_FALSE(res.response.has_value());
+        EXPECT_EQ(res.response.error(), Status{RippledError::rpcTOO_BUSY});
     });
 }
 
@@ -327,9 +323,8 @@ TEST_F(RPCEngineTest, ThrowException)
         );
 
         auto const res = engine->buildResponse(ctx);
-        auto const status = std::get_if<rpc::Status>(&res.response);
-        ASSERT_TRUE(status != nullptr);
-        EXPECT_EQ(*status, Status{RippledError::rpcINTERNAL});
+        ASSERT_FALSE(res.response.has_value());
+        EXPECT_EQ(res.response.error(), Status{RippledError::rpcINTERNAL});
     });
 }
 
@@ -454,8 +449,8 @@ TEST_P(RPCEngineCacheParameterTest, Test)
             );
 
             auto const res = engine->buildResponse(ctx);
-            auto const response = std::get_if<boost::json::object>(&res.response);
-            EXPECT_EQ(*response, boost::json::parse(R"JSON({ "computed": "world_50"})JSON").as_object());
+            ASSERT_TRUE(res.response.has_value());
+            EXPECT_EQ(res.response.value(), boost::json::parse(R"JSON({ "computed": "world_50"})JSON").as_object());
         });
     }
 }
@@ -499,9 +494,8 @@ TEST_F(RPCEngineTest, NotCacheIfErrorHappen)
             );
 
             auto const res = engine->buildResponse(ctx);
-            auto const error = std::get_if<rpc::Status>(&res.response);
-            ASSERT_NE(error, nullptr);
-            EXPECT_EQ(*error, rpc::Status{"Very custom error"});
+            ASSERT_FALSE(res.response.has_value());
+            EXPECT_EQ(res.response.error(), rpc::Status{"Very custom error"});
         });
     }
 }

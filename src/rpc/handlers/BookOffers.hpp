@@ -85,6 +85,7 @@ public:
         // accountID will be filled by input converter, if no issuer is given, will use XRP issuer
         ripple::AccountID paysID = ripple::xrpAccount();
         ripple::AccountID getsID = ripple::xrpAccount();
+        std::optional<std::string> domain;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -146,6 +147,14 @@ public:
              meta::WithCustomError{
                  validation::CustomValidators::accountValidator,
                  Status(RippledError::rpcINVALID_PARAMS, "Invalid field 'taker'.")
+             }},
+            {JS(domain),
+             meta::WithCustomError{
+                 validation::Type<std::string>{}, Status(RippledError::rpcDOMAIN_MALFORMED, "Unable to parse domain.")
+             },
+             meta::WithCustomError{
+                 validation::CustomValidators::uint256HexStringValidator,
+                 Status(RippledError::rpcDOMAIN_MALFORMED, "Unable to parse domain.")
              }},
             {JS(limit),
              validation::Type<uint32_t>{},

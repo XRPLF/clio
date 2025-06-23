@@ -82,7 +82,8 @@ public:
         override;
 
 private:
-    std::unique_ptr<MetricBase> static makeMetric(std::string name, std::string labelsString, MetricType type);
+    static std::unique_ptr<MetricBase>
+    makeMetric(std::string name, std::string labelsString, MetricType type);
 
     template <typename ValueType>
         requires std::same_as<ValueType, std::int64_t> || std::same_as<ValueType, double>

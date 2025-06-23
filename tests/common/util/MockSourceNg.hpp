@@ -20,6 +20,7 @@
 
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etlng/InitialLoadObserverInterface.hpp"
+#include "etlng/LoadBalancerInterface.hpp"
 #include "etlng/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
@@ -61,7 +62,7 @@ struct MockSourceNg : etlng::SourceBase {
         (override)
     );
     MOCK_METHOD(
-        (std::pair<std::vector<std::string>, bool>),
+        etlng::InitialLedgerLoadResult,
         loadInitialLedger,
         (uint32_t, uint32_t, etlng::InitialLoadObserverInterface&),
         (override)
@@ -136,7 +137,7 @@ public:
         return mock_->fetchLedger(sequence, getObjects, getObjectNeighbors);
     }
 
-    std::pair<std::vector<std::string>, bool>
+    etlng::InitialLedgerLoadResult
     loadInitialLedger(uint32_t sequence, uint32_t maxLedger, etlng::InitialLoadObserverInterface& observer) override
     {
         return mock_->loadInitialLedger(sequence, maxLedger, observer);

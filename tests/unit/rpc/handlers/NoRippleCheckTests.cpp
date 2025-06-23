@@ -213,7 +213,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaHash)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(std::nullopt));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "role": "gateway",
@@ -240,7 +240,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaIntIndex)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::nullopt));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "role": "gateway",
@@ -267,7 +267,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::nullopt));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "role": "gateway",

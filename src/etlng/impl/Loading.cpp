@@ -20,11 +20,14 @@
 #include "etlng/impl/Loading.hpp"
 
 #include "data/BackendInterface.hpp"
+#include "etl/SystemState.hpp"
 #include "etl/impl/LedgerLoader.hpp"
 #include "etlng/AmendmentBlockHandlerInterface.hpp"
+#include "etlng/LoaderInterface.hpp"
 #include "etlng/Models.hpp"
 #include "etlng/RegistryInterface.hpp"
 #include "util/Assert.hpp"
+#include "util/Constants.hpp"
 #include "util/LedgerUtils.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
@@ -46,29 +49,45 @@ namespace etlng::impl {
 Loader::Loader(
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<RegistryInterface> registry,
-    std::shared_ptr<AmendmentBlockHandlerInterface> amendmentBlockHandler
+    std::shared_ptr<AmendmentBlockHandlerInterface> amendmentBlockHandler,
+    std::shared_ptr<etl::SystemState> state
 )
     : backend_(std::move(backend))
     , registry_(std::move(registry))
     , amendmentBlockHandler_(std::move(amendmentBlockHandler))
+    , state_(std::move(state))
 {
 }
 
-void
+std::expected<void, LoaderError>
 Loader::load(model::LedgerData const& data)
 {
     try {
-        // perform cache updates and all writes from extensions
+        // Perform cache updates and all writes from extensions
+        // TODO: maybe this readonly logic should be removed?
         registry_->dispatch(data);
 
-        auto [success, duration] =
-            ::util::timed<std::chrono::duration<double>>([&]() { return backend_->finishWrites(data.seq); });
-        LOG(log_.info()) << "Finished writes to DB for " << data.seq << ": " << (success ? "YES" : "NO") << "; took "
-                         << duration;
+        // Only a writer should attempt to commit to DB
+        // This is also where conflicts with other writer nodes will be detected
+        if (state_->isWriting) {
+            auto [success, duration] =
+                ::util::timed<std::chrono::milliseconds>([&]() { return backend_->finishWrites(data.seq); });
+            LOG(log_.info()) << "Finished writes to DB for " << data.seq << ": " << (success ? "YES" : "NO")
+                             << "; took " << duration << "ms";
+
+            if (not success) {
+                state_->writeConflict = true;
+                LOG(log_.warn()) << "Another node wrote a ledger into the DB - we have a write conflict";
+                return std::unexpected(LoaderError::WriteConflict);
+            }
+        }
     } catch (std::runtime_error const& e) {
         LOG(log_.fatal()) << "Failed to load " << data.seq << ": " << e.what();
         amendmentBlockHandler_->notifyAmendmentBlocked();
+        return std::unexpected(LoaderError::AmendmentBlocked);
     }
+
+    return {};
 };
 
 void
@@ -78,13 +97,32 @@ Loader::onInitialLoadGotMoreObjects(
     std::optional<std::string> lastKey
 )
 {
+    static constexpr std::size_t kLOG_STRIDE = 1000u;
+    static auto kINITIAL_LOAD_START_TIME = std::chrono::steady_clock::now();
+
     try {
-        LOG(log_.debug()) << "On initial load: got more objects for seq " << seq << ". size = " << data.size();
+        LOG(log_.trace()) << "On initial load: got more objects for seq " << seq << ". size = " << data.size();
         registry_->dispatchInitialObjects(
             seq,
             data,
             std::move(lastKey).value_or(std::string{})  // TODO: perhaps use optional all the way to extensions?
         );
+
+        initialLoadWrittenObjects_ += data.size();
+        ++initialLoadWrites_;
+        if (initialLoadWrites_ % kLOG_STRIDE == 0u && initialLoadWrites_ != 0u) {
+            auto elapsedSinceStart = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - kINITIAL_LOAD_START_TIME
+            );
+            auto elapsedSeconds = elapsedSinceStart.count() / static_cast<double>(util::kMILLISECONDS_PER_SECOND);
+            auto objectsPerSecond =
+                elapsedSeconds > 0.0 ? static_cast<double>(initialLoadWrittenObjects_) / elapsedSeconds : 0.0;
+
+            LOG(log_.info()) << "Wrote " << initialLoadWrittenObjects_
+                             << " initial ledger objects so far with average rate of " << objectsPerSecond
+                             << " objects per second";
+        }
+
     } catch (std::runtime_error const& e) {
         LOG(log_.fatal()) << "Failed to load initial objects for " << seq << ": " << e.what();
         amendmentBlockHandler_->notifyAmendmentBlocked();
@@ -95,9 +133,7 @@ std::optional<ripple::LedgerHeader>
 Loader::loadInitialLedger(model::LedgerData const& data)
 {
     try {
-        // check that database is actually empty
-        auto rng = backend_->hardFetchLedgerRangeNoThrow();
-        if (rng) {
+        if (auto const rng = backend_->hardFetchLedgerRangeNoThrow(); rng.has_value()) {
             ASSERT(false, "Database is not empty");
             return std::nullopt;
         }

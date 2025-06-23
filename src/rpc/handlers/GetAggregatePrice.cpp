@@ -54,7 +54,6 @@
 #include <numeric>
 #include <optional>
 #include <string>
-#include <variant>
 
 namespace rpc {
 
@@ -64,14 +63,14 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "GetAggregatePrice's ledger range must be available");
 
-    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
-        return Error{*status};
+    if (!expectedLgrInfo.has_value())
+        return Error{expectedLgrInfo.error()};
 
-    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
+    auto const& lgrInfo = expectedLgrInfo.value();
 
     // sorted descending by lastUpdateTime, ascending by AssetPrice
     using TimestampPricesBiMap = boost::bimaps::bimap<

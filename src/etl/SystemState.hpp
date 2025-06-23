@@ -37,7 +37,7 @@ struct SystemState {
      * In strict read-only mode, the process will never attempt to become the ETL writer, and will only publish ledgers
      * as they are written to the database.
      */
-    util::prometheus::Bool isReadOnly = PrometheusService::boolMetric(
+    util::prometheus::Bool isStrictReadonly = PrometheusService::boolMetric(
         "read_only",
         util::prometheus::Labels{},
         "Whether the process is in strict read-only mode"

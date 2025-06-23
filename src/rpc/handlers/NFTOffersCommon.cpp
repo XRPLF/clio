@@ -48,7 +48,6 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <variant>
 #include <vector>
 
 using namespace ripple;
@@ -93,14 +92,14 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "NFTOffersCommon's ledger range must be available");
 
-    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
-        return Error{*status};
+    if (!expectedLgrInfo.has_value())
+        return Error{expectedLgrInfo.error()};
 
-    auto const lgrInfo = std::get<LedgerHeader>(lgrInfoOrStatus);
+    auto const& lgrInfo = expectedLgrInfo.value();
 
     // TODO: just check for existence without pulling
     if (not sharedPtrBackend_->fetchLedgerObject(directory.key, lgrInfo.seq, yield))
@@ -156,8 +155,8 @@ NFTOffersHandlerBase::iterateOfferDirectory(
         }
     );
 
-    if (auto status = std::get_if<Status>(&result))
-        return Error{*status};
+    if (!result.has_value())
+        return Error{result.error()};
 
     if (offers.size() == reserve) {
         output.limit = input.limit;

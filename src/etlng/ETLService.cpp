@@ -35,13 +35,13 @@
 #include "etlng/LoadBalancerInterface.hpp"
 #include "etlng/LoaderInterface.hpp"
 #include "etlng/MonitorInterface.hpp"
+#include "etlng/MonitorProviderInterface.hpp"
 #include "etlng/TaskManagerProviderInterface.hpp"
 #include "etlng/impl/AmendmentBlockHandler.hpp"
 #include "etlng/impl/CacheUpdater.hpp"
 #include "etlng/impl/Extraction.hpp"
 #include "etlng/impl/LedgerPublisher.hpp"
 #include "etlng/impl/Loading.hpp"
-#include "etlng/impl/Monitor.hpp"
 #include "etlng/impl/Registry.hpp"
 #include "etlng/impl/Scheduling.hpp"
 #include "etlng/impl/TaskManager.hpp"
@@ -57,6 +57,7 @@
 #include <boost/json/object.hpp>
 #include <boost/signals2/connection.hpp>
 #include <fmt/core.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <chrono>
 #include <cstddef>
@@ -82,6 +83,7 @@ ETLService::ETLService(
     std::shared_ptr<LoaderInterface> loader,
     std::shared_ptr<InitialLoadObserverInterface> initialLoadObserver,
     std::shared_ptr<etlng::TaskManagerProviderInterface> taskManagerProvider,
+    std::shared_ptr<etlng::MonitorProviderInterface> monitorProvider,
     std::shared_ptr<etl::SystemState> state
 )
     : ctx_(std::move(ctx))
@@ -96,9 +98,20 @@ ETLService::ETLService(
     , loader_(std::move(loader))
     , initialLoadObserver_(std::move(initialLoadObserver))
     , taskManagerProvider_(std::move(taskManagerProvider))
+    , monitorProvider_(std::move(monitorProvider))
     , state_(std::move(state))
+    , startSequence_(config.get().maybeValue<uint32_t>("start_sequence"))
+    , finishSequence_(config.get().maybeValue<uint32_t>("finish_sequence"))
 {
-    LOG(log_.info()) << "Creating ETLng...";
+    ASSERT(not state_->isWriting, "ETL should never start in writer mode");
+
+    if (startSequence_.has_value())
+        LOG(log_.info()) << "Start sequence: " << *startSequence_;
+
+    if (finishSequence_.has_value())
+        LOG(log_.info()) << "Finish sequence: " << *finishSequence_;
+
+    LOG(log_.info()) << "Starting in " << (state_->isStrictReadonly ? "STRICT READONLY MODE" : "WRITE MODE");
 }
 
 ETLService::~ETLService()
@@ -112,12 +125,7 @@ ETLService::run()
 {
     LOG(log_.info()) << "Running ETLng...";
 
-    // TODO: write-enabled node should start in readonly and do the 10 second dance to become a writer
     mainLoop_.emplace(ctx_.execute([this] {
-        state_->isWriting =
-            not state_->isReadOnly;  // TODO: this is now needed because we don't have a mechanism for readonly or
-                                     // ETL writer node. remove later in favor of real mechanism
-
         auto const rng = loadInitialLedgerIfNeeded();
 
         LOG(log_.info()) << "Waiting for next ledger to be validated by network...";
@@ -129,15 +137,18 @@ ETLService::run()
             return;
         }
 
-        ASSERT(rng.has_value(), "Ledger range can't be null");
+        if (not rng.has_value()) {
+            LOG(log_.warn()) << "Initial ledger download got cancelled - stopping ETL service";
+            return;
+        }
+
         auto const nextSequence = rng->maxSequence + 1;
 
         LOG(log_.debug()) << "Database is populated. Starting monitor loop. sequence = " << nextSequence;
         startMonitor(nextSequence);
 
-        // TODO: we only want to run the full ETL task man if we are POSSIBLY a write node
-        // but definitely not in strict readonly
-        if (not state_->isReadOnly)
+        // If we are a writer as the result of loading the initial ledger - start loading
+        if (state_->isWriting)
             startLoading(nextSequence);
     }));
 }
@@ -147,6 +158,8 @@ ETLService::stop()
 {
     LOG(log_.info()) << "Stop called";
 
+    if (mainLoop_)
+        mainLoop_->wait();
     if (taskMan_)
         taskMan_->stop();
     if (monitor_)
@@ -160,7 +173,7 @@ ETLService::getInfo() const
 
     result["etl_sources"] = balancer_->toJson();
     result["is_writer"] = static_cast<int>(state_->isWriting);
-    result["read_only"] = static_cast<int>(state_->isReadOnly);
+    result["read_only"] = static_cast<int>(state_->isStrictReadonly);
     auto last = publisher_->getLastPublish();
     if (last.time_since_epoch().count() != 0)
         result["last_publish_age_seconds"] = std::to_string(publisher_->lastPublishAgeSeconds());
@@ -196,21 +209,40 @@ ETLService::loadInitialLedgerIfNeeded()
 {
     auto rng = backend_->hardFetchLedgerRangeNoThrow();
     if (not rng.has_value()) {
-        LOG(log_.info()) << "Database is empty. Will download a ledger from the network.";
+        ASSERT(
+            not state_->isStrictReadonly,
+            "Database is empty but this node is in strict readonly mode. Can't write initial ledger."
+        );
 
-        LOG(log_.info()) << "Waiting for next ledger to be validated by network...";
-        if (auto const mostRecentValidated = ledgers_->getMostRecent(); mostRecentValidated.has_value()) {
-            auto const seq = *mostRecentValidated;
-            LOG(log_.info()) << "Ledger " << seq << " has been validated. Downloading... ";
+        LOG(log_.info()) << "Database is empty. Will download a ledger from the network.";
+        state_->isWriting = true;  // immediately become writer as the db is empty
+
+        auto const getMostRecent = [this]() {
+            LOG(log_.info()) << "Waiting for next ledger to be validated by network...";
+            return ledgers_->getMostRecent();
+        };
+
+        if (auto const maybeSeq = startSequence_.or_else(getMostRecent); maybeSeq.has_value()) {
+            auto const seq = *maybeSeq;
+            LOG(log_.info()) << "Starting from sequence " << seq
+                             << ". Initial ledger download and extraction can take a while...";
 
             auto [ledger, timeDiff] = ::util::timed<std::chrono::duration<double>>([this, seq]() {
-                return extractor_->extractLedgerOnly(seq).and_then([this, seq](auto&& data) {
-                    // TODO: loadInitialLedger in balancer should be called fetchEdgeKeys or similar
-                    data.edgeKeys = balancer_->loadInitialLedger(seq, *initialLoadObserver_);
+                return extractor_->extractLedgerOnly(seq).and_then(
+                    [this, seq](auto&& data) -> std::optional<ripple::LedgerHeader> {
+                        // TODO: loadInitialLedger in balancer should be called fetchEdgeKeys or similar
+                        auto res = balancer_->loadInitialLedger(seq, *initialLoadObserver_);
+                        if (not res.has_value() and res.error() == InitialLedgerLoadError::Cancelled) {
+                            LOG(log_.debug()) << "Initial ledger load got cancelled";
+                            return std::nullopt;
+                        }
 
-                    // TODO: this should be interruptible for graceful shutdown
-                    return loader_->loadInitialLedger(data);
-                });
+                        ASSERT(res.has_value(), "Initial ledger retry logic failed");
+                        data.edgeKeys = std::move(res).value();
+
+                        return loader_->loadInitialLedger(data);
+                    }
+                );
             });
 
             if (not ledger.has_value()) {
@@ -238,28 +270,64 @@ ETLService::loadInitialLedgerIfNeeded()
 void
 ETLService::startMonitor(uint32_t seq)
 {
-    monitor_ = std::make_unique<impl::Monitor>(ctx_, backend_, ledgers_, seq);
-    monitorSubscription_ = monitor_->subscribe([this](uint32_t seq) {
-        log_.info() << "MONITOR got new seq from db: " << seq;
+    monitor_ = monitorProvider_->make(ctx_, backend_, ledgers_, seq);
 
-        // FIXME: is this the best way?
+    monitorNewSeqSubscription_ = monitor_->subscribeToNewSequence([this](uint32_t seq) {
+        LOG(log_.info()) << "ETLService (via Monitor) got new seq from db: " << seq;
+
+        if (state_->writeConflict) {
+            LOG(log_.info()) << "Got a write conflict; Giving up writer seat immediately";
+            giveUpWriter();
+        }
+
         if (not state_->isWriting) {
             auto const diff = data::synchronousAndRetryOnTimeout([this, seq](auto yield) {
                 return backend_->fetchLedgerDiff(seq, yield);
             });
+
             cacheUpdater_->update(seq, diff);
+            backend_->updateRange(seq);
         }
 
         publisher_->publish(seq, {});
     });
+
+    monitorDbStalledSubscription_ = monitor_->subscribeToDbStalled([this]() {
+        LOG(log_.warn()) << "ETLService received DbStalled signal from Monitor";
+        if (not state_->isStrictReadonly and not state_->isWriting)
+            attemptTakeoverWriter();
+    });
+
     monitor_->run();
 }
 
 void
 ETLService::startLoading(uint32_t seq)
 {
-    taskMan_ = taskManagerProvider_->make(ctx_, *monitor_, seq);
+    ASSERT(not state_->isStrictReadonly, "This should only happen on writer nodes");
+    taskMan_ = taskManagerProvider_->make(ctx_, *monitor_, seq, finishSequence_);
     taskMan_->run(config_.get().get<std::size_t>("extractor_threads"));
+}
+
+void
+ETLService::attemptTakeoverWriter()
+{
+    ASSERT(not state_->isStrictReadonly, "This should only happen on writer nodes");
+    auto rng = backend_->hardFetchLedgerRangeNoThrow();
+    ASSERT(rng.has_value(), "Ledger range can't be null");
+
+    state_->isWriting = true;  // switch to writer
+    LOG(log_.info()) << "Taking over the ETL writer seat";
+    startLoading(rng->maxSequence + 1);
+}
+
+void
+ETLService::giveUpWriter()
+{
+    ASSERT(not state_->isStrictReadonly, "This should only happen on writer nodes");
+    state_->isWriting = false;
+    state_->writeConflict = false;
+    taskMan_ = nullptr;
 }
 
 }  // namespace etlng

@@ -13,25 +13,25 @@ runs:
       if: ${{ runner.os == 'macOS' }}
       shell: bash
       run: |
-        brew install \
+        brew install --quiet \
           bison \
           ca-certificates \
           ccache \
           clang-build-analyzer \
-          conan@1 \
+          conan \
           gh \
           jq \
           llvm@14 \
           ninja \
           pkg-config
-        echo "/opt/homebrew/opt/conan@1/bin" >> $GITHUB_PATH
+        echo "/opt/homebrew/opt/conan@2/bin" >> $GITHUB_PATH
 
     - name: Install CMake 3.31.6 on mac
       if: ${{ runner.os == 'macOS' }}
       shell: bash
       run: |
         # Uninstall any existing cmake
-        brew uninstall cmake --ignore-dependencies || true
+        brew uninstall --formula cmake --ignore-dependencies || true
 
         # Download specific cmake formula
         FORMULA_URL="https://raw.githubusercontent.com/Homebrew/homebrew-core/b4e46db74e74a8c1650b38b1da222284ce1ec5ce/Formula/c/cmake.rb"
@@ -43,7 +43,7 @@ runs:
         echo "$FORMULA_EXPECTED_SHA256  /tmp/homebrew-formula/cmake.rb" | shasum -a 256 -c
 
         # Install cmake from the specific formula with force flag
-        brew install --formula --force /tmp/homebrew-formula/cmake.rb
+        brew install --formula --quiet --force /tmp/homebrew-formula/cmake.rb
 
     - name: Fix git permissions on Linux
       if: ${{ runner.os == 'Linux' }}
@@ -55,14 +55,14 @@ runs:
       shell: bash
       run: |
         echo "CCACHE_DIR=${{ github.workspace }}/.ccache" >> $GITHUB_ENV
-        echo "CONAN_USER_HOME=${{ github.workspace }}" >> $GITHUB_ENV
+        echo "CONAN_HOME=${{ github.workspace }}/.conan2" >> $GITHUB_ENV
 
     - name: Set env variables for Linux
       if: ${{ runner.os == 'Linux' }}
       shell: bash
       run: |
         echo "CCACHE_DIR=/root/.ccache" >> $GITHUB_ENV
-        echo "CONAN_USER_HOME=/root/" >> $GITHUB_ENV
+        echo "CONAN_HOME=/root/.conan2" >> $GITHUB_ENV
 
     - name: Set CCACHE_DISABLE=1
       if: ${{ inputs.disable_ccache == 'true' }}
@@ -74,4 +74,4 @@ runs:
       shell: bash
       run: |
         mkdir -p "$CCACHE_DIR"
-        mkdir -p "$CONAN_USER_HOME/.conan"
+        mkdir -p "$CONAN_HOME"

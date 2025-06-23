@@ -573,7 +573,7 @@ TEST_F(RPCTxTest, ReturnBinaryWithCTID)
 TEST_F(RPCTxTest, MintNFT)
 {
     // Note: `inLedger` is API v1 only. See DefaultOutput_*
-    auto static const kOUT = fmt::format(
+    static auto const kOUT = fmt::format(
         R"JSON({{
             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Fee": "50",
@@ -992,7 +992,7 @@ TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvailable)
 
 TEST_F(RPCTxTest, ViaCTID)
 {
-    auto static const kOUT = fmt::format(
+    static auto const kOUT = fmt::format(
         R"JSON({{
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Fee":"2",

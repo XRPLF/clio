@@ -36,7 +36,8 @@ namespace rpc::validation {
  * @return true if convertible; false otherwise
  */
 template <typename Expected>
-[[nodiscard]] bool static checkType(boost::json::value const& value)
+[[nodiscard]] static bool
+checkType(boost::json::value const& value)
 {
     auto hasError = false;
     if constexpr (std::is_same_v<Expected, bool>) {

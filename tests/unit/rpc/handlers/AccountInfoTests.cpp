@@ -187,7 +187,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "ledger_index": 30
@@ -210,7 +210,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::nullopt));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "ledger_index": "30"
@@ -234,7 +234,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "ledger_hash": "{}"
@@ -261,7 +261,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}"
         }})JSON",
@@ -287,7 +287,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}"
         }})JSON",
@@ -321,7 +321,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _)).WillOnce(Return(false));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "signer_lists": true
@@ -424,7 +424,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _)).WillOnce(Return(false));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "signer_lists": true
@@ -525,7 +525,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _)).WillOnce(Return(false));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
             "signer_lists": true
@@ -599,7 +599,7 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _)).WillOnce(Return(false));
     EXPECT_CALL(*backend_, doFetchLedgerObject);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}"
         }})JSON",
@@ -628,7 +628,7 @@ TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _)).WillOnce(Return(false));
     EXPECT_CALL(*backend_, doFetchLedgerObject);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "ident": "{}"
         }})JSON",
@@ -706,7 +706,7 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _)).WillOnce(Return(false));
     EXPECT_CALL(*backend_, doFetchLedgerObject);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}"
         }})JSON",
@@ -780,7 +780,7 @@ TEST_F(RPCAccountInfoHandlerTest, Clawback)
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _)).WillOnce(Return(true));
     EXPECT_CALL(*backend_, doFetchLedgerObject);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}"
         }})JSON",

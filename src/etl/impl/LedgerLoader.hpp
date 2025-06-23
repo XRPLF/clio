@@ -242,8 +242,8 @@ public:
                     }
 
                     prev = cur->key;
-                    static constexpr std::size_t kLOG_INTERVAL = 100000;
-                    if (numWrites % kLOG_INTERVAL == 0 && numWrites != 0)
+                    static constexpr std::size_t kLOG_STRIDE = 100000;
+                    if (numWrites % kLOG_STRIDE == 0 && numWrites != 0)
                         LOG(log_.info()) << "Wrote " << numWrites << " book successors";
                 }
 

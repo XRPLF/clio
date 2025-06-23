@@ -43,7 +43,7 @@
 using namespace util::config;
 
 struct BackendCassandraFactoryTest : SyncAsioContextTest, util::prometheus::WithPrometheus {
-    constexpr static auto kKEYSPACE = "factory_test";
+    static constexpr auto kKEYSPACE = "factory_test";
 
 protected:
     ClioConfigDefinition cfg_{

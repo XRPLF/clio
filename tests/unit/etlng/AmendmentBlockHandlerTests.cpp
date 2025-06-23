@@ -42,7 +42,7 @@ protected:
 
 TEST_F(AmendmentBlockHandlerNgTests, CallTonotifyAmendmentBlockedSetsStateAndRepeatedlyCallsAction)
 {
-    constexpr static auto kMAX_ITERATIONS = 10uz;
+    static constexpr auto kMAX_ITERATIONS = 10uz;
     etlng::impl::AmendmentBlockHandler handler{ctx_, state_, std::chrono::nanoseconds{1}, actionMock_.AsStdFunction()};
     auto counter = 0uz;
     std::binary_semaphore stop{0};

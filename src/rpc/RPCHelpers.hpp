@@ -80,7 +80,6 @@
 #include <string>
 #include <tuple>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace rpc {
@@ -288,7 +287,7 @@ generatePubLedgerMessage(
  * @param ctx The context of the request
  * @return The ledger info or an error status
  */
-std::variant<Status, ripple::LedgerHeader>
+std::expected<ripple::LedgerHeader, Status>
 ledgerHeaderFromRequest(std::shared_ptr<data::BackendInterface const> const& backend, web::Context const& ctx);
 
 /**
@@ -301,7 +300,7 @@ ledgerHeaderFromRequest(std::shared_ptr<data::BackendInterface const> const& bac
  * @param maxSeq The maximum sequence to search
  * @return The ledger info or an error status
  */
-std::variant<Status, ripple::LedgerHeader>
+std::expected<ripple::LedgerHeader, Status>
 getLedgerHeaderFromHashOrSeq(
     BackendInterface const& backend,
     boost::asio::yield_context yield,
@@ -323,7 +322,7 @@ getLedgerHeaderFromHashOrSeq(
  * @param atOwnedNode The function to call for each owned node
  * @return The status or the account cursor
  */
-std::variant<Status, AccountCursor>
+std::expected<AccountCursor, Status>
 traverseOwnedNodes(
     BackendInterface const& backend,
     ripple::Keylet const& owner,
@@ -350,7 +349,7 @@ traverseOwnedNodes(
  * @param nftIncluded Whether to include NFTs
  * @return The status or the account cursor
  */
-std::variant<Status, AccountCursor>
+std::expected<AccountCursor, Status>
 traverseOwnedNodes(
     BackendInterface const& backend,
     ripple::AccountID const& accountID,
@@ -633,10 +632,17 @@ postProcessOrderBook(
  * @param payIssuer The issuer of the currency to pay
  * @param gets The currency to get
  * @param getIssuer The issuer of the currency to get
+ * @param domain The domain
  * @return The book or an error status
  */
-std::variant<Status, ripple::Book>
-parseBook(ripple::Currency pays, ripple::AccountID payIssuer, ripple::Currency gets, ripple::AccountID getIssuer);
+std::expected<ripple::Book, Status>
+parseBook(
+    ripple::Currency pays,
+    ripple::AccountID payIssuer,
+    ripple::Currency gets,
+    ripple::AccountID getIssuer,
+    std::optional<std::string> const& domain
+);
 
 /**
  * @brief Parse the book from the request
@@ -644,7 +650,7 @@ parseBook(ripple::Currency pays, ripple::AccountID payIssuer, ripple::Currency g
  * @param request The request
  * @return The book or an error status
  */
-std::variant<Status, ripple::Book>
+std::expected<ripple::Book, Status>
 parseBook(boost::json::object const& request);
 
 /**
@@ -653,7 +659,7 @@ parseBook(boost::json::object const& request);
  * @param taker The taker as json
  * @return The taker account or an error status
  */
-std::variant<Status, ripple::AccountID>
+std::expected<ripple::AccountID, Status>
 parseTaker(boost::json::value const& taker);
 
 /**
@@ -690,7 +696,7 @@ isAdminCmd(std::string const& method, boost::json::object const& request);
  * @param request The request
  * @return The NFTID or an error status
  */
-std::variant<ripple::uint256, Status>
+std::expected<ripple::uint256, Status>
 getNFTID(boost::json::object const& request);
 
 /**
@@ -800,7 +806,7 @@ parseRippleLibSeed(boost::json::value const& value);
  * @param atOwnedNode The function to call for each owned node
  * @return The account cursor or an error status
  */
-std::variant<Status, AccountCursor>
+std::expected<AccountCursor, Status>
 traverseNFTObjects(
     BackendInterface const& backend,
     std::uint32_t sequence,

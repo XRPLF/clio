@@ -147,9 +147,9 @@ public:
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator}
         };
 
-        auto static const kSPEC_V1 =
+        static auto const kSPEC_V1 =
             RpcSpec{kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(ripple::rpcINVALID_HOTWALLET)}}};
-        auto static const kSPEC_V2 =
+        static auto const kSPEC_V2 =
             RpcSpec{kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(ripple::rpcINVALID_PARAMS)}}};
 
         return apiVersion == 1 ? kSPEC_V1 : kSPEC_V2;

@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etlng/MonitorInterface.hpp"
+#include "util/Mutex.hpp"
 #include "util/async/AnyExecutionContext.hpp"
 #include "util/async/AnyOperation.hpp"
 #include "util/async/AnyStrand.hpp"
@@ -30,6 +31,7 @@
 #include <boost/signals2/connection.hpp>
 #include <xrpl/protocol/TxFormats.h>
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -43,11 +45,20 @@ class Monitor : public MonitorInterface {
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<etl::NetworkValidatedLedgersInterface> validatedLedgers_;
 
-    uint32_t nextSequence_;
+    std::atomic_uint32_t nextSequence_;
     std::optional<util::async::AnyOperation<void>> repeatedTask_;
     std::optional<boost::signals2::scoped_connection> subscription_;  // network validated ledgers subscription
 
-    SignalType notificationChannel_;
+    NewSequenceSignalType notificationChannel_;
+    DbStalledSignalType dbStalledChannel_;
+
+    struct UpdateData {
+        std::chrono::steady_clock::duration dbStalledReportDelay;
+        std::chrono::steady_clock::time_point lastDbCheckTime;
+        uint32_t lastSeenMaxSeqInDb = 0u;
+    };
+
+    util::Mutex<UpdateData> updateData_;
 
     util::Logger log_{"ETL"};
 
@@ -56,12 +67,16 @@ public:
         util::async::AnyExecutionContext ctx,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<etl::NetworkValidatedLedgersInterface> validatedLedgers,
-        uint32_t startSequence
+        uint32_t startSequence,
+        std::chrono::steady_clock::duration dbStalledReportDelay
     );
     ~Monitor() override;
 
     void
-    notifyLedgerLoaded(uint32_t seq) override;
+    notifySequenceLoaded(uint32_t seq) override;
+
+    void
+    notifyWriteConflict(uint32_t seq) override;
 
     void
     run(std::chrono::steady_clock::duration repeatInterval) override;
@@ -70,7 +85,10 @@ public:
     stop() override;
 
     boost::signals2::scoped_connection
-    subscribe(SignalType::slot_type const& subscriber) override;
+    subscribeToNewSequence(NewSequenceSignalType::slot_type const& subscriber) override;
+
+    boost::signals2::scoped_connection
+    subscribeToDbStalled(DbStalledSignalType::slot_type const& subscriber) override;
 
 private:
     void

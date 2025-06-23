@@ -36,7 +36,6 @@
 
 #include <string>
 #include <utility>
-#include <variant>
 
 namespace rpc {
 
@@ -46,17 +45,17 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context c
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "TransactionEntry's ledger range must be available");
 
-    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
-        return Error{*status};
+    if (!expectedLgrInfo.has_value())
+        return Error{expectedLgrInfo.error()};
 
     auto output = TransactionEntryHandler::Output{};
     output.apiVersion = ctx.apiVersion;
 
-    output.ledgerHeader = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
+    output.ledgerHeader = expectedLgrInfo.value();
     auto const dbRet = sharedPtrBackend_->fetchTransaction(ripple::uint256{input.txHash.c_str()}, ctx.yield);
     // Note: transaction_entry is meant to only search a specified ledger for
     // the specified transaction. tx searches the entire range of history. For

@@ -653,7 +653,7 @@ TEST_F(RPCUnsubscribeTest, Books)
     ));
 
     auto const parsedBookMaybe = rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
-    auto const book = std::get<ripple::Book>(parsedBookMaybe);
+    auto const book = parsedBookMaybe.value();
 
     EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubBook(book, _)).Times(1);
     EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubBook(ripple::reversed(book), _)).Times(1);
@@ -686,7 +686,7 @@ TEST_F(RPCUnsubscribeTest, SingleBooks)
     ));
 
     auto const parsedBookMaybe = rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
-    auto const book = std::get<ripple::Book>(parsedBookMaybe);
+    auto const book = parsedBookMaybe.value();
 
     EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubBook(book, _)).Times(1);
 

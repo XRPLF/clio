@@ -23,9 +23,18 @@
 
 #include <xrpl/protocol/LedgerHeader.h>
 
+#include <expected>
 #include <optional>
 
 namespace etlng {
+
+/**
+ * @brief Enumeration of possible errors that can occur during loading operations
+ */
+enum class LoaderError {
+    AmendmentBlocked, /*< Error indicating that an operation is blocked by an amendment */
+    WriteConflict,    /*< Error indicating that a write operation resulted in a conflict */
+};
 
 /**
  * @brief An interface for a ETL Loader
@@ -36,8 +45,9 @@ struct LoaderInterface {
     /**
      * @brief Load ledger data
      * @param data The data to load
+     * @return Nothing or error as std::expected
      */
-    virtual void
+    [[nodiscard]] virtual std::expected<void, LoaderError>
     load(model::LedgerData const& data) = 0;
 
     /**

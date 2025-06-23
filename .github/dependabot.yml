@@ -144,7 +144,7 @@ updates:
     target-branch: develop
 
   - package-ecosystem: github-actions
-    directory: .github/actions/setup_conan/
+    directory: .github/actions/setup_conan_macos/
     schedule:
       interval: weekly
       day: monday

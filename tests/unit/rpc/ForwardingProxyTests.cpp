@@ -39,7 +39,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <variant>
 #include <vector>
 
 using namespace rpc;
@@ -318,8 +317,7 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
 
         auto const res = proxy_.forward(ctx);
 
-        auto const data = std::get_if<json::object>(&res.response);
-        EXPECT_TRUE(data != nullptr);
+        EXPECT_TRUE(res.response.has_value());
     });
 }
 
@@ -348,8 +346,7 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
 
         auto const res = proxy_.forward(ctx);
 
-        auto const status = std::get_if<Status>(&res.response);
-        EXPECT_TRUE(status != nullptr);
-        EXPECT_EQ(*status, rpc::ClioError::EtlInvalidResponse);
+        EXPECT_FALSE(res.response.has_value());
+        EXPECT_EQ(res.response.error(), rpc::ClioError::EtlInvalidResponse);
     });
 }

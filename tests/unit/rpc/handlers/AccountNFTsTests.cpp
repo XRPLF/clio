@@ -181,7 +181,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaHash)
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "ledger_hash":"{}"
@@ -207,7 +207,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaStringIndex)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "ledger_index":"{}"
@@ -233,7 +233,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "ledger_index":{}
@@ -260,7 +260,7 @@ TEST_F(RPCAccountNFTsHandlerTest, AccountNotFound)
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}"
         }})JSON",
@@ -323,7 +323,7 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}"
         }})JSON",
@@ -357,7 +357,7 @@ TEST_F(RPCAccountNFTsHandlerTest, Limit)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1 + kLIMIT);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "limit":{}
@@ -392,7 +392,7 @@ TEST_F(RPCAccountNFTsHandlerTest, Marker)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "marker":"{}"
@@ -419,7 +419,7 @@ TEST_F(RPCAccountNFTsHandlerTest, InvalidMarker)
     ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(accountID).key, 30, _))
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "marker":"{}"
@@ -448,7 +448,7 @@ TEST_F(RPCAccountNFTsHandlerTest, AccountWithNoNFT)
     ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(accountID).key, 30, _))
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}"
         }})JSON",
@@ -480,7 +480,7 @@ TEST_F(RPCAccountNFTsHandlerTest, invalidPage)
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "marker":"{}"
@@ -546,7 +546,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "limit":{}
@@ -610,7 +610,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account":"{}",
             "limit":{}

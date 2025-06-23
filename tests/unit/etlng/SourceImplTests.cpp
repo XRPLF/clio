@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "etlng/InitialLoadObserverInterface.hpp"
+#include "etlng/LoadBalancerInterface.hpp"
 #include "etlng/Models.hpp"
 #include "etlng/impl/SourceImpl.hpp"
 #include "rpc/Errors.hpp"
@@ -33,6 +34,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <string>
@@ -51,8 +53,10 @@ struct GrpcSourceMock {
     using FetchLedgerReturnType = std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>;
     MOCK_METHOD(FetchLedgerReturnType, fetchLedger, (uint32_t, bool, bool));
 
-    using LoadLedgerReturnType = std::pair<std::vector<std::string>, bool>;
+    using LoadLedgerReturnType = etlng::InitialLedgerLoadResult;
     MOCK_METHOD(LoadLedgerReturnType, loadInitialLedger, (uint32_t, uint32_t, etlng::InitialLoadObserverInterface&));
+
+    MOCK_METHOD(void, stop, (boost::asio::yield_context), ());
 };
 
 struct SubscriptionSourceMock {
@@ -127,6 +131,7 @@ TEST_F(SourceImplNgTest, run)
 TEST_F(SourceImplNgTest, stop)
 {
     EXPECT_CALL(*subscriptionSourceMock_, stop);
+    EXPECT_CALL(grpcSourceMock_, stop);
     boost::asio::io_context ctx;
     boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) { source_.stop(yield); });
     ctx.run();
@@ -190,7 +195,7 @@ TEST_F(SourceImplNgTest, fetchLedger)
     EXPECT_EQ(actualStatus.error_code(), grpc::StatusCode::OK);
 }
 
-TEST_F(SourceImplNgTest, loadInitialLedger)
+TEST_F(SourceImplNgTest, loadInitialLedgerErrorPath)
 {
     uint32_t const ledgerSeq = 123;
     uint32_t const numMarkers = 3;
@@ -198,11 +203,25 @@ TEST_F(SourceImplNgTest, loadInitialLedger)
     auto observerMock = testing::StrictMock<InitialLoadObserverMock>();
 
     EXPECT_CALL(grpcSourceMock_, loadInitialLedger(ledgerSeq, numMarkers, testing::_))
-        .WillOnce(Return(std::make_pair(std::vector<std::string>{}, true)));
-    auto const [actualLedgers, actualSuccess] = source_.loadInitialLedger(ledgerSeq, numMarkers, observerMock);
+        .WillOnce(Return(std::unexpected{etlng::InitialLedgerLoadError::Errored}));
+    auto const res = source_.loadInitialLedger(ledgerSeq, numMarkers, observerMock);
 
-    EXPECT_TRUE(actualLedgers.empty());
-    EXPECT_TRUE(actualSuccess);
+    EXPECT_FALSE(res.has_value());
+}
+
+TEST_F(SourceImplNgTest, loadInitialLedgerSuccessPath)
+{
+    uint32_t const ledgerSeq = 123;
+    uint32_t const numMarkers = 3;
+    auto response = etlng::InitialLedgerLoadResult{{"1", "2", "3"}};
+
+    auto observerMock = testing::StrictMock<InitialLoadObserverMock>();
+
+    EXPECT_CALL(grpcSourceMock_, loadInitialLedger(ledgerSeq, numMarkers, testing::_)).WillOnce(Return(response));
+    auto const res = source_.loadInitialLedger(ledgerSeq, numMarkers, observerMock);
+
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res, response);
 }
 
 TEST_F(SourceImplNgTest, forwardToRippled)

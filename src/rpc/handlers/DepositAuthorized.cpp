@@ -45,7 +45,6 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <variant>
 
 namespace rpc {
 
@@ -55,14 +54,14 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "DepositAuthorized ledger range must be available");
 
-    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
-        return Error{*status};
+    if (!expectedLgrInfo.has_value())
+        return Error{expectedLgrInfo.error()};
 
-    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
+    auto const& lgrInfo = expectedLgrInfo.value();
     auto const sourceAccountID = accountFromStringStrict(input.sourceAccount);
     auto const destinationAccountID = accountFromStringStrict(input.destinationAccount);
 

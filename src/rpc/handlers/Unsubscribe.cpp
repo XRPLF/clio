@@ -40,7 +40,6 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <variant>
 #include <vector>
 
 namespace rpc {
@@ -66,8 +65,8 @@ UnsubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
                     return Error{Status{RippledError::rpcINVALID_PARAMS, "bothNotBool"}};
 
                 auto const parsedBook = parseBook(book.as_object());
-                if (auto const status = std::get_if<Status>(&parsedBook))
-                    return Error(*status);
+                if (!parsedBook.has_value())
+                    return Error(parsedBook.error());
             }
 
             return MaybeError{};
@@ -193,7 +192,8 @@ tag_invoke(boost::json::value_to_tag<UnsubscribeHandler::Input>, boost::json::va
                 internalBook.both = both->value().as_bool();
 
             auto const parsedBookMaybe = parseBook(book.as_object());
-            internalBook.book = std::get<ripple::Book>(parsedBookMaybe);
+            ASSERT(parsedBookMaybe.has_value(), "Invalid book format");
+            internalBook.book = parsedBookMaybe.value();
             input.books->push_back(internalBook);
         }
     }

@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/Coroutine.hpp"
 #include "util/LoggerFixtures.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
@@ -79,6 +80,22 @@ private:
  * This is meant to be used as a base for other fixtures.
  */
 struct SyncAsioContextTest : virtual public NoLoggerFixture {
+    template <util::CoroutineFunction F>
+    void
+    runCoroutine(F&& f, bool allowMockLeak = false)
+    {
+        testing::MockFunction<void()> call;
+        if (allowMockLeak)
+            testing::Mock::AllowLeak(&call);
+
+        util::Coroutine::spawnNew(ctx_, [&, _ = boost::asio::make_work_guard(ctx_)](util::Coroutine& coroutine) {
+            f(coroutine);
+            call.Call();
+        });
+        EXPECT_CALL(call, Call());
+        runContext();
+    }
+
     template <typename F>
     void
     runSpawn(F&& f, bool allowMockLeak = false)

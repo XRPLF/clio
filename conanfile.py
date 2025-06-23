@@ -2,16 +2,15 @@ from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 
 
-class Clio(ConanFile):
+class ClioConan(ConanFile):
     name = 'clio'
     license = 'ISC'
-    author = 'Alex Kremer <akremer@ripple.com>, John Freeman <jfreeman@ripple.com>'
+    author = 'Alex Kremer <akremer@ripple.com>, John Freeman <jfreeman@ripple.com>, Ayaz Salikhov <asalikhov@ripple.com>'
     url = 'https://github.com/xrplf/clio'
     description = 'Clio RPC server'
     settings = 'os', 'compiler', 'build_type', 'arch'
     options = {
         'static': [True, False],              # static linkage
-        'fPIC': [True, False],                # unused?
         'verbose': [True, False],
         'tests': [True, False],               # build unit tests; create `clio_tests` binary
         'integration_tests': [True, False],   # build integration tests; create `clio_integration_tests` binary
@@ -28,17 +27,16 @@ class Clio(ConanFile):
         'boost/1.83.0',
         'cassandra-cpp-driver/2.17.0',
         'fmt/10.1.1',
-        'protobuf/3.21.9',
+        'protobuf/3.21.12',
         'grpc/1.50.1',
         'openssl/1.1.1v',
-        'xrpl/2.4.0@my/singleAssetVault',
+        'xrpl/2.5.0-rc1',
         'zlib/1.3.1',
         'libbacktrace/cci.20210118'
     ]
 
     default_options = {
         'static': False,
-        'fPIC': True,
         'verbose': False,
         'tests': False,
         'integration_tests': False,
@@ -89,17 +87,8 @@ class Clio(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables['verbose'] = self.options.verbose
-        tc.variables['static'] = self.options.static
-        tc.variables['tests'] = self.options.tests
-        tc.variables['integration_tests'] = self.options.integration_tests
-        tc.variables['coverage'] = self.options.coverage
-        tc.variables['lint'] = self.options.lint
-        tc.variables['docs'] = self.options.docs
-        tc.variables['packaging'] = self.options.packaging
-        tc.variables['benchmark'] = self.options.benchmark
-        tc.variables['snapshot'] = self.options.snapshot
-        tc.variables['time_trace'] = self.options.time_trace
+        for option_name, option_value in self.options.items():
+            tc.variables[option_name] = option_value
         tc.generate()
 
     def build(self):

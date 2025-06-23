@@ -24,7 +24,7 @@ on:
         type: string
 
       disable_cache:
-        description: Whether ccache and conan cache should be disabled
+        description: Whether ccache should be disabled
         required: false
         type: boolean
         default: false
@@ -57,12 +57,6 @@ on:
         type: string
         default: all
 
-      sanitizer:
-        description: Sanitizer to use
-        required: false
-        type: string
-        default: "false"
-
 jobs:
   build:
     uses: ./.github/workflows/build_impl.yml
@@ -76,7 +70,6 @@ jobs:
       static: ${{ inputs.static }}
       upload_clio_server: ${{ inputs.upload_clio_server }}
       targets: ${{ inputs.targets }}
-      sanitizer: ${{ inputs.sanitizer }}
       analyze_build_time: false
 
   test:
@@ -89,4 +82,3 @@ jobs:
       build_type: ${{ inputs.build_type }}
       run_unit_tests: ${{ inputs.run_unit_tests }}
       run_integration_tests: ${{ inputs.run_integration_tests }}
-      sanitizer: ${{ inputs.sanitizer }}

@@ -40,6 +40,20 @@
 namespace etlng {
 
 /**
+ * @brief Represents possible errors for initial ledger load
+ */
+enum class InitialLedgerLoadError {
+    Cancelled, /*< Indicating the initial load got cancelled by user */
+    Errored,   /*< Indicating some error happened during initial ledger load */
+};
+
+/**
+ * @brief The result type of the initial ledger load
+ * @note The successful value represents edge keys
+ */
+using InitialLedgerLoadResult = std::expected<std::vector<std::string>, InitialLedgerLoadError>;
+
+/**
  * @brief An interface for LoadBalancer
  */
 class LoadBalancerInterface {
@@ -52,14 +66,14 @@ public:
 
     /**
      * @brief Load the initial ledger, writing data to the queue.
-     * @note This function will retry indefinitely until the ledger is downloaded.
+     * @note This function will retry indefinitely until the ledger is downloaded or the download is cancelled.
      *
      * @param sequence Sequence of ledger to download
      * @param loader InitialLoadObserverInterface implementation
      * @param retryAfter Time to wait between retries (2 seconds by default)
-     * @return A std::vector<std::string> The ledger data
+     * @return A std::expected with ledger edge keys on success, or InitialLedgerLoadError on failure
      */
-    virtual std::vector<std::string>
+    [[nodiscard]] virtual InitialLedgerLoadResult
     loadInitialLedger(
         uint32_t sequence,
         etlng::InitialLoadObserverInterface& loader,
@@ -74,7 +88,7 @@ public:
      * @param retryAfter Time to wait between retries (2 seconds by default)
      * @return A std::vector<std::string> The ledger data
      */
-    virtual std::vector<std::string>
+    [[nodiscard]] virtual std::vector<std::string>
     loadInitialLedger(uint32_t sequence, std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2}) = 0;
 
     /**
@@ -90,7 +104,7 @@ public:
      * @return The extracted data, if extraction was successful. If the ledger was found
      * in the database or the server is shutting down, the optional will be empty
      */
-    virtual OptionalGetLedgerResponseType
+    [[nodiscard]] virtual OptionalGetLedgerResponseType
     fetchLedger(
         uint32_t ledgerSequence,
         bool getObjects,
@@ -103,7 +117,7 @@ public:
      *
      * @return JSON representation of the state of this load balancer.
      */
-    virtual boost::json::value
+    [[nodiscard]] virtual boost::json::value
     toJson() const = 0;
 
     /**
@@ -115,7 +129,7 @@ public:
      * @param yield The coroutine context
      * @return Response received from rippled node as JSON object on success or error on failure
      */
-    virtual std::expected<boost::json::object, rpc::CombinedError>
+    [[nodiscard]] virtual std::expected<boost::json::object, rpc::CombinedError>
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,
@@ -127,7 +141,7 @@ public:
      * @brief Return state of ETL nodes.
      * @return ETL state, nullopt if etl nodes not available
      */
-    virtual std::optional<etl::ETLState>
+    [[nodiscard]] virtual std::optional<etl::ETLState>
     getETLState() noexcept = 0;
 
     /**
