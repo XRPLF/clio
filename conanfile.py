@@ -11,7 +11,6 @@ class ClioConan(ConanFile):
     settings = 'os', 'compiler', 'build_type', 'arch'
     options = {
         'static': [True, False],              # static linkage
-        'fPIC': [True, False],                # unused?
         'verbose': [True, False],
         'tests': [True, False],               # build unit tests; create `clio_tests` binary
         'integration_tests': [True, False],   # build integration tests; create `clio_integration_tests` binary
@@ -38,7 +37,6 @@ class ClioConan(ConanFile):
 
     default_options = {
         'static': False,
-        'fPIC': True,
         'verbose': False,
         'tests': False,
         'integration_tests': False,
@@ -89,21 +87,8 @@ class ClioConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables['verbose'] = self.options.verbose
-        tc.variables['static'] = self.options.static
-        tc.variables['tests'] = self.options.tests
-        tc.variables['integration_tests'] = self.options.integration_tests
-        tc.variables['coverage'] = self.options.coverage
-        tc.variables['lint'] = self.options.lint
-        tc.variables['docs'] = self.options.docs
-        tc.variables['packaging'] = self.options.packaging
-        tc.variables['benchmark'] = self.options.benchmark
-        tc.variables['snapshot'] = self.options.snapshot
-        tc.variables['time_trace'] = self.options.time_trace
-
-        if self.settings.compiler == 'clang' and self.settings.compiler.version == 16:
-            tc.extra_cxxflags = ["-DBOOST_ASIO_DISABLE_CONCEPTS"]
-
+        for option_name, option_value in self.options.items():
+            tc.variables[option_name] = option_value
         tc.generate()
 
     def build(self):

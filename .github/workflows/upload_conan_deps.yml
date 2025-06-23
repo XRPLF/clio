@@ -1,12 +1,21 @@
 name: Upload Conan Dependencies
 
 on:
+  schedule:
+    - cron: "0 9 * * 1-5"
   workflow_dispatch:
+    inputs:
+      force_source_build:
+        description: "Force source build of all dependencies"
+        required: false
+        default: false
+        type: boolean
   pull_request:
     branches:
       - develop
     paths:
       - .github/workflows/upload_conan_deps.yml
+      - .github/scripts/generate_conan_matrix.py
       - conanfile.py
       - conan.lock
   push:
@@ -14,6 +23,7 @@ on:
       - develop
     paths:
       - .github/workflows/upload_conan_deps.yml
+      - .github/scripts/generate_conan_matrix.py
       - conanfile.py
       - conan.lock
 
@@ -22,35 +32,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Calculate conan matrix
+        id: set-matrix
+        run: .github/scripts/generate_conan_matrix.py >> "${GITHUB_OUTPUT}"
+
   upload-conan-deps:
-    name: Build and Upload Conan Deps
+    name: Build ${{ matrix.compiler }}${{ matrix.sanitizer_ext }} ${{ matrix.build_type }}
+
+    needs: generate-matrix
 
     strategy:
       fail-fast: false
-      matrix:
-        os: [heavy, heavy-arm64]
-        container: ['{ "image": "ghcr.io/xrplf/clio-ci:latest" }']
-        compiler: ["gcc", "clang"]
-        sanitizer_ext: [".asan", ".tsan", ".ubsan", ""]
-        build_type: ["Release", "Debug"]
-        # libbacktrace doesn't build on arm64 with gcc.tsan
-        exclude:
-          - os: heavy-arm64
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
-            compiler: gcc
-            sanitizer_ext: .tsan
-            build_type: Release
-          - os: heavy-arm64
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
-            compiler: gcc
-            sanitizer_ext: .tsan
-            build_type: Debug
-        include:
-          - os: macos15
-            container: ""
-            compiler: default_apple_clang
-            sanitizer_ext: ""
-            build_type: Release
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
 
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container != '' && fromJson(matrix.container) || null }}
@@ -70,8 +70,7 @@ jobs:
         if: runner.os == 'macOS'
         uses: ./.github/actions/setup_conan_macos
         with:
-          conan_profile: ${{ env.CONAN_PROFILE }}
-          global_conf_file: docker/ci/conan/global.conf
+          conan_files_dir: docker/ci/conan/
 
       - name: Show conan profile
         run: conan profile show --profile:all ${{ env.CONAN_PROFILE }}
@@ -80,7 +79,9 @@ jobs:
         uses: ./.github/actions/generate
         with:
           conan_profile: ${{ env.CONAN_PROFILE }}
-          force_conan_source_build: "true"
+          # We check that everything builds fine from source on scheduled runs
+          # But we do build and upload packages with build=missing by default
+          force_conan_source_build: ${{ github.event_name == 'schedule' || github.event.inputs.force_source_build == 'true' }}
           build_type: ${{ matrix.build_type }}
 
       - name: Login to Conan
@@ -88,5 +89,5 @@ jobs:
         run: conan remote login -p ${{ secrets.CONAN_PASSWORD }} ripple ${{ secrets.CONAN_USERNAME }}
 
       - name: Upload Conan packages
-        if: github.event_name != 'pull_request'
-        run: conan upload "*" -r=ripple --confirm --force
+        if: github.event_name != 'pull_request' && github.event_name != 'schedule'
+        run: conan upload "*" -r=ripple --confirm

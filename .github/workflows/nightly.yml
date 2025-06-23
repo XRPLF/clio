@@ -32,7 +32,7 @@ jobs:
       matrix:
         include:
           - os: macos15
-            conan_profile: default_apple_clang
+            conan_profile: apple-clang
             build_type: Release
             static: false
           - os: heavy
@@ -75,7 +75,7 @@ jobs:
             container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
             static: true
           - os: macos15
-            conan_profile: default_apple_clang
+            conan_profile: apple-clang
             container: ""
             static: false
     uses: ./.github/workflows/build_impl.yml

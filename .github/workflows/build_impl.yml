@@ -59,7 +59,7 @@ on:
 
 jobs:
   build:
-    name: Build ${{ inputs.container != '' && 'in container' || 'natively' }}
+    name: Build
     runs-on: ${{ inputs.runs_on }}
     container: ${{ inputs.container != '' && fromJson(inputs.container) || null }}
 
@@ -81,8 +81,7 @@ jobs:
         if: runner.os == 'macOS'
         uses: ./.github/actions/setup_conan_macos
         with:
-          conan_profile: ${{ inputs.conan_profile }}
-          global_conf_file: docker/ci/conan/global.conf
+          conan_files_dir: docker/ci/conan/
 
       - name: Restore cache
         if: ${{ !inputs.disable_cache }}

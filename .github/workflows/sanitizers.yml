@@ -37,14 +37,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        conan_profile: ["gcc.asan", "gcc.tsan", "gcc.ubsan"]
+        compiler: ["gcc", "clang"]
+        sanitizer_ext: [".asan", ".tsan", ".ubsan"]
+        exclude:
+          # Currently, clang.tsan unit tests hang
+          - compiler: clang
+            sanitizer_ext: .tsan
 
     uses: ./.github/workflows/build_and_test.yml
     with:
       runs_on: heavy
       container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
       disable_cache: true
-      conan_profile: ${{ matrix.conan_profile }}
+      conan_profile: ${{ matrix.compiler }}${{ matrix.sanitizer_ext }}
       build_type: Release
       static: false
       run_unit_tests: true

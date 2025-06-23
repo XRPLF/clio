@@ -1,10 +1,19 @@
-FROM ubuntu:20.04 AS build
+ARG UBUNTU_VERSION=20.04
+
+ARG GCC_MAJOR_VERSION=12
+
+FROM ubuntu:$UBUNTU_VERSION AS build
+
+ARG UBUNTU_VERSION
+
+ARG GCC_MAJOR_VERSION
+ARG GCC_MINOR_VERSION=3
+ARG GCC_PATCH_VERSION=0
+ARG GCC_VERSION=${GCC_MAJOR_VERSION}.${GCC_MINOR_VERSION}.${GCC_PATCH_VERSION}
+ARG BUILD_VERSION=5
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
-ARG UBUNTU_VERSION=20.04
-ARG GCC_VERSION=12.3.0
-ARG BUILD_VERSION=4
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests \
@@ -18,18 +27,21 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+WORKDIR /
 RUN wget --progress=dot:giga https://gcc.gnu.org/pub/gcc/releases/gcc-$GCC_VERSION/gcc-$GCC_VERSION.tar.gz \
-    && tar xf gcc-$GCC_VERSION.tar.gz \
-    && cd /gcc-$GCC_VERSION && ./contrib/download_prerequisites
+    && tar xf gcc-$GCC_VERSION.tar.gz
 
-RUN mkdir /${TARGETARCH}-gcc-12
-WORKDIR /${TARGETARCH}-gcc-12
+WORKDIR /gcc-$GCC_VERSION
+RUN ./contrib/download_prerequisites
+
+RUN mkdir /gcc-build
+WORKDIR /gcc-build
 RUN /gcc-$GCC_VERSION/configure \
         --with-pkgversion="clio-build-$BUILD_VERSION https://github.com/XRPLF/clio" \
         --enable-languages=c,c++ \
         --prefix=/usr \
         --with-gcc-major-version-only \
-        --program-suffix=-12 \
+        --program-suffix=-${GCC_MAJOR_VERSION} \
         --enable-shared \
         --enable-linker-build-id \
         --libexecdir=/usr/lib \
@@ -53,38 +65,54 @@ RUN /gcc-$GCC_VERSION/configure \
         --enable-cet \
         --disable-multilib \
         --without-cuda-driver \
-        --enable-checking=release \
-    && make -j "$(nproc)" \
-    && make install-strip DESTDIR=/gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION \
+        --enable-checking=release
+
+RUN make -j "$(nproc)"
+
+RUN make install-strip DESTDIR=/gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION \
     && mkdir -p /gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION/usr/share/gdb/auto-load/usr/lib64 \
-    && mv /gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION/usr/lib64/libstdc++.so.6.0.30-gdb.py /gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION/usr/share/gdb/auto-load/usr/lib64/libstdc++.so.6.0.30-gdb.py
+    && mv \
+        /gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION/usr/lib64/libstdc++.so.6.0.30-gdb.py \
+        /gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION/usr/share/gdb/auto-load/usr/lib64/libstdc++.so.6.0.30-gdb.py
 
 # Generate deb
 WORKDIR /
 COPY control.m4 /
-COPY ld.so.conf /gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION/etc/ld.so.conf.d/1-gcc-12.conf
+COPY ld.so.conf /gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION/etc/ld.so.conf.d/1-gcc-${GCC_MAJOR_VERSION}.conf
 
 RUN mkdir /gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION/DEBIAN \
-    && m4 -P -DUBUNTU_VERSION=$UBUNTU_VERSION -DVERSION=$GCC_VERSION-$BUILD_VERSION -DTARGETARCH=$TARGETARCH control.m4 > /gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION/DEBIAN/control \
-    && dpkg-deb --build --root-owner-group /gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION /gcc12.deb
+    && m4 \
+        -P \
+        -DUBUNTU_VERSION=$UBUNTU_VERSION \
+        -DVERSION=$GCC_VERSION-$BUILD_VERSION \
+        -DTARGETARCH=$TARGETARCH \
+        control.m4 > /gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION/DEBIAN/control \
+    && dpkg-deb \
+        --build \
+        --root-owner-group \
+        /gcc-$GCC_VERSION-$BUILD_VERSION-ubuntu-$UBUNTU_VERSION \
+        /gcc${GCC_MAJOR_VERSION}.deb
 
 # Create final image
-FROM ubuntu:20.04
-COPY --from=build /gcc12.deb /
+FROM ubuntu:$UBUNTU_VERSION
 
-# Make gcc-12 available but also leave gcc12.deb for others to copy if needed
+ARG GCC_MAJOR_VERSION
+
+COPY --from=build /gcc${GCC_MAJOR_VERSION}.deb /
+
+# Install gcc-${GCC_MAJOR_VERSION}, but also leave gcc${GCC_MAJOR_VERSION}.deb for others to copy if needed
 RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests \
         binutils \
         libc6-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && dpkg -i /gcc12.deb
+    && dpkg -i /gcc${GCC_MAJOR_VERSION}.deb
 
-RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 100 \
-    && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-12 100 \
-    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 \
-    && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-12 100 \
-    && update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-12 100 \
-    && update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-12 100 \
-    && update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-12 100
+RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${GCC_MAJOR_VERSION} 100 \
+    && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-${GCC_MAJOR_VERSION} 100 \
+    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_MAJOR_VERSION} 100 \
+    && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-${GCC_MAJOR_VERSION} 100 \
+    && update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-${GCC_MAJOR_VERSION} 100 \
+    && update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-${GCC_MAJOR_VERSION} 100 \
+    && update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-${GCC_MAJOR_VERSION} 100

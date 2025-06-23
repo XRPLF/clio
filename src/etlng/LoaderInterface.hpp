@@ -25,11 +25,16 @@
 
 #include <expected>
 #include <optional>
-#include <string>
 
 namespace etlng {
 
-using Error = std::string;
+/**
+ * @brief Enumeration of possible errors that can occur during loading operations
+ */
+enum class LoaderError {
+    AmendmentBlocked, /*< Error indicating that an operation is blocked by an amendment */
+    WriteConflict,    /*< Error indicating that a write operation resulted in a conflict */
+};
 
 /**
  * @brief An interface for a ETL Loader
@@ -42,7 +47,7 @@ struct LoaderInterface {
      * @param data The data to load
      * @return Nothing or error as std::expected
      */
-    [[nodiscard]] virtual std::expected<void, Error>
+    [[nodiscard]] virtual std::expected<void, LoaderError>
     load(model::LedgerData const& data) = 0;
 
     /**

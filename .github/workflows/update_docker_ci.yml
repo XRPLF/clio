@@ -33,7 +33,7 @@ env:
 jobs:
   gcc-amd64:
     name: Build and push GCC docker image (amd64)
-    runs-on: [self-hosted, heavy]
+    runs-on: heavy
 
     steps:
       - uses: actions/checkout@v4
@@ -67,7 +67,7 @@ jobs:
 
   gcc-arm64:
     name: Build and push GCC docker image (arm64)
-    runs-on: [self-hosted, heavy-arm64]
+    runs-on: heavy-arm64
 
     steps:
       - uses: actions/checkout@v4
@@ -101,7 +101,7 @@ jobs:
 
   gcc-merge:
     name: Merge and push multi-arch GCC docker image
-    runs-on: [self-hosted, heavy]
+    runs-on: heavy
     needs: [gcc-amd64, gcc-arm64]
 
     steps:
@@ -150,7 +150,7 @@ jobs:
 
   clang:
     name: Build and push Clang docker image
-    runs-on: [self-hosted, heavy]
+    runs-on: heavy
 
     steps:
       - uses: actions/checkout@v4
@@ -183,7 +183,7 @@ jobs:
 
   tools:
     name: Build and push tools docker image
-    runs-on: [self-hosted, heavy]
+    runs-on: heavy
 
     steps:
       - uses: actions/checkout@v4
@@ -210,7 +210,7 @@ jobs:
 
   ci:
     name: Build and push CI docker image
-    runs-on: [self-hosted, heavy]
+    runs-on: heavy
     needs: [gcc-merge, clang, tools]
 
     steps:

@@ -22,7 +22,6 @@
 #include "data/BackendInterface.hpp"
 #include "etl/CacheLoader.hpp"
 #include "etl/CorruptionDetector.hpp"
-#include "etl/ETLState.hpp"
 #include "etl/LoadBalancer.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/SystemState.hpp"

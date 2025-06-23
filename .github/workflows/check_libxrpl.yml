@@ -15,7 +15,7 @@ env:
 jobs:
   build:
     name: Build Clio / `libXRPL ${{ github.event.client_payload.version }}`
-    runs-on: [self-hosted, heavy]
+    runs-on: heavy
     container:
       image: ghcr.io/xrplf/clio-ci:latest
 
@@ -27,7 +27,13 @@ jobs:
       - name: Update libXRPL version requirement
         shell: bash
         run: |
-          ./.github/scripts/update-libxrpl-version ${{ github.event.client_payload.version }}
+          sed -i.bak -E "s|'xrpl/[a-zA-Z0-9\\.\\-]+'|'xrpl/${{ github.event.client_payload.version }}'|g" conanfile.py
+          rm -f conanfile.py.bak
+
+      - name: Update conan lockfile
+        shell: bash
+        run: |
+          conan lock create . -o '&:tests=True' -o '&:benchmark=True'
 
       - name: Prepare runner
         uses: ./.github/actions/prepare_runner
@@ -54,7 +60,7 @@ jobs:
   run_tests:
     name: Run tests
     needs: build
-    runs-on: [self-hosted, heavy]
+    runs-on: heavy
     container:
       image: ghcr.io/xrplf/clio-ci:latest
 

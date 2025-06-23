@@ -59,7 +59,7 @@ Loader::Loader(
 {
 }
 
-std::expected<void, Error>
+std::expected<void, LoaderError>
 Loader::load(model::LedgerData const& data)
 {
     try {
@@ -78,13 +78,13 @@ Loader::load(model::LedgerData const& data)
             if (not success) {
                 state_->writeConflict = true;
                 LOG(log_.warn()) << "Another node wrote a ledger into the DB - we have a write conflict";
-                return std::unexpected("write conflict");
+                return std::unexpected(LoaderError::WriteConflict);
             }
         }
     } catch (std::runtime_error const& e) {
         LOG(log_.fatal()) << "Failed to load " << data.seq << ": " << e.what();
         amendmentBlockHandler_->notifyAmendmentBlocked();
-        return std::unexpected("amendment blocked");
+        return std::unexpected(LoaderError::AmendmentBlocked);
     }
 
     return {};
@@ -133,9 +133,7 @@ std::optional<ripple::LedgerHeader>
 Loader::loadInitialLedger(model::LedgerData const& data)
 {
     try {
-        // check that database is actually empty
-        auto rng = backend_->hardFetchLedgerRangeNoThrow();
-        if (rng) {
+        if (auto const rng = backend_->hardFetchLedgerRangeNoThrow(); rng.has_value()) {
             ASSERT(false, "Database is not empty");
             return std::nullopt;
         }

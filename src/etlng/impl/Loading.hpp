@@ -77,7 +77,7 @@ public:
     Loader&
     operator=(Loader&&) = delete;
 
-    std::expected<void, Error>
+    std::expected<void, LoaderError>
     load(model::LedgerData const& data) override;
 
     void

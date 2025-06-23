@@ -20,8 +20,8 @@
 #include "etlng/Source.hpp"
 
 #include "etl/NetworkValidatedLedgersInterface.hpp"
-#include "etl/impl/ForwardingSource.hpp"
 #include "etl/impl/SubscriptionSource.hpp"
+#include "etlng/impl/ForwardingSource.hpp"
 #include "etlng/impl/GrpcSource.hpp"
 #include "etlng/impl/SourceImpl.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
@@ -52,7 +52,7 @@ makeSource(
     auto const wsPort = config.get<std::string>("ws_port");
     auto const grpcPort = config.get<std::string>("grpc_port");
 
-    etl::impl::ForwardingSource forwardingSource{ip, wsPort, forwardingTimeout};
+    etlng::impl::ForwardingSource forwardingSource{ip, wsPort, forwardingTimeout};
     impl::GrpcSource grpcSource{ip, grpcPort};
     auto subscriptionSource = std::make_unique<etl::impl::SubscriptionSource>(
         ioc,

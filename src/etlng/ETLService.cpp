@@ -57,6 +57,7 @@
 #include <boost/json/object.hpp>
 #include <boost/signals2/connection.hpp>
 #include <fmt/core.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <chrono>
 #include <cstddef>
@@ -136,7 +137,11 @@ ETLService::run()
             return;
         }
 
-        ASSERT(rng.has_value(), "Ledger range can't be null");
+        if (not rng.has_value()) {
+            LOG(log_.warn()) << "Initial ledger download got cancelled - stopping ETL service";
+            return;
+        }
+
         auto const nextSequence = rng->maxSequence + 1;
 
         LOG(log_.debug()) << "Database is populated. Starting monitor loop. sequence = " << nextSequence;
@@ -223,13 +228,21 @@ ETLService::loadInitialLedgerIfNeeded()
                              << ". Initial ledger download and extraction can take a while...";
 
             auto [ledger, timeDiff] = ::util::timed<std::chrono::duration<double>>([this, seq]() {
-                return extractor_->extractLedgerOnly(seq).and_then([this, seq](auto&& data) {
-                    // TODO: loadInitialLedger in balancer should be called fetchEdgeKeys or similar
-                    data.edgeKeys = balancer_->loadInitialLedger(seq, *initialLoadObserver_);
+                return extractor_->extractLedgerOnly(seq).and_then(
+                    [this, seq](auto&& data) -> std::optional<ripple::LedgerHeader> {
+                        // TODO: loadInitialLedger in balancer should be called fetchEdgeKeys or similar
+                        auto res = balancer_->loadInitialLedger(seq, *initialLoadObserver_);
+                        if (not res.has_value() and res.error() == InitialLedgerLoadError::Cancelled) {
+                            LOG(log_.debug()) << "Initial ledger load got cancelled";
+                            return std::nullopt;
+                        }
 
-                    // TODO: this should be interruptible for graceful shutdown
-                    return loader_->loadInitialLedger(data);
-                });
+                        ASSERT(res.has_value(), "Initial ledger retry logic failed");
+                        data.edgeKeys = std::move(res).value();
+
+                        return loader_->loadInitialLedger(data);
+                    }
+                );
             });
 
             if (not ledger.has_value()) {

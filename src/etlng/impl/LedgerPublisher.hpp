@@ -21,7 +21,6 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
-#include "data/Types.hpp"
 #include "etl/SystemState.hpp"
 #include "etlng/LedgerPublisherInterface.hpp"
 #include "etlng/impl/Loading.hpp"

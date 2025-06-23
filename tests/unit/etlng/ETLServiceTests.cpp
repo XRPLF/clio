@@ -27,6 +27,7 @@
 #include "etlng/ETLService.hpp"
 #include "etlng/ExtractorInterface.hpp"
 #include "etlng/InitialLoadObserverInterface.hpp"
+#include "etlng/LoadBalancerInterface.hpp"
 #include "etlng/LoaderInterface.hpp"
 #include "etlng/Models.hpp"
 #include "etlng/MonitorInterface.hpp"
@@ -34,7 +35,6 @@
 #include "etlng/TaskManagerInterface.hpp"
 #include "etlng/TaskManagerProviderInterface.hpp"
 #include "util/BinaryTestObject.hpp"
-#include "util/MockAssert.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockLedgerPublisher.hpp"
 #include "util/MockLoadBalancer.hpp"
@@ -100,7 +100,7 @@ struct MockExtractor : etlng::ExtractorInterface {
 };
 
 struct MockLoader : etlng::LoaderInterface {
-    using ExpectedType = std::expected<void, etlng::Error>;
+    using ExpectedType = std::expected<void, etlng::LoaderError>;
     MOCK_METHOD(ExpectedType, load, (etlng::model::LedgerData const&), (override));
     MOCK_METHOD(std::optional<ripple::LedgerHeader>, loadInitialLedger, (etlng::model::LedgerData const&), (override));
 };
@@ -488,9 +488,7 @@ TEST_F(ETLServiceTests, GiveUpWriterAfterWriteConflict)
     EXPECT_FALSE(systemState_->writeConflict);  // and removes write conflict flag
 }
 
-struct ETLServiceAssertTests : common::util::WithMockAssert, ETLServiceTests {};
-
-TEST_F(ETLServiceAssertTests, FailToLoadInitialLedger)
+TEST_F(ETLServiceTests, CancelledLoadInitialLedger)
 {
     EXPECT_CALL(*backend_, hardFetchLedgerRange).WillOnce(testing::Return(std::nullopt));
     EXPECT_CALL(*ledgers_, getMostRecent()).WillRepeatedly(testing::Return(kSEQ));
@@ -501,10 +499,10 @@ TEST_F(ETLServiceAssertTests, FailToLoadInitialLedger)
     EXPECT_CALL(*loader_, loadInitialLedger).Times(0);
     EXPECT_CALL(*taskManagerProvider_, make).Times(0);
 
-    EXPECT_CLIO_ASSERT_FAIL({ service_.run(); });
+    service_.run();
 }
 
-TEST_F(ETLServiceAssertTests, WaitForValidatedLedgerIsAbortedLeadToFailToLoadInitialLedger)
+TEST_F(ETLServiceTests, WaitForValidatedLedgerIsAbortedLeadToFailToLoadInitialLedger)
 {
     testing::Sequence const s;
     EXPECT_CALL(*backend_, hardFetchLedgerRange).WillOnce(testing::Return(std::nullopt));
@@ -517,5 +515,27 @@ TEST_F(ETLServiceAssertTests, WaitForValidatedLedgerIsAbortedLeadToFailToLoadIni
     EXPECT_CALL(*loader_, loadInitialLedger).Times(0);
     EXPECT_CALL(*taskManagerProvider_, make).Times(0);
 
-    EXPECT_CLIO_ASSERT_FAIL({ service_.run(); });
+    service_.run();
+}
+
+TEST_F(ETLServiceTests, RunStopsIfInitialLoadIsCancelledByBalancer)
+{
+    constexpr uint32_t kMOCK_START_SEQUENCE = 123u;
+    systemState_->isStrictReadonly = false;
+
+    testing::Sequence const s;
+    EXPECT_CALL(*backend_, hardFetchLedgerRange).WillOnce(testing::Return(std::nullopt));
+    EXPECT_CALL(*ledgers_, getMostRecent).InSequence(s).WillOnce(testing::Return(kMOCK_START_SEQUENCE));
+    EXPECT_CALL(*ledgers_, getMostRecent).InSequence(s).WillOnce(testing::Return(kMOCK_START_SEQUENCE + 10));
+
+    auto const dummyLedgerData = createTestData(kMOCK_START_SEQUENCE);
+    EXPECT_CALL(*extractor_, extractLedgerOnly(kMOCK_START_SEQUENCE)).WillOnce(testing::Return(dummyLedgerData));
+    EXPECT_CALL(*balancer_, loadInitialLedger(testing::_, testing::_, testing::_))
+        .WillOnce(testing::Return(std::unexpected{etlng::InitialLedgerLoadError::Cancelled}));
+
+    service_.run();
+
+    EXPECT_TRUE(systemState_->isWriting);
+    EXPECT_FALSE(service_.isAmendmentBlocked());
+    EXPECT_FALSE(service_.isCorruptionDetected());
 }

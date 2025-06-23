@@ -121,16 +121,29 @@ TaskManager::spawnLoader(TaskQueue& queue)
         while (not stopRequested) {
             // TODO (https://github.com/XRPLF/clio/issues/66): does not tell the loader whether it's out of order or not
             if (auto data = queue.dequeue(); data.has_value()) {
-                // perhaps this should return an error if conflict happened, then we can stop loading immediately
                 auto [expectedSuccess, nanos] =
                     util::timed<std::chrono::nanoseconds>([&] { return loader_.get().load(*data); });
 
-                if (not expectedSuccess.has_value()) {
-                    LOG(log_.warn()) << "Immediately stopping loader with error: " << expectedSuccess.error()
-                                     << "; latest ledger cache loaded for " << data->seq;
-                    monitor_.get().notifyWriteConflict(data->seq);
+                auto const shouldExitOnError = [&] {
+                    if (expectedSuccess.has_value())
+                        return false;
+
+                    switch (expectedSuccess.error()) {
+                        case LoaderError::WriteConflict:
+                            LOG(log_.warn()) << "Immediately stopping loader on write conflict"
+                                             << "; latest ledger cache loaded for " << data->seq;
+                            monitor_.get().notifyWriteConflict(data->seq);
+                            return true;
+                        case LoaderError::AmendmentBlocked:
+                            LOG(log_.warn()) << "Immediately stopping loader on amendment block";
+                            return true;
+                    }
+
+                    std::unreachable();
+                }();
+
+                if (shouldExitOnError)
                     break;
-                }
 
                 auto const seconds = nanos / util::kNANO_PER_SECOND;
                 auto const txnCount = data->transactions.size();
