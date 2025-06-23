@@ -19,9 +19,13 @@
 
 #include "util/AsyncMutex.hpp"
 
+#include "util/Assert.hpp"
+
 #include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
+
+#include <utility>
 
 namespace util {
 
@@ -32,6 +36,11 @@ AsyncMutexLock::AsyncMutexLock(AsyncMutex& mutex) : mutex_(mutex)
 AsyncMutexLock::~AsyncMutexLock()
 {
     mutex_.unlock();
+}
+
+AsyncMutex::AsyncMutex(AsyncMutex&& other) : timer_{std::move(other.timer_)}
+{
+    ASSERT(not other.locked_, "Moving a locked mutex is unsafe");
 }
 
 AsyncMutex::AsyncMutex(boost::asio::any_io_executor executor) : timer_{executor}

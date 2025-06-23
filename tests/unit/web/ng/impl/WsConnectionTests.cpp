@@ -334,19 +334,21 @@ TEST_F(WebWsConnectionTests, CloseCalledFromMultipleSubCoroutines)
     });
 }
 
-TEST_F(WebWsConnectionTests, WriteSocketClosed)
+TEST_F(WebWsConnectionTests, MultipleSendsToSlowClient)
 {
+    static constexpr std::chrono::seconds kTEST_TIMEOUT{5};
     boost::asio::io_context clientCtx;
-    boost::asio::spawn(clientCtx, [this](boost::asio::yield_context yield) {
+    boost::asio::steady_timer syncTimer{clientCtx.get_executor(), kTEST_TIMEOUT};
+    boost::asio::spawn(clientCtx, [this, &syncTimer](boost::asio::yield_context yield) {
         auto maybeError = wsClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError.value().message(); }();
-        boost::asio::steady_timer timer{yield.get_executor(), std::chrono::milliseconds{1000}};
-        timer.async_wait(yield);
+        boost::system::error_code unusedError;
+        syncTimer.async_wait(yield[unusedError]);
         wsClient_.close();
     });
     std::thread t{[&clientCtx]() { clientCtx.run(); }};
 
-    runSpawnWithTimeout(std::chrono::seconds{5}, [this](boost::asio::yield_context yield) {
+    runSpawnWithTimeout(kTEST_TIMEOUT, [this, &syncTimer, &clientCtx](boost::asio::yield_context yield) {
         auto wsConnection = acceptConnection(yield);
         util::CoroutineGroup coroutines{yield};
         for ([[maybe_unused]] auto i : std::ranges::iota_view(0, 10)) {
@@ -355,6 +357,7 @@ TEST_F(WebWsConnectionTests, WriteSocketClosed)
             });
         }
         coroutines.asyncWait(yield);
+        boost::asio::spawn(clientCtx, [&syncTimer](boost::asio::yield_context) { syncTimer.cancel(); });
     });
     t.join();
 }

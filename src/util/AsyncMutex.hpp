@@ -77,7 +77,10 @@ public:
     AsyncMutex(boost::asio::any_io_executor executor);
 
     ~AsyncMutex() = default;
-    AsyncMutex(AsyncMutex&&) = delete;
+
+    /** @brief AsyncMutex is safe to move when it is not locked (there is an assert inside) */
+    AsyncMutex(AsyncMutex&&);
+
     AsyncMutex(AsyncMutex const&) = delete;
 
     /**
