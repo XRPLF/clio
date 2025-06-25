@@ -146,7 +146,7 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
         auto* ptr = dynamic_cast<impl::WsConnectionBase*>(connectionPtr.get());
         ASSERT(ptr != nullptr, "Casted not websocket connection");
         subscriptionContext = std::make_shared<SubscriptionContext>(
-            tagFactory_,
+            tagFactory_.get().with(connectionRef.tag()),
             *ptr,
             maxSubscriptionSendQueueSize_,
             yield,
