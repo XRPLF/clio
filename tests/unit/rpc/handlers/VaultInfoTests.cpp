@@ -86,7 +86,7 @@ generateTestValuesForParametersTest()
         VaultInfoParamTestCaseBundle{
             .testName = "RandomField",
             .testJson = R"JSON({
-                "idk" : "idk"
+                "idk": "idk"
             })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
