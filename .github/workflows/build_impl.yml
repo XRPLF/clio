@@ -77,11 +77,10 @@ jobs:
         with:
           disable_ccache: ${{ inputs.disable_cache }}
 
-      - name: Setup conan
+      - name: Setup conan on macOS
         if: runner.os == 'macOS'
-        uses: ./.github/actions/setup_conan_macos
-        with:
-          conan_files_dir: docker/ci/conan/
+        shell: bash
+        run: ./.github/scripts/conan/init.sh
 
       - name: Restore cache
         if: ${{ !inputs.disable_cache }}

@@ -79,7 +79,32 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
 
     auto output = GatewayBalancesHandler::Output{};
 
+    auto addEscrow = [&](ripple::SLE const& sle) {
+        if (sle.getType() == ripple::ltESCROW) {
+            auto const& escrow = sle.getFieldAmount(ripple::sfAmount);
+            auto& lockedBalance = output.locked[escrow.getCurrency()];
+            if (lockedBalance == beast::zero) {
+                // This is needed to set the currency code correctly
+                lockedBalance = escrow;
+            } else {
+                try {
+                    lockedBalance += escrow;
+                } catch (std::runtime_error const&) {
+                    // Presumably the exception was caused by overflow.
+                    // On overflow return the largest valid STAmount.
+                    // Very large sums of STAmount are approximations
+                    // anyway.
+                    lockedBalance = ripple::STAmount(
+                        lockedBalance.issue(), ripple::STAmount::cMaxValue, ripple::STAmount::cMaxOffset
+                    );
+                }
+            }
+        }
+    };
+
     auto const addToResponse = [&](ripple::SLE const sle) {
+        addEscrow(sle);
+
         if (sle.getType() == ripple::ltRIPPLE_STATE) {
             ripple::STAmount balance = sle.getFieldAmount(ripple::sfBalance);
             auto const lowLimit = sle.getFieldAmount(ripple::sfLowLimit);
@@ -193,6 +218,14 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GatewayBalancesH
 
     if (auto balances = toJson(output.assets); !balances.empty())
         obj[JS(assets)] = balances;
+
+    if (!output.locked.empty()) {
+        boost::json::object lockedObj;
+        for (auto const& [currency, amount] : output.locked) {
+            lockedObj[ripple::to_string(currency)] = amount.getText();
+        }
+        obj[JS(locked)] = std::move(lockedObj);
+    }
 
     obj[JS(account)] = output.accountID;
     obj[JS(ledger_index)] = output.ledgerIndex;

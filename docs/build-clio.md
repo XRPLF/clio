@@ -6,7 +6,7 @@
 ## Minimum Requirements
 
 - [Python 3.7](https://www.python.org/downloads/)
-- [Conan 1.55, <2.0](https://conan.io/downloads.html)
+- [Conan 2.17.0](https://conan.io/downloads.html)
 - [CMake 3.20, <4.0](https://cmake.org/download/)
 - [**Optional**] [GCovr](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html): needed for code coverage generation
 - [**Optional**] [CCache](https://ccache.dev/): speeds up compilation if you are going to compile Clio often
@@ -19,10 +19,21 @@
 
 ### Conan Configuration
 
-Clio requires `compiler.cppstd=20` in your Conan profile (`~/.conan2/profiles/default`).
+By default, Conan uses `~/.conan2` as it's home folder.
+You can change it by using `$CONAN_HOME` env variable.
+[More info about Conan home](https://docs.conan.io/2/reference/environment.html#conan-home).
 
-> [!NOTE]
-> Although Clio is built using C++23, it's required to set `compiler.cppstd=20` for the time being as some of Clio's dependencies are not yet capable of building under C++23.
+> [!TIP]
+> To setup Conan automatically, you can run `.github/scripts/conan/init.sh`.
+> This will delete Conan home directory (if it exists), set up profiles and add Artifactory remote.
+
+The instruction below assumes that `$CONAN_HOME` is not set.
+
+#### Profiles
+
+The default profile is the file in `~/.conan2/profiles/default`.
+
+Here are some examples of possible profiles:
 
 **Mac apple-clang 16 example**:
 
@@ -56,9 +67,16 @@ os=Linux
 tools.build:compiler_executables={'c': '/usr/bin/gcc-12', 'cpp': '/usr/bin/g++-12'}
 ```
 
+> [!NOTE]
+> Although Clio is built using C++23, it's required to set `compiler.cppstd=20` in your profile for the time being as some of Clio's dependencies are not yet capable of building under C++23.
+
+#### global.conf file
+
 Add the following to the `~/.conan2/global.conf` file:
 
 ```text
+core.download:parallel={{os.cpu_count()}}
+core.upload:parallel={{os.cpu_count()}}
 tools.info.package_id:confs = ["tools.build:cflags", "tools.build:cxxflags", "tools.build:exelinkflags", "tools.build:sharedlinkflags"]
 ```
 
@@ -70,16 +88,7 @@ Make sure artifactory is setup with Conan.
 conan remote add --index 0 ripple http://18.143.149.228:8081/artifactory/api/conan/dev
 ```
 
-Now you should be able to download the prebuilt `xrpl` package on some platforms.
-
-> [!NOTE]
-> You may need to edit the `~/.conan2/remotes.json` file to ensure that this newly added artifactory is listed last. Otherwise, you could see compilation errors when building the project with gcc version 13 (or newer).
-
-Remove old packages you may have cached interactively.
-
-```sh
-conan remove xrpl
-```
+Now you should be able to download the prebuilt dependencies (including `xrpl` package) on supported platforms.
 
 #### Conan lockfile
 
@@ -102,6 +111,7 @@ Navigate to Clio's root directory and run:
 
 ```sh
 mkdir build && cd build
+# You can also specify profile explicitly by adding `--profile:all <PROFILE_NAME>`
 conan install .. --output-folder . --build missing --settings build_type=Release -o '&:tests=True'
 # You can also add -GNinja to use Ninja build system instead of Make
 cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..

@@ -73,6 +73,7 @@ public:
         std::map<ripple::AccountID, std::vector<ripple::STAmount>> hotBalances;
         std::map<ripple::AccountID, std::vector<ripple::STAmount>> assets;
         std::map<ripple::AccountID, std::vector<ripple::STAmount>> frozenBalances;
+        std::map<ripple::Currency, ripple::STAmount> locked;
         // validated should be sent via framework
         bool validated = true;
     };

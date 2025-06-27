@@ -23,9 +23,10 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
+  # Only matches runs for the current workflow - matches against branch & tags
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # We want to execute all builds sequentially in develop
+  cancel-in-progress: false
 
 env:
   GHCR_REPO: ghcr.io/${{ github.repository_owner }}

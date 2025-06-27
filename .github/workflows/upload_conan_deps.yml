@@ -15,7 +15,12 @@ on:
       - develop
     paths:
       - .github/workflows/upload_conan_deps.yml
-      - .github/scripts/generate_conan_matrix.py
+
+      - .github/actions/generate/action.yml
+      - .github/actions/prepare_runner/action.yml
+      - .github/scripts/conan/generate_matrix.py
+      - .github/scripts/conan/init.sh
+
       - conanfile.py
       - conan.lock
   push:
@@ -23,7 +28,12 @@ on:
       - develop
     paths:
       - .github/workflows/upload_conan_deps.yml
-      - .github/scripts/generate_conan_matrix.py
+
+      - .github/actions/generate/action.yml
+      - .github/actions/prepare_runner/action.yml
+      - .github/scripts/conan/generate_matrix.py
+      - .github/scripts/conan/init.sh
+
       - conanfile.py
       - conan.lock
 
@@ -41,7 +51,7 @@ jobs:
 
       - name: Calculate conan matrix
         id: set-matrix
-        run: .github/scripts/generate_conan_matrix.py >> "${GITHUB_OUTPUT}"
+        run: .github/scripts/conan/generate_matrix.py >> "${GITHUB_OUTPUT}"
 
   upload-conan-deps:
     name: Build ${{ matrix.compiler }}${{ matrix.sanitizer_ext }} ${{ matrix.build_type }}
@@ -66,11 +76,10 @@ jobs:
         with:
           disable_ccache: true
 
-      - name: Setup conan
+      - name: Setup conan on macOS
         if: runner.os == 'macOS'
-        uses: ./.github/actions/setup_conan_macos
-        with:
-          conan_files_dir: docker/ci/conan/
+        shell: bash
+        run: ./.github/scripts/conan/init.sh
 
       - name: Show conan profile
         run: conan profile show --profile:all ${{ env.CONAN_PROFILE }}

@@ -270,9 +270,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
 {
     auto const seq = 123;
 
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
@@ -298,9 +296,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaIntIndex)
 {
     auto const seq = 123;
 
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
@@ -324,10 +320,8 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaIntIndex)
 
 TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaHash)
 {
-    EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+        .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
@@ -353,15 +347,11 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
 {
     auto const seq = 300;
 
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    // return valid ledgerHeader
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, seq);
-    ON_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillOnce(Return(ledgerHeader));
 
-    // return empty account
     auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, seq, _)).WillByDefault(Return(std::optional<Blob>{}));
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, seq, _)).WillOnce(Return(std::optional<Blob>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
@@ -396,31 +386,25 @@ TEST_P(NormalPathTest, CheckOutput)
     auto const& bundle = GetParam();
     auto const seq = 300;
 
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // return valid ledgerHeader
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, seq);
-    ON_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillOnce(Return(ledgerHeader));
 
     // return valid account
     auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, seq, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, seq, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     // return valid owner dir
     auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
-    ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, seq, _))
-        .WillByDefault(Return(bundle.mockedDir.getSerializer().peekData()));
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, seq, _))
+        .WillOnce(Return(bundle.mockedDir.getSerializer().peekData()));
 
     std::vector<Blob> bbs;
-    std::ranges::transform(
-        bundle.mockedObjects,
-
-        std::back_inserter(bbs),
-        [](auto const& obj) { return obj.getSerializer().peekData(); }
-    );
-    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+    std::ranges::transform(bundle.mockedObjects, std::back_inserter(bbs), [](auto const& obj) {
+        return obj.getSerializer().peekData();
+    });
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
     runSpawn([&](auto yield) {
@@ -479,43 +463,43 @@ generateNormalPathTestBundles()
             .expectedJson = fmt::format(
                 R"JSON({{
                     "obligations":{{
-                        "JPY":"50"
+                        "JPY": "50"
                     }},
                     "balances":{{
-                        "{}":[
+                        "{}": [
                             {{
-                                "currency":"USD",
-                                "value":"10"
+                                "currency": "USD",
+                                "value": "10"
                             }},
                             {{
-                                "currency":"CNY",
-                                "value":"20"
+                                "currency": "CNY",
+                                "value": "20"
                             }}
                         ]
                     }},
                     "frozen_balances":{{
-                        "{}":[
+                        "{}": [
                             {{
-                                "currency":"JPY",
-                                "value":"50"
+                                "currency": "JPY",
+                                "value": "50"
                             }}
                         ]
                     }},
                     "assets":{{
-                        "{}":[
+                        "{}": [
                             {{
-                                "currency":"EUR",
-                                "value":"30"
+                                "currency": "EUR",
+                                "value": "30"
                             }},
                             {{
-                                "currency":"JPY",
-                                "value":"40"
+                                "currency": "JPY",
+                                "value": "40"
                             }}
                         ]
                     }},
-                    "account":"{}",
-                    "ledger_index":300,
-                    "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
+                    "account": "{}",
+                    "ledger_index": 300,
+                    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
                 }})JSON",
                 kACCOUNT2,
                 kACCOUNT3,
@@ -533,11 +517,11 @@ generateNormalPathTestBundles()
             .expectedJson = fmt::format(
                 R"JSON({{
                     "obligations":{{
-                        "JPY":"50"
+                        "JPY": "50"
                     }},
-                    "account":"{}",
-                    "ledger_index":300,
-                    "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
+                    "account": "{}",
+                    "ledger_index": 300,
+                    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
                 }})JSON",
                 kACCOUNT
             ),
@@ -550,11 +534,11 @@ generateNormalPathTestBundles()
             .expectedJson = fmt::format(
                 R"JSON({{
                     "obligations":{{
-                        "JPY":"9999999999999999e80"
+                        "JPY": "9999999999999999e80"
                     }},
-                    "account":"{}",
-                    "ledger_index":300,
-                    "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
+                    "account": "{}",
+                    "ledger_index": 300,
+                    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
                 }})JSON",
                 kACCOUNT
             ),
@@ -579,31 +563,31 @@ generateNormalPathTestBundles()
             .expectedJson = fmt::format(
                 R"JSON({{
                     "obligations":{{
-                        "EUR":"30"
+                        "EUR": "30"
                     }},
                     "balances":{{
-                        "{}":[
+                        "{}": [
                             {{
-                                "currency":"USD",
-                                "value":"10"
+                                "currency": "USD",
+                                "value": "10"
                             }},
                             {{
-                                "currency":"CNY",
-                                "value":"20"
+                                "currency": "CNY",
+                                "value": "20"
                             }}
                         ]
                     }},
                     "assets":{{
-                        "{}":[
+                        "{}": [
                             {{
-                                "currency":"JPY",
-                                "value":"50"
+                                "currency": "JPY",
+                                "value": "50"
                             }}
                         ]
                     }},
-                    "account":"{}",
-                    "ledger_index":300,
-                    "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
+                    "account": "{}",
+                    "ledger_index": 300,
+                    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
                 }})JSON",
                 kACCOUNT2,
                 kACCOUNT3,
@@ -626,26 +610,26 @@ generateNormalPathTestBundles()
             .expectedJson = fmt::format(
                 R"JSON({{
                     "balances":{{
-                        "{}":[
+                        "{}": [
                             {{
-                                "currency":"EUR",
-                                "value":"30"
+                                "currency": "EUR",
+                                "value": "30"
                             }}
                         ],
-                        "{}":[
+                        "{}": [
                             {{
-                                "currency":"USD",
-                                "value":"10"
+                                "currency": "USD",
+                                "value": "10"
                             }},
                             {{
-                                "currency":"CNY",
-                                "value":"20"
+                                "currency": "CNY",
+                                "value": "20"
                             }}
                         ]
                     }},
-                    "account":"{}",
-                    "ledger_index":300,
-                    "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
+                    "account": "{}",
+                    "ledger_index": 300,
+                    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
                 }})JSON",
                 kACCOUNT3,
                 kACCOUNT2,
@@ -660,5 +644,139 @@ INSTANTIATE_TEST_SUITE_P(
     RPCGatewayBalancesHandler,
     NormalPathTest,
     testing::ValuesIn(generateNormalPathTestBundles()),
+    tests::util::kNAME_GENERATOR
+);
+
+struct EscrowTestBundle {
+    std::string testName;
+    ripple::STObject mockedDir;
+    std::vector<ripple::STObject> mockedObjects;
+    std::string expectedJson;
+};
+
+struct EscrowTest : public RPCGatewayBalancesHandlerTest, public WithParamInterface<EscrowTestBundle> {};
+
+TEST_P(EscrowTest, CheckEscrowOutput)
+{
+    auto const& bundle = GetParam();
+    auto const seq = 300;
+
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, seq);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(seq, _)).WillOnce(Return(ledgerHeader));
+
+    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, seq, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ownerDirKk, seq, _))
+        .WillOnce(Return(bundle.mockedDir.getSerializer().peekData()));
+
+    std::vector<Blob> bbs;
+    std::ranges::transform(bundle.mockedObjects, std::back_inserter(bbs), [](auto const& obj) {
+        return obj.getSerializer().peekData();
+    });
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
+
+    auto const handler = AnyHandler{GatewayBalancesHandler{backend_}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(
+            json::parse(fmt::format(
+                R"JSON({{
+                    "account": "{}"
+                }})JSON",
+                kACCOUNT
+            )),
+            Context{yield}
+        );
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result.value(), json::parse(bundle.expectedJson));
+    });
+}
+
+static auto
+generateEscrowTestBundles()
+{
+    // Escrow with 100 XRP
+    auto escrow1 = createEscrowLedgerObject(kACCOUNT, kACCOUNT2);
+    escrow1.setFieldAmount(ripple::sfAmount, ripple::STAmount(100, false));
+
+    // Escrow with 200 XRP
+    auto escrow2 = createEscrowLedgerObject(kACCOUNT, kACCOUNT3);
+    escrow2.setFieldAmount(ripple::sfAmount, ripple::STAmount(200, false));
+
+    // Escrow with a non-XRP currency
+    auto escrow3 = createEscrowLedgerObject(kACCOUNT, kACCOUNT2);
+    escrow3.setFieldAmount(ripple::sfAmount, ripple::STAmount(getIssue("USD", kISSUER), 50));
+
+    return std::vector<EscrowTestBundle>{
+        EscrowTestBundle{
+            .testName = "SingleEscrowXRP",
+            .mockedDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1),
+            .mockedObjects = std::vector{escrow1},
+            .expectedJson = fmt::format(
+                R"JSON({{
+                    "locked": {{"XRP": "100"}},
+                    "account": "{}",
+                    "ledger_index": 300,
+                    "ledger_hash": "{}"
+                }})JSON",
+                kACCOUNT,
+                kLEDGER_HASH
+            )
+        },
+        EscrowTestBundle{
+            .testName = "MultipleEscrowXRP",
+            .mockedDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}}, kINDEX1),
+            .mockedObjects = std::vector{escrow1, escrow2},
+            .expectedJson = fmt::format(
+                R"JSON({{
+                    "locked": {{"XRP": "300"}},
+                    "account": "{}",
+                    "ledger_index": 300,
+                    "ledger_hash": "{}"
+                }})JSON",
+                kACCOUNT,
+                kLEDGER_HASH
+            )
+        },
+        EscrowTestBundle{
+            .testName = "EscrowNonXRP",
+            .mockedDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1),
+            .mockedObjects = std::vector{escrow3},
+            .expectedJson = fmt::format(
+                R"JSON({{
+                    "locked": {{"USD": "50"}},
+                    "account": "{}",
+                    "ledger_index": 300,
+                    "ledger_hash": "{}"
+                }})JSON",
+                kACCOUNT,
+                kLEDGER_HASH
+            )
+        },
+        EscrowTestBundle{
+            .testName = "EscrowMixedCurrencies",
+            .mockedDir = createOwnerDirLedgerObject(
+                {ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}}, kINDEX1
+            ),
+            .mockedObjects = std::vector{escrow1, escrow2, escrow3},
+            .expectedJson = fmt::format(
+                R"JSON({{
+                    "locked": {{"XRP": "300", "USD": "50"}},
+                    "account": "{}",
+                    "ledger_index": 300,
+                    "ledger_hash": "{}"
+                }})JSON",
+                kACCOUNT,
+                kLEDGER_HASH
+            )
+        }
+    };
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    RPCGatewayBalancesHandler,
+    EscrowTest,
+    testing::ValuesIn(generateEscrowTestBundles()),
     tests::util::kNAME_GENERATOR
 );
