@@ -82,20 +82,20 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
     auto addEscrow = [&](ripple::SLE const& sle) {
         if (sle.getType() == ripple::ltESCROW) {
             auto const& escrow = sle.getFieldAmount(ripple::sfAmount);
-            auto& locked_balance = output.locked[escrow.getCurrency()];
-            if (locked_balance == beast::zero) {
+            auto& lockedBalance = output.locked[escrow.getCurrency()];
+            if (lockedBalance == beast::zero) {
                 // This is needed to set the currency code correctly
-                locked_balance = escrow;
+                lockedBalance = escrow;
             } else {
                 try {
-                    locked_balance += escrow;
+                    lockedBalance += escrow;
                 } catch (std::runtime_error const&) {
                     // Presumably the exception was caused by overflow.
                     // On overflow return the largest valid STAmount.
                     // Very large sums of STAmount are approximations
                     // anyway.
-                    locked_balance = ripple::STAmount(
-                        locked_balance.issue(), ripple::STAmount::cMaxValue, ripple::STAmount::cMaxOffset
+                    lockedBalance = ripple::STAmount(
+                        lockedBalance.issue(), ripple::STAmount::cMaxValue, ripple::STAmount::cMaxOffset
                     );
                 }
             }
