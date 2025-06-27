@@ -2258,7 +2258,7 @@ generateTestValuesForParametersTest()
             .testName = "BothOwnerAndSeqInvalid",
             .testJson =
                 R"JSON({
-                "vault" : {
+                "vault": {
                     "owner": "abcd",
                     "seq": -200
                 }})JSON",
