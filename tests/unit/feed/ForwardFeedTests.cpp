@@ -34,7 +34,7 @@ using namespace util::prometheus;
 
 namespace {
 
-constexpr auto kFEED = R"JSON({"test":"test"})JSON";
+constexpr auto kFEED = R"JSON({"test": "test"})JSON";
 
 }  // namespace
 

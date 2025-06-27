@@ -186,7 +186,7 @@ TEST_F(WebRPCServerHandlerTest, WsNormalPath)
 
     static constexpr auto kRESULT = "{}";
     static constexpr auto kRESPONSE = R"JSON({
-                                        "result":{},
+                                        "result": {},
                                         "id": 99,
                                         "status": "success",
                                         "type": "response",
@@ -261,12 +261,12 @@ TEST_F(WebRPCServerHandlerTest, HTTPForwardedPath)
                                         "forwarded": true
                                     })JSON";
     static constexpr auto kRESPONSE = R"JSON({
-                                        "result":{
+                                        "result": {
                                                 "index": 1,
                                                 "status": "success"
                                         },
                                         "forwarded": true,
-                                        "warnings":[
+                                        "warnings": [
                                             {
                                                 "id": 2001,
                                                 "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
@@ -307,7 +307,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPForwardedErrorPath)
                                         "forwarded": true
                                     })JSON";
     static constexpr auto kRESPONSE = R"JSON({
-                                        "result":{
+                                        "result": {
                                             "error": "error",
                                             "error_code": 123,
                                             "error_message": "error message",
@@ -315,7 +315,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPForwardedErrorPath)
                                             "type": "response"
                                         },
                                         "forwarded": true,
-                                        "warnings":[
+                                        "warnings": [
                                             {
                                                 "id": 2001,
                                                 "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
@@ -355,7 +355,7 @@ TEST_F(WebRPCServerHandlerTest, WsForwardedPath)
                                         "forwarded": true
                                    })JSON";
     static constexpr auto kRESPONSE = R"JSON({
-                                        "result":{
+                                        "result": {
                                             "index": 1
                                         },
                                         "forwarded": true,
@@ -697,7 +697,7 @@ TEST_F(WebRPCServerHandlerTest, WsMissingCommand)
                                         "status": "error",
                                         "type": "response",
                                         "id": 99,
-                                        "request":{
+                                        "request": {
                                             "command2": "server_info",
                                             "id": 99
                                         }
@@ -877,11 +877,11 @@ TEST_F(WebRPCServerHandlerTest, WsOutdated)
 
     static constexpr auto kRESULT = "{}";
     static constexpr auto kRESPONSE = R"JSON({
-                                        "result":{},
+                                        "result": {},
                                         "id": 99,
                                         "status": "success",
                                         "type": "response",
-                                        "warnings":[
+                                        "warnings": [
                                             {
                                                 "id": 2001,
                                                 "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"

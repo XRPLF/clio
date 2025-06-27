@@ -277,7 +277,7 @@ TEST_F(RPCBaseTest, ArrayAtValidator)
     auto failingInput = json::parse(R"JSON({ "arr": [{"limit": "not int"}] })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
-    failingInput = json::parse(R"JSON({ "arr": [{"limit": 42}] ,"arr2": "not array type" })JSON");
+    failingInput = json::parse(R"JSON({ "arr": [{"limit": 42}], "arr2": "not array type" })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
     failingInput = json::parse(R"JSON({ "arr": [] })JSON");
@@ -323,7 +323,7 @@ TEST_F(RPCBaseTest, IfTypeValidator)
     failingInput = json::parse(R"JSON({ "mix": 1213 })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
-    failingInput = json::parse(R"JSON({ "mix": {"limit": 42, "limit2": 22} , "mix2": 1213 })JSON");
+    failingInput = json::parse(R"JSON({ "mix": {"limit": 42, "limit2": 22}, "mix2": 1213 })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 }
 
@@ -585,7 +585,7 @@ TEST_F(RPCBaseTest, CurrencyValidator)
     ASSERT_TRUE(spec.process(passingInput));
 
     for (auto const& currency : {"[]<", ">()", "{}|", "?!@", "#$%", "^&*"}) {
-        passingInput = json::parse(fmt::format(R"JSON({{ "currency" : "{}" }})JSON", currency));
+        passingInput = json::parse(fmt::format(R"JSON({{ "currency": "{}" }})JSON", currency));
         ASSERT_TRUE(spec.process(passingInput));
     }
 
@@ -652,7 +652,7 @@ TEST_F(RPCBaseTest, SubscribeAccountsValidator)
 {
     auto const spec = RpcSpec{{"accounts", CustomValidators::subscribeAccountsValidator}};
     auto passingInput = json::parse(
-        R"JSON({ "accounts": ["rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn","rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"]})JSON"
+        R"JSON({ "accounts": ["rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"]})JSON"
     );
     ASSERT_TRUE(spec.process(passingInput));
 

@@ -846,20 +846,20 @@ TEST_F(RPCTxTest, CTIDNotMatch)
 TEST_F(RPCTxTest, ReturnCTIDForTxInput)
 {
     static constexpr auto kOUT = R"JSON({
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "Fee":"2",
-            "Sequence":100,
-            "SigningPubKey":"74657374",
+            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "Fee": "2",
+            "Sequence": 100,
+            "SigningPubKey": "74657374",
             "TakerGets":
             {
-                "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "value":"200"
+                "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "value": "200"
             },
-            "ctid":"C000006400640002",
-            "TakerPays":"300",
-            "TransactionType":"OfferCreate",
-            "hash":"2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
+            "ctid": "C000006400640002",
+            "TakerPays": "300",
+            "TransactionType": "OfferCreate",
+            "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
             "meta":
             {
                 "AffectedNodes":
@@ -867,26 +867,26 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
                     {
                         "CreatedNode":
                         {
-                            "LedgerEntryType":"Offer",
+                            "LedgerEntryType": "Offer",
                             "NewFields":
                             {
-                                "TakerGets":"200",
+                                "TakerGets": "200",
                                 "TakerPays":
                                 {
-                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                    "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                    "value":"300"
+                                    "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "value": "300"
                                 }
                             }
                         }
                     }
                 ],
-                "TransactionIndex":100,
-                "TransactionResult":"tesSUCCESS"
+                "TransactionIndex": 100,
+                "TransactionResult": "tesSUCCESS"
             },
-            "date":123456,
-            "ledger_index":100,
-            "inLedger":100,
+            "date": 123456,
+            "ledger_index": 100,
+            "inLedger": 100,
             "validated": true
     })JSON";
 
@@ -920,19 +920,19 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
 TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvailable)
 {
     static constexpr auto kOUT = R"JSON({
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "Fee":"2",
-            "Sequence":100,
-            "SigningPubKey":"74657374",
+            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "Fee": "2",
+            "Sequence": 100,
+            "SigningPubKey": "74657374",
             "TakerGets":
             {
-                "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "value":"200"
+                "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "value": "200"
             },
-            "TakerPays":"300",
-            "TransactionType":"OfferCreate",
-            "hash":"2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
+            "TakerPays": "300",
+            "TransactionType": "OfferCreate",
+            "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
             "meta":
             {
                 "AffectedNodes":
@@ -940,26 +940,26 @@ TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvailable)
                     {
                         "CreatedNode":
                         {
-                            "LedgerEntryType":"Offer",
+                            "LedgerEntryType": "Offer",
                             "NewFields":
                             {
-                                "TakerGets":"200",
+                                "TakerGets": "200",
                                 "TakerPays":
                                 {
-                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                    "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                    "value":"300"
+                                    "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "value": "300"
                                 }
                             }
                         }
                     }
                 ],
-                "TransactionIndex":100,
-                "TransactionResult":"tesSUCCESS"
+                "TransactionIndex": 100,
+                "TransactionResult": "tesSUCCESS"
             },
-            "date":123456,
-            "ledger_index":100,
-            "inLedger":100,
+            "date": 123456,
+            "ledger_index": 100,
+            "inLedger": 100,
             "validated": true
     })JSON";
 
@@ -994,20 +994,20 @@ TEST_F(RPCTxTest, ViaCTID)
 {
     static auto const kOUT = fmt::format(
         R"JSON({{
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "Fee":"2",
-            "Sequence":100,
-            "SigningPubKey":"74657374",
+            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "Fee": "2",
+            "Sequence": 100,
+            "SigningPubKey": "74657374",
             "TakerGets":
             {{
-                "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "value":"200"
+                "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "value": "200"
             }},
-            "ctid":"{}",
-            "TakerPays":"300",
-            "TransactionType":"OfferCreate",
-            "hash":"2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
+            "ctid": "{}",
+            "TakerPays": "300",
+            "TransactionType": "OfferCreate",
+            "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
             "meta":
             {{
                 "AffectedNodes":
@@ -1015,26 +1015,26 @@ TEST_F(RPCTxTest, ViaCTID)
                     {{
                         "CreatedNode":
                         {{
-                            "LedgerEntryType":"Offer",
+                            "LedgerEntryType": "Offer",
                             "NewFields":
                             {{
-                                "TakerGets":"200",
+                                "TakerGets": "200",
                                 "TakerPays":
                                 {{
-                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                    "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                    "value":"300"
+                                    "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "value": "300"
                                 }}
                             }}
                         }}
                     }}
                 ],
-                "TransactionIndex":1,
-                "TransactionResult":"tesSUCCESS"
+                "TransactionIndex": 1,
+                "TransactionResult": "tesSUCCESS"
             }},
-            "date":123456,
-            "ledger_index":{},
-            "inLedger":{},
+            "date": 123456,
+            "ledger_index": {},
+            "inLedger": {},
             "validated": true
     }})JSON",
         kCTID,

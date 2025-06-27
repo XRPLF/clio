@@ -114,10 +114,10 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "MissingTakerGets",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "USD",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "USD",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 }
             })JSON",
             .expectedError = "invalidParams",
@@ -126,10 +126,10 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "MissingTakerPays",
             .testJson = R"JSON({
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "USD",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "USD",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 }
             })JSON",
             .expectedError = "invalidParams",
@@ -138,10 +138,10 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "WrongTypeTakerPays",
             .testJson = R"JSON({
-                "taker_pays" : "wrong",
-                "taker_gets" :
+                "taker_pays": "wrong",
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 }
             })JSON",
             .expectedError = "invalidParams",
@@ -150,10 +150,10 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "WrongTypeTakerGets",
             .testJson = R"JSON({
-                "taker_gets" : "wrong",
-                "taker_pays" :
+                "taker_gets": "wrong",
+                "taker_pays":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 }
             })JSON",
             .expectedError = "invalidParams",
@@ -162,10 +162,10 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerPaysMissingCurrency",
             .testJson = R"JSON({
-                "taker_pays" : {},
-                "taker_gets" :
+                "taker_pays": {},
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 }
             })JSON",
             .expectedError = "invalidParams",
@@ -174,10 +174,10 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerGetsMissingCurrency",
             .testJson = R"JSON({
-                "taker_gets" : {},
-                "taker_pays" :
+                "taker_gets": {},
+                "taker_pays":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 }
             })JSON",
             .expectedError = "invalidParams",
@@ -186,14 +186,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerGetsWrongCurrency",
             .testJson = R"JSON({
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "CNYY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNYY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 }
             })JSON",
             .expectedError = "dstAmtMalformed",
@@ -202,14 +202,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerPaysWrongCurrency",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "CNYY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNYY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 }
             })JSON",
             .expectedError = "srcCurMalformed",
@@ -218,14 +218,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerGetsCurrencyNotString",
             .testJson = R"JSON({
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : 123,
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": 123,
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 }
             })JSON",
             .expectedError = "dstAmtMalformed",
@@ -234,14 +234,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerPaysCurrencyNotString",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : 123,
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": 123,
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 }
             })JSON",
             .expectedError = "srcCurMalformed",
@@ -250,14 +250,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerGetsWrongIssuer",
             .testJson = R"JSON({
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs5"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs5"
                 },
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 }
             })JSON",
             .expectedError = "dstIsrMalformed",
@@ -266,14 +266,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerPaysWrongIssuer",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs5"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs5"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 }
             })JSON",
             .expectedError = "srcIsrMalformed",
@@ -282,14 +282,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "InvalidTaker",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 },
                 "taker": "123"
             })JSON",
@@ -299,14 +299,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerNotString",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 },
                 "taker": 123
             })JSON",
@@ -316,14 +316,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "Domain_InvalidType",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 },
                 "domain": 0
             })JSON",
@@ -333,14 +333,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "Domain_InvalidInt",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 },
                 "domain": "123"
             })JSON",
@@ -350,14 +350,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "Domain_InvalidObject",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 },
                 "domain": {}
             })JSON",
@@ -367,14 +367,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "LimitNotInt",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 },
                 "limit": "123"
             })JSON",
@@ -384,14 +384,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "LimitNegative",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 },
                 "limit": -1
             })JSON",
@@ -401,14 +401,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "LimitZero",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 },
                 "limit": 0
             })JSON",
@@ -418,14 +418,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "LedgerIndexInvalid",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 },
                 "ledger_index": "xxx"
             })JSON",
@@ -435,14 +435,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "LedgerHashInvalid",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 },
                 "ledger_hash": "xxx"
             })JSON",
@@ -452,14 +452,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "LedgerHashNotString",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 },
                 "ledger_hash": 123
             })JSON",
@@ -469,15 +469,15 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "GetsPaysXRPWithIssuer",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "XRP",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "XRP",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
+                    "currency": "CNY",
+                    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
                 }
             })JSON",
             .expectedError = "srcIsrMalformed",
@@ -486,14 +486,14 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "PaysCurrencyWithXRPIssuer",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "JPY"
+                    "currency": "JPY"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
+                    "currency": "CNY",
+                    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
                 }
             })JSON",
             .expectedError = "srcIsrMalformed",
@@ -502,13 +502,13 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "GetsCurrencyWithXRPIssuer",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "XRP"
+                    "currency": "XRP"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "CNY"
+                    "currency": "CNY"
                 }
             })JSON",
             .expectedError = "dstIsrMalformed",
@@ -517,15 +517,15 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "GetsXRPWithIssuer",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "XRP",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "XRP",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 }
             })JSON",
             .expectedError = "dstIsrMalformed",
@@ -534,15 +534,15 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "BadMarket",
             .testJson = R"JSON({
-                "taker_pays" :
+                "taker_pays":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets" :
+                "taker_gets":
                 {
-                    "currency" : "CNY",
-                    "issuer" : "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+                    "currency": "CNY",
+                    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 }
             })JSON",
             .expectedError = "badMarket",
@@ -770,28 +770,28 @@ generateNormalPathBookOffersTestBundles()
             .mockedOffers = std::vector<ripple::STObject>{gets10XRPPays20USDOffer},
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "ledger_hash":"{}",
-                    "ledger_index":300,
-                    "offers":[
+                    "ledger_hash": "{}",
+                    "ledger_index": 300,
+                    "offers": [
                         {{
-                            "Account":"{}",
-                            "BookDirectory":"43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000",
-                            "BookNode":"0",
-                            "Flags":0,
-                            "LedgerEntryType":"Offer",
-                            "OwnerNode":"0",
-                            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                            "PreviousTxnLgrSeq":0,
-                            "Sequence":0,
-                            "TakerGets":"10",
-                            "TakerPays":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"20"
+                            "Account": "{}",
+                            "BookDirectory": "43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000",
+                            "BookNode": "0",
+                            "Flags": 0,
+                            "LedgerEntryType": "Offer",
+                            "OwnerNode": "0",
+                            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                            "PreviousTxnLgrSeq": 0,
+                            "Sequence": 0,
+                            "TakerGets": "10",
+                            "TakerPays": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "20"
                             }},
-                            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                            "owner_funds":"{}",
-                            "quality":"{}"
+                            "index": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                            "owner_funds": "{}",
+                            "quality": "{}"
                         }}
                     ]
                 }})JSON",
@@ -830,34 +830,34 @@ generateNormalPathBookOffersTestBundles()
             .mockedOffers = std::vector<ripple::STObject>{gets10XRPPays20USDOffer},
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "ledger_hash":"{}",
-                    "ledger_index":300,
+                    "ledger_hash": "{}",
+                    "ledger_index": 300,
                     "offers":
                     [
                         {{
-                            "Account":"{}",
-                            "BookDirectory":"43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000",
-                            "BookNode":"0",
-                            "Flags":0,
-                            "LedgerEntryType":"Offer",
-                            "OwnerNode":"0",
-                            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                            "PreviousTxnLgrSeq":0,
-                            "Sequence":0,
-                            "TakerGets":"10",
-                            "TakerPays":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"20"
+                            "Account": "{}",
+                            "BookDirectory": "43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000",
+                            "BookNode": "0",
+                            "Flags": 0,
+                            "LedgerEntryType": "Offer",
+                            "OwnerNode": "0",
+                            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                            "PreviousTxnLgrSeq": 0,
+                            "Sequence": 0,
+                            "TakerGets": "10",
+                            "TakerPays": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "20"
                             }},
-                            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                            "owner_funds":"{}",
-                            "quality":"{}",
-                            "taker_gets_funded":"5",
-                            "taker_pays_funded":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"10"
+                            "index": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                            "owner_funds": "{}",
+                            "quality": "{}",
+                            "taker_gets_funded": "5",
+                            "taker_pays_funded": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "10"
                             }}
                         }}
                     ]
@@ -892,34 +892,34 @@ generateNormalPathBookOffersTestBundles()
             .mockedOffers = std::vector<ripple::STObject>{gets10XRPPays20USDOffer},
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "ledger_hash":"{}",
-                    "ledger_index":300,
+                    "ledger_hash": "{}",
+                    "ledger_index": 300,
                     "offers":
                     [
                         {{
-                            "Account":"{}",
-                            "BookDirectory":"43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000",
-                            "BookNode":"0",
-                            "Flags":0,
-                            "LedgerEntryType":"Offer",
-                            "OwnerNode":"0",
-                            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                            "PreviousTxnLgrSeq":0,
-                            "Sequence":0,
-                            "TakerGets":"10",
-                            "TakerPays":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"20"
+                            "Account": "{}",
+                            "BookDirectory": "43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000",
+                            "BookNode": "0",
+                            "Flags": 0,
+                            "LedgerEntryType": "Offer",
+                            "OwnerNode": "0",
+                            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                            "PreviousTxnLgrSeq": 0,
+                            "Sequence": 0,
+                            "TakerGets": "10",
+                            "TakerPays": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "20"
                             }},
-                            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                            "owner_funds":"{}",
-                            "quality":"{}",
-                            "taker_gets_funded":"0",
-                            "taker_pays_funded":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"0"
+                            "index": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                            "owner_funds": "{}",
+                            "quality": "{}",
+                            "taker_gets_funded": "0",
+                            "taker_pays_funded": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "0"
                             }}
                         }}
                     ]
@@ -954,35 +954,35 @@ generateNormalPathBookOffersTestBundles()
             .mockedOffers = std::vector<ripple::STObject>{gets10XRPPays20USDOfferWithDomain},
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "ledger_hash":"{}",
-                    "ledger_index":300,
+                    "ledger_hash": "{}",
+                    "ledger_index": 300,
                     "offers":
                     [
                         {{
-                            "Account":"{}",
-                            "BookDirectory":"43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000",
-                            "BookNode":"0",
+                            "Account": "{}",
+                            "BookDirectory": "43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000",
+                            "BookNode": "0",
                             "DomainID": "F10D0CC9A0F9A3CBF585B80BE09A186483668FDBDD39AA7E3370F3649CE134E5",
-                            "Flags":0,
-                            "LedgerEntryType":"Offer",
-                            "OwnerNode":"0",
-                            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                            "PreviousTxnLgrSeq":0,
-                            "Sequence":0,
-                            "TakerGets":"10",
-                            "TakerPays":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"20"
+                            "Flags": 0,
+                            "LedgerEntryType": "Offer",
+                            "OwnerNode": "0",
+                            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                            "PreviousTxnLgrSeq": 0,
+                            "Sequence": 0,
+                            "TakerGets": "10",
+                            "TakerPays": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "20"
                             }},
-                            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                            "owner_funds":"{}",
-                            "quality":"{}",
-                            "taker_gets_funded":"0",
-                            "taker_pays_funded":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"0"
+                            "index": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                            "owner_funds": "{}",
+                            "quality": "{}",
+                            "taker_gets_funded": "0",
+                            "taker_pays_funded": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "0"
                             }}
                         }}
                     ]
@@ -1019,34 +1019,34 @@ generateNormalPathBookOffersTestBundles()
             .mockedOffers = std::vector<ripple::STObject>{gets10USDPays20XRPOffer},
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "ledger_hash":"{}",
-                    "ledger_index":300,
+                    "ledger_hash": "{}",
+                    "ledger_index": 300,
                     "offers":
                     [
                         {{
-                            "Account":"{}",
-                            "BookDirectory":"{}",
-                            "BookNode":"0",
-                            "Flags":0,
-                            "LedgerEntryType":"Offer",
-                            "OwnerNode":"0",
-                            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                            "PreviousTxnLgrSeq":0,
-                            "Sequence":0,
-                            "TakerPays":"20",
-                            "TakerGets":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"10"
+                            "Account": "{}",
+                            "BookDirectory": "{}",
+                            "BookNode": "0",
+                            "Flags": 0,
+                            "LedgerEntryType": "Offer",
+                            "OwnerNode": "0",
+                            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                            "PreviousTxnLgrSeq": 0,
+                            "Sequence": 0,
+                            "TakerPays": "20",
+                            "TakerGets": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "10"
                             }},
-                            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                            "owner_funds":"{}",
-                            "quality":"{}",
-                            "taker_pays_funded":"0",
-                            "taker_gets_funded":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"0"
+                            "index": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                            "owner_funds": "{}",
+                            "quality": "{}",
+                            "taker_pays_funded": "0",
+                            "taker_gets_funded": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "0"
                             }}
                         }}
                     ]
@@ -1085,35 +1085,35 @@ generateNormalPathBookOffersTestBundles()
             .mockedOffers = std::vector<ripple::STObject>{gets10USDPays20XRPOffer},
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "ledger_hash":"{}",
-                    "ledger_index":300,
+                    "ledger_hash": "{}",
+                    "ledger_index": 300,
                     "offers":
                     [
                         {{
-                            "Account":"{}",
-                            "BookDirectory":"{}",
-                            "BookNode":"0",
-                            "Flags":0,
-                            "LedgerEntryType":"Offer",
-                            "OwnerNode":"0",
-                            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                            "PreviousTxnLgrSeq":0,
-                            "Sequence":0,
-                            "TakerPays":"20",
-                            "TakerGets":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"10"
+                            "Account": "{}",
+                            "BookDirectory": "{}",
+                            "BookNode": "0",
+                            "Flags": 0,
+                            "LedgerEntryType": "Offer",
+                            "OwnerNode": "0",
+                            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                            "PreviousTxnLgrSeq": 0,
+                            "Sequence": 0,
+                            "TakerPays": "20",
+                            "TakerGets": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "10"
                             }},
-                            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                            "owner_funds":"{}",
-                            "quality":"{}",
-                            "taker_gets_funded":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"4"
+                            "index": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                            "owner_funds": "{}",
+                            "quality": "{}",
+                            "taker_gets_funded": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "4"
                             }},
-                            "taker_pays_funded":"8"
+                            "taker_pays_funded": "8"
                         }}
                     ]
                 }})JSON",
@@ -1160,54 +1160,54 @@ generateNormalPathBookOffersTestBundles()
                 },
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "ledger_hash":"{}",
-                    "ledger_index":300,
+                    "ledger_hash": "{}",
+                    "ledger_index": 300,
                     "offers":
                     [
                         {{
-                            "Account":"{}",
-                            "BookDirectory":"{}",
-                            "BookNode":"0",
-                            "Flags":0,
-                            "LedgerEntryType":"Offer",
-                            "OwnerNode":"0",
-                            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                            "PreviousTxnLgrSeq":0,
-                            "Sequence":0,
-                            "TakerPays":"20",
-                            "TakerGets":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"10"
+                            "Account": "{}",
+                            "BookDirectory": "{}",
+                            "BookNode": "0",
+                            "Flags": 0,
+                            "LedgerEntryType": "Offer",
+                            "OwnerNode": "0",
+                            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                            "PreviousTxnLgrSeq": 0,
+                            "Sequence": 0,
+                            "TakerPays": "20",
+                            "TakerGets": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "10"
                             }},
-                            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                            "owner_funds":"{}",
-                            "quality":"{}"
+                            "index": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                            "owner_funds": "{}",
+                            "quality": "{}"
                         }},
                         {{
-                            "Account":"{}",
-                            "BookDirectory":"{}",
-                            "BookNode":"0",
-                            "Flags":0,
-                            "LedgerEntryType":"Offer",
-                            "OwnerNode":"0",
-                            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                            "PreviousTxnLgrSeq":0,
-                            "Sequence":0,
-                            "TakerPays":"20",
-                            "TakerGets":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"10"
+                            "Account": "{}",
+                            "BookDirectory": "{}",
+                            "BookNode": "0",
+                            "Flags": 0,
+                            "LedgerEntryType": "Offer",
+                            "OwnerNode": "0",
+                            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                            "PreviousTxnLgrSeq": 0,
+                            "Sequence": 0,
+                            "TakerPays": "20",
+                            "TakerGets": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "10"
                             }},
-                            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                            "taker_gets_funded":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"5"
+                            "index": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                            "taker_gets_funded": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "5"
                             }},
-                            "taker_pays_funded":"10",
-                            "quality":"{}"
+                            "taker_pays_funded": "10",
+                            "quality": "{}"
                         }}
                     ]
                 }})JSON",
@@ -1246,29 +1246,29 @@ generateNormalPathBookOffersTestBundles()
             .mockedOffers = std::vector<ripple::STObject>{gets10USDPays20XRPOwnerOffer},
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "ledger_hash":"{}",
-                    "ledger_index":300,
+                    "ledger_hash": "{}",
+                    "ledger_index": 300,
                     "offers":
                     [
                         {{
-                            "Account":"{}",
-                            "BookDirectory":"{}",
-                            "BookNode":"0",
-                            "Flags":0,
-                            "LedgerEntryType":"Offer",
-                            "OwnerNode":"0",
-                            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                            "PreviousTxnLgrSeq":0,
-                            "Sequence":0,
-                            "TakerPays":"20",
-                            "TakerGets":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"10"
+                            "Account": "{}",
+                            "BookDirectory": "{}",
+                            "BookNode": "0",
+                            "Flags": 0,
+                            "LedgerEntryType": "Offer",
+                            "OwnerNode": "0",
+                            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                            "PreviousTxnLgrSeq": 0,
+                            "Sequence": 0,
+                            "TakerPays": "20",
+                            "TakerGets": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "10"
                             }},
-                            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                            "owner_funds":"{}",
-                            "quality":"{}"
+                            "index": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                            "owner_funds": "{}",
+                            "quality": "{}"
                         }}
                     ]
                 }})JSON",
@@ -1306,35 +1306,35 @@ generateNormalPathBookOffersTestBundles()
             .mockedOffers = std::vector<ripple::STObject>{gets10USDPays20XRPOffer},
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "ledger_hash":"{}",
-                    "ledger_index":300,
+                    "ledger_hash": "{}",
+                    "ledger_index": 300,
                     "offers":
                     [
                         {{
-                            "Account":"{}",
-                            "BookDirectory":"{}",
-                            "BookNode":"0",
-                            "Flags":0,
-                            "LedgerEntryType":"Offer",
-                            "OwnerNode":"0",
-                            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                            "PreviousTxnLgrSeq":0,
-                            "Sequence":0,
-                            "TakerPays":"20",
-                            "TakerGets":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"10"
+                            "Account": "{}",
+                            "BookDirectory": "{}",
+                            "BookNode": "0",
+                            "Flags": 0,
+                            "LedgerEntryType": "Offer",
+                            "OwnerNode": "0",
+                            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                            "PreviousTxnLgrSeq": 0,
+                            "Sequence": 0,
+                            "TakerPays": "20",
+                            "TakerGets": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "10"
                             }},
-                            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                            "owner_funds":"{}",
-                            "quality":"{}",
-                            "taker_gets_funded":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"0"
+                            "index": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                            "owner_funds": "{}",
+                            "quality": "{}",
+                            "taker_gets_funded": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "0"
                             }},
-                            "taker_pays_funded":"0"
+                            "taker_pays_funded": "0"
                         }}
                     ]
                 }})JSON",
@@ -1371,35 +1371,35 @@ generateNormalPathBookOffersTestBundles()
             .mockedOffers = std::vector<ripple::STObject>{gets10USDPays20XRPOffer},
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "ledger_hash":"{}",
-                    "ledger_index":300,
+                    "ledger_hash": "{}",
+                    "ledger_index": 300,
                     "offers":
                     [
                         {{
-                            "Account":"{}",
-                            "BookDirectory":"{}",
-                            "BookNode":"0",
-                            "Flags":0,
-                            "LedgerEntryType":"Offer",
-                            "OwnerNode":"0",
-                            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                            "PreviousTxnLgrSeq":0,
-                            "Sequence":0,
-                            "TakerPays":"20",
-                            "TakerGets":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"10"
+                            "Account": "{}",
+                            "BookDirectory": "{}",
+                            "BookNode": "0",
+                            "Flags": 0,
+                            "LedgerEntryType": "Offer",
+                            "OwnerNode": "0",
+                            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                            "PreviousTxnLgrSeq": 0,
+                            "Sequence": 0,
+                            "TakerPays": "20",
+                            "TakerGets": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "10"
                             }},
-                            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                            "owner_funds":"{}",
-                            "quality":"{}",
-                            "taker_gets_funded":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"0"
+                            "index": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                            "owner_funds": "{}",
+                            "quality": "{}",
+                            "taker_gets_funded": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "0"
                             }},
-                            "taker_pays_funded":"0"
+                            "taker_pays_funded": "0"
                         }}
                     ]
                 }})JSON",
@@ -1439,35 +1439,35 @@ generateNormalPathBookOffersTestBundles()
             .mockedOffers = std::vector<ripple::STObject>{gets10USDPays20XRPOffer},
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "ledger_hash":"{}",
-                    "ledger_index":300,
+                    "ledger_hash": "{}",
+                    "ledger_index": 300,
                     "offers":
                     [
                         {{
-                            "Account":"{}",
-                            "BookDirectory":"{}",
-                            "BookNode":"0",
-                            "Flags":0,
-                            "LedgerEntryType":"Offer",
-                            "OwnerNode":"0",
-                            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                            "PreviousTxnLgrSeq":0,
-                            "Sequence":0,
-                            "TakerPays":"20",
-                            "TakerGets":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"10"
+                            "Account": "{}",
+                            "BookDirectory": "{}",
+                            "BookNode": "0",
+                            "Flags": 0,
+                            "LedgerEntryType": "Offer",
+                            "OwnerNode": "0",
+                            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                            "PreviousTxnLgrSeq": 0,
+                            "Sequence": 0,
+                            "TakerPays": "20",
+                            "TakerGets": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "10"
                             }},
-                            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                            "owner_funds":"{}",
-                            "quality":"{}",
-                            "taker_gets_funded":{{
-                                "currency":"USD",
-                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                "value":"0"
+                            "index": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                            "owner_funds": "{}",
+                            "quality": "{}",
+                            "taker_gets_funded": {{
+                                "currency": "USD",
+                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "value": "0"
                             }},
-                            "taker_pays_funded":"0"
+                            "taker_pays_funded": "0"
                         }}
                     ]
                 }})JSON",

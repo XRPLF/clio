@@ -117,7 +117,7 @@ INSTANTIATE_TEST_CASE_P(
             .configStr = R"JSON({
                 "level_0": {
                     "int": 42,
-                    "level_1":{
+                    "level_1": {
                         "double": 123.456,
                         "level_2": {
                             "bool": true,

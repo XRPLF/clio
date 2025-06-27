@@ -462,10 +462,10 @@ generateNormalPathTestBundles()
                 },
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "obligations":{{
+                    "obligations": {{
                         "JPY": "50"
                     }},
-                    "balances":{{
+                    "balances": {{
                         "{}": [
                             {{
                                 "currency": "USD",
@@ -477,7 +477,7 @@ generateNormalPathTestBundles()
                             }}
                         ]
                     }},
-                    "frozen_balances":{{
+                    "frozen_balances": {{
                         "{}": [
                             {{
                                 "currency": "JPY",
@@ -485,7 +485,7 @@ generateNormalPathTestBundles()
                             }}
                         ]
                     }},
-                    "assets":{{
+                    "assets": {{
                         "{}": [
                             {{
                                 "currency": "EUR",
@@ -516,7 +516,7 @@ generateNormalPathTestBundles()
             )},
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "obligations":{{
+                    "obligations": {{
                         "JPY": "50"
                     }},
                     "account": "{}",
@@ -533,7 +533,7 @@ generateNormalPathTestBundles()
             .mockedObjects = std::vector{overflowState, overflowState},
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "obligations":{{
+                    "obligations": {{
                         "JPY": "9999999999999999e80"
                     }},
                     "account": "{}",
@@ -562,10 +562,10 @@ generateNormalPathTestBundles()
                 },
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "obligations":{{
+                    "obligations": {{
                         "EUR": "30"
                     }},
-                    "balances":{{
+                    "balances": {{
                         "{}": [
                             {{
                                 "currency": "USD",
@@ -577,7 +577,7 @@ generateNormalPathTestBundles()
                             }}
                         ]
                     }},
-                    "assets":{{
+                    "assets": {{
                         "{}": [
                             {{
                                 "currency": "JPY",
@@ -609,7 +609,7 @@ generateNormalPathTestBundles()
                 },
             .expectedJson = fmt::format(
                 R"JSON({{
-                    "balances":{{
+                    "balances": {{
                         "{}": [
                             {{
                                 "currency": "EUR",

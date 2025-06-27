@@ -96,86 +96,86 @@ generateTestValuesForParametersTest()
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "AccountNotString",
-            .testJson = R"JSON({"account":1})JSON",
+            .testJson = R"JSON({"account": 1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "accountNotString"
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "AccountInvalid",
-            .testJson = R"JSON({"account":"xxx"})JSON",
+            .testJson = R"JSON({"account": "xxx"})JSON",
             .expectedError = "actMalformed",
             .expectedErrorMessage = "accountMalformed"
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "TypeNotString",
-            .testJson = R"JSON({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type":1})JSON",
+            .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type": 1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "TypeInvalid",
-            .testJson = R"JSON({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type":"wrong"})JSON",
+            .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type": "wrong"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid field 'type'."
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "TypeNotAccountOwned",
-            .testJson = R"JSON({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type":"amendments"})JSON",
+            .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type": "amendments"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid field 'type'."
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LedgerHashInvalid",
-            .testJson = R"JSON({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":"1"})JSON",
+            .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": "1"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashMalformed"
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LedgerHashNotString",
-            .testJson = R"JSON({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":1})JSON",
+            .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": 1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashNotString"
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LedgerIndexInvalid",
-            .testJson = R"JSON({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index":"a"})JSON",
+            .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index": "a"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledgerIndexMalformed"
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LimitNotInt",
-            .testJson = R"JSON({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":"1"})JSON",
+            .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit": "1"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LimitNegative",
-            .testJson = R"JSON({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":-1})JSON",
+            .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":-1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "LimitZero",
-            .testJson = R"JSON({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":0})JSON",
+            .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit": 0})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "MarkerNotString",
-            .testJson = R"JSON({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker":9})JSON",
+            .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker": 9})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "markerNotString"
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "MarkerInvalid",
-            .testJson = R"JSON({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker":"xxxx"})JSON",
+            .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker": "xxxx"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Malformed cursor."
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "NFTMarkerInvalid",
             .testJson = fmt::format(
-                R"JSON({{"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker":"wronghex256,{}"}})JSON",
+                R"JSON({{"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker": "wronghex256,{}"}})JSON",
                 std::numeric_limits<uint32_t>::max()
             ),
             .expectedError = "invalidParams",
@@ -225,8 +225,8 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "ledger_index":30
+            "account": "{}",
+            "ledger_index": 30
         }})JSON",
         kACCOUNT
     ));
@@ -247,8 +247,8 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "ledger_index":"30"
+            "account": "{}",
+            "ledger_index": "30"
         }})JSON",
         kACCOUNT
     ));
@@ -270,8 +270,8 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "ledger_hash":"{}"
+            "account": "{}",
+            "ledger_hash": "{}"
         }})JSON",
         kACCOUNT,
         kLEDGER_HASH
@@ -295,7 +295,7 @@ TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}"
+            "account": "{}"
         }})JSON",
         kACCOUNT
     ));
@@ -312,33 +312,33 @@ TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
 TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
 {
     static constexpr auto kEXPECTED_OUT = R"JSON({
-                                            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                                            "ledger_index":30,
-                                            "validated":true,
+                                            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                                            "ledger_index": 30,
+                                            "validated": true,
                                             "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                             "limit": 200,
-                                            "account_objects":[
+                                            "account_objects": [
                                                 {
-                                                    "Balance":{
-                                                        "currency":"USD",
-                                                        "issuer":"rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-                                                        "value":"100"
+                                                    "Balance": {
+                                                        "currency": "USD",
+                                                        "issuer": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
+                                                        "value": "100"
                                                     },
-                                                    "Flags":0,
-                                                    "HighLimit":{
-                                                        "currency":"USD",
-                                                        "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                                        "value":"20"
+                                                    "Flags": 0,
+                                                    "HighLimit": {
+                                                        "currency": "USD",
+                                                        "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                                        "value": "20"
                                                     },
-                                                    "LedgerEntryType":"RippleState",
-                                                    "LowLimit":{
-                                                        "currency":"USD",
-                                                        "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                                        "value":"10"
+                                                    "LedgerEntryType": "RippleState",
+                                                    "LowLimit": {
+                                                        "currency": "USD",
+                                                        "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                                        "value": "10"
                                                     },
-                                                    "PreviousTxnID":"E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
-                                                    "PreviousTxnLgrSeq":123,
-                                                    "index":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
+                                                    "PreviousTxnID": "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
+                                                    "PreviousTxnLgrSeq": 123,
+                                                    "index": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
                                                 }
                                             ]
                                         })JSON";
@@ -367,7 +367,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}"
+            "account": "{}"
         }})JSON",
         kACCOUNT
     ));
@@ -411,8 +411,8 @@ TEST_F(RPCAccountObjectsHandlerTest, Limit)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "limit":{}
+            "account": "{}",
+            "limit": {}
         }})JSON",
         kACCOUNT,
         kLIMIT
@@ -455,8 +455,8 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "marker":"{},{}"
+            "account": "{}",
+            "marker": "{},{}"
         }})JSON",
         kACCOUNT,
         kINDEX1,
@@ -509,8 +509,8 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "limit":{}
+            "account": "{}",
+            "limit": {}
         }})JSON",
         kACCOUNT,
         2 * kCOUNT
@@ -563,8 +563,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "type":"offer"
+            "account": "{}",
+            "type": "offer"
         }})JSON",
         kACCOUNT
     ));
@@ -660,7 +660,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
+            "account": "{}",
             "type": "check"
         }})JSON",
         kACCOUNT
@@ -898,64 +898,64 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleT
 TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
 {
     static constexpr auto kEXPECTED_OUT = R"JSON({
-                                            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                                            "ledger_index":30,
-                                            "validated":true,
+                                            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                                            "ledger_index": 30,
+                                            "validated": true,
                                             "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                             "limit": 200,
-                                            "account_objects":[
+                                            "account_objects": [
                                                 {
-                                                    "Flags":0,
-                                                    "LedgerEntryType":"NFTokenPage",
-                                                    "NFTokens":[
+                                                    "Flags": 0,
+                                                    "LedgerEntryType": "NFTokenPage",
+                                                    "NFTokens": [
                                                         {
-                                                            "NFToken":{
-                                                                "NFTokenID":"000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
-                                                                "URI":"7777772E6F6B2E636F6D"
+                                                            "NFToken": {
+                                                                "NFTokenID": "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
+                                                                "URI": "7777772E6F6B2E636F6D"
                                                             }
                                                         }
                                                     ],
-                                                    "PreviousPageMin":"4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC",
-                                                    "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                                                    "PreviousTxnLgrSeq":0,
-                                                    "index":"4B4E9C06F24296074F7BC48F92A97916C6DC5EA9FFFFFFFFFFFFFFFFFFFFFFFF"
+                                                    "PreviousPageMin": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC",
+                                                    "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                                                    "PreviousTxnLgrSeq": 0,
+                                                    "index": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9FFFFFFFFFFFFFFFFFFFFFFFF"
                                                 },
                                                 {
-                                                    "Flags":0,
-                                                    "LedgerEntryType":"NFTokenPage",
-                                                    "NFTokens":[
+                                                    "Flags": 0,
+                                                    "LedgerEntryType": "NFTokenPage",
+                                                    "NFTokens": [
                                                         {
-                                                            "NFToken":{
-                                                                "NFTokenID":"000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
-                                                                "URI":"7777772E6F6B2E636F6D"
+                                                            "NFToken": {
+                                                                "NFTokenID": "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
+                                                                "URI": "7777772E6F6B2E636F6D"
                                                             }
                                                         }
                                                     ],
-                                                    "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                                                    "PreviousTxnLgrSeq":0,
-                                                    "index":"4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC"
+                                                    "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                                                    "PreviousTxnLgrSeq": 0,
+                                                    "index": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC"
                                                 },
                                                 {
-                                                    "Balance":{
-                                                        "currency":"USD",
-                                                        "issuer":"rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-                                                        "value":"100"
+                                                    "Balance": {
+                                                        "currency": "USD",
+                                                        "issuer": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
+                                                        "value": "100"
                                                     },
-                                                    "Flags":0,
-                                                    "HighLimit":{
-                                                        "currency":"USD",
-                                                        "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                                        "value":"20"
+                                                    "Flags": 0,
+                                                    "HighLimit": {
+                                                        "currency": "USD",
+                                                        "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                                        "value": "20"
                                                     },
-                                                    "LedgerEntryType":"RippleState",
-                                                    "LowLimit":{
-                                                        "currency":"USD",
-                                                        "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                                        "value":"10"
+                                                    "LedgerEntryType": "RippleState",
+                                                    "LowLimit": {
+                                                        "currency": "USD",
+                                                        "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                                        "value": "10"
                                                     },
-                                                    "PreviousTxnID":"E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
-                                                    "PreviousTxnLgrSeq":123,
-                                                    "index":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
+                                                    "PreviousTxnID": "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
+                                                    "PreviousTxnLgrSeq": 123,
+                                                    "index": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
                                                 }
                                             ]
                                         })JSON";
@@ -994,7 +994,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}"
+            "account": "{}"
         }})JSON",
         kACCOUNT
     ));
@@ -1033,8 +1033,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "limit":{}
+            "account": "{}",
+            "limit": {}
         }})JSON",
         kACCOUNT,
         10
@@ -1082,8 +1082,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "limit":{}
+            "account": "{}",
+            "limit": {}
         }})JSON",
         kACCOUNT,
         11
@@ -1160,8 +1160,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "marker":"{},{}"
+            "account": "{}",
+            "marker": "{},{}"
         }})JSON",
         kACCOUNT,
         ripple::strHex(marker),
@@ -1216,8 +1216,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "marker":"{},{}"
+            "account": "{}",
+            "marker": "{},{}"
         }})JSON",
         kACCOUNT,
         ripple::strHex(ripple::uint256{beast::zero}),
@@ -1245,7 +1245,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
-            "marker" : "{},{}"
+            "marker": "{},{}"
         }})JSON",
         kACCOUNT,
         kINDEX1,
@@ -1278,7 +1278,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
             "account": "{}",
-            "marker" : "{},{}"
+            "marker": "{},{}"
         }})JSON",
         kACCOUNT,
         ripple::strHex(accountNftMax),
@@ -1351,8 +1351,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "marker":"{},{}",
+            "account": "{}",
+            "marker": "{},{}",
             "limit": 12
         }})JSON",
         kACCOUNT,
@@ -1373,42 +1373,42 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
 TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
 {
     static constexpr auto kEXPECTED_OUT = R"JSON({
-                                            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                                            "ledger_index":30,
-                                            "validated":true,
+                                            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                                            "ledger_index": 30,
+                                            "validated": true,
                                             "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                             "limit": 200,
-                                            "account_objects":[
+                                            "account_objects": [
                                                 {
-                                                    "Flags":0,
-                                                    "LedgerEntryType":"NFTokenPage",
-                                                    "NFTokens":[
+                                                    "Flags": 0,
+                                                    "LedgerEntryType": "NFTokenPage",
+                                                    "NFTokens": [
                                                         {
-                                                            "NFToken":{
-                                                                "NFTokenID":"000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
-                                                                "URI":"7777772E6F6B2E636F6D"
+                                                            "NFToken": {
+                                                                "NFTokenID": "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
+                                                                "URI": "7777772E6F6B2E636F6D"
                                                             }
                                                         }
                                                     ],
-                                                    "PreviousPageMin":"4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC",
-                                                    "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                                                    "PreviousTxnLgrSeq":0,
-                                                    "index":"4B4E9C06F24296074F7BC48F92A97916C6DC5EA9FFFFFFFFFFFFFFFFFFFFFFFF"
+                                                    "PreviousPageMin": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC",
+                                                    "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                                                    "PreviousTxnLgrSeq": 0,
+                                                    "index": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9FFFFFFFFFFFFFFFFFFFFFFFF"
                                                 },
                                                 {
-                                                    "Flags":0,
-                                                    "LedgerEntryType":"NFTokenPage",
-                                                    "NFTokens":[
+                                                    "Flags": 0,
+                                                    "LedgerEntryType": "NFTokenPage",
+                                                    "NFTokens": [
                                                         {
-                                                            "NFToken":{
-                                                                "NFTokenID":"000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
-                                                                "URI":"7777772E6F6B2E636F6D"
+                                                            "NFToken": {
+                                                                "NFTokenID": "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
+                                                                "URI": "7777772E6F6B2E636F6D"
                                                             }
                                                         }
                                                     ],
-                                                    "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-                                                    "PreviousTxnLgrSeq":0,
-                                                    "index":"4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC"
+                                                    "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                                                    "PreviousTxnLgrSeq": 0,
+                                                    "index": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC"
                                                 }
                                             ]
                                         })JSON";
@@ -1447,7 +1447,7 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
+            "account": "{}",
             "type": "nft_page"
         }})JSON",
         kACCOUNT
@@ -1488,8 +1488,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "limit":{},
+            "account": "{}",
+            "limit": {},
             "marker": "{},{}"
         }})JSON",
         kACCOUNT,
@@ -1511,33 +1511,33 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
 {
     static auto const kEXPECTED_OUT = fmt::format(
         R"JSON({{
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_index":30,
-            "validated":true,
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
+            "validated": true,
             "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "limit": {},
-            "account_objects":[
+            "account_objects": [
                 {{
-                    "Balance":{{
-                        "currency":"USD",
-                        "issuer":"rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-                        "value":"100"
+                    "Balance": {{
+                        "currency": "USD",
+                        "issuer": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
+                        "value": "100"
                     }},
-                    "Flags":0,
-                    "HighLimit":{{
-                        "currency":"USD",
-                        "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                        "value":"20"
+                    "Flags": 0,
+                    "HighLimit": {{
+                        "currency": "USD",
+                        "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "value": "20"
                     }},
-                    "LedgerEntryType":"RippleState",
-                    "LowLimit":{{
-                        "currency":"USD",
-                        "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "value":"10"
+                    "LedgerEntryType": "RippleState",
+                    "LowLimit": {{
+                        "currency": "USD",
+                        "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "value": "10"
                     }},
-                    "PreviousTxnID":"E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
-                    "PreviousTxnLgrSeq":123,
-                    "index":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
+                    "PreviousTxnID": "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
+                    "PreviousTxnLgrSeq": 123,
+                    "index": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
                 }}
             ]
         }})JSON",
@@ -1568,7 +1568,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
+            "account": "{}",
             "limit": {}
         }})JSON",
         kACCOUNT,
@@ -1587,33 +1587,33 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
 {
     static auto const kEXPECTED_OUT = fmt::format(
         R"JSON({{
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_index":30,
-            "validated":true,
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
+            "validated": true,
             "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "limit": {},
-            "account_objects":[
+            "account_objects": [
                 {{
-                    "Balance":{{
-                        "currency":"USD",
-                        "issuer":"rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-                        "value":"100"
+                    "Balance": {{
+                        "currency": "USD",
+                        "issuer": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
+                        "value": "100"
                     }},
-                    "Flags":0,
-                    "HighLimit":{{
-                        "currency":"USD",
-                        "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                        "value":"20"
+                    "Flags": 0,
+                    "HighLimit": {{
+                        "currency": "USD",
+                        "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "value": "20"
                     }},
-                    "LedgerEntryType":"RippleState",
-                    "LowLimit":{{
-                        "currency":"USD",
-                        "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "value":"10"
+                    "LedgerEntryType": "RippleState",
+                    "LowLimit": {{
+                        "currency": "USD",
+                        "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "value": "10"
                     }},
-                    "PreviousTxnID":"E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
-                    "PreviousTxnLgrSeq":123,
-                    "index":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
+                    "PreviousTxnID": "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
+                    "PreviousTxnLgrSeq": 123,
+                    "index": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
                 }}
             ]
         }})JSON",
@@ -1644,7 +1644,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
+            "account": "{}",
             "limit": {}
         }})JSON",
         kACCOUNT,

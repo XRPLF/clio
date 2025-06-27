@@ -791,7 +791,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
                 "ledger_index_max": {},
                 "limit": 2,
                 "forward": false,
-                "marker": {{"ledger":10,"seq":11}}
+                "marker": {{"ledger": 10, "seq": 11}}
             }})JSON",
             kACCOUNT,
             -1,

@@ -631,7 +631,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsWithoutLedger)
     // these streams don't return response
     auto const input = json::parse(
         R"JSON({
-            "streams": ["transactions_proposed","transactions","validations","manifests","book_changes"]
+            "streams": ["transactions_proposed", "transactions", "validations", "manifests", "book_changes"]
         })JSON"
     );
     runSpawn([&, this](auto yield) {
@@ -654,13 +654,13 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
 {
     static constexpr auto kEXPECTED_OUTPUT =
         R"JSON({
-            "validated_ledgers":"10-30",
-            "ledger_index":30,
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_time":0,
-            "fee_base":1,
-            "reserve_base":3,
-            "reserve_inc":2
+            "validated_ledgers": "10-30",
+            "ledger_index": 30,
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_time": 0,
+            "fee_base": 1,
+            "reserve_base": 3,
+            "reserve_inc": 2
         })JSON";
 
     auto const input = json::parse(
@@ -686,7 +686,7 @@ TEST_F(RPCSubscribeHandlerTest, Accounts)
 {
     auto const input = json::parse(fmt::format(
         R"JSON({{
-            "accounts": ["{}","{}","{}"]
+            "accounts": ["{}", "{}", "{}"]
         }})JSON",
         kACCOUNT,
         kACCOUNT2,
@@ -709,7 +709,7 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
 {
     auto const input = json::parse(fmt::format(
         R"JSON({{
-            "accounts_proposed": ["{}","{}","{}"]
+            "accounts_proposed": ["{}", "{}", "{}"]
         }})JSON",
         kACCOUNT,
         kACCOUNT2,
@@ -901,25 +901,25 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
 
     static auto const kEXPECTED_OFFER = fmt::format(
         R"JSON({{
-            "Account":"{}",
-            "BookDirectory":"{}",
-            "BookNode":"0",
-            "Flags":0,
-            "LedgerEntryType":"Offer",
-            "OwnerNode":"0",
-            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-            "PreviousTxnLgrSeq":0,
-            "Sequence":0,
-            "TakerGets":"10",
+            "Account": "{}",
+            "BookDirectory": "{}",
+            "BookNode": "0",
+            "Flags": 0,
+            "LedgerEntryType": "Offer",
+            "OwnerNode": "0",
+            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+            "PreviousTxnLgrSeq": 0,
+            "Sequence": 0,
+            "TakerGets": "10",
             "TakerPays":
             {{
-                "currency":"USD",
-                "issuer":"{}",
-                "value":"20"
+                "currency": "USD",
+                "issuer": "{}",
+                "value": "20"
             }},
-            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-            "owner_funds":"193",
-            "quality":"2"
+            "index": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+            "owner_funds": "193",
+            "quality": "2"
         }})JSON",
         kACCOUNT2,
         kPAYS20_USD_GETS10_XRP_BOOK_DIR,
@@ -927,25 +927,25 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     );
     static auto const kEXPECTED_REVERSED_OFFER = fmt::format(
         R"JSON({{
-            "Account":"{}",
-            "BookDirectory":"{}",
-            "BookNode":"0",
-            "Flags":0,
-            "LedgerEntryType":"Offer",
-            "OwnerNode":"0",
-            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-            "PreviousTxnLgrSeq":0,
-            "Sequence":0,
+            "Account": "{}",
+            "BookDirectory": "{}",
+            "BookNode": "0",
+            "Flags": 0,
+            "LedgerEntryType": "Offer",
+            "OwnerNode": "0",
+            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+            "PreviousTxnLgrSeq": 0,
+            "Sequence": 0,
             "TakerGets":
             {{
-                "currency":"USD",
-                "issuer":"{}",
-                "value":"10"
+                "currency": "USD",
+                "issuer": "{}",
+                "value": "10"
             }},
-            "TakerPays":"20",
-            "index":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-            "owner_funds":"10",
-            "quality":"2"
+            "TakerPays": "20",
+            "index": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+            "owner_funds": "10",
+            "quality": "2"
         }})JSON",
         kACCOUNT,
         kPAYS20_XRP_GETS10_USD_BOOK_DIR,
@@ -1072,25 +1072,25 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
 
     static auto const kEXPECTED_OFFER = fmt::format(
         R"JSON({{
-            "Account":"{}",
-            "BookDirectory":"{}",
-            "BookNode":"0",
-            "Flags":0,
-            "LedgerEntryType":"Offer",
-            "OwnerNode":"0",
-            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-            "PreviousTxnLgrSeq":0,
-            "Sequence":0,
-            "TakerGets":"10",
+            "Account": "{}",
+            "BookDirectory": "{}",
+            "BookNode": "0",
+            "Flags": 0,
+            "LedgerEntryType": "Offer",
+            "OwnerNode": "0",
+            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+            "PreviousTxnLgrSeq": 0,
+            "Sequence": 0,
+            "TakerGets": "10",
             "TakerPays":
             {{
-                "currency":"USD",
-                "issuer":"{}",
-                "value":"20"
+                "currency": "USD",
+                "issuer": "{}",
+                "value": "20"
             }},
-            "index":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-            "owner_funds":"193",
-            "quality":"2"
+            "index": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+            "owner_funds": "193",
+            "quality": "2"
         }})JSON",
         kACCOUNT2,
         kPAYS20_USD_GETS10_XRP_BOOK_DIR,

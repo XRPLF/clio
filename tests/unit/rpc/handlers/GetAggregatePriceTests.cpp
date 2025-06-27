@@ -155,7 +155,7 @@ generateTestValuesForParametersTest()
         GetAggregatePriceParamTestCaseBundle{
             .testName = "invalid_base_asset",
             .testJson = R"JSON({
-                    "quote_asset" : "USD",
+                    "quote_asset": "USD",
                     "base_asset": "asdf",
                     "oracles":
                     [
@@ -171,7 +171,7 @@ generateTestValuesForParametersTest()
         GetAggregatePriceParamTestCaseBundle{
             .testName = "empty_base_asset",
             .testJson = R"JSON({
-                    "quote_asset" : "USD",
+                    "quote_asset": "USD",
                     "base_asset": "",
                     "oracles":
                     [
@@ -187,7 +187,7 @@ generateTestValuesForParametersTest()
         GetAggregatePriceParamTestCaseBundle{
             .testName = "invalid_base_asset2",
             .testJson = R"JSON({
-                    "quote_asset" : "USD",
+                    "quote_asset": "USD",
                     "base_asset": "+aa",
                     "oracles":
                     [
@@ -218,7 +218,7 @@ generateTestValuesForParametersTest()
         GetAggregatePriceParamTestCaseBundle{
             .testName = "invalid_quote_asset",
             .testJson = R"JSON({
-                    "quote_asset" : "asdf",
+                    "quote_asset": "asdf",
                     "base_asset": "USD",
                     "oracles":
                     [
@@ -234,7 +234,7 @@ generateTestValuesForParametersTest()
         GetAggregatePriceParamTestCaseBundle{
             .testName = "empty_quote_asset",
             .testJson = R"JSON({
-                    "quote_asset" : "",
+                    "quote_asset": "",
                     "base_asset": "USD",
                     "oracles":
                     [
@@ -250,7 +250,7 @@ generateTestValuesForParametersTest()
         GetAggregatePriceParamTestCaseBundle{
             .testName = "invalid_quote_asset2",
             .testJson = R"JSON({
-                    "quote_asset" : "+aa",
+                    "quote_asset": "+aa",
                     "base_asset": "USD",
                     "oracles":
                     [

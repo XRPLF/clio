@@ -93,8 +93,8 @@ TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtx)
     EXPECT_CALL(*sessionPtr_, onDisconnect);
     subscriptionManagerPtr_->subValidation(session_);
 
-    static constexpr auto kJSON_MANIFEST = R"JSON({"manifest":"test"})JSON";
-    static constexpr auto kJSON_VALIDATION = R"JSON({"validation":"test"})JSON";
+    static constexpr auto kJSON_MANIFEST = R"JSON({"manifest": "test"})JSON";
+    static constexpr auto kJSON_VALIDATION = R"JSON({"validation": "test"})JSON";
 
     EXPECT_CALL(*sessionPtr_, send(testing::_)).Times(testing::AtMost(2));
 
@@ -112,23 +112,23 @@ TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtxSessionDieEarly)
     EXPECT_CALL(*sessionPtr_, send(testing::_)).Times(0);
     session_.reset();
 
-    subscriptionManagerPtr_->forwardManifest(json::parse(R"JSON({"manifest":"test"})JSON").get_object());
-    subscriptionManagerPtr_->forwardValidation(json::parse(R"JSON({"validation":"test"})JSON").get_object());
+    subscriptionManagerPtr_->forwardManifest(json::parse(R"JSON({"manifest": "test"})JSON").get_object());
+    subscriptionManagerPtr_->forwardValidation(json::parse(R"JSON({"validation": "test"})JSON").get_object());
 }
 
 TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
 {
     static constexpr auto kREPORT_RETURN =
         R"JSON({
-            "ledger":0,
-            "transactions":2,
-            "transactions_proposed":2,
-            "manifests":2,
-            "validations":2,
-            "account":2,
-            "accounts_proposed":2,
-            "books":2,
-            "book_changes":2
+            "ledger": 0,
+            "transactions": 2,
+            "transactions_proposed": 2,
+            "manifests": 2,
+            "validations": 2,
+            "account": 2,
+            "accounts_proposed": 2,
+            "books": 2,
+            "book_changes": 2
         })JSON";
     web::SubscriptionContextPtr const session1 = std::make_shared<MockSession>();
     MockSession* mockSession1 = dynamic_cast<MockSession*>(session1.get());
@@ -201,7 +201,7 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
 
 TEST_F(SubscriptionManagerTest, ManifestTest)
 {
-    static constexpr auto kDUMMY_MANIFEST = R"JSON({"manifest":"test"})JSON";
+    static constexpr auto kDUMMY_MANIFEST = R"JSON({"manifest": "test"})JSON";
     EXPECT_CALL(*sessionPtr_, onDisconnect);
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kDUMMY_MANIFEST)));
     subscriptionManagerPtr_->subManifest(session_);
@@ -214,7 +214,7 @@ TEST_F(SubscriptionManagerTest, ManifestTest)
 
 TEST_F(SubscriptionManagerTest, ValidationTest)
 {
-    static constexpr auto kDUMMY = R"JSON({"validation":"test"})JSON";
+    static constexpr auto kDUMMY = R"JSON({"validation": "test"})JSON";
     EXPECT_CALL(*sessionPtr_, onDisconnect);
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kDUMMY)));
     subscriptionManagerPtr_->subValidation(session_);
@@ -242,21 +242,21 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
     transactions.push_back(trans1);
     static constexpr auto kBOOK_CHANGE_PUBLISH =
         R"JSON({
-            "type":"bookChanges",
-            "ledger_index":32,
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_time":0,
+            "type": "bookChanges",
+            "ledger_index": 32,
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_time": 0,
             "changes":
             [
                 {
-                    "currency_a":"XRP_drops",
-                    "currency_b":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD/0158415500000000C1F76FF6ECB0BAC600000000",
-                    "volume_a":"2",
-                    "volume_b":"2",
-                    "high":"-1",
-                    "low":"-1",
-                    "open":"-1",
-                    "close":"-1"
+                    "currency_a": "XRP_drops",
+                    "currency_b": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD/0158415500000000C1F76FF6ECB0BAC600000000",
+                    "volume_a": "2",
+                    "volume_b": "2",
+                    "high": "-1",
+                    "low": "-1",
+                    "open": "-1",
+                    "close": "-1"
                 }
             ]
         })JSON";
@@ -282,13 +282,13 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
     // the type and txn_count fields
     static constexpr auto kLEDGER_RESPONSE =
         R"JSON({
-            "validated_ledgers":"10-30",
-            "ledger_index":30,
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_time":0,
-            "fee_base":1,
-            "reserve_base":3,
-            "reserve_inc":2
+            "validated_ledgers": "10-30",
+            "ledger_index": 30,
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_time": 0,
+            "fee_base": 1,
+            "reserve_base": 3,
+            "reserve_inc": 2
         })JSON";
     boost::asio::io_context ctx;
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
@@ -306,15 +306,15 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
     fee2.reserve = 10;
     static constexpr auto kLEDGER_PUB =
         R"JSON({
-            "type":"ledgerClosed",
-            "ledger_index":31,
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_time":0,
-            "fee_base":0,
-            "reserve_base":10,
-            "reserve_inc":0,
-            "validated_ledgers":"10-31",
-            "txn_count":8
+            "type": "ledgerClosed",
+            "ledger_index": 31,
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_time": 0,
+            "fee_base": 0,
+            "reserve_base": 10,
+            "reserve_inc": 0,
+            "validated_ledgers": "10-31",
+            "txn_count": 8
         })JSON";
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kLEDGER_PUB)));
     subscriptionManagerPtr_->pubLedger(ledgerHeader2, fee2, "10-31", 8);
@@ -349,16 +349,16 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
         R"JSON({
             "transaction":
             {
-                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "Amount":"1",
-                "DeliverMax":"1",
-                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "Fee":"1",
-                "Sequence":32,
-                "SigningPubKey":"74657374",
-                "TransactionType":"Payment",
-                "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-                "date":0
+                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Amount": "1",
+                "DeliverMax": "1",
+                "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "Fee": "1",
+                "Sequence": 32,
+                "SigningPubKey": "74657374",
+                "TransactionType": "Payment",
+                "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                "date": 0
             },
             "meta":
             {
@@ -369,42 +369,42 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
                         {
                             "FinalFields":
                             {
-                                "TakerGets":"3",
+                                "TakerGets": "3",
                                 "TakerPays":
                                 {
-                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                                    "value":"1"
+                                    "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value": "1"
                                 }
                             },
-                            "LedgerEntryType":"Offer",
+                            "LedgerEntryType": "Offer",
                             "PreviousFields":
                             {
-                                "TakerGets":"1",
+                                "TakerGets": "1",
                                 "TakerPays":
                                 {
-                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                                    "value":"3"
+                                    "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value": "3"
                                 }
                             }
                         }
                     }
                 ],
-                "TransactionIndex":22,
-                "TransactionResult":"tesSUCCESS",
-                "delivered_amount":"unavailable"
+                "TransactionIndex": 22,
+                "TransactionResult": "tesSUCCESS",
+                "delivered_amount": "unavailable"
             },
-            "ctid":"C000002100160000",
-            "type":"transaction",
-            "validated":true,
-            "status":"closed",
-            "ledger_index":33,
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "engine_result_code":0,
-            "engine_result":"tesSUCCESS",
+            "ctid": "C000002100160000",
+            "type": "transaction",
+            "validated": true,
+            "status": "closed",
+            "ledger_index": 33,
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "engine_result_code": 0,
+            "engine_result": "tesSUCCESS",
             "close_time_iso": "2000-01-01T00:00:00Z",
-            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+            "engine_result_message": "The transaction was applied. Only final in a validated ledger."
         })JSON";
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kORDERBOOK_PUBLISH))).Times(3);
     EXPECT_CALL(*sessionPtr_, apiSubversion).Times(3).WillRepeatedly(testing::Return(1));
@@ -431,24 +431,24 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
         R"JSON({
             "transaction":
             {
-                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
+                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
             }
         })JSON";
     static constexpr auto kORDERBOOK_PUBLISH =
         R"JSON({
             "transaction":
             {
-                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "Amount":"1",
-                "DeliverMax":"1",
-                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "Fee":"1",
-                "Sequence":32,
-                "SigningPubKey":"74657374",
-                "TransactionType":"Payment",
-                "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-                "date":0
+                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Amount": "1",
+                "DeliverMax": "1",
+                "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "Fee": "1",
+                "Sequence": 32,
+                "SigningPubKey": "74657374",
+                "TransactionType": "Payment",
+                "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                "date": 0
             },
             "meta":
             {
@@ -459,42 +459,42 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
                         {
                             "FinalFields":
                             {
-                                "TakerGets":"3",
+                                "TakerGets": "3",
                                 "TakerPays":
                                 {
-                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                    "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                    "value":"1"
+                                    "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "value": "1"
                                 }
                             },
-                            "LedgerEntryType":"Offer",
+                            "LedgerEntryType": "Offer",
                             "PreviousFields":
                             {
-                                "TakerGets":"1",
+                                "TakerGets": "1",
                                 "TakerPays":
                                 {
-                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                    "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                    "value":"3"
+                                    "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "value": "3"
                                 }
                             }
                         }
                     }
                 ],
-                "TransactionIndex":22,
-                "TransactionResult":"tesSUCCESS",
-                "delivered_amount":"unavailable"
+                "TransactionIndex": 22,
+                "TransactionResult": "tesSUCCESS",
+                "delivered_amount": "unavailable"
             },
-            "ctid":"C000002100160000",
-            "type":"transaction",
-            "validated":true,
-            "status":"closed",
-            "ledger_index":33,
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "engine_result_code":0,
-            "engine_result":"tesSUCCESS",
+            "ctid": "C000002100160000",
+            "type": "transaction",
+            "validated": true,
+            "status": "closed",
+            "ledger_index": 33,
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "engine_result_code": 0,
+            "engine_result": "tesSUCCESS",
             "close_time_iso": "2000-01-01T00:00:00Z",
-            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+            "engine_result_message": "The transaction was applied. Only final in a validated ledger."
         })JSON";
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kDUMMY_TRANSACTION))).Times(2);
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kORDERBOOK_PUBLISH))).Times(2);

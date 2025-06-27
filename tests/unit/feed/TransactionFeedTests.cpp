@@ -64,16 +64,16 @@ constexpr auto kTRAN_V1 =
     R"JSON({
         "transaction":
         {
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "Amount":"1",
-            "DeliverMax":"1",
-            "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-            "Fee":"1",
-            "Sequence":32,
-            "SigningPubKey":"74657374",
-            "TransactionType":"Payment",
-            "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-            "date":0
+            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "Amount": "1",
+            "DeliverMax": "1",
+            "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+            "Fee": "1",
+            "Sequence": 32,
+            "SigningPubKey": "74657374",
+            "TransactionType": "Payment",
+            "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+            "date": 0
         },
         "meta":
         {
@@ -84,10 +84,10 @@ constexpr auto kTRAN_V1 =
                     {
                         "FinalFields":
                         {
-                            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                            "Balance":"110"
+                            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                            "Balance": "110"
                         },
-                        "LedgerEntryType":"AccountRoot"
+                        "LedgerEntryType": "AccountRoot"
                     }
                 },
                 {
@@ -95,80 +95,80 @@ constexpr auto kTRAN_V1 =
                     {
                         "FinalFields":
                         {
-                            "Account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                            "Balance":"30"
+                            "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                            "Balance": "30"
                         },
-                        "LedgerEntryType":"AccountRoot"
+                        "LedgerEntryType": "AccountRoot"
                     }
                 }
             ],
-            "TransactionIndex":22,
-            "TransactionResult":"tesSUCCESS",
-            "delivered_amount":"unavailable"
+            "TransactionIndex": 22,
+            "TransactionResult": "tesSUCCESS",
+            "delivered_amount": "unavailable"
         },
-        "ctid":"C000002100160000",
-        "type":"transaction",
-        "validated":true,
-        "status":"closed",
-        "ledger_index":33,
+        "ctid": "C000002100160000",
+        "type": "transaction",
+        "validated": true,
+        "status": "closed",
+        "ledger_index": 33,
         "close_time_iso": "2000-01-01T00:00:00Z",
-        "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-        "engine_result_code":0,
-        "engine_result":"tesSUCCESS",
-        "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+        "ledger_hash": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+        "engine_result_code": 0,
+        "engine_result": "tesSUCCESS",
+        "engine_result_message": "The transaction was applied. Only final in a validated ledger."
     })JSON";
 
 constexpr auto kTRAN_V2 =
     R"JSON({
         "tx_json":
         {
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "DeliverMax":"1",
-            "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-            "Fee":"1",
-            "Sequence":32,
-            "SigningPubKey":"74657374",
-            "TransactionType":"Payment",
-            "date":0
+            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "DeliverMax": "1",
+            "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+            "Fee": "1",
+            "Sequence": 32,
+            "SigningPubKey": "74657374",
+            "TransactionType": "Payment",
+            "date": 0
         },
         "meta":
         {
             "AffectedNodes":
             [
                 {
-                    "ModifiedNode":{
-                    "FinalFields":{
-                        "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Balance":"110"
+                    "ModifiedNode": {
+                    "FinalFields": {
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Balance": "110"
                     },
-                    "LedgerEntryType":"AccountRoot"
+                    "LedgerEntryType": "AccountRoot"
                     }
                 },
                 {
-                    "ModifiedNode":{
-                    "FinalFields":{
-                        "Account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                        "Balance":"30"
+                    "ModifiedNode": {
+                    "FinalFields": {
+                        "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "Balance": "30"
                     },
-                    "LedgerEntryType":"AccountRoot"
+                    "LedgerEntryType": "AccountRoot"
                     }
                 }
             ],
-            "TransactionIndex":22,
-            "TransactionResult":"tesSUCCESS",
-            "delivered_amount":"unavailable"
+            "TransactionIndex": 22,
+            "TransactionResult": "tesSUCCESS",
+            "delivered_amount": "unavailable"
         },
-        "ctid":"C000002100160000",
-        "type":"transaction",
-        "validated":true,
-        "status":"closed",
-        "ledger_index":33,
+        "ctid": "C000002100160000",
+        "type": "transaction",
+        "validated": true,
+        "status": "closed",
+        "ledger_index": 33,
         "close_time_iso": "2000-01-01T00:00:00Z",
-        "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-        "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-        "engine_result_code":0,
-        "engine_result":"tesSUCCESS",
-        "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+        "ledger_hash": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+        "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+        "engine_result_code": 0,
+        "engine_result": "tesSUCCESS",
+        "engine_result_message": "The transaction was applied. Only final in a validated ledger."
     })JSON";
 
 }  // namespace
@@ -370,16 +370,16 @@ TEST_F(FeedTransactionTest, SubBookV1)
         R"JSON({
             "transaction":
             {
-                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "Amount":"1",
-                "DeliverMax":"1",
-                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "Fee":"1",
-                "Sequence":32,
-                "SigningPubKey":"74657374",
-                "TransactionType":"Payment",
-                "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-                "date":0
+                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Amount": "1",
+                "DeliverMax": "1",
+                "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "Fee": "1",
+                "Sequence": 32,
+                "SigningPubKey": "74657374",
+                "TransactionType": "Payment",
+                "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                "date": 0
             },
             "meta":
             {
@@ -390,41 +390,41 @@ TEST_F(FeedTransactionTest, SubBookV1)
                         {
                             "FinalFields":
                             {
-                                "TakerGets":"3",
+                                "TakerGets": "3",
                                 "TakerPays":
                                 {
-                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                                    "value":"1"
+                                    "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value": "1"
                                 }
                             },
-                            "LedgerEntryType":"Offer",
-                            "PreviousFields":{
-                                "TakerGets":"1",
+                            "LedgerEntryType": "Offer",
+                            "PreviousFields": {
+                                "TakerGets": "1",
                                 "TakerPays":
                                 {
-                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                                    "value":"3"
+                                    "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value": "3"
                                 }
                             }
                         }
                     }
                 ],
-                "TransactionIndex":22,
-                "TransactionResult":"tesSUCCESS",
-                "delivered_amount":"unavailable"
+                "TransactionIndex": 22,
+                "TransactionResult": "tesSUCCESS",
+                "delivered_amount": "unavailable"
             },
-            "ctid":"C000002100160000",
-            "type":"transaction",
-            "validated":true,
-            "status":"closed",
-            "ledger_index":33,
-            "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-            "engine_result_code":0,
-            "engine_result":"tesSUCCESS",
+            "ctid": "C000002100160000",
+            "type": "transaction",
+            "validated": true,
+            "status": "closed",
+            "ledger_index": 33,
+            "ledger_hash": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+            "engine_result_code": 0,
+            "engine_result": "tesSUCCESS",
             "close_time_iso": "2000-01-01T00:00:00Z",
-            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+            "engine_result_message": "The transaction was applied. Only final in a validated ledger."
         })JSON";
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
@@ -437,19 +437,19 @@ TEST_F(FeedTransactionTest, SubBookV1)
 
     static constexpr auto kORDERBOOK_CANCEL_PUBLISH =
         R"JSON({
-            "transaction":{
-                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "Amount":"1",
-                "DeliverMax":"1",
-                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "Fee":"1",
-                "Sequence":32,
-                "SigningPubKey":"74657374",
-                "TransactionType":"Payment",
-                "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-                "date":0
+            "transaction": {
+                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Amount": "1",
+                "DeliverMax": "1",
+                "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "Fee": "1",
+                "Sequence": 32,
+                "SigningPubKey": "74657374",
+                "TransactionType": "Payment",
+                "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                "date": 0
             },
-            "meta":{
+            "meta": {
                 "AffectedNodes":
                 [
                     {
@@ -457,31 +457,31 @@ TEST_F(FeedTransactionTest, SubBookV1)
                         {
                             "FinalFields":
                             {
-                                "TakerGets":"3",
-                                "TakerPays":{
-                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                                    "value":"1"
+                                "TakerGets": "3",
+                                "TakerPays": {
+                                    "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value": "1"
                                 }
                             },
-                            "LedgerEntryType":"Offer"
+                            "LedgerEntryType": "Offer"
                         }
                     }
                 ],
-                "TransactionIndex":22,
-                "TransactionResult":"tesSUCCESS",
-                "delivered_amount":"unavailable"
+                "TransactionIndex": 22,
+                "TransactionResult": "tesSUCCESS",
+                "delivered_amount": "unavailable"
             },
-            "ctid":"C000002100160000",
-            "type":"transaction",
-            "validated":true,
-            "status":"closed",
-            "ledger_index":33,
-            "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-            "engine_result_code":0,
-            "engine_result":"tesSUCCESS",
+            "ctid": "C000002100160000",
+            "type": "transaction",
+            "validated": true,
+            "status": "closed",
+            "ledger_index": 33,
+            "ledger_hash": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+            "engine_result_code": 0,
+            "engine_result": "tesSUCCESS",
             "close_time_iso": "2000-01-01T00:00:00Z",
-            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+            "engine_result_message": "The transaction was applied. Only final in a validated ledger."
         })JSON";
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
@@ -493,16 +493,16 @@ TEST_F(FeedTransactionTest, SubBookV1)
         R"JSON({
             "transaction":
             {
-                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "Amount":"1",
-                "DeliverMax":"1",
-                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "Fee":"1",
-                "Sequence":32,
-                "SigningPubKey":"74657374",
-                "TransactionType":"Payment",
-                "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-                "date":0
+                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Amount": "1",
+                "DeliverMax": "1",
+                "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "Fee": "1",
+                "Sequence": 32,
+                "SigningPubKey": "74657374",
+                "TransactionType": "Payment",
+                "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                "date": 0
             },
             "meta":
             {
@@ -511,33 +511,33 @@ TEST_F(FeedTransactionTest, SubBookV1)
                     {
                         "CreatedNode":
                         {
-                            "NewFields":{
-                                "TakerGets":"3",
+                            "NewFields": {
+                                "TakerGets": "3",
                                 "TakerPays":
                                 {
-                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                                    "value":"1"
+                                    "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value": "1"
                                 }
                             },
-                            "LedgerEntryType":"Offer"
+                            "LedgerEntryType": "Offer"
                         }
                     }
                 ],
-                "TransactionIndex":22,
-                "TransactionResult":"tesSUCCESS",
-                "delivered_amount":"unavailable"
+                "TransactionIndex": 22,
+                "TransactionResult": "tesSUCCESS",
+                "delivered_amount": "unavailable"
             },
-            "ctid":"C000002100160000",
-            "type":"transaction",
-            "validated":true,
-            "status":"closed",
-            "ledger_index":33,
-            "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-            "engine_result_code":0,
-            "engine_result":"tesSUCCESS",
+            "ctid": "C000002100160000",
+            "type": "transaction",
+            "validated": true,
+            "status": "closed",
+            "ledger_index": 33,
+            "ledger_hash": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+            "engine_result_code": 0,
+            "engine_result": "tesSUCCESS",
             "close_time_iso": "2000-01-01T00:00:00Z",
-            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+            "engine_result_message": "The transaction was applied. Only final in a validated ledger."
         })JSON";
     metaObj = createMetaDataForCreateOffer(kCURRENCY, kISSUER, 22, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
@@ -574,14 +574,14 @@ TEST_F(FeedTransactionTest, SubBookV2)
         R"JSON({
             "tx_json":
             {
-                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "DeliverMax":"1",
-                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "Fee":"1",
-                "Sequence":32,
-                "SigningPubKey":"74657374",
-                "TransactionType":"Payment",
-                "date":0
+                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "DeliverMax": "1",
+                "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "Fee": "1",
+                "Sequence": 32,
+                "SigningPubKey": "74657374",
+                "TransactionType": "Payment",
+                "date": 0
             },
             "meta":
             {
@@ -592,43 +592,43 @@ TEST_F(FeedTransactionTest, SubBookV2)
                         {
                             "FinalFields":
                             {
-                                "TakerGets":"3",
+                                "TakerGets": "3",
                                 "TakerPays":
                                 {
-                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                                    "value":"1"
+                                    "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value": "1"
                                 }
                             },
-                            "LedgerEntryType":"Offer",
+                            "LedgerEntryType": "Offer",
                             "PreviousFields":
                             {
-                                "TakerGets":"1",
+                                "TakerGets": "1",
                                 "TakerPays":
                                 {
-                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                                    "value":"3"
+                                    "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value": "3"
                                 }
                             }
                         }
                     }
                 ],
-                "TransactionIndex":22,
-                "TransactionResult":"tesSUCCESS",
-                "delivered_amount":"unavailable"
+                "TransactionIndex": 22,
+                "TransactionResult": "tesSUCCESS",
+                "delivered_amount": "unavailable"
             },
-            "ctid":"C000002100160000",
-            "type":"transaction",
-            "validated":true,
-            "status":"closed",
-            "ledger_index":33,
-            "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-            "engine_result_code":0,
-            "engine_result":"tesSUCCESS",
+            "ctid": "C000002100160000",
+            "type": "transaction",
+            "validated": true,
+            "status": "closed",
+            "ledger_index": 33,
+            "ledger_hash": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+            "engine_result_code": 0,
+            "engine_result": "tesSUCCESS",
             "close_time_iso": "2000-01-01T00:00:00Z",
-            "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+            "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+            "engine_result_message": "The transaction was applied. Only final in a validated ledger."
         })JSON";
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
@@ -844,38 +844,38 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
         R"JSON({
             "transaction":
             {
-                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "Fee":"1",
-                "Sequence":32,
-                "SigningPubKey":"74657374",
+                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Fee": "1",
+                "Sequence": 32,
+                "SigningPubKey": "74657374",
                 "TakerGets":
                 {
-                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                    "value":"1"
+                    "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                    "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                    "value": "1"
                 },
-                "TakerPays":"3",
-                "TransactionType":"OfferCreate",
-                "hash":"EE8775B43A67F4803DECEC5E918E0EA9C56D8ED93E512EBE9F2891846509AAAB",
-                "date":0,
-                "owner_funds":"100"
+                "TakerPays": "3",
+                "TransactionType": "OfferCreate",
+                "hash": "EE8775B43A67F4803DECEC5E918E0EA9C56D8ED93E512EBE9F2891846509AAAB",
+                "date": 0,
+                "owner_funds": "100"
             },
             "meta":
             {
-                "AffectedNodes":[],
-                "TransactionIndex":22,
-                "TransactionResult":"tesSUCCESS"
+                "AffectedNodes": [],
+                "TransactionIndex": 22,
+                "TransactionResult": "tesSUCCESS"
             },
-            "ctid":"C000002100160000",
-            "type":"transaction",
-            "validated":true,
-            "status":"closed",
-            "ledger_index":33,
-            "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-            "engine_result_code":0,
+            "ctid": "C000002100160000",
+            "type": "transaction",
+            "validated": true,
+            "status": "closed",
+            "ledger_index": 33,
+            "ledger_hash": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+            "engine_result_code": 0,
             "close_time_iso": "2000-01-01T00:00:00Z",
-            "engine_result":"tesSUCCESS",
-            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+            "engine_result": "tesSUCCESS",
+            "engine_result_message": "The transaction was applied. Only final in a validated ledger."
         })JSON";
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
@@ -890,37 +890,37 @@ static constexpr auto kTRAN_FROZEN =
     R"JSON({
         "transaction":
         {
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "Fee":"1",
-            "Sequence":32,
-            "SigningPubKey":"74657374",
+            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "Fee": "1",
+            "Sequence": 32,
+            "SigningPubKey": "74657374",
             "TakerGets":
             {
-                "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                "value":"1"
+                "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                "value": "1"
             },
-            "TakerPays":"3",
-            "TransactionType":"OfferCreate",
-            "hash":"EE8775B43A67F4803DECEC5E918E0EA9C56D8ED93E512EBE9F2891846509AAAB",
-            "date":0,
-            "owner_funds":"0"
+            "TakerPays": "3",
+            "TransactionType": "OfferCreate",
+            "hash": "EE8775B43A67F4803DECEC5E918E0EA9C56D8ED93E512EBE9F2891846509AAAB",
+            "date": 0,
+            "owner_funds": "0"
         },
-        "meta":{
-            "AffectedNodes":[],
-            "TransactionIndex":22,
-            "TransactionResult":"tesSUCCESS"
+        "meta": {
+            "AffectedNodes": [],
+            "TransactionIndex": 22,
+            "TransactionResult": "tesSUCCESS"
         },
-        "ctid":"C000002100160000",
-        "type":"transaction",
-        "validated":true,
-        "status":"closed",
-        "ledger_index":33,
+        "ctid": "C000002100160000",
+        "type": "transaction",
+        "validated": true,
+        "status": "closed",
+        "ledger_index": 33,
         "close_time_iso": "2000-01-01T00:00:00Z",
-        "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-        "engine_result_code":0,
-        "engine_result":"tesSUCCESS",
-        "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+        "ledger_hash": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+        "engine_result_code": 0,
+        "engine_result": "tesSUCCESS",
+        "engine_result_message": "The transaction was applied. Only final in a validated ledger."
     })JSON";
 
 TEST_F(FeedTransactionTest, PubTransactionOfferCreationFrozenLine)
@@ -1150,38 +1150,38 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
         R"JSON({
             "transaction":
             {
-                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "Fee":"1",
-                "Sequence":32,
-                "SigningPubKey":"74657374",
+                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Fee": "1",
+                "Sequence": 32,
+                "SigningPubKey": "74657374",
                 "TakerGets":
                 {
-                    "currency":"037C35306B24AAB7FF90848206E003279AA47090",
-                    "issuer":"rnW8FAPgpQgA6VoESnVrUVJHBdq9QAtRZs",
-                    "value":"1"
+                    "currency": "037C35306B24AAB7FF90848206E003279AA47090",
+                    "issuer": "rnW8FAPgpQgA6VoESnVrUVJHBdq9QAtRZs",
+                    "value": "1"
                 },
-                "TakerPays":"3",
-                "TransactionType":"OfferCreate",
-                "hash":"9CA8BBF209DC4505F593A1EA0DC2135A5FA2C6541AF19D128B046873E0CEB695",
-                "date":0,
-                "owner_funds":"0"
+                "TakerPays": "3",
+                "TransactionType": "OfferCreate",
+                "hash": "9CA8BBF209DC4505F593A1EA0DC2135A5FA2C6541AF19D128B046873E0CEB695",
+                "date": 0,
+                "owner_funds": "0"
             },
             "meta":
             {
-                "AffectedNodes":[],
-                "TransactionIndex":22,
-                "TransactionResult":"tesSUCCESS"
+                "AffectedNodes": [],
+                "TransactionIndex": 22,
+                "TransactionResult": "tesSUCCESS"
             },
-            "ctid":"C000002100160000",
-            "type":"transaction",
-            "validated":true,
-            "status":"closed",
-            "ledger_index":33,
-            "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-            "engine_result_code":0,
+            "ctid": "C000002100160000",
+            "type": "transaction",
+            "validated": true,
+            "status": "closed",
+            "ledger_index": 33,
+            "ledger_hash": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+            "engine_result_code": 0,
             "close_time_iso": "2000-01-01T00:00:00Z",
-            "engine_result":"tesSUCCESS",
-            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+            "engine_result": "tesSUCCESS",
+            "engine_result_message": "The transaction was applied. Only final in a validated ledger."
         })JSON";
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));

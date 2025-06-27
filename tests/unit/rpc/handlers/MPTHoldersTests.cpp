@@ -376,7 +376,7 @@ TEST_F(RPCMPTHoldersHandlerTest, DefaultParameters)
     auto const currentOutput = fmt::format(
         R"JSON({{
         "mpt_issuance_id": "{}",
-        "limit":50,
+        "limit": 50,
         "ledger_index": 30,
         "mptokens": [{}],
         "validated": true
@@ -420,7 +420,7 @@ TEST_F(RPCMPTHoldersHandlerTest, CustomAmounts)
     auto const currentOutput = fmt::format(
         R"JSON({{
         "mpt_issuance_id": "{}",
-        "limit":50,
+        "limit": 50,
         "ledger_index": 30,
         "mptokens": [{{
             "account": "rrnAZCqMahreZrKMcZU3t2DZ6yUndT4ubN",
@@ -467,7 +467,7 @@ TEST_F(RPCMPTHoldersHandlerTest, SpecificLedgerIndex)
     auto const currentOutput = fmt::format(
         R"JSON({{
         "mpt_issuance_id": "{}",
-        "limit":50,
+        "limit": 50,
         "ledger_index": {},
         "mptokens": [{}],
         "validated": true
@@ -516,7 +516,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerParameter)
     auto const currentOutput = fmt::format(
         R"JSON({{
         "mpt_issuance_id": "{}",
-        "limit":50,
+        "limit": 50,
         "ledger_index": 30,
         "mptokens": [{}],
         "validated": true,
@@ -563,7 +563,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
     auto const currentOutput = fmt::format(
         R"JSON({{
         "mpt_issuance_id": "{}",
-        "limit":50,
+        "limit": 50,
         "ledger_index": 30,
         "mptokens": [{}, {}],
         "validated": true
@@ -607,7 +607,7 @@ TEST_F(RPCMPTHoldersHandlerTest, LimitMoreThanMAx)
     auto const currentOutput = fmt::format(
         R"JSON({{
         "mpt_issuance_id": "{}",
-        "limit":100,
+        "limit": 100,
         "ledger_index": 30,
         "mptokens": [{}],
         "validated": true

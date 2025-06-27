@@ -535,7 +535,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
     auto const currentOutput = fmt::format(
         R"JSON({{
             "issuer": "{}",
-            "limit":50,
+            "limit": 50,
             "ledger_index": 30,
             "nfts": [{}, {}, {}],
             "validated": true

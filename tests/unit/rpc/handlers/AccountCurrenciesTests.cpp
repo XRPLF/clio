@@ -75,7 +75,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExist)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}"
+            "account": "{}"
         }})JSON",
         kACCOUNT
     ));
@@ -97,7 +97,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaIntSequence)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}"
+            "account": "{}"
         }})JSON",
         kACCOUNT
     ));
@@ -121,8 +121,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaStringSequence)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "ledger_index":"{}"
+            "account": "{}",
+            "ledger_index": "{}"
         }})JSON",
         kACCOUNT,
         kSEQ
@@ -146,8 +146,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
 
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "ledger_hash":"{}"
+            "account": "{}",
+            "ledger_hash": "{}"
         }})JSON",
         kACCOUNT,
         kLEDGER_HASH
@@ -165,14 +165,14 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
 TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
 {
     static constexpr auto kOUTPUT = R"JSON({
-        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-        "ledger_index":30,
-        "validated":true,
-        "receive_currencies":[
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index": 30,
+        "validated": true,
+        "receive_currencies": [
             "EUR",
             "JPY"
         ],
-        "send_currencies":[
+        "send_currencies": [
             "EUR",
             "USD"
         ]
@@ -212,7 +212,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}"
+            "account": "{}"
         }})JSON",
         kACCOUNT
     ));
@@ -247,8 +247,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "ledger_hash":"{}"
+            "account": "{}",
+            "ledger_hash": "{}"
         }})JSON",
         kACCOUNT,
         kLEDGER_HASH
@@ -284,8 +284,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
     static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "ledger_index":{}
+            "account": "{}",
+            "ledger_index": {}
         }})JSON",
         kACCOUNT,
         ledgerSeq

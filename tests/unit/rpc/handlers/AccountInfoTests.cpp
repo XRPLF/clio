@@ -90,49 +90,49 @@ generateTestValuesForParametersTest()
         },
         AccountInfoParamTestCaseBundle{
             .testName = "AccountNotString",
-            .testJson = R"JSON({"account":1})JSON",
+            .testJson = R"JSON({"account": 1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "accountNotString"
         },
         AccountInfoParamTestCaseBundle{
             .testName = "AccountInvalid",
-            .testJson = R"JSON({"account":"xxx"})JSON",
+            .testJson = R"JSON({"account": "xxx"})JSON",
             .expectedError = "actMalformed",
             .expectedErrorMessage = "accountMalformed"
         },
         AccountInfoParamTestCaseBundle{
             .testName = "IdentNotString",
-            .testJson = R"JSON({"ident":1})JSON",
+            .testJson = R"JSON({"ident": 1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "identNotString"
         },
         AccountInfoParamTestCaseBundle{
             .testName = "IdentInvalid",
-            .testJson = R"JSON({"ident":"xxx"})JSON",
+            .testJson = R"JSON({"ident": "xxx"})JSON",
             .expectedError = "actMalformed",
             .expectedErrorMessage = "identMalformed"
         },
         AccountInfoParamTestCaseBundle{
             .testName = "SignerListsInvalid",
-            .testJson = R"JSON({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists":1})JSON",
+            .testJson = R"JSON({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists": 1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters."
         },
         AccountInfoParamTestCaseBundle{
             .testName = "LedgerHashInvalid",
-            .testJson = R"JSON({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":"1"})JSON",
+            .testJson = R"JSON({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": "1"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashMalformed"
         },
         AccountInfoParamTestCaseBundle{
             .testName = "LedgerHashNotString",
-            .testJson = R"JSON({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":1})JSON",
+            .testJson = R"JSON({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash": 1})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashNotString"
         },
         AccountInfoParamTestCaseBundle{
             .testName = "LedgerIndexInvalid",
-            .testJson = R"JSON({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index":"a"})JSON",
+            .testJson = R"JSON({"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index": "a"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledgerIndexMalformed"
         },
@@ -164,7 +164,7 @@ TEST_P(AccountInfoParameterTest, InvalidParams)
 TEST_F(AccountInfoParameterTest, ApiV1SignerListIsNotBool)
 {
     static constexpr auto kREQ_JSON = R"JSON(
-        {"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists":1}
+        {"ident": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists": 1}
     )JSON";
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence);

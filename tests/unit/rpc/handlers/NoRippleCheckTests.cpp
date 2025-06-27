@@ -318,13 +318,13 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
     static constexpr auto kSEQ = 30;
     static constexpr auto kEXPECTED_OUTPUT =
         R"JSON({
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_index":30,
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
             "problems":
             [
                 "You appear to have set your default ripple flag even though you are not a gateway. This is not recommended unless you are experimenting"
             ],
-            "validated":true
+            "validated": true
         })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ);
@@ -379,13 +379,13 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
     static constexpr auto kSEQ = 30;
     static constexpr auto kEXPECTED_OUTPUT =
         R"JSON({
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_index":30,
-            "problems":[
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
+            "problems": [
                 "You should probably set the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                 "You should probably set the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
             ],
-            "validated":true
+            "validated": true
         })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ);
@@ -434,14 +434,14 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
     static constexpr auto kSEQ = 30;
     static constexpr auto kEXPECTED_OUTPUT =
         R"JSON({
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_index":30,
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
             "problems":
             [
                 "You should clear the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                 "You should clear the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
             ],
-            "validated":true
+            "validated": true
         })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ);
@@ -496,13 +496,13 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
     static constexpr auto kSEQ = 30;
     static constexpr auto kEXPECTED_OUTPUT =
         R"JSON({
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_index":30,
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
             "problems":
             [
                 "You should immediately set your default ripple flag"
             ],
-            "validated":true
+            "validated": true
         })JSON";
 
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ);
@@ -653,47 +653,47 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
     constexpr auto kTRANSACTION_SEQ = 123;
     auto const expectedOutput = fmt::format(
         R"JSON({{
-                "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                "ledger_index":30,
-                "problems":[
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "ledger_index": 30,
+                "problems": [
                     "You should immediately set your default ripple flag",
                     "You should clear the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                     "You should clear the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
                 ],
-                "transactions":[
+                "transactions": [
                     {{
-                        "Sequence":{},
-                        "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee":1,
-                        "TransactionType":"AccountSet",
-                        "SetFlag":8
+                        "Sequence": {},
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Fee": 1,
+                        "TransactionType": "AccountSet",
+                        "SetFlag": 8
                     }},
                     {{
-                        "Sequence":{},
-                        "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee":1,
-                        "TransactionType":"TrustSet",
-                        "LimitAmount":{{
-                            "currency":"USD",
-                            "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                            "value":"10"
+                        "Sequence": {},
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Fee": 1,
+                        "TransactionType": "TrustSet",
+                        "LimitAmount": {{
+                            "currency": "USD",
+                            "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                            "value": "10"
                         }},
-                        "Flags":{}
+                        "Flags": {}
                     }},
                     {{
-                        "Sequence":{},
-                        "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee":1,
-                        "TransactionType":"TrustSet",
-                        "LimitAmount":{{
-                            "currency":"USD",
-                            "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                            "value":"10"
+                        "Sequence": {},
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Fee": 1,
+                        "TransactionType": "TrustSet",
+                        "LimitAmount": {{
+                            "currency": "USD",
+                            "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                            "value": "10"
                         }},
-                        "Flags":{}
+                        "Flags": {}
                     }}
                 ],
-                "validated":true
+                "validated": true
         }})JSON",
         kTRANSACTION_SEQ,
         kTRANSACTION_SEQ + 1,
