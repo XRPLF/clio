@@ -138,10 +138,10 @@ struct Amendments {
     REGISTER(fixFrozenLPTokenTransfer);
     REGISTER(DeepFreeze);
     REGISTER(PermissionDelegation);
-    REGISTER(SingleAssetVault);
     REGISTER(fixPayChanCancelAfter);
     REGISTER(Batch);
     REGISTER(PermissionedDEX);
+    REGISTER(SingleAssetVault);
     REGISTER(TokenEscrow);
     REGISTER(fixAMMv1_3);
     REGISTER(fixEnforceNFTokenTrustlineV2);

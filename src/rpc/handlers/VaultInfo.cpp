@@ -47,50 +47,52 @@
 
 namespace rpc {
 
-VaultInfoHandler::VaultInfoHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-    : sharedPtrBackend_{sharedPtrBackend}
-{
-}
+namespace {
 
 /**
  * @brief Ensures that the input contains either a `vaultID` alone, or both `owner` and `tnxSequence`.
  * Any other combination is considered malformed.
  *
  * @param input The input object containing optional fields for the vault request.
- * @return Returns an empty expected on success (valid combination), else error.
+ * @return Returns true if the input is valid, false otherwise.
  */
-static std::expected<void, ClioError>
-parseVaultField(VaultInfoHandler::Input const& input)
+bool
+validate(VaultInfoHandler::Input const& input)
 {
-    auto const hasVaultId = input.vaultID.has_value();
-    auto const hasOwner = input.owner.has_value();
-    auto const hasSeq = input.tnxSequence.has_value();
+    bool const hasVaultId = input.vaultID.has_value();
+    bool const hasOwner = input.owner.has_value();
+    bool const hasSeq = input.tnxSequence.has_value();
 
     // Only valid combinations: (vaultID) or (owner + ledgerIndex)
-    if ((hasVaultId && !hasOwner && !hasSeq) || (!hasVaultId && hasOwner && hasSeq))
-        return {};
+    // NOLINTNEXTLINE(readability-simplify-boolean-expr)
+    return (hasVaultId && !hasOwner && !hasSeq) || (!hasVaultId && hasOwner && hasSeq);
+}
 
-    return std::unexpected<ClioError>{ClioError::RpcMalformedRequest};
+}  // namespace
+
+VaultInfoHandler::VaultInfoHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+    : sharedPtrBackend_{sharedPtrBackend}
+{
 }
 
 VaultInfoHandler::Result
 VaultInfoHandler::process(VaultInfoHandler::Input input, Context const& ctx) const
 {
     // vault info input must either have owner and sequence, or vault_id only.
-    if (auto const res = parseVaultField(input); !res.has_value())
-        return Error{res.error()};
+    if (not validate(input))
+        return Error{ClioError::RpcMalformedRequest};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "VaultInfo's ledger range must be available");
 
-    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+    auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, std::nullopt, input.ledgerIndex, range->maxSequence
     );
 
-    if (not lgrInfoOrStatus.has_value())
-        return Error{lgrInfoOrStatus.error()};
+    if (not expectedLgrInfo.has_value())
+        return Error{expectedLgrInfo.error()};
 
-    auto const lgrInfo = *lgrInfoOrStatus;
+    auto const& lgrInfo = *expectedLgrInfo;
 
     // Extract the vault keylet based on input
     auto const vaultKeylet = [&]() -> std::expected<ripple::Keylet, Status> {
