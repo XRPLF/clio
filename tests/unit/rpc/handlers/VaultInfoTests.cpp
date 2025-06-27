@@ -280,7 +280,7 @@ TEST_F(RPCVaultInfoHandlerTest, MissingIssuanceObject)
 TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
 {
     constexpr auto kEXPECTED_OUTPUT =
-        R"({
+        R"JSON({
         "ledger_index": 30,
         "validated": true,
         "vault": {
@@ -316,7 +316,7 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
                 "mpt_issuance_id": "0000001E4B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
             }
         }
-    })";
+    })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kINDEX1, kSEQ);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
