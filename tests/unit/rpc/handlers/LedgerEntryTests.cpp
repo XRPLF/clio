@@ -3328,13 +3328,13 @@ TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
         auto const req = json::parse(fmt::format(
-            R"({{
+            R"JSON({{
                 "binary": false,
                 "vault": {{
                     "owner": "{}",
                     "seq": {}
                 }}
-            }})",
+            }})JSON",
             kACCOUNT,
             kRANGE_MAX
         ));

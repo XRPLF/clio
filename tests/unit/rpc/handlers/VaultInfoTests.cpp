@@ -195,10 +195,10 @@ TEST_F(RPCVaultInfoHandlerTest, InputHasOwnerButNotFoundResultsInError)
 
     // Input JSON using vault object
     auto static const kINPUT = boost::json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "owner": "{}",
             "seq": 3
-        }})",
+        }})JSON",
         kACCOUNT
     ));
 
@@ -281,42 +281,42 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
 {
     constexpr auto kEXPECTED_OUTPUT =
         R"JSON({
-        "ledger_index": 30,
-        "validated": true,
-        "vault": {
-            "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-            "Asset": {
-                "currency": "XRP"
-            },
-            "AssetsAvailable": "300",
-            "AssetsTotal": "300",
-            "Flags": 0,
-            "LedgerEntryType": "Vault",
-            "LossUnrealized": "0",
-            "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "OwnerNode": "4",
-            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000002",
-            "PreviousTxnLgrSeq": 3,
-            "Sequence": 30,
-            "ShareMPTID": "00000000000000000000000000000000000000000000007B",
-            "WithdrawalPolicy": 200,
-            "index": "61B03A6F8CEBD3AF9D8F696C3D0A9A9F0493B34BF6B5D93CF0BC009E6BA75303",
-            "shares": {
+            "ledger_index": 30,
+            "validated": true,
+            "vault": {
+                "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "Asset": {
+                    "currency": "XRP"
+                },
+                "AssetsAvailable": "300",
+                "AssetsTotal": "300",
                 "Flags": 0,
-                "Issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "LedgerEntryType": "MPTokenIssuance",
-                "MPTokenMetadata": "6D65746164617461",
-                "MaximumAmount": "0",
-                "OutstandingAmount": "0",
-                "OwnerNode": "0",
-                "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
-                "PreviousTxnLgrSeq": 0,
+                "LedgerEntryType": "Vault",
+                "LossUnrealized": "0",
+                "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "OwnerNode": "4",
+                "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000002",
+                "PreviousTxnLgrSeq": 3,
                 "Sequence": 30,
-                "index": "87658CA4D4D7A50EE99E632055FE7A879CD9A331880AC21D538FA6E4032804E3",
-                "mpt_issuance_id": "0000001E4B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
+                "ShareMPTID": "00000000000000000000000000000000000000000000007B",
+                "WithdrawalPolicy": 200,
+                "index": "61B03A6F8CEBD3AF9D8F696C3D0A9A9F0493B34BF6B5D93CF0BC009E6BA75303",
+                "shares": {
+                    "Flags": 0,
+                    "Issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "LedgerEntryType": "MPTokenIssuance",
+                    "MPTokenMetadata": "6D65746164617461",
+                    "MaximumAmount": "0",
+                    "OutstandingAmount": "0",
+                    "OwnerNode": "0",
+                    "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                    "PreviousTxnLgrSeq": 0,
+                    "Sequence": 30,
+                    "index": "87658CA4D4D7A50EE99E632055FE7A879CD9A331880AC21D538FA6E4032804E3",
+                    "mpt_issuance_id": "0000001E4B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
+                }
             }
-        }
-    })JSON";
+        })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kINDEX1, kSEQ);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
@@ -362,43 +362,43 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
 TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
 {
     constexpr auto kEXPECTED_OUTPUT =
-        R"({
-        "ledger_index": 30,
-        "validated": true,
-        "vault": {
-            "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-            "Asset": {
-                "currency": "XRP"
-            },
-            "AssetsAvailable": "300",
-            "AssetsTotal": "300",
-            "Flags": 0,
-            "LedgerEntryType": "Vault",
-            "LossUnrealized": "0",
-            "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "OwnerNode": "4",
-            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000002",
-            "PreviousTxnLgrSeq": 3,
-            "Sequence": 30,
-            "ShareMPTID": "00000000000000000000000000000000000000000000007B",
-            "WithdrawalPolicy": 200,
-            "index": "1B7BB49E0663E073D1C3EF989271F89E290AAF2D67CEE85F18E2CC76D168F694",
-            "shares": {
+        R"JSON({
+            "ledger_index": 30,
+            "validated": true,
+            "vault": {
+                "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "Asset": {
+                    "currency": "XRP"
+                },
+                "AssetsAvailable": "300",
+                "AssetsTotal": "300",
                 "Flags": 0,
-                "Issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "LedgerEntryType": "MPTokenIssuance",
-                "MPTokenMetadata": "6D65746164617461",
-                "MaximumAmount": "0",
-                "OutstandingAmount": "0",
-                "OwnerNode": "0",
-                "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
-                "PreviousTxnLgrSeq": 0,
+                "LedgerEntryType": "Vault",
+                "LossUnrealized": "0",
+                "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "OwnerNode": "4",
+                "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000002",
+                "PreviousTxnLgrSeq": 3,
                 "Sequence": 30,
-                "index": "87658CA4D4D7A50EE99E632055FE7A879CD9A331880AC21D538FA6E4032804E3",
-                "mpt_issuance_id": "0000001E4B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
+                "ShareMPTID": "00000000000000000000000000000000000000000000007B",
+                "WithdrawalPolicy": 200,
+                "index": "1B7BB49E0663E073D1C3EF989271F89E290AAF2D67CEE85F18E2CC76D168F694",
+                "shares": {
+                    "Flags": 0,
+                    "Issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "LedgerEntryType": "MPTokenIssuance",
+                    "MPTokenMetadata": "6D65746164617461",
+                    "MaximumAmount": "0",
+                    "OutstandingAmount": "0",
+                    "OwnerNode": "0",
+                    "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                    "PreviousTxnLgrSeq": 0,
+                    "Sequence": 30,
+                    "index": "87658CA4D4D7A50EE99E632055FE7A879CD9A331880AC21D538FA6E4032804E3",
+                    "mpt_issuance_id": "0000001E4B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
+                }
             }
-        }
-    })";
+        })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kINDEX1, kSEQ);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
@@ -431,11 +431,11 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
 
     // Input JSON using vault object
     auto static const kINPUT = boost::json::parse(fmt::format(
-        R"({{
+        R"JSON({{
             "owner": "{}",
             "seq": {},
             "ledger_index": 30
-        }})",
+        }})JSON",
         kACCOUNT,
         kSEQ
     ));

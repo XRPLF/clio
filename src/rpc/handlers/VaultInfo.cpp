@@ -117,14 +117,14 @@ VaultInfoHandler::process(VaultInfoHandler::Input input, Context const& ctx) con
         return std::unexpected{Status{ClioError::RpcEntryNotFound}};
     }();
 
-    if (!vaultKeylet.has_value())
+    if (not vaultKeylet.has_value())
         return Error{vaultKeylet.error()};
 
     // Fetch the vault object and it's associated issuance ID
     auto const vaultLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(vaultKeylet.value().key, lgrInfo.seq, ctx.yield);
 
-    if (!vaultLedgerObject)
+    if (not vaultLedgerObject)
         return Error{Status{ClioError::RpcEntryNotFound, "vault object not found."}};
 
     ripple::STLedgerEntry const vaultSle{
@@ -134,7 +134,7 @@ VaultInfoHandler::process(VaultInfoHandler::Input input, Context const& ctx) con
     auto const issuanceKeylet = ripple::keylet::mptIssuance(vaultSle[ripple::sfShareMPTID]).key;
     auto const issuanceObject = sharedPtrBackend_->fetchLedgerObject(issuanceKeylet, lgrInfo.seq, ctx.yield);
 
-    if (!issuanceObject)
+    if (not issuanceObject)
         return Error{Status{ClioError::RpcEntryNotFound, "issuance object not found."}};
 
     ripple::STLedgerEntry const issuanceSle{
@@ -176,7 +176,7 @@ tag_invoke(boost::json::value_to_tag<VaultInfoHandler::Input>, boost::json::valu
         input.vaultID = jsonObject.at(JS(vault_id)).as_string();
 
     if (jsonObject.contains(JS(ledger_index))) {
-        if (!jsonObject.at(JS(ledger_index)).is_string()) {
+        if (not jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
         } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
