@@ -85,78 +85,78 @@ generateTestValuesForParametersTest()
     return std::vector<VaultInfoParamTestCaseBundle>{
         VaultInfoParamTestCaseBundle{
             .testName = "RandomField",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "idk" : "idk"
-            })",
+            })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "MissingOwnerInVault",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "seq": 4
-            })",
+            })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "MissingSeqInVault",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "owner": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
-            })",
+            })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "SeqNotAnInteger",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "owner": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
                 "seq": "asdf"
-            })",
+            })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "OwnerNotAString",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "owner": true,
                 "seq": 3
-            })",
+            })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "OwnerNotHexString"
         },
         VaultInfoParamTestCaseBundle{
             .testName = "OwnerNotAHexString",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "owner": "asdf",
                 "seq": 3
-            })",
+            })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "OwnerNotHexString"
         },
         VaultInfoParamTestCaseBundle{
             .testName = "vaultIDNotString",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "vault_id": 3
-            })",
+            })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "vaultIDNotHex256",
-            .testJson = R"({
+            .testJson = R"JSON({
                 "vault_id": "idk"
-            })",
+            })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
             .testName = "vaultIDWithOwner",
             .testJson = fmt::format(
-                R"({{
+                R"JSON({{
                 "vault_id": "{}",
                 "owner": "{}"
-            }})",
+            }})JSON",
                 kVAULT_ID,
                 kACCOUNT
             ),
@@ -219,8 +219,8 @@ TEST_F(RPCVaultInfoHandlerTest, VaultIDFailsVaultDeserializationReturnsEntryNotF
 
     // Mock: vault_id exists, but data is not a valid vault object
     ripple::uint256 vaultKey = ripple::uint256{kVAULT_ID};
-    ON_CALL(*backend_, doFetchLedgerObject(vaultKey, kSEQ, _))
-        .WillByDefault(Return(std::nullopt));  // intentionally invalid vault
+    EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKey, kSEQ, _))
+        .WillOnce(Return(std::nullopt));  // intentionally invalid vault
 
     auto const kINPUT = boost::json::parse(fmt::format(
         R"({{
@@ -256,10 +256,10 @@ TEST_F(RPCVaultInfoHandlerTest, MissingIssuanceObject)
     auto const vaultKeylet = ripple::keylet::vault(ripple::uint256{kVAULT_ID}).key;
     auto const mptIssuance = ripple::keylet::mptIssuance(mptSharesID).key;
 
-    ON_CALL(*backend_, doFetchLedgerObject(vaultKeylet, kSEQ, _))
-        .WillByDefault(Return(vault.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(mptIssuance, kSEQ, _))
-        .WillByDefault(Return(std::nullopt));  // Missing issuance
+    EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKeylet, kSEQ, _))
+        .WillOnce(Return(vault.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(mptIssuance, kSEQ, _))
+        .WillOnce(Return(std::nullopt));  // Missing issuance
 
     auto static const kINPUT = boost::json::parse(fmt::format(
         R"({{
@@ -337,12 +337,10 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
     auto const vaultKeylet = ripple::keylet::vault(ripple::uint256{kVAULT_ID}).key;
     auto const mptIssuance = ripple::keylet::mptIssuance(mptSharesID).key;
 
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kVAULT_ID}, kSEQ, _))
-        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
-    ON_CALL(*backend_, doFetchLedgerObject(vaultKeylet, kSEQ, _))
-        .WillByDefault(Return(vault.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(mptIssuance, kSEQ, _))
-        .WillByDefault(Return(issuance.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKeylet, kSEQ, _))
+        .WillOnce(Return(vault.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(mptIssuance, kSEQ, _))
+        .WillOnce(Return(issuance.getSerializer().peekData()));
 
     // Input JSON using vault_id
     auto static const kINPUT = boost::json::parse(fmt::format(
@@ -424,12 +422,12 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
     auto const vaultKeylet = ripple::keylet::vault(account, kSEQ).key;
     auto const mptIssuance = ripple::keylet::mptIssuance(mptSharesID).key;
 
-    ON_CALL(*backend_, doFetchLedgerObject(accountKeylet, kSEQ, _))
-        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(vaultKeylet, kSEQ, _))
-        .WillByDefault(Return(vault.getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(mptIssuance, kSEQ, _))
-        .WillByDefault(Return(issuance.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKeylet, kSEQ, _))
+        .WillOnce(Return(accountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKeylet, kSEQ, _))
+        .WillOnce(Return(vault.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(mptIssuance, kSEQ, _))
+        .WillOnce(Return(issuance.getSerializer().peekData()));
 
     // Input JSON using vault object
     auto static const kINPUT = boost::json::parse(fmt::format(

@@ -2198,27 +2198,27 @@ generateTestValuesForParametersTest()
         ParamTestCaseBundle{
             .testName = "InvalidVault_Type",
             .testJson =
-                R"json({
+                R"JSON({
                     "vault": 0
-                })json",
+                })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "InvalidVault_NotHex",
             .testJson =
-                R"json({
+                R"JSON({
                     "vault": "invalid_hex"
-                })json",
+                })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "MissingOwner",
             .testJson =
-                R"json({
+                R"JSON({
                     "vault": { "seq": 1 }
-                })json",
+                })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request.",
         },
@@ -2226,42 +2226,42 @@ generateTestValuesForParametersTest()
         ParamTestCaseBundle{
             .testName = "MissingSeq",
             .testJson =
-                R"json({
+                R"JSON({
                     "vault": { "owner": "abcd" }
-                })json",
+                })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "SeqNotInteger",
             .testJson =
-                R"json({
+                R"JSON({
                  "vault": {
                     "owner": "abcd",
                     "seq": "notAnInteger"
-                }})json",
+                }})JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
             .testName = "InvalidOwnerFormat",
             .testJson =
-                R"json({
+                R"JSON({
                 "vault" : {
                     "owner": "abcd",
                     "seq": 10
-                }})json",
+                }})JSON",
             .expectedError = "malformedOwner",
             .expectedErrorMessage = "Malformed owner.",
         },
         ParamTestCaseBundle{
             .testName = "BothOwnerAndSeqInvalid",
             .testJson =
-                R"json({
+                R"JSON({
                 "vault" : {
                     "owner": "abcd",
                     "seq": -200
-                }})json",
+                }})JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request.",
         },
@@ -3133,10 +3133,10 @@ generateTestValuesForNormalPathTest()
         NormalPathTestBundle{
             .testName = "CreateVaultObjectByHexString",
             .testJson = fmt::format(
-                R"json({{
+                R"JSON({{
                     "binary": true,
                     "vault": "{}"
-                }})json",
+                }})JSON",
                 kINDEX1
             ),
             .expectedIndex = ripple::uint256(kINDEX1),
@@ -3155,13 +3155,13 @@ generateTestValuesForNormalPathTest()
         NormalPathTestBundle{
             .testName = "CreateVaultObjectByAccount",
             .testJson = fmt::format(
-                R"json({{
+                R"JSON({{
                     "binary": true,
                     "vault": {{
                         "owner": "{}",
                         "seq": {}
                     }}
-                }})json",
+                }})JSON",
                 kACCOUNT,
                 kRANGE_MAX
             ),
