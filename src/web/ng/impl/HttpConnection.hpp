@@ -46,6 +46,7 @@
 #include <chrono>
 #include <memory>
 #include <optional>
+#include <queue>
 #include <string>
 #include <utility>
 
@@ -76,6 +77,9 @@ class HttpConnection : public UpgradableConnection {
     std::optional<boost::beast::http::request<boost::beast::http::string_body>> request_;
     std::chrono::steady_clock::duration timeout_{kDEFAULT_TIMEOUT};
     bool closed_{false};
+    std::queue<boost::beast::http::response<boost::beast::http::string_body>> sendingQueue_;
+    bool isSending_{false};
+    boost::system::error_code sendingError_;
 
 public:
     HttpConnection(
@@ -128,11 +132,23 @@ public:
     sendRaw(boost::beast::http::response<boost::beast::http::string_body> response, boost::asio::yield_context yield)
         override
     {
-        boost::system::error_code error;
-        boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
-        boost::beast::http::async_write(stream_, response, yield[error]);
-        if (error)
-            return error;
+        if (sendingError_)
+            return sendingError_;
+
+        sendingQueue_.push(std::move(response));
+        if (isSending_)
+            return std::nullopt;
+
+        isSending_ = true;
+        while (not sendingQueue_.empty() and not sendingError_) {
+            auto responseToSend = std::move(sendingQueue_.front());
+            sendingQueue_.pop();
+            boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
+            boost::beast::http::async_write(stream_, responseToSend, yield[sendingError_]);
+        }
+        isSending_ = false;
+        if (sendingError_)
+            return sendingError_;
         return std::nullopt;
     }
 
