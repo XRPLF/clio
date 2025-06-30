@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
@@ -33,9 +32,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
-#include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
-#include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 
 #include <cstdint>
@@ -218,7 +215,7 @@ TEST_F(RPCVaultInfoHandlerTest, VaultIDFailsVaultDeserializationReturnsEntryNotF
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     // Mock: vault_id exists, but data is not a valid vault object
-    ripple::uint256 vaultKey = ripple::uint256{kVAULT_ID};
+    ripple::uint256 const vaultKey = ripple::uint256{kVAULT_ID};
     EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKey, kSEQ, _))
         .WillOnce(Return(std::nullopt));  // intentionally invalid vault
 
@@ -244,10 +241,10 @@ TEST_F(RPCVaultInfoHandlerTest, MissingIssuanceObject)
     auto const ledgerHeader = createLedgerHeader(kINDEX1, kSEQ);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    ripple::uint192 mptSharesID{123};
-    ripple::uint256 prevTxId{2};
-    uint32_t prevTxSeq = 3;
-    uint64_t ownerNode = 4;
+    ripple::uint192 const mptSharesID{123};
+    ripple::uint256 const prevTxId{2};
+    uint32_t const prevTxSeq = 3;
+    uint64_t const ownerNode = 4;
 
     auto const vault = createVault(
         kACCOUNT, kACCOUNT2, kSEQ, kASSET_CURRENCY, kASSET_ISSUER, mptSharesID, ownerNode, prevTxId, prevTxSeq
@@ -322,10 +319,10 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     // Vault params
-    ripple::uint192 mptSharesID{123};
-    ripple::uint256 prevTxId{2};
-    uint32_t prevTxSeq = 3;
-    uint64_t ownerNode = 4;
+    ripple::uint192 const mptSharesID{123};
+    ripple::uint256 const prevTxId{2};
+    uint32_t const prevTxSeq = 3;
+    uint64_t const ownerNode = 4;
 
     // Mock vault object
     auto const vault = createVault(
@@ -404,10 +401,10 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     // Vault params
-    ripple::uint192 mptSharesID{123};
-    ripple::uint256 prevTxId{2};
-    uint32_t prevTxSeq = 3;
-    uint64_t ownerNode = 4;
+    ripple::uint192 const mptSharesID{123};
+    ripple::uint256 const prevTxId{2};
+    uint32_t const prevTxSeq = 3;
+    uint64_t const ownerNode = 4;
 
     // Mock vault object
     auto const vault = createVault(

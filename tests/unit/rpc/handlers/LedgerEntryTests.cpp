@@ -3301,7 +3301,7 @@ TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
 
-    boost::json::object entry;
+    boost::json::object const entry;
 
     auto const vault = createVault(
         kACCOUNT,
