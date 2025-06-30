@@ -45,6 +45,7 @@
 #include <cstddef>
 #include <optional>
 #include <ranges>
+#include <string>
 #include <utility>
 
 using namespace web::ng::impl;
@@ -264,6 +265,8 @@ TEST_F(HttpConnectionTests, SendMultipleTimesClientDisconnected)
             ++counter;
             maybeError = connection.send(response, yield);
         }
+        // Sending after getting an error should be safe
+        maybeError = connection.send(response, yield);
         EXPECT_TRUE(maybeError.has_value());
         EXPECT_LT(counter, 100);
     });

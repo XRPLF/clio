@@ -141,7 +141,7 @@ public:
 
         isSending_ = true;
         while (not sendingQueue_.empty() and not sendingError_) {
-            auto responseToSend = std::move(sendingQueue_.front());
+            auto const responseToSend = std::move(sendingQueue_.front());
             sendingQueue_.pop();
             boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
             boost::beast::http::async_write(stream_, responseToSend, yield[sendingError_]);

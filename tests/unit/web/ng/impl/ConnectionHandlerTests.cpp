@@ -277,9 +277,9 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SendSubscriptionMessage)
 
     EXPECT_CALL(*mockWsConnection, send).WillOnce(Return(std::nullopt));
 
-    EXPECT_CALL(*mockWsConnection, sendBuffer)
-        .WillOnce([&subscriptionMessage](boost::asio::const_buffer buffer, auto&&) {
-            EXPECT_EQ(boost::beast::buffers_to_string(buffer), subscriptionMessage);
+    EXPECT_CALL(*mockWsConnection, sendShared)
+        .WillOnce([&subscriptionMessage](std::shared_ptr<std::string> sendingMessage, auto&&) {
+            EXPECT_EQ(*sendingMessage, subscriptionMessage);
             return std::nullopt;
         });
 
