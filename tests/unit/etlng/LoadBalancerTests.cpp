@@ -19,6 +19,7 @@
 
 #include "etlng/InitialLoadObserverInterface.hpp"
 #include "etlng/LoadBalancer.hpp"
+#include "etlng/LoadBalancerInterface.hpp"
 #include "etlng/Models.hpp"
 #include "etlng/Source.hpp"
 #include "rpc/Errors.hpp"
@@ -459,7 +460,7 @@ struct LoadBalancerLoadInitialLedgerNgTests : LoadBalancerOnConnectHookNgTests {
 protected:
     uint32_t const sequence_ = 123;
     uint32_t const numMarkers_ = 16;
-    std::pair<std::vector<std::string>, bool> const response_ = {{"1", "2", "3"}, true};
+    InitialLedgerLoadResult const response_{std::vector<std::string>{"1", "2", "3"}};
     testing::StrictMock<InitialLoadObserverMock> observer_;
 };
 
@@ -469,7 +470,7 @@ TEST_F(LoadBalancerLoadInitialLedgerNgTests, load)
     EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, testing::_))
         .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.value());
 }
 
 TEST_F(LoadBalancerLoadInitialLedgerNgTests, load_source0DoesntHaveLedger)
@@ -479,7 +480,7 @@ TEST_F(LoadBalancerLoadInitialLedgerNgTests, load_source0DoesntHaveLedger)
     EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, testing::_))
         .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.value());
 }
 
 TEST_F(LoadBalancerLoadInitialLedgerNgTests, load_bothSourcesDontHaveLedger)
@@ -489,26 +490,26 @@ TEST_F(LoadBalancerLoadInitialLedgerNgTests, load_bothSourcesDontHaveLedger)
     EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, testing::_))
         .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.value());
 }
 
 TEST_F(LoadBalancerLoadInitialLedgerNgTests, load_source0ReturnsStatusFalse)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
     EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, testing::_))
-        .WillOnce(Return(std::make_pair(std::vector<std::string>{}, false)));
+        .WillOnce(Return(std::unexpected{InitialLedgerLoadError::Errored}));
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(true));
     EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, testing::_))
         .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.value());
 }
 
 struct LoadBalancerLoadInitialLedgerCustomNumMarkersNgTests : LoadBalancerConstructorNgTests {
 protected:
     uint32_t const numMarkers_ = 16;
     uint32_t const sequence_ = 123;
-    std::pair<std::vector<std::string>, bool> const response_ = {{"1", "2", "3"}, true};
+    InitialLedgerLoadResult const response_{std::vector<std::string>{"1", "2", "3"}};
     testing::StrictMock<InitialLoadObserverMock> observer_;
 };
 
@@ -527,7 +528,7 @@ TEST_F(LoadBalancerLoadInitialLedgerCustomNumMarkersNgTests, loadInitialLedger)
     EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, testing::_))
         .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.first);
+    EXPECT_EQ(loadBalancer->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.value());
 }
 
 struct LoadBalancerFetchLegerNgTests : LoadBalancerOnConnectHookNgTests {

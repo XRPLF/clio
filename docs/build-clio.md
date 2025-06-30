@@ -6,7 +6,7 @@
 ## Minimum Requirements
 
 - [Python 3.7](https://www.python.org/downloads/)
-- [Conan 1.55, <2.0](https://conan.io/downloads.html)
+- [Conan 2.17.0](https://conan.io/downloads.html)
 - [CMake 3.20, <4.0](https://cmake.org/download/)
 - [**Optional**] [GCovr](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html): needed for code coverage generation
 - [**Optional**] [CCache](https://ccache.dev/): speeds up compilation if you are going to compile Clio often
@@ -19,16 +19,27 @@
 
 ### Conan Configuration
 
-Clio requires `compiler.cppstd=20` in your Conan profile (`~/.conan/profiles/default`).
+By default, Conan uses `~/.conan2` as it's home folder.
+You can change it by using `$CONAN_HOME` env variable.
+[More info about Conan home](https://docs.conan.io/2/reference/environment.html#conan-home).
 
-> [!NOTE]
-> Although Clio is built using C++23, it's required to set `compiler.cppstd=20` for the time being as some of Clio's dependencies are not yet capable of building under C++23.
+> [!TIP]
+> To setup Conan automatically, you can run `.github/scripts/conan/init.sh`.
+> This will delete Conan home directory (if it exists), set up profiles and add Artifactory remote.
+
+The instruction below assumes that `$CONAN_HOME` is not set.
+
+#### Profiles
+
+The default profile is the file in `~/.conan2/profiles/default`.
+
+Here are some examples of possible profiles:
 
 **Mac apple-clang 16 example**:
 
 ```text
 [settings]
-arch=armv8
+arch={{detect_api.detect_arch()}}
 build_type=Release
 compiler=apple-clang
 compiler.cppstd=20
@@ -37,14 +48,14 @@ compiler.version=16
 os=Macos
 
 [conf]
-tools.build:cxxflags+=["-Wno-missing-template-arg-list-after-template-kw"]
+grpc/1.50.1:tools.build:cxxflags+=["-Wno-missing-template-arg-list-after-template-kw"]
 ```
 
 **Linux gcc-12 example**:
 
 ```text
 [settings]
-arch=x86_64
+arch={{detect_api.detect_arch()}}
 build_type=Release
 compiler=gcc
 compiler.cppstd=20
@@ -56,6 +67,19 @@ os=Linux
 tools.build:compiler_executables={'c': '/usr/bin/gcc-12', 'cpp': '/usr/bin/g++-12'}
 ```
 
+> [!NOTE]
+> Although Clio is built using C++23, it's required to set `compiler.cppstd=20` in your profile for the time being as some of Clio's dependencies are not yet capable of building under C++23.
+
+#### global.conf file
+
+Add the following to the `~/.conan2/global.conf` file:
+
+```text
+core.download:parallel={{os.cpu_count()}}
+core.upload:parallel={{os.cpu_count()}}
+tools.info.package_id:confs = ["tools.build:cflags", "tools.build:cxxflags", "tools.build:exelinkflags", "tools.build:sharedlinkflags"]
+```
+
 #### Artifactory
 
 Make sure artifactory is setup with Conan.
@@ -64,15 +88,21 @@ Make sure artifactory is setup with Conan.
 conan remote add --index 0 ripple http://18.143.149.228:8081/artifactory/api/conan/dev
 ```
 
-Now you should be able to download the prebuilt `xrpl` package on some platforms.
+Now you should be able to download the prebuilt dependencies (including `xrpl` package) on supported platforms.
 
-> [!NOTE]
-> You may need to edit the `~/.conan/remotes.json` file to ensure that this newly added artifactory is listed last. Otherwise, you could see compilation errors when building the project with gcc version 13 (or newer).
+#### Conan lockfile
 
-Remove old packages you may have cached.
+To achieve reproducible dependencies, we use [Conan lockfile](https://docs.conan.io/2/tutorial/versioning/lockfiles.html).
 
-```sh
-conan remove -f xrpl
+The `conan.lock` file in the repository contains a "snapshot" of the current dependencies.
+It is implicitly used when running `conan` commands, you don't need to specify it.
+
+You have to update this file every time you add a new dependency or change a revision or version of an existing dependency.
+
+To do that, run the following command in the repository root:
+
+```bash
+conan lock create . -o '&:tests=True' -o '&:benchmark=True'
 ```
 
 ## Building Clio
@@ -81,6 +111,7 @@ Navigate to Clio's root directory and run:
 
 ```sh
 mkdir build && cd build
+# You can also specify profile explicitly by adding `--profile:all <PROFILE_NAME>`
 conan install .. --output-folder . --build missing --settings build_type=Release -o '&:tests=True'
 # You can also add -GNinja to use Ninja build system instead of Make
 cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
@@ -152,24 +183,24 @@ If you wish to develop against a `rippled` instance running in standalone mode t
 
 Sometimes, during development, you need to build against a custom version of `libxrpl`. (For example, you may be developing compatibility for a proposed amendment that is not yet merged to the main `rippled` codebase.) To build Clio with compatibility for a custom fork or branch of `rippled`, follow these steps:
 
-1. First, pull/clone the appropriate `rippled` fork and switch to the branch you want to build.
-   The following example uses an in-development build with [XLS-33d Multi-Purpose Tokens](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens):
+1. First, pull/clone the appropriate `rippled` version and switch to the branch you want to build.
+   The following example uses a `2.5.0-rc1` tag of rippled in the main branch:
 
    ```sh
-   git clone https://github.com/shawnxie999/rippled/
+   git clone https://github.com/XRPLF/rippled/
    cd rippled
-   git switch mpt-1.1
+   git checkout 2.5.0-rc1
    ```
 
 2. Export a custom package to your local Conan store using a user/channel:
 
    ```sh
-   conan export . my/feature
+   conan export . --user=my --channel=feature
    ```
 
 3. Patch your local Clio build to use the right package.
 
-   Edit `conanfile.py` (from the Clio repository root). Replace the `xrpl` requirement with the custom package version from the previous step. This must also include the current version number from your `rippled` branch. For example:
+   Edit `conanfile.py` in the Clio repository root. Replace the `xrpl` requirement with the custom package version from the previous step. This must also include the current version number from your `rippled` branch. For example:
 
    ```py
    # ... (excerpt from conanfile.py)
@@ -180,7 +211,7 @@ Sometimes, during development, you need to build against a custom version of `li
        'protobuf/3.21.9',
        'grpc/1.50.1',
        'openssl/1.1.1v',
-       'xrpl/2.3.0-b1@my/feature', # Update this line
+       'xrpl/2.5.0-rc1@my/feature', # Use your exported version here
        'zlib/1.3.1',
        'libbacktrace/cci.20210118'
    ]

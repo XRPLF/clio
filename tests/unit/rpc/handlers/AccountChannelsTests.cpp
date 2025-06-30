@@ -427,31 +427,31 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistAccount)
 TEST_F(RPCAccountChannelsHandlerTest, DefaultParameterTest)
 {
     static constexpr auto kCORRECT_OUTPUT = R"JSON({
-        "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-        "ledger_index":30,
-        "validated":true,
-        "limit":200,
-        "channels":[
+        "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index": 30,
+        "validated": true,
+        "limit": 200,
+        "channels": [
             {
-                "channel_id":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "destination_account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "amount":"100",
-                "balance":"10",
-                "settle_delay":32,
-                "public_key":"aBMxWrnPUnvwZPfsmTyVizxEGsGheAu3Tsn6oPRgyjgvd2NggFxz",
-                "public_key_hex":"020000000000000000000000000000000000000000000000000000000000000000"
+                "channel_id": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "amount": "100",
+                "balance": "10",
+                "settle_delay": 32,
+                "public_key": "aBMxWrnPUnvwZPfsmTyVizxEGsGheAu3Tsn6oPRgyjgvd2NggFxz",
+                "public_key_hex": "020000000000000000000000000000000000000000000000000000000000000000"
             },
             {
-                "channel_id":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "destination_account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "amount":"100",
-                "balance":"10",
-                "settle_delay":32,
-                "public_key":"aBMxWrnPUnvwZPfsmTyVizxEGsGheAu3Tsn6oPRgyjgvd2NggFxz",
-                "public_key_hex":"020000000000000000000000000000000000000000000000000000000000000000"
+                "channel_id": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "amount": "100",
+                "balance": "10",
+                "settle_delay": 32,
+                "public_key": "aBMxWrnPUnvwZPfsmTyVizxEGsGheAu3Tsn6oPRgyjgvd2NggFxz",
+                "public_key_hex": "020000000000000000000000000000000000000000000000000000000000000000"
             }
         ]
     })JSON";
@@ -623,7 +623,7 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
         R"JSON({{
             "account": "{}",
             "limit": 30,
-            "destination_account":"{}"
+            "destination_account": "{}"
         }})JSON",
         kACCOUNT,
         kACCOUNT3
@@ -674,35 +674,35 @@ TEST_F(RPCAccountChannelsHandlerTest, EmptyChannel)
 TEST_F(RPCAccountChannelsHandlerTest, OptionalResponseField)
 {
     static constexpr auto kCORRECT_OUTPUT = R"JSON({
-        "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-        "ledger_index":30,
-        "validated":true,
-        "limit":200,
-        "channels":[
+        "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index": 30,
+        "validated": true,
+        "limit": 200,
+        "channels": [
             {
-                "channel_id":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "destination_account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "amount":"100",
-                "balance":"10",
-                "settle_delay":32,
-                "public_key":"aBMxWrnPUnvwZPfsmTyVizxEGsGheAu3Tsn6oPRgyjgvd2NggFxz",
-                "public_key_hex":"020000000000000000000000000000000000000000000000000000000000000000",
+                "channel_id": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "amount": "100",
+                "balance": "10",
+                "settle_delay": 32,
+                "public_key": "aBMxWrnPUnvwZPfsmTyVizxEGsGheAu3Tsn6oPRgyjgvd2NggFxz",
+                "public_key_hex": "020000000000000000000000000000000000000000000000000000000000000000",
                 "expiration": 100,
                 "cancel_after": 200,
                 "source_tag": 300,
                 "destination_tag": 400
             },
             {
-                "channel_id":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "destination_account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "amount":"100",
-                "balance":"10",
-                "settle_delay":32,
-                "public_key":"aBMxWrnPUnvwZPfsmTyVizxEGsGheAu3Tsn6oPRgyjgvd2NggFxz",
-                "public_key_hex":"020000000000000000000000000000000000000000000000000000000000000000",
+                "channel_id": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "amount": "100",
+                "balance": "10",
+                "settle_delay": 32,
+                "public_key": "aBMxWrnPUnvwZPfsmTyVizxEGsGheAu3Tsn6oPRgyjgvd2NggFxz",
+                "public_key_hex": "020000000000000000000000000000000000000000000000000000000000000000",
                 "expiration": 100,
                 "cancel_after": 200,
                 "source_tag": 300,

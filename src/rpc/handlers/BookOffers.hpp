@@ -148,11 +148,14 @@ public:
                  validation::CustomValidators::accountValidator,
                  Status(RippledError::rpcINVALID_PARAMS, "Invalid field 'taker'.")
              }},
-            {
-                JS(domain),
-                validation::Type<std::string>{},
-                validation::CustomValidators::uint256HexStringValidator,
-            },
+            {JS(domain),
+             meta::WithCustomError{
+                 validation::Type<std::string>{}, Status(RippledError::rpcDOMAIN_MALFORMED, "Unable to parse domain.")
+             },
+             meta::WithCustomError{
+                 validation::CustomValidators::uint256HexStringValidator,
+                 Status(RippledError::rpcDOMAIN_MALFORMED, "Unable to parse domain.")
+             }},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),

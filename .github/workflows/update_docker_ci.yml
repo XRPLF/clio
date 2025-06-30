@@ -23,14 +23,18 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
+  # Only matches runs for the current workflow - matches against branch & tags
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # We want to execute all builds sequentially in develop
+  cancel-in-progress: false
+
+env:
+  GHCR_REPO: ghcr.io/${{ github.repository_owner }}
 
 jobs:
-  gcc:
-    name: Build and push GCC docker image
-    runs-on: [self-hosted, heavy]
+  gcc-amd64:
+    name: Build and push GCC docker image (amd64)
+    runs-on: heavy
 
     steps:
       - uses: actions/checkout@v4
@@ -42,30 +46,112 @@ jobs:
           files: "docker/compilers/gcc/**"
 
       - uses: ./.github/actions/build_docker_image
-        # Skipping this build for now, because CI environment is not stable
-        if: false && steps.changed-files.outputs.any_changed == 'true'
+        if: steps.changed-files.outputs.any_changed == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
           DOCKERHUB_PW: ${{ secrets.DOCKERHUB_PW }}
         with:
           images: |
-            ghcr.io/xrplf/clio-gcc
+            ${{ env.GHCR_REPO }}/clio-gcc
             rippleci/clio_gcc
           push_image: ${{ github.event_name != 'pull_request' }}
           directory: docker/compilers/gcc
           tags: |
-            type=raw,value=latest
-            type=raw,value=12
-            type=raw,value=12.3.0
-            type=raw,value=${{ github.sha }}
-          platforms: linux/amd64,linux/arm64
+            type=raw,value=amd64-latest
+            type=raw,value=amd64-12
+            type=raw,value=amd64-12.3.0
+            type=raw,value=amd64-${{ github.sha }}
+          platforms: linux/amd64
           dockerhub_repo: rippleci/clio_gcc
           dockerhub_description: GCC compiler for XRPLF/clio.
 
+  gcc-arm64:
+    name: Build and push GCC docker image (arm64)
+    runs-on: heavy-arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: "docker/compilers/gcc/**"
+
+      - uses: ./.github/actions/build_docker_image
+        if: steps.changed-files.outputs.any_changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
+          DOCKERHUB_PW: ${{ secrets.DOCKERHUB_PW }}
+        with:
+          images: |
+            ${{ env.GHCR_REPO }}/clio-gcc
+            rippleci/clio_gcc
+          push_image: ${{ github.event_name != 'pull_request' }}
+          directory: docker/compilers/gcc
+          tags: |
+            type=raw,value=arm64-latest
+            type=raw,value=arm64-12
+            type=raw,value=arm64-12.3.0
+            type=raw,value=arm64-${{ github.sha }}
+          platforms: linux/arm64
+          dockerhub_repo: rippleci/clio_gcc
+          dockerhub_description: GCC compiler for XRPLF/clio.
+
+  gcc-merge:
+    name: Merge and push multi-arch GCC docker image
+    runs-on: heavy
+    needs: [gcc-amd64, gcc-arm64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: "docker/compilers/gcc/**"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to DockerHub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PW }}
+
+      - name: Make GHCR_REPO lowercase
+        run: |
+          echo "GHCR_REPO_LC=$(echo ${{env.GHCR_REPO}} | tr '[:upper:]' '[:lower:]')" >> ${GITHUB_ENV}
+
+      - name: Create and push multi-arch manifest
+        if: github.event_name != 'pull_request' && steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          for image in ${{ env.GHCR_REPO_LC }}/clio-gcc rippleci/clio_gcc; do
+            docker buildx imagetools create \
+              -t $image:latest \
+              -t $image:12 \
+              -t $image:12.3.0 \
+              -t $image:${{ github.sha }} \
+              $image:arm64-latest \
+              $image:amd64-latest
+          done
+
   clang:
     name: Build and push Clang docker image
-    runs-on: [self-hosted, heavy]
+    runs-on: heavy
 
     steps:
       - uses: actions/checkout@v4
@@ -84,7 +170,7 @@ jobs:
           DOCKERHUB_PW: ${{ secrets.DOCKERHUB_PW }}
         with:
           images: |
-            ghcr.io/xrplf/clio-clang
+            ${{ env.GHCR_REPO }}/clio-clang
             rippleci/clio_clang
           push_image: ${{ github.event_name != 'pull_request' }}
           directory: docker/compilers/clang
@@ -98,7 +184,7 @@ jobs:
 
   tools:
     name: Build and push tools docker image
-    runs-on: [self-hosted, heavy]
+    runs-on: heavy
 
     steps:
       - uses: actions/checkout@v4
@@ -115,7 +201,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           images: |
-            ghcr.io/xrplf/clio-tools
+            ${{ env.GHCR_REPO }}/clio-tools
           push_image: ${{ github.event_name != 'pull_request' }}
           directory: docker/tools
           tags: |
@@ -125,8 +211,8 @@ jobs:
 
   ci:
     name: Build and push CI docker image
-    runs-on: [self-hosted, heavy]
-    needs: [gcc, clang, tools]
+    runs-on: heavy
+    needs: [gcc-merge, clang, tools]
 
     steps:
       - uses: actions/checkout@v4
@@ -137,8 +223,8 @@ jobs:
           DOCKERHUB_PW: ${{ secrets.DOCKERHUB_PW }}
         with:
           images: |
+            ${{ env.GHCR_REPO }}/clio-ci
             rippleci/clio_ci
-            ghcr.io/xrplf/clio-ci
           push_image: ${{ github.event_name != 'pull_request' }}
           directory: docker/ci
           tags: |

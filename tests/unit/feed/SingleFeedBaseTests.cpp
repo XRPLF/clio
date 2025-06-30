@@ -32,7 +32,7 @@
 #include <memory>
 
 namespace {
-constexpr auto kFEED = R"JSON({"test":"test"})JSON";
+constexpr auto kFEED = R"JSON({"test": "test"})JSON";
 }  // namespace
 
 using namespace feed::impl;

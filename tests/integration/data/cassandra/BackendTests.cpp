@@ -1424,7 +1424,7 @@ TEST_F(BackendCassandraNodeMessageTest, UpdatingMessageKeepsItAlive)
 {
 #if defined(__APPLE__)
     GTEST_SKIP() << "Skipping test on Apple platform due to slow DB";
-#endif
+#else
     static boost::uuids::uuid const kUUID = generateUuid();
     static std::string const kUPDATED_MESSAGE = "updated message";
 
@@ -1442,4 +1442,5 @@ TEST_F(BackendCassandraNodeMessageTest, UpdatingMessageKeepsItAlive)
         EXPECT_EQ(uuid, kUUID);
         EXPECT_EQ(message, kUPDATED_MESSAGE);
     });
+#endif
 }

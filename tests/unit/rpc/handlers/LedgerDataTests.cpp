@@ -271,18 +271,18 @@ TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
 TEST_F(RPCLedgerDataHandlerTest, NoMarker)
 {
     static auto const kLEDGER_EXPECTED = R"JSON({
-      "account_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-      "close_flags":0,
-      "close_time":0,
-      "close_time_resolution":0,
-      "close_time_iso":"2000-01-01T00:00:00Z",
-      "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-      "ledger_index":"30",
-      "parent_close_time":0,
-      "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-      "total_coins":"0",
-      "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-      "closed":true
+      "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "close_flags": 0,
+      "close_time": 0,
+      "close_time_resolution": 0,
+      "close_time_iso": "2000-01-01T00:00:00Z",
+      "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+      "ledger_index": "30",
+      "parent_close_time": 0,
+      "parent_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "total_coins": "0",
+      "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "closed": true
    })JSON";
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(createLedgerHeader(kLEDGER_HASH, kRANGE_MAX)));
@@ -310,7 +310,7 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(R"JSON({"limit":10})JSON");
+        auto const req = json::parse(R"JSON({"limit": 10})JSON");
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("ledger"));
@@ -368,7 +368,7 @@ TEST_F(RPCLedgerDataHandlerTest, Version2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(R"JSON({"limit":10})JSON");
+        auto const req = json::parse(R"JSON({"limit": 10})JSON");
         auto output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("ledger"));
@@ -383,18 +383,18 @@ TEST_F(RPCLedgerDataHandlerTest, Version2)
 TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
 {
     static auto const kLEDGER_EXPECTED = R"JSON({
-      "account_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-      "close_flags":0,
-      "close_time":0,
-      "close_time_resolution":0,
-      "close_time_iso":"2000-01-01T00:00:00Z",
-      "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-      "ledger_index":"30",
-      "parent_close_time":0,
-      "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-      "total_coins":"0",
-      "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-      "closed":true
+      "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "close_flags": 0,
+      "close_time": 0,
+      "close_time_resolution": 0,
+      "close_time_iso": "2000-01-01T00:00:00Z",
+      "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+      "ledger_index": "30",
+      "parent_close_time": 0,
+      "parent_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "total_coins": "0",
+      "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "closed": true
    })JSON";
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
@@ -425,8 +425,8 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(R"JSON({
-            "limit":10,
-            "type":"state"
+            "limit": 10,
+            "type": "state"
         })JSON");
 
         auto output = handler.process(req, Context{yield});
@@ -447,18 +447,18 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
 TEST_F(RPCLedgerDataHandlerTest, TypeFilterAMM)
 {
     static auto const kLEDGER_EXPECTED = R"JSON({
-      "account_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-      "close_flags":0,
-      "close_time":0,
-      "close_time_resolution":0,
-      "close_time_iso":"2000-01-01T00:00:00Z",
-      "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-      "ledger_index":"30",
-      "parent_close_time":0,
-      "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-      "total_coins":"0",
-      "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-      "closed":true
+      "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "close_flags": 0,
+      "close_time": 0,
+      "close_time_resolution": 0,
+      "close_time_iso": "2000-01-01T00:00:00Z",
+      "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+      "ledger_index": "30",
+      "parent_close_time": 0,
+      "parent_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "total_coins": "0",
+      "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "closed": true
    })JSON";
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
@@ -486,8 +486,8 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterAMM)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(R"JSON({
-            "limit":6,
-            "type":"amm"
+            "limit": 6,
+            "type": "amm"
         })JSON");
 
         auto output = handler.process(req, Context{yield});
@@ -508,18 +508,18 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterAMM)
 TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
 {
     static auto const kLEDGER_EXPECTED = R"JSON({
-      "account_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-      "close_flags":0,
-      "close_time":0,
-      "close_time_resolution":0,
-      "close_time_iso":"2000-01-01T00:00:00Z",
-      "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-      "ledger_index":"30",
-      "parent_close_time":0,
-      "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-      "total_coins":"0",
-      "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-      "closed":true
+      "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "close_flags": 0,
+      "close_time": 0,
+      "close_time_resolution": 0,
+      "close_time_iso": "2000-01-01T00:00:00Z",
+      "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+      "ledger_index": "30",
+      "parent_close_time": 0,
+      "parent_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "total_coins": "0",
+      "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "closed": true
    })JSON";
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
@@ -542,7 +542,7 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
-        auto const req = json::parse(R"JSON({"limit":10, "out_of_order":true})JSON");
+        auto const req = json::parse(R"JSON({"limit": 10, "out_of_order": true})JSON");
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("ledger"));
@@ -590,7 +590,7 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"JSON({{
-                "limit":10,
+                "limit": 10,
                 "marker": "{}"
             }})JSON",
             kINDEX1
@@ -633,7 +633,7 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"JSON({{
-                "limit":10,
+                "limit": 10,
                 "marker": {},
                 "out_of_order": true
             }})JSON",
@@ -674,7 +674,7 @@ TEST_F(RPCLedgerDataHandlerTest, Binary)
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(
             R"JSON({
-                "limit":10,
+                "limit": 10,
                 "binary": true
             })JSON"
         );
@@ -714,7 +714,7 @@ TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"JSON({{
-                "limit":{},
+                "limit": {},
                 "binary": true
             }})JSON",
             LedgerDataHandler::kLIMIT_BINARY + 1
@@ -755,7 +755,7 @@ TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(fmt::format(
             R"JSON({{
-                "limit":{},
+                "limit": {},
                 "binary": false
             }})JSON",
             LedgerDataHandler::kLIMIT_JSON + 1
@@ -789,8 +789,8 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPTIssuance)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(R"JSON({
-            "limit":1,
-            "type":"mpt_issuance"
+            "limit": 1,
+            "type": "mpt_issuance"
         })JSON");
 
         auto output = handler.process(req, Context{yield});
@@ -831,8 +831,8 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPToken)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(R"JSON({
-            "limit":1,
-            "type":"mptoken"
+            "limit": 1,
+            "type": "mptoken"
         })JSON");
 
         auto output = handler.process(req, Context{yield});

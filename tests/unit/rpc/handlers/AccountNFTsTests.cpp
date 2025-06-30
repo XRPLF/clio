@@ -181,10 +181,10 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaHash)
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "ledger_hash":"{}"
+            "account": "{}",
+            "ledger_hash": "{}"
         }})JSON",
         kACCOUNT,
         kLEDGER_HASH
@@ -207,10 +207,10 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaStringIndex)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "ledger_index":"{}"
+            "account": "{}",
+            "ledger_index": "{}"
         }})JSON",
         kACCOUNT,
         kSEQ
@@ -233,10 +233,10 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "ledger_index":{}
+            "account": "{}",
+            "ledger_index": {}
         }})JSON",
         kACCOUNT,
         kSEQ
@@ -260,9 +260,9 @@ TEST_F(RPCAccountNFTsHandlerTest, AccountNotFound)
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}"
+            "account": "{}"
         }})JSON",
         kACCOUNT
     ));
@@ -280,22 +280,22 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
 {
     static auto const kEXPECTED_OUTPUT = fmt::format(
         R"JSON({{
-            "ledger_hash":"{}",
-            "ledger_index":30,
-            "validated":true,
-            "account":"{}",
-            "account_nfts":[
+            "ledger_hash": "{}",
+            "ledger_index": 30,
+            "validated": true,
+            "account": "{}",
+            "account_nfts": [
                 {{
-                    "NFTokenID":"{}",
-                    "URI":"7777772E6F6B2E636F6D",
-                    "Flags":{},
-                    "Issuer":"{}",
-                    "NFTokenTaxon":{},
-                    "nft_serial":{},
-                    "TransferFee":10000
+                    "NFTokenID": "{}",
+                    "URI": "7777772E6F6B2E636F6D",
+                    "Flags": {},
+                    "Issuer": "{}",
+                    "NFTokenTaxon": {},
+                    "nft_serial": {},
+                    "TransferFee": 10000
                 }}
             ],
-            "limit":100
+            "limit": 100
         }})JSON",
         kLEDGER_HASH,
         kACCOUNT,
@@ -323,9 +323,9 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}"
+            "account": "{}"
         }})JSON",
         kACCOUNT
     ));
@@ -357,10 +357,10 @@ TEST_F(RPCAccountNFTsHandlerTest, Limit)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1 + kLIMIT);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "limit":{}
+            "account": "{}",
+            "limit": {}
         }})JSON",
         kACCOUNT,
         kLIMIT
@@ -392,10 +392,10 @@ TEST_F(RPCAccountNFTsHandlerTest, Marker)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "marker":"{}"
+            "account": "{}",
+            "marker": "{}"
         }})JSON",
         kACCOUNT,
         kPAGE
@@ -419,10 +419,10 @@ TEST_F(RPCAccountNFTsHandlerTest, InvalidMarker)
     ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(accountID).key, 30, _))
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "marker":"{}"
+            "account": "{}",
+            "marker": "{}"
         }})JSON",
         kACCOUNT,
         kINVALID_PAGE
@@ -448,9 +448,9 @@ TEST_F(RPCAccountNFTsHandlerTest, AccountWithNoNFT)
     ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(accountID).key, 30, _))
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}"
+            "account": "{}"
         }})JSON",
         kACCOUNT
     ));
@@ -480,10 +480,10 @@ TEST_F(RPCAccountNFTsHandlerTest, invalidPage)
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "marker":"{}"
+            "account": "{}",
+            "marker": "{}"
         }})JSON",
         kACCOUNT,
         kPAGE
@@ -502,22 +502,22 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
 {
     static auto const kEXPECTED_OUTPUT = fmt::format(
         R"JSON({{
-            "ledger_hash":"{}",
-            "ledger_index":30,
-            "validated":true,
-            "account":"{}",
-            "account_nfts":[
+            "ledger_hash": "{}",
+            "ledger_index": 30,
+            "validated": true,
+            "account": "{}",
+            "account_nfts": [
                 {{
-                    "NFTokenID":"{}",
-                    "URI":"7777772E6F6B2E636F6D",
-                    "Flags":{},
-                    "Issuer":"{}",
-                    "NFTokenTaxon":{},
-                    "nft_serial":{},
-                    "TransferFee":10000
+                    "NFTokenID": "{}",
+                    "URI": "7777772E6F6B2E636F6D",
+                    "Flags": {},
+                    "Issuer": "{}",
+                    "NFTokenTaxon": {},
+                    "nft_serial": {},
+                    "TransferFee": 10000
                 }}
             ],
-            "limit":{}
+            "limit": {}
         }})JSON",
         kLEDGER_HASH,
         kACCOUNT,
@@ -546,10 +546,10 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "limit":{}
+            "account": "{}",
+            "limit": {}
         }})JSON",
         kACCOUNT,
         AccountNFTsHandler::kLIMIT_MIN - 1
@@ -566,22 +566,22 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
 {
     static auto const kEXPECTED_OUTPUT = fmt::format(
         R"JSON({{
-            "ledger_hash":"{}",
-            "ledger_index":30,
-            "validated":true,
-            "account":"{}",
-            "account_nfts":[
+            "ledger_hash": "{}",
+            "ledger_index": 30,
+            "validated": true,
+            "account": "{}",
+            "account_nfts": [
                 {{
-                    "NFTokenID":"{}",
-                    "URI":"7777772E6F6B2E636F6D",
-                    "Flags":{},
-                    "Issuer":"{}",
-                    "NFTokenTaxon":{},
-                    "nft_serial":{},
-                    "TransferFee":10000
+                    "NFTokenID": "{}",
+                    "URI": "7777772E6F6B2E636F6D",
+                    "Flags": {},
+                    "Issuer": "{}",
+                    "NFTokenTaxon": {},
+                    "nft_serial": {},
+                    "TransferFee": 10000
                 }}
             ],
-            "limit":{}
+            "limit": {}
         }})JSON",
         kLEDGER_HASH,
         kACCOUNT,
@@ -610,10 +610,10 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto static const kINPUT = json::parse(fmt::format(
+    static auto const kINPUT = json::parse(fmt::format(
         R"JSON({{
-            "account":"{}",
-            "limit":{}
+            "account": "{}",
+            "limit": {}
         }})JSON",
         kACCOUNT,
         AccountNFTsHandler::kLIMIT_MAX + 1

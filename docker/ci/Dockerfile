@@ -1,5 +1,4 @@
-# TODO: change this when we are able to push gcc image to ghcr.io
-FROM rippleci/clio_gcc:12.3.0 AS clio-gcc
+FROM ghcr.io/xrplf/clio-gcc:12.3.0 AS clio-gcc
 FROM ghcr.io/xrplf/clio-tools:latest AS clio-tools
 
 FROM ghcr.io/xrplf/clio-clang:16
@@ -33,10 +32,8 @@ RUN apt-get update \
 # Install packages
 RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests \
-        bison \
         clang-tidy-${LLVM_TOOLS_VERSION} \
         clang-tools-${LLVM_TOOLS_VERSION} \
-        flex \
         git \
         git-lfs \
         graphviz \
@@ -48,6 +45,10 @@ RUN apt-get update \
         zip \
     && pip3 install -q --upgrade --no-cache-dir pip \
     && pip3 install -q --no-cache-dir \
+        # TODO: Remove this once we switch to newer Ubuntu base image
+        # lxml 6.0.0 is not compatible with our image
+        'lxml<6.0.0' \
+        \
         cmake==3.31.6 \
         conan==2.17.0 \
         gcovr \
@@ -89,6 +90,9 @@ WORKDIR /root
 
 # Setup conan
 RUN conan remote add --index 0 ripple http://18.143.149.228:8081/artifactory/api/conan/dev
+
+WORKDIR /root/.conan2
+COPY conan/global.conf ./global.conf
 
 WORKDIR /root/.conan2/profiles
 

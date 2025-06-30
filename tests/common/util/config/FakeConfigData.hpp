@@ -85,7 +85,7 @@ generateConfig()
            }
        }
      ],
-     "dosguard":  {
+     "dosguard": {
         "whitelist": [
             // mandatory for user to include
         ],
@@ -132,16 +132,16 @@ static constexpr auto kJSON_DATA = R"JSON({
             }
         }
     ],
-    "dosguard":  {
+    "dosguard": {
         "whitelist": [
             "125.5.5.1", "204.2.2.1"
         ],
-        "port" : 44444
+        "port": 44444
     },
-    "optional" : {
-        "withDefault" : 0.0
+    "optional": {
+        "withDefault": 0.0
     },
-    "requireValue" : "required"
+    "requireValue": "required"
 })JSON";
 
 /* After parsing jsonValue and populating it into ClioConfig, It will look like this below in json format;
@@ -177,7 +177,7 @@ static constexpr auto kJSON_DATA = R"JSON({
            }
        }
      ],
-     "dosguard":  {
+     "dosguard": {
         "whitelist": [
             "125.5.5.1", "204.2.2.1"
         ],
@@ -203,8 +203,8 @@ static constexpr auto kINVALID_JSON_DATA = R"JSON({
         ]
     },
     "idk": true,
-    "requireValue" : "required",
-    "optional" : {
-        "withDefault" : "0.0"
+    "requireValue": "required",
+    "optional": {
+        "withDefault": "0.0"
     }
 })JSON";

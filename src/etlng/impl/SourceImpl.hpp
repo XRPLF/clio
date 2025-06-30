@@ -19,10 +19,11 @@
 
 #pragma once
 
-#include "etl/impl/ForwardingSource.hpp"
 #include "etl/impl/SubscriptionSource.hpp"
 #include "etlng/InitialLoadObserverInterface.hpp"
+#include "etlng/LoadBalancerInterface.hpp"
 #include "etlng/Source.hpp"
+#include "etlng/impl/ForwardingSource.hpp"
 #include "etlng/impl/GrpcSource.hpp"
 #include "rpc/Errors.hpp"
 
@@ -53,7 +54,7 @@ namespace etlng::impl {
 template <
     typename GrpcSourceType = GrpcSource,
     typename SubscriptionSourceTypePtr = std::unique_ptr<etl::impl::SubscriptionSource>,
-    typename ForwardingSourceType = etl::impl::ForwardingSource>
+    typename ForwardingSourceType = etlng::impl::ForwardingSource>
 class SourceImpl : public SourceBase {
     std::string ip_;
     std::string wsPort_;
@@ -107,6 +108,7 @@ public:
     stop(boost::asio::yield_context yield) final
     {
         subscriptionSource_->stop(yield);
+        grpcSource_.stop(yield);
     }
 
     /**
@@ -202,7 +204,7 @@ public:
      * @param loader InitialLoadObserverInterface implementation
      * @return A std::pair of the data and a bool indicating whether the download was successful
      */
-    std::pair<std::vector<std::string>, bool>
+    InitialLedgerLoadResult
     loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, etlng::InitialLoadObserverInterface& loader) final
     {
         return grpcSource_.loadInitialLedger(sequence, numMarkers, loader);

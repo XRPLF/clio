@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "data/BackendInterface.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etlng/InitialLoadObserverInterface.hpp"
+#include "etlng/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "util/config/ObjectView.hpp"
@@ -131,7 +131,7 @@ public:
      * @param loader InitialLoadObserverInterface implementation
      * @return A std::pair of the data and a bool indicating whether the download was successful
      */
-    virtual std::pair<std::vector<std::string>, bool>
+    virtual InitialLedgerLoadResult
     loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, etlng::InitialLoadObserverInterface& loader) = 0;
 
     /**

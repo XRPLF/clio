@@ -672,16 +672,28 @@ TEST_F(RegistryTest, MixedReadonlyAndRegularExtensions)
 TEST_F(RegistryTest, MonitorInterfaceExecution)
 {
     struct MockMonitor : etlng::MonitorInterface {
-        MOCK_METHOD(void, notifyLedgerLoaded, (uint32_t), (override));
-        MOCK_METHOD(boost::signals2::scoped_connection, subscribe, (SignalType::slot_type const&), (override));
+        MOCK_METHOD(void, notifySequenceLoaded, (uint32_t), (override));
+        MOCK_METHOD(void, notifyWriteConflict, (uint32_t), (override));
+        MOCK_METHOD(
+            boost::signals2::scoped_connection,
+            subscribeToNewSequence,
+            (NewSequenceSignalType::slot_type const&),
+            (override)
+        );
+        MOCK_METHOD(
+            boost::signals2::scoped_connection,
+            subscribeToDbStalled,
+            (DbStalledSignalType::slot_type const&),
+            (override)
+        );
         MOCK_METHOD(void, run, (std::chrono::steady_clock::duration), (override));
         MOCK_METHOD(void, stop, (), (override));
     };
 
     auto monitor = MockMonitor{};
-    EXPECT_CALL(monitor, notifyLedgerLoaded(kSEQ)).Times(1);
+    EXPECT_CALL(monitor, notifySequenceLoaded(kSEQ)).Times(1);
 
-    monitor.notifyLedgerLoaded(kSEQ);
+    monitor.notifySequenceLoaded(kSEQ);
 }
 
 TEST_F(RegistryTest, ReadonlyModeWithAllowInReadonlyTest)

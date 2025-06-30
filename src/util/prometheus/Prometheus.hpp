@@ -257,7 +257,8 @@ public:
      *
      * @param config The configuration to use
      */
-    void static init(util::config::ClioConfigDefinition const& config);
+    static void
+    init(util::config::ClioConfigDefinition const& config);
 
     /**
      * @brief Get a bool based metric. It will be created if it doesn't exist

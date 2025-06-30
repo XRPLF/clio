@@ -60,6 +60,7 @@
 #include "rpc/handlers/TransactionEntry.hpp"
 #include "rpc/handlers/Tx.hpp"
 #include "rpc/handlers/Unsubscribe.hpp"
+#include "rpc/handlers/VaultInfo.hpp"
 #include "rpc/handlers/VersionHandler.hpp"
 #include "util/config/ConfigDefinition.hpp"
 
@@ -114,6 +115,7 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"tx", {.handler = TxHandler{backend, etl}}},
           {"subscribe", {.handler = SubscribeHandler{backend, amendmentCenter, subscriptionManager}}},
           {"unsubscribe", {.handler = UnsubscribeHandler{subscriptionManager}}},
+          {"vault_info", {.handler = VaultInfoHandler{backend}}},
           {"version", {.handler = VersionHandler{config}}},
       }
 {

@@ -21,14 +21,17 @@
 #include "etl/ETLHelpers.hpp"
 #include "etl/impl/GrpcSource.hpp"
 #include "etlng/InitialLoadObserverInterface.hpp"
+#include "etlng/LoadBalancerInterface.hpp"
 #include "etlng/Models.hpp"
 #include "etlng/impl/GrpcSource.hpp"
+#include "util/AsioContextTestFixture.hpp"
 #include "util/Assert.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockXrpLedgerAPIService.hpp"
 #include "util/Mutex.hpp"
 #include "util/TestObject.hpp"
 
+#include <boost/asio/spawn.hpp>
 #include <gmock/gmock.h>
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/status.h>
@@ -39,9 +42,11 @@
 #include <xrpl/basics/strHex.h>
 
 #include <atomic>
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <future>
 #include <map>
 #include <mutex>
 #include <optional>
@@ -62,7 +67,7 @@ struct MockLoadObserver : etlng::InitialLoadObserverInterface {
     );
 };
 
-struct GrpcSourceNgTests : NoLoggerFixture, tests::util::WithMockXrpLedgerAPIService {
+struct GrpcSourceNgTests : virtual NoLoggerFixture, tests::util::WithMockXrpLedgerAPIService {
     GrpcSourceNgTests()
         : WithMockXrpLedgerAPIService("localhost:0"), grpcSource_("localhost", std::to_string(getXRPLMockPort()))
     {
@@ -184,9 +189,8 @@ TEST_F(GrpcSourceNgLoadInitialLedgerTests, GetLedgerDataNotFound)
             return grpc::Status{grpc::StatusCode::NOT_FOUND, "Not found"};
         });
 
-    auto const [data, success] = grpcSource_.loadInitialLedger(sequence_, numMarkers_, observer_);
-    EXPECT_TRUE(data.empty());
-    EXPECT_FALSE(success);
+    auto const res = grpcSource_.loadInitialLedger(sequence_, numMarkers_, observer_);
+    EXPECT_FALSE(res.has_value());
 }
 
 TEST_F(GrpcSourceNgLoadInitialLedgerTests, ObserverCalledCorrectly)
@@ -219,12 +223,12 @@ TEST_F(GrpcSourceNgLoadInitialLedgerTests, ObserverCalledCorrectly)
             EXPECT_EQ(data.size(), 1);
         });
 
-    auto const [data, success] = grpcSource_.loadInitialLedger(sequence_, numMarkers_, observer_);
+    auto const res = grpcSource_.loadInitialLedger(sequence_, numMarkers_, observer_);
 
-    EXPECT_TRUE(success);
-    EXPECT_EQ(data.size(), numMarkers_);
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value().size(), numMarkers_);
 
-    EXPECT_EQ(data, std::vector<std::string>(4, keyStr));
+    EXPECT_EQ(res.value(), std::vector<std::string>(4, keyStr));
 }
 
 TEST_F(GrpcSourceNgLoadInitialLedgerTests, DataTransferredAndObserverCalledCorrectly)
@@ -284,12 +288,73 @@ TEST_F(GrpcSourceNgLoadInitialLedgerTests, DataTransferredAndObserverCalledCorre
             total += data.size();
         });
 
-    auto const [data, success] = grpcSource_.loadInitialLedger(sequence_, numMarkers_, observer_);
+    auto const res = grpcSource_.loadInitialLedger(sequence_, numMarkers_, observer_);
 
-    EXPECT_TRUE(success);
-    EXPECT_EQ(data.size(), numMarkers_);
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value().size(), numMarkers_);
     EXPECT_EQ(total, totalKeys);
     EXPECT_EQ(totalWithLastKey + totalWithoutLastKey, numMarkers_ * batchesPerMarker);
     EXPECT_EQ(totalWithoutLastKey, numMarkers_);
     EXPECT_EQ(totalWithLastKey, (numMarkers_ - 1) * batchesPerMarker);
+}
+
+struct GrpcSourceStopTests : GrpcSourceNgTests, SyncAsioContextTest {};
+
+TEST_F(GrpcSourceStopTests, LoadInitialLedgerStopsWhenRequested)
+{
+    uint32_t const sequence = 123u;
+    uint32_t const numMarkers = 1;
+
+    std::mutex mtx;
+    std::condition_variable cvGrpcCallActive;
+    std::condition_variable cvStopCalled;
+    bool grpcCallIsActive = false;
+    bool stopHasBeenCalled = false;
+
+    EXPECT_CALL(mockXrpLedgerAPIService, GetLedgerData)
+        .WillOnce([&](grpc::ServerContext*,
+                      org::xrpl::rpc::v1::GetLedgerDataRequest const* request,
+                      org::xrpl::rpc::v1::GetLedgerDataResponse* response) {
+            EXPECT_EQ(request->ledger().sequence(), sequence);
+            EXPECT_EQ(request->user(), "ETL");
+
+            {
+                std::unique_lock const lk(mtx);
+                grpcCallIsActive = true;
+            }
+            cvGrpcCallActive.notify_one();
+
+            {
+                std::unique_lock lk(mtx);
+                cvStopCalled.wait(lk, [&] { return stopHasBeenCalled; });
+            }
+
+            response->set_is_unlimited(true);
+            return grpc::Status::OK;
+        });
+
+    EXPECT_CALL(observer_, onInitialLoadGotMoreObjects).Times(0);
+
+    auto loadTask = std::async(std::launch::async, [&]() {
+        return grpcSource_.loadInitialLedger(sequence, numMarkers, observer_);
+    });
+
+    {
+        std::unique_lock lk(mtx);
+        cvGrpcCallActive.wait(lk, [&] { return grpcCallIsActive; });
+    }
+
+    runSyncOperation([&](boost::asio::yield_context yield) {
+        grpcSource_.stop(yield);
+        {
+            std::unique_lock const lk(mtx);
+            stopHasBeenCalled = true;
+        }
+        cvStopCalled.notify_one();
+    });
+
+    auto const res = loadTask.get();
+
+    ASSERT_FALSE(res.has_value());
+    EXPECT_EQ(res.error(), etlng::InitialLedgerLoadError::Cancelled);
 }

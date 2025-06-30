@@ -264,22 +264,22 @@ TEST_F(RPCLedgerHandlerTest, Default)
 {
     static constexpr auto kEXPECTED_OUT =
         R"JSON({
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_index":30,
-            "validated":true,
-            "ledger":{
-                "account_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-                "close_flags":0,
-                "close_time":0,
-                "close_time_resolution":0,
-                "closed":true,
-                "close_time_iso":"2000-01-01T00:00:00Z",
-                "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                "ledger_index":"30",
-                "parent_close_time":0,
-                "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-                "total_coins":"0",
-                "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000"
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
+            "validated": true,
+            "ledger": {
+                "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "close_flags": 0,
+                "close_time": 0,
+                "close_time_resolution": 0,
+                "closed": true,
+                "close_time_iso": "2000-01-01T00:00:00Z",
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "ledger_index": "30",
+                "parent_close_time": 0,
+                "parent_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "total_coins": "0",
+                "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000"
             }
         })JSON";
 
@@ -352,12 +352,12 @@ TEST_F(RPCLedgerHandlerTest, BinaryTrue)
 {
     static constexpr auto kEXPECTED_OUT =
         R"JSON({
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_index":30,
-            "validated":true,
-            "ledger":{
-                "ledger_data":"0000001E000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-                "closed":true
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
+            "validated": true,
+            "ledger": {
+                "ledger_data": "0000001E000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                "closed": true
             }
         })JSON";
 
@@ -382,20 +382,20 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
 {
     static constexpr auto kEXPECTED_OUT =
         R"JSON({
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_index":30,
-            "validated":true,
-            "ledger":{
-                "ledger_data":"0000001E000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-                "closed":true,
-                "transactions":[
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
+            "validated": true,
+            "ledger": {
+                "ledger_data": "0000001E000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                "closed": true,
+                "transactions": [
                     {
-                        "tx_blob":"120000240000001E61400000000000006468400000000000000373047465737481144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451243869B38667CBD89DF3",
-                        "meta":"201C00000000F8E5110061E762400000000000006E81144B4E9C06F24296074F7BC48F92A97916C6DC5EA9E1E1E5110061E762400000000000001E8114D31252CF902EF8DD8451243869B38667CBD89DF3E1E1F1031000"
+                        "tx_blob": "120000240000001E61400000000000006468400000000000000373047465737481144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451243869B38667CBD89DF3",
+                        "meta": "201C00000000F8E5110061E762400000000000006E81144B4E9C06F24296074F7BC48F92A97916C6DC5EA9E1E1E5110061E762400000000000001E8114D31252CF902EF8DD8451243869B38667CBD89DF3E1E1F1031000"
                     },
                     {
-                        "tx_blob":"120000240000001E61400000000000006468400000000000000373047465737481144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451243869B38667CBD89DF3",
-                        "meta":"201C00000000F8E5110061E762400000000000006E81144B4E9C06F24296074F7BC48F92A97916C6DC5EA9E1E1E5110061E762400000000000001E8114D31252CF902EF8DD8451243869B38667CBD89DF3E1E1F1031000"
+                        "tx_blob": "120000240000001E61400000000000006468400000000000000373047465737481144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451243869B38667CBD89DF3",
+                        "meta": "201C00000000F8E5110061E762400000000000006E81144B4E9C06F24296074F7BC48F92A97916C6DC5EA9E1E1E5110061E762400000000000001E8114D31252CF902EF8DD8451243869B38667CBD89DF3E1E1F1031000"
                     }
                 ]
             }
@@ -435,7 +435,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinaryV2)
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index": 30,
             "validated": true,
-            "ledger":{
+            "ledger": {
                 "ledger_data": "0000001E000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
                 "closed": true,
                 "transactions": [
@@ -482,57 +482,57 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
 {
     static constexpr auto kEXPECTED_OUT =
         R"JSON({
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_index":30,
-            "validated":true,
-            "ledger":{
-                "account_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-                "close_flags":0,
-                "close_time":0,
-                "close_time_resolution":0,
-                "closed":true,
-                "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                "ledger_index":"30",
-                "parent_close_time":0,
-                "close_time_iso":"2000-01-01T00:00:00Z",
-                "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-                "total_coins":"0",
-                "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-                "transactions":[
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
+            "validated": true,
+            "ledger": {
+                "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "close_flags": 0,
+                "close_time": 0,
+                "close_time_resolution": 0,
+                "closed": true,
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "ledger_index": "30",
+                "parent_close_time": 0,
+                "close_time_iso": "2000-01-01T00:00:00Z",
+                "parent_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "total_coins": "0",
+                "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "transactions": [
                     {
-                        "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Amount":"100",
-                        "DeliverMax":"100",
-                        "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                        "Fee":"3",
-                        "Sequence":30,
-                        "SigningPubKey":"74657374",
-                        "TransactionType":"Payment",
-                        "hash":"70436A9332F7CD928FAEC1A41269A677739D8B11F108CE23AE23CBF0C9113F8C",
-                        "metaData":{
-                        "AffectedNodes":[
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Amount": "100",
+                        "DeliverMax": "100",
+                        "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "Fee": "3",
+                        "Sequence": 30,
+                        "SigningPubKey": "74657374",
+                        "TransactionType": "Payment",
+                        "hash": "70436A9332F7CD928FAEC1A41269A677739D8B11F108CE23AE23CBF0C9113F8C",
+                        "metaData": {
+                        "AffectedNodes": [
                             {
-                                "ModifiedNode":{
-                                    "FinalFields":{
-                                    "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                    "Balance":"110"
+                                "ModifiedNode": {
+                                    "FinalFields": {
+                                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "Balance": "110"
                                     },
-                                    "LedgerEntryType":"AccountRoot"
+                                    "LedgerEntryType": "AccountRoot"
                                 }
                             },
                             {
-                                "ModifiedNode":{
-                                    "FinalFields":{
-                                    "Account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                    "Balance":"30"
+                                "ModifiedNode": {
+                                    "FinalFields": {
+                                    "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                    "Balance": "30"
                                     },
-                                    "LedgerEntryType":"AccountRoot"
+                                    "LedgerEntryType": "AccountRoot"
                                 }
                             }
                         ],
-                        "TransactionIndex":0,
-                        "TransactionResult":"tesSUCCESS",
-                        "delivered_amount":"unavailable"
+                        "TransactionIndex": 0,
+                        "TransactionResult": "tesSUCCESS",
+                        "delivered_amount": "unavailable"
                         }
                     }
                 ]
@@ -575,7 +575,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_index": 30,
             "validated": true,
-            "ledger":{
+            "ledger": {
                 "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
                 "close_flags": 0,
                 "close_time": 0,
@@ -588,7 +588,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
                 "parent_hash": "0000000000000000000000000000000000000000000000000000000000000000",
                 "total_coins": "0",
                 "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000",
-                "transactions":[
+                "transactions": [
                     {
                         "validated": true,
                         "close_time_iso": "2000-01-01T00:00:00Z",
@@ -605,8 +605,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
                             "SigningPubKey": "74657374",
                             "TransactionType": "Payment"
                         },
-                        "meta":{
-                            "AffectedNodes":[
+                        "meta": {
+                            "AffectedNodes": [
                                 {
                                     "ModifiedNode":
                                     {
@@ -733,7 +733,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
         ASSERT_TRUE(output);
         EXPECT_EQ(
             output.result->as_object().at("ledger").at("transactions"),
-            json::parse(fmt::format(R"JSON(["{}","{}"])JSON", kINDEX1, kINDEX2))
+            json::parse(fmt::format(R"JSON(["{}", "{}"])JSON", kINDEX1, kINDEX2))
         );
     });
 }
@@ -743,22 +743,22 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
     static constexpr auto kEXPECTED_OUT =
         R"JSON([
             {
-                "object_id":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515B1",
-                "object":""
+                "object_id": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515B1",
+                "object": ""
             },
             {
-                "object_id":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-                "object":{
-                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "Balance":"10",
-                "Flags":4194304,
-                "LedgerEntryType":"AccountRoot",
-                "OwnerCount":2,
-                "PreviousTxnID":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-                "PreviousTxnLgrSeq":3,
-                "Sequence":1,
-                "TransferRate":0,
-                "index":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
+                "object_id": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                "object": {
+                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Balance": "10",
+                "Flags": 4194304,
+                "LedgerEntryType": "AccountRoot",
+                "OwnerCount": 2,
+                "PreviousTxnID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                "PreviousTxnLgrSeq": 3,
+                "Sequence": 1,
+                "TransferRate": 0,
+                "index": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
                 }
             }
         ])JSON";
@@ -798,12 +798,12 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
     static constexpr auto kEXPECTED_OUT =
         R"JSON([
             {
-                "object_id":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515B1",
-                "object":""
+                "object_id": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515B1",
+                "object": ""
             },
             {
-                "object_id":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-                "object":"1100612200400000240000000125000000032B000000002D00000002551B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC62400000000000000A81144B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
+                "object_id": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                "object": "1100612200400000240000000125000000032B000000002D00000002551B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC62400000000000000A81144B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
             }
         ])JSON";
 
@@ -842,57 +842,57 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmpty)
 {
     static constexpr auto kEXPECTED_OUT =
         R"JSON({
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_index":30,
-            "validated":true,
-            "ledger":{
-                "account_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-                "close_flags":0,
-                "close_time":0,
-                "close_time_resolution":0,
-                "closed":true,
-                "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                "ledger_index":"30",
-                "parent_close_time":0,
-                "close_time_iso":"2000-01-01T00:00:00Z",
-                "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-                "total_coins":"0",
-                "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
-                "transactions":[
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
+            "validated": true,
+            "ledger": {
+                "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "close_flags": 0,
+                "close_time": 0,
+                "close_time_resolution": 0,
+                "closed": true,
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "ledger_index": "30",
+                "parent_close_time": 0,
+                "close_time_iso": "2000-01-01T00:00:00Z",
+                "parent_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "total_coins": "0",
+                "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "transactions": [
                     {
-                        "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Amount":"100",
-                        "DeliverMax":"100",
-                        "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                        "Fee":"3",
-                        "Sequence":30,
-                        "SigningPubKey":"74657374",
-                        "TransactionType":"Payment",
-                        "hash":"70436A9332F7CD928FAEC1A41269A677739D8B11F108CE23AE23CBF0C9113F8C",
-                        "metaData":{
-                        "AffectedNodes":[
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Amount": "100",
+                        "DeliverMax": "100",
+                        "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "Fee": "3",
+                        "Sequence": 30,
+                        "SigningPubKey": "74657374",
+                        "TransactionType": "Payment",
+                        "hash": "70436A9332F7CD928FAEC1A41269A677739D8B11F108CE23AE23CBF0C9113F8C",
+                        "metaData": {
+                        "AffectedNodes": [
                             {
-                                "ModifiedNode":{
-                                    "FinalFields":{
-                                    "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                    "Balance":"110"
+                                "ModifiedNode": {
+                                    "FinalFields": {
+                                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "Balance": "110"
                                     },
-                                    "LedgerEntryType":"AccountRoot"
+                                    "LedgerEntryType": "AccountRoot"
                                 }
                             },
                             {
-                                "ModifiedNode":{
-                                    "FinalFields":{
-                                    "Account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                    "Balance":"30"
+                                "ModifiedNode": {
+                                    "FinalFields": {
+                                    "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                    "Balance": "30"
                                     },
-                                    "LedgerEntryType":"AccountRoot"
+                                    "LedgerEntryType": "AccountRoot"
                                 }
                             }
                         ],
-                        "TransactionIndex":0,
-                        "TransactionResult":"tesSUCCESS",
-                        "delivered_amount":"unavailable"
+                        "TransactionIndex": 0,
+                        "TransactionResult": "tesSUCCESS",
+                        "delivered_amount": "unavailable"
                         }
                     }
                 ]

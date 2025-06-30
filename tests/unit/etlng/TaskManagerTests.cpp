@@ -62,13 +62,26 @@ struct MockExtractor : etlng::ExtractorInterface {
 };
 
 struct MockLoader : etlng::LoaderInterface {
-    MOCK_METHOD(void, load, (LedgerData const&), (override));
+    using ExpectedType = std::expected<void, etlng::LoaderError>;
+    MOCK_METHOD(ExpectedType, load, (LedgerData const&), (override));
     MOCK_METHOD(std::optional<ripple::LedgerHeader>, loadInitialLedger, (LedgerData const&), (override));
 };
 
 struct MockMonitor : etlng::MonitorInterface {
-    MOCK_METHOD(void, notifyLedgerLoaded, (uint32_t), (override));
-    MOCK_METHOD(boost::signals2::scoped_connection, subscribe, (SignalType::slot_type const&), (override));
+    MOCK_METHOD(void, notifySequenceLoaded, (uint32_t), (override));
+    MOCK_METHOD(void, notifyWriteConflict, (uint32_t), (override));
+    MOCK_METHOD(
+        boost::signals2::scoped_connection,
+        subscribeToNewSequence,
+        (NewSequenceSignalType::slot_type const&),
+        (override)
+    );
+    MOCK_METHOD(
+        boost::signals2::scoped_connection,
+        subscribeToDbStalled,
+        (DbStalledSignalType::slot_type const&),
+        (override)
+    );
     MOCK_METHOD(void, run, (std::chrono::steady_clock::duration), (override));
     MOCK_METHOD(void, stop, (), (override));
 };
@@ -127,21 +140,130 @@ TEST_F(TaskManagerTests, LoaderGetsDataIfNextSequenceIsExtracted)
             return createTestData(seq);
         });
 
-    EXPECT_CALL(*mockLoaderPtr_, load(testing::_)).Times(kTOTAL).WillRepeatedly([&](LedgerData data) {
-        loaded.push_back(data.seq);
-        if (loaded.size() == kTOTAL) {
-            done.release();
-        }
-    });
+    EXPECT_CALL(*mockLoaderPtr_, load(testing::_))
+        .Times(kTOTAL)
+        .WillRepeatedly([&](LedgerData data) -> std::expected<void, etlng::LoaderError> {
+            loaded.push_back(data.seq);
+            if (loaded.size() == kTOTAL)
+                done.release();
 
-    EXPECT_CALL(*mockMonitorPtr_, notifyLedgerLoaded(testing::_)).Times(kTOTAL);
+            return {};
+        });
+
+    EXPECT_CALL(*mockMonitorPtr_, notifySequenceLoaded(testing::_)).Times(kTOTAL);
 
     taskManager_.run(kEXTRACTORS);
     done.acquire();
     taskManager_.stop();
 
     EXPECT_EQ(loaded.size(), kTOTAL);
-    for (std::size_t i = 0; i < loaded.size(); ++i) {
+    for (std::size_t i = 0; i < loaded.size(); ++i)
         EXPECT_EQ(loaded[i], kSEQ + i);
-    }
+}
+
+TEST_F(TaskManagerTests, WriteConflictHandling)
+{
+    static constexpr auto kTOTAL = 64uz;
+    static constexpr auto kCONFLICT_AFTER = 32uz;  // Conflict after 32 ledgers
+    static constexpr auto kEXTRACTORS = 4uz;
+
+    std::atomic_uint32_t seq = kSEQ;
+    std::vector<uint32_t> loaded;
+    std::binary_semaphore done{0};
+    bool conflictOccurred = false;
+
+    EXPECT_CALL(*mockSchedulerPtr_, next()).WillRepeatedly([&]() {
+        return Task{.priority = Task::Priority::Higher, .seq = seq++};
+    });
+
+    EXPECT_CALL(*mockExtractorPtr_, extractLedgerWithDiff(testing::_))
+        .WillRepeatedly([](uint32_t seq) -> std::optional<LedgerData> {
+            if (seq > kSEQ + kTOTAL - 1)
+                return std::nullopt;
+
+            return createTestData(seq);
+        });
+
+    // First kCONFLICT_AFTER calls succeed, then we get a write conflict
+    EXPECT_CALL(*mockLoaderPtr_, load(testing::_))
+        .WillRepeatedly([&](LedgerData data) -> std::expected<void, etlng::LoaderError> {
+            loaded.push_back(data.seq);
+
+            if (loaded.size() == kCONFLICT_AFTER) {
+                conflictOccurred = true;
+                done.release();
+                return std::unexpected(etlng::LoaderError::WriteConflict);
+            }
+
+            if (loaded.size() == kTOTAL)
+                done.release();
+
+            return {};
+        });
+
+    EXPECT_CALL(*mockMonitorPtr_, notifySequenceLoaded(testing::_)).Times(kCONFLICT_AFTER - 1);
+    EXPECT_CALL(*mockMonitorPtr_, notifyWriteConflict(kSEQ + kCONFLICT_AFTER - 1));
+
+    taskManager_.run(kEXTRACTORS);
+    done.acquire();
+    taskManager_.stop();
+
+    EXPECT_EQ(loaded.size(), kCONFLICT_AFTER);
+    EXPECT_TRUE(conflictOccurred);
+
+    for (std::size_t i = 0; i < loaded.size(); ++i)
+        EXPECT_EQ(loaded[i], kSEQ + i);
+}
+
+TEST_F(TaskManagerTests, AmendmentBlockedHandling)
+{
+    static constexpr auto kTOTAL = 64uz;
+    static constexpr auto kAMENDMENT_BLOCKED_AFTER = 20uz;  // Amendment block after 20 ledgers
+    static constexpr auto kEXTRACTORS = 2uz;
+
+    std::atomic_uint32_t seq = kSEQ;
+    std::vector<uint32_t> loaded;
+    std::binary_semaphore done{0};
+    bool amendmentBlockedOccurred = false;
+
+    EXPECT_CALL(*mockSchedulerPtr_, next()).WillRepeatedly([&]() {
+        return Task{.priority = Task::Priority::Higher, .seq = seq++};
+    });
+
+    EXPECT_CALL(*mockExtractorPtr_, extractLedgerWithDiff(testing::_))
+        .WillRepeatedly([](uint32_t seq) -> std::optional<LedgerData> {
+            if (seq > kSEQ + kTOTAL - 1)
+                return std::nullopt;
+
+            return createTestData(seq);
+        });
+
+    EXPECT_CALL(*mockLoaderPtr_, load(testing::_))
+        .WillRepeatedly([&](LedgerData data) -> std::expected<void, etlng::LoaderError> {
+            loaded.push_back(data.seq);
+
+            if (loaded.size() == kAMENDMENT_BLOCKED_AFTER) {
+                amendmentBlockedOccurred = true;
+                done.release();
+                return std::unexpected(etlng::LoaderError::AmendmentBlocked);
+            }
+
+            if (loaded.size() == kTOTAL)
+                done.release();
+
+            return {};
+        });
+
+    EXPECT_CALL(*mockMonitorPtr_, notifySequenceLoaded(testing::_)).Times(kAMENDMENT_BLOCKED_AFTER - 1);
+    EXPECT_CALL(*mockMonitorPtr_, notifyWriteConflict(testing::_)).Times(0);
+
+    taskManager_.run(kEXTRACTORS);
+    done.acquire();
+    taskManager_.stop();
+
+    EXPECT_EQ(loaded.size(), kAMENDMENT_BLOCKED_AFTER);
+    EXPECT_TRUE(amendmentBlockedOccurred);
+
+    for (std::size_t i = 0; i < loaded.size(); ++i)
+        EXPECT_EQ(loaded[i], kSEQ + i);
 }

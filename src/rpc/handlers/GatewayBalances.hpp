@@ -73,6 +73,7 @@ public:
         std::map<ripple::AccountID, std::vector<ripple::STAmount>> hotBalances;
         std::map<ripple::AccountID, std::vector<ripple::STAmount>> assets;
         std::map<ripple::AccountID, std::vector<ripple::STAmount>> frozenBalances;
+        std::map<ripple::Currency, ripple::STAmount> locked;
         // validated should be sent via framework
         bool validated = true;
     };
@@ -147,9 +148,9 @@ public:
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator}
         };
 
-        auto static const kSPEC_V1 =
+        static auto const kSPEC_V1 =
             RpcSpec{kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(ripple::rpcINVALID_HOTWALLET)}}};
-        auto static const kSPEC_V2 =
+        static auto const kSPEC_V2 =
             RpcSpec{kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(ripple::rpcINVALID_PARAMS)}}};
 
         return apiVersion == 1 ? kSPEC_V1 : kSPEC_V2;

@@ -74,7 +74,7 @@ makeWarning(WarningCode code)
 ClioErrorInfo const&
 getErrorInfo(ClioError code)
 {
-    constexpr static ClioErrorInfo kINFOS[]{
+    static constexpr ClioErrorInfo kINFOS[]{
         {.code = ClioError::RpcMalformedCurrency, .error = "malformedCurrency", .message = "Malformed currency."},
         {.code = ClioError::RpcMalformedRequest, .error = "malformedRequest", .message = "Malformed request."},
         {.code = ClioError::RpcMalformedOwner, .error = "malformedOwner", .message = "Malformed owner."},
@@ -89,7 +89,7 @@ getErrorInfo(ClioError code)
         {.code = ClioError::RpcMalformedAuthorizedCredentials,
          .error = "malformedAuthorizedCredentials",
          .message = "Malformed authorized credentials."},
-
+        {.code = ClioError::RpcEntryNotFound, .error = "entryNotFound", .message = "Entry Not Found."},
         // special system errors
         {.code = ClioError::RpcInvalidApiVersion, .error = JS(invalid_API_version), .message = "Invalid API version."},
         {.code = ClioError::RpcCommandIsMissing,

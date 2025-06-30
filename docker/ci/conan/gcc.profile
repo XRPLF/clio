@@ -1,5 +1,5 @@
 [settings]
-arch=x86_64
+arch={{detect_api.detect_arch()}}
 build_type=Release
 compiler=gcc
 compiler.cppstd=20

@@ -485,7 +485,7 @@ TEST_F(RPCEngineTest, NotCacheIfErrorHappen)
                 yield,
                 method,
                 1,
-                boost::json::parse(R"JSON({"hello": "world","limit": 50})JSON").as_object(),
+                boost::json::parse(R"JSON({"hello": "world", "limit": 50})JSON").as_object(),
                 nullptr,
                 tagFactory,
                 LedgerRange{.minSequence = 0, .maxSequence = 30},

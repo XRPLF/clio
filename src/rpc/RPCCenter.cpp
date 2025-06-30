@@ -30,6 +30,7 @@ std::unordered_set<std::string_view> const&
 handledRpcs()
 {
     static std::unordered_set<std::string_view> const kHANDLED_RPCS = {
+        // clang-format off
         "account_channels",
         "account_currencies",
         "account_info",
@@ -64,7 +65,9 @@ handledRpcs()
         "tx",
         "subscribe",
         "unsubscribe",
+        "vault_info",
         "version",
+        // clang-format on
     };
     return kHANDLED_RPCS;
 }

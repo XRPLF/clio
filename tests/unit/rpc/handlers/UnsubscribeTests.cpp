@@ -568,7 +568,7 @@ TEST_F(RPCUnsubscribeTest, Streams)
 {
     auto const input = json::parse(
         R"JSON({
-            "streams": ["transactions_proposed","transactions","validations","manifests","book_changes","ledger"]
+            "streams": ["transactions_proposed", "transactions", "validations", "manifests", "book_changes", "ledger"]
         })JSON"
     );
 
@@ -591,7 +591,7 @@ TEST_F(RPCUnsubscribeTest, Accounts)
 {
     auto const input = json::parse(fmt::format(
         R"JSON({{
-            "accounts": ["{}","{}"]
+            "accounts": ["{}", "{}"]
         }})JSON",
         kACCOUNT,
         kACCOUNT2
@@ -613,7 +613,7 @@ TEST_F(RPCUnsubscribeTest, AccountsProposed)
 {
     auto const input = json::parse(fmt::format(
         R"JSON({{
-            "accounts_proposed": ["{}","{}"]
+            "accounts_proposed": ["{}", "{}"]
         }})JSON",
         kACCOUNT,
         kACCOUNT2

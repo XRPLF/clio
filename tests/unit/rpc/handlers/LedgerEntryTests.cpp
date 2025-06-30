@@ -44,8 +44,10 @@
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/STXChainBridge.h>
+#include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/UintTypes.h>
 
 #include <cstdint>
@@ -687,7 +689,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "ripple_state": {{
-                        "accounts" : ["{}"]
+                        "accounts": ["{}"]
                     }}
                 }})JSON",
                 kACCOUNT
@@ -701,7 +703,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "ripple_state": {{
-                        "accounts" : ["{}","{}"],
+                        "accounts": ["{}", "{}"],
                         "currency": "USD"
                     }}
                 }})JSON",
@@ -717,7 +719,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "ripple_state": {{
-                        "accounts" : ["{}",123],
+                        "accounts": ["{}",123],
                         "currency": "USD"
                     }}
                 }})JSON",
@@ -732,7 +734,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "ripple_state": {{
-                        "accounts" : ["{}","123"],
+                        "accounts": ["{}", "123"],
                         "currency": "USD"
                     }}
                 }})JSON",
@@ -747,7 +749,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "ripple_state": {{
-                        "accounts" : ["{}","{}"],
+                        "accounts": ["{}", "{}"],
                         "currency": "XXXX"
                     }}
                 }})JSON",
@@ -763,7 +765,7 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "ripple_state": {{
-                        "accounts" : ["{}","{}"],
+                        "accounts": ["{}", "{}"],
                         "currency": 123
                     }}
                 }})JSON",
@@ -912,11 +914,11 @@ generateTestValuesForParametersTest()
                 R"JSON({{
                     "amm":
                     {{
-                        "asset":{{}},
+                        "asset": {{}},
                         "asset2":
                         {{
-                            "currency" : "USD",
-                            "issuer" : "{}"
+                            "currency": "USD",
+                            "issuer": "{}"
                         }}
                     }}
                 }})JSON",
@@ -932,11 +934,11 @@ generateTestValuesForParametersTest()
                 R"JSON({{
                     "amm":
                     {{
-                        "asset2":{{}},
+                        "asset2": {{}},
                         "asset":
                         {{
-                            "currency" : "USD",
-                            "issuer" : "{}"
+                            "currency": "USD",
+                            "issuer": "{}"
                         }}
                     }}
                 }})JSON",
@@ -954,8 +956,8 @@ generateTestValuesForParametersTest()
                     {{
                         "asset":
                         {{
-                            "currency" : "USD",
-                            "issuer" : "{}"
+                            "currency": "USD",
+                            "issuer": "{}"
                         }}
                     }}
                 }})JSON",
@@ -973,8 +975,8 @@ generateTestValuesForParametersTest()
                     {{
                         "asset2":
                         {{
-                            "currency" : "USD",
-                            "issuer" : "{}"
+                            "currency": "USD",
+                            "issuer": "{}"
                         }}
                     }}
                 }})JSON",
@@ -993,8 +995,8 @@ generateTestValuesForParametersTest()
                         "asset": "invalid",
                         "asset2":
                         {{
-                            "currency" : "USD",
-                            "issuer" : "{}"
+                            "currency": "USD",
+                            "issuer": "{}"
                         }}
                     }}
                 }})JSON",
@@ -1013,8 +1015,8 @@ generateTestValuesForParametersTest()
                         "asset2": "invalid",
                         "asset":
                         {{
-                            "currency" : "USD",
-                            "issuer" : "{}"
+                            "currency": "USD",
+                            "issuer": "{}"
                         }}
                     }}
                 }})JSON",
@@ -1032,12 +1034,12 @@ generateTestValuesForParametersTest()
                     {{
                         "asset2":
                         {{
-                            "currency":"XRP"
+                            "currency": "XRP"
                         }},
                         "asset":
                         {{
-                            "currency" : "USD2",
-                            "issuer" : "{}"
+                            "currency": "USD2",
+                            "issuer": "{}"
                         }}
                     }}
                 }})JSON",
@@ -1055,12 +1057,12 @@ generateTestValuesForParametersTest()
                     {{
                         "asset2":
                         {{
-                            "currency":"XRP"
+                            "currency": "XRP"
                         }},
                         "asset":
                         {{
-                            "currency" : "USD",
-                            "issuer" : "aa{}"
+                            "currency": "USD",
+                            "issuer": "aa{}"
                         }}
                     }}
                 }})JSON",
@@ -1078,12 +1080,12 @@ generateTestValuesForParametersTest()
                     {{
                         "asset2":
                         {{
-                            "currency":"JPY"
+                            "currency": "JPY"
                         }},
                         "asset":
                         {{
-                            "currency" : "USD",
-                            "issuer" : "{}"
+                            "currency": "USD",
+                            "issuer": "{}"
                         }}
                     }}
                 }})JSON",
@@ -1101,13 +1103,13 @@ generateTestValuesForParametersTest()
                     {{
                         "asset2":
                         {{
-                            "currency":"XRP",
-                            "issuer":"{}"
+                            "currency": "XRP",
+                            "issuer": "{}"
                         }},
                         "asset":
                         {{
-                            "currency" : "USD",
-                            "issuer" : "{}"
+                            "currency": "USD",
+                            "issuer": "{}"
                         }}
                     }}
                 }})JSON",
@@ -1126,11 +1128,11 @@ generateTestValuesForParametersTest()
                     {{
                         "asset2":
                         {{
-                            "currency":"XRP"
+                            "currency": "XRP"
                         }},
                         "asset":
                         {{
-                            "issuer" : "{}"
+                            "issuer": "{}"
                         }}
                     }}
                 }})JSON",
@@ -2194,6 +2196,76 @@ generateTestValuesForParametersTest()
             .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
+            .testName = "InvalidVault_Type",
+            .testJson =
+                R"JSON({
+                    "vault": 0
+                })JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidVault_NotHex",
+            .testJson =
+                R"JSON({
+                    "vault": "invalid_hex"
+                })JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "MissingOwner",
+            .testJson =
+                R"JSON({
+                    "vault": { "seq": 1 }
+                })JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+
+        ParamTestCaseBundle{
+            .testName = "MissingSeq",
+            .testJson =
+                R"JSON({
+                    "vault": { "owner": "abcd" }
+                })JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "SeqNotInteger",
+            .testJson =
+                R"JSON({
+                 "vault": {
+                    "owner": "abcd",
+                    "seq": "notAnInteger"
+                }})JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidOwnerFormat",
+            .testJson =
+                R"JSON({
+                "vault": {
+                    "owner": "abcd",
+                    "seq": 10
+                }})JSON",
+            .expectedError = "malformedOwner",
+            .expectedErrorMessage = "Malformed owner.",
+        },
+        ParamTestCaseBundle{
+            .testName = "BothOwnerAndSeqInvalid",
+            .testJson =
+                R"JSON({
+                "vault": {
+                    "owner": "abcd",
+                    "seq": -200
+                }})JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
             .testName = "Delegate_InvalidType",
             .testJson = R"JSON({"delegate": 123})JSON",
             .expectedError = "malformedRequest",
@@ -2694,7 +2766,7 @@ generateTestValuesForNormalPathTest()
                 R"JSON({{
                     "binary": true,
                     "ripple_state": {{
-                        "accounts": ["{}","{}"],
+                        "accounts": ["{}", "{}"],
                         "currency": "USD"
                     }}
                 }})JSON",
@@ -2782,11 +2854,11 @@ generateTestValuesForNormalPathTest()
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
                         "LockingChainIssue": {{
-                            "currency" : "XRP"
+                            "currency": "XRP"
                         }},
                         "IssuingChainIssue": {{
-                            "currency" : "JPY",
-                            "issuer" : "{}"
+                            "currency": "JPY",
+                            "issuer": "{}"
                         }}
                     }}
                 }})JSON",
@@ -2817,11 +2889,11 @@ generateTestValuesForNormalPathTest()
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
                         "LockingChainIssue": {{
-                            "currency" : "XRP"
+                            "currency": "XRP"
                         }},
                         "IssuingChainIssue": {{
-                            "currency" : "JPY",
-                            "issuer" : "{}"
+                            "currency": "JPY",
+                            "issuer": "{}"
                         }}
                     }}
                 }})JSON",
@@ -2851,11 +2923,11 @@ generateTestValuesForNormalPathTest()
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
                         "LockingChainIssue": {{
-                            "currency" : "XRP"
+                            "currency": "XRP"
                         }},
                         "IssuingChainIssue": {{
-                            "currency" : "JPY",
-                            "issuer" : "{}"
+                            "currency": "JPY",
+                            "issuer": "{}"
                         }},
                         "xchain_owned_claim_id": 10
                     }}
@@ -2885,11 +2957,11 @@ generateTestValuesForNormalPathTest()
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
                         "LockingChainIssue": {{
-                            "currency" : "XRP"
+                            "currency": "XRP"
                         }},
                         "IssuingChainIssue": {{
-                            "currency" : "JPY",
-                            "issuer" : "{}"
+                            "currency": "JPY",
+                            "issuer": "{}"
                         }},
                         "xchain_owned_create_account_claim_id": 10
                     }}
@@ -3059,6 +3131,55 @@ generateTestValuesForNormalPathTest()
             .mockedEntity = createPermissionedDomainObject(kACCOUNT, kINDEX1, kRANGE_MAX, 0, ripple::uint256{0}, 0)
         },
         NormalPathTestBundle{
+            .testName = "CreateVaultObjectByHexString",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "binary": true,
+                    "vault": "{}"
+                }})JSON",
+                kINDEX1
+            ),
+            .expectedIndex = ripple::uint256(kINDEX1),
+            .mockedEntity = createVault(
+                kACCOUNT,
+                kACCOUNT,
+                kRANGE_MAX,
+                "XRP",
+                ripple::toBase58(ripple::xrpAccount()),
+                ripple::uint192(0),
+                0,
+                ripple::uint256{0},
+                0
+            )
+        },
+        NormalPathTestBundle{
+            .testName = "CreateVaultObjectByAccount",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "binary": true,
+                    "vault": {{
+                        "owner": "{}",
+                        "seq": {}
+                    }}
+                }})JSON",
+                kACCOUNT,
+                kRANGE_MAX
+            ),
+            .expectedIndex =
+                ripple::keylet::vault(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX).key,
+            .mockedEntity = createVault(
+                kACCOUNT,
+                kACCOUNT,
+                kRANGE_MAX,
+                "XRP",
+                ripple::toBase58(ripple::xrpAccount()),
+                ripple::uint192(0),
+                0,
+                ripple::uint256{0},
+                0
+            )
+        },
+        NormalPathTestBundle{
             .testName = "DelegateViaStringIndex",
             .testJson = fmt::format(
                 R"JSON({{
@@ -3131,23 +3252,23 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
 TEST_F(RPCLedgerEntryTest, BinaryFalse)
 {
     static constexpr auto kOUT = R"JSON({
-        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-        "ledger_index":30,
-        "validated":true,
-        "index":"05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
-        "node":{
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "Amount":"100",
-            "Balance":"200",
-            "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-            "Flags":0,
-            "LedgerEntryType":"PayChannel",
-            "OwnerNode":"0",
-            "PreviousTxnID":"05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
-            "PreviousTxnLgrSeq":400,
-            "PublicKey":"020000000000000000000000000000000000000000000000000000000000000000",
-            "SettleDelay":300,
-            "index":"05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD"
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index": 30,
+        "validated": true,
+        "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
+        "node": {
+            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "Amount": "100",
+            "Balance": "200",
+            "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+            "Flags": 0,
+            "LedgerEntryType": "PayChannel",
+            "OwnerNode": "0",
+            "PreviousTxnID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
+            "PreviousTxnLgrSeq": 400,
+            "PublicKey": "020000000000000000000000000000000000000000000000000000000000000000",
+            "SettleDelay": 300,
+            "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD"
         }
     })JSON";
 
@@ -3171,6 +3292,57 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));
+    });
+}
+
+TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
+{
+    // return valid ledgerHeader
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
+
+    boost::json::object entry;
+
+    auto const vault = createVault(
+        kACCOUNT,
+        kACCOUNT,
+        kRANGE_MAX,
+        "XRP",
+        ripple::toBase58(ripple::xrpAccount()),
+        ripple::uint192(0),
+        0,
+        ripple::uint256{1},
+        0
+    );
+
+    auto const vaultKey =
+        ripple::keylet::vault(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX).key;
+
+    ripple::STLedgerEntry const sle{
+        ripple::SerialIter{vault.getSerializer().peekData().data(), vault.getSerializer().peekData().size()}, vaultKey
+    };
+
+    EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKey, testing::_, testing::_))
+        .WillOnce(Return(vault.getSerializer().peekData()));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
+        auto const req = json::parse(fmt::format(
+            R"JSON({{
+                "binary": false,
+                "vault": {{
+                    "owner": "{}",
+                    "seq": {}
+                }}
+            }})JSON",
+            kACCOUNT,
+            kRANGE_MAX
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+
+        EXPECT_EQ(output.result->at("node").at("Owner").as_string(), kACCOUNT);
+        EXPECT_EQ(output.result->at("node").at("Sequence").as_int64(), kRANGE_MAX);
     });
 }
 
@@ -3622,23 +3794,23 @@ TEST_F(RPCLedgerEntryTest, ObjectSeqNotExist)
 TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
 {
     static constexpr auto kOUT = R"JSON({
-        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-        "ledger_index":30,
-        "validated":true,
-        "index":"FD7E7EFAE2A20E75850D0E0590B205E2F74DC472281768CD6E03988069816336",
-        "node":{
-            "Flags":0,
-            "Issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "LedgerEntryType":"MPTokenIssuance",
-            "MPTokenMetadata":"6D65746164617461",
-            "MaximumAmount":"0",
-            "OutstandingAmount":"0",
-            "OwnerNode":"0",
-            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
-            "PreviousTxnLgrSeq":0,
-            "Sequence":2,
-            "index":"FD7E7EFAE2A20E75850D0E0590B205E2F74DC472281768CD6E03988069816336",
-            "mpt_issuance_id":"000000024B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index": 30,
+        "validated": true,
+        "index": "FD7E7EFAE2A20E75850D0E0590B205E2F74DC472281768CD6E03988069816336",
+        "node": {
+            "Flags": 0,
+            "Issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "LedgerEntryType": "MPTokenIssuance",
+            "MPTokenMetadata": "6D65746164617461",
+            "MaximumAmount": "0",
+            "OutstandingAmount": "0",
+            "OwnerNode": "0",
+            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+            "PreviousTxnLgrSeq": 0,
+            "Sequence": 2,
+            "index": "FD7E7EFAE2A20E75850D0E0590B205E2F74DC472281768CD6E03988069816336",
+            "mpt_issuance_id": "000000024B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
         }
     })JSON";
 

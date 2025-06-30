@@ -20,7 +20,7 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "etl/LedgerFetcherInterface.hpp"
+#include "etl/SystemState.hpp"
 #include "etl/impl/LedgerLoader.hpp"
 #include "etlng/AmendmentBlockHandlerInterface.hpp"
 #include "etlng/InitialLoadObserverInterface.hpp"
@@ -39,6 +39,7 @@
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/TxMeta.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -51,7 +52,10 @@ class Loader : public LoaderInterface, public InitialLoadObserverInterface {
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<RegistryInterface> registry_;
     std::shared_ptr<AmendmentBlockHandlerInterface> amendmentBlockHandler_;
+    std::shared_ptr<etl::SystemState> state_;
 
+    std::size_t initialLoadWrittenObjects_{0u};
+    std::size_t initialLoadWrites_{0u};
     util::Logger log_{"ETL"};
 
 public:
@@ -62,7 +66,8 @@ public:
     Loader(
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<RegistryInterface> registry,
-        std::shared_ptr<AmendmentBlockHandlerInterface> amendmentBlockHandler
+        std::shared_ptr<AmendmentBlockHandlerInterface> amendmentBlockHandler,
+        std::shared_ptr<etl::SystemState> state
     );
 
     Loader(Loader const&) = delete;
@@ -72,7 +77,7 @@ public:
     Loader&
     operator=(Loader&&) = delete;
 
-    void
+    std::expected<void, LoaderError>
     load(model::LedgerData const& data) override;
 
     void

@@ -40,25 +40,17 @@ jobs:
         with:
           disable_ccache: true
 
-      - name: Setup conan
-        uses: ./.github/actions/setup_conan
-        with:
-          conan_profile: ${{ env.CONAN_PROFILE }}
-
       - name: Restore cache
         uses: ./.github/actions/restore_cache
         id: restore_cache
         with:
-          conan_dir: ${{ env.CONAN_HOME }}
-          ccache_dir: ${{ env.CCACHE_DIR }}
           conan_profile: ${{ env.CONAN_PROFILE }}
+          ccache_dir: ${{ env.CCACHE_DIR }}
 
       - name: Run conan and cmake
         uses: ./.github/actions/generate
         with:
           conan_profile: ${{ env.CONAN_PROFILE }}
-          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
-          build_type: Release
 
       - name: Get number of threads
         uses: ./.github/actions/get_number_of_threads

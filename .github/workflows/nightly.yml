@@ -32,28 +32,24 @@ jobs:
       matrix:
         include:
           - os: macos15
-            conan_profile: default_apple_clang
+            conan_profile: apple-clang
             build_type: Release
             static: false
-            sanitizer: "false"
           - os: heavy
             conan_profile: gcc
             build_type: Release
             static: true
             container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
-            sanitizer: "false"
           - os: heavy
             conan_profile: gcc
             build_type: Debug
             static: true
             container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
-            sanitizer: "false"
           - os: heavy
             conan_profile: gcc.ubsan
             build_type: Release
             static: false
             container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
-            sanitizer: "ubsan"
 
     uses: ./.github/workflows/build_and_test.yml
     with:
@@ -66,7 +62,6 @@ jobs:
       run_integration_tests: true
       upload_clio_server: true
       disable_cache: true
-      sanitizer: ${{ matrix.sanitizer }}
 
   analyze_build_time:
     name: Analyze Build Time
@@ -80,7 +75,7 @@ jobs:
             container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
             static: true
           - os: macos15
-            conan_profile: default_apple_clang
+            conan_profile: apple-clang
             container: ""
             static: false
     uses: ./.github/workflows/build_impl.yml
@@ -94,7 +89,6 @@ jobs:
       static: ${{ matrix.static }}
       upload_clio_server: false
       targets: all
-      sanitizer: "false"
       analyze_build_time: true
 
   nightly_release:

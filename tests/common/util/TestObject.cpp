@@ -41,6 +41,7 @@
 #include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STArray.h>
 #include <xrpl/protocol/STIssue.h>
+#include <xrpl/protocol/STNumber.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/STVector256.h>
 #include <xrpl/protocol/TER.h>
@@ -328,18 +329,21 @@ createMetaDataForBookChange(
     std::string_view issueId,
     uint32_t transactionIndex,
     int finalTakerGets,
-    int perviousTakerGets,
+    int previousTakerGets,
     int finalTakerPays,
-    int perviousTakerPays
+    int previousTakerPays,
+    std::optional<std::string_view> domain
 )
 {
     ripple::STObject finalFields(ripple::sfFinalFields);
     ripple::Issue const issue1 = getIssue(currency, issueId);
     finalFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, finalTakerPays));
     finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(finalTakerGets, false));
+    if (domain.has_value())
+        finalFields.setFieldH256(ripple::sfDomainID, ripple::uint256{*domain});
     ripple::STObject previousFields(ripple::sfPreviousFields);
-    previousFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, perviousTakerPays));
-    previousFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(perviousTakerGets, false));
+    previousFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, previousTakerPays));
+    previousFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(previousTakerGets, false));
     ripple::STObject metaObj(ripple::sfTransactionMetaData);
     ripple::STArray metaArray{1};
     ripple::STObject node(ripple::sfModifiedNode);
@@ -484,7 +488,7 @@ createOfferLedgerObject(
     std::string_view getsIssueId,
     std::string_view paysIssueId,
     std::string_view dirId,
-    std::optional<std::string_view> const& domain
+    std::optional<std::string_view> domain
 )
 {
     ripple::STObject offer(ripple::sfLedgerEntry);
@@ -1638,4 +1642,38 @@ createAuthCredentialArray(std::vector<std::string_view> issuer, std::vector<std:
         arr.push_back(credential);
     }
     return arr;
+}
+
+ripple::STObject
+createVault(
+    std::string_view owner,
+    std::string_view account,
+    ripple::LedgerIndex seq,
+    std::string_view assetCurrency,
+    std::string_view assetIssuer,
+    ripple::uint192 shareMPTID,
+    uint64_t ownerNode,
+    ripple::uint256 previousTxId,
+    uint32_t previousTxSeq
+)
+{
+    auto vault = ripple::STObject(ripple::sfLedgerEntry);
+    vault.setAccountID(ripple::sfOwner, getAccountIdWithString(owner));
+    vault.setAccountID(ripple::sfAccount, getAccountIdWithString(account));
+    vault.setFieldU32(ripple::sfSequence, seq);
+    vault.setFieldU64(ripple::sfOwnerNode, ownerNode);
+    vault.setFieldH256(ripple::sfPreviousTxnID, previousTxId);
+    vault.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxSeq);
+
+    vault.setFieldIssue(ripple::sfAsset, ripple::STIssue{ripple::sfAsset, getIssue(assetCurrency, assetIssuer)});
+    vault[ripple::sfShareMPTID] = shareMPTID;
+    vault.setFieldNumber(ripple::sfAssetsTotal, ripple::STNumber{ripple::sfAssetsTotal, 300});
+    vault.setFieldNumber(ripple::sfAssetsAvailable, ripple::STNumber{ripple::sfAssetsAvailable, 300});
+    vault.setFieldNumber(ripple::sfLossUnrealized, ripple::STNumber{ripple::sfLossUnrealized, 0});
+    vault.setFieldU8(ripple::sfWithdrawalPolicy, 200);
+
+    vault.setFieldU32(ripple::sfFlags, 0);
+    vault.setFieldU16(ripple::sfLedgerEntryType, ripple::ltVAULT);
+
+    return vault;
 }

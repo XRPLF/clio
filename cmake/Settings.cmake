@@ -1,21 +1,22 @@
 set(COMPILER_FLAGS
+    -pedantic
     -Wall
     -Wcast-align
     -Wdouble-promotion
-    -Wextra
     -Werror
+    -Wextra
     -Wformat=2
     -Wimplicit-fallthrough
     -Wmisleading-indentation
-    -Wno-narrowing
-    -Wno-deprecated-declarations
     -Wno-dangling-else
+    -Wno-deprecated-declarations
+    -Wno-narrowing
     -Wno-unused-but-set-variable
     -Wnon-virtual-dtor
     -Wnull-dereference
     -Wold-style-cast
-    -pedantic
     -Wpedantic
+    -Wunreachable-code
     -Wunused
     # FIXME: The following bunch are needed for gcc12 atm.
     -Wno-missing-requires

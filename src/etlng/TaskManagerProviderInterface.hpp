@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 
 namespace etlng {
 
@@ -41,11 +42,17 @@ struct TaskManagerProviderInterface {
      *
      * @param ctx The async context to associate the task manager instance with
      * @param monitor The monitor to notify when ledger is loaded
-     * @param seq The sequence to start at
+     * @param startSeq The sequence to start at
+     * @param finishSeq The sequence to stop at if specified
      * @return A unique pointer to a TaskManager implementation
      */
-    virtual std::unique_ptr<TaskManagerInterface>
-    make(util::async::AnyExecutionContext ctx, std::reference_wrapper<MonitorInterface> monitor, uint32_t seq) = 0;
+    [[nodiscard]] virtual std::unique_ptr<TaskManagerInterface>
+    make(
+        util::async::AnyExecutionContext ctx,
+        std::reference_wrapper<MonitorInterface> monitor,
+        uint32_t startSeq,
+        std::optional<uint32_t> finishSeq = std::nullopt
+    ) = 0;
 };
 
 }  // namespace etlng

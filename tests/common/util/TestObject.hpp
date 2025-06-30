@@ -182,9 +182,10 @@ createMetaDataForBookChange(
     std::string_view issueId,
     uint32_t transactionIndex,
     int finalTakerGets,
-    int perviousTakerGets,
+    int previousTakerGets,
     int finalTakerPays,
-    int perviousTakerPays
+    int previousTakerPays,
+    std::optional<std::string_view> domain = std::nullopt
 );
 
 /*
@@ -258,7 +259,7 @@ createOfferLedgerObject(
     std::string_view getsIssueId,
     std::string_view paysIssueId,
     std::string_view bookDirId,
-    std::optional<std::string_view> const& domain = std::nullopt
+    std::optional<std::string_view> domain = std::nullopt
 );
 
 [[nodiscard]] ripple::STObject
@@ -523,3 +524,16 @@ createCredentialObject(
 
 [[nodiscard]] ripple::STArray
 createAuthCredentialArray(std::vector<std::string_view> issuer, std::vector<std::string_view> credType);
+
+[[nodiscard]] ripple::STObject
+createVault(
+    std::string_view owner,
+    std::string_view account,
+    ripple::LedgerIndex seq,
+    std::string_view assetCurrency,
+    std::string_view assetIssuer,
+    ripple::uint192 shareMPTID,
+    uint64_t ownerNode,
+    ripple::uint256 previousTxId,
+    uint32_t previousTxSeq
+);

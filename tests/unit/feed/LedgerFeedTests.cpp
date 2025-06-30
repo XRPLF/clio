@@ -53,13 +53,13 @@ TEST_F(FeedLedgerTest, SubPub)
     // the type and txn_count fields
     static constexpr auto kLEDGER_RESPONSE =
         R"JSON({
-            "validated_ledgers":"10-30",
-            "ledger_index":30,
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_time":0,
-            "fee_base":1,
-            "reserve_base":3,
-            "reserve_inc":2
+            "validated_ledgers": "10-30",
+            "ledger_index": 30,
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_time": 0,
+            "fee_base": 1,
+            "reserve_base": 3,
+            "reserve_inc": 2
         })JSON";
     boost::asio::io_context ioContext;
     boost::asio::spawn(ioContext, [this](boost::asio::yield_context yield) {
@@ -73,15 +73,15 @@ TEST_F(FeedLedgerTest, SubPub)
 
     static constexpr auto kLEDGER_PUB =
         R"JSON({
-            "type":"ledgerClosed",
-            "ledger_index":31,
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_time":0,
-            "fee_base":0,
-            "reserve_base":10,
-            "reserve_inc":0,
-            "validated_ledgers":"10-31",
-            "txn_count":8
+            "type": "ledgerClosed",
+            "ledger_index": 31,
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_time": 0,
+            "fee_base": 0,
+            "reserve_base": 10,
+            "reserve_inc": 0,
+            "validated_ledgers": "10-31",
+            "txn_count": 8
         })JSON";
 
     // test publish
@@ -108,13 +108,13 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
     EXPECT_CALL(*backend_, doFetchLedgerObject).WillOnce(testing::Return(feeBlob));
     static constexpr auto kLEDGER_RESPONSE =
         R"JSON({
-            "validated_ledgers":"10-30",
-            "ledger_index":30,
-            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-            "ledger_time":0,
-            "fee_base":1,
-            "reserve_base":3,
-            "reserve_inc":2
+            "validated_ledgers": "10-30",
+            "ledger_index": 30,
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_time": 0,
+            "fee_base": 1,
+            "reserve_base": 3,
+            "reserve_inc": 2
         })JSON";
 
     web::SubscriptionContextInterface::OnDisconnectSlot slot;

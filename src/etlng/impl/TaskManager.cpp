@@ -26,6 +26,7 @@
 #include "etlng/SchedulerInterface.hpp"
 #include "etlng/impl/Monitor.hpp"
 #include "etlng/impl/TaskQueue.hpp"
+#include "util/Constants.hpp"
 #include "util/LedgerUtils.hpp"
 #include "util/Profiler.hpp"
 #include "util/async/AnyExecutionContext.hpp"
@@ -102,29 +103,49 @@ TaskManager::spawnExtractor(TaskQueue& queue)
                         if (stopRequested)
                             break;
                     }
-                } else {
-                    // TODO: how do we signal to the loaders that it's time to shutdown? some special task?
-                    break;  // TODO: handle server shutdown or other node took over ETL
                 }
             } else {
                 // TODO (https://github.com/XRPLF/clio/issues/1852)
                 std::this_thread::sleep_for(kDELAY_BETWEEN_ATTEMPTS);
             }
         }
+
+        LOG(log_.info()) << "Extractor (one of) coroutine stopped";
     });
 }
 
 util::async::AnyOperation<void>
 TaskManager::spawnLoader(TaskQueue& queue)
 {
-    static constexpr auto kNANO_TO_SECOND = 1.0e9;
-
     return ctx_.execute([this, &queue](auto stopRequested) {
         while (not stopRequested) {
             // TODO (https://github.com/XRPLF/clio/issues/66): does not tell the loader whether it's out of order or not
             if (auto data = queue.dequeue(); data.has_value()) {
-                auto nanos = util::timed<std::chrono::nanoseconds>([this, data = *data] { loader_.get().load(data); });
-                auto const seconds = nanos / kNANO_TO_SECOND;
+                auto [expectedSuccess, nanos] =
+                    util::timed<std::chrono::nanoseconds>([&] { return loader_.get().load(*data); });
+
+                auto const shouldExitOnError = [&] {
+                    if (expectedSuccess.has_value())
+                        return false;
+
+                    switch (expectedSuccess.error()) {
+                        case LoaderError::WriteConflict:
+                            LOG(log_.warn()) << "Immediately stopping loader on write conflict"
+                                             << "; latest ledger cache loaded for " << data->seq;
+                            monitor_.get().notifyWriteConflict(data->seq);
+                            return true;
+                        case LoaderError::AmendmentBlocked:
+                            LOG(log_.warn()) << "Immediately stopping loader on amendment block";
+                            return true;
+                    }
+
+                    std::unreachable();
+                }();
+
+                if (shouldExitOnError)
+                    break;
+
+                auto const seconds = nanos / util::kNANO_PER_SECOND;
                 auto const txnCount = data->transactions.size();
                 auto const objCount = data->objects.size();
 
@@ -133,9 +154,11 @@ TaskManager::spawnLoader(TaskQueue& queue)
                                  << " seconds;"
                                  << " tps[" << txnCount / seconds << "], ops[" << objCount / seconds << "]";
 
-                monitor_.get().notifyLedgerLoaded(data->seq);
+                monitor_.get().notifySequenceLoaded(data->seq);
             }
         }
+
+        LOG(log_.info()) << "Loader coroutine stopped";
     });
 }
 

@@ -72,7 +72,7 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
-        auto const output = handler.process(json::parse(R"JSON({"tx_hash":"123"})JSON"), Context{yield});
+        auto const output = handler.process(json::parse(R"JSON({"tx_hash": "123"})JSON"), Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");

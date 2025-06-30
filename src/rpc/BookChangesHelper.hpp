@@ -265,6 +265,9 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const
         {JS(open), to_string(change.openRate.iou())},
         {JS(close), to_string(change.closeRate.iou())},
     };
+
+    if (change.domain.has_value())
+        jv.as_object()[JS(domain)] = ripple::to_string(*change.domain);
 }
 
 /**
