@@ -55,15 +55,30 @@ repos:
             --ignore-words=pre-commit-hooks/codespell_ignore.txt,
           ]
 
-  # Running fix-local-includes before clang-format
-  # to ensure that the include order is correct.
+  # Running some C++ hooks before clang-format
+  # to ensure that the style is consistent.
   - repo: local
     hooks:
+      - id: json-in-cpp
+        name: Fix JSON style in C++
+        entry: pre-commit-hooks/json_in_cpp.py
+        types: [c++]
+        language: python
+        exclude: |
+          (?x)^(
+            tests/unit/etl/SubscriptionSourceTests.cpp|
+            tests/unit/web/ServerTests.cpp|
+            tests/unit/web/impl/ErrorHandlingTests.cpp|
+            tests/unit/web/ng/ServerTests.cpp|
+            tests/unit/web/ng/impl/ErrorHandlingTests.cpp
+          )$
+
       - id: fix-local-includes
         name: Fix Local Includes
         entry: pre-commit-hooks/fix-local-includes.sh
         types: [c++]
         language: script
+
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: f9a52e87b6cdcb01b0a62b8611d9ba9f2dad0067 # frozen: v19.1.7
     hooks:

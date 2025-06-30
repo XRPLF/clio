@@ -51,6 +51,7 @@ target_sources(
           handlers/Subscribe.cpp
           handlers/TransactionEntry.cpp
           handlers/Unsubscribe.cpp
+          handlers/VaultInfo.cpp
 )
 
 target_link_libraries(clio_rpc PRIVATE clio_util)

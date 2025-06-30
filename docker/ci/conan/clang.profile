@@ -8,4 +8,4 @@ compiler.version=16
 os=Linux
 
 [conf]
-tools.build:compiler_executables={'c': '/usr/bin/clang-16', 'cpp': '/usr/bin/clang++-16'}
+tools.build:compiler_executables={"c": "/usr/bin/clang-16", "cpp": "/usr/bin/clang++-16"}

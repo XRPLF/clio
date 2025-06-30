@@ -47,6 +47,7 @@
 #include "rpc/handlers/ServerInfo.hpp"
 #include "rpc/handlers/Subscribe.hpp"
 #include "rpc/handlers/TransactionEntry.hpp"
+#include "rpc/handlers/VaultInfo.hpp"
 #include "util/Assert.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
 #include "util/MockAmendmentCenter.hpp"
@@ -79,6 +80,7 @@ static constexpr auto kAMM_ACCOUNT = "rLcS7XL6nxRAi7JcbJcn1Na179oF3vdfbh";
 static constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 static constexpr auto kNFT_ID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
 static constexpr auto kCURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
+static constexpr auto kVAULT_ID = "61B03A6F8CEBD3AF9D8F696C3D0A9A9F0493B34BF6B5D93CF0BC009E6BA75303";
 
 using AnyHandlerType = Types<
     AccountChannelsHandler,
@@ -109,7 +111,8 @@ using AnyHandlerType = Types<
     NoRippleCheckHandler,
     TestServerInfoHandler,
     SubscribeHandler,
-    TransactionEntryHandler>;
+    TransactionEntryHandler,
+    VaultInfoHandler>;
 
 template <typename HandlerType>
 struct AllHandlersAssertTest : common::util::WithMockAssert,
@@ -252,6 +255,16 @@ createInput<SubscribeHandler>()
     input.books = std::vector<SubscribeHandler::OrderBook>{
         SubscribeHandler::OrderBook{.book = ripple::Book{}, .taker = kACCOUNT, .snapshot = true, .both = true}
     };
+    return input;
+}
+
+template <>
+VaultInfoHandler::Input
+createInput<VaultInfoHandler>()
+{
+    VaultInfoHandler::Input input{};
+    input.vaultID = kVAULT_ID;
+
     return input;
 }
 

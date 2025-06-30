@@ -57,6 +57,7 @@ TEST(LedgerUtilsTests, LedgerObjectTypeList)
         JS(permissioned_domain),
         JS(oracle),
         JS(credential),
+        JS(vault),
         JS(nunl),
         JS(delegate)
     };
@@ -92,6 +93,7 @@ TEST(LedgerUtilsTests, AccountOwnedTypeList)
         JS(mpt_issuance),
         JS(mptoken),
         JS(permissioned_domain),
+        JS(vault),
         JS(delegate)
     };
 

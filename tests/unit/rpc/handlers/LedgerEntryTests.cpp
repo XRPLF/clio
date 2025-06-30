@@ -44,8 +44,10 @@
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/STXChainBridge.h>
+#include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/UintTypes.h>
 
 #include <cstdint>
@@ -2194,6 +2196,76 @@ generateTestValuesForParametersTest()
             .expectedErrorMessage = "Malformed request.",
         },
         ParamTestCaseBundle{
+            .testName = "InvalidVault_Type",
+            .testJson =
+                R"JSON({
+                    "vault": 0
+                })JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidVault_NotHex",
+            .testJson =
+                R"JSON({
+                    "vault": "invalid_hex"
+                })JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "MissingOwner",
+            .testJson =
+                R"JSON({
+                    "vault": { "seq": 1 }
+                })JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+
+        ParamTestCaseBundle{
+            .testName = "MissingSeq",
+            .testJson =
+                R"JSON({
+                    "vault": { "owner": "abcd" }
+                })JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "SeqNotInteger",
+            .testJson =
+                R"JSON({
+                 "vault": {
+                    "owner": "abcd",
+                    "seq": "notAnInteger"
+                }})JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "InvalidOwnerFormat",
+            .testJson =
+                R"JSON({
+                "vault": {
+                    "owner": "abcd",
+                    "seq": 10
+                }})JSON",
+            .expectedError = "malformedOwner",
+            .expectedErrorMessage = "Malformed owner.",
+        },
+        ParamTestCaseBundle{
+            .testName = "BothOwnerAndSeqInvalid",
+            .testJson =
+                R"JSON({
+                "vault": {
+                    "owner": "abcd",
+                    "seq": -200
+                }})JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
             .testName = "Delegate_InvalidType",
             .testJson = R"JSON({"delegate": 123})JSON",
             .expectedError = "malformedRequest",
@@ -3059,6 +3131,55 @@ generateTestValuesForNormalPathTest()
             .mockedEntity = createPermissionedDomainObject(kACCOUNT, kINDEX1, kRANGE_MAX, 0, ripple::uint256{0}, 0)
         },
         NormalPathTestBundle{
+            .testName = "CreateVaultObjectByHexString",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "binary": true,
+                    "vault": "{}"
+                }})JSON",
+                kINDEX1
+            ),
+            .expectedIndex = ripple::uint256(kINDEX1),
+            .mockedEntity = createVault(
+                kACCOUNT,
+                kACCOUNT,
+                kRANGE_MAX,
+                "XRP",
+                ripple::toBase58(ripple::xrpAccount()),
+                ripple::uint192(0),
+                0,
+                ripple::uint256{0},
+                0
+            )
+        },
+        NormalPathTestBundle{
+            .testName = "CreateVaultObjectByAccount",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "binary": true,
+                    "vault": {{
+                        "owner": "{}",
+                        "seq": {}
+                    }}
+                }})JSON",
+                kACCOUNT,
+                kRANGE_MAX
+            ),
+            .expectedIndex =
+                ripple::keylet::vault(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX).key,
+            .mockedEntity = createVault(
+                kACCOUNT,
+                kACCOUNT,
+                kRANGE_MAX,
+                "XRP",
+                ripple::toBase58(ripple::xrpAccount()),
+                ripple::uint192(0),
+                0,
+                ripple::uint256{0},
+                0
+            )
+        },
+        NormalPathTestBundle{
             .testName = "DelegateViaStringIndex",
             .testJson = fmt::format(
                 R"JSON({{
@@ -3171,6 +3292,57 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));
+    });
+}
+
+TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
+{
+    // return valid ledgerHeader
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
+
+    boost::json::object const entry;
+
+    auto const vault = createVault(
+        kACCOUNT,
+        kACCOUNT,
+        kRANGE_MAX,
+        "XRP",
+        ripple::toBase58(ripple::xrpAccount()),
+        ripple::uint192(0),
+        0,
+        ripple::uint256{1},
+        0
+    );
+
+    auto const vaultKey =
+        ripple::keylet::vault(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX).key;
+
+    ripple::STLedgerEntry const sle{
+        ripple::SerialIter{vault.getSerializer().peekData().data(), vault.getSerializer().peekData().size()}, vaultKey
+    };
+
+    EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKey, testing::_, testing::_))
+        .WillOnce(Return(vault.getSerializer().peekData()));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
+        auto const req = json::parse(fmt::format(
+            R"JSON({{
+                "binary": false,
+                "vault": {{
+                    "owner": "{}",
+                    "seq": {}
+                }}
+            }})JSON",
+            kACCOUNT,
+            kRANGE_MAX
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+
+        EXPECT_EQ(output.result->at("node").at("Owner").as_string(), kACCOUNT);
+        EXPECT_EQ(output.result->at("node").at("Sequence").as_int64(), kRANGE_MAX);
     });
 }
 

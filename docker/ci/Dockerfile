@@ -45,6 +45,10 @@ RUN apt-get update \
         zip \
     && pip3 install -q --upgrade --no-cache-dir pip \
     && pip3 install -q --no-cache-dir \
+        # TODO: Remove this once we switch to newer Ubuntu base image
+        # lxml 6.0.0 is not compatible with our image
+        'lxml<6.0.0' \
+        \
         cmake==3.31.6 \
         conan==2.17.0 \
         gcovr \

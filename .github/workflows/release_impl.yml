@@ -69,9 +69,9 @@ jobs:
         shell: bash
         if: ${{ inputs.generate_changelog }}
         run: |
-          LAST_TAG=$(gh release view --json tagName -q .tagName)
-          LAST_TAG_COMMIT=$(git rev-parse $LAST_TAG)
-          BASE_COMMIT=$(git merge-base HEAD $LAST_TAG_COMMIT)
+          LAST_TAG="$(gh release view --json tagName -q .tagName)"
+          LAST_TAG_COMMIT="$(git rev-parse $LAST_TAG)"
+          BASE_COMMIT="$(git merge-base HEAD $LAST_TAG_COMMIT)"
           git-cliff "${BASE_COMMIT}..HEAD" --ignore-tags "nightly|-b"
           cat CHANGELOG.md >> "${RUNNER_TEMP}/release_notes.md"
 
@@ -108,10 +108,10 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         shell: bash
         run: |
-          gh release create ${{ inputs.version }} \
+          gh release create "${{ inputs.version }}" \
             ${{ inputs.overwrite_release && '--prerelease' || '' }} \
             --title "${{ inputs.title }}" \
-            --target $GITHUB_SHA \
+            --target "${GITHUB_SHA}" \
             ${{ inputs.draft && '--draft' || '' }} \
             --notes-file "${RUNNER_TEMP}/release_notes.md" \
             ./release_artifacts/clio_server*

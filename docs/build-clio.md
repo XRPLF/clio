@@ -64,7 +64,7 @@ compiler.version=12
 os=Linux
 
 [conf]
-tools.build:compiler_executables={'c': '/usr/bin/gcc-12', 'cpp': '/usr/bin/g++-12'}
+tools.build:compiler_executables={"c": "/usr/bin/gcc-12", "cpp": "/usr/bin/g++-12"}
 ```
 
 > [!NOTE]
@@ -72,12 +72,11 @@ tools.build:compiler_executables={'c': '/usr/bin/gcc-12', 'cpp': '/usr/bin/g++-1
 
 #### global.conf file
 
-Add the following to the `~/.conan2/global.conf` file:
+To increase the speed of downloading and uploading packages, add the following to the `~/.conan2/global.conf` file:
 
 ```text
 core.download:parallel={{os.cpu_count()}}
 core.upload:parallel={{os.cpu_count()}}
-tools.info.package_id:confs = ["tools.build:cflags", "tools.build:cxxflags", "tools.build:exelinkflags", "tools.build:sharedlinkflags"]
 ```
 
 #### Artifactory

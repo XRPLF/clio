@@ -89,7 +89,7 @@ getErrorInfo(ClioError code)
         {.code = ClioError::RpcMalformedAuthorizedCredentials,
          .error = "malformedAuthorizedCredentials",
          .message = "Malformed authorized credentials."},
-
+        {.code = ClioError::RpcEntryNotFound, .error = "entryNotFound", .message = "Entry Not Found."},
         // special system errors
         {.code = ClioError::RpcInvalidApiVersion, .error = JS(invalid_API_version), .message = "Invalid API version."},
         {.code = ClioError::RpcCommandIsMissing,

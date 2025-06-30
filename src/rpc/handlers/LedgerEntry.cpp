@@ -184,6 +184,11 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         );
         auto const seq = input.permissionedDomain->at(JS(seq)).as_int64();
         key = ripple::keylet::permissionedDomain(*account, seq).key;
+    } else if (input.vault) {
+        auto const account =
+            ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.vault->at(JS(owner))));
+        auto const seq = input.vault->at(JS(seq)).as_int64();
+        key = ripple::keylet::vault(*account, seq).key;
     } else if (input.delegate) {
         auto const account =
             ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.delegate->at(JS(account))));
@@ -214,13 +219,13 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
 
     if (!ledgerObject || ledgerObject->empty()) {
         if (not input.includeDeleted)
-            return Error{Status{"entryNotFound"}};
+            return Error{Status{ClioError::RpcEntryNotFound}};
         auto const deletedSeq = sharedPtrBackend_->fetchLedgerObjectSeq(key, lgrInfo.seq, ctx.yield);
         if (!deletedSeq)
-            return Error{Status{"entryNotFound"}};
+            return Error{Status{ClioError::RpcEntryNotFound}};
         ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, deletedSeq.value() - 1, ctx.yield);
         if (!ledgerObject || ledgerObject->empty())
-            return Error{Status{"entryNotFound"}};
+            return Error{Status{ClioError::RpcEntryNotFound}};
         output.deletedLedgerIndex = deletedSeq;
     }
 
@@ -326,6 +331,7 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(credential), ripple::ltCREDENTIAL},
         {JS(mptoken), ripple::ltMPTOKEN},
         {JS(permissioned_domain), ripple::ltPERMISSIONED_DOMAIN},
+        {JS(vault), ripple::ltVAULT},
         {JS(delegate), ripple::ltDELEGATE}
     };
 
@@ -415,6 +421,8 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         input.mptoken = jv.at(JS(mptoken)).as_object();
     } else if (jsonObject.contains(JS(permissioned_domain))) {
         input.permissionedDomain = jv.at(JS(permissioned_domain)).as_object();
+    } else if (jsonObject.contains(JS(vault))) {
+        input.vault = jv.at(JS(vault)).as_object();
     } else if (jsonObject.contains(JS(delegate))) {
         input.delegate = jv.at(JS(delegate)).as_object();
     }
