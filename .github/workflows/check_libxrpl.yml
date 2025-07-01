@@ -17,7 +17,7 @@ jobs:
     name: Build Clio / `libXRPL ${{ github.event.client_payload.version }}`
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:latest
+      image: ghcr.io/mathbunnyru/clio-ci:latest
 
     steps:
       - uses: actions/checkout@v4
@@ -62,7 +62,7 @@ jobs:
     needs: build
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:latest
+      image: ghcr.io/mathbunnyru/clio-ci:latest
 
     steps:
       - uses: actions/download-artifact@v4

@@ -47,7 +47,7 @@ jobs:
     uses: ./.github/workflows/build_and_test.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
+      container: '{ "image": "ghcr.io/mathbunnyru/clio-ci:latest" }'
       disable_cache: true
       conan_profile: ${{ matrix.compiler }}${{ matrix.sanitizer_ext }}
       build_type: Release

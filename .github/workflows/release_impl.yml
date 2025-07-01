@@ -37,7 +37,7 @@ jobs:
   release:
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:latest
+      image: ghcr.io/mathbunnyru/clio-ci:latest
     env:
       GH_REPO: ${{ github.repository }}
       GH_TOKEN: ${{ github.token }}
