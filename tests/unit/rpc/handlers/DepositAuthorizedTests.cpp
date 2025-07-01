@@ -240,16 +240,18 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "source_account": "{}",
                 "destination_account": "{}",
                 "ledger_index": {}
             }})JSON",
-            kACCOUNT,
-            kACCOUNT2,
-            kRANGE_MAX
-        ));
+                kACCOUNT,
+                kACCOUNT2,
+                kRANGE_MAX
+            )
+        );
 
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -267,16 +269,18 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "source_account": "{}",
                 "destination_account": "{}",
                 "ledger_index": "{}"
             }})JSON",
-            kACCOUNT,
-            kACCOUNT2,
-            kRANGE_MAX
-        ));
+                kACCOUNT,
+                kACCOUNT2,
+                kRANGE_MAX
+            )
+        );
 
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -294,16 +298,18 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "source_account": "{}",
                 "destination_account": "{}",
                 "ledger_hash": "{}"
             }})JSON",
-            kACCOUNT,
-            kACCOUNT2,
-            kLEDGER_HASH
-        ));
+                kACCOUNT,
+                kACCOUNT2,
+                kLEDGER_HASH
+            )
+        );
 
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -324,16 +330,18 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}"
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kACCOUNT2,
+            kLEDGER_HASH
+        )
+    );
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
@@ -361,16 +369,18 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}"
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kACCOUNT2,
+            kLEDGER_HASH
+        )
+    );
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
@@ -405,16 +415,18 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(accountRoot.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}"
         }})JSON",
-        kACCOUNT,
-        kACCOUNT,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
@@ -451,16 +463,18 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}"
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kACCOUNT2,
+            kLEDGER_HASH
+        )
+    );
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
@@ -498,16 +512,18 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}"
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kACCOUNT2,
+            kLEDGER_HASH
+        )
+    );
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
@@ -545,16 +561,18 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}"
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kACCOUNT2,
+            kLEDGER_HASH
+        )
+    );
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
@@ -603,18 +621,20 @@ TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
         .WillByDefault(Return(credential.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(4);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}",
             "credentials": ["{}"]
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kLEDGER_HASH,
-        ripple::strHex(credentialIndex)
-    ));
+            kACCOUNT,
+            kACCOUNT2,
+            kLEDGER_HASH,
+            ripple::strHex(credentialIndex)
+        )
+    );
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
@@ -651,18 +671,20 @@ TEST_F(RPCDepositAuthorizedTest, CredentialNotAuthorizedReturnsFalse)
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}",
             "credentials": ["{}"]
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kLEDGER_HASH,
-        ripple::strHex(credentialIndex)
-    ));
+            kACCOUNT,
+            kACCOUNT2,
+            kLEDGER_HASH,
+            ripple::strHex(credentialIndex)
+        )
+    );
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
@@ -707,18 +729,20 @@ TEST_F(RPCDepositAuthorizedTest, CredentialExpiredReturnsFalse)
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}",
             "credentials": ["{}"]
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kLEDGER_HASH,
-        ripple::strHex(credentialIndex)
-    ));
+            kACCOUNT,
+            kACCOUNT2,
+            kLEDGER_HASH,
+            ripple::strHex(credentialIndex)
+        )
+    );
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
@@ -757,19 +781,21 @@ TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}",
             "credentials": ["{}", "{}"]
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kLEDGER_HASH,
-        ripple::strHex(credentialIndex),
-        ripple::strHex(credentialIndex)
-    ));
+            kACCOUNT,
+            kACCOUNT2,
+            kLEDGER_HASH,
+            ripple::strHex(credentialIndex),
+            ripple::strHex(credentialIndex)
+        )
+    );
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
@@ -799,17 +825,19 @@ TEST_F(RPCDepositAuthorizedTest, NoElementsInCredentialsReturnsFalse)
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}",
             "credentials": []
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kLEDGER_HASH
-    ));
+            kACCOUNT,
+            kACCOUNT2,
+            kLEDGER_HASH
+        )
+    );
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
@@ -850,21 +878,24 @@ TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
 
     std::vector<std::string> credentials(9, ripple::strHex(credentialIndex));
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}",
             "credentials": [{}]
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kLEDGER_HASH,
-        fmt::join(
-            credentials | std::views::transform([](std::string const& cred) { return fmt::format("\"{}\"", cred); }),
-            ", "
+            kACCOUNT,
+            kACCOUNT2,
+            kLEDGER_HASH,
+            fmt::join(
+                credentials |
+                    std::views::transform([](std::string const& cred) { return fmt::format("\"{}\"", cred); }),
+                ", "
+            )
         )
-    ));
+    );
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};
@@ -904,18 +935,20 @@ TEST_F(RPCDepositAuthorizedTest, DifferentSubjectAccountForCredentialReturnsFals
         .WillByDefault(Return(credential.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "source_account": "{}",
             "destination_account": "{}",
             "ledger_hash": "{}",
             "credentials": ["{}"]
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kLEDGER_HASH,
-        ripple::strHex(credentialIndex)
-    ));
+            kACCOUNT,
+            kACCOUNT2,
+            kLEDGER_HASH,
+            ripple::strHex(credentialIndex)
+        )
+    );
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend_}};

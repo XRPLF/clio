@@ -166,17 +166,16 @@ public:
         static_assert(not std::is_same_v<RetType, std::any>);
 
         auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(delay);
-        return AnyOperation<RetType>(pimpl_->scheduleAfter(
-            millis,
-            [fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> std::any {
+        return AnyOperation<RetType>(
+            pimpl_->scheduleAfter(millis, [fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> std::any {
                 if constexpr (std::is_void_v<RetType>) {
                     fn(std::move(stopToken));
                     return {};
                 } else {
                     return std::make_any<RetType>(fn(std::move(stopToken)));
                 }
-            }
-        ));
+            })
+        );
     }
 
     /**
@@ -197,8 +196,7 @@ public:
 
         auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(delay);
         return AnyOperation<RetType>(pimpl_->scheduleAfter(
-            millis,
-            [fn = std::forward<decltype(fn)>(fn)](auto stopToken, auto cancelled) -> std::any {
+            millis, [fn = std::forward<decltype(fn)>(fn)](auto stopToken, auto cancelled) -> std::any {
                 if constexpr (std::is_void_v<RetType>) {
                     fn(std::move(stopToken), cancelled);
                     return {};
@@ -224,13 +222,10 @@ public:
 
         auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(interval);
         return AnyOperation<RetType>(  //
-            pimpl_->executeRepeatedly(
-                millis,
-                [fn = std::forward<decltype(fn)>(fn)] -> std::any {
-                    fn();
-                    return {};
-                }
-            )
+            pimpl_->executeRepeatedly(millis, [fn = std::forward<decltype(fn)>(fn)] -> std::any {
+                fn();
+                return {};
+            })
         );
     }
 

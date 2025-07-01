@@ -172,8 +172,10 @@ public:
      * @return A std::vector<std::string> The ledger data
      */
     std::vector<std::string>
-    loadInitialLedger(uint32_t sequence, std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2})
-        override;
+    loadInitialLedger(
+        uint32_t sequence,
+        std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2}
+    ) override;
 
     /**
      * @brief Load the initial ledger, writing data to the queue.

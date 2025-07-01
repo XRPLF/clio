@@ -93,7 +93,8 @@ CliArgs::parse(int argc, char const* argv[])
     if (parsed.count("verify") != 0u)
         return Action{Action::VerifyConfig{.configPath = std::move(configPath)}};
 
-    return Action{Action::Run{.configPath = std::move(configPath), .useNgWebServer = parsed.count("ng-web-server") != 0}
+    return Action{
+        Action::Run{.configPath = std::move(configPath), .useNgWebServer = parsed.count("ng-web-server") != 0}
     };
 }
 

@@ -187,7 +187,8 @@ tryUpgradeConnection(
         if (expectedUpgradedConnection.has_value())
             return std::move(expectedUpgradedConnection).value();
 
-        return std::unexpected{fmt::format("Error upgrading connection: {}", expectedUpgradedConnection.error().what())
+        return std::unexpected{
+            fmt::format("Error upgrading connection: {}", expectedUpgradedConnection.error().what())
         };
     }
 
@@ -247,8 +248,7 @@ Server::run()
 
     running_ = true;
     boost::asio::spawn(
-        ctx_.get(),
-        [this, acceptor = std::move(acceptor).value()](boost::asio::yield_context yield) mutable {
+        ctx_.get(), [this, acceptor = std::move(acceptor).value()](boost::asio::yield_context yield) mutable {
             while (true) {
                 boost::beast::error_code errorCode;
                 boost::asio::ip::tcp::socket socket{ctx_.get().get_executor()};
@@ -314,8 +314,7 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
 
     if (connectionHandler_.isStopping()) {
         boost::asio::spawn(
-            ctx_.get(),
-            [connection = std::move(connectionExpected).value()](boost::asio::yield_context yield) {
+            ctx_.get(), [connection = std::move(connectionExpected).value()](boost::asio::yield_context yield) {
                 web::ng::impl::ConnectionHandler::stopConnection(*connection, yield);
             }
         );
@@ -329,8 +328,7 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
     }
 
     boost::asio::spawn(
-        ctx_.get(),
-        [this, connection = std::move(connection).value()](boost::asio::yield_context yield) mutable {
+        ctx_.get(), [this, connection = std::move(connection).value()](boost::asio::yield_context yield) mutable {
             connectionHandler_.processConnection(std::move(connection), yield);
         }
     );

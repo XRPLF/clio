@@ -79,11 +79,13 @@ SubscriptionSource::SubscriptionSource(
     , onConnect_(std::move(onConnect))
     , onDisconnect_(std::move(onDisconnect))
     , onLedgerClosed_(std::move(onLedgerClosed))
-    , lastMessageTimeSecondsSinceEpoch_(PrometheusService::gaugeInt(
-          "subscription_source_last_message_time",
-          util::prometheus::Labels({{"source", fmt::format("{}:{}", ip, wsPort)}}),
-          "Seconds since epoch of the last message received from rippled subscription streams"
-      ))
+    , lastMessageTimeSecondsSinceEpoch_(
+          PrometheusService::gaugeInt(
+              "subscription_source_last_message_time",
+              util::prometheus::Labels({{"source", fmt::format("{}:{}", ip, wsPort)}}),
+              "Seconds since epoch of the last message received from rippled subscription streams"
+          )
+      )
 {
     wsConnectionBuilder_.addHeader({boost::beast::http::field::user_agent, "clio-client"})
         .addHeader({"X-User", "clio-client"})
@@ -329,9 +331,13 @@ SubscriptionSource::setValidatedRange(std::string range)
             pairs.emplace_back(sequence, sequence);
         } else {
             if (minAndMax.size() != 2) {
-                throw std::runtime_error(fmt::format(
-                    "Error parsing range: {}.Min and max should be of size 2. Got size = {}", range, minAndMax.size()
-                ));
+                throw std::runtime_error(
+                    fmt::format(
+                        "Error parsing range: {}.Min and max should be of size 2. Got size = {}",
+                        range,
+                        minAndMax.size()
+                    )
+                );
             }
             uint32_t const min = std::stoll(minAndMax[0]);
             uint32_t const max = std::stoll(minAndMax[1]);

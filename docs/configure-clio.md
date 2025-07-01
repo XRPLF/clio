@@ -5,7 +5,6 @@
 Clio needs access to a `rippled` server in order to work. The following configurations are required for Clio and `rippled` to communicate:
 
 1. In the Clio config file, provide the following:
-
    - The IP of the `rippled` server
 
    - The port on which `rippled` is accepting unencrypted WebSocket connections
@@ -13,7 +12,6 @@ Clio needs access to a `rippled` server in order to work. The following configur
    - The port on which `rippled` is handling gRPC requests
 
 2. In the `rippled` config file, you need to open:
-
    - A port to accept unencrypted WebSocket connections
 
    - A port to handle gRPC requests, with the IP(s) of Clio specified in the `secure_gateway` entry

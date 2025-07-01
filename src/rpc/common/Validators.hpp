@@ -457,7 +457,10 @@ public:
 checkIsU32Numeric(std::string_view sv);
 
 template <class HexType>
-    requires(std::is_same_v<HexType, ripple::uint160> || std::is_same_v<HexType, ripple::uint192> || std::is_same_v<HexType, ripple::uint256>)
+    requires(
+        std::is_same_v<HexType, ripple::uint160> || std::is_same_v<HexType, ripple::uint192> ||
+        std::is_same_v<HexType, ripple::uint256>
+    )
 MaybeError
 makeHexStringValidator(boost::json::value const& value, std::string_view key)
 {

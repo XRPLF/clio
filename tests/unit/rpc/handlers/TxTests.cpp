@@ -150,15 +150,17 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}",
                 "min_ledger": 1,
                 "max_ledger": 1002
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -184,14 +186,16 @@ TEST_F(RPCTxTest, InvalidBinaryV1)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}",
                 "binary": 12
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
     });
@@ -201,14 +205,16 @@ TEST_F(RPCTxTest, InvalidBinaryV2)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}",
                 "binary": 12
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_FALSE(output);
 
@@ -222,15 +228,17 @@ TEST_F(RPCTxTest, InvalidLgrRange)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}",
                 "max_ledger": 1,
                 "min_ledger": 10
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -251,13 +259,15 @@ TEST_F(RPCTxTest, TxnNotFound)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}"
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -279,15 +289,17 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}",
                 "min_ledger": 1,
                 "max_ledger": 1000
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -310,15 +322,17 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}",
                 "min_ledger": 1,
                 "max_ledger": 1000
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -342,14 +356,16 @@ TEST_F(RPCTxTest, CtidNotFoundSearchAllFalse)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "ctid": "{}",
                 "min_ledger": 1,
                 "max_ledger": 1000
             }})JSON",
-            kCTID
-        ));
+                kCTID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -377,13 +393,15 @@ TEST_F(RPCTxTest, DefaultParameter_API_v1)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}"
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
 
@@ -407,13 +425,15 @@ TEST_F(RPCTxTest, PaymentTx_API_v1)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}"
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("DeliverMax"));
@@ -438,13 +458,15 @@ TEST_F(RPCTxTest, PaymentTx_API_v2)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}"
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("tx_json"));
@@ -472,13 +494,15 @@ TEST_F(RPCTxTest, DefaultParameter_API_v2)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}"
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kDEFAULT_OUT2));
@@ -513,14 +537,16 @@ TEST_F(RPCTxTest, ReturnBinary)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}",
                 "binary": true
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));
@@ -556,14 +582,16 @@ TEST_F(RPCTxTest, ReturnBinaryWithCTID)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}",
                 "binary": true
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));
@@ -644,13 +672,15 @@ TEST_F(RPCTxTest, MintNFT)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}"
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));
@@ -671,13 +701,15 @@ TEST_F(RPCTxTest, NFTAcceptOffer)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}"
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("meta").at("nftoken_id").as_string(), kNFT_ID);
@@ -699,13 +731,15 @@ TEST_F(RPCTxTest, NFTCancelOffer)
 
     runSpawn([this, &ids](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}"
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
 
@@ -734,13 +768,15 @@ TEST_F(RPCTxTest, NFTCreateOffer)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}"
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->at("meta").at("offer_id").as_string() == kNFT_ID2);
@@ -751,15 +787,17 @@ TEST_F(RPCTxTest, CTIDAndTransactionBothProvided)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}",
                 "ctid": "{}"
             }})JSON",
-            kTXN_ID,
-            kCTID
-        ));
+                kTXN_ID,
+                kCTID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -823,13 +861,15 @@ TEST_F(RPCTxTest, CTIDNotMatch)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "ctid": "{}"
             }})JSON",
-            kCTID
-        ));
+                kCTID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -904,13 +944,15 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}"
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));
@@ -977,13 +1019,15 @@ TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvailable)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "transaction": "{}"
             }})JSON",
-            kTXN_ID
-        ));
+                kTXN_ID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));
@@ -1062,13 +1106,15 @@ TEST_F(RPCTxTest, ViaCTID)
 
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "ctid": "{}"
             }})JSON",
-            kCTID
-        ));
+                kCTID
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kOUT));
@@ -1100,13 +1146,15 @@ TEST_F(RPCTxTest, ViaLowercaseCTID)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend_, mockETLServicePtr_}};
-        auto const req = json::parse(fmt::format(
-            R"JSON({{
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
                 "command": "tx",
                 "ctid": "{}"
             }})JSON",
-            ctid
-        ));
+                ctid
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("ctid").as_string(), kCTID);

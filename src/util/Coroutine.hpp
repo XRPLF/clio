@@ -134,8 +134,7 @@ public:
             return;
 
         boost::asio::spawn(
-            yield_,
-            [signal = familySignal_, fn = std::move(fn)](boost::asio::yield_context yield) mutable {
+            yield_, [signal = familySignal_, fn = std::move(fn)](boost::asio::yield_context yield) mutable {
                 Coroutine coroutine(std::move(yield), std::move(signal));
                 fn(coroutine);
             }

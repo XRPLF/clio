@@ -202,8 +202,8 @@ INSTANTIATE_TEST_SUITE_P(
 TEST(WeightsMakeTest, CreateFromConfig)
 {
     util::config::ClioConfigDefinition mockConfig{
-        {"dos_guard.__ng_default_weight", util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(10)
-        },
+        {"dos_guard.__ng_default_weight",
+         util::config::ConfigValue{util::config::ConfigType::Integer}.defaultValue(10)},
         {"dos_guard.__ng_weights.[].method",
          util::config::Array{util::config::ConfigValue{util::config::ConfigType::String}}},
         {"dos_guard.__ng_weights.[].weight",

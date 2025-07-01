@@ -228,10 +228,12 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
 
 TEST_F(PrometheusHandleRequestTests, compressReply)
 {
-    PrometheusService::init(ClioConfigDefinition{
-        {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
-        {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
-    });
+    PrometheusService::init(
+        ClioConfigDefinition{
+            {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+            {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+        }
+    );
 
     auto& gauge = PrometheusService::gaugeInt("test_gauge", Labels{});
     ++gauge;

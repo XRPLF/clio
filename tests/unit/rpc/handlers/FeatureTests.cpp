@@ -181,12 +181,14 @@ TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaIntSequence)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{FeatureHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = boost::json::parse(fmt::format(
-            R"JSON({{
+        auto const req = boost::json::parse(
+            fmt::format(
+                R"JSON({{
                 "ledger_index": {}
             }})JSON",
-            kRANGE_MAX
-        ));
+                kRANGE_MAX
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -201,12 +203,14 @@ TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaStringSequence)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{FeatureHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = boost::json::parse(fmt::format(
-            R"JSON({{
+        auto const req = boost::json::parse(
+            fmt::format(
+                R"JSON({{
                 "ledger_index": "{}"
             }})JSON",
-            kRANGE_MAX
-        ));
+                kRANGE_MAX
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -222,12 +226,14 @@ TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaHash)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{FeatureHandler{backend_, mockAmendmentCenterPtr_}};
-        auto const req = boost::json::parse(fmt::format(
-            R"JSON({{
+        auto const req = boost::json::parse(
+            fmt::format(
+                R"JSON({{
                 "ledger_hash": "{}"
             }})JSON",
-            kLEDGER_HASH
-        ));
+                kLEDGER_HASH
+            )
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());

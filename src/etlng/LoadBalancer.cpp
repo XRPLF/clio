@@ -184,11 +184,14 @@ LoadBalancer::LoadBalancer(
             LOG(log_.warn()) << "Failed to fetch ETL state from source = " << source->toString()
                              << " Please check the configuration and network";
         } else if (etlState_ && etlState_->networkID != stateOpt->networkID) {
-            checkOnETLFailure(fmt::format(
-                "ETL sources must be on the same network. Source network id = {} does not match others network id = {}",
-                stateOpt->networkID,
-                etlState_->networkID
-            ));
+            checkOnETLFailure(
+                fmt::format(
+                    "ETL sources must be on the same network. Source network id = {} does not match others network id "
+                    "= {}",
+                    stateOpt->networkID,
+                    etlState_->networkID
+                )
+            );
         } else {
             etlState_ = stateOpt;
         }
@@ -284,9 +287,8 @@ LoadBalancer::forwardToRippled(
 
     if (forwardingCache_ and forwardingCache_->shouldCache(cmd)) {
         bool servedFromCache = true;
-        auto updater =
-            [this, &request, &clientIp, &servedFromCache, isAdmin](boost::asio::yield_context yield
-            ) -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
+        auto updater = [this, &request, &clientIp, &servedFromCache, isAdmin](boost::asio::yield_context yield)
+            -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
             servedFromCache = false;
             auto result = forwardToRippledImpl(request, clientIp, isAdmin, yield);
             if (result.has_value()) {
@@ -300,10 +302,9 @@ LoadBalancer::forwardToRippled(
         };
 
         auto result = forwardingCache_->getOrUpdate(
-            yield,
-            cmd,
-            std::move(updater),
-            [](util::ResponseExpirationCache::EntryData const& entry) { return not entry.response.contains("error"); }
+            yield, cmd, std::move(updater), [](util::ResponseExpirationCache::EntryData const& entry) {
+                return not entry.response.contains("error");
+            }
         );
         if (servedFromCache) {
             ++forwardingCounters_.cacheHit.get();

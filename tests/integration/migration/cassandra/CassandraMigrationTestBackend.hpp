@@ -73,14 +73,16 @@ public:
     writeTxIndexExample(std::string const& hash, std::string const& txType)
     {
         static auto kINSERT_TX_INDEX_EXAMPLE = [this]() {
-            return handle_.prepare(fmt::format(
-                R"(
+            return handle_.prepare(
+                fmt::format(
+                    R"(
                 INSERT INTO {}
                        (hash, tx_type)
                 VALUES (?, ?)
                 )",
-                data::cassandra::qualifiedTableName(settingsProvider_, "tx_index_example")
-            ));
+                    data::cassandra::qualifiedTableName(settingsProvider_, "tx_index_example")
+                )
+            );
         }();
         executor_.writeSync(kINSERT_TX_INDEX_EXAMPLE.bind(hash, data::cassandra::Text(txType)));
     }
@@ -97,12 +99,14 @@ public:
     fetchTxTypeViaID(std::string const& hash, boost::asio::yield_context ctx)
     {
         static auto kFETCH_TX_TYPE = [this]() {
-            return handle_.prepare(fmt::format(
-                R"(
+            return handle_.prepare(
+                fmt::format(
+                    R"(
                 SELECT tx_type FROM {} WHERE hash = ?
                 )",
-                data::cassandra::qualifiedTableName(settingsProvider_, "tx_index_example")
-            ));
+                    data::cassandra::qualifiedTableName(settingsProvider_, "tx_index_example")
+                )
+            );
         }();
         auto const res = executor_.read(ctx, kFETCH_TX_TYPE.bind(hash));
         if (not res) {
@@ -130,12 +134,14 @@ public:
     fetchTxIndexTableSize(boost::asio::yield_context ctx)
     {
         static auto kINSERT_TX_INDEX_EXAMPLE = [this]() {
-            return handle_.prepare(fmt::format(
-                R"(
+            return handle_.prepare(
+                fmt::format(
+                    R"(
                 SELECT COUNT(*) FROM {}
                 )",
-                data::cassandra::qualifiedTableName(settingsProvider_, "tx_index_example")
-            ));
+                    data::cassandra::qualifiedTableName(settingsProvider_, "tx_index_example")
+                )
+            );
         }();
 
         // This function will be called after table being dropped, catch the exception
@@ -169,14 +175,16 @@ public:
     writeLedgerAccountHash(std::uint64_t sequence, std::string const& accountHash)
     {
         static auto kINSERT_LEDGER_EXAMPLE = [this]() {
-            return handle_.prepare(fmt::format(
-                R"(
+            return handle_.prepare(
+                fmt::format(
+                    R"(
                 INSERT INTO {}
                        (sequence, account_hash)
                 VALUES (?, ?)
                 )",
-                data::cassandra::qualifiedTableName(settingsProvider_, "ledger_example")
-            ));
+                    data::cassandra::qualifiedTableName(settingsProvider_, "ledger_example")
+                )
+            );
         }();
         executor_.writeSync(kINSERT_LEDGER_EXAMPLE.bind(sequence, accountHash));
     }
@@ -193,12 +201,14 @@ public:
     fetchAccountHashViaSequence(std::uint64_t sequence, boost::asio::yield_context ctx)
     {
         static auto kFETCH_ACCOUNT_HASH = [this]() {
-            return handle_.prepare(fmt::format(
-                R"(
+            return handle_.prepare(
+                fmt::format(
+                    R"(
                 SELECT account_hash FROM {} WHERE sequence = ?
                 )",
-                data::cassandra::qualifiedTableName(settingsProvider_, "ledger_example")
-            ));
+                    data::cassandra::qualifiedTableName(settingsProvider_, "ledger_example")
+                )
+            );
         }();
         auto const res = executor_.read(ctx, kFETCH_ACCOUNT_HASH.bind(sequence));
         if (not res) {
@@ -226,12 +236,14 @@ public:
     fetchLedgerTableSize(boost::asio::yield_context ctx)
     {
         static auto kINSERT_LEDGER_EXAMPLE = [this]() {
-            return handle_.prepare(fmt::format(
-                R"(
+            return handle_.prepare(
+                fmt::format(
+                    R"(
                 SELECT COUNT(*) FROM {}
                 )",
-                data::cassandra::qualifiedTableName(settingsProvider_, "ledger_example")
-            ));
+                    data::cassandra::qualifiedTableName(settingsProvider_, "ledger_example")
+                )
+            );
         }();
 
         // This function will be called after table being dropped, catch the exception
@@ -263,12 +275,14 @@ public:
     auto
     dropDiffTable()
     {
-        return handle_.execute(fmt::format(
-            R"(
+        return handle_.execute(
+            fmt::format(
+                R"(
             DROP TABLE IF EXISTS {}
             )",
-            data::cassandra::qualifiedTableName(settingsProvider_, "diff")
-        ));
+                data::cassandra::qualifiedTableName(settingsProvider_, "diff")
+            )
+        );
     }
 
     /**
@@ -281,12 +295,14 @@ public:
     fetchDiffTableSize(boost::asio::yield_context ctx)
     {
         static auto kCOUNT_DIFF = [this]() {
-            return handle_.prepare(fmt::format(
-                R"(
+            return handle_.prepare(
+                fmt::format(
+                    R"(
                 SELECT COUNT(*) FROM {}
                 )",
-                data::cassandra::qualifiedTableName(settingsProvider_, "diff")
-            ));
+                    data::cassandra::qualifiedTableName(settingsProvider_, "diff")
+                )
+            );
         }();
 
         // This function will be called after table being dropped, catch the exception
@@ -316,8 +332,9 @@ private:
     {
         std::vector<data::cassandra::Statement> statements;
 
-        statements.emplace_back(fmt::format(
-            R"(
+        statements.emplace_back(
+            fmt::format(
+                R"(
             CREATE TABLE IF NOT EXISTS {}
                    (
                         hash blob,
@@ -325,11 +342,13 @@ private:
                      PRIMARY KEY (hash)
                    )
             )",
-            data::cassandra::qualifiedTableName(settingsProvider_, "tx_index_example")
-        ));
+                data::cassandra::qualifiedTableName(settingsProvider_, "tx_index_example")
+            )
+        );
 
-        statements.emplace_back(fmt::format(
-            R"(
+        statements.emplace_back(
+            fmt::format(
+                R"(
             CREATE TABLE IF NOT EXISTS {}
                    (
                         sequence bigint,
@@ -337,8 +356,9 @@ private:
                          PRIMARY KEY (sequence)
                    )
             )",
-            data::cassandra::qualifiedTableName(settingsProvider_, "ledger_example")
-        ));
+                data::cassandra::qualifiedTableName(settingsProvider_, "ledger_example")
+            )
+        );
         return statements;
     }
 };
