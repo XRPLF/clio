@@ -27,6 +27,7 @@
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 #include "web/ng/impl/Concepts.hpp"
+#include "web/ng/impl/SendingQueue.hpp"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -48,7 +49,6 @@
 #include <chrono>
 #include <memory>
 #include <optional>
-#include <queue>
 #include <string>
 #include <utility>
 #include <variant>
@@ -67,10 +67,11 @@ template <typename StreamType>
 class WsConnection : public WsConnectionBase {
     boost::beast::websocket::stream<StreamType> stream_;
     boost::beast::http::request<boost::beast::http::string_body> initialRequest_;
+
+    using MessageType = std::variant<Response, std::shared_ptr<std::string>>;
+    SendingQueue<MessageType> sendingQueue_;
+
     bool closed_{false};
-    std::queue<std::variant<Response, std::shared_ptr<std::string>>> sendingQueue_;
-    bool isSending_{false};
-    boost::system::error_code sendingError_;
 
 public:
     WsConnection(
@@ -83,9 +84,29 @@ public:
         : WsConnectionBase(std::move(ip), std::move(buffer), tagDecoratorFactory)
         , stream_(std::move(stream))
         , initialRequest_(std::move(initialRequest))
+        , sendingQueue_{[this](MessageType const& message, auto&& yield) {
+            boost::asio::const_buffer const buffer = std::visit(
+                util::OverloadSet{
+                    [](Response const& r) { return r.asWsResponse(); },
+                    [](std::shared_ptr<std::string> const& m) -> boost::asio::const_buffer {
+                        return boost::asio::buffer(*m);
+                    }
+                },
+                message
+            );
+            stream_.async_write(buffer, yield);
+        }}
     {
         setupWsStream();
     }
+
+    ~WsConnection() override = default;
+    WsConnection(WsConnection&&) = delete;
+    WsConnection&
+    operator=(WsConnection&&) = delete;
+    WsConnection(WsConnection const&) = delete;
+    WsConnection&
+    operator=(WsConnection const&) = delete;
 
     std::optional<Error>
     performHandshake(boost::asio::yield_context yield)
@@ -106,7 +127,7 @@ public:
     std::optional<Error>
     sendShared(std::shared_ptr<std::string> message, boost::asio::yield_context yield) override
     {
-        return sendImpl(std::move(message), yield);
+        return sendingQueue_.send(std::move(message), yield);
     }
 
     void
@@ -122,7 +143,7 @@ public:
     std::optional<Error>
     send(Response response, boost::asio::yield_context yield) override
     {
-        return sendImpl(std::move(response), yield);
+        return sendingQueue_.send(std::move(response), yield);
     }
 
     std::expected<Request, Error>
@@ -165,37 +186,6 @@ private:
                 res.set(boost::beast::http::field::server, util::build::getClioFullVersionString());
             })
         );
-    }
-
-    std::optional<Error>
-    sendImpl(std::variant<Response, std::shared_ptr<std::string>> message, boost::asio::yield_context yield)
-    {
-        if (sendingError_)
-            return sendingError_;
-
-        sendingQueue_.push(std::move(message));
-        if (isSending_)
-            return std::nullopt;
-
-        isSending_ = true;
-        while (not sendingQueue_.empty() and not sendingError_) {
-            auto const messageToSend = std::move(sendingQueue_.front());
-            sendingQueue_.pop();
-            boost::asio::const_buffer const buffer = std::visit(
-                util::OverloadSet{
-                    [](Response const& r) { return r.asWsResponse(); },
-                    [](std::shared_ptr<std::string> const& m) -> boost::asio::const_buffer {
-                        return boost::asio::buffer(*m);
-                    }
-                },
-                messageToSend
-            );
-            stream_.async_write(buffer, yield[sendingError_]);
-        }
-        isSending_ = false;
-        if (sendingError_)
-            return sendingError_;
-        return std::nullopt;
     }
 };
 
