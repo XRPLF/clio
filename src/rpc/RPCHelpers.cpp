@@ -1283,9 +1283,10 @@ postProcessOrderBook(
             } else {
                 saTakerGetsFunded = saOwnerFundsLimit;
                 offerJson["taker_gets_funded"] = toBoostJson(saTakerGetsFunded.getJson(ripple::JsonOptions::none));
-                offerJson["taker_pays_funded"] =
-                    toBoostJson(std::min(saTakerPays, ripple::multiply(saTakerGetsFunded, dirRate, saTakerPays.issue()))
-                                    .getJson(ripple::JsonOptions::none));
+                offerJson["taker_pays_funded"] = toBoostJson(
+                    std::min(saTakerPays, ripple::multiply(saTakerGetsFunded, dirRate, saTakerPays.issue()))
+                        .getJson(ripple::JsonOptions::none)
+                );
             }
 
             ripple::STAmount const saOwnerPays = (ripple::parityRate == offerRate)

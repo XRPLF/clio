@@ -282,15 +282,17 @@ TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForInitialTransaction)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtNftBurn&, MockExtNftOffer&>(state_, extBurn, extOffer);
-    reg.dispatchInitialData(etlng::model::LedgerData{
-        .transactions = transactions,
-        .objects = {},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ,
-    });
+    reg.dispatchInitialData(
+        etlng::model::LedgerData{
+            .transactions = transactions,
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ,
+        }
+    );
 }
 
 TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForTransaction)
@@ -309,15 +311,17 @@ TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForTransaction)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtTransactionNftBurn&, MockExtTransactionNftOffer&>(state_, extBurn, extOffer);
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = std::move(transactions),
-        .objects = {},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = std::move(transactions),
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, InitialObjectsEmpty)
@@ -352,15 +356,17 @@ TEST_F(RegistryTest, ObjectsDispatched)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtOnObject&>(state_, extObj);
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = {},
-        .objects = {util::createObject(), util::createObject(), util::createObject()},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = {},
+            .objects = {util::createObject(), util::createObject(), util::createObject()},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, OnLedgerDataForBatch)
@@ -377,15 +383,17 @@ TEST_F(RegistryTest, OnLedgerDataForBatch)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtLedgerData&>(state_, ext);
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = std::move(transactions),
-        .objects = {},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = std::move(transactions),
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, InitialObjectsCorrectOrderOfHookCalls)
@@ -418,15 +426,17 @@ TEST_F(RegistryTest, InitialDataCorrectOrderOfHookCalls)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtNftBurn&, MockExtInitialData&>(state_, extInitialTransaction, extInitialData);
-    reg.dispatchInitialData(etlng::model::LedgerData{
-        .transactions = std::move(transactions),
-        .objects = {},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatchInitialData(
+        etlng::model::LedgerData{
+            .transactions = std::move(transactions),
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, LedgerDataCorrectOrderOfHookCalls)
@@ -456,15 +466,17 @@ TEST_F(RegistryTest, LedgerDataCorrectOrderOfHookCalls)
     auto reg = Registry<MockExtOnObject&, MockExtTransactionNftBurn&, MockExtLedgerData&>(
         state_, extOnObject, extOnTransaction, extLedgerData
     );
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = std::move(transactions),
-        .objects = std::move(objects),
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = std::move(transactions),
+            .objects = std::move(objects),
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, ReadonlyModeLedgerDataAllowed)
@@ -481,15 +493,17 @@ TEST_F(RegistryTest, ReadonlyModeLedgerDataAllowed)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtLedgerDataReadonly&>(state_, ext);
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = std::move(transactions),
-        .objects = {},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = std::move(transactions),
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, ReadonlyModeTransactionAllowed)
@@ -506,15 +520,17 @@ TEST_F(RegistryTest, ReadonlyModeTransactionAllowed)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtTransactionNftBurnReadonly&>(state_, extTx);
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = std::move(transactions),
-        .objects = {},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = std::move(transactions),
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, ReadonlyModeObjectAllowed)
@@ -532,15 +548,17 @@ TEST_F(RegistryTest, ReadonlyModeObjectAllowed)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtOnObjectReadonly&>(state_, extObj);
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = {},
-        .objects = std::move(objects),
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = {},
+            .objects = std::move(objects),
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, ReadonlyModeInitialDataAllowed)
@@ -557,15 +575,17 @@ TEST_F(RegistryTest, ReadonlyModeInitialDataAllowed)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtInitialDataReadonly&>(state_, extInitialData);
-    reg.dispatchInitialData(etlng::model::LedgerData{
-        .transactions = std::move(transactions),
-        .objects = {},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatchInitialData(
+        etlng::model::LedgerData{
+            .transactions = std::move(transactions),
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, ReadonlyModeInitialTransactionAllowed)
@@ -582,15 +602,17 @@ TEST_F(RegistryTest, ReadonlyModeInitialTransactionAllowed)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtNftBurnReadonly&>(state_, extTx);
-    reg.dispatchInitialData(etlng::model::LedgerData{
-        .transactions = std::move(transactions),
-        .objects = {},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatchInitialData(
+        etlng::model::LedgerData{
+            .transactions = std::move(transactions),
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, ReadonlyModeInitialObjectAllowed)
@@ -630,15 +652,17 @@ TEST_F(RegistryTest, ReadonlyModeRegularExtensionsNotCalled)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtLedgerData&>(state_, extLedgerData);
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = {},
-        .objects = std::move(objects),
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = {},
+            .objects = std::move(objects),
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, MixedReadonlyAndRegularExtensions)
@@ -658,15 +682,17 @@ TEST_F(RegistryTest, MixedReadonlyAndRegularExtensions)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtLedgerDataReadonly&, MockExtLedgerData&>(state_, extReadonly, extRegular);
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = {},
-        .objects = std::move(objects),
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = {},
+            .objects = std::move(objects),
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, MonitorInterfaceExecution)
@@ -715,15 +741,17 @@ TEST_F(RegistryTest, ReadonlyModeWithAllowInReadonlyTest)
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<ExtWithAllowInReadonly&>(state_, ext);
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = {},
-        .objects = {},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = {},
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 }
 
 TEST_F(RegistryTest, ReadonlyModeExecutePluralHooksIfAllowedPaths)
@@ -757,25 +785,29 @@ TEST_F(RegistryTest, ReadonlyModeExecutePluralHooksIfAllowedPaths)
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<ExtWithBothHooksAndAllowReadonly&>(state_, ext);
 
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = transactions,
-        .objects = objects,
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = transactions,
+            .objects = objects,
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 
-    reg.dispatchInitialData(etlng::model::LedgerData{
-        .transactions = std::move(transactions),
-        .objects = {},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatchInitialData(
+        etlng::model::LedgerData{
+            .transactions = std::move(transactions),
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 
     reg.dispatchInitialObjects(kSEQ, objects, {});
 }
@@ -815,25 +847,29 @@ TEST_F(RegistryTest, ReadonlyModeExecuteByOneHooksIfAllowedPaths)
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<ExtWithBothHooksAndAllowReadonly&>(state_, ext);
 
-    reg.dispatch(etlng::model::LedgerData{
-        .transactions = transactions,
-        .objects = objects,
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatch(
+        etlng::model::LedgerData{
+            .transactions = transactions,
+            .objects = objects,
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 
-    reg.dispatchInitialData(etlng::model::LedgerData{
-        .transactions = std::move(transactions),
-        .objects = {},
-        .successors = {},
-        .edgeKeys = {},
-        .header = header,
-        .rawHeader = {},
-        .seq = kSEQ
-    });
+    reg.dispatchInitialData(
+        etlng::model::LedgerData{
+            .transactions = std::move(transactions),
+            .objects = {},
+            .successors = {},
+            .edgeKeys = {},
+            .header = header,
+            .rawHeader = {},
+            .seq = kSEQ
+        }
+    );
 
     reg.dispatchInitialObjects(kSEQ, objects, {});
 }

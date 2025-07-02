@@ -36,8 +36,8 @@ TEST(TxUtilTests, txTypesInLowercase)
     );
 
     std::for_each(
-        ripple::TxFormats::getInstance().begin(),
-        ripple::TxFormats::getInstance().end(),
-        [&](auto const& pair) { EXPECT_TRUE(types.find(util::toLower(pair.getName())) != types.end()); }
+        ripple::TxFormats::getInstance().begin(), ripple::TxFormats::getInstance().end(), [&](auto const& pair) {
+            EXPECT_TRUE(types.find(util::toLower(pair.getName())) != types.end());
+        }
     );
 }

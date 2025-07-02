@@ -75,10 +75,9 @@ public:
     {
         auto data = data_->template lock<std::scoped_lock>();
         auto const bucket = std::lower_bound(
-            data->buckets.begin(),
-            data->buckets.end(),
-            value,
-            [](Bucket const& bucket, ValueType const& value) { return bucket.upperBound < value; }
+            data->buckets.begin(), data->buckets.end(), value, [](Bucket const& bucket, ValueType const& value) {
+                return bucket.upperBound < value;
+            }
         );
         if (bucket != data->buckets.end()) {
             ++bucket->count;

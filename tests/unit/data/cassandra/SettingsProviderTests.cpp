@@ -160,13 +160,17 @@ TEST_F(SettingsProviderTest, SecureBundleConfig)
 TEST_F(SettingsProviderTest, CertificateConfig)
 {
     TmpFile const file{"certificateData"};
-    auto const cfg = getParseSettingsConfig(json::parse(fmt::format(
-        R"JSON({{
+    auto const cfg = getParseSettingsConfig(
+        json::parse(
+            fmt::format(
+                R"JSON({{
             "database.cassandra.contact_points": "127.0.0.1",
             "database.cassandra.certfile": "{}"
         }})JSON",
-        file.path
-    )));
+                file.path
+            )
+        )
+    );
     SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
     auto const settings = provider.getSettings();
