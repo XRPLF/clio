@@ -88,6 +88,8 @@ public:
         ErrorHandler errorHandler
     );
 
+    ~SubscriptionContext() override;
+
     /**
      * @brief Send message to the client
      * @note This method does nothing after disconnected() was called.

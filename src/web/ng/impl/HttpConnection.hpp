@@ -79,9 +79,6 @@ class HttpConnection : public UpgradableConnection {
 
     using MessageType = boost::beast::http::response<boost::beast::http::string_body>;
     SendingQueue<MessageType> sendingQueue_;
-    // std::queue<MessageType> sendingQueue_;
-    // boost::system::error_code sendingError_;
-    // bool isSending_{false};
 
     bool closed_{false};
 

@@ -19,6 +19,7 @@
 
 #include "web/ng/SubscriptionContext.hpp"
 
+#include "util/Assert.hpp"
 #include "util/Taggable.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 
@@ -48,6 +49,11 @@ SubscriptionContext::SubscriptionContext(
     , yield_(yield)
     , errorHandler_(std::move(errorHandler))
 {
+}
+
+SubscriptionContext::~SubscriptionContext()
+{
+    ASSERT(disconnected_, "SubscriptionContext must be disconnected before destroying");
 }
 
 void
