@@ -23,7 +23,7 @@
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <string>
 

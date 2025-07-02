@@ -32,8 +32,6 @@
 #include "util/config/Types.hpp"
 #include "util/config/ValueView.hpp"
 
-#include <fmt/core.h>
-
 #include <algorithm>
 #include <chrono>
 #include <cmath>

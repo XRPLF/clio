@@ -16,7 +16,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 USER root
 WORKDIR /root
 
-ARG LLVM_TOOLS_VERSION=19
+ARG LLVM_TOOLS_VERSION=20
 
 # Add repositories
 RUN apt-get update \

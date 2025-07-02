@@ -22,7 +22,7 @@
 #include "util/async/Error.hpp"
 #include "util/async/impl/ErasedOperation.hpp"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <fmt/std.h>
 
 #include <any>

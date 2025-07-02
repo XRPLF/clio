@@ -23,7 +23,7 @@
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/Error.hpp"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <array>

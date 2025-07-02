@@ -24,8 +24,8 @@
 #include "util/config/Types.hpp"
 #include "util/log/Logger.hpp"
 
-#include <fmt/core.h>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include <algorithm>
 #include <array>

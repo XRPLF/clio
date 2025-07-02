@@ -31,7 +31,7 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/parse.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/Blob.h>

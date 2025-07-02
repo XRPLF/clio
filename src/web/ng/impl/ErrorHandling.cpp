@@ -27,7 +27,7 @@
 
 #include <boost/beast/http/status.hpp>
 #include <boost/json/object.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/protocol/jss.h>
 
 #include <optional>

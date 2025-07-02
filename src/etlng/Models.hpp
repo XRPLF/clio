@@ -22,7 +22,7 @@
 #include "util/Concepts.hpp"
 
 #include <boost/json/object.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/proto/org/xrpl/rpc/v1/get_ledger.pb.h>

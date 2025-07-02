@@ -21,7 +21,7 @@
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/Result.hpp"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <cstdint>
 #include <string>

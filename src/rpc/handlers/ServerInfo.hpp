@@ -34,7 +34,7 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/BuildInfo.h>

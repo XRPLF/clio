@@ -21,7 +21,7 @@
 
 #include "rpc/JS.hpp"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/strHex.h>

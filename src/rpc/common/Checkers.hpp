@@ -24,7 +24,7 @@
 
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <optional>
 #include <string>

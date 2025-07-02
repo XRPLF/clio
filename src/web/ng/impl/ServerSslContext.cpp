@@ -23,7 +23,7 @@
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ssl/context.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <expected>
 #include <fstream>
