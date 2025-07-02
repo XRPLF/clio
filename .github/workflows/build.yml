@@ -85,6 +85,23 @@ jobs:
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
+  package:
+    name: Build packages
+
+    uses: ./.github/workflows/build_impl.yml
+    with:
+      runs_on: heavy
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:0d262e74bcd286ccd6fc36e45990ff2e6b8d8430" }'
+      conan_profile: gcc
+      build_type: Release
+      disable_cache: false
+      code_coverage: false
+      static: true
+      upload_clio_server: false
+      package: true
+      targets: package
+      analyze_build_time: false
+
   check_config:
     name: Check Config Description
     needs: build-and-test

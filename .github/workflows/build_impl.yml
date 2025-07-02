@@ -59,6 +59,11 @@ on:
         type: string
         default: ""
 
+      package:
+        description: Build Linux deb package
+        required: false
+        type: boolean
+
     secrets:
       CODECOV_TOKEN:
         required: false
@@ -111,6 +116,7 @@ jobs:
           static: ${{ inputs.static }}
           time_trace: ${{ inputs.analyze_build_time }}
           use_mold: ${{ runner.os != 'macOS' }}
+          package: ${{ inputs.package }}
 
       - name: Build Clio
         uses: ./.github/actions/build_clio
@@ -170,6 +176,13 @@ jobs:
         with:
           name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_integration_tests
+
+      - name: Upload Clio Linux package
+        if: inputs.package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Clio_debian_package
+          path: build/*.deb
 
       - name: Save cache
         if: ${{ !inputs.disable_cache && github.ref == 'refs/heads/develop' }}

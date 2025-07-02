@@ -1,0 +1,39 @@
+#!/bin/sh
+
+set -e
+
+USER_NAME=clio
+GROUP_NAME=clio
+CLIO_PREFIX="/opt/clio"
+CLIO_BIN="$CLIO_PREFIX/bin/clio_server"
+CLIO_CONFIG="$CLIO_PREFIX/etc/config.json"
+
+case "$1" in
+    configure)
+        if ! id -u "$USER_NAME" >/dev/null 2>&1; then
+            adduser --system --quiet \
+                --home /nonexistent --no-create-home \
+                --disabled-password \
+                --group "$GROUP_NAME"
+        fi
+
+        install -d -o "$USER_NAME" -g "$GROUP_NAME" /var/log/clio
+
+        if [ -f "$CLIO_CONFIG" ]; then
+            chown "$USER_NAME:$GROUP_NAME" "$CLIO_CONFIG"
+        fi
+
+        chown -R "$USER_NAME:$GROUP_NAME" "$CLIO_PREFIX"
+
+        ln -sf "$CLIO_BIN" /usr/bin/clio_server
+
+        ;;
+    abort-upgrade|abort-remove|abort-deconfigure)
+        ;;
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+exit 0
