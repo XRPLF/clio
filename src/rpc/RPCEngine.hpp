@@ -37,7 +37,6 @@
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
-#include <fmt/core.h>
 #include <fmt/format.h>
 #include <xrpl/protocol/ErrorCodes.h>
 

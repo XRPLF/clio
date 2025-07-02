@@ -25,7 +25,7 @@
 #include "util/log/Logger.hpp"
 
 #include <cassandra.h>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <stdexcept>
 #include <string>

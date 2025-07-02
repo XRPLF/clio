@@ -30,7 +30,7 @@
 #include <boost/asio/ip/network_v4.hpp>
 #include <boost/asio/ip/network_v6.hpp>
 #include <boost/iterator/transform_iterator.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <regex>

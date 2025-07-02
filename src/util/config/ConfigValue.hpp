@@ -25,7 +25,7 @@
 #include "util/config/Error.hpp"
 #include "util/config/Types.hpp"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <cstddef>
 #include <cstdint>

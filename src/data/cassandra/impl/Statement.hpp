@@ -28,7 +28,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <cassandra.h>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/STAccount.h>

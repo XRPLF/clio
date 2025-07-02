@@ -31,7 +31,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/json/object.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Book.h>
 #include <xrpl/protocol/LedgerHeader.h>

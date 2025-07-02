@@ -18,6 +18,7 @@ concurrency:
 
 env:
   CONAN_PROFILE: clang
+  LLVM_TOOLS_VERSION: 20
 
 jobs:
   clang_tidy:
@@ -61,7 +62,7 @@ jobs:
         shell: bash
         id: run_clang_tidy
         run: |
-          run-clang-tidy-19 -p build -j "${{ steps.number_of_threads.outputs.threads_number }}" -fix -quiet 1>output.txt
+          run-clang-tidy-${{ env.LLVM_TOOLS_VERSION }} -p build -j "${{ steps.number_of_threads.outputs.threads_number }}" -fix -quiet 1>output.txt
 
       - name: Fix local includes and clang-format style
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}

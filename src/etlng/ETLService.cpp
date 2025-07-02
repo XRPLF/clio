@@ -56,7 +56,6 @@
 
 #include <boost/json/object.hpp>
 #include <boost/signals2/connection.hpp>
-#include <fmt/core.h>
 #include <xrpl/protocol/LedgerHeader.h>
 
 #include <chrono>

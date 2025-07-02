@@ -34,7 +34,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/beast/http/field.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <atomic>
 #include <chrono>

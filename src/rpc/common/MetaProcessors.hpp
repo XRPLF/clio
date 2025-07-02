@@ -25,7 +25,7 @@
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/value.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <cstddef>
 #include <functional>

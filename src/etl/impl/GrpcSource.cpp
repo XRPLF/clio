@@ -26,7 +26,7 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/security/credentials.h>
 #include <grpcpp/support/channel_arguments.h>

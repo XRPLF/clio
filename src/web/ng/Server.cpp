@@ -44,7 +44,7 @@
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
 #include <boost/system/system_error.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <chrono>
 #include <cstddef>

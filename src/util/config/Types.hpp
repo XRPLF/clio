@@ -21,7 +21,7 @@
 
 #include "util/UnsupportedType.hpp"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <cstdint>
 #include <expected>

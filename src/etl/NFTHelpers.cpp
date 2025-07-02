@@ -19,7 +19,7 @@
 
 #include "data/DBHelpers.hpp"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>

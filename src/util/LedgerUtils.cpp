@@ -36,7 +36,7 @@ LedgerTypes::getLedgerEntryTypeFromStr(std::string const& entryName)
         return map;
     }();
 
-    if (kTYPE_MAP.find(entryName) == kTYPE_MAP.end())
+    if (!kTYPE_MAP.contains(entryName))
         return ripple::ltANY;
 
     return kTYPE_MAP.at(entryName);

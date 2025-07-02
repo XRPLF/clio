@@ -45,7 +45,7 @@
 #include <boost/json/value_to.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/lexical_cast/bad_lexical_cast.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>

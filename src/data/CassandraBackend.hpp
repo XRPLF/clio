@@ -40,7 +40,7 @@
 #include <boost/uuid/string_generator.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <cassandra.h>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>

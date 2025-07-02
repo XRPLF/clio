@@ -29,7 +29,7 @@
 #include <boost/json/parse.hpp>
 #include <boost/json/parse_options.hpp>
 #include <boost/json/value.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <cstddef>

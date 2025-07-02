@@ -31,7 +31,6 @@
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
-#include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/jss.h>
 
 #include <string>

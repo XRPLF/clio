@@ -48,7 +48,7 @@
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
 #include <boost/system/system_error.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <test_data/SslCert.hpp>
 

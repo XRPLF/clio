@@ -40,7 +40,7 @@
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
 #include <boost/json/value_to.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/protocol/jss.h>
 
 #include <algorithm>

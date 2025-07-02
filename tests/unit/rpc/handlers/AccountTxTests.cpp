@@ -28,7 +28,7 @@
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>

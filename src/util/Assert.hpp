@@ -29,7 +29,6 @@
 #include <boost/stacktrace.hpp>
 #include <boost/stacktrace/stacktrace.hpp>
 #endif  // CLIO_WITHOUT_STACKTRACE
-#include <fmt/core.h>
 #include <fmt/format.h>
 
 #include <cstdlib>

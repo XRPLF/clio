@@ -24,7 +24,7 @@
 #include "data/cassandra/SettingsProvider.hpp"
 #include "data/cassandra/Types.hpp"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <functional>
 #include <string>
