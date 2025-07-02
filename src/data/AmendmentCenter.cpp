@@ -78,17 +78,20 @@ WritingAmendmentKey::WritingAmendmentKey(std::string amendmentName) : AmendmentK
 
 }  // namespace impl
 
-AmendmentKey::operator std::string const&() const
+AmendmentKey::
+operator std::string const&() const
 {
     return name;
 }
 
-AmendmentKey::operator std::string_view() const
+AmendmentKey::
+operator std::string_view() const
 {
     return name;
 }
 
-AmendmentKey::operator ripple::uint256() const
+AmendmentKey::
+operator ripple::uint256() const
 {
     return Amendment::getAmendmentId(name);
 }

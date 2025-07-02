@@ -52,16 +52,18 @@ TEST_F(RPCVersionHandlerTest, Default)
         {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(kDEFAULT_API_VERSION)}
     };
 
-    boost::json::value jsonData = boost::json::parse(fmt::format(
-        R"JSON({{
+    boost::json::value jsonData = boost::json::parse(
+        fmt::format(
+            R"JSON({{
             "api_version.min": {},
             "api_version.max": {},
             "api_version.default": {}
         }})JSON",
-        kMIN_API_VERSION,
-        kMAX_API_VERSION,
-        kDEFAULT_API_VERSION
-    ));
+            kMIN_API_VERSION,
+            kMAX_API_VERSION,
+            kDEFAULT_API_VERSION
+        )
+    );
 
     runSpawn([&](auto yield) {
         auto const handler = AnyHandler{VersionHandler{cfg}};

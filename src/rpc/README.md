@@ -17,7 +17,6 @@ See [tests/unit/rpc](https://github.com/XRPLF/clio/tree/develop/tests/unit/rpc) 
 Handlers need to fulfil the requirements specified by the `SomeHandler` concept (see `rpc/common/Concepts.hpp`):
 
 - Expose types:
-
   - `Input` - The POD struct which acts as input for the handler
 
   - `Output` - The POD struct which acts as output of a valid handler invocation

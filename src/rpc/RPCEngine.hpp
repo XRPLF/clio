@@ -158,9 +158,8 @@ public:
         }
 
         if (not ctx.isAdmin and responseCache_ and responseCache_->shouldCache(ctx.method)) {
-            auto updater =
-                [this, &ctx](boost::asio::yield_context
-                ) -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
+            auto updater = [this, &ctx](boost::asio::yield_context)
+                -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
                 auto result = buildResponseImpl(ctx);
 
                 auto const extracted =

@@ -684,14 +684,16 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
 
 TEST_F(RPCSubscribeHandlerTest, Accounts)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "accounts": ["{}", "{}", "{}"]
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kACCOUNT2
-    ));
+            kACCOUNT,
+            kACCOUNT2,
+            kACCOUNT2
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler =
             AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
@@ -707,14 +709,16 @@ TEST_F(RPCSubscribeHandlerTest, Accounts)
 
 TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "accounts_proposed": ["{}", "{}", "{}"]
         }})JSON",
-        kACCOUNT,
-        kACCOUNT2,
-        kACCOUNT2
-    ));
+            kACCOUNT,
+            kACCOUNT2,
+            kACCOUNT2
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler =
             AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
@@ -731,8 +735,9 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
 
 TEST_F(RPCSubscribeHandlerTest, JustBooks)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "books":
             [
                 {{
@@ -748,8 +753,9 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
                 }}
             ]
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler =
             AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
@@ -763,8 +769,9 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
 
 TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "books":
             [
                 {{
@@ -781,8 +788,9 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
                 }}
             ]
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     runSpawn([&, this](auto yield) {
         auto const handler =
             AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
@@ -796,8 +804,9 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
 
 TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "books":
             [
                 {{
@@ -815,8 +824,9 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
                 }}
             ]
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     backend_->setRange(kMIN_SEQ, kMAX_SEQ);
 
     auto const issuer = getAccountIdWithString(kACCOUNT);
@@ -969,8 +979,9 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
 
 TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
 {
-    auto const input = json::parse(fmt::format(
-        R"JSON({{
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
             "books":
             [
                 {{
@@ -987,8 +998,9 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
                 }}
             ]
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     backend_->setRange(kMIN_SEQ, kMAX_SEQ);
 
     auto const issuer = getAccountIdWithString(kACCOUNT);

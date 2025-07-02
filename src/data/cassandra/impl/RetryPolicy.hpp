@@ -45,11 +45,13 @@ public:
      * @brief Create a new retry policy instance with the io_context provided
      */
     ExponentialBackoffRetryPolicy(boost::asio::io_context& ioc)
-        : retry_(util::makeRetryExponentialBackoff(
-              std::chrono::milliseconds(1),
-              std::chrono::seconds(1),
-              boost::asio::make_strand(ioc)
-          ))
+        : retry_(
+              util::makeRetryExponentialBackoff(
+                  std::chrono::milliseconds(1),
+                  std::chrono::seconds(1),
+                  boost::asio::make_strand(ioc)
+              )
+          )
     {
     }
 

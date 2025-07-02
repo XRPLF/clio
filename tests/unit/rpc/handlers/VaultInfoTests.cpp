@@ -191,13 +191,15 @@ TEST_F(RPCVaultInfoHandlerTest, InputHasOwnerButNotFoundResultsInError)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     // Input JSON using vault object
-    auto static const kINPUT = boost::json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = boost::json::parse(
+        fmt::format(
+            R"JSON({{
             "owner": "{}",
             "seq": 3
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
 
     // Run the handler
     auto const handler = AnyHandler{VaultInfoHandler{backend_}};
@@ -219,12 +221,14 @@ TEST_F(RPCVaultInfoHandlerTest, VaultIDFailsVaultDeserializationReturnsEntryNotF
     EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKey, kSEQ, _))
         .WillOnce(Return(std::nullopt));  // intentionally invalid vault
 
-    auto const kINPUT = boost::json::parse(fmt::format(
-        R"({{
+    auto const kINPUT = boost::json::parse(
+        fmt::format(
+            R"({{
             "vault_id": "{}"
         }})",
-        kVAULT_ID
-    ));
+            kVAULT_ID
+        )
+    );
 
     auto const handler = AnyHandler{VaultInfoHandler{backend_}};
     runSpawn([&](auto yield) {
@@ -258,12 +262,14 @@ TEST_F(RPCVaultInfoHandlerTest, MissingIssuanceObject)
     EXPECT_CALL(*backend_, doFetchLedgerObject(mptIssuance, kSEQ, _))
         .WillOnce(Return(std::nullopt));  // Missing issuance
 
-    auto static const kINPUT = boost::json::parse(fmt::format(
-        R"({{
+    auto static const kINPUT = boost::json::parse(
+        fmt::format(
+            R"({{
             "vault_id": "{}"
         }})",
-        kVAULT_ID
-    ));
+            kVAULT_ID
+        )
+    );
 
     auto const handler = AnyHandler{VaultInfoHandler{backend_}};
     runSpawn([&](auto yield) {
@@ -340,12 +346,14 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
         .WillOnce(Return(issuance.getSerializer().peekData()));
 
     // Input JSON using vault_id
-    auto static const kINPUT = boost::json::parse(fmt::format(
-        R"({{
+    auto static const kINPUT = boost::json::parse(
+        fmt::format(
+            R"({{
             "vault_id": "{}"
         }})",
-        kVAULT_ID
-    ));
+            kVAULT_ID
+        )
+    );
 
     // Run the handler
     auto const handler = AnyHandler{VaultInfoHandler{backend_}};
@@ -427,15 +435,17 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
         .WillOnce(Return(issuance.getSerializer().peekData()));
 
     // Input JSON using vault object
-    auto static const kINPUT = boost::json::parse(fmt::format(
-        R"JSON({{
+    auto static const kINPUT = boost::json::parse(
+        fmt::format(
+            R"JSON({{
             "owner": "{}",
             "seq": {},
             "ledger_index": 30
         }})JSON",
-        kACCOUNT,
-        kSEQ
-    ));
+            kACCOUNT,
+            kSEQ
+        )
+    );
 
     // Run the handler
     auto const handler = AnyHandler{VaultInfoHandler{backend_}};

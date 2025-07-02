@@ -512,17 +512,19 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": true
             }})JSON",
-            kACCOUNT,
-            kMIN_SEQ + 1,
-            kMAX_SEQ - 1
-        ));
+                kACCOUNT,
+                kMIN_SEQ + 1,
+                kMAX_SEQ - 1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
@@ -554,17 +556,19 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
             }})JSON",
-            kACCOUNT,
-            kMIN_SEQ + 1,
-            kMAX_SEQ - 1
-        ));
+                kACCOUNT,
+                kMIN_SEQ + 1,
+                kMAX_SEQ - 1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
@@ -596,17 +600,19 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": true
             }})JSON",
-            kACCOUNT,
-            -1,
-            -1
-        ));
+                kACCOUNT,
+                -1,
+                -1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
@@ -638,17 +644,19 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
             }})JSON",
-            kACCOUNT,
-            -1,
-            -1
-        ));
+                kACCOUNT,
+                -1,
+                -1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
@@ -678,17 +686,19 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "binary": true
             }})JSON",
-            kACCOUNT,
-            -1,
-            -1
-        ));
+                kACCOUNT,
+                -1,
+                -1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
@@ -732,17 +742,19 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrueV2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "binary": true
             }})JSON",
-            kACCOUNT,
-            -1,
-            -1
-        ));
+                kACCOUNT,
+                -1,
+                -1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
@@ -784,8 +796,9 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
@@ -793,10 +806,11 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
                 "forward": false,
                 "marker": {{"ledger": 10, "seq": 11}}
             }})JSON",
-            kACCOUNT,
-            -1,
-            -1
-        ));
+                kACCOUNT,
+                -1,
+                -1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
@@ -818,18 +832,20 @@ TEST_F(RPCAccountTxHandlerTest, LimitIsCapped)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "limit": 100000,
                 "forward": false
             }})JSON",
-            kACCOUNT,
-            -1,
-            -1
-        ));
+                kACCOUNT,
+                -1,
+                -1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
@@ -850,19 +866,21 @@ TEST_F(RPCAccountTxHandlerTest, LimitAllowedUpToCap)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "limit": {},
                 "forward": false
             }})JSON",
-            kACCOUNT,
-            -1,
-            -1,
-            AccountTxHandler::kLIMIT_MAX - 1
-        ));
+                kACCOUNT,
+                -1,
+                -1,
+                AccountTxHandler::kLIMIT_MAX - 1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
@@ -898,14 +916,16 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index": {}
             }})JSON",
-            kACCOUNT,
-            kMAX_SEQ - 1
-        ));
+                kACCOUNT,
+                kMAX_SEQ - 1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
@@ -924,14 +944,16 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index": {}
             }})JSON",
-            kACCOUNT,
-            kMAX_SEQ - 1
-        ));
+                kACCOUNT,
+                kMAX_SEQ - 1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -947,14 +969,16 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index": "{}"
             }})JSON",
-            kACCOUNT,
-            kMAX_SEQ - 1
-        ));
+                kACCOUNT,
+                kMAX_SEQ - 1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -989,14 +1013,16 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_hash": "{}"
             }})JSON",
-            kACCOUNT,
-            kLEDGER_HASH
-        ));
+                kACCOUNT,
+                kLEDGER_HASH
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
@@ -1033,13 +1059,15 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index": "validated"
             }})JSON",
-            kACCOUNT
-        ));
+                kACCOUNT
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
@@ -1071,17 +1099,19 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
             }})JSON",
-            kACCOUNT,
-            kMIN_SEQ + 2,
-            kMAX_SEQ - 1
-        ));
+                kACCOUNT,
+                kMIN_SEQ + 2,
+                kMAX_SEQ - 1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
@@ -1113,17 +1143,19 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false
             }})JSON",
-            kACCOUNT,
-            kMIN_SEQ + 1,
-            kMAX_SEQ - 2
-        ));
+                kACCOUNT,
+                kMIN_SEQ + 1,
+                kMAX_SEQ - 2
+            )
+        );
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
@@ -1355,18 +1387,20 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false,
                 "marker": {{"ledger": 10, "seq": 11}}
             }})JSON",
-            kACCOUNT,
-            -1,
-            -1
-        ));
+                kACCOUNT,
+                -1,
+                -1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(out));
@@ -1603,18 +1637,20 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(
-            R"JSON({{
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
                 "account": "{}",
                 "ledger_index_min": {},
                 "ledger_index_max": {},
                 "forward": false,
                 "marker": {{"ledger": 10, "seq": 11}}
             }})JSON",
-            kACCOUNT,
-            -1,
-            -1
-        ));
+                kACCOUNT,
+                -1,
+                -1
+            )
+        );
         auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(out));

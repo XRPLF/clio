@@ -159,8 +159,10 @@ public:
      * @param transactions The transactions in the current ledger.
      */
     void
-    pubBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions)
-        final;
+    pubBookChanges(
+        ripple::LedgerHeader const& lgrInfo,
+        std::vector<data::TransactionAndMetadata> const& transactions
+    ) final;
 
     /**
      * @brief Subscribe to the proposed transactions feed.

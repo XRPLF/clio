@@ -40,8 +40,11 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         with:
-          branch: update/pre-commit-hooks
-          title: "style: Update pre-commit hooks"
           commit-message: "style: Update pre-commit hooks"
+          committer: Clio CI <skuznetsov@ripple.com>
+          branch: update/pre-commit-hooks
+          branch-suffix: timestamp
+          delete-branch: true
+          title: "style: Update pre-commit hooks"
           body: Update versions of pre-commit hooks to latest version.
           reviewers: "godexsoft,kuznetsss,PeterChen13579,mathbunnyru"

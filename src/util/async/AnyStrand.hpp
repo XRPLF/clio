@@ -146,13 +146,10 @@ public:
 
         auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(interval);
         return AnyOperation<RetType>(  //
-            pimpl_->executeRepeatedly(
-                millis,
-                [fn = std::forward<decltype(fn)>(fn)] -> std::any {
-                    fn();
-                    return {};
-                }
-            )
+            pimpl_->executeRepeatedly(millis, [fn = std::forward<decltype(fn)>(fn)] -> std::any {
+                fn();
+                return {};
+            })
         );
     }
 

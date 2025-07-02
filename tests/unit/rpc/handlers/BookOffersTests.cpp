@@ -1152,11 +1152,12 @@ generateNormalPathBookOffersTestBundles()
                 },
             .ledgerObjectCalls = 6,
             .mockedOffers =
-                std::vector<ripple::STObject>{// After offer1, balance is 30 - 2*10 = 10
-                                              gets10USDPays20XRPOffer,
-                                              // offer2 not fully funded, balance is 10, rate is 2, so only
-                                              // gets 5
-                                              gets10USDPays20XRPOffer
+                std::vector<ripple::STObject>{
+                    // After offer1, balance is 30 - 2*10 = 10
+                    gets10USDPays20XRPOffer,
+                    // offer2 not fully funded, balance is 10, rate is 2, so only
+                    // gets 5
+                    gets10USDPays20XRPOffer
                 },
             .expectedJson = fmt::format(
                 R"JSON({{
@@ -1495,8 +1496,9 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    static auto const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    static auto const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "ledger_index": 30,
             "taker_gets":
             {{
@@ -1508,8 +1510,9 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
                 "issuer": "{}"
             }}
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(kINPUT, Context{.yield = yield});
@@ -1526,8 +1529,9 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    static auto const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    static auto const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "ledger_index": "30",
             "taker_gets":
             {{
@@ -1539,8 +1543,9 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
                 "issuer": "{}"
             }}
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(kINPUT, Context{.yield = yield});
@@ -1558,8 +1563,9 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
-    static auto const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    static auto const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "ledger_hash": "{}",
             "taker_gets":
             {{
@@ -1571,9 +1577,10 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
                 "issuer": "{}"
             }}
         }})JSON",
-        kLEDGER_HASH,
-        kACCOUNT
-    ));
+            kLEDGER_HASH,
+            kACCOUNT
+        )
+    );
     auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(kINPUT, Context{.yield = yield});
@@ -1635,8 +1642,9 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    static auto const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    static auto const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "taker_gets":
             {{
                 "currency": "XRP"
@@ -1648,8 +1656,9 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
             }},
             "limit": 5
         }})JSON",
-        kACCOUNT
-    ));
+            kACCOUNT
+        )
+    );
     auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(kINPUT, Context{.yield = yield});
@@ -1709,8 +1718,9 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    static auto const kINPUT = json::parse(fmt::format(
-        R"JSON({{
+    static auto const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
             "taker_gets":
             {{
                 "currency": "XRP"
@@ -1722,9 +1732,10 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
             }},
             "limit": {}
         }})JSON",
-        kACCOUNT,
-        BookOffersHandler::kLIMIT_MAX + 1
-    ));
+            kACCOUNT,
+            BookOffersHandler::kLIMIT_MAX + 1
+        )
+    );
     auto const handler = AnyHandler{BookOffersHandler{backend_, mockAmendmentCenterPtr_}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(kINPUT, Context{.yield = yield});

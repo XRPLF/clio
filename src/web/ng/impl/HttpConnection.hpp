@@ -146,8 +146,10 @@ public:
     }
 
     std::optional<Error>
-    sendRaw(boost::beast::http::response<boost::beast::http::string_body> response, boost::asio::yield_context yield)
-        override
+    sendRaw(
+        boost::beast::http::response<boost::beast::http::string_body> response,
+        boost::asio::yield_context yield
+    ) override
     {
         return sendingQueue_.send(std::move(response), yield);
     }
