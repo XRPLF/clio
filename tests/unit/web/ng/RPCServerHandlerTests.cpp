@@ -174,8 +174,7 @@ TEST_F(NgRpcServerHandlerTest, CoroutineSleepsUntilRpcEngineFinishes)
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             boost::asio::spawn(
-                ctx_,
-                [this, &rpcEngineDone, fn = std::forward<decltype(fn)>(fn)](boost::asio::yield_context yield) {
+                ctx_, [this, &rpcEngineDone, fn = std::forward<decltype(fn)>(fn)](boost::asio::yield_context yield) {
                     EXPECT_CALL(*rpcEngine_, notifyBadSyntax);
                     fn(yield);
                     rpcEngineDone.Call();
@@ -440,9 +439,9 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_OutdatedWarning)
 
         std::unordered_set<int64_t> warningCodes;
         std::ranges::transform(
-            jsonResponse.at("warnings").as_array(),
-            std::inserter(warningCodes, warningCodes.end()),
-            [](auto const& w) { return w.as_object().at("id").as_int64(); }
+            jsonResponse.at("warnings").as_array(), std::inserter(warningCodes, warningCodes.end()), [](auto const& w) {
+                return w.as_object().at("id").as_int64();
+            }
         );
 
         EXPECT_EQ(warningCodes.size(), 2);
@@ -464,9 +463,11 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_Forwarded)
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
-                .WillOnce(Return(rpc::Result{rpc::ReturnType{boost::json::object{
-                    {"result", boost::json::object{{"some key", "some value"}}}, {"forwarded", true}
-                }}}));
+                .WillOnce(Return(
+                    rpc::Result{rpc::ReturnType{boost::json::object{
+                        {"result", boost::json::object{{"some key", "some value"}}}, {"forwarded", true}
+                    }}}
+                ));
             EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
             fn(yield);
@@ -500,9 +501,11 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_HasError)
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
-                .WillOnce(Return(rpc::Result{
-                    rpc::ReturnType{boost::json::object{{"some key", "some value"}, {"error", "some error"}}}
-                }));
+                .WillOnce(Return(
+                    rpc::Result{
+                        rpc::ReturnType{boost::json::object{{"some key", "some value"}, {"error", "some error"}}}
+                    }
+                ));
             EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
             fn(yield);
@@ -587,9 +590,11 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest_HasError)
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
-                .WillOnce(Return(rpc::Result{
-                    rpc::ReturnType{boost::json::object{{"some key", "some value"}, {"error", "some error"}}}
-                }));
+                .WillOnce(Return(
+                    rpc::Result{
+                        rpc::ReturnType{boost::json::object{{"some key", "some value"}, {"error", "some error"}}}
+                    }
+                ));
             EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
             fn(yield);

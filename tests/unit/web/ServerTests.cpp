@@ -73,8 +73,9 @@ using namespace web;
 static boost::json::value
 generateJSONWithDynamicPort(std::string_view port)
 {
-    return boost::json::parse(fmt::format(
-        R"JSON({{
+    return boost::json::parse(
+        fmt::format(
+            R"JSON({{
             "server": {{
                 "ip": "0.0.0.0",
                 "port": {}
@@ -87,15 +88,17 @@ generateJSONWithDynamicPort(std::string_view port)
                 "whitelist": ["127.0.0.1"]
             }}
         }})JSON",
-        port
-    ));
+            port
+        )
+    );
 }
 
 static boost::json::value
 generateJSONDataOverload(std::string_view port)
 {
-    return boost::json::parse(fmt::format(
-        R"JSON({{
+    return boost::json::parse(
+        fmt::format(
+            R"JSON({{
             "server": {{
                 "ip": "0.0.0.0",
                 "port": {}
@@ -107,8 +110,9 @@ generateJSONDataOverload(std::string_view port)
                 "max_requests": 1
             }}
         }})JSON",
-        port
-    ));
+            port
+        )
+    );
 }
 
 inline static ClioConfigDefinition

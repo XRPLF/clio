@@ -107,8 +107,8 @@ public:
     template <SomeRequirement... Requirements>
     explicit IfType(Requirements&&... requirements)
         : processor_(
-              [... r = std::forward<Requirements>(requirements
-               )](boost::json::value& j, std::string_view key) -> MaybeError {
+              [... r = std::forward<Requirements>(requirements)](boost::json::value& j, std::string_view key)
+                  -> MaybeError {
                   std::optional<Status> firstFailure = std::nullopt;
 
                   // the check logic is the same as fieldspec

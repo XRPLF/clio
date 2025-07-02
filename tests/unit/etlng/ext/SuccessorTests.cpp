@@ -294,12 +294,12 @@ TEST_F(SuccessorExtTests, OnLedgerDataWithDeletedObjectAndWithCachedPredecessorA
     using namespace etlng::model;
 
     auto const objKey = "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960D";
-    auto const predKey =
-        binaryStringToUint256(hexStringToBinaryString("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960C"
-        ));
-    auto const succKey =
-        binaryStringToUint256(hexStringToBinaryString("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960E"
-        ));
+    auto const predKey = binaryStringToUint256(
+        hexStringToBinaryString("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960C")
+    );
+    auto const succKey = binaryStringToUint256(
+        hexStringToBinaryString("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960E")
+    );
     auto const createdObj = util::createObject(Object::ModType::Created, objKey);
     auto const data = createTestData({
         createdObj,

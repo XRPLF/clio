@@ -64,13 +64,16 @@ WebSocketSyncClient::connect(std::string const& host, std::string const& port, s
     // See https://tools.ietf.org/html/rfc7230#section-5.4
     auto const hostPort = host + ':' + std::to_string(ep.port());
 
-    ws_.set_option(boost::beast::websocket::stream_base::decorator([additionalHeaders = std::move(additionalHeaders
-                                                                    )](boost::beast::websocket::request_type& req) {
-        req.set(http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-coro");
-        for (auto const& header : additionalHeaders) {
-            req.set(header.name, header.value);
-        }
-    }));
+    ws_.set_option(
+        boost::beast::websocket::stream_base::decorator(
+            [additionalHeaders = std::move(additionalHeaders)](boost::beast::websocket::request_type& req) {
+                req.set(http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-coro");
+                for (auto const& header : additionalHeaders) {
+                    req.set(header.name, header.value);
+                }
+            }
+        )
+    );
 
     ws_.handshake(hostPort, "/");
 }
@@ -157,12 +160,15 @@ WebSocketAsyncClient::connect(
     stream_.set_option(wsTimeout);
     boost::beast::get_lowest_layer(stream_).expires_never();
 
-    stream_.set_option(boost::beast::websocket::stream_base::decorator([additionalHeaders = std::move(additionalHeaders
-                                                                        )](boost::beast::websocket::request_type& req) {
-        for (auto const& header : additionalHeaders) {
-            req.set(header.name, header.value);
-        }
-    }));
+    stream_.set_option(
+        boost::beast::websocket::stream_base::decorator(
+            [additionalHeaders = std::move(additionalHeaders)](boost::beast::websocket::request_type& req) {
+                for (auto const& header : additionalHeaders) {
+                    req.set(header.name, header.value);
+                }
+            }
+        )
+    );
     stream_.async_handshake(fmt::format("{}:{}", host, port), "/", yield[error]);
 
     if (error)

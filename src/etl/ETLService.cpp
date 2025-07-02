@@ -171,9 +171,11 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
     auto pipe = DataPipeType{numExtractors, startSequence};
 
     for (auto i = 0u; i < numExtractors; ++i) {
-        extractors.push_back(std::make_unique<ExtractorType>(
-            pipe, networkValidatedLedgers_, ledgerFetcher_, startSequence + i, finishSequence_, state_
-        ));
+        extractors.push_back(
+            std::make_unique<ExtractorType>(
+                pipe, networkValidatedLedgers_, ledgerFetcher_, startSequence + i, finishSequence_, state_
+            )
+        );
     }
 
     auto transformer =

@@ -60,8 +60,10 @@ public:
     }
 
     std::expected<std::string, RequestError>
-    read(boost::asio::yield_context yield, std::optional<std::chrono::steady_clock::duration> timeout = std::nullopt)
-        override
+    read(
+        boost::asio::yield_context yield,
+        std::optional<std::chrono::steady_clock::duration> timeout = std::nullopt
+    ) override
     {
         boost::beast::error_code errorCode;
         boost::beast::flat_buffer buffer;
@@ -101,8 +103,10 @@ public:
     }
 
     std::optional<RequestError>
-    close(boost::asio::yield_context yield, std::chrono::steady_clock::duration const timeout = kDEFAULT_TIMEOUT)
-        override
+    close(
+        boost::asio::yield_context yield,
+        std::chrono::steady_clock::duration const timeout = kDEFAULT_TIMEOUT
+    ) override
     {
         // Set the timeout for closing the connection
         boost::beast::websocket::stream_base::timeout wsTimeout{};
