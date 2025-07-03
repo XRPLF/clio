@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/Assert.hpp"  // NOLINT(unused-includes)
+#include "util/Assert.hpp"  // IWYU pragma: keep
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
