@@ -168,5 +168,6 @@ TEST_F(NgSubscriptionContextTests, SetApiSubversion)
         auto subscriptionContext = makeSubscriptionContext(yield);
         subscriptionContext.setApiSubversion(42);
         EXPECT_EQ(subscriptionContext.apiSubversion(), 42);
+        subscriptionContext.disconnect(yield);
     });
 }
