@@ -87,7 +87,7 @@ public:
         , sendingQueue_{[this](MessageType const& message, auto&& yield) {
             boost::asio::const_buffer const buffer = std::visit(
                 util::OverloadSet{
-                    [](Response const& r) { return r.asWsResponse(); },
+                    [](Response const& r) -> boost::asio::const_buffer { return r.asWsResponse(); },
                     [](std::shared_ptr<std::string> const& m) -> boost::asio::const_buffer {
                         return boost::asio::buffer(*m);
                     }

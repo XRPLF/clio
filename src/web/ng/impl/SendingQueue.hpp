@@ -38,9 +38,9 @@ public:
 
 private:
     std::queue<T> queue_;
-    boost::system::error_code error_;
-    bool isSending_{false};
     Sender sender_;
+    Error error_;
+    bool isSending_{false};
 
 public:
     SendingQueue(Sender sender) : sender_{std::move(sender)}

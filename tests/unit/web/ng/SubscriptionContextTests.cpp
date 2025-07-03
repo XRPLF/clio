@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "util/AsioContextTestFixture.hpp"
+#include "util/MockAssert.hpp"
 #include "util/Taggable.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigValue.hpp"
@@ -169,5 +170,14 @@ TEST_F(NgSubscriptionContextTests, SetApiSubversion)
         subscriptionContext.setApiSubversion(42);
         EXPECT_EQ(subscriptionContext.apiSubversion(), 42);
         subscriptionContext.disconnect(yield);
+    });
+}
+
+struct NgSubscriptionContextAssertTests : common::util::WithMockAssertNoThrow, NgSubscriptionContextTests {};
+
+TEST_F(NgSubscriptionContextAssertTests, AssertFailsWhenNotDisconnected)
+{
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_CLIO_ASSERT_FAIL({ auto subscriptionContext = makeSubscriptionContext(yield); });
     });
 }
