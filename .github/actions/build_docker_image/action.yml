@@ -17,6 +17,9 @@ inputs:
   platforms:
     description: Platforms to build the image for (e.g. linux/amd64,linux/arm64)
     required: true
+  build_args:
+    description: List of build-time variables
+    required: false
 
   dockerhub_repo:
     description: DockerHub repository name
@@ -61,6 +64,7 @@ runs:
         platforms: ${{ inputs.platforms }}
         push: ${{ inputs.push_image == 'true' }}
         tags: ${{ steps.meta.outputs.tags }}
+        build-args: ${{ inputs.build_args }}
 
     - name: Update DockerHub description
       if: ${{ inputs.push_image == 'true' && inputs.dockerhub_repo != '' }}

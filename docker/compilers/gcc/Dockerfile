@@ -1,16 +1,14 @@
 ARG UBUNTU_VERSION=20.04
 
-ARG GCC_MAJOR_VERSION=12
+ARG GCC_MAJOR_VERSION=invalid
 
 FROM ubuntu:$UBUNTU_VERSION AS build
 
 ARG UBUNTU_VERSION
 
 ARG GCC_MAJOR_VERSION
-ARG GCC_MINOR_VERSION=3
-ARG GCC_PATCH_VERSION=0
-ARG GCC_VERSION=${GCC_MAJOR_VERSION}.${GCC_MINOR_VERSION}.${GCC_PATCH_VERSION}
-ARG BUILD_VERSION=6
+
+ARG BUILD_VERSION=7
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
@@ -26,6 +24,8 @@ RUN apt-get update \
         wget \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+ARG GCC_VERSION
 
 WORKDIR /
 RUN wget --progress=dot:giga https://gcc.gnu.org/pub/gcc/releases/gcc-$GCC_VERSION/gcc-$GCC_VERSION.tar.gz \

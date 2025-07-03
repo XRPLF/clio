@@ -1,7 +1,10 @@
-FROM ghcr.io/xrplf/clio-gcc:12.3.0 AS clio-gcc
+ARG CLANG_MAJOR_VERSION=invalid
+ARG GCC_VERSION=invalid
+
+FROM ghcr.io/xrplf/clio-gcc:${GCC_VERSION} AS clio-gcc
 FROM ghcr.io/xrplf/clio-tools:latest AS clio-tools
 
-FROM ghcr.io/xrplf/clio-clang:16
+FROM ghcr.io/xrplf/clio-clang:${CLANG_MAJOR_VERSION}
 
 ARG DEBIAN_FRONTEND=noninteractive
 

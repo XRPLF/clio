@@ -29,6 +29,10 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  CLANG_MAJOR_VERSION: 16
+  GCC_MAJOR_VERSION: 12
+  GCC_VERSION: 12.3.0
+
   GHCR_REPO: ghcr.io/${{ github.repository_owner }}
 
 jobs:
@@ -59,10 +63,13 @@ jobs:
           directory: docker/compilers/gcc
           tags: |
             type=raw,value=amd64-latest
-            type=raw,value=amd64-12
-            type=raw,value=amd64-12.3.0
+            type=raw,value=amd64-${{ env.GCC_MAJOR_VERSION }}
+            type=raw,value=amd64-${{ env.GCC_VERSION }}
             type=raw,value=amd64-${{ github.sha }}
           platforms: linux/amd64
+          build_args: |
+            GCC_MAJOR_VERSION=${{ env.GCC_MAJOR_VERSION }}
+            GCC_VERSION=${{ env.GCC_VERSION }}
           dockerhub_repo: rippleci/clio_gcc
           dockerhub_description: GCC compiler for XRPLF/clio.
 
@@ -93,10 +100,13 @@ jobs:
           directory: docker/compilers/gcc
           tags: |
             type=raw,value=arm64-latest
-            type=raw,value=arm64-12
-            type=raw,value=arm64-12.3.0
+            type=raw,value=arm64-${{ env.GCC_MAJOR_VERSION }}
+            type=raw,value=arm64-${{ env.GCC_VERSION }}
             type=raw,value=arm64-${{ github.sha }}
           platforms: linux/arm64
+          build_args: |
+            GCC_MAJOR_VERSION=${{ env.GCC_MAJOR_VERSION }}
+            GCC_VERSION=${{ env.GCC_VERSION }}
           dockerhub_repo: rippleci/clio_gcc
           dockerhub_description: GCC compiler for XRPLF/clio.
 
@@ -142,8 +152,8 @@ jobs:
           for image in ${{ env.GHCR_REPO_LC }}/clio-gcc rippleci/clio_gcc; do
             docker buildx imagetools create \
               -t $image:latest \
-              -t $image:12 \
-              -t $image:12.3.0 \
+              -t $image:${{ env.GCC_MAJOR_VERSION }} \
+              -t $image:${{ env.GCC_VERSION }} \
               -t $image:${{ github.sha }} \
               $image:arm64-latest \
               $image:amd64-latest
@@ -176,9 +186,11 @@ jobs:
           directory: docker/compilers/clang
           tags: |
             type=raw,value=latest
-            type=raw,value=16
+            type=raw,value=${{ env.CLANG_MAJOR_VERSION }}
             type=raw,value=${{ github.sha }}
           platforms: linux/amd64,linux/arm64
+          build_args: |
+            CLANG_MAJOR_VERSION=${{ env.CLANG_MAJOR_VERSION }}
           dockerhub_repo: rippleci/clio_clang
           dockerhub_description: Clang compiler for XRPLF/clio.
 
@@ -229,8 +241,11 @@ jobs:
           directory: docker/ci
           tags: |
             type=raw,value=latest
-            type=raw,value=gcc_12_clang_16
+            type=raw,value=gcc_${{ env.GCC_MAJOR_VERSION }}_clang_${{ env.CLANG_MAJOR_VERSION }}
             type=raw,value=${{ github.sha }}
           platforms: linux/amd64,linux/arm64
+          build_args: |
+            CLANG_MAJOR_VERSION=${{ env.CLANG_MAJOR_VERSION }}
+            GCC_VERSION=${{ env.GCC_VERSION }}
           dockerhub_repo: rippleci/clio_ci
           dockerhub_description: CI image for XRPLF/clio.
