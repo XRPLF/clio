@@ -56,7 +56,7 @@ public:
     }
 
     /**
-     * @brief Run the the migration according to the given migrator's name
+     * @brief Run the migration according to the given migrator's name
      *
      * @param name The name of the migrator
      */

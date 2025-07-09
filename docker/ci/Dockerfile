@@ -82,6 +82,8 @@ RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 100 \
     && update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-12 100
 
 COPY --from=clio-tools \
+    /usr/local/bin/mold \
+    /usr/local/bin/ld.mold \
     /usr/local/bin/ccache \
     /usr/local/bin/doxygen \
     /usr/local/bin/ClangBuildAnalyzer \

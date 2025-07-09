@@ -65,13 +65,3 @@ runs:
         push: ${{ inputs.push_image == 'true' }}
         tags: ${{ steps.meta.outputs.tags }}
         build-args: ${{ inputs.build_args }}
-
-    - name: Update DockerHub description
-      if: ${{ inputs.push_image == 'true' && inputs.dockerhub_repo != '' }}
-      uses: peter-evans/dockerhub-description@432a30c9e07499fd01da9f8a49f0faf9e0ca5b77 # v4.0.2
-      with:
-        username: ${{ env.DOCKERHUB_USER }}
-        password: ${{ env.DOCKERHUB_PW }}
-        repository: ${{ inputs.dockerhub_repo }}
-        short-description: ${{ inputs.dockerhub_description }}
-        readme-filepath: ${{ inputs.directory }}/README.md

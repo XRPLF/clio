@@ -99,7 +99,7 @@ public:
     connect() const;
 
     /**
-     * @brief Connect to the the specified keyspace asynchronously.
+     * @brief Connect to the specified keyspace asynchronously.
      *
      * @param keyspace The keyspace to use
      * @return A future
@@ -137,7 +137,7 @@ public:
     disconnect() const;
 
     /**
-     * @brief Reconnect to the the specified keyspace asynchronously.
+     * @brief Reconnect to the specified keyspace asynchronously.
      *
      * @param keyspace The keyspace to use
      * @return A future

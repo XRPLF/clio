@@ -17,6 +17,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 ARG CLANG_MAJOR_VERSION=invalid
+# Bump this version to force rebuild of the image
+ARG BUILD_VERSION=0
 
 RUN wget --progress=dot:giga https://apt.llvm.org/llvm.sh \
     && chmod +x llvm.sh \
