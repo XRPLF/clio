@@ -32,7 +32,7 @@ namespace migration {
  */
 struct MigrationManagerInterface : virtual public MigrationInspectorInterface {
     /**
-     * @brief Run the the migration according to the given migrator's name
+     * @brief Run the migration according to the given migrator's name
      */
     virtual void
     runMigration(std::string const&) = 0;
