@@ -19,6 +19,7 @@
 
 #include "web/ng/SubscriptionContext.hpp"
 
+#include "util/Assert.hpp"
 #include "util/Taggable.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 
@@ -50,24 +51,31 @@ SubscriptionContext::SubscriptionContext(
 {
 }
 
+SubscriptionContext::~SubscriptionContext()
+{
+    ASSERT(disconnected_, "SubscriptionContext must be disconnected before destroying");
+}
+
 void
 SubscriptionContext::send(std::shared_ptr<std::string> message)
 {
-    if (disconnected_)
+    if (disconnected_ or gotError_)
         return;
 
     if (maxSendQueueSize_.has_value() and tasksGroup_.size() >= *maxSendQueueSize_) {
         tasksGroup_.spawn(yield_, [this](boost::asio::yield_context innerYield) {
             connection_.get().close(innerYield);
         });
-        disconnected_ = true;
+        gotError_ = true;
         return;
     }
 
-    tasksGroup_.spawn(yield_, [this, message = std::move(message)](boost::asio::yield_context innerYield) {
-        auto const maybeError = connection_.get().sendBuffer(boost::asio::buffer(*message), innerYield);
-        if (maybeError.has_value() and errorHandler_(*maybeError, connection_))
+    tasksGroup_.spawn(yield_, [this, message = std::move(message)](boost::asio::yield_context innerYield) mutable {
+        auto const maybeError = connection_.get().sendShared(std::move(message), innerYield);
+        if (maybeError.has_value() and errorHandler_(*maybeError, connection_)) {
             connection_.get().close(innerYield);
+            gotError_ = true;
+        }
     });
 }
 
@@ -92,8 +100,8 @@ SubscriptionContext::apiSubversion() const
 void
 SubscriptionContext::disconnect(boost::asio::yield_context yield)
 {
-    onDisconnect_(this);
     disconnected_ = true;
+    onDisconnect_(this);
     tasksGroup_.asyncWait(yield);
 }
 
