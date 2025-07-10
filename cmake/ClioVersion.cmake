@@ -20,8 +20,8 @@ if (BRANCH STREQUAL "")
   set(BRANCH "dev")
 endif ()
 
-if (NOT (BRANCH MATCHES master OR BRANCH MATCHES release/*)) # for develop and any other branch name
-                                                             # YYYYMMDDHMS-<branch>-<git-rev>
+if (NOT (BRANCH MATCHES release/*))
+  # for develop and any other branch name YYYYMMDDHMS-<branch>-<git-rev>
   set(GIT_COMMAND show -s --date=format:%Y%m%d%H%M%S --format=%cd)
   execute_process(
     COMMAND ${GIT_EXECUTABLE} ${GIT_COMMAND} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE DATE

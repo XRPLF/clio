@@ -29,10 +29,8 @@
 #include "web/ng/SubscriptionContext.hpp"
 #include "web/ng/impl/MockWsConnection.hpp"
 
-#include <boost/asio/buffer.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/system/errc.hpp>
 #include <gmock/gmock.h>

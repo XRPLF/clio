@@ -34,11 +34,9 @@
 #include "web/ng/impl/MockHttpConnection.hpp"
 #include "web/ng/impl/MockWsConnection.hpp"
 
-#include <boost/asio/buffer.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/message.hpp>

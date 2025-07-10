@@ -3,8 +3,7 @@ name: Run pre-commit hooks
 on:
   pull_request:
   push:
-    branches:
-      - develop
+    branches: [develop]
   workflow_dispatch:
 
 jobs:
