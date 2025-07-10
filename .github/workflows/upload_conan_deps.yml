@@ -11,8 +11,7 @@ on:
         default: false
         type: boolean
   pull_request:
-    branches:
-      - develop
+    branches: [develop]
     paths:
       - .github/workflows/upload_conan_deps.yml
 
@@ -24,8 +23,7 @@ on:
       - conanfile.py
       - conan.lock
   push:
-    branches:
-      - develop
+    branches: [develop]
     paths:
       - .github/workflows/upload_conan_deps.yml
 

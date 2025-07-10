@@ -42,4 +42,9 @@ WithMockAssert::throwOnAssert(std::string_view m)
     throw MockAssertException{.message = std::string{m}};
 }
 
+WithMockAssertNoThrow::~WithMockAssertNoThrow()
+{
+    ::util::impl::OnAssert::resetAction();
+}
+
 }  // namespace common::util

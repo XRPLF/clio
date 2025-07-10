@@ -248,6 +248,7 @@ TEST_F(ServerHttpTest, ClientDisconnects)
         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
 
         client.disconnect();
+        server_->stop(yield);
         ctx_.stop();
     });
 
@@ -306,6 +307,7 @@ TEST_F(ServerHttpTest, OnConnectCheck)
         timer.async_wait(yield[error]);
 
         client.gracefulShutdown();
+        server_->stop(yield);
         ctx_.stop();
     });
 
@@ -364,6 +366,7 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
         EXPECT_EQ(response->version(), 11);
 
         client.gracefulShutdown();
+        server_->stop(yield);
         ctx_.stop();
     });
 
@@ -417,6 +420,7 @@ TEST_F(ServerHttpTest, OnDisconnectHook)
         boost::system::error_code error;
         timer.async_wait(yield[error]);
 
+        server_->stop(yield);
         ctx_.stop();
     });
 
@@ -479,6 +483,7 @@ TEST_P(ServerHttpTest, RequestResponse)
         }
 
         client.gracefulShutdown();
+        server_->stop(yield);
         ctx_.stop();
     });
 
@@ -518,6 +523,7 @@ TEST_F(ServerTest, WsClientDisconnects)
         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
 
         client.close();
+        server_->stop(yield);
         ctx_.stop();
     });
 
@@ -548,6 +554,7 @@ TEST_F(ServerTest, WsRequestResponse)
         }
 
         client.gracefulClose(yield, std::chrono::milliseconds{100});
+        server_->stop(yield);
         ctx_.stop();
     });
 

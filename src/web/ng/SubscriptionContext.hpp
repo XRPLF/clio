@@ -61,6 +61,7 @@ private:
 
     boost::signals2::signal<void(SubscriptionContextInterface*)> onDisconnect_;
     std::atomic_bool disconnected_{false};
+    std::atomic_bool gotError_{false};
 
     /**
      * @brief The API version of the web stream client.
@@ -86,6 +87,8 @@ public:
         boost::asio::yield_context yield,
         ErrorHandler errorHandler
     );
+
+    ~SubscriptionContext() override;
 
     /**
      * @brief Send message to the client

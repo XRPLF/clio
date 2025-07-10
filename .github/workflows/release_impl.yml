@@ -8,6 +8,11 @@ on:
         required: true
         type: boolean
 
+      prerelease:
+        description: "Create a prerelease"
+        required: true
+        type: boolean
+
       title:
         description: "Release title"
         required: true
@@ -25,12 +30,12 @@ on:
 
       generate_changelog:
         description: "Generate changelog"
-        required: false
+        required: true
         type: boolean
 
       draft:
         description: "Create a draft release"
-        required: false
+        required: true
         type: boolean
 
 jobs:
@@ -109,7 +114,7 @@ jobs:
         shell: bash
         run: |
           gh release create "${{ inputs.version }}" \
-            ${{ inputs.overwrite_release && '--prerelease' || '' }} \
+            ${{ inputs.prerelease && '--prerelease' || '' }} \
             --title "${{ inputs.title }}" \
             --target "${GITHUB_SHA}" \
             ${{ inputs.draft && '--draft' || '' }} \

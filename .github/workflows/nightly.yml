@@ -96,6 +96,7 @@ jobs:
     uses: ./.github/workflows/release_impl.yml
     with:
       overwrite_release: true
+      prerelease: true
       title: "Clio development (nightly) build"
       version: nightly
       header: >
