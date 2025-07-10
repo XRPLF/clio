@@ -23,7 +23,6 @@
 #include "util/Taggable.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 
-#include <boost/asio/buffer.hpp>
 #include <boost/asio/spawn.hpp>
 
 #include <cstddef>
