@@ -32,7 +32,7 @@
 namespace util {
 
 /**
- * @brief Cache of requests' responses with TTL support and configurable cachable commands
+ * @brief Cache of requests' responses with TTL support and configurable cacheable commands
  */
 class ResponseExpirationCache {
     /**
@@ -123,4 +123,4 @@ public:
     invalidate();
 };
 
-} // namespace util
+}  // namespace util
