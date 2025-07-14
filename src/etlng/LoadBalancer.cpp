@@ -58,7 +58,6 @@
 #include <string>
 #include <thread>
 #include <utility>
-#include <variant>
 #include <vector>
 
 using namespace util::config;
@@ -284,40 +283,46 @@ LoadBalancer::forwardToRippled(
         return std::unexpected{rpc::ClioError::RpcCommandIsMissing};
 
     auto const cmd = boost::json::value_to<std::string>(request.at("command"));
-
-    if (forwardingCache_ and forwardingCache_->shouldCache(cmd)) {
-        bool servedFromCache = true;
-        auto updater = [this, &request, &clientIp, &servedFromCache, isAdmin](boost::asio::yield_context yield)
-            -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
-            servedFromCache = false;
-            auto result = forwardToRippledImpl(request, clientIp, isAdmin, yield);
-            if (result.has_value()) {
-                return util::ResponseExpirationCache::EntryData{
-                    .lastUpdated = std::chrono::steady_clock::now(), .response = std::move(result).value()
-                };
-            }
-            return std::unexpected{
-                util::ResponseExpirationCache::Error{.status = rpc::Status{result.error()}, .warnings = {}}
-            };
-        };
-
-        auto result = forwardingCache_->getOrUpdate(
-            yield, cmd, std::move(updater), [](util::ResponseExpirationCache::EntryData const& entry) {
-                return not entry.response.contains("error");
-            }
-        );
-        if (servedFromCache) {
-            ++forwardingCounters_.cacheHit.get();
+    if (forwardingCache_) {
+        if (auto cachedResponse = forwardingCache_->get(cmd); cachedResponse) {
+            forwardingCounters_.cacheHit.get() += 1;
+            return std::move(cachedResponse).value();
         }
-        if (result.has_value()) {
-            return std::move(result).value();
+    }
+    forwardingCounters_.cacheMiss.get() += 1;
+
+    ASSERT(not sources_.empty(), "ETL sources must be configured to forward requests.");
+    std::size_t sourceIdx = randomGenerator_->uniform(0ul, sources_.size() - 1);
+
+    auto numAttempts = 0u;
+
+    auto xUserValue = isAdmin ? kADMIN_FORWARDING_X_USER_VALUE : kUSER_FORWARDING_X_USER_VALUE;
+
+    std::optional<boost::json::object> response;
+    rpc::ClioError error = rpc::ClioError::EtlConnectionError;
+    while (numAttempts < sources_.size()) {
+        auto [res, duration] =
+            util::timed([&]() { return sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield); });
+        if (res) {
+            forwardingCounters_.successDuration.get() += duration;
+            response = std::move(res).value();
+            break;
         }
-        auto const combinedError = result.error().status.code;
-        ASSERT(std::holds_alternative<rpc::ClioError>(combinedError), "There could be only ClioError here");
-        return std::unexpected{std::get<rpc::ClioError>(combinedError)};
+        forwardingCounters_.failDuration.get() += duration;
+        ++forwardingCounters_.retries.get();
+        error = std::max(error, res.error());  // Choose the best result between all sources
+
+        sourceIdx = (sourceIdx + 1) % sources_.size();
+        ++numAttempts;
     }
 
-    return forwardToRippledImpl(request, clientIp, isAdmin, yield);
+    if (response) {
+        if (forwardingCache_ and not response->contains("error"))
+            forwardingCache_->put(cmd, *response);
+        return std::move(response).value();
+    }
+
+    return std::unexpected{error};
 }
 
 boost::json::value
@@ -406,49 +411,6 @@ LoadBalancer::chooseForwardingSource()
             source->setForwarding(false);
         }
     }
-}
-
-std::expected<boost::json::object, rpc::CombinedError>
-LoadBalancer::forwardToRippledImpl(
-    boost::json::object const& request,
-    std::optional<std::string> const& clientIp,
-    bool isAdmin,
-    boost::asio::yield_context yield
-)
-{
-    ++forwardingCounters_.cacheMiss.get();
-
-    ASSERT(not sources_.empty(), "ETL sources must be configured to forward requests.");
-    std::size_t sourceIdx = randomGenerator_->uniform(0ul, sources_.size() - 1);
-
-    auto numAttempts = 0u;
-
-    auto xUserValue = isAdmin ? kADMIN_FORWARDING_X_USER_VALUE : kUSER_FORWARDING_X_USER_VALUE;
-
-    std::optional<boost::json::object> response;
-    rpc::ClioError error = rpc::ClioError::EtlConnectionError;
-    while (numAttempts < sources_.size()) {
-        auto [res, duration] =
-            util::timed([&]() { return sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield); });
-
-        if (res) {
-            forwardingCounters_.successDuration.get() += duration;
-            response = std::move(res).value();
-            break;
-        }
-        forwardingCounters_.failDuration.get() += duration;
-        ++forwardingCounters_.retries.get();
-        error = std::max(error, res.error());  // Choose the best result between all sources
-
-        sourceIdx = (sourceIdx + 1) % sources_.size();
-        ++numAttempts;
-    }
-
-    if (response.has_value()) {
-        return std::move(response).value();
-    }
-
-    return std::unexpected{error};
 }
 
 }  // namespace etlng
