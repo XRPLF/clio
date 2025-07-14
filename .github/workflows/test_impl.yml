@@ -85,7 +85,7 @@ jobs:
         if: env.SANITIZER_IGNORE_ERRORS == 'true' && steps.check_report.outputs.found_report == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.conan_profile }}_report
+          name: sanitizer_report_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: .sanitizer-report/*
           include-hidden-files: true
 

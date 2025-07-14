@@ -10,4 +10,5 @@ target_link_libraries(
          clio_web
          clio_rpc
          clio_migration
+  PRIVATE Boost::program_options
 )

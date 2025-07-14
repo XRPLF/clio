@@ -30,7 +30,6 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <xrpl/basics/base_uint.h>
-#include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/Keylet.h>
 #include <xrpl/protocol/LedgerHeader.h>

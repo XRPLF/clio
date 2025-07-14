@@ -61,7 +61,6 @@
 #include "web/SubscriptionContextInterface.hpp"
 
 #include <boost/asio/spawn.hpp>
-#include <fmt/core.h>
 #include <gtest/gtest.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Book.h>

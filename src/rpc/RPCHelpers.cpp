@@ -45,7 +45,7 @@
 #include <boost/json/value_to.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/lexical_cast/bad_lexical_cast.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
@@ -1283,9 +1283,10 @@ postProcessOrderBook(
             } else {
                 saTakerGetsFunded = saOwnerFundsLimit;
                 offerJson["taker_gets_funded"] = toBoostJson(saTakerGetsFunded.getJson(ripple::JsonOptions::none));
-                offerJson["taker_pays_funded"] =
-                    toBoostJson(std::min(saTakerPays, ripple::multiply(saTakerGetsFunded, dirRate, saTakerPays.issue()))
-                                    .getJson(ripple::JsonOptions::none));
+                offerJson["taker_pays_funded"] = toBoostJson(
+                    std::min(saTakerPays, ripple::multiply(saTakerGetsFunded, dirRate, saTakerPays.issue()))
+                        .getJson(ripple::JsonOptions::none)
+                );
             }
 
             ripple::STAmount const saOwnerPays = (ripple::parityRate == offerRate)

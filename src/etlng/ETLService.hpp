@@ -58,7 +58,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/json/object.hpp>
 #include <boost/signals2/connection.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>

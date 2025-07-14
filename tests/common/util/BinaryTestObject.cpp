@@ -148,11 +148,16 @@ createObjectWithTwoNFTs()
 
     auto const nftPage = createNftTokenPage({{kNFT_ID, url1}, {kNFT_ID2, url2}}, std::nullopt);
     auto const serializerNftPage = nftPage.getSerializer();
-
     auto const account = getAccountIdWithString(kACCOUNT);
+
+    // key is a token made up from owner's account ID followed by unused (in Clio) value described here:
+    // https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0020-non-fungible-tokens#tokenpage-id-format
+    auto constexpr kEXTRA_BYTES = "000000000000";
+    auto const key = std::string(std::begin(account), std::end(account)) + kEXTRA_BYTES;
+
     return {
         .key = {},
-        .keyRaw = std::string(reinterpret_cast<char const*>(account.data()), ripple::AccountID::size()),
+        .keyRaw = key,
         .data = {},
         .dataRaw =
             std::string(static_cast<char const*>(serializerNftPage.getDataPtr()), serializerNftPage.getDataLength()),

@@ -2,6 +2,7 @@
 add_library(clio_rpc_center)
 target_sources(clio_rpc_center PRIVATE RPCCenter.cpp)
 target_include_directories(clio_rpc_center PUBLIC "${CMAKE_SOURCE_DIR}/src")
+target_link_libraries(clio_rpc_center PUBLIC clio_options)
 
 add_library(clio_rpc)
 

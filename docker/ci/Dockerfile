@@ -1,7 +1,10 @@
-FROM ghcr.io/xrplf/clio-gcc:12.3.0 AS clio-gcc
+ARG CLANG_MAJOR_VERSION=invalid
+ARG GCC_VERSION=invalid
+
+FROM ghcr.io/xrplf/clio-gcc:${GCC_VERSION} AS clio-gcc
 FROM ghcr.io/xrplf/clio-tools:latest AS clio-tools
 
-FROM ghcr.io/xrplf/clio-clang:16
+FROM ghcr.io/xrplf/clio-clang:${CLANG_MAJOR_VERSION}
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -16,7 +19,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 USER root
 WORKDIR /root
 
-ARG LLVM_TOOLS_VERSION=19
+ARG LLVM_TOOLS_VERSION=20
 
 # Add repositories
 RUN apt-get update \
@@ -79,6 +82,8 @@ RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 100 \
     && update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-12 100
 
 COPY --from=clio-tools \
+    /usr/local/bin/mold \
+    /usr/local/bin/ld.mold \
     /usr/local/bin/ccache \
     /usr/local/bin/doxygen \
     /usr/local/bin/ClangBuildAnalyzer \

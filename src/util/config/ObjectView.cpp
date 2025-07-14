@@ -24,7 +24,7 @@
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ValueView.hpp"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <cstddef>

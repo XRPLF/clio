@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/OverloadSet.hpp"
 #include "util/Taggable.hpp"
 #include "util/build/Build.hpp"
 #include "web/ng/Connection.hpp"
@@ -26,6 +27,7 @@
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 #include "web/ng/impl/Concepts.hpp"
+#include "web/ng/impl/SendingQueue.hpp"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -49,6 +51,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <variant>
 
 namespace web::ng::impl {
 
@@ -57,13 +60,17 @@ public:
     using Connection::Connection;
 
     virtual std::optional<Error>
-    sendBuffer(boost::asio::const_buffer buffer, boost::asio::yield_context yield) = 0;
+    sendShared(std::shared_ptr<std::string> message, boost::asio::yield_context yield) = 0;
 };
 
 template <typename StreamType>
 class WsConnection : public WsConnectionBase {
     boost::beast::websocket::stream<StreamType> stream_;
     boost::beast::http::request<boost::beast::http::string_body> initialRequest_;
+
+    using MessageType = std::variant<Response, std::shared_ptr<std::string>>;
+    SendingQueue<MessageType> sendingQueue_;
+
     bool closed_{false};
 
 public:
@@ -77,9 +84,29 @@ public:
         : WsConnectionBase(std::move(ip), std::move(buffer), tagDecoratorFactory)
         , stream_(std::move(stream))
         , initialRequest_(std::move(initialRequest))
+        , sendingQueue_{[this](MessageType const& message, auto&& yield) {
+            boost::asio::const_buffer const buffer = std::visit(
+                util::OverloadSet{
+                    [](Response const& r) -> boost::asio::const_buffer { return r.asWsResponse(); },
+                    [](std::shared_ptr<std::string> const& m) -> boost::asio::const_buffer {
+                        return boost::asio::buffer(*m);
+                    }
+                },
+                message
+            );
+            stream_.async_write(buffer, yield);
+        }}
     {
         setupWsStream();
     }
+
+    ~WsConnection() override = default;
+    WsConnection(WsConnection&&) = delete;
+    WsConnection&
+    operator=(WsConnection&&) = delete;
+    WsConnection(WsConnection const&) = delete;
+    WsConnection&
+    operator=(WsConnection const&) = delete;
 
     std::optional<Error>
     performHandshake(boost::asio::yield_context yield)
@@ -98,16 +125,9 @@ public:
     }
 
     std::optional<Error>
-    sendBuffer(boost::asio::const_buffer buffer, boost::asio::yield_context yield) override
+    sendShared(std::shared_ptr<std::string> message, boost::asio::yield_context yield) override
     {
-        boost::beast::websocket::stream_base::timeout timeoutOption{};
-        stream_.get_option(timeoutOption);
-
-        boost::system::error_code error;
-        stream_.async_write(buffer, yield[error]);
-        if (error)
-            return error;
-        return std::nullopt;
+        return sendingQueue_.send(std::move(message), yield);
     }
 
     void
@@ -123,7 +143,7 @@ public:
     std::optional<Error>
     send(Response response, boost::asio::yield_context yield) override
     {
-        return sendBuffer(response.asWsResponse(), yield);
+        return sendingQueue_.send(std::move(response), yield);
     }
 
     std::expected<Request, Error>

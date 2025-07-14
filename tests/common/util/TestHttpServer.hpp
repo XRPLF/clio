@@ -35,8 +35,9 @@
  */
 class TestHttpServer {
 public:
-    using RequestHandler = std::function<std::optional<boost::beast::http::response<
-        boost::beast::http::string_body>>(boost::beast::http::request<boost::beast::http::string_body>)>;
+    using RequestHandler = std::function<std::optional<boost::beast::http::response<boost::beast::http::string_body>>(
+        boost::beast::http::request<boost::beast::http::string_body>
+    )>;
 
     /**
      * @brief Construct a new TestHttpServer

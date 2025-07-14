@@ -32,7 +32,7 @@
 #include <boost/beast/http/string_body.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <cstdint>
 #include <optional>

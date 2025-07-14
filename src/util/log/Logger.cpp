@@ -46,7 +46,7 @@
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/utility/setup/file.hpp>
 #include <boost/log/utility/setup/formatter_parser.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <array>

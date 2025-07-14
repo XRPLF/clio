@@ -24,7 +24,7 @@
 #include "util/config/Error.hpp"
 #include "util/config/Types.hpp"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

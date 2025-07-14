@@ -49,6 +49,7 @@
 #include <concepts>
 #include <cstdint>
 #include <expected>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -172,8 +173,10 @@ public:
      * @return A std::vector<std::string> The ledger data
      */
     std::vector<std::string>
-    loadInitialLedger(uint32_t sequence, std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2})
-        override;
+    loadInitialLedger(
+        uint32_t sequence,
+        std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2}
+    ) override;
 
     /**
      * @brief Load the initial ledger, writing data to the queue.
@@ -279,14 +282,6 @@ private:
      */
     void
     chooseForwardingSource();
-
-    std::expected<boost::json::object, rpc::CombinedError>
-    forwardToRippledImpl(
-        boost::json::object const& request,
-        std::optional<std::string> const& clientIp,
-        bool isAdmin,
-        boost::asio::yield_context yield
-    );
 };
 
 }  // namespace etl

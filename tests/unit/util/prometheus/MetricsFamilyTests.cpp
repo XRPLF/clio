@@ -23,7 +23,7 @@
 #include "util/prometheus/MetricsFamily.hpp"
 #include "util/prometheus/OStream.hpp"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

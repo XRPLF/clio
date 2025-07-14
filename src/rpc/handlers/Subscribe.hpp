@@ -140,8 +140,10 @@ private:
     subscribeToAccounts(std::vector<std::string> const& accounts, feed::SubscriberSharedPtr const& session) const;
 
     void
-    subscribeToAccountsProposed(std::vector<std::string> const& accounts, feed::SubscriberSharedPtr const& session)
-        const;
+    subscribeToAccountsProposed(
+        std::vector<std::string> const& accounts,
+        feed::SubscriberSharedPtr const& session
+    ) const;
 
     void
     subscribeToBooks(

@@ -60,17 +60,17 @@ CliArgs::parse(int argc, char const* argv[])
     po::store(po::command_line_parser(argc, argv).options(description).positional(positional).run(), parsed);
     po::notify(parsed);
 
-    if (parsed.count("help") != 0u) {
+    if (parsed.contains("help")) {
         std::cout << "Clio server " << util::build::getClioFullVersionString() << "\n\n" << description;
         return Action{Action::Exit{EXIT_SUCCESS}};
     }
 
-    if (parsed.count("version") != 0u) {
+    if (parsed.contains("version")) {
         std::cout << util::build::getClioFullVersionString() << '\n';
         return Action{Action::Exit{EXIT_SUCCESS}};
     }
 
-    if (parsed.count("config-description") != 0u) {
+    if (parsed.contains("config-description")) {
         std::filesystem::path const filePath = parsed["config-description"].as<std::string>();
 
         auto const res = util::config::ClioConfigDescription::generateConfigDescriptionToFile(filePath);
@@ -83,18 +83,17 @@ CliArgs::parse(int argc, char const* argv[])
 
     auto configPath = parsed["conf"].as<std::string>();
 
-    if (parsed.count("migrate") != 0u) {
+    if (parsed.contains("migrate")) {
         auto const opt = parsed["migrate"].as<std::string>();
         if (opt == "status")
             return Action{Action::Migrate{.configPath = std::move(configPath), .subCmd = MigrateSubCmd::status()}};
         return Action{Action::Migrate{.configPath = std::move(configPath), .subCmd = MigrateSubCmd::migration(opt)}};
     }
 
-    if (parsed.count("verify") != 0u)
+    if (parsed.contains("verify"))
         return Action{Action::VerifyConfig{.configPath = std::move(configPath)}};
 
-    return Action{Action::Run{.configPath = std::move(configPath), .useNgWebServer = parsed.count("ng-web-server") != 0}
-    };
+    return Action{Action::Run{.configPath = std::move(configPath), .useNgWebServer = parsed.contains("ng-web-server")}};
 }
 
 }  // namespace app

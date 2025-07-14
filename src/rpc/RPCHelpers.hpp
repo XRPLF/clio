@@ -42,7 +42,7 @@
 #include <boost/regex.hpp>
 #include <boost/regex/v5/regex_fwd.hpp>
 #include <boost/regex/v5/regex_match.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/basics/Number.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/json/json_value.h>

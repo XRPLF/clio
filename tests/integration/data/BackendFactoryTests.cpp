@@ -30,7 +30,7 @@
 
 #include <TestGlobals.hpp>
 #include <boost/json/parse.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 
 #include <algorithm>

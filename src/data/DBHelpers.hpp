@@ -199,39 +199,6 @@ struct MPTHolderData {
 };
 
 /**
- * @brief Check whether the supplied object is an offer.
- *
- * @param object The object to check
- * @return true if the object is an offer; false otherwise
- */
-template <typename T>
-inline bool
-isOffer(T const& object)
-{
-    static constexpr short kOFFER_OFFSET = 0x006f;
-    static constexpr short kSHIFT = 8;
-
-    short offerBytes = (object[1] << kSHIFT) | object[2];
-    return offerBytes == kOFFER_OFFSET;
-}
-
-/**
- * @brief Check whether the supplied hex represents an offer object.
- *
- * @param object The object to check
- * @return true if the object is an offer; false otherwise
- */
-template <typename T>
-inline bool
-isOfferHex(T const& object)
-{
-    auto blob = ripple::strUnHex(4, object.begin(), object.begin() + 4);
-    if (blob)
-        return isOffer(*blob);
-    return false;
-}
-
-/**
  * @brief Check whether the supplied object is a dir node.
  *
  * @param object The object to check
@@ -241,6 +208,10 @@ template <typename T>
 inline bool
 isDirNode(T const& object)
 {
+    static constexpr auto kMIN_SIZE_REQUIRED = 3;
+    if (std::size(object) < kMIN_SIZE_REQUIRED)
+        return false;
+
     static constexpr short kDIR_NODE_SPACE_KEY = 0x0064;
     short const spaceKey = (object.data()[1] << 8) | object.data()[2];
     return spaceKey == kDIR_NODE_SPACE_KEY;
@@ -262,23 +233,6 @@ isBookDir(T const& key, R const& object)
 
     ripple::STLedgerEntry const sle{ripple::SerialIter{object.data(), object.size()}, key};
     return !sle[~ripple::sfOwner].has_value();
-}
-
-/**
- * @brief Get the book out of an offer object.
- *
- * @param offer The offer to get the book for
- * @return Book as ripple::uint256
- */
-template <typename T>
-inline ripple::uint256
-getBook(T const& offer)
-{
-    ripple::SerialIter it{offer.data(), offer.size()};
-    ripple::SLE const sle{it, {}};
-    ripple::uint256 book = sle.getFieldH256(ripple::sfBookDirectory);
-
-    return book;
 }
 
 /**

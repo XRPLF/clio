@@ -27,7 +27,7 @@
 #include "web/Resolver.hpp"
 
 #include <boost/asio/spawn.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/security/credentials.h>
 #include <grpcpp/support/channel_arguments.h>

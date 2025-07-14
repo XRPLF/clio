@@ -64,7 +64,7 @@ compiler.version=12
 os=Linux
 
 [conf]
-tools.build:compiler_executables={'c': '/usr/bin/gcc-12', 'cpp': '/usr/bin/g++-12'}
+tools.build:compiler_executables={"c": "/usr/bin/gcc-12", "cpp": "/usr/bin/g++-12"}
 ```
 
 > [!NOTE]
@@ -72,12 +72,11 @@ tools.build:compiler_executables={'c': '/usr/bin/gcc-12', 'cpp': '/usr/bin/g++-1
 
 #### global.conf file
 
-Add the following to the `~/.conan2/global.conf` file:
+To increase the speed of downloading and uploading packages, add the following to the `~/.conan2/global.conf` file:
 
 ```text
 core.download:parallel={{os.cpu_count()}}
 core.upload:parallel={{os.cpu_count()}}
-tools.info.package_id:confs = ["tools.build:cflags", "tools.build:cxxflags", "tools.build:exelinkflags", "tools.build:sharedlinkflags"]
 ```
 
 #### Artifactory
@@ -223,18 +222,16 @@ Sometimes, during development, you need to build against a custom version of `li
 
 ## Using `clang-tidy` for static analysis
 
-The minimum [clang-tidy](https://clang.llvm.org/extra/clang-tidy/) version required is 19.0.
-
 Clang-tidy can be run by CMake when building the project.
 To achieve this, you just need to provide the option `-o '&:lint=True'` for the `conan install` command:
 
 ```sh
-conan install .. --output-folder . --build missing --settings build_type=Release -o '&:tests=True' -o '&:lint=True'
+conan install .. --output-folder . --build missing --settings build_type=Release -o '&:tests=True' -o '&:lint=True' --profile:all clang
 ```
 
 By default CMake will try to find `clang-tidy` automatically in your system.
 To force CMake to use your desired binary, set the `CLIO_CLANG_TIDY_BIN` environment variable to the path of the `clang-tidy` binary. For example:
 
 ```sh
-export CLIO_CLANG_TIDY_BIN=/opt/homebrew/opt/llvm@19/bin/clang-tidy
+export CLIO_CLANG_TIDY_BIN=/opt/homebrew/opt/llvm/bin/clang-tidy
 ```

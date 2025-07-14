@@ -2,9 +2,9 @@ name: Build
 
 on:
   push:
-    branches: [master, release/*, develop]
+    branches: [release/*, develop]
   pull_request:
-    branches: [master, release/*, develop]
+    branches: [release/*, develop]
     paths:
       - .github/workflows/build.yml
 

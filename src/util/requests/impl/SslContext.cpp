@@ -27,7 +27,7 @@
 #include <boost/asio/ssl/verify_mode.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/lexical_cast.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <openssl/err.h>
 
 #include <array>

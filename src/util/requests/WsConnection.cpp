@@ -34,7 +34,6 @@
 #include <boost/beast/core/stream_traits.hpp>
 #include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
-#include <fmt/core.h>
 #include <fmt/format.h>
 #include <openssl/err.h>
 #include <openssl/tls1.h>

@@ -39,7 +39,7 @@
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/stream_traits.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <chrono>
 #include <cstdint>

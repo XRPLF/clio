@@ -18,8 +18,9 @@
 //==============================================================================
 
 #include "data/DBHelpers.hpp"
+#include "util/Assert.hpp"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
@@ -138,7 +139,8 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
     // There should always be a difference so the returned finalIDs
     // iterator should never be end().  But better safe than sorry.
     if (finalIDs.size() != prevIDs.size() + 1 || diff.first == finalIDs.end() || !owner) {
-        throw std::runtime_error(fmt::format(" - unexpected NFTokenMint data in tx {}", strHex(sttx.getTransactionID()))
+        throw std::runtime_error(
+            fmt::format(" - unexpected NFTokenMint data in tx {}", strHex(sttx.getTransactionID()))
         );
     }
 
@@ -358,14 +360,18 @@ getNFTDataFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 std::vector<NFTsData>
 getNFTDataFromObj(std::uint32_t const seq, std::string const& key, std::string const& blob)
 {
-    std::vector<NFTsData> nfts;
-    ripple::STLedgerEntry const sle =
+    // https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0020-non-fungible-tokens#tokenpage-id-format
+    ASSERT(key.size() == ripple::uint256::size(), "The size of the key (token) is expected to fit uint256 exactly");
+
+    auto const sle =
         ripple::STLedgerEntry(ripple::SerialIter{blob.data(), blob.size()}, ripple::uint256::fromVoid(key.data()));
 
     if (sle.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltNFTOKEN_PAGE)
-        return nfts;
+        return {};
 
     auto const owner = ripple::AccountID::fromVoid(key.data());
+    std::vector<NFTsData> nfts;
+
     for (ripple::STObject const& node : sle.getFieldArray(ripple::sfNFTokens))
         nfts.emplace_back(node.getFieldH256(ripple::sfNFTokenID), seq, owner, node.getFieldVL(ripple::sfURI));
 

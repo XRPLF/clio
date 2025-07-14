@@ -280,7 +280,7 @@ TransactionFeed::pub(
                         data->getFieldAmount(ripple::sfTakerPays).issue(),
                         (*data)[~ripple::sfDomainID]
                     };
-                    if (affectedBooks.find(book) == affectedBooks.end()) {
+                    if (!affectedBooks.contains(book)) {
                         affectedBooks.insert(book);
                     }
                 }

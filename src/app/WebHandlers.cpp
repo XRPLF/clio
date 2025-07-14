@@ -97,7 +97,7 @@ HealthCheckHandler::operator()(
     boost::asio::yield_context
 )
 {
-    static auto constexpr kHEALTH_CHECK_HTML = R"html(
+    static constexpr auto kHEALTH_CHECK_HTML = R"html(
     <!DOCTYPE html>
     <html>
         <head><title>Test page for Clio</title></head>

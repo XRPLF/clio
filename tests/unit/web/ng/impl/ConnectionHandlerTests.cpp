@@ -34,11 +34,9 @@
 #include "web/ng/impl/MockHttpConnection.hpp"
 #include "web/ng/impl/MockWsConnection.hpp"
 
-#include <boost/asio/buffer.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/message.hpp>
@@ -277,9 +275,9 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SendSubscriptionMessage)
 
     EXPECT_CALL(*mockWsConnection, send).WillOnce(Return(std::nullopt));
 
-    EXPECT_CALL(*mockWsConnection, sendBuffer)
-        .WillOnce([&subscriptionMessage](boost::asio::const_buffer buffer, auto&&) {
-            EXPECT_EQ(boost::beast::buffers_to_string(buffer), subscriptionMessage);
+    EXPECT_CALL(*mockWsConnection, sendShared)
+        .WillOnce([&subscriptionMessage](std::shared_ptr<std::string> sendingMessage, auto&&) {
+            EXPECT_EQ(*sendingMessage, subscriptionMessage);
             return std::nullopt;
         });
 

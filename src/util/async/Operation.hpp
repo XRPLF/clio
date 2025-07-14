@@ -26,7 +26,7 @@
 #include "util/async/context/impl/Cancellation.hpp"
 #include "util/async/context/impl/Timer.hpp"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <chrono>
 #include <concepts>

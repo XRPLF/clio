@@ -57,9 +57,7 @@ ProposedTransactionFeed::sub(ripple::AccountID const& account, SubscriberSharedP
 {
     auto const weakPtr = std::weak_ptr(subscriber);
     auto const added = accountSignal_.connectTrackableSlot(
-        subscriber,
-        account,
-        [this, weakPtr](std::shared_ptr<std::string> const& msg) {
+        subscriber, account, [this, weakPtr](std::shared_ptr<std::string> const& msg) {
             if (auto connectionPtr = weakPtr.lock()) {
                 // Check if this connection already sent
                 if (notified_.contains(connectionPtr.get()))
