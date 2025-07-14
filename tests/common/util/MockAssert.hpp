@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "util/Assert.hpp"  // IWYU pragma: keep
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -41,19 +43,35 @@ private:
     throwOnAssert(std::string_view m);
 };
 
+class WithMockAssertNoThrow : virtual public testing::Test {
+public:
+    ~WithMockAssertNoThrow() override;
+};
+
 }  // namespace common::util
 
-#define EXPECT_CLIO_ASSERT_FAIL(statement) EXPECT_THROW(statement, MockAssertException)
+#define EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(statement, message_regex)                                        \
+    if (dynamic_cast<common::util::WithMockAssert*>(this) != nullptr) {                                       \
+        EXPECT_THROW(                                                                                         \
+            {                                                                                                 \
+                try {                                                                                         \
+                    statement;                                                                                \
+                } catch (common::util::WithMockAssert::MockAssertException const& e) {                        \
+                    EXPECT_THAT(e.message, testing::ContainsRegex(message_regex));                            \
+                    throw;                                                                                    \
+                }                                                                                             \
+            },                                                                                                \
+            common::util::WithMockAssert::MockAssertException                                                 \
+        );                                                                                                    \
+    } else if (dynamic_cast<common::util::WithMockAssertNoThrow*>(this) != nullptr) {                         \
+        testing::StrictMock<testing::MockFunction<void(std::string_view)>> callMock;                          \
+        ::util::impl::OnAssert::setAction([&callMock](std::string_view m) { callMock.Call(m); });             \
+        EXPECT_CALL(callMock, Call(testing::ContainsRegex(message_regex)));                                   \
+        statement;                                                                                            \
+        ::util::impl::OnAssert::resetAction();                                                                \
+    } else {                                                                                                  \
+        std::cerr << "EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE() can be used only inside test body" << std::endl; \
+        std::terminate();                                                                                     \
+    }
 
-#define EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(statement, message_regex)             \
-    EXPECT_THROW(                                                                  \
-        {                                                                          \
-            try {                                                                  \
-                statement;                                                         \
-            } catch (common::util::WithMockAssert::MockAssertException const& e) { \
-                EXPECT_THAT(e.message, testing::ContainsRegex(message_regex));     \
-                throw;                                                             \
-            }                                                                      \
-        },                                                                         \
-        common::util::WithMockAssert::MockAssertException                          \
-    )
+#define EXPECT_CLIO_ASSERT_FAIL(statement) EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(statement, ".*")

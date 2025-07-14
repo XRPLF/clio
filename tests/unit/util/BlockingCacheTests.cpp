@@ -222,7 +222,7 @@ TEST_F(BlockingCacheTest, InvalidateWhenStateIsHasValue)
     EXPECT_EQ(cache->state(), Cache::State::NoValue);
 }
 
-TEST_F(BlockingCacheTest, UpdateFromTwoCoroutinesHappensOnlyOnes)
+TEST_F(BlockingCacheTest, UpdateFromTwoCoroutinesHappensOnlyOnce)
 {
     auto waitingCoroutine = [&](boost::asio::yield_context yield) {
         auto result = cache->update(yield, mockUpdater.AsStdFunction(), mockVerifier.AsStdFunction());

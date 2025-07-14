@@ -42,12 +42,15 @@ target_sources(
 
 # This must be above the target_link_libraries call otherwise backtrace doesn't work
 if ("${san}" STREQUAL "")
-  target_link_libraries(clio_util PUBLIC Boost::stacktrace_backtrace dl libbacktrace::libbacktrace)
+  target_link_libraries(clio_util PUBLIC Boost::stacktrace_backtrace)
 endif ()
 
 target_link_libraries(
   clio_util
   PUBLIC Boost::headers
+         Boost::iostreams
+         Boost::log
+         Boost::log_setup
          fmt::fmt
          openssl::openssl
          xrpl::libxrpl

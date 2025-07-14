@@ -6,7 +6,7 @@ To support additional database types, you can create new classes that implement 
 
 ## Data Model
 
-The data model used by Clio to read and write ledger data is different from what `rippled` uses. `rippled` uses a novel data structure named [_SHAMap_](https://github.com/ripple/rippled/blob/master/src/ripple/shamap/README.md), which is a combination of a Merkle Tree and a Radix Trie. In a SHAMap, ledger objects are stored in the root vertices of the tree. Thus, looking up a record located at the leaf node of the SHAMap executes a tree search, where the path from the root node to the leaf node is the key of the record.
+The data model used by Clio to read and write ledger data is different from what `rippled` uses. `rippled` uses a novel data structure named [_SHAMap_](https://github.com/XRPLF/rippled/blob/develop/src/xrpld/shamap/README.md), which is a combination of a Merkle Tree and a Radix Trie. In a SHAMap, ledger objects are stored in the root vertices of the tree. Thus, looking up a record located at the leaf node of the SHAMap executes a tree search, where the path from the root node to the leaf node is the key of the record.
 
 `rippled` nodes can also generate a proof-tree by forming a subtree with all the path nodes and their neighbors, which can then be used to prove the existence of the leaf node data to other `rippled` nodes. In short, the main purpose of the SHAMap data structure is to facilitate the fast validation of data integrity between different decentralized `rippled` nodes.
 
