@@ -197,22 +197,31 @@ private:
     std::expected<ValueType, ErrorType>
     wait(boost::asio::yield_context yield, Updater updater, Verifier verifier)
     {
-        boost::asio::steady_timer timer{yield.get_executor(), boost::asio::steady_timer::duration::max()};
+        struct SharedContext {
+            SharedContext(boost::asio::yield_context y)
+                : timer(y.get_executor(), boost::asio::steady_timer::duration::max())
+            {
+            }
+
+            boost::asio::steady_timer timer;
+            std::optional<std::expected<ValueType, ErrorType>> result;
+        };
+
+        auto sharedContext = std::make_shared<SharedContext>(yield);
         boost::system::error_code errorCode;
 
-        std::optional<std::expected<ValueType, ErrorType>> result;
         boost::signals2::scoped_connection const slot =
-            updateFinished_.connect([yield, &timer, &result](std::expected<ValueType, ErrorType> value) {
-                boost::asio::spawn(yield, [&timer, &result, value = std::move(value)](auto&&) {
-                    result = std::move(value);
-                    timer.cancel();
+            updateFinished_.connect([yield, sharedContext](std::expected<ValueType, ErrorType> value) {
+                boost::asio::spawn(yield, [sharedContext = std::move(sharedContext), value = std::move(value)](auto&&) {
+                    sharedContext->result = std::move(value);
+                    sharedContext->timer.cancel();
                 });
             });
 
         if (state_ == State::Updating) {
-            timer.async_wait(yield[errorCode]);
-            ASSERT(result.has_value(), "There should be some value after waiting");
-            return std::move(result).value();
+            sharedContext->timer.async_wait(yield[errorCode]);
+            ASSERT(sharedContext->result.has_value(), "There should be some value after waiting");
+            return std::move(sharedContext->result).value();
         }
         return asyncGet(yield, std::move(updater), std::move(verifier));
     }
