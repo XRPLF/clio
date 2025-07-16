@@ -1,10 +1,11 @@
+ARG GHCR_REPO=invalid
 ARG CLANG_MAJOR_VERSION=invalid
 ARG GCC_VERSION=invalid
 
-FROM ghcr.io/xrplf/clio-gcc:${GCC_VERSION} AS clio-gcc
-FROM ghcr.io/xrplf/clio-tools:latest AS clio-tools
+FROM ${GHCR_REPO}/clio-gcc:${GCC_VERSION} AS clio-gcc
+FROM ${GHCR_REPO}/clio-tools:latest AS clio-tools
 
-FROM ghcr.io/xrplf/clio-clang:${CLANG_MAJOR_VERSION}
+FROM ${GHCR_REPO}/clio-clang:${CLANG_MAJOR_VERSION}
 
 ARG DEBIAN_FRONTEND=noninteractive
 
