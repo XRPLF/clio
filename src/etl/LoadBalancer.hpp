@@ -49,6 +49,7 @@
 #include <concepts>
 #include <cstdint>
 #include <expected>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -281,14 +282,6 @@ private:
      */
     void
     chooseForwardingSource();
-
-    std::expected<boost::json::object, rpc::CombinedError>
-    forwardToRippledImpl(
-        boost::json::object const& request,
-        std::optional<std::string> const& clientIp,
-        bool isAdmin,
-        boost::asio::yield_context yield
-    );
 };
 
 }  // namespace etl
