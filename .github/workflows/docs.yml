@@ -22,6 +22,11 @@ jobs:
         with:
           lfs: true
 
+      - name: Prepare runner
+        uses: ./.github/actions/prepare_runner
+        with:
+          disable_ccache: true
+
       - name: Create build directory
         run: mkdir build_docs
 
