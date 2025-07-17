@@ -61,6 +61,7 @@ public:
         ripple::STLedgerEntry accountData;
         bool isDisallowIncomingEnabled = false;
         bool isClawbackEnabled = false;
+        bool isTokenEscrowEnabled = false;
         uint32_t apiVersion;
         std::optional<std::vector<ripple::STLedgerEntry>> signerLists;
         // validated should be sent via framework
@@ -74,6 +75,7 @@ public:
          * @param sle The account data
          * @param isDisallowIncomingEnabled Whether disallow incoming is enabled
          * @param isClawbackEnabled Whether clawback is enabled
+         * @param isTokenEscrowEnabled Whether token escrow is enabled
          * @param version The API version
          * @param signerLists The signer lists
          */
@@ -83,6 +85,7 @@ public:
             ripple::STLedgerEntry sle,
             bool isDisallowIncomingEnabled,
             bool isClawbackEnabled,
+            bool isTokenEscrowEnabled,
             uint32_t version,
             std::optional<std::vector<ripple::STLedgerEntry>> signerLists = std::nullopt
         )
@@ -91,6 +94,7 @@ public:
             , accountData(std::move(sle))
             , isDisallowIncomingEnabled(isDisallowIncomingEnabled)
             , isClawbackEnabled(isClawbackEnabled)
+            , isTokenEscrowEnabled(isTokenEscrowEnabled)
             , apiVersion(version)
             , signerLists(std::move(signerLists))
         {
