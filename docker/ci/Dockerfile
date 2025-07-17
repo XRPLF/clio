@@ -60,27 +60,29 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install gcc-12 and make ldconfig aware of the new libstdc++ location (for gcc)
+ARG GCC_MAJOR_VERSION=invalid
+
+# Install custom-built gcc and make ldconfig aware of the new libstdc++ location (for gcc)
 # Note: Clang is using libc++ instead
-COPY --from=clio-gcc /gcc12.deb /
+COPY --from=clio-gcc /gcc${GCC_MAJOR_VERSION}.deb /
 RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests \
         binutils \
         libc6-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && dpkg -i /gcc12.deb \
-    && rm -rf /gcc12.deb \
+    && dpkg -i /gcc${GCC_MAJOR_VERSION}.deb \
+    && rm -rf /gcc${GCC_MAJOR_VERSION}.deb \
     && ldconfig
 
-# Rewire to use gcc-12 as default compiler
-RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 100 \
-    && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-12 100 \
-    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 \
-    && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-12 100 \
-    && update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-12 100 \
-    && update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-12 100 \
-    && update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-12 100
+# Rewire to use our custom-built gcc as default compiler
+RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${GCC_MAJOR_VERSION} 100 \
+    && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-${GCC_MAJOR_VERSION} 100 \
+    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_MAJOR_VERSION} 100 \
+    && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-${GCC_MAJOR_VERSION} 100 \
+    && update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-${GCC_MAJOR_VERSION} 100 \
+    && update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-${GCC_MAJOR_VERSION} 100 \
+    && update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-${GCC_MAJOR_VERSION} 100
 
 COPY --from=clio-tools \
     /usr/local/bin/mold \

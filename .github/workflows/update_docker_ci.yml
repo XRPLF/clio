@@ -326,6 +326,7 @@ jobs:
           build_args: |
             GHCR_REPO=${{ needs.repo.outputs.GHCR_REPO }}
             CLANG_MAJOR_VERSION=${{ env.CLANG_MAJOR_VERSION }}
+            GCC_MAJOR_VERSION=${{ env.GCC_MAJOR_VERSION }}
             GCC_VERSION=${{ env.GCC_VERSION }}
           dockerhub_repo: rippleci/clio_ci
           dockerhub_description: CI image for XRPLF/clio.
