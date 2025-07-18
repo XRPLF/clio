@@ -25,6 +25,9 @@
 #include "util/config/ArrayView.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ObjectView.hpp"
+#include "util/prometheus/Counter.hpp"
+#include "util/prometheus/Label.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
@@ -42,6 +45,7 @@
 #include <boost/log/keywords/target_file_name.hpp>
 #include <boost/log/keywords/time_based_rotation.hpp>
 #include <boost/log/sinks/text_file_backend.hpp>
+#include <boost/log/utility/exception_handler.hpp>
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/utility/setup/file.hpp>
@@ -52,7 +56,9 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <filesystem>
+#include <functional>
 #include <ios>
 #include <iostream>
 #include <optional>
@@ -65,6 +71,30 @@
 
 namespace util {
 
+namespace {
+
+class LoggerExceptionHandler {
+    std::reference_wrapper<util::prometheus::CounterInt> exceptionCounter_ =
+        PrometheusService::counterInt("logger_exceptions_total_number", util::prometheus::Labels{});
+
+public:
+    using result_type = void;
+
+    LoggerExceptionHandler()
+    {
+        // Check that prometheus is already initialized
+        PrometheusService::instance();
+    }
+
+    void
+    operator()(std::exception const& e) const
+    {
+        std::cerr << fmt::format("Exception in logger: {}", e.what()) << std::endl;
+        exceptionCounter_.get() += 1;
+    }
+};
+
+}  // namespace
 Logger LogService::generalLog = Logger{"General"};
 Logger LogService::alertLog = Logger{"Alert"};
 boost::log::filter LogService::filter{};
@@ -160,6 +190,10 @@ LogService::init(config::ClioConfigDefinition const& config)
             sinks::file::make_collector(keywords::target = dirPath, keywords::max_size = dirSize)
         );
         fileSink->locked_backend()->scan_for_files();
+
+        boost::log::core::get()->set_exception_handler(
+            boost::log::make_exception_handler<std::exception>(LoggerExceptionHandler())
+        );
     }
 
     // get default severity, can be overridden per channel using the `log_channels` array

@@ -25,6 +25,7 @@
 #include "util/TerminationHandler.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <cstdlib>
 #include <exception>
@@ -52,6 +53,7 @@ try {
             if (not app::parseConfig(run.configPath))
                 return EXIT_FAILURE;
 
+            PrometheusService::init(gClioConfig);
             if (auto const initSuccess = util::LogService::init(gClioConfig); not initSuccess) {
                 std::cerr << initSuccess.error() << std::endl;
                 return EXIT_FAILURE;
