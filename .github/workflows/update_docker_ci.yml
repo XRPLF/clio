@@ -30,8 +30,8 @@ concurrency:
 
 env:
   CLANG_MAJOR_VERSION: 19
-  GCC_MAJOR_VERSION: 12
-  GCC_VERSION: 12.3.0
+  GCC_MAJOR_VERSION: 14
+  GCC_VERSION: 14.3.0
 
 jobs:
   repo:

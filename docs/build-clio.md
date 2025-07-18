@@ -35,7 +35,7 @@ The default profile is the file in `~/.conan2/profiles/default`.
 
 Here are some examples of possible profiles:
 
-**Mac apple-clang 16 example**:
+**Mac apple-clang 17 example**:
 
 ```text
 [settings]
@@ -44,7 +44,7 @@ build_type=Release
 compiler=apple-clang
 compiler.cppstd=20
 compiler.libcxx=libc++
-compiler.version=16
+compiler.version=17
 os=Macos
 
 [conf]
