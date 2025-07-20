@@ -198,8 +198,8 @@ private:
 
             if (!context) {
                 auto const err = context.error();
-                LOG(perfLog_.warn()) << connection->tag() << "Could not create Web context: " << err;
-                LOG(log_.warn()) << connection->tag() << "Could not create Web context: " << err;
+                LOG(perfLog_.warn()) << connection->tag() << "Could not create Web context: " << err.message;
+                LOG(log_.warn()) << connection->tag() << "Could not create Web context: " << err.message;
 
                 // we count all those as BadSyntax - as the WS path would.
                 // Although over HTTP these will yield a 400 status with a plain text response (for most).
