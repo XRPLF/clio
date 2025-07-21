@@ -82,19 +82,19 @@ public:
 
     LoggerExceptionHandler()
     {
-        // Check that prometheus is already initialized
-        PrometheusService::instance();
+        ASSERT(PrometheusService::isInitialised(), "Prometheus should be initialised before Logger");
     }
 
     void
     operator()(std::exception const& e) const
     {
-        std::cerr << fmt::format("Exception in logger: {}", e.what()) << std::endl;
-        exceptionCounter_.get() += 1;
+        std::cerr << fmt::format("Exception in logger: {}\n", e.what());
+        ++exceptionCounter_.get();
     }
 };
 
 }  // namespace
+
 Logger LogService::generalLog = Logger{"General"};
 Logger LogService::alertLog = Logger{"Alert"};
 boost::log::filter LogService::filter{};

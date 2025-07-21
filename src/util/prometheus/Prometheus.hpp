@@ -261,6 +261,14 @@ public:
     init(util::config::ClioConfigDefinition const& config);
 
     /**
+     * @brief Whether the singleton has been already initialised
+     *
+     * @return True if the singleton was already initialised and false otherwise
+     */
+    static bool
+    isInitialised();
+
+    /**
      * @brief Get a bool based metric. It will be created if it doesn't exist
      * @note Prometheus does not have a native bool type, so we use a counter with a value of 0 or 1
      *
