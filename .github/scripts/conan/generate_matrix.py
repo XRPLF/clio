@@ -22,9 +22,6 @@ def generate_matrix():
         itertools.product(MACOS_OS, MACOS_CONTAINERS, MACOS_COMPILERS),
     ):
         for sanitizer_ext, build_type in itertools.product(SANITIZER_EXT, BUILD_TYPES):
-            # libbacktrace doesn't build on arm64 with gcc.tsan
-            if os == "heavy-arm64" and compiler == "gcc" and sanitizer_ext == ".tsan":
-                continue
             configurations.append(
                 {
                     "os": os,

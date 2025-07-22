@@ -40,14 +40,6 @@ jobs:
         compiler: [gcc, clang]
         sanitizer_ext: [.asan, .tsan, .ubsan]
         build_type: [Release, Debug]
-        exclude:
-          # Currently, clang.tsan unit tests hang
-          - compiler: clang
-            sanitizer_ext: .tsan
-            build_type: Release
-          - compiler: clang
-            sanitizer_ext: .tsan
-            build_type: Debug
 
     uses: ./.github/workflows/build_and_test.yml
     with:
@@ -57,7 +49,8 @@ jobs:
       conan_profile: ${{ matrix.compiler }}${{ matrix.sanitizer_ext }}
       build_type: ${{ matrix.build_type }}
       static: false
-      run_unit_tests: true
+      # Currently, both gcc.tsan and clang.tsan unit tests hang
+      run_unit_tests: ${{ matrix.sanitizer_ext != '.tsan' }}
       run_integration_tests: false
       upload_clio_server: false
       targets: clio_tests clio_integration_tests

@@ -1,6 +1,7 @@
+ARG GHCR_REPO=invalid
 ARG GCC_VERSION=invalid
 
-FROM ghcr.io/xrplf/clio-gcc:${GCC_VERSION}
+FROM ${GHCR_REPO}/clio-gcc:${GCC_VERSION}
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH

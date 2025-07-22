@@ -55,6 +55,12 @@ repos:
             --ignore-words=pre-commit-hooks/codespell_ignore.txt,
           ]
 
+  - repo: https://github.com/trufflesecurity/trufflehog
+    rev: 6641d4ba5b684fffe195b9820345de1bf19f3181 # frozen: v3.89.2
+    hooks:
+      - id: trufflehog
+        entry: trufflehog git file://. --since-commit HEAD --no-verification --fail
+
   # Running some C++ hooks before clang-format
   # to ensure that the style is consistent.
   - repo: local
