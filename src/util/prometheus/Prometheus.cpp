@@ -184,6 +184,12 @@ PrometheusService::init(util::config::ClioConfigDefinition const& config)
     impl = std::make_unique<util::prometheus::PrometheusImpl>(enabled, compressReply);
 }
 
+bool
+PrometheusService::isInitialised()
+{
+    return impl != nullptr;
+}
+
 util::prometheus::Bool
 PrometheusService::boolMetric(std::string name, util::prometheus::Labels labels, std::optional<std::string> description)
 {
@@ -271,7 +277,7 @@ PrometheusService::replaceInstance(std::unique_ptr<util::prometheus::PrometheusI
 util::prometheus::PrometheusInterface&
 PrometheusService::instance()
 {
-    ASSERT(impl != nullptr, "PrometheusService::instance() called before init()");
+    ASSERT(isInitialised(), "PrometheusService::instance() called before init()");
     return *impl;
 }
 

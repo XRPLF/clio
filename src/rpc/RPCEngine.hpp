@@ -157,48 +157,55 @@ public:
             return forwardingProxy_.forward(ctx);
         }
 
-        if (not ctx.isAdmin and responseCache_ and responseCache_->shouldCache(ctx.method)) {
-            auto updater = [this, &ctx](boost::asio::yield_context)
-                -> std::expected<util::ResponseExpirationCache::EntryData, util::ResponseExpirationCache::Error> {
-                auto result = buildResponseImpl(ctx);
-
-                auto const extracted =
-                    [&result]() -> std::expected<boost::json::object, util::ResponseExpirationCache::Error> {
-                    if (result.response.has_value()) {
-                        return std::move(result.response).value();
-                    }
-                    return std::unexpected{util::ResponseExpirationCache::Error{
-                        .status = std::move(result.response).error(), .warnings = std::move(result.warnings)
-                    }};
-                }();
-
-                if (extracted.has_value()) {
-                    return util::ResponseExpirationCache::EntryData{
-                        .lastUpdated = std::chrono::steady_clock::now(), .response = std::move(extracted).value()
-                    };
-                }
-                return std::unexpected{std::move(extracted).error()};
-            };
-
-            auto result = responseCache_->getOrUpdate(
-                ctx.yield,
-                ctx.method,
-                std::move(updater),
-                [&ctx](util::ResponseExpirationCache::EntryData const& entry) {
-                    return not ctx.isAdmin and not entry.response.contains("error");
-                }
-            );
-            if (result.has_value()) {
-                return Result{std::move(result).value()};
-            }
-
-            auto error = std::move(result).error();
-            Result errorResult{std::move(error.status)};
-            errorResult.warnings = std::move(error.warnings);
-            return errorResult;
+        if (not ctx.isAdmin and responseCache_) {
+            if (auto res = responseCache_->get(ctx.method); res.has_value())
+                return Result{std::move(res).value()};
         }
 
-        return buildResponseImpl(ctx);
+        if (backend_->isTooBusy()) {
+            LOG(log_.error()) << "Database is too busy. Rejecting request";
+            notifyTooBusy();  // TODO: should we add ctx.method if we have it?
+            return Result{Status{RippledError::rpcTOO_BUSY}};
+        }
+
+        auto const method = handlerProvider_->getHandler(ctx.method);
+        if (!method) {
+            notifyUnknownCommand();
+            return Result{Status{RippledError::rpcUNKNOWN_COMMAND}};
+        }
+
+        try {
+            LOG(perfLog_.debug()) << ctx.tag() << " start executing rpc `" << ctx.method << '`';
+
+            auto const context = Context{
+                .yield = ctx.yield,
+                .session = ctx.session,
+                .isAdmin = ctx.isAdmin,
+                .clientIp = ctx.clientIp,
+                .apiVersion = ctx.apiVersion
+            };
+            auto v = (*method).process(ctx.params, context);
+
+            LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
+
+            if (not v) {
+                notifyErrored(ctx.method);
+            } else if (not ctx.isAdmin and responseCache_) {
+                responseCache_->put(ctx.method, v.result->as_object());
+            }
+
+            return Result{std::move(v)};
+        } catch (data::DatabaseTimeout const& t) {
+            LOG(log_.error()) << "Database timeout";
+            notifyTooBusy();
+
+            return Result{Status{RippledError::rpcTOO_BUSY}};
+        } catch (std::exception const& ex) {
+            LOG(log_.error()) << ctx.tag() << "Caught exception: " << ex.what();
+            notifyInternalError();
+
+            return Result{Status{RippledError::rpcINTERNAL}};
+        }
     }
 
     /**

@@ -35,7 +35,7 @@ The default profile is the file in `~/.conan2/profiles/default`.
 
 Here are some examples of possible profiles:
 
-**Mac apple-clang 16 example**:
+**Mac apple-clang 17 example**:
 
 ```text
 [settings]
@@ -44,7 +44,7 @@ build_type=Release
 compiler=apple-clang
 compiler.cppstd=20
 compiler.libcxx=libc++
-compiler.version=16
+compiler.version=17
 os=Macos
 
 [conf]
@@ -163,7 +163,7 @@ To generate the API docs:
 It is also possible to build Clio using [Docker](https://www.docker.com/) if you don't want to install all the dependencies on your machine.
 
 ```sh
-docker run -it ghcr.io/xrplf/clio-ci:latest
+docker run -it ghcr.io/xrplf/clio-ci:25e55ef95248539a3b1106985e1b30b1e73462b7
 git clone https://github.com/XRPLF/clio
 mkdir build && cd build
 conan install .. --output-folder . --build missing --settings build_type=Release -o '&:tests=True'

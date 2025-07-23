@@ -29,7 +29,7 @@ jobs:
             conan_profile: gcc
             build_type: Release
             static: true
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:25e55ef95248539a3b1106985e1b30b1e73462b7" }'
 
     uses: ./.github/workflows/build_and_test.yml
     with:

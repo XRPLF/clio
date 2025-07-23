@@ -282,14 +282,6 @@ private:
      */
     void
     chooseForwardingSource();
-
-    std::expected<boost::json::object, rpc::CombinedError>
-    forwardToRippledImpl(
-        boost::json::object const& request,
-        std::optional<std::string> const& clientIp,
-        bool isAdmin,
-        boost::asio::yield_context yield
-    );
 };
 
 }  // namespace etlng

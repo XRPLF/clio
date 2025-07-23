@@ -14,13 +14,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/xrplf/clio-ci:latest
+      image: ghcr.io/xrplf/clio-ci:25e55ef95248539a3b1106985e1b30b1e73462b7
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           lfs: true
+
+      - name: Prepare runner
+        uses: ./.github/actions/prepare_runner
+        with:
+          disable_ccache: true
 
       - name: Create build directory
         run: mkdir build_docs
