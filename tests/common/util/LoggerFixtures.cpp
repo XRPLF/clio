@@ -19,12 +19,17 @@
 
 #include "util/LoggerFixtures.hpp"
 
+#include "util/log/Logger.hpp"
+
 #include <boost/log/core/core.hpp>
 #include <boost/log/expressions/predicates/channel_severity_filter.hpp>
 #include <boost/log/keywords/format.hpp>
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/utility/setup/formatter_parser.hpp>
+
+#include <algorithm>
+#include <mutex>
 
 LoggerFixture::LoggerFixture()
 {

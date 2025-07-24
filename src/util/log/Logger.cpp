@@ -241,7 +241,7 @@ getMinSeverity(config::ClioConfigDefinition const& config, Severity defaultSever
 static boost::log::filter
 createLogFilter(Severity defaultSeverity, std::unordered_map<std::string, Severity> const& minSeverity)
 {
-    auto logFilter = [minSeverity = std::move(minSeverity),
+    auto logFilter = [minSeverity = minSeverity,
                       defaultSeverity](boost::log::attribute_value_set const& attributes) -> bool {
         auto const channel = attributes[LogChannel];
         auto const severity = attributes[LogSeverity];
@@ -260,13 +260,13 @@ LogService::init(config::ClioConfigDefinition const& config)
 {
     boost::log::add_common_attributes();
     boost::log::register_simple_formatter_factory<Severity, char>("Severity");
-    std::string format = config.get<std::string>("log_format");
+    std::string const format = config.get<std::string>("log_format");
 
     initConsoleLogging(config.get<bool>("log_to_console"), format);
 
     auto const logDir = config.maybeValue<std::string>("log_directory");
     if (logDir) {
-        std::filesystem::path dirPath{logDir.value()};
+        std::filesystem::path const dirPath{logDir.value()};
         if (not std::filesystem::exists(dirPath)) {
             if (std::error_code error; not std::filesystem::create_directories(dirPath, error)) {
                 return std::unexpected{
@@ -286,7 +286,7 @@ LogService::init(config::ClioConfigDefinition const& config)
     auto const minSeverity = std::move(maybeMinSeverity).value();
 
     auto logFilter = createLogFilter(defaultSeverity, minSeverity);
-    boost::log::core::get()->set_filter(std::move(logFilter));
+    boost::log::core::get()->set_filter(logFilter);
 
     LOG(LogService::info()) << "Default log level = " << defaultSeverity;
     return {};
