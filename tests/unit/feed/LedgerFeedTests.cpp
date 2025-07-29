@@ -19,6 +19,7 @@
 
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/LedgerFeed.hpp"
+#include "util/Spawn.hpp"
 #include "util/TestObject.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 
@@ -62,7 +63,7 @@ TEST_F(FeedLedgerTest, SubPub)
             "reserve_inc": 2
         })JSON";
     boost::asio::io_context ioContext;
-    boost::asio::spawn(ioContext, [this](boost::asio::yield_context yield) {
+    util::spawn(ioContext, [this](boost::asio::yield_context yield) {
         EXPECT_CALL(*mockSessionPtr, onDisconnect);
         auto res = testFeedPtr->sub(yield, backend_, sessionPtr);
         // check the response
@@ -120,11 +121,14 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
     web::SubscriptionContextInterface::OnDisconnectSlot slot;
     EXPECT_CALL(*mockSessionPtr, onDisconnect).WillOnce(testing::SaveArg<0>(&slot));
 
-    boost::asio::spawn(ctx_, [this](boost::asio::yield_context yield) {
+    boost::asio::io_context ioContext;
+    util::spawn(ioContext, [this](boost::asio::yield_context yield) {
         auto res = testFeedPtr->sub(yield, backend_, sessionPtr);
         // check the response
         EXPECT_EQ(res, json::parse(kLEDGER_RESPONSE));
     });
+
+    ioContext.run();
     EXPECT_EQ(testFeedPtr->count(), 1);
     EXPECT_CALL(*mockSessionPtr, send(_)).Times(0);
 

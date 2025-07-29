@@ -10,6 +10,11 @@ on:
         required: false
         default: false
         type: boolean
+      force_upload:
+        description: "Force upload of all dependencies"
+        required: false
+        default: false
+        type: boolean
   pull_request:
     branches: [develop]
     paths:
@@ -17,8 +22,8 @@ on:
 
       - .github/actions/generate/action.yml
       - .github/actions/prepare_runner/action.yml
-      - .github/scripts/conan/generate_matrix.py
-      - .github/scripts/conan/init.sh
+      - ".github/scripts/conan/**"
+      - "!.github/scripts/conan/apple-clang-local.profile"
 
       - conanfile.py
       - conan.lock
@@ -29,8 +34,8 @@ on:
 
       - .github/actions/generate/action.yml
       - .github/actions/prepare_runner/action.yml
-      - .github/scripts/conan/generate_matrix.py
-      - .github/scripts/conan/init.sh
+      - ".github/scripts/conan/**"
+      - "!.github/scripts/conan/apple-clang-local.profile"
 
       - conanfile.py
       - conan.lock
@@ -97,4 +102,4 @@ jobs:
 
       - name: Upload Conan packages
         if: github.event_name != 'pull_request' && github.event_name != 'schedule'
-        run: conan upload "*" -r=ripple --confirm
+        run: conan upload "*" -r=ripple --confirm ${{ github.event.inputs.force_upload == 'true' && '--force' || '' }}

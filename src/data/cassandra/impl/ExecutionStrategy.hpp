@@ -30,8 +30,8 @@
 
 #include <boost/asio.hpp>
 #include <boost/asio/associated_executor.hpp>
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/io_service.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 
@@ -79,7 +79,7 @@ class DefaultExecutionStrategy {
     std::condition_variable syncCv_;
 
     boost::asio::io_context ioc_;
-    std::optional<boost::asio::io_service::work> work_;
+    std::optional<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work_;
 
     std::reference_wrapper<HandleType const> handle_;
     std::thread thread_;
@@ -107,7 +107,7 @@ public:
         : maxWriteRequestsOutstanding_{settings.maxWriteRequestsOutstanding}
         , maxReadRequestsOutstanding_{settings.maxReadRequestsOutstanding}
         , writeBatchSize_{settings.writeBatchSize}
-        , work_{ioc_}
+        , work_{boost::asio::make_work_guard(ioc_)}
         , handle_{std::cref(handle)}
         , thread_{[this]() { ioc_.run(); }}
         , counters_{std::move(counters)}
@@ -334,7 +334,7 @@ public:
             };
 
             auto res = boost::asio::async_compose<CompletionTokenType, void(ResultOrErrorType)>(
-                init, token, boost::asio::get_associated_executor(token)
+                std::move(init), token, boost::asio::get_associated_executor(token)
             );
             numReadRequestsOutstanding_ -= numStatements;
 
@@ -387,7 +387,7 @@ public:
             };
 
             auto res = boost::asio::async_compose<CompletionTokenType, void(ResultOrErrorType)>(
-                init, token, boost::asio::get_associated_executor(token)
+                std::move(init), token, boost::asio::get_associated_executor(token)
             );
             --numReadRequestsOutstanding_;
 
@@ -456,7 +456,7 @@ public:
         };
 
         boost::asio::async_compose<CompletionTokenType, void()>(
-            init, token, boost::asio::get_associated_executor(token)
+            std::move(init), token, boost::asio::get_associated_executor(token)
         );
         numReadRequestsOutstanding_ -= statements.size();
 

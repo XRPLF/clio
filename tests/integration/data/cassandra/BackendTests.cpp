@@ -33,13 +33,14 @@
 #include "util/MockLedgerHeaderCache.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/Random.hpp"
+#include "util/Spawn.hpp"
 #include "util/StringUtils.hpp"
 #include "util/config/ConfigValue.hpp"
 #include "util/config/ObjectView.hpp"
 #include "util/config/Types.hpp"
 
 #include <TestGlobals.hpp>
-#include <boost/asio/impl/spawn.hpp>
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/uuid/random_generator.hpp>
@@ -143,10 +144,9 @@ protected:
 TEST_F(BackendCassandraTest, Basic)
 {
     std::atomic_bool done = false;
-    std::optional<boost::asio::io_context::work> work;
-    work.emplace(ctx_);
+    auto work = std::make_optional(boost::asio::make_work_guard(ctx_));
 
-    boost::asio::spawn(ctx_, [this, &done, &work](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [this, &done, &work](boost::asio::yield_context yield) {
         std::string const rawHeader =
             "03C3141A01633CD656F91B4EBB5EB89B791BD34DBC8A04BB6F407C5335BC54351E"
             "DD733898497E809E04074D14D271E4832D7888754F9230800761563A292FA2315A"
@@ -908,10 +908,9 @@ TEST_F(BackendCassandraTest, Basic)
 TEST_F(BackendCassandraTest, CacheIntegration)
 {
     std::atomic_bool done = false;
-    std::optional<boost::asio::io_context::work> work;
-    work.emplace(ctx_);
+    auto work = std::make_optional(boost::asio::make_work_guard(ctx_));
 
-    boost::asio::spawn(ctx_, [this, &done, &work](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [this, &done, &work](boost::asio::yield_context yield) {
         backend_->cache().setFull();
 
         // this account is not related to the above transaction and

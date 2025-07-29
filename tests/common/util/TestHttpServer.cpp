@@ -133,6 +133,7 @@ TestHttpServer::accept(boost::asio::yield_context yield)
 void
 TestHttpServer::handleRequest(TestHttpServer::RequestHandler handler, bool const allowToFail)
 {
+    // Note: This was designed to use `boost::asio::detached`
     boost::asio::spawn(
         acceptor_.get_executor(),
         [this, allowToFail, handler = std::move(handler)](asio::yield_context yield) mutable {

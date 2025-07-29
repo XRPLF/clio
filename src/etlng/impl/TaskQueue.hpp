@@ -67,7 +67,8 @@ public:
 
     /**
      * @brief Construct a new priority queue
-     * @param limit The limit of items allowed simultaneously in the queue
+     * @param settings Settings for the queue, including starting sequence, increment value, and optional limit
+     * @note If limit is not set, the queue will have no limit
      */
     explicit TaskQueue(Settings settings)
         : limit_(settings.limit.value_or(0uz)), increment_(settings.increment), data_(settings.startSeq)
