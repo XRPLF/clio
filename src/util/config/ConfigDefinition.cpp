@@ -246,7 +246,7 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
 ClioConfigDefinition&
 getClioConfig()
 {
-    static ClioConfigDefinition kG_CLIO_CONFIG{
+    static ClioConfigDefinition kCLIO_CONFIG{
         {{"database.type",
           ConfigValue{ConfigType::String}.defaultValue("cassandra").withConstraint(gValidateCassandraName)},
          {"database.cassandra.contact_points", ConfigValue{ConfigType::String}.defaultValue("localhost")},
@@ -403,7 +403,7 @@ getClioConfig()
           ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(gValidateUint32)}},
     };
 
-    return kG_CLIO_CONFIG;
+    return kCLIO_CONFIG;
 }
 
 }  // namespace util::config
