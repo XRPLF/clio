@@ -17,38 +17,46 @@
 */
 //==============================================================================
 
-#include "app/Stopper.hpp"
-
 #include "util/Spawn.hpp"
 
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/strand.hpp>
+#include <gtest/gtest.h>
 
-#include <functional>
-#include <thread>
-#include <utility>
+#include <stdexcept>
 
-namespace app {
-
-Stopper::~Stopper()
+TEST(SpawnTest, SpawnOnIoContext)
 {
-    if (worker_.joinable())
-        worker_.join();
+    EXPECT_ANY_THROW([] {
+        boost::asio::io_context io;
+        util::spawn(io, [](boost::asio::yield_context) { throw std::runtime_error("Test exception in coroutine"); });
+
+        io.run();
+    }());
 }
 
-void
-Stopper::setOnStop(std::function<void(boost::asio::yield_context)> cb)
+TEST(SpawnTest, SpawnOnStrand)
 {
-    util::spawn(ctx_, std::move(cb));
+    EXPECT_ANY_THROW([] {
+        boost::asio::io_context io;
+        auto str = boost::asio::make_strand(io);
+        util::spawn(str, [](boost::asio::yield_context) { throw std::runtime_error("Test exception in coroutine"); });
+
+        io.run();
+    }());
 }
 
-void
-Stopper::stop()
+TEST(SpawnTest, SpawnOnCoroutine)
 {
-    // Do nothing if worker_ is already running
-    if (worker_.joinable())
-        return;
+    EXPECT_ANY_THROW([] {
+        boost::asio::io_context io;
+        util::spawn(io, [](boost::asio::yield_context yield) {
+            util::spawn(yield, [](boost::asio::yield_context) {
+                throw std::runtime_error("Test exception in coroutine");
+            });
+        });
 
-    worker_ = std::thread{[this]() { ctx_.run(); }};
+        io.run();
+    }());
 }
-
-}  // namespace app

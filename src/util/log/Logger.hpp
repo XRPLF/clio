@@ -269,7 +269,6 @@ public:
  */
 class LogService {
     static Logger generalLog; /*< Global logger for General channel */
-    static Logger alertLog;   /*< Global logger for Alerts channel */
     static boost::log::filter filter;
 
 public:
@@ -354,18 +353,6 @@ public:
     fatal(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return generalLog.fatal(loc);
-    }
-
-    /**
-     * @brief Globally accessible Alert logger
-     *
-     * @param loc The source location of the log message
-     * @return The pump to use for logging
-     */
-    [[nodiscard]] static Logger::Pump
-    alert(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
-    {
-        return alertLog.warn(loc);
     }
 
     /**

@@ -30,8 +30,8 @@ concurrency:
 
 env:
   CLANG_MAJOR_VERSION: 19
-  GCC_MAJOR_VERSION: 12
-  GCC_VERSION: 12.3.0
+  GCC_MAJOR_VERSION: 14
+  GCC_VERSION: 14.3.0
 
 jobs:
   repo:
@@ -326,6 +326,7 @@ jobs:
           build_args: |
             GHCR_REPO=${{ needs.repo.outputs.GHCR_REPO }}
             CLANG_MAJOR_VERSION=${{ env.CLANG_MAJOR_VERSION }}
+            GCC_MAJOR_VERSION=${{ env.GCC_MAJOR_VERSION }}
             GCC_VERSION=${{ env.GCC_VERSION }}
           dockerhub_repo: rippleci/clio_ci
           dockerhub_description: CI image for XRPLF/clio.

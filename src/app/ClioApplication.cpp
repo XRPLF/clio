@@ -41,7 +41,6 @@
 #include "util/build/Build.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
-#include "util/prometheus/Prometheus.hpp"
 #include "web/AdminVerificationStrategy.hpp"
 #include "web/RPCServerHandler.hpp"
 #include "web/Server.hpp"
@@ -91,7 +90,6 @@ ClioApplication::ClioApplication(util::config::ClioConfigDefinition const& confi
     : config_(config), signalsHandler_{config_}
 {
     LOG(util::LogService::info()) << "Clio version: " << util::build::getClioFullVersionString();
-    PrometheusService::init(config);
     signalsHandler_.subscribeToStop([this]() { appStopper_.stop(); });
 }
 

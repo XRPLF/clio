@@ -29,6 +29,7 @@
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/NameGenerator.hpp"
+#include "util/Spawn.hpp"
 #include "util/Taggable.hpp"
 #include "util/TestObject.hpp"
 #include "util/config/ConfigDefinition.hpp"
@@ -98,7 +99,7 @@ protected:
 
 TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidIndexNotHex)
 {
-    boost::asio::spawn(ctx_, [this](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [this](boost::asio::yield_context yield) {
         auto account = getAccountIdWithString(kACCOUNT);
         auto ret = traverseOwnedNodes(*backend_, account, 9, 10, "nothex,10", yield, [](auto) {
 
@@ -112,7 +113,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidIndexNotHex)
 
 TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidPageNotInt)
 {
-    boost::asio::spawn(ctx_, [this](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [this](boost::asio::yield_context yield) {
         auto account = getAccountIdWithString(kACCOUNT);
         auto ret = traverseOwnedNodes(*backend_, account, 9, 10, "nothex,abc", yield, [](auto) {
 
@@ -145,7 +146,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    boost::asio::spawn(ctx_, [this, &account](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [this, &account](boost::asio::yield_context yield) {
         auto ret = traverseOwnedNodes(*backend_, account, 9, 10, {}, yield, [](auto) {});
         EXPECT_TRUE(ret.has_value());
         EXPECT_EQ(
@@ -184,7 +185,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    boost::asio::spawn(ctx_, [this, &account](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [this, &account](boost::asio::yield_context yield) {
         auto count = 0;
         auto ret = traverseOwnedNodes(*backend_, account, 9, 10, {}, yield, [&](auto) { count++; });
         EXPECT_TRUE(ret.has_value());
@@ -235,7 +236,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    boost::asio::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
         auto count = 0;
         auto ret = traverseOwnedNodes(*backend_, account, 9, kLIMIT, {}, yield, [&](auto) { count++; });
         EXPECT_TRUE(ret.has_value());
@@ -279,7 +280,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
-    boost::asio::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
         auto count = 0;
         auto ret = traverseOwnedNodes(
             *backend_, account, 9, kLIMIT, fmt::format("{},{}", kINDEX1, kPAGE_NUM), yield, [&](auto) { count++; }
@@ -315,7 +316,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
     ON_CALL(*backend_, doFetchLedgerObject(ownerDir2Kk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
 
-    boost::asio::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
         auto count = 0;
         auto ret = traverseOwnedNodes(
             *backend_, account, 9, kLIMIT, fmt::format("{},{}", kINDEX2, kPAGE_NUM), yield, [&](auto) { count++; }
@@ -418,15 +419,13 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV1)
 
 TEST_F(RPCHelpersTest, DeliverMaxAliasV2)
 {
-    auto req = boost::json::parse(
-                   R"JSON({
-                        "TransactionType": "Payment",
-                        "Amount": {
-                            "test": "test"
-                        }
-                    })JSON"
-    )
-                   .as_object();
+    auto constexpr kJSON = R"JSON({
+         "TransactionType": "Payment",
+         "Amount": {
+             "test": "test"
+         }
+     })JSON";
+    auto req = boost::json::parse(kJSON).as_object();
 
     insertDeliverMaxAlias(req, 2);
     EXPECT_EQ(
@@ -523,15 +522,11 @@ TEST_F(RPCHelpersTest, TransactionAndMetadataBinaryJsonV2)
 
 TEST_F(RPCHelpersTest, ParseIssue)
 {
-    auto issue = parseIssue(
-        boost::json::parse(
-            R"JSON({
-                                        "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                        "currency": "JPY"
-                                    })JSON"
-        )
-            .as_object()
-    );
+    auto constexpr kJSON = R"JSON({
+        "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+        "currency": "JPY"
+    })JSON";
+    auto issue = parseIssue(boost::json::parse(kJSON).as_object());
     EXPECT_TRUE(issue.account == getAccountIdWithString(kACCOUNT2));
 
     issue = parseIssue(boost::json::parse(R"JSON({"currency": "XRP"})JSON").as_object());
@@ -541,18 +536,11 @@ TEST_F(RPCHelpersTest, ParseIssue)
 
     EXPECT_THROW(parseIssue(boost::json::parse(R"JSON({"currency": "XRP2"})JSON").as_object()), std::runtime_error);
 
-    EXPECT_THROW(
-        parseIssue(
-            boost::json::parse(
-                R"JSON({
-                                "issuer": "abcd",
-                                "currency": "JPY"
-                            })JSON"
-            )
-                .as_object()
-        ),
-        std::runtime_error
-    );
+    auto constexpr kJSON2 = R"JSON({
+        "issuer": "abcd",
+        "currency": "JPY"
+    })JSON";
+    EXPECT_THROW(parseIssue(boost::json::parse(kJSON2).as_object()), std::runtime_error);
 
     EXPECT_THROW(
         parseIssue(boost::json::parse(R"JSON({"issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"})JSON").as_object()),
@@ -857,7 +845,7 @@ TEST_F(RPCHelpersTest, AccountHoldsFixLPTAmendmentDisabled)
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
         .WillOnce(Return(false));
 
-    boost::asio::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
         auto ret = accountHolds(
             *backend_,
             *mockAmendmentCenterPtr_,
@@ -897,7 +885,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenNotAMMAccount)
         .Times(2)
         .WillRepeatedly(Return(account2Root.getSerializer().peekData()));
 
-    boost::asio::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
         auto ret = accountHolds(
             *backend_, *mockAmendmentCenterPtr_, 0, account, ripple::to_currency("USD"), account2, true, yield
         );
@@ -944,7 +932,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset1Frozen)
     EXPECT_CALL(*backend_, doFetchLedgerObject(issuerKk, testing::_, testing::_))
         .WillOnce(Return(issuerAccountRoot.getSerializer().peekData()));
 
-    boost::asio::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
         auto ret = accountHolds(
             *backend_,
             *mockAmendmentCenterPtr_,
@@ -997,7 +985,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset2Frozen)
     EXPECT_CALL(*backend_, doFetchLedgerObject(issuerKk, testing::_, testing::_))
         .WillOnce(Return(issuerAccountRoot.getSerializer().peekData()));
 
-    boost::asio::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
         auto ret = accountHolds(
             *backend_,
             *mockAmendmentCenterPtr_,
@@ -1057,7 +1045,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenUnfrozen)
     EXPECT_CALL(*backend_, doFetchLedgerObject(usdRippleStateKk, testing::_, testing::_))
         .WillOnce(Return(usdRippleState.getSerializer().peekData()));
 
-    boost::asio::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [&, this](boost::asio::yield_context yield) {
         auto ret = accountHolds(
             *backend_,
             *mockAmendmentCenterPtr_,
@@ -1086,122 +1074,199 @@ static auto
 generateTestValuesForParametersTest()
 {
     return std::vector<IsAdminCmdParamTestCaseBundle>{
-        {.testName = "ledgerEntry",
-         .method = "ledger_entry",
-         .testJson = R"JSON({"type": false})JSON",
-         .expected = false},
+        {
+            .testName = "ledgerEntry",
+            .method = "ledger_entry",
+            .testJson = R"JSON({"type": false})JSON",
+            .expected = false,
+        },
+        {
+            .testName = "featureVetoedTrue",
+            .method = "feature",
+            .testJson = R"JSON({"vetoed": true, "feature": "foo"})JSON",
+            .expected = true,
+        },
+        {
+            .testName = "featureVetoedFalse",
+            .method = "feature",
+            .testJson = R"JSON({"vetoed": false, "feature": "foo"})JSON",
+            .expected = true,
+        },
+        {
+            .testName = "featureVetoedIsStr",
+            .method = "feature",
+            .testJson = R"JSON({"vetoed": "String"})JSON",
+            .expected = true,
+        },
+        {
+            .testName = "ledger",
+            .method = "ledger",
+            .testJson = R"JSON({})JSON",
+            .expected = false,
+        },
+        {
+            .testName = "ledgerWithType",
+            .method = "ledger",
+            .testJson = R"JSON({"type": "fee"})JSON",
+            .expected = false,
+        },
+        {
+            .testName = "ledgerFullTrue",
+            .method = "ledger",
+            .testJson = R"JSON({"full": true})JSON",
+            .expected = true,
+        },
+        {
+            .testName = "ledgerFullFalse",
+            .method = "ledger",
+            .testJson = R"JSON({"full": false})JSON",
+            .expected = false,
+        },
+        {
+            .testName = "ledgerFullIsStr",
+            .method = "ledger",
+            .testJson = R"JSON({"full": "String"})JSON",
+            .expected = true,
+        },
+        {
+            .testName = "ledgerFullIsEmptyStr",
+            .method = "ledger",
+            .testJson = R"JSON({"full": ""})JSON",
+            .expected = false,
+        },
+        {
+            .testName = "ledgerFullIsNumber1",
+            .method = "ledger",
+            .testJson = R"JSON({"full": 1})JSON",
+            .expected = true,
+        },
+        {
+            .testName = "ledgerFullIsNumber0",
+            .method = "ledger",
+            .testJson = R"JSON({"full": 0})JSON",
+            .expected = false,
+        },
+        {
+            .testName = "ledgerFullIsNull",
+            .method = "ledger",
+            .testJson = R"JSON({"full": null})JSON",
+            .expected = false,
+        },
+        {
+            .testName = "ledgerFullIsFloat0",
+            .method = "ledger",
+            .testJson = R"JSON({"full": 0.0})JSON",
+            .expected = false,
+        },
+        {
+            .testName = "ledgerFullIsFloat1",
+            .method = "ledger",
+            .testJson = R"JSON({"full": 0.1})JSON",
+            .expected = true,
+        },
+        {
+            .testName = "ledgerFullIsArray",
+            .method = "ledger",
+            .testJson = R"JSON({"full": [1]})JSON",
+            .expected = true,
+        },
+        {
+            .testName = "ledgerFullIsEmptyArray",
+            .method = "ledger",
+            .testJson = R"JSON({"full": []})JSON",
+            .expected = false,
+        },
+        {
+            .testName = "ledgerFullIsObject",
+            .method = "ledger",
+            .testJson = R"JSON({"full": {"key": 1}})JSON",
+            .expected = true,
+        },
+        {
+            .testName = "ledgerFullIsEmptyObject",
+            .method = "ledger",
+            .testJson = R"JSON({"full": {}})JSON",
+            .expected = false,
+        },
 
-        {.testName = "featureVetoedTrue",
-         .method = "feature",
-         .testJson = R"JSON({"vetoed": true, "feature": "foo"})JSON",
-         .expected = true},
-        {.testName = "featureVetoedFalse",
-         .method = "feature",
-         .testJson = R"JSON({"vetoed": false, "feature": "foo"})JSON",
-         .expected = true},
-        {.testName = "featureVetoedIsStr",
-         .method = "feature",
-         .testJson = R"JSON({"vetoed": "String"})JSON",
-         .expected = true},
-
-        {.testName = "ledger", .method = "ledger", .testJson = R"JSON({})JSON", .expected = false},
-        {.testName = "ledgerWithType", .method = "ledger", .testJson = R"JSON({"type": "fee"})JSON", .expected = false},
-        {.testName = "ledgerFullTrue", .method = "ledger", .testJson = R"JSON({"full": true})JSON", .expected = true},
-        {.testName = "ledgerFullFalse",
-         .method = "ledger",
-         .testJson = R"JSON({"full": false})JSON",
-         .expected = false},
-        {.testName = "ledgerFullIsStr",
-         .method = "ledger",
-         .testJson = R"JSON({"full": "String"})JSON",
-         .expected = true},
-        {.testName = "ledgerFullIsEmptyStr",
-         .method = "ledger",
-         .testJson = R"JSON({"full": ""})JSON",
-         .expected = false},
-        {.testName = "ledgerFullIsNumber1", .method = "ledger", .testJson = R"JSON({"full": 1})JSON", .expected = true},
-        {.testName = "ledgerFullIsNumber0",
-         .method = "ledger",
-         .testJson = R"JSON({"full": 0})JSON",
-         .expected = false},
-        {.testName = "ledgerFullIsNull",
-         .method = "ledger",
-         .testJson = R"JSON({"full": null})JSON",
-         .expected = false},
-        {.testName = "ledgerFullIsFloat0",
-         .method = "ledger",
-         .testJson = R"JSON({"full": 0.0})JSON",
-         .expected = false},
-        {.testName = "ledgerFullIsFloat1",
-         .method = "ledger",
-         .testJson = R"JSON({"full": 0.1})JSON",
-         .expected = true},
-        {.testName = "ledgerFullIsArray", .method = "ledger", .testJson = R"JSON({"full": [1]})JSON", .expected = true},
-        {.testName = "ledgerFullIsEmptyArray",
-         .method = "ledger",
-         .testJson = R"JSON({"full": []})JSON",
-         .expected = false},
-        {.testName = "ledgerFullIsObject",
-         .method = "ledger",
-         .testJson = R"JSON({"full": {"key": 1}})JSON",
-         .expected = true},
-        {.testName = "ledgerFullIsEmptyObject",
-         .method = "ledger",
-         .testJson = R"JSON({"full": {}})JSON",
-         .expected = false},
-
-        {.testName = "ledgerAccountsTrue",
-         .method = "ledger",
-         .testJson = R"JSON({"accounts": true})JSON",
-         .expected = true},
-        {.testName = "ledgerAccountsFalse",
-         .method = "ledger",
-         .testJson = R"JSON({"accounts": false})JSON",
-         .expected = false},
-        {.testName = "ledgerAccountsIsStr",
-         .method = "ledger",
-         .testJson = R"JSON({"accounts": "String"})JSON",
-         .expected = true},
-        {.testName = "ledgerAccountsIsEmptyStr",
-         .method = "ledger",
-         .testJson = R"JSON({"accounts": ""})JSON",
-         .expected = false},
-        {.testName = "ledgerAccountsIsNumber1",
-         .method = "ledger",
-         .testJson = R"JSON({"accounts": 1})JSON",
-         .expected = true},
-        {.testName = "ledgerAccountsIsNumber0",
-         .method = "ledger",
-         .testJson = R"JSON({"accounts": 0})JSON",
-         .expected = false},
-        {.testName = "ledgerAccountsIsNull",
-         .method = "ledger",
-         .testJson = R"JSON({"accounts": null})JSON",
-         .expected = false},
-        {.testName = "ledgerAccountsIsFloat0",
-         .method = "ledger",
-         .testJson = R"JSON({"accounts": 0.0})JSON",
-         .expected = false},
-        {.testName = "ledgerAccountsIsFloat1",
-         .method = "ledger",
-         .testJson = R"JSON({"accounts": 0.1})JSON",
-         .expected = true},
-        {.testName = "ledgerAccountsIsArray",
-         .method = "ledger",
-         .testJson = R"JSON({"accounts": [1]})JSON",
-         .expected = true},
-        {.testName = "ledgerAccountsIsEmptyArray",
-         .method = "ledger",
-         .testJson = R"JSON({"accounts": []})JSON",
-         .expected = false},
-        {.testName = "ledgerAccountsIsObject",
-         .method = "ledger",
-         .testJson = R"JSON({"accounts": {"key": 1}})JSON",
-         .expected = true},
-        {.testName = "ledgerAccountsIsEmptyObject",
-         .method = "ledger",
-         .testJson = R"JSON({"accounts": {}})JSON",
-         .expected = false},
+        {
+            .testName = "ledgerAccountsTrue",
+            .method = "ledger",
+            .testJson = R"JSON({"accounts": true})JSON",
+            .expected = true,
+        },
+        {
+            .testName = "ledgerAccountsFalse",
+            .method = "ledger",
+            .testJson = R"JSON({"accounts": false})JSON",
+            .expected = false,
+        },
+        {
+            .testName = "ledgerAccountsIsStr",
+            .method = "ledger",
+            .testJson = R"JSON({"accounts": "String"})JSON",
+            .expected = true,
+        },
+        {
+            .testName = "ledgerAccountsIsEmptyStr",
+            .method = "ledger",
+            .testJson = R"JSON({"accounts": ""})JSON",
+            .expected = false,
+        },
+        {
+            .testName = "ledgerAccountsIsNumber1",
+            .method = "ledger",
+            .testJson = R"JSON({"accounts": 1})JSON",
+            .expected = true,
+        },
+        {
+            .testName = "ledgerAccountsIsNumber0",
+            .method = "ledger",
+            .testJson = R"JSON({"accounts": 0})JSON",
+            .expected = false,
+        },
+        {
+            .testName = "ledgerAccountsIsNull",
+            .method = "ledger",
+            .testJson = R"JSON({"accounts": null})JSON",
+            .expected = false,
+        },
+        {
+            .testName = "ledgerAccountsIsFloat0",
+            .method = "ledger",
+            .testJson = R"JSON({"accounts": 0.0})JSON",
+            .expected = false,
+        },
+        {
+            .testName = "ledgerAccountsIsFloat1",
+            .method = "ledger",
+            .testJson = R"JSON({"accounts": 0.1})JSON",
+            .expected = true,
+        },
+        {
+            .testName = "ledgerAccountsIsArray",
+            .method = "ledger",
+            .testJson = R"JSON({"accounts": [1]})JSON",
+            .expected = true,
+        },
+        {
+            .testName = "ledgerAccountsIsEmptyArray",
+            .method = "ledger",
+            .testJson = R"JSON({"accounts": []})JSON",
+            .expected = false,
+        },
+        {
+            .testName = "ledgerAccountsIsObject",
+            .method = "ledger",
+            .testJson = R"JSON({"accounts": {"key": 1}})JSON",
+            .expected = true,
+        },
+        {
+            .testName = "ledgerAccountsIsEmptyObject",
+            .method = "ledger",
+            .testJson = R"JSON({"accounts": {}})JSON",
+            .expected = false,
+        },
     };
 }
 

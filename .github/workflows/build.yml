@@ -42,7 +42,10 @@ jobs:
         os: [heavy]
         conan_profile: [gcc, clang]
         build_type: [Release, Debug]
-        container: ['{ "image": "ghcr.io/xrplf/clio-ci:latest" }']
+        container:
+          [
+            '{ "image": "ghcr.io/xrplf/clio-ci:494888254504d5c8a382f8bd283b069bdec40622" }',
+          ]
         static: [true]
 
         include:
@@ -69,7 +72,7 @@ jobs:
     uses: ./.github/workflows/build_impl.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-ci:latest" }'
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:494888254504d5c8a382f8bd283b069bdec40622" }'
       conan_profile: gcc
       build_type: Debug
       disable_cache: false
@@ -86,7 +89,7 @@ jobs:
     needs: build-and-test
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:latest
+      image: ghcr.io/xrplf/clio-ci:494888254504d5c8a382f8bd283b069bdec40622
 
     steps:
       - uses: actions/checkout@v4

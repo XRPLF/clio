@@ -124,9 +124,9 @@ public:
             // Every type of value is directed to operator<< in ConfigValue.hpp
             // as ConfigValue is the one that holds all the info regarding the config values
             if (key.contains("[]")) {
-                file << gClioConfig.asArray(key);
+                file << getClioConfig().asArray(key);
             } else {
-                file << gClioConfig.getValueView(key);
+                file << getClioConfig().getValueView(key);
             }
             file << "- **Description**: " << val << "\n";
         }

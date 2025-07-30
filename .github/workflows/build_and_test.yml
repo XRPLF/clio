@@ -57,6 +57,12 @@ on:
         type: string
         default: all
 
+      expected_version:
+        description: Expected version of the clio_server binary
+        required: false
+        type: string
+        default: ""
+
 jobs:
   build:
     uses: ./.github/workflows/build_impl.yml
@@ -71,6 +77,7 @@ jobs:
       upload_clio_server: ${{ inputs.upload_clio_server }}
       targets: ${{ inputs.targets }}
       analyze_build_time: false
+      expected_version: ${{ inputs.expected_version }}
 
   test:
     needs: build

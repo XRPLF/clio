@@ -38,9 +38,6 @@ namespace web {
  */
 class SubscriptionContextInterface : public util::Taggable {
 public:
-    /**
-     * @brief Reusing Taggable constructor
-     */
     using util::Taggable::Taggable;
 
     /**

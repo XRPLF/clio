@@ -2,14 +2,15 @@ add_library(clio_testing_common)
 
 target_sources(
   clio_testing_common
-  PRIVATE util/MockAssert.cpp
-          util/AssignRandomPort.cpp
+  PRIVATE util/AssignRandomPort.cpp
+          util/BinaryTestObject.cpp
           util/CallWithTimeout.cpp
+          util/LoggerFixtures.cpp
+          util/MockAssert.cpp
           util/StringUtils.cpp
           util/TestHttpClient.cpp
           util/TestHttpServer.cpp
           util/TestObject.cpp
-          util/BinaryTestObject.cpp
           util/TestWebSocketClient.cpp
           util/TestWsServer.cpp
 )

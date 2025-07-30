@@ -1,4 +1,4 @@
-Package: gcc-12-ubuntu-UBUNTUVERSION
+Package: gcc-14-ubuntu-UBUNTUVERSION
 Version: VERSION
 Architecture: TARGETARCH
 Maintainer: Alex Kremer <akremer@ripple.com>

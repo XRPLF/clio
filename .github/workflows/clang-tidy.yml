@@ -24,7 +24,7 @@ jobs:
   clang_tidy:
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:latest
+      image: ghcr.io/xrplf/clio-ci:494888254504d5c8a382f8bd283b069bdec40622
 
     permissions:
       contents: write

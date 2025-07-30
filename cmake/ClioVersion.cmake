@@ -1,7 +1,3 @@
-#[===================================================================[
-   write version to source
-#]===================================================================]
-
 find_package(Git REQUIRED)
 
 set(GIT_COMMAND describe --tags --exact-match)
@@ -47,5 +43,3 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
 endif ()
 
 message(STATUS "Build version: ${CLIO_VERSION}")
-
-configure_file(${CMAKE_CURRENT_LIST_DIR}/Build.cpp.in ${CMAKE_CURRENT_LIST_DIR}/../src/util/build/Build.cpp)
