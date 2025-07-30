@@ -85,13 +85,13 @@ makeHttpContext(
 )
 {
     if (!request.contains("method"))
-        return Error{{ClioError::RpcCommandIsMissing, "Method is not specified."}};
+        return Error{{ClioError::RpcCommandIsMissing}};
 
     if (!request.at("method").is_string())
-        return Error{{ClioError::RpcCommandNotString, "Method is not a string."}};
+        return Error{{ClioError::RpcCommandNotString}};
 
     if (request.at("method").as_string().empty())
-        return Error{{ClioError::RpcCommandIsEmpty, "Method is empty."}};
+        return Error{{ClioError::RpcCommandIsEmpty}};
 
     auto const command = boost::json::value_to<std::string>(request.at("method"));
 
@@ -104,7 +104,7 @@ makeHttpContext(
     boost::json::array const& array = request.at("params").as_array();
 
     if (array.size() != 1 || !array.at(0).is_object())
-        return Error{{ClioError::RpcParamsUnparsable, "Params must be an array with a single object."}};
+        return Error{{ClioError::RpcParamsUnparsable}};
 
     auto const apiVersion = apiVersionParser.get().parse(request.at("params").as_array().at(0).as_object());
     if (!apiVersion)

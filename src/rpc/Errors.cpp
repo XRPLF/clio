@@ -39,6 +39,17 @@ using namespace std;
 
 namespace rpc {
 
+std::ostream&
+operator<<(std::ostream& stream, Status const& status)
+{
+    if (!status.message.empty())
+        stream << status.message;
+    else if (auto const clioCode = std::get_if<ClioError>(&status.code))
+        stream << std::string{getErrorInfo(*clioCode).message};
+
+    return stream;
+}
+
 WarningInfo const&
 getWarningInfo(WarningCode code)
 {
