@@ -20,6 +20,7 @@
 #include "util/AsioContextTestFixture.hpp"
 #include "util/BlockingCache.hpp"
 #include "util/NameGenerator.hpp"
+#include "util/Spawn.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -146,7 +147,7 @@ TEST_P(BlockingCacheWaitTest, WaitForUpdate)
 
     EXPECT_CALL(mockUpdater, Call)
         .WillOnce([this, &waitingCoroutine](boost::asio::yield_context yield) -> std::expected<ValueType, ErrorType> {
-            boost::asio::spawn(yield, waitingCoroutine);
+            util::spawn(yield, waitingCoroutine);
             if (GetParam().updateSuccessful) {
                 return value;
             }
@@ -232,7 +233,7 @@ TEST_F(BlockingCacheTest, UpdateFromTwoCoroutinesHappensOnlyOnce)
 
     EXPECT_CALL(mockUpdater, Call)
         .WillOnce([this, &waitingCoroutine](boost::asio::yield_context yield) -> std::expected<ValueType, ErrorType> {
-            boost::asio::spawn(yield, waitingCoroutine);
+            util::spawn(yield, waitingCoroutine);
             return value;
         });
     EXPECT_CALL(mockVerifier, Call(value)).WillOnce(Return(true));
@@ -244,6 +245,6 @@ TEST_F(BlockingCacheTest, UpdateFromTwoCoroutinesHappensOnlyOnce)
     };
 
     runSpawnWithTimeout(std::chrono::seconds{1}, [&](boost::asio::yield_context yield) {
-        boost::asio::spawn(yield, updatingCoroutine);
+        util::spawn(yield, updatingCoroutine);
     });
 }

@@ -25,6 +25,7 @@
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
+#include "util/Spawn.hpp"
 #include "util/TestObject.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
 #include "util/async/context/SyncExecutionContext.hpp"
@@ -291,7 +292,7 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
             "reserve_inc": 2
         })JSON";
     boost::asio::io_context ctx;
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+    util::spawn(ctx, [this](boost::asio::yield_context yield) {
         EXPECT_CALL(*sessionPtr_, onDisconnect);
         auto const res = subscriptionManagerPtr_->subLedger(yield, session_);
         // check the response

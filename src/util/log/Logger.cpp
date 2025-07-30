@@ -25,6 +25,9 @@
 #include "util/config/ArrayView.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ObjectView.hpp"
+#include "util/prometheus/Counter.hpp"
+#include "util/prometheus/Label.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
@@ -42,6 +45,7 @@
 #include <boost/log/keywords/target_file_name.hpp>
 #include <boost/log/keywords/time_based_rotation.hpp>
 #include <boost/log/sinks/text_file_backend.hpp>
+#include <boost/log/utility/exception_handler.hpp>
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/utility/setup/file.hpp>
@@ -52,7 +56,9 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <filesystem>
+#include <functional>
 #include <ios>
 #include <iostream>
 #include <optional>
@@ -65,8 +71,31 @@
 
 namespace util {
 
+namespace {
+
+class LoggerExceptionHandler {
+    std::reference_wrapper<util::prometheus::CounterInt> exceptionCounter_ =
+        PrometheusService::counterInt("logger_exceptions_total_number", util::prometheus::Labels{});
+
+public:
+    using result_type = void;
+
+    LoggerExceptionHandler()
+    {
+        ASSERT(PrometheusService::isInitialised(), "Prometheus should be initialised before Logger");
+    }
+
+    void
+    operator()(std::exception const& e) const
+    {
+        std::cerr << fmt::format("Exception in logger: {}\n", e.what());
+        ++exceptionCounter_.get();
+    }
+};
+
+}  // namespace
+
 Logger LogService::generalLog = Logger{"General"};
-Logger LogService::alertLog = Logger{"Alert"};
 boost::log::filter LogService::filter{};
 
 std::ostream&
@@ -111,17 +140,18 @@ getSeverityLevel(std::string_view logLevel)
     std::unreachable();
 }
 
-std::expected<void, std::string>
-LogService::init(config::ClioConfigDefinition const& config)
+/**
+ * @brief Initializes console logging.
+ *
+ * @param logToConsole A boolean indicating whether to log to console.
+ * @param format The log format string.
+ */
+static void
+initConsoleLogging(bool logToConsole, std::string const& format)
 {
     namespace keywords = boost::log::keywords;
-    namespace sinks = boost::log::sinks;
 
-    boost::log::add_common_attributes();
-    boost::log::register_simple_formatter_factory<Severity, char>("Severity");
-    std::string format = config.get<std::string>("log_format");
-
-    if (config.get<bool>("log_to_console")) {
+    if (logToConsole) {
         boost::log::add_console_log(
             std::cout, keywords::format = format, keywords::filter = LogSeverity < Severity::FTL
         );
@@ -129,46 +159,62 @@ LogService::init(config::ClioConfigDefinition const& config)
 
     // Always print fatal logs to cerr
     boost::log::add_console_log(std::cerr, keywords::format = format, keywords::filter = LogSeverity >= Severity::FTL);
+}
 
-    auto const logDir = config.maybeValue<std::string>("log_directory");
-    if (logDir) {
-        std::filesystem::path dirPath{logDir.value()};
-        if (not std::filesystem::exists(dirPath)) {
-            if (std::error_code error; not std::filesystem::create_directories(dirPath, error)) {
-                return std::unexpected{
-                    fmt::format("Couldn't create logs directory '{}': {}", dirPath.string(), error.message())
-                };
-            }
-        }
+/**
+ * @brief Initializes file logging.
+ *
+ * @param config The configuration object containing log settings.
+ * @param format The log format string.
+ * @param dirPath The directory path where log files will be stored.
+ */
+static void
+initFileLogging(
+    config::ClioConfigDefinition const& config,
+    std::string const& format,
+    std::filesystem::path const& dirPath
+)
+{
+    namespace keywords = boost::log::keywords;
+    namespace sinks = boost::log::sinks;
 
-        auto const rotationPeriod = config.get<uint32_t>("log_rotation_hour_interval");
+    auto const rotationPeriod = config.get<uint32_t>("log_rotation_hour_interval");
 
-        // the below are taken from user in MB, but boost::log::add_file_log needs it to be in bytes
-        auto const rotationSize = mbToBytes(config.get<uint32_t>("log_rotation_size"));
-        auto const dirSize = mbToBytes(config.get<uint32_t>("log_directory_max_size"));
-        auto fileSink = boost::log::add_file_log(
-            keywords::file_name = dirPath / "clio.log",
-            keywords::target_file_name = dirPath / "clio_%Y-%m-%d_%H-%M-%S.log",
-            keywords::auto_flush = true,
-            keywords::format = format,
-            keywords::open_mode = std::ios_base::app,
-            keywords::rotation_size = rotationSize,
-            keywords::time_based_rotation =
-                sinks::file::rotation_at_time_interval(boost::posix_time::hours(rotationPeriod))
-        );
-        fileSink->locked_backend()->set_file_collector(
-            sinks::file::make_collector(keywords::target = dirPath, keywords::max_size = dirSize)
-        );
-        fileSink->locked_backend()->scan_for_files();
-    }
+    // the below are taken from user in MB, but boost::log::add_file_log needs it to be in bytes
+    auto const rotationSize = mbToBytes(config.get<uint32_t>("log_rotation_size"));
+    auto const dirSize = mbToBytes(config.get<uint32_t>("log_directory_max_size"));
+    auto fileSink = boost::log::add_file_log(
+        keywords::file_name = dirPath / "clio.log",
+        keywords::target_file_name = dirPath / "clio_%Y-%m-%d_%H-%M-%S.log",
+        keywords::auto_flush = true,
+        keywords::format = format,
+        keywords::open_mode = std::ios_base::app,
+        keywords::rotation_size = rotationSize,
+        keywords::time_based_rotation = sinks::file::rotation_at_time_interval(boost::posix_time::hours(rotationPeriod))
+    );
+    fileSink->locked_backend()->set_file_collector(
+        sinks::file::make_collector(keywords::target = dirPath, keywords::max_size = dirSize)
+    );
+    fileSink->locked_backend()->scan_for_files();
 
-    // get default severity, can be overridden per channel using the `log_channels` array
-    auto const defaultSeverity = getSeverityLevel(config.get<std::string>("log_level"));
+    boost::log::core::get()->set_exception_handler(
+        boost::log::make_exception_handler<std::exception>(LoggerExceptionHandler())
+    );
+}
 
+/**
+ * @brief Gets the minimum severity levels for each log channel from the configuration.
+ *
+ * @param config The configuration object containing log settings.
+ * @param defaultSeverity The default severity level to use if not overridden.
+ * @return A map of channel names to their minimum severity levels, or an error message if parsing fails.
+ */
+static std::expected<std::unordered_map<std::string, Severity>, std::string>
+getMinSeverity(config::ClioConfigDefinition const& config, Severity defaultSeverity)
+{
     std::unordered_map<std::string, Severity> minSeverity;
     for (auto const& channel : Logger::kCHANNELS)
         minSeverity[channel] = defaultSeverity;
-    minSeverity["Alert"] = Severity::WRN;  // Channel for alerts, always warning severity
 
     auto const overrides = config.getArray("log_channels");
 
@@ -182,7 +228,20 @@ LogService::init(config::ClioConfigDefinition const& config)
         minSeverity[name] = getSeverityLevel(channelConfig.get<std::string>("log_level"));
     }
 
-    auto logFilter = [minSeverity = std::move(minSeverity),
+    return minSeverity;
+}
+
+/**
+ * @brief Creates a log filter based on the minimum severity levels for each channel.
+ *
+ * @param defaultSeverity The default severity level to use if not overridden.
+ * @param minSeverity A map of channel names to their minimum severity levels.
+ * @return A boost::log::filter that filters log records based on the severity level.
+ */
+static boost::log::filter
+createLogFilter(Severity defaultSeverity, std::unordered_map<std::string, Severity> const& minSeverity)
+{
+    auto logFilter = [minSeverity = minSeverity,
                       defaultSeverity](boost::log::attribute_value_set const& attributes) -> bool {
         auto const channel = attributes[LogChannel];
         auto const severity = attributes[LogSeverity];
@@ -193,8 +252,42 @@ LogService::init(config::ClioConfigDefinition const& config)
         return severity.get() >= defaultSeverity;
     };
 
-    filter = boost::log::filter{std::move(logFilter)};
-    boost::log::core::get()->set_filter(filter);
+    return boost::log::filter{std::move(logFilter)};
+}
+
+std::expected<void, std::string>
+LogService::init(config::ClioConfigDefinition const& config)
+{
+    boost::log::add_common_attributes();
+    boost::log::register_simple_formatter_factory<Severity, char>("Severity");
+    std::string const format = config.get<std::string>("log_format");
+
+    initConsoleLogging(config.get<bool>("log_to_console"), format);
+
+    auto const logDir = config.maybeValue<std::string>("log_directory");
+    if (logDir) {
+        std::filesystem::path const dirPath{logDir.value()};
+        if (not std::filesystem::exists(dirPath)) {
+            if (std::error_code error; not std::filesystem::create_directories(dirPath, error)) {
+                return std::unexpected{
+                    fmt::format("Couldn't create logs directory '{}': {}", dirPath.string(), error.message())
+                };
+            }
+        }
+        initFileLogging(config, format, dirPath);
+    }
+
+    // get default severity, can be overridden per channel using the `log_channels` array
+    auto const defaultSeverity = getSeverityLevel(config.get<std::string>("log_level"));
+    auto const maybeMinSeverity = getMinSeverity(config, defaultSeverity);
+    if (!maybeMinSeverity) {
+        return std::unexpected{maybeMinSeverity.error()};
+    }
+    auto const minSeverity = std::move(maybeMinSeverity).value();
+
+    auto logFilter = createLogFilter(defaultSeverity, minSeverity);
+    boost::log::core::get()->set_filter(logFilter);
+
     LOG(LogService::info()) << "Default log level = " << defaultSeverity;
     return {};
 }
@@ -209,32 +302,32 @@ Logger::Pump
 Logger::trace(SourceLocationType const& loc) const
 {
     return {logger_, Severity::TRC, loc};
-};
+}
 Logger::Pump
 Logger::debug(SourceLocationType const& loc) const
 {
     return {logger_, Severity::DBG, loc};
-};
+}
 Logger::Pump
 Logger::info(SourceLocationType const& loc) const
 {
     return {logger_, Severity::NFO, loc};
-};
+}
 Logger::Pump
 Logger::warn(SourceLocationType const& loc) const
 {
     return {logger_, Severity::WRN, loc};
-};
+}
 Logger::Pump
 Logger::error(SourceLocationType const& loc) const
 {
     return {logger_, Severity::ERR, loc};
-};
+}
 Logger::Pump
 Logger::fatal(SourceLocationType const& loc) const
 {
     return {logger_, Severity::FTL, loc};
-};
+}
 
 std::string
 Logger::Pump::prettyPath(SourceLocationType const& loc, size_t maxDepth)

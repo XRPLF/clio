@@ -22,6 +22,7 @@
 #include "data/cassandra/impl/AsyncExecutor.hpp"
 #include "util/AsioContextTestFixture.hpp"
 
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <cassandra.h>
 #include <gmock/gmock.h>
@@ -53,13 +54,13 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnSuccess)
 
     ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([this](auto const&, auto&& cb) {
-            ctx_.post([cb = std::forward<decltype(cb)>(cb)]() { cb({}); });
+            boost::asio::post(ctx_, [cb = std::forward<decltype(cb)>(cb)]() { cb({}); });
             return FakeFutureWithCallback{};
         });
     EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(AtLeast(1));
 
-    auto work = std::optional<boost::asio::io_context::work>{ctx_};
+    auto work = std::make_optional(boost::asio::make_work_guard(ctx_));
     EXPECT_CALL(callbackMock_, onComplete);
 
     AsyncExecutor<FakeStatement, MockHandle>::run(
@@ -96,7 +97,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMa
     EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(3);
 
-    auto work = std::optional<boost::asio::io_context::work>{ctx_};
+    auto work = std::make_optional(boost::asio::make_work_guard(ctx_));
     EXPECT_CALL(callbackMock_, onComplete);
     EXPECT_CALL(callbackMock_, onRetry).Times(2);
 
@@ -121,7 +122,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOt
     auto handle = MockHandle{};
 
     auto threadedCtx = boost::asio::io_context{};
-    auto work = std::optional<boost::asio::io_context::work>{threadedCtx};
+    auto work = std::make_optional(boost::asio::make_work_guard(threadedCtx));
     auto thread = std::thread{[&threadedCtx] { threadedCtx.run(); }};
 
     // emulate successful execution after some attempts
@@ -139,7 +140,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOt
     EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(3);
 
-    auto work2 = std::optional<boost::asio::io_context::work>{ctx_};
+    auto work2 = std::make_optional(boost::asio::make_work_guard(ctx_));
     EXPECT_CALL(callbackMock_, onComplete);
     EXPECT_CALL(callbackMock_, onRetry).Times(2);
 
@@ -175,7 +176,7 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnFailureAfterRetryCou
     EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .Times(1);
 
-    auto work = std::optional<boost::asio::io_context::work>{ctx_};
+    auto work = std::make_optional(boost::asio::make_work_guard(ctx_));
     EXPECT_CALL(callbackMock_, onComplete);
 
     AsyncExecutor<FakeStatement, MockHandle, FakeRetryPolicy>::run(

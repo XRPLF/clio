@@ -10,6 +10,11 @@ on:
         required: false
         default: false
         type: boolean
+      force_upload:
+        description: "Force upload of all dependencies"
+        required: false
+        default: false
+        type: boolean
   pull_request:
     branches: [develop]
     paths:
@@ -97,4 +102,4 @@ jobs:
 
       - name: Upload Conan packages
         if: github.event_name != 'pull_request' && github.event_name != 'schedule'
-        run: conan upload "*" -r=ripple --confirm
+        run: conan upload "*" -r=ripple --confirm ${{ github.event.inputs.force_upload == 'true' && '--force' || '' }}

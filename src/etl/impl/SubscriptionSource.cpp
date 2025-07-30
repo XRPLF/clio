@@ -23,6 +23,7 @@
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/JS.hpp"
 #include "util/Retry.hpp"
+#include "util/Spawn.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
@@ -157,7 +158,7 @@ SubscriptionSource::stop(boost::asio::yield_context yield)
 void
 SubscriptionSource::subscribe()
 {
-    boost::asio::spawn(strand_, [this, _ = boost::asio::make_work_guard(strand_)](boost::asio::yield_context yield) {
+    util::spawn(strand_, [this, _ = boost::asio::make_work_guard(strand_)](boost::asio::yield_context yield) {
         if (auto connection = wsConnectionBuilder_.connect(yield); connection) {
             wsConnection_ = std::move(connection).value();
         } else {
