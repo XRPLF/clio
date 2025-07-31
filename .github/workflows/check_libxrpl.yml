@@ -24,6 +24,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Prepare runner
+        uses: ./.github/actions/prepare_runner
+        with:
+          disable_ccache: true
+
       - name: Update libXRPL version requirement
         shell: bash
         run: |
@@ -34,11 +39,6 @@ jobs:
         shell: bash
         run: |
           conan lock create . -o '&:tests=True' -o '&:benchmark=True' --profile:all ${{ env.CONAN_PROFILE }}
-
-      - name: Prepare runner
-        uses: ./.github/actions/prepare_runner
-        with:
-          disable_ccache: true
 
       - name: Run conan and cmake
         uses: ./.github/actions/generate
