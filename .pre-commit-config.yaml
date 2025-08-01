@@ -56,7 +56,7 @@ repos:
           ]
 
   - repo: https://github.com/trufflesecurity/trufflehog
-    rev: 6641d4ba5b684fffe195b9820345de1bf19f3181 # frozen: v3.89.2
+    rev: a05cf0859455b5b16317ee22d809887a4043cdf0 # frozen: v3.90.2
     hooks:
       - id: trufflehog
         entry: trufflehog git file://. --since-commit HEAD --no-verification --fail
@@ -86,7 +86,7 @@ repos:
         language: script
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: 6b9072cd80691b1b48d80046d884409fb1d962d1 # frozen: v20.1.7
+    rev: 182152eb8c5ce1cf5299b956b04392c86bd8a126 # frozen: v20.1.8
     hooks:
       - id: clang-format
         args: [--style=file]
