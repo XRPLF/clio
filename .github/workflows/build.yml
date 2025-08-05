@@ -28,10 +28,10 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # Develop branch: Each run gets unique group (using run_number) for parallel execution without cancellation
+  # Develop branch: Each run gets unique group (using run_number) for parallel execution
   # Other branches: Shared group with cancel-in-progress to stop old runs when new commits are pushed
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/develop' && github.run_number || 'branch' }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/develop' }}
+  cancel-in-progress: true
 
 jobs:
   build-and-test:
