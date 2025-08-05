@@ -1657,6 +1657,10 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
     });
 }
 
+TEST_F(RPCAccountTxHandlerTest, AccountHolderHasMPT)
+{
+}
+
 struct AccountTxTransactionBundle {
     std::string testName;
     std::string testJson;

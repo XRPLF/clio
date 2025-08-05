@@ -205,7 +205,7 @@ TransactionFeed::pub(
         pubObj[JS(meta)] = rpc::toJson(*meta);
         rpc::insertDeliveredAmount(pubObj[JS(meta)].as_object(), tx, meta, txMeta.date);
         rpc::insertDeliverMaxAlias(pubObj[txKey].as_object(), version);
-        rpc::insertMPTIssuanceID(pubObj[JS(meta)].as_object(), tx, meta);
+        rpc::insertMPTIssuanceID(pubObj[txKey].as_object(), meta);
 
         auto const& metaObj = pubObj[JS(meta)];
         ASSERT(metaObj.is_object(), "meta must be an obj in rippled and clio");
