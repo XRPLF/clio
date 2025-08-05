@@ -28,8 +28,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Use separate concurrency groups for develop vs other branches to prevent cross-cancellation
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/develop' && github.run_number || 'branch' }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/develop' }}
 
 jobs:
