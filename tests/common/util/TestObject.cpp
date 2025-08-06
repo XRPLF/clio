@@ -1500,6 +1500,58 @@ createMpTokenObject(std::string_view accountId, ripple::uint192 issuanceID, std:
 }
 
 ripple::STObject
+createMPTIssuanceCreateTx(std::string_view accountId, uint32_t fee, uint32_t seq)
+{
+    ripple::STObject tx(ripple::sfTransaction);
+    tx.setFieldU16(ripple::sfTransactionType, ripple::ttMPTOKEN_ISSUANCE_CREATE);
+    tx.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
+    tx.setFieldAmount(ripple::sfFee, ripple::STAmount(fee, false));
+    tx.setFieldU32(ripple::sfSequence, seq);
+    char const* key = "test";
+    ripple::Slice const slice(key, 4);
+    tx.setFieldVL(ripple::sfSigningPubKey, slice);
+    return tx;
+}
+
+data::TransactionAndMetadata
+createMPTIssuanceCreateTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee)
+{
+    ripple::STObject tx = createMPTIssuanceCreateTx(accountId, fee, seq);
+
+    ripple::STObject metaObj(ripple::sfTransactionMetaData);
+    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
+    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+
+    ripple::STObject newFields(ripple::sfNewFields);
+    newFields.setAccountID(ripple::sfIssuer, getAccountIdWithString(accountId));
+    newFields.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN_ISSUANCE);
+    newFields.setFieldU32(ripple::sfFlags, 0);
+    newFields.setFieldU32(ripple::sfSequence, seq);
+    newFields.setFieldU64(ripple::sfOwnerNode, 0);
+    newFields.setFieldU64(ripple::sfMaximumAmount, 0);
+    newFields.setFieldU64(ripple::sfOutstandingAmount, 0);
+    newFields.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    newFields.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    std::string_view metadata = "test-meta";
+    ripple::Slice const sliceMetadata(metadata.data(), metadata.size());
+    newFields.setFieldVL(ripple::sfMPTokenMetadata, sliceMetadata);
+
+    ripple::STObject createdNode(ripple::sfCreatedNode);
+    createdNode.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN_ISSUANCE);
+    createdNode.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{});
+    createdNode.emplace_back(std::move(newFields));
+
+    ripple::STArray affectedNodes(ripple::sfAffectedNodes);
+    affectedNodes.push_back(std::move(createdNode));
+    metaObj.setFieldArray(ripple::sfAffectedNodes, affectedNodes);
+
+    data::TransactionAndMetadata ret;
+    ret.transaction = tx.getSerializer().peekData();
+    ret.metadata = metaObj.getSerializer().peekData();
+    return ret;
+}
+
+ripple::STObject
 createPermissionedDomainObject(
     std::string_view accountId,
     std::string_view ledgerIndex,
