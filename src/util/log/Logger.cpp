@@ -221,7 +221,7 @@ getMinSeverity(config::ClioConfigDefinition const& config, Severity defaultSever
     for (auto it = overrides.begin<util::config::ObjectView>(); it != overrides.end<util::config::ObjectView>(); ++it) {
         auto const& channelConfig = *it;
         auto const name = channelConfig.get<std::string>("channel");
-        if (std::ranges::count(Logger::kCHANNELS, name) == 0) {  // TODO: use std::ranges::contains when available
+        if (!std::ranges::contains(Logger::kCHANNELS, name)) {
             return std::unexpected{fmt::format("Can't override settings for log channel {}: invalid channel", name)};
         }
 

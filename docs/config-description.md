@@ -428,7 +428,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: False
 - **Type**: string
 - **Default value**: None
-- **Constraints**: The value must be one of the following: `trace`, `debug`, `info`, `warning`, `error`, `fatal`, `count`.
+- **Constraints**: The value must be one of the following: `trace`, `debug`, `info`, `warning`, `error`, `fatal`.
 - **Description**: The log level for the specific log channel.
 
 ### log_level
@@ -436,7 +436,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: string
 - **Default value**: `info`
-- **Constraints**: The value must be one of the following: `trace`, `debug`, `info`, `warning`, `error`, `fatal`, `count`.
+- **Constraints**: The value must be one of the following: `trace`, `debug`, `info`, `warning`, `error`, `fatal`.
 - **Description**: The general logging level of Clio. This level is applied to all log channels that do not have an explicitly defined logging level.
 
 ### log_format
