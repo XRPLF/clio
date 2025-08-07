@@ -21,9 +21,7 @@
 
 #include "util/OverloadSet.hpp"
 
-#include <cstdint>
 #include <ostream>
-#include <string>
 #include <variant>
 
 namespace util::config {
