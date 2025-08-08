@@ -92,7 +92,7 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
             threads.emplace_back([threadNum, messagesPerThread, &barrier]() {
                 barrier.arrive_and_wait();
 
-                Logger threadLogger("Thread_" + std::to_string(threadNum));
+                Logger const threadLogger("Thread_" + std::to_string(threadNum));
 
                 for (size_t messageNum = 0; messageNum < messagesPerThread; ++messageNum) {
                     LOG(threadLogger.info()) << "Test log message #" << messageNum;
