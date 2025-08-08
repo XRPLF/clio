@@ -49,7 +49,7 @@
 namespace rpc {
 
 AccountNFTsHandler::Result
-AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx) const
+AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountNFT's ledger range must be available");

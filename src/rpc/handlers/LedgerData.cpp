@@ -51,7 +51,7 @@
 namespace rpc {
 
 LedgerDataHandler::Result
-LedgerDataHandler::process(Input input, Context const& ctx) const
+LedgerDataHandler::process(Input const& input, Context const& ctx) const
 {
     // marker must be int if outOfOrder is true
     if (input.outOfOrder && input.marker)

@@ -42,7 +42,7 @@
 namespace rpc {
 
 BookOffersHandler::Result
-BookOffersHandler::process(Input input, Context const& ctx) const
+BookOffersHandler::process(Input const& input, Context const& ctx) const
 {
     auto bookMaybe = parseBook(input.paysCurrency, input.paysID, input.getsCurrency, input.getsID, input.domain);
     if (!bookMaybe.has_value())

@@ -111,7 +111,7 @@ public:
      * @return The result of the command
      */
     Result
-    process(Input input, Context const& ctx) const;
+    process(Input const& input, Context const& ctx) const;
 
 private:
     /**

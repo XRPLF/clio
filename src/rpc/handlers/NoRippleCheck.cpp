@@ -55,7 +55,7 @@
 namespace rpc {
 
 NoRippleCheckHandler::Result
-NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& ctx) const
+NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "NoRippleCheck's ledger range must be available");
