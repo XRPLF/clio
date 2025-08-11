@@ -51,6 +51,8 @@
 #include <ostream>
 #include <string>
 
+struct BenchmarkLoggingInitializer;
+
 namespace util {
 
 namespace config {
@@ -362,6 +364,20 @@ public:
      */
     [[nodiscard]] static bool
     enabled();
+
+private:
+    struct FileLoggingParams {
+        std::string logDir;
+
+        uint32_t rotationSizeMB;
+        uint32_t dirMaxSizeMB;
+        uint32_t rotationHours;
+    };
+
+    friend struct ::BenchmarkLoggingInitializer;
+
+    static void
+    initFileLogging(FileLoggingParams const& params, std::string const& format);
 };
 
 };  // namespace util

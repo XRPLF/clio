@@ -31,12 +31,12 @@
 #include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/proto/org/xrpl/rpc/v1/get_ledger.pb.h>
-#include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/STTx.h>
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/TxFormats.h>
 #include <xrpl/protocol/TxMeta.h>
+#include <xrpl/protocol/digest.h>
 
 #include <optional>
 #include <string>
@@ -152,7 +152,7 @@ createObjectWithTwoNFTs()
 
     // key is a token made up from owner's account ID followed by unused (in Clio) value described here:
     // https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0020-non-fungible-tokens#tokenpage-id-format
-    auto constexpr kEXTRA_BYTES = "000000000000";
+    constexpr auto kEXTRA_BYTES = "000000000000";
     auto const key = std::string(std::begin(account), std::end(account)) + kEXTRA_BYTES;
 
     return {
@@ -173,11 +173,17 @@ createObjectWithMPT()
     constexpr auto kACCOUNT = "rM2AGCCCRb373FRuD8wHyUwUsh2dV4BW5Q";
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const mptokenObject = createMpTokenObject(kACCOUNT, ripple::makeMptID(2, getAccountIdWithString(kACCOUNT)));
+    auto const mptID = ripple::makeMptID(2, getAccountIdWithString(kACCOUNT));
+    auto const mptokenObject = createMpTokenObject(kACCOUNT, mptID);
+
+    // key is a token made up from several fields described here:
+    // https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#2121-mptoken-ledger-identifier
+    constexpr auto kSPACE_KEY = 0x007F;
+    auto const keySha512Half = ripple::sha512Half(kSPACE_KEY, mptID, account);
 
     return {
         .key = {},
-        .keyRaw = std::string(reinterpret_cast<char const*>(account.data()), ripple::AccountID::size()),
+        .keyRaw = std::string(std::begin(keySha512Half), std::end(keySha512Half)),
         .data = {},
         .dataRaw = std::string(
             static_cast<char const*>(mptokenObject.getSerializer().getDataPtr()),

@@ -46,7 +46,7 @@ using namespace ripple;
 namespace rpc {
 
 MPTHoldersHandler::Result
-MPTHoldersHandler::process(MPTHoldersHandler::Input input, Context const& ctx) const
+MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "MPTHolder's ledger range must be available");

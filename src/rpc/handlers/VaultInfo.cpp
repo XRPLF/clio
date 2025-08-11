@@ -75,7 +75,7 @@ VaultInfoHandler::VaultInfoHandler(std::shared_ptr<BackendInterface> const& shar
 }
 
 VaultInfoHandler::Result
-VaultInfoHandler::process(VaultInfoHandler::Input input, Context const& ctx) const
+VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& ctx) const
 {
     // vault info input must either have owner and sequence, or vault_id only.
     if (not validate(input))

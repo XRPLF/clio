@@ -1,6 +1,6 @@
 services:
   clio_develop:
-    image: ghcr.io/xrplf/clio-ci:494888254504d5c8a382f8bd283b069bdec40622
+    image: ghcr.io/xrplf/clio-ci:a446d85297b3006e6d2c4dc7640368f096afecf5
     volumes:
       - clio_develop_conan_data:/root/.conan2/p
       - clio_develop_ccache:/root/.ccache

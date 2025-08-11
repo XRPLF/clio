@@ -41,7 +41,7 @@
 namespace rpc {
 
 BookChangesHandler::Result
-BookChangesHandler::process(BookChangesHandler::Input input, Context const& ctx) const
+BookChangesHandler::process(BookChangesHandler::Input const& input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "BookChanges' ledger range must be available");

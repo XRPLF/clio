@@ -53,7 +53,7 @@ RUN apt-get update \
         # lxml 6.0.0 is not compatible with our image
         'lxml<6.0.0' \
         \
-        cmake==3.31.6 \
+        cmake \
         conan==2.17.0 \
         gcovr \
         pre-commit \

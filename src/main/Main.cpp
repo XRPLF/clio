@@ -53,7 +53,7 @@ try {
             if (not app::parseConfig(run.configPath))
                 return EXIT_FAILURE;
 
-            ClioConfigDefinition& gClioConfig = getClioConfig();
+            ClioConfigDefinition const& gClioConfig = getClioConfig();
             PrometheusService::init(gClioConfig);
             if (auto const initSuccess = util::LogService::init(gClioConfig); not initSuccess) {
                 std::cerr << initSuccess.error() << std::endl;

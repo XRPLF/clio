@@ -419,7 +419,7 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV1)
 
 TEST_F(RPCHelpersTest, DeliverMaxAliasV2)
 {
-    auto constexpr kJSON = R"JSON({
+    constexpr auto kJSON = R"JSON({
          "TransactionType": "Payment",
          "Amount": {
              "test": "test"
@@ -522,7 +522,7 @@ TEST_F(RPCHelpersTest, TransactionAndMetadataBinaryJsonV2)
 
 TEST_F(RPCHelpersTest, ParseIssue)
 {
-    auto constexpr kJSON = R"JSON({
+    constexpr auto kJSON = R"JSON({
         "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
         "currency": "JPY"
     })JSON";
@@ -536,7 +536,7 @@ TEST_F(RPCHelpersTest, ParseIssue)
 
     EXPECT_THROW(parseIssue(boost::json::parse(R"JSON({"currency": "XRP2"})JSON").as_object()), std::runtime_error);
 
-    auto constexpr kJSON2 = R"JSON({
+    constexpr auto kJSON2 = R"JSON({
         "issuer": "abcd",
         "currency": "JPY"
     })JSON";

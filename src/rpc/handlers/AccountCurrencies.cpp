@@ -43,7 +43,7 @@
 
 namespace rpc {
 AccountCurrenciesHandler::Result
-AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context const& ctx) const
+AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input const& input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountCurrencies' ledger range must be available");

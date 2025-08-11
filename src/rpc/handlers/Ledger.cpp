@@ -48,7 +48,7 @@
 
 namespace rpc {
 LedgerHandler::Result
-LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
+LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "LedgerHandler's ledger range must be available");

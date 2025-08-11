@@ -65,7 +65,7 @@ AccountOffersHandler::addOffer(std::vector<Offer>& offers, ripple::SLE const& of
 };
 
 AccountOffersHandler::Result
-AccountOffersHandler::process(AccountOffersHandler::Input input, Context const& ctx) const
+AccountOffersHandler::process(AccountOffersHandler::Input const& input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountOffer's ledger range must be available");

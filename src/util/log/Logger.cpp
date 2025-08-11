@@ -168,21 +168,18 @@ initConsoleLogging(bool logToConsole, std::string const& format)
  * @param format The log format string.
  * @param dirPath The directory path where log files will be stored.
  */
-static void
-initFileLogging(
-    config::ClioConfigDefinition const& config,
-    std::string const& format,
-    std::filesystem::path const& dirPath
-)
+void
+LogService::initFileLogging(FileLoggingParams const& params, std::string const& format)
 {
     namespace keywords = boost::log::keywords;
     namespace sinks = boost::log::sinks;
 
-    auto const rotationPeriod = config.get<uint32_t>("log_rotation_hour_interval");
-
     // the below are taken from user in MB, but boost::log::add_file_log needs it to be in bytes
-    auto const rotationSize = mbToBytes(config.get<uint32_t>("log_rotation_size"));
-    auto const dirSize = mbToBytes(config.get<uint32_t>("log_directory_max_size"));
+    auto const rotationSize = mbToBytes(params.rotationSizeMB);
+    auto const dirSize = mbToBytes(params.dirMaxSizeMB);
+
+    auto const dirPath = std::filesystem::path{params.logDir};
+
     auto fileSink = boost::log::add_file_log(
         keywords::file_name = dirPath / "clio.log",
         keywords::target_file_name = dirPath / "clio_%Y-%m-%d_%H-%M-%S.log",
@@ -190,7 +187,8 @@ initFileLogging(
         keywords::format = format,
         keywords::open_mode = std::ios_base::app,
         keywords::rotation_size = rotationSize,
-        keywords::time_based_rotation = sinks::file::rotation_at_time_interval(boost::posix_time::hours(rotationPeriod))
+        keywords::time_based_rotation =
+            sinks::file::rotation_at_time_interval(boost::posix_time::hours(params.rotationHours))
     );
     fileSink->locked_backend()->set_file_collector(
         sinks::file::make_collector(keywords::target = dirPath, keywords::max_size = dirSize)
@@ -221,7 +219,7 @@ getMinSeverity(config::ClioConfigDefinition const& config, Severity defaultSever
     for (auto it = overrides.begin<util::config::ObjectView>(); it != overrides.end<util::config::ObjectView>(); ++it) {
         auto const& channelConfig = *it;
         auto const name = channelConfig.get<std::string>("channel");
-        if (std::ranges::count(Logger::kCHANNELS, name) == 0) {  // TODO: use std::ranges::contains when available
+        if (not std::ranges::contains(Logger::kCHANNELS, name)) {
             return std::unexpected{fmt::format("Can't override settings for log channel {}: invalid channel", name)};
         }
 
@@ -274,7 +272,13 @@ LogService::init(config::ClioConfigDefinition const& config)
                 };
             }
         }
-        initFileLogging(config, format, dirPath);
+        FileLoggingParams const params{
+            .logDir = logDir.value(),
+            .rotationSizeMB = config.get<uint32_t>("log_rotation_size"),
+            .dirMaxSizeMB = config.get<uint32_t>("log_directory_max_size"),
+            .rotationHours = config.get<uint32_t>("log_rotation_hour_interval")
+        };
+        initFileLogging(params, format);
     }
 
     // get default severity, can be overridden per channel using the `log_channels` array

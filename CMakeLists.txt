@@ -16,6 +16,7 @@ option(lint "Run clang-tidy checks during compilation" FALSE)
 option(static "Statically linked Clio" FALSE)
 option(snapshot "Build snapshot tool" FALSE)
 option(time_trace "Build using -ftime-trace to create compiler trace reports" FALSE)
+option(use_mold "Use mold linker" FALSE)
 
 # ========================================================================== #
 set(san "" CACHE STRING "Add sanitizer instrumentation")
@@ -29,6 +30,7 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 include(Ccache)
 include(CheckCXXCompilerFlag)
 include(ClangTidy)
+include(Linker)
 
 add_library(clio_options INTERFACE)
 target_compile_features(clio_options INTERFACE cxx_std_23) # Clio needs c++23 but deps can remain c++20 for now

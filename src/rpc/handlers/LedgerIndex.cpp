@@ -40,7 +40,7 @@
 namespace rpc {
 
 LedgerIndexHandler::Result
-LedgerIndexHandler::process(LedgerIndexHandler::Input input, Context const& ctx) const
+LedgerIndexHandler::process(LedgerIndexHandler::Input const& input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "LedgerIndex's ledger range must be available");

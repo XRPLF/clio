@@ -155,6 +155,10 @@ TaskManager::spawnLoader(TaskQueue& queue)
                                  << " tps[" << txnCount / seconds << "], ops[" << objCount / seconds << "]";
 
                 monitor_.get().notifySequenceLoaded(data->seq);
+            } else {
+                // TODO (https://github.com/XRPLF/clio/issues/1852) this is probably better done with a timeout (on
+                // coroutine) so that the thread itself is not blocked
+                queue.awaitTask();
             }
         }
 
@@ -179,6 +183,7 @@ TaskManager::stop()
     for (auto& loader : loaders_)
         loader.abort();
 
+    queue_.stop();
     wait();
 }
 
