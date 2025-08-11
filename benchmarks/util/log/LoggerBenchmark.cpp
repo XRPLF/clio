@@ -41,8 +41,6 @@ struct BenchmarkLoggingInitializer {
     static void
     initFileLogging(LogService::FileLoggingParams const& params)
     {
-        boost::log::add_common_attributes();
-        std::filesystem::create_directories(params.logDir);
         LogService::initFileLogging(params, kLOG_FORMAT);
     }
 };
@@ -64,6 +62,8 @@ uniqueLogDir()
 static void
 benchmarkConcurrentFileLogging(benchmark::State& state)
 {
+    boost::log::add_common_attributes();
+
     auto const numThreads = static_cast<size_t>(state.range(0));
     auto const messagesPerThread = static_cast<size_t>(state.range(1));
 
@@ -72,27 +72,30 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
     auto const logDir = uniqueLogDir();
     for (auto _ : state) {
         state.PauseTiming();
-        std::filesystem::remove_all(logDir);
+
+        std::filesystem::create_directories(logDir);
 
         BenchmarkLoggingInitializer::initFileLogging({
             .logDir = logDir,
-            .rotationSizeMB = 1,
-            .dirMaxSizeMB = 10,
+            .rotationSizeMB = 5,
+            .dirMaxSizeMB = 125,
             .rotationHours = 24,
         });
-        state.ResumeTiming();
 
         std::vector<std::thread> threads;
         threads.reserve(numThreads);
 
         std::chrono::high_resolution_clock::time_point start;
-        std::barrier barrier(numThreads, [&start]() { start = std::chrono::high_resolution_clock::now(); });
+        std::barrier barrier(numThreads, [&state, &start]() {
+            state.ResumeTiming();
+            start = std::chrono::high_resolution_clock::now();
+        });
 
         for (size_t threadNum = 0; threadNum < numThreads; ++threadNum) {
             threads.emplace_back([threadNum, messagesPerThread, &barrier]() {
                 barrier.arrive_and_wait();
 
-                Logger threadLogger("Thread_" + std::to_string(threadNum));
+                Logger const threadLogger("Thread_" + std::to_string(threadNum));
 
                 for (size_t messageNum = 0; messageNum < messagesPerThread; ++messageNum) {
                     LOG(threadLogger.info()) << "Test log message #" << messageNum;
@@ -108,9 +111,9 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
         auto const end = std::chrono::high_resolution_clock::now();
 
         state.SetIterationTime(std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count());
-    }
 
-    std::filesystem::remove_all(logDir);
+        std::filesystem::remove_all(logDir);
+    }
 
     auto const totalMessages = numThreads * messagesPerThread;
     state.counters["TotalMessagesRate"] = benchmark::Counter(totalMessages, benchmark::Counter::kIsRate);
@@ -118,10 +121,15 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
     state.counters["MessagesPerThread"] = messagesPerThread;
 }
 
+// One line of log message is around 110 bytes
+// So, 100K messages is around 10.5MB
+
 BENCHMARK(benchmarkConcurrentFileLogging)
     ->ArgsProduct({
-        {1, 2, 4, 8},               // Number of threads
-        {500, 1000, 2000, 100000},  // Messages per thread
+        // Number of threads
+        {1, 2, 4, 8},
+        // Messages per thread
+        {10'000, 100'000, 500'000},
     })
     ->UseManualTime()
     ->Unit(benchmark::kMillisecond);

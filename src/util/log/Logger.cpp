@@ -272,7 +272,7 @@ LogService::init(config::ClioConfigDefinition const& config)
                 };
             }
         }
-        FileLoggingParams params{
+        FileLoggingParams const params{
             .logDir = logDir.value(),
             .rotationSizeMB = config.get<uint32_t>("log_rotation_size"),
             .dirMaxSizeMB = config.get<uint32_t>("log_directory_max_size"),
