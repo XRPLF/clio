@@ -27,6 +27,6 @@ TEST(ScopeGuardTest, IsCalled)
     testing::StrictMock<testing::MockFunction<void()>> mockFunction;
     EXPECT_CALL(mockFunction, Call());
     {
-        util::ScopeGuard guard([&mockFunction] { mockFunction.Call(); });
+        util::ScopeGuard const guard([&mockFunction] { mockFunction.Call(); });
     }
 }

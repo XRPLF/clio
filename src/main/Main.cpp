@@ -38,7 +38,7 @@ int
 main(int argc, char const* argv[])
 try {
     util::setTerminationHandler();
-    util::ScopeGuard loggerShutdownGuard{[]() { util::LogService::shutdown(); }};
+    util::ScopeGuard const loggerShutdownGuard{[]() { util::LogService::shutdown(); }};
 
     auto const action = app::CliArgs::parse(argc, argv);
     return action.apply(

@@ -20,8 +20,6 @@
 #include "util/LoggerFixtures.hpp"
 #include "util/log/Logger.hpp"
 
-#include <fmt/format.h>
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <cstddef>

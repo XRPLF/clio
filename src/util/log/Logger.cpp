@@ -32,7 +32,6 @@
 #include <spdlog/async_logger.h>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
-#include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
@@ -344,7 +343,7 @@ Logger::Pump::Pump(std::shared_ptr<spdlog::logger> logger, Severity sev, SourceL
 Logger::Pump::~Pump()
 {
     if (enabled_) {
-        spdlog::source_loc sourceLocation{prettyPath(sourceLocation_).cbegin(), sourceLocation_.line(), nullptr};
+        spdlog::source_loc const sourceLocation{prettyPath(sourceLocation_).cbegin(), sourceLocation_.line(), nullptr};
         logger_->log(sourceLocation, toSpdlogLevel(severity_), std::move(stream_).str());
     }
 }
@@ -387,7 +386,7 @@ Logger::Logger(std::shared_ptr<spdlog::logger> logger) : logger_(std::move(logge
 std::string_view
 Logger::Pump::prettyPath(SourceLocationType const& loc, size_t maxDepth)
 {
-    std::string_view filePath{loc.file_name()};
+    std::string_view const filePath{loc.file_name()};
     auto idx = filePath.size();
     while (maxDepth-- > 0) {
         idx = filePath.rfind('/', idx - 1);
