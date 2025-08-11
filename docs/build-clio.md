@@ -7,7 +7,7 @@
 
 - [Python 3.7](https://www.python.org/downloads/)
 - [Conan 2.17.0](https://conan.io/downloads.html)
-- [CMake 3.20, <4.0](https://cmake.org/download/)
+- [CMake 3.20](https://cmake.org/download/)
 - [**Optional**] [GCovr](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html): needed for code coverage generation
 - [**Optional**] [CCache](https://ccache.dev/): speeds up compilation if you are going to compile Clio often
 
@@ -163,7 +163,7 @@ To generate the API docs:
 It is also possible to build Clio using [Docker](https://www.docker.com/) if you don't want to install all the dependencies on your machine.
 
 ```sh
-docker run -it ghcr.io/xrplf/clio-ci:494888254504d5c8a382f8bd283b069bdec40622
+docker run -it ghcr.io/xrplf/clio-ci:a446d85297b3006e6d2c4dc7640368f096afecf5
 git clone https://github.com/XRPLF/clio
 mkdir build && cd build
 conan install .. --output-folder . --build missing --settings build_type=Release -o '&:tests=True'

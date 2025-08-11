@@ -19,6 +19,7 @@
 
 #include "util/config/ConfigDefinition.hpp"
 
+#include "rpc/common/APIVersion.hpp"
 #include "util/Assert.hpp"
 #include "util/Constants.hpp"
 #include "util/OverloadSet.hpp"
@@ -36,10 +37,12 @@
 #include <chrono>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <initializer_list>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -243,7 +246,7 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
 ClioConfigDefinition&
 getClioConfig()
 {
-    static ClioConfigDefinition gClioConfig{
+    static ClioConfigDefinition kCLIO_CONFIG{
         {{"database.type",
           ConfigValue{ConfigType::String}.defaultValue("cassandra").withConstraint(gValidateCassandraName)},
          {"database.cassandra.contact_points", ConfigValue{ConfigType::String}.defaultValue("localhost")},
@@ -400,7 +403,7 @@ getClioConfig()
           ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(gValidateUint32)}},
     };
 
-    return gClioConfig;
+    return kCLIO_CONFIG;
 }
 
 }  // namespace util::config

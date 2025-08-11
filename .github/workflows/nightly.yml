@@ -39,17 +39,17 @@ jobs:
             conan_profile: gcc
             build_type: Release
             static: true
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:494888254504d5c8a382f8bd283b069bdec40622" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:a446d85297b3006e6d2c4dc7640368f096afecf5" }'
           - os: heavy
             conan_profile: gcc
             build_type: Debug
             static: true
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:494888254504d5c8a382f8bd283b069bdec40622" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:a446d85297b3006e6d2c4dc7640368f096afecf5" }'
           - os: heavy
             conan_profile: gcc.ubsan
             build_type: Release
             static: false
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:494888254504d5c8a382f8bd283b069bdec40622" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:a446d85297b3006e6d2c4dc7640368f096afecf5" }'
 
     uses: ./.github/workflows/build_and_test.yml
     with:
@@ -72,7 +72,7 @@ jobs:
         include:
           - os: heavy
             conan_profile: clang
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:494888254504d5c8a382f8bd283b069bdec40622" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:a446d85297b3006e6d2c4dc7640368f096afecf5" }'
             static: true
           - os: macos15
             conan_profile: apple-clang

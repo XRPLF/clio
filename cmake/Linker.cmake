@@ -1,0 +1,8 @@
+if (use_mold)
+  if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    message(STATUS "Using Mold linker")
+    set(CMAKE_LINKER_TYPE MOLD)
+  else ()
+    message(FATAL_ERROR "Mold linker is only supported on Linux.")
+  endif ()
+endif ()

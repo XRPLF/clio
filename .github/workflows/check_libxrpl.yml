@@ -17,12 +17,17 @@ jobs:
     name: Build Clio / `libXRPL ${{ github.event.client_payload.version }}`
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:494888254504d5c8a382f8bd283b069bdec40622
+      image: ghcr.io/xrplf/clio-ci:a446d85297b3006e6d2c4dc7640368f096afecf5
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Prepare runner
+        uses: ./.github/actions/prepare_runner
+        with:
+          disable_ccache: true
 
       - name: Update libXRPL version requirement
         shell: bash
@@ -33,12 +38,7 @@ jobs:
       - name: Update conan lockfile
         shell: bash
         run: |
-          conan lock create . -o '&:tests=True' -o '&:benchmark=True'
-
-      - name: Prepare runner
-        uses: ./.github/actions/prepare_runner
-        with:
-          disable_ccache: true
+          conan lock create . -o '&:tests=True' -o '&:benchmark=True' --profile:all ${{ env.CONAN_PROFILE }}
 
       - name: Run conan and cmake
         uses: ./.github/actions/generate
@@ -62,7 +62,7 @@ jobs:
     needs: build
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:494888254504d5c8a382f8bd283b069bdec40622
+      image: ghcr.io/xrplf/clio-ci:a446d85297b3006e6d2c4dc7640368f096afecf5
 
     steps:
       - uses: actions/download-artifact@v4

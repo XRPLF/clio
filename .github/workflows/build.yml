@@ -28,8 +28,9 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Develop branch: Each run gets unique group (using run_number) for parallel execution
+  # Other branches: Shared group with cancel-in-progress to stop old runs when new commits are pushed
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/develop' && github.run_number || 'branch' }}
   cancel-in-progress: true
 
 jobs:
@@ -44,7 +45,7 @@ jobs:
         build_type: [Release, Debug]
         container:
           [
-            '{ "image": "ghcr.io/xrplf/clio-ci:494888254504d5c8a382f8bd283b069bdec40622" }',
+            '{ "image": "ghcr.io/xrplf/clio-ci:a446d85297b3006e6d2c4dc7640368f096afecf5" }',
           ]
         static: [true]
 
@@ -72,7 +73,7 @@ jobs:
     uses: ./.github/workflows/build_impl.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-ci:494888254504d5c8a382f8bd283b069bdec40622" }'
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:a446d85297b3006e6d2c4dc7640368f096afecf5" }'
       conan_profile: gcc
       build_type: Debug
       disable_cache: false
@@ -89,7 +90,7 @@ jobs:
     needs: build-and-test
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:494888254504d5c8a382f8bd283b069bdec40622
+      image: ghcr.io/xrplf/clio-ci:a446d85297b3006e6d2c4dc7640368f096afecf5
 
     steps:
       - uses: actions/checkout@v4

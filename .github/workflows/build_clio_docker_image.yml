@@ -73,7 +73,8 @@ jobs:
           elif [[ $artifact == *.tar.gz ]]; then
             tar -xvf $artifact
           fi
-          mv clio_server ../
+          chmod +x ./clio_server
+          mv ./clio_server ../
           cd ../
           rm -rf ./artifact
 

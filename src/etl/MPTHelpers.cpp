@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "data/DBHelpers.hpp"
+#include "util/Assert.hpp"
 
 #include <ripple/protocol/STBase.h>
 #include <ripple/protocol/STTx.h>
@@ -71,6 +72,9 @@ getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 std::optional<MPTHolderData>
 getMPTHolderFromObj(std::string const& key, std::string const& blob)
 {
+    // https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#2121-mptoken-ledger-identifier
+    ASSERT(key.size() == ripple::uint256::size(), "The size of the key is expected to fit uint256 exactly");
+
     ripple::STLedgerEntry const sle =
         ripple::STLedgerEntry(ripple::SerialIter{blob.data(), blob.size()}, ripple::uint256::fromVoid(key.data()));
 

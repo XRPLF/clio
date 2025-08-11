@@ -19,9 +19,9 @@
 
 #include "util/config/Types.hpp"
 
-#include <cstdint>
+#include "util/OverloadSet.hpp"
+
 #include <ostream>
-#include <string>
 #include <variant>
 
 namespace util::config {
@@ -51,15 +51,13 @@ operator<<(std::ostream& stream, ConfigType type)
 std::ostream&
 operator<<(std::ostream& stream, Value value)
 {
-    if (std::holds_alternative<std::string>(value)) {
-        stream << std::get<std::string>(value);
-    } else if (std::holds_alternative<bool>(value)) {
-        stream << (std::get<bool>(value) ? "False" : "True");
-    } else if (std::holds_alternative<double>(value)) {
-        stream << std::get<double>(value);
-    } else if (std::holds_alternative<int64_t>(value)) {
-        stream << std::get<int64_t>(value);
-    }
+    std::visit(
+        util::OverloadSet{
+            [&stream](bool const& val) { stream << (val ? "True" : "False"); },
+            [&stream](auto const& val) { stream << val; }
+        },
+        value
+    );
     return stream;
 }
 
