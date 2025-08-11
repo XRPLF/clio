@@ -53,7 +53,7 @@ RUN apt-get update \
         # lxml 6.0.0 is not compatible with our image
         'lxml<6.0.0' \
         \
-        cmake==3.31.6 \
+        cmake \
         conan==2.17.0 \
         gcovr \
         pre-commit \
@@ -97,7 +97,7 @@ COPY --from=clio-tools \
 WORKDIR /root
 
 # Setup conan
-RUN conan remote add --index 0 ripple http://18.143.149.228:8081/artifactory/api/conan/dev
+RUN conan remote add --index 0 ripple https://conan.ripplex.io
 
 WORKDIR /root/.conan2
 COPY conan/global.conf ./global.conf

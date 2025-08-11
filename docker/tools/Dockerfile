@@ -20,7 +20,7 @@ RUN apt-get update \
         software-properties-common \
         wget \
     && pip3 install -q --no-cache-dir \
-        cmake==3.31.6 \
+        cmake \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

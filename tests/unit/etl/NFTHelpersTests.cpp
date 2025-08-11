@@ -478,7 +478,7 @@ TEST_F(NFTHelpersTest, NFTDataFromLedgerObject)
 
     // key is a token made up from owner's account ID followed by unused (in Clio) value described here:
     // https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0020-non-fungible-tokens#tokenpage-id-format
-    auto constexpr kEXTRA_BYTES = "000000000000";
+    constexpr auto kEXTRA_BYTES = "000000000000";
     auto const key = std::string(std::begin(account), std::end(account)) + kEXTRA_BYTES;
 
     uint32_t constexpr kSEQ{5};

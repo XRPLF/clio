@@ -50,7 +50,7 @@
 
 namespace rpc {
 AccountInfoHandler::Result
-AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx) const
+AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context const& ctx) const
 {
     using namespace data;
 

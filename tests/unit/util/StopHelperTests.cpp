@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "util/AsioContextTestFixture.hpp"
+#include "util/Spawn.hpp"
 #include "util/StopHelper.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -39,7 +40,7 @@ TEST_F(StopHelperTests, asyncWaitForStopWaitsForReadyToStop)
     EXPECT_CALL(readyToStopCalled_, Call).InSequence(sequence);
     EXPECT_CALL(asyncWaitForStopFinished_, Call).InSequence(sequence);
 
-    boost::asio::spawn(ctx_, [this](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [this](boost::asio::yield_context yield) {
         stopHelper_.asyncWaitForStop(yield);
         asyncWaitForStopFinished_.Call();
     });

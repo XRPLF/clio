@@ -7,7 +7,7 @@
 
 - [Python 3.7](https://www.python.org/downloads/)
 - [Conan 2.17.0](https://conan.io/downloads.html)
-- [CMake 3.20, <4.0](https://cmake.org/download/)
+- [CMake 3.20](https://cmake.org/download/)
 - [**Optional**] [GCovr](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html): needed for code coverage generation
 - [**Optional**] [CCache](https://ccache.dev/): speeds up compilation if you are going to compile Clio often
 
@@ -35,7 +35,7 @@ The default profile is the file in `~/.conan2/profiles/default`.
 
 Here are some examples of possible profiles:
 
-**Mac apple-clang 16 example**:
+**Mac apple-clang 17 example**:
 
 ```text
 [settings]
@@ -44,7 +44,7 @@ build_type=Release
 compiler=apple-clang
 compiler.cppstd=20
 compiler.libcxx=libc++
-compiler.version=16
+compiler.version=17
 os=Macos
 
 [conf]
@@ -84,7 +84,7 @@ core.upload:parallel={{os.cpu_count()}}
 Make sure artifactory is setup with Conan.
 
 ```sh
-conan remote add --index 0 ripple http://18.143.149.228:8081/artifactory/api/conan/dev
+conan remote add --index 0 ripple https://conan.ripplex.io
 ```
 
 Now you should be able to download the prebuilt dependencies (including `xrpl` package) on supported platforms.
@@ -163,7 +163,7 @@ To generate the API docs:
 It is also possible to build Clio using [Docker](https://www.docker.com/) if you don't want to install all the dependencies on your machine.
 
 ```sh
-docker run -it ghcr.io/xrplf/clio-ci:latest
+docker run -it ghcr.io/xrplf/clio-ci:a446d85297b3006e6d2c4dc7640368f096afecf5
 git clone https://github.com/XRPLF/clio
 mkdir build && cd build
 conan install .. --output-folder . --build missing --settings build_type=Release -o '&:tests=True'

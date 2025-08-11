@@ -8,7 +8,11 @@ REPO_DIR="$(cd "$CURRENT_DIR/../../../" && pwd)"
 CONAN_DIR="${CONAN_HOME:-$HOME/.conan2}"
 PROFILES_DIR="$CONAN_DIR/profiles"
 
-APPLE_CLANG_PROFILE="$CURRENT_DIR/apple-clang.profile"
+if [[ -z "$CI" ]]; then
+    APPLE_CLANG_PROFILE="$CURRENT_DIR/apple-clang-local.profile"
+else
+    APPLE_CLANG_PROFILE="$CURRENT_DIR/apple-clang-ci.profile"
+fi
 
 GCC_PROFILE="$REPO_DIR/docker/ci/conan/gcc.profile"
 CLANG_PROFILE="$REPO_DIR/docker/ci/conan/clang.profile"
@@ -17,7 +21,7 @@ SANITIZER_TEMPLATE_FILE="$REPO_DIR/docker/ci/conan/sanitizer_template.profile"
 
 rm -rf "$CONAN_DIR"
 
-conan remote add --index 0 ripple http://18.143.149.228:8081/artifactory/api/conan/dev
+conan remote add --index 0 ripple https://conan.ripplex.io
 
 cp "$REPO_DIR/docker/ci/conan/global.conf" "$CONAN_DIR/global.conf"
 

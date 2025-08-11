@@ -50,7 +50,7 @@
 namespace rpc {
 
 FeatureHandler::Result
-FeatureHandler::process(FeatureHandler::Input input, Context const& ctx) const
+FeatureHandler::process(FeatureHandler::Input const& input, Context const& ctx) const
 {
     namespace vs = std::views;
     namespace rg = std::ranges;

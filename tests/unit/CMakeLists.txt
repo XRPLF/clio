@@ -170,10 +170,11 @@ target_sources(
           util/CoroutineTest.cpp
           util/MoveTrackerTests.cpp
           util/RandomTests.cpp
-          util/RetryTests.cpp
           util/RepeatTests.cpp
           util/ResponseExpirationCacheTests.cpp
+          util/RetryTests.cpp
           util/SignalsHandlerTests.cpp
+          util/SpawnTests.cpp
           util/StopHelperTests.cpp
           util/TimeUtilsTests.cpp
           util/TxUtilTests.cpp

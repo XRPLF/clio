@@ -45,14 +45,13 @@ class ConfigValue;
 /**
  * @brief specific values that are accepted for logger levels in config.
  */
-static constexpr std::array<char const*, 7> kLOG_LEVELS = {
+static constexpr std::array<char const*, 6> kLOG_LEVELS = {
     "trace",
     "debug",
     "info",
     "warning",
     "error",
     "fatal",
-    "count",
 };
 
 /**

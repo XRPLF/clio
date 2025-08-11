@@ -19,6 +19,7 @@
 
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
+#include "util/Spawn.hpp"
 #include "util/Taggable.hpp"
 #include "util/UnsupportedType.hpp"
 #include "util/config/ConfigDefinition.hpp"
@@ -484,7 +485,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
         .WillRepeatedly([&](auto&&, auto&&) {
             ++numCalls;
             if (numCalls == 3)
-                boost::asio::spawn(ctx_, [this](auto yield) { connectionHandler.stop(yield); });
+                util::spawn(ctx_, [this](auto yield) { connectionHandler.stop(yield); });
 
             return std::nullopt;
         });

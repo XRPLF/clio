@@ -130,7 +130,7 @@ AccountLinesHandler::addLine(
 }
 
 AccountLinesHandler::Result
-AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ctx) const
+AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountLines' ledger range must be available");

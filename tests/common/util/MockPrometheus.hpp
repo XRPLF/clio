@@ -214,7 +214,7 @@ struct WithMockPrometheus : virtual ::testing::Test {
             {"prometheus.compress_reply", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)},
             {"prometheus.enabled", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)}
         };
-        PrometheusService::init(config);
+        PrometheusService::replaceInstance(nullptr);
     }
 
     static MockPrometheusImpl&
@@ -258,20 +258,24 @@ struct WithMockPrometheus : virtual ::testing::Test {
 /**
  * @note this class should be the first in the inheritance list
  */
-struct WithPrometheus : virtual ::testing::Test {
-    WithPrometheus()
+template <bool IsEnabled = true>
+struct WithPrometheusImpl : virtual ::testing::Test {
+    WithPrometheusImpl()
     {
         config::ClioConfigDefinition const config{
             {"prometheus.compress_reply", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(false)},
-            {"prometheus.enabled", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)}
+            {"prometheus.enabled", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(IsEnabled)}
         };
         PrometheusService::init(config);
     }
 
-    ~WithPrometheus() override
+    ~WithPrometheusImpl() override
     {
         PrometheusService::replaceInstance(nullptr);
     }
 };
+
+using WithPrometheus = WithPrometheusImpl<>;
+using WithPrometheusDisabled = WithPrometheusImpl<false>;
 
 }  // namespace util::prometheus

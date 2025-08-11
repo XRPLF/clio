@@ -20,7 +20,8 @@ class ClioConan(ConanFile):
         'coverage': [True, False],            # build for test coverage report; create custom target `clio_tests-ccov`
         'lint': [True, False],                # run clang-tidy checks during compilation
         'snapshot': [True, False],            # build export/import snapshot tool
-        'time_trace': [True, False]           # build using -ftime-trace to create compiler trace reports
+        'time_trace': [True, False],          # build using -ftime-trace to create compiler trace reports
+        'use_mold': [True, False],            # use mold linker for faster linking
     }
 
     requires = [
@@ -30,7 +31,7 @@ class ClioConan(ConanFile):
         'protobuf/3.21.12',
         'grpc/1.50.1',
         'openssl/1.1.1v',
-        'xrpl/2.5.0',
+        'xrpl/2.5.0@clio/boost-odr',
         'zlib/1.3.1',
         'libbacktrace/cci.20210118'
     ]
@@ -47,6 +48,7 @@ class ClioConan(ConanFile):
         'docs': False,
         'snapshot': False,
         'time_trace': False,
+        'use_mold': False,
 
         'xrpl/*:tests': False,
         'xrpl/*:rocksdb': False,
@@ -71,7 +73,7 @@ class ClioConan(ConanFile):
         if self.options.tests or self.options.integration_tests:
             self.requires('gtest/1.14.0')
         if self.options.benchmark:
-            self.requires('benchmark/1.8.3')
+            self.requires('benchmark/1.9.4')
 
     def configure(self):
         if self.settings.compiler == 'apple-clang':
