@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,45 +17,41 @@
 */
 //==============================================================================
 
-#include "util/TerminationHandler.hpp"
+#pragma once
 
-#include "util/log/Logger.hpp"
-
-#ifndef CLIO_WITHOUT_STACKTRACE
-#include <boost/stacktrace/stacktrace.hpp>
-#endif  // CLIO_WITHOUT_STACKTRACE
-
-#include <cstdlib>
-#include <exception>
+#include <utility>
 
 namespace util {
 
-namespace {
+/**
+ * @brief Run a function when the scope is exited
+ */
+template <typename Func>
+class ScopeGuard {
+public:
+    ScopeGuard(ScopeGuard const&) = delete;
+    ScopeGuard(ScopeGuard&&) = delete;
+    ScopeGuard&
+    operator=(ScopeGuard const&) = delete;
+    ScopeGuard&
+    operator=(ScopeGuard&&) = delete;
 
-void
-terminationHandler()
-{
-#ifndef CLIO_WITHOUT_STACKTRACE
-    try {
-        LOG(LogService::fatal()) << "Exit on terminate. Backtrace:\n" << boost::stacktrace::stacktrace();
-    } catch (...) {
-        LOG(LogService::fatal()) << "Exit on terminate. Can't get backtrace.";
+    /**
+     * @brief Create ScopeGuard object.
+     *
+     * @param func The function to run when the scope is exited.
+     */
+    ScopeGuard(Func func) : func_(std::move(func))
+    {
     }
-#else
-    LOG(LogService::fatal()) << "Exit on terminate. Stacktrace disabled.";
-#endif  // CLIO_WITHOUT_STACKTRACE
 
-    // We're calling std::abort later, so spdlog won't be shutdown automatically
-    util::LogService::shutdown();
-    std::abort();
-}
+    ~ScopeGuard()
+    {
+        func_();
+    }
 
-}  // namespace
-
-void
-setTerminationHandler()
-{
-    std::set_terminate(terminationHandler);
-}
+private:
+    Func func_;
+};
 
 }  // namespace util

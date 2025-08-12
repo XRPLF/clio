@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,45 +17,21 @@
 */
 //==============================================================================
 
-#include "util/TerminationHandler.hpp"
+#pragma once
 
-#include "util/log/Logger.hpp"
+#include <sstream>
+#include <string>
 
-#ifndef CLIO_WITHOUT_STACKTRACE
-#include <boost/stacktrace/stacktrace.hpp>
-#endif  // CLIO_WITHOUT_STACKTRACE
-
-#include <cstdlib>
-#include <exception>
-
-namespace util {
-
-namespace {
-
-void
-terminationHandler()
-{
-#ifndef CLIO_WITHOUT_STACKTRACE
-    try {
-        LOG(LogService::fatal()) << "Exit on terminate. Backtrace:\n" << boost::stacktrace::stacktrace();
-    } catch (...) {
-        LOG(LogService::fatal()) << "Exit on terminate. Can't get backtrace.";
+/**
+ * @brief A simple string buffer that can be used to mock std::cout for console logging.
+ */
+class StringBuffer final : public std::stringbuf {
+public:
+    std::string
+    getStrAndReset()
+    {
+        auto value = str();
+        str("");
+        return value;
     }
-#else
-    LOG(LogService::fatal()) << "Exit on terminate. Stacktrace disabled.";
-#endif  // CLIO_WITHOUT_STACKTRACE
-
-    // We're calling std::abort later, so spdlog won't be shutdown automatically
-    util::LogService::shutdown();
-    std::abort();
-}
-
-}  // namespace
-
-void
-setTerminationHandler()
-{
-    std::set_terminate(terminationHandler);
-}
-
-}  // namespace util
+};

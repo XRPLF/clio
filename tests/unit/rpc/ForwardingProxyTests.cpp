@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/common/impl/ForwardingProxy.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
@@ -282,10 +283,17 @@ TEST_P(ShouldForwardParameterTest, Test)
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(testBundle.called);
 
     runSpawn([&](auto yield) {
-        auto const range = backend_->fetchLedgerRange();
-        auto const ctx = web::Context(
-            yield, method, apiVersion, params.as_object(), nullptr, tagFactory_, *range, kCLIENT_IP, testBundle.isAdmin
-        );
+        auto const ctx = web::Context{
+            yield,
+            method,
+            apiVersion,
+            params.as_object(),
+            nullptr,
+            tagFactory_,
+            data::LedgerRange{},
+            kCLIENT_IP,
+            testBundle.isAdmin,
+        };
 
         auto const res = proxy_.shouldForward(ctx);
         ASSERT_EQ(res, testBundle.expected);
@@ -311,9 +319,17 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
     EXPECT_CALL(counters_, rpcForwarded(method));
 
     runSpawn([&](auto yield) {
-        auto const range = backend_->fetchLedgerRange();
-        auto const ctx =
-            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory_, *range, kCLIENT_IP, true);
+        auto const ctx = web::Context{
+            yield,
+            method,
+            apiVersion,
+            params.as_object(),
+            nullptr,
+            tagFactory_,
+            data::LedgerRange{},
+            kCLIENT_IP,
+            true,
+        };
 
         auto const res = proxy_.forward(ctx);
 
@@ -340,9 +356,17 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
     EXPECT_CALL(counters_, rpcFailedToForward(method));
 
     runSpawn([&](auto yield) {
-        auto const range = backend_->fetchLedgerRange();
-        auto const ctx =
-            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory_, *range, kCLIENT_IP, true);
+        auto const ctx = web::Context{
+            yield,
+            method,
+            apiVersion,
+            params.as_object(),
+            nullptr,
+            tagFactory_,
+            data::LedgerRange{},
+            kCLIENT_IP,
+            true,
+        };
 
         auto const res = proxy_.forward(ctx);
 

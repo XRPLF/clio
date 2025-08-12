@@ -66,7 +66,8 @@ public:
     defaultValue(Value value, std::optional<std::string_view> description = std::nullopt)
     {
         auto const err = checkTypeConsistency(type_, value);
-        ASSERT(!err.has_value(), "{}", err->error);
+        if (err.has_value())
+            ASSERT(false, "{}", err->error);
         description_ = description;
         value_ = value;
         return *this;
