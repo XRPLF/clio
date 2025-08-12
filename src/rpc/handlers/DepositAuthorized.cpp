@@ -49,7 +49,7 @@
 namespace rpc {
 
 DepositAuthorizedHandler::Result
-DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context const& ctx) const
+DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input const& input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "DepositAuthorized ledger range must be available");

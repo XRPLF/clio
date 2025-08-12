@@ -17,6 +17,10 @@ inputs:
     description: Whether to build integration tests
     required: true
     default: "true"
+  build_benchmark:
+    description: Whether to build benchmark tests
+    required: true
+    default: "true"
   code_coverage:
     description: Whether conan's coverage option should be on or not
     required: true
@@ -48,6 +52,7 @@ runs:
         CODE_COVERAGE: "${{ inputs.code_coverage == 'true' && 'True' || 'False' }}"
         STATIC_OPTION: "${{ inputs.static == 'true' && 'True' || 'False' }}"
         INTEGRATION_TESTS_OPTION: "${{ inputs.build_integration_tests == 'true' && 'True' || 'False' }}"
+        BENCHMARK_OPTION: "${{ inputs.build_benchmark == 'true' && 'True' || 'False' }}"
         TIME_TRACE: "${{ inputs.time_trace == 'true' && 'True' || 'False' }}"
         USE_MOLD: "${{ inputs.use_mold == 'true' && 'True' || 'False' }}"
       run: |
@@ -60,6 +65,7 @@ runs:
           -o "&:static=${STATIC_OPTION}" \
           -o "&:tests=True" \
           -o "&:integration_tests=${INTEGRATION_TESTS_OPTION}" \
+          -o "&:benchmark=${BENCHMARK_OPTION}" \
           -o "&:lint=False" \
           -o "&:coverage=${CODE_COVERAGE}" \
           -o "&:time_trace=${TIME_TRACE}" \

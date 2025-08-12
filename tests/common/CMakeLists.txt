@@ -18,4 +18,4 @@ target_sources(
 include(deps/gtest)
 
 target_include_directories(clio_testing_common PUBLIC .)
-target_link_libraries(clio_testing_common PUBLIC clio_app gtest::gtest)
+target_link_libraries(clio_testing_common PUBLIC clio_app gtest::gtest PRIVATE spdlog::spdlog)

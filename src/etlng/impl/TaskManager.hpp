@@ -70,6 +70,13 @@ public:
 
     ~TaskManager() override;
 
+    TaskManager(TaskManager const&) = delete;
+    TaskManager(TaskManager&&) = delete;
+    TaskManager&
+    operator=(TaskManager const&) = delete;
+    TaskManager&
+    operator=(TaskManager&&) = delete;
+
     void
     run(std::size_t numExtractors) override;
 

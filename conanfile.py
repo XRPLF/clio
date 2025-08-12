@@ -33,7 +33,8 @@ class ClioConan(ConanFile):
         'openssl/1.1.1v',
         'xrpl/2.5.0@clio/boost-odr',
         'zlib/1.3.1',
-        'libbacktrace/cci.20210118'
+        'libbacktrace/cci.20210118',
+        'spdlog/1.15.3',
     ]
 
     default_options = {
@@ -73,7 +74,7 @@ class ClioConan(ConanFile):
         if self.options.tests or self.options.integration_tests:
             self.requires('gtest/1.14.0')
         if self.options.benchmark:
-            self.requires('benchmark/1.8.3')
+            self.requires('benchmark/1.9.4')
 
     def configure(self):
         if self.settings.compiler == 'apple-clang':

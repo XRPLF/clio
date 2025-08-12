@@ -18,6 +18,7 @@ runs:
           ca-certificates \
           ccache \
           clang-build-analyzer \
+          cmake \
           conan \
           gh \
           jq \
@@ -25,25 +26,6 @@ runs:
           ninja \
           pkg-config
         echo "/opt/homebrew/opt/conan@2/bin" >> $GITHUB_PATH
-
-    - name: Install CMake 3.31.6 on mac
-      if: ${{ runner.os == 'macOS' }}
-      shell: bash
-      run: |
-        # Uninstall any existing cmake
-        brew uninstall --formula cmake --ignore-dependencies || true
-
-        # Download specific cmake formula
-        FORMULA_URL="https://raw.githubusercontent.com/Homebrew/homebrew-core/b4e46db74e74a8c1650b38b1da222284ce1ec5ce/Formula/c/cmake.rb"
-        FORMULA_EXPECTED_SHA256="c7ec95d86f0657638835441871e77541165e0a2581b53b3dd657cf13ad4228d4"
-
-        mkdir -p /tmp/homebrew-formula
-        curl -s -L "$FORMULA_URL" -o /tmp/homebrew-formula/cmake.rb
-
-        echo "$FORMULA_EXPECTED_SHA256  /tmp/homebrew-formula/cmake.rb" | shasum -a 256 -c
-
-        # Install cmake from the specific formula with force flag
-        brew install --formula --quiet --force /tmp/homebrew-formula/cmake.rb
 
     - name: Fix git permissions on Linux
       if: ${{ runner.os == 'Linux' }}
