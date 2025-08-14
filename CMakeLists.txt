@@ -58,6 +58,7 @@ include(deps/Threads)
 include(deps/libfmt)
 include(deps/cassandra)
 include(deps/libbacktrace)
+include(deps/spdlog)
 
 add_subdirectory(src)
 add_subdirectory(tests)

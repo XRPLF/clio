@@ -44,6 +44,9 @@ terminationHandler()
 #else
     LOG(LogService::fatal()) << "Exit on terminate. Stacktrace disabled.";
 #endif  // CLIO_WITHOUT_STACKTRACE
+
+    // We're calling std::abort later, so spdlog won't be shutdown automatically
+    util::LogService::shutdown();
     std::abort();
 }
 

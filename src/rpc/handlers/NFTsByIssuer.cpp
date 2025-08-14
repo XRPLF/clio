@@ -45,7 +45,7 @@ using namespace ripple;
 namespace rpc {
 
 NFTsByIssuerHandler::Result
-NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ctx) const
+NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "NFTsByIssuer's ledger range must be available");

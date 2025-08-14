@@ -43,7 +43,7 @@ using namespace ripple;
 namespace rpc {
 
 NFTInfoHandler::Result
-NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
+NFTInfoHandler::process(NFTInfoHandler::Input const& input, Context const& ctx) const
 {
     auto const tokenID = ripple::uint256{input.nftID.c_str()};
     auto const range = sharedPtrBackend_->fetchLedgerRange();

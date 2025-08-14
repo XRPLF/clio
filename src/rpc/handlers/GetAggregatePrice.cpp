@@ -58,7 +58,7 @@
 namespace rpc {
 
 GetAggregatePriceHandler::Result
-GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context const& ctx) const
+GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input const& input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "GetAggregatePrice's ledger range must be available");

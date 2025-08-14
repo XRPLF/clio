@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,23 +17,16 @@
 */
 //==============================================================================
 
-#include "rpc/handlers/NFTBuyOffers.hpp"
+#include "util/ScopeGuard.hpp"
 
-#include "rpc/common/Types.hpp"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/Indexes.h>
-
-using namespace ripple;
-
-namespace rpc {
-
-NFTBuyOffersHandler::Result
-NFTBuyOffersHandler::process(NFTBuyOffersHandler::Input const& input, Context const& ctx) const
+TEST(ScopeGuardTest, IsCalled)
 {
-    auto const tokenID = uint256{input.nftID.c_str()};
-    auto const directory = keylet::nft_buys(tokenID);
-
-    return iterateOfferDirectory(input, tokenID, directory, ctx.yield);
+    testing::StrictMock<testing::MockFunction<void()>> mockFunction;
+    EXPECT_CALL(mockFunction, Call());
+    {
+        util::ScopeGuard const guard([&mockFunction] { mockFunction.Call(); });
+    }
 }
-}  // namespace rpc

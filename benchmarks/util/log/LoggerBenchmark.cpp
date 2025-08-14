@@ -22,26 +22,36 @@
 #include "util/prometheus/Prometheus.hpp"
 
 #include <benchmark/benchmark.h>
-#include <boost/log/core/core.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
+#include <fmt/format.h>
+#include <spdlog/async.h>
+#include <spdlog/async_logger.h>
+#include <spdlog/spdlog.h>
 
 #include <barrier>
 #include <chrono>
 #include <cstddef>
 #include <filesystem>
+#include <memory>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 using namespace util;
 
-struct BenchmarkLoggingInitializer {
-    static constexpr auto kLOG_FORMAT = "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%";
+static constexpr auto kLOG_FORMAT = "%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v";
 
-    static void
-    initFileLogging(LogService::FileLoggingParams const& params)
+struct BenchmarkLoggingInitializer {
+    static std::shared_ptr<spdlog::sinks::sink>
+    createFileSink(LogService::FileLoggingParams const& params)
     {
-        LogService::initFileLogging(params, kLOG_FORMAT);
+        return LogService::createFileSink(params);
+    }
+
+    static Logger
+    getLogger(std::shared_ptr<spdlog::logger> logger)
+    {
+        return Logger(std::move(logger));
     }
 };
 
@@ -53,7 +63,7 @@ uniqueLogDir()
     auto const epochTime = std::chrono::high_resolution_clock::now().time_since_epoch();
     auto const tmpDir = std::filesystem::temp_directory_path();
     std::string const dirName =
-        "logs_" + std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(epochTime).count());
+        fmt::format("logs_{}", std::chrono::duration_cast<std::chrono::microseconds>(epochTime).count());
     return tmpDir / "clio_benchmark" / dirName;
 }
 
@@ -62,7 +72,7 @@ uniqueLogDir()
 static void
 benchmarkConcurrentFileLogging(benchmark::State& state)
 {
-    boost::log::add_common_attributes();
+    spdlog::drop_all();
 
     auto const numThreads = static_cast<size_t>(state.range(0));
     auto const messagesPerThread = static_cast<size_t>(state.range(1));
@@ -74,12 +84,12 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
         state.PauseTiming();
 
         std::filesystem::create_directories(logDir);
+        spdlog::init_thread_pool(8192, 1);
 
-        BenchmarkLoggingInitializer::initFileLogging({
+        auto fileSink = BenchmarkLoggingInitializer::createFileSink({
             .logDir = logDir,
             .rotationSizeMB = 5,
-            .dirMaxSizeMB = 125,
-            .rotationHours = 24,
+            .dirMaxFiles = 25,
         });
 
         std::vector<std::thread> threads;
@@ -92,10 +102,16 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
         });
 
         for (size_t threadNum = 0; threadNum < numThreads; ++threadNum) {
-            threads.emplace_back([threadNum, messagesPerThread, &barrier]() {
-                barrier.arrive_and_wait();
+            threads.emplace_back([threadNum, messagesPerThread, fileSink, &barrier]() {
+                std::string const channel = fmt::format("Thread_{}", threadNum);
+                auto logger = std::make_shared<spdlog::async_logger>(
+                    channel, fileSink, spdlog::thread_pool(), spdlog::async_overflow_policy::block
+                );
+                logger->set_pattern(kLOG_FORMAT);
+                spdlog::register_logger(logger);
+                Logger const threadLogger = BenchmarkLoggingInitializer::getLogger(std::move(logger));
 
-                Logger const threadLogger("Thread_" + std::to_string(threadNum));
+                barrier.arrive_and_wait();
 
                 for (size_t messageNum = 0; messageNum < messagesPerThread; ++messageNum) {
                     LOG(threadLogger.info()) << "Test log message #" << messageNum;
@@ -106,10 +122,9 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
         for (auto& thread : threads) {
             thread.join();
         }
-        boost::log::core::get()->flush();
+        spdlog::shutdown();
 
         auto const end = std::chrono::high_resolution_clock::now();
-
         state.SetIterationTime(std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count());
 
         std::filesystem::remove_all(logDir);
@@ -129,7 +144,7 @@ BENCHMARK(benchmarkConcurrentFileLogging)
         // Number of threads
         {1, 2, 4, 8},
         // Messages per thread
-        {10'000, 100'000, 500'000},
+        {10'000, 100'000, 500'000, 1'000'000, 10'000'000},
     })
     ->UseManualTime()
     ->Unit(benchmark::kMillisecond);

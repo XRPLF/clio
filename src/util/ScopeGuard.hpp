@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,23 +17,41 @@
 */
 //==============================================================================
 
-#include "rpc/handlers/NFTBuyOffers.hpp"
+#pragma once
 
-#include "rpc/common/Types.hpp"
+#include <utility>
 
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/Indexes.h>
+namespace util {
 
-using namespace ripple;
+/**
+ * @brief Run a function when the scope is exited
+ */
+template <typename Func>
+class ScopeGuard {
+public:
+    ScopeGuard(ScopeGuard const&) = delete;
+    ScopeGuard(ScopeGuard&&) = delete;
+    ScopeGuard&
+    operator=(ScopeGuard const&) = delete;
+    ScopeGuard&
+    operator=(ScopeGuard&&) = delete;
 
-namespace rpc {
+    /**
+     * @brief Create ScopeGuard object.
+     *
+     * @param func The function to run when the scope is exited.
+     */
+    ScopeGuard(Func func) : func_(std::move(func))
+    {
+    }
 
-NFTBuyOffersHandler::Result
-NFTBuyOffersHandler::process(NFTBuyOffersHandler::Input const& input, Context const& ctx) const
-{
-    auto const tokenID = uint256{input.nftID.c_str()};
-    auto const directory = keylet::nft_buys(tokenID);
+    ~ScopeGuard()
+    {
+        func_();
+    }
 
-    return iterateOfferDirectory(input, tokenID, directory, ctx.yield);
-}
-}  // namespace rpc
+private:
+    Func func_;
+};
+
+}  // namespace util

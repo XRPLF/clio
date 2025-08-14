@@ -42,6 +42,10 @@ RUN apt-get update \
         git-lfs \
         graphviz \
         jq \
+        # libgmp, libmpfr and libncurses are gdb dependencies
+        libgmp-dev \
+        libmpfr-dev \
+        libncurses-dev \
         make \
         ninja-build \
         python3 \
@@ -92,6 +96,7 @@ COPY --from=clio-tools \
     /usr/local/bin/ClangBuildAnalyzer \
     /usr/local/bin/git-cliff \
     /usr/local/bin/gh \
+    /usr/local/bin/gdb \
     /usr/local/bin/
 
 WORKDIR /root

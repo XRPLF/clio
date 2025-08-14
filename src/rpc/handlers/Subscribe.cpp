@@ -112,7 +112,7 @@ SubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
 }
 
 SubscribeHandler::Result
-SubscribeHandler::process(Input input, Context const& ctx) const
+SubscribeHandler::process(Input const& input, Context const& ctx) const
 {
     auto output = Output{};
 

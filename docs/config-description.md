@@ -439,13 +439,21 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The value must be one of the following: `trace`, `debug`, `info`, `warning`, `error`, `fatal`.
 - **Description**: The general logging level of Clio. This level is applied to all log channels that do not have an explicitly defined logging level.
 
-### log_format
+### spdlog_format
 
 - **Required**: True
 - **Type**: string
-- **Default value**: `%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%`
+- **Default value**: `%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v`
 - **Constraints**: None
-- **Description**: The format string for log messages. The format is described here: <https://www.boost.org/doc/libs/1_83_0/libs/log/doc/html/log/tutorial/formatters.html>.
+- **Description**: The format string for log messages using spdlog format patterns. Documentation can be found at: <https://github.com/gabime/spdlog/wiki/Custom-formatting>.
+
+### spdlog_async
+
+- **Required**: True
+- **Type**: boolean
+- **Default value**: `True`
+- **Constraints**: None
+- **Description**: Whether spdlog is asynchronous or not.
 
 ### log_to_console
 
@@ -471,21 +479,13 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The log rotation size in megabytes. When the log file reaches this particular size, a new log file starts.
 
-### log_directory_max_size
+### log_directory_max_files
 
 - **Required**: True
 - **Type**: int
-- **Default value**: `51200`
+- **Default value**: `25`
 - **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
-- **Description**: The maximum size of the log directory in megabytes.
-
-### log_rotation_hour_interval
-
-- **Required**: True
-- **Type**: int
-- **Default value**: `12`
-- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
-- **Description**: Represents the interval (in hours) for log rotation. If the current log file reaches this value in logging, a new log file starts.
+- **Description**: The maximum number of log files in the directory.
 
 ### log_tag_style
 

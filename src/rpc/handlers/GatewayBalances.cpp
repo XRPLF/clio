@@ -55,7 +55,7 @@
 namespace rpc {
 
 GatewayBalancesHandler::Result
-GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context const& ctx) const
+GatewayBalancesHandler::process(GatewayBalancesHandler::Input const& input, Context const& ctx) const
 {
     // check ledger
     auto const range = sharedPtrBackend_->fetchLedgerRange();

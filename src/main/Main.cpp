@@ -22,6 +22,7 @@
 #include "app/VerifyConfig.hpp"
 #include "migration/MigrationApplication.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
+#include "util/ScopeGuard.hpp"
 #include "util/TerminationHandler.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
@@ -37,6 +38,7 @@ int
 main(int argc, char const* argv[])
 try {
     util::setTerminationHandler();
+    util::ScopeGuard const loggerShutdownGuard{[]() { util::LogService::shutdown(); }};
 
     auto const action = app::CliArgs::parse(argc, argv);
     return action.apply(
