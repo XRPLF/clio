@@ -30,8 +30,8 @@ concurrency:
 
 env:
   CLANG_MAJOR_VERSION: 19
-  GCC_MAJOR_VERSION: 14
-  GCC_VERSION: 14.3.0
+  GCC_MAJOR_VERSION: 15
+  GCC_VERSION: 15.2.0
 
 jobs:
   repo:
@@ -69,7 +69,7 @@ jobs:
         with:
           images: |
             ${{ needs.repo.outputs.GHCR_REPO }}/clio-gcc
-            rippleci/clio_gcc
+            ${{ github.repository_owner == 'XRPLF' && 'rippleci/clio_gcc' || '' }}
           push_image: ${{ github.event_name != 'pull_request' }}
           directory: docker/compilers/gcc
           tags: |
@@ -81,7 +81,7 @@ jobs:
           build_args: |
             GCC_MAJOR_VERSION=${{ env.GCC_MAJOR_VERSION }}
             GCC_VERSION=${{ env.GCC_VERSION }}
-          dockerhub_repo: rippleci/clio_gcc
+          dockerhub_repo: ${{ github.repository_owner == 'XRPLF' && 'rippleci/clio_gcc' || '' }}
           dockerhub_description: GCC compiler for XRPLF/clio.
 
   gcc-arm64:
@@ -107,7 +107,7 @@ jobs:
         with:
           images: |
             ${{ needs.repo.outputs.GHCR_REPO }}/clio-gcc
-            rippleci/clio_gcc
+            ${{ github.repository_owner == 'XRPLF' && 'rippleci/clio_gcc' || '' }}
           push_image: ${{ github.event_name != 'pull_request' }}
           directory: docker/compilers/gcc
           tags: |
@@ -119,7 +119,7 @@ jobs:
           build_args: |
             GCC_MAJOR_VERSION=${{ env.GCC_MAJOR_VERSION }}
             GCC_VERSION=${{ env.GCC_VERSION }}
-          dockerhub_repo: rippleci/clio_gcc
+          dockerhub_repo: ${{ github.repository_owner == 'XRPLF' && 'rippleci/clio_gcc' || '' }}
           dockerhub_description: GCC compiler for XRPLF/clio.
 
   gcc-merge:
@@ -141,15 +141,15 @@ jobs:
 
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to DockerHub
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
+        if: github.repository_owner == 'XRPLF' && github.event_name != 'pull_request'
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PW }}
@@ -157,15 +157,21 @@ jobs:
       - name: Create and push multi-arch manifest
         if: github.event_name != 'pull_request' && steps.changed-files.outputs.any_changed == 'true'
         run: |
-          for image in ${{ needs.repo.outputs.GHCR_REPO }}/clio-gcc rippleci/clio_gcc; do
+          push_image() {
+            image=$1
+
             docker buildx imagetools create \
-              -t $image:latest \
-              -t $image:${{ env.GCC_MAJOR_VERSION }} \
-              -t $image:${{ env.GCC_VERSION }} \
-              -t $image:${{ github.sha }} \
-              $image:arm64-latest \
-              $image:amd64-latest
-          done
+                -t $image:latest \
+                -t $image:${{ env.GCC_MAJOR_VERSION }} \
+                -t $image:${{ env.GCC_VERSION }} \
+                -t $image:${{ github.sha }} \
+                $image:arm64-latest \
+                $image:amd64-latest
+          }
+          push_image ${{ needs.repo.outputs.GHCR_REPO }}/clio-gcc
+          if [[ ${{ github.repository_owner }} == 'XRPLF' ]]; then
+            push_image rippleci/clio_clang
+          fi
 
   clang:
     name: Build and push Clang docker image
@@ -190,7 +196,7 @@ jobs:
         with:
           images: |
             ${{ needs.repo.outputs.GHCR_REPO }}/clio-clang
-            rippleci/clio_clang
+            ${{ github.repository_owner == 'XRPLF' && 'rippleci/clio_clang' || '' }}
           push_image: ${{ github.event_name != 'pull_request' }}
           directory: docker/compilers/clang
           tags: |
@@ -200,7 +206,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build_args: |
             CLANG_MAJOR_VERSION=${{ env.CLANG_MAJOR_VERSION }}
-          dockerhub_repo: rippleci/clio_clang
+          dockerhub_repo: ${{ github.repository_owner == 'XRPLF' && 'rippleci/clio_clang' || '' }}
           dockerhub_description: Clang compiler for XRPLF/clio.
 
   tools-amd64:
@@ -284,7 +290,7 @@ jobs:
 
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -315,7 +321,7 @@ jobs:
         with:
           images: |
             ${{ needs.repo.outputs.GHCR_REPO }}/clio-ci
-            rippleci/clio_ci
+            ${{ github.repository_owner == 'XRPLF' && 'rippleci/clio_ci' || '' }}
           push_image: ${{ github.event_name != 'pull_request' }}
           directory: docker/ci
           tags: |
@@ -328,5 +334,5 @@ jobs:
             CLANG_MAJOR_VERSION=${{ env.CLANG_MAJOR_VERSION }}
             GCC_MAJOR_VERSION=${{ env.GCC_MAJOR_VERSION }}
             GCC_VERSION=${{ env.GCC_VERSION }}
-          dockerhub_repo: rippleci/clio_ci
+          dockerhub_repo: ${{ github.repository_owner == 'XRPLF' && 'rippleci/clio_ci' || '' }}
           dockerhub_description: CI image for XRPLF/clio.

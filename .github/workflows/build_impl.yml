@@ -110,6 +110,7 @@ jobs:
           code_coverage: ${{ inputs.code_coverage }}
           static: ${{ inputs.static }}
           time_trace: ${{ inputs.analyze_build_time }}
+          use_mold: ${{ runner.os != 'macOS' }}
 
       - name: Build Clio
         uses: ./.github/actions/build_clio

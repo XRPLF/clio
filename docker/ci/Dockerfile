@@ -42,6 +42,10 @@ RUN apt-get update \
         git-lfs \
         graphviz \
         jq \
+        # libgmp, libmpfr and libncurses are gdb dependencies
+        libgmp-dev \
+        libmpfr-dev \
+        libncurses-dev \
         make \
         ninja-build \
         python3 \
@@ -53,7 +57,7 @@ RUN apt-get update \
         # lxml 6.0.0 is not compatible with our image
         'lxml<6.0.0' \
         \
-        cmake==3.31.6 \
+        cmake \
         conan==2.17.0 \
         gcovr \
         pre-commit \
@@ -92,6 +96,7 @@ COPY --from=clio-tools \
     /usr/local/bin/ClangBuildAnalyzer \
     /usr/local/bin/git-cliff \
     /usr/local/bin/gh \
+    /usr/local/bin/gdb \
     /usr/local/bin/
 
 WORKDIR /root

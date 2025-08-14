@@ -19,6 +19,7 @@
 
 #include "util/config/ConfigDefinition.hpp"
 
+#include "rpc/common/APIVersion.hpp"
 #include "util/Assert.hpp"
 #include "util/Constants.hpp"
 #include "util/OverloadSet.hpp"
@@ -36,10 +37,12 @@
 #include <chrono>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <initializer_list>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -243,7 +246,7 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
 ClioConfigDefinition&
 getClioConfig()
 {
-    static ClioConfigDefinition gClioConfig{
+    static ClioConfigDefinition kCLIO_CONFIG{
         {{"database.type",
           ConfigValue{ConfigType::String}.defaultValue("cassandra").withConstraint(gValidateCassandraName)},
          {"database.cassandra.contact_points", ConfigValue{ConfigType::String}.defaultValue("localhost")},
@@ -355,10 +358,9 @@ getClioConfig()
 
          {"log_level", ConfigValue{ConfigType::String}.defaultValue("info").withConstraint(gValidateLogLevelName)},
 
-         {"log_format",
-          ConfigValue{ConfigType::String}.defaultValue(
-              R"(%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%)"
-          )},
+         {"spdlog_format", ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
+
+         {"spdlog_async", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
 
          {"log_to_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
@@ -366,11 +368,7 @@ getClioConfig()
 
          {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateUint32)},
 
-         {"log_directory_max_size",
-          ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(gValidateUint32)},
-
-         {"log_rotation_hour_interval",
-          ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(gValidateUint32)},
+         {"log_directory_max_files", ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(gValidateUint32)},
 
          {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none").withConstraint(gValidateLogTag)},
 
@@ -400,7 +398,7 @@ getClioConfig()
           ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(gValidateUint32)}},
     };
 
-    return gClioConfig;
+    return kCLIO_CONFIG;
 }
 
 }  // namespace util::config

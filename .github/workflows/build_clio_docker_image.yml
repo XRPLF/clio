@@ -48,7 +48,7 @@ jobs:
 
       - name: Download Clio binary from artifact
         if: ${{ inputs.artifact_name != null }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ inputs.artifact_name }}
           path: ./docker/clio/artifact/
@@ -73,7 +73,8 @@ jobs:
           elif [[ $artifact == *.tar.gz ]]; then
             tar -xvf $artifact
           fi
-          mv clio_server ../
+          chmod +x ./clio_server
+          mv ./clio_server ../
           cd ../
           rm -rf ./artifact
 
@@ -96,5 +97,5 @@ jobs:
           directory: docker/clio
           tags: ${{ inputs.tags }}
           platforms: linux/amd64
-          dockerhub_repo: rippleci/clio
+          dockerhub_repo: ${{ github.repository_owner == 'XRPLF' && 'rippleci/clio' || '' }}
           dockerhub_description: Clio is an XRP Ledger API server.

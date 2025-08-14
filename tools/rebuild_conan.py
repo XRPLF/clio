@@ -27,7 +27,7 @@ def rebuild():
                     f"--output-folder=build_{profile}_{build_type}",
                     "-s", f"build_type={build_type}",
                     "-o", "&:tests=True",
-                    "-o", "&:integration_tests=True",
+                    "-o", "&:benchmark=True",
                     "--profile:all", profile
                 ] & plumbum.FG
 

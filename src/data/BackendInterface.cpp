@@ -275,14 +275,17 @@ BackendInterface::updateRange(uint32_t newMax)
 {
     std::scoped_lock const lck(rngMtx_);
 
-    ASSERT(
-        !range_ || newMax >= range_->maxSequence,
-        "Range shouldn't exist yet or newMax should be greater. newMax = {}, range->maxSequence = {}",
-        newMax,
-        range_->maxSequence
-    );
+    if (range_.has_value() && newMax < range_->maxSequence) {
+        ASSERT(
+            false,
+            "Range shouldn't exist yet or newMax should be at least range->maxSequence. newMax = {}, "
+            "range->maxSequence = {}",
+            newMax,
+            range_->maxSequence
+        );
+    }
 
-    if (!range_) {
+    if (!range_.has_value()) {
         range_ = {.minSequence = newMax, .maxSequence = newMax};
     } else {
         range_->maxSequence = newMax;

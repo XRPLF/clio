@@ -86,7 +86,7 @@ UnsubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
 }
 
 UnsubscribeHandler::Result
-UnsubscribeHandler::process(Input input, Context const& ctx) const
+UnsubscribeHandler::process(Input const& input, Context const& ctx) const
 {
     if (input.streams)
         unsubscribeFromStreams(*(input.streams), ctx.session);

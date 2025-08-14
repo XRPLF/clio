@@ -108,6 +108,8 @@ public:
 
             ioc.stop();
             LOG(util::LogService::info()) << "io_context stopped";
+
+            util::LogService::shutdown();
         };
     }
 };

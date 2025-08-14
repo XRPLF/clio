@@ -81,7 +81,7 @@ AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, r
 }
 
 AccountChannelsHandler::Result
-AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context const& ctx) const
+AccountChannelsHandler::process(AccountChannelsHandler::Input const& input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountChannel's ledger range must be available");
