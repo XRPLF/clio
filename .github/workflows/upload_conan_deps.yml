@@ -23,7 +23,6 @@ on:
       - .github/actions/generate/action.yml
       - .github/actions/prepare_runner/action.yml
       - ".github/scripts/conan/**"
-      - "!.github/scripts/conan/apple-clang-local.profile"
 
       - conanfile.py
       - conan.lock
@@ -35,7 +34,6 @@ on:
       - .github/actions/generate/action.yml
       - .github/actions/prepare_runner/action.yml
       - ".github/scripts/conan/**"
-      - "!.github/scripts/conan/apple-clang-local.profile"
 
       - conanfile.py
       - conan.lock
@@ -97,9 +95,9 @@ jobs:
           build_type: ${{ matrix.build_type }}
 
       - name: Login to Conan
-        if: github.event_name != 'pull_request'
+        if: github.repository_owner == 'XRPLF' && github.event_name != 'pull_request'
         run: conan remote login -p ${{ secrets.CONAN_PASSWORD }} ripple ${{ secrets.CONAN_USERNAME }}
 
       - name: Upload Conan packages
-        if: github.event_name != 'pull_request' && github.event_name != 'schedule'
+        if: github.repository_owner == 'XRPLF' && github.event_name != 'pull_request' && github.event_name != 'schedule'
         run: conan upload "*" -r=ripple --confirm ${{ github.event.inputs.force_upload == 'true' && '--force' || '' }}

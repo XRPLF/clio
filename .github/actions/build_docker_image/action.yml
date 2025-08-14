@@ -24,6 +24,7 @@ inputs:
   dockerhub_repo:
     description: DockerHub repository name
     required: false
+    default: ""
   dockerhub_description:
     description: Short description of the image
     required: false

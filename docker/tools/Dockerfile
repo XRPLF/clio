@@ -8,12 +8,10 @@ ARG TARGETARCH
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-ARG BUILD_VERSION=1
+ARG BUILD_VERSION=2
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests \
-        bison \
-        flex \
         ninja-build \
         python3 \
         python3-pip \
@@ -46,6 +44,13 @@ RUN wget --progress=dot:giga "https://github.com/ccache/ccache/releases/download
     && ninja install \
     && rm -rf /tmp/* /var/tmp/*
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends --no-install-suggests \
+        bison \
+        flex \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 ARG DOXYGEN_VERSION=1.12.0
 RUN wget --progress=dot:giga "https://github.com/doxygen/doxygen/releases/download/Release_${DOXYGEN_VERSION//./_}/doxygen-${DOXYGEN_VERSION}.src.tar.gz" \
     && tar xf "doxygen-${DOXYGEN_VERSION}.src.tar.gz" \
@@ -76,6 +81,24 @@ ARG GH_VERSION=2.74.0
 RUN wget --progress=dot:giga "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz" \
     && tar xf gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz \
     && mv gh_${GH_VERSION}_linux_${TARGETARCH}/bin/gh /usr/local/bin/gh \
+    && rm -rf /tmp/* /var/tmp/*
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends --no-install-suggests \
+        libgmp-dev \
+        libmpfr-dev \
+        libncurses-dev \
+        make \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG GDB_VERSION=16.3
+RUN wget --progress=dot:giga "https://sourceware.org/pub/gdb/releases/gdb-${GDB_VERSION}.tar.gz" \
+    && tar xf "gdb-${GDB_VERSION}.tar.gz" \
+    && cd "gdb-${GDB_VERSION}" \
+    && ./configure --prefix=/usr/local \
+    && make -j "$(nproc)" \
+    && make install-gdb \
     && rm -rf /tmp/* /var/tmp/*
 
 WORKDIR /root

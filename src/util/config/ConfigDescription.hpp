@@ -263,18 +263,16 @@ private:
         KV{.key = "log_level",
            .value = "The general logging level of Clio. This level is applied to all log channels that do not have an "
                     "explicitly defined logging level."},
-        KV{.key = "log_format",
-           .value = "The format string for log messages. The format is described here: "
-                    "<https://www.boost.org/doc/libs/1_83_0/libs/log/doc/html/log/tutorial/formatters.html>."},
+        KV{.key = "spdlog_format",
+           .value = "The format string for log messages using spdlog format patterns. Documentation can be found at: "
+                    "<https://github.com/gabime/spdlog/wiki/Custom-formatting>."},
+        KV{.key = "spdlog_async", .value = "Whether spdlog is asynchronous or not."},
         KV{.key = "log_to_console", .value = "Enables or disables logging to the console."},
         KV{.key = "log_directory", .value = "The directory path for the log files."},
         KV{.key = "log_rotation_size",
            .value = "The log rotation size in megabytes. When the log file reaches this particular size, a new log "
                     "file starts."},
-        KV{.key = "log_directory_max_size", .value = "The maximum size of the log directory in megabytes."},
-        KV{.key = "log_rotation_hour_interval",
-           .value = "Represents the interval (in hours) for log rotation. If the current log file reaches this value "
-                    "in logging, a new log file starts."},
+        KV{.key = "log_directory_max_files", .value = "The maximum number of log files in the directory."},
         KV{.key = "log_tag_style",
            .value =
                "Log tags are unique identifiers for log messages. `uint`/`int` starts logging from 0 and increments, "

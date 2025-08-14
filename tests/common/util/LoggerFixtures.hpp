@@ -19,56 +19,25 @@
 
 #pragma once
 
-#include "util/log/Logger.hpp"
+#include "util/StringBuffer.hpp"
 
 #include <gtest/gtest.h>
 
-#include <algorithm>
-#include <mutex>
 #include <ostream>
-#include <sstream>
 #include <string>
 
 /**
- * @brief Fixture with util::Logger support.
+ * @brief A fixture for testing LogService and Logger.
  */
 class LoggerFixture : virtual public ::testing::Test {
-    /**
-     * @brief A simple string buffer that can be used to mock std::cout for
-     * console logging.
-     */
-    class FakeBuffer final : public std::stringbuf {
-    public:
-        std::string
-        getStrAndReset()
-        {
-            auto value = str();
-            str("");
-            return value;
-        }
-    };
-
-    FakeBuffer buffer_;
+    StringBuffer buffer_;
     std::ostream stream_ = std::ostream{&buffer_};
 
 public:
-    // Simulates the `util::Logger::init(config)` call
+    // Simulates the `util::LogService::init(config)` call
     LoggerFixture();
 
 protected:
-    void
-    checkEqual(std::string expected)
-    {
-        auto value = buffer_.getStrAndReset();
-        ASSERT_EQ(value, expected + '\n') << "Got: " << value;
-    }
-
-    void
-    checkEmpty()
-    {
-        ASSERT_TRUE(buffer_.getStrAndReset().empty());
-    }
-
     std::string
     getLoggerString()
     {

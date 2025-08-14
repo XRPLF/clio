@@ -21,44 +21,40 @@
 
 #include "util/log/Logger.hpp"
 
-#include <boost/log/core/core.hpp>
-#include <boost/log/expressions/predicates/channel_severity_filter.hpp>
-#include <boost/log/keywords/format.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/utility/setup/console.hpp>
-#include <boost/log/utility/setup/formatter_parser.hpp>
+#include <spdlog/common.h>
+#include <spdlog/sinks/ostream_sink.h>
+#include <spdlog/spdlog.h>
 
 #include <algorithm>
-#include <mutex>
+#include <memory>
 
 LoggerFixture::LoggerFixture()
 {
-    static std::once_flag kONCE;
-    std::call_once(kONCE, [] {
-        boost::log::add_common_attributes();
-        boost::log::register_simple_formatter_factory<util::Severity, char>("Severity");
+    // Clear any existing loggers
+    spdlog::drop_all();
+
+    // Create ostream sink for testing
+    auto ostreamSink = std::make_shared<spdlog::sinks::ostream_sink_mt>(stream_);
+
+    // Create loggers for each channel
+    std::ranges::for_each(util::Logger::kCHANNELS, [&ostreamSink](char const* channel) {
+        auto logger = std::make_shared<spdlog::logger>(channel, ostreamSink);
+        logger->set_level(spdlog::level::trace);
+        spdlog::register_logger(logger);
     });
 
-    namespace keywords = boost::log::keywords;
-    namespace expr = boost::log::expressions;
-    auto core = boost::log::core::get();
+    spdlog::get("General")->set_level(spdlog::level::debug);
 
-    core->remove_all_sinks();
-    boost::log::add_console_log(stream_, keywords::format = "%Channel%:%Severity% %Message%");
-    auto minSeverity = expr::channel_severity_filter(util::LogChannel, util::LogSeverity);
+    auto traceLogger = std::make_shared<spdlog::logger>("Trace", ostreamSink);
+    traceLogger->set_level(spdlog::level::trace);
+    spdlog::register_logger(traceLogger);
 
-    std::ranges::for_each(util::Logger::kCHANNELS, [&minSeverity](char const* channel) {
-        minSeverity[channel] = util::Severity::TRC;
-    });
+    spdlog::set_default_logger(spdlog::get("General"));
 
-    minSeverity["General"] = util::Severity::DBG;
-    minSeverity["Trace"] = util::Severity::TRC;
-
-    core->set_filter(minSeverity);
-    core->set_logging_enabled(true);
+    spdlog::set_pattern("%^%3!l:%n%$ - %v");
 }
 
 NoLoggerFixture::NoLoggerFixture()
 {
-    boost::log::core::get()->set_logging_enabled(false);
+    spdlog::set_level(spdlog::level::off);
 }
