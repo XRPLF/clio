@@ -509,6 +509,14 @@ struct CustomValidators final {
     static CustomValidator accountMarkerValidator;
 
     /**
+     * @brief Provides a commonly used validator for account type.
+     *
+     * A type can be name or canonical name.
+     * The former will be read as hex, and the latter can be cast to uint64.
+     */
+    static CustomValidator accountTypeValidator;
+
+    /**
      * @brief Provides a commonly used validator for uint160(AccountID) hex string.
      *
      * It must be a string and also a decodable hex.

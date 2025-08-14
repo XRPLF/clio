@@ -19,6 +19,7 @@
 
 #include "util/LedgerUtils.hpp"
 
+#include <boost/algorithm/string.hpp>
 #include <xrpl/protocol/LedgerFormats.h>
 
 #include <algorithm>
@@ -32,7 +33,7 @@ LedgerTypes::getLedgerEntryTypeFromStr(std::string const& entryName)
 {
     static std::unordered_map<std::string, ripple::LedgerEntryType> kTYPE_MAP = []() {
         std::unordered_map<std::string, ripple::LedgerEntryType> map;
-        std::ranges::for_each(kLEDGER_TYPES, [&map](auto const& item) { map[item.name_] = item.type_; });
+        std::ranges::for_each(kLEDGER_TYPES, [&map](auto const& item) { map[item.rpcName_] = item.type_; });
         return map;
     }();
 
@@ -40,6 +41,23 @@ LedgerTypes::getLedgerEntryTypeFromStr(std::string const& entryName)
         return ripple::ltANY;
 
     return kTYPE_MAP.at(entryName);
+}
+
+ripple::LedgerEntryType
+LedgerTypes::getAccountOwnedLedgerTypeFromStr(std::string const& entryName)
+{
+    constexpr auto kFILTER = [](auto const& item) {
+        return item.category_ != LedgerTypeAttribute::LedgerCategory::Chain;
+    };
+
+    auto it = std::ranges::find_if(kLEDGER_TYPES, [&](auto const& item) {
+        return (kFILTER(item) && (item.rpcName_ == entryName || boost::iequals(item.name_, entryName)));
+    });
+
+    if (it == std::end(kLEDGER_TYPES))
+        return ripple::ltANY;
+
+    return it->type_;
 }
 
 }  // namespace util
