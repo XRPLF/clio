@@ -97,5 +97,5 @@ jobs:
           directory: docker/clio
           tags: ${{ inputs.tags }}
           platforms: linux/amd64
-          dockerhub_repo: rippleci/clio
+          dockerhub_repo: ${{ github.repository_owner == 'XRPLF' && 'rippleci/clio' || '' }}
           dockerhub_description: Clio is an XRP Ledger API server.

@@ -4,8 +4,8 @@ build_type=Release
 compiler=gcc
 compiler.cppstd=20
 compiler.libcxx=libstdc++11
-compiler.version=14
+compiler.version=15
 os=Linux
 
 [conf]
-tools.build:compiler_executables={"c": "/usr/bin/gcc-14", "cpp": "/usr/bin/g++-14"}
+tools.build:compiler_executables={"c": "/usr/bin/gcc-15", "cpp": "/usr/bin/g++-15"}

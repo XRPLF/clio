@@ -8,10 +8,11 @@ REPO_DIR="$(cd "$CURRENT_DIR/../../../" && pwd)"
 CONAN_DIR="${CONAN_HOME:-$HOME/.conan2}"
 PROFILES_DIR="$CONAN_DIR/profiles"
 
+# When developers' compilers are updated, these profiles might be different
 if [[ -z "$CI" ]]; then
-    APPLE_CLANG_PROFILE="$CURRENT_DIR/apple-clang-local.profile"
+    APPLE_CLANG_PROFILE="$CURRENT_DIR/apple-clang-17.profile"
 else
-    APPLE_CLANG_PROFILE="$CURRENT_DIR/apple-clang-ci.profile"
+    APPLE_CLANG_PROFILE="$CURRENT_DIR/apple-clang-17.profile"
 fi
 
 GCC_PROFILE="$REPO_DIR/docker/ci/conan/gcc.profile"
