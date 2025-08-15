@@ -53,25 +53,25 @@ using util::config::ConfigValue;
 struct LogServiceInitTests : virtual public ::testing::Test {
 protected:
     util::config::ClioConfigDefinition config_{
-        {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}}},
-        {"log_channels.[].log_level", Array{ConfigValue{ConfigType::String}}},
+        {"log.channels.[].channel", Array{ConfigValue{ConfigType::String}}},
+        {"log.channels.[].level", Array{ConfigValue{ConfigType::String}}},
 
-        {"log_level", ConfigValue{ConfigType::String}.defaultValue("info")},
+        {"log.level", ConfigValue{ConfigType::String}.defaultValue("info")},
 
-        {"spdlog_format", ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
-        {"spdlog_async", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+        {"log.format", ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
+        {"log.is_async", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
-        {"log_to_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+        {"log.enable_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
-        {"log_directory", ConfigValue{ConfigType::String}.optional()},
+        {"log.directory", ConfigValue{ConfigType::String}.optional()},
 
-        {"log_rotation_size",
+        {"log.rotation_size",
          ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(config::gValidateUint32)},
 
-        {"log_directory_max_files",
+        {"log.directory_max_files",
          ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(config::gValidateUint32)},
 
-        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
     };
 
     std::string
@@ -104,7 +104,8 @@ private:
 
 TEST_F(LogServiceInitTests, DefaultLogLevel)
 {
-    auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::object{{"log_level", "warn"}}});
+    auto const parsingErrors =
+        config_.parse(ConfigFileJson{boost::json::object{{"log", boost::json::object{{"level", "warn"}}}}});
     ASSERT_FALSE(parsingErrors.has_value());
     std::string const logString = "some log";
 
@@ -134,13 +135,15 @@ TEST_F(LogServiceInitTests, ChannelLogLevel)
 {
     std::string const configStr = R"JSON(
     {
-        "log_level": "error",
-        "log_channels": [
-            {
-                "channel": "Backend",
-                "log_level": "warning"
-            }
-        ]
+        "log": {
+            "level": "error",
+            "channels": [
+                {
+                    "channel": "Backend",
+                    "level": "warning"
+                }
+            ]
+        }
     }
     )JSON";
 
@@ -177,7 +180,8 @@ TEST_F(LogServiceInitTests, ChannelLogLevel)
 TEST_F(LogServiceInitTests, InitReturnsErrorIfCouldNotCreateLogDirectory)
 {
     // "/proc" directory is read only on any unix OS
-    auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::object{{"log_directory", "/proc/logs"}}});
+    auto const parsingErrors =
+        config_.parse(ConfigFileJson{boost::json::object{{"log", boost::json::object{{"directory", "/proc/logs"}}}}});
     ASSERT_FALSE(parsingErrors.has_value());
 
     auto const result = LogService::init(config_);
@@ -189,12 +193,14 @@ TEST_F(LogServiceInitTests, InitReturnsErrorIfProvidedInvalidChannel)
 {
     auto const jsonStr = R"JSON(
     {
-        "log_channels": [
-            {
-                "channel": "SomeChannel",
-                "log_level": "warn"
-            }
-        ]
+        "log": {
+            "channels": [
+                {
+                    "channel": "SomeChannel",
+                    "level": "warn"
+                }
+            ]
+        }
     })JSON";
 
     auto const json = boost::json::parse(jsonStr).as_object();
@@ -208,7 +214,7 @@ TEST_F(LogServiceInitTests, InitReturnsErrorIfProvidedInvalidChannel)
 
 TEST_F(LogServiceInitTests, LogSizeAndHourRotationCannotBeZero)
 {
-    std::vector<std::string_view> const keys{"log_directory_max_files", "log_rotation_size"};
+    std::vector<std::string_view> const keys{"log.directory_max_files", "log.rotation_size"};
 
     auto const jsonStr = fmt::format(
         R"JSON(

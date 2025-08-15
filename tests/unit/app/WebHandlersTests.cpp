@@ -57,7 +57,7 @@ using namespace util::config;
 struct WebHandlersTest : virtual NoLoggerFixture {
     DOSGuardStrictMock dosGuardMock;
     util::TagDecoratorFactory const tagFactory{
-        ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
+        ClioConfigDefinition{{"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
     };
     std::string const ip = "some ip";
     StrictMockConnection connectionMock{ip, boost::beast::flat_buffer{}, tagFactory};

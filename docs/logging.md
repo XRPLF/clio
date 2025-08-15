@@ -1,12 +1,13 @@
 # Logging
 
-Clio provides several logging options, which all are configurable via the config file. These are detailed in the following sections.
+Clio provides several logging options, which all are configurable via the config file under the `log` section.
+These are detailed in the following sections.
 
-## `log_level`
+## `log.level`
 
 The minimum level of severity at which the log message will be outputted by default. Severity options are `trace`, `debug`, `info`, `warning`, `error`, `fatal`. Defaults to `info`.
 
-## `spdlog_format`
+## `log.format`
 
 The format of log lines produced by Clio using spdlog format patterns. Defaults to `"%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v"`.
 
@@ -26,52 +27,52 @@ Some additional variables that might be useful:
 
 For more information about spdlog format patterns, see: <https://github.com/gabime/spdlog/wiki/Custom-formatting>
 
-## `spdlog_async`
+## `log.is_async`
 
 Whether spdlog is asynchronous or not.
 
-## `log_channels`
+## `log.channels`
 
 An array of JSON objects, each overriding properties for a logging `channel`.
 
 > [!IMPORTANT]
-> At the time of writing, only `log_level` can be overridden using this mechanism.
+> At the time of writing, only `log.level` can be overridden using this mechanism.
 
 Each object is of this format:
 
 ```json
 {
   "channel": "Backend",
-  "log_level": "fatal"
+  "level": "fatal"
 }
 ```
 
-If no override is present for a given channel, that channel will log at the severity specified by the global `log_level`.
+If no override is present for a given channel, that channel will log at the severity specified by the global `log.level`.
 
 The log channels that can be overridden are: `Backend`, `WebServer`, `Subscriptions`, `RPC`, `ETL` and `Performance`.
 
 > [!NOTE]
 > See [example-config.json](../docs/examples/config/example-config.json) for more details.
 
-## `log_to_console`
+## `log.enable_console`
 
 Enable or disable log output to console. Options are `true`/`false`. This option defaults to `true`.
 
-## `log_directory`
+## `log.directory`
 
 Path to the directory where log files are stored. If such directory doesn't exist, Clio will create it.
 
 If the option is not specified, the logs are not written to a file.
 
-## `log_rotation_size`
+## `log.rotation_size`
 
 The max size of the log file in **megabytes** before it will rotate into a smaller file. Defaults to 2GB.
 
-## `log_directory_max_files`
+## `log.directory_max_files`
 
 The max number of log files in the directory before old log files will be deleted to free up space. Defaults to 25.
 
-## `log_tag_style`
+## `log.tag_style`
 
 Tag implementation to use. Must be one of:
 

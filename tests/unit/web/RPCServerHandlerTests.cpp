@@ -96,7 +96,7 @@ struct MockWsBase : public web::ConnectionBase {
 
 struct WebRPCServerHandlerTest : util::prometheus::WithPrometheus, MockBackendTest, SyncAsioContextTest {
     util::config::ClioConfigDefinition cfg{
-        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
         {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(rpc::kAPI_VERSION_DEFAULT)},
         {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(rpc::kAPI_VERSION_MIN)},
         {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(rpc::kAPI_VERSION_MAX)}

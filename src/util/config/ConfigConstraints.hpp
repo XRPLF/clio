@@ -465,10 +465,10 @@ static constinit PortConstraint gValidatePort{};
 static constinit ValidIPConstraint gValidateIp{};
 
 static constinit OneOf gValidateChannelName{"channel", Logger::kCHANNELS};
-static constinit OneOf gValidateLogLevelName{"log_level", kLOG_LEVELS};
+static constinit OneOf gValidateLogLevelName{"log.level", kLOG_LEVELS};
 static constinit OneOf gValidateCassandraName{"database.type", kDATABASE_TYPE};
 static constinit OneOf gValidateLoadMode{"cache.load", kLOAD_CACHE_MODE};
-static constinit OneOf gValidateLogTag{"log_tag_style", kLOG_TAGS};
+static constinit OneOf gValidateLogTag{"log.tag_style", kLOG_TAGS};
 static constinit OneOf gValidateProcessingPolicy{"server.processing_policy", kPROCESSING_POLICY};
 
 static constinit PositiveDouble gValidatePositiveDouble{};
