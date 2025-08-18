@@ -74,7 +74,7 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         uses: kuznetsss/workspace-cleanup@80b9863b45562c148927c3d53621ef354e5ae7ce # v1.0
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           # We need to fetch tags to have correct version in the release
