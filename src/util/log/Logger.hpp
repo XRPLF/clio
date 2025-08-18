@@ -242,7 +242,7 @@ private:
 class LogService {
     struct Data {
         bool isAsync;
-        Severity severity;
+        Severity defaultSeverity;
         std::vector<std::shared_ptr<spdlog::sinks::sink>> allSinks;
     };
 
@@ -252,7 +252,7 @@ private:
     static Data data;
 
     static std::shared_ptr<spdlog::logger>
-    registerLogger(std::string const& channel, Severity severity = data.severity);
+    registerLogger(std::string const& channel, Severity severity = data.defaultSeverity);
 
 public:
     LogService() = delete;

@@ -40,7 +40,7 @@ struct MockSession : public web::SubscriptionContextInterface {
     MOCK_METHOD(uint32_t, apiSubversion, (), (const, override));
 
     util::TagDecoratorFactory tagDecoratorFactory{util::config::ClioConfigDefinition{
-        {"log_tag_style", util::config::ConfigValue{util::config::ConfigType::String}.defaultValue("none")}
+        {"log.tag_style", util::config::ConfigValue{util::config::ConfigType::String}.defaultValue("none")}
     }};
 
     MockSession() : web::SubscriptionContextInterface(tagDecoratorFactory)

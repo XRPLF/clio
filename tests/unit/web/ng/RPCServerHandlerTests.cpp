@@ -65,7 +65,7 @@ namespace http = boost::beast::http;
 
 struct NgRpcServerHandlerTest : util::prometheus::WithPrometheus, MockBackendTestStrict, SyncAsioContextTest {
     ClioConfigDefinition config{ClioConfigDefinition{
-        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
         {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(1)},
         {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(2)},
         {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(1)}

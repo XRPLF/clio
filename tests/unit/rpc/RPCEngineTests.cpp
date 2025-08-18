@@ -80,7 +80,7 @@ generateDefaultRPCEngineConfig()
         {"workers", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint16)},
         {"rpc.cache_timeout",
          ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(gValidatePositiveDouble)},
-        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
         {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}.optional()}},
         {"dos_guard.max_fetches",
          ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(gValidateUint32)},

@@ -415,7 +415,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The value must be one of the following: `sync`, `async`, `none`.
 - **Description**: The strategy used for Cache loading.
 
-### log_channels.[].channel
+### log.channels.[].channel
 
 - **Required**: False
 - **Type**: string
@@ -423,7 +423,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The value must be one of the following: `General`, `WebServer`, `Backend`, `RPC`, `ETL`, `Subscriptions`, `Performance`, `Migration`.
 - **Description**: The name of the log channel.
 
-### log_channels.[].log_level
+### log.channels.[].level
 
 - **Required**: False
 - **Type**: string
@@ -431,7 +431,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The value must be one of the following: `trace`, `debug`, `info`, `warning`, `error`, `fatal`.
 - **Description**: The log level for the specific log channel.
 
-### log_level
+### log.level
 
 - **Required**: True
 - **Type**: string
@@ -439,7 +439,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The value must be one of the following: `trace`, `debug`, `info`, `warning`, `error`, `fatal`.
 - **Description**: The general logging level of Clio. This level is applied to all log channels that do not have an explicitly defined logging level.
 
-### spdlog_format
+### log.format
 
 - **Required**: True
 - **Type**: string
@@ -447,7 +447,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: None
 - **Description**: The format string for log messages using spdlog format patterns. Documentation can be found at: <https://github.com/gabime/spdlog/wiki/Custom-formatting>.
 
-### spdlog_async
+### log.is_async
 
 - **Required**: True
 - **Type**: boolean
@@ -455,7 +455,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: None
 - **Description**: Whether spdlog is asynchronous or not.
 
-### log_to_console
+### log.enable_console
 
 - **Required**: True
 - **Type**: boolean
@@ -463,7 +463,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: None
 - **Description**: Enables or disables logging to the console.
 
-### log_directory
+### log.directory
 
 - **Required**: False
 - **Type**: string
@@ -471,7 +471,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: None
 - **Description**: The directory path for the log files.
 
-### log_rotation_size
+### log.rotation_size
 
 - **Required**: True
 - **Type**: int
@@ -479,7 +479,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The log rotation size in megabytes. When the log file reaches this particular size, a new log file starts.
 
-### log_directory_max_files
+### log.directory_max_files
 
 - **Required**: True
 - **Type**: int
@@ -487,7 +487,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The maximum number of log files in the directory.
 
-### log_tag_style
+### log.tag_style
 
 - **Required**: True
 - **Type**: string

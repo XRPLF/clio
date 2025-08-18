@@ -182,17 +182,17 @@ TEST_F(ConstraintTest, OneOfConstraintOneValue)
 TEST_F(ConstraintTest, OneOfConstraint)
 {
     std::array<char const*, 3> const arr = {"123", "trace", "haha"};
-    auto const oneOfCons{OneOf{"log_level", arr}};
+    auto const oneOfCons{OneOf{"log.level", arr}};
 
     EXPECT_FALSE(oneOfCons.checkConstraint("trace").has_value());
 
     EXPECT_TRUE(oneOfCons.checkConstraint(345).has_value());
-    EXPECT_EQ(oneOfCons.checkConstraint(345)->error, R"(Key "log_level"'s value must be a string)");
+    EXPECT_EQ(oneOfCons.checkConstraint(345)->error, R"(Key "log.level"'s value must be a string)");
 
     EXPECT_TRUE(oneOfCons.checkConstraint("PETER_WAS_HERE").has_value());
     EXPECT_EQ(
         oneOfCons.checkConstraint("PETER_WAS_HERE")->error,
-        R"(You provided value "PETER_WAS_HERE". Key "log_level"'s value must be one of the following: 123, trace, haha)"
+        R"(You provided value "PETER_WAS_HERE". Key "log.level"'s value must be one of the following: 123, trace, haha)"
     );
 }
 

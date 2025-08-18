@@ -351,26 +351,26 @@ getClioConfig()
          {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(gValidateUint16)},
          {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(gValidateLoadMode)},
 
-         {"log_channels.[].channel",
+         {"log.channels.[].channel",
           Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateChannelName)}},
-         {"log_channels.[].log_level",
+         {"log.channels.[].level",
           Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateLogLevelName)}},
 
-         {"log_level", ConfigValue{ConfigType::String}.defaultValue("info").withConstraint(gValidateLogLevelName)},
+         {"log.level", ConfigValue{ConfigType::String}.defaultValue("info").withConstraint(gValidateLogLevelName)},
 
-         {"spdlog_format", ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
+         {"log.format", ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
 
-         {"spdlog_async", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+         {"log.is_async", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
 
-         {"log_to_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+         {"log.enable_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
-         {"log_directory", ConfigValue{ConfigType::String}.optional()},
+         {"log.directory", ConfigValue{ConfigType::String}.optional()},
 
-         {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateUint32)},
+         {"log.rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateUint32)},
 
-         {"log_directory_max_files", ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(gValidateUint32)},
+         {"log.directory_max_files", ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(gValidateUint32)},
 
-         {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none").withConstraint(gValidateLogTag)},
+         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("none").withConstraint(gValidateLogTag)},
 
          {"extractor_threads", ConfigValue{ConfigType::Integer}.defaultValue(1u).withConstraint(gValidateUint32)},
 
