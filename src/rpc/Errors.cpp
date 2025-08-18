@@ -42,10 +42,32 @@ namespace rpc {
 std::ostream&
 operator<<(std::ostream& stream, Status const& status)
 {
-    if (!status.message.empty())
-        stream << status.message;
-    else if (auto const clioCode = std::get_if<ClioError>(&status.code))
-        stream << std::string{getErrorInfo(*clioCode).message};
+    std::visit(
+        util::OverloadSet{
+            [&stream, &status](RippledError err) {
+                stream << "Code: " << static_cast<std::underlying_type_t<RippledError>>(err);
+                if (!status.error.empty())
+                    stream << ", Error: " << status.error;
+                if (!status.message.empty())
+                    stream << ", Message: " << status.message;
+                else
+                    stream << ", Message: " << ripple::RPC::get_error_info(err).message;
+            },
+            [&stream, &status](ClioError err) {
+                stream << "Code: " << static_cast<std::underlying_type_t<ClioError>>(err);
+                if (!status.error.empty())
+                    stream << ", Error: " << status.error;
+                if (!status.message.empty())
+                    stream << ", Message: " << status.message;
+                else
+                    stream << ", Message: " << std::string{getErrorInfo(err).message};
+            }
+        },
+        status.code
+    );
+
+    if (status.extraInfo)
+        stream << ", Extra Info: " << status.extraInfo.value();
 
     return stream;
 }
