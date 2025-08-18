@@ -48,7 +48,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - name: Calculate conan matrix
         id: set-matrix
@@ -70,7 +70,7 @@ jobs:
       CONAN_PROFILE: ${{ matrix.compiler }}${{ matrix.sanitizer_ext }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - name: Prepare runner
         uses: ./.github/actions/prepare_runner

@@ -20,7 +20,7 @@ jobs:
       image: ghcr.io/xrplf/clio-ci:0d262e74bcd286ccd6fc36e45990ff2e6b8d8430
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -85,7 +85,7 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - name: Create an issue
         uses: ./.github/actions/create_issue

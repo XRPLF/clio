@@ -128,7 +128,7 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - name: Create an issue
         uses: ./.github/actions/create_issue
