@@ -67,7 +67,7 @@ namespace websocket = boost::beast::websocket;
 struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
     ConnectionHandlerTest(ProcessingPolicy policy, std::optional<size_t> maxParallelConnections)
         : tagFactory{util::config::ClioConfigDefinition{
-              {"log_tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
+              {"log.tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
           }}
         , connectionHandler{policy, maxParallelConnections, tagFactory, std::nullopt, onDisconnectMock.AsStdFunction()}
     {
@@ -103,7 +103,7 @@ struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
     ConnectionHandler connectionHandler;
 
     util::TagDecoratorFactory tagDecoratorFactory{config::ClioConfigDefinition{
-        {"log_tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
+        {"log.tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
     }};
     StrictMockHttpConnectionPtr mockHttpConnection =
         std::make_unique<StrictMockHttpConnection>("1.2.3.4", beast::flat_buffer{}, tagDecoratorFactory);
