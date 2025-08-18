@@ -38,6 +38,8 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests \
         clang-tidy-${LLVM_TOOLS_VERSION} \
         clang-tools-${LLVM_TOOLS_VERSION} \
+        dpkg-dev \
+        file \
         git \
         git-lfs \
         graphviz \

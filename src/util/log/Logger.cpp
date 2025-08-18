@@ -116,7 +116,7 @@ getSeverityLevel(std::string_view logLevel)
         return Severity::FTL;
 
     // already checked during parsing of config that value must be valid
-    ASSERT(false, "Parsing of log_level is incorrect");
+    ASSERT(false, "Parsing of log level is incorrect");
     std::unreachable();
 }
 
@@ -181,7 +181,7 @@ getMinSeverity(config::ClioConfigDefinition const& config, Severity defaultSever
     for (auto const& channel : Logger::kCHANNELS)
         minSeverity[channel] = defaultSeverity;
 
-    auto const overrides = config.getArray("log_channels");
+    auto const overrides = config.getArray("log.channels");
 
     for (auto it = overrides.begin<util::config::ObjectView>(); it != overrides.end<util::config::ObjectView>(); ++it) {
         auto const& channelConfig = *it;
@@ -190,7 +190,7 @@ getMinSeverity(config::ClioConfigDefinition const& config, Severity defaultSever
             return std::unexpected{fmt::format("Can't override settings for log channel {}: invalid channel", name)};
         }
 
-        minSeverity[name] = getSeverityLevel(channelConfig.get<std::string>("log_level"));
+        minSeverity[name] = getSeverityLevel(channelConfig.get<std::string>("level"));
     }
 
     return minSeverity;
@@ -226,15 +226,16 @@ LogService::init(config::ClioConfigDefinition const& config)
     // Drop existing loggers
     spdlog::drop_all();
 
-    data.isAsync = config.get<bool>("spdlog_async");
+    data.isAsync = config.get<bool>("log.is_async");
+    data.defaultSeverity = getSeverityLevel(config.get<std::string>("log.level"));
 
     if (data.isAsync) {
         spdlog::init_thread_pool(8192, 1);
     }
 
-    data.allSinks = createConsoleSinks(config.get<bool>("log_to_console"));
+    data.allSinks = createConsoleSinks(config.get<bool>("log.enable_console"));
 
-    if (auto const logDir = config.maybeValue<std::string>("log_directory"); logDir.has_value()) {
+    if (auto const logDir = config.maybeValue<std::string>("log.directory"); logDir.has_value()) {
         std::filesystem::path const dirPath{logDir.value()};
         if (not std::filesystem::exists(dirPath)) {
             if (std::error_code error; not std::filesystem::create_directories(dirPath, error)) {
@@ -246,15 +247,14 @@ LogService::init(config::ClioConfigDefinition const& config)
 
         FileLoggingParams const params{
             .logDir = logDir.value(),
-            .rotationSizeMB = config.get<uint32_t>("log_rotation_size"),
-            .dirMaxFiles = config.get<uint32_t>("log_directory_max_files"),
+            .rotationSizeMB = config.get<uint32_t>("log.rotation_size"),
+            .dirMaxFiles = config.get<uint32_t>("log.directory_max_files"),
         };
         data.allSinks.push_back(createFileSink(params));
     }
 
-    // get default severity, can be overridden per channel using the `log_channels` array
-    auto const defaultSeverity = getSeverityLevel(config.get<std::string>("log_level"));
-    auto const maybeMinSeverity = getMinSeverity(config, defaultSeverity);
+    // get min severity per channel, can be overridden using the `log.channels` array
+    auto const maybeMinSeverity = getMinSeverity(config, data.defaultSeverity);
     if (!maybeMinSeverity) {
         return std::unexpected{maybeMinSeverity.error()};
     }
@@ -263,16 +263,16 @@ LogService::init(config::ClioConfigDefinition const& config)
     // Create loggers for each channel
     for (auto const& channel : Logger::kCHANNELS) {
         auto const it = minSeverity.find(channel);
-        auto const severity = (it != minSeverity.end()) ? it->second : defaultSeverity;
+        auto const severity = (it != minSeverity.end()) ? it->second : data.defaultSeverity;
         registerLogger(channel, severity);
     }
 
     spdlog::set_default_logger(spdlog::get("General"));
 
-    std::string const format = config.get<std::string>("spdlog_format");
+    std::string const format = config.get<std::string>("log.format");
     spdlog::set_pattern(format);
 
-    LOG(LogService::info()) << "Default log level = " << toString(defaultSeverity);
+    LOG(LogService::info()) << "Default log level = " << toString(data.defaultSeverity);
     return {};
 }
 

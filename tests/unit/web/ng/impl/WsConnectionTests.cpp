@@ -85,7 +85,7 @@ struct WebWsConnectionTests : SyncAsioContextTest {
 
 protected:
     util::TagDecoratorFactory tagDecoratorFactory_{config::ClioConfigDefinition{
-        {"log_tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("int")}
+        {"log.tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("int")}
     }};
     TestHttpServer httpServer_{ctx_, "localhost"};
     WebSocketAsyncClient wsClient_{ctx_};
