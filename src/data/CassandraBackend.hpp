@@ -565,7 +565,7 @@ public:
                 }
 
             } else if (settingsProvider_.getSettings().provider == "scylladb") {
-                auto r = schema_->selectNFTsByIssuerScylla->bind(issuer);  // Note: using optional
+                auto r = schema_->selectNFTsByIssuerScylla->bind(issuer);
                 r.bindAt(
                     1,
                     std::make_tuple(
