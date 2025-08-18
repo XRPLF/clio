@@ -328,8 +328,8 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
     ON_CALL(*backend_, doFetchLedgerObject(signersKey, 30, _))
         .WillByDefault(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::DisallowIncoming, _)).WillOnce(Return(false));
-    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _)).WillOnce(Return(false));
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _)).WillOnce(Return(false));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _)).WillOnce(Return(false));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     static auto const kINPUT = json::parse(
@@ -434,8 +434,8 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
     ON_CALL(*backend_, doFetchLedgerObject(signersKey, 30, _))
         .WillByDefault(Return(createSignerLists({{kACCOUNT1, 1}, {kACCOUNT2, 1}}).getSerializer().peekData()));
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::DisallowIncoming, _)).WillOnce(Return(false));
-    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _)).WillOnce(Return(false));
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _)).WillOnce(Return(false));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _)).WillOnce(Return(false));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     static auto const kINPUT = json::parse(
@@ -538,8 +538,8 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
     ON_CALL(*backend_, doFetchLedgerObject(signersKey, 30, _))
         .WillByDefault(Return(createSignerLists({{kACCOUNT1, 1}, {kACCOUNT2, 1}}).getSerializer().peekData()));
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::DisallowIncoming, _)).WillOnce(Return(false));
-    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _)).WillOnce(Return(false));
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _)).WillOnce(Return(false));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _)).WillOnce(Return(false));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     static auto const kINPUT = json::parse(
@@ -615,8 +615,8 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::DisallowIncoming, _)).WillOnce(Return(false));
-    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _)).WillOnce(Return(false));
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _)).WillOnce(Return(false));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _)).WillOnce(Return(false));
     EXPECT_CALL(*backend_, doFetchLedgerObject);
 
     static auto const kINPUT = json::parse(
@@ -647,8 +647,8 @@ TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::DisallowIncoming, _)).WillOnce(Return(false));
-    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _)).WillOnce(Return(false));
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _)).WillOnce(Return(false));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _)).WillOnce(Return(false));
     EXPECT_CALL(*backend_, doFetchLedgerObject);
 
     static auto const kINPUT = json::parse(
@@ -806,8 +806,8 @@ TEST_F(RPCAccountInfoHandlerTest, AmendmentsEnabled)
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::DisallowIncoming, _)).WillOnce(Return(false));
-    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _)).WillOnce(Return(true));
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _)).WillOnce(Return(true));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _)).WillOnce(Return(true));
     EXPECT_CALL(*backend_, doFetchLedgerObject);
 
     static auto const kINPUT = json::parse(
