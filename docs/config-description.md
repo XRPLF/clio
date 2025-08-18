@@ -87,6 +87,14 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: Represents the number of threads that will be used for database operations.
 
+### database.cassandra.provider
+
+- **Required**: True
+- **Type**: string
+- **Default value**: `scylladb`
+- **Constraints**: The value must be one of the following: `scylladb`, `aws_keyspace`.
+- **Description**: The specific database backend provider we are using. Currently we only support scylladb, or aws_keyspace.
+
 ### database.cassandra.core_connections_per_host
 
 - **Required**: True

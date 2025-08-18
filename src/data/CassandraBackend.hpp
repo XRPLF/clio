@@ -225,8 +225,9 @@ public:
     {
         waitForWritesToFinish();
 
+        // only run if require to write in first ledger
         if (!range_) {
-            executor_.writeSync(schema_->updateLedgerRange, ledgerSequence_, false, ledgerSequence_);
+            executor_.writeSync(schema_->insertLedgerRange, false, ledgerSequence_);
         }
 
         if (not executeSyncUpdate(schema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1))) {
@@ -514,43 +515,78 @@ public:
     ) const override
     {
         NFTsAndCursor ret;
+        std::vector<ripple::uint256> nftIDs;
 
-        Statement const idQueryStatement = [&taxon, &issuer, &cursorIn, &limit, this]() {
-            if (taxon.has_value()) {
-                auto r = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
-                r.bindAt(1, *taxon);
-                r.bindAt(2, cursorIn.value_or(ripple::uint256(0)));
-                r.bindAt(3, Limit{limit});
-                return r;
+        // --- A specific taxon is requested ---
+        if (taxon.has_value()) {
+            Statement statement = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
+            statement.bindAt(1, *taxon);
+            statement.bindAt(2, cursorIn.value_or(ripple::uint256(0)));
+            statement.bindAt(3, Limit{limit});
+
+            auto const res = executor_.read(yield, statement);
+            if (res && res.value().hasRows()) {
+                for (auto const [nftID] : extract<ripple::uint256>(res.value()))
+                    nftIDs.push_back(nftID);
             }
+        }
+        // --- No taxon is specified (general pagination) ---
+        else {
+            if (settingsProvider_.getSettings().provider == "aws_keyspace") {
+                // --- Amazon Keyspaces Workflow ---
+                auto const startTaxon =
+                    cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0;
+                auto const startTokenID = cursorIn.value_or(ripple::uint256(0));
 
-            auto r = schema_->selectNFTIDsByIssuer.bind(issuer);
-            r.bindAt(
-                1,
-                std::make_tuple(
-                    cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0,
-                    cursorIn.value_or(ripple::uint256(0))
-                )
-            );
-            r.bindAt(2, Limit{limit});
-            return r;
-        }();
+                //  Execute the first query to try and fill the page from the current taxon.
+                Statement firstQuery = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
+                firstQuery.bindAt(1, startTaxon);
+                firstQuery.bindAt(2, startTokenID);
+                firstQuery.bindAt(3, Limit{limit});
 
-        // Query for all the NFTs issued by the account, potentially filtered by the taxon
-        auto const res = executor_.read(yield, idQueryStatement);
+                auto const firstRes = executor_.read(yield, firstQuery);
+                if (firstRes) {
+                    for (auto const [nftID] : extract<ripple::uint256>(firstRes.value()))
+                        nftIDs.push_back(nftID);
+                }
 
-        auto const& idQueryResults = res.value();
-        if (not idQueryResults.hasRows()) {
+                // If the page is not full, execute the second query to get the rest.
+                if (nftIDs.size() < limit) {
+                    auto const remainingLimit = limit - nftIDs.size();
+                    Statement secondQuery = schema_->selectNFTsAfterTaxonKeyspaces->bind(issuer);
+                    secondQuery.bindAt(1, startTaxon);
+                    secondQuery.bindAt(2, Limit{remainingLimit});
+
+                    auto const secondRes = executor_.read(yield, secondQuery);
+                    if (secondRes) {
+                        for (auto const [nftID] : extract<ripple::uint256>(secondRes.value()))
+                            nftIDs.push_back(nftID);
+                    }
+                }
+
+            } else if (settingsProvider_.getSettings().provider == "scylladb") {
+                auto r = schema_->selectNFTsByIssuerScylla->bind(issuer);  // Note: using optional
+                r.bindAt(
+                    1,
+                    std::make_tuple(
+                        cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0,
+                        cursorIn.value_or(ripple::uint256(0))
+                    )
+                );
+                r.bindAt(2, Limit{limit});
+
+                auto const res = executor_.read(yield, r);
+                if (res && res.value().hasRows()) {
+                    for (auto const [nftID] : extract<ripple::uint256>(res.value()))
+                        nftIDs.push_back(nftID);
+                }
+            }
+        }
+
+        if (nftIDs.empty()) {
             LOG(log_.debug()) << "No rows returned";
             return {};
         }
-
-        std::vector<ripple::uint256> nftIDs;
-        for (auto const [nftID] : extract<ripple::uint256>(idQueryResults))
-            nftIDs.push_back(nftID);
-
-        if (nftIDs.empty())
-            return ret;
 
         if (nftIDs.size() == limit)
             ret.cursor = nftIDs.back();
@@ -803,8 +839,9 @@ public:
         std::optional<ripple::AccountID> lastItem;
 
         while (liveAccounts.size() < number) {
-            Statement const statement = lastItem ? schema_->selectAccountFromToken.bind(*lastItem, Limit{pageSize})
-                                                 : schema_->selectAccountFromBeginning.bind(Limit{pageSize});
+            Statement const statement = lastItem
+                ? schema_->selectAccountFromTokenScylla->bind(*lastItem, Limit{pageSize})
+                : schema_->selectAccountFromBeginningScylla->bind(Limit{pageSize});
 
             auto const res = executor_.read(yield, statement);
             if (res) {

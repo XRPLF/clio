@@ -38,7 +38,7 @@ namespace data::cassandra::impl {
 
 // TODO: Use an appropriate value instead of CASS_BATCH_TYPE_LOGGED for different use cases
 Batch::Batch(std::vector<Statement> const& statements)
-    : ManagedObject{cass_batch_new(CASS_BATCH_TYPE_LOGGED), kBATCH_DELETER}
+    : ManagedObject{cass_batch_new(CASS_BATCH_TYPE_UNLOGGED), kBATCH_DELETER}
 {
     cass_batch_set_is_idempotent(*this, cass_true);
 
