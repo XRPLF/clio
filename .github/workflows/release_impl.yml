@@ -76,7 +76,7 @@ jobs:
         shell: bash
         if: ${{ inputs.generate_changelog }}
         run: |
-          LAST_TAG="$(gh release view --json tagName -q .tagName)"
+          LAST_TAG="$(gh release view --json tagName -q .tagName --repo XRPLF/clio)"
           LAST_TAG_COMMIT="$(git rev-parse $LAST_TAG)"
           BASE_COMMIT="$(git merge-base HEAD $LAST_TAG_COMMIT)"
           git-cliff "${BASE_COMMIT}..HEAD" --ignore-tags "nightly|-b|-rc"

@@ -1299,7 +1299,7 @@ struct RPCHelpersLogDurationTest : LoggerFixture, testing::WithParamInterface<RP
          }}
     };
     util::TagDecoratorFactory tagFactory{util::config::ClioConfigDefinition{
-        {"log_tag_style", util::config::ConfigValue{util::config::ConfigType::String}.defaultValue("none")}
+        {"log.tag_style", util::config::ConfigValue{util::config::ConfigType::String}.defaultValue("none")}
     }};
     struct DummyTaggable : util::Taggable {
         DummyTaggable(util::TagDecoratorFactory& f) : util::Taggable(f)
