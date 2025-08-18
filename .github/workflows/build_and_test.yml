@@ -64,7 +64,7 @@ on:
         default: ""
 
       package:
-        description: Build Linux deb package
+        description: Whether to generate Debian package
         required: false
         type: boolean
         default: true

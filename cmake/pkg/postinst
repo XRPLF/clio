@@ -12,7 +12,7 @@ case "$1" in
     configure)
         if ! id -u "$USER_NAME" >/dev/null 2>&1; then
             adduser --system --quiet \
-                --home /nonexistent --no-create-home \
+                --no-create-home \
                 --disabled-password \
                 --group "$GROUP_NAME"
         fi

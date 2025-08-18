@@ -38,7 +38,7 @@ inputs:
     required: true
     default: "false"
   package:
-    description: Whether to generate Linux binary packages
+    description: Whether to generate Debian package
     required: true
     default: "false"
 

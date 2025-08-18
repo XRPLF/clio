@@ -60,7 +60,7 @@ on:
         default: ""
 
       package:
-        description: Build Linux deb package
+        description: Whether to generate Debian package
         required: false
         type: boolean
 
@@ -164,14 +164,14 @@ jobs:
           path: build/clio_server
 
       - name: Upload clio_tests
-        if: ${{ !inputs.code_coverage && !inputs.analyze_build_time }}
+        if: ${{ !inputs.code_coverage && !inputs.analyze_build_time && !inputs.package }}
         uses: actions/upload-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_tests
 
       - name: Upload clio_integration_tests
-        if: ${{ !inputs.code_coverage && !inputs.analyze_build_time }}
+        if: ${{ !inputs.code_coverage && !inputs.analyze_build_time && !inputs.package }}
         uses: actions/upload-artifact@v4
         with:
           name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
@@ -181,7 +181,7 @@ jobs:
         if: inputs.package
         uses: actions/upload-artifact@v4
         with:
-          name: Clio_debian_package
+          name: clio_deb_package_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/*.deb
 
       - name: Save cache
