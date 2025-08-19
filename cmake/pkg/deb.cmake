@@ -8,4 +8,5 @@ set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA ${CMAKE_SOURCE_DIR}/cmake/pkg/postinst)
 
-string(REPLACE "-" "~" CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}")
+# We must replace "-" with "~" otherwise dpkg will sort "X.Y.Z-b1" as greater than "X.Y.Z"
+string(REPLACE "-" "~" git "${CPACK_PACKAGE_VERSION}")

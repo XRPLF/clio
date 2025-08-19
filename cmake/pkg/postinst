@@ -20,7 +20,8 @@ case "$1" in
                     --user-group \
                     ${USER_NAME}
         fi
-
+    # Users who should not have a home directory should have their home directory set to /nonexistent
+    # https://www.debian.org/doc/debian-policy/ch-opersys.html#non-existent-home-directories
         install -d -o "$USER_NAME" -g "$GROUP_NAME" /var/log/clio
 
         if [ -f "$CLIO_CONFIG" ]; then
