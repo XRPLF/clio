@@ -43,7 +43,6 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 namespace rpc {
@@ -60,7 +59,8 @@ public:
      */
     struct Stats {
         ripple::STAmount avg{};  // NOLINT(readability-redundant-member-init)
-        ripple::Number sd{};     // NOLINT(readability-redundant-member-init). standard deviation
+        // standard deviation
+        ripple::Number sd{};  // NOLINT(readability-redundant-member-init)
         uint32_t size{0};
     };
 

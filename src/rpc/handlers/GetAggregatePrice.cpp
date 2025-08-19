@@ -126,8 +126,10 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input const& input, 
 
     Output out{
         .time = latestTime,
+        .trimStats = std::nullopt,
         .ledgerHash = ripple::to_string(lgrInfo.hash),
         .ledgerIndex = lgrInfo.seq,
+        .median = ""
     };
 
     if (input.timeThreshold) {

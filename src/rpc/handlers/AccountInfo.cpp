@@ -91,6 +91,17 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
     auto const isClawbackEnabled = isEnabled(Amendments::Clawback);
     auto const isTokenEscrowEnabled = isEnabled(Amendments::TokenEscrow);
 
+    Output out{
+        .ledgerIndex = lgrInfo.seq,
+        .ledgerHash = ripple::strHex(lgrInfo.hash),
+        .accountData = sle,
+        .isDisallowIncomingEnabled = isDisallowIncomingEnabled,
+        .isClawbackEnabled = isClawbackEnabled,
+        .isTokenEscrowEnabled = isTokenEscrowEnabled,
+        .apiVersion = ctx.apiVersion,
+        .signerLists = std::nullopt
+    };
+
     // Return SignerList(s) if that is requested.
     if (input.signerLists) {
         // We put the SignerList in an array because of an anticipated
@@ -110,31 +121,11 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
             if (!signersKey.check(sleSigners))
                 return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
 
-            signerList.push_back(sleSigners);
+            out.signerLists = std::vector<ripple::STLedgerEntry>{sleSigners};
         }
-
-        return Output{
-            .ledgerIndex = lgrInfo.seq,
-            .ledgerHash = ripple::strHex(lgrInfo.hash),
-            .accountData = sle,
-            .isDisallowIncomingEnabled = isDisallowIncomingEnabled,
-            .isClawbackEnabled = isClawbackEnabled,
-            .isTokenEscrowEnabled = isTokenEscrowEnabled,
-            .apiVersion = ctx.apiVersion,
-            .signerLists = signerList
-        };
     }
 
-    return Output{
-        .ledgerIndex = lgrInfo.seq,
-        .ledgerHash = ripple::strHex(lgrInfo.hash),
-        .accountData = sle,
-        .isDisallowIncomingEnabled = isDisallowIncomingEnabled,
-        .isClawbackEnabled = isClawbackEnabled,
-        .isTokenEscrowEnabled = isTokenEscrowEnabled,
-        .apiVersion = ctx.apiVersion,
-        .signerLists = std::nullopt
-    };
+    return out;
 }
 
 void
