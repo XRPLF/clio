@@ -103,6 +103,7 @@ protected:
           ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
          {"database.cassandra.keyspace",
           ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendKeyspace)},
+         {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue("scylladb")},
          {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
          {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
          {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.defaultValue(2)},
