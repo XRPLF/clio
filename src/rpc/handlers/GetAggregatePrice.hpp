@@ -59,8 +59,8 @@ public:
      * @brief A struct to hold the statistics
      */
     struct Stats {
-        ripple::STAmount avg;
-        ripple::Number sd;  // standard deviation
+        ripple::STAmount avg{};  // NOLINT(readability-redundant-member-init)
+        ripple::Number sd{};     // NOLINT(readability-redundant-member-init). standard deviation
         uint32_t size{0};
     };
 
@@ -69,23 +69,12 @@ public:
      */
     struct Output {
         uint32_t time;
-        Stats extireStats;
+        Stats extireStats{};
         std::optional<Stats> trimStats;
         std::string ledgerHash;
         uint32_t ledgerIndex;
         std::string median;
         bool validated = true;
-
-        /**
-         * @brief Construct a new Output object
-         * @param time The time of the latest oracle data
-         * @param ledgerHash The hash of the ledger
-         * @param ledgerIndex The index of the ledger
-         */
-        Output(uint32_t time, std::string ledgerHash, uint32_t ledgerIndex)
-            : time(time), ledgerHash(std::move(ledgerHash)), ledgerIndex(ledgerIndex)
-        {
-        }
     };
 
     /**
