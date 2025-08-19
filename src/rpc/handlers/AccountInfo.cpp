@@ -88,6 +88,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
 
     auto const isDisallowIncomingEnabled = isEnabled(Amendments::DisallowIncoming);
     auto const isClawbackEnabled = isEnabled(Amendments::Clawback);
+    auto const isTokenEscrowEnabled = isEnabled(Amendments::TokenEscrow);
 
     // Return SignerList(s) if that is requested.
     if (input.signerLists) {
@@ -117,13 +118,20 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
             sle,
             isDisallowIncomingEnabled,
             isClawbackEnabled,
+            isTokenEscrowEnabled,
             ctx.apiVersion,
             signerList
         );
     }
 
     return Output(
-        lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, isDisallowIncomingEnabled, isClawbackEnabled, ctx.apiVersion
+        lgrInfo.seq,
+        ripple::strHex(lgrInfo.hash),
+        sle,
+        isDisallowIncomingEnabled,
+        isClawbackEnabled,
+        isTokenEscrowEnabled,
+        ctx.apiVersion
     );
 }
 
@@ -159,9 +167,11 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
         lsFlags.insert(lsFlags.end(), disallowIncomingFlags.begin(), disallowIncomingFlags.end());
     }
 
-    if (output.isClawbackEnabled) {
+    if (output.isClawbackEnabled)
         lsFlags.emplace_back("allowTrustLineClawback", ripple::lsfAllowTrustLineClawback);
-    }
+
+    if (output.isTokenEscrowEnabled)
+        lsFlags.emplace_back("allowTrustLineLocking", ripple::lsfAllowTrustLineLocking);
 
     boost::json::object acctFlags;
     for (auto const& lsf : lsFlags)
