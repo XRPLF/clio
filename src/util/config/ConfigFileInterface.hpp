@@ -22,6 +22,7 @@
 #include "util/config/Types.hpp"
 
 #include <optional>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -63,6 +64,14 @@ public:
      */
     virtual bool
     containsKey(std::string_view key) const = 0;
+
+    /**
+     * @brief Retrieves all keys in the configuration file.
+     *
+     * @return A vector of all keys in the configuration file.
+     */
+    virtual std::vector<std::string>
+    getAllKeys() const = 0;
 };
 
 }  // namespace util::config

@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -486,6 +487,31 @@ TEST_F(ConfigFileJsonTest, containsKey)
     EXPECT_TRUE(jsonFileObj.containsKey("array_of_objects.[].string"));
     EXPECT_FALSE(jsonFileObj.containsKey("array_of_objects.[]"));
     EXPECT_FALSE(jsonFileObj.containsKey("array_of_objects.[].object"));
+}
+
+TEST_F(ConfigFileJsonTest, getAllKeys)
+{
+    auto const jsonStr = R"JSON({
+        "int": 42,
+        "object": { "string": "some string", "array": [1, 2, 3] },
+        "array2": [1, 2, 3],
+        "array_of_objects": [ {"int": 42}, {"string": "some string"} ]
+    })JSON";
+    auto const jsonFileObj = ConfigFileJson{boost::json::parse(jsonStr).as_object()};
+
+    auto allKeys = jsonFileObj.getAllKeys();
+    std::ranges::sort(allKeys);
+    EXPECT_EQ(allKeys.size(), 6);
+
+    std::vector<std::string> const expectedKeys{
+        {"array2.[]",
+         "array_of_objects.[].int",
+         "array_of_objects.[].string",
+         "int",
+         "object.array.[]",
+         "object.string"}
+    };
+    EXPECT_EQ(allKeys, expectedKeys);
 }
 
 struct ConfigFileJsonMakeTest : ConfigFileJsonTest {};
