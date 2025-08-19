@@ -342,11 +342,6 @@ TEST_F(ClioConfigDefinitionParseArrayTest, emptyArray)
                                 .as_object();
 
     auto const result = config.parse(ConfigFileJson{configJson});
-    if (result.has_value()) {
-        for (auto const& error : result.value()) {
-            std::cerr << error.error << std::endl;
-        }
-    }
     EXPECT_FALSE(result.has_value());
 }
 
