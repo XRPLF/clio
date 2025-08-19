@@ -66,39 +66,6 @@ public:
         std::optional<std::vector<ripple::STLedgerEntry>> signerLists;
         // validated should be sent via framework
         bool validated = true;
-
-        /**
-         * @brief Construct a new Output object
-         *
-         * @param ledgerId The ledger index
-         * @param ledgerHash The ledger hash
-         * @param sle The account data
-         * @param isDisallowIncomingEnabled Whether disallow incoming is enabled
-         * @param isClawbackEnabled Whether clawback is enabled
-         * @param isTokenEscrowEnabled Whether token escrow is enabled
-         * @param version The API version
-         * @param signerLists The signer lists
-         */
-        Output(
-            uint32_t ledgerId,
-            std::string ledgerHash,
-            ripple::STLedgerEntry sle,
-            bool isDisallowIncomingEnabled,
-            bool isClawbackEnabled,
-            bool isTokenEscrowEnabled,
-            uint32_t version,
-            std::optional<std::vector<ripple::STLedgerEntry>> signerLists = std::nullopt
-        )
-            : ledgerIndex(ledgerId)
-            , ledgerHash(std::move(ledgerHash))
-            , accountData(std::move(sle))
-            , isDisallowIncomingEnabled(isDisallowIncomingEnabled)
-            , isClawbackEnabled(isClawbackEnabled)
-            , isTokenEscrowEnabled(isTokenEscrowEnabled)
-            , apiVersion(version)
-            , signerLists(std::move(signerLists))
-        {
-        }
     };
 
     /**

@@ -43,6 +43,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -112,27 +113,28 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
             signerList.push_back(sleSigners);
         }
 
-        return Output(
-            lgrInfo.seq,
-            ripple::strHex(lgrInfo.hash),
-            sle,
-            isDisallowIncomingEnabled,
-            isClawbackEnabled,
-            isTokenEscrowEnabled,
-            ctx.apiVersion,
-            signerList
-        );
+        return Output{
+            .ledgerIndex = lgrInfo.seq,
+            .ledgerHash = ripple::strHex(lgrInfo.hash),
+            .accountData = sle,
+            .isDisallowIncomingEnabled = isDisallowIncomingEnabled,
+            .isClawbackEnabled = isClawbackEnabled,
+            .isTokenEscrowEnabled = isTokenEscrowEnabled,
+            .apiVersion = ctx.apiVersion,
+            .signerLists = signerList
+        };
     }
 
-    return Output(
-        lgrInfo.seq,
-        ripple::strHex(lgrInfo.hash),
-        sle,
-        isDisallowIncomingEnabled,
-        isClawbackEnabled,
-        isTokenEscrowEnabled,
-        ctx.apiVersion
-    );
+    return Output{
+        .ledgerIndex = lgrInfo.seq,
+        .ledgerHash = ripple::strHex(lgrInfo.hash),
+        .accountData = sle,
+        .isDisallowIncomingEnabled = isDisallowIncomingEnabled,
+        .isClawbackEnabled = isClawbackEnabled,
+        .isTokenEscrowEnabled = isTokenEscrowEnabled,
+        .apiVersion = ctx.apiVersion,
+        .signerLists = std::nullopt
+    };
 }
 
 void
