@@ -87,7 +87,7 @@ static constexpr std::array<char const*, 2> kPROCESSING_POLICY = {"parallel", "s
 /**
  * @brief specific values that are accepted for database provider in config.
  */
-static constexpr std::array<char const*, 2> kPROVIDER = {"scylladb", "aws_keyspace"};
+static constexpr std::array<char const*, 2> kPROVIDER = {"cassandra", "aws_keyspace"};
 
 /**
  * @brief An interface to enforce constraints on certain values within ClioConfigDefinition.

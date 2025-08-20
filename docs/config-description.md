@@ -91,9 +91,9 @@ This document provides a list of all available Clio configuration properties in 
 
 - **Required**: True
 - **Type**: string
-- **Default value**: `scylladb`
-- **Constraints**: The value must be one of the following: `scylladb`, `aws_keyspace`.
-- **Description**: The specific database backend provider we are using. Currently we only support scylladb, or aws_keyspace.
+- **Default value**: `cassandra`
+- **Constraints**: The value must be one of the following: `cassandra`, `aws_keyspace`.
+- **Description**: The specific database backend provider we are using. Currently we only support cassandra, or aws_keyspace.
 
 ### database.cassandra.core_connections_per_host
 

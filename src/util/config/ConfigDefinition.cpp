@@ -280,7 +280,7 @@ getClioConfig()
          {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
          {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
          {"database.cassandra.provider",
-          ConfigValue{ConfigType::String}.defaultValue("scylladb").withConstraint(gValidateProvider)},
+          ConfigValue{ConfigType::String}.defaultValue("cassandra").withConstraint(gValidateProvider)},
 
          {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
          {"__ng_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
