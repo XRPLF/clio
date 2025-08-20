@@ -111,7 +111,6 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
         auto const signers = sharedPtrBackend_->fetchLedgerObject(signersKey.key, lgrInfo.seq, ctx.yield);
-        std::vector<ripple::STLedgerEntry> signerList;
 
         if (signers) {
             ripple::STLedgerEntry const sleSigners{
