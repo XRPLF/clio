@@ -14,13 +14,14 @@ case "$1" in
         if ! id -u "$USER_NAME" >/dev/null 2>&1; then
             # Users who should not have a home directory should have their home directory set to /nonexistent
             # https://www.debian.org/doc/debian-policy/ch-opersys.html#non-existent-home-directories
-            useradd --system \
-                    --home-dir /nonexistent \
-                    --no-create-home \
-                    --shell /usr/sbin/nologin \
-                    --comment "system user for ${CLIO_EXECUTABLE}" \
-                    --user-group \
-                    ${USER_NAME}
+            useradd \
+                --system \
+                --home-dir /nonexistent \
+                --no-create-home \
+                --shell /usr/sbin/nologin \
+                --comment "system user for ${CLIO_EXECUTABLE}" \
+                --user-group \
+                ${USER_NAME}
         fi
 
         install -d -o "$USER_NAME" -g "$GROUP_NAME" /var/log/clio
