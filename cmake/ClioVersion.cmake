@@ -34,10 +34,6 @@ else ()
     OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ERROR_IS_FATAL ANY
   )
 
-  if (BRANCH STREQUAL "")
-    set(BRANCH "dev")
-  endif ()
-
   set(CLIO_VERSION "${DATE}-${BRANCH}-${REV}")
   set(DOC_CLIO_VERSION "develop")
 endif ()
