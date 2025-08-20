@@ -56,12 +56,22 @@ CliArgs::parse(int argc, char const* argv[])
     po::positional_options_description positional;
     positional.add("conf", 1);
 
+    auto const printHelp = [&description]() {
+        std::cout << "Clio server " << util::build::getClioFullVersionString() << "\n\n" << description;
+    };
+
     po::variables_map parsed;
-    po::store(po::command_line_parser(argc, argv).options(description).positional(positional).run(), parsed);
-    po::notify(parsed);
+    try {
+        po::store(po::command_line_parser(argc, argv).options(description).positional(positional).run(), parsed);
+        po::notify(parsed);
+    } catch (po::error const& e) {
+        std::cerr << "Error: " << e.what() << std::endl << std::endl;
+        printHelp();
+        return Action{Action::Exit{EXIT_FAILURE}};
+    }
 
     if (parsed.contains("help")) {
-        std::cout << "Clio server " << util::build::getClioFullVersionString() << "\n\n" << description;
+        printHelp();
         return Action{Action::Exit{EXIT_SUCCESS}};
     }
 

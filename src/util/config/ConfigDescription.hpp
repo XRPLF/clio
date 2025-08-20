@@ -263,9 +263,23 @@ private:
         KV{.key = "log.level",
            .value = "The general logging level of Clio. This level is applied to all log channels that do not have an "
                     "explicitly defined logging level."},
-        KV{.key = "log.format",
-           .value = "The format string for log messages using spdlog format patterns. Documentation can be found at: "
-                    "<https://github.com/gabime/spdlog/wiki/Custom-formatting>."},
+        KV{.key = "log.format", .value = R"(The format string for log messages using spdlog format patterns.
+
+Each of the variables expands like so:
+
+- `%Y-%m-%d %H:%M:%S.%f`: The full date and time of the log entry with microsecond precision
+- `%^`: Start color range
+- `%3!l`: The severity (aka log level) the entry was sent at stripped to 3 characters
+- `%n`: The logger name (channel) that this log entry was sent to
+- `%$`: End color range
+- `%v`: The actual log message
+
+Some additional variables that might be useful:
+
+- `%@`: A partial path to the C++ file and the line number in the said file (`src/file/path:linenumber`)
+- `%t`: The ID of the thread the log entry is written from
+
+Documentation can be found at: <https://github.com/gabime/spdlog/wiki/Custom-formatting>.)"},
         KV{.key = "log.is_async", .value = "Whether spdlog is asynchronous or not."},
         KV{.key = "log.enable_console", .value = "Enables or disables logging to the console."},
         KV{.key = "log.directory", .value = "The directory path for the log files."},

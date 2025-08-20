@@ -142,6 +142,16 @@ ConfigFileJson::containsKey(std::string_view key) const
     return jsonObject_.contains(key);
 }
 
+std::vector<std::string>
+ConfigFileJson::getAllKeys() const
+{
+    std::vector<std::string> keys;
+    for (auto const& [key, value] : jsonObject_) {
+        keys.push_back(key);
+    }
+    return keys;
+}
+
 boost::json::object const&
 ConfigFileJson::inner() const
 {
