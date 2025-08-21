@@ -79,7 +79,7 @@ main(int argc, char const* argv[])
 {
     util::setTerminationHandler();
 
-    util::ScopeGuard const loggerShutdownGuard{[]() { util::LogService::shutdown(); }};
+    util::ScopeGuard const loggerShutdownGuard{[] { util::LogService::shutdown(); }};
 
     try {
         runApp(argc, argv);
