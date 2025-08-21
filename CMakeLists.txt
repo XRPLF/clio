@@ -94,8 +94,8 @@ if (docs)
 endif ()
 
 include(install/install)
-if (packaging)
-  include(cmake/packaging.cmake) # This file exists only in build runner
+if (package)
+  include(ClioPackage)
 endif ()
 
 if (snapshot)

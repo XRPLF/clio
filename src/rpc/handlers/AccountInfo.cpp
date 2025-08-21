@@ -43,6 +43,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -90,6 +91,17 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
     auto const isClawbackEnabled = isEnabled(Amendments::Clawback);
     auto const isTokenEscrowEnabled = isEnabled(Amendments::TokenEscrow);
 
+    Output out{
+        .ledgerIndex = lgrInfo.seq,
+        .ledgerHash = ripple::strHex(lgrInfo.hash),
+        .accountData = sle,
+        .isDisallowIncomingEnabled = isDisallowIncomingEnabled,
+        .isClawbackEnabled = isClawbackEnabled,
+        .isTokenEscrowEnabled = isTokenEscrowEnabled,
+        .apiVersion = ctx.apiVersion,
+        .signerLists = std::nullopt
+    };
+
     // Return SignerList(s) if that is requested.
     if (input.signerLists) {
         // We put the SignerList in an array because of an anticipated
@@ -99,7 +111,6 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
         auto const signers = sharedPtrBackend_->fetchLedgerObject(signersKey.key, lgrInfo.seq, ctx.yield);
-        std::vector<ripple::STLedgerEntry> signerList;
 
         if (signers) {
             ripple::STLedgerEntry const sleSigners{
@@ -109,30 +120,11 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
             if (!signersKey.check(sleSigners))
                 return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
 
-            signerList.push_back(sleSigners);
+            out.signerLists = std::vector<ripple::STLedgerEntry>{sleSigners};
         }
-
-        return Output(
-            lgrInfo.seq,
-            ripple::strHex(lgrInfo.hash),
-            sle,
-            isDisallowIncomingEnabled,
-            isClawbackEnabled,
-            isTokenEscrowEnabled,
-            ctx.apiVersion,
-            signerList
-        );
     }
 
-    return Output(
-        lgrInfo.seq,
-        ripple::strHex(lgrInfo.hash),
-        sle,
-        isDisallowIncomingEnabled,
-        isClawbackEnabled,
-        isTokenEscrowEnabled,
-        ctx.apiVersion
-    );
+    return out;
 }
 
 void

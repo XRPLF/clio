@@ -59,6 +59,11 @@ on:
         type: string
         default: ""
 
+      package:
+        description: Whether to generate Debian package
+        required: false
+        type: boolean
+
     secrets:
       CODECOV_TOKEN:
         required: false
@@ -111,6 +116,7 @@ jobs:
           static: ${{ inputs.static }}
           time_trace: ${{ inputs.analyze_build_time }}
           use_mold: ${{ runner.os != 'macOS' }}
+          package: ${{ inputs.package }}
 
       - name: Build Clio
         uses: ./.github/actions/build_clio
@@ -158,18 +164,25 @@ jobs:
           path: build/clio_server
 
       - name: Upload clio_tests
-        if: ${{ !inputs.code_coverage && !inputs.analyze_build_time }}
+        if: ${{ !inputs.code_coverage && !inputs.analyze_build_time && !inputs.package }}
         uses: actions/upload-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_tests
 
       - name: Upload clio_integration_tests
-        if: ${{ !inputs.code_coverage && !inputs.analyze_build_time }}
+        if: ${{ !inputs.code_coverage && !inputs.analyze_build_time && !inputs.package }}
         uses: actions/upload-artifact@v4
         with:
           name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_integration_tests
+
+      - name: Upload Clio Linux package
+        if: inputs.package
+        uses: actions/upload-artifact@v4
+        with:
+          name: clio_deb_package_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+          path: build/*.deb
 
       - name: Save cache
         if: ${{ !inputs.disable_cache && github.ref == 'refs/heads/develop' }}

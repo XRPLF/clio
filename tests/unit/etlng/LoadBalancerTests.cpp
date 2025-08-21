@@ -182,7 +182,7 @@ TEST_F(LoadBalancerConstructorNgTests, construct)
 TEST_F(LoadBalancerConstructorNgTests, forwardingTimeoutPassedToSourceFactory)
 {
     auto const forwardingTimeout = 10;
-    configJson_.as_object()["forwarding"] = boost::json::object{{"timeout", float{forwardingTimeout}}};
+    configJson_.as_object()["forwarding"] = boost::json::object{{"cache_timeout", float{forwardingTimeout}}};
     EXPECT_CALL(
         sourceFactory_,
         makeSource(
