@@ -21,8 +21,10 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/CassandraBackend.hpp"
+#include "data/ClickHouseBackend.hpp"
 #include "data/LedgerCacheInterface.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
+#include "data/clickhouse/SettingsProvider.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
 
@@ -57,6 +59,11 @@ makeBackend(util::config::ClioConfigDefinition const& config, data::LedgerCacheI
         auto const cfg = config.getObject("database." + type);
         backend = std::make_shared<data::cassandra::CassandraBackend>(
             data::cassandra::SettingsProvider{cfg}, cache, readOnly
+        );
+    } else if (boost::iequals(type, "clickhouse")) {
+        auto const cfg = config.getObject("database." + type);
+        backend = std::make_shared<data::clickhouse::ClickHouseBackend>(
+            data::clickhouse::SettingsProvider{cfg}, cache, readOnly
         );
     }
 
