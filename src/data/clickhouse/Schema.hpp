@@ -20,7 +20,7 @@
 #pragma once
 
 #include "data/clickhouse/Types.hpp"
-#include "data/clickhouse/impl/Connection.hpp"
+#include "data/clickhouse/impl/Session.hpp"
 #include "util/log/Logger.hpp"
 
 #include <fmt/format.h>

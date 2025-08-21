@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "data/clickhouse/SettingsProvider.hpp"
+#include "data/clickhouse/impl/Settings.hpp"
 #include "util/log/Logger.hpp"
 
 #include <chrono>

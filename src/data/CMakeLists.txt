@@ -16,7 +16,12 @@ target_sources(
           cassandra/SettingsProvider.cpp
           clickhouse/SettingsProvider.cpp
           clickhouse/Handle.cpp
-          clickhouse/impl/Connection.cpp
+          clickhouse/impl/Result.cpp
+          clickhouse/impl/Session.cpp
+          clickhouse/impl/Cluster.cpp
+          clickhouse/impl/Statement.cpp
+          clickhouse/impl/Batch.cpp
+          clickhouse/impl/PreparedStatement.cpp
           ClickHouseBackend.cpp
 )
 

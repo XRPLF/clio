@@ -7,116 +7,123 @@
     purpose with or without fee is hereby granted, provided that the above
     copyright notice and this permission notice appear in all copies.
 
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    THE  SOFTWARE  IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
     MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+    ANY  SPECIAL,  DIRECT,  INDIRECT,  OR  CONSEQUENTIAL  DAMAGES  OR  ANY
+    DAMAGES  WHATSOEVER  RESULTING  FROM  LOSS  OF  USE,  DATA  OR  PROFITS,
+    WHETHER  IN  AN  ACTION  OF  CONTRACT,  NEGLIGENCE  OR  OTHER  TORTIOUS
+    ACTION,  ARISING  OUT  OF  OR  IN  CONNECTION  WITH  THE  USE  OR
+    PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
 
 #pragma once
 
+#include "data/clickhouse/Error.hpp"
 #include "data/clickhouse/Types.hpp"
-#include "data/clickhouse/impl/Connection.hpp"
-#include "util/log/Logger.hpp"
+#include "data/clickhouse/impl/Batch.hpp"
+#include "data/clickhouse/impl/Cluster.hpp"
+#include "data/clickhouse/impl/Result.hpp"
+#include "data/clickhouse/impl/Session.hpp"
+#include "data/clickhouse/impl/Statement.hpp"
 
-#include <memory>
-#include <string>
+#include <functional>
+#include <string_view>
 #include <vector>
 
+/**
+ * @brief This namespace implements a wrapper for the ClickHouse HTTP client
+ */
 namespace data::clickhouse {
 
 /**
- * @brief A handle to a ClickHouse database connection.
- *
- * This class provides a simplified interface for database operations,
- * managing the underlying connection and providing error handling.
+ * @brief Represents a handle to the ClickHouse database cluster
  */
 class Handle {
-    util::Logger log_{"ClickHouseHandle"};
-    std::unique_ptr<impl::Connection> connection_;
+    impl::Cluster cluster_;
+    impl::Session session_;
 
 public:
-    /**
-     * @brief Construct a new Handle object.
-     *
-     * @param settings The connection settings to use
-     */
-    explicit Handle(Settings const& settings);
+    using ResultOrErrorType = ResultOrError;
+    using MaybeErrorType = MaybeError;
+    using StatementType = Statement;
+    using PreparedStatementType = PreparedStatement;
+    using ResultType = Result;
 
     /**
-     * @brief Destructor.
+     * @brief Construct a new handle from a Settings object.
+     *
+     * @param clusterSettings The settings to use
+     */
+    explicit Handle(Settings const& clusterSettings = Settings::defaultSettings());
+
+    /**
+     * @brief Construct a new handle with default settings and only by setting the contact points.
+     *
+     * @param contactPoints The contact points to use instead of settings
+     */
+    explicit Handle(std::string_view contactPoints);
+
+    /**
+     * @brief Disconnects gracefully if possible.
      */
     ~Handle();
 
     /**
-     * @brief Move constructor.
+     * @brief Move is supported.
      */
-    Handle(Handle&&) noexcept;
+    Handle(Handle&&) = default;
 
     /**
-     * @brief Move assignment operator.
-     */
-    Handle& operator=(Handle&&) noexcept;
-
-    /**
-     * @brief Deleted copy constructor.
-     */
-    Handle(Handle const&) = delete;
-
-    /**
-     * @brief Deleted copy assignment operator.
-     */
-    Handle& operator=(Handle const&) = delete;
-
-    /**
-     * @brief Connect to the ClickHouse database.
+     * @brief Connect to the cluster synchronously.
      *
-     * @return MaybeError indicating success or failure
+     * @return Possibly an error
      */
-    MaybeError connect();
+    [[nodiscard]] MaybeErrorType
+    connect() const;
 
     /**
-     * @brief Execute a query.
+     * @brief Execute a query without returning results.
      *
-     * @param query The SQL query to execute
-     * @return MaybeError indicating success or failure
+     * @param query The query to execute
+     * @return Possibly an error
      */
-    MaybeError execute(std::string const& query);
+    [[nodiscard]] MaybeErrorType
+    execute(std::string const& query) const;
 
     /**
-     * @brief Execute multiple queries.
+     * @brief Execute a batch of queries.
      *
-     * @param queries The SQL queries to execute
-     * @return MaybeError indicating success or failure
+     * @param batch The batch to execute
+     * @return Possibly an error
      */
-    MaybeError executeEach(std::vector<std::string> const& queries);
+    [[nodiscard]] MaybeErrorType
+    executeEach(std::vector<std::string> const& queries) const;
 
     /**
      * @brief Execute a query and return results.
      *
-     * @param query The SQL query to execute
-     * @return ResultOrError containing the results or an error
+     * @param query The query to execute
+     * @return A result or an error
      */
-    ResultOrError query(std::string const& query);
+    [[nodiscard]] ResultOrErrorType
+    query(std::string const& query) const;
 
     /**
-     * @brief Check if the connection is active.
+     * @brief Check if the handle is connected.
      *
      * @return true if connected, false otherwise
      */
-    bool isConnected() const;
+    [[nodiscard]] bool
+    isConnected() const;
 
 private:
-    /**
-     * @brief Initialize the connection.
-     *
-     * @param settings The connection settings
-     */
-    void initialize(Settings const& settings);
+    void
+    initialize(Settings const& settings);
+
+    void
+    initialize(std::string_view contactPoints);
 };
 
 }  // namespace data::clickhouse

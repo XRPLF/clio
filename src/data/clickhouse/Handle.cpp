@@ -7,13 +7,14 @@
     purpose with or without fee is hereby granted, provided that the above
     copyright notice and this permission notice appear in all copies.
 
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    THE  SOFTWARE  IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
     MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+    ANY  SPECIAL,  DIRECT,  INDIRECT,  OR  CONSEQUENTIAL  DAMAGES  OR  ANY
+    DAMAGES  WHATSOEVER  RESULTING  FROM  LOSS  OF  USE,  DATA  OR  PROFITS,
+    WHETHER  IN  AN  ACTION  OF  CONTRACT,  NEGLIGENCE  OR  OTHER  TORTIOUS
+    ACTION,  ARISING  OUT  OF  OR  IN  CONNECTION  WITH  THE  USE  OR
+    PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
 
@@ -21,54 +22,69 @@
 
 namespace data::clickhouse {
 
-Handle::Handle(Settings const& settings)
-{
-    initialize(settings);
+Handle::Handle(Settings const& clusterSettings)
+    : cluster_(clusterSettings), session_(clusterSettings) {
+    initialize(clusterSettings);
+}
+
+Handle::Handle(std::string_view contactPoints)
+    : cluster_(Settings::defaultSettings()), session_(Settings::defaultSettings()) {
+    initialize(contactPoints);
 }
 
 Handle::~Handle() = default;
 
-Handle::Handle(Handle&&) noexcept = default;
-
-Handle&
-Handle::operator=(Handle&&) noexcept = default;
-
 void
 Handle::initialize(Settings const& settings)
 {
-    connection_ = std::make_unique<impl::Connection>(settings);
+    cluster_ = impl::Cluster(settings);
+    if (cluster_.isValid()) {
+        auto session = cluster_.createSession();
+        if (session) {
+            session_ = std::move(*session);
+        }
+    }
+}
+
+void
+Handle::initialize(std::string_view /*contactPoints*/)
+{
+    // parse contact points and create settings
+    auto settings = Settings::defaultSettings();
+    // TODO(NODE-2688): parse contactPoints string and set host/port
+    initialize(settings);
 }
 
 MaybeError
-Handle::connect()
+Handle::connect() const
 {
-    if (!connection_) {
-        return Error{ClickHouseError{"No connection available"}};
+    if (!cluster_.isValid()) {
+        return Error{ClickHouseError{"Cluster not valid: " + cluster_.getLastError()}};
     }
 
-    if (connection_->connect()) {
+    if (session_.isValid()) {
         return {};
     } else {
-        return Error{ClickHouseError{"Failed to connect to ClickHouse"}};
+        return Error{ClickHouseError{"Failed to connect to ClickHouse: " + session_.getLastError()}};
     }
 }
 
 MaybeError
-Handle::execute(std::string const& query)
+Handle::execute(std::string const& query) const
 {
-    if (!connection_ || !connection_->isConnected()) {
+    if (!session_.isValid()) {
         return Error{ClickHouseError{"Not connected to ClickHouse"}};
     }
 
-    if (connection_->execute(query)) {
+    if (session_.execute(query)) {
         return {};
     } else {
-        return Error{ClickHouseError{"Failed to execute query: " + query}};
+        return Error{ClickHouseError{"Failed to execute query: " + query + " - " + session_.getLastError()}};
     }
 }
 
 MaybeError
-Handle::executeEach(std::vector<std::string> const& queries)
+Handle::executeEach(std::vector<std::string> const& queries) const
 {
     for (auto const& query : queries) {
         if (auto const result = execute(query); !result) {
@@ -79,23 +95,24 @@ Handle::executeEach(std::vector<std::string> const& queries)
 }
 
 ResultOrError
-Handle::query(std::string const& /*query*/)
+Handle::query(std::string const& query) const
 {
-    if (!connection_ || !connection_->isConnected()) {
+    if (!session_.isValid()) {
         return Error{ClickHouseError{"Not connected to ClickHouse"}};
     }
 
-    // For now, return a simple result
-    Result result;
-    result.columnNames = {"status"};
-    result.rows = {{"success"}};
+    auto result = session_.query(query);
+    if (result.columnNames.empty() && result.rows.empty()) {
+        return Error{ClickHouseError{"Query failed: " + session_.getLastError()}};
+    }
     return result;
 }
 
 bool
 Handle::isConnected() const
 {
-    return connection_ && connection_->isConnected();
+    return cluster_.isValid() && session_.isValid();
 }
 
 }  // namespace data::clickhouse
+
