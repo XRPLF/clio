@@ -31,10 +31,10 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <variant>
+#include <vector>
 
 using namespace util::config;
 

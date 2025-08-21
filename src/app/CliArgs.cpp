@@ -23,6 +23,7 @@
 #include "util/build/Build.hpp"
 #include "util/config/ConfigDescription.hpp"
 
+#include <boost/program_options/errors.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/positional_options.hpp>

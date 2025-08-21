@@ -16,7 +16,7 @@ class ClioConan(ConanFile):
         'integration_tests': [True, False],   # build integration tests; create `clio_integration_tests` binary
         'benchmark': [True, False],           # build benchmarks; create `clio_benchmarks` binary
         'docs': [True, False],                # doxygen API docs; create custom target 'docs'
-        'packaging': [True, False],           # create distribution packages
+        'package': [True, False],             # create distribution packages
         'coverage': [True, False],            # build for test coverage report; create custom target `clio_tests-ccov`
         'lint': [True, False],                # run clang-tidy checks during compilation
         'snapshot': [True, False],            # build export/import snapshot tool
@@ -43,7 +43,7 @@ class ClioConan(ConanFile):
         'tests': False,
         'integration_tests': False,
         'benchmark': False,
-        'packaging': False,
+        'package': False,
         'coverage': False,
         'lint': False,
         'docs': False,

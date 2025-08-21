@@ -45,7 +45,7 @@ struct BenchmarkLoggingInitializer {
     static std::shared_ptr<spdlog::sinks::sink>
     createFileSink(LogService::FileLoggingParams const& params)
     {
-        return LogService::createFileSink(params);
+        return LogService::createFileSink(params, kLOG_FORMAT);
     }
 
     static Logger
@@ -107,7 +107,6 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
                 auto logger = std::make_shared<spdlog::async_logger>(
                     channel, fileSink, spdlog::thread_pool(), spdlog::async_overflow_policy::block
                 );
-                logger->set_pattern(kLOG_FORMAT);
                 spdlog::register_logger(logger);
                 Logger const threadLogger = BenchmarkLoggingInitializer::getLogger(std::move(logger));
 
