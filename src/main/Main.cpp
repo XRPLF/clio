@@ -34,6 +34,7 @@
 
 using namespace util::config;
 
+[[nodiscard]]
 int
 runApp(int argc, char const* argv[])
 {
@@ -82,7 +83,7 @@ main(int argc, char const* argv[])
     util::ScopeGuard const loggerShutdownGuard{[] { util::LogService::shutdown(); }};
 
     try {
-        runApp(argc, argv);
+        return runApp(argc, argv);
     } catch (std::exception const& e) {
         LOG(util::LogService::fatal()) << "Exit on exception: " << e.what();
         return EXIT_FAILURE;
