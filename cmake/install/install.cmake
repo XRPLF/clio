@@ -5,7 +5,7 @@ set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
 include(GNUInstallDirs)
 
-install(TARGETS clio_server DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS clio_server DESTINATION "${CMAKE_INSTALL_BINDIR}")
 
 file(READ docs/examples/config/example-config.json config)
 string(REGEX REPLACE "./clio_log" "/var/log/clio/" config "${config}")

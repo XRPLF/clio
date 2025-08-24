@@ -11,7 +11,7 @@ option(integration_tests "Build integration tests" FALSE)
 option(benchmark "Build benchmarks" FALSE)
 option(docs "Generate doxygen docs" FALSE)
 option(coverage "Build test coverage report" FALSE)
-option(packaging "Create distribution packages" FALSE)
+option(package "Create distribution packages" FALSE)
 option(lint "Run clang-tidy checks during compilation" FALSE)
 option(static "Statically linked Clio" FALSE)
 option(snapshot "Build snapshot tool" FALSE)
@@ -38,11 +38,6 @@ target_include_directories(clio_options INTERFACE ${CMAKE_SOURCE_DIR}/src)
 
 if (verbose)
   set(CMAKE_VERBOSE_MAKEFILE TRUE)
-endif ()
-
-if (packaging)
-  add_definitions(-DPKG=1)
-  target_compile_definitions(clio_options INTERFACE PKG=1)
 endif ()
 
 # Clio tweaks and checks
