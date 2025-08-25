@@ -206,7 +206,7 @@ class TagDecoratorFactory final {
         if (boost::iequals(style, "uuid"))
             return TagDecoratorFactory::Type::UUID;
 
-        ASSERT(false, "log_tag_style does not have valid value");
+        ASSERT(false, "log.tag_style does not have valid value");
         std::unreachable();
     }
 
@@ -219,7 +219,7 @@ public:
      * @param config The configuration as a json object
      */
     explicit TagDecoratorFactory(util::config::ClioConfigDefinition const& config)
-        : type_{getLogTagType(config.get<std::string>("log_tag_style"))}
+        : type_{getLogTagType(config.get<std::string>("log.tag_style"))}
     {
     }
 

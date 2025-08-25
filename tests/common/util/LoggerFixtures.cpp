@@ -22,6 +22,7 @@
 #include "util/log/Logger.hpp"
 
 #include <spdlog/common.h>
+#include <spdlog/pattern_formatter.h>
 #include <spdlog/sinks/ostream_sink.h>
 #include <spdlog/spdlog.h>
 
@@ -35,6 +36,7 @@ LoggerFixture::LoggerFixture()
 
     // Create ostream sink for testing
     auto ostreamSink = std::make_shared<spdlog::sinks::ostream_sink_mt>(stream_);
+    ostreamSink->set_formatter(std::make_unique<spdlog::pattern_formatter>("%^%3!l:%n%$ - %v"));
 
     // Create loggers for each channel
     std::ranges::for_each(util::Logger::kCHANNELS, [&ostreamSink](char const* channel) {
@@ -50,8 +52,6 @@ LoggerFixture::LoggerFixture()
     spdlog::register_logger(traceLogger);
 
     spdlog::set_default_logger(spdlog::get("General"));
-
-    spdlog::set_pattern("%^%3!l:%n%$ - %v");
 }
 
 NoLoggerFixture::NoLoggerFixture()

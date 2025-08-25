@@ -28,6 +28,7 @@
 #include <expected>
 #include <filesystem>
 #include <optional>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -72,6 +73,14 @@ public:
      */
     [[nodiscard]] bool
     containsKey(std::string_view key) const override;
+
+    /**
+     * @brief Retrieves all keys in the configuration file.
+     *
+     * @return A vector of all keys in the configuration file.
+     */
+    [[nodiscard]] std::vector<std::string>
+    getAllKeys() const override;
 
     /**
      * @brief Creates a new ConfigFileJson by parsing the provided JSON file and
