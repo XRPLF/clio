@@ -52,7 +52,7 @@ jobs:
     needs: repo
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Get changed files
         id: changed-files
@@ -90,7 +90,7 @@ jobs:
     needs: repo
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Get changed files
         id: changed-files
@@ -128,7 +128,7 @@ jobs:
     needs: [repo, gcc-amd64, gcc-arm64]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Get changed files
         id: changed-files
@@ -179,7 +179,7 @@ jobs:
     needs: repo
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Get changed files
         id: changed-files
@@ -215,7 +215,7 @@ jobs:
     needs: [repo, gcc-merge]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Get changed files
         id: changed-files
@@ -246,7 +246,7 @@ jobs:
     needs: [repo, gcc-merge]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Get changed files
         id: changed-files
@@ -277,7 +277,7 @@ jobs:
     needs: [repo, tools-amd64, tools-arm64]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Get changed files
         id: changed-files
@@ -312,7 +312,7 @@ jobs:
     needs: [repo, gcc-merge, clang, tools-merge]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/build_docker_image
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
