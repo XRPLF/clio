@@ -395,6 +395,21 @@ public:
                         )
                     );
                 }();
+
+                updateLedgerRange = [this]() {
+                    return handle_.get().prepare(
+                        fmt::format(
+                            R"(
+                UPDATE {}
+                   SET sequence = ?
+                 WHERE is_latest = ?
+                    IF sequence IN (?, null)
+                    )",
+                            qualifiedTableName(settingsProvider_.get(), "ledger_range")
+                        )
+                    );
+                }();
+
                 // AWS_keyspace supported queries
             } else if (settingsProvider_.get().getSettings().provider == "aws_keyspace") {
                 selectNFTsAfterTaxonKeyspaces = [this]() {
