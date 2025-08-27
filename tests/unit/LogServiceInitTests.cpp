@@ -32,6 +32,7 @@
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <spdlog/pattern_formatter.h>
 #include <spdlog/sinks/ostream_sink.h>
 #include <spdlog/spdlog.h>
 
@@ -84,6 +85,7 @@ protected:
     replaceSinks()
     {
         auto ostreamSink = std::make_shared<spdlog::sinks::ostream_sink_mt>(stream_);
+        ostreamSink->set_formatter(std::make_unique<spdlog::pattern_formatter>("%^%3!l:%n%$ - %v"));
 
         for (auto const& channel : Logger::kCHANNELS) {
             auto logger = spdlog::get(channel);
@@ -93,8 +95,6 @@ protected:
             logger->sinks().clear();
             logger->sinks().push_back(ostreamSink);
         }
-
-        spdlog::set_pattern("%^%3!l:%n%$ - %v");
     }
 
 private:

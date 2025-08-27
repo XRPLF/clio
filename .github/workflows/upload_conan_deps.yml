@@ -21,7 +21,6 @@ on:
       - .github/workflows/upload_conan_deps.yml
 
       - .github/actions/generate/action.yml
-      - .github/actions/prepare_runner/action.yml
       - ".github/scripts/conan/**"
 
       - conanfile.py
@@ -32,7 +31,6 @@ on:
       - .github/workflows/upload_conan_deps.yml
 
       - .github/actions/generate/action.yml
-      - .github/actions/prepare_runner/action.yml
       - ".github/scripts/conan/**"
 
       - conanfile.py
@@ -73,7 +71,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Prepare runner
-        uses: ./.github/actions/prepare_runner
+        uses: XRPLF/actions/.github/actions/prepare_runner@dabd6e67fd6780379c48eedb83df189626f1158d
         with:
           disable_ccache: true
 

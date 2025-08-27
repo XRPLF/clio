@@ -124,7 +124,13 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input const& input, 
 
     auto const latestTime = timestampPricesBiMap.left.begin()->first;
 
-    Output out(latestTime, ripple::to_string(lgrInfo.hash), lgrInfo.seq);
+    Output out{
+        .time = latestTime,
+        .trimStats = std::nullopt,
+        .ledgerHash = ripple::to_string(lgrInfo.hash),
+        .ledgerIndex = lgrInfo.seq,
+        .median = ""
+    };
 
     if (input.timeThreshold) {
         auto const oldestTime = timestampPricesBiMap.left.rbegin()->first;
