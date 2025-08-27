@@ -71,7 +71,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Prepare runner
-        uses: XRPLF/actions/.github/actions/prepare_runner@dabd6e67fd6780379c48eedb83df189626f1158d
+        uses: XRPLF/actions/.github/actions/prepare-runner@7951b682e5a2973b28b0719a72f01fc4b0d0c34f
         with:
           disable_ccache: true
 
