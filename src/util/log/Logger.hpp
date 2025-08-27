@@ -346,7 +346,7 @@ private:
 
     [[nodiscard]]
     static std::shared_ptr<spdlog::sinks::sink>
-    createFileSink(FileLoggingParams const& params);
+    createFileSink(FileLoggingParams const& params, std::string const& format);
 };
 
 };  // namespace util

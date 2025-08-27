@@ -81,7 +81,8 @@ class SettingsProviderTest : public NoLoggerFixture {};
 
 TEST_F(SettingsProviderTest, Defaults)
 {
-    auto const cfg = getParseSettingsConfig(json::parse(R"JSON({"contact_points": "127.0.0.1"})JSON"));
+    auto const cfg =
+        getParseSettingsConfig(json::parse(R"JSON({"database.cassandra.contact_points": "127.0.0.1"})JSON"));
     SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
     auto const settings = provider.getSettings();

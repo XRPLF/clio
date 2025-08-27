@@ -237,6 +237,12 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
         });
     }
 
+    for (auto const& key : config.getAllKeys()) {
+        if (!map_.contains(key) && !arrayPrefixesToKeysMap.contains(key)) {
+            listOfErrors.emplace_back("Unknown key: " + key);
+        }
+    }
+
     if (!listOfErrors.empty())
         return listOfErrors;
 
