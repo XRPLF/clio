@@ -21,7 +21,6 @@ on:
       - .github/workflows/upload_conan_deps.yml
 
       - .github/actions/generate/action.yml
-      - .github/actions/prepare_runner/action.yml
       - ".github/scripts/conan/**"
 
       - conanfile.py
@@ -32,7 +31,6 @@ on:
       - .github/workflows/upload_conan_deps.yml
 
       - .github/actions/generate/action.yml
-      - .github/actions/prepare_runner/action.yml
       - ".github/scripts/conan/**"
 
       - conanfile.py
