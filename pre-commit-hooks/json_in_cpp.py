@@ -42,6 +42,33 @@ def fix_colon_spacing(cpp_content: str) -> str:
         return f'R"JSON({raw_json})JSON"'
     return re.sub(PATTERN, replace_json, cpp_content, flags=re.DOTALL)
 
+
+def fix_indentation(cpp_content: str) -> str:
+    lines = cpp_content.splitlines()
+
+    def find_indentation(line: str) -> int:
+        return len(line) - len(line.lstrip())
+
+    for (line_num, (line, next_line)) in enumerate(zip(lines[:-1], lines[1:])):
+        if "JSON(" in line and ")JSON" not in line:
+            indent = find_indentation(line)
+            next_indent = find_indentation(next_line)
+
+            by_how_much = next_indent - (indent + 4)
+            if by_how_much != 0:
+                print(
+                    f"Indentation error at line: {line_num + 2}: expected {indent + 4} spaces, found {next_indent} spaces"
+                )
+
+                for i in range(line_num + 1, len(lines)):
+                    if ")JSON" in lines[i]:
+                        lines[i] = " " * indent + lines[i].lstrip()
+                        break
+                    lines[i] = lines[i][by_how_much:] if by_how_much > 0 else " " * (-by_how_much) + lines[i]
+
+    return "\n".join(lines) + "\n"
+
+
 def process_file(file_path: Path, dry_run: bool) -> bool:
     content = file_path.read_text(encoding="utf-8")
 
@@ -49,6 +76,7 @@ def process_file(file_path: Path, dry_run: bool) -> bool:
     new_content = use_uppercase(new_content)
     new_content = fix_json_style(new_content)
     new_content = fix_colon_spacing(new_content)
+    new_content = fix_indentation(new_content)
 
     if new_content != content:
         print(f"Processing file: {file_path}")
