@@ -166,8 +166,7 @@ constexpr auto kTRAN_V2 =
 
 constexpr auto kNFT_MINT_TRAN_V1 =
     R"JSON({
-        "transaction":
-        {
+        "transaction": {
             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Fee": "12",
             "NFTokenTaxon": 123,
