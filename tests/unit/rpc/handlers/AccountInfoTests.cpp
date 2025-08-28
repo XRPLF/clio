@@ -190,9 +190,9 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_index": 30
-        }})JSON",
+                "account": "{}",
+                "ledger_index": 30
+            }})JSON",
             kACCOUNT
         )
     );
@@ -215,9 +215,9 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_index": "30"
-        }})JSON",
+                "account": "{}",
+                "ledger_index": "30"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -241,9 +241,9 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -270,8 +270,8 @@ TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -298,8 +298,8 @@ TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -335,9 +335,9 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "signer_lists": true
-        }})JSON",
+                "account": "{}",
+                "signer_lists": true
+            }})JSON",
             kACCOUNT
         )
     );
@@ -435,9 +435,9 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "signer_lists": true
-        }})JSON",
+                "account": "{}",
+                "signer_lists": true
+            }})JSON",
             kACCOUNT
         )
     );
@@ -533,9 +533,9 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "signer_lists": true
-        }})JSON",
+                "account": "{}",
+                "signer_lists": true
+            }})JSON",
             kACCOUNT
         )
     );
@@ -610,8 +610,8 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -642,8 +642,8 @@ TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "ident": "{}"
-        }})JSON",
+                "ident": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -723,8 +723,8 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -801,8 +801,8 @@ TEST_F(RPCAccountInfoHandlerTest, AmendmentsEnabled)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );

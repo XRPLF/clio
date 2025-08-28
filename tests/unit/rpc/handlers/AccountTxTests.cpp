@@ -169,69 +169,69 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 .testName = "MarkerMissingSeq",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "marker": {"ledger": 123}
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "marker": {"ledger": 123}
+                })JSON",
                 .expectedError = "invalidParams",
                 .expectedErrorMessage = "Required field 'seq' missing"
             },
             AccountTxParamTestCaseBundle{
                 .testName = "MarkerMissingLedger",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "marker": {"seq": 123}
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "marker": {"seq": 123}
+                })JSON",
                 .expectedError = "invalidParams",
                 .expectedErrorMessage = "Required field 'ledger' missing"
             },
             AccountTxParamTestCaseBundle{
                 .testName = "MarkerLedgerNotInt",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "marker": {
-                    "seq": "string",
-                    "ledger": 1
-                }
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "marker": {
+                        "seq": "string",
+                        "ledger": 1
+                    }
+                })JSON",
                 .expectedError = "invalidParams",
                 .expectedErrorMessage = "Invalid parameters."
             },
             AccountTxParamTestCaseBundle{
                 .testName = "MarkerSeqNotInt",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "marker": {
-                    "ledger": "string",
-                    "seq": 1
-                }
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "marker": {
+                        "ledger": "string",
+                        "seq": 1
+                    }
+                })JSON",
                 .expectedError = "invalidParams",
                 .expectedErrorMessage = "Invalid parameters."
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMinLessThanMinSeq",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_min": 9
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "ledger_index_min": 9
+                })JSON",
                 .expectedError = "lgrIdxMalformed",
                 .expectedErrorMessage = "ledgerSeqMinOutOfRange"
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxLargeThanMaxSeq",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_max": 31
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "ledger_index_max": 31
+                })JSON",
                 .expectedError = "lgrIdxMalformed",
                 .expectedErrorMessage = "ledgerSeqMaxOutOfRange"
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxLargeThanMaxSeq_API_v1",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_max": 31
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "ledger_index_max": 31
+                })JSON",
                 .expectedError = std::nullopt,
                 .expectedErrorMessage = std::nullopt,
                 .apiVersion = 1u
@@ -239,18 +239,18 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxSmallerThanMinSeq",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_max": 9
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "ledger_index_max": 9
+                })JSON",
                 .expectedError = "lgrIdxMalformed",
                 .expectedErrorMessage = "ledgerSeqMaxOutOfRange"
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxSmallerThanMinSeq_API_v1",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_max": 9
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "ledger_index_max": 9
+                })JSON",
                 .expectedError = "lgrIdxsInvalid",
                 .expectedErrorMessage = "Ledger indexes invalid.",
                 .apiVersion = 1u
@@ -258,18 +258,18 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMinSmallerThanMinSeq",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_min": 9
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "ledger_index_min": 9
+                })JSON",
                 .expectedError = "lgrIdxMalformed",
                 .expectedErrorMessage = "ledgerSeqMinOutOfRange"
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMinSmallerThanMinSeq_API_v1",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_min": 9
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "ledger_index_min": 9
+                })JSON",
                 .expectedError = std::nullopt,
                 .expectedErrorMessage = std::nullopt,
                 .apiVersion = 1u
@@ -277,18 +277,18 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMinLargerThanMaxSeq",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_min": 31
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "ledger_index_min": 31
+                })JSON",
                 .expectedError = "lgrIdxMalformed",
                 .expectedErrorMessage = "ledgerSeqMinOutOfRange"
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMinLargerThanMaxSeq_API_v1",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_min": 31
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "ledger_index_min": 31
+                })JSON",
                 .expectedError = "lgrIdxsInvalid",
                 .expectedErrorMessage = "Ledger indexes invalid.",
                 .apiVersion = 1u
@@ -296,20 +296,20 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxLessThanLedgerIndexMin",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_max": 11,
-                "ledger_index_min": 20
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "ledger_index_max": 11,
+                    "ledger_index_min": 20
+                })JSON",
                 .expectedError = "invalidLgrRange",
                 .expectedErrorMessage = "Ledger range is invalid."
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxLessThanLedgerIndexMin_API_v1",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_max": 11,
-                "ledger_index_min": 20
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "ledger_index_max": 11,
+                    "ledger_index_min": 20
+                })JSON",
                 .expectedError = "lgrIdxsInvalid",
                 .expectedErrorMessage = "Ledger indexes invalid.",
                 .apiVersion = 1u
@@ -317,33 +317,33 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxMinAndLedgerIndex",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_max": 20,
-                "ledger_index_min": 11,
-                "ledger_index": 10
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "ledger_index_max": 20,
+                    "ledger_index_min": 11,
+                    "ledger_index": 10
+                })JSON",
                 .expectedError = "invalidParams",
                 .expectedErrorMessage = "containsLedgerSpecifierAndRange"
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxMinAndLedgerIndexValidated",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_max": 20,
-                "ledger_index_min": 11,
-                "ledger_index": "validated"
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "ledger_index_max": 20,
+                    "ledger_index_min": 11,
+                    "ledger_index": "validated"
+                })JSON",
                 .expectedError = "invalidParams",
                 .expectedErrorMessage = "containsLedgerSpecifierAndRange"
             },
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxMinAndLedgerIndex_API_v1",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_max": 20,
-                "ledger_index_min": 11,
-                "ledger_index": 10
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "ledger_index_max": 20,
+                    "ledger_index_min": 11,
+                    "ledger_index": 10
+                })JSON",
                 .expectedError = std::nullopt,
                 .expectedErrorMessage = std::nullopt,
                 .apiVersion = 1u
@@ -352,11 +352,11 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 .testName = "LedgerIndexMaxMinAndLedgerHash",
                 .testJson = fmt::format(
                     R"JSON({{
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_max": 20,
-                "ledger_index_min": 11,
-                "ledger_hash": "{}"
-            }})JSON",
+                        "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "ledger_index_max": 20,
+                        "ledger_index_min": 11,
+                        "ledger_hash": "{}"
+                    }})JSON",
                     kLEDGER_HASH
                 ),
                 .expectedError = "invalidParams",
@@ -366,11 +366,11 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 .testName = "LedgerIndexMaxMinAndLedgerHash_API_v1",
                 .testJson = fmt::format(
                     R"JSON({{
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_max": 20,
-                "ledger_index_min": 11,
-                "ledger_hash": "{}"
-            }})JSON",
+                        "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "ledger_index_max": 20,
+                        "ledger_index_min": 11,
+                        "ledger_hash": "{}"
+                    }})JSON",
                     kLEDGER_HASH
                 ),
                 .expectedError = std::nullopt,
@@ -380,11 +380,11 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 .testName = "LedgerIndexMaxMinAndLedgerIndexValidated_API_v1",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "ledger_index_max": 20,
-                "ledger_index_min": 11,
-                "ledger_index": "validated"
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "ledger_index_max": 20,
+                    "ledger_index_min": 11,
+                    "ledger_index": "validated"
+                })JSON",
                 .expectedError = std::nullopt,
                 .expectedErrorMessage = std::nullopt,
                 .apiVersion = 1u
@@ -392,9 +392,9 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 .testName = "InvalidTxType",
                 .testJson = R"JSON({
-                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "tx_type": "unknown"
-            })JSON",
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "tx_type": "unknown"
+                })JSON",
                 .expectedError = "invalidParams",
                 .expectedErrorMessage = "Invalid field 'tx_type'."
             }
@@ -513,11 +513,11 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": true
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": true
+                }})JSON",
                 kACCOUNT,
                 kMIN_SEQ + 1,
                 kMAX_SEQ - 1
@@ -557,11 +557,11 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": false
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": false
+                }})JSON",
                 kACCOUNT,
                 kMIN_SEQ + 1,
                 kMAX_SEQ - 1
@@ -601,11 +601,11 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": true
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": true
+                }})JSON",
                 kACCOUNT,
                 -1,
                 -1
@@ -645,11 +645,11 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": false
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": false
+                }})JSON",
                 kACCOUNT,
                 -1,
                 -1
@@ -687,11 +687,11 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "binary": true
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "binary": true
+                }})JSON",
                 kACCOUNT,
                 -1,
                 -1
@@ -743,11 +743,11 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrueV2)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "binary": true
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "binary": true
+                }})JSON",
                 kACCOUNT,
                 -1,
                 -1
@@ -797,13 +797,13 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "limit": 2,
-                "forward": false,
-                "marker": {{"ledger": 10, "seq": 11}}
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "limit": 2,
+                    "forward": false,
+                    "marker": {{"ledger": 10, "seq": 11}}
+                }})JSON",
                 kACCOUNT,
                 -1,
                 -1
@@ -833,12 +833,12 @@ TEST_F(RPCAccountTxHandlerTest, LimitIsCapped)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "limit": 100000,
-                "forward": false
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "limit": 100000,
+                    "forward": false
+                }})JSON",
                 kACCOUNT,
                 -1,
                 -1
@@ -867,12 +867,12 @@ TEST_F(RPCAccountTxHandlerTest, LimitAllowedUpToCap)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "limit": {},
-                "forward": false
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "limit": {},
+                    "forward": false
+                }})JSON",
                 kACCOUNT,
                 -1,
                 -1,
@@ -917,9 +917,9 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index": {}
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index": {}
+                }})JSON",
                 kACCOUNT,
                 kMAX_SEQ - 1
             )
@@ -945,9 +945,9 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index": {}
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index": {}
+                }})JSON",
                 kACCOUNT,
                 kMAX_SEQ - 1
             )
@@ -970,9 +970,9 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index": "{}"
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index": "{}"
+                }})JSON",
                 kACCOUNT,
                 kMAX_SEQ - 1
             )
@@ -1014,9 +1014,9 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_hash": "{}"
-            }})JSON",
+                    "account": "{}",
+                    "ledger_hash": "{}"
+                }})JSON",
                 kACCOUNT,
                 kLEDGER_HASH
             )
@@ -1060,9 +1060,9 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index": "validated"
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index": "validated"
+                }})JSON",
                 kACCOUNT
             )
         );
@@ -1100,11 +1100,11 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": false
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": false
+                }})JSON",
                 kACCOUNT,
                 kMIN_SEQ + 2,
                 kMAX_SEQ - 1
@@ -1144,11 +1144,11 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": false
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": false
+                }})JSON",
                 kACCOUNT,
                 kMIN_SEQ + 1,
                 kMAX_SEQ - 2
@@ -1168,180 +1168,180 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
 TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
 {
     auto const out = R"JSON({
-            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "ledger_index_min": 10,
-            "ledger_index_max": 30,
-            "transactions": [
-                {
-                    "meta": {
-                        "AffectedNodes": [
-                            {
-                                "ModifiedNode": {
-                                    "FinalFields": {
-                                        "NFTokens": [
-                                            {
-                                                "NFToken": {
-                                                    "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
-                                                    "URI": "7465737475726C"
-                                                }
-                                            },
-                                            {
-                                                "NFToken": {
-                                                    "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-                                                    "URI": "7465737475726C"
-                                                }
+        "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+        "ledger_index_min": 10,
+        "ledger_index_max": 30,
+        "transactions": [
+            {
+                "meta": {
+                    "AffectedNodes": [
+                        {
+                            "ModifiedNode": {
+                                "FinalFields": {
+                                    "NFTokens": [
+                                        {
+                                            "NFToken": {
+                                                "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
+                                                "URI": "7465737475726C"
                                             }
-                                        ]
-                                    },
-                                    "LedgerEntryType": "NFTokenPage",
-                                    "PreviousFields": {
-                                        "NFTokens": [
-                                            {
-                                                "NFToken": {
-                                                    "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-                                                    "URI": "7465737475726C"
-                                                }
+                                        },
+                                        {
+                                            "NFToken": {
+                                                "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                                                "URI": "7465737475726C"
                                             }
-                                        ]
-                                    }
+                                        }
+                                    ]
+                                },
+                                "LedgerEntryType": "NFTokenPage",
+                                "PreviousFields": {
+                                    "NFTokens": [
+                                        {
+                                            "NFToken": {
+                                                "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                                                "URI": "7465737475726C"
+                                            }
+                                        }
+                                    ]
                                 }
                             }
-                        ],
-                        "TransactionIndex": 0,
-                        "TransactionResult": "tesSUCCESS",
-                        "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
-                    },
-                    "tx": {
-                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee": "50",
-                        "NFTokenTaxon": 123,
-                        "Sequence": 1,
-                        "SigningPubKey": "74657374",
-                        "TransactionType": "NFTokenMint",
-                        "hash": "C74463F49CFDCBEF3E9902672719918CDE5042DC7E7660BEBD1D1105C4B6DFF4",
-                        "ledger_index": 11,
-                        "inLedger": 11,
-                        "ctid": "C000000B00000000",
-                        "date": 1
-                    },
-                    "validated": true
+                        }
+                    ],
+                    "TransactionIndex": 0,
+                    "TransactionResult": "tesSUCCESS",
+                    "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
                 },
-                {
-                    "meta": {
-                        "AffectedNodes": [
-                            {
-                                "DeletedNode": {
-                                    "FinalFields": {
-                                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
-                                        "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
+                "tx": {
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Fee": "50",
+                    "NFTokenTaxon": 123,
+                    "Sequence": 1,
+                    "SigningPubKey": "74657374",
+                    "TransactionType": "NFTokenMint",
+                    "hash": "C74463F49CFDCBEF3E9902672719918CDE5042DC7E7660BEBD1D1105C4B6DFF4",
+                    "ledger_index": 11,
+                    "inLedger": 11,
+                    "ctid": "C000000B00000000",
+                    "date": 1
+                },
+                "validated": true
+            },
+            {
+                "meta": {
+                    "AffectedNodes": [
+                        {
+                            "DeletedNode": {
+                                "FinalFields": {
+                                    "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
+                                    "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
 
-                                    },
-                                    "LedgerEntryType": "NFTokenOffer",
-                                    "LedgerIndex": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322"
-                                }
+                                },
+                                "LedgerEntryType": "NFTokenOffer",
+                                "LedgerIndex": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322"
                             }
-                        ],
-                        "TransactionIndex": 0,
-                        "TransactionResult": "tesSUCCESS",
-                        "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
-                    },
-                    "tx": {
-                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee": "50",
-                        "NFTokenBuyOffer": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
-                        "Sequence": 1,
-                        "SigningPubKey": "74657374",
-                        "TransactionType": "NFTokenAcceptOffer",
-                        "hash": "C85E486EE308C68D7E601FCEB4FC961BFA914C80ABBF7ECC7E6277B06692B490",
-                        "ledger_index": 11,
-                        "inLedger": 11,
-                        "ctid": "C000000B00000000",
-                        "date": 2
-                    },
-                    "validated": true
+                        }
+                    ],
+                    "TransactionIndex": 0,
+                    "TransactionResult": "tesSUCCESS",
+                    "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
                 },
-                {
-                    "meta": {
-                        "AffectedNodes": [
-                            {
-                                "DeletedNode": {
-                                    "FinalFields": {
-                                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
-                                    },
-                                    "LedgerEntryType": "NFTokenOffer"
-                                }
-                            },
-                            {
-                                "DeletedNode": {
-                                    "FinalFields": {
-                                        "NFTokenID": "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
-                                    },
-                                    "LedgerEntryType": "NFTokenOffer"
-                                }
-                            }
-                        ],
-                        "TransactionIndex": 0,
-                        "TransactionResult": "tesSUCCESS",
-                        "nftoken_ids": [
-                            "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
-                            "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
-                        ]
-                    },
-                    "tx": {
-                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee": "50",
-                        "NFTokenOffers": [
-                            "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
-                            "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
-                        ],
-                        "Sequence": 1,
-                        "SigningPubKey": "74657374",
-                        "TransactionType": "NFTokenCancelOffer",
-                        "hash": "9F82743EEB30065FB9CB92C61F0F064B5859C5A590FA811FAAAD9C988E5B47DB",
-                        "ledger_index": 11,
-                        "inLedger": 11,
-                        "ctid": "C000000B00000000",
-                        "date": 3
-                    },
-                    "validated": true
+                "tx": {
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Fee": "50",
+                    "NFTokenBuyOffer": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
+                    "Sequence": 1,
+                    "SigningPubKey": "74657374",
+                    "TransactionType": "NFTokenAcceptOffer",
+                    "hash": "C85E486EE308C68D7E601FCEB4FC961BFA914C80ABBF7ECC7E6277B06692B490",
+                    "ledger_index": 11,
+                    "inLedger": 11,
+                    "ctid": "C000000B00000000",
+                    "date": 2
                 },
-                {
-                    "meta": {
-                        "AffectedNodes": [
-                            {
-                                "CreatedNode": {
-                                    "LedgerEntryType": "NFTokenOffer",
-                                    "LedgerIndex": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
-                                }
+                "validated": true
+            },
+            {
+                "meta": {
+                    "AffectedNodes": [
+                        {
+                            "DeletedNode": {
+                                "FinalFields": {
+                                    "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                                },
+                                "LedgerEntryType": "NFTokenOffer"
                             }
-                        ],
-                        "TransactionIndex": 0,
-                        "TransactionResult": "tesSUCCESS",
-                        "offer_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
-                    },
-                    "tx": {
-                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Amount": "123",
-                        "Fee": "50",
-                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
-                        "Sequence": 1,
-                        "SigningPubKey": "74657374",
-                        "TransactionType": "NFTokenCreateOffer",
-                        "hash": "ECB1837EB7C7C0AC22ECDCCE59FDD4795C70E0B9D8F4E1C9A9408BB7EC75DA5C",
-                        "ledger_index": 11,
-                        "inLedger": 11,
-                        "ctid": "C000000B00000000",
-                        "date": 4
-                    },
-                    "validated": true
-                }
-            ],
-            "validated": true,
-            "marker": {
-                "ledger": 12,
-                "seq": 34
+                        },
+                        {
+                            "DeletedNode": {
+                                "FinalFields": {
+                                    "NFTokenID": "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
+                                },
+                                "LedgerEntryType": "NFTokenOffer"
+                            }
+                        }
+                    ],
+                    "TransactionIndex": 0,
+                    "TransactionResult": "tesSUCCESS",
+                    "nftoken_ids": [
+                        "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
+                        "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
+                    ]
+                },
+                "tx": {
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Fee": "50",
+                    "NFTokenOffers": [
+                        "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
+                        "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
+                    ],
+                    "Sequence": 1,
+                    "SigningPubKey": "74657374",
+                    "TransactionType": "NFTokenCancelOffer",
+                    "hash": "9F82743EEB30065FB9CB92C61F0F064B5859C5A590FA811FAAAD9C988E5B47DB",
+                    "ledger_index": 11,
+                    "inLedger": 11,
+                    "ctid": "C000000B00000000",
+                    "date": 3
+                },
+                "validated": true
+            },
+            {
+                "meta": {
+                    "AffectedNodes": [
+                        {
+                            "CreatedNode": {
+                                "LedgerEntryType": "NFTokenOffer",
+                                "LedgerIndex": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                            }
+                        }
+                    ],
+                    "TransactionIndex": 0,
+                    "TransactionResult": "tesSUCCESS",
+                    "offer_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                },
+                "tx": {
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Amount": "123",
+                    "Fee": "50",
+                    "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
+                    "Sequence": 1,
+                    "SigningPubKey": "74657374",
+                    "TransactionType": "NFTokenCreateOffer",
+                    "hash": "ECB1837EB7C7C0AC22ECDCCE59FDD4795C70E0B9D8F4E1C9A9408BB7EC75DA5C",
+                    "ledger_index": 11,
+                    "inLedger": 11,
+                    "ctid": "C000000B00000000",
+                    "date": 4
+                },
+                "validated": true
             }
-        })JSON";
+        ],
+        "validated": true,
+        "marker": {
+            "ledger": 12,
+            "seq": 34
+        }
+    })JSON";
 
     auto const transactions = genNFTTransactions(kMIN_SEQ + 1);
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -1360,12 +1360,12 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": false,
-                "marker": {{"ledger": 10, "seq": 11}}
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": false,
+                    "marker": {{"ledger": 10, "seq": 11}}
+                }})JSON",
                 kACCOUNT,
                 -1,
                 -1
@@ -1380,187 +1380,187 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
 TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
 {
     auto const out = R"JSON({
-            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "ledger_index_min": 10,
-            "ledger_index_max": 30,
-            "transactions": [
-                {
-                    "meta": {
-                        "AffectedNodes": [
-                            {
-                                "ModifiedNode": {
-                                    "FinalFields": {
-                                        "NFTokens": [
-                                            {
-                                                "NFToken": {
-                                                    "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
-                                                    "URI": "7465737475726C"
-                                                }
-                                            },
-                                            {
-                                                "NFToken": {
-                                                    "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-                                                    "URI": "7465737475726C"
-                                                }
+        "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+        "ledger_index_min": 10,
+        "ledger_index_max": 30,
+        "transactions": [
+            {
+                "meta": {
+                    "AffectedNodes": [
+                        {
+                            "ModifiedNode": {
+                                "FinalFields": {
+                                    "NFTokens": [
+                                        {
+                                            "NFToken": {
+                                                "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
+                                                "URI": "7465737475726C"
                                             }
-                                        ]
-                                    },
-                                    "LedgerEntryType": "NFTokenPage",
-                                    "PreviousFields": {
-                                        "NFTokens": [
-                                            {
-                                                "NFToken": {
-                                                    "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-                                                    "URI": "7465737475726C"
-                                                }
+                                        },
+                                        {
+                                            "NFToken": {
+                                                "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                                                "URI": "7465737475726C"
                                             }
-                                        ]
-                                    }
+                                        }
+                                    ]
+                                },
+                                "LedgerEntryType": "NFTokenPage",
+                                "PreviousFields": {
+                                    "NFTokens": [
+                                        {
+                                            "NFToken": {
+                                                "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+                                                "URI": "7465737475726C"
+                                            }
+                                        }
+                                    ]
                                 }
                             }
-                        ],
-                        "TransactionIndex": 0,
-                        "TransactionResult": "tesSUCCESS",
-                        "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
-                    },
-                    "hash": "C74463F49CFDCBEF3E9902672719918CDE5042DC7E7660BEBD1D1105C4B6DFF4",
-                    "ledger_index": 11,
-                    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                    "close_time_iso": "2000-01-01T00:00:00Z",
-                    "tx_json": {
-                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee": "50",
-                        "NFTokenTaxon": 123,
-                        "Sequence": 1,
-                        "SigningPubKey": "74657374",
-                        "TransactionType": "NFTokenMint",
-                        "ledger_index": 11,
-                        "ctid": "C000000B00000000",
-                        "date": 1
-                    },
-                    "validated": true
+                        }
+                    ],
+                    "TransactionIndex": 0,
+                    "TransactionResult": "tesSUCCESS",
+                    "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
                 },
-                {
-                    "meta": {
-                        "AffectedNodes": [
-                            {
-                                "DeletedNode": {
-                                    "FinalFields": {
-                                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
-                                        "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
-                                    },
-                                    "LedgerEntryType": "NFTokenOffer",
-                                    "LedgerIndex": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322"
-                                }
-                            }
-                        ],
-                        "TransactionIndex": 0,
-                        "TransactionResult": "tesSUCCESS",
-                        "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
-                    },
-                    "hash": "C85E486EE308C68D7E601FCEB4FC961BFA914C80ABBF7ECC7E6277B06692B490",
+                "hash": "C74463F49CFDCBEF3E9902672719918CDE5042DC7E7660BEBD1D1105C4B6DFF4",
+                "ledger_index": 11,
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "close_time_iso": "2000-01-01T00:00:00Z",
+                "tx_json": {
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Fee": "50",
+                    "NFTokenTaxon": 123,
+                    "Sequence": 1,
+                    "SigningPubKey": "74657374",
+                    "TransactionType": "NFTokenMint",
                     "ledger_index": 11,
-                    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                    "close_time_iso": "2000-01-01T00:00:00Z",
-                    "tx_json": {
-                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee": "50",
-                        "NFTokenBuyOffer": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
-                        "Sequence": 1,
-                        "SigningPubKey": "74657374",
-                        "TransactionType": "NFTokenAcceptOffer",
-                        "ledger_index": 11,
-                        "ctid": "C000000B00000000",
-                        "date": 2
-                    },
-                    "validated": true
+                    "ctid": "C000000B00000000",
+                    "date": 1
                 },
-                {
-                    "meta": {
-                        "AffectedNodes": [
-                            {
-                                "DeletedNode": {
-                                    "FinalFields": {
-                                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
-                                    },
-                                    "LedgerEntryType": "NFTokenOffer"
-                                }
-                            },
-                            {
-                                "DeletedNode": {
-                                    "FinalFields": {
-                                        "NFTokenID": "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
-                                    },
-                                    "LedgerEntryType": "NFTokenOffer"
-                                }
+                "validated": true
+            },
+            {
+                "meta": {
+                    "AffectedNodes": [
+                        {
+                            "DeletedNode": {
+                                "FinalFields": {
+                                    "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
+                                    "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
+                                },
+                                "LedgerEntryType": "NFTokenOffer",
+                                "LedgerIndex": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322"
                             }
-                        ],
-                        "TransactionIndex": 0,
-                        "TransactionResult": "tesSUCCESS",
-                        "nftoken_ids": [
-                            "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
-                            "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
-                        ]
-                    },
-                    "hash": "9F82743EEB30065FB9CB92C61F0F064B5859C5A590FA811FAAAD9C988E5B47DB",
-                    "ledger_index": 11,
-                    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                    "close_time_iso": "2000-01-01T00:00:00Z",
-                    "tx_json": {
-                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee": "50",
-                        "NFTokenOffers": [
-                            "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
-                            "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
-                        ],
-                        "Sequence": 1,
-                        "SigningPubKey": "74657374",
-                        "TransactionType": "NFTokenCancelOffer",
-                        "ledger_index": 11,
-                        "ctid": "C000000B00000000",
-                        "date": 3
-                    },
-                    "validated": true
+                        }
+                    ],
+                    "TransactionIndex": 0,
+                    "TransactionResult": "tesSUCCESS",
+                    "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
                 },
-                {
-                    "meta": {
-                        "AffectedNodes": [
-                            {
-                                "CreatedNode": {
-                                    "LedgerEntryType": "NFTokenOffer",
-                                    "LedgerIndex": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
-                                }
-                            }
-                        ],
-                        "TransactionIndex": 0,
-                        "TransactionResult": "tesSUCCESS",
-                        "offer_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
-                    },
-                    "hash": "ECB1837EB7C7C0AC22ECDCCE59FDD4795C70E0B9D8F4E1C9A9408BB7EC75DA5C",
+                "hash": "C85E486EE308C68D7E601FCEB4FC961BFA914C80ABBF7ECC7E6277B06692B490",
+                "ledger_index": 11,
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "close_time_iso": "2000-01-01T00:00:00Z",
+                "tx_json": {
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Fee": "50",
+                    "NFTokenBuyOffer": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
+                    "Sequence": 1,
+                    "SigningPubKey": "74657374",
+                    "TransactionType": "NFTokenAcceptOffer",
                     "ledger_index": 11,
-                    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                    "close_time_iso": "2000-01-01T00:00:00Z",
-                    "tx_json": {
-                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Amount": "123",
-                        "Fee": "50",
-                        "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
-                        "Sequence": 1,
-                        "SigningPubKey": "74657374",
-                        "TransactionType": "NFTokenCreateOffer",
-                        "ledger_index": 11,
-                        "ctid": "C000000B00000000",
-                        "date": 4
-                    },
-                    "validated": true
-                }
-            ],
-            "validated": true,
-            "marker": {
-                "ledger": 12,
-                "seq": 34
+                    "ctid": "C000000B00000000",
+                    "date": 2
+                },
+                "validated": true
+            },
+            {
+                "meta": {
+                    "AffectedNodes": [
+                        {
+                            "DeletedNode": {
+                                "FinalFields": {
+                                    "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                                },
+                                "LedgerEntryType": "NFTokenOffer"
+                            }
+                        },
+                        {
+                            "DeletedNode": {
+                                "FinalFields": {
+                                    "NFTokenID": "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
+                                },
+                                "LedgerEntryType": "NFTokenOffer"
+                            }
+                        }
+                    ],
+                    "TransactionIndex": 0,
+                    "TransactionResult": "tesSUCCESS",
+                    "nftoken_ids": [
+                        "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
+                        "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
+                    ]
+                },
+                "hash": "9F82743EEB30065FB9CB92C61F0F064B5859C5A590FA811FAAAD9C988E5B47DB",
+                "ledger_index": 11,
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "close_time_iso": "2000-01-01T00:00:00Z",
+                "tx_json": {
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Fee": "50",
+                    "NFTokenOffers": [
+                        "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA",
+                        "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
+                    ],
+                    "Sequence": 1,
+                    "SigningPubKey": "74657374",
+                    "TransactionType": "NFTokenCancelOffer",
+                    "ledger_index": 11,
+                    "ctid": "C000000B00000000",
+                    "date": 3
+                },
+                "validated": true
+            },
+            {
+                "meta": {
+                    "AffectedNodes": [
+                        {
+                            "CreatedNode": {
+                                "LedgerEntryType": "NFTokenOffer",
+                                "LedgerIndex": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                            }
+                        }
+                    ],
+                    "TransactionIndex": 0,
+                    "TransactionResult": "tesSUCCESS",
+                    "offer_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
+                },
+                "hash": "ECB1837EB7C7C0AC22ECDCCE59FDD4795C70E0B9D8F4E1C9A9408BB7EC75DA5C",
+                "ledger_index": 11,
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "close_time_iso": "2000-01-01T00:00:00Z",
+                "tx_json": {
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Amount": "123",
+                    "Fee": "50",
+                    "NFTokenID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF",
+                    "Sequence": 1,
+                    "SigningPubKey": "74657374",
+                    "TransactionType": "NFTokenCreateOffer",
+                    "ledger_index": 11,
+                    "ctid": "C000000B00000000",
+                    "date": 4
+                },
+                "validated": true
             }
-        })JSON";
+        ],
+        "validated": true,
+        "marker": {
+            "ledger": 12,
+            "seq": 34
+        }
+    })JSON";
 
     auto const transactions = genNFTTransactions(kMIN_SEQ + 1);
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -1582,12 +1582,12 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": false,
-                "marker": {{"ledger": 10, "seq": 11}}
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": false,
+                    "marker": {{"ledger": 10, "seq": 11}}
+                }})JSON",
                 kACCOUNT,
                 -1,
                 -1

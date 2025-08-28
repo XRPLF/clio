@@ -556,8 +556,8 @@ TEST_F(RPCUnsubscribeTest, Accounts)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "accounts": ["{}", "{}"]
-        }})JSON",
+                "accounts": ["{}", "{}"]
+            }})JSON",
             kACCOUNT,
             kACCOUNT2
         )
@@ -580,8 +580,8 @@ TEST_F(RPCUnsubscribeTest, AccountsProposed)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "accounts_proposed": ["{}", "{}"]
-        }})JSON",
+                "accounts_proposed": ["{}", "{}"]
+            }})JSON",
             kACCOUNT,
             kACCOUNT2
         )
@@ -605,19 +605,19 @@ TEST_F(RPCUnsubscribeTest, Books)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "books": [
-                {{
-                    "taker_pays": {{
-                        "currency": "XRP"
-                    }},
-                    "taker_gets": {{
-                        "currency": "USD",
-                        "issuer": "{}"
-                    }},
-                    "both": true
-                }}
-            ]
-        }})JSON",
+                "books": [
+                    {{
+                        "taker_pays": {{
+                            "currency": "XRP"
+                        }},
+                        "taker_gets": {{
+                            "currency": "USD",
+                            "issuer": "{}"
+                        }},
+                        "both": true
+                    }}
+                ]
+            }})JSON",
             kACCOUNT
         )
     );
@@ -641,18 +641,18 @@ TEST_F(RPCUnsubscribeTest, SingleBooks)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "books": [
-                {{
-                    "taker_pays": {{
-                        "currency": "XRP"
-                    }},
-                    "taker_gets": {{
-                        "currency": "USD",
-                        "issuer": "{}"
+                "books": [
+                    {{
+                        "taker_pays": {{
+                            "currency": "XRP"
+                        }},
+                        "taker_gets": {{
+                            "currency": "USD",
+                            "issuer": "{}"
+                        }}
                     }}
-                }}
-            ]
-        }})JSON",
+                ]
+            }})JSON",
             kACCOUNT
         )
     );

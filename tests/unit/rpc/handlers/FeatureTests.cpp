@@ -184,8 +184,8 @@ TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaIntSequence)
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
-                "ledger_index": {}
-            }})JSON",
+                    "ledger_index": {}
+                }})JSON",
                 kRANGE_MAX
             )
         );
@@ -206,8 +206,8 @@ TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaStringSequence)
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
-                "ledger_index": "{}"
-            }})JSON",
+                    "ledger_index": "{}"
+                }})JSON",
                 kRANGE_MAX
             )
         );
@@ -229,8 +229,8 @@ TEST_F(RPCFeatureHandlerTest, LedgerNotExistViaHash)
         auto const req = boost::json::parse(
             fmt::format(
                 R"JSON({{
-                "ledger_hash": "{}"
-            }})JSON",
+                    "ledger_hash": "{}"
+                }})JSON",
                 kLEDGER_HASH
             )
         );

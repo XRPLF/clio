@@ -35,12 +35,12 @@ using namespace util::config;
 struct IntervalSweepHandlerTest : SyncAsioContextTest {
 protected:
     static constexpr auto kJSON_DATA = R"JSON(
-    {
-        "dos_guard": {
-            "sweep_interval": 0
+        {
+            "dos_guard": {
+                "sweep_interval": 0
+            }
         }
-    }
-)JSON";
+    )JSON";
 
     DOSGuardStrictMock guardMock_;
 

@@ -216,10 +216,10 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaHash)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "role": "gateway",
-            "ledger_hash": "{}"
-        }})JSON",
+                "account": "{}",
+                "role": "gateway",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -245,10 +245,10 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaIntIndex)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "role": "gateway",
-            "ledger_index": {}
-        }})JSON",
+                "account": "{}",
+                "role": "gateway",
+                "ledger_index": {}
+            }})JSON",
             kACCOUNT,
             kSEQ
         )
@@ -274,10 +274,10 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "role": "gateway",
-            "ledger_index": "{}"
-        }})JSON",
+                "account": "{}",
+                "role": "gateway",
+                "ledger_index": "{}"
+            }})JSON",
             kACCOUNT,
             kSEQ
         )
@@ -303,10 +303,10 @@ TEST_F(RPCNoRippleCheckTest, AccountNotExist)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}",
-            "role": "gateway"
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}",
+                "role": "gateway"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -367,10 +367,10 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}",
-            "role": "user"
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}",
+                "role": "user"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -424,10 +424,10 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}",
-            "role": "user"
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}",
+                "role": "user"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -487,10 +487,10 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}",
-            "role": "gateway"
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}",
+                "role": "gateway"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -543,10 +543,10 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}",
-            "role": "gateway"
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}",
+                "role": "gateway"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -592,11 +592,11 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}",
-            "role": "gateway",
-            "transactions": true
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}",
+                "role": "gateway",
+                "transactions": true
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -647,11 +647,11 @@ TEST_F(RPCNoRippleCheckTest, NormalPathLimit)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}",
-            "role": "gateway",
-            "limit": 1
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}",
+                "role": "gateway",
+                "limit": 1
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -670,47 +670,47 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
     constexpr auto kTRANSACTION_SEQ = 123;
     auto const expectedOutput = fmt::format(
         R"JSON({{
-                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                "ledger_index": 30,
-                "problems": [
-                    "You should immediately set your default ripple flag",
-                    "You should clear the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                    "You should clear the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
-                ],
-                "transactions": [
-                    {{
-                        "Sequence": {},
-                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee": 1,
-                        "TransactionType": "AccountSet",
-                        "SetFlag": 8
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
+            "problems": [
+                "You should immediately set your default ripple flag",
+                "You should clear the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "You should clear the no ripple flag on your USD line to rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
+            ],
+            "transactions": [
+                {{
+                    "Sequence": {},
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Fee": 1,
+                    "TransactionType": "AccountSet",
+                    "SetFlag": 8
+                }},
+                {{
+                    "Sequence": {},
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Fee": 1,
+                    "TransactionType": "TrustSet",
+                    "LimitAmount": {{
+                        "currency": "USD",
+                        "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "value": "10"
                     }},
-                    {{
-                        "Sequence": {},
-                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee": 1,
-                        "TransactionType": "TrustSet",
-                        "LimitAmount": {{
-                            "currency": "USD",
-                            "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                            "value": "10"
-                        }},
-                        "Flags": {}
+                    "Flags": {}
+                }},
+                {{
+                    "Sequence": {},
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Fee": 1,
+                    "TransactionType": "TrustSet",
+                    "LimitAmount": {{
+                        "currency": "USD",
+                        "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "value": "10"
                     }},
-                    {{
-                        "Sequence": {},
-                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Fee": 1,
-                        "TransactionType": "TrustSet",
-                        "LimitAmount": {{
-                            "currency": "USD",
-                            "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                            "value": "10"
-                        }},
-                        "Flags": {}
-                    }}
-                ],
-                "validated": true
+                    "Flags": {}
+                }}
+            ],
+            "validated": true
         }})JSON",
         kTRANSACTION_SEQ,
         kTRANSACTION_SEQ + 1,
@@ -754,11 +754,11 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}",
-            "role": "gateway",
-            "transactions": true
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}",
+                "role": "gateway",
+                "transactions": true
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -808,11 +808,11 @@ TEST_F(RPCNoRippleCheckTest, LimitMoreThanMax)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}",
-            "role": "gateway",
-            "limit": {}
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}",
+                "role": "gateway",
+                "limit": {}
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH,
             NoRippleCheckHandler::kLIMIT_MAX + 1

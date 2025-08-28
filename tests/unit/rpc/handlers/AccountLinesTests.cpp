@@ -79,10 +79,10 @@ TEST_F(RPCAccountLinesHandlerTest, NonHexLedgerHash)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "limit": 10,
-                "ledger_hash": "xxx"
-            }})JSON",
+                    "account": "{}",
+                    "limit": 10,
+                    "ledger_hash": "xxx"
+                }})JSON",
                 kACCOUNT
             )
         );
@@ -102,10 +102,10 @@ TEST_F(RPCAccountLinesHandlerTest, NonStringLedgerHash)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "limit": 10,
-                "ledger_hash": 123
-            }})JSON",
+                    "account": "{}",
+                    "limit": 10,
+                    "ledger_hash": 123
+                }})JSON",
                 kACCOUNT
             )
         );
@@ -125,10 +125,10 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidLedgerIndexString)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "limit": 10,
-                "ledger_index": "notvalidated"
-            }})JSON",
+                    "account": "{}",
+                    "limit": 10,
+                    "ledger_index": "notvalidated"
+                }})JSON",
                 kACCOUNT
             )
         );
@@ -148,9 +148,9 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerNotString)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "marker": 9
-            }})JSON",
+                    "account": "{}",
+                    "marker": 9
+                }})JSON",
                 kACCOUNT
             )
         );
@@ -173,9 +173,9 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "marker": "123invalid"
-            }})JSON",
+                    "account": "{}",
+                    "marker": "123invalid"
+                }})JSON",
                 kACCOUNT
             )
         );
@@ -191,9 +191,9 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "marker": 401
-            }})JSON",
+                    "account": "{}",
+                    "marker": 401
+                }})JSON",
                 kACCOUNT
             )
         );
@@ -344,9 +344,9 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -371,9 +371,9 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerStringIndex)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_index": "4"
-        }})JSON",
+                "account": "{}",
+                "ledger_index": "4"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -395,9 +395,9 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIntIndex)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_index": 4
-        }})JSON",
+                "account": "{}",
+                "ledger_index": 4
+            }})JSON",
             kACCOUNT
         )
     );
@@ -422,9 +422,9 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash2)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -448,9 +448,9 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIndex2)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_index": "31"
-        }})JSON",
+                "account": "{}",
+                "ledger_index": "31"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -476,9 +476,9 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistAccount)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -528,8 +528,8 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}"
-            }})JSON",
+                    "account": "{}"
+                }})JSON",
                 kACCOUNT
             )
         );
@@ -609,9 +609,9 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "limit": 20
-            }})JSON",
+                    "account": "{}",
+                    "limit": 20
+                }})JSON",
                 kACCOUNT
             )
         );
@@ -627,9 +627,9 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "limit": 9
-            }})JSON",
+                    "account": "{}",
+                    "limit": 9
+                }})JSON",
                 kACCOUNT
             )
         );
@@ -642,9 +642,9 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "limit": 401
-            }})JSON",
+                    "account": "{}",
+                    "limit": 401
+                }})JSON",
                 kACCOUNT
             )
         );
@@ -700,10 +700,10 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": 30,
-            "peer": "{}"
-        }})JSON",
+                "account": "{}",
+                "limit": 30,
+                "peer": "{}"
+            }})JSON",
             kACCOUNT,
             kACCOUNT3
         )
@@ -739,8 +739,8 @@ TEST_F(RPCAccountLinesHandlerTest, EmptyChannel)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -831,8 +831,8 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseFieldWithDeepFreeze)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -913,8 +913,8 @@ TEST_F(RPCAccountLinesHandlerTest, FrozenTrustLineResponse)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -978,9 +978,9 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": {}
-        }})JSON",
+                "account": "{}",
+                "limit": {}
+            }})JSON",
             kACCOUNT,
             kLIMIT
         )
@@ -1035,10 +1035,10 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": {},
-            "marker": "{},{}"
-        }})JSON",
+                "account": "{}",
+                "limit": {},
+                "marker": "{},{}"
+            }})JSON",
             kACCOUNT,
             kLIMIT,
             kINDEX1,
@@ -1090,9 +1090,9 @@ TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "limit": {}
-            }})JSON",
+                    "account": "{}",
+                    "limit": {}
+                }})JSON",
                 kACCOUNT,
                 AccountLinesHandler::kLIMIT_MIN - 1
             )
@@ -1169,9 +1169,9 @@ TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "limit": {}
-            }})JSON",
+                    "account": "{}",
+                    "limit": {}
+                }})JSON",
                 kACCOUNT,
                 AccountLinesHandler::kLIMIT_MAX + 1
             )

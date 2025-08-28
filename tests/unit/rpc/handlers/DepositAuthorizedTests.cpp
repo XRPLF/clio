@@ -243,10 +243,10 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "source_account": "{}",
-                "destination_account": "{}",
-                "ledger_index": {}
-            }})JSON",
+                    "source_account": "{}",
+                    "destination_account": "{}",
+                    "ledger_index": {}
+                }})JSON",
                 kACCOUNT,
                 kACCOUNT2,
                 kRANGE_MAX
@@ -272,10 +272,10 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "source_account": "{}",
-                "destination_account": "{}",
-                "ledger_index": "{}"
-            }})JSON",
+                    "source_account": "{}",
+                    "destination_account": "{}",
+                    "ledger_index": "{}"
+                }})JSON",
                 kACCOUNT,
                 kACCOUNT2,
                 kRANGE_MAX
@@ -301,10 +301,10 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "source_account": "{}",
-                "destination_account": "{}",
-                "ledger_hash": "{}"
-            }})JSON",
+                    "source_account": "{}",
+                    "destination_account": "{}",
+                    "ledger_hash": "{}"
+                }})JSON",
                 kACCOUNT,
                 kACCOUNT2,
                 kLEDGER_HASH
@@ -333,10 +333,10 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "source_account": "{}",
-            "destination_account": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "source_account": "{}",
+                "destination_account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kACCOUNT2,
             kLEDGER_HASH
@@ -372,10 +372,10 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "source_account": "{}",
-            "destination_account": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "source_account": "{}",
+                "destination_account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kACCOUNT2,
             kLEDGER_HASH
@@ -418,10 +418,10 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "source_account": "{}",
-            "destination_account": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "source_account": "{}",
+                "destination_account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kACCOUNT,
             kLEDGER_HASH
@@ -466,10 +466,10 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "source_account": "{}",
-            "destination_account": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "source_account": "{}",
+                "destination_account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kACCOUNT2,
             kLEDGER_HASH
@@ -515,10 +515,10 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "source_account": "{}",
-            "destination_account": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "source_account": "{}",
+                "destination_account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kACCOUNT2,
             kLEDGER_HASH
@@ -564,10 +564,10 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "source_account": "{}",
-            "destination_account": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "source_account": "{}",
+                "destination_account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kACCOUNT2,
             kLEDGER_HASH
@@ -624,11 +624,11 @@ TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "source_account": "{}",
-            "destination_account": "{}",
-            "ledger_hash": "{}",
-            "credentials": ["{}"]
-        }})JSON",
+                "source_account": "{}",
+                "destination_account": "{}",
+                "ledger_hash": "{}",
+                "credentials": ["{}"]
+            }})JSON",
             kACCOUNT,
             kACCOUNT2,
             kLEDGER_HASH,
@@ -674,11 +674,11 @@ TEST_F(RPCDepositAuthorizedTest, CredentialNotAuthorizedReturnsFalse)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "source_account": "{}",
-            "destination_account": "{}",
-            "ledger_hash": "{}",
-            "credentials": ["{}"]
-        }})JSON",
+                "source_account": "{}",
+                "destination_account": "{}",
+                "ledger_hash": "{}",
+                "credentials": ["{}"]
+            }})JSON",
             kACCOUNT,
             kACCOUNT2,
             kLEDGER_HASH,
@@ -732,11 +732,11 @@ TEST_F(RPCDepositAuthorizedTest, CredentialExpiredReturnsFalse)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "source_account": "{}",
-            "destination_account": "{}",
-            "ledger_hash": "{}",
-            "credentials": ["{}"]
-        }})JSON",
+                "source_account": "{}",
+                "destination_account": "{}",
+                "ledger_hash": "{}",
+                "credentials": ["{}"]
+            }})JSON",
             kACCOUNT,
             kACCOUNT2,
             kLEDGER_HASH,
@@ -784,11 +784,11 @@ TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "source_account": "{}",
-            "destination_account": "{}",
-            "ledger_hash": "{}",
-            "credentials": ["{}", "{}"]
-        }})JSON",
+                "source_account": "{}",
+                "destination_account": "{}",
+                "ledger_hash": "{}",
+                "credentials": ["{}", "{}"]
+            }})JSON",
             kACCOUNT,
             kACCOUNT2,
             kLEDGER_HASH,
@@ -828,11 +828,11 @@ TEST_F(RPCDepositAuthorizedTest, NoElementsInCredentialsReturnsFalse)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "source_account": "{}",
-            "destination_account": "{}",
-            "ledger_hash": "{}",
-            "credentials": []
-        }})JSON",
+                "source_account": "{}",
+                "destination_account": "{}",
+                "ledger_hash": "{}",
+                "credentials": []
+            }})JSON",
             kACCOUNT,
             kACCOUNT2,
             kLEDGER_HASH
@@ -881,11 +881,11 @@ TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "source_account": "{}",
-            "destination_account": "{}",
-            "ledger_hash": "{}",
-            "credentials": [{}]
-        }})JSON",
+                "source_account": "{}",
+                "destination_account": "{}",
+                "ledger_hash": "{}",
+                "credentials": [{}]
+            }})JSON",
             kACCOUNT,
             kACCOUNT2,
             kLEDGER_HASH,
@@ -938,11 +938,11 @@ TEST_F(RPCDepositAuthorizedTest, DifferentSubjectAccountForCredentialReturnsFals
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "source_account": "{}",
-            "destination_account": "{}",
-            "ledger_hash": "{}",
-            "credentials": ["{}"]
-        }})JSON",
+                "source_account": "{}",
+                "destination_account": "{}",
+                "ledger_hash": "{}",
+                "credentials": ["{}"]
+            }})JSON",
             kACCOUNT,
             kACCOUNT2,
             kLEDGER_HASH,

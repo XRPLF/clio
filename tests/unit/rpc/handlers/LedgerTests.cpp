@@ -207,8 +207,8 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "ledger_index": {}
-            }})JSON",
+                    "ledger_index": {}
+                }})JSON",
                 kRANGE_MAX
             )
         );
@@ -230,8 +230,8 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "ledger_index": "{}"
-            }})JSON",
+                    "ledger_index": "{}"
+                }})JSON",
                 kRANGE_MAX
             )
         );
@@ -253,8 +253,8 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "ledger_hash": "{}"
-            }})JSON",
+                    "ledger_hash": "{}"
+                }})JSON",
                 kLEDGER_HASH
             )
         );
@@ -698,11 +698,11 @@ TEST_F(RPCLedgerHandlerTest, TwoRequestInARowTransactionsExpandNotBinaryV2)
         auto const req2 = json::parse(
             fmt::format(
                 R"JSON({{
-                "binary": false,
-                "expand": true,
-                "transactions": true,
-                "ledger_index": {}
-            }})JSON",
+                    "binary": false,
+                    "expand": true,
+                    "transactions": true,
+                    "ledger_index": {}
+                }})JSON",
                 kRANGE_MAX - 1
             )
         );

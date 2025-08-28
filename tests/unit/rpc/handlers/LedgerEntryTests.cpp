@@ -1590,8 +1590,8 @@ generateTestValuesForParametersTest()
         ParamTestCaseBundle{
             .testName = "OwnedCreateAccountClaimIdInvalidType",
             .testJson = R"JSON({
-                    "xchain_owned_create_account_claim_id": 123
-                    })JSON",
+                "xchain_owned_create_account_claim_id": 123
+            })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request."
         },
@@ -1936,10 +1936,10 @@ generateTestValuesForParametersTest()
             .testName = "CredentialInvalidIssuerType",
             .testJson = fmt::format(
                 R"JSON({{
-                "credential": {{
-                    "issuer": ["{}"]
-                }}
-            }})JSON",
+                    "credential": {{
+                        "issuer": ["{}"]
+                    }}
+                }})JSON",
                 kACCOUNT
             ),
             .expectedError = "malformedRequest",
@@ -1996,12 +1996,12 @@ generateTestValuesForParametersTest()
             .testName = "CredentialInvalidCredentialType",
             .testJson = fmt::format(
                 R"JSON({{
-                "credential": {{
-                    "subject": "{}",
-                    "issuer": "{}",
-                    "credential_type": 1234
-                }}
-            }})JSON",
+                    "credential": {{
+                        "subject": "{}",
+                        "issuer": "{}",
+                        "credential_type": 1234
+                    }}
+                }})JSON",
                 kACCOUNT,
                 kACCOUNT2
             ),
@@ -2012,11 +2012,11 @@ generateTestValuesForParametersTest()
             .testName = "CredentialMissingIssuerField",
             .testJson = fmt::format(
                 R"JSON({{
-                "credential": {{
-                    "subject": "{}",
-                    "credential_type": "1234"
-                }}
-            }})JSON",
+                    "credential": {{
+                        "subject": "{}",
+                        "credential_type": "1234"
+                    }}
+                }})JSON",
                 kACCOUNT,
                 kACCOUNT2
             ),
@@ -2142,9 +2142,9 @@ generateTestValuesForParametersTest()
             .testName = "SeqNotInteger",
             .testJson =
                 R"JSON({
-                 "vault": {
-                    "owner": "abcd",
-                    "seq": "notAnInteger"
+                    "vault": {
+                       "owner": "abcd",
+                       "seq": "notAnInteger"
                 }})JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request.",
@@ -2153,9 +2153,9 @@ generateTestValuesForParametersTest()
             .testName = "InvalidOwnerFormat",
             .testJson =
                 R"JSON({
-                "vault": {
-                    "owner": "abcd",
-                    "seq": 10
+                    "vault": {
+                        "owner": "abcd",
+                        "seq": 10
                 }})JSON",
             .expectedError = "malformedOwner",
             .expectedErrorMessage = "Malformed owner.",
@@ -2164,9 +2164,9 @@ generateTestValuesForParametersTest()
             .testName = "BothOwnerAndSeqInvalid",
             .testJson =
                 R"JSON({
-                "vault": {
-                    "owner": "abcd",
-                    "seq": -200
+                    "vault": {
+                        "owner": "abcd",
+                        "seq": -200
                 }})JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request.",
@@ -2324,8 +2324,8 @@ TEST_P(IndexTest, InvalidIndexUint256)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "{}": "invalid"
-            }})JSON",
+                    "{}": "invalid"
+                }})JSON",
                 index
             )
         );
@@ -2346,8 +2346,8 @@ TEST_P(IndexTest, InvalidIndexNotString)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "{}": 123
-            }})JSON",
+                    "{}": 123
+                }})JSON",
                 index
             )
         );
@@ -2375,8 +2375,8 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "account_root": "{}"
-            }})JSON",
+                    "account_root": "{}"
+                }})JSON",
                 kACCOUNT
             )
         );
@@ -2621,17 +2621,17 @@ generateTestValuesForNormalPathTest()
             .testName = "DepositPreauthByAuthCredentials",
             .testJson = fmt::format(
                 R"JSON({{
-                       "binary": true,
-                       "deposit_preauth": {{
-                           "owner": "{}",
-                           "authorized_credentials": [
-                               {{
-                                    "issuer": "{}",
-                                    "credential_type": "{}"
-                               }}
-                           ]
-                       }}
-                   }})JSON",
+                    "binary": true,
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": [
+                            {{
+                                 "issuer": "{}",
+                                 "credential_type": "{}"
+                            }}
+                        ]
+                    }}
+                }})JSON",
                 kACCOUNT,
                 kACCOUNT2,
                 kCREDENTIAL_TYPE
@@ -3198,8 +3198,8 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "payment_channel": "{}"
-            }})JSON",
+                    "payment_channel": "{}"
+                }})JSON",
                 kINDEX1
             )
         );
@@ -3244,12 +3244,12 @@ TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "binary": false,
-                "vault": {{
-                    "owner": "{}",
-                    "seq": {}
-                }}
-            }})JSON",
+                    "binary": false,
+                    "vault": {{
+                        "owner": "{}",
+                        "seq": {}
+                    }}
+                }})JSON",
                 kACCOUNT,
                 kRANGE_MAX
             )
@@ -3278,8 +3278,8 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "check": "{}"
-            }})JSON",
+                    "check": "{}"
+                }})JSON",
                 kINDEX1
             )
         );
@@ -3299,9 +3299,9 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "check": "{}",
-                "ledger_index": {}
-            }})JSON",
+                    "check": "{}",
+                    "ledger_index": {}
+                }})JSON",
                 kINDEX1,
                 kRANGE_MAX
             )
@@ -3323,9 +3323,9 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "check": "{}",
-                "ledger_index": "{}"
-            }})JSON",
+                    "check": "{}",
+                    "ledger_index": "{}"
+                }})JSON",
                 kINDEX1,
                 kRANGE_MAX
             )
@@ -3347,9 +3347,9 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "check": "{}",
-                "ledger_hash": "{}"
-            }})JSON",
+                    "check": "{}",
+                    "ledger_hash": "{}"
+                }})JSON",
                 kINDEX1,
                 kLEDGER_HASH
             )
@@ -3441,9 +3441,9 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleted)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "index": "{}",
-                "include_deleted": true
-            }})JSON",
+                    "index": "{}",
+                    "include_deleted": true
+                }})JSON",
                 kINDEX1
             )
         );
@@ -3491,9 +3491,9 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryDeleted)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "index": "{}",
-                "include_deleted": true
-            }})JSON",
+                    "index": "{}",
+                    "include_deleted": true
+                }})JSON",
                 kINDEX1
             )
         );
@@ -3521,9 +3521,9 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "index": "{}",
-                "include_deleted": true
-            }})JSON",
+                    "index": "{}",
+                    "include_deleted": true
+                }})JSON",
                 kINDEX1
             )
         );
@@ -3574,9 +3574,9 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleteFalse)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "payment_channel": "{}",
-                "include_deleted": false
-            }})JSON",
+                    "payment_channel": "{}",
+                    "include_deleted": false
+                }})JSON",
                 kINDEX1
             )
         );
@@ -3636,9 +3636,9 @@ TEST_F(RPCLedgerEntryTest, ObjectUpdateIncludeDelete)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "index": "{}",
-                "include_deleted": true
-            }})JSON",
+                    "index": "{}",
+                    "include_deleted": true
+                }})JSON",
                 kINDEX1
             )
         );
@@ -3686,9 +3686,9 @@ TEST_F(RPCLedgerEntryTest, ObjectDeletedPreviously)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "index": "{}",
-                "include_deleted": true
-            }})JSON",
+                    "index": "{}",
+                    "include_deleted": true
+                }})JSON",
                 kINDEX1
             )
         );
@@ -3714,9 +3714,9 @@ TEST_F(RPCLedgerEntryTest, ObjectSeqNotExist)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "index": "{}",
-                "include_deleted": true
-            }})JSON",
+                    "index": "{}",
+                    "include_deleted": true
+                }})JSON",
                 kINDEX1
             )
         );
@@ -3768,8 +3768,8 @@ TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "mpt_issuance": "{}"
-            }})JSON",
+                    "mpt_issuance": "{}"
+                }})JSON",
                 ripple::to_string(mptId)
             )
         );

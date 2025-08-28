@@ -55,10 +55,10 @@ TEST_F(RPCVersionHandlerTest, Default)
     boost::json::value jsonData = boost::json::parse(
         fmt::format(
             R"JSON({{
-            "api_version.min": {},
-            "api_version.max": {},
-            "api_version.default": {}
-        }})JSON",
+                "api_version.min": {},
+                "api_version.max": {},
+                "api_version.default": {}
+            }})JSON",
             kMIN_API_VERSION,
             kMAX_API_VERSION,
             kDEFAULT_API_VERSION

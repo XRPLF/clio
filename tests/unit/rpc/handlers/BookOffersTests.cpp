@@ -1433,15 +1433,15 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "ledger_index": 30,
-            "taker_gets": {{
-                "currency": "XRP"
-            }},
-            "taker_pays": {{
-                "currency": "USD",
-                "issuer": "{}"
-            }}
-        }})JSON",
+                "ledger_index": 30,
+                "taker_gets": {{
+                    "currency": "XRP"
+                }},
+                "taker_pays": {{
+                    "currency": "USD",
+                    "issuer": "{}"
+                }}
+            }})JSON",
             kACCOUNT
         )
     );
@@ -1464,15 +1464,15 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "ledger_index": "30",
-            "taker_gets": {{
-                "currency": "XRP"
-            }},
-            "taker_pays": {{
-                "currency": "USD",
-                "issuer": "{}"
-            }}
-        }})JSON",
+                "ledger_index": "30",
+                "taker_gets": {{
+                    "currency": "XRP"
+                }},
+                "taker_pays": {{
+                    "currency": "USD",
+                    "issuer": "{}"
+                }}
+            }})JSON",
             kACCOUNT
         )
     );
@@ -1496,15 +1496,15 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "ledger_hash": "{}",
-            "taker_gets": {{
-                "currency": "XRP"
-            }},
-            "taker_pays": {{
-                "currency": "USD",
-                "issuer": "{}"
-            }}
-        }})JSON",
+                "ledger_hash": "{}",
+                "taker_gets": {{
+                    "currency": "XRP"
+                }},
+                "taker_pays": {{
+                    "currency": "USD",
+                    "issuer": "{}"
+                }}
+            }})JSON",
             kLEDGER_HASH,
             kACCOUNT
         )
@@ -1573,15 +1573,15 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "taker_gets": {{
-                "currency": "XRP"
-            }},
-            "taker_pays": {{
-                "currency": "USD",
-                "issuer": "{}"
-            }},
-            "limit": 5
-        }})JSON",
+                "taker_gets": {{
+                    "currency": "XRP"
+                }},
+                "taker_pays": {{
+                    "currency": "USD",
+                    "issuer": "{}"
+                }},
+                "limit": 5
+            }})JSON",
             kACCOUNT
         )
     );
@@ -1647,15 +1647,15 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "taker_gets": {{
-                "currency": "XRP"
-            }},
-            "taker_pays": {{
-                "currency": "USD",
-                "issuer": "{}"
-            }},
-            "limit": {}
-        }})JSON",
+                "taker_gets": {{
+                    "currency": "XRP"
+                }},
+                "taker_pays": {{
+                    "currency": "USD",
+                    "issuer": "{}"
+                }},
+                "limit": {}
+            }})JSON",
             kACCOUNT,
             BookOffersHandler::kLIMIT_MAX + 1
         )

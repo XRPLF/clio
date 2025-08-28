@@ -179,9 +179,9 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaHash)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -207,9 +207,9 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaStringIndex)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_index": "{}"
-        }})JSON",
+                "account": "{}",
+                "ledger_index": "{}"
+            }})JSON",
             kACCOUNT,
             kSEQ
         )
@@ -235,9 +235,9 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaIntIndex)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_index": {}
-        }})JSON",
+                "account": "{}",
+                "ledger_index": {}
+            }})JSON",
             kACCOUNT,
             kSEQ
         )
@@ -264,8 +264,8 @@ TEST_F(RPCAccountOffersHandlerTest, AccountNotFound)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -341,8 +341,8 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -391,9 +391,9 @@ TEST_F(RPCAccountOffersHandlerTest, Limit)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": 10
-        }})JSON",
+                "account": "{}",
+                "limit": 10
+            }})JSON",
             kACCOUNT
         )
     );
@@ -446,9 +446,9 @@ TEST_F(RPCAccountOffersHandlerTest, Marker)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "marker": "{},{}"
-        }})JSON",
+                "account": "{}",
+                "marker": "{},{}"
+            }})JSON",
             kACCOUNT,
             kINDEX1,
             startPage
@@ -484,9 +484,9 @@ TEST_F(RPCAccountOffersHandlerTest, MarkerNotExists)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "marker": "{},{}"
-        }})JSON",
+                "account": "{}",
+                "marker": "{},{}"
+            }})JSON",
             kACCOUNT,
             kINDEX1,
             startPage
@@ -544,9 +544,9 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": {}
-        }})JSON",
+                "account": "{}",
+                "limit": {}
+            }})JSON",
             kACCOUNT,
             AccountOffersHandler::kLIMIT_MIN - 1
         )
@@ -601,9 +601,9 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": {}
-        }})JSON",
+                "account": "{}",
+                "limit": {}
+            }})JSON",
             kACCOUNT,
             AccountOffersHandler::kLIMIT_MAX + 1
         )
