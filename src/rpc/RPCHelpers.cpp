@@ -33,6 +33,7 @@
 #include "web/Context.hpp"
 
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/format/format_fwd.hpp>
 #include <boost/format/free_funcs.hpp>
@@ -355,7 +356,7 @@ static bool
 canHaveMPTIssuanceID(boost::json::object const& txnJson, std::shared_ptr<ripple::TxMeta const> const& meta)
 {
     if (txnJson.at(JS(TransactionType)).is_string() and
-        boost::iequals(txnJson.at(JS(TransactionType)).as_string(), JS(MPTokenIssuanceCreate)))
+        not boost::iequals(txnJson.at(JS(TransactionType)).as_string(), JS(MPTokenIssuanceCreate)))
         return false;
 
     if (meta->getResultTER() != ripple::tesSUCCESS)
