@@ -69,9 +69,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitNotInt)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "limit": "xxx"
-            }})JSON",
+                    "nft_id": "{}",
+                    "limit": "xxx"
+                }})JSON",
                 kNFT_ID
             )
         );
@@ -90,9 +90,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitNegative)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "limit": -1
-            }})JSON",
+                    "nft_id": "{}",
+                    "limit": -1
+                }})JSON",
                 kNFT_ID
             )
         );
@@ -111,9 +111,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitZero)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "limit": 0
-            }})JSON",
+                    "nft_id": "{}",
+                    "limit": 0
+                }})JSON",
                 kNFT_ID
             )
         );
@@ -132,9 +132,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonHexLedgerHash)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_hash": "xxx"
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_hash": "xxx"
+                }})JSON",
                 kNFT_ID
             )
         );
@@ -154,9 +154,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonStringLedgerHash)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_hash": 123
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_hash": 123
+                }})JSON",
                 kNFT_ID
             )
         );
@@ -176,9 +176,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidLedgerIndexString)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index": "notvalidated"
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index": "notvalidated"
+                }})JSON",
                 kNFT_ID
             )
         );
@@ -235,9 +235,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "nft_id": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kNFT_ID,
             kLEDGER_HASH
         )
@@ -262,9 +262,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}",
-            "ledger_index": "4"
-        }})JSON",
+                "nft_id": "{}",
+                "ledger_index": "4"
+            }})JSON",
             kNFT_ID
         )
     );
@@ -289,9 +289,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash2)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "nft_id": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kNFT_ID,
             kLEDGER_HASH
         )
@@ -315,9 +315,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}",
-            "ledger_index": "31"
-        }})JSON",
+                "nft_id": "{}",
+                "ledger_index": "31"
+            }})JSON",
             kNFT_ID
         )
     );
@@ -342,9 +342,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, NoNFT)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "nft_id": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kNFT_ID,
             kLEDGER_HASH
         )
@@ -366,9 +366,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, MarkerNotString)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "marker": 9
-            }})JSON",
+                    "nft_id": "{}",
+                    "marker": 9
+                }})JSON",
                 kNFT_ID
             )
         );
@@ -390,9 +390,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidMarker)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "marker": "123invalid"
-            }})JSON",
+                    "nft_id": "{}",
+                    "marker": "123invalid"
+                }})JSON",
                 kNFT_ID
             )
         );
@@ -408,9 +408,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidMarker)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "marker": 250
-            }})JSON",
+                    "nft_id": "{}",
+                    "marker": 250
+                }})JSON",
                 kNFT_ID
             )
         );
@@ -467,8 +467,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, DefaultParameters)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}"
-        }})JSON",
+                "nft_id": "{}"
+            }})JSON",
             kNFT_ID
         )
     );
@@ -509,9 +509,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}",
-            "limit": 50
-        }})JSON",
+                "nft_id": "{}",
+                "limit": 50
+            }})JSON",
             kNFT_ID
         )
     );
@@ -569,10 +569,10 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}",
-            "marker": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353",
-            "limit": 50
-        }})JSON",
+                "nft_id": "{}",
+                "marker": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353",
+                "limit": 50
+            }})JSON",
             kNFT_ID
         )
     );
@@ -634,10 +634,10 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "marker": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353",
-                "limit": 50
-            }})JSON",
+                    "nft_id": "{}",
+                    "marker": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353",
+                    "limit": 50
+                }})JSON",
                 kNFT_ID
             )
         );
@@ -655,9 +655,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "limit": 49
-            }})JSON",
+                    "nft_id": "{}",
+                    "limit": 49
+                }})JSON",
                 kNFT_ID
             )
         );
@@ -670,9 +670,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "limit": 501
-            }})JSON",
+                    "nft_id": "{}",
+                    "limit": 501
+                }})JSON",
                 kNFT_ID
             )
         );
@@ -709,9 +709,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}",
-            "limit": {}
-        }})JSON",
+                "nft_id": "{}",
+                "limit": {}
+            }})JSON",
             kNFT_ID,
             NFTSellOffersHandler::kLIMIT_MIN - 1
         )
@@ -754,9 +754,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitMoreThanMax)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}",
-            "limit": {}
-        }})JSON",
+                "nft_id": "{}",
+                "limit": {}
+            }})JSON",
             kNFT_ID,
             NFTSellOffersHandler::kLIMIT_MAX + 1
         )

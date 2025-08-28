@@ -207,8 +207,8 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "ledger_index": {}
-            }})JSON",
+                    "ledger_index": {}
+                }})JSON",
                 kRANGE_MAX
             )
         );
@@ -230,8 +230,8 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "ledger_index": "{}"
-            }})JSON",
+                    "ledger_index": "{}"
+                }})JSON",
                 kRANGE_MAX
             )
         );
@@ -253,8 +253,8 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
         auto const req = json::parse(
             fmt::format(
                 R"JSON({{
-                "ledger_hash": "{}"
-            }})JSON",
+                    "ledger_hash": "{}"
+                }})JSON",
                 kLEDGER_HASH
             )
         );
@@ -601,8 +601,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
                         "hash": "70436A9332F7CD928FAEC1A41269A677739D8B11F108CE23AE23CBF0C9113F8C",
                         "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                         "ledger_index": 30,
-                        "tx_json":
-                        {
+                        "tx_json": {
                             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                             "DeliverMax": "100",
                             "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
@@ -614,10 +613,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
                         "meta": {
                             "AffectedNodes": [
                                 {
-                                    "ModifiedNode":
-                                    {
-                                        "FinalFields":
-                                        {
+                                    "ModifiedNode": {
+                                        "FinalFields": {
                                             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                             "Balance": "110"
                                         },
@@ -625,10 +622,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
                                     }
                                 },
                                 {
-                                    "ModifiedNode":
-                                    {
-                                        "FinalFields":
-                                        {
+                                    "ModifiedNode": {
+                                        "FinalFields": {
                                             "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                                             "Balance": "30"
                                         },
@@ -703,11 +698,11 @@ TEST_F(RPCLedgerHandlerTest, TwoRequestInARowTransactionsExpandNotBinaryV2)
         auto const req2 = json::parse(
             fmt::format(
                 R"JSON({{
-                "binary": false,
-                "expand": true,
-                "transactions": true,
-                "ledger_index": {}
-            }})JSON",
+                    "binary": false,
+                    "expand": true,
+                    "transactions": true,
+                    "ledger_index": {}
+                }})JSON",
                 kRANGE_MAX - 1
             )
         );

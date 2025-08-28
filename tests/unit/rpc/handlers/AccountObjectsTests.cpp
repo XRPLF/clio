@@ -226,9 +226,9 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_index": 30
-        }})JSON",
+                "account": "{}",
+                "ledger_index": 30
+            }})JSON",
             kACCOUNT
         )
     );
@@ -250,9 +250,9 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_index": "30"
-        }})JSON",
+                "account": "{}",
+                "ledger_index": "30"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -275,9 +275,9 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -302,8 +302,8 @@ TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -320,36 +320,36 @@ TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
 TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
 {
     static constexpr auto kEXPECTED_OUT = R"JSON({
-                                            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                                            "ledger_index": 30,
-                                            "validated": true,
-                                            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                            "limit": 200,
-                                            "account_objects": [
-                                                {
-                                                    "Balance": {
-                                                        "currency": "USD",
-                                                        "issuer": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-                                                        "value": "100"
-                                                    },
-                                                    "Flags": 0,
-                                                    "HighLimit": {
-                                                        "currency": "USD",
-                                                        "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                                        "value": "20"
-                                                    },
-                                                    "LedgerEntryType": "RippleState",
-                                                    "LowLimit": {
-                                                        "currency": "USD",
-                                                        "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                                        "value": "10"
-                                                    },
-                                                    "PreviousTxnID": "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
-                                                    "PreviousTxnLgrSeq": 123,
-                                                    "index": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
-                                                }
-                                            ]
-                                        })JSON";
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index": 30,
+        "validated": true,
+        "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+        "limit": 200,
+        "account_objects": [
+            {
+                "Balance": {
+                    "currency": "USD",
+                    "issuer": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
+                    "value": "100"
+                },
+                "Flags": 0,
+                "HighLimit": {
+                    "currency": "USD",
+                    "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                    "value": "20"
+                },
+                "LedgerEntryType": "RippleState",
+                "LowLimit": {
+                    "currency": "USD",
+                    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "value": "10"
+                },
+                "PreviousTxnID": "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
+                "PreviousTxnLgrSeq": 123,
+                "index": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
+            }
+        ]
+    })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
@@ -376,8 +376,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -422,9 +422,9 @@ TEST_F(RPCAccountObjectsHandlerTest, Limit)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": {}
-        }})JSON",
+                "account": "{}",
+                "limit": {}
+            }})JSON",
             kACCOUNT,
             kLIMIT
         )
@@ -468,9 +468,9 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "marker": "{},{}"
-        }})JSON",
+                "account": "{}",
+                "marker": "{},{}"
+            }})JSON",
             kACCOUNT,
             kINDEX1,
             kPAGE
@@ -524,9 +524,9 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": {}
-        }})JSON",
+                "account": "{}",
+                "limit": {}
+            }})JSON",
             kACCOUNT,
             2 * kCOUNT
         )
@@ -580,9 +580,9 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "type": "offer"
-        }})JSON",
+                "account": "{}",
+                "type": "offer"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -626,9 +626,9 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterAmmType)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "type": "amm"
-        }})JSON",
+                "account": "{}",
+                "type": "amm"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -681,9 +681,9 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "type": "check"
-        }})JSON",
+                "account": "{}",
+                "type": "check"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -738,9 +738,9 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "deletion_blockers_only": true
-        }})JSON",
+                "account": "{}",
+                "deletion_blockers_only": true
+            }})JSON",
             kACCOUNT
         )
     );
@@ -783,10 +783,10 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "deletion_blockers_only": true,
-            "type": "payment_channel"
-        }})JSON",
+                "account": "{}",
+                "deletion_blockers_only": true,
+                "type": "payment_channel"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -847,9 +847,9 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "deletion_blockers_only": true
-        }})JSON",
+                "account": "{}",
+                "deletion_blockers_only": true
+            }})JSON",
             kACCOUNT
         )
     );
@@ -909,10 +909,10 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleT
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "deletion_blockers_only": true,
-            "type": "offer"
-        }})JSON",
+                "account": "{}",
+                "deletion_blockers_only": true,
+                "type": "offer"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -928,67 +928,67 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleT
 TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
 {
     static constexpr auto kEXPECTED_OUT = R"JSON({
-                                            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                                            "ledger_index": 30,
-                                            "validated": true,
-                                            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                            "limit": 200,
-                                            "account_objects": [
-                                                {
-                                                    "Flags": 0,
-                                                    "LedgerEntryType": "NFTokenPage",
-                                                    "NFTokens": [
-                                                        {
-                                                            "NFToken": {
-                                                                "NFTokenID": "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
-                                                                "URI": "7777772E6F6B2E636F6D"
-                                                            }
-                                                        }
-                                                    ],
-                                                    "PreviousPageMin": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC",
-                                                    "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
-                                                    "PreviousTxnLgrSeq": 0,
-                                                    "index": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9FFFFFFFFFFFFFFFFFFFFFFFF"
-                                                },
-                                                {
-                                                    "Flags": 0,
-                                                    "LedgerEntryType": "NFTokenPage",
-                                                    "NFTokens": [
-                                                        {
-                                                            "NFToken": {
-                                                                "NFTokenID": "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
-                                                                "URI": "7777772E6F6B2E636F6D"
-                                                            }
-                                                        }
-                                                    ],
-                                                    "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
-                                                    "PreviousTxnLgrSeq": 0,
-                                                    "index": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC"
-                                                },
-                                                {
-                                                    "Balance": {
-                                                        "currency": "USD",
-                                                        "issuer": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-                                                        "value": "100"
-                                                    },
-                                                    "Flags": 0,
-                                                    "HighLimit": {
-                                                        "currency": "USD",
-                                                        "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                                        "value": "20"
-                                                    },
-                                                    "LedgerEntryType": "RippleState",
-                                                    "LowLimit": {
-                                                        "currency": "USD",
-                                                        "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                                        "value": "10"
-                                                    },
-                                                    "PreviousTxnID": "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
-                                                    "PreviousTxnLgrSeq": 123,
-                                                    "index": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
-                                                }
-                                            ]
-                                        })JSON";
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index": 30,
+        "validated": true,
+        "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+        "limit": 200,
+        "account_objects": [
+            {
+                "Flags": 0,
+                "LedgerEntryType": "NFTokenPage",
+                "NFTokens": [
+                    {
+                        "NFToken": {
+                            "NFTokenID": "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
+                            "URI": "7777772E6F6B2E636F6D"
+                        }
+                    }
+                ],
+                "PreviousPageMin": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC",
+                "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                "PreviousTxnLgrSeq": 0,
+                "index": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9FFFFFFFFFFFFFFFFFFFFFFFF"
+            },
+            {
+                "Flags": 0,
+                "LedgerEntryType": "NFTokenPage",
+                "NFTokens": [
+                    {
+                        "NFToken": {
+                            "NFTokenID": "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
+                            "URI": "7777772E6F6B2E636F6D"
+                        }
+                    }
+                ],
+                "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                "PreviousTxnLgrSeq": 0,
+                "index": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC"
+            },
+            {
+                "Balance": {
+                    "currency": "USD",
+                    "issuer": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
+                    "value": "100"
+                },
+                "Flags": 0,
+                "HighLimit": {
+                    "currency": "USD",
+                    "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                    "value": "20"
+                },
+                "LedgerEntryType": "RippleState",
+                "LowLimit": {
+                    "currency": "USD",
+                    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "value": "10"
+                },
+                "PreviousTxnID": "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
+                "PreviousTxnLgrSeq": 123,
+                "index": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"
+            }
+        ]
+    })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
@@ -1025,8 +1025,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -1066,9 +1066,9 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": {}
-        }})JSON",
+                "account": "{}",
+                "limit": {}
+            }})JSON",
             kACCOUNT,
             10
         )
@@ -1117,9 +1117,9 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": {}
-        }})JSON",
+                "account": "{}",
+                "limit": {}
+            }})JSON",
             kACCOUNT,
             11
         )
@@ -1197,9 +1197,9 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "marker": "{},{}"
-        }})JSON",
+                "account": "{}",
+                "marker": "{},{}"
+            }})JSON",
             kACCOUNT,
             ripple::strHex(marker),
             std::numeric_limits<uint32_t>::max()
@@ -1255,9 +1255,9 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "marker": "{},{}"
-        }})JSON",
+                "account": "{}",
+                "marker": "{},{}"
+            }})JSON",
             kACCOUNT,
             ripple::strHex(ripple::uint256{beast::zero}),
             std::numeric_limits<uint32_t>::max()
@@ -1285,9 +1285,9 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "marker": "{},{}"
-        }})JSON",
+                "account": "{}",
+                "marker": "{},{}"
+            }})JSON",
             kACCOUNT,
             kINDEX1,
             std::numeric_limits<std::uint32_t>::max()
@@ -1320,9 +1320,9 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "marker": "{},{}"
-        }})JSON",
+                "account": "{}",
+                "marker": "{},{}"
+            }})JSON",
             kACCOUNT,
             ripple::strHex(accountNftMax),
             std::numeric_limits<std::uint32_t>::max()
@@ -1396,10 +1396,10 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "marker": "{},{}",
-            "limit": 12
-        }})JSON",
+                "account": "{}",
+                "marker": "{},{}",
+                "limit": 12
+            }})JSON",
             kACCOUNT,
             ripple::strHex(marker),
             std::numeric_limits<uint32_t>::max()
@@ -1419,45 +1419,45 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
 TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
 {
     static constexpr auto kEXPECTED_OUT = R"JSON({
-                                            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                                            "ledger_index": 30,
-                                            "validated": true,
-                                            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                            "limit": 200,
-                                            "account_objects": [
-                                                {
-                                                    "Flags": 0,
-                                                    "LedgerEntryType": "NFTokenPage",
-                                                    "NFTokens": [
-                                                        {
-                                                            "NFToken": {
-                                                                "NFTokenID": "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
-                                                                "URI": "7777772E6F6B2E636F6D"
-                                                            }
-                                                        }
-                                                    ],
-                                                    "PreviousPageMin": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC",
-                                                    "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
-                                                    "PreviousTxnLgrSeq": 0,
-                                                    "index": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9FFFFFFFFFFFFFFFFFFFFFFFF"
-                                                },
-                                                {
-                                                    "Flags": 0,
-                                                    "LedgerEntryType": "NFTokenPage",
-                                                    "NFTokens": [
-                                                        {
-                                                            "NFToken": {
-                                                                "NFTokenID": "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
-                                                                "URI": "7777772E6F6B2E636F6D"
-                                                            }
-                                                        }
-                                                    ],
-                                                    "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
-                                                    "PreviousTxnLgrSeq": 0,
-                                                    "index": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC"
-                                                }
-                                            ]
-                                        })JSON";
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index": 30,
+        "validated": true,
+        "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+        "limit": 200,
+        "account_objects": [
+            {
+                "Flags": 0,
+                "LedgerEntryType": "NFTokenPage",
+                "NFTokens": [
+                    {
+                        "NFToken": {
+                            "NFTokenID": "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
+                            "URI": "7777772E6F6B2E636F6D"
+                        }
+                    }
+                ],
+                "PreviousPageMin": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC",
+                "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                "PreviousTxnLgrSeq": 0,
+                "index": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9FFFFFFFFFFFFFFFFFFFFFFFF"
+            },
+            {
+                "Flags": 0,
+                "LedgerEntryType": "NFTokenPage",
+                "NFTokens": [
+                    {
+                        "NFToken": {
+                            "NFTokenID": "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA",
+                            "URI": "7777772E6F6B2E636F6D"
+                        }
+                    }
+                ],
+                "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                "PreviousTxnLgrSeq": 0,
+                "index": "4B4E9C06F24296074F7BC48F92A97916C6DC5EA9659B25014D08E1BC983515BC"
+            }
+        ]
+    })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
@@ -1494,9 +1494,9 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "type": "nft_page"
-        }})JSON",
+                "account": "{}",
+                "type": "nft_page"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -1537,10 +1537,10 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": {},
-            "marker": "{},{}"
-        }})JSON",
+                "account": "{}",
+                "limit": {},
+                "marker": "{},{}"
+            }})JSON",
             kACCOUNT,
             kLIMIT,
             ripple::strHex(ripple::uint256{beast::zero}),
@@ -1619,9 +1619,9 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": {}
-        }})JSON",
+                "account": "{}",
+                "limit": {}
+            }})JSON",
             kACCOUNT,
             AccountObjectsHandler::kLIMIT_MIN - 1
         )
@@ -1697,9 +1697,9 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": {}
-        }})JSON",
+                "account": "{}",
+                "limit": {}
+            }})JSON",
             kACCOUNT,
             AccountObjectsHandler::kLIMIT_MAX + 1
         )
@@ -1741,9 +1741,9 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTIssuanceType)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "type": "mpt_issuance"
-        }})JSON",
+                "account": "{}",
+                "type": "mpt_issuance"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -1792,9 +1792,9 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTokenType)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "type": "mptoken"
-        }})JSON",
+                "account": "{}",
+                "type": "mptoken"
+            }})JSON",
             kACCOUNT
         )
     );

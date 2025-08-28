@@ -21,9 +21,13 @@
 
 #include "cluster/ClioNode.hpp"
 #include "data/BackendInterface.hpp"
+#include "util/Assert.hpp"
 #include "util/Spawn.hpp"
 #include "util/log/Logger.hpp"
 
+#include <boost/asio/bind_cancellation_slot.hpp>
+#include <boost/asio/cancellation_type.hpp>
+#include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/json/parse.hpp>
@@ -36,10 +40,15 @@
 
 #include <chrono>
 #include <ctime>
+#include <latch>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
+namespace {
+constexpr auto kTOTAL_WORKERS = 2uz;  // 1 reading and 1 writing worker (coroutines)
+}  // namespace
 
 namespace cluster {
 
@@ -51,6 +60,7 @@ ClusterCommunicationService::ClusterCommunicationService(
     : backend_(std::move(backend))
     , readInterval_(readInterval)
     , writeInterval_(writeInterval)
+    , finishedCountdown_(kTOTAL_WORKERS)
     , selfData_{ClioNode{
           .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator{}()),
           .updateTime = std::chrono::system_clock::time_point{}
@@ -63,22 +73,42 @@ ClusterCommunicationService::ClusterCommunicationService(
 void
 ClusterCommunicationService::run()
 {
+    ASSERT(not running_ and not stopped_, "Can only be ran once");
+    running_ = true;
+
     util::spawn(strand_, [this](boost::asio::yield_context yield) {
         boost::asio::steady_timer timer(yield.get_executor());
-        while (true) {
+        boost::system::error_code ec;
+
+        while (running_) {
             timer.expires_after(readInterval_);
-            timer.async_wait(yield);
+            auto token = cancelSignal_.slot();
+            timer.async_wait(boost::asio::bind_cancellation_slot(token, yield[ec]));
+
+            if (ec == boost::asio::error::operation_aborted or not running_)
+                break;
+
             doRead(yield);
         }
+
+        finishedCountdown_.count_down(1);
     });
 
     util::spawn(strand_, [this](boost::asio::yield_context yield) {
         boost::asio::steady_timer timer(yield.get_executor());
-        while (true) {
+        boost::system::error_code ec;
+
+        while (running_) {
             doWrite();
             timer.expires_after(writeInterval_);
-            timer.async_wait(yield);
+            auto token = cancelSignal_.slot();
+            timer.async_wait(boost::asio::bind_cancellation_slot(token, yield[ec]));
+
+            if (ec == boost::asio::error::operation_aborted or not running_)
+                break;
         }
+
+        finishedCountdown_.count_down(1);
     });
 }
 
@@ -93,9 +123,14 @@ ClusterCommunicationService::stop()
     if (stopped_)
         return;
 
-    ctx_.stop();
-    ctx_.join();
     stopped_ = true;
+
+    // for ASAN to see through concurrency correctly we need to exit all coroutines before joining the ctx
+    running_ = false;
+    cancelSignal_.emit(boost::asio::cancellation_type::all);
+    finishedCountdown_.wait();
+
+    ctx_.join();
 }
 
 std::shared_ptr<boost::uuids::uuid>

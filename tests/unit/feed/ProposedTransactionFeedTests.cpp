@@ -41,8 +41,7 @@ constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr auto kACCOUNT3 = "r92yNeoiCdwULRbjh6cUBEbD71iHcqe1hE";
 constexpr auto kDUMMY_TRANSACTION =
     R"JSON({
-        "transaction":
-        {
+        "transaction": {
             "Account": "rh1HPuRVsYYvThxG2Bs1MfjmrVC73S16Fb",
             "Amount": "40000000",
             "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
