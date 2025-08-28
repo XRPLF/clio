@@ -912,11 +912,9 @@ generateTestValuesForParametersTest()
             .testName = "EmptyAMMAssetJson",
             .testJson = fmt::format(
                 R"JSON({{
-                    "amm":
-                    {{
+                    "amm": {{
                         "asset": {{}},
-                        "asset2":
-                        {{
+                        "asset2": {{
                             "currency": "USD",
                             "issuer": "{}"
                         }}
@@ -932,11 +930,9 @@ generateTestValuesForParametersTest()
             .testName = "EmptyAMMAsset2Json",
             .testJson = fmt::format(
                 R"JSON({{
-                    "amm":
-                    {{
+                    "amm": {{
                         "asset2": {{}},
-                        "asset":
-                        {{
+                        "asset": {{
                             "currency": "USD",
                             "issuer": "{}"
                         }}
@@ -952,10 +948,8 @@ generateTestValuesForParametersTest()
             .testName = "MissingAMMAsset2Json",
             .testJson = fmt::format(
                 R"JSON({{
-                    "amm":
-                    {{
-                        "asset":
-                        {{
+                    "amm": {{
+                        "asset": {{
                             "currency": "USD",
                             "issuer": "{}"
                         }}
@@ -971,10 +965,8 @@ generateTestValuesForParametersTest()
             .testName = "MissingAMMAssetJson",
             .testJson = fmt::format(
                 R"JSON({{
-                    "amm":
-                    {{
-                        "asset2":
-                        {{
+                    "amm": {{
+                        "asset2": {{
                             "currency": "USD",
                             "issuer": "{}"
                         }}
@@ -990,11 +982,9 @@ generateTestValuesForParametersTest()
             .testName = "AMMAssetNotJson",
             .testJson = fmt::format(
                 R"JSON({{
-                    "amm":
-                    {{
+                    "amm": {{
                         "asset": "invalid",
-                        "asset2":
-                        {{
+                        "asset2": {{
                             "currency": "USD",
                             "issuer": "{}"
                         }}
@@ -1010,11 +1000,9 @@ generateTestValuesForParametersTest()
             .testName = "AMMAsset2NotJson",
             .testJson = fmt::format(
                 R"JSON({{
-                    "amm":
-                    {{
+                    "amm": {{
                         "asset2": "invalid",
-                        "asset":
-                        {{
+                        "asset": {{
                             "currency": "USD",
                             "issuer": "{}"
                         }}
@@ -1030,14 +1018,11 @@ generateTestValuesForParametersTest()
             .testName = "WrongAMMAssetCurrency",
             .testJson = fmt::format(
                 R"JSON({{
-                    "amm":
-                    {{
-                        "asset2":
-                        {{
+                    "amm": {{
+                        "asset2": {{
                             "currency": "XRP"
                         }},
-                        "asset":
-                        {{
+                        "asset": {{
                             "currency": "USD2",
                             "issuer": "{}"
                         }}
@@ -1053,14 +1038,11 @@ generateTestValuesForParametersTest()
             .testName = "WrongAMMAssetIssuer",
             .testJson = fmt::format(
                 R"JSON({{
-                    "amm":
-                    {{
-                        "asset2":
-                        {{
+                    "amm": {{
+                        "asset2": {{
                             "currency": "XRP"
                         }},
-                        "asset":
-                        {{
+                        "asset": {{
                             "currency": "USD",
                             "issuer": "aa{}"
                         }}
@@ -1076,14 +1058,11 @@ generateTestValuesForParametersTest()
             .testName = "MissingAMMAssetIssuerForNonXRP",
             .testJson = fmt::format(
                 R"JSON({{
-                    "amm":
-                    {{
-                        "asset2":
-                        {{
+                    "amm": {{
+                        "asset2": {{
                             "currency": "JPY"
                         }},
-                        "asset":
-                        {{
+                        "asset": {{
                             "currency": "USD",
                             "issuer": "{}"
                         }}
@@ -1099,15 +1078,12 @@ generateTestValuesForParametersTest()
             .testName = "AMMAssetHasIssuerForXRP",
             .testJson = fmt::format(
                 R"JSON({{
-                    "amm":
-                    {{
-                        "asset2":
-                        {{
+                    "amm": {{
+                        "asset2": {{
                             "currency": "XRP",
                             "issuer": "{}"
                         }},
-                        "asset":
-                        {{
+                        "asset": {{
                             "currency": "USD",
                             "issuer": "{}"
                         }}
@@ -1124,14 +1100,11 @@ generateTestValuesForParametersTest()
             .testName = "MissingAMMAssetCurrency",
             .testJson = fmt::format(
                 R"JSON({{
-                    "amm":
-                    {{
-                        "asset2":
-                        {{
+                    "amm": {{
+                        "asset2": {{
                             "currency": "XRP"
                         }},
-                        "asset":
-                        {{
+                        "asset": {{
                             "issuer": "{}"
                         }}
                     }}
@@ -1145,16 +1118,13 @@ generateTestValuesForParametersTest()
             .testName = "BridgeMissingBridgeAccount",
             .testJson = fmt::format(
                 R"JSON({{
-                    "bridge":
-                    {{
+                    "bridge": {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "{}",
                             "issuer": "{}"
                         }}
@@ -1173,16 +1143,13 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "bridge_account": "{}",
-                    "bridge":
-                    {{
+                    "bridge": {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": {},
                             "issuer": "{}"
                         }}
@@ -1202,16 +1169,13 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "bridge_account": "{}",
-                    "bridge":
-                    {{
+                    "bridge": {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "{}",
                             "issuer": {}
                         }}
@@ -1231,12 +1195,10 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "bridge_account": "{}",
-                    "bridge":
-                    {{
+                    "bridge": {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
                         "IssuingChainIssue": 1
@@ -1254,16 +1216,13 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "bridge_account": "abcd",
-                    "bridge":
-                    {{
+                    "bridge": {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "{}",
                             "issuer": "{}"
                         }}
@@ -1282,16 +1241,13 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "bridge_account": "{}",
-                    "bridge":
-                    {{
+                    "bridge": {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "abcd",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "{}",
                             "issuer": "{}"
                         }}
@@ -1310,16 +1266,13 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "bridge_account": "{}",
-                    "bridge":
-                    {{
+                    "bridge": {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "{}",
                             "issuer": "invalid"
                         }}
@@ -1338,16 +1291,13 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "bridge_account": "{}",
-                    "bridge":
-                    {{
+                    "bridge": {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "JPJPJP",
                             "issuer": "{}"
                         }}
@@ -1366,17 +1316,14 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "bridge_account": "{}",
-                    "bridge":
-                    {{
+                    "bridge": {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP",
                             "issuer": "{}"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "JPY",
                             "issuer": "{}"
                         }}
@@ -1396,16 +1343,13 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "bridge_account": "{}",
-                    "bridge":
-                    {{
+                    "bridge": {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "JPY"
                         }}
                     }}
@@ -1422,16 +1366,13 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "bridge_account": "{}",
-                    "bridge":
-                    {{
+                    "bridge": {{
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP",
                             "issuer": "{}"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "JPY",
                             "issuer": "{}"
                         }}
@@ -1450,15 +1391,12 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "bridge_account": "{}",
-                    "bridge":
-                    {{
+                    "bridge": {{
                         "LockingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "JPY",
                             "issuer": "{}"
                         }}
@@ -1476,12 +1414,10 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "bridge_account": "{}",
-                    "bridge":
-                    {{
+                    "bridge": {{
                         "IssuingChainDoor": "{}",
                         "LockingChainDoor": "{}",
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "JPY",
                             "issuer": "{}"
                         }}
@@ -1500,12 +1436,10 @@ generateTestValuesForParametersTest()
             .testJson = fmt::format(
                 R"JSON({{
                     "bridge_account": "{}",
-                    "bridge":
-                    {{
+                    "bridge": {{
                         "IssuingChainDoor": "{}",
                         "LockingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "JPY",
                             "issuer": "{}"
                         }}
@@ -1543,16 +1477,13 @@ generateTestValuesForParametersTest()
             .testName = "OwnedClaimIdJsonMissingClaimId",
             .testJson = fmt::format(
                 R"JSON({{
-                    "xchain_owned_claim_id":
-                    {{
+                    "xchain_owned_claim_id": {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "{}",
                             "issuer": "{}"
                         }}
@@ -1570,16 +1501,13 @@ generateTestValuesForParametersTest()
             .testName = "OwnedClaimIdJsonMissingDoor",
             .testJson = fmt::format(
                 R"JSON({{
-                    "xchain_owned_claim_id":
-                    {{
+                    "xchain_owned_claim_id": {{
                         "xchain_owned_claim_id": 10,
                         "LockingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "{}",
                             "issuer": "{}"
                         }}
@@ -1596,13 +1524,11 @@ generateTestValuesForParametersTest()
             .testName = "OwnedClaimIdJsonMissingIssue",
             .testJson = fmt::format(
                 R"JSON({{
-                    "xchain_owned_claim_id":
-                    {{
+                    "xchain_owned_claim_id": {{
                         "xchain_owned_claim_id": 10,
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }}
                     }}
@@ -1618,17 +1544,14 @@ generateTestValuesForParametersTest()
             .testName = "OwnedClaimIdJsonInvalidDoor",
             .testJson = fmt::format(
                 R"JSON({{
-                    "xchain_owned_claim_id":
-                    {{
+                    "xchain_owned_claim_id": {{
                         "xchain_owned_claim_id": 10,
                         "LockingChainDoor": "abcd",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "{}",
                             "issuer": "{}"
                         }}
@@ -1645,17 +1568,14 @@ generateTestValuesForParametersTest()
             .testName = "OwnedClaimIdJsonInvalidIssue",
             .testJson = fmt::format(
                 R"JSON({{
-                    "xchain_owned_claim_id":
-                    {{
+                    "xchain_owned_claim_id": {{
                         "xchain_owned_claim_id": 10,
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "{}"
                         }}
                     }}
@@ -1679,16 +1599,13 @@ generateTestValuesForParametersTest()
             .testName = "OwnedCreateAccountClaimIdJsonMissingClaimId",
             .testJson = fmt::format(
                 R"JSON({{
-                    "xchain_owned_create_account_claim_id":
-                    {{
+                    "xchain_owned_create_account_claim_id": {{
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "{}",
                             "issuer": "{}"
                         }}
@@ -1706,16 +1623,13 @@ generateTestValuesForParametersTest()
             .testName = "OwnedCreateAccountClaimIdJsonMissingDoor",
             .testJson = fmt::format(
                 R"JSON({{
-                    "xchain_owned_create_account_claim_id":
-                    {{
+                    "xchain_owned_create_account_claim_id": {{
                         "xchain_owned_create_account_claim_id": 10,
                         "LockingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "{}",
                             "issuer": "{}"
                         }}
@@ -1732,13 +1646,11 @@ generateTestValuesForParametersTest()
             .testName = "OwnedCreateAccountClaimIdJsonMissingIssue",
             .testJson = fmt::format(
                 R"JSON({{
-                    "xchain_owned_create_account_claim_id":
-                    {{
+                    "xchain_owned_create_account_claim_id": {{
                         "xchain_owned_create_account_claim_id": 10,
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }}
                     }}
@@ -1754,17 +1666,14 @@ generateTestValuesForParametersTest()
             .testName = "OwnedCreateAccountClaimIdJsonInvalidDoor",
             .testJson = fmt::format(
                 R"JSON({{
-                    "xchain_owned_create_account_claim_id":
-                    {{
+                    "xchain_owned_create_account_claim_id": {{
                         "xchain_owned_create_account_claim_id": 10,
                         "LockingChainDoor": "abcd",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "{}",
                             "issuer": "{}"
                         }}
@@ -1781,17 +1690,14 @@ generateTestValuesForParametersTest()
             .testName = "OwnedCreateAccountClaimIdJsonInvalidIssue",
             .testJson = fmt::format(
                 R"JSON({{
-                    "xchain_owned_create_account_claim_id":
-                    {{
+                    "xchain_owned_create_account_claim_id": {{
                         "xchain_owned_create_account_claim_id": 10,
                         "LockingChainDoor": "{}",
                         "IssuingChainDoor": "{}",
-                        "LockingChainIssue":
-                        {{
+                        "LockingChainIssue": {{
                             "currency": "XRP"
                         }},
-                        "IssuingChainIssue":
-                        {{
+                        "IssuingChainIssue": {{
                             "currency": "{}"
                         }}
                     }}

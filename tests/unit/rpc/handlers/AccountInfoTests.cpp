@@ -355,8 +355,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
 {
     auto const expectedOutput = fmt::format(
         R"JSON({{
-            "account_data":
-            {{
+            "account_data": {{
                 "Account": "{}",
                 "Balance": "200",
                 "Flags": 0,
@@ -368,26 +367,22 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
                 "TransferRate": 0,
                 "index": "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8"
             }},
-            "signer_lists":
-            [
+            "signer_lists": [
                 {{
                     "Flags": 0,
                     "LedgerEntryType": "SignerList",
                     "OwnerNode": "0",
                     "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
                     "PreviousTxnLgrSeq": 0,
-                    "SignerEntries":
-                    [
+                    "SignerEntries": [
                         {{
-                            "SignerEntry":
-                            {{
+                            "SignerEntry": {{
                                 "Account": "{}",
                                 "SignerWeight": 1
                             }}
                         }},
                         {{
-                            "SignerEntry":
-                            {{
+                            "SignerEntry": {{
                                 "Account": "{}",
                                 "SignerWeight": 1
                             }}
@@ -398,8 +393,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
                     "index": "A9C28A28B85CD533217F5C0A0C7767666B093FA58A0F2D80026FCC4CD932DDC7"
                 }}
             ],
-            "account_flags":
-            {{
+            "account_flags": {{
                 "defaultRipple": false,
                 "depositAuth": false,
                 "disableMasterKey": false,
@@ -459,8 +453,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
 {
     auto const expectedOutput = fmt::format(
         R"JSON({{
-            "account_data":
-            {{
+            "account_data": {{
                 "Account": "{}",
                 "Balance": "200",
                 "Flags": 0,
@@ -471,26 +464,22 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
                 "Sequence": 2,
                 "TransferRate": 0,
                 "index": "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8",
-                "signer_lists":
-                [
+                "signer_lists": [
                     {{
                         "Flags": 0,
                         "LedgerEntryType": "SignerList",
                         "OwnerNode": "0",
                         "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
                         "PreviousTxnLgrSeq": 0,
-                        "SignerEntries":
-                        [
+                        "SignerEntries": [
                             {{
-                                "SignerEntry":
-                                {{
+                                "SignerEntry": {{
                                     "Account": "{}",
                                     "SignerWeight": 1
                                 }}
                             }},
                             {{
-                                "SignerEntry":
-                                {{
+                                "SignerEntry": {{
                                     "Account": "{}",
                                     "SignerWeight": 1
                                 }}
@@ -502,8 +491,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
                     }}
                 ]
             }},
-            "account_flags":
-            {{
+            "account_flags": {{
                 "defaultRipple": false,
                 "depositAuth": false,
                 "disableMasterKey": false,

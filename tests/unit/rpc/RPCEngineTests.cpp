@@ -64,8 +64,7 @@ using namespace util::config;
 
 namespace {
 constexpr auto kFORWARD_REPLY = R"JSON({
-    "result":
-    {
+    "result": {
         "status": "success",
         "forwarded": true
     }
@@ -347,8 +346,7 @@ generateCacheTestValuesForParametersTest()
          .config = R"JSON({
             "server": {"max_queue_size": 2},
             "workers": 4,
-            "rpc":
-            {"cache_timeout": 10}
+            "rpc": {"cache_timeout": 10}
          })JSON",
          .method = "server_info",
          .isAdmin = false,

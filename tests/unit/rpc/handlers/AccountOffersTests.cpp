@@ -287,15 +287,13 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
             "ledger_index": 30,
             "validated": true,
             "account": "{}",
-            "offers":
-            [
+            "offers": [
                 {{
                     "seq": 0,
                     "flags": 0,
                     "quality": "0.000000024999999374023",
                     "taker_pays": "20",
-                    "taker_gets":
-                    {{
+                    "taker_gets": {{
                         "currency": "USD",
                         "issuer": "{}",
                         "value": "10"

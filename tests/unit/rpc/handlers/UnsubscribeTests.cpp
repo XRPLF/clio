@@ -167,11 +167,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsNotObject",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_pays":
-                        {
+                        "taker_pays": {
                             "currency": "XRP"
                         },
                         "taker_gets": "USD"
@@ -184,11 +182,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysNotObject",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_gets":
-                        {
+                        "taker_gets": {
                             "currency": "XRP"
                         },
                         "taker_pays": "USD"
@@ -201,11 +197,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysMissingCurrency",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_gets":
-                        {
+                        "taker_gets": {
                             "currency": "XRP"
                         },
                         "taker_pays": {}
@@ -218,11 +212,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsMissingCurrency",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_pays":
-                        {
+                        "taker_pays": {
                             "currency": "XRP"
                         },
                         "taker_gets": {}
@@ -235,11 +227,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysCurrencyNotString",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_gets":
-                        {
+                        "taker_gets": {
                             "currency": "XRP"
                         },
                         "taker_pays": {
@@ -255,11 +245,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsCurrencyNotString",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_pays":
-                        {
+                        "taker_pays": {
                             "currency": "XRP"
                         },
                         "taker_gets": {
@@ -275,11 +263,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysInvalidCurrency",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_gets":
-                        {
+                        "taker_gets": {
                             "currency": "XRP"
                         },
                         "taker_pays": {
@@ -295,11 +281,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsInvalidCurrency",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_pays":
-                        {
+                        "taker_pays": {
                             "currency": "XRP"
                         },
                         "taker_gets": {
@@ -315,11 +299,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysMissingIssuer",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_gets":
-                        {
+                        "taker_gets": {
                             "currency": "XRP"
                         },
                         "taker_pays": {
@@ -334,11 +316,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsMissingIssuer",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_pays":
-                        {
+                        "taker_pays": {
                             "currency": "XRP"
                         },
                         "taker_gets": {
@@ -353,11 +333,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysIssuerNotString",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_gets":
-                        {
+                        "taker_gets": {
                             "currency": "XRP"
                         },
                         "taker_pays": {
@@ -373,11 +351,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsIssuerNotString",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_pays":
-                        {
+                        "taker_pays": {
                             "currency": "XRP"
                         },
                         "taker_gets": {
@@ -393,11 +369,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysInvalidIssuer",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_gets":
-                        {
+                        "taker_gets": {
                             "currency": "XRP"
                         },
                         "taker_pays": {
@@ -413,11 +387,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsInvalidIssuer",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_pays":
-                        {
+                        "taker_pays": {
                             "currency": "XRP"
                         },
                         "taker_gets": {
@@ -433,11 +405,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerGetsXRPHasIssuer",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_pays":
-                        {
+                        "taker_pays": {
                             "currency": "USD",
                             "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
                         },
@@ -454,11 +424,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysXRPHasIssuer",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_pays":
-                        {
+                        "taker_pays": {
                             "currency": "XRP",
                             "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
                         },
@@ -475,11 +443,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemBadMartket",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_pays":
-                        {
+                        "taker_pays": {
                             "currency": "XRP"
                         },
                         "taker_gets": {
@@ -494,11 +460,9 @@ generateTestValuesForParametersTest()
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemInvalidBoth",
             .testJson = R"JSON({
-                "books":
-                [
+                "books": [
                     {
-                        "taker_pays":
-                        {
+                        "taker_pays": {
                             "currency": "XRP"
                         },
                         "taker_gets": {

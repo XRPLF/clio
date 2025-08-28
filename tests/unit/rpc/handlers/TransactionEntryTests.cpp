@@ -193,19 +193,14 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
 TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
 {
     static constexpr auto kOUTPUT = R"JSON({
-                                        "metadata":
-                                        {
-                                            "AffectedNodes":
-                                            [
+                                        "metadata": {
+                                            "AffectedNodes": [
                                                 {
-                                                    "CreatedNode":
-                                                    {
+                                                    "CreatedNode": {
                                                         "LedgerEntryType": "Offer",
-                                                        "NewFields":
-                                                        {
+                                                        "NewFields": {
                                                             "TakerGets": "200",
-                                                            "TakerPays":
-                                                            {
+                                                            "TakerPays": {
                                                                 "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                                                 "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                                                 "value": "300"
@@ -217,14 +212,12 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
                                             "TransactionIndex": 100,
                                             "TransactionResult": "tesSUCCESS"
                                         },
-                                        "tx_json":
-                                        {
+                                        "tx_json": {
                                             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                             "Fee": "2",
                                             "Sequence": 100,
                                             "SigningPubKey": "74657374",
-                                            "TakerGets":
-                                            {
+                                            "TakerGets": {
                                                 "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                                 "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                                                 "value": "200"
@@ -271,19 +264,14 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
 TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
 {
     static constexpr auto kOUTPUT = R"JSON({
-                                        "meta":
-                                        {
-                                            "AffectedNodes":
-                                            [
+                                        "meta": {
+                                            "AffectedNodes": [
                                                 {
-                                                    "CreatedNode":
-                                                    {
+                                                    "CreatedNode": {
                                                         "LedgerEntryType": "Offer",
-                                                        "NewFields":
-                                                        {
+                                                        "NewFields": {
                                                             "TakerGets": "200",
-                                                            "TakerPays":
-                                                            {
+                                                            "TakerPays": {
                                                                 "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                                                 "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                                                 "value": "300"
@@ -295,14 +283,12 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
                                             "TransactionIndex": 100,
                                             "TransactionResult": "tesSUCCESS"
                                         },
-                                        "tx_json":
-                                        {
+                                        "tx_json": {
                                             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                             "Fee": "2",
                                             "Sequence": 100,
                                             "SigningPubKey": "74657374",
-                                            "TakerGets":
-                                            {
+                                            "TakerGets": {
                                                 "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                                 "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                                                 "value": "200"

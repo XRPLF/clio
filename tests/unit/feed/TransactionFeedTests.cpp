@@ -62,8 +62,7 @@ constexpr auto kNETWORK_ID = 0u;
 
 constexpr auto kTRAN_V1 =
     R"JSON({
-        "transaction":
-        {
+        "transaction": {
             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Amount": "1",
             "DeliverMax": "1",
@@ -75,15 +74,11 @@ constexpr auto kTRAN_V1 =
             "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
             "date": 0
         },
-        "meta":
-        {
-            "AffectedNodes":
-            [
+        "meta": {
+            "AffectedNodes": [
                 {
-                    "ModifiedNode":
-                    {
-                        "FinalFields":
-                        {
+                    "ModifiedNode": {
+                        "FinalFields": {
                             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                             "Balance": "110"
                         },
@@ -91,10 +86,8 @@ constexpr auto kTRAN_V1 =
                     }
                 },
                 {
-                    "ModifiedNode":
-                    {
-                        "FinalFields":
-                        {
+                    "ModifiedNode": {
+                        "FinalFields": {
                             "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                             "Balance": "30"
                         },
@@ -120,8 +113,7 @@ constexpr auto kTRAN_V1 =
 
 constexpr auto kTRAN_V2 =
     R"JSON({
-        "tx_json":
-        {
+        "tx_json": {
             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "DeliverMax": "1",
             "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
@@ -131,10 +123,8 @@ constexpr auto kTRAN_V2 =
             "TransactionType": "Payment",
             "date": 0
         },
-        "meta":
-        {
-            "AffectedNodes":
-            [
+        "meta": {
+            "AffectedNodes": [
                 {
                     "ModifiedNode": {
                     "FinalFields": {
@@ -368,8 +358,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
 
     static constexpr auto kORDERBOOK_PUBLISH =
         R"JSON({
-            "transaction":
-            {
+            "transaction": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "Amount": "1",
                 "DeliverMax": "1",
@@ -381,18 +370,13 @@ TEST_F(FeedTransactionTest, SubBookV1)
                 "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
                 "date": 0
             },
-            "meta":
-            {
-                "AffectedNodes":
-                [
+            "meta": {
+                "AffectedNodes": [
                     {
-                        "ModifiedNode":
-                        {
-                            "FinalFields":
-                            {
+                        "ModifiedNode": {
+                            "FinalFields": {
                                 "TakerGets": "3",
-                                "TakerPays":
-                                {
+                                "TakerPays": {
                                     "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                     "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
                                     "value": "1"
@@ -401,8 +385,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
                             "LedgerEntryType": "Offer",
                             "PreviousFields": {
                                 "TakerGets": "1",
-                                "TakerPays":
-                                {
+                                "TakerPays": {
                                     "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                     "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
                                     "value": "3"
@@ -450,13 +433,10 @@ TEST_F(FeedTransactionTest, SubBookV1)
                 "date": 0
             },
             "meta": {
-                "AffectedNodes":
-                [
+                "AffectedNodes": [
                     {
-                        "DeletedNode":
-                        {
-                            "FinalFields":
-                            {
+                        "DeletedNode": {
+                            "FinalFields": {
                                 "TakerGets": "3",
                                 "TakerPays": {
                                     "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
@@ -491,8 +471,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
     // trigger by offer create meta data
     static constexpr auto kORDERBOOK_CREATE_PUBLISH =
         R"JSON({
-            "transaction":
-            {
+            "transaction": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "Amount": "1",
                 "DeliverMax": "1",
@@ -504,17 +483,13 @@ TEST_F(FeedTransactionTest, SubBookV1)
                 "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
                 "date": 0
             },
-            "meta":
-            {
-                "AffectedNodes":
-                [
+            "meta": {
+                "AffectedNodes": [
                     {
-                        "CreatedNode":
-                        {
+                        "CreatedNode": {
                             "NewFields": {
                                 "TakerGets": "3",
-                                "TakerPays":
-                                {
+                                "TakerPays": {
                                     "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                     "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
                                     "value": "1"
@@ -572,8 +547,7 @@ TEST_F(FeedTransactionTest, SubBookV2)
 
     static constexpr auto kORDERBOOK_PUBLISH =
         R"JSON({
-            "tx_json":
-            {
+            "tx_json": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "DeliverMax": "1",
                 "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
@@ -583,29 +557,22 @@ TEST_F(FeedTransactionTest, SubBookV2)
                 "TransactionType": "Payment",
                 "date": 0
             },
-            "meta":
-            {
-                "AffectedNodes":
-                [
+            "meta": {
+                "AffectedNodes": [
                     {
-                        "ModifiedNode":
-                        {
-                            "FinalFields":
-                            {
+                        "ModifiedNode": {
+                            "FinalFields": {
                                 "TakerGets": "3",
-                                "TakerPays":
-                                {
+                                "TakerPays": {
                                     "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                     "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
                                     "value": "1"
                                 }
                             },
                             "LedgerEntryType": "Offer",
-                            "PreviousFields":
-                            {
+                            "PreviousFields": {
                                 "TakerGets": "1",
-                                "TakerPays":
-                                {
+                                "TakerPays": {
                                     "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                     "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
                                     "value": "3"
@@ -842,14 +809,12 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
 
     static constexpr auto kTRANSACTION_FOR_OWNER_FUND =
         R"JSON({
-            "transaction":
-            {
+            "transaction": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "Fee": "1",
                 "Sequence": 32,
                 "SigningPubKey": "74657374",
-                "TakerGets":
-                {
+                "TakerGets": {
                     "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                     "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
                     "value": "1"
@@ -860,8 +825,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
                 "date": 0,
                 "owner_funds": "100"
             },
-            "meta":
-            {
+            "meta": {
                 "AffectedNodes": [],
                 "TransactionIndex": 22,
                 "TransactionResult": "tesSUCCESS"
@@ -888,14 +852,12 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
 
 static constexpr auto kTRAN_FROZEN =
     R"JSON({
-        "transaction":
-        {
+        "transaction": {
             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Fee": "1",
             "Sequence": 32,
             "SigningPubKey": "74657374",
-            "TakerGets":
-            {
+            "TakerGets": {
                 "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                 "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
                 "value": "1"
@@ -1148,14 +1110,12 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
 
     static constexpr auto kTRANSACTION_FOR_OWNER_FUND =
         R"JSON({
-            "transaction":
-            {
+            "transaction": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "Fee": "1",
                 "Sequence": 32,
                 "SigningPubKey": "74657374",
-                "TakerGets":
-                {
+                "TakerGets": {
                     "currency": "037C35306B24AAB7FF90848206E003279AA47090",
                     "issuer": "rnW8FAPgpQgA6VoESnVrUVJHBdq9QAtRZs",
                     "value": "1"
@@ -1166,8 +1126,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
                 "date": 0,
                 "owner_funds": "0"
             },
-            "meta":
-            {
+            "meta": {
                 "AffectedNodes": [],
                 "TransactionIndex": 22,
                 "TransactionResult": "tesSUCCESS"

@@ -5,11 +5,14 @@ import re
 from pathlib import Path
 
 
+PATTERN = r'R"JSON\((.*?)\)JSON"'
+
+
+def use_uppercase(cpp_content: str) -> str:
+    return cpp_content.replace('R"json(', 'R"JSON(').replace(')json"', ')JSON"')
+
+
 def fix_json_style(cpp_content: str) -> str:
-    cpp_content = cpp_content.replace('R"json(', 'R"JSON(').replace(')json"', ')JSON"')
-
-    pattern = r'R"JSON\((.*?)\)JSON"'
-
     def replace_json(match):
         raw_json = match.group(1)
 
@@ -29,12 +32,23 @@ def fix_json_style(cpp_content: str) -> str:
             raw_json = raw_json.replace(f'":{digit}', f'": {digit}')
         return f'R"JSON({raw_json})JSON"'
 
-    return re.sub(pattern, replace_json, cpp_content, flags=re.DOTALL)
+    return re.sub(PATTERN, replace_json, cpp_content, flags=re.DOTALL)
 
+
+def fix_colon_spacing(cpp_content: str) -> str:
+    def replace_json(match):
+        raw_json = match.group(1)
+        raw_json = re.sub(r'":\n\s*(\[|\{)', r'": \1', raw_json)
+        return f'R"JSON({raw_json})JSON"'
+    return re.sub(PATTERN, replace_json, cpp_content, flags=re.DOTALL)
 
 def process_file(file_path: Path, dry_run: bool) -> bool:
     content = file_path.read_text(encoding="utf-8")
-    new_content = fix_json_style(content)
+
+    new_content = content
+    new_content = use_uppercase(new_content)
+    new_content = fix_json_style(new_content)
+    new_content = fix_colon_spacing(new_content)
 
     if new_content != content:
         print(f"Processing file: {file_path}")

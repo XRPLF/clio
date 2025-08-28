@@ -181,8 +181,7 @@ generateTestValuesForParametersTest()
             .testName = "MarkerLedgerNotInt",
             .testJson = R"JSON({
                 "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
-                "marker":
-                {
+                "marker": {
                     "seq": "string",
                     "ledger": 1
                 }
@@ -194,8 +193,7 @@ generateTestValuesForParametersTest()
             .testName = "MarkerSeqNotInt",
             .testJson = R"JSON({
                 "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
-                "marker":
-                {
+                "marker": {
                     "ledger": "string",
                     "seq": 1
                 }
@@ -340,13 +338,10 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV1)
                                 "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
                                 "ledger_index_min": 11,
                                 "ledger_index_max": 29,
-                                "transactions":
-                                [
+                                "transactions": [
                                     {
-                                        "meta":
-                                        {
-                                            "AffectedNodes":
-                                            [
+                                        "meta": {
+                                            "AffectedNodes": [
                                                 {
                                                     "ModifiedNode": {
                                                         "FinalFields": {
@@ -370,8 +365,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV1)
                                             "TransactionResult": "tesSUCCESS",
                                             "delivered_amount": "unavailable"
                                         },
-                                        "tx":
-                                        {
+                                        "tx": {
                                             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                             "Amount": "1",
                                             "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
@@ -387,10 +381,8 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV1)
                                         "validated": true
                                     },
                                     {
-                                        "meta":
-                                        {
-                                            "AffectedNodes":
-                                            [
+                                        "meta": {
+                                            "AffectedNodes": [
                                                 {
                                                     "ModifiedNode": {
                                                         "FinalFields": {
@@ -414,8 +406,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV1)
                                             "TransactionResult": "tesSUCCESS",
                                             "delivered_amount": "unavailable"
                                         },
-                                        "tx":
-                                        {
+                                        "tx": {
                                             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                             "Amount": "1",
                                             "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
@@ -432,8 +423,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV1)
                                     }
                                 ],
                                 "validated": true,
-                                "marker":
-                                {
+                                "marker": {
                                     "ledger": 12,
                                     "seq": 34
                                 }
@@ -481,18 +471,13 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
                                 "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
                                 "ledger_index_min": 11,
                                 "ledger_index_max": 29,
-                                "transactions":
-                                [
+                                "transactions": [
                                     {
-                                        "meta":
-                                        {
-                                            "AffectedNodes":
-                                            [
+                                        "meta": {
+                                            "AffectedNodes": [
                                                 {
-                                                    "ModifiedNode":
-                                                    {
-                                                        "FinalFields":
-                                                        {
+                                                    "ModifiedNode": {
+                                                        "FinalFields": {
                                                             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                                             "Balance": "22"
                                                         },
@@ -500,10 +485,8 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
                                                     }
                                                 },
                                                 {
-                                                    "ModifiedNode":
-                                                    {
-                                                        "FinalFields":
-                                                        {
+                                                    "ModifiedNode": {
+                                                        "FinalFields": {
                                                             "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                                                             "Balance": "23"
                                                         },
@@ -515,8 +498,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
                                             "TransactionResult": "tesSUCCESS",
                                             "delivered_amount": "unavailable"
                                         },
-                                        "tx_json":
-                                        {
+                                        "tx_json": {
                                             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                             "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                                             "Fee": "1",
@@ -534,15 +516,11 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
                                         "validated": true
                                     },
                                     {
-                                        "meta":
-                                        {
-                                            "AffectedNodes":
-                                            [
+                                        "meta": {
+                                            "AffectedNodes": [
                                                 {
-                                                    "ModifiedNode":
-                                                    {
-                                                        "FinalFields":
-                                                        {
+                                                    "ModifiedNode": {
+                                                        "FinalFields": {
                                                             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                                             "Balance": "22"
                                                         },
@@ -550,10 +528,8 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
                                                     }
                                                 },
                                                 {
-                                                    "ModifiedNode":
-                                                    {
-                                                        "FinalFields":
-                                                        {
+                                                    "ModifiedNode": {
+                                                        "FinalFields": {
                                                             "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                                                             "Balance": "23"
                                                         },
@@ -565,8 +541,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
                                             "TransactionResult": "tesSUCCESS",
                                             "delivered_amount": "unavailable"
                                         },
-                                        "tx_json":
-                                        {
+                                        "tx_json": {
                                             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                             "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                                             "Fee": "1",
@@ -585,8 +560,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
                                     }
                                 ],
                                 "validated": true,
-                                "marker":
-                                {
+                                "marker": {
                                     "ledger": 12,
                                     "seq": 34
                                 }

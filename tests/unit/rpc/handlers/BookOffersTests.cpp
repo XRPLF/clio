@@ -114,8 +114,7 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "MissingTakerGets",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "USD",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 }
@@ -126,8 +125,7 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "MissingTakerPays",
             .testJson = R"JSON({
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "USD",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 }
@@ -139,8 +137,7 @@ generateParameterBookOffersTestBundles()
             .testName = "WrongTypeTakerPays",
             .testJson = R"JSON({
                 "taker_pays": "wrong",
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 }
             })JSON",
@@ -151,8 +148,7 @@ generateParameterBookOffersTestBundles()
             .testName = "WrongTypeTakerGets",
             .testJson = R"JSON({
                 "taker_gets": "wrong",
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "XRP"
                 }
             })JSON",
@@ -163,8 +159,7 @@ generateParameterBookOffersTestBundles()
             .testName = "TakerPaysMissingCurrency",
             .testJson = R"JSON({
                 "taker_pays": {},
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 }
             })JSON",
@@ -175,8 +170,7 @@ generateParameterBookOffersTestBundles()
             .testName = "TakerGetsMissingCurrency",
             .testJson = R"JSON({
                 "taker_gets": {},
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "XRP"
                 }
             })JSON",
@@ -186,13 +180,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerGetsWrongCurrency",
             .testJson = R"JSON({
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "CNYY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "XRP"
                 }
             })JSON",
@@ -202,13 +194,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerPaysWrongCurrency",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "CNYY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 }
             })JSON",
@@ -218,13 +208,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerGetsCurrencyNotString",
             .testJson = R"JSON({
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": 123,
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "XRP"
                 }
             })JSON",
@@ -234,13 +222,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerPaysCurrencyNotString",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": 123,
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 }
             })JSON",
@@ -250,13 +236,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerGetsWrongIssuer",
             .testJson = R"JSON({
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs5"
                 },
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "XRP"
                 }
             })JSON",
@@ -266,13 +250,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerPaysWrongIssuer",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs5"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 }
             })JSON",
@@ -282,13 +264,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "InvalidTaker",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 },
                 "taker": "123"
@@ -299,13 +279,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "TakerNotString",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 },
                 "taker": 123
@@ -316,13 +294,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "Domain_InvalidType",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 },
                 "domain": 0
@@ -333,13 +309,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "Domain_InvalidInt",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 },
                 "domain": "123"
@@ -350,13 +324,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "Domain_InvalidObject",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 },
                 "domain": {}
@@ -367,13 +339,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "LimitNotInt",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 },
                 "limit": "123"
@@ -384,13 +354,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "LimitNegative",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 },
                 "limit": -1
@@ -401,13 +369,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "LimitZero",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 },
                 "limit": 0
@@ -418,13 +384,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "LedgerIndexInvalid",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 },
                 "ledger_index": "xxx"
@@ -435,13 +399,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "LedgerHashInvalid",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 },
                 "ledger_hash": "xxx"
@@ -452,13 +414,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "LedgerHashNotString",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP"
                 },
                 "ledger_hash": 123
@@ -469,13 +429,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "GetsPaysXRPWithIssuer",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "XRP",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "CNY",
                     "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
                 }
@@ -486,12 +444,10 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "PaysCurrencyWithXRPIssuer",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "JPY"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "CNY",
                     "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
                 }
@@ -502,12 +458,10 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "GetsCurrencyWithXRPIssuer",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "XRP"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "CNY"
                 }
             })JSON",
@@ -517,13 +471,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "GetsXRPWithIssuer",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "XRP",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 }
@@ -534,13 +486,11 @@ generateParameterBookOffersTestBundles()
         ParameterTestBundle{
             .testName = "BadMarket",
             .testJson = R"JSON({
-                "taker_pays":
-                {
+                "taker_pays": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 },
-                "taker_gets":
-                {
+                "taker_gets": {
                     "currency": "CNY",
                     "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
                 }
@@ -687,12 +637,10 @@ generateNormalPathBookOffersTestBundles()
 
     auto const getsXRPPaysUSDInputJson = fmt::format(
         R"JSON({{
-            "taker_gets":
-            {{
+            "taker_gets": {{
                 "currency": "XRP"
             }},
-            "taker_pays":
-            {{
+            "taker_pays": {{
                 "currency": "USD",
                 "issuer": "{}"
             }}
@@ -702,12 +650,10 @@ generateNormalPathBookOffersTestBundles()
 
     auto const getsXRPPaysUSDInputJsonWithDomain = fmt::format(
         R"JSON({{
-            "taker_gets":
-            {{
+            "taker_gets": {{
                 "currency": "XRP"
             }},
-            "taker_pays":
-            {{
+            "taker_pays": {{
                 "currency": "USD",
                 "issuer": "{}"
             }},
@@ -719,12 +665,10 @@ generateNormalPathBookOffersTestBundles()
 
     auto const paysXRPGetsUSDInputJson = fmt::format(
         R"JSON({{
-            "taker_pays":
-            {{
+            "taker_pays": {{
                 "currency": "XRP"
             }},
-            "taker_gets":
-            {{
+            "taker_gets": {{
                 "currency": "USD",
                 "issuer": "{}"
             }}
@@ -832,8 +776,7 @@ generateNormalPathBookOffersTestBundles()
                 R"JSON({{
                     "ledger_hash": "{}",
                     "ledger_index": 300,
-                    "offers":
-                    [
+                    "offers": [
                         {{
                             "Account": "{}",
                             "BookDirectory": "43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000",
@@ -894,8 +837,7 @@ generateNormalPathBookOffersTestBundles()
                 R"JSON({{
                     "ledger_hash": "{}",
                     "ledger_index": 300,
-                    "offers":
-                    [
+                    "offers": [
                         {{
                             "Account": "{}",
                             "BookDirectory": "43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000",
@@ -956,8 +898,7 @@ generateNormalPathBookOffersTestBundles()
                 R"JSON({{
                     "ledger_hash": "{}",
                     "ledger_index": 300,
-                    "offers":
-                    [
+                    "offers": [
                         {{
                             "Account": "{}",
                             "BookDirectory": "43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000",
@@ -1021,8 +962,7 @@ generateNormalPathBookOffersTestBundles()
                 R"JSON({{
                     "ledger_hash": "{}",
                     "ledger_index": 300,
-                    "offers":
-                    [
+                    "offers": [
                         {{
                             "Account": "{}",
                             "BookDirectory": "{}",
@@ -1087,8 +1027,7 @@ generateNormalPathBookOffersTestBundles()
                 R"JSON({{
                     "ledger_hash": "{}",
                     "ledger_index": 300,
-                    "offers":
-                    [
+                    "offers": [
                         {{
                             "Account": "{}",
                             "BookDirectory": "{}",
@@ -1163,8 +1102,7 @@ generateNormalPathBookOffersTestBundles()
                 R"JSON({{
                     "ledger_hash": "{}",
                     "ledger_index": 300,
-                    "offers":
-                    [
+                    "offers": [
                         {{
                             "Account": "{}",
                             "BookDirectory": "{}",
@@ -1249,8 +1187,7 @@ generateNormalPathBookOffersTestBundles()
                 R"JSON({{
                     "ledger_hash": "{}",
                     "ledger_index": 300,
-                    "offers":
-                    [
+                    "offers": [
                         {{
                             "Account": "{}",
                             "BookDirectory": "{}",
@@ -1309,8 +1246,7 @@ generateNormalPathBookOffersTestBundles()
                 R"JSON({{
                     "ledger_hash": "{}",
                     "ledger_index": 300,
-                    "offers":
-                    [
+                    "offers": [
                         {{
                             "Account": "{}",
                             "BookDirectory": "{}",
@@ -1374,8 +1310,7 @@ generateNormalPathBookOffersTestBundles()
                 R"JSON({{
                     "ledger_hash": "{}",
                     "ledger_index": 300,
-                    "offers":
-                    [
+                    "offers": [
                         {{
                             "Account": "{}",
                             "BookDirectory": "{}",
@@ -1442,8 +1377,7 @@ generateNormalPathBookOffersTestBundles()
                 R"JSON({{
                     "ledger_hash": "{}",
                     "ledger_index": 300,
-                    "offers":
-                    [
+                    "offers": [
                         {{
                             "Account": "{}",
                             "BookDirectory": "{}",
@@ -1500,12 +1434,10 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
         fmt::format(
             R"JSON({{
             "ledger_index": 30,
-            "taker_gets":
-            {{
+            "taker_gets": {{
                 "currency": "XRP"
             }},
-            "taker_pays":
-            {{
+            "taker_pays": {{
                 "currency": "USD",
                 "issuer": "{}"
             }}
@@ -1533,12 +1465,10 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
         fmt::format(
             R"JSON({{
             "ledger_index": "30",
-            "taker_gets":
-            {{
+            "taker_gets": {{
                 "currency": "XRP"
             }},
-            "taker_pays":
-            {{
+            "taker_pays": {{
                 "currency": "USD",
                 "issuer": "{}"
             }}
@@ -1567,12 +1497,10 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
         fmt::format(
             R"JSON({{
             "ledger_hash": "{}",
-            "taker_gets":
-            {{
+            "taker_gets": {{
                 "currency": "XRP"
             }},
-            "taker_pays":
-            {{
+            "taker_pays": {{
                 "currency": "USD",
                 "issuer": "{}"
             }}
@@ -1645,12 +1573,10 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "taker_gets":
-            {{
+            "taker_gets": {{
                 "currency": "XRP"
             }},
-            "taker_pays":
-            {{
+            "taker_pays": {{
                 "currency": "USD",
                 "issuer": "{}"
             }},
@@ -1721,12 +1647,10 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "taker_gets":
-            {{
+            "taker_gets": {{
                 "currency": "XRP"
             }},
-            "taker_pays":
-            {{
+            "taker_pays": {{
                 "currency": "USD",
                 "issuer": "{}"
             }},

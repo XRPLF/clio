@@ -601,8 +601,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
                         "hash": "70436A9332F7CD928FAEC1A41269A677739D8B11F108CE23AE23CBF0C9113F8C",
                         "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                         "ledger_index": 30,
-                        "tx_json":
-                        {
+                        "tx_json": {
                             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                             "DeliverMax": "100",
                             "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
@@ -614,10 +613,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
                         "meta": {
                             "AffectedNodes": [
                                 {
-                                    "ModifiedNode":
-                                    {
-                                        "FinalFields":
-                                        {
+                                    "ModifiedNode": {
+                                        "FinalFields": {
                                             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                             "Balance": "110"
                                         },
@@ -625,10 +622,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
                                     }
                                 },
                                 {
-                                    "ModifiedNode":
-                                    {
-                                        "FinalFields":
-                                        {
+                                    "ModifiedNode": {
+                                        "FinalFields": {
                                             "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                                             "Balance": "30"
                                         },

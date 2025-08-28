@@ -618,15 +618,13 @@ TEST_F(RPCTxTest, MintNFT)
                     "FinalFields": {{
                         "NFTokens": [
                         {{
-                            "NFToken":
-                            {{
+                            "NFToken": {{
                                 "NFTokenID": "{}",
                                 "URI": "7465737475726C"
                             }}
                         }},
                         {{
-                            "NFToken":
-                            {{
+                            "NFToken": {{
                                 "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
                                 "URI": "7465737475726C"
                             }}
@@ -637,8 +635,7 @@ TEST_F(RPCTxTest, MintNFT)
                     "PreviousFields": {{
                         "NFTokens": [
                         {{
-                            "NFToken":
-                            {{
+                            "NFToken": {{
                                 "NFTokenID": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
                                 "URI": "7465737475726C"
                             }}
@@ -890,8 +887,7 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
             "Fee": "2",
             "Sequence": 100,
             "SigningPubKey": "74657374",
-            "TakerGets":
-            {
+            "TakerGets": {
                 "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                 "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                 "value": "200"
@@ -900,19 +896,14 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
             "TakerPays": "300",
             "TransactionType": "OfferCreate",
             "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
-            "meta":
-            {
-                "AffectedNodes":
-                [
+            "meta": {
+                "AffectedNodes": [
                     {
-                        "CreatedNode":
-                        {
+                        "CreatedNode": {
                             "LedgerEntryType": "Offer",
-                            "NewFields":
-                            {
+                            "NewFields": {
                                 "TakerGets": "200",
-                                "TakerPays":
-                                {
+                                "TakerPays": {
                                     "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                     "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                     "value": "300"
@@ -966,8 +957,7 @@ TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvailable)
             "Fee": "2",
             "Sequence": 100,
             "SigningPubKey": "74657374",
-            "TakerGets":
-            {
+            "TakerGets": {
                 "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                 "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                 "value": "200"
@@ -975,19 +965,14 @@ TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvailable)
             "TakerPays": "300",
             "TransactionType": "OfferCreate",
             "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
-            "meta":
-            {
-                "AffectedNodes":
-                [
+            "meta": {
+                "AffectedNodes": [
                     {
-                        "CreatedNode":
-                        {
+                        "CreatedNode": {
                             "LedgerEntryType": "Offer",
-                            "NewFields":
-                            {
+                            "NewFields": {
                                 "TakerGets": "200",
-                                "TakerPays":
-                                {
+                                "TakerPays": {
                                     "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                     "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                     "value": "300"
@@ -1042,8 +1027,7 @@ TEST_F(RPCTxTest, ViaCTID)
             "Fee": "2",
             "Sequence": 100,
             "SigningPubKey": "74657374",
-            "TakerGets":
-            {{
+            "TakerGets": {{
                 "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                 "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                 "value": "200"
@@ -1052,19 +1036,14 @@ TEST_F(RPCTxTest, ViaCTID)
             "TakerPays": "300",
             "TransactionType": "OfferCreate",
             "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
-            "meta":
-            {{
-                "AffectedNodes":
-                [
+            "meta": {{
+                "AffectedNodes": [
                     {{
-                        "CreatedNode":
-                        {{
+                        "CreatedNode": {{
                             "LedgerEntryType": "Offer",
-                            "NewFields":
-                            {{
+                            "NewFields": {{
                                 "TakerGets": "200",
-                                "TakerPays":
-                                {{
+                                "TakerPays": {{
                                     "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                     "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                     "value": "300"
