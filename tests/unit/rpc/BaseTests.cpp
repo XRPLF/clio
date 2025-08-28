@@ -621,8 +621,7 @@ TEST_F(RPCBaseTest, SubscribeStreamValidator)
     auto const spec = RpcSpec{{"streams", CustomValidators::subscribeStreamValidator}};
     auto passingInput = json::parse(
         R"JSON({
-            "streams":
-            [
+            "streams": [
                 "ledger",
                 "transactions_proposed",
                 "validations",

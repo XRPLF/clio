@@ -165,9 +165,9 @@ TEST_F(SettingsProviderTest, CertificateConfig)
         json::parse(
             fmt::format(
                 R"JSON({{
-            "database.cassandra.contact_points": "127.0.0.1",
-            "database.cassandra.certfile": "{}"
-        }})JSON",
+                    "database.cassandra.contact_points": "127.0.0.1",
+                    "database.cassandra.certfile": "{}"
+                }})JSON",
                 file.path
             )
         )

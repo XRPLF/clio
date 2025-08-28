@@ -27,12 +27,15 @@
 #include "util/prometheus/Gauge.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
+#include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/uuid/uuid.hpp>
 
+#include <atomic>
 #include <chrono>
+#include <latch>
 #include <memory>
 #include <string>
 #include <vector>
@@ -65,10 +68,13 @@ class ClusterCommunicationService : public ClusterCommunicationServiceInterface 
     std::chrono::steady_clock::duration readInterval_;
     std::chrono::steady_clock::duration writeInterval_;
 
+    boost::asio::cancellation_signal cancelSignal_;
+    std::latch finishedCountdown_;
+    std::atomic_bool running_ = false;
+    bool stopped_ = false;
+
     ClioNode selfData_;
     std::vector<ClioNode> otherNodesData_;
-
-    bool stopped_ = false;
 
 public:
     static constexpr std::chrono::milliseconds kDEFAULT_READ_INTERVAL{2100};

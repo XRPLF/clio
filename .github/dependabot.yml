@@ -105,19 +105,6 @@ updates:
     target-branch: develop
 
   - package-ecosystem: github-actions
-    directory: .github/actions/prepare_runner/
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:00"
-      timezone: Etc/GMT
-    reviewers:
-      - XRPLF/clio-dev-team
-    commit-message:
-      prefix: "ci: [DEPENDABOT] "
-    target-branch: develop
-
-  - package-ecosystem: github-actions
     directory: .github/actions/restore_cache/
     schedule:
       interval: weekly

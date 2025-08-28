@@ -400,9 +400,9 @@ TEST_F(RPCServerInfoHandlerTest, BackendCountersPresentWhenRequestWithParam)
 
     runSpawn([&](auto yield) {
         auto const req = json::parse(R"JSON(
-        {
-            "backend_counters": true
-        }
+            {
+                "backend_counters": true
+            }
         )JSON");
         auto const output = handler.process(req, Context{yield, {}, true});
 

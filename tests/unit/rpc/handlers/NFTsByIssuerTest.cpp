@@ -108,9 +108,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonHexLedgerHash)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "issuer": "{}",
-                "ledger_hash": "xxx"
-            }})JSON",
+                    "issuer": "{}",
+                    "ledger_hash": "xxx"
+                }})JSON",
                 kACCOUNT
             )
         );
@@ -130,9 +130,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonStringLedgerHash)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "issuer": "{}",
-                "ledger_hash": 123
-            }})JSON",
+                    "issuer": "{}",
+                    "ledger_hash": 123
+                }})JSON",
                 kACCOUNT
             )
         );
@@ -152,9 +152,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, InvalidLedgerIndexString)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "issuer": "{}",
-                "ledger_index": "notvalidated"
-            }})JSON",
+                    "issuer": "{}",
+                    "ledger_index": "notvalidated"
+                }})JSON",
                 kACCOUNT
             )
         );
@@ -225,9 +225,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "issuer": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "issuer": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -251,9 +251,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerStringIndex)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "issuer": "{}",
-            "ledger_index": "4"
-        }})JSON",
+                "issuer": "{}",
+                "ledger_index": "4"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -274,9 +274,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIntIndex)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "issuer": "{}",
-            "ledger_index": 4
-        }})JSON",
+                "issuer": "{}",
+                "ledger_index": 4
+            }})JSON",
             kACCOUNT
         )
     );
@@ -301,9 +301,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash2)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "issuer": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "issuer": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -327,9 +327,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIndex2)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "issuer": "{}",
-            "ledger_index": "31"
-        }})JSON",
+                "issuer": "{}",
+                "ledger_index": "31"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -355,9 +355,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, AccountNotFound)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "issuer": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "issuer": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -400,8 +400,8 @@ TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "issuer": "{}"
-        }})JSON",
+                "issuer": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -455,9 +455,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, SpecificLedgerIndex)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "issuer": "{}",
-            "ledger_index": {}
-        }})JSON",
+                "issuer": "{}",
+                "ledger_index": {}
+            }})JSON",
             kACCOUNT,
             specificLedger
         )
@@ -498,9 +498,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, TaxonParameter)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "issuer": "{}",
-            "nft_taxon": 0
-        }})JSON",
+                "issuer": "{}",
+                "nft_taxon": 0
+            }})JSON",
             kACCOUNT
         )
     );
@@ -541,9 +541,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MarkerParameter)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "issuer": "{}",
-            "marker": "{}"
-        }})JSON",
+                "issuer": "{}",
+                "marker": "{}"
+            }})JSON",
             kACCOUNT,
             kNFT_ID1
         )
@@ -587,8 +587,8 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "issuer": "{}"
-        }})JSON",
+                "issuer": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -631,9 +631,9 @@ TEST_F(RPCNFTsByIssuerHandlerTest, LimitMoreThanMax)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "issuer": "{}",
-            "limit": {}
-        }})JSON",
+                "issuer": "{}",
+                "limit": {}
+            }})JSON",
             kACCOUNT,
             NFTsByIssuerHandler::kLIMIT_MAX + 1
         )
