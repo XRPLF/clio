@@ -76,8 +76,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExist)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -100,8 +100,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaIntSequence)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -126,9 +126,9 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaStringSequence)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_index": "{}"
-        }})JSON",
+                "account": "{}",
+                "ledger_index": "{}"
+            }})JSON",
             kACCOUNT,
             kSEQ
         )
@@ -153,9 +153,9 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -221,8 +221,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -258,9 +258,9 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -297,9 +297,9 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_index": {}
-        }})JSON",
+                "account": "{}",
+                "ledger_index": {}
+            }})JSON",
             kACCOUNT,
             ledgerSeq
         )

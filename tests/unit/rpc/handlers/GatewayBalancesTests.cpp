@@ -278,9 +278,9 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
             json::parse(
                 fmt::format(
                     R"JSON({{
-                    "account": "{}",
-                    "ledger_index": "{}"
-                }})JSON",
+                        "account": "{}",
+                        "ledger_index": "{}"
+                    }})JSON",
                     kACCOUNT,
                     seq
                 )
@@ -306,9 +306,9 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaIntIndex)
             json::parse(
                 fmt::format(
                     R"JSON({{
-                    "account": "{}",
-                    "ledger_index": {}
-                }})JSON",
+                        "account": "{}",
+                        "ledger_index": {}
+                    }})JSON",
                     kACCOUNT,
                     seq
                 )
@@ -333,9 +333,9 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaHash)
             json::parse(
                 fmt::format(
                     R"JSON({{
-                    "account": "{}",
-                    "ledger_hash": "{}"
-                }})JSON",
+                        "account": "{}",
+                        "ledger_hash": "{}"
+                    }})JSON",
                     kACCOUNT,
                     kLEDGER_HASH
                 )
@@ -365,8 +365,8 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
             json::parse(
                 fmt::format(
                     R"JSON({{
-                    "account": "{}"
-                }})JSON",
+                        "account": "{}"
+                    }})JSON",
                     kACCOUNT
                 )
             ),
@@ -420,9 +420,9 @@ TEST_P(NormalPathTest, CheckOutput)
             json::parse(
                 fmt::format(
                     R"JSON({{
-                    "account": "{}",
-                    {}
-                }})JSON",
+                        "account": "{}",
+                        {}
+                    }})JSON",
                     kACCOUNT,
                     bundle.hotwallet
                 )
@@ -695,8 +695,8 @@ TEST_P(EscrowTest, CheckEscrowOutput)
             json::parse(
                 fmt::format(
                     R"JSON({{
-                    "account": "{}"
-                }})JSON",
+                        "account": "{}"
+                    }})JSON",
                     kACCOUNT
                 )
             ),

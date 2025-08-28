@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "rpc/common/APIVersion.hpp"
 #include "util/Assert.hpp"
 #include "util/config/Array.hpp"
 #include "util/config/ConfigConstraints.hpp"
@@ -27,18 +26,15 @@
 #include "util/config/ConfigValue.hpp"
 #include "util/config/Error.hpp"
 #include "util/config/ObjectView.hpp"
-#include "util/config/Types.hpp"
 #include "util/config/ValueView.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
-#include <cstdint>
 #include <initializer_list>
 #include <optional>
 #include <string>
 #include <string_view>
-#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <variant>

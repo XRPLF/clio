@@ -37,6 +37,10 @@ inputs:
     description: Whether to use mold linker
     required: true
     default: "false"
+  package:
+    description: Whether to generate Debian package
+    required: true
+    default: "false"
 
 runs:
   using: composite
@@ -55,6 +59,7 @@ runs:
         BENCHMARK_OPTION: "${{ inputs.build_benchmark == 'true' && 'True' || 'False' }}"
         TIME_TRACE: "${{ inputs.time_trace == 'true' && 'True' || 'False' }}"
         USE_MOLD: "${{ inputs.use_mold == 'true' && 'True' || 'False' }}"
+        PACKAGE: "${{ inputs.package == 'true' && 'True' || 'False' }}"
       run: |
         cd build
         conan \
@@ -70,6 +75,7 @@ runs:
           -o "&:coverage=${CODE_COVERAGE}" \
           -o "&:time_trace=${TIME_TRACE}" \
           -o "&:use_mold=${USE_MOLD}" \
+          -o "&:package=${PACKAGE}" \
           --profile:all "${{ inputs.conan_profile }}"
 
     - name: Run cmake

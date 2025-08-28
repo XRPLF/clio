@@ -70,7 +70,7 @@ struct HttpConnectionTests : SyncAsioContextTest {
 
 protected:
     util::TagDecoratorFactory tagDecoratorFactory_{
-        ClioConfigDefinition{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("int")}}
+        ClioConfigDefinition{{"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("int")}}
     };
     TestHttpServer httpServer_{ctx_, "localhost"};
     HttpAsyncClient httpClient_{ctx_};

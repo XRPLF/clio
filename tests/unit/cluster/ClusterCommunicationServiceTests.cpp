@@ -49,6 +49,19 @@
 
 using namespace cluster;
 
+namespace {
+std::vector<ClioNode> const kOTHER_NODES_DATA = {
+    ClioNode{
+        .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()()),
+        .updateTime = util::systemTpFromUtcStr("2015-05-15T12:00:00Z", ClioNode::kTIME_FORMAT).value()
+    },
+    ClioNode{
+        .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()()),
+        .updateTime = util::systemTpFromUtcStr("2015-05-15T12:00:01Z", ClioNode::kTIME_FORMAT).value()
+    },
+};
+}  // namespace
+
 struct ClusterCommunicationServiceTest : util::prometheus::WithPrometheus, MockBackendTestStrict {
     ClusterCommunicationService clusterCommunicationService{
         backend_,
@@ -97,6 +110,7 @@ TEST_F(ClusterCommunicationServiceTest, Write)
 
     clusterCommunicationService.run();
     wait();
+    // destructor of clusterCommunicationService calls .stop()
 }
 
 TEST_F(ClusterCommunicationServiceTest, Read_FetchFailed)
@@ -105,10 +119,13 @@ TEST_F(ClusterCommunicationServiceTest, Read_FetchFailed)
     EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([this](auto&&, auto&&) {
         notify();
     });
-    EXPECT_CALL(*backend_, fetchClioNodesData).WillOnce([](auto&&) { return std::unexpected{"Failed"}; });
+    EXPECT_CALL(*backend_, fetchClioNodesData).WillRepeatedly([](auto&&) { return std::unexpected{"Failed"}; });
 
     clusterCommunicationService.run();
     wait();
+    // call .stop() manually so that workers exit before expectations are called more times than we want
+    clusterCommunicationService.stop();
+
     EXPECT_FALSE(isHealthyMetric);
 }
 
@@ -118,10 +135,12 @@ TEST_F(ClusterCommunicationServiceTest, Read_FetchThrew)
     EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([this](auto&&, auto&&) {
         notify();
     });
-    EXPECT_CALL(*backend_, fetchClioNodesData).WillOnce(testing::Throw(data::DatabaseTimeout{}));
+    EXPECT_CALL(*backend_, fetchClioNodesData).WillRepeatedly(testing::Throw(data::DatabaseTimeout{}));
 
     clusterCommunicationService.run();
     wait();
+    clusterCommunicationService.stop();
+
     EXPECT_FALSE(isHealthyMetric);
     EXPECT_FALSE(clusterCommunicationService.clusterData().has_value());
 }
@@ -132,7 +151,7 @@ TEST_F(ClusterCommunicationServiceTest, Read_GotInvalidJson)
     EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([this](auto&&, auto&&) {
         notify();
     });
-    EXPECT_CALL(*backend_, fetchClioNodesData).WillOnce([](auto&&) {
+    EXPECT_CALL(*backend_, fetchClioNodesData).WillRepeatedly([](auto&&) {
         return std::vector<std::pair<boost::uuids::uuid, std::string>>{
             {boost::uuids::random_generator()(), "invalid json"}
         };
@@ -140,6 +159,8 @@ TEST_F(ClusterCommunicationServiceTest, Read_GotInvalidJson)
 
     clusterCommunicationService.run();
     wait();
+    clusterCommunicationService.stop();
+
     EXPECT_FALSE(isHealthyMetric);
     EXPECT_FALSE(clusterCommunicationService.clusterData().has_value());
 }
@@ -150,12 +171,14 @@ TEST_F(ClusterCommunicationServiceTest, Read_GotInvalidNodeData)
     EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([this](auto&&, auto&&) {
         notify();
     });
-    EXPECT_CALL(*backend_, fetchClioNodesData).WillOnce([](auto&&) {
+    EXPECT_CALL(*backend_, fetchClioNodesData).WillRepeatedly([](auto&&) {
         return std::vector<std::pair<boost::uuids::uuid, std::string>>{{boost::uuids::random_generator()(), "{}"}};
     });
 
     clusterCommunicationService.run();
     wait();
+    clusterCommunicationService.stop();
+
     EXPECT_FALSE(isHealthyMetric);
     EXPECT_FALSE(clusterCommunicationService.clusterData().has_value());
 }
@@ -164,23 +187,12 @@ TEST_F(ClusterCommunicationServiceTest, Read_Success)
 {
     EXPECT_TRUE(isHealthyMetric);
     EXPECT_EQ(nodesInClusterMetric.value(), 1);
-    std::vector<ClioNode> otherNodesData = {
-        ClioNode{
-            .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()()),
-            .updateTime = util::systemTpFromUtcStr("2015-05-15T12:00:00Z", ClioNode::kTIME_FORMAT).value()
-        },
-        ClioNode{
-            .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()()),
-            .updateTime = util::systemTpFromUtcStr("2015-05-15T12:00:01Z", ClioNode::kTIME_FORMAT).value()
-        },
-    };
-    auto const selfUuid = *clusterCommunicationService.selfUuid();
 
-    EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([&](auto&&, auto&&) {
+    EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([this](auto&&, auto&&) {
         auto const clusterData = clusterCommunicationService.clusterData();
         ASSERT_TRUE(clusterData.has_value());
-        ASSERT_EQ(clusterData->size(), otherNodesData.size() + 1);
-        for (auto const& node : otherNodesData) {
+        ASSERT_EQ(clusterData->size(), kOTHER_NODES_DATA.size() + 1);
+        for (auto const& node : kOTHER_NODES_DATA) {
             auto const it =
                 std::ranges::find_if(*clusterData, [&](ClioNode const& n) { return *(n.uuid) == *(node.uuid); });
             EXPECT_NE(it, clusterData->cend()) << boost::uuids::to_string(*node.uuid);
@@ -193,12 +205,13 @@ TEST_F(ClusterCommunicationServiceTest, Read_Success)
         notify();
     });
 
-    EXPECT_CALL(*backend_, fetchClioNodesData).WillOnce([&](auto&&) {
+    EXPECT_CALL(*backend_, fetchClioNodesData).WillRepeatedly([this](auto&&) {
+        auto const selfUuid = clusterCommunicationService.selfUuid();
         std::vector<std::pair<boost::uuids::uuid, std::string>> result = {
-            {selfUuid, R"JSON({"update_time": "2015-05-15:12:00:00"})JSON"},
+            {*selfUuid, R"JSON({"update_time": "2015-05-15:12:00:00"})JSON"},
         };
 
-        for (auto const& node : otherNodesData) {
+        for (auto const& node : kOTHER_NODES_DATA) {
             boost::json::value jsonValue;
             boost::json::value_from(node, jsonValue);
             result.emplace_back(*node.uuid, boost::json::serialize(jsonValue));
@@ -208,6 +221,8 @@ TEST_F(ClusterCommunicationServiceTest, Read_Success)
 
     clusterCommunicationService.run();
     wait();
+    clusterCommunicationService.stop();
+
     EXPECT_TRUE(isHealthyMetric);
     EXPECT_EQ(nodesInClusterMetric.value(), 3);
 }

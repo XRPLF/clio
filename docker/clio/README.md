@@ -13,8 +13,8 @@ Clio repository provides an [example](https://github.com/XRPLF/clio/blob/develop
 
 Config file recommendations:
 
-- Set `log_to_console` to `false` if you want to avoid logs being written to `stdout`.
-- Set `log_directory` to `/opt/clio/log` to store logs in a volume.
+- Set `log.enable_console` to `false` if you want to avoid logs being written to `stdout`.
+- Set `log.directory` to `/opt/clio/log` to store logs in a volume.
 
 ## Usage
 

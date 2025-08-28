@@ -57,7 +57,7 @@ protected:
     std::shared_ptr<MockHandlerProvider> handlerProvider_ = std::make_shared<MockHandlerProvider>();
     MockCounters counters_;
 
-    ClioConfigDefinition const config_{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none")}};
+    ClioConfigDefinition const config_{{"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("none")}};
     util::TagDecoratorFactory tagFactory_{config_};
 
     rpc::impl::ForwardingProxy<MockCounters, MockHandlerProvider> proxy_{loadBalancer_, counters_, handlerProvider_};

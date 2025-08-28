@@ -181,8 +181,7 @@ generateTestValuesForParametersTest()
             .testName = "MarkerLedgerNotInt",
             .testJson = R"JSON({
                 "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
-                "marker":
-                {
+                "marker": {
                     "seq": "string",
                     "ledger": 1
                 }
@@ -194,8 +193,7 @@ generateTestValuesForParametersTest()
             .testName = "MarkerSeqNotInt",
             .testJson = R"JSON({
                 "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
-                "marker":
-                {
+                "marker": {
                     "ledger": "string",
                     "seq": 1
                 }
@@ -313,11 +311,11 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardTrue)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": true
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": true
+                }})JSON",
                 kNFT_ID,
                 kMIN_SEQ + 1,
                 kMAX_SEQ - 1
@@ -337,107 +335,99 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardTrue)
 TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV1)
 {
     constexpr auto kOUTPUT = R"JSON({
-                                "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
-                                "ledger_index_min": 11,
-                                "ledger_index_max": 29,
-                                "transactions":
-                                [
-                                    {
-                                        "meta":
-                                        {
-                                            "AffectedNodes":
-                                            [
-                                                {
-                                                    "ModifiedNode": {
-                                                        "FinalFields": {
-                                                            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                                            "Balance": "22"
-                                                        },
-                                                        "LedgerEntryType": "AccountRoot"
-                                                    }
-                                                },
-                                                {
-                                                    "ModifiedNode": {
-                                                        "FinalFields": {
-                                                            "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                                            "Balance": "23"
-                                                        },
-                                                        "LedgerEntryType": "AccountRoot"
-                                                    }
-                                                }
-                                            ],
-                                            "TransactionIndex": 0,
-                                            "TransactionResult": "tesSUCCESS",
-                                            "delivered_amount": "unavailable"
-                                        },
-                                        "tx":
-                                        {
-                                            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                            "Amount": "1",
-                                            "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                            "Fee": "1",
-                                            "Sequence": 32,
-                                            "SigningPubKey": "74657374",
-                                            "TransactionType": "Payment",
-                                            "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-                                            "DeliverMax": "1",
-                                            "ledger_index": 11,
-                                            "date": 1
-                                        },
-                                        "validated": true
-                                    },
-                                    {
-                                        "meta":
-                                        {
-                                            "AffectedNodes":
-                                            [
-                                                {
-                                                    "ModifiedNode": {
-                                                        "FinalFields": {
-                                                            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                                            "Balance": "22"
-                                                        },
-                                                        "LedgerEntryType": "AccountRoot"
-                                                    }
-                                                },
-                                                {
-                                                    "ModifiedNode": {
-                                                        "FinalFields": {
-                                                            "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                                            "Balance": "23"
-                                                        },
-                                                        "LedgerEntryType": "AccountRoot"
-                                                    }
-                                                }
-                                            ],
-                                            "TransactionIndex": 0,
-                                            "TransactionResult": "tesSUCCESS",
-                                            "delivered_amount": "unavailable"
-                                        },
-                                        "tx":
-                                        {
-                                            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                            "Amount": "1",
-                                            "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                            "Fee": "1",
-                                            "Sequence": 32,
-                                            "SigningPubKey": "74657374",
-                                            "TransactionType": "Payment",
-                                            "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-                                            "DeliverMax": "1",
-                                            "ledger_index": 29,
-                                            "date": 2
-                                        },
-                                        "validated": true
-                                    }
-                                ],
-                                "validated": true,
-                                "marker":
-                                {
-                                    "ledger": 12,
-                                    "seq": 34
-                                }
-                                })JSON";
+        "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
+        "ledger_index_min": 11,
+        "ledger_index_max": 29,
+        "transactions": [
+            {
+                "meta": {
+                    "AffectedNodes": [
+                        {
+                            "ModifiedNode": {
+                                "FinalFields": {
+                                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "Balance": "22"
+                                },
+                                "LedgerEntryType": "AccountRoot"
+                            }
+                        },
+                        {
+                            "ModifiedNode": {
+                                "FinalFields": {
+                                    "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                    "Balance": "23"
+                                },
+                                "LedgerEntryType": "AccountRoot"
+                            }
+                        }
+                    ],
+                    "TransactionIndex": 0,
+                    "TransactionResult": "tesSUCCESS",
+                    "delivered_amount": "unavailable"
+                },
+                "tx": {
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Amount": "1",
+                    "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                    "Fee": "1",
+                    "Sequence": 32,
+                    "SigningPubKey": "74657374",
+                    "TransactionType": "Payment",
+                    "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                    "DeliverMax": "1",
+                    "ledger_index": 11,
+                    "date": 1
+                },
+                "validated": true
+            },
+            {
+                "meta": {
+                    "AffectedNodes": [
+                        {
+                            "ModifiedNode": {
+                                "FinalFields": {
+                                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "Balance": "22"
+                                },
+                                "LedgerEntryType": "AccountRoot"
+                            }
+                        },
+                        {
+                            "ModifiedNode": {
+                                "FinalFields": {
+                                    "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                    "Balance": "23"
+                                },
+                                "LedgerEntryType": "AccountRoot"
+                            }
+                        }
+                    ],
+                    "TransactionIndex": 0,
+                    "TransactionResult": "tesSUCCESS",
+                    "delivered_amount": "unavailable"
+                },
+                "tx": {
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Amount": "1",
+                    "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                    "Fee": "1",
+                    "Sequence": 32,
+                    "SigningPubKey": "74657374",
+                    "TransactionType": "Payment",
+                    "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                    "DeliverMax": "1",
+                    "ledger_index": 29,
+                    "date": 2
+                },
+                "validated": true
+            }
+        ],
+        "validated": true,
+        "marker": {
+            "ledger": 12,
+            "seq": 34
+        }
+    })JSON";
 
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -459,11 +449,11 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV1)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": false
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": false
+                }})JSON",
                 kNFT_ID,
                 kMIN_SEQ + 1,
                 kMAX_SEQ - 1
@@ -478,119 +468,103 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV1)
 TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
 {
     constexpr auto kOUTPUT = R"JSON({
-                                "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
-                                "ledger_index_min": 11,
-                                "ledger_index_max": 29,
-                                "transactions":
-                                [
-                                    {
-                                        "meta":
-                                        {
-                                            "AffectedNodes":
-                                            [
-                                                {
-                                                    "ModifiedNode":
-                                                    {
-                                                        "FinalFields":
-                                                        {
-                                                            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                                            "Balance": "22"
-                                                        },
-                                                        "LedgerEntryType": "AccountRoot"
-                                                    }
-                                                },
-                                                {
-                                                    "ModifiedNode":
-                                                    {
-                                                        "FinalFields":
-                                                        {
-                                                            "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                                            "Balance": "23"
-                                                        },
-                                                        "LedgerEntryType": "AccountRoot"
-                                                    }
-                                                }
-                                            ],
-                                            "TransactionIndex": 0,
-                                            "TransactionResult": "tesSUCCESS",
-                                            "delivered_amount": "unavailable"
-                                        },
-                                        "tx_json":
-                                        {
-                                            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                            "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                            "Fee": "1",
-                                            "Sequence": 32,
-                                            "SigningPubKey": "74657374",
-                                            "TransactionType": "Payment",
-                                            "DeliverMax": "1",
-                                            "ledger_index": 11,
-                                            "date": 1
-                                        },
-                                        "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-                                        "ledger_index": 11,
-                                        "close_time_iso": "2000-01-01T00:00:00Z",
-                                        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                                        "validated": true
-                                    },
-                                    {
-                                        "meta":
-                                        {
-                                            "AffectedNodes":
-                                            [
-                                                {
-                                                    "ModifiedNode":
-                                                    {
-                                                        "FinalFields":
-                                                        {
-                                                            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                                            "Balance": "22"
-                                                        },
-                                                        "LedgerEntryType": "AccountRoot"
-                                                    }
-                                                },
-                                                {
-                                                    "ModifiedNode":
-                                                    {
-                                                        "FinalFields":
-                                                        {
-                                                            "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                                            "Balance": "23"
-                                                        },
-                                                        "LedgerEntryType": "AccountRoot"
-                                                    }
-                                                }
-                                            ],
-                                            "TransactionIndex": 0,
-                                            "TransactionResult": "tesSUCCESS",
-                                            "delivered_amount": "unavailable"
-                                        },
-                                        "tx_json":
-                                        {
-                                            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                            "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                            "Fee": "1",
-                                            "Sequence": 32,
-                                            "SigningPubKey": "74657374",
-                                            "TransactionType": "Payment",
-                                            "DeliverMax": "1",
-                                            "ledger_index": 29,
-                                            "date": 2
-                                        },
-                                        "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-                                        "ledger_index": 29,
-                                        "close_time_iso": "2000-01-01T00:00:00Z",
-                                        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                                        "validated": true
-                                    }
-                                ],
-                                "validated": true,
-                                "marker":
-                                {
-                                    "ledger": 12,
-                                    "seq": 34
-                                }
-                                })JSON";
+        "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
+        "ledger_index_min": 11,
+        "ledger_index_max": 29,
+        "transactions": [
+            {
+                "meta": {
+                    "AffectedNodes": [
+                        {
+                            "ModifiedNode": {
+                                "FinalFields": {
+                                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "Balance": "22"
+                                },
+                                "LedgerEntryType": "AccountRoot"
+                            }
+                        },
+                        {
+                            "ModifiedNode": {
+                                "FinalFields": {
+                                    "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                    "Balance": "23"
+                                },
+                                "LedgerEntryType": "AccountRoot"
+                            }
+                        }
+                    ],
+                    "TransactionIndex": 0,
+                    "TransactionResult": "tesSUCCESS",
+                    "delivered_amount": "unavailable"
+                },
+                "tx_json": {
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                    "Fee": "1",
+                    "Sequence": 32,
+                    "SigningPubKey": "74657374",
+                    "TransactionType": "Payment",
+                    "DeliverMax": "1",
+                    "ledger_index": 11,
+                    "date": 1
+                },
+                "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                "ledger_index": 11,
+                "close_time_iso": "2000-01-01T00:00:00Z",
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "validated": true
+            },
+            {
+                "meta": {
+                    "AffectedNodes": [
+                        {
+                            "ModifiedNode": {
+                                "FinalFields": {
+                                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "Balance": "22"
+                                },
+                                "LedgerEntryType": "AccountRoot"
+                            }
+                        },
+                        {
+                            "ModifiedNode": {
+                                "FinalFields": {
+                                    "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                    "Balance": "23"
+                                },
+                                "LedgerEntryType": "AccountRoot"
+                            }
+                        }
+                    ],
+                    "TransactionIndex": 0,
+                    "TransactionResult": "tesSUCCESS",
+                    "delivered_amount": "unavailable"
+                },
+                "tx_json": {
+                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                    "Fee": "1",
+                    "Sequence": 32,
+                    "SigningPubKey": "74657374",
+                    "TransactionType": "Payment",
+                    "DeliverMax": "1",
+                    "ledger_index": 29,
+                    "date": 2
+                },
+                "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                "ledger_index": 29,
+                "close_time_iso": "2000-01-01T00:00:00Z",
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "validated": true
+            }
+        ],
+        "validated": true,
+        "marker": {
+            "ledger": 12,
+            "seq": 34
+        }
+    })JSON";
 
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
@@ -615,11 +589,11 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": false
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": false
+                }})JSON",
                 kNFT_ID,
                 kMIN_SEQ + 1,
                 kMAX_SEQ - 1
@@ -649,11 +623,11 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": true
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": true
+                }})JSON",
                 kNFT_ID,
                 -1,
                 -1
@@ -692,11 +666,11 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": false
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": false
+                }})JSON",
                 kNFT_ID,
                 -1,
                 -1
@@ -735,11 +709,11 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV1)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "binary": true
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "binary": true
+                }})JSON",
                 kNFT_ID,
                 -1,
                 -1
@@ -791,11 +765,11 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV2)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "binary": true
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "binary": true
+                }})JSON",
                 kNFT_ID,
                 -1,
                 -1
@@ -844,13 +818,13 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitAndMarker)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "limit": 2,
-                "forward": false,
-                "marker": {{"ledger": 10, "seq": 11}}
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "limit": 2,
+                    "forward": false,
+                    "marker": {{"ledger": 10, "seq": 11}}
+                }})JSON",
                 kNFT_ID,
                 -1,
                 -1
@@ -894,9 +868,9 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerIndex)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index": {}
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index": {}
+                }})JSON",
                 kNFT_ID,
                 kMAX_SEQ - 1
             )
@@ -922,9 +896,9 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerIntIndex)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index": {}
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index": {}
+                }})JSON",
                 kNFT_ID,
                 kMAX_SEQ - 1
             )
@@ -947,9 +921,9 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerStringIndex)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index": "{}"
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index": "{}"
+                }})JSON",
                 kNFT_ID,
                 kMAX_SEQ - 1
             )
@@ -989,9 +963,9 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_hash": "{}"
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_hash": "{}"
+                }})JSON",
                 kNFT_ID,
                 kLEDGER_HASH
             )
@@ -1029,11 +1003,11 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLessThanMinSeq)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": false
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": false
+                }})JSON",
                 kNFT_ID,
                 kMIN_SEQ + 2,
                 kMAX_SEQ - 1
@@ -1072,11 +1046,11 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": false
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": false
+                }})JSON",
                 kNFT_ID,
                 kMIN_SEQ + 1,
                 kMAX_SEQ - 2
@@ -1115,12 +1089,12 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitMoreThanMax)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {},
-                "forward": false,
-                "limit": {}
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {},
+                    "forward": false,
+                    "limit": {}
+                }})JSON",
                 kNFT_ID,
                 kMIN_SEQ + 1,
                 kMAX_SEQ - 1,

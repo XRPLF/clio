@@ -66,8 +66,7 @@ TEST_F(FeedBookChangeTest, Pub)
             "ledger_index": 32,
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_time": 0,
-            "changes":
-            [
+            "changes": [
                 {
                     "currency_a": "XRP_drops",
                     "currency_b": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD/0158415500000000C1F76FF6ECB0BAC600000000",

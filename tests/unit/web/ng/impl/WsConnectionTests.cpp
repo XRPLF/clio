@@ -85,7 +85,7 @@ struct WebWsConnectionTests : SyncAsioContextTest {
 
 protected:
     util::TagDecoratorFactory tagDecoratorFactory_{config::ClioConfigDefinition{
-        {"log_tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("int")}
+        {"log.tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("int")}
     }};
     TestHttpServer httpServer_{ctx_, "localhost"};
     WebSocketAsyncClient wsClient_{ctx_};
@@ -397,7 +397,7 @@ TEST_F(WebWsConnectionTests, CloseCalledFromMultipleSubCoroutines)
     testing::StrictMock<testing::MockFunction<void()>> closeCalled;
     EXPECT_CALL(closeCalled, Call).Times(2);
 
-    runSpawnWithTimeout(std::chrono::seconds{1}, [&](boost::asio::yield_context yield) {
+    runSpawn([&](boost::asio::yield_context yield) {
         auto wsConnection = acceptConnection(yield);
         util::CoroutineGroup coroutines{yield};
         for ([[maybe_unused]] int const i : std::ranges::iota_view{0, 2}) {
