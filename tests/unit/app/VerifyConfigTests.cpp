@@ -38,7 +38,7 @@ TEST(VerifyConfigTest, ValidConfig)
 {
     // used to Verify Config test
     static constexpr auto kVALID_JSON_DATA = R"JSON({
-         "server": {
+        "server": {
             "ip": "0.0.0.0",
             "port": 51233
         }
@@ -58,7 +58,7 @@ TEST(VerifyConfigTest, InvalidJsonFile)
 {
     // invalid json because extra "," after 51233
     static constexpr auto kINVALID_JSON = R"JSON({
-                                             "server": {
+                                            "server": {
                                                 "ip": "0.0.0.0",
                                                 "port": 51233,
                                             }
