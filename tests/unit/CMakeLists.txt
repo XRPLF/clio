@@ -59,7 +59,6 @@ target_sources(
           etlng/ext/NFTTests.cpp
           etlng/ext/SuccessorTests.cpp
           # Feed
-          util/BytesConverterTests.cpp
           feed/BookChangesFeedTests.cpp
           feed/ForwardFeedTests.cpp
           feed/LedgerFeedTests.cpp
@@ -68,9 +67,12 @@ target_sources(
           feed/SubscriptionManagerTests.cpp
           feed/TrackableSignalTests.cpp
           feed/TransactionFeedTests.cpp
+          # Logging
+          util/log/LogServiceInitTests.cpp
+          util/log/LoggerTests.cpp
+          util/log/PrettyPathTests.cpp
+          # Other
           JsonUtilTests.cpp
-          LogServiceInitTests.cpp
-          LoggerTests.cpp
           Main.cpp
           Playground.cpp
           ProfilerTests.cpp
@@ -168,6 +170,7 @@ target_sources(
           # Common utils
           util/AccountUtilsTests.cpp
           util/AssertTests.cpp
+          util/BytesConverterTests.cpp
           util/CoroutineTest.cpp
           util/MoveTrackerTests.cpp
           util/RandomTests.cpp

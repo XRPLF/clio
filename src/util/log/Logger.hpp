@@ -28,7 +28,6 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <vector>
 
 // We forward declare spdlog::logger and spdlog::sinks::sink
@@ -136,10 +135,6 @@ class Logger final {
         {
             return enabled_;
         }
-
-    private:
-        [[nodiscard]] static std::string_view
-        prettyPath(SourceLocationType const& loc, size_t maxDepth = 3);
     };
 
 public:
