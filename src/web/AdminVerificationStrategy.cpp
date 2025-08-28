@@ -20,6 +20,7 @@
 #include "web/AdminVerificationStrategy.hpp"
 
 #include "util/JsonUtils.hpp"
+#include "util/Shasum.hpp"
 #include "util/config/ConfigDefinition.hpp"
 
 #include <boost/beast/http/field.hpp>
@@ -43,12 +44,7 @@ IPAdminVerificationStrategy::isAdmin(RequestHeader const&, std::string_view ip) 
 
 PasswordAdminVerificationStrategy::PasswordAdminVerificationStrategy(std::string const& password)
 {
-    ripple::sha256_hasher hasher;
-    hasher(password.data(), password.size());
-    auto const d = static_cast<ripple::sha256_hasher::result_type>(hasher);
-    ripple::uint256 sha256;
-    std::memcpy(sha256.data(), d.data(), d.size());
-    passwordSha256_ = ripple::to_string(sha256);
+    passwordSha256_ = util::sha256sumString(password);
     // make sure it's uppercase
     passwordSha256_ = util::toUpper(std::move(passwordSha256_));
 }

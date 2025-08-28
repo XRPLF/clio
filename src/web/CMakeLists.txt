@@ -15,6 +15,7 @@ target_sources(
           ng/Response.cpp
           ng/Server.cpp
           ng/SubscriptionContext.cpp
+          ProxyIpResolver.cpp
           Resolver.cpp
           SubscriptionContext.cpp
 )
