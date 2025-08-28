@@ -1678,10 +1678,10 @@ TEST_F(RPCAccountTxHandlerTest, MPTTxs_API_v2)
         static auto const kINPUT = json::parse(
             fmt::format(
                 R"JSON({{
-                "account": "{}",
-                "ledger_index_min": {},
-                "ledger_index_max": {}
-            }})JSON",
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {}
+                }})JSON",
                 kACCOUNT,
                 kMIN_SEQ,
                 kMAX_SEQ
