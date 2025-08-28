@@ -2145,7 +2145,8 @@ generateTestValuesForParametersTest()
                     "vault": {
                        "owner": "abcd",
                        "seq": "notAnInteger"
-                }})JSON",
+                    }
+                })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request.",
         },
@@ -2156,7 +2157,8 @@ generateTestValuesForParametersTest()
                     "vault": {
                         "owner": "abcd",
                         "seq": 10
-                }})JSON",
+                    }
+                })JSON",
             .expectedError = "malformedOwner",
             .expectedErrorMessage = "Malformed owner.",
         },
@@ -2167,7 +2169,8 @@ generateTestValuesForParametersTest()
                     "vault": {
                         "owner": "abcd",
                         "seq": -200
-                }})JSON",
+                    }
+                })JSON",
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request.",
         },
