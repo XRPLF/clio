@@ -52,7 +52,7 @@ public:
      * @return The result of the operation
      */
     Result
-    process(Input input, Context const& ctx) const;
+    process(Input const& input, Context const& ctx) const;
 };
 
 }  // namespace rpc

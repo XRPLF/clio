@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/AsioContextTestFixture.hpp"
 #include "util/MockAmendmentCenter.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"

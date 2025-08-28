@@ -214,29 +214,29 @@ TEST(WeightsMakeTest, CreateFromConfig)
          util::config::Array{util::config::ConfigValue{util::config::ConfigType::Integer}.optional()}}
     };
     std::string const configStr = R"JSON(
-    {
-        "dos_guard": {
-            "__ng_default_weight": 15,
-            "__ng_weights": [
-                {
-                    "method": "method1",
-                    "weight": 25,
-                    "weight_ledger_current": 30
-                },
-                {
-                    "method": "method2",
-                    "weight": 35,
-                    "weight_ledger_validated": 40
-                },
-                {
-                    "method": "method3",
-                    "weight": 45,
-                    "weight_ledger_current": 50,
-                    "weight_ledger_validated": 55
-                }
-            ]
+        {
+            "dos_guard": {
+                "__ng_default_weight": 15,
+                "__ng_weights": [
+                    {
+                        "method": "method1",
+                        "weight": 25,
+                        "weight_ledger_current": 30
+                    },
+                    {
+                        "method": "method2",
+                        "weight": 35,
+                        "weight_ledger_validated": 40
+                    },
+                    {
+                        "method": "method3",
+                        "weight": 45,
+                        "weight_ledger_current": 50,
+                        "weight_ledger_validated": 55
+                    }
+                ]
+            }
         }
-    }
     )JSON";
 
     auto const configJson = boost::json::parse(configStr).as_object();

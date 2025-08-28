@@ -5,11 +5,14 @@ import re
 from pathlib import Path
 
 
+PATTERN = r'R"JSON\((.*?)\)JSON"'
+
+
+def use_uppercase(cpp_content: str) -> str:
+    return cpp_content.replace('R"json(', 'R"JSON(').replace(')json"', ')JSON"')
+
+
 def fix_json_style(cpp_content: str) -> str:
-    cpp_content = cpp_content.replace('R"json(', 'R"JSON(').replace(')json"', ')JSON"')
-
-    pattern = r'R"JSON\((.*?)\)JSON"'
-
     def replace_json(match):
         raw_json = match.group(1)
 
@@ -29,12 +32,51 @@ def fix_json_style(cpp_content: str) -> str:
             raw_json = raw_json.replace(f'":{digit}', f'": {digit}')
         return f'R"JSON({raw_json})JSON"'
 
-    return re.sub(pattern, replace_json, cpp_content, flags=re.DOTALL)
+    return re.sub(PATTERN, replace_json, cpp_content, flags=re.DOTALL)
+
+
+def fix_colon_spacing(cpp_content: str) -> str:
+    def replace_json(match):
+        raw_json = match.group(1)
+        raw_json = re.sub(r'":\n\s*(\[|\{)', r'": \1', raw_json)
+        return f'R"JSON({raw_json})JSON"'
+    return re.sub(PATTERN, replace_json, cpp_content, flags=re.DOTALL)
+
+
+def fix_indentation(cpp_content: str) -> str:
+    lines = cpp_content.splitlines()
+
+    def find_indentation(line: str) -> int:
+        return len(line) - len(line.lstrip())
+
+    for (line_num, (line, next_line)) in enumerate(zip(lines[:-1], lines[1:])):
+        if "JSON(" in line and ")JSON" not in line:
+            indent = find_indentation(line)
+            next_indent = find_indentation(next_line)
+
+            by_how_much = next_indent - (indent + 4)
+            if by_how_much != 0:
+                print(
+                    f"Indentation error at line: {line_num + 2}: expected {indent + 4} spaces, found {next_indent} spaces"
+                )
+
+                for i in range(line_num + 1, len(lines)):
+                    if ")JSON" in lines[i]:
+                        lines[i] = " " * indent + lines[i].lstrip()
+                        break
+                    lines[i] = lines[i][by_how_much:] if by_how_much > 0 else " " * (-by_how_much) + lines[i]
+
+    return "\n".join(lines) + "\n"
 
 
 def process_file(file_path: Path, dry_run: bool) -> bool:
     content = file_path.read_text(encoding="utf-8")
-    new_content = fix_json_style(content)
+
+    new_content = content
+    new_content = use_uppercase(new_content)
+    new_content = fix_json_style(new_content)
+    new_content = fix_colon_spacing(new_content)
+    new_content = fix_indentation(new_content)
 
     if new_content != content:
         print(f"Processing file: {file_path}")

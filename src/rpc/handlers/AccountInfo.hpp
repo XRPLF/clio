@@ -61,40 +61,11 @@ public:
         ripple::STLedgerEntry accountData;
         bool isDisallowIncomingEnabled = false;
         bool isClawbackEnabled = false;
+        bool isTokenEscrowEnabled = false;
         uint32_t apiVersion;
         std::optional<std::vector<ripple::STLedgerEntry>> signerLists;
         // validated should be sent via framework
         bool validated = true;
-
-        /**
-         * @brief Construct a new Output object
-         *
-         * @param ledgerId The ledger index
-         * @param ledgerHash The ledger hash
-         * @param sle The account data
-         * @param isDisallowIncomingEnabled Whether disallow incoming is enabled
-         * @param isClawbackEnabled Whether clawback is enabled
-         * @param version The API version
-         * @param signerLists The signer lists
-         */
-        Output(
-            uint32_t ledgerId,
-            std::string ledgerHash,
-            ripple::STLedgerEntry sle,
-            bool isDisallowIncomingEnabled,
-            bool isClawbackEnabled,
-            uint32_t version,
-            std::optional<std::vector<ripple::STLedgerEntry>> signerLists = std::nullopt
-        )
-            : ledgerIndex(ledgerId)
-            , ledgerHash(std::move(ledgerHash))
-            , accountData(std::move(sle))
-            , isDisallowIncomingEnabled(isDisallowIncomingEnabled)
-            , isClawbackEnabled(isClawbackEnabled)
-            , apiVersion(version)
-            , signerLists(std::move(signerLists))
-        {
-        }
     };
 
     /**
@@ -159,7 +130,7 @@ public:
      * @return The result of the operation
      */
     Result
-    process(Input input, Context const& ctx) const;
+    process(Input const& input, Context const& ctx) const;
 
 private:
     /**

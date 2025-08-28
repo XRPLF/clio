@@ -16,6 +16,7 @@ coverage:
 #
 # More info: https://github.com/XRPLF/clio/pull/2066
 ignore:
+  - "benchmarks"
   - "tests"
   - "src/data/cassandra/"
   - "src/data/CassandraBackend.hpp"

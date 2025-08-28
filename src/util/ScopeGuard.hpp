@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,31 +19,39 @@
 
 #pragma once
 
-#include "util/config/ConfigFileInterface.hpp"
-#include "util/config/Types.hpp"
+#include <utility>
 
-#include <boost/filesystem/path.hpp>
+namespace util {
 
-#include <string_view>
-#include <vector>
-
-// TODO: implement when we support yaml
-
-namespace util::config {
-
-/** @brief Yaml representation of config */
-class ConfigFileYaml final : public ConfigFileInterface {
+/**
+ * @brief Run a function when the scope is exited
+ */
+template <typename Func>
+class ScopeGuard {
 public:
-    ConfigFileYaml() = default;
+    ScopeGuard(ScopeGuard const&) = delete;
+    ScopeGuard(ScopeGuard&&) = delete;
+    ScopeGuard&
+    operator=(ScopeGuard const&) = delete;
+    ScopeGuard&
+    operator=(ScopeGuard&&) = delete;
 
-    Value
-    getValue(std::string_view key) const override;
+    /**
+     * @brief Create ScopeGuard object.
+     *
+     * @param func The function to run when the scope is exited.
+     */
+    ScopeGuard(Func func) : func_(std::move(func))
+    {
+    }
 
-    std::vector<Value>
-    getArray(std::string_view key) const override;
+    ~ScopeGuard()
+    {
+        func_();
+    }
 
-    bool
-    containsKey(std::string_view key) const override;
+private:
+    Func func_;
 };
 
-}  // namespace util::config
+}  // namespace util

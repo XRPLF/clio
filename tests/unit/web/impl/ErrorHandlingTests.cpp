@@ -44,7 +44,7 @@ using namespace util::config;
 struct ErrorHandlingTests : NoLoggerFixture {
 protected:
     util::TagDecoratorFactory tagFactory_{ClioConfigDefinition{
-        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
     }};
     std::string const clientIp_ = "some ip";
     ConnectionBaseStrictMockPtr connection_ =

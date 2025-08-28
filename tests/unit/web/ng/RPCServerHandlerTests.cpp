@@ -24,6 +24,7 @@
 #include "util/MockETLService.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockRPCEngine.hpp"
+#include "util/Spawn.hpp"
 #include "util/Taggable.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigValue.hpp"
@@ -64,7 +65,7 @@ namespace http = boost::beast::http;
 
 struct NgRpcServerHandlerTest : util::prometheus::WithPrometheus, MockBackendTestStrict, SyncAsioContextTest {
     ClioConfigDefinition config{ClioConfigDefinition{
-        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
         {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(1)},
         {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(2)},
         {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(1)}
@@ -173,7 +174,7 @@ TEST_F(NgRpcServerHandlerTest, CoroutineSleepsUntilRpcEngineFinishes)
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
-            boost::asio::spawn(
+            util::spawn(
                 ctx_, [this, &rpcEngineDone, fn = std::forward<decltype(fn)>(fn)](boost::asio::yield_context yield) {
                     EXPECT_CALL(*rpcEngine_, notifyBadSyntax);
                     fn(yield);

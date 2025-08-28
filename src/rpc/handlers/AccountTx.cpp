@@ -52,7 +52,7 @@ namespace rpc {
 // TODO: this is currently very similar to nft_history but its own copy for time
 // being. we should aim to reuse common logic in some way in the future.
 AccountTxHandler::Result
-AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) const
+AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountTX's ledger range must be available");

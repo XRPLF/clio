@@ -1,9 +1,10 @@
+add_subdirectory(build)
+
 add_library(clio_util)
 
 target_sources(
   clio_util
   PRIVATE Assert.cpp
-          build/Build.cpp
           Coroutine.cpp
           CoroutineGroup.cpp
           log/Logger.cpp
@@ -50,14 +51,14 @@ target_link_libraries(
   clio_util
   PUBLIC Boost::headers
          Boost::iostreams
-         Boost::log
-         Boost::log_setup
          fmt::fmt
          openssl::openssl
          xrpl::libxrpl
          Threads::Threads
          clio_options
          clio_rpc_center
+         clio_build_version
+  PRIVATE spdlog::spdlog
 )
 
 # FIXME: needed on gcc-12, clang-16 and AppleClang for now (known boost 1.82 issue for some compilers)

@@ -15,6 +15,7 @@ runs:
       shell: bash
       run: |
         gcovr \
+          -e benchmarks \
           -e tests \
           -e src/data/cassandra \
           -e src/data/CassandraBackend.hpp \

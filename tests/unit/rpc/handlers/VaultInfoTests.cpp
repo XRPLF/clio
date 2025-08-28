@@ -151,9 +151,9 @@ generateTestValuesForParametersTest()
             .testName = "vaultIDWithOwner",
             .testJson = fmt::format(
                 R"JSON({{
-                "vault_id": "{}",
-                "owner": "{}"
-            }})JSON",
+                    "vault_id": "{}",
+                    "owner": "{}"
+                }})JSON",
                 kVAULT_ID,
                 kACCOUNT
             ),
@@ -194,9 +194,9 @@ TEST_F(RPCVaultInfoHandlerTest, InputHasOwnerButNotFoundResultsInError)
     auto static const kINPUT = boost::json::parse(
         fmt::format(
             R"JSON({{
-            "owner": "{}",
-            "seq": 3
-        }})JSON",
+                "owner": "{}",
+                "seq": 3
+            }})JSON",
             kACCOUNT
         )
     );
@@ -438,10 +438,10 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
     auto static const kINPUT = boost::json::parse(
         fmt::format(
             R"JSON({{
-            "owner": "{}",
-            "seq": {},
-            "ledger_index": 30
-        }})JSON",
+                "owner": "{}",
+                "seq": {},
+                "ledger_index": 30
+            }})JSON",
             kACCOUNT,
             kSEQ
         )

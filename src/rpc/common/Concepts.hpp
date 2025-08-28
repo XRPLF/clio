@@ -69,9 +69,10 @@ concept SomeProcessor = (SomeRequirement<T> or SomeModifier<T>);
  * @brief A process function that expects both some Input and a Context.
  */
 template <typename T>
-concept SomeContextProcessWithInput = requires(T a, typename T::Input in, typename T::Output out, Context const& ctx) {
-    { a.process(in, ctx) } -> std::same_as<HandlerReturnType<decltype(out)>>;
-};
+concept SomeContextProcessWithInput =
+    requires(T a, typename T::Input const& in, typename T::Output out, Context const& ctx) {
+        { a.process(in, ctx) } -> std::same_as<HandlerReturnType<decltype(out)>>;
+    };
 
 /**
  * @brief A process function that expects no Input but does take a Context.

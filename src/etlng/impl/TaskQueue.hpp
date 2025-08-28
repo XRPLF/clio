@@ -20,10 +20,14 @@
 #pragma once
 
 #include "etlng/Models.hpp"
+#include "util/Assert.hpp"
 #include "util/Mutex.hpp"
 
+#include <atomic>
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
+#include <mutex>
 #include <optional>
 #include <queue>
 #include <utility>
@@ -44,9 +48,6 @@ struct ReverseOrderComparator {
  * @note This may be a candidate for future improvements if performance proves to be poor (e.g. use a lock free queue)
  */
 class TaskQueue {
-    std::size_t limit_;
-    std::uint32_t increment_;
-
     struct Data {
         std::uint32_t expectedSequence;
         std::priority_queue<model::LedgerData, std::vector<model::LedgerData>, ReverseOrderComparator> forwardLoadQueue;
@@ -56,7 +57,12 @@ class TaskQueue {
         }
     };
 
+    std::size_t limit_;
+    std::uint32_t increment_;
     util::Mutex<Data> data_;
+
+    std::condition_variable cv_;
+    std::atomic_bool stopping_ = false;
 
 public:
     struct Settings {
@@ -67,11 +73,17 @@ public:
 
     /**
      * @brief Construct a new priority queue
-     * @param limit The limit of items allowed simultaneously in the queue
+     * @param settings Settings for the queue, including starting sequence, increment value, and optional limit
+     * @note If limit is not set, the queue will have no limit
      */
     explicit TaskQueue(Settings settings)
         : limit_(settings.limit.value_or(0uz)), increment_(settings.increment), data_(settings.startSeq)
     {
+    }
+
+    ~TaskQueue()
+    {
+        ASSERT(stopping_, "stop() must be called before destroying the TaskQueue");
     }
 
     /**
@@ -88,6 +100,8 @@ public:
 
         if (limit_ == 0uz or lock->forwardLoadQueue.size() < limit_) {
             lock->forwardLoadQueue.push(std::move(item));
+            cv_.notify_all();
+
             return true;
         }
 
@@ -124,6 +138,32 @@ public:
     empty()
     {
         return data_.lock()->forwardLoadQueue.empty();
+    }
+
+    /**
+     * @brief Awaits for the queue to become non-empty
+     * @note This function blocks until there is a task or the queue is being destroyed
+     */
+    void
+    awaitTask()
+    {
+        if (stopping_)
+            return;
+
+        auto lock = data_.lock<std::unique_lock>();
+        cv_.wait(lock, [&] { return stopping_ or not lock->forwardLoadQueue.empty(); });
+    }
+
+    /**
+     * @brief Notify the queue that it's no longer needed
+     * @note This must be called before the queue is destroyed
+     */
+    void
+    stop()
+    {
+        // unblock all waiters
+        stopping_ = true;
+        cv_.notify_all();
     }
 };
 

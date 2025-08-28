@@ -10,7 +10,8 @@ The image is based on Ubuntu 20.04 and contains:
 - ClangBuildAnalyzer 1.6.0
 - Conan 2.17.0
 - Doxygen 1.12
-- GCC 14.3.0
+- GCC 15.2.0
+- GDB 16.3
 - gh 2.74
 - git-cliff 2.9.1
 - mold 2.40.1

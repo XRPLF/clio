@@ -38,10 +38,16 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests \
         clang-tidy-${LLVM_TOOLS_VERSION} \
         clang-tools-${LLVM_TOOLS_VERSION} \
+        dpkg-dev \
+        file \
         git \
         git-lfs \
         graphviz \
         jq \
+        # libgmp, libmpfr and libncurses are gdb dependencies
+        libgmp-dev \
+        libmpfr-dev \
+        libncurses-dev \
         make \
         ninja-build \
         python3 \
@@ -53,7 +59,7 @@ RUN apt-get update \
         # lxml 6.0.0 is not compatible with our image
         'lxml<6.0.0' \
         \
-        cmake==3.31.6 \
+        cmake \
         conan==2.17.0 \
         gcovr \
         pre-commit \
@@ -92,12 +98,13 @@ COPY --from=clio-tools \
     /usr/local/bin/ClangBuildAnalyzer \
     /usr/local/bin/git-cliff \
     /usr/local/bin/gh \
+    /usr/local/bin/gdb \
     /usr/local/bin/
 
 WORKDIR /root
 
 # Setup conan
-RUN conan remote add --index 0 ripple http://18.143.149.228:8081/artifactory/api/conan/dev
+RUN conan remote add --index 0 ripple https://conan.ripplex.io
 
 WORKDIR /root/.conan2
 COPY conan/global.conf ./global.conf

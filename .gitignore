@@ -9,4 +9,3 @@
 .sanitizer-report
 CMakeUserPresets.json
 config.json
-src/util/build/Build.cpp

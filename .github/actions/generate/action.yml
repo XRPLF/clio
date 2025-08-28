@@ -17,6 +17,10 @@ inputs:
     description: Whether to build integration tests
     required: true
     default: "true"
+  build_benchmark:
+    description: Whether to build benchmark tests
+    required: true
+    default: "true"
   code_coverage:
     description: Whether conan's coverage option should be on or not
     required: true
@@ -27,6 +31,14 @@ inputs:
     default: "false"
   time_trace:
     description: Whether to enable compiler trace reports
+    required: true
+    default: "false"
+  use_mold:
+    description: Whether to use mold linker
+    required: true
+    default: "false"
+  package:
+    description: Whether to generate Debian package
     required: true
     default: "false"
 
@@ -44,7 +56,10 @@ runs:
         CODE_COVERAGE: "${{ inputs.code_coverage == 'true' && 'True' || 'False' }}"
         STATIC_OPTION: "${{ inputs.static == 'true' && 'True' || 'False' }}"
         INTEGRATION_TESTS_OPTION: "${{ inputs.build_integration_tests == 'true' && 'True' || 'False' }}"
+        BENCHMARK_OPTION: "${{ inputs.build_benchmark == 'true' && 'True' || 'False' }}"
         TIME_TRACE: "${{ inputs.time_trace == 'true' && 'True' || 'False' }}"
+        USE_MOLD: "${{ inputs.use_mold == 'true' && 'True' || 'False' }}"
+        PACKAGE: "${{ inputs.package == 'true' && 'True' || 'False' }}"
       run: |
         cd build
         conan \
@@ -55,9 +70,12 @@ runs:
           -o "&:static=${STATIC_OPTION}" \
           -o "&:tests=True" \
           -o "&:integration_tests=${INTEGRATION_TESTS_OPTION}" \
+          -o "&:benchmark=${BENCHMARK_OPTION}" \
           -o "&:lint=False" \
           -o "&:coverage=${CODE_COVERAGE}" \
           -o "&:time_trace=${TIME_TRACE}" \
+          -o "&:use_mold=${USE_MOLD}" \
+          -o "&:package=${PACKAGE}" \
           --profile:all "${{ inputs.conan_profile }}"
 
     - name: Run cmake
@@ -69,11 +87,13 @@ runs:
               endsWith(inputs.conan_profile, '.tsan') && '-Dsan=thread' ||
               endsWith(inputs.conan_profile, '.ubsan') && '-Dsan=undefined' ||
               '' }}
+        USE_MOLD_OPTION: "${{ inputs.use_mold == 'true' && '-DUSE_MOLD=ON' || '' }}"
       run: |
         cd build
         cmake \
           -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake \
           -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+          "${USE_MOLD_OPTION}" \
           "${SANITIZER_OPTION}" \
           .. \
           -G Ninja

@@ -21,6 +21,7 @@
 
 #include "util/Assert.hpp"
 #include "util/Mutex.hpp"
+#include "util/Spawn.hpp"
 
 #include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
@@ -212,7 +213,7 @@ private:
 
         boost::signals2::scoped_connection const slot =
             updateFinished_.connect([yield, sharedContext](std::expected<ValueType, ErrorType> value) {
-                boost::asio::spawn(yield, [sharedContext = std::move(sharedContext), value = std::move(value)](auto&&) {
+                util::spawn(yield, [sharedContext = std::move(sharedContext), value = std::move(value)](auto&&) {
                     sharedContext->result = std::move(value);
                     sharedContext->timer.cancel();
                 });

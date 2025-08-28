@@ -25,6 +25,7 @@
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
+#include "util/Spawn.hpp"
 #include "util/TestObject.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
 #include "util/async/context/SyncExecutionContext.hpp"
@@ -246,8 +247,7 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
             "ledger_index": 32,
             "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "ledger_time": 0,
-            "changes":
-            [
+            "changes": [
                 {
                     "currency_a": "XRP_drops",
                     "currency_b": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD/0158415500000000C1F76FF6ECB0BAC600000000",
@@ -291,7 +291,7 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
             "reserve_inc": 2
         })JSON";
     boost::asio::io_context ctx;
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+    util::spawn(ctx, [this](boost::asio::yield_context yield) {
         EXPECT_CALL(*sessionPtr_, onDisconnect);
         auto const res = subscriptionManagerPtr_->subLedger(yield, session_);
         // check the response
@@ -347,8 +347,7 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
     trans1.metadata = metaObj.getSerializer().peekData();
     static constexpr auto kORDERBOOK_PUBLISH =
         R"JSON({
-            "transaction":
-            {
+            "transaction": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "Amount": "1",
                 "DeliverMax": "1",
@@ -360,29 +359,22 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
                 "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
                 "date": 0
             },
-            "meta":
-            {
-                "AffectedNodes":
-                [
+            "meta": {
+                "AffectedNodes": [
                     {
-                        "ModifiedNode":
-                        {
-                            "FinalFields":
-                            {
+                        "ModifiedNode": {
+                            "FinalFields": {
                                 "TakerGets": "3",
-                                "TakerPays":
-                                {
+                                "TakerPays": {
                                     "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                     "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
                                     "value": "1"
                                 }
                             },
                             "LedgerEntryType": "Offer",
-                            "PreviousFields":
-                            {
+                            "PreviousFields": {
                                 "TakerGets": "1",
-                                "TakerPays":
-                                {
+                                "TakerPays": {
                                     "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                     "issuer": "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
                                     "value": "3"
@@ -429,16 +421,14 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
 
     static constexpr auto kDUMMY_TRANSACTION =
         R"JSON({
-            "transaction":
-            {
+            "transaction": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
             }
         })JSON";
     static constexpr auto kORDERBOOK_PUBLISH =
         R"JSON({
-            "transaction":
-            {
+            "transaction": {
                 "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "Amount": "1",
                 "DeliverMax": "1",
@@ -450,29 +440,22 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
                 "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
                 "date": 0
             },
-            "meta":
-            {
-                "AffectedNodes":
-                [
+            "meta": {
+                "AffectedNodes": [
                     {
-                        "ModifiedNode":
-                        {
-                            "FinalFields":
-                            {
+                        "ModifiedNode": {
+                            "FinalFields": {
                                 "TakerGets": "3",
-                                "TakerPays":
-                                {
+                                "TakerPays": {
                                     "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                     "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                     "value": "1"
                                 }
                             },
                             "LedgerEntryType": "Offer",
-                            "PreviousFields":
-                            {
+                            "PreviousFields": {
                                 "TakerGets": "1",
-                                "TakerPays":
-                                {
+                                "TakerPays": {
                                     "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
                                     "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                                     "value": "3"

@@ -184,9 +184,9 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaHash)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kACCOUNT,
             kLEDGER_HASH
         )
@@ -212,9 +212,9 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaStringIndex)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_index": "{}"
-        }})JSON",
+                "account": "{}",
+                "ledger_index": "{}"
+            }})JSON",
             kACCOUNT,
             kSEQ
         )
@@ -240,9 +240,9 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "ledger_index": {}
-        }})JSON",
+                "account": "{}",
+                "ledger_index": {}
+            }})JSON",
             kACCOUNT,
             kSEQ
         )
@@ -269,8 +269,8 @@ TEST_F(RPCAccountNFTsHandlerTest, AccountNotFound)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -334,8 +334,8 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -370,9 +370,9 @@ TEST_F(RPCAccountNFTsHandlerTest, Limit)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": {}
-        }})JSON",
+                "account": "{}",
+                "limit": {}
+            }})JSON",
             kACCOUNT,
             kLIMIT
         )
@@ -407,9 +407,9 @@ TEST_F(RPCAccountNFTsHandlerTest, Marker)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "marker": "{}"
-        }})JSON",
+                "account": "{}",
+                "marker": "{}"
+            }})JSON",
             kACCOUNT,
             kPAGE
         )
@@ -436,9 +436,9 @@ TEST_F(RPCAccountNFTsHandlerTest, InvalidMarker)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "marker": "{}"
-        }})JSON",
+                "account": "{}",
+                "marker": "{}"
+            }})JSON",
             kACCOUNT,
             kINVALID_PAGE
         )
@@ -467,8 +467,8 @@ TEST_F(RPCAccountNFTsHandlerTest, AccountWithNoNFT)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}"
-        }})JSON",
+                "account": "{}"
+            }})JSON",
             kACCOUNT
         )
     );
@@ -501,9 +501,9 @@ TEST_F(RPCAccountNFTsHandlerTest, invalidPage)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "marker": "{}"
-        }})JSON",
+                "account": "{}",
+                "marker": "{}"
+            }})JSON",
             kACCOUNT,
             kPAGE
         )
@@ -569,9 +569,9 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": {}
-        }})JSON",
+                "account": "{}",
+                "limit": {}
+            }})JSON",
             kACCOUNT,
             AccountNFTsHandler::kLIMIT_MIN - 1
         )
@@ -635,9 +635,9 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "account": "{}",
-            "limit": {}
-        }})JSON",
+                "account": "{}",
+                "limit": {}
+            }})JSON",
             kACCOUNT,
             AccountNFTsHandler::kLIMIT_MAX + 1
         )

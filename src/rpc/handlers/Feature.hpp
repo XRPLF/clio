@@ -111,7 +111,7 @@ public:
      * @return The result of the operation
      */
     Result
-    process(Input input, Context const& ctx) const;  // NOLINT(readability-convert-member-functions-to-static)
+    process(Input const& input, Context const& ctx) const;  // NOLINT(readability-convert-member-functions-to-static)
 
 private:
     /**

@@ -39,8 +39,8 @@
 #include "web/dosguard/WhitelistHandler.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/io_service.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/status.hpp>
@@ -125,7 +125,7 @@ getParseServerConfig(boost::json::value val)
         {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
         {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
         {"server.ws_max_sending_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1500)},
-        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
         {"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}},
         {"dos_guard.sweep_interval", ConfigValue{ConfigType::Integer}},
         {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}},
@@ -150,7 +150,7 @@ struct WebServerTest : NoLoggerFixture {
 
     WebServerTest()
     {
-        work_.emplace(ctx);  // make sure ctx does not stop on its own
+        work_.emplace(boost::asio::make_work_guard(ctx));  // make sure ctx does not stop on its own
         runner_.emplace([this] { ctx.run(); });
     }
 
@@ -182,7 +182,7 @@ struct WebServerTest : NoLoggerFixture {
     TmpFile sslKeyFile{tests::sslKeyFile()};
 
 private:
-    std::optional<boost::asio::io_service::work> work_;
+    std::optional<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work_;
     std::optional<std::thread> runner_;
 };
 
@@ -525,7 +525,7 @@ getParseAdminServerConfig(boost::json::value val)
         {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
         {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
         {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
-        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
     };
     auto const errors = config.parse(jsonVal);
     [&]() { ASSERT_FALSE(errors.has_value()); }();
@@ -688,7 +688,9 @@ TEST_F(WebServerPrometheusTest, rejectedWithoutAdminPassword)
     EXPECT_EQ(status, boost::beast::http::status::unauthorized);
 }
 
-TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
+struct WebServerPrometheusDisabledTest : util::prometheus::WithPrometheusDisabled, WebServerTest {};
+
+TEST_F(WebServerPrometheusDisabledTest, rejectedIfPrometheusIsDisabled)
 {
     uint32_t webServerPort = tests::util::generateFreePort();
     std::string const jsonServerConfigWithDisabledPrometheus = fmt::format(
@@ -698,8 +700,7 @@ TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
                 "port": {},
                 "admin_password": "secret",
                 "ws_max_sending_queue_size": 1500
-            }},
-        "prometheus": {{ "enabled": false }}
+            }}
     }})JSON",
         webServerPort
     );
@@ -708,7 +709,6 @@ TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
     ClioConfigDefinition const serverConfig{
         getParseAdminServerConfig(boost::json::parse(jsonServerConfigWithDisabledPrometheus))
     };
-    PrometheusService::init(serverConfig);
     auto server = makeServerSync(serverConfig, ctx, dosGuard, e);
     auto const [status, res] = HttpSyncClient::get(
         "localhost",

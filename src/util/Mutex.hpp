@@ -76,6 +76,11 @@ public:
     {
         return &data_;
     }
+
+    operator LockType<MutexType>&()
+    {
+        return lock_;
+    }
     /** @endcond */
 
 private:

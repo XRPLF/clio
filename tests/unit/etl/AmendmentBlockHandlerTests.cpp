@@ -45,7 +45,12 @@ TEST_F(AmendmentBlockHandlerTest, CallTonotifyAmendmentBlockedSetsStateAndRepeat
     handler.notifyAmendmentBlocked();
     EXPECT_TRUE(state.isAmendmentBlocked);
 
+// Code runs significantly slower when assertions are enabled
+#ifdef _GLIBCXX_ASSERTIONS
+    runContextFor(std::chrono::milliseconds{10});
+#else
     runContextFor(std::chrono::milliseconds{1});
+#endif
 }
 
 struct DefaultAmendmentBlockActionTest : LoggerFixture {};
@@ -54,5 +59,5 @@ TEST_F(DefaultAmendmentBlockActionTest, Call)
 {
     AmendmentBlockHandler::kDEFAULT_AMENDMENT_BLOCK_ACTION();
     auto const loggerString = getLoggerString();
-    EXPECT_TRUE(loggerString.starts_with("ETL:FTL Can't process new ledgers")) << "LoggerString " << loggerString;
+    EXPECT_TRUE(loggerString.starts_with("cri:ETL - Can't process new ledgers")) << "LoggerString " << loggerString;
 }

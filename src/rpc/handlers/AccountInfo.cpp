@@ -43,6 +43,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -50,7 +51,7 @@
 
 namespace rpc {
 AccountInfoHandler::Result
-AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx) const
+AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context const& ctx) const
 {
     using namespace data;
 
@@ -88,6 +89,18 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
 
     auto const isDisallowIncomingEnabled = isEnabled(Amendments::DisallowIncoming);
     auto const isClawbackEnabled = isEnabled(Amendments::Clawback);
+    auto const isTokenEscrowEnabled = isEnabled(Amendments::TokenEscrow);
+
+    Output out{
+        .ledgerIndex = lgrInfo.seq,
+        .ledgerHash = ripple::strHex(lgrInfo.hash),
+        .accountData = sle,
+        .isDisallowIncomingEnabled = isDisallowIncomingEnabled,
+        .isClawbackEnabled = isClawbackEnabled,
+        .isTokenEscrowEnabled = isTokenEscrowEnabled,
+        .apiVersion = ctx.apiVersion,
+        .signerLists = std::nullopt
+    };
 
     // Return SignerList(s) if that is requested.
     if (input.signerLists) {
@@ -98,7 +111,6 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
         auto const signers = sharedPtrBackend_->fetchLedgerObject(signersKey.key, lgrInfo.seq, ctx.yield);
-        std::vector<ripple::STLedgerEntry> signerList;
 
         if (signers) {
             ripple::STLedgerEntry const sleSigners{
@@ -108,23 +120,11 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
             if (!signersKey.check(sleSigners))
                 return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
 
-            signerList.push_back(sleSigners);
+            out.signerLists = std::vector<ripple::STLedgerEntry>{sleSigners};
         }
-
-        return Output(
-            lgrInfo.seq,
-            ripple::strHex(lgrInfo.hash),
-            sle,
-            isDisallowIncomingEnabled,
-            isClawbackEnabled,
-            ctx.apiVersion,
-            signerList
-        );
     }
 
-    return Output(
-        lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, isDisallowIncomingEnabled, isClawbackEnabled, ctx.apiVersion
-    );
+    return out;
 }
 
 void
@@ -159,9 +159,11 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
         lsFlags.insert(lsFlags.end(), disallowIncomingFlags.begin(), disallowIncomingFlags.end());
     }
 
-    if (output.isClawbackEnabled) {
+    if (output.isClawbackEnabled)
         lsFlags.emplace_back("allowTrustLineClawback", ripple::lsfAllowTrustLineClawback);
-    }
+
+    if (output.isTokenEscrowEnabled)
+        lsFlags.emplace_back("allowTrustLineLocking", ripple::lsfAllowTrustLineLocking);
 
     boost::json::object acctFlags;
     for (auto const& lsf : lsFlags)

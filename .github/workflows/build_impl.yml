@@ -53,6 +53,17 @@ on:
         required: true
         type: boolean
 
+      expected_version:
+        description: Expected version of the clio_server binary
+        required: false
+        type: string
+        default: ""
+
+      package:
+        description: Whether to generate Debian package
+        required: false
+        type: boolean
+
     secrets:
       CODECOV_TOKEN:
         required: false
@@ -71,9 +82,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # We need to fetch tags to have correct version in the release
+          # The workaround is based on https://github.com/actions/checkout/issues/1467
+          fetch-tags: true
+          ref: ${{ github.ref }}
 
       - name: Prepare runner
-        uses: ./.github/actions/prepare_runner
+        uses: XRPLF/actions/.github/actions/prepare-runner@7951b682e5a2973b28b0719a72f01fc4b0d0c34f
         with:
           disable_ccache: ${{ inputs.disable_cache }}
 
@@ -100,6 +115,8 @@ jobs:
           code_coverage: ${{ inputs.code_coverage }}
           static: ${{ inputs.static }}
           time_trace: ${{ inputs.analyze_build_time }}
+          use_mold: ${{ runner.os != 'macOS' }}
+          package: ${{ inputs.package }}
 
       - name: Build Clio
         uses: ./.github/actions/build_clio
@@ -147,18 +164,25 @@ jobs:
           path: build/clio_server
 
       - name: Upload clio_tests
-        if: ${{ !inputs.code_coverage && !inputs.analyze_build_time }}
+        if: ${{ !inputs.code_coverage && !inputs.analyze_build_time && !inputs.package }}
         uses: actions/upload-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_tests
 
       - name: Upload clio_integration_tests
-        if: ${{ !inputs.code_coverage && !inputs.analyze_build_time }}
+        if: ${{ !inputs.code_coverage && !inputs.analyze_build_time && !inputs.package }}
         uses: actions/upload-artifact@v4
         with:
           name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_integration_tests
+
+      - name: Upload Clio Linux package
+        if: inputs.package
+        uses: actions/upload-artifact@v4
+        with:
+          name: clio_deb_package_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+          path: build/*.deb
 
       - name: Save cache
         if: ${{ !inputs.disable_cache && github.ref == 'refs/heads/develop' }}
@@ -174,7 +198,6 @@ jobs:
 
       # This is run as part of the build job, because it requires the following:
       # - source code
-      # - generated source code (Build.cpp)
       # - conan packages
       # - .gcno files in build directory
       #
@@ -182,6 +205,18 @@ jobs:
       - name: Run code coverage
         if: ${{ inputs.code_coverage }}
         uses: ./.github/actions/code_coverage
+
+      - name: Verify expected version
+        if: ${{ inputs.expected_version != '' }}
+        shell: bash
+        run: |
+          set -e
+          EXPECTED_VERSION="clio-${{ inputs.expected_version }}"
+          actual_version=$(./build/clio_server --version)
+          if [[ "$actual_version" != "$EXPECTED_VERSION" ]]; then
+            echo "Expected version '$EXPECTED_VERSION', but got '$actual_version'"
+            exit 1
+          fi
 
   # `codecov/codecov-action` will rerun `gcov` if it's available and build directory is present
   # To prevent this from happening, we run this action in a separate workflow

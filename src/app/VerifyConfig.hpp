@@ -44,7 +44,7 @@ parseConfig(std::string_view configPath)
         std::cerr << "Error parsing json from config: " << configPath << "\n" << json.error().error << std::endl;
         return false;
     }
-    auto const errors = gClioConfig.parse(json.value());
+    auto const errors = getClioConfig().parse(json.value());
     if (errors.has_value()) {
         for (auto const& err : errors.value()) {
             std::cerr << "Issues found in provided config '" << configPath << "':\n";

@@ -7,15 +7,21 @@
 
 - [Python 3.7](https://www.python.org/downloads/)
 - [Conan 2.17.0](https://conan.io/downloads.html)
-- [CMake 3.20, <4.0](https://cmake.org/download/)
+- [CMake 3.20](https://cmake.org/download/)
 - [**Optional**] [GCovr](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html): needed for code coverage generation
 - [**Optional**] [CCache](https://ccache.dev/): speeds up compilation if you are going to compile Clio often
 
+We use our Docker image `ghcr.io/XRPLF/clio-ci` to build `Clio`, see [Building Clio with Docker](#building-clio-with-docker).
+You can find information about exact compiler versions and tools in the [image's README](https://github.com/XRPLF/clio/blob/develop/docker/ci/README.md).
+
+The following compiler version are guaranteed to work.
+Any compiler with lower version may not be able to build Clio:
+
 | Compiler    | Version |
 | ----------- | ------- |
-| GCC         | 12.3    |
-| Clang       | 16      |
-| Apple Clang | 15      |
+| GCC         | 15.2    |
+| Clang       | 19      |
+| Apple Clang | 17      |
 
 ### Conan Configuration
 
@@ -84,7 +90,7 @@ core.upload:parallel={{os.cpu_count()}}
 Make sure artifactory is setup with Conan.
 
 ```sh
-conan remote add --index 0 ripple http://18.143.149.228:8081/artifactory/api/conan/dev
+conan remote add --index 0 ripple https://conan.ripplex.io
 ```
 
 Now you should be able to download the prebuilt dependencies (including `xrpl` package) on supported platforms.
@@ -163,7 +169,7 @@ To generate the API docs:
 It is also possible to build Clio using [Docker](https://www.docker.com/) if you don't want to install all the dependencies on your machine.
 
 ```sh
-docker run -it ghcr.io/xrplf/clio-ci:25e55ef95248539a3b1106985e1b30b1e73462b7
+docker run -it ghcr.io/xrplf/clio-ci:8ad111655c4d04bfedb7e7cb3bbfba6d4204852d
 git clone https://github.com/XRPLF/clio
 mkdir build && cd build
 conan install .. --output-folder . --build missing --settings build_type=Release -o '&:tests=True'

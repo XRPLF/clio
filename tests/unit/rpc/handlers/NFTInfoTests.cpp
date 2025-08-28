@@ -64,9 +64,9 @@ TEST_F(RPCNFTInfoHandlerTest, NonHexLedgerHash)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_hash": "xxx"
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_hash": "xxx"
+                }})JSON",
                 kNFT_ID
             )
         );
@@ -86,9 +86,9 @@ TEST_F(RPCNFTInfoHandlerTest, NonStringLedgerHash)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_hash": 123
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_hash": 123
+                }})JSON",
                 kNFT_ID
             )
         );
@@ -108,9 +108,9 @@ TEST_F(RPCNFTInfoHandlerTest, InvalidLedgerIndexString)
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
-                "nft_id": "{}",
-                "ledger_index": "notvalidated"
-            }})JSON",
+                    "nft_id": "{}",
+                    "ledger_index": "notvalidated"
+                }})JSON",
                 kNFT_ID
             )
         );
@@ -167,9 +167,9 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "nft_id": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kNFT_ID,
             kLEDGER_HASH
         )
@@ -194,9 +194,9 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerStringIndex)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}",
-            "ledger_index": "4"
-        }})JSON",
+                "nft_id": "{}",
+                "ledger_index": "4"
+            }})JSON",
             kNFT_ID
         )
     );
@@ -218,9 +218,9 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIntIndex)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}",
-            "ledger_index": 4
-        }})JSON",
+                "nft_id": "{}",
+                "ledger_index": 4
+            }})JSON",
             kNFT_ID
         )
     );
@@ -245,9 +245,9 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash2)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "nft_id": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kNFT_ID,
             kLEDGER_HASH
         )
@@ -271,9 +271,9 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIndex2)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}",
-            "ledger_index": "31"
-        }})JSON",
+                "nft_id": "{}",
+                "ledger_index": "31"
+            }})JSON",
             kNFT_ID
         )
     );
@@ -299,9 +299,9 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistNFT)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}",
-            "ledger_hash": "{}"
-        }})JSON",
+                "nft_id": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
             kNFT_ID,
             kLEDGER_HASH
         )
@@ -345,8 +345,8 @@ TEST_F(RPCNFTInfoHandlerTest, DefaultParameters)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}"
-        }})JSON",
+                "nft_id": "{}"
+            }})JSON",
             kNFT_ID
         )
     );
@@ -388,8 +388,8 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}"
-        }})JSON",
+                "nft_id": "{}"
+            }})JSON",
             kNFT_ID
         )
     );
@@ -430,8 +430,8 @@ TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}"
-        }})JSON",
+                "nft_id": "{}"
+            }})JSON",
             kNFT_ID
         )
     );
@@ -472,8 +472,8 @@ TEST_F(RPCNFTInfoHandlerTest, NFTWithExtraFieldsSet)
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
-            "nft_id": "{}"
-        }})JSON",
+                "nft_id": "{}"
+            }})JSON",
             kNFT_ID2
         )
     );

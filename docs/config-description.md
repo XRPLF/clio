@@ -3,7 +3,9 @@
 This document provides a list of all available Clio configuration properties in detail.
 
 > [!NOTE]
-> Dot notation in configuration key names represents nested fields. For example, **database.scylladb** refers to the _scylladb_ field inside the _database_ object. If a key name includes "[]", it indicates that the nested field is an array (e.g., etl_sources.[]).
+> Dot notation in configuration key names represents nested fields.
+> For example, **database.scylladb** refers to the _scylladb_ field inside the _database_ object.
+> If a key name includes "[]", it indicates that the nested field is an array (e.g., etl_sources.[]).
 
 ## Configuration Details
 
@@ -155,7 +157,7 @@ This document provides a list of all available Clio configuration properties in 
 
 - **Required**: True
 - **Type**: boolean
-- **Default value**: `True`
+- **Default value**: `False`
 - **Constraints**: None
 - **Description**: If set to `True`, allows Clio to start without any ETL source.
 
@@ -331,7 +333,7 @@ This document provides a list of all available Clio configuration properties in 
 
 - **Required**: True
 - **Type**: boolean
-- **Default value**: `False`
+- **Default value**: `True`
 - **Constraints**: None
 - **Description**: Enables or disables Prometheus metrics.
 
@@ -339,7 +341,7 @@ This document provides a list of all available Clio configuration properties in 
 
 - **Required**: True
 - **Type**: boolean
-- **Default value**: `False`
+- **Default value**: `True`
 - **Constraints**: None
 - **Description**: Enables or disables compression of Prometheus responses.
 
@@ -415,7 +417,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The value must be one of the following: `sync`, `async`, `none`.
 - **Description**: The strategy used for Cache loading.
 
-### log_channels.[].channel
+### log.channels.[].channel
 
 - **Required**: False
 - **Type**: string
@@ -423,39 +425,63 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The value must be one of the following: `General`, `WebServer`, `Backend`, `RPC`, `ETL`, `Subscriptions`, `Performance`, `Migration`.
 - **Description**: The name of the log channel.
 
-### log_channels.[].log_level
+### log.channels.[].level
 
 - **Required**: False
 - **Type**: string
 - **Default value**: None
-- **Constraints**: The value must be one of the following: `trace`, `debug`, `info`, `warning`, `error`, `fatal`, `count`.
+- **Constraints**: The value must be one of the following: `trace`, `debug`, `info`, `warning`, `error`, `fatal`.
 - **Description**: The log level for the specific log channel.
 
-### log_level
+### log.level
 
 - **Required**: True
 - **Type**: string
 - **Default value**: `info`
-- **Constraints**: The value must be one of the following: `trace`, `debug`, `info`, `warning`, `error`, `fatal`, `count`.
+- **Constraints**: The value must be one of the following: `trace`, `debug`, `info`, `warning`, `error`, `fatal`.
 - **Description**: The general logging level of Clio. This level is applied to all log channels that do not have an explicitly defined logging level.
 
-### log_format
+### log.format
 
 - **Required**: True
 - **Type**: string
-- **Default value**: `%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%`
+- **Default value**: `%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v`
 - **Constraints**: None
-- **Description**: The format string for log messages. The format is described here: <https://www.boost.org/doc/libs/1_83_0/libs/log/doc/html/log/tutorial/formatters.html>.
+- **Description**: The format string for log messages using spdlog format patterns.
 
-### log_to_console
+Each of the variables expands like so:
+
+- `%Y-%m-%d %H:%M:%S.%f`: The full date and time of the log entry with microsecond precision
+- `%^`: Start color range
+- `%3!l`: The severity (aka log level) the entry was sent at stripped to 3 characters
+- `%n`: The logger name (channel) that this log entry was sent to
+- `%$`: End color range
+- `%v`: The actual log message
+
+Some additional variables that might be useful:
+
+- `%@`: A partial path to the C++ file and the line number in the said file (`src/file/path:linenumber`)
+- `%t`: The ID of the thread the log entry is written from
+
+Documentation can be found at: <https://github.com/gabime/spdlog/wiki/Custom-formatting>.
+
+### log.is_async
 
 - **Required**: True
 - **Type**: boolean
 - **Default value**: `True`
 - **Constraints**: None
+- **Description**: Whether spdlog is asynchronous or not.
+
+### log.enable_console
+
+- **Required**: True
+- **Type**: boolean
+- **Default value**: `False`
+- **Constraints**: None
 - **Description**: Enables or disables logging to the console.
 
-### log_directory
+### log.directory
 
 - **Required**: False
 - **Type**: string
@@ -463,7 +489,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: None
 - **Description**: The directory path for the log files.
 
-### log_rotation_size
+### log.rotation_size
 
 - **Required**: True
 - **Type**: int
@@ -471,23 +497,15 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The log rotation size in megabytes. When the log file reaches this particular size, a new log file starts.
 
-### log_directory_max_size
+### log.directory_max_files
 
 - **Required**: True
 - **Type**: int
-- **Default value**: `51200`
+- **Default value**: `25`
 - **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
-- **Description**: The maximum size of the log directory in megabytes.
+- **Description**: The maximum number of log files in the directory.
 
-### log_rotation_hour_interval
-
-- **Required**: True
-- **Type**: int
-- **Default value**: `12`
-- **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
-- **Description**: Represents the interval (in hours) for log rotation. If the current log file reaches this value in logging, a new log file starts.
-
-### log_tag_style
+### log.tag_style
 
 - **Required**: True
 - **Type**: string
@@ -507,7 +525,7 @@ This document provides a list of all available Clio configuration properties in 
 
 - **Required**: True
 - **Type**: boolean
-- **Default value**: `True`
+- **Default value**: `False`
 - **Constraints**: None
 - **Description**: Indicates if the server is allowed to write data to the database.
 

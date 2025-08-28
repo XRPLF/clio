@@ -65,5 +65,5 @@ TEST_F(DefaultAmendmentBlockActionNgTest, Call)
 {
     AmendmentBlockHandler::kDEFAULT_AMENDMENT_BLOCK_ACTION();
     auto const loggerString = getLoggerString();
-    EXPECT_TRUE(loggerString.starts_with("ETL:FTL Can't process new ledgers")) << "LoggerString " << loggerString;
+    EXPECT_TRUE(loggerString.starts_with("cri:ETL - Can't process new ledgers")) << "LoggerString " << loggerString;
 }

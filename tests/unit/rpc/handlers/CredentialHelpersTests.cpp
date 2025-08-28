@@ -23,6 +23,7 @@
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
+#include "util/Spawn.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -117,7 +118,7 @@ TEST_F(CredentialHelperTest, GetInvalidCredentialArray)
     boost::json::array credentialsArray = {kCREDENTIAL_ID};
     auto const info = createLedgerHeader(kINDEX1, 30);
 
-    boost::asio::spawn(ctx_, [&](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [&](boost::asio::yield_context yield) {
         auto const ret = credentials::fetchCredentialArray(
             credentialsArray, getAccountIdWithString(kACCOUNT), *backend_, info, yield
         );
@@ -149,7 +150,7 @@ TEST_F(CredentialHelperTest, GetValidCredentialArray)
     );
     expectedAuthCreds.push_back(std::move(credential));
 
-    boost::asio::spawn(ctx_, [&](boost::asio::yield_context yield) {
+    util::spawn(ctx_, [&](boost::asio::yield_context yield) {
         auto const result = credentials::fetchCredentialArray(
             credentialsArray, getAccountIdWithString(kACCOUNT), *backend_, ledgerHeader, yield
         );

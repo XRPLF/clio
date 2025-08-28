@@ -29,7 +29,7 @@ jobs:
             conan_profile: gcc
             build_type: Release
             static: true
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:25e55ef95248539a3b1106985e1b30b1e73462b7" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:8ad111655c4d04bfedb7e7cb3bbfba6d4204852d" }'
 
     uses: ./.github/workflows/build_and_test.yml
     with:
@@ -42,6 +42,7 @@ jobs:
       run_integration_tests: true
       upload_clio_server: true
       disable_cache: true
+      expected_version: ${{ github.event_name == 'push' && github.ref_name || '' }}
 
   release:
     needs: build-and-test
@@ -52,6 +53,6 @@ jobs:
       title: "${{ github.ref_name}}"
       version: "${{ github.ref_name }}"
       header: >
-        # Introducing Clio version ${{ github.ref_name }}
-      generate_changelog: true
+        ${{ contains(github.ref_name, '-') && '> **Note:** Please remember that this is a release candidate and it is not recommended for production use.' || '' }}
+      generate_changelog: ${{ !contains(github.ref_name, '-') }}
       draft: true

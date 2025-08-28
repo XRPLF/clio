@@ -19,6 +19,7 @@
 
 #pragma once
 #include "rpc/common/Types.hpp"
+#include "util/Spawn.hpp"
 #include "web/Context.hpp"
 
 #include <boost/asio.hpp>
@@ -35,12 +36,10 @@ struct MockAsyncRPCEngine {
     bool
     post(Fn&& func, [[maybe_unused]] std::string const& ip = "")
     {
-        using namespace boost::asio;
-        io_context ioc;
+        boost::asio::io_context ioc;
 
-        spawn(ioc, [handler = std::forward<Fn>(func), _ = make_work_guard(ioc)](auto yield) mutable {
+        util::spawn(ioc, [handler = std::forward<Fn>(func), _ = make_work_guard(ioc)](auto yield) mutable {
             handler(yield);
-            ;
         });
 
         ioc.run();

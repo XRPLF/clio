@@ -465,3 +465,35 @@ TEST_F(ClioConfigDefinitionParseArrayTest, missingAllRequiredFields)
     EXPECT_EQ(result->size(), 1);
     EXPECT_THAT(result->at(0).error, testing::StartsWith("array.[].int"));
 }
+
+TEST(ClioConfigDefinitionParse, unexpectedFields)
+{
+    ClioConfigDefinition config{
+        {"expected", ConfigValue{ConfigType::String}.optional()},
+    };
+
+    auto const configJson = boost::json::parse(R"JSON({
+        "expected": "present",
+        "unexpected_string": "",
+        "unexpected_non_empty_array": [
+            {"string": ""},
+            {"string": ""}
+        ],
+        "unexpected_empty_array": [],
+        "unexpected_object": {
+            "string": ""
+        }
+    })JSON")
+                                .as_object();
+
+    auto const configFile = ConfigFileJson{configJson};
+    auto result = config.parse(configFile);
+    std::ranges::sort(*result, [](auto const& lhs, auto const& rhs) { return lhs.error < rhs.error; });
+    ASSERT_TRUE(result.has_value());
+    ASSERT_EQ(result->size(), 4);
+
+    EXPECT_EQ(result->at(0).error, "Unknown key: unexpected_empty_array.[]");
+    EXPECT_EQ(result->at(1).error, "Unknown key: unexpected_non_empty_array.[].string");
+    EXPECT_EQ(result->at(2).error, "Unknown key: unexpected_object.string");
+    EXPECT_EQ(result->at(3).error, "Unknown key: unexpected_string");
+}

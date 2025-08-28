@@ -77,7 +77,7 @@ toIso8601(ripple::NetClock::time_point tp)
 namespace rpc {
 
 AMMInfoHandler::Result
-AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
+AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) const
 {
     using namespace ripple;
 

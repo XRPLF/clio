@@ -19,6 +19,7 @@
 
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
+#include "util/Spawn.hpp"
 #include "util/Taggable.hpp"
 #include "util/UnsupportedType.hpp"
 #include "util/config/ConfigDefinition.hpp"
@@ -66,7 +67,7 @@ namespace websocket = boost::beast::websocket;
 struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
     ConnectionHandlerTest(ProcessingPolicy policy, std::optional<size_t> maxParallelConnections)
         : tagFactory{util::config::ClioConfigDefinition{
-              {"log_tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
+              {"log.tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
           }}
         , connectionHandler{policy, maxParallelConnections, tagFactory, std::nullopt, onDisconnectMock.AsStdFunction()}
     {
@@ -102,7 +103,7 @@ struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
     ConnectionHandler connectionHandler;
 
     util::TagDecoratorFactory tagDecoratorFactory{config::ClioConfigDefinition{
-        {"log_tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
+        {"log.tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
     }};
     StrictMockHttpConnectionPtr mockHttpConnection =
         std::make_unique<StrictMockHttpConnection>("1.2.3.4", beast::flat_buffer{}, tagDecoratorFactory);
@@ -484,7 +485,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
         .WillRepeatedly([&](auto&&, auto&&) {
             ++numCalls;
             if (numCalls == 3)
-                boost::asio::spawn(ctx_, [this](auto yield) { connectionHandler.stop(yield); });
+                util::spawn(ctx_, [this](auto yield) { connectionHandler.stop(yield); });
 
             return std::nullopt;
         });
