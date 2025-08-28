@@ -34,19 +34,16 @@
 
 using namespace util::config;
 
+[[nodiscard]]
 int
-main(int argc, char const* argv[])
-try {
-    util::setTerminationHandler();
-    util::ScopeGuard const loggerShutdownGuard{[]() { util::LogService::shutdown(); }};
-
+runApp(int argc, char const* argv[])
+{
     auto const action = app::CliArgs::parse(argc, argv);
     return action.apply(
         [](app::CliArgs::Action::Exit const& exit) { return exit.exitCode; },
         [](app::CliArgs::Action::VerifyConfig const& verify) {
             if (app::parseConfig(verify.configPath)) {
-                std::cout << "Config " << verify.configPath << " is correct"
-                          << "\n";
+                std::cout << "Config " << verify.configPath << " is correct" << "\n";
                 return EXIT_SUCCESS;
             }
             return EXIT_FAILURE;
@@ -76,10 +73,22 @@ try {
             return migrator.run();
         }
     );
-} catch (std::exception const& e) {
-    LOG(util::LogService::fatal()) << "Exit on exception: " << e.what();
-    return EXIT_FAILURE;
-} catch (...) {
-    LOG(util::LogService::fatal()) << "Exit on exception: unknown";
-    return EXIT_FAILURE;
+}
+
+int
+main(int argc, char const* argv[])
+{
+    util::setTerminationHandler();
+
+    util::ScopeGuard const loggerShutdownGuard{[] { util::LogService::shutdown(); }};
+
+    try {
+        return runApp(argc, argv);
+    } catch (std::exception const& e) {
+        LOG(util::LogService::fatal()) << "Exit on exception: " << e.what();
+        return EXIT_FAILURE;
+    } catch (...) {
+        LOG(util::LogService::fatal()) << "Exit on exception: unknown";
+        return EXIT_FAILURE;
+    }
 }

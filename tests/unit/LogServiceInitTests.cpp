@@ -32,6 +32,7 @@
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <spdlog/pattern_formatter.h>
 #include <spdlog/sinks/ostream_sink.h>
 #include <spdlog/spdlog.h>
 
@@ -84,6 +85,7 @@ protected:
     replaceSinks()
     {
         auto ostreamSink = std::make_shared<spdlog::sinks::ostream_sink_mt>(stream_);
+        ostreamSink->set_formatter(std::make_unique<spdlog::pattern_formatter>("%^%3!l:%n%$ - %v"));
 
         for (auto const& channel : Logger::kCHANNELS) {
             auto logger = spdlog::get(channel);
@@ -93,8 +95,6 @@ protected:
             logger->sinks().clear();
             logger->sinks().push_back(ostreamSink);
         }
-
-        spdlog::set_pattern("%^%3!l:%n%$ - %v");
     }
 
 private:
@@ -134,17 +134,17 @@ TEST_F(LogServiceInitTests, DefaultLogLevel)
 TEST_F(LogServiceInitTests, ChannelLogLevel)
 {
     std::string const configStr = R"JSON(
-    {
-        "log": {
-            "level": "error",
-            "channels": [
-                {
-                    "channel": "Backend",
-                    "level": "warning"
-                }
-            ]
+        {
+            "log": {
+                "level": "error",
+                "channels": [
+                    {
+                        "channel": "Backend",
+                        "level": "warning"
+                    }
+                ]
+            }
         }
-    }
     )JSON";
 
     auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::parse(configStr).as_object()});
@@ -192,15 +192,15 @@ TEST_F(LogServiceInitTests, InitReturnsErrorIfCouldNotCreateLogDirectory)
 TEST_F(LogServiceInitTests, InitReturnsErrorIfProvidedInvalidChannel)
 {
     auto const jsonStr = R"JSON(
-    {
-        "log": {
-            "channels": [
-                {
-                    "channel": "SomeChannel",
-                    "level": "warn"
-                }
-            ]
-        }
+        {
+            "log": {
+                "channels": [
+                    {
+                        "channel": "SomeChannel",
+                        "level": "warn"
+                    }
+                ]
+            }
     })JSON";
 
     auto const json = boost::json::parse(jsonStr).as_object();

@@ -163,8 +163,8 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "ledger_hash": "{}"
-        }})JSON",
+                "ledger_hash": "{}"
+            }})JSON",
             kLEDGER_HASH
         )
     );

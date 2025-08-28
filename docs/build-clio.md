@@ -11,11 +11,17 @@
 - [**Optional**] [GCovr](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html): needed for code coverage generation
 - [**Optional**] [CCache](https://ccache.dev/): speeds up compilation if you are going to compile Clio often
 
+We use our Docker image `ghcr.io/XRPLF/clio-ci` to build `Clio`, see [Building Clio with Docker](#building-clio-with-docker).
+You can find information about exact compiler versions and tools in the [image's README](https://github.com/XRPLF/clio/blob/develop/docker/ci/README.md).
+
+The following compiler version are guaranteed to work.
+Any compiler with lower version may not be able to build Clio:
+
 | Compiler    | Version |
 | ----------- | ------- |
-| GCC         | 12.3    |
-| Clang       | 16      |
-| Apple Clang | 15      |
+| GCC         | 15.2    |
+| Clang       | 19      |
+| Apple Clang | 17      |
 
 ### Conan Configuration
 
@@ -163,7 +169,7 @@ To generate the API docs:
 It is also possible to build Clio using [Docker](https://www.docker.com/) if you don't want to install all the dependencies on your machine.
 
 ```sh
-docker run -it ghcr.io/xrplf/clio-ci:0d262e74bcd286ccd6fc36e45990ff2e6b8d8430
+docker run -it ghcr.io/xrplf/clio-ci:8ad111655c4d04bfedb7e7cb3bbfba6d4204852d
 git clone https://github.com/XRPLF/clio
 mkdir build && cd build
 conan install .. --output-folder . --build missing --settings build_type=Release -o '&:tests=True'

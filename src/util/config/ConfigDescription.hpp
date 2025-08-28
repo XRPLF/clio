@@ -110,13 +110,7 @@ public:
     static void
     writeConfigDescriptionToFile(std::ostream& file)
     {
-        file << "# Clio Config Description\n\n";
-        file << "This document provides a list of all available Clio configuration properties in detail.\n\n";
-        file << "> [!NOTE]\n";
-        file << "> Dot notation in configuration key names represents nested fields. For example, "
-                "**database.scylladb** refers to the _scylladb_ field inside the _database_ object. If a key name "
-                "includes \"[]\", it indicates that the nested field is an array (e.g., etl_sources.[]).\n\n";
-        file << "## Configuration Details\n";
+        file << kCONFIG_DESCRIPTION_HEADER;
 
         for (auto const& [key, val] : kCONFIG_DESCRIPTION) {
             file << "\n### " << key << "\n\n";
@@ -133,6 +127,19 @@ public:
     }
 
 private:
+    static constexpr auto kCONFIG_DESCRIPTION_HEADER =
+        R"(# Clio Config Description
+
+This document provides a list of all available Clio configuration properties in detail.
+
+> [!NOTE]
+> Dot notation in configuration key names represents nested fields.
+> For example, **database.scylladb** refers to the _scylladb_ field inside the _database_ object.
+> If a key name includes "[]", it indicates that the nested field is an array (e.g., etl_sources.[]).
+
+## Configuration Details
+)";
+
     static constexpr auto kCONFIG_DESCRIPTION = std::array{
         KV{
             .key = "database.type",
@@ -263,9 +270,23 @@ private:
         KV{.key = "log.level",
            .value = "The general logging level of Clio. This level is applied to all log channels that do not have an "
                     "explicitly defined logging level."},
-        KV{.key = "log.format",
-           .value = "The format string for log messages using spdlog format patterns. Documentation can be found at: "
-                    "<https://github.com/gabime/spdlog/wiki/Custom-formatting>."},
+        KV{.key = "log.format", .value = R"(The format string for log messages using spdlog format patterns.
+
+Each of the variables expands like so:
+
+- `%Y-%m-%d %H:%M:%S.%f`: The full date and time of the log entry with microsecond precision
+- `%^`: Start color range
+- `%3!l`: The severity (aka log level) the entry was sent at stripped to 3 characters
+- `%n`: The logger name (channel) that this log entry was sent to
+- `%$`: End color range
+- `%v`: The actual log message
+
+Some additional variables that might be useful:
+
+- `%@`: A partial path to the C++ file and the line number in the said file (`src/file/path:linenumber`)
+- `%t`: The ID of the thread the log entry is written from
+
+Documentation can be found at: <https://github.com/gabime/spdlog/wiki/Custom-formatting>.)"},
         KV{.key = "log.is_async", .value = "Whether spdlog is asynchronous or not."},
         KV{.key = "log.enable_console", .value = "Enables or disables logging to the console."},
         KV{.key = "log.directory", .value = "The directory path for the log files."},
