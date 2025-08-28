@@ -182,9 +182,9 @@ TEST_F(RPCAMMInfoHandlerTest, AccountNotFound)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "amm_account": "{}",
-            "account": "{}"
-        }})JSON",
+                "amm_account": "{}",
+                "account": "{}"
+            }})JSON",
             kAMM_ACCOUNT,
             kNOTFOUND_ACCOUNT
         )
@@ -210,8 +210,8 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotExist)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "amm_account": "{}"
-        }})JSON",
+                "amm_account": "{}"
+            }})JSON",
             kWRONG_AMM_ACCOUNT
         )
     );
@@ -235,8 +235,8 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotInDBIsMalformed)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "amm_account": "{}"
-        }})JSON",
+                "amm_account": "{}"
+            }})JSON",
             kAMM_ACCOUNT
         )
     );
@@ -263,8 +263,8 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotFoundMissingAmmField)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "amm_account": "{}"
-        }})JSON",
+                "amm_account": "{}"
+            }})JSON",
             kAMM_ACCOUNT
         )
     );
@@ -300,8 +300,8 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAmmBlobNotFound)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "amm_account": "{}"
-        }})JSON",
+                "amm_account": "{}"
+            }})JSON",
             kAMM_ACCOUNT
         )
     );
@@ -341,8 +341,8 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAccBlobNotFound)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "amm_account": "{}"
-        }})JSON",
+                "amm_account": "{}"
+            }})JSON",
             kAMM_ACCOUNT
         )
     );
@@ -388,8 +388,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "amm_account": "{}"
-        }})JSON",
+                "amm_account": "{}"
+            }})JSON",
             kAMM_ACCOUNT
         )
     );
@@ -400,26 +400,26 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
         auto expectedResult = json::parse(
             fmt::format(
                 R"JSON({{
-                "amm": {{
-                    "lp_token": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "100"
+                    "amm": {{
+                        "lp_token": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "100"
+                        }},
+                        "amount": "193",
+                        "amount2": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "0"
+                        }},
+                        "account": "{}",
+                        "trading_fee": 5,
+                        "asset2_frozen": false
                     }},
-                    "amount": "193",
-                    "amount2": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "0"
-                    }},
-                    "account": "{}",
-                    "trading_fee": 5,
-                    "asset2_frozen": false
-                }},
-                "ledger_index": 30,
-                "ledger_hash": "{}",
-                "validated": true
-            }})JSON",
+                    "ledger_index": 30,
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})JSON",
                 kLP_ISSUE_CURRENCY,
                 kAMM_ACCOUNT,
                 "JPY",
@@ -472,9 +472,9 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "amm_account": "{}",
-            "account": "{}"
-        }})JSON",
+                "amm_account": "{}",
+                "account": "{}"
+            }})JSON",
             kAMM_ACCOUNT,
             kAMM_ACCOUNT2
         )
@@ -486,26 +486,26 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
         auto const expectedResult = json::parse(
             fmt::format(
                 R"JSON({{
-                "amm": {{
-                    "lp_token": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "12"
+                    "amm": {{
+                        "lp_token": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "12"
+                        }},
+                        "amount": "293",
+                        "amount2": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "0"
+                        }},
+                        "account": "{}",
+                        "trading_fee": 5,
+                        "asset2_frozen": false
                     }},
-                    "amount": "293",
-                    "amount2": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "0"
-                    }},
-                    "account": "{}",
-                    "trading_fee": 5,
-                    "asset2_frozen": false
-                }},
-                "ledger_index": 30,
-                "ledger_hash": "{}",
-                "validated": true
-            }})JSON",
+                    "ledger_index": 30,
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})JSON",
                 kLP_ISSUE_CURRENCY,
                 kAMM_ACCOUNT2,
                 "JPY",
@@ -550,8 +550,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "amm_account": "{}"
-        }})JSON",
+                "amm_account": "{}"
+            }})JSON",
             kAMM_ACCOUNT
         )
     );
@@ -562,26 +562,26 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
         auto const expectedResult = json::parse(
             fmt::format(
                 R"JSON({{
-                "amm": {{
-                    "lp_token": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "100"
+                    "amm": {{
+                        "lp_token": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "100"
+                        }},
+                        "amount": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "0"
+                        }},
+                        "amount2": "193",
+                        "account": "{}",
+                        "trading_fee": 5,
+                        "asset_frozen": false
                     }},
-                    "amount": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "0"
-                    }},
-                    "amount2": "193",
-                    "account": "{}",
-                    "trading_fee": 5,
-                    "asset_frozen": false
-                }},
-                "ledger_index": 30,
-                "ledger_hash": "{}",
-                "validated": true
-            }})JSON",
+                    "ledger_index": 30,
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})JSON",
                 kLP_ISSUE_CURRENCY,
                 kAMM_ACCOUNT,
                 "JPY",
@@ -624,8 +624,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "amm_account": "{}"
-        }})JSON",
+                "amm_account": "{}"
+            }})JSON",
             kAMM_ACCOUNT
         )
     );
@@ -636,31 +636,31 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
         auto const expectedResult = json::parse(
             fmt::format(
                 R"JSON({{
-                "amm": {{
-                    "lp_token": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "100"
+                    "amm": {{
+                        "lp_token": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "100"
+                        }},
+                        "amount": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "0"
+                        }},
+                        "amount2": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "0"
+                        }},
+                        "account": "{}",
+                        "trading_fee": 5,
+                        "asset_frozen": false,
+                        "asset2_frozen": false
                     }},
-                    "amount": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "0"
-                    }},
-                    "amount2": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "0"
-                    }},
-                    "account": "{}",
-                    "trading_fee": 5,
-                    "asset_frozen": false,
-                    "asset2_frozen": false
-                }},
-                "ledger_index": 30,
-                "ledger_hash": "{}",
-                "validated": true
-            }})JSON",
+                    "ledger_index": 30,
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})JSON",
                 kLP_ISSUE_CURRENCY,
                 kAMM_ACCOUNT,
                 "USD",
@@ -717,8 +717,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "amm_account": "{}"
-        }})JSON",
+                "amm_account": "{}"
+            }})JSON",
             kAMM_ACCOUNT
         )
     );
@@ -729,31 +729,31 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
         auto const expectedResult = json::parse(
             fmt::format(
                 R"JSON({{
-                "amm": {{
-                    "lp_token": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "100"
+                    "amm": {{
+                        "lp_token": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "100"
+                        }},
+                        "amount": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "8"
+                        }},
+                        "amount2": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "-12"
+                        }},
+                        "account": "{}",
+                        "trading_fee": 5,
+                        "asset_frozen": false,
+                        "asset2_frozen": true
                     }},
-                    "amount": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "8"
-                    }},
-                    "amount2": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "-12"
-                    }},
-                    "account": "{}",
-                    "trading_fee": 5,
-                    "asset_frozen": false,
-                    "asset2_frozen": true
-                }},
-                "ledger_index": 30,
-                "ledger_hash": "{}",
-                "validated": true
-            }})JSON",
+                    "ledger_index": 30,
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})JSON",
                 kLP_ISSUE_CURRENCY,
                 kAMM_ACCOUNT,
                 "USD",
@@ -811,8 +811,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "amm_account": "{}"
-        }})JSON",
+                "amm_account": "{}"
+            }})JSON",
             kAMM_ACCOUNT
         )
     );
@@ -823,31 +823,31 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
         auto const expectedResult = json::parse(
             fmt::format(
                 R"JSON({{
-                "amm": {{
-                    "lp_token": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "100"
+                    "amm": {{
+                        "lp_token": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "100"
+                        }},
+                        "amount": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "8"
+                        }},
+                        "amount2": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "-12"
+                        }},
+                        "account": "{}",
+                        "trading_fee": 5,
+                        "asset_frozen": true,
+                        "asset2_frozen": true
                     }},
-                    "amount": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "8"
-                    }},
-                    "amount2": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "-12"
-                    }},
-                    "account": "{}",
-                    "trading_fee": 5,
-                    "asset_frozen": true,
-                    "asset2_frozen": true
-                }},
-                "ledger_index": 30,
-                "ledger_hash": "{}",
-                "validated": true
-            }})JSON",
+                    "ledger_index": 30,
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})JSON",
                 kLP_ISSUE_CURRENCY,
                 kAMM_ACCOUNT,
                 "USD",
@@ -897,8 +897,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "amm_account": "{}"
-        }})JSON",
+                "amm_account": "{}"
+            }})JSON",
             kAMM_ACCOUNT
         )
     );
@@ -909,26 +909,26 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
         auto expectedResult = json::parse(
             fmt::format(
                 R"JSON({{
-                "amm": {{
-                    "lp_token": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "100"
+                    "amm": {{
+                        "lp_token": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "100"
+                        }},
+                        "amount": "193",
+                        "amount2": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "8"
+                        }},
+                        "account": "{}",
+                        "trading_fee": 5,
+                        "asset2_frozen": false
                     }},
-                    "amount": "193",
-                    "amount2": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "8"
-                    }},
-                    "account": "{}",
-                    "trading_fee": 5,
-                    "asset2_frozen": false
-                }},
-                "ledger_index": 30,
-                "ledger_hash": "{}",
-                "validated": true
-            }})JSON",
+                    "ledger_index": 30,
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})JSON",
                 kLP_ISSUE_CURRENCY,
                 kAMM_ACCOUNT,
                 "JPY",
@@ -978,8 +978,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "amm_account": "{}"
-        }})JSON",
+                "amm_account": "{}"
+            }})JSON",
             kAMM_ACCOUNT
         )
     );
@@ -990,38 +990,38 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
         auto expectedResult = json::parse(
             fmt::format(
                 R"JSON({{
-                "amm": {{
-                    "lp_token": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "100"
-                    }},
-                    "amount": "193",
-                    "amount2": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "8"
-                    }},
-                    "account": "{}",
-                    "trading_fee": 5,
-                    "vote_slots": [
-                        {{
-                            "account": "{}",
-                            "trading_fee": 2,
-                            "vote_weight": 4
+                    "amm": {{
+                        "lp_token": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "100"
                         }},
-                        {{
-                            "account": "{}",
-                            "trading_fee": 4,
-                            "vote_weight": 2
-                        }}
-                    ],
-                    "asset2_frozen": false
-                }},
-                "ledger_index": 30,
-                "ledger_hash": "{}",
-                "validated": true
-            }})JSON",
+                        "amount": "193",
+                        "amount2": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "8"
+                        }},
+                        "account": "{}",
+                        "trading_fee": 5,
+                        "vote_slots": [
+                            {{
+                                "account": "{}",
+                                "trading_fee": 2,
+                                "vote_weight": 4
+                            }},
+                            {{
+                                "account": "{}",
+                                "trading_fee": 4,
+                                "vote_weight": 2
+                            }}
+                        ],
+                        "asset2_frozen": false
+                    }},
+                    "ledger_index": 30,
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})JSON",
                 kLP_ISSUE_CURRENCY,
                 kAMM_ACCOUNT,
                 "JPY",
@@ -1075,8 +1075,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "amm_account": "{}"
-        }})JSON",
+                "amm_account": "{}"
+            }})JSON",
             kAMM_ACCOUNT
         )
     );
@@ -1087,41 +1087,41 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
         auto expectedResult = json::parse(
             fmt::format(
                 R"JSON({{
-                "amm": {{
-                    "lp_token": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "100"
-                    }},
-                    "amount": "193",
-                    "amount2": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "8"
-                    }},
-                    "account": "{}",
-                    "trading_fee": 5,
-                    "auction_slot": {{
-                        "time_interval": 20,
-                        "price": "100",
-                        "discounted_fee": 2,
+                    "amm": {{
+                        "lp_token": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "100"
+                        }},
+                        "amount": "193",
+                        "amount2": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "8"
+                        }},
                         "account": "{}",
-                        "expiration": "2000-01-02T01:00:00+0000",
-                        "auth_accounts": [
-                            {{
-                                "account": "{}"
-                            }},
-                            {{
-                                "account": "{}"
-                            }}
-                        ]
+                        "trading_fee": 5,
+                        "auction_slot": {{
+                            "time_interval": 20,
+                            "price": "100",
+                            "discounted_fee": 2,
+                            "account": "{}",
+                            "expiration": "2000-01-02T01:00:00+0000",
+                            "auth_accounts": [
+                                {{
+                                    "account": "{}"
+                                }},
+                                {{
+                                    "account": "{}"
+                                }}
+                            ]
+                        }},
+                        "asset2_frozen": false
                     }},
-                    "asset2_frozen": false
-                }},
-                "ledger_index": 30,
-                "ledger_hash": "{}",
-                "validated": true
-            }})JSON",
+                    "ledger_index": 30,
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})JSON",
                 kLP_ISSUE_CURRENCY,
                 kAMM_ACCOUNT,
                 "JPY",
@@ -1167,15 +1167,15 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "asset": {{
-                "currency": "JPY",
-                "issuer": "{}"
-            }},
-            "asset2": {{
-                "currency": "USD",
-                "issuer": "{}"
-            }}
-        }})JSON",
+                "asset": {{
+                    "currency": "JPY",
+                    "issuer": "{}"
+                }},
+                "asset2": {{
+                    "currency": "USD",
+                    "issuer": "{}"
+                }}
+            }})JSON",
             kAMM_ACCOUNT,
             kAMM_ACCOUNT2
         )
@@ -1187,50 +1187,50 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
         auto expectedResult = json::parse(
             fmt::format(
                 R"JSON({{
-                "amm": {{
-                    "lp_token": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "100"
-                    }},
-                    "amount": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "0"
-                    }},
-                    "amount2": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "0"
-                    }},
-                    "account": "{}",
-                    "trading_fee": 5,
-                    "auction_slot": {{
-                        "time_interval": 20,
-                        "price": {{
+                    "amm": {{
+                        "lp_token": {{
                             "currency": "{}",
                             "issuer": "{}",
                             "value": "100"
                         }},
-                        "discounted_fee": 2,
+                        "amount": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "0"
+                        }},
+                        "amount2": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "0"
+                        }},
                         "account": "{}",
-                        "expiration": "2000-01-02T01:00:00+0000",
-                        "auth_accounts": [
-                            {{
-                                "account": "{}"
+                        "trading_fee": 5,
+                        "auction_slot": {{
+                            "time_interval": 20,
+                            "price": {{
+                                "currency": "{}",
+                                "issuer": "{}",
+                                "value": "100"
                             }},
-                            {{
-                                "account": "{}"
-                            }}
-                        ]
+                            "discounted_fee": 2,
+                            "account": "{}",
+                            "expiration": "2000-01-02T01:00:00+0000",
+                            "auth_accounts": [
+                                {{
+                                    "account": "{}"
+                                }},
+                                {{
+                                    "account": "{}"
+                                }}
+                            ]
+                        }},
+                        "asset_frozen": false,
+                        "asset2_frozen": false
                     }},
-                    "asset_frozen": false,
-                    "asset2_frozen": false
-                }},
-                "ledger_index": 30,
-                "ledger_hash": "{}",
-                "validated": true
-            }})JSON",
+                    "ledger_index": 30,
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})JSON",
                 kLP_ISSUE_CURRENCY,
                 kAMM_ACCOUNT,
                 "JPY",
@@ -1281,15 +1281,15 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
     static auto const kINPUT = json::parse(
         fmt::format(
             R"JSON({{
-            "asset": {{
-                "currency": "USD",
-                "issuer": "{}"
-            }},
-            "asset2": {{
-                "currency": "JPY",
-                "issuer": "{}"
-            }}
-        }})JSON",
+                "asset": {{
+                    "currency": "USD",
+                    "issuer": "{}"
+                }},
+                "asset2": {{
+                    "currency": "JPY",
+                    "issuer": "{}"
+                }}
+            }})JSON",
             kAMM_ACCOUNT,
             kAMM_ACCOUNT2
         )
@@ -1301,50 +1301,50 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
         auto expectedResult = json::parse(
             fmt::format(
                 R"JSON({{
-                "amm": {{
-                    "lp_token": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "100"
-                    }},
-                    "amount": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "0"
-                    }},
-                    "amount2": {{
-                        "currency": "{}",
-                        "issuer": "{}",
-                        "value": "0"
-                    }},
-                    "account": "{}",
-                    "trading_fee": 5,
-                    "auction_slot": {{
-                        "time_interval": 20,
-                        "price": {{
+                    "amm": {{
+                        "lp_token": {{
                             "currency": "{}",
                             "issuer": "{}",
                             "value": "100"
                         }},
-                        "discounted_fee": 2,
+                        "amount": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "0"
+                        }},
+                        "amount2": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "0"
+                        }},
                         "account": "{}",
-                        "expiration": "2000-01-02T01:00:00+0000",
-                        "auth_accounts": [
-                            {{
-                                "account": "{}"
+                        "trading_fee": 5,
+                        "auction_slot": {{
+                            "time_interval": 20,
+                            "price": {{
+                                "currency": "{}",
+                                "issuer": "{}",
+                                "value": "100"
                             }},
-                            {{
-                                "account": "{}"
-                            }}
-                        ]
+                            "discounted_fee": 2,
+                            "account": "{}",
+                            "expiration": "2000-01-02T01:00:00+0000",
+                            "auth_accounts": [
+                                {{
+                                    "account": "{}"
+                                }},
+                                {{
+                                    "account": "{}"
+                                }}
+                            ]
+                        }},
+                        "asset_frozen": false,
+                        "asset2_frozen": false
                     }},
-                    "asset_frozen": false,
-                    "asset2_frozen": false
-                }},
-                "ledger_index": 30,
-                "ledger_hash": "{}",
-                "validated": true
-            }})JSON",
+                    "ledger_index": 30,
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})JSON",
                 kLP_ISSUE_CURRENCY,
                 kAMM_ACCOUNT,
                 "USD",

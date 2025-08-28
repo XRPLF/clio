@@ -420,11 +420,11 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV1)
 TEST_F(RPCHelpersTest, DeliverMaxAliasV2)
 {
     constexpr auto kJSON = R"JSON({
-         "TransactionType": "Payment",
-         "Amount": {
-             "test": "test"
-         }
-     })JSON";
+        "TransactionType": "Payment",
+        "Amount": {
+            "test": "test"
+        }
+    })JSON";
     auto req = boost::json::parse(kJSON).as_object();
 
     insertDeliverMaxAlias(req, 2);
@@ -447,9 +447,9 @@ TEST_F(RPCHelpersTest, LedgerHeaderJson)
     auto const binJson = toJson(ledgerHeader, true, 1u);
 
     constexpr auto kEXPECT_BIN = R"JSON({
-                                    "ledger_data": "0000001E000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-                                    "closed": true
-                                })JSON";
+        "ledger_data": "0000001E000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "closed": true
+    })JSON";
     EXPECT_EQ(binJson, boost::json::parse(kEXPECT_BIN));
 
     auto const expectJson = fmt::format(
