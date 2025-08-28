@@ -355,7 +355,7 @@ static bool
 canHaveMPTIssuanceID(boost::json::object const& txnJson, std::shared_ptr<ripple::TxMeta const> const& meta)
 {
     if (txnJson.at(JS(TransactionType)).is_string() and
-        txnJson.at(JS(TransactionType)).as_string() != JS(MPTokenIssuanceCreate))
+        boost::iequals(txnJson.at(JS(TransactionType)).as_string(), JS(MPTokenIssuanceCreate)))
         return false;
 
     if (meta->getResultTER() != ripple::tesSUCCESS)

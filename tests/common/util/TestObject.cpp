@@ -183,8 +183,7 @@ createPaymentTransactionObject(
     auto account2 = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId2));
     obj.setAccountID(ripple::sfDestination, account2.value());
     obj.setFieldU32(ripple::sfSequence, seq);
-    char const* key = "test";
-    ripple::Slice const slice(key, 4);
+    ripple::Slice const slice("test", 4);
     obj.setFieldVL(ripple::sfSigningPubKey, slice);
     return obj;
 }
@@ -1514,7 +1513,7 @@ createMPTIssuanceCreateTx(std::string_view accountId, uint32_t fee, uint32_t seq
 }
 
 data::TransactionAndMetadata
-createMPTIssuanceCreateTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee)
+createMPTIssuanceCreateTxWithMetadata(std::string_view accountId, uint32_t fee, uint32_t seq)
 {
     ripple::STObject tx = createMPTIssuanceCreateTx(accountId, fee, seq);
 

@@ -460,7 +460,7 @@ createMpTokenObject(std::string_view accountId, ripple::uint192 issuanceID, std:
 createMPTIssuanceCreateTx(std::string_view accountId, uint32_t fee, uint32_t seq);
 
 [[nodiscard]] data::TransactionAndMetadata
-createMPTIssuanceCreateTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee);
+createMPTIssuanceCreateTxWithMetadata(std::string_view accountId, uint32_t fee, uint32_t seq);
 
 [[nodiscard]] ripple::STObject
 createPermissionedDomainObject(
