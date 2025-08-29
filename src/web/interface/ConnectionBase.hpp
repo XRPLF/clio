@@ -120,6 +120,11 @@ public:
         return isAdmin_;
     }
 
+    /**
+     * @brief Get the IP address of the client.
+     *
+     * @return The IP address of the client.
+     */
     [[nodiscard]] std::string const&
     clientIp() const
     {
