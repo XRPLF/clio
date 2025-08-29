@@ -17,9 +17,16 @@
 //==============================================================================
 
 #include "util/NameGenerator.hpp"
+#include "util/config/Array.hpp"
+#include "util/config/ConfigDefinition.hpp"
+#include "util/config/ConfigFileJson.hpp"
+#include "util/config/ConfigValue.hpp"
+#include "util/config/Types.hpp"
 #include "web/ProxyIpResolver.hpp"
 
 #include <boost/beast/http/field.hpp>
+#include <boost/json/parse.hpp>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 
 #include <string>
@@ -41,6 +48,47 @@ struct ProxyIpResolverTestParams {
 };
 
 class ProxyIpResolverTest : public ::testing::TestWithParam<ProxyIpResolverTestParams> {};
+
+TEST_F(ProxyIpResolverTest, FromConfig)
+{
+    using namespace util::config;
+    ClioConfigDefinition config{{
+        {"server.proxy_ips.[]", Array{ConfigValue{ConfigType::String}}},
+        {"server.proxy_tokens.[]", Array{ConfigValue{ConfigType::String}}},
+    }};
+    auto const proxyIp = "1.2.3.4";
+    auto const clientIp = "5.6.7.8";
+    auto const proxyToken = "some_proxy_token";
+
+    auto const configStr = fmt::format(
+        R"({{
+        "server": {{
+            "proxy_ips": ["{}"],
+            "proxy_tokens": ["{}"]
+        }}
+    }})",
+        proxyIp,
+        proxyToken
+    );
+
+    auto const err = config.parse(ConfigFileJson{boost::json::parse(configStr).as_object()});
+    ASSERT_FALSE(err.has_value());
+
+    auto const proxyIpResolver = ProxyIpResolver::fromConfig(config);
+    ProxyIpResolver::HttpHeaders headers;
+
+    EXPECT_EQ(proxyIpResolver.resolveClientIp(clientIp, headers), clientIp);
+    EXPECT_EQ(proxyIpResolver.resolveClientIp(proxyIp, headers), proxyIp);
+
+    headers.set(boost::beast::http::field::forwarded, fmt::format("for={}", clientIp));
+    EXPECT_EQ(proxyIpResolver.resolveClientIp(clientIp, headers), clientIp);
+    EXPECT_EQ(proxyIpResolver.resolveClientIp(proxyIp, headers), clientIp);
+
+    headers.set(ProxyIpResolver::kPROXY_TOKEN_HEADER, proxyToken);
+    EXPECT_EQ(proxyIpResolver.resolveClientIp(clientIp, headers), clientIp);
+    EXPECT_EQ(proxyIpResolver.resolveClientIp(proxyIp, headers), clientIp);
+    EXPECT_EQ(proxyIpResolver.resolveClientIp("127.0.0.1", headers), clientIp);
+}
 
 TEST_P(ProxyIpResolverTest, ResolveClientIp)
 {
@@ -132,6 +180,22 @@ INSTANTIATE_TEST_SUITE_P(
             .proxyIps = {"5.6.7.8"},
             .proxyTokens = {},
             .headers = {{std::string(http::to_string(http::field::forwarded)), "For=1.2.3.4"}},
+            .connectionIp = "5.6.7.8",
+            .expectedIp = "1.2.3.4"
+        },
+        ProxyIpResolverTestParams{
+            .testName = "ForwardedHeaderWithoutFor",
+            .proxyIps = {"5.6.7.8"},
+            .proxyTokens = {},
+            .headers = {{std::string(http::to_string(http::field::forwarded)), "by=1.2.3.4"}},
+            .connectionIp = "5.6.7.8",
+            .expectedIp = "5.6.7.8"
+        },
+        ProxyIpResolverTestParams{
+            .testName = "ForwardedHeaderWithIpInQuotes",
+            .proxyIps = {"5.6.7.8"},
+            .proxyTokens = {},
+            .headers = {{std::string(http::to_string(http::field::forwarded)), "for=\"1.2.3.4\""}},
             .connectionIp = "5.6.7.8",
             .expectedIp = "1.2.3.4"
         }
