@@ -22,6 +22,7 @@
 #include "util/Taggable.hpp"
 #include "web/AdminVerificationStrategy.hpp"
 #include "web/PlainWsSession.hpp"
+#include "web/ProxyIpResolver.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/HttpBase.hpp"
 #include "web/interface/Concepts.hpp"
@@ -64,6 +65,7 @@ public:
      * @param socket The socket. Ownership is transferred to HttpSession
      * @param ip Client's IP address
      * @param adminVerification The admin verification strategy to use
+     * @param proxyIpResolver The client ip resolver if a request was forwarded by a proxy
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
      * @param handler The server handler to use
@@ -74,6 +76,7 @@ public:
         tcp::socket&& socket,
         std::string const& ip,
         std::shared_ptr<AdminVerificationStrategy> const& adminVerification,
+        std::shared_ptr<ProxyIpResolver> proxyIpResolver,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
@@ -84,6 +87,7 @@ public:
               ip,
               tagFactory,
               adminVerification,
+              std::move(proxyIpResolver),
               dosGuard,
               handler,
               std::move(buffer)
@@ -129,7 +133,7 @@ public:
     {
         std::make_shared<WsUpgrader<HandlerType>>(
             std::move(stream_),
-            this->clientIp,
+            this->clientIp_,
             tagFactory_,
             this->dosGuard_,
             this->handler_,

@@ -124,7 +124,7 @@ public:
     ~WsBase() override
     {
         LOG(perfLog_.debug()) << tag() << "session closed";
-        dosGuard_.get().decrement(clientIp);
+        dosGuard_.get().decrement(clientIp_);
     }
 
     Derived<HandlerType>&
@@ -217,7 +217,7 @@ public:
     void
     send(std::string&& msg, http::status) override
     {
-        if (!dosGuard_.get().add(clientIp, msg.size())) {
+        if (!dosGuard_.get().add(clientIp_, msg.size())) {
             auto jsonResponse = boost::json::parse(msg).as_object();
             jsonResponse["warning"] = "load";
 
@@ -283,7 +283,7 @@ public:
         if (ec)
             return wsFail(ec, "read");
 
-        LOG(perfLog_.info()) << tag() << "Received request from ip = " << this->clientIp;
+        LOG(perfLog_.info()) << tag() << "Received request from ip = " << clientIp_;
 
         std::string requestStr{static_cast<char const*>(buffer_.data().data()), buffer_.size()};
 

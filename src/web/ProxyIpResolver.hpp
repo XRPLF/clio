@@ -31,6 +31,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_set>
+#include <vector>
 
 namespace web {
 
@@ -43,7 +44,8 @@ namespace web {
  */
 class ProxyIpResolver {
     std::unordered_set<std::string> proxyIps_;
-    std::unordered_set<std::string> proxyTokens_;
+    // ripple::uint256 doesn't have hash implementation
+    std::vector<ripple::uint256> proxyTokens_;
 
 public:
     /**

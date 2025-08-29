@@ -28,6 +28,7 @@
 #include <boost/beast/http/string_body.hpp>
 #include <xrpl/basics/base_uint.h>
 
+#include <algorithm>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -39,8 +40,9 @@ namespace web {
 ProxyIpResolver::ProxyIpResolver(std::unordered_set<std::string> proxyIps, std::unordered_set<std::string> proxyTokens)
     : proxyIps_(std::move(proxyIps))
 {
+    proxyTokens_.reserve(proxyTokens.size());
     for (auto const& t : proxyTokens) {
-        proxyTokens_.insert(util::sha256sumString(t));
+        proxyTokens_.push_back(util::sha256sum(t));
     }
 }
 
@@ -72,8 +74,8 @@ ProxyIpResolver::resolveClientIp(std::string const& connectionIp, HttpHeaders co
     }
 
     if (auto it = headers.find(kPROXY_TOKEN_HEADER); it != headers.end()) {
-        auto const tokenHash = util::sha256sumString(it->value());
-        if (proxyTokens_.contains(tokenHash)) {
+        auto const tokenHash = util::sha256sum(it->value());
+        if (std::ranges::find(proxyTokens_, tokenHash) != proxyTokens_.end()) {
             return extractClientIp(headers).value_or(connectionIp);
         }
     }
