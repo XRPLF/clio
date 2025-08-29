@@ -8,6 +8,7 @@ target_sources(
           Coroutine.cpp
           CoroutineGroup.cpp
           log/Logger.cpp
+          log/PrettyPath.cpp
           prometheus/Http.cpp
           prometheus/Label.cpp
           prometheus/MetricBase.cpp

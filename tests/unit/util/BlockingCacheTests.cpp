@@ -33,7 +33,6 @@ using testing::StrictMock;
 
 #include <boost/asio/spawn.hpp>
 
-#include <chrono>
 #include <expected>
 #include <string>
 
