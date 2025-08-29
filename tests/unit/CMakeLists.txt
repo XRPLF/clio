@@ -198,6 +198,7 @@ target_sources(
           web/ng/impl/HttpConnectionTests.cpp
           web/ng/impl/ServerSslContextTests.cpp
           web/ng/impl/WsConnectionTests.cpp
+          web/ProxyIpResolverTests.cpp
           web/RPCServerHandlerTests.cpp
           web/ServerTests.cpp
           web/SubscriptionContextTests.cpp

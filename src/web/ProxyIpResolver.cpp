@@ -18,6 +18,7 @@
 
 #include "web/ProxyIpResolver.hpp"
 
+#include "util/JsonUtils.hpp"
 #include "util/Shasum.hpp"
 #include "util/config/ArrayView.hpp"
 #include "util/config/ConfigDefinition.hpp"
@@ -90,13 +91,21 @@ ProxyIpResolver::extractClientIp(HttpHeaders const& headers)
         return std::nullopt;
     }
 
+    auto const headerValue = util::toLower(it->value());
+
     static constexpr std::string_view kFOR_PREFIX = "for=";
-    auto const startPos = it->value().find(kFOR_PREFIX);
+    auto const startPos = headerValue.find(kFOR_PREFIX);
     if (startPos == std::string::npos) {
         return std::nullopt;
     }
-    auto const endPos = it->value().find(';', startPos + kFOR_PREFIX.size());
-    return it->value().substr(startPos + kFOR_PREFIX.size(), endPos);
+
+    static constexpr char kDELIMITER = ';';
+    auto const endPos = it->value().find(kDELIMITER, startPos + kFOR_PREFIX.size());
+    auto const ip = it->value().substr(startPos + kFOR_PREFIX.size(), endPos - (startPos + kFOR_PREFIX.size()));
+    if (ip.starts_with('"')) {
+        return ip.substr(1, ip.size() - 2);
+    }
+    return std::string{ip};
 }
 
 }  // namespace web
