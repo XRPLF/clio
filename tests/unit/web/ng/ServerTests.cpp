@@ -26,11 +26,13 @@
 #include "util/Taggable.hpp"
 #include "util/TestHttpClient.hpp"
 #include "util/TestWebSocketClient.hpp"
+#include "util/config/Array.hpp"
 #include "util/config/ConfigConstraints.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigFileJson.hpp"
 #include "util/config/ConfigValue.hpp"
 #include "util/config/Types.hpp"
+#include "web/ProxyIpResolver.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/ProcessingPolicy.hpp"
@@ -58,6 +60,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <unordered_set>
 
 using namespace web::ng;
 using namespace util::config;
@@ -85,6 +88,8 @@ TEST_P(MakeServerTest, Make)
         {"server.ip", ConfigValue{ConfigType::String}.optional()},
         {"server.port", ConfigValue{ConfigType::Integer}.optional()},
         {"server.processing_policy", ConfigValue{ConfigType::String}.defaultValue("parallel")},
+        {"server.proxy_ips.[]", Array{ConfigValue{ConfigType::String}}},
+        {"server.proxy_tokens.[]", Array{ConfigValue{ConfigType::String}}},
         {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional()},
         {"server.ws_max_sending_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1500)},
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
@@ -173,6 +178,8 @@ protected:
         {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
         {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
         {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional()},
+        {"server.proxy_ips.[]", Array{ConfigValue{ConfigType::String}}},
+        {"server.proxy_tokens.[]", Array{ConfigValue{ConfigType::String}}},
         {"server.ws_max_sending_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1500)},
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
         {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
@@ -210,6 +217,7 @@ TEST_F(ServerTest, BadEndpoint)
         ProcessingPolicy::Sequential,
         std::nullopt,
         tagDecoratorFactory,
+        web::ProxyIpResolver{{}, {}},
         std::nullopt,
         emptyOnConnectCheck_,
         [](auto&&) {}
@@ -274,6 +282,7 @@ TEST_F(ServerHttpTest, OnConnectCheck)
         ProcessingPolicy::Sequential,
         std::nullopt,
         tagDecoratorFactory,
+        web::ProxyIpResolver{{}, {}},
         std::nullopt,
         onConnectCheck.AsStdFunction(),
         [](auto&&) {}
@@ -334,6 +343,7 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
         ProcessingPolicy::Sequential,
         std::nullopt,
         tagDecoratorFactory,
+        web::ProxyIpResolver{{}, {}},
         std::nullopt,
         onConnectCheck.AsStdFunction(),
         [](auto&&) {}
@@ -393,6 +403,7 @@ TEST_F(ServerHttpTest, OnDisconnectHook)
         ProcessingPolicy::Sequential,
         std::nullopt,
         tagDecoratorFactory,
+        web::ProxyIpResolver{{}, {}},
         std::nullopt,
         emptyOnConnectCheck_,
         onDisconnectHookMock.AsStdFunction()

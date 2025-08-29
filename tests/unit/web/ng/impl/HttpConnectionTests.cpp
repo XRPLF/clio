@@ -27,6 +27,7 @@
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigValue.hpp"
 #include "util/config/Types.hpp"
+#include "web/ProxyIpResolver.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 #include "web/ng/impl/HttpConnection.hpp"
@@ -38,6 +39,7 @@
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
+#include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -47,6 +49,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <unordered_set>
 #include <utility>
 
 using namespace web::ng::impl;
@@ -62,7 +65,11 @@ struct HttpConnectionTests : SyncAsioContextTest {
         [&]() { ASSERT_TRUE(expectedSocket.has_value()) << expectedSocket.error().message(); }();
         auto ip = expectedSocket->remote_endpoint().address().to_string();
         auto connection = std::make_unique<PlainHttpConnection>(
-            std::move(expectedSocket).value(), std::move(ip), boost::beast::flat_buffer{}, tagDecoratorFactory_
+            std::move(expectedSocket).value(),
+            std::move(ip),
+            boost::beast::flat_buffer{},
+            tagDecoratorFactory_,
+            proxyIpResolver_
         );
         connection->setTimeout(std::chrono::milliseconds{100});
         return connection;
@@ -75,6 +82,9 @@ protected:
     TestHttpServer httpServer_{ctx_, "localhost"};
     HttpAsyncClient httpClient_{ctx_};
     http::request<http::string_body> request_{http::verb::post, "/some_target", 11, "some data"};
+    std::string const proxyToken_ = "some_proxy_token";
+    std::shared_ptr<web::ProxyIpResolver> proxyIpResolver_ =
+        std::make_shared<web::ProxyIpResolver>(std::unordered_set<std::string>{}, std::unordered_set{proxyToken_});
 };
 
 TEST_F(HttpConnectionTests, wasUpgraded)
@@ -117,6 +127,34 @@ TEST_F(HttpConnectionTests, Receive)
             receivedRequest.at(boost::beast::http::field::user_agent),
             request_.at(boost::beast::http::field::user_agent)
         );
+    });
+}
+
+TEST_F(HttpConnectionTests, ReceiveFromProxyIp)
+{
+    request_.set(boost::beast::http::field::user_agent, "test_client");
+
+    auto const clientIp = "1.2.3.4";
+    util::spawn(ctx_, [this, &clientIp](boost::asio::yield_context yield) {
+        auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        auto request = request_;
+        request.set(web::ProxyIpResolver::kPROXY_TOKEN_HEADER, proxyToken_);
+        request.set(boost::beast::http::field::forwarded, fmt::format("for={}", clientIp));
+
+        maybeError = httpClient_.send(request, yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+    });
+
+    runSpawn([this, &clientIp](boost::asio::yield_context yield) {
+        auto connection = acceptConnection(yield);
+
+        auto expectedRequest = connection->receive(yield);
+        ASSERT_TRUE(expectedRequest.has_value()) << expectedRequest.error().message();
+        ASSERT_TRUE(expectedRequest->isHttp());
+
+        EXPECT_EQ(connection->ip(), clientIp);
     });
 }
 

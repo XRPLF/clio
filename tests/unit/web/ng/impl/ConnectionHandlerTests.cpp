@@ -60,7 +60,6 @@ using namespace web::ng::impl;
 using namespace web::ng;
 using namespace util;
 using testing::Return;
-namespace beast = boost::beast;
 namespace http = boost::beast::http;
 namespace websocket = boost::beast::websocket;
 
@@ -106,9 +105,9 @@ struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
         {"log.tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
     }};
     StrictMockHttpConnectionPtr mockHttpConnection =
-        std::make_unique<StrictMockHttpConnection>("1.2.3.4", beast::flat_buffer{}, tagDecoratorFactory);
+        std::make_unique<StrictMockHttpConnection>("1.2.3.4", boost::beast::flat_buffer{}, tagDecoratorFactory);
     StrictMockWsConnectionPtr mockWsConnection =
-        std::make_unique<StrictMockWsConnection>("1.2.3.4", beast::flat_buffer{}, tagDecoratorFactory);
+        std::make_unique<StrictMockWsConnection>("1.2.3.4", boost::beast::flat_buffer{}, tagDecoratorFactory);
 
     Request::HttpHeaders headers;
 };

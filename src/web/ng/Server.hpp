@@ -22,6 +22,7 @@
 #include "util/Taggable.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
+#include "web/ProxyIpResolver.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/ProcessingPolicy.hpp"
@@ -36,6 +37,7 @@
 #include <concepts>
 #include <cstddef>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 
@@ -76,6 +78,8 @@ private:
 
     util::TagDecoratorFactory tagDecoratorFactory_;
 
+    std::shared_ptr<ProxyIpResolver> proxyIpResolver_;
+
     impl::ConnectionHandler connectionHandler_;
     boost::asio::ip::tcp::endpoint endpoint_;
 
@@ -94,6 +98,7 @@ public:
      * @param parallelRequestLimit The limit of requests for one connection that can be processed in parallel. Only used
      * if processingPolicy is parallel.
      * @param tagDecoratorFactory The tag decorator factory.
+     * @param proxyIpResolver The client ip resolver if a request was forwarded by a proxy
      * @param maxSubscriptionSendQueueSize The maximum size of the subscription send queue.
      * @param onConnectCheck The check to perform on each connection.
      * @param onDisconnectHook The hook to call on each disconnection.
@@ -105,6 +110,7 @@ public:
         ProcessingPolicy processingPolicy,
         std::optional<size_t> parallelRequestLimit,
         util::TagDecoratorFactory tagDecoratorFactory,
+        ProxyIpResolver proxyIpResolver,
         std::optional<size_t> maxSubscriptionSendQueueSize,
         OnConnectCheck onConnectCheck,
         OnDisconnectHook onDisconnectHook
