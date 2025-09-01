@@ -86,7 +86,8 @@ public:
      *
      * @returns true if stop is requested; false otherwise
      */
-    [[nodiscard]] operator bool() const noexcept
+    [[nodiscard]]
+    operator bool() const noexcept
     {
         return isStopRequested();
     }
@@ -97,7 +98,8 @@ public:
      *
      * @returns The underlying boost::asio::yield_context
      */
-    [[nodiscard]] operator boost::asio::yield_context() const
+    [[nodiscard]]
+    operator boost::asio::yield_context() const
     {
         return pimpl_->yieldContext();
     }
