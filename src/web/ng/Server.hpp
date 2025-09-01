@@ -37,7 +37,6 @@
 #include <concepts>
 #include <cstddef>
 #include <functional>
-#include <memory>
 #include <optional>
 #include <string>
 
@@ -64,6 +63,8 @@ public:
      */
     using OnConnectCheck = std::function<std::expected<void, Response>(Connection const&)>;
 
+    using OnIpChangeHook = impl::ConnectionHandler::OnIpChangeHook;
+
     /**
      * @brief Hook called when any connection disconnects
      */
@@ -77,8 +78,6 @@ private:
     std::optional<boost::asio::ssl::context> sslContext_;
 
     util::TagDecoratorFactory tagDecoratorFactory_;
-
-    std::shared_ptr<ProxyIpResolver> proxyIpResolver_;
 
     impl::ConnectionHandler connectionHandler_;
     boost::asio::ip::tcp::endpoint endpoint_;
@@ -113,6 +112,7 @@ public:
         ProxyIpResolver proxyIpResolver,
         std::optional<size_t> maxSubscriptionSendQueueSize,
         OnConnectCheck onConnectCheck,
+        OnIpChangeHook onIpChangeHook,
         OnDisconnectHook onDisconnectHook
     );
 
@@ -191,6 +191,7 @@ std::expected<Server, std::string>
 makeServer(
     util::config::ClioConfigDefinition const& config,
     Server::OnConnectCheck onConnectCheck,
+    Server::OnIpChangeHook onIpChangeHook,
     Server::OnDisconnectHook onDisconnectHook,
     boost::asio::io_context& context
 );

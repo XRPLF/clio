@@ -130,7 +130,6 @@ makeConnection(
     std::optional<boost::asio::ssl::context>& sslContext,
     std::string ip,
     util::TagDecoratorFactory& tagDecoratorFactory,
-    std::shared_ptr<ProxyIpResolver> proxyIpResolver,
     Server::OnConnectCheck onConnectCheck,
     boost::asio::yield_context yield
 )
@@ -145,8 +144,7 @@ makeConnection(
             std::move(ip),
             std::move(sslDetectionResult.buffer),
             *sslContext,
-            tagDecoratorFactory,
-            std::move(proxyIpResolver)
+            tagDecoratorFactory
         );
         sslConnection->setTimeout(std::chrono::seconds{10});
         auto const maybeError = sslConnection->sslHandshake(yield);
@@ -159,8 +157,7 @@ makeConnection(
             std::move(sslDetectionResult.socket),
             std::move(ip),
             std::move(sslDetectionResult.buffer),
-            tagDecoratorFactory,
-            std::move(proxyIpResolver)
+            tagDecoratorFactory
         );
     }
 
@@ -212,13 +209,13 @@ Server::Server(
     ProxyIpResolver proxyIpResolver,
     std::optional<size_t> maxSubscriptionSendQueueSize,
     OnConnectCheck onConnectCheck,
+    OnIpChangeHook onIpChangeHook,
     OnDisconnectHook onDisconnectHook
 )
     : ctx_{ctx}
     , sslContext_{std::move(sslContext)}
     , tagDecoratorFactory_{tagDecoratorFactory}
-    , proxyIpResolver_(std::make_shared<ProxyIpResolver>(std::move(proxyIpResolver)))
-    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, maxSubscriptionSendQueueSize, std::move(onDisconnectHook)}
+    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, maxSubscriptionSendQueueSize, std::move(proxyIpResolver), std::move(onDisconnectHook), std::move(onIpChangeHook)}
     , endpoint_{std::move(endpoint)}
     , onConnectCheck_{std::move(onConnectCheck)}
 {
@@ -308,7 +305,6 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
         sslContext_,
         std::move(ip).value(),
         tagDecoratorFactory_,
-        proxyIpResolver_,
         onConnectCheck_,
         yield
     );
@@ -344,6 +340,7 @@ std::expected<Server, std::string>
 makeServer(
     util::config::ClioConfigDefinition const& config,
     Server::OnConnectCheck onConnectCheck,
+    Server::OnIpChangeHook onIpChangeHook,
     Server::OnDisconnectHook onDisconnectHook,
     boost::asio::io_context& context
 )
@@ -385,6 +382,7 @@ makeServer(
         std::move(proxyIpResolver),
         maxSubscriptionSendQueueSize,
         std::move(onConnectCheck),
+        std::move(onIpChangeHook),
         std::move(onDisconnectHook)
     };
 }

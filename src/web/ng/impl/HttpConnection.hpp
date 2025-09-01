@@ -21,7 +21,6 @@
 
 #include "util/Assert.hpp"
 #include "util/Taggable.hpp"
-#include "web/ProxyIpResolver.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/Request.hpp"
@@ -80,7 +79,6 @@ class HttpConnection : public UpgradableConnection {
 
     using MessageType = boost::beast::http::response<boost::beast::http::string_body>;
     SendingQueue<MessageType> sendingQueue_;
-    std::shared_ptr<ProxyIpResolver> proxyIpResolver_;
 
     bool closed_{false};
 
@@ -89,8 +87,7 @@ public:
         boost::asio::ip::tcp::socket socket,
         std::string ip,
         boost::beast::flat_buffer buffer,
-        util::TagDecoratorFactory const& tagDecoratorFactory,
-        std::shared_ptr<ProxyIpResolver> proxyIpResolver
+        util::TagDecoratorFactory const& tagDecoratorFactory
     )
         requires IsTcpStream<StreamType>
         : UpgradableConnection(std::move(ip), std::move(buffer), tagDecoratorFactory)
@@ -99,7 +96,6 @@ public:
             boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
             boost::beast::http::async_write(stream_, message, yield);
         })
-        , proxyIpResolver_(std::move(proxyIpResolver))
     {
     }
 
@@ -108,8 +104,7 @@ public:
         std::string ip,
         boost::beast::flat_buffer buffer,
         boost::asio::ssl::context& sslCtx,
-        util::TagDecoratorFactory const& tagDecoratorFactory,
-        std::shared_ptr<ProxyIpResolver> proxyIpResolver
+        util::TagDecoratorFactory const& tagDecoratorFactory
     )
         requires IsSslTcpStream<StreamType>
         : UpgradableConnection(std::move(ip), std::move(buffer), tagDecoratorFactory)
@@ -118,7 +113,6 @@ public:
             boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
             boost::beast::http::async_write(stream_, message, yield);
         })
-        , proxyIpResolver_(std::move(proxyIpResolver))
     {
     }
 
@@ -245,7 +239,6 @@ private:
         boost::beast::http::async_read(stream_, buffer_, request, yield[error]);
         if (error)
             return std::unexpected{error};
-        ip_ = proxyIpResolver_->resolveClientIp(ip_, request);
         return request;
     }
 };

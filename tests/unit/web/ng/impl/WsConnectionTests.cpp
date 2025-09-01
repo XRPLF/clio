@@ -21,13 +21,11 @@
 #include "util/CoroutineGroup.hpp"
 #include "util/Spawn.hpp"
 #include "util/Taggable.hpp"
-#include "util/TestHttpClient.hpp"
 #include "util/TestHttpServer.hpp"
 #include "util/TestWebSocketClient.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigValue.hpp"
 #include "util/config/Types.hpp"
-#include "web/ProxyIpResolver.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
@@ -54,7 +52,6 @@
 #include <ranges>
 #include <string>
 #include <thread>
-#include <unordered_set>
 #include <utility>
 
 using namespace web::ng::impl;
@@ -74,7 +71,6 @@ struct WebWsConnectionTests : SyncAsioContextTest {
             std::move(ip),
             boost::beast::flat_buffer{},
             tagDecoratorFactory_,
-            proxyIpResolver_
         };
 
         auto expectedTrue = httpConnection.isUpgradeRequested(yield);
@@ -100,9 +96,6 @@ protected:
     WebSocketAsyncClient wsClient_{ctx_};
     Request::HttpHeaders const headers_;
     Request request_{"some request", headers_};
-    std::string const proxyToken_ = "some_proxy_token";
-    std::shared_ptr<web::ProxyIpResolver> proxyIpResolver_ =
-        std::make_shared<web::ProxyIpResolver>(std::unordered_set<std::string>{}, std::unordered_set{proxyToken_});
 };
 
 TEST_F(WebWsConnectionTests, WasUpgraded)
@@ -114,27 +107,6 @@ TEST_F(WebWsConnectionTests, WasUpgraded)
     runSpawn([this](boost::asio::yield_context yield) {
         auto wsConnection = acceptConnection(yield);
         EXPECT_TRUE(wsConnection->wasUpgraded());
-    });
-}
-
-TEST_F(WebWsConnectionTests, ClientIpWhenSentFromProxy)
-{
-    auto const clientIp = "1.2.3.4";
-    util::spawn(ctx_, [this, &clientIp](boost::asio::yield_context yield) {
-        auto maybeError = wsClient_.connect(
-            "localhost",
-            httpServer_.port(),
-            yield,
-            std::chrono::milliseconds{100},
-            {WebHeader{boost::beast::http::field::forwarded, fmt::format("for={}", clientIp)},
-             WebHeader{web::ProxyIpResolver::kPROXY_TOKEN_HEADER, proxyToken_}}
-        );
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError.value().message(); }();
-    });
-    runSpawn([this, &clientIp](boost::asio::yield_context yield) {
-        auto wsConnection = acceptConnection(yield);
-        EXPECT_TRUE(wsConnection->wasUpgraded());
-        EXPECT_EQ(wsConnection->ip(), clientIp);
     });
 }
 

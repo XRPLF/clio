@@ -222,7 +222,13 @@ public:
         if (req_.method() == http::verb::get and req_.target() == "/health")
             return sender_(httpResponse(http::status::ok, "text/html", kHEALTH_CHECK_HTML));
 
-        clientIp_ = proxyIpResolver_->resolveClientIp(clientIp_, req_);
+        if (auto resolvedIp = proxyIpResolver_->resolveClientIp(clientIp_, req_); resolvedIp != clientIp_) {
+            LOG(log_.info()) << "Detected a forwarded request from proxy. Proxy ip: " << clientIp_
+                             << " Resolved client ip: " << resolvedIp;
+            dosGuard_.get().decrement(clientIp_);
+            clientIp_ = std::move(resolvedIp);
+            dosGuard_.get().increment(clientIp_);
+        }
 
         // Update isAdmin property of the connection
         ConnectionBase::isAdmin_ = adminVerification_->isAdmin(req_, clientIp_);

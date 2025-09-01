@@ -25,6 +25,7 @@
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigValue.hpp"
 #include "util/config/Types.hpp"
+#include "web/ProxyIpResolver.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
@@ -68,7 +69,15 @@ struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
         : tagFactory{util::config::ClioConfigDefinition{
               {"log.tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
           }}
-        , connectionHandler{policy, maxParallelConnections, tagFactory, std::nullopt, onDisconnectMock.AsStdFunction()}
+        , connectionHandler{
+              policy,
+              maxParallelConnections,
+              tagFactory,
+              std::nullopt,
+              proxyIpResolver,
+              onDisconnectMock.AsStdFunction(),
+              onIpChangeMock.AsStdFunction()
+          }
     {
     }
 
@@ -97,6 +106,9 @@ struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
         return Request{std::forward<Args>(args)...};
     }
 
+    web::ProxyIpResolver proxyIpResolver{{}, {}};
+
+    testing::StrictMock<testing::MockFunction<void(std::string const&, std::string const&)>> onIpChangeMock;
     testing::StrictMock<testing::MockFunction<void(Connection const&)>> onDisconnectMock;
     util::TagDecoratorFactory tagFactory;
     ConnectionHandler connectionHandler;

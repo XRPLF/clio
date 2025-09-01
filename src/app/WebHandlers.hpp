@@ -36,6 +36,7 @@
 #include <exception>
 #include <functional>
 #include <memory>
+#include <string>
 #include <utility>
 
 namespace app {
@@ -62,6 +63,16 @@ public:
      */
     std::expected<void, web::ng::Response>
     operator()(web::ng::Connection const& connection);
+};
+
+class IpChangeHook {
+    std::reference_wrapper<web::dosguard::DOSGuardInterface> dosguard_;
+
+public:
+    IpChangeHook(web::dosguard::DOSGuardInterface& dosguard);
+
+    void
+    operator()(std::string const& oldIp, std::string const& newIp);
 };
 
 /**

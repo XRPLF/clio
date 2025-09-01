@@ -100,8 +100,13 @@ TEST_P(MakeServerTest, Make)
     auto const errors = config.parse(json);
     ASSERT_TRUE(!errors.has_value());
 
-    auto const expectedServer =
-        makeServer(config, [](auto&&) -> std::expected<void, Response> { return {}; }, [](auto&&) {}, ioContext_);
+    auto const expectedServer = makeServer(
+        config,
+        [](auto&&) -> std::expected<void, Response> { return {}; },
+        [](auto&&, auto&&) {},
+        [](auto&&) {},
+        ioContext_
+    );
     EXPECT_EQ(expectedServer.has_value(), GetParam().expectSuccess);
 }
 
@@ -187,7 +192,8 @@ protected:
     };
 
     Server::OnConnectCheck emptyOnConnectCheck_ = [](auto&&) -> std::expected<void, Response> { return {}; };
-    std::expected<Server, std::string> server_ = makeServer(config_, emptyOnConnectCheck_, [](auto&&) {}, ctx_);
+    std::expected<Server, std::string> server_ =
+        makeServer(config_, emptyOnConnectCheck_, [](auto&&, auto&&) {}, [](auto&&) {}, ctx_);
 
     std::string requestMessage_ = "some request";
     std::string const headerName_ = "Some-header";
@@ -220,6 +226,7 @@ TEST_F(ServerTest, BadEndpoint)
         web::ProxyIpResolver{{}, {}},
         std::nullopt,
         emptyOnConnectCheck_,
+        [](auto&&, auto&&) {},
         [](auto&&) {}
     };
 
@@ -285,6 +292,7 @@ TEST_F(ServerHttpTest, OnConnectCheck)
         web::ProxyIpResolver{{}, {}},
         std::nullopt,
         onConnectCheck.AsStdFunction(),
+        [](auto&&, auto&&) {},
         [](auto&&) {}
     };
 
@@ -346,6 +354,7 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
         web::ProxyIpResolver{{}, {}},
         std::nullopt,
         onConnectCheck.AsStdFunction(),
+        [](auto&&, auto&&) {},
         [](auto&&) {}
     };
 
@@ -406,6 +415,7 @@ TEST_F(ServerHttpTest, OnDisconnectHook)
         web::ProxyIpResolver{{}, {}},
         std::nullopt,
         emptyOnConnectCheck_,
+        [](auto&&, auto&&) {},
         onDisconnectHookMock.AsStdFunction()
     };
 
