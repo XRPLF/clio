@@ -15,6 +15,7 @@ The image is based on Ubuntu 20.04 and contains:
 - gh 2.74
 - git-cliff 2.9.1
 - mold 2.40.1
+- Python 3.13
 - and some other useful tools
 
 Conan is set up to build Clio without any additional steps.
