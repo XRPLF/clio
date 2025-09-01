@@ -25,6 +25,7 @@
 #include "util/config/ArrayView.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ObjectView.hpp"
+#include "util/log/PrettyPath.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <fmt/format.h>
@@ -382,7 +383,9 @@ Logger::Pump::Pump(std::shared_ptr<spdlog::logger> logger, Severity sev, SourceL
 Logger::Pump::~Pump()
 {
     if (enabled_) {
-        spdlog::source_loc const sourceLocation{prettyPath(sourceLocation_).cbegin(), sourceLocation_.line(), nullptr};
+        spdlog::source_loc const sourceLocation{
+            prettyPath(sourceLocation_.file_name()).cbegin(), sourceLocation_.line(), nullptr
+        };
         logger_->log(sourceLocation, toSpdlogLevel(severity_), std::move(stream_).str());
     }
 }
@@ -420,19 +423,6 @@ Logger::fatal(SourceLocationType const& loc) const
 
 Logger::Logger(std::shared_ptr<spdlog::logger> logger) : logger_(std::move(logger))
 {
-}
-
-std::string_view
-Logger::Pump::prettyPath(SourceLocationType const& loc, size_t maxDepth)
-{
-    std::string_view const filePath{loc.file_name()};
-    auto idx = filePath.size();
-    while (maxDepth-- > 0) {
-        idx = filePath.rfind('/', idx - 1);
-        if (idx == std::string::npos || idx == 0)
-            break;
-    }
-    return filePath.substr(idx == std::string::npos ? 0 : idx + 1);
 }
 
 }  // namespace util
