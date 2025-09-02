@@ -43,10 +43,8 @@ IPAdminVerificationStrategy::isAdmin(RequestHeader const&, std::string_view ip) 
 }
 
 PasswordAdminVerificationStrategy::PasswordAdminVerificationStrategy(std::string const& password)
+    : passwordSha256_(util::toUpper(util::sha256sumString(password)))
 {
-    passwordSha256_ = util::sha256sumString(password);
-    // make sure it's uppercase
-    passwordSha256_ = util::toUpper(std::move(passwordSha256_));
 }
 
 bool

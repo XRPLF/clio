@@ -70,13 +70,13 @@ ProxyIpResolver::fromConfig(util::config::ClioConfigDefinition const& config)
 std::string
 ProxyIpResolver::resolveClientIp(std::string const& connectionIp, HttpHeaders const& headers) const
 {
-    if (auto it = proxyIps_.find(connectionIp); it != proxyIps_.end()) {
+    if (proxyIps_.contains(connectionIp)) {
         return extractClientIp(headers).value_or(connectionIp);
     }
 
     if (auto it = headers.find(kPROXY_TOKEN_HEADER); it != headers.end()) {
         auto const tokenHash = util::sha256sum(it->value());
-        if (std::ranges::find(proxyTokens_, tokenHash) != proxyTokens_.end()) {
+        if (std::ranges::contains(proxyTokens_, tokenHash)) {
             return extractClientIp(headers).value_or(connectionIp);
         }
     }
@@ -91,6 +91,8 @@ ProxyIpResolver::extractClientIp(HttpHeaders const& headers)
         return std::nullopt;
     }
 
+    // Forwarded header is case insensitive:
+    // https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Forwarded#using_the_forwarded_header
     auto const headerValue = util::toLower(it->value());
 
     static constexpr std::string_view kFOR_PREFIX = "for=";
@@ -98,14 +100,15 @@ ProxyIpResolver::extractClientIp(HttpHeaders const& headers)
     if (startPos == std::string::npos) {
         return std::nullopt;
     }
+    auto value = it->value().substr(startPos + kFOR_PREFIX.size());
 
     static constexpr char kDELIMITER = ';';
-    auto const endPos = it->value().find(kDELIMITER, startPos + kFOR_PREFIX.size());
-    auto const ip = it->value().substr(startPos + kFOR_PREFIX.size(), endPos - (startPos + kFOR_PREFIX.size()));
+    auto const endPos = value.find(kDELIMITER);
+    auto const ip = value.substr(0, endPos);
     if (ip.starts_with('"')) {
         return ip.substr(1, ip.size() - 2);
     }
-    return std::string{ip};
+    return ip;
 }
 
 }  // namespace web
