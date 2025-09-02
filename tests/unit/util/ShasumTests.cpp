@@ -19,30 +19,29 @@
 
 #include "util/Shasum.hpp"
 
+#include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/digest.h>
 
-#include <cstring>
-#include <string>
-#include <string_view>
+using namespace util;
 
-namespace util {
+struct ShasumTest : testing::Test {
+    static constexpr auto kEMPTY_HASH = "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855";
+    static constexpr auto kHELLO_WORLD_HASH = "B94D27B9934D3E08A52E52D7DA7DABFAC484EFE37A5380EE9088F7ACE2EFCDE9";
+};
 
-ripple::uint256
-sha256sum(std::string_view s)
+TEST_F(ShasumTest, sha256sum)
 {
-    ripple::sha256_hasher hasher;
-    hasher(s.data(), s.size());
-    auto const hashData = static_cast<ripple::sha256_hasher::result_type>(hasher);
-    ripple::uint256 sha256;
-    std::memcpy(sha256.data(), hashData.data(), hashData.size());
-    return sha256;
+    ripple::uint256 expected;
+
+    ASSERT_TRUE(expected.parseHex(kEMPTY_HASH));
+    EXPECT_EQ(sha256sum(""), expected);
+
+    ASSERT_TRUE(expected.parseHex(kHELLO_WORLD_HASH));
+    EXPECT_EQ(sha256sum("hello world"), expected);
 }
 
-std::string
-sha256sumString(std::string_view s)
+TEST_F(ShasumTest, sha256sumString)
 {
-    return ripple::to_string(sha256sum(s));
+    EXPECT_EQ(sha256sumString(""), kEMPTY_HASH);
+    EXPECT_EQ(sha256sumString("hello world"), kHELLO_WORLD_HASH);
 }
-
-}  // namespace util

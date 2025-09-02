@@ -179,6 +179,7 @@ target_sources(
           util/RetryTests.cpp
           util/ScopeGuardTests.cpp
           util/SignalsHandlerTests.cpp
+          util/ShasumTests.cpp
           util/SpawnTests.cpp
           util/StopHelperTests.cpp
           util/TimeUtilsTests.cpp
