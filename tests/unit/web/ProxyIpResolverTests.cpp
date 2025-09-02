@@ -200,6 +200,14 @@ INSTANTIATE_TEST_SUITE_P(
             .headers = {{std::string(http::to_string(http::field::forwarded)), "for=\"1.2.3.4\""}},
             .connectionIp = "5.6.7.8",
             .expectedIp = "1.2.3.4"
+        },
+        ProxyIpResolverTestParams{
+            .testName = "ForwardedHeaderIsIncorrect",
+            .proxyIps = {"5.6.7.8"},
+            .proxyTokens = {},
+            .headers = {{std::string(http::to_string(http::field::forwarded)), "for=\";some_other_text"}},
+            .connectionIp = "5.6.7.8",
+            .expectedIp = "5.6.7.8"
         }
     ),
     tests::util::kNAME_GENERATOR

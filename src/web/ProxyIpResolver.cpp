@@ -104,6 +104,12 @@ ProxyIpResolver::extractClientIp(HttpHeaders const& headers)
     static constexpr char kDELIMITER = ';';
     auto const endPos = value.find(kDELIMITER);
     auto const ip = value.substr(0, endPos);
+
+    static constexpr auto kMIN_IP_LENGTH = 7;  // minimum 3 dots + 4 digits
+    if (ip.size() < kMIN_IP_LENGTH) {
+        return std::nullopt;
+    }
+
     if (ip.starts_with('"')) {
         return ip.substr(1, ip.size() - 2);
     }
