@@ -71,6 +71,11 @@ public:
     std::string const&
     ip() const;
 
+    /**
+     * @brief Set the ip of the client.
+     *
+     * @param newIp The new ip to set.
+     */
     void
     setIp(std::string newIp)
     {

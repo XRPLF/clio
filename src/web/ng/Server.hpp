@@ -70,6 +70,9 @@ public:
      */
     using OnDisconnectHook = impl::ConnectionHandler::OnDisconnectHook;
 
+    /**
+     * @brief A struct that holds all the hooks for the server.
+     */
     struct Hooks {
         OnConnectCheck onConnectCheck;
         OnIpChangeHook onIpChangeHook;
