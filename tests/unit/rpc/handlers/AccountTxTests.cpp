@@ -909,9 +909,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
     );
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ - 1);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence);
-    ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillByDefault(Return(ledgerHeader));
-
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillRepeatedly(Return(ledgerHeader));
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
     runSpawn([&, this](auto yield) {
@@ -939,8 +937,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
 
 TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
 {
-    EXPECT_CALL(*backend_, fetchLedgerBySequence);
-    ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
@@ -964,8 +961,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
 
 TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
 {
-    EXPECT_CALL(*backend_, fetchLedgerBySequence);
-    ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillOnce(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
@@ -1051,8 +1047,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
     );
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence);
-    ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillByDefault(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillRepeatedly(Return(ledgerHeader));
 
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
@@ -1667,8 +1662,7 @@ TEST_F(RPCAccountTxHandlerTest, MPTTxs_API_v2)
     auto transactions = std::vector<TransactionAndMetadata>{std::move(mptTx)};
     auto const transCursor = TransactionsAndCursor{.txns = std::move(transactions), .cursor = std::nullopt};
 
-    ON_CALL(*backend_, fetchAccountTransactions).WillByDefault(Return(transCursor));
-    EXPECT_CALL(*backend_, fetchAccountTransactions);
+    EXPECT_CALL(*backend_, fetchAccountTransactions).WillOnce(Return(transCursor));
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMIN_SEQ + 1);
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kMIN_SEQ + 1, _)).WillOnce(Return(ledgerHeader));
