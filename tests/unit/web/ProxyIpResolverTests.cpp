@@ -53,8 +53,8 @@ TEST_F(ProxyIpResolverTest, FromConfig)
 {
     using namespace util::config;
     ClioConfigDefinition config{{
-        {"server.proxy_ips.[]", Array{ConfigValue{ConfigType::String}}},
-        {"server.proxy_tokens.[]", Array{ConfigValue{ConfigType::String}}},
+        {"server.proxy.ips.[]", Array{ConfigValue{ConfigType::String}}},
+        {"server.proxy.tokens.[]", Array{ConfigValue{ConfigType::String}}},
     }};
     auto const proxyIp = "1.2.3.4";
     auto const clientIp = "5.6.7.8";
@@ -63,8 +63,10 @@ TEST_F(ProxyIpResolverTest, FromConfig)
     auto const configStr = fmt::format(
         R"({{
         "server": {{
-            "proxy_ips": ["{}"],
-            "proxy_tokens": ["{}"]
+            "proxy": {{
+                "ips": ["{}"],
+                "tokens": ["{}"]
+            }}
         }}
     }})",
         proxyIp,

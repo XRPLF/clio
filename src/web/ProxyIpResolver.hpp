@@ -59,7 +59,7 @@ public:
     /**
      * @brief Creates a ProxyIpResolver from a configuration.
      *
-     * The configuration should contain `server.proxy_ips` and `server.proxy_tokens` arrays.
+     * The configuration should contain `server.proxy.ips` and `server.proxy.tokens` arrays.
      *
      * @param config The Clio configuration.
      * @return A new ProxyIpResolver instance.

@@ -329,7 +329,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: Maximum queue size for sending subscription data to clients. This queue buffers data when a client is slow to receive it, ensuring delivery once the client is ready.
 
-### server.proxy_ips.[]
+### server.proxy.ips.[]
 
 - **Required**: True
 - **Type**: string
@@ -337,7 +337,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: None
 - **Description**: List of proxy ip addresses. When Clio receives a request from proxy it will use `Forwarded` value (if any) as client ip. When this option is used together with `server.proxy_tokens` Clio will identify proxy by ip or by token.
 
-### server.proxy_tokens.[]
+### server.proxy.tokens.[]
 
 - **Required**: True
 - **Type**: string

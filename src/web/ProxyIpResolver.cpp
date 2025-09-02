@@ -53,13 +53,13 @@ ProxyIpResolver::fromConfig(util::config::ClioConfigDefinition const& config)
     using util::config::ValueView;
 
     std::unordered_set<std::string> ips;
-    auto const ipsFromConfig = config.getArray("server.proxy_ips");
+    auto const ipsFromConfig = config.getArray("server.proxy.ips");
     for (auto it = ipsFromConfig.begin<ValueView>(); it != ipsFromConfig.end<ValueView>(); ++it) {
         ips.insert((*it).asString());
     }
 
     std::unordered_set<std::string> tokens;
-    auto const tokensFromConfig = config.getArray("server.proxy_tokens");
+    auto const tokensFromConfig = config.getArray("server.proxy.tokens");
     for (auto it = tokensFromConfig.begin<ValueView>(); it != tokensFromConfig.end<ValueView>(); ++it) {
         tokens.insert((*it).asString());
     }
