@@ -60,7 +60,7 @@ class LedgerTypeAttribute {
         ripple::LedgerEntryType type,
         LedgerCategory category
     )
-        : type_(type), name_(name), rpcName_(rpcName), category_(category)
+        : type_{type}, name_{name}, rpcName_{rpcName}, category_{category}
     {
     }
 
