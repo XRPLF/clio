@@ -108,8 +108,7 @@ public:
      * @param tagDecoratorFactory The tag decorator factory.
      * @param proxyIpResolver The client ip resolver if a request was forwarded by a proxy
      * @param maxSubscriptionSendQueueSize The maximum size of the subscription send queue.
-     * @param onConnectCheck The check to perform on each connection.
-     * @param onDisconnectHook The hook to call on each disconnection.
+     * @param hooks The server hooks
      */
     Server(
         boost::asio::io_context& ctx,
