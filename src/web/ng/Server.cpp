@@ -208,16 +208,14 @@ Server::Server(
     util::TagDecoratorFactory tagDecoratorFactory,
     ProxyIpResolver proxyIpResolver,
     std::optional<size_t> maxSubscriptionSendQueueSize,
-    OnConnectCheck onConnectCheck,
-    OnIpChangeHook onIpChangeHook,
-    OnDisconnectHook onDisconnectHook
+    Hooks hooks
 )
     : ctx_{ctx}
     , sslContext_{std::move(sslContext)}
     , tagDecoratorFactory_{tagDecoratorFactory}
-    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, maxSubscriptionSendQueueSize, std::move(proxyIpResolver), std::move(onDisconnectHook), std::move(onIpChangeHook)}
+    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, maxSubscriptionSendQueueSize, std::move(proxyIpResolver), std::move(hooks.onDisconnectHook), std::move(hooks.onIpChangeHook)}
     , endpoint_{std::move(endpoint)}
-    , onConnectCheck_{std::move(onConnectCheck)}
+    , onConnectCheck_{std::move(hooks.onConnectCheck)}
 {
 }
 
@@ -381,9 +379,11 @@ makeServer(
         util::TagDecoratorFactory(config),
         std::move(proxyIpResolver),
         maxSubscriptionSendQueueSize,
-        std::move(onConnectCheck),
-        std::move(onIpChangeHook),
-        std::move(onDisconnectHook)
+        Server::Hooks{
+            .onConnectCheck = std::move(onConnectCheck),
+            .onIpChangeHook = std::move(onIpChangeHook),
+            .onDisconnectHook = std::move(onDisconnectHook)
+        }
     };
 }
 

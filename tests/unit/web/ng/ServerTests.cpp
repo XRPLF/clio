@@ -225,9 +225,11 @@ TEST_F(ServerTest, BadEndpoint)
         tagDecoratorFactory,
         web::ProxyIpResolver{{}, {}},
         std::nullopt,
-        emptyOnConnectCheck_,
-        [](auto&&, auto&&) {},
-        [](auto&&) {}
+        Server::Hooks{
+            .onConnectCheck = emptyOnConnectCheck_,
+            .onIpChangeHook = [](auto&&, auto&&) {},
+            .onDisconnectHook = [](auto&&) {}
+        }
     };
 
     auto maybeError = server.run();
@@ -291,9 +293,11 @@ TEST_F(ServerHttpTest, OnConnectCheck)
         tagDecoratorFactory,
         web::ProxyIpResolver{{}, {}},
         std::nullopt,
-        onConnectCheck.AsStdFunction(),
-        [](auto&&, auto&&) {},
-        [](auto&&) {}
+        Server::Hooks{
+            .onConnectCheck = onConnectCheck.AsStdFunction(),
+            .onIpChangeHook = [](auto&&, auto&&) {},
+            .onDisconnectHook = [](auto&&) {}
+        }
     };
 
     HttpAsyncClient client{ctx_};
@@ -353,9 +357,11 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
         tagDecoratorFactory,
         web::ProxyIpResolver{{}, {}},
         std::nullopt,
-        onConnectCheck.AsStdFunction(),
-        [](auto&&, auto&&) {},
-        [](auto&&) {}
+        Server::Hooks{
+            .onConnectCheck = onConnectCheck.AsStdFunction(),
+            .onIpChangeHook = [](auto&&, auto&&) {},
+            .onDisconnectHook = [](auto&&) {}
+        }
     };
 
     HttpAsyncClient client{ctx_};
@@ -414,9 +420,11 @@ TEST_F(ServerHttpTest, OnDisconnectHook)
         tagDecoratorFactory,
         web::ProxyIpResolver{{}, {}},
         std::nullopt,
-        emptyOnConnectCheck_,
-        [](auto&&, auto&&) {},
-        onDisconnectHookMock.AsStdFunction()
+        Server::Hooks{
+            .onConnectCheck = emptyOnConnectCheck_,
+            .onIpChangeHook = [](auto&&, auto&&) {},
+            .onDisconnectHook = onDisconnectHookMock.AsStdFunction()
+        }
     };
 
     HttpAsyncClient client{ctx_};

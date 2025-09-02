@@ -70,6 +70,12 @@ public:
      */
     using OnDisconnectHook = impl::ConnectionHandler::OnDisconnectHook;
 
+    struct Hooks {
+        OnConnectCheck onConnectCheck;
+        OnIpChangeHook onIpChangeHook;
+        OnDisconnectHook onDisconnectHook;
+    };
+
 private:
     util::Logger log_{"WebServer"};
     util::Logger perfLog_{"Performance"};
@@ -111,9 +117,7 @@ public:
         util::TagDecoratorFactory tagDecoratorFactory,
         ProxyIpResolver proxyIpResolver,
         std::optional<size_t> maxSubscriptionSendQueueSize,
-        OnConnectCheck onConnectCheck,
-        OnIpChangeHook onIpChangeHook,
-        OnDisconnectHook onDisconnectHook
+        Hooks hooks
     );
 
     /**
