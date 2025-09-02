@@ -239,13 +239,13 @@ This document provides a list of all available Clio configuration properties in 
         KV{.key = "server.proxy.ips.[]",
            .value = "List of proxy ip addresses. When Clio receives a request from proxy it will use "
                     "`Forwarded` value (if any) as client ip. When this option is used together with "
-                    "`server.proxy_tokens` Clio will identify proxy by ip or by token."},
+                    "`server.proxy.tokens` Clio will identify proxy by ip or by token."},
         KV{.key = "server.proxy.tokens.[]",
            .value = "List of tokens in identifying request as a request from proxy. Token should be provided in "
                     "`X-Proxy-Token` header, e.g. "
                     "`X-Proxy-Token: <very_secret_token>'. When Clio receives a request from proxy "
                     "it will use 'Forwarded` value (if any) to get client ip. When this option is used together with "
-                    "'server.proxy_ips' Clio will identify proxy by ip or by token."},
+                    "'server.proxy.ips' Clio will identify proxy by ip or by token."},
         KV{.key = "prometheus.enabled", .value = "Enables or disables Prometheus metrics."},
         KV{.key = "prometheus.compress_reply", .value = "Enables or disables compression of Prometheus responses."},
         KV{.key = "io_threads",
