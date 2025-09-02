@@ -87,7 +87,7 @@ runs:
               endsWith(inputs.conan_profile, '.tsan') && '-Dsan=thread' ||
               endsWith(inputs.conan_profile, '.ubsan') && '-Dsan=undefined' ||
               '' }}
-        USE_MOLD_OPTION: "${{ inputs.use_mold == 'true' && '-DUSE_MOLD=ON' || '' }}"
+        USE_MOLD_OPTION: "${{ inputs.use_mold == 'true' && '-Duse_mold=ON' || '' }}"
       run: |
         cd build
         cmake \
