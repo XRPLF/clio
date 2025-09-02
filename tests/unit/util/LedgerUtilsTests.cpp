@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <string>
 #include <string_view>
 
 TEST(LedgerUtilsTests, LedgerObjectTypeList)
@@ -115,7 +116,7 @@ class AccountOwnedLedgerTypeFromStrTest : public ::testing::TestWithParam<Ledger
 TEST_P(AccountOwnedLedgerTypeFromStrTest, Test)
 {
     auto const& param = GetParam();
-    auto result = util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(param.input);
+    auto const result = util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(param.input);
     EXPECT_EQ(result, param.expected);
 }
 

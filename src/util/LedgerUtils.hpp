@@ -40,6 +40,7 @@ namespace util {
 class LedgerTypes;
 
 namespace impl {
+
 class LedgerTypeAttribute {
     enum class LedgerCategory {
         Invalid,
@@ -83,6 +84,7 @@ public:
     }
     friend class util::LedgerTypes;
 };
+
 }  // namespace impl
 
 /**

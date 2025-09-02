@@ -33,6 +33,7 @@
 #include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/UintTypes.h>
 
@@ -164,7 +165,7 @@ CustomValidator CustomValidators::accountMarkerValidator =
 CustomValidator CustomValidators::accountTypeValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
-            return Error{Status{RippledError::rpcINVALID_PARAMS, "Invalid parameters."}};
+            return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', not string.", key)}};
 
         auto const type =
             util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(boost::json::value_to<std::string>(value));
