@@ -223,8 +223,8 @@ public:
             return sender_(httpResponse(http::status::ok, "text/html", kHEALTH_CHECK_HTML));
 
         if (auto resolvedIp = proxyIpResolver_->resolveClientIp(clientIp_, req_); resolvedIp != clientIp_) {
-            LOG(log_.info()) << "Detected a forwarded request from proxy. Proxy ip: " << clientIp_
-                             << " Resolved client ip: " << resolvedIp;
+            LOG(log_.info()) << tag() << "Detected a forwarded request from proxy. Proxy ip: " << clientIp_
+                             << ". Resolved client ip: " << resolvedIp;
             dosGuard_.get().decrement(clientIp_);
             clientIp_ = std::move(resolvedIp);
             dosGuard_.get().increment(clientIp_);

@@ -397,8 +397,8 @@ ConnectionHandler::resolveClientIp(Connection& connection, Request const& reques
 {
     if (auto resolvedClientIp = proxyIpResolver_.resolveClientIp(connection.ip(), request.httpHeaders());
         resolvedClientIp != connection.ip()) {
-        LOG(log_.info()) << "Detected a forwarded request from proxy. Proxy ip: " << connection.ip()
-                         << " Resolved client ip: " << resolvedClientIp;
+        LOG(log_.info()) << connection.tag() << "Detected a forwarded request from proxy. Proxy ip: " << connection.ip()
+                         << ". Resolved client ip: " << resolvedClientIp;
         onIpChangeHook_(connection.ip(), resolvedClientIp);
         connection.setIp(std::move(resolvedClientIp));
     }
