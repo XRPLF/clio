@@ -511,8 +511,8 @@ struct CustomValidators final {
     /**
      * @brief Provides a commonly used validator for account type.
      *
-     * A type can be name or canonical name.
-     * The former will be read as hex, and the latter can be cast to uint64.
+     * A type accepts canonical names of owned ledger entry types (case insensitive) or short names.
+     * Used by ledger_data and account_objects.
      */
     static CustomValidator accountTypeValidator;
 
