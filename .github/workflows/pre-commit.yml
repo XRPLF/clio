@@ -10,7 +10,7 @@ jobs:
   run-hooks:
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:8ad111655c4d04bfedb7e7cb3bbfba6d4204852d
+      image: ghcr.io/xrplf/clio-ci:0e8896ad064a5290c4805318b549df16403ca2d7
 
     steps:
       - name: Checkout Repo ⚡️
