@@ -68,8 +68,8 @@ TEST_F(AmendmentCenterTest, Accessors)
         EXPECT_EQ(am.feature, ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"));
     }
 
-    auto const a = amendmentCenter[Amendments::OwnerPaysFee];
-    auto const b = amendmentCenter["OwnerPaysFee"];
+    auto const a = amendmentCenter[Amendments::Flow];
+    auto const b = amendmentCenter["Flow"];
     EXPECT_EQ(a, b);
 }
 

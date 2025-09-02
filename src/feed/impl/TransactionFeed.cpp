@@ -210,7 +210,7 @@ TransactionFeed::pub(
         rpc::insertMPTIssuanceID(pubObj[JS(meta)].as_object(), tx, meta);
 
         Json::Value nftJson;
-        ripple::insertNFTSyntheticInJson(nftJson, tx, *meta);
+        ripple::RPC::insertNFTSyntheticInJson(nftJson, tx, *meta);
         auto const nftBoostJson = rpc::toBoostJson(nftJson).as_object();
         if (nftBoostJson.contains(JS(meta)) && nftBoostJson.at(JS(meta)).is_object()) {
             auto& metaObjInPub = pubObj.at(JS(meta)).as_object();
