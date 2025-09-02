@@ -76,12 +76,14 @@ public:
             return shared_->isStopRequested();
         }
 
-        [[nodiscard]] operator bool() const noexcept
+        [[nodiscard]]
+        operator bool() const noexcept
         {
             return isStopRequested();
         }
 
-        [[nodiscard]] operator boost::asio::yield_context() const noexcept
+        [[nodiscard]]
+        operator boost::asio::yield_context() const noexcept
         {
             return yield_;
         }
@@ -122,7 +124,8 @@ public:
             return shared_->isStopRequested();
         }
 
-        [[nodiscard]] operator bool() const noexcept
+        [[nodiscard]]
+        operator bool() const noexcept
         {
             return isStopRequested();
         }

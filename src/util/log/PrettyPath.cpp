@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,41 +17,26 @@
 */
 //==============================================================================
 
-#pragma once
+#include "util/log/PrettyPath.hpp"
 
-#include <fmt/format.h>
+#include "util/Assert.hpp"
 
-#include <string>
+#include <cstddef>
 #include <string_view>
-#include <utility>
 
-namespace util::config {
+namespace util {
 
-/** @brief Displays the different errors when parsing user config */
-struct Error {
-    /**
-     * @brief Constructs an Error with a custom error message.
-     *
-     * @param err the error message to display to users.
-     */
-    Error(std::string err) : error{std::move(err)}
-    {
+std::string_view
+prettyPath(std::string_view filePath, size_t maxDepth)
+{
+    ASSERT(maxDepth > 0, "maxDepth must be greater than 0");
+    auto idx = filePath.size();
+    while (maxDepth-- > 0) {
+        idx = filePath.rfind('/', idx - 1);
+        if (idx == std::string_view::npos || idx == 0)
+            break;
     }
+    return filePath.substr(idx == std::string_view::npos ? 0 : idx + 1);
+}
 
-    /**
-     * @brief Constructs an Error with a custom error message.
-     *
-     * @param key the key associated with the error.
-     * @param err the error message to display to users.
-     */
-    Error(std::string_view key, std::string_view err)
-        : error{
-              fmt::format("The value of {} {}", key, err),
-          }
-    {
-    }
-
-    std::string error;
-};
-
-}  // namespace util::config
+}  // namespace util

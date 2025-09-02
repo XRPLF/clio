@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,39 +19,21 @@
 
 #pragma once
 
-#include <fmt/format.h>
-
-#include <string>
+#include <cstddef>
 #include <string_view>
-#include <utility>
 
-namespace util::config {
+namespace util {
 
-/** @brief Displays the different errors when parsing user config */
-struct Error {
-    /**
-     * @brief Constructs an Error with a custom error message.
-     *
-     * @param err the error message to display to users.
-     */
-    Error(std::string err) : error{std::move(err)}
-    {
-    }
+/**
+ * @brief Get a pretty version of the path from the source location.
+ *
+ * This will return the file path up to `maxDepth` parent directories.
+ *
+ * @param filePath The source file path
+ * @param maxDepth The maximum depth of directories to include
+ * @return The pretty path as a string view
+ */
+[[nodiscard]] std::string_view
+prettyPath(std::string_view filePath, size_t maxDepth = 3);
 
-    /**
-     * @brief Constructs an Error with a custom error message.
-     *
-     * @param key the key associated with the error.
-     * @param err the error message to display to users.
-     */
-    Error(std::string_view key, std::string_view err)
-        : error{
-              fmt::format("The value of {} {}", key, err),
-          }
-    {
-    }
-
-    std::string error;
-};
-
-}  // namespace util::config
+}  // namespace util

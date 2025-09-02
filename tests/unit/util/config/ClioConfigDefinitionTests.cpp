@@ -446,7 +446,7 @@ TEST_F(ClioConfigDefinitionParseArrayTest, missingRequiredFields)
     auto const result = config.parse(configFile);
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result->size(), 1);
-    EXPECT_THAT(result->at(0).error, testing::StartsWith("array.[].int"));
+    EXPECT_THAT(result->at(0).error, testing::StartsWith("The value of array.[].int"));
 }
 
 TEST_F(ClioConfigDefinitionParseArrayTest, missingAllRequiredFields)
@@ -463,7 +463,7 @@ TEST_F(ClioConfigDefinitionParseArrayTest, missingAllRequiredFields)
     auto const result = config.parse(configFile);
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result->size(), 1);
-    EXPECT_THAT(result->at(0).error, testing::StartsWith("array.[].int"));
+    EXPECT_THAT(result->at(0).error, testing::StartsWith("The value of array.[].int"));
 }
 
 TEST(ClioConfigDefinitionParse, unexpectedFields)
