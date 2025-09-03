@@ -50,6 +50,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace http = boost::beast::http;
@@ -81,8 +82,8 @@ syncRequest(
     req.set(http::field::host, host);
     req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
 
-    for (auto& header : additionalHeaders) {
-        req.set(header.name, header.value);
+    for (auto const& header : additionalHeaders) {
+        std::visit([&header, &req](auto const& name) { req.set(name, header.value); }, header.name);
     }
 
     req.target(target);
@@ -103,6 +104,10 @@ syncRequest(
 }  // namespace
 
 WebHeader::WebHeader(http::field name, std::string value) : name(name), value(std::move(value))
+{
+}
+
+WebHeader::WebHeader(std::string_view name, std::string value) : name(std::string{name}), value(std::move(value))
 {
 }
 

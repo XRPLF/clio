@@ -39,7 +39,9 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/http/field.hpp>
 #include <boost/beast/http/status.hpp>
+#include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -65,7 +67,10 @@ struct WebWsConnectionTests : SyncAsioContextTest {
         auto ip = expectedSocket->remote_endpoint().address().to_string();
 
         PlainHttpConnection httpConnection{
-            std::move(expectedSocket).value(), std::move(ip), boost::beast::flat_buffer{}, tagDecoratorFactory_
+            std::move(expectedSocket).value(),
+            std::move(ip),
+            boost::beast::flat_buffer{},
+            tagDecoratorFactory_,
         };
 
         auto expectedTrue = httpConnection.isUpgradeRequested(yield);

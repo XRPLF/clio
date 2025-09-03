@@ -33,6 +33,7 @@
 
 #include <memory>
 #include <optional>
+#include <string>
 #include <utility>
 
 namespace app {
@@ -52,6 +53,17 @@ OnConnectCheck::operator()(web::ng::Connection const& connection)
     }
 
     return {};
+}
+
+IpChangeHook::IpChangeHook(web::dosguard::DOSGuardInterface& dosguard) : dosguard_(dosguard)
+{
+}
+
+void
+IpChangeHook::operator()(std::string const& oldIp, std::string const& newIp)
+{
+    dosguard_.get().decrement(oldIp);
+    dosguard_.get().increment(newIp);
 }
 
 DisconnectHook::DisconnectHook(web::dosguard::DOSGuardInterface& dosguard) : dosguard_{dosguard}
