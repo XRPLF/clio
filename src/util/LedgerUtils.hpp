@@ -31,6 +31,8 @@
 
 #include <algorithm>
 #include <array>
+#include <functional>
+#include <optional>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -199,6 +201,10 @@ public:
      */
     static ripple::LedgerEntryType
     getAccountOwnedLedgerTypeFromStr(std::string const& entryName);
+
+private:
+    static std::optional<std::reference_wrapper<impl::LedgerTypeAttribute const>>
+    getLedgerTypeAttributeFromStr(std::string const& entryName);
 };
 
 /**
