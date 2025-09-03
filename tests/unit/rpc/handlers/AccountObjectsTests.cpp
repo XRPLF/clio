@@ -110,7 +110,7 @@ generateTestValuesForParametersTest()
             .testName = "TypeNotString",
             .testJson = R"JSON({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type": 1})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "Invalid field 'type', not string."
         },
         AccountObjectsParamTestCaseBundle{
             .testName = "TypeInvalid",

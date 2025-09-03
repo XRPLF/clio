@@ -20,14 +20,12 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Checkers.hpp"
 #include "rpc/common/MetaProcessors.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
-#include "util/LedgerUtils.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/json/array.hpp>
@@ -36,7 +34,6 @@
 #include <boost/json/value.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/ErrorCodes.h>
-#include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/jss.h>
 
 #include <cstdint>
@@ -113,7 +110,6 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        auto const& ledgerTypeStrs = util::LedgerTypes::getLedgerEntryTypeStrList();
         static auto const kRPC_SPEC = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
             {"out_of_order", validation::Type<bool>{}},
@@ -123,11 +119,7 @@ public:
             {JS(marker),
              validation::Type<uint32_t, std::string>{},
              meta::IfType<std::string>{validation::CustomValidators::uint256HexStringValidator}},
-            {JS(type),
-             meta::WithCustomError{
-                 validation::Type<std::string>{}, Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}
-             },
-             validation::OneOf<std::string>(ledgerTypeStrs.cbegin(), ledgerTypeStrs.cend())},
+            {JS(type), validation::CustomValidators::ledgerTypeValidator},
             {JS(ledger), check::Deprecated{}},
         };
         return kRPC_SPEC;
