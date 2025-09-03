@@ -33,7 +33,6 @@
 #include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
-#include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/UintTypes.h>
 
@@ -118,6 +117,18 @@ CustomValidator CustomValidators::ledgerIndexValidator =
         if (value.is_string() && value.as_string() != "validated" &&
             !checkIsU32Numeric(boost::json::value_to<std::string>(value)))
             return err;
+
+        return MaybeError{};
+    }};
+
+CustomValidator CustomValidators::ledgerTypeValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (!value.is_string())
+            return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', not string.", key)}};
+
+        auto const type = util::LedgerTypes::getLedgerEntryTypeFromStr(boost::json::value_to<std::string>(value));
+        if (type == ripple::ltANY)
+            return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}'.", key)}};
 
         return MaybeError{};
     }};

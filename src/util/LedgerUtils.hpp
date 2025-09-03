@@ -184,7 +184,7 @@ public:
     /**
      * @brief Returns the ripple::LedgerEntryType from the given string.
      *
-     * @param entryName The name of the ledger entry type
+     * @param entryName The name or canonical name (case-insensitive) of the ledger entry type for all categories
      * @return The ripple::LedgerEntryType of the given string, returns ltANY if not found.
      */
     static ripple::LedgerEntryType
@@ -193,7 +193,8 @@ public:
     /**
      * @brief Returns the ripple::LedgerEntryType from the given string.
      *
-     * @param entryName The name or canonical name (case-insensitive) of the ledger entry type
+     * @param entryName The name or canonical name (case-insensitive) of the ledger entry type for account owned
+     * category
      * @return The ripple::LedgerEntryType of the given string, returns ltANY if not found.
      */
     static ripple::LedgerEntryType

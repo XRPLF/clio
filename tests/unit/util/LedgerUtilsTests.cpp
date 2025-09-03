@@ -106,84 +106,130 @@ TEST(LedgerUtilsTests, DeletionBlockerTypes)
     }));
 }
 
-struct LedgerTypeParam {
+struct LedgerEntryTypeParam {
     std::string input;
     ripple::LedgerEntryType expected;
 };
 
-class AccountOwnedLedgerTypeFromStrTest : public ::testing::TestWithParam<LedgerTypeParam> {};
+static LedgerEntryTypeParam const kChainTestCases[] = {
+    // Using RPC name with exact match
+    {"amendments", ripple::ltAMENDMENTS},
+    {"directory", ripple::ltDIR_NODE},
+    {"fee", ripple::ltFEE_SETTINGS},
+    {"hashes", ripple::ltLEDGER_HASHES},
+    {"nunl", ripple::ltNEGATIVE_UNL},
 
-TEST_P(AccountOwnedLedgerTypeFromStrTest, Test)
+    // Using canonical name with exact match
+    {"Amendments", ripple::ltAMENDMENTS},
+    {"DirectoryNode", ripple::ltDIR_NODE},
+    {"FeeSettings", ripple::ltFEE_SETTINGS},
+    {"LedgerHashes", ripple::ltLEDGER_HASHES},
+    {"NegativeUNL", ripple::ltNEGATIVE_UNL}
+};
+
+static LedgerEntryTypeParam const kAccountOwnedTestCases[] = {
+    // Using RPC name with exact match
+    {"account", ripple::ltACCOUNT_ROOT},
+    {"check", ripple::ltCHECK},
+    {"deposit_preauth", ripple::ltDEPOSIT_PREAUTH},
+    {"escrow", ripple::ltESCROW},
+    {"offer", ripple::ltOFFER},
+    {"payment_channel", ripple::ltPAYCHAN},
+    {"signer_list", ripple::ltSIGNER_LIST},
+    {"state", ripple::ltRIPPLE_STATE},
+    {"ticket", ripple::ltTICKET},
+    {"nft_offer", ripple::ltNFTOKEN_OFFER},
+    {"nft_page", ripple::ltNFTOKEN_PAGE},
+    {"amm", ripple::ltAMM},
+    {"bridge", ripple::ltBRIDGE},
+    {"xchain_owned_claim_id", ripple::ltXCHAIN_OWNED_CLAIM_ID},
+    {"xchain_owned_create_account_claim_id", ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID},
+    {"did", ripple::ltDID},
+    {"oracle", ripple::ltORACLE},
+    {"credential", ripple::ltCREDENTIAL},
+    {"mpt_issuance", ripple::ltMPTOKEN_ISSUANCE},
+    {"mptoken", ripple::ltMPTOKEN},
+    {"permissioned_domain", ripple::ltPERMISSIONED_DOMAIN},
+    {"vault", ripple::ltVAULT},
+    {"delegate", ripple::ltDELEGATE},
+
+    // Using canonical name with exact match
+    {"AccountRoot", ripple::ltACCOUNT_ROOT},
+    {"Check", ripple::ltCHECK},
+    {"DepositPreauth", ripple::ltDEPOSIT_PREAUTH},
+    {"Escrow", ripple::ltESCROW},
+    {"Offer", ripple::ltOFFER},
+    {"PayChannel", ripple::ltPAYCHAN},
+    {"SignerList", ripple::ltSIGNER_LIST},
+    {"RippleState", ripple::ltRIPPLE_STATE},
+    {"Ticket", ripple::ltTICKET},
+    {"NFTokenOffer", ripple::ltNFTOKEN_OFFER},
+    {"NFTokenPage", ripple::ltNFTOKEN_PAGE},
+    {"AMM", ripple::ltAMM},
+    {"Bridge", ripple::ltBRIDGE},
+    {"XChainOwnedClaimID", ripple::ltXCHAIN_OWNED_CLAIM_ID},
+    {"XChainOwnedCreateAccountClaimID", ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID},
+    {"DID", ripple::ltDID},
+    {"Oracle", ripple::ltORACLE},
+    {"Credential", ripple::ltCREDENTIAL},
+    {"MPTokenIssuance", ripple::ltMPTOKEN_ISSUANCE},
+    {"MPToken", ripple::ltMPTOKEN},
+    {"PermissionedDomain", ripple::ltPERMISSIONED_DOMAIN},
+    {"Vault", ripple::ltVAULT},
+    {"Delegate", ripple::ltDELEGATE}
+};
+
+static LedgerEntryTypeParam const kCaseInsensitiveTestCases[] = {
+    // With canonical name in mixedcase
+    {"mPtOKenIssuance", ripple::ltMPTOKEN_ISSUANCE},
+    // With canonical name in lowercase
+    {"mptokenissuance", ripple::ltMPTOKEN_ISSUANCE},
+};
+
+static LedgerEntryTypeParam const kInvalidTestCases[] = {
+    {"", ripple::ltANY},
+    {"1234", ripple::ltANY},
+    {"unknown", ripple::ltANY},
+    // With RPC name with inexact match
+    {"MPT_Issuance", ripple::ltANY}
+};
+
+class LedgerEntryTypeFromStrTest : public ::testing::TestWithParam<LedgerEntryTypeParam> {};
+
+TEST_P(LedgerEntryTypeFromStrTest, GetLedgerEntryTypeFromStr)
+{
+    auto const& param = GetParam();
+    auto const result = util::LedgerTypes::getLedgerEntryTypeFromStr(param.input);
+    EXPECT_EQ(result, param.expected);
+}
+
+INSTANTIATE_TEST_SUITE_P(LedgerUtilsTests, LedgerEntryTypeFromStrTest, ::testing::ValuesIn([]() {
+                             std::vector<LedgerEntryTypeParam> v;
+                             v.insert(v.end(), std::begin(kChainTestCases), std::end(kChainTestCases));
+                             v.insert(v.end(), std::begin(kAccountOwnedTestCases), std::end(kAccountOwnedTestCases));
+                             v.insert(
+                                 v.end(), std::begin(kCaseInsensitiveTestCases), std::end(kCaseInsensitiveTestCases)
+                             );
+                             v.insert(v.end(), std::begin(kInvalidTestCases), std::end(kInvalidTestCases));
+                             return v;
+                         }()));
+
+class AccountOwnedLedgerTypeFromStrTest : public ::testing::TestWithParam<LedgerEntryTypeParam> {};
+
+TEST_P(AccountOwnedLedgerTypeFromStrTest, GetAccountOwnedLedgerTypeFromStr)
 {
     auto const& param = GetParam();
     auto const result = util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(param.input);
     EXPECT_EQ(result, param.expected);
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    LedgerUtilsTests,
-    AccountOwnedLedgerTypeFromStrTest,
-    ::testing::Values(
-        // Using RPC name with exact match
-        LedgerTypeParam{"account", ripple::ltACCOUNT_ROOT},
-        LedgerTypeParam{"check", ripple::ltCHECK},
-        LedgerTypeParam{"deposit_preauth", ripple::ltDEPOSIT_PREAUTH},
-        LedgerTypeParam{"escrow", ripple::ltESCROW},
-        LedgerTypeParam{"offer", ripple::ltOFFER},
-        LedgerTypeParam{"payment_channel", ripple::ltPAYCHAN},
-        LedgerTypeParam{"signer_list", ripple::ltSIGNER_LIST},
-        LedgerTypeParam{"state", ripple::ltRIPPLE_STATE},
-        LedgerTypeParam{"ticket", ripple::ltTICKET},
-        LedgerTypeParam{"nft_offer", ripple::ltNFTOKEN_OFFER},
-        LedgerTypeParam{"nft_page", ripple::ltNFTOKEN_PAGE},
-        LedgerTypeParam{"amm", ripple::ltAMM},
-        LedgerTypeParam{"bridge", ripple::ltBRIDGE},
-        LedgerTypeParam{"xchain_owned_claim_id", ripple::ltXCHAIN_OWNED_CLAIM_ID},
-        LedgerTypeParam{"xchain_owned_create_account_claim_id", ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID},
-        LedgerTypeParam{"did", ripple::ltDID},
-        LedgerTypeParam{"oracle", ripple::ltORACLE},
-        LedgerTypeParam{"credential", ripple::ltCREDENTIAL},
-        LedgerTypeParam{"mpt_issuance", ripple::ltMPTOKEN_ISSUANCE},
-        LedgerTypeParam{"mptoken", ripple::ltMPTOKEN},
-        LedgerTypeParam{"permissioned_domain", ripple::ltPERMISSIONED_DOMAIN},
-        LedgerTypeParam{"vault", ripple::ltVAULT},
-        LedgerTypeParam{"delegate", ripple::ltDELEGATE},
-
-        // Using canonical name with exact match
-        LedgerTypeParam{"AccountRoot", ripple::ltACCOUNT_ROOT},
-        LedgerTypeParam{"Check", ripple::ltCHECK},
-        LedgerTypeParam{"DepositPreauth", ripple::ltDEPOSIT_PREAUTH},
-        LedgerTypeParam{"Escrow", ripple::ltESCROW},
-        LedgerTypeParam{"Offer", ripple::ltOFFER},
-        LedgerTypeParam{"PayChannel", ripple::ltPAYCHAN},
-        LedgerTypeParam{"SignerList", ripple::ltSIGNER_LIST},
-        LedgerTypeParam{"RippleState", ripple::ltRIPPLE_STATE},
-        LedgerTypeParam{"Ticket", ripple::ltTICKET},
-        LedgerTypeParam{"NFTokenOffer", ripple::ltNFTOKEN_OFFER},
-        LedgerTypeParam{"NFTokenPage", ripple::ltNFTOKEN_PAGE},
-        LedgerTypeParam{"AMM", ripple::ltAMM},
-        LedgerTypeParam{"Bridge", ripple::ltBRIDGE},
-        LedgerTypeParam{"XChainOwnedClaimID", ripple::ltXCHAIN_OWNED_CLAIM_ID},
-        LedgerTypeParam{"XChainOwnedCreateAccountClaimID", ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID},
-        LedgerTypeParam{"DID", ripple::ltDID},
-        LedgerTypeParam{"Oracle", ripple::ltORACLE},
-        LedgerTypeParam{"Credential", ripple::ltCREDENTIAL},
-        LedgerTypeParam{"MPTokenIssuance", ripple::ltMPTOKEN_ISSUANCE},
-        LedgerTypeParam{"MPToken", ripple::ltMPTOKEN},
-        LedgerTypeParam{"PermissionedDomain", ripple::ltPERMISSIONED_DOMAIN},
-        LedgerTypeParam{"Vault", ripple::ltVAULT},
-        LedgerTypeParam{"Delegate", ripple::ltDELEGATE},
-
-        // With canonical name in mixedcase
-        LedgerTypeParam{"mPtOKenIssuance", ripple::ltMPTOKEN_ISSUANCE},
-        // With canonical name in lowercase
-        LedgerTypeParam{"mptokenissuance", ripple::ltMPTOKEN_ISSUANCE},
-        // With RPC name with inexact match
-        LedgerTypeParam{"MPT_Issuance", ripple::ltANY},
-
-        // With invalid input
-        LedgerTypeParam{"", ripple::ltANY},
-        LedgerTypeParam{"1234", ripple::ltANY},
-        LedgerTypeParam{"unknown", ripple::ltANY}
-    )
-);
+INSTANTIATE_TEST_SUITE_P(LedgerUtilsTests, AccountOwnedLedgerTypeFromStrTest, ::testing::ValuesIn([]() {
+                             std::vector<LedgerEntryTypeParam> v;
+                             v.insert(v.end(), std::begin(kAccountOwnedTestCases), std::end(kAccountOwnedTestCases));
+                             v.insert(
+                                 v.end(), std::begin(kCaseInsensitiveTestCases), std::end(kCaseInsensitiveTestCases)
+                             );
+                             v.insert(v.end(), std::begin(kInvalidTestCases), std::end(kInvalidTestCases));
+                             v.push_back({"amendments", ripple::ltANY});  // chain type should return ltANY
+                             return v;
+                         }()));

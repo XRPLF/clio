@@ -34,7 +34,6 @@
 #include <boost/json/value.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/ErrorCodes.h>
-#include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/jss.h>
 
 #include <cstdint>
@@ -120,7 +119,7 @@ public:
             {JS(marker),
              validation::Type<uint32_t, std::string>{},
              meta::IfType<std::string>{validation::CustomValidators::uint256HexStringValidator}},
-            {JS(type), validation::CustomValidators::accountTypeValidator},
+            {JS(type), validation::CustomValidators::ledgerTypeValidator},
             {JS(ledger), check::Deprecated{}},
         };
         return kRPC_SPEC;
