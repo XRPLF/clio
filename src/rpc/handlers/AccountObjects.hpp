@@ -25,11 +25,9 @@
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
-#include "util/LedgerUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/jss.h>
 
@@ -107,7 +105,6 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        auto const& accountOwnedTypes = util::LedgerTypes::getAccountOwnedLedgerTypeStrList();
         static auto const kRPC_SPEC = RpcSpec{
             {JS(account), validation::Required{}, validation::CustomValidators::accountValidator},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
@@ -116,9 +113,7 @@ public:
              validation::Type<uint32_t>{},
              validation::Min(1u),
              modifiers::Clamp<int32_t>(kLIMIT_MIN, kLIMIT_MAX)},
-            {JS(type),
-             validation::Type<std::string>{},
-             validation::OneOf<std::string>(accountOwnedTypes.cbegin(), accountOwnedTypes.cend())},
+            {JS(type), validation::CustomValidators::accountTypeValidator},
             {JS(marker), validation::CustomValidators::accountMarkerValidator},
             {JS(deletion_blockers_only), validation::Type<bool>{}},
         };

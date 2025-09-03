@@ -32,7 +32,6 @@
 #include <boost/json/value_to.hpp>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
-#include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/jss.h>
@@ -160,7 +159,8 @@ tag_invoke(boost::json::value_to_tag<AccountObjectsHandler::Input>, boost::json:
     }
 
     if (jsonObject.contains(JS(type)))
-        input.type = util::LedgerTypes::getLedgerEntryTypeFromStr(boost::json::value_to<std::string>(jv.at(JS(type))));
+        input.type =
+            util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(boost::json::value_to<std::string>(jv.at(JS(type))));
 
     if (jsonObject.contains(JS(limit)))
         input.limit = jv.at(JS(limit)).as_int64();

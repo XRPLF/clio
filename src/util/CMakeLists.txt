@@ -24,6 +24,7 @@ target_sources(
           requests/WsConnection.cpp
           requests/impl/SslContext.cpp
           ResponseExpirationCache.cpp
+          Shasum.cpp
           SignalsHandler.cpp
           StopHelper.cpp
           StringHash.cpp

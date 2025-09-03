@@ -107,7 +107,7 @@ public:
     void
     operator()(std::string const& request, std::shared_ptr<web::ConnectionBase> const& connection)
     {
-        if (not dosguard_.get().isOk(connection->clientIp)) {
+        if (not dosguard_.get().isOk(connection->clientIp())) {
             connection->sendSlowDown(request);
             return;
         }
@@ -119,7 +119,7 @@ public:
             if (not connection->upgraded and shouldReplaceParams(req))
                 req[JS(params)] = boost::json::array({boost::json::object{}});
 
-            if (not dosguard_.get().request(connection->clientIp, req)) {
+            if (not dosguard_.get().request(connection->clientIp(), req)) {
                 connection->sendSlowDown(request);
                 return;
             }
@@ -128,7 +128,7 @@ public:
                     [this, request = std::move(req), connection](boost::asio::yield_context yield) mutable {
                         handleRequest(yield, std::move(request), connection);
                     },
-                    connection->clientIp
+                    connection->clientIp()
                 )) {
                 rpcEngine_->notifyTooBusy();
                 web::impl::ErrorHelper(connection).sendTooBusyError();
@@ -160,7 +160,7 @@ private:
     {
         LOG(log_.info()) << connection->tag() << (connection->upgraded ? "ws" : "http")
                          << " received request from work queue: " << util::removeSecret(request)
-                         << " ip = " << connection->clientIp;
+                         << " ip = " << connection->clientIp();
 
         try {
             auto const range = backend_->fetchLedgerRange();
@@ -180,7 +180,7 @@ private:
                         connection->makeSubscriptionContext(tagFactory_),
                         tagFactory_.with(connection->tag()),
                         *range,
-                        connection->clientIp,
+                        connection->clientIp(),
                         std::cref(apiVersionParser_),
                         connection->isAdmin()
                     );
@@ -190,7 +190,7 @@ private:
                     request,
                     tagFactory_.with(connection->tag()),
                     *range,
-                    connection->clientIp,
+                    connection->clientIp(),
                     std::cref(apiVersionParser_),
                     connection->isAdmin()
                 );

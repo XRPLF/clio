@@ -25,6 +25,7 @@
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigValue.hpp"
 #include "util/config/Types.hpp"
+#include "web/ProxyIpResolver.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
@@ -40,11 +41,13 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/error.hpp>
+#include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/beast/websocket/error.hpp>
+#include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -60,7 +63,6 @@ using namespace web::ng::impl;
 using namespace web::ng;
 using namespace util;
 using testing::Return;
-namespace beast = boost::beast;
 namespace http = boost::beast::http;
 namespace websocket = boost::beast::websocket;
 
@@ -69,7 +71,15 @@ struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
         : tagFactory{util::config::ClioConfigDefinition{
               {"log.tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
           }}
-        , connectionHandler{policy, maxParallelConnections, tagFactory, std::nullopt, onDisconnectMock.AsStdFunction()}
+        , connectionHandler{
+              policy,
+              maxParallelConnections,
+              tagFactory,
+              std::nullopt,
+              proxyIpResolver,
+              onDisconnectMock.AsStdFunction(),
+              onIpChangeMock.AsStdFunction()
+          }
     {
     }
 
@@ -98,6 +108,12 @@ struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
         return Request{std::forward<Args>(args)...};
     }
 
+    std::string const clientIp = "1.2.3.4";
+    std::string const proxyIp = "5.6.7.8";
+    std::string const proxyToken = "some_proxy_token";
+    web::ProxyIpResolver proxyIpResolver{{proxyIp}, {proxyToken}};
+
+    testing::StrictMock<testing::MockFunction<void(std::string const&, std::string const&)>> onIpChangeMock;
     testing::StrictMock<testing::MockFunction<void(Connection const&)>> onDisconnectMock;
     util::TagDecoratorFactory tagFactory;
     ConnectionHandler connectionHandler;
@@ -106,9 +122,9 @@ struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
         {"log.tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
     }};
     StrictMockHttpConnectionPtr mockHttpConnection =
-        std::make_unique<StrictMockHttpConnection>("1.2.3.4", beast::flat_buffer{}, tagDecoratorFactory);
+        std::make_unique<StrictMockHttpConnection>(clientIp, boost::beast::flat_buffer{}, tagDecoratorFactory);
     StrictMockWsConnectionPtr mockWsConnection =
-        std::make_unique<StrictMockWsConnection>("1.2.3.4", beast::flat_buffer{}, tagDecoratorFactory);
+        std::make_unique<StrictMockWsConnection>(clientIp, boost::beast::flat_buffer{}, tagDecoratorFactory);
 
     Request::HttpHeaders headers;
 };
@@ -452,6 +468,50 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_SendError)
     });
 }
 
+TEST_F(ConnectionHandlerSequentialProcessingTest, OnIpChangeHookCalledWhenSentFromProxy)
+{
+    std::string const target = "/some/target";
+    testing::StrictMock<testing::MockFunction<
+        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+        getHandlerMock;
+
+    std::string const requestMessage = "some message";
+    std::string const responseMessage = "some response";
+
+    connectionHandler.onGet(target, getHandlerMock.AsStdFunction());
+
+    StrictMockHttpConnectionPtr mockHttpConnectionFromProxy =
+        std::make_unique<StrictMockHttpConnection>(proxyIp, boost::beast::flat_buffer{}, tagDecoratorFactory);
+
+    auto request = http::request<http::string_body>{http::verb::get, target, 11, requestMessage};
+    request.set(http::field::forwarded, fmt::format("for={}", clientIp));
+
+    EXPECT_CALL(*mockHttpConnectionFromProxy, wasUpgraded).WillOnce(Return(false));
+    EXPECT_CALL(*mockHttpConnectionFromProxy, receive).WillOnce(Return(makeRequest(request)));
+
+    EXPECT_CALL(onIpChangeMock, Call(proxyIp, clientIp));
+
+    EXPECT_CALL(getHandlerMock, Call).WillOnce([&](Request const& request, auto&&, auto&&, auto&&) {
+        EXPECT_EQ(request.message(), requestMessage);
+        return Response(http::status::ok, responseMessage, request);
+    });
+
+    EXPECT_CALL(*mockHttpConnectionFromProxy, send).WillOnce([&responseMessage](Response response, auto&&) {
+        EXPECT_EQ(response.message(), responseMessage);
+        return makeError(http::error::end_of_stream).error();
+    });
+
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([this, connectionPtr = mockHttpConnectionFromProxy.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+            EXPECT_EQ(c.ip(), clientIp);
+        });
+
+    runSpawn([this, c = std::move(mockHttpConnectionFromProxy)](boost::asio::yield_context yield) mutable {
+        connectionHandler.processConnection(std::move(c), yield);
+    });
+}
+
 TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
 {
     testing::StrictMock<testing::MockFunction<
@@ -610,6 +670,48 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send)
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockWsConnection), yield);
+    });
+}
+
+TEST_F(ConnectionHandlerParallelProcessingTest, OnIpChangeHookCalledWhenSentFromProxy)
+{
+    testing::StrictMock<testing::MockFunction<
+        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+        wsHandlerMock;
+    connectionHandler.onWs(wsHandlerMock.AsStdFunction());
+
+    StrictMockWsConnectionPtr mockWsConnectionFromProxy =
+        std::make_unique<StrictMockWsConnection>(proxyIp, boost::beast::flat_buffer{}, tagDecoratorFactory);
+    headers.set(http::field::forwarded, fmt::format("for={}", clientIp));
+
+    std::string const requestMessage = "some message";
+    std::string const responseMessage = "some response";
+
+    EXPECT_CALL(*mockWsConnectionFromProxy, wasUpgraded).WillOnce(Return(true));
+    EXPECT_CALL(*mockWsConnectionFromProxy, receive)
+        .WillOnce(Return(makeRequest(requestMessage, headers)))
+        .WillOnce(Return(makeError(websocket::error::closed)));
+
+    EXPECT_CALL(onIpChangeMock, Call(proxyIp, clientIp));
+
+    EXPECT_CALL(wsHandlerMock, Call).WillOnce([&](Request const& request, auto&&, auto&&, auto&&) {
+        EXPECT_EQ(request.message(), requestMessage);
+        return Response(http::status::ok, responseMessage, request);
+    });
+
+    EXPECT_CALL(*mockWsConnectionFromProxy, send).WillOnce([&responseMessage](Response response, auto&&) {
+        EXPECT_EQ(response.message(), responseMessage);
+        return std::nullopt;
+    });
+
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([this, connectionPtr = mockWsConnectionFromProxy.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+            EXPECT_EQ(c.ip(), clientIp);
+        });
+
+    runSpawn([this, c = std::move(mockWsConnectionFromProxy)](boost::asio::yield_context yield) mutable {
+        connectionHandler.processConnection(std::move(c), yield);
     });
 }
 

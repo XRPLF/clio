@@ -26,6 +26,7 @@
 #include "util/prometheus/Gauge.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
+#include "web/ProxyIpResolver.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
@@ -52,6 +53,7 @@ namespace web::ng::impl {
 class ConnectionHandler {
 public:
     using OnDisconnectHook = std::function<void(Connection const&)>;
+    using OnIpChangeHook = std::function<void(std::string const&, std::string const&)>;
     using TargetToHandlerMap = std::unordered_map<std::string, MessageHandler, util::StringHash, std::equal_to<>>;
 
 private:
@@ -64,7 +66,10 @@ private:
     std::reference_wrapper<util::TagDecoratorFactory> tagFactory_;
     std::optional<size_t> maxSubscriptionSendQueueSize_;
 
+    ProxyIpResolver proxyIpResolver_;
+
     OnDisconnectHook onDisconnectHook_;
+    OnIpChangeHook onIpChangeHook_;
 
     TargetToHandlerMap getHandlers_;
     TargetToHandlerMap postHandlers_;
@@ -84,7 +89,9 @@ public:
         std::optional<size_t> maxParallelRequests,
         util::TagDecoratorFactory& tagFactory,
         std::optional<size_t> maxSubscriptionSendQueueSize,
-        OnDisconnectHook onDisconnectHook
+        ProxyIpResolver proxyIpResolver,
+        OnDisconnectHook onDisconnectHook,
+        OnIpChangeHook onIpChangeHook
     );
 
     ConnectionHandler(ConnectionHandler&&) = delete;
@@ -159,6 +166,9 @@ private:
         Request const& request,
         boost::asio::yield_context yield
     );
+
+    void
+    resolveClientIp(Connection& connection, Request const& request) const;
 };
 
 }  // namespace web::ng::impl

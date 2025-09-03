@@ -22,6 +22,7 @@
 #include "util/Taggable.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
+#include "web/ProxyIpResolver.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/ProcessingPolicy.hpp"
@@ -62,10 +63,21 @@ public:
      */
     using OnConnectCheck = std::function<std::expected<void, Response>(Connection const&)>;
 
+    using OnIpChangeHook = impl::ConnectionHandler::OnIpChangeHook;
+
     /**
      * @brief Hook called when any connection disconnects
      */
     using OnDisconnectHook = impl::ConnectionHandler::OnDisconnectHook;
+
+    /**
+     * @brief A struct that holds all the hooks for the server.
+     */
+    struct Hooks {
+        OnConnectCheck onConnectCheck;
+        OnIpChangeHook onIpChangeHook;
+        OnDisconnectHook onDisconnectHook;
+    };
 
 private:
     util::Logger log_{"WebServer"};
@@ -94,9 +106,9 @@ public:
      * @param parallelRequestLimit The limit of requests for one connection that can be processed in parallel. Only used
      * if processingPolicy is parallel.
      * @param tagDecoratorFactory The tag decorator factory.
+     * @param proxyIpResolver The client ip resolver if a request was forwarded by a proxy
      * @param maxSubscriptionSendQueueSize The maximum size of the subscription send queue.
-     * @param onConnectCheck The check to perform on each connection.
-     * @param onDisconnectHook The hook to call on each disconnection.
+     * @param hooks The server hooks
      */
     Server(
         boost::asio::io_context& ctx,
@@ -105,9 +117,9 @@ public:
         ProcessingPolicy processingPolicy,
         std::optional<size_t> parallelRequestLimit,
         util::TagDecoratorFactory tagDecoratorFactory,
+        ProxyIpResolver proxyIpResolver,
         std::optional<size_t> maxSubscriptionSendQueueSize,
-        OnConnectCheck onConnectCheck,
-        OnDisconnectHook onDisconnectHook
+        Hooks hooks
     );
 
     /**
@@ -185,6 +197,7 @@ std::expected<Server, std::string>
 makeServer(
     util::config::ClioConfigDefinition const& config,
     Server::OnConnectCheck onConnectCheck,
+    Server::OnIpChangeHook onIpChangeHook,
     Server::OnDisconnectHook onDisconnectHook,
     boost::asio::io_context& context
 );

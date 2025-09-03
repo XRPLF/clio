@@ -179,6 +179,7 @@ target_sources(
           util/RetryTests.cpp
           util/ScopeGuardTests.cpp
           util/SignalsHandlerTests.cpp
+          util/ShasumTests.cpp
           util/SpawnTests.cpp
           util/StopHelperTests.cpp
           util/TimeUtilsTests.cpp
@@ -201,6 +202,7 @@ target_sources(
           web/ng/impl/HttpConnectionTests.cpp
           web/ng/impl/ServerSslContextTests.cpp
           web/ng/impl/WsConnectionTests.cpp
+          web/ProxyIpResolverTests.cpp
           web/RPCServerHandlerTests.cpp
           web/ServerTests.cpp
           web/SubscriptionContextTests.cpp

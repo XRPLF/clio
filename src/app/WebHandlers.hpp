@@ -36,6 +36,7 @@
 #include <exception>
 #include <functional>
 #include <memory>
+#include <string>
 #include <utility>
 
 namespace app {
@@ -62,6 +63,31 @@ public:
      */
     std::expected<void, web::ng::Response>
     operator()(web::ng::Connection const& connection);
+};
+
+/**
+ * @brief A function object that is called when the IP of a connection changes (usually if proxy detected).
+ * This is used to update the DOS guard.
+ */
+class IpChangeHook {
+    std::reference_wrapper<web::dosguard::DOSGuardInterface> dosguard_;
+
+public:
+    /**
+     * @brief Construct a new IpChangeHook object.
+     *
+     * @param dosguard The DOS guard to use.
+     */
+    IpChangeHook(web::dosguard::DOSGuardInterface& dosguard);
+
+    /**
+     * @brief The call of the function object.
+     *
+     * @param oldIp The old IP of the connection.
+     * @param newIp The new IP of the connection.
+     */
+    void
+    operator()(std::string const& oldIp, std::string const& newIp);
 };
 
 /**

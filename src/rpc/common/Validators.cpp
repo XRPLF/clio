@@ -23,6 +23,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
+#include "util/LedgerUtils.hpp"
 #include "util/TimeUtils.hpp"
 
 #include <boost/json/object.hpp>
@@ -120,6 +121,18 @@ CustomValidator CustomValidators::ledgerIndexValidator =
         return MaybeError{};
     }};
 
+CustomValidator CustomValidators::ledgerTypeValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (!value.is_string())
+            return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', not string.", key)}};
+
+        auto const type = util::LedgerTypes::getLedgerEntryTypeFromStr(boost::json::value_to<std::string>(value));
+        if (type == ripple::ltANY)
+            return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}'.", key)}};
+
+        return MaybeError{};
+    }};
+
 CustomValidator CustomValidators::accountValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
@@ -156,6 +169,19 @@ CustomValidator CustomValidators::accountMarkerValidator =
             // align with the current error message
             return Error{Status{RippledError::rpcINVALID_PARAMS, "Malformed cursor."}};
         }
+
+        return MaybeError{};
+    }};
+
+CustomValidator CustomValidators::accountTypeValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (!value.is_string())
+            return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', not string.", key)}};
+
+        auto const type =
+            util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(boost::json::value_to<std::string>(value));
+        if (type == ripple::ltANY)
+            return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}'.", key)}};
 
         return MaybeError{};
     }};

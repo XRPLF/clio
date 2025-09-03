@@ -23,6 +23,7 @@
 #include "util/CoroutineGroup.hpp"
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
+#include "web/ProxyIpResolver.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
@@ -90,13 +91,17 @@ ConnectionHandler::ConnectionHandler(
     std::optional<size_t> maxParallelRequests,
     util::TagDecoratorFactory& tagFactory,
     std::optional<size_t> maxSubscriptionSendQueueSize,
-    OnDisconnectHook onDisconnectHook
+    ProxyIpResolver proxyIpResolver,
+    OnDisconnectHook onDisconnectHook,
+    OnIpChangeHook onIpChangeHook
 )
     : processingPolicy_{processingPolicy}
     , maxParallelRequests_{maxParallelRequests}
     , tagFactory_{tagFactory}
     , maxSubscriptionSendQueueSize_{maxSubscriptionSendQueueSize}
+    , proxyIpResolver_(std::move(proxyIpResolver))
     , onDisconnectHook_{std::move(onDisconnectHook)}
+    , onIpChangeHook_(std::move(onIpChangeHook))
 {
 }
 
@@ -277,9 +282,9 @@ ConnectionHandler::sequentRequestResponseLoop(
         if (not expectedRequest)
             return handleError(expectedRequest.error(), connection);
 
-        LOG(log_.info()) << connection.tag() << "Received request from ip = " << connection.ip();
+        resolveClientIp(connection, *expectedRequest);
 
-        auto maybeReturnValue = processRequest(connection, subscriptionContext, expectedRequest.value(), yield);
+        auto maybeReturnValue = processRequest(connection, subscriptionContext, *expectedRequest, yield);
         if (maybeReturnValue.has_value())
             return maybeReturnValue.value();
     }
@@ -307,6 +312,8 @@ ConnectionHandler::parallelRequestResponseLoop(
             closeConnectionGracefully &= closeGracefully;
             break;
         }
+
+        resolveClientIp(connection, *expectedRequest);
 
         if (not tasksGroup.isFull()) {
             bool const spawnSuccess = tasksGroup.spawn(
@@ -382,6 +389,18 @@ ConnectionHandler::handleRequest(
             return handleWsRequest(connectionMetadata, subscriptionContext, wsHandler_, request, yield);
         default:
             return Response{boost::beast::http::status::bad_request, "Unsupported http method", request};
+    }
+}
+
+void
+ConnectionHandler::resolveClientIp(Connection& connection, Request const& request) const
+{
+    if (auto resolvedClientIp = proxyIpResolver_.resolveClientIp(connection.ip(), request.httpHeaders());
+        resolvedClientIp != connection.ip()) {
+        LOG(log_.info()) << connection.tag() << "Detected a forwarded request from proxy. Proxy ip: " << connection.ip()
+                         << ". Resolved client ip: " << resolvedClientIp;
+        onIpChangeHook_(connection.ip(), resolvedClientIp);
+        connection.setIp(std::move(resolvedClientIp));
     }
 }
 
