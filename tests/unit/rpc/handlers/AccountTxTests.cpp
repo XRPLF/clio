@@ -909,7 +909,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
     );
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ - 1);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillRepeatedly(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillOnce(Return(ledgerHeader));
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
     runSpawn([&, this](auto yield) {
@@ -937,7 +937,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
 
 TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
 {
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillRepeatedly(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillOnce(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
@@ -1047,7 +1047,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
     );
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillRepeatedly(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillOnce(Return(ledgerHeader));
 
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
