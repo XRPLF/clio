@@ -26,11 +26,13 @@
 #include "util/Taggable.hpp"
 #include "util/TestHttpClient.hpp"
 #include "util/TestWebSocketClient.hpp"
+#include "util/config/Array.hpp"
 #include "util/config/ConfigConstraints.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigFileJson.hpp"
 #include "util/config/ConfigValue.hpp"
 #include "util/config/Types.hpp"
+#include "web/ProxyIpResolver.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/ProcessingPolicy.hpp"
@@ -58,6 +60,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <unordered_set>
 
 using namespace web::ng;
 using namespace util::config;
@@ -85,6 +88,8 @@ TEST_P(MakeServerTest, Make)
         {"server.ip", ConfigValue{ConfigType::String}.optional()},
         {"server.port", ConfigValue{ConfigType::Integer}.optional()},
         {"server.processing_policy", ConfigValue{ConfigType::String}.defaultValue("parallel")},
+        {"server.proxy.ips.[]", Array{ConfigValue{ConfigType::String}}},
+        {"server.proxy.tokens.[]", Array{ConfigValue{ConfigType::String}}},
         {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional()},
         {"server.ws_max_sending_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1500)},
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
@@ -95,8 +100,13 @@ TEST_P(MakeServerTest, Make)
     auto const errors = config.parse(json);
     ASSERT_TRUE(!errors.has_value());
 
-    auto const expectedServer =
-        makeServer(config, [](auto&&) -> std::expected<void, Response> { return {}; }, [](auto&&) {}, ioContext_);
+    auto const expectedServer = makeServer(
+        config,
+        [](auto&&) -> std::expected<void, Response> { return {}; },
+        [](auto&&, auto&&) {},
+        [](auto&&) {},
+        ioContext_
+    );
     EXPECT_EQ(expectedServer.has_value(), GetParam().expectSuccess);
 }
 
@@ -173,6 +183,8 @@ protected:
         {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
         {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
         {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional()},
+        {"server.proxy.ips.[]", Array{ConfigValue{ConfigType::String}}},
+        {"server.proxy.tokens.[]", Array{ConfigValue{ConfigType::String}}},
         {"server.ws_max_sending_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1500)},
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
         {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
@@ -180,7 +192,8 @@ protected:
     };
 
     Server::OnConnectCheck emptyOnConnectCheck_ = [](auto&&) -> std::expected<void, Response> { return {}; };
-    std::expected<Server, std::string> server_ = makeServer(config_, emptyOnConnectCheck_, [](auto&&) {}, ctx_);
+    std::expected<Server, std::string> server_ =
+        makeServer(config_, emptyOnConnectCheck_, [](auto&&, auto&&) {}, [](auto&&) {}, ctx_);
 
     std::string requestMessage_ = "some request";
     std::string const headerName_ = "Some-header";
@@ -210,9 +223,13 @@ TEST_F(ServerTest, BadEndpoint)
         ProcessingPolicy::Sequential,
         std::nullopt,
         tagDecoratorFactory,
+        web::ProxyIpResolver{{}, {}},
         std::nullopt,
-        emptyOnConnectCheck_,
-        [](auto&&) {}
+        Server::Hooks{
+            .onConnectCheck = emptyOnConnectCheck_,
+            .onIpChangeHook = [](auto&&, auto&&) {},
+            .onDisconnectHook = [](auto&&) {}
+        }
     };
 
     auto maybeError = server.run();
@@ -274,9 +291,13 @@ TEST_F(ServerHttpTest, OnConnectCheck)
         ProcessingPolicy::Sequential,
         std::nullopt,
         tagDecoratorFactory,
+        web::ProxyIpResolver{{}, {}},
         std::nullopt,
-        onConnectCheck.AsStdFunction(),
-        [](auto&&) {}
+        Server::Hooks{
+            .onConnectCheck = onConnectCheck.AsStdFunction(),
+            .onIpChangeHook = [](auto&&, auto&&) {},
+            .onDisconnectHook = [](auto&&) {}
+        }
     };
 
     HttpAsyncClient client{ctx_};
@@ -334,9 +355,13 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
         ProcessingPolicy::Sequential,
         std::nullopt,
         tagDecoratorFactory,
+        web::ProxyIpResolver{{}, {}},
         std::nullopt,
-        onConnectCheck.AsStdFunction(),
-        [](auto&&) {}
+        Server::Hooks{
+            .onConnectCheck = onConnectCheck.AsStdFunction(),
+            .onIpChangeHook = [](auto&&, auto&&) {},
+            .onDisconnectHook = [](auto&&) {}
+        }
     };
 
     HttpAsyncClient client{ctx_};
@@ -393,9 +418,13 @@ TEST_F(ServerHttpTest, OnDisconnectHook)
         ProcessingPolicy::Sequential,
         std::nullopt,
         tagDecoratorFactory,
+        web::ProxyIpResolver{{}, {}},
         std::nullopt,
-        emptyOnConnectCheck_,
-        onDisconnectHookMock.AsStdFunction()
+        Server::Hooks{
+            .onConnectCheck = emptyOnConnectCheck_,
+            .onIpChangeHook = [](auto&&, auto&&) {},
+            .onDisconnectHook = onDisconnectHookMock.AsStdFunction()
+        }
     };
 
     HttpAsyncClient client{ctx_};

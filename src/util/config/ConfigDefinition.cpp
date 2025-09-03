@@ -337,6 +337,8 @@ getClioConfig()
          {"server.ws_max_sending_queue_size",
           ConfigValue{ConfigType::Integer}.defaultValue(1500).withConstraint(gValidateUint32)},
          {"server.__ng_web_server", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+         {"server.proxy.ips.[]", Array{ConfigValue{ConfigType::String}}},
+         {"server.proxy.tokens.[]", Array{ConfigValue{ConfigType::String}}},
 
          {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
          {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},

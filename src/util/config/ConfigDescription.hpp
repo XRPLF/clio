@@ -236,6 +236,16 @@ This document provides a list of all available Clio configuration properties in 
         KV{.key = "server.ws_max_sending_queue_size",
            .value = "Maximum queue size for sending subscription data to clients. This queue buffers data when a "
                     "client is slow to receive it, ensuring delivery once the client is ready."},
+        KV{.key = "server.proxy.ips.[]",
+           .value = "List of proxy ip addresses. When Clio receives a request from proxy it will use "
+                    "`Forwarded` value (if any) as client ip. When this option is used together with "
+                    "`server.proxy.tokens` Clio will identify proxy by ip or by token."},
+        KV{.key = "server.proxy.tokens.[]",
+           .value = "List of tokens in identifying request as a request from proxy. Token should be provided in "
+                    "`X-Proxy-Token` header, e.g. "
+                    "`X-Proxy-Token: <very_secret_token>'. When Clio receives a request from proxy "
+                    "it will use 'Forwarded` value (if any) to get client ip. When this option is used together with "
+                    "'server.proxy.ips' Clio will identify proxy by ip or by token."},
         KV{.key = "prometheus.enabled", .value = "Enables or disables Prometheus metrics."},
         KV{.key = "prometheus.compress_reply", .value = "Enables or disables compression of Prometheus responses."},
         KV{.key = "io_threads",
