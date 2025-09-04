@@ -95,7 +95,7 @@ TEST_F(ProxyIpResolverTest, FromConfig)
 TEST_P(ProxyIpResolverTest, ResolveClientIp)
 {
     auto const& params = GetParam();
-    ProxyIpResolver resolver(params.proxyIps, params.proxyTokens);
+    ProxyIpResolver const resolver(params.proxyIps, params.proxyTokens);
     ProxyIpResolver::HttpHeaders headers;
     for (auto const& [key, value] : params.headers) {
         headers.set(key, value);
