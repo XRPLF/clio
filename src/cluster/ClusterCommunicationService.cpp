@@ -30,6 +30,7 @@
 #include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
+#include <boost/asio/use_future.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
 #include <boost/json/value.hpp>
@@ -127,7 +128,12 @@ ClusterCommunicationService::stop()
 
     // for ASAN to see through concurrency correctly we need to exit all coroutines before joining the ctx
     running_ = false;
-    cancelSignal_.emit(boost::asio::cancellation_type::all);
+
+    // cancelSignal_ is not thread safe so we execute emit on the same strand
+    boost::asio::spawn(
+        strand_, [this](auto&&) { cancelSignal_.emit(boost::asio::cancellation_type::all); }, boost::asio::use_future
+    )
+        .wait();
     finishedCountdown_.wait();
 
     ctx_.join();
