@@ -45,9 +45,9 @@ struct ConnectionBase : public util::Taggable {
 protected:
     boost::system::error_code ec_;
     bool isAdmin_ = false;
+    std::string clientIp_;
 
 public:
-    std::string const clientIp;
     bool upgraded = false;
 
     /**
@@ -57,7 +57,7 @@ public:
      * @param ip The IP address of the connected peer
      */
     ConnectionBase(util::TagDecoratorFactory const& tagFactory, std::string ip)
-        : Taggable(tagFactory), clientIp(std::move(ip))
+        : Taggable(tagFactory), clientIp_(std::move(ip))
     {
     }
 
@@ -118,6 +118,17 @@ public:
     isAdmin() const
     {
         return isAdmin_;
+    }
+
+    /**
+     * @brief Get the IP address of the client.
+     *
+     * @return The IP address of the client.
+     */
+    [[nodiscard]] std::string const&
+    clientIp() const
+    {
+        return clientIp_;
     }
 };
 }  // namespace web

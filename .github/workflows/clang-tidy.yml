@@ -24,7 +24,7 @@ jobs:
   clang_tidy:
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:8ad111655c4d04bfedb7e7cb3bbfba6d4204852d
+      image: ghcr.io/xrplf/clio-ci:0e8896ad064a5290c4805318b549df16403ca2d7
 
     permissions:
       contents: write
@@ -48,8 +48,13 @@ jobs:
           conan_profile: ${{ env.CONAN_PROFILE }}
           ccache_dir: ${{ env.CCACHE_DIR }}
 
-      - name: Run conan and cmake
-        uses: ./.github/actions/generate
+      - name: Run conan
+        uses: ./.github/actions/conan
+        with:
+          conan_profile: ${{ env.CONAN_PROFILE }}
+
+      - name: Run CMake
+        uses: ./.github/actions/cmake
         with:
           conan_profile: ${{ env.CONAN_PROFILE }}
 

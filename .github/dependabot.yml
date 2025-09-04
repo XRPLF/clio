@@ -40,6 +40,19 @@ updates:
     target-branch: develop
 
   - package-ecosystem: github-actions
+    directory: .github/actions/cmake/
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Etc/GMT
+    reviewers:
+      - XRPLF/clio-dev-team
+    commit-message:
+      prefix: "ci: [DEPENDABOT] "
+    target-branch: develop
+
+  - package-ecosystem: github-actions
     directory: .github/actions/code_coverage/
     schedule:
       interval: weekly
@@ -53,7 +66,7 @@ updates:
     target-branch: develop
 
   - package-ecosystem: github-actions
-    directory: .github/actions/create_issue/
+    directory: .github/actions/conan/
     schedule:
       interval: weekly
       day: monday
@@ -66,7 +79,7 @@ updates:
     target-branch: develop
 
   - package-ecosystem: github-actions
-    directory: .github/actions/generate/
+    directory: .github/actions/create_issue/
     schedule:
       interval: weekly
       day: monday

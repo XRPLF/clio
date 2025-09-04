@@ -26,6 +26,7 @@
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Http.hpp"
 #include "web/AdminVerificationStrategy.hpp"
+#include "web/ProxyIpResolver.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/interface/Concepts.hpp"
@@ -120,6 +121,7 @@ class HttpBase : public ConnectionBase {
     std::shared_ptr<void> res_;
     SendLambda sender_;
     std::shared_ptr<AdminVerificationStrategy> adminVerification_;
+    std::shared_ptr<ProxyIpResolver> proxyIpResolver_;
 
 protected:
     boost::beast::flat_buffer buffer_;
@@ -164,6 +166,7 @@ public:
         std::string const& ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::shared_ptr<AdminVerificationStrategy> adminVerification,
+        std::shared_ptr<ProxyIpResolver> proxyIpResolver,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> handler,
         boost::beast::flat_buffer buffer
@@ -171,6 +174,7 @@ public:
         : ConnectionBase(tagFactory, ip)
         , sender_(*this)
         , adminVerification_(std::move(adminVerification))
+        , proxyIpResolver_(std::move(proxyIpResolver))
         , buffer_(std::move(buffer))
         , dosGuard_(dosGuard)
         , handler_(std::move(handler))
@@ -183,7 +187,7 @@ public:
     {
         LOG(perfLog_.debug()) << tag() << "http session closed";
         if (not upgraded)
-            dosGuard_.get().decrement(this->clientIp);
+            dosGuard_.get().decrement(clientIp_);
     }
 
     void
@@ -218,11 +222,19 @@ public:
         if (req_.method() == http::verb::get and req_.target() == "/health")
             return sender_(httpResponse(http::status::ok, "text/html", kHEALTH_CHECK_HTML));
 
+        if (auto resolvedIp = proxyIpResolver_->resolveClientIp(clientIp_, req_); resolvedIp != clientIp_) {
+            LOG(log_.info()) << tag() << "Detected a forwarded request from proxy. Proxy ip: " << clientIp_
+                             << ". Resolved client ip: " << resolvedIp;
+            dosGuard_.get().decrement(clientIp_);
+            clientIp_ = std::move(resolvedIp);
+            dosGuard_.get().increment(clientIp_);
+        }
+
         // Update isAdmin property of the connection
-        ConnectionBase::isAdmin_ = adminVerification_->isAdmin(req_, this->clientIp);
+        ConnectionBase::isAdmin_ = adminVerification_->isAdmin(req_, clientIp_);
 
         if (boost::beast::websocket::is_upgrade(req_)) {
-            if (dosGuard_.get().isOk(this->clientIp)) {
+            if (dosGuard_.get().isOk(clientIp_)) {
                 // Disable the timeout. The websocket::stream uses its own timeout settings.
                 boost::beast::get_lowest_layer(derived().stream()).expires_never();
 
@@ -240,7 +252,7 @@ public:
             return sender_(httpResponse(http::status::bad_request, "text/html", "Expected a POST request"));
         }
 
-        LOG(log_.info()) << tag() << "Received request from ip = " << clientIp;
+        LOG(log_.info()) << tag() << "Received request from ip = " << clientIp_;
 
         try {
             (*handler_)(req_.body(), derived().shared_from_this());
@@ -271,7 +283,7 @@ public:
     void
     send(std::string&& msg, http::status status = http::status::ok) override
     {
-        if (!dosGuard_.get().add(clientIp, msg.size())) {
+        if (!dosGuard_.get().add(clientIp_, msg.size())) {
             auto jsonResponse = boost::json::parse(msg).as_object();
             jsonResponse["warning"] = "load";
             if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {

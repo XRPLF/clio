@@ -25,6 +25,7 @@
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ObjectView.hpp"
 #include "util/log/Logger.hpp"
+#include "web/ProxyIpResolver.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/ProcessingPolicy.hpp"
@@ -205,16 +206,16 @@ Server::Server(
     ProcessingPolicy processingPolicy,
     std::optional<size_t> parallelRequestLimit,
     util::TagDecoratorFactory tagDecoratorFactory,
+    ProxyIpResolver proxyIpResolver,
     std::optional<size_t> maxSubscriptionSendQueueSize,
-    OnConnectCheck onConnectCheck,
-    OnDisconnectHook onDisconnectHook
+    Hooks hooks
 )
     : ctx_{ctx}
     , sslContext_{std::move(sslContext)}
     , tagDecoratorFactory_{tagDecoratorFactory}
-    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, maxSubscriptionSendQueueSize, std::move(onDisconnectHook)}
+    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, maxSubscriptionSendQueueSize, std::move(proxyIpResolver), std::move(hooks.onDisconnectHook), std::move(hooks.onIpChangeHook)}
     , endpoint_{std::move(endpoint)}
-    , onConnectCheck_{std::move(onConnectCheck)}
+    , onConnectCheck_{std::move(hooks.onConnectCheck)}
 {
 }
 
@@ -337,6 +338,7 @@ std::expected<Server, std::string>
 makeServer(
     util::config::ClioConfigDefinition const& config,
     Server::OnConnectCheck onConnectCheck,
+    Server::OnIpChangeHook onIpChangeHook,
     Server::OnDisconnectHook onDisconnectHook,
     boost::asio::io_context& context
 )
@@ -365,6 +367,8 @@ makeServer(
 
     auto const maxSubscriptionSendQueueSize = serverConfig.get<size_t>("ws_max_sending_queue_size");
 
+    auto proxyIpResolver = ProxyIpResolver::fromConfig(config);
+
     return std::expected<Server, std::string>{
         std::in_place,
         context,
@@ -373,9 +377,13 @@ makeServer(
         processingPolicy,
         parallelRequestLimit,
         util::TagDecoratorFactory(config),
+        std::move(proxyIpResolver),
         maxSubscriptionSendQueueSize,
-        std::move(onConnectCheck),
-        std::move(onDisconnectHook)
+        Server::Hooks{
+            .onConnectCheck = std::move(onConnectCheck),
+            .onIpChangeHook = std::move(onIpChangeHook),
+            .onDisconnectHook = std::move(onDisconnectHook)
+        }
     };
 }
 

@@ -4,47 +4,19 @@ on:
   # every first day of the month
   schedule:
     - cron: "0 0 1 * *"
-  # on demand
+  pull_request:
+    branches: [release/*, develop]
+    paths:
+      - ".pre-commit-config.yaml"
   workflow_dispatch:
 
 jobs:
   auto-update:
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-      pull-requests: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.x
-
-      - run: pip install pre-commit
-      - run: pre-commit autoupdate --freeze
-      - run: pre-commit run --all-files || true
-
-      - uses: crazy-max/ghaction-import-gpg@e89d40939c28e39f97cf32126055eeae86ba74ec # v6.3.0
-        if: github.event_name != 'pull_request'
-        with:
-          gpg_private_key: ${{ secrets.ACTIONS_GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.ACTIONS_GPG_PASSPHRASE }}
-          git_user_signingkey: true
-          git_commit_gpgsign: true
-
-      - uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
-        if: always()
-        env:
-          GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ github.token }}
-        with:
-          commit-message: "style: Update pre-commit hooks"
-          committer: Clio CI <skuznetsov@ripple.com>
-          branch: update/pre-commit-hooks
-          branch-suffix: timestamp
-          delete-branch: true
-          title: "style: Update pre-commit hooks"
-          body: Update versions of pre-commit hooks to latest version.
-          reviewers: "godexsoft,kuznetsss,PeterChen13579,mathbunnyru"
+    uses: XRPLF/actions/.github/workflows/pre-commit-autoupdate.yml@afbcbdafbe0ce5439492fb87eda6441371086386
+    with:
+      sign_commit: true
+      committer: "Clio CI <skuznetsov@ripple.com>"
+      reviewers: "godexsoft,kuznetsss,PeterChen13579,mathbunnyru"
+    secrets:
+      GPG_PRIVATE_KEY: ${{ secrets.ACTIONS_GPG_PRIVATE_KEY }}
+      GPG_PASSPHRASE: ${{ secrets.ACTIONS_GPG_PASSPHRASE }}

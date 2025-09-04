@@ -33,6 +33,7 @@
 #include "web/Context.hpp"
 
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/format/format_fwd.hpp>
 #include <boost/format/free_funcs.hpp>
@@ -262,11 +263,11 @@ toExpandedJson(
     auto metaJson = toJson(*meta);
     insertDeliveredAmount(metaJson, txn, meta, blobs.date);
     insertDeliverMaxAlias(txnJson, apiVersion);
-    insertMPTIssuanceID(metaJson, txn, meta);
+    insertMPTIssuanceID(txnJson, meta);
 
     if (nftEnabled == NFTokenjson::ENABLE) {
         Json::Value nftJson;
-        ripple::insertNFTSyntheticInJson(nftJson, txn, *meta);
+        ripple::RPC::insertNFTSyntheticInJson(nftJson, txn, *meta);
         // if there is no nft fields, the nftJson will be {"meta":null}
         auto const nftBoostJson = toBoostJson(nftJson).as_object();
         if (nftBoostJson.contains(JS(meta)) and nftBoostJson.at(JS(meta)).is_object()) {
@@ -347,14 +348,15 @@ getMPTIssuanceID(std::shared_ptr<ripple::TxMeta const> const& meta)
 /**
  * @brief Check if transaction has a new MPToken created
  *
- * @param txn The transaction
+ * @param txnJson The transaction Json
  * @param meta The metadata
  * @return true if the transaction can have a mpt_issuance_id
  */
 static bool
-canHaveMPTIssuanceID(std::shared_ptr<ripple::STTx const> const& txn, std::shared_ptr<ripple::TxMeta const> const& meta)
+canHaveMPTIssuanceID(boost::json::object const& txnJson, std::shared_ptr<ripple::TxMeta const> const& meta)
 {
-    if (txn->getTxnType() != ripple::ttMPTOKEN_ISSUANCE_CREATE)
+    if (txnJson.at(JS(TransactionType)).is_string() and
+        not boost::iequals(txnJson.at(JS(TransactionType)).as_string(), JS(MPTokenIssuanceCreate)))
         return false;
 
     if (meta->getResultTER() != ripple::tesSUCCESS)
@@ -364,17 +366,13 @@ canHaveMPTIssuanceID(std::shared_ptr<ripple::STTx const> const& txn, std::shared
 }
 
 bool
-insertMPTIssuanceID(
-    boost::json::object& metaJson,
-    std::shared_ptr<ripple::STTx const> const& txn,
-    std::shared_ptr<ripple::TxMeta const> const& meta
-)
+insertMPTIssuanceID(boost::json::object& txnJson, std::shared_ptr<ripple::TxMeta const> const& meta)
 {
-    if (!canHaveMPTIssuanceID(txn, meta))
+    if (!canHaveMPTIssuanceID(txnJson, meta))
         return false;
 
     if (auto const id = getMPTIssuanceID(meta)) {
-        metaJson[JS(mpt_issuance_id)] = ripple::to_string(*id);
+        txnJson[JS(mpt_issuance_id)] = ripple::to_string(*id);
         return true;
     }
 

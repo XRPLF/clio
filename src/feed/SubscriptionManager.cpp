@@ -96,7 +96,7 @@ SubscriptionManager::forwardProposedTransaction(boost::json::object const& recei
 boost::json::object
 SubscriptionManager::subLedger(boost::asio::yield_context yield, SubscriberSharedPtr const& subscriber)
 {
-    return ledgerFeed_.sub(yield, backend_, subscriber);
+    return ledgerFeed_.sub(yield, backend_, subscriber, networkID_);
 }
 
 void
@@ -113,7 +113,7 @@ SubscriptionManager::pubLedger(
     std::uint32_t const txnCount
 )
 {
-    ledgerFeed_.pub(lgrInfo, fees, ledgerRange, txnCount);
+    ledgerFeed_.pub(lgrInfo, fees, ledgerRange, txnCount, networkID_);
 }
 
 void

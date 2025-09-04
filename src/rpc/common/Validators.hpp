@@ -487,6 +487,14 @@ struct CustomValidators final {
     static CustomValidator ledgerIndexValidator;
 
     /**
+     * @brief Provides a validator for ledger type.
+     *
+     * A type accepts canonical names of ledger entry types (case insensitive) or short names.
+     * Used by ledger_data.
+     */
+    static CustomValidator ledgerTypeValidator;
+
+    /**
      * @brief Provides a commonly used validator for accounts.
      *
      * Account must be a string and the converted public key is valid.
@@ -507,6 +515,14 @@ struct CustomValidators final {
      * The former will be read as hex, and the latter can be cast to uint64.
      */
     static CustomValidator accountMarkerValidator;
+
+    /**
+     * @brief Provides a validator for account type.
+     *
+     * A type accepts canonical names of owned ledger entry types (case insensitive) or short names.
+     * Used by account_objects.
+     */
+    static CustomValidator accountTypeValidator;
 
     /**
      * @brief Provides a commonly used validator for uint160(AccountID) hex string.

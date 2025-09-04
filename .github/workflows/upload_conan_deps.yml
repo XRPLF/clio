@@ -20,7 +20,7 @@ on:
     paths:
       - .github/workflows/upload_conan_deps.yml
 
-      - .github/actions/generate/action.yml
+      - .github/actions/conan/action.yml
       - ".github/scripts/conan/**"
 
       - conanfile.py
@@ -30,7 +30,7 @@ on:
     paths:
       - .github/workflows/upload_conan_deps.yml
 
-      - .github/actions/generate/action.yml
+      - .github/actions/conan/action.yml
       - ".github/scripts/conan/**"
 
       - conanfile.py
@@ -83,8 +83,8 @@ jobs:
       - name: Show conan profile
         run: conan profile show --profile:all ${{ env.CONAN_PROFILE }}
 
-      - name: Run conan and cmake
-        uses: ./.github/actions/generate
+      - name: Run conan
+        uses: ./.github/actions/conan
         with:
           conan_profile: ${{ env.CONAN_PROFILE }}
           # We check that everything builds fine from source on scheduled runs

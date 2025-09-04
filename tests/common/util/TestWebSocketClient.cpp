@@ -46,6 +46,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace http = boost::beast::http;
@@ -69,7 +70,7 @@ WebSocketSyncClient::connect(std::string const& host, std::string const& port, s
             [additionalHeaders = std::move(additionalHeaders)](boost::beast::websocket::request_type& req) {
                 req.set(http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-coro");
                 for (auto const& header : additionalHeaders) {
-                    req.set(header.name, header.value);
+                    std::visit([&header, &req](auto const& name) { req.set(name, header.value); }, header.name);
                 }
             }
         )
@@ -164,7 +165,7 @@ WebSocketAsyncClient::connect(
         boost::beast::websocket::stream_base::decorator(
             [additionalHeaders = std::move(additionalHeaders)](boost::beast::websocket::request_type& req) {
                 for (auto const& header : additionalHeaders) {
-                    req.set(header.name, header.value);
+                    std::visit([&header, &req](auto const& name) { req.set(name, header.value); }, header.name);
                 }
             }
         )
