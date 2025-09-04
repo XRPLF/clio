@@ -77,7 +77,7 @@ public:
     pub(ripple::LedgerHeader const& lgrInfo,
         ripple::Fees const& fees,
         std::string const& ledgerRange,
-        std::uint32_t txnCount,
+        uint32_t txnCount,
         uint32_t networkID);
 
 private:
@@ -86,7 +86,7 @@ private:
         ripple::LedgerHeader const& lgrInfo,
         ripple::Fees const& fees,
         std::string const& ledgerRange,
-        std::uint32_t txnCount,
+        uint32_t txnCount,
         uint32_t networkID
     );
 };

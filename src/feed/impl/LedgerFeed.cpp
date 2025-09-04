@@ -44,7 +44,7 @@ LedgerFeed::makeLedgerPubMessage(
     ripple::LedgerHeader const& lgrInfo,
     ripple::Fees const& fees,
     std::string const& ledgerRange,
-    std::uint32_t const txnCount,
+    uint32_t const txnCount,
     uint32_t const networkID
 )
 {
@@ -96,7 +96,7 @@ LedgerFeed::pub(
     ripple::LedgerHeader const& lgrInfo,
     ripple::Fees const& fees,
     std::string const& ledgerRange,
-    std::uint32_t const txnCount,
+    uint32_t const txnCount,
     uint32_t const networkID
 )
 {
