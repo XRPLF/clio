@@ -1,0 +1,78 @@
+name: Run CMake
+description: Run CMake to generate build files
+
+inputs:
+  build_dir:
+    description: Build directory
+    required: false
+    default: "build"
+  conan_profile:
+    description: Conan profile name
+    required: true
+  build_type:
+    description: Build type for third-party libraries and clio. Could be 'Release', 'Debug'
+    required: true
+    default: "Release"
+  integration_tests:
+    description: Whether to generate target integration tests
+    required: true
+    default: "true"
+  benchmark:
+    description: Whether to generate targets for benchmarks
+    required: true
+    default: "true"
+  code_coverage:
+    description: Whether to enable code coverage
+    required: true
+    default: "false"
+  static:
+    description: Whether Clio is to be statically linked
+    required: true
+    default: "false"
+  time_trace:
+    description: Whether to enable compiler trace reports
+    required: true
+    default: "false"
+  use_mold:
+    description: Whether to use mold linker
+    required: true
+    default: "false"
+  package:
+    description: Whether to generate Debian package
+    required: true
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Run cmake
+      shell: bash
+      env:
+        BUILD_TYPE: "${{ inputs.build_type }}"
+        SANITIZER_OPTION: |-
+          ${{ endsWith(inputs.conan_profile, '.asan') && '-Dsan=address' ||
+              endsWith(inputs.conan_profile, '.tsan') && '-Dsan=thread' ||
+              endsWith(inputs.conan_profile, '.ubsan') && '-Dsan=undefined' ||
+              '' }}
+        INTEGRATION_TESTS: "${{ inputs.integration_tests == 'true' && 'ON' || 'OFF' }}"
+        BENCHMARK: "${{ inputs.benchmark == 'true' && 'ON' || 'OFF' }}"
+        COVERAGE: "${{ inputs.code_coverage == 'true' && 'ON' || 'OFF' }}"
+        STATIC: "${{ inputs.static == 'true' && 'ON' || 'OFF' }}"
+        TIME_TRACE: "${{ inputs.time_trace == 'true' && 'ON' || 'OFF' }}"
+        USE_MOLD: "${{ inputs.use_mold == 'true' && 'ON' || 'OFF' }}"
+        PACKAGE: "${{ inputs.package == 'true' && 'ON' || 'OFF' }}"
+      run: |
+        cmake \
+          -B ${{inputs.build_dir}} \
+          -S . \
+          -G Ninja \
+          -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake \
+          -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+          "${SANITIZER_OPTION}" \
+          -Dintegration_tests="${INTEGRATION_TESTS}" \
+          -Dbenchmark="${BENCHMARK}" \
+          -Dcoverage="${COVERAGE}" \
+          -Dstatic="${STATIC}" \
+          -Dtime_trace="${TIME_TRACE}" \
+          -Duse_mold="${USE_MOLD}" \
+          -Dpackage="${PACKAGE}"
