@@ -1,0 +1,45 @@
+name: Run Conan
+description: Run conan to install dependencies
+
+inputs:
+  build_dir:
+    description: Build directory
+    required: false
+    default: "build"
+  conan_profile:
+    description: Conan profile name
+    required: true
+  force_conan_source_build:
+    description: Whether conan should build all dependencies from source
+    required: true
+    default: "false"
+  build_type:
+    description: Build type for third-party libraries and clio. Could be 'Release', 'Debug'
+    required: true
+    default: "Release"
+  build_benchmark:
+    description: Whether to build benchmark tests
+    required: true
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Create build directory
+      shell: bash
+      run: mkdir -p "${{ inputs.build_dir }}"
+
+    - name: Run conan
+      shell: bash
+      env:
+        CONAN_BUILD_OPTION: "${{ inputs.force_conan_source_build == 'true' && '*' || 'missing' }}"
+        BUILD_BENCHMARK: "${{ inputs.build_benchmark == 'true' && 'True' || 'False' }}"
+      run: |
+        conan \
+          install . \
+          -of build \
+          -b "$CONAN_BUILD_OPTION" \
+          -s "build_type=${{ inputs.build_type }}" \
+          -o "&:tests=True" \
+          -o "&:benchmark=${BUILD_BENCHMARK}" \
+          --profile:all "${{ inputs.conan_profile }}"

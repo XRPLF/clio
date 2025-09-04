@@ -8,6 +8,7 @@ target_sources(
           Coroutine.cpp
           CoroutineGroup.cpp
           log/Logger.cpp
+          log/PrettyPath.cpp
           prometheus/Http.cpp
           prometheus/Label.cpp
           prometheus/MetricBase.cpp
@@ -23,6 +24,7 @@ target_sources(
           requests/WsConnection.cpp
           requests/impl/SslContext.cpp
           ResponseExpirationCache.cpp
+          Shasum.cpp
           SignalsHandler.cpp
           StopHelper.cpp
           StringHash.cpp

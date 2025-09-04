@@ -75,9 +75,9 @@ jobs:
     container: ${{ inputs.container != '' && fromJson(inputs.container) || null }}
 
     steps:
-      - name: Clean workdir
+      - name: Cleanup workspace
         if: ${{ runner.os == 'macOS' }}
-        uses: kuznetsss/workspace-cleanup@80b9863b45562c148927c3d53621ef354e5ae7ce # v1.0
+        uses: XRPLF/actions/.github/actions/cleanup-workspace@ea9970b7c211b18f4c8bcdb28c29f5711752029f
 
       - uses: actions/checkout@v4
         with:
@@ -107,15 +107,20 @@ jobs:
           build_type: ${{ inputs.build_type }}
           code_coverage: ${{ inputs.code_coverage }}
 
-      - name: Run conan and cmake
-        uses: ./.github/actions/generate
+      - name: Run conan
+        uses: ./.github/actions/conan
+        with:
+          conan_profile: ${{ inputs.conan_profile }}
+          build_type: ${{ inputs.build_type }}
+
+      - name: Run CMake
+        uses: ./.github/actions/cmake
         with:
           conan_profile: ${{ inputs.conan_profile }}
           build_type: ${{ inputs.build_type }}
           code_coverage: ${{ inputs.code_coverage }}
           static: ${{ inputs.static }}
           time_trace: ${{ inputs.analyze_build_time }}
-          use_mold: ${{ runner.os != 'macOS' }}
           package: ${{ inputs.package }}
 
       - name: Build Clio

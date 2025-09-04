@@ -457,6 +457,12 @@ createMptIssuanceObject(std::string_view accountId, std::uint32_t seq, std::stri
 createMpTokenObject(std::string_view accountId, ripple::uint192 issuanceID, std::uint64_t mptAmount = 1);
 
 [[nodiscard]] ripple::STObject
+createMPTIssuanceCreateTx(std::string_view accountId, uint32_t fee, uint32_t seq);
+
+[[nodiscard]] data::TransactionAndMetadata
+createMPTIssuanceCreateTxWithMetadata(std::string_view accountId, uint32_t fee, uint32_t seq);
+
+[[nodiscard]] ripple::STObject
 createPermissionedDomainObject(
     std::string_view accountId,
     std::string_view ledgerIndex,

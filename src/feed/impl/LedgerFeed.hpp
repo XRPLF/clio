@@ -63,7 +63,8 @@ public:
     boost::json::object
     sub(boost::asio::yield_context yield,
         std::shared_ptr<data::BackendInterface const> const& backend,
-        SubscriberSharedPtr const& subscriber);
+        SubscriberSharedPtr const& subscriber,
+        uint32_t networkID);
 
     /**
      * @brief Publishes the ledger feed.
@@ -76,7 +77,8 @@ public:
     pub(ripple::LedgerHeader const& lgrInfo,
         ripple::Fees const& fees,
         std::string const& ledgerRange,
-        std::uint32_t txnCount);
+        uint32_t txnCount,
+        uint32_t networkID);
 
 private:
     static boost::json::object
@@ -84,7 +86,8 @@ private:
         ripple::LedgerHeader const& lgrInfo,
         ripple::Fees const& fees,
         std::string const& ledgerRange,
-        std::uint32_t txnCount
+        uint32_t txnCount,
+        uint32_t networkID
     );
 };
 }  // namespace feed::impl

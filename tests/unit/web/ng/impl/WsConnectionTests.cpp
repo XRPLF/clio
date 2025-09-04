@@ -65,7 +65,10 @@ struct WebWsConnectionTests : SyncAsioContextTest {
         auto ip = expectedSocket->remote_endpoint().address().to_string();
 
         PlainHttpConnection httpConnection{
-            std::move(expectedSocket).value(), std::move(ip), boost::beast::flat_buffer{}, tagDecoratorFactory_
+            std::move(expectedSocket).value(),
+            std::move(ip),
+            boost::beast::flat_buffer{},
+            tagDecoratorFactory_,
         };
 
         auto expectedTrue = httpConnection.isUpgradeRequested(yield);

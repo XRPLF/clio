@@ -68,7 +68,6 @@ struct Amendments {
 
     /** @cond */
     // NOLINTBEGIN(readability-identifier-naming)
-    REGISTER(OwnerPaysFee);
     REGISTER(Flow);
     REGISTER(FlowCross);
     REGISTER(fix1513);
@@ -145,6 +144,9 @@ struct Amendments {
     REGISTER(TokenEscrow);
     REGISTER(fixAMMv1_3);
     REGISTER(fixEnforceNFTokenTrustlineV2);
+    REGISTER(fixAMMClawbackRounding);
+    REGISTER(fixMPTDeliveredAmount);
+    REGISTER(fixPriceOracleOrder);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);
@@ -153,6 +155,7 @@ struct Amendments {
     REGISTER(fixNFTokenNegOffer);
 
     // Retired amendments
+    REGISTER(OwnerPaysFee);  // Removed in xrpl 2.6.0 (https://github.com/XRPLF/rippled/pull/5435)
     REGISTER(MultiSign);
     REGISTER(TrustSetAuth);
     REGISTER(FeeEscalation);

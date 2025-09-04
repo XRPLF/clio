@@ -35,12 +35,14 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 struct WebHeader {
     WebHeader(boost::beast::http::field name, std::string value);
+    WebHeader(std::string_view name, std::string value);
 
-    boost::beast::http::field name;
+    std::variant<boost::beast::http::field, std::string> name;
     std::string value;
 };
 

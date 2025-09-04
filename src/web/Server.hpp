@@ -23,6 +23,7 @@
 #include "util/log/Logger.hpp"
 #include "web/AdminVerificationStrategy.hpp"
 #include "web/HttpSession.hpp"
+#include "web/ProxyIpResolver.hpp"
 #include "web/SslHttpSession.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/interface/Concepts.hpp"
@@ -87,6 +88,7 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, 
     boost::beast::flat_buffer buffer_;
     std::shared_ptr<AdminVerificationStrategy> const adminVerification_;
     std::uint32_t maxWsSendingQueueSize_;
+    std::shared_ptr<ProxyIpResolver> proxyIpResolver_;
 
 public:
     /**
@@ -99,6 +101,7 @@ public:
      * @param handler The server handler to use
      * @param adminVerification The admin verification strategy to use
      * @param maxWsSendingQueueSize The maximum size of the sending queue for websocket
+     * @param proxyIpResolver The client ip resolver if a request was forwarded by a proxy
      */
     Detector(
         tcp::socket&& socket,
@@ -107,7 +110,8 @@ public:
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> handler,
         std::shared_ptr<AdminVerificationStrategy> adminVerification,
-        std::uint32_t maxWsSendingQueueSize
+        std::uint32_t maxWsSendingQueueSize,
+        std::shared_ptr<ProxyIpResolver> proxyIpResolver
     )
         : stream_(std::move(socket))
         , ctx_(ctx)
@@ -116,6 +120,7 @@ public:
         , handler_(std::move(handler))
         , adminVerification_(std::move(adminVerification))
         , maxWsSendingQueueSize_(maxWsSendingQueueSize)
+        , proxyIpResolver_(std::move(proxyIpResolver))
     {
     }
 
@@ -169,6 +174,7 @@ public:
                 stream_.release_socket(),
                 ip,
                 adminVerification_,
+                proxyIpResolver_,
                 *ctx_,
                 tagFactory_,
                 dosGuard_,
@@ -184,6 +190,7 @@ public:
             stream_.release_socket(),
             ip,
             adminVerification_,
+            proxyIpResolver_,
             tagFactory_,
             dosGuard_,
             handler_,
@@ -219,6 +226,7 @@ class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslS
     tcp::acceptor acceptor_;
     std::shared_ptr<AdminVerificationStrategy> adminVerification_;
     std::uint32_t maxWsSendingQueueSize_;
+    std::shared_ptr<ProxyIpResolver> proxyIpResolver_;
 
 public:
     /**
@@ -232,6 +240,7 @@ public:
      * @param handler The server handler to use
      * @param adminVerification The admin verification strategy to use
      * @param maxWsSendingQueueSize The maximum size of the sending queue for websocket
+     * @param proxyIpResolver The client ip resolver if a request was forwarded by a proxy
      */
     Server(
         boost::asio::io_context& ioc,
@@ -241,7 +250,8 @@ public:
         dosguard::DOSGuardInterface& dosGuard,
         std::shared_ptr<HandlerType> handler,
         std::shared_ptr<AdminVerificationStrategy> adminVerification,
-        std::uint32_t maxWsSendingQueueSize
+        std::uint32_t maxWsSendingQueueSize,
+        ProxyIpResolver proxyIpResolver
     )
         : ioc_(std::ref(ioc))
         , ctx_(std::move(ctx))
@@ -251,6 +261,7 @@ public:
         , acceptor_(boost::asio::make_strand(ioc))
         , adminVerification_(std::move(adminVerification))
         , maxWsSendingQueueSize_(maxWsSendingQueueSize)
+        , proxyIpResolver_(std::make_shared<ProxyIpResolver>(std::move(proxyIpResolver)))
     {
         boost::beast::error_code ec;
 
@@ -310,7 +321,8 @@ private:
                 dosGuard_,
                 handler_,
                 adminVerification_,
-                maxWsSendingQueueSize_
+                maxWsSendingQueueSize_,
+                proxyIpResolver_
             )
                 ->run();
         }
@@ -364,6 +376,8 @@ makeHttpServer(
     // each ledger. we allow user delay 3 ledgers by default
     auto const maxWsSendingQueueSize = serverConfig.get<uint32_t>("ws_max_sending_queue_size");
 
+    auto proxyIpResolver = ProxyIpResolver::fromConfig(config);
+
     auto server = std::make_shared<HttpServer<HandlerType>>(
         ioc,
         std::move(expectedSslContext).value(),
@@ -372,7 +386,8 @@ makeHttpServer(
         dosGuard,
         handler,
         std::move(expectedAdminVerification).value(),
-        maxWsSendingQueueSize
+        maxWsSendingQueueSize,
+        std::move(proxyIpResolver)
     );
 
     server->run();

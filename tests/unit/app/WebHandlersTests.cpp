@@ -92,6 +92,21 @@ TEST_F(OnConnectCheckTests, RateLimited)
     EXPECT_EQ(httpResponse.body(), "Too many requests");
 }
 
+struct IpChangeHookTests : WebHandlersTest {
+    IpChangeHook ipChangeHook{dosGuardMock};
+};
+
+TEST_F(IpChangeHookTests, CallsDecrementAndIncrement)
+{
+    std::string const oldIp = "old ip";
+    std::string const newIp = "new ip";
+
+    EXPECT_CALL(dosGuardMock, decrement(oldIp));
+    EXPECT_CALL(dosGuardMock, increment(newIp));
+
+    ipChangeHook(oldIp, newIp);
+}
+
 struct DisconnectHookTests : WebHandlersTest {
     DisconnectHook disconnectHook{dosGuardMock};
 };

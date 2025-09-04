@@ -43,6 +43,7 @@
 #include <xrpl/protocol/STObject.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -75,6 +76,7 @@ protected:
         std::make_shared<SubscriptionManager>(Execution(2), backend_, mockAmendmentCenterPtr_);
     web::SubscriptionContextPtr session_ = std::make_shared<MockSession>();
     MockSession* sessionPtr_ = dynamic_cast<MockSession*>(session_.get());
+    uint32_t const networkID_ = 123;
 };
 
 using SubscriptionManagerTest = SubscriptionManagerBaseTest<util::async::SyncExecutionContext>;
@@ -271,6 +273,8 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
 TEST_F(SubscriptionManagerTest, LedgerTest)
 {
     backend_->setRange(10, 30);
+    subscriptionManagerPtr_->setNetworkID(networkID_);
+
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
 
@@ -288,7 +292,8 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
             "ledger_time": 0,
             "fee_base": 1,
             "reserve_base": 3,
-            "reserve_inc": 2
+            "reserve_inc": 2,
+            "network_id": 123
         })JSON";
     boost::asio::io_context ctx;
     util::spawn(ctx, [this](boost::asio::yield_context yield) {
@@ -314,7 +319,8 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
             "reserve_base": 10,
             "reserve_inc": 0,
             "validated_ledgers": "10-31",
-            "txn_count": 8
+            "txn_count": 8,
+            "network_id": 123
         })JSON";
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kLEDGER_PUB)));
     subscriptionManagerPtr_->pubLedger(ledgerHeader2, fee2, "10-31", 8);

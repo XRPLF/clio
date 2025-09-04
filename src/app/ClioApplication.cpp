@@ -178,7 +178,9 @@ ClioApplication::run(bool const useNgWebServer)
         }
         auto const adminVerifier = std::move(expectedAdminVerifier).value();
 
-        auto httpServer = web::ng::makeServer(config_, OnConnectCheck{dosGuard}, DisconnectHook{dosGuard}, ioc);
+        auto httpServer = web::ng::makeServer(
+            config_, OnConnectCheck{dosGuard}, IpChangeHook{dosGuard}, DisconnectHook{dosGuard}, ioc
+        );
 
         if (not httpServer.has_value()) {
             LOG(util::LogService::error()) << "Error creating web server: " << httpServer.error();

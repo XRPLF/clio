@@ -17,7 +17,7 @@ jobs:
     name: Build Clio / `libXRPL ${{ github.event.client_payload.version }}`
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:8ad111655c4d04bfedb7e7cb3bbfba6d4204852d
+      image: ghcr.io/xrplf/clio-ci:0e8896ad064a5290c4805318b549df16403ca2d7
 
     steps:
       - uses: actions/checkout@v4
@@ -32,7 +32,7 @@ jobs:
       - name: Update libXRPL version requirement
         shell: bash
         run: |
-          sed -i.bak -E "s|'xrpl/[a-zA-Z0-9\\.\\-]+'|'xrpl/${{ github.event.client_payload.version }}'|g" conanfile.py
+          sed -i.bak -E "s|'xrpl/[a-zA-Z0-9\\.\\-]+'|'xrpl/${{ github.event.client_payload.conan_ref }}'|g" conanfile.py
           rm -f conanfile.py.bak
 
       - name: Update conan lockfile
@@ -40,8 +40,13 @@ jobs:
         run: |
           conan lock create . -o '&:tests=True' -o '&:benchmark=True' --profile:all ${{ env.CONAN_PROFILE }}
 
-      - name: Run conan and cmake
-        uses: ./.github/actions/generate
+      - name: Run conan
+        uses: ./.github/actions/conan
+        with:
+          conan_profile: ${{ env.CONAN_PROFILE }}
+
+      - name: Run CMake
+        uses: ./.github/actions/cmake
         with:
           conan_profile: ${{ env.CONAN_PROFILE }}
 
@@ -62,7 +67,7 @@ jobs:
     needs: build
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:8ad111655c4d04bfedb7e7cb3bbfba6d4204852d
+      image: ghcr.io/xrplf/clio-ci:0e8896ad064a5290c4805318b549df16403ca2d7
 
     steps:
       - uses: actions/download-artifact@v5
@@ -95,6 +100,7 @@ jobs:
           labels: "compatibility,bug"
           title: "Proposed libXRPL check failed"
           body: >
-            Clio build or tests failed against `libXRPL ${{ github.event.client_payload.version }}`.
+            Clio build or tests failed against `libXRPL ${{ github.event.client_payload.conan_ref }}`.
 
-            Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/
+            PR: ${{ github.event.client_payload.pr_url }}
+            Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/

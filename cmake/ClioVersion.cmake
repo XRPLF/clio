@@ -6,15 +6,17 @@ execute_process(
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   OUTPUT_VARIABLE TAG
   RESULT_VARIABLE RC
-  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_VARIABLE ERR
+  OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_STRIP_TRAILING_WHITESPACE
 )
 
 if (RC EQUAL 0)
-  # if we are on a tag, use the tag name
+  message(STATUS "Found tag '${TAG}' in git. Will use it as Clio version")
   set(CLIO_VERSION "${TAG}")
   set(DOC_CLIO_VERSION "${TAG}")
 else ()
-  # if not, use YYYYMMDDHMS-<branch>-<git-rev>
+  message(STATUS "Error finding tag in git: ${ERR}")
+  message(STATUS "Will use 'YYYYMMDDHMS-<branch>-<git-rev>' as Clio version")
 
   set(GIT_COMMAND show -s --date=format:%Y%m%d%H%M%S --format=%cd)
   execute_process(

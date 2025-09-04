@@ -44,7 +44,8 @@ LedgerFeed::makeLedgerPubMessage(
     ripple::LedgerHeader const& lgrInfo,
     ripple::Fees const& fees,
     std::string const& ledgerRange,
-    std::uint32_t const txnCount
+    uint32_t const txnCount,
+    uint32_t const networkID
 )
 {
     boost::json::object pubMsg;
@@ -57,6 +58,7 @@ LedgerFeed::makeLedgerPubMessage(
     pubMsg["reserve_inc"] = rpc::toBoostJson(fees.increment.jsonClipped());
     pubMsg["validated_ledgers"] = ledgerRange;
     pubMsg["txn_count"] = txnCount;
+    pubMsg["network_id"] = networkID;
     return pubMsg;
 }
 
@@ -64,7 +66,8 @@ boost::json::object
 LedgerFeed::sub(
     boost::asio::yield_context yield,
     std::shared_ptr<data::BackendInterface const> const& backend,
-    SubscriberSharedPtr const& subscriber
+    SubscriberSharedPtr const& subscriber,
+    uint32_t const networkID
 )
 {
     SingleFeedBase::sub(subscriber);
@@ -81,7 +84,7 @@ LedgerFeed::sub(
 
     auto const range = std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);
 
-    auto pubMsg = makeLedgerPubMessage(*lgrInfo, *fees, range, 0);
+    auto pubMsg = makeLedgerPubMessage(*lgrInfo, *fees, range, 0, networkID);
     pubMsg.erase("txn_count");
     pubMsg.erase("type");
 
@@ -93,9 +96,10 @@ LedgerFeed::pub(
     ripple::LedgerHeader const& lgrInfo,
     ripple::Fees const& fees,
     std::string const& ledgerRange,
-    std::uint32_t const txnCount
+    uint32_t const txnCount,
+    uint32_t const networkID
 )
 {
-    SingleFeedBase::pub(boost::json::serialize(makeLedgerPubMessage(lgrInfo, fees, ledgerRange, txnCount)));
+    SingleFeedBase::pub(boost::json::serialize(makeLedgerPubMessage(lgrInfo, fees, ledgerRange, txnCount, networkID)));
 }
 }  // namespace feed::impl
