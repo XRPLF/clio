@@ -121,7 +121,6 @@ jobs:
           code_coverage: ${{ inputs.code_coverage }}
           static: ${{ inputs.static }}
           time_trace: ${{ inputs.analyze_build_time }}
-          use_mold: ${{ runner.os != 'macOS' }}
           package: ${{ inputs.package }}
 
       - name: Build Clio
