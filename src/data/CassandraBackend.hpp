@@ -225,8 +225,11 @@ public:
     {
         waitForWritesToFinish();
 
+        // !range means the table 'ledger_range' is not populated it; This would be first write to the table
+        // In this case, insert both min_sequence/max_sequence range into the table
         if (!range_) {
-            executor_.writeSync(schema_->updateLedgerRange, ledgerSequence_, false, ledgerSequence_);
+            executor_.writeSync(schema_->insertLedgerRange, false, ledgerSequence_);
+            executor_.writeSync(schema_->insertLedgerRange, true, ledgerSequence_);
         }
 
         if (not executeSyncUpdate(schema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1))) {
@@ -513,80 +516,16 @@ public:
         boost::asio::yield_context yield
     ) const override
     {
-        NFTsAndCursor ret;
-
-        Statement const idQueryStatement = [&taxon, &issuer, &cursorIn, &limit, this]() {
-            if (taxon.has_value()) {
-                auto r = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
-                r.bindAt(1, *taxon);
-                r.bindAt(2, cursorIn.value_or(ripple::uint256(0)));
-                r.bindAt(3, Limit{limit});
-                return r;
-            }
-
-            auto r = schema_->selectNFTIDsByIssuer.bind(issuer);
-            r.bindAt(
-                1,
-                std::make_tuple(
-                    cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0,
-                    cursorIn.value_or(ripple::uint256(0))
-                )
-            );
-            r.bindAt(2, Limit{limit});
-            return r;
-        }();
-
-        // Query for all the NFTs issued by the account, potentially filtered by the taxon
-        auto const res = executor_.read(yield, idQueryStatement);
-
-        auto const& idQueryResults = res.value();
-        if (not idQueryResults.hasRows()) {
-            LOG(log_.debug()) << "No rows returned";
-            return {};
-        }
-
         std::vector<ripple::uint256> nftIDs;
-        for (auto const [nftID] : extract<ripple::uint256>(idQueryResults))
-            nftIDs.push_back(nftID);
-
-        if (nftIDs.empty())
-            return ret;
-
-        if (nftIDs.size() == limit)
-            ret.cursor = nftIDs.back();
-
-        std::vector<Statement> selectNFTStatements;
-        selectNFTStatements.reserve(nftIDs.size());
-
-        std::transform(
-            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTStatements), [&](auto const& nftID) {
-                return schema_->selectNFT.bind(nftID, ledgerSequence);
-            }
-        );
-
-        auto const nftInfos = executor_.readEach(yield, selectNFTStatements);
-
-        std::vector<Statement> selectNFTURIStatements;
-        selectNFTURIStatements.reserve(nftIDs.size());
-
-        std::transform(
-            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTURIStatements), [&](auto const& nftID) {
-                return schema_->selectNFTURI.bind(nftID, ledgerSequence);
-            }
-        );
-
-        auto const nftUris = executor_.readEach(yield, selectNFTURIStatements);
-
-        for (auto i = 0u; i < nftIDs.size(); i++) {
-            if (auto const maybeRow = nftInfos[i].template get<uint32_t, ripple::AccountID, bool>(); maybeRow) {
-                auto [seq, owner, isBurned] = *maybeRow;
-                NFT nft(nftIDs[i], seq, owner, isBurned);
-                if (auto const maybeUri = nftUris[i].template get<ripple::Blob>(); maybeUri)
-                    nft.uri = *maybeUri;
-                ret.nfts.push_back(nft);
-            }
+        // --- A specific taxon is requested ---
+        if (taxon.has_value()) {
+            nftIDs = fetchNFTIDsByTaxon(issuer, *taxon, limit, cursorIn, yield);
+        } else {
+            // --- No taxon is specified (general pagination) ---
+            nftIDs = fetchNFTIDsWithoutTaxon(issuer, limit, cursorIn, yield);
         }
-        return ret;
+
+        return populateNFTsAndCreateCursor(nftIDs, ledgerSequence, limit, yield);
     }
 
     MPTHoldersAndCursor
@@ -803,8 +742,9 @@ public:
         std::optional<ripple::AccountID> lastItem;
 
         while (liveAccounts.size() < number) {
-            Statement const statement = lastItem ? schema_->selectAccountFromToken.bind(*lastItem, Limit{pageSize})
-                                                 : schema_->selectAccountFromBeginning.bind(Limit{pageSize});
+            Statement const statement = lastItem
+                ? schema_->selectAccountFromTokenScylla->bind(*lastItem, Limit{pageSize})
+                : schema_->selectAccountFromBeginningScylla->bind(Limit{pageSize});
 
             auto const res = executor_.read(yield, statement);
             if (res) {
@@ -1115,6 +1055,139 @@ private:
         }
 
         return true;
+    }
+
+    std::vector<ripple::uint256>
+    fetchNFTIDsByTaxon(
+        ripple::AccountID const& issuer,
+        std::uint32_t const taxon,
+        std::uint32_t const limit,
+        std::optional<ripple::uint256> const& cursorIn,
+        boost::asio::yield_context yield
+    ) const
+    {
+        std::vector<ripple::uint256> nftIDs;
+        Statement statement = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
+        statement.bindAt(1, taxon);
+        statement.bindAt(2, cursorIn.value_or(ripple::uint256(0)));
+        statement.bindAt(3, Limit{limit});
+
+        auto const res = executor_.read(yield, statement);
+        if (res && res.value().hasRows()) {
+            for (auto const [nftID] : extract<ripple::uint256>(res.value()))
+                nftIDs.push_back(nftID);
+        }
+        return nftIDs;
+    }
+
+    std::vector<ripple::uint256>
+    fetchNFTIDsWithoutTaxon(
+        ripple::AccountID const& issuer,
+        std::uint32_t const limit,
+        std::optional<ripple::uint256> const& cursorIn,
+        boost::asio::yield_context yield
+    ) const
+    {
+        std::vector<ripple::uint256> nftIDs;
+        if (settingsProvider_.getSettings().provider == "aws_keyspace") {
+            // --- Amazon Keyspaces Workflow ---
+            auto const startTaxon = cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0;
+            auto const startTokenID = cursorIn.value_or(ripple::uint256(0));
+
+            Statement firstQuery = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
+            firstQuery.bindAt(1, startTaxon);
+            firstQuery.bindAt(2, startTokenID);
+            firstQuery.bindAt(3, Limit{limit});
+
+            auto const firstRes = executor_.read(yield, firstQuery);
+            if (firstRes) {
+                for (auto const [nftID] : extract<ripple::uint256>(firstRes.value()))
+                    nftIDs.push_back(nftID);
+            }
+
+            if (nftIDs.size() < limit) {
+                auto const remainingLimit = limit - nftIDs.size();
+                Statement secondQuery = schema_->selectNFTsAfterTaxonKeyspaces->bind(issuer);
+                secondQuery.bindAt(1, startTaxon);
+                secondQuery.bindAt(2, Limit{remainingLimit});
+
+                auto const secondRes = executor_.read(yield, secondQuery);
+                if (secondRes) {
+                    for (auto const [nftID] : extract<ripple::uint256>(secondRes.value()))
+                        nftIDs.push_back(nftID);
+                }
+            }
+        } else if (settingsProvider_.getSettings().provider == "scylladb") {
+            auto r = schema_->selectNFTsByIssuerScylla->bind(issuer);
+            r.bindAt(
+                1,
+                std::make_tuple(
+                    cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0,
+                    cursorIn.value_or(ripple::uint256(0))
+                )
+            );
+            r.bindAt(2, Limit{limit});
+
+            auto const res = executor_.read(yield, r);
+            if (res && res.value().hasRows()) {
+                for (auto const [nftID] : extract<ripple::uint256>(res.value()))
+                    nftIDs.push_back(nftID);
+            }
+        }
+        return nftIDs;
+    }
+
+    /**
+     * @brief Takes a list of NFT IDs, fetches their full data, and assembles the final result with a cursor.
+     */
+    NFTsAndCursor
+    populateNFTsAndCreateCursor(
+        std::vector<ripple::uint256> const& nftIDs,
+        std::uint32_t const ledgerSequence,
+        std::uint32_t const limit,
+        boost::asio::yield_context yield
+    ) const
+    {
+        if (nftIDs.empty()) {
+            LOG(log_.debug()) << "No rows returned";
+            return {};
+        }
+
+        NFTsAndCursor ret;
+        if (nftIDs.size() == limit)
+            ret.cursor = nftIDs.back();
+
+        // Prepare and execute queries to fetch NFT info and URIs in parallel.
+        std::vector<Statement> selectNFTStatements;
+        selectNFTStatements.reserve(nftIDs.size());
+        std::transform(
+            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTStatements), [&](auto const& nftID) {
+                return schema_->selectNFT.bind(nftID, ledgerSequence);
+            }
+        );
+
+        std::vector<Statement> selectNFTURIStatements;
+        selectNFTURIStatements.reserve(nftIDs.size());
+        std::transform(
+            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTURIStatements), [&](auto const& nftID) {
+                return schema_->selectNFTURI.bind(nftID, ledgerSequence);
+            }
+        );
+
+        auto const nftInfos = executor_.readEach(yield, selectNFTStatements);
+        auto const nftUris = executor_.readEach(yield, selectNFTURIStatements);
+
+        // Combine the results into final NFT objects.
+        for (auto i = 0u; i < nftIDs.size(); ++i) {
+            if (auto const maybeRow = nftInfos[i].template get<uint32_t, ripple::AccountID, bool>(); maybeRow) {
+                auto [seq, owner, isBurned] = *maybeRow;
+                NFT nft(nftIDs[i], seq, owner, isBurned);
+                if (auto const maybeUri = nftUris[i].template get<ripple::Blob>(); maybeUri)
+                    nft.uri = *maybeUri;
+                ret.nfts.push_back(nft);
+            }
+        }
+        return ret;
     }
 };
 

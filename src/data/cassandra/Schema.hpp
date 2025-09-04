@@ -28,6 +28,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -347,6 +348,86 @@ public:
         Statements(SettingsProviderType const& settingsProvider, Handle const& handle)
             : settingsProvider_{settingsProvider}, handle_{std::cref(handle)}
         {
+            // initialize scylladb supported queries
+            if (settingsProvider_.get().getSettings().provider == "scylladb") {
+                selectAccountFromBeginningScylla = [this]() {
+                    return handle_.get().prepare(
+                        fmt::format(
+                            R"(
+                        SELECT account
+                          FROM {}
+                         WHERE token(account) > 0
+                           PER PARTITION LIMIT 1
+                         LIMIT ?
+                        )",
+                            qualifiedTableName(settingsProvider_.get(), "account_tx")
+                        )
+                    );
+                }();
+
+                selectAccountFromTokenScylla = [this]() {
+                    return handle_.get().prepare(
+                        fmt::format(
+                            R"(
+                        SELECT account
+                          FROM {}
+                         WHERE token(account) > token(?)
+                           PER PARTITION LIMIT 1
+                         LIMIT ?
+                        )",
+                            qualifiedTableName(settingsProvider_.get(), "account_tx")
+                        )
+                    );
+                }();
+
+                selectNFTsByIssuerScylla = [this]() {
+                    return handle_.get().prepare(
+                        fmt::format(
+                            R"(
+                        SELECT token_id
+                          FROM {}
+                         WHERE issuer = ?
+                           AND (taxon, token_id) > ?
+                        ORDER BY taxon ASC, token_id ASC
+                         LIMIT ?
+                        )",
+                            qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
+                        )
+                    );
+                }();
+
+                updateLedgerRange = [this]() {
+                    return handle_.get().prepare(
+                        fmt::format(
+                            R"(
+                UPDATE {}
+                   SET sequence = ?
+                 WHERE is_latest = ?
+                    IF sequence IN (?, null)
+                    )",
+                            qualifiedTableName(settingsProvider_.get(), "ledger_range")
+                        )
+                    );
+                }();
+
+                // AWS_keyspace supported queries
+            } else if (settingsProvider_.get().getSettings().provider == "aws_keyspace") {
+                selectNFTsAfterTaxonKeyspaces = [this]() {
+                    return handle_.get().prepare(
+                        fmt::format(
+                            R"(
+                            SELECT token_id
+                              FROM {}
+                             WHERE issuer = ?
+                               AND taxon > ?
+                          ORDER BY taxon ASC, token_id ASC
+                             LIMIT ?
+                            )",
+                            qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
+                        )
+                    );
+                }();
+            }
         }
 
         //
@@ -526,6 +607,17 @@ public:
         // Update (and "delete") queries
         //
 
+        PreparedStatement insertLedgerRange = [this]() {
+            return handle_.get().prepare(
+                fmt::format(
+                    R"(
+                    INSERT INTO {} (is_latest, sequence) VALUES (?, ?) IF NOT EXISTS
+                    )",
+                    qualifiedTableName(settingsProvider_.get(), "ledger_range")
+                )
+            );
+        }();
+
         PreparedStatement updateLedgerRange = [this]() {
             return handle_.get().prepare(
                 fmt::format(
@@ -533,7 +625,7 @@ public:
                 UPDATE {}
                    SET sequence = ?
                  WHERE is_latest = ?
-                    IF sequence IN (?, null)
+                    IF sequence = ?
                 )",
                     qualifiedTableName(settingsProvider_.get(), "ledger_range")
                 )
@@ -654,6 +746,10 @@ public:
             );
         }();
 
+        /*
+        Currently, these two SELECT statements is not used.
+        If we ever use them, will need to change the PER PARTITION LIMIT to support for Keyspace
+
         PreparedStatement selectLedgerPageKeys = [this]() {
             return handle_.get().prepare(
                 fmt::format(
@@ -687,6 +783,7 @@ public:
                 )
             );
         }();
+        */
 
         PreparedStatement getToken = [this]() {
             return handle_.get().prepare(
@@ -710,36 +807,6 @@ public:
                   FROM {}
                  WHERE account = ?
                    AND seq_idx < ?
-                 LIMIT ?
-                )",
-                    qualifiedTableName(settingsProvider_.get(), "account_tx")
-                )
-            );
-        }();
-
-        PreparedStatement selectAccountFromBeginning = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
-                SELECT account
-                  FROM {}
-                 WHERE token(account) > 0
-                   PER PARTITION LIMIT 1
-                 LIMIT ?
-                )",
-                    qualifiedTableName(settingsProvider_.get(), "account_tx")
-                )
-            );
-        }();
-
-        PreparedStatement selectAccountFromToken = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
-                SELECT account
-                  FROM {}
-                 WHERE token(account) > token(?)
-                   PER PARTITION LIMIT 1
                  LIMIT ?
                 )",
                     qualifiedTableName(settingsProvider_.get(), "account_tx")
@@ -823,22 +890,6 @@ public:
                  LIMIT ?
                 )",
                     qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
-                )
-            );
-        }();
-
-        PreparedStatement selectNFTIDsByIssuer = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
-                SELECT token_id
-                  FROM {}
-                 WHERE issuer = ?
-                   AND (taxon, token_id) > ?
-              ORDER BY taxon ASC, token_id ASC
-                 LIMIT ?
-                )",
-                    qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
                 )
             );
         }();
@@ -953,6 +1004,15 @@ public:
                 )
             );
         }();
+
+        // For ScyllaDB / Cassandra ONLY
+        std::optional<PreparedStatement> selectAccountFromBeginningScylla;
+        std::optional<PreparedStatement> selectAccountFromTokenScylla;
+        std::optional<PreparedStatement> selectNFTsByIssuerScylla;
+
+        // For AWS Keyspaces ONLY
+        // NOTE: AWS keyspace is not able to load cache with accounts
+        std::optional<PreparedStatement> selectNFTsAfterTaxonKeyspaces;
     };
 
     /**

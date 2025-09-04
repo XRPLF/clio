@@ -85,6 +85,11 @@ static constexpr std::array<char const*, 1> kDATABASE_TYPE = {"cassandra"};
 static constexpr std::array<char const*, 2> kPROCESSING_POLICY = {"parallel", "sequent"};
 
 /**
+ * @brief specific values that are accepted for database provider in config.
+ */
+static constexpr std::array<char const*, 2> kPROVIDER = {"cassandra", "aws_keyspace"};
+
+/**
  * @brief An interface to enforce constraints on certain values within ClioConfigDefinition.
  */
 class Constraint {
@@ -470,6 +475,7 @@ static constinit OneOf gValidateCassandraName{"database.type", kDATABASE_TYPE};
 static constinit OneOf gValidateLoadMode{"cache.load", kLOAD_CACHE_MODE};
 static constinit OneOf gValidateLogTag{"log.tag_style", kLOG_TAGS};
 static constinit OneOf gValidateProcessingPolicy{"server.processing_policy", kPROCESSING_POLICY};
+static constinit OneOf gValidateProvider{"database.cassandra.provider", kPROVIDER};
 
 static constinit PositiveDouble gValidatePositiveDouble{};
 
