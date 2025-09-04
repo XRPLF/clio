@@ -10,18 +10,8 @@ class ClioConan(ConanFile):
     description = 'Clio RPC server'
     settings = 'os', 'compiler', 'build_type', 'arch'
     options = {
-        'static': [True, False],              # static linkage
-        'verbose': [True, False],
-        'tests': [True, False],               # build unit tests; create `clio_tests` binary
-        'integration_tests': [True, False],   # build integration tests; create `clio_integration_tests` binary
-        'benchmark': [True, False],           # build benchmarks; create `clio_benchmarks` binary
-        'docs': [True, False],                # doxygen API docs; create custom target 'docs'
-        'package': [True, False],             # create distribution packages
-        'coverage': [True, False],            # build for test coverage report; create custom target `clio_tests-ccov`
-        'lint': [True, False],                # run clang-tidy checks during compilation
-        'snapshot': [True, False],            # build export/import snapshot tool
-        'time_trace': [True, False],          # build using -ftime-trace to create compiler trace reports
-        'use_mold': [True, False],            # use mold linker for faster linking
+        'tests': [True, False],
+        'benchmark': [True, False],
     }
 
     requires = [
@@ -38,18 +28,8 @@ class ClioConan(ConanFile):
     ]
 
     default_options = {
-        'static': False,
-        'verbose': False,
         'tests': False,
-        'integration_tests': False,
         'benchmark': False,
-        'package': False,
-        'coverage': False,
-        'lint': False,
-        'docs': False,
-        'snapshot': False,
-        'time_trace': False,
-        'use_mold': False,
 
         'xrpl/*:tests': False,
         'xrpl/*:rocksdb': False,

@@ -60,7 +60,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 RUN pip install -q --no-cache-dir \
         cmake \
-        conan==2.17.0 \
+        conan==2.20.1 \
         gcovr \
         pre-commit
 
