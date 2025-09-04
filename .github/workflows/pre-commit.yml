@@ -8,20 +8,7 @@ on:
 
 jobs:
   run-hooks:
-    runs-on: heavy
-    container:
-      image: ghcr.io/xrplf/clio-ci:0e8896ad064a5290c4805318b549df16403ca2d7
-
-    steps:
-      - name: Checkout Repo ⚡️
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Prepare runner
-        uses: XRPLF/actions/.github/actions/prepare-runner@7951b682e5a2973b28b0719a72f01fc4b0d0c34f
-        with:
-          disable_ccache: true
-
-      - name: Run pre-commit ✅
-        run: pre-commit run --all-files
+    uses: XRPLF/actions/.github/workflows/pre-commit.yml@afbcbdafbe0ce5439492fb87eda6441371086386
+    with:
+      runs_on: heavy
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:0e8896ad064a5290c4805318b549df16403ca2d7" }'

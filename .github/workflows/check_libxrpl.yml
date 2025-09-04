@@ -32,7 +32,7 @@ jobs:
       - name: Update libXRPL version requirement
         shell: bash
         run: |
-          sed -i.bak -E "s|'xrpl/[a-zA-Z0-9\\.\\-]+'|'xrpl/${{ github.event.client_payload.version }}'|g" conanfile.py
+          sed -i.bak -E "s|'xrpl/[a-zA-Z0-9\\.\\-]+'|'xrpl/${{ github.event.client_payload.conan_ref }}'|g" conanfile.py
           rm -f conanfile.py.bak
 
       - name: Update conan lockfile
@@ -95,6 +95,7 @@ jobs:
           labels: "compatibility,bug"
           title: "Proposed libXRPL check failed"
           body: >
-            Clio build or tests failed against `libXRPL ${{ github.event.client_payload.version }}`.
+            Clio build or tests failed against `libXRPL ${{ github.event.client_payload.conan_ref }}`.
 
-            Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/
+            PR: ${{ github.event.client_payload.pr_url }}
+            Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/

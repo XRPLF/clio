@@ -25,9 +25,6 @@
 #include "util/config/ValueView.hpp"
 
 #include <boost/beast/http/field.hpp>
-#include <boost/beast/http/message.hpp>
-#include <boost/beast/http/string_body.hpp>
-#include <xrpl/basics/base_uint.h>
 
 #include <optional>
 #include <string>

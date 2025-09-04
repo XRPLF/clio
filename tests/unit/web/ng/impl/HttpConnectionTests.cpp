@@ -38,7 +38,6 @@
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
-#include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

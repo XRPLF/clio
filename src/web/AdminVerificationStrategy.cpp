@@ -24,8 +24,6 @@
 #include "util/config/ConfigDefinition.hpp"
 
 #include <boost/beast/http/field.hpp>
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/digest.h>
 
 #include <cstring>
 #include <memory>

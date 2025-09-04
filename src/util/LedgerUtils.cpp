@@ -21,7 +21,6 @@
 
 #include "util/JsonUtils.hpp"
 
-#include <boost/algorithm/string.hpp>
 #include <xrpl/protocol/LedgerFormats.h>
 
 #include <algorithm>
