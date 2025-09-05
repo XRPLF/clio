@@ -51,7 +51,7 @@ class ClioConan(ConanFile):
     )
 
     def requirements(self):
-        if self.options.tests or self.options.integration_tests:
+        if self.options.tests:
             self.requires('gtest/1.14.0')
         if self.options.benchmark:
             self.requires('benchmark/1.9.4')
