@@ -189,3 +189,66 @@ TEST(RPCErrorsTest, InvalidWarningToJSON)
     };
     EXPECT_ANY_THROW((void)notSanitizedMakeWarning());
 }
+
+struct StatusStreamTestBundle {
+    rpc::Status status;
+    std::string expectedOutput;
+};
+
+struct RPCErrorsStatusStreamTest : public ::testing::TestWithParam<StatusStreamTestBundle> {
+protected:
+    std::ostringstream oss;
+};
+
+TEST_P(RPCErrorsStatusStreamTest, StatusStreamOperator)
+{
+    auto const param = GetParam();
+    oss << param.status;
+    EXPECT_EQ(oss.str(), param.expectedOutput);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    RPCErrorsTest,
+    RPCErrorsStatusStreamTest,
+    testing::Values(
+        // Empty constructor
+        StatusStreamTestBundle{.status = Status{}, .expectedOutput = "Code: 0, Message: An unknown error code."},
+
+        // Code only constructor with RippledError
+        StatusStreamTestBundle{
+            .status = Status{RippledError::rpcSUCCESS},
+            .expectedOutput = "Code: 0, Message: An unknown error code."
+        },
+
+        // Code only constructor with ClioError
+        StatusStreamTestBundle{
+            .status = Status{ClioError::RpcParamsUnparsable},
+            .expectedOutput = "Code: 6004, Message: Params must be an array holding exactly one object."
+        },
+
+        // Code and extraInfo constructor
+        StatusStreamTestBundle{
+            .status = Status{ClioError::EtlConnectionError, boost::json::object{}},
+            .expectedOutput = "Code: 7000, Message: Couldn't connect to rippled., Extra Info: {}"
+        },
+
+        // Message only constructor
+        StatusStreamTestBundle{.status = Status{"test message."}, .expectedOutput = "Code: -1, Message: test message."},
+
+        // Code and message constructor
+        StatusStreamTestBundle{
+            .status = Status{RippledError::rpcSUCCESS, "test message."},
+            .expectedOutput = "Code: 0, Message: test message."
+        },
+        StatusStreamTestBundle{
+            .status = Status{ClioError::RpcParamsUnparsable, "Missing params array."},
+            .expectedOutput = "Code: 6004, Message: Missing params array."
+        },
+
+        // Code, error, and message constructor
+        StatusStreamTestBundle{
+            .status = Status{ClioError::EtlInvalidResponse, "invalidResponse", "Rippled returned an invalid response."},
+            .expectedOutput = "Code: 7003, Error: invalidResponse, Message: Rippled returned an invalid response."
+        }
+    )
+);
