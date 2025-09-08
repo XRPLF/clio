@@ -1493,7 +1493,7 @@ createMPTIssuanceCreateTx(std::string_view accountId, uint32_t fee, uint32_t seq
 data::TransactionAndMetadata
 createMPTIssuanceCreateTxWithMetadata(std::string_view accountId, uint32_t fee, uint32_t seq)
 {
-    ripple::STObject tx = createMPTIssuanceCreateTx(accountId, fee, seq);
+    ripple::STObject const tx = createMPTIssuanceCreateTx(accountId, fee, seq);
 
     ripple::STObject metaObj(ripple::sfTransactionMetaData);
     metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
@@ -1509,7 +1509,7 @@ createMPTIssuanceCreateTxWithMetadata(std::string_view accountId, uint32_t fee, 
     newFields.setFieldU64(ripple::sfOutstandingAmount, 0);
     newFields.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
     newFields.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
-    std::string_view metadata = "test-meta";
+    std::string_view const metadata = "test-meta";
     ripple::Slice const sliceMetadata(metadata.data(), metadata.size());
     newFields.setFieldVL(ripple::sfMPTokenMetadata, sliceMetadata);
 
