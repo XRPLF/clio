@@ -38,7 +38,7 @@ jobs:
       - name: Update conan lockfile
         shell: bash
         run: |
-          conan lock create . -o '&:tests=True' -o '&:benchmark=True' --profile:all ${{ env.CONAN_PROFILE }}
+          conan lock create . --profile:all ${{ env.CONAN_PROFILE }}
 
       - name: Run conan
         uses: ./.github/actions/conan
