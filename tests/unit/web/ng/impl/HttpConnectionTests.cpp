@@ -81,7 +81,7 @@ TEST_F(HttpConnectionTests, wasUpgraded)
 {
     util::spawn(ctx_, [this](boost::asio::yield_context yield) {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
     });
 
     runSpawn([this](boost::asio::yield_context yield) {
@@ -96,10 +96,10 @@ TEST_F(HttpConnectionTests, Receive)
 
     util::spawn(ctx_, [this](boost::asio::yield_context yield) {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
 
         maybeError = httpClient_.send(request_, yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
     });
 
     runSpawn([this](boost::asio::yield_context yield) {
@@ -124,7 +124,7 @@ TEST_F(HttpConnectionTests, ReceiveTimeout)
 {
     util::spawn(ctx_, [this](boost::asio::yield_context yield) {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{1});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
     });
 
     runSpawn([this](boost::asio::yield_context yield) {
@@ -139,7 +139,7 @@ TEST_F(HttpConnectionTests, ReceiveClientDisconnected)
 {
     util::spawn(ctx_, [this](boost::asio::yield_context yield) {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{1});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
         httpClient_.disconnect();
     });
 
@@ -158,10 +158,10 @@ TEST_F(HttpConnectionTests, Send)
 
     util::spawn(ctx_, [this, response = response](boost::asio::yield_context yield) mutable {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
 
         auto const expectedResponse = httpClient_.receive(yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_TRUE(expectedResponse.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(expectedResponse.has_value()) << expectedResponse.error().message(); }();
 
         auto const receivedResponse = expectedResponse.value();
         auto const sentResponse = std::move(response).intoHttpResponse();
@@ -174,7 +174,7 @@ TEST_F(HttpConnectionTests, Send)
     runSpawn([this, &response](boost::asio::yield_context yield) {
         auto connection = acceptConnection(yield);
         auto maybeError = connection->send(response, yield);
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
     });
 }
 
@@ -185,7 +185,7 @@ TEST_F(HttpConnectionTests, SendMultipleTimes)
 
     util::spawn(ctx_, [this, response = response](boost::asio::yield_context yield) mutable {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
 
         for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
             auto const expectedResponse = httpClient_.receive(yield, std::chrono::milliseconds{100});
@@ -205,7 +205,7 @@ TEST_F(HttpConnectionTests, SendMultipleTimes)
 
         for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
             auto maybeError = connection->send(response, yield);
-            [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+            [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
         }
     });
 }
@@ -218,7 +218,7 @@ TEST_F(HttpConnectionTests, SendMultipleTimesFromMultipleCoroutines)
     util::spawn(ctx_, [this, response = response](boost::asio::yield_context yield) mutable {
         auto const maybeError =
             httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
 
         for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
             auto const expectedResponse = httpClient_.receive(yield, std::chrono::milliseconds{100});
@@ -240,7 +240,7 @@ TEST_F(HttpConnectionTests, SendMultipleTimesFromMultipleCoroutines)
         for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
             group.spawn(yield, [&response, &connection](boost::asio::yield_context innerYield) {
                 auto const maybeError = connection->send(response, innerYield);
-                [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+                [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
             });
         }
         group.asyncWait(yield);
@@ -253,7 +253,7 @@ TEST_F(HttpConnectionTests, SendMultipleTimesClientDisconnected)
     util::spawn(ctx_, [this, response = response](boost::asio::yield_context yield) mutable {
         auto const maybeError =
             httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{1});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
         auto const expectedResponse = httpClient_.receive(yield, std::chrono::milliseconds{100});
         [&]() { ASSERT_TRUE(expectedResponse.has_value()) << expectedResponse.error().message(); }();
         httpClient_.disconnect();
@@ -264,13 +264,13 @@ TEST_F(HttpConnectionTests, SendMultipleTimesClientDisconnected)
         connection->setTimeout(std::chrono::milliseconds{1});
         auto maybeError = connection->send(response, yield);
         size_t counter{1};
-        while (not maybeError.has_value() and counter < 100) {
+        while (maybeError.has_value() and counter < 100) {
             ++counter;
             maybeError = connection->send(response, yield);
         }
         // Sending after getting an error should be safe
         maybeError = connection->send(response, yield);
-        EXPECT_TRUE(maybeError.has_value());
+        EXPECT_FALSE(maybeError.has_value());
         EXPECT_LT(counter, 100);
     });
 }
@@ -280,7 +280,7 @@ TEST_F(HttpConnectionTests, SendClientDisconnected)
     Response const response{http::status::ok, "some response data", Request{request_}};
     util::spawn(ctx_, [this, response = response](boost::asio::yield_context yield) mutable {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{1});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
         httpClient_.disconnect();
     });
     runSpawn([this, &response](boost::asio::yield_context yield) {
@@ -288,11 +288,11 @@ TEST_F(HttpConnectionTests, SendClientDisconnected)
         connection->setTimeout(std::chrono::milliseconds{1});
         auto maybeError = connection->send(response, yield);
         size_t counter{1};
-        while (not maybeError.has_value() and counter < 100) {
+        while (maybeError.has_value() and counter < 100) {
             ++counter;
             maybeError = connection->send(response, yield);
         }
-        EXPECT_TRUE(maybeError.has_value());
+        EXPECT_FALSE(maybeError.has_value());
         EXPECT_LT(counter, 100);
     });
 }
@@ -301,14 +301,14 @@ TEST_F(HttpConnectionTests, Close)
 {
     util::spawn(ctx_, [this](boost::asio::yield_context yield) {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
 
         size_t counter{0};
-        while (not maybeError.has_value() and counter < 100) {
+        while (maybeError.has_value() and counter < 100) {
             ++counter;
             maybeError = httpClient_.send(request_, yield, std::chrono::milliseconds{1});
         }
-        EXPECT_TRUE(maybeError.has_value());
+        EXPECT_FALSE(maybeError.has_value());
         EXPECT_LT(counter, 100);
     });
 
@@ -323,10 +323,10 @@ TEST_F(HttpConnectionTests, IsUpgradeRequested_GotHttpRequest)
 {
     util::spawn(ctx_, [this](boost::asio::yield_context yield) {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
 
         maybeError = httpClient_.send(request_, yield, std::chrono::milliseconds{1});
-        EXPECT_FALSE(maybeError.has_value()) << maybeError->message();
+        EXPECT_TRUE(maybeError.has_value()) << maybeError.error().message();
     });
 
     runSpawn([this](boost::asio::yield_context yield) {
@@ -341,7 +341,7 @@ TEST_F(HttpConnectionTests, IsUpgradeRequested_FailedToFetch)
 {
     util::spawn(ctx_, [this](boost::asio::yield_context yield) {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
     });
 
     runSpawn([this](boost::asio::yield_context yield) {
@@ -358,7 +358,7 @@ TEST_F(HttpConnectionTests, Upgrade)
 
     util::spawn(ctx_, [this, &wsClient](boost::asio::yield_context yield) {
         auto maybeError = wsClient.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
     });
 
     runSpawn([this](boost::asio::yield_context yield) {
@@ -376,7 +376,7 @@ TEST_F(HttpConnectionTests, Ip)
 {
     util::spawn(ctx_, [this](boost::asio::yield_context yield) mutable {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
     });
 
     runSpawn([this](boost::asio::yield_context yield) {
@@ -392,7 +392,7 @@ TEST_F(HttpConnectionTests, isAdminSetAdmin)
 
     util::spawn(ctx_, [this](boost::asio::yield_context yield) mutable {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(maybeError.has_value()) << maybeError.error().message(); }();
     });
 
     runSpawn([&](boost::asio::yield_context yield) {

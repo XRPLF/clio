@@ -71,7 +71,7 @@ SubscriptionContext::send(std::shared_ptr<std::string> message)
 
     tasksGroup_.spawn(yield_, [this, message = std::move(message)](boost::asio::yield_context innerYield) mutable {
         auto const maybeError = connection_.get().sendShared(std::move(message), innerYield);
-        if (maybeError.has_value() and errorHandler_(*maybeError, connection_)) {
+        if (not maybeError.has_value() and errorHandler_(maybeError.error(), connection_)) {
             connection_.get().close(innerYield);
             gotError_ = true;
         }

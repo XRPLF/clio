@@ -67,7 +67,7 @@ TEST_F(NgSubscriptionContextTests, Send)
 
         EXPECT_CALL(connection_, sendShared).WillOnce([&message](std::shared_ptr<std::string> sendingMessage, auto&&) {
             EXPECT_EQ(sendingMessage, message);
-            return std::nullopt;
+            return std::expected<void, web::ng::Error>{};
         });
         subscriptionContext.send(message);
         subscriptionContext.disconnect(yield);
@@ -86,13 +86,13 @@ TEST_F(NgSubscriptionContextTests, SendOrder)
             .InSequence(sequence)
             .WillOnce([&message1](std::shared_ptr<std::string> sendingMessage, auto&&) {
                 EXPECT_EQ(sendingMessage, message1);
-                return std::nullopt;
+                return std::expected<void, web::ng::Error>{};
             });
         EXPECT_CALL(connection_, sendShared)
             .InSequence(sequence)
             .WillOnce([&message2](std::shared_ptr<std::string> sendingMessage, auto&&) {
                 EXPECT_EQ(sendingMessage, message2);
-                return std::nullopt;
+                return std::expected<void, web::ng::Error>{};
             });
 
         subscriptionContext.send(message1);
@@ -109,7 +109,7 @@ TEST_F(NgSubscriptionContextTests, SendFailed)
 
         EXPECT_CALL(connection_, sendShared).WillOnce([&message](std::shared_ptr<std::string> sendingMessage, auto&&) {
             EXPECT_EQ(sendingMessage, message);
-            return boost::system::errc::make_error_code(boost::system::errc::not_supported);
+            return std::unexpected{boost::system::errc::make_error_code(boost::system::errc::not_supported)};
         });
         EXPECT_CALL(errorHandler_, Call).WillOnce(testing::Return(true));
         EXPECT_CALL(connection_, close);
@@ -128,7 +128,7 @@ TEST_F(NgSubscriptionContextTests, SendTooManySubscriptions)
             .WillOnce([&message](std::shared_ptr<std::string> sendingMessage, boost::asio::yield_context innerYield) {
                 boost::asio::post(innerYield);  // simulate send is slow by switching to another coroutine
                 EXPECT_EQ(sendingMessage, message);
-                return std::nullopt;
+                return std::expected<void, web::ng::Error>{};
             });
         EXPECT_CALL(connection_, close);
 

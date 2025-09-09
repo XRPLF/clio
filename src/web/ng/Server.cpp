@@ -148,8 +148,8 @@ makeConnection(
         );
         sslConnection->setTimeout(std::chrono::seconds{10});
         auto const maybeError = sslConnection->sslHandshake(yield);
-        if (maybeError.has_value())
-            return std::unexpected{fmt::format("SSL handshake error: {}", maybeError->message())};
+        if (not maybeError.has_value())
+            return std::unexpected{fmt::format("SSL handshake error: {}", maybeError.error().message())};
 
         connection = std::move(sslConnection);
     } else {
