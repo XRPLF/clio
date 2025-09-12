@@ -231,52 +231,22 @@ private:
     Logger(std::shared_ptr<spdlog::logger> logger);
 };
 
-class LogServiceData {
-private:
-    bool isAsync_ = true;
-    Severity defaultSeverity_ = Severity::NFO;
-    std::vector<std::shared_ptr<spdlog::sinks::sink>> sinks_;
-    bool initialized_{false};
-
+class LogServiceState {
 public:
-    void
+    static void
     init(bool isAsync, Severity defaultSeverity, std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks);
 
-    void
-    reset()
-    {
-        *this = LogServiceData{};
-    }
+    static void
+    reset();
 
-    bool
-    isAsync() const
-    {
-        return isAsync_;
-    }
+    static void
+    reinitSinks(std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks);
 
-    Severity
-    defaultSeverity() const
-    {
-        return defaultSeverity_;
-    }
-
-    std::vector<std::shared_ptr<spdlog::sinks::sink>> const&
-    sinks() const
-    {
-        return sinks_;
-    }
-
-    void
-    setSinks(std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks)
-    {
-        sinks_ = sinks;
-    }
-
-    bool
-    initialized() const
-    {
-        return initialized_;
-    }
+protected:
+    static bool isAsync_;                                             // NOLINT(readability-identifier-naming)
+    static Severity defaultSeverity_;                                 // NOLINT(readability-identifier-naming)
+    static std::vector<std::shared_ptr<spdlog::sinks::sink>> sinks_;  // NOLINT(readability-identifier-naming)
+    static bool initialized_;                                         // NOLINT(readability-identifier-naming)
 };
 
 /**
@@ -285,37 +255,17 @@ public:
  * Used to initialize and setup the logging core as well as a globally available
  * entrypoint for logging into the `General` channel as well as raising alerts.
  */
-class LogService {
+class LogService : public LogServiceState {
 private:
     friend class Logger;
     friend class ::LoggerFixture;
     friend struct ::LogServiceInitTests;
-
-    static LogServiceData data_;  // NOLINT(readability-identifier-naming)
-
-    static LogServiceData&
-    data()
-    {
-        return data_;
-    }
-
-    static void
-    reinitSinks(std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks);
 
     static std::shared_ptr<spdlog::logger>
     registerLogger(std::string const& channel, std::optional<Severity> severity = std::nullopt);
 
 public:
     LogService() = delete;
-
-    /**
-     * @brief Parses the sinks from a @ref config::ClioConfigDefinition
-     *
-     * @param config The configuration to parse sinks from
-     * @return A vector of sinks on success, error message on failure
-     */
-    [[nodiscard]] static std::expected<std::vector<std::shared_ptr<spdlog::sinks::sink>>, std::string>
-    getSinks(config::ClioConfigDefinition const& config);
 
     /**
      * @brief Global log core initialization from a @ref config::ClioConfigDefinition
@@ -395,6 +345,15 @@ public:
     initialized();
 
 private:
+    /**
+     * @brief Parses the sinks from a @ref config::ClioConfigDefinition
+     *
+     * @param config The configuration to parse sinks from
+     * @return A vector of sinks on success, error message on failure
+     */
+    [[nodiscard]] static std::expected<std::vector<std::shared_ptr<spdlog::sinks::sink>>, std::string>
+    getSinks(config::ClioConfigDefinition const& config);
+
     struct FileLoggingParams {
         std::string logDir;
 

@@ -55,13 +55,13 @@ struct LogServiceInitTests : virtual public LoggerFixture {
 public:
     LogServiceInitTests()
     {
-        util::LogService::data().reset();
+        util::LogServiceState::reset();
     }
 
     ~LogServiceInitTests() override
     {
-        util::LogService::data().reset();
-        util::LogService::data().init(false, util::Severity::NFO, {});
+        util::LogServiceState::reset();
+        util::LogServiceState::init(false, util::Severity::NFO, {});
     }
 
 protected:

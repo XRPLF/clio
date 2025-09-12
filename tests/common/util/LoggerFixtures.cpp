@@ -33,7 +33,7 @@
 void
 LoggerFixture::init()
 {
-    util::LogService::data().init(false, util::Severity::FTL, {});
+    util::LogServiceState::init(false, util::Severity::FTL, {});
 
     std::ranges::for_each(util::Logger::kCHANNELS, [](char const* channel) {
         util::LogService::registerLogger(channel);
@@ -56,8 +56,8 @@ LoggerFixture::resetTestingLoggers()
 
 LoggerFixture::LoggerFixture()
 {
-    util::LogService::data().reset();
-    util::LogService::data().init(false, util::Severity::TRC, {});
+    util::LogServiceState::reset();
+    util::LogServiceState::init(false, util::Severity::TRC, {});
 
     resetTestingLoggers();
 }

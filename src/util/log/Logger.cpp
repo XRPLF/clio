@@ -58,7 +58,10 @@
 
 namespace util {
 
-LogServiceData LogService::data_{};
+bool LogServiceState::isAsync_{true};
+Severity LogServiceState::defaultSeverity_{Severity::NFO};
+std::vector<spdlog::sink_ptr> LogServiceState::sinks_{};
+bool LogServiceState::initialized_{false};
 
 namespace {
 
@@ -241,10 +244,10 @@ getMinSeverity(config::ClioConfigDefinition const& config, Severity defaultSever
 }
 
 void
-LogServiceData::init(bool isAsync, Severity defaultSeverity, std::vector<spdlog::sink_ptr> const& sinks)
+LogServiceState::init(bool isAsync, Severity defaultSeverity, std::vector<spdlog::sink_ptr> const& sinks)
 {
     if (initialized_) {
-        throw std::logic_error("LogServiceData already initialized");
+        throw std::logic_error("LogServiceState is already initialized");
     }
 
     isAsync_ = isAsync;
@@ -252,7 +255,7 @@ LogServiceData::init(bool isAsync, Severity defaultSeverity, std::vector<spdlog:
     sinks_ = sinks;
     initialized_ = true;
 
-    spdlog::apply_all([this](std::shared_ptr<spdlog::logger> logger) {
+    spdlog::apply_all([](std::shared_ptr<spdlog::logger> logger) {
         logger->set_level(toSpdlogLevel(defaultSeverity_));
     });
 
@@ -262,16 +265,25 @@ LogServiceData::init(bool isAsync, Severity defaultSeverity, std::vector<spdlog:
     }
 }
 
+void
+LogServiceState::reset()
+{
+    isAsync_ = true;
+    defaultSeverity_ = Severity::NFO;
+    sinks_.clear();
+    initialized_ = false;
+}
+
 std::shared_ptr<spdlog::logger>
 LogService::registerLogger(std::string const& channel, std::optional<Severity> severity)
 {
-    if (not data_.initialized()) {
+    if (not initialized_) {
         throw std::logic_error("LogService not initialized");
     }
 
     if (!severity.has_value()) {
         std::cerr << "Registering logger for channel: " << channel
-                  << " with default severity: " << toString(data_.defaultSeverity()) << std::endl;
+                  << " with default severity: " << toString(defaultSeverity_) << std::endl;
     } else {
         std::cerr << "Registering logger for channel: " << channel
                   << " with overridden severity: " << toString(severity.value()) << std::endl;
@@ -288,26 +300,22 @@ LogService::registerLogger(std::string const& channel, std::optional<Severity> s
 
     if (!severity.has_value()) {
         std::cerr << "Creating new logger for channel: " << channel
-                  << " with default severity: " << toString(data_.defaultSeverity()) << std::endl;
+                  << " with default severity: " << toString(defaultSeverity_) << std::endl;
     } else {
         std::cerr << "Creating new logger for channel: " << channel
                   << " with overridden severity: " << toString(severity.value()) << std::endl;
     }
 
     std::shared_ptr<spdlog::logger> logger;
-    if (data_.isAsync()) {
+    if (isAsync_) {
         logger = std::make_shared<spdlog::async_logger>(
-            channel,
-            data_.sinks().begin(),
-            data_.sinks().end(),
-            spdlog::thread_pool(),
-            spdlog::async_overflow_policy::block
+            channel, sinks_.begin(), sinks_.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block
         );
     } else {
-        logger = std::make_shared<spdlog::logger>(channel, data_.sinks().begin(), data_.sinks().end());
+        logger = std::make_shared<spdlog::logger>(channel, sinks_.begin(), sinks_.end());
     }
 
-    logger->set_level(toSpdlogLevel(severity.value_or(data_.defaultSeverity())));
+    logger->set_level(toSpdlogLevel(severity.value_or(defaultSeverity_)));
     logger->flush_on(spdlog::level::err);
 
     spdlog::register_logger(logger);
@@ -350,14 +358,14 @@ LogService::init(config::ClioConfigDefinition const& config)
         return std::unexpected{sinksMaybe.error()};
     }
 
-    data_.init(
+    LogServiceState::init(
         config.get<bool>("log.is_async"),
         getSeverityLevel(config.get<std::string>("log.level")),
         std::move(sinksMaybe).value()
     );
 
     // get min severity per channel, can be overridden using the `log.channels` array
-    auto const maybeMinSeverity = getMinSeverity(config, data_.defaultSeverity());
+    auto const maybeMinSeverity = getMinSeverity(config, defaultSeverity_);
     if (!maybeMinSeverity) {
         return std::unexpected{maybeMinSeverity.error()};
     }
@@ -366,7 +374,7 @@ LogService::init(config::ClioConfigDefinition const& config)
     // Create loggers for each channel
     for (auto const& channel : Logger::kCHANNELS) {
         auto const it = minSeverity.find(channel);
-        auto const severity = (it != minSeverity.end()) ? it->second : data_.defaultSeverity();
+        auto const severity = (it != minSeverity.end()) ? it->second : defaultSeverity_;
         registerLogger(channel, severity);
     }
 
@@ -377,10 +385,10 @@ LogService::init(config::ClioConfigDefinition const& config)
 void
 LogService::shutdown()
 {
-    if (!data_.initialized()) {
+    if (!initialized_) {
         throw std::logic_error("LogService not initialized");
     }
-    if (data_.isAsync()) {
+    if (isAsync_) {
         // We run in async mode in production, so we need to make sure all logs are flushed before shutting down
         spdlog::shutdown();
     }
@@ -425,14 +433,14 @@ LogService::fatal(SourceLocationType const& loc)
 bool
 LogService::initialized()
 {
-    return data_.initialized();
+    return initialized_;
 }
 
 void
-LogService::reinitSinks(std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks)
+LogServiceState::reinitSinks(std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks)
 {
-    util::LogService::data().setSinks(sinks);
-    spdlog::apply_all([&sinks](std::shared_ptr<spdlog::logger> logger) { logger->sinks() = sinks; });
+    sinks_ = sinks;
+    spdlog::apply_all([](std::shared_ptr<spdlog::logger> logger) { logger->sinks() = sinks_; });
 }
 
 Logger::Logger(std::string channel) : logger_(LogService::registerLogger(channel))
