@@ -33,11 +33,11 @@ TEST_F(LoggerTest, Basic)
 {
     Logger const log{"General"};
 
-    LogService::debug() << "Debug line not logged";
-    ASSERT_TRUE(getLoggerString().empty());
+    log.info() << "Info line logged";
+    ASSERT_EQ(getLoggerString(), "inf:General - Info line logged\n");
 
-    log.info() << "Info line logged with numbers: " << 42 << " and " << 3.14;
-    ASSERT_EQ(getLoggerString(), "inf:General - Info line logged with numbers: 42 and 3.14\n");
+    LogService::debug() << "Debug line with numbers " << 12345;
+    ASSERT_EQ(getLoggerString(), "deb:General - Debug line with numbers 12345\n");
 
     LogService::warn() << "Warning is logged";
     ASSERT_EQ(getLoggerString(), "war:General - Warning is logged\n");

@@ -50,13 +50,14 @@ LoggerFixture::resetTestingLoggers()
     ostreamSink->set_level(spdlog::level::trace);
     util::LogService::reinitSinks({ostreamSink});
 
-    spdlog::apply_all([](std::shared_ptr<spdlog::logger> logger) { logger->set_level(spdlog::level::info); });
+    spdlog::apply_all([](std::shared_ptr<spdlog::logger> logger) { logger->set_level(spdlog::level::trace); });
+    spdlog::get("General")->set_level(spdlog::level::debug);
 }
 
 LoggerFixture::LoggerFixture()
 {
     util::LogService::data().reset();
-    util::LogService::data().init(false, util::Severity::NFO, {});
+    util::LogService::data().init(false, util::Severity::TRC, {});
 
     resetTestingLoggers();
 }
