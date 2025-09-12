@@ -45,7 +45,7 @@ struct Settings {
     static constexpr uint32_t kDEFAULT_MAX_WRITE_REQUESTS_OUTSTANDING = 10'000;
     static constexpr uint32_t kDEFAULT_MAX_READ_REQUESTS_OUTSTANDING = 100'000;
     static constexpr std::size_t kDEFAULT_BATCH_SIZE = 20;
-    static constexpr std::string kDEFAULT_PROVIDER = "scylladb";
+    static constexpr std::string kDEFAULT_PROVIDER = "cassandra";
 
     /**
      * @brief Represents the configuration of contact points for cassandra.

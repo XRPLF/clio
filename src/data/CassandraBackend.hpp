@@ -225,9 +225,9 @@ public:
     {
         waitForWritesToFinish();
 
-        // !range means the table 'ledger_range' is not populated it; This would be first write to the table
-        // In this case, insert both min_sequence/max_sequence range into the table
-        if (!range_) {
+        // !range_.has_value() means the table 'ledger_range' is not populated; This would be the first write to the
+        // table In this case, insert both min_sequence/max_sequence range into the table
+        if (!range_.has_value()) {
             executor_.writeSync(schema_->insertLedgerRange, false, ledgerSequence_);
             executor_.writeSync(schema_->insertLedgerRange, true, ledgerSequence_);
         }
@@ -517,11 +517,9 @@ public:
     ) const override
     {
         std::vector<ripple::uint256> nftIDs;
-        // --- A specific taxon is requested ---
         if (taxon.has_value()) {
             nftIDs = fetchNFTIDsByTaxon(issuer, *taxon, limit, cursorIn, yield);
         } else {
-            // --- No taxon is specified (general pagination) ---
             nftIDs = fetchNFTIDsWithoutTaxon(issuer, limit, cursorIn, yield);
         }
 
