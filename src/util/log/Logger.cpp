@@ -281,29 +281,11 @@ LogService::registerLogger(std::string const& channel, std::optional<Severity> s
         throw std::logic_error("LogService not initialized");
     }
 
-    if (!severity.has_value()) {
-        std::cerr << "Registering logger for channel: " << channel
-                  << " with default severity: " << toString(defaultSeverity_) << std::endl;
-    } else {
-        std::cerr << "Registering logger for channel: " << channel
-                  << " with overridden severity: " << toString(severity.value()) << std::endl;
-    }
-
     std::shared_ptr<spdlog::logger> existingLogger = spdlog::get(channel);
     if (existingLogger != nullptr) {
-        std::cerr << "Logger for channel: " << channel << " already exists" << std::endl;
         if (severity.has_value())
             existingLogger->set_level(toSpdlogLevel(*severity));
-        // existingLogger->sinks() = data_.sinks();
         return existingLogger;
-    }
-
-    if (!severity.has_value()) {
-        std::cerr << "Creating new logger for channel: " << channel
-                  << " with default severity: " << toString(defaultSeverity_) << std::endl;
-    } else {
-        std::cerr << "Creating new logger for channel: " << channel
-                  << " with overridden severity: " << toString(severity.value()) << std::endl;
     }
 
     std::shared_ptr<spdlog::logger> logger;
@@ -453,8 +435,6 @@ Logger::Pump::Pump(std::shared_ptr<spdlog::logger> logger, Severity sev, SourceL
     , sourceLocation_(loc)
     , enabled_(logger_ != nullptr && logger_->should_log(toSpdlogLevel(sev)))
 {
-    std::cerr << "pump created"
-              << fmt::format(" channel={} severity={} enabled={}\n", logger_->name(), toString(severity_), enabled_);
 }
 
 Logger::Pump::~Pump()
