@@ -41,11 +41,9 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
-#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
-#include <iostream>
 #include <memory>
 #include <optional>
 #include <stdexcept>
