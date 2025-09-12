@@ -85,21 +85,6 @@ toSpdlogLevel(Severity sev)
     return spdlog::level::info;
 }
 
-std::string_view
-toString(Severity sev)
-{
-    static constexpr std::array<std::string_view, 6> kLABELS = {
-        "TRC",
-        "DBG",
-        "NFO",
-        "WRN",
-        "ERR",
-        "FTL",
-    };
-
-    return kLABELS.at(static_cast<int>(sev));
-}
-
 }  // namespace
 
 /**
