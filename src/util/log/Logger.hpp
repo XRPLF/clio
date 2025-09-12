@@ -232,7 +232,11 @@ private:
 };
 
 class LogServiceState {
-public:
+protected:
+    friend struct ::LogServiceInitTests;
+    friend class ::LoggerFixture;
+    friend class Logger;
+
     static void
     init(bool isAsync, Severity defaultSeverity, std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks);
 
@@ -241,6 +245,9 @@ public:
 
     static void
     replaceSinks(std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks);
+
+    static std::shared_ptr<spdlog::logger>
+    registerLogger(std::string const& channel, std::optional<Severity> severity = std::nullopt);
 
 protected:
     static bool isAsync_;                                             // NOLINT(readability-identifier-naming)
@@ -256,14 +263,6 @@ protected:
  * entrypoint for logging into the `General` channel as well as raising alerts.
  */
 class LogService : public LogServiceState {
-private:
-    friend class Logger;
-    friend class ::LoggerFixture;
-    friend struct ::LogServiceInitTests;
-
-    static std::shared_ptr<spdlog::logger>
-    registerLogger(std::string const& channel, std::optional<Severity> severity = std::nullopt);
-
 public:
     LogService() = delete;
 

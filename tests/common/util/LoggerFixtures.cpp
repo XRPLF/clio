@@ -48,7 +48,7 @@ LoggerFixture::resetTestingLoggers()
     auto ostreamSink = std::make_shared<spdlog::sinks::ostream_sink_mt>(buffer_.getStream());
     ostreamSink->set_formatter(std::make_unique<spdlog::pattern_formatter>("%^%3!l:%n%$ - %v"));
     ostreamSink->set_level(spdlog::level::trace);
-    util::LogService::replaceSinks({ostreamSink});
+    util::LogServiceState::replaceSinks({ostreamSink});
 
     spdlog::apply_all([](std::shared_ptr<spdlog::logger> logger) { logger->set_level(spdlog::level::trace); });
     spdlog::get("General")->set_level(spdlog::level::debug);
@@ -64,6 +64,6 @@ LoggerFixture::LoggerFixture()
 
 LoggerFixture::~LoggerFixture()
 {
-    util::LogService::replaceSinks({});
+    util::LogServiceState::replaceSinks({});
     spdlog::apply_all([](std::shared_ptr<spdlog::logger> logger) { logger->set_level(spdlog::level::off); });
 }

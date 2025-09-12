@@ -258,7 +258,7 @@ LogServiceState::reset()
 }
 
 std::shared_ptr<spdlog::logger>
-LogService::registerLogger(std::string const& channel, std::optional<Severity> severity)
+LogServiceState::registerLogger(std::string const& channel, std::optional<Severity> severity)
 {
     if (not initialized_) {
         throw std::logic_error("LogService not initialized");
@@ -408,7 +408,7 @@ LogServiceState::replaceSinks(std::vector<std::shared_ptr<spdlog::sinks::sink>> 
     spdlog::apply_all([](std::shared_ptr<spdlog::logger> logger) { logger->sinks() = sinks_; });
 }
 
-Logger::Logger(std::string channel) : logger_(LogService::registerLogger(channel))
+Logger::Logger(std::string channel) : logger_(LogServiceState::registerLogger(channel))
 {
 }
 
