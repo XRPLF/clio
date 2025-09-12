@@ -231,21 +231,52 @@ private:
     Logger(std::shared_ptr<spdlog::logger> logger);
 };
 
+/**
+ * @brief Base state management class for the logging service.
+ *
+ * This class manages the global state and core functionality for the logging system,
+ * including initialization, sink management, and logger registration.
+ */
 class LogServiceState {
 protected:
     friend struct ::LogServiceInitTests;
     friend class ::LoggerFixture;
     friend class Logger;
 
+    /**
+     * @brief Initialize the logging core with specified parameters.
+     *
+     * @param isAsync Whether logging should be asynchronous
+     * @param defaultSeverity The default severity level for new loggers
+     * @param sinks Vector of spdlog sinks to use for output
+     */
     static void
     init(bool isAsync, Severity defaultSeverity, std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks);
 
+    /**
+     * @brief Reset the logging service to uninitialized state.
+     */
     static void
     reset();
 
+    /**
+     * @brief Replace the current sinks with a new set of sinks.
+     *
+     * @param sinks Vector of new spdlog sinks to replace the current ones
+     */
     static void
     replaceSinks(std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks);
 
+    /**
+     * @brief Register a new logger for the specified channel.
+     *
+     * Creates and registers a new spdlog logger instance for the given channel
+     * with the specified or default severity level.
+     *
+     * @param channel The name of the logging channel
+     * @param severity Optional severity level override; uses default if not specified
+     * @return Shared pointer to the registered spdlog logger
+     */
     static std::shared_ptr<spdlog::logger>
     registerLogger(std::string const& channel, std::optional<Severity> severity = std::nullopt);
 
