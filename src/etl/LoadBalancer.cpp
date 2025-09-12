@@ -343,7 +343,6 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence, std::chrono::steady_clock
 
         LOG(log_.debug()) << "Attempting to execute func. ledger sequence = " << ledgerSequence
                           << " - source = " << source->toString();
-
         // Originally, it was (source->hasLedger(ledgerSequence) || true)
         /* Sometimes rippled has ledger but doesn't actually know. However,
         but this does NOT happen in the normal case and is safe to remove

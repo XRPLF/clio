@@ -402,7 +402,7 @@ LogService::initialized()
 }
 
 void
-LogServiceState::reinitSinks(std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks)
+LogServiceState::replaceSinks(std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks)
 {
     sinks_ = sinks;
     spdlog::apply_all([](std::shared_ptr<spdlog::logger> logger) { logger->sinks() = sinks_; });

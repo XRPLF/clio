@@ -240,7 +240,7 @@ public:
     reset();
 
     static void
-    reinitSinks(std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks);
+    replaceSinks(std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks);
 
 protected:
     static bool isAsync_;                                             // NOLINT(readability-identifier-naming)
