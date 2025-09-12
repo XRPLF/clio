@@ -76,7 +76,7 @@ TEST_F(FullTableScannerAssertTest, cursorsPerWorkerZero)
     );
 }
 
-struct FullTableScannerTests : NoLoggerFixture {};
+struct FullTableScannerTests : public virtual ::testing::Test {};
 
 TEST_F(FullTableScannerTests, SingleThreadCtx)
 {

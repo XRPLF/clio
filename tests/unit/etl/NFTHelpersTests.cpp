@@ -56,7 +56,7 @@ constexpr auto kOFFER_ID = "AA86CBF29770F72FA3FF4A5D9A9FA54D6F399A8E038F72393EF7
 
 }  // namespace
 
-struct NFTHelpersTest : NoLoggerFixture {
+struct NFTHelpersTest : virtual public ::testing::Test {
 protected:
     static void
     verifyNFTTransactionsData(

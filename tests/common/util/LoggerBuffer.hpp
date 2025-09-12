@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,24 +17,27 @@
 */
 //==============================================================================
 
-#include "migration/impl/MigrationManagerFactory.hpp"
-#include "util/LoggerFixtures.hpp"
-#include "util/MockLedgerCache.hpp"
-#include "util/config/ConfigDefinition.hpp"
-#include "util/config/ConfigValue.hpp"
-#include "util/config/Types.hpp"
+#pragma once
+#include "util/StringBuffer.hpp"
 
-#include <gtest/gtest.h>
+#include <ostream>
+#include <string>
 
-struct MigrationManagerFactoryTests : public virtual ::testing::Test {};
+class LoggerBuffer {
+public:
+    std::string
+    getStrAndReset()
+    {
+        return buffer_.getStrAndReset();
+    }
 
-TEST_F(MigrationManagerFactoryTests, InvalidDBType)
-{
-    MockLedgerCache cache{};
-    util::config::ClioConfigDefinition const configDef{
-        {"database.type", util::config::ConfigValue{util::config::ConfigType::String}.defaultValue("invalid")}
-    };
-    auto const ret = migration::impl::makeMigrationManager(configDef, cache);
-    EXPECT_FALSE(ret);
-    EXPECT_EQ(ret.error(), "Invalid database type");
-}
+    std::ostream&
+    getStream()
+    {
+        return stream_;
+    }
+
+private:
+    StringBuffer buffer_;
+    std::ostream stream_ = std::ostream{&buffer_};
+};

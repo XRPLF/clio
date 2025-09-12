@@ -86,7 +86,7 @@ makeMigrationTestManagerAndBackend(ClioConfigDefinition const& config)
 }
 }  // namespace
 
-class MigrationCassandraSimpleTest : public WithPrometheus, public NoLoggerFixture {
+class MigrationCassandraSimpleTest : public WithPrometheus {
     // This function is used to prepare the database before running the tests
     // It is called in the SetUp function. Different tests can override this function to prepare the database
     // differently

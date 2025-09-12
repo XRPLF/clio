@@ -43,7 +43,7 @@ using namespace web::ng;
 
 namespace http = boost::beast::http;
 
-struct NgErrorHandlingTests : NoLoggerFixture {
+struct NgErrorHandlingTests : public virtual ::testing::Test {
     static Request
     makeRequest(bool isHttp, std::optional<std::string> body = std::nullopt)
     {

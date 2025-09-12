@@ -143,9 +143,13 @@ LoadBalancer::LoadBalancer(
     auto const allowNoEtl = config.get<bool>("allow_no_etl");
 
     auto const checkOnETLFailure = [this, allowNoEtl](std::string const& log) {
+        std::cerr << "checkOnETLFailure called" << std::endl;
         LOG(log_.warn()) << log;
+        std::cerr << "ETL configuration error. ";
+        std::cerr << log << std::endl;
 
         if (!allowNoEtl) {
+            std::cerr << "Set allow_no_etl as true in config to allow clio run without valid ETL sources." << std::endl;
             LOG(log_.error()) << "Set allow_no_etl as true in config to allow clio run without valid ETL sources.";
             throw std::logic_error("ETL configuration error.");
         }
@@ -337,12 +341,16 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence, std::chrono::steady_clock
     size_t sourceIdx = randomGenerator_->uniform(0ul, sources_.size() - 1);
 
     size_t numAttempts = 0;
+    std::cerr << "WOWWWWWW0000: " << numAttempts << std::endl;
 
     while (true) {
         auto& source = sources_[sourceIdx];
 
+        std::cerr << "WOWWWWWW1111" << std::endl;
         LOG(log_.debug()) << "Attempting to execute func. ledger sequence = " << ledgerSequence
                           << " - source = " << source->toString();
+        std::cerr << "WOWWWWWW2222" << std::endl;
+
         // Originally, it was (source->hasLedger(ledgerSequence) || true)
         /* Sometimes rippled has ledger but doesn't actually know. However,
         but this does NOT happen in the normal case and is safe to remove

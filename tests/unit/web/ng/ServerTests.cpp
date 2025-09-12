@@ -73,9 +73,7 @@ struct MakeServerTestBundle {
     bool expectSuccess;
 };
 
-struct MakeServerTest : util::prometheus::WithPrometheus,
-                        NoLoggerFixture,
-                        testing::WithParamInterface<MakeServerTestBundle> {
+struct MakeServerTest : util::prometheus::WithPrometheus, testing::WithParamInterface<MakeServerTestBundle> {
 protected:
     boost::asio::io_context ioContext_;
 };

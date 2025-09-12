@@ -72,8 +72,6 @@ uniqueLogDir()
 static void
 benchmarkConcurrentFileLogging(benchmark::State& state)
 {
-    spdlog::drop_all();
-
     auto const numThreads = static_cast<size_t>(state.range(0));
     auto const messagesPerThread = static_cast<size_t>(state.range(1));
 

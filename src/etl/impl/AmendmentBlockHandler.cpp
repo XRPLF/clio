@@ -26,12 +26,15 @@
 
 #include <chrono>
 #include <functional>
+#include <iostream>
 #include <utility>
 
 namespace etl::impl {
 
 AmendmentBlockHandler::ActionType const AmendmentBlockHandler::kDEFAULT_AMENDMENT_BLOCK_ACTION = []() {
+    std::cerr << "kDEFAULT_AMENDMENT_BLOCK_ACTION called" << std::endl;
     static util::Logger const log{"ETL"};  // NOLINT(readability-identifier-naming)
+    std::cerr << "Logger created" << std::endl;
     LOG(log.fatal()) << "Can't process new ledgers: The current ETL source is not compatible with the version of "
                      << "the libxrpl Clio is currently using. Please upgrade Clio to a newer version.";
 };

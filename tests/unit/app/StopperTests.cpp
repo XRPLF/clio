@@ -37,7 +37,7 @@
 
 using namespace app;
 
-struct StopperTest : NoLoggerFixture {
+struct StopperTest : virtual public ::testing::Test {
 protected:
     // Order here is important, stopper_ should die before mockCallback_, otherwise UB
     testing::StrictMock<testing::MockFunction<void(boost::asio::yield_context)>> mockCallback_;

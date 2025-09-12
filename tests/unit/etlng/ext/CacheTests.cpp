@@ -59,7 +59,7 @@ createTestData()
 
 }  // namespace
 
-struct CacheExtTests : NoLoggerFixture, util::prometheus::WithPrometheus {
+struct CacheExtTests : util::prometheus::WithPrometheus {
 protected:
     MockLedgerCache cache_;
     std::shared_ptr<etlng::impl::CacheUpdater> updater_ = std::make_shared<etlng::impl::CacheUpdater>(cache_);
