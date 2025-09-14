@@ -65,10 +65,13 @@ TEST_F(NgSubscriptionContextTests, Send)
         auto subscriptionContext = makeSubscriptionContext(yield);
         auto const message = std::make_shared<std::string>("some message");
 
-        EXPECT_CALL(connection_, sendShared).WillOnce([&message](std::shared_ptr<std::string> sendingMessage, auto&&) {
-            EXPECT_EQ(sendingMessage, message);
-            return std::expected<void, web::ng::Error>{};
-        });
+        EXPECT_CALL(connection_, sendShared)
+            .WillOnce(
+                [&message](std::shared_ptr<std::string> sendingMessage, auto&&) -> std::expected<void, web::ng::Error> {
+                    EXPECT_EQ(sendingMessage, message);
+                    return {};
+                }
+            );
         subscriptionContext.send(message);
         subscriptionContext.disconnect(yield);
     });
@@ -84,16 +87,24 @@ TEST_F(NgSubscriptionContextTests, SendOrder)
         testing::Sequence const sequence;
         EXPECT_CALL(connection_, sendShared)
             .InSequence(sequence)
-            .WillOnce([&message1](std::shared_ptr<std::string> sendingMessage, auto&&) {
-                EXPECT_EQ(sendingMessage, message1);
-                return std::expected<void, web::ng::Error>{};
-            });
+            .WillOnce(
+                [&message1](
+                    std::shared_ptr<std::string> sendingMessage, auto&&
+                ) -> std::expected<void, web::ng::Error> {
+                    EXPECT_EQ(sendingMessage, message1);
+                    return {};
+                }
+            );
         EXPECT_CALL(connection_, sendShared)
             .InSequence(sequence)
-            .WillOnce([&message2](std::shared_ptr<std::string> sendingMessage, auto&&) {
-                EXPECT_EQ(sendingMessage, message2);
-                return std::expected<void, web::ng::Error>{};
-            });
+            .WillOnce(
+                [&message2](
+                    std::shared_ptr<std::string> sendingMessage, auto&&
+                ) -> std::expected<void, web::ng::Error> {
+                    EXPECT_EQ(sendingMessage, message2);
+                    return {};
+                }
+            );
 
         subscriptionContext.send(message1);
         subscriptionContext.send(message2);
@@ -125,11 +136,15 @@ TEST_F(NgSubscriptionContextTests, SendTooManySubscriptions)
         auto const message = std::make_shared<std::string>("message1");
 
         EXPECT_CALL(connection_, sendShared)
-            .WillOnce([&message](std::shared_ptr<std::string> sendingMessage, boost::asio::yield_context innerYield) {
-                boost::asio::post(innerYield);  // simulate send is slow by switching to another coroutine
-                EXPECT_EQ(sendingMessage, message);
-                return std::expected<void, web::ng::Error>{};
-            });
+            .WillOnce(
+                [&message](
+                    std::shared_ptr<std::string> sendingMessage, boost::asio::yield_context innerYield
+                ) -> std::expected<void, web::ng::Error> {
+                    boost::asio::post(innerYield);  // simulate send is slow by switching to another coroutine
+                    EXPECT_EQ(sendingMessage, message);
+                    return {};
+                }
+            );
         EXPECT_CALL(connection_, close);
 
         subscriptionContext.send(message);

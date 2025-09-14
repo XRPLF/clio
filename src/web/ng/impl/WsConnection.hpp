@@ -206,9 +206,9 @@ makeWsConnection(
     auto connection = std::make_unique<WsConnection<StreamType>>(
         std::forward<StreamType>(stream), std::move(ip), std::move(buffer), std::move(request), tagDecoratorFactory
     );
-    auto maybeError = connection->performHandshake(yield);
-    if (not maybeError.has_value())
-        return std::unexpected{maybeError.error()};
+    auto const expectedSuccess = connection->performHandshake(yield);
+    if (not expectedSuccess.has_value())
+        return std::unexpected{expectedSuccess.error()};
     return connection;
 }
 

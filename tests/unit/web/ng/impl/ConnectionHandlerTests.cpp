@@ -173,10 +173,11 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_NoHandler_Send)
         .WillOnce(Return(makeRequest("some_request", headers)))
         .WillOnce(Return(makeError(websocket::error::closed)));
 
-    EXPECT_CALL(*mockHttpConnection, send).WillOnce([](Response response, auto&&) {
-        EXPECT_EQ(response.message(), "WebSocket is not supported by this server");
-        return std::expected<void, web::ng::Error>{};
-    });
+    EXPECT_CALL(*mockHttpConnection, send)
+        .WillOnce([](Response response, auto&&) -> std::expected<void, web::ng::Error> {
+            EXPECT_EQ(response.message(), "WebSocket is not supported by this server");
+            return {};
+        });
 
     EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
         EXPECT_EQ(&c, connectionPtr);
@@ -197,13 +198,14 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_BadTarget_Send)
         .WillOnce(Return(makeRequest(http::request<http::string_body>{http::verb::get, target, 11, requestMessage})))
         .WillOnce(Return(makeError(http::error::end_of_stream)));
 
-    EXPECT_CALL(*mockHttpConnection, send).WillOnce([](Response response, auto&&) {
-        EXPECT_EQ(response.message(), "Bad target");
-        auto const httpResponse = std::move(response).intoHttpResponse();
-        EXPECT_EQ(httpResponse.result(), http::status::bad_request);
-        EXPECT_EQ(httpResponse.version(), 11);
-        return std::expected<void, web::ng::Error>{};
-    });
+    EXPECT_CALL(*mockHttpConnection, send)
+        .WillOnce([](Response response, auto&&) -> std::expected<void, web::ng::Error> {
+            EXPECT_EQ(response.message(), "Bad target");
+            auto const httpResponse = std::move(response).intoHttpResponse();
+            EXPECT_EQ(httpResponse.result(), http::status::bad_request);
+            EXPECT_EQ(httpResponse.version(), 11);
+            return {};
+        });
 
     EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
         EXPECT_EQ(&c, connectionPtr);
@@ -221,10 +223,11 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_BadMethod_Send)
         .WillOnce(Return(makeRequest(http::request<http::string_body>{http::verb::acl, "/", 11})))
         .WillOnce(Return(makeError(http::error::end_of_stream)));
 
-    EXPECT_CALL(*mockHttpConnection, send).WillOnce([](Response response, auto&&) {
-        EXPECT_EQ(response.message(), "Unsupported http method");
-        return std::expected<void, web::ng::Error>{};
-    });
+    EXPECT_CALL(*mockHttpConnection, send)
+        .WillOnce([](Response response, auto&&) -> std::expected<void, web::ng::Error> {
+            EXPECT_EQ(response.message(), "Unsupported http method");
+            return {};
+        });
 
     EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
         EXPECT_EQ(&c, connectionPtr);
@@ -255,10 +258,11 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send)
         return Response(http::status::ok, responseMessage, request);
     });
 
-    EXPECT_CALL(*mockWsConnection, send).WillOnce([&responseMessage](Response response, auto&&) {
-        EXPECT_EQ(response.message(), responseMessage);
-        return std::expected<void, web::ng::Error>{};
-    });
+    EXPECT_CALL(*mockWsConnection, send)
+        .WillOnce([&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
+            EXPECT_EQ(response.message(), responseMessage);
+            return {};
+        });
 
     EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
         EXPECT_EQ(&c, connectionPtr);
@@ -293,10 +297,14 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SendSubscriptionMessage)
     EXPECT_CALL(*mockWsConnection, send).WillOnce(Return(std::expected<void, web::ng::Error>{}));
 
     EXPECT_CALL(*mockWsConnection, sendShared)
-        .WillOnce([&subscriptionMessage](std::shared_ptr<std::string> sendingMessage, auto&&) {
-            EXPECT_EQ(*sendingMessage, subscriptionMessage);
-            return std::expected<void, web::ng::Error>{};
-        });
+        .WillOnce(
+            [&subscriptionMessage](
+                std::shared_ptr<std::string> sendingMessage, auto&&
+            ) -> std::expected<void, web::ng::Error> {
+                EXPECT_EQ(*sendingMessage, subscriptionMessage);
+                return {};
+            }
+        );
 
     EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
         EXPECT_EQ(&c, connectionPtr);
@@ -367,10 +375,11 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SubscriptionContextIsNullForHt
             return Response(http::status::ok, responseMessage, request);
         });
 
-    EXPECT_CALL(*mockHttpConnection, send).WillOnce([&responseMessage](Response response, auto&&) {
-        EXPECT_EQ(response.message(), responseMessage);
-        return std::expected<void, web::ng::Error>{};
-    });
+    EXPECT_CALL(*mockHttpConnection, send)
+        .WillOnce([&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
+            EXPECT_EQ(response.message(), responseMessage);
+            return {};
+        });
 
     EXPECT_CALL(
         *mockHttpConnection,
@@ -413,10 +422,12 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send_Loop)
         return Response(http::status::ok, responseMessage, request);
     });
 
-    EXPECT_CALL(*mockHttpConnection, send).Times(3).WillRepeatedly([&responseMessage](Response response, auto&&) {
-        EXPECT_EQ(response.message(), responseMessage);
-        return std::expected<void, web::ng::Error>{};
-    });
+    EXPECT_CALL(*mockHttpConnection, send)
+        .Times(3)
+        .WillRepeatedly([&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
+            EXPECT_EQ(response.message(), responseMessage);
+            return {};
+        });
 
     EXPECT_CALL(
         *mockHttpConnection,
@@ -542,12 +553,12 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
         send(testing::ResultOf([](Response const& r) { return r.message(); }, responseMessage), testing::_)
     )
         .Times(3)
-        .WillRepeatedly([&](auto&&, auto&&) {
+        .WillRepeatedly([&](auto&&, auto&&) -> std::expected<void, web::ng::Error> {
             ++numCalls;
             if (numCalls == 3)
                 util::spawn(ctx_, [this](auto yield) { connectionHandler.stop(yield); });
 
-            return std::expected<void, web::ng::Error>{};
+            return {};
         });
 
     EXPECT_CALL(
@@ -659,10 +670,11 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send)
         return Response(http::status::ok, responseMessage, request);
     });
 
-    EXPECT_CALL(*mockWsConnection, send).WillOnce([&responseMessage](Response response, auto&&) {
-        EXPECT_EQ(response.message(), responseMessage);
-        return std::expected<void, web::ng::Error>{};
-    });
+    EXPECT_CALL(*mockWsConnection, send)
+        .WillOnce([&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
+            EXPECT_EQ(response.message(), responseMessage);
+            return {};
+        });
 
     EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
         EXPECT_EQ(&c, connectionPtr);
@@ -699,10 +711,11 @@ TEST_F(ConnectionHandlerParallelProcessingTest, OnIpChangeHookCalledWhenSentFrom
         return Response(http::status::ok, responseMessage, request);
     });
 
-    EXPECT_CALL(*mockWsConnectionFromProxy, send).WillOnce([&responseMessage](Response response, auto&&) {
-        EXPECT_EQ(response.message(), responseMessage);
-        return std::expected<void, web::ng::Error>{};
-    });
+    EXPECT_CALL(*mockWsConnectionFromProxy, send)
+        .WillOnce([&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
+            EXPECT_EQ(response.message(), responseMessage);
+            return {};
+        });
 
     EXPECT_CALL(onDisconnectMock, Call)
         .WillOnce([this, connectionPtr = mockWsConnectionFromProxy.get()](Connection const& c) {
@@ -738,10 +751,12 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop)
         return Response(http::status::ok, responseMessage, request);
     });
 
-    EXPECT_CALL(*mockWsConnection, send).Times(2).WillRepeatedly([&responseMessage](Response response, auto&&) {
-        EXPECT_EQ(response.message(), responseMessage);
-        return std::expected<void, web::ng::Error>{};
-    });
+    EXPECT_CALL(*mockWsConnection, send)
+        .Times(2)
+        .WillRepeatedly([&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
+            EXPECT_EQ(response.message(), responseMessage);
+            return {};
+        });
 
     EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
         EXPECT_EQ(&c, connectionPtr);
