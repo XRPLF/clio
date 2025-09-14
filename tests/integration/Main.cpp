@@ -18,8 +18,8 @@
 //==============================================================================
 
 #include "util/TerminationHandler.hpp"
+#include "util/TestGlobals.hpp"
 
-#include <TestGlobals.hpp>
 #include <gtest/gtest.h>
 
 /*

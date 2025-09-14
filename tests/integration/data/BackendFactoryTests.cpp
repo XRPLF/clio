@@ -22,13 +22,13 @@
 #include "data/cassandra/Handle.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
+#include "util/TestGlobals.hpp"
 #include "util/config/ConfigConstraints.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigFileJson.hpp"
 #include "util/config/ConfigValue.hpp"
 #include "util/config/Types.hpp"
 
-#include <TestGlobals.hpp>
 #include <boost/json/parse.hpp>
 #include <fmt/format.h>
 #include <gtest/gtest.h>

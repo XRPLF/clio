@@ -35,11 +35,11 @@
 #include "util/Random.hpp"
 #include "util/Spawn.hpp"
 #include "util/StringUtils.hpp"
+#include "util/TestGlobals.hpp"
 #include "util/config/ConfigValue.hpp"
 #include "util/config/ObjectView.hpp"
 #include "util/config/Types.hpp"
 
-#include <TestGlobals.hpp>
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>

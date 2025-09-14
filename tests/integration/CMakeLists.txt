@@ -12,8 +12,8 @@ target_sources(
           migration/cassandra/ExampleLedgerMigrator.cpp
           migration/cassandra/ExampleDropTableMigrator.cpp
           util/CassandraDBHelper.cpp
+          util/TestGlobals.cpp
           # Test runner
-          TestGlobals.cpp
           Main.cpp
 )
 
