@@ -367,10 +367,7 @@ LogService::init(config::ClioConfigDefinition const& config)
 void
 LogService::shutdown()
 {
-    if (!initialized_) {
-        throw std::logic_error("LogService not initialized");
-    }
-    if (isAsync_) {
+    if (initialized_ && isAsync_) {
         // We run in async mode in production, so we need to make sure all logs are flushed before shutting down
         spdlog::shutdown();
     }
