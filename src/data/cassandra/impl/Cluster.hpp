@@ -84,7 +84,7 @@ struct Settings {
     uint32_t maxReadRequestsOutstanding = kDEFAULT_MAX_READ_REQUESTS_OUTSTANDING;
 
     /** @brief The number of connection per host to always have active */
-    uint32_t coreConnectionsPerHost = 1u;
+    uint32_t coreConnectionsPerHost = 3u;
 
     /** @brief Size of batches when writing */
     std::size_t writeBatchSize = kDEFAULT_BATCH_SIZE;
