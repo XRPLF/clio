@@ -65,5 +65,5 @@ LoggerFixture::LoggerFixture()
 LoggerFixture::~LoggerFixture()
 {
     util::LogServiceState::replaceSinks({});
-    spdlog::apply_all([](std::shared_ptr<spdlog::logger> logger) { logger->set_level(spdlog::level::off); });
+    spdlog::apply_all([](std::shared_ptr<spdlog::logger> logger) { logger->set_level(spdlog::level::critical); });
 }
