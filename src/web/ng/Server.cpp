@@ -147,9 +147,9 @@ makeConnection(
             tagDecoratorFactory
         );
         sslConnection->setTimeout(std::chrono::seconds{10});
-        auto const maybeError = sslConnection->sslHandshake(yield);
-        if (maybeError.has_value())
-            return std::unexpected{fmt::format("SSL handshake error: {}", maybeError->message())};
+        auto const expectedSuccess = sslConnection->sslHandshake(yield);
+        if (not expectedSuccess.has_value())
+            return std::unexpected{fmt::format("SSL handshake error: {}", expectedSuccess.error().message())};
 
         connection = std::move(sslConnection);
     } else {
