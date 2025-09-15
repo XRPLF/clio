@@ -93,7 +93,7 @@ jobs:
           disable_ccache: ${{ inputs.disable_cache }}
 
       - name: Setup conan on macOS
-        if: runner.os == 'macOS'
+        if: ${{ runner.os == 'macOS' }}
         shell: bash
         run: ./.github/scripts/conan/init.sh
 
@@ -162,7 +162,7 @@ jobs:
         run: strip build/clio_integration_tests
 
       - name: Upload clio_server
-        if: inputs.upload_clio_server && !inputs.code_coverage && !inputs.analyze_build_time
+        if: ${{ inputs.upload_clio_server && !inputs.code_coverage && !inputs.analyze_build_time }}
         uses: actions/upload-artifact@v4
         with:
           name: clio_server_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
@@ -183,7 +183,7 @@ jobs:
           path: build/clio_integration_tests
 
       - name: Upload Clio Linux package
-        if: inputs.package
+        if: ${{ inputs.package }}
         uses: actions/upload-artifact@v4
         with:
           name: clio_deb_package_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
