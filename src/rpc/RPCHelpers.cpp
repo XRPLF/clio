@@ -33,7 +33,6 @@
 #include "web/Context.hpp"
 
 #include <boost/algorithm/string/case_conv.hpp>
-#include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/format/format_fwd.hpp>
 #include <boost/format/free_funcs.hpp>
@@ -101,11 +100,6 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-
-// local to compilation unit loggers
-namespace {
-util::Logger gLog{"RPC"};
-}  // namespace
 
 namespace rpc {
 
@@ -209,6 +203,8 @@ accountFromStringStrict(std::string const& account)
 std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::STObject const>>
 deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs)
 {
+    static util::Logger const log{"RPC"};  // NOLINT(readability-identifier-naming)
+
     try {
         std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::STObject const>> result;
         {
@@ -225,9 +221,9 @@ deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs)
         std::stringstream meta;
         std::ranges::copy(blobs.transaction, std::ostream_iterator<unsigned char>(txn));
         std::ranges::copy(blobs.metadata, std::ostream_iterator<unsigned char>(meta));
-        LOG(gLog.error()) << "Failed to deserialize transaction. txn = " << txn.str() << " - meta = " << meta.str()
-                          << " txn length = " << std::to_string(blobs.transaction.size())
-                          << " meta length = " << std::to_string(blobs.metadata.size());
+        LOG(log.error()) << "Failed to deserialize transaction. txn = " << txn.str() << " - meta = " << meta.str()
+                         << " txn length = " << std::to_string(blobs.transaction.size())
+                         << " meta length = " << std::to_string(blobs.metadata.size());
         throw e;
     }
 }
@@ -263,7 +259,6 @@ toExpandedJson(
     auto metaJson = toJson(*meta);
     insertDeliveredAmount(metaJson, txn, meta, blobs.date);
     insertDeliverMaxAlias(txnJson, apiVersion);
-    insertMPTIssuanceID(txnJson, meta);
 
     if (nftEnabled == NFTokenjson::ENABLE) {
         Json::Value nftJson;
@@ -319,64 +314,6 @@ insertDeliveredAmount(
         }
         return true;
     }
-    return false;
-}
-
-/**
- * @brief Get the delivered amount
- *
- * @param meta The metadata
- * @return The mpt_issuance_id or std::nullopt if not available
- */
-static std::optional<ripple::uint192>
-getMPTIssuanceID(std::shared_ptr<ripple::TxMeta const> const& meta)
-{
-    ripple::TxMeta const& transactionMeta = *meta;
-
-    for (ripple::STObject const& node : transactionMeta.getNodes()) {
-        if (node.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltMPTOKEN_ISSUANCE ||
-            node.getFName() != ripple::sfCreatedNode)
-            continue;
-
-        auto const& mptNode = node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>();
-        return ripple::makeMptID(mptNode[ripple::sfSequence], mptNode[ripple::sfIssuer]);
-    }
-
-    return {};
-}
-
-/**
- * @brief Check if transaction has a new MPToken created
- *
- * @param txnJson The transaction Json
- * @param meta The metadata
- * @return true if the transaction can have a mpt_issuance_id
- */
-static bool
-canHaveMPTIssuanceID(boost::json::object const& txnJson, std::shared_ptr<ripple::TxMeta const> const& meta)
-{
-    if (txnJson.at(JS(TransactionType)).is_string() and
-        not boost::iequals(txnJson.at(JS(TransactionType)).as_string(), JS(MPTokenIssuanceCreate)))
-        return false;
-
-    if (meta->getResultTER() != ripple::tesSUCCESS)
-        return false;
-
-    return true;
-}
-
-bool
-insertMPTIssuanceID(boost::json::object& txnJson, std::shared_ptr<ripple::TxMeta const> const& meta)
-{
-    if (!canHaveMPTIssuanceID(txnJson, meta))
-        return false;
-
-    if (auto const id = getMPTIssuanceID(meta)) {
-        txnJson[JS(mpt_issuance_id)] = ripple::to_string(*id);
-        return true;
-    }
-
-    assert(false);
     return false;
 }
 
@@ -804,7 +741,9 @@ traverseOwnedNodes(
     }
     auto end = std::chrono::system_clock::now();
 
-    LOG(gLog.debug()) << fmt::format(
+    static util::Logger const log{"RPC"};  // NOLINT(readability-identifier-naming)
+
+    LOG(log.debug()) << fmt::format(
         "Time loading owned directories: {} milliseconds, entries size: {}",
         std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count(),
         keys.size()
@@ -812,7 +751,7 @@ traverseOwnedNodes(
 
     auto [objects, timeDiff] = util::timed([&]() { return backend.fetchLedgerObjects(keys, sequence, yield); });
 
-    LOG(gLog.debug()) << "Time loading owned entries: " << timeDiff << " milliseconds";
+    LOG(log.debug()) << "Time loading owned entries: " << timeDiff << " milliseconds";
 
     for (auto i = 0u; i < objects.size(); ++i) {
         ripple::SerialIter it{objects[i].data(), objects[i].size()};
@@ -1300,7 +1239,8 @@ postProcessOrderBook(
 
             jsonOffers.push_back(offerJson);
         } catch (std::exception const& e) {
-            LOG(gLog.error()) << "caught exception: " << e.what();
+            util::Logger const log{"RPC"};
+            LOG(log.error()) << "caught exception: " << e.what();
         }
     }
     return jsonOffers;

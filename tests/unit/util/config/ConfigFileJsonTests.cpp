@@ -52,7 +52,8 @@ struct ConfigFileJsonParseTestBundle {
     ValidationMap validationMap;
 };
 
-struct ConfigFileJsonParseTest : NoLoggerFixture, testing::WithParamInterface<ConfigFileJsonParseTestBundle> {};
+struct ConfigFileJsonParseTest : public virtual ::testing::Test,
+                                 testing::WithParamInterface<ConfigFileJsonParseTestBundle> {};
 
 TEST_P(ConfigFileJsonParseTest, parseValues)
 {
@@ -309,7 +310,7 @@ INSTANTIATE_TEST_CASE_P(
     tests::util::kNAME_GENERATOR
 );
 
-struct ConfigFileJsonTest : NoLoggerFixture {};
+struct ConfigFileJsonTest : public virtual ::testing::Test {};
 
 TEST_F(ConfigFileJsonTest, getValue)
 {

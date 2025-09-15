@@ -43,11 +43,6 @@
 #include <utility>
 #include <vector>
 
-// local to compilation unit loggers
-namespace {
-util::Logger gLog{"Backend"};
-}  // namespace
-
 /**
  * @brief This namespace implements the data access layer and related components.
  *
@@ -58,10 +53,10 @@ namespace data {
 bool
 BackendInterface::finishWrites(std::uint32_t const ledgerSequence)
 {
-    LOG(gLog.debug()) << "Want finish writes for " << ledgerSequence;
+    LOG(log_.debug()) << "Want finish writes for " << ledgerSequence;
     auto commitRes = doFinishWrites();
     if (commitRes) {
-        LOG(gLog.debug()) << "Successfully committed. Updating range now to " << ledgerSequence;
+        LOG(log_.debug()) << "Successfully committed. Updating range now to " << ledgerSequence;
         updateRange(ledgerSequence);
     }
     return commitRes;
@@ -89,15 +84,15 @@ BackendInterface::fetchLedgerObject(
 {
     auto obj = cache_.get().get(key, sequence);
     if (obj) {
-        LOG(gLog.trace()) << "Cache hit - " << ripple::strHex(key);
+        LOG(log_.trace()) << "Cache hit - " << ripple::strHex(key);
         return obj;
     }
 
     auto dbObj = doFetchLedgerObject(key, sequence, yield);
     if (!dbObj) {
-        LOG(gLog.trace()) << "Missed cache and missed in db";
+        LOG(log_.trace()) << "Missed cache and missed in db";
     } else {
-        LOG(gLog.trace()) << "Missed cache but found in db";
+        LOG(log_.trace()) << "Missed cache but found in db";
     }
     return dbObj;
 }
@@ -111,7 +106,7 @@ BackendInterface::fetchLedgerObjectSeq(
 {
     auto seq = doFetchLedgerObjectSeq(key, sequence, yield);
     if (!seq)
-        LOG(gLog.trace()) << "Missed in db";
+        LOG(log_.trace()) << "Missed in db";
     return seq;
 }
 
@@ -133,7 +128,7 @@ BackendInterface::fetchLedgerObjects(
             misses.push_back(keys[i]);
         }
     }
-    LOG(gLog.trace()) << "Cache hits = " << keys.size() - misses.size() << " - cache misses = " << misses.size();
+    LOG(log_.trace()) << "Cache hits = " << keys.size() - misses.size() << " - cache misses = " << misses.size();
 
     if (!misses.empty()) {
         auto objs = doFetchLedgerObjects(misses, sequence, yield);
@@ -158,9 +153,9 @@ BackendInterface::fetchSuccessorKey(
 {
     auto succ = cache_.get().getSuccessor(key, ledgerSequence);
     if (succ) {
-        LOG(gLog.trace()) << "Cache hit - " << ripple::strHex(key);
+        LOG(log_.trace()) << "Cache hit - " << ripple::strHex(key);
     } else {
-        LOG(gLog.trace()) << "Cache miss - " << ripple::strHex(key);
+        LOG(log_.trace()) << "Cache miss - " << ripple::strHex(key);
     }
     return succ ? succ->key : doFetchSuccessorKey(key, ledgerSequence, yield);
 }
@@ -210,7 +205,7 @@ BackendInterface::fetchBookOffers(
         numSucc++;
         succMillis += getMillis(mid2 - mid1);
         if (!offerDir || offerDir->key >= bookEnd) {
-            LOG(gLog.trace()) << "offerDir.has_value() " << offerDir.has_value() << " breaking";
+            LOG(log_.trace()) << "offerDir.has_value() " << offerDir.has_value() << " breaking";
             break;
         }
         uTipIndex = offerDir->key;
@@ -223,7 +218,7 @@ BackendInterface::fetchBookOffers(
             keys.insert(keys.end(), indexes.begin(), indexes.end());
             auto next = sle.getFieldU64(ripple::sfIndexNext);
             if (next == 0u) {
-                LOG(gLog.trace()) << "Next is empty. breaking";
+                LOG(log_.trace()) << "Next is empty. breaking";
                 break;
             }
             auto nextKey = ripple::keylet::page(uTipIndex, next);
@@ -238,13 +233,13 @@ BackendInterface::fetchBookOffers(
     auto mid = std::chrono::system_clock::now();
     auto objs = fetchLedgerObjects(keys, ledgerSequence, yield);
     for (size_t i = 0; i < keys.size() && i < limit; ++i) {
-        LOG(gLog.trace()) << "Key = " << ripple::strHex(keys[i]) << " blob = " << ripple::strHex(objs[i])
+        LOG(log_.trace()) << "Key = " << ripple::strHex(keys[i]) << " blob = " << ripple::strHex(objs[i])
                           << " ledgerSequence = " << ledgerSequence;
         ASSERT(!objs[i].empty(), "Ledger object can't be empty");
         page.offers.push_back({keys[i], objs[i]});
     }
     auto end = std::chrono::system_clock::now();
-    LOG(gLog.debug()) << "Fetching " << std::to_string(keys.size()) << " offers took "
+    LOG(log_.debug()) << "Fetching " << std::to_string(keys.size()) << " offers took "
                       << std::to_string(getMillis(mid - begin)) << " milliseconds. Fetching next dir took "
                       << std::to_string(succMillis) << " milliseconds. Fetched next dir " << std::to_string(numSucc)
                       << " times"
@@ -341,13 +336,13 @@ BackendInterface::fetchLedgerPage(
         if (!objects[i].empty()) {
             page.objects.push_back({keys[i], std::move(objects[i])});
         } else if (!outOfOrder) {
-            LOG(gLog.error()) << "Deleted or non-existent object in successor table. key = " << ripple::strHex(keys[i])
+            LOG(log_.error()) << "Deleted or non-existent object in successor table. key = " << ripple::strHex(keys[i])
                               << " - seq = " << ledgerSequence;
             std::stringstream msg;
             for (size_t j = 0; j < objects.size(); ++j) {
                 msg << " - " << ripple::strHex(keys[j]);
             }
-            LOG(gLog.error()) << msg.str();
+            LOG(log_.error()) << msg.str();
 
             if (corruptionDetector_.has_value())
                 corruptionDetector_->onCorruptionDetected();
@@ -368,7 +363,7 @@ BackendInterface::fetchFees(std::uint32_t const seq, boost::asio::yield_context 
     auto bytes = fetchLedgerObject(key, seq, yield);
 
     if (!bytes) {
-        LOG(gLog.error()) << "Could not find fees";
+        LOG(log_.error()) << "Could not find fees";
         return {};
     }
 

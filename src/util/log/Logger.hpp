@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <expected>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -43,8 +44,14 @@ class sink;  // NOLINT(readability-identifier-naming)
 }  // namespace spdlog
 
 struct BenchmarkLoggingInitializer;
+class LoggerFixture;
+struct LogServiceInitTests;
 
 namespace util {
+
+namespace impl {
+class OnAssert;
+}  // namespace impl
 
 namespace config {
 class ClioConfigDefinition;
@@ -229,26 +236,77 @@ private:
 };
 
 /**
+ * @brief Base state management class for the logging service.
+ *
+ * This class manages the global state and core functionality for the logging system,
+ * including initialization, sink management, and logger registration.
+ */
+class LogServiceState {
+protected:
+    friend struct ::LogServiceInitTests;
+    friend class ::LoggerFixture;
+    friend class Logger;
+    friend class ::util::impl::OnAssert;
+
+    /**
+     * @brief Initialize the logging core with specified parameters.
+     *
+     * @param isAsync Whether logging should be asynchronous
+     * @param defaultSeverity The default severity level for new loggers
+     * @param sinks Vector of spdlog sinks to use for output
+     */
+    static void
+    init(bool isAsync, Severity defaultSeverity, std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks);
+
+    /**
+     * @brief Whether the LogService is initialized or not
+     *
+     * @return true if the LogService is initialized
+     */
+    [[nodiscard]] static bool
+    initialized();
+
+    /**
+     * @brief Reset the logging service to uninitialized state.
+     */
+    static void
+    reset();
+
+    /**
+     * @brief Replace the current sinks with a new set of sinks.
+     *
+     * @param sinks Vector of new spdlog sinks to replace the current ones
+     */
+    static void
+    replaceSinks(std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks);
+
+    /**
+     * @brief Register a new logger for the specified channel.
+     *
+     * Creates and registers a new spdlog logger instance for the given channel
+     * with the specified or default severity level.
+     *
+     * @param channel The name of the logging channel
+     * @param severity Optional severity level override; uses default if not specified
+     * @return Shared pointer to the registered spdlog logger
+     */
+    static std::shared_ptr<spdlog::logger>
+    registerLogger(std::string const& channel, std::optional<Severity> severity = std::nullopt);
+
+protected:
+    static bool isAsync_;                                             // NOLINT(readability-identifier-naming)
+    static Severity defaultSeverity_;                                 // NOLINT(readability-identifier-naming)
+    static std::vector<std::shared_ptr<spdlog::sinks::sink>> sinks_;  // NOLINT(readability-identifier-naming)
+    static bool initialized_;                                         // NOLINT(readability-identifier-naming)
+};
+
+/**
  * @brief A global logging service.
  *
  * Used to initialize and setup the logging core as well as a globally available
  * entrypoint for logging into the `General` channel as well as raising alerts.
  */
-class LogService {
-    struct Data {
-        bool isAsync;
-        Severity defaultSeverity;
-        std::vector<std::shared_ptr<spdlog::sinks::sink>> allSinks;
-    };
-
-    friend class Logger;
-
-private:
-    static Data data;
-
-    static std::shared_ptr<spdlog::logger>
-    registerLogger(std::string const& channel, Severity severity = data.defaultSeverity);
-
+class LogService : public LogServiceState {
 public:
     LogService() = delete;
 
@@ -321,15 +379,16 @@ public:
     [[nodiscard]] static Logger::Pump
     fatal(SourceLocationType const& loc = CURRENT_SRC_LOCATION);
 
-    /**
-     * @brief Whether the LogService is enabled or not
-     *
-     * @return true if the LogService is enabled, false otherwise
-     */
-    [[nodiscard]] static bool
-    enabled();
-
 private:
+    /**
+     * @brief Parses the sinks from a @ref config::ClioConfigDefinition
+     *
+     * @param config The configuration to parse sinks from
+     * @return A vector of sinks on success, error message on failure
+     */
+    [[nodiscard]] static std::expected<std::vector<std::shared_ptr<spdlog::sinks::sink>>, std::string>
+    getSinks(config::ClioConfigDefinition const& config);
+
     struct FileLoggingParams {
         std::string logDir;
 

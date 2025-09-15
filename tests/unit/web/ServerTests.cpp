@@ -141,7 +141,7 @@ getParseServerConfig(boost::json::value val)
     return config;
 };
 
-struct WebServerTest : NoLoggerFixture {
+struct WebServerTest : public virtual ::testing::Test {
     ~WebServerTest() override
     {
         work_.reset();

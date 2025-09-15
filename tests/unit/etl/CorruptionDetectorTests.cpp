@@ -30,7 +30,7 @@ using namespace data;
 using namespace util::prometheus;
 using namespace testing;
 
-struct CorruptionDetectorTest : NoLoggerFixture, WithPrometheus {};
+struct CorruptionDetectorTest : WithPrometheus {};
 
 TEST_F(CorruptionDetectorTest, DisableCacheOnCorruption)
 {

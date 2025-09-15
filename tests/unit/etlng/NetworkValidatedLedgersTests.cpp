@@ -32,7 +32,7 @@
 
 using namespace etlng::impl;
 
-struct NetworkValidatedLedgersTests : NoLoggerFixture {
+struct NetworkValidatedLedgersTests : virtual public ::testing::Test {
 protected:
     util::async::CoroExecutionContext ctx_{2};
     std::shared_ptr<etl::NetworkValidatedLedgersInterface> ledgers_ =

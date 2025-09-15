@@ -254,7 +254,7 @@ struct MockExtNftBurnReadonly {
     }
 };
 
-struct RegistryTest : NoLoggerFixture, util::prometheus::WithPrometheus {
+struct RegistryTest : util::prometheus::WithPrometheus {
     RegistryTest()
     {
         state_.isWriting = true;

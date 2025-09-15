@@ -52,7 +52,7 @@ public:
 };
 }  // namespace
 
-struct ForwardSchedulerTests : NoLoggerFixture {
+struct ForwardSchedulerTests : virtual public ::testing::Test {
 protected:
     MockNetworkValidatedLedgersPtr networkValidatedLedgers_;
 };

@@ -54,7 +54,7 @@ OnAssert::resetAction()
 void
 OnAssert::defaultAction(std::string_view message)
 {
-    if (LogService::enabled()) {
+    if (LogServiceState::initialized()) {
         LOG(LogService::fatal()) << message;
     } else {
         std::cerr << message;

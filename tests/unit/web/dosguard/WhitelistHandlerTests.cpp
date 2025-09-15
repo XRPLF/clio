@@ -39,7 +39,7 @@ using namespace util;
 using namespace util::config;
 using namespace web::dosguard;
 
-struct WhitelistHandlerTest : NoLoggerFixture {};
+struct WhitelistHandlerTest : public virtual ::testing::Test {};
 
 inline static ClioConfigDefinition
 getParseWhitelistHandlerConfig(boost::json::value val)

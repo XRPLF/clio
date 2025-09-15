@@ -86,7 +86,7 @@ struct MockMonitor : etlng::MonitorInterface {
     MOCK_METHOD(void, stop, (), (override));
 };
 
-struct TaskManagerTests : NoLoggerFixture {
+struct TaskManagerTests : virtual public ::testing::Test {
     using MockSchedulerType = testing::NiceMock<MockScheduler>;
     using MockExtractorType = testing::NiceMock<MockExtractor>;
     using MockLoaderType = testing::NiceMock<MockLoader>;
