@@ -258,15 +258,22 @@ LogServiceState::init(bool isAsync, Severity defaultSeverity, std::vector<spdlog
     });
 
     if (isAsync) {
-        // Create a thread pool with 8192 queue size and 1 thread
-        spdlog::init_thread_pool(8192, 1);
+        static constexpr size_t kQUEUE_SIZE = 8192;
+        static constexpr size_t kTHREAD_COUNT = 1;
+        spdlog::init_thread_pool(kQUEUE_SIZE, kTHREAD_COUNT);
     }
+}
+
+bool
+LogServiceState::initialized()
+{
+    return initialized_;
 }
 
 void
 LogServiceState::reset()
 {
-    if (!initialized_) {
+    if (not initialized()) {
         throw std::logic_error("LogService is not initialized");
     }
     isAsync_ = true;
@@ -410,12 +417,6 @@ Logger::Pump
 LogService::fatal(SourceLocationType const& loc)
 {
     return Logger(spdlog::default_logger()).fatal(loc);
-}
-
-bool
-LogService::initialized()
-{
-    return initialized_;
 }
 
 void

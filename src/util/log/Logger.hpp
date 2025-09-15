@@ -49,6 +49,10 @@ struct LogServiceInitTests;
 
 namespace util {
 
+namespace impl {
+class OnAssert;
+}  // namespace impl
+
 namespace config {
 class ClioConfigDefinition;
 }  // namespace config
@@ -242,6 +246,7 @@ protected:
     friend struct ::LogServiceInitTests;
     friend class ::LoggerFixture;
     friend class Logger;
+    friend class ::util::impl::OnAssert;
 
     /**
      * @brief Initialize the logging core with specified parameters.
@@ -252,6 +257,14 @@ protected:
      */
     static void
     init(bool isAsync, Severity defaultSeverity, std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks);
+
+    /**
+     * @brief Whether the LogService is initialized or not
+     *
+     * @return true if the LogService is initialized
+     */
+    [[nodiscard]] static bool
+    initialized();
 
     /**
      * @brief Reset the logging service to uninitialized state.
@@ -365,14 +378,6 @@ public:
      */
     [[nodiscard]] static Logger::Pump
     fatal(SourceLocationType const& loc = CURRENT_SRC_LOCATION);
-
-    /**
-     * @brief Whether the LogService is initialized or not
-     *
-     * @return true if the LogService is initialized
-     */
-    [[nodiscard]] static bool
-    initialized();
 
 private:
     /**

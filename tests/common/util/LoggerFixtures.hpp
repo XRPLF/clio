@@ -44,6 +44,7 @@ public:
     init();
 
 protected:
+    [[nodiscard]]
     std::string
     getLoggerString()
     {
