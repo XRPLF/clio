@@ -41,7 +41,7 @@ using namespace web::impl;
 using namespace web;
 using namespace util::config;
 
-struct ErrorHandlingTests : NoLoggerFixture {
+struct ErrorHandlingTests : public virtual ::testing::Test {
 protected:
     util::TagDecoratorFactory tagFactory_{ClioConfigDefinition{
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},

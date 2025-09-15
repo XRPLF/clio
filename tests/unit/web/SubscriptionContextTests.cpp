@@ -35,7 +35,7 @@
 using namespace web;
 using namespace util::config;
 
-struct SubscriptionContextTests : NoLoggerFixture {
+struct SubscriptionContextTests : public virtual ::testing::Test {
 protected:
     util::TagDecoratorFactory tagFactory_{ClioConfigDefinition{
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},

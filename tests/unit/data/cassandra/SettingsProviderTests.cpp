@@ -77,7 +77,7 @@ getParseSettingsConfig(boost::json::value val)
     return config;
 };
 
-class SettingsProviderTest : public NoLoggerFixture {};
+class SettingsProviderTest : virtual public ::testing::Test {};
 
 TEST_F(SettingsProviderTest, Defaults)
 {

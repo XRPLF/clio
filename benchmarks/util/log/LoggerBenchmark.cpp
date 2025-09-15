@@ -42,7 +42,7 @@ using namespace util;
 static constexpr auto kLOG_FORMAT = "%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v";
 
 struct BenchmarkLoggingInitializer {
-    static std::shared_ptr<spdlog::sinks::sink>
+    [[nodiscard]] static std::shared_ptr<spdlog::sinks::sink>
     createFileSink(LogService::FileLoggingParams const& params)
     {
         return LogService::createFileSink(params, kLOG_FORMAT);
@@ -72,8 +72,6 @@ uniqueLogDir()
 static void
 benchmarkConcurrentFileLogging(benchmark::State& state)
 {
-    spdlog::drop_all();
-
     auto const numThreads = static_cast<size_t>(state.range(0));
     auto const messagesPerThread = static_cast<size_t>(state.range(1));
 
@@ -84,7 +82,9 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
         state.PauseTiming();
 
         std::filesystem::create_directories(logDir);
-        spdlog::init_thread_pool(8192, 1);
+        static constexpr size_t kQUEUE_SIZE = 8192;
+        static constexpr size_t kTHREAD_COUNT = 1;
+        spdlog::init_thread_pool(kQUEUE_SIZE, kTHREAD_COUNT);
 
         auto fileSink = BenchmarkLoggingInitializer::createFileSink({
             .logDir = logDir,

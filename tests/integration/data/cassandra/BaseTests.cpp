@@ -41,7 +41,7 @@ using namespace std;
 
 using namespace data::cassandra;
 
-class BackendCassandraBaseTest : public NoLoggerFixture {
+class BackendCassandraBaseTest : public virtual ::testing::Test {
 protected:
     static Handle
     createHandle(std::string_view contactPoints, std::string_view keyspace)

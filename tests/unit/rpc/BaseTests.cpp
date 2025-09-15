@@ -49,7 +49,7 @@ using namespace rpc::modifiers;
 
 namespace json = boost::json;
 
-class RPCBaseTest : public NoLoggerFixture {};
+class RPCBaseTest : public virtual ::testing::Test {};
 
 TEST_F(RPCBaseTest, CheckType)
 {

@@ -39,7 +39,7 @@ using namespace util::config;
 using namespace rpc;
 using namespace util::prometheus;
 
-struct RPCWorkQueueTestBase : NoLoggerFixture {
+struct RPCWorkQueueTestBase : public virtual ::testing::Test {
     ClioConfigDefinition cfg = {
         {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
         {"workers", ConfigValue{ConfigType::Integer}.defaultValue(4)}

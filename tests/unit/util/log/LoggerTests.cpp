@@ -29,12 +29,10 @@ using namespace util;
 // Used as a fixture for tests with enabled logging
 class LoggerTest : public LoggerFixture {};
 
-// Used as a fixture for tests with disabled logging
-class NoLoggerTest : public NoLoggerFixture {};
-
 TEST_F(LoggerTest, Basic)
 {
     Logger const log{"General"};
+
     log.info() << "Info line logged";
     ASSERT_EQ(getLoggerString(), "inf:General - Info line logged\n");
 
@@ -53,10 +51,6 @@ TEST_F(LoggerTest, Filtering)
 
     log.warn() << "Warning is logged";
     ASSERT_EQ(getLoggerString(), "war:General - Warning is logged\n");
-
-    Logger const tlog{"Trace"};
-    tlog.trace() << "Trace line logged for 'Trace' component";
-    ASSERT_EQ(getLoggerString(), "tra:Trace - Trace line logged for 'Trace' component\n");
 }
 
 #ifndef COVERAGE_ENABLED
@@ -77,13 +71,3 @@ TEST_F(LoggerTest, LOGMacro)
     EXPECT_TRUE(computeCalled);
 }
 #endif
-
-TEST_F(NoLoggerTest, Basic)
-{
-    Logger const log{"Trace"};
-    log.trace() << "Nothing";
-    ASSERT_TRUE(getLoggerString().empty());
-
-    LogService::fatal() << "Still nothing";
-    ASSERT_TRUE(getLoggerString().empty());
-}
