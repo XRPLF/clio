@@ -40,7 +40,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -55,13 +54,15 @@ struct LogServiceInitTests : virtual public LoggerFixture {
 public:
     LogServiceInitTests()
     {
-        util::LogServiceState::reset();
+        LogServiceState::reset();
     }
 
     ~LogServiceInitTests() override
     {
-        util::LogServiceState::reset();
-        util::LogServiceState::init(false, util::Severity::NFO, {});
+        if (LogService::initialized()) {
+            LogService::reset();
+        }
+        LogServiceState::init(false, Severity::FTL, {});
     }
 
 protected:

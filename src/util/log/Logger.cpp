@@ -266,6 +266,9 @@ LogServiceState::init(bool isAsync, Severity defaultSeverity, std::vector<spdlog
 void
 LogServiceState::reset()
 {
+    if (!initialized_) {
+        throw std::logic_error("LogService is not initialized");
+    }
     isAsync_ = true;
     defaultSeverity_ = Severity::NFO;
     sinks_.clear();
@@ -276,7 +279,7 @@ std::shared_ptr<spdlog::logger>
 LogServiceState::registerLogger(std::string const& channel, std::optional<Severity> severity)
 {
     if (not initialized_) {
-        throw std::logic_error("LogService not initialized");
+        throw std::logic_error("LogService is not initialized");
     }
 
     std::shared_ptr<spdlog::logger> existingLogger = spdlog::get(channel);
