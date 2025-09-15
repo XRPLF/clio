@@ -186,7 +186,7 @@ HttpAsyncClient::HttpAsyncClient(boost::asio::io_context& ioContext) : stream_{i
 {
 }
 
-std::optional<boost::system::error_code>
+std::expected<void, boost::system::error_code>
 HttpAsyncClient::connect(
     std::string_view host,
     std::string_view port,
@@ -198,18 +198,18 @@ HttpAsyncClient::connect(
     boost::asio::ip::tcp::resolver resolver{stream_.get_executor()};
     auto const resolverResults = resolver.resolve(host, port, error);
     if (error)
-        return error;
+        return std::unexpected{error};
 
     ASSERT(!resolverResults.empty(), "No results from resolver");
 
     boost::beast::get_lowest_layer(stream_).expires_after(timeout);
     stream_.async_connect(resolverResults.begin()->endpoint(), yield[error]);
     if (error)
-        return error;
-    return std::nullopt;
+        return std::unexpected{error};
+    return {};
 }
 
-std::optional<boost::system::error_code>
+std::expected<void, boost::system::error_code>
 HttpAsyncClient::send(
     boost::beast::http::request<boost::beast::http::string_body> request,
     boost::asio::yield_context yield,
@@ -221,8 +221,8 @@ HttpAsyncClient::send(
     boost::beast::get_lowest_layer(stream_).expires_after(timeout);
     http::async_write(stream_, request, yield[error]);
     if (error)
-        return error;
-    return std::nullopt;
+        return std::unexpected{error};
+    return {};
 }
 
 std::expected<boost::beast::http::response<boost::beast::http::string_body>, boost::system::error_code>

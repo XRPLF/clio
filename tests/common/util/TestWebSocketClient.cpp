@@ -137,7 +137,7 @@ WebSocketAsyncClient::WebSocketAsyncClient(boost::asio::io_context& ioContext) :
 {
 }
 
-std::optional<boost::system::error_code>
+std::expected<void, boost::system::error_code>
 WebSocketAsyncClient::connect(
     std::string const& host,
     std::string const& port,
@@ -153,7 +153,7 @@ WebSocketAsyncClient::connect(
     boost::beast::get_lowest_layer(stream_).expires_after(timeout);
     stream_.next_layer().async_connect(results, yield[error]);
     if (error)
-        return error;
+        return std::unexpected{error};
 
     boost::beast::websocket::stream_base::timeout wsTimeout =
         boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::client);
@@ -173,12 +173,12 @@ WebSocketAsyncClient::connect(
     stream_.async_handshake(fmt::format("{}:{}", host, port), "/", yield[error]);
 
     if (error)
-        return error;
+        return std::unexpected{error};
 
-    return std::nullopt;
+    return {};
 }
 
-std::optional<boost::system::error_code>
+std::expected<void, boost::system::error_code>
 WebSocketAsyncClient::send(
     boost::asio::yield_context yield,
     std::string_view message,
@@ -190,8 +190,8 @@ WebSocketAsyncClient::send(
     );
 
     if (error)
-        return error;
-    return std::nullopt;
+        return std::unexpected{error};
+    return {};
 }
 
 std::expected<std::string, boost::system::error_code>

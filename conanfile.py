@@ -9,10 +9,7 @@ class ClioConan(ConanFile):
     url = 'https://github.com/xrplf/clio'
     description = 'Clio RPC server'
     settings = 'os', 'compiler', 'build_type', 'arch'
-    options = {
-        'tests': [True, False],
-        'benchmark': [True, False],
-    }
+    options = {}
 
     requires = [
         'boost/1.83.0',
@@ -28,9 +25,6 @@ class ClioConan(ConanFile):
     ]
 
     default_options = {
-        'tests': False,
-        'benchmark': False,
-
         'xrpl/*:tests': False,
         'xrpl/*:rocksdb': False,
         'cassandra-cpp-driver/*:shared': False,
@@ -51,10 +45,8 @@ class ClioConan(ConanFile):
     )
 
     def requirements(self):
-        if self.options.tests or self.options.integration_tests:
-            self.requires('gtest/1.14.0')
-        if self.options.benchmark:
-            self.requires('benchmark/1.9.4')
+        self.requires('gtest/1.14.0')
+        self.requires('benchmark/1.9.4')
 
     def configure(self):
         if self.settings.compiler == 'apple-clang':
@@ -70,8 +62,6 @@ class ClioConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        for option_name, option_value in self.options.items():
-            tc.variables[option_name] = option_value
         tc.generate()
 
     def build(self):

@@ -115,7 +115,7 @@ COPY --from=clio-tools \
 WORKDIR /root
 
 # Setup conan
-RUN conan remote add --index 0 ripple https://conan.ripplex.io
+RUN conan remote add --index 0 xrplf https://conan.ripplex.io
 
 WORKDIR /root/.conan2
 COPY conan/global.conf ./global.conf

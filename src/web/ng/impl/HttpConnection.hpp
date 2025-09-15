@@ -62,7 +62,7 @@ public:
     virtual std::expected<ConnectionPtr, Error>
     upgrade(util::TagDecoratorFactory const& tagDecoratorFactory, boost::asio::yield_context yield) = 0;
 
-    virtual std::optional<Error>
+    virtual std::expected<void, Error>
     sendRaw(
         boost::beast::http::response<boost::beast::http::string_body> response,
         boost::asio::yield_context yield
@@ -123,7 +123,7 @@ public:
     HttpConnection&
     operator=(HttpConnection const& other) = delete;
 
-    std::optional<Error>
+    std::expected<void, Error>
     sslHandshake(boost::asio::yield_context yield)
         requires IsSslTcpStream<StreamType>
     {
@@ -132,11 +132,11 @@ public:
         auto const bytesUsed =
             stream_.async_handshake(boost::asio::ssl::stream_base::server, buffer_.cdata(), yield[error]);
         if (error)
-            return error;
+            return std::unexpected{error};
 
         buffer_.consume(bytesUsed);
 
-        return std::nullopt;
+        return {};
     }
 
     bool
@@ -145,7 +145,7 @@ public:
         return false;
     }
 
-    std::optional<Error>
+    std::expected<void, Error>
     sendRaw(
         boost::beast::http::response<boost::beast::http::string_body> response,
         boost::asio::yield_context yield
@@ -160,7 +160,7 @@ public:
         timeout_ = newTimeout;
     }
 
-    std::optional<Error>
+    std::expected<void, Error>
     send(Response response, boost::asio::yield_context yield) override
     {
         auto httpResponse = std::move(response).intoHttpResponse();

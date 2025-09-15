@@ -365,9 +365,9 @@ ConnectionHandler::processRequest(
     auto response = handleRequest(connection, subscriptionContext, request, yield);
 
     LOG(log_.trace()) << connection.tag() << "Sending response: " << response.message();
-    auto const maybeError = connection.send(std::move(response), yield);
-    if (maybeError.has_value()) {
-        return handleError(maybeError.value(), connection);
+    auto const expectedSuccess = connection.send(std::move(response), yield);
+    if (not expectedSuccess.has_value()) {
+        return handleError(expectedSuccess.error(), connection);
     }
     return std::nullopt;
 }

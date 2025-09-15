@@ -261,9 +261,9 @@ TEST_F(ServerHttpTest, ClientDisconnects)
 {
     HttpAsyncClient client{ctx_};
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        auto maybeError =
+        auto expectedSuccess =
             client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         client.disconnect();
         server_->stop(yield);
@@ -312,16 +312,17 @@ TEST_F(ServerHttpTest, OnConnectCheck)
                 return {};
             });
 
-        auto maybeError =
+        auto expectedSuccess =
             client.connect("127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         // Have to send a request here because the server does async_detect_ssl() which waits for some data to appear
-        client.send(
+        expectedSuccess = client.send(
             http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
             yield,
             std::chrono::milliseconds{100}
         );
+        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         // Wait for the onConnectCheck to be called
         timer.expires_after(std::chrono::milliseconds{100});
@@ -374,16 +375,17 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
     });
 
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        auto maybeError =
+        auto expectedSuccess =
             client.connect("127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         // Have to send a request here because the server does async_detect_ssl() which waits for some data to appear
-        client.send(
+        expectedSuccess = client.send(
             http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
             yield,
             std::chrono::milliseconds{100}
         );
+        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         auto const response = client.receive(yield, std::chrono::milliseconds{100});
         [&]() { ASSERT_TRUE(response.has_value()) << response.error().message(); }();
@@ -434,15 +436,17 @@ TEST_F(ServerHttpTest, OnDisconnectHook)
 
         EXPECT_CALL(onDisconnectHookMock, Call).WillOnce([&timer](auto&&) { timer.cancel(); });
 
-        auto maybeError =
+        auto expectedSuccess =
             client.connect("127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
-        client.send(
+        // Have to send a request here because the server does async_detect_ssl() which waits for some data to appear
+        expectedSuccess = client.send(
             http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
             yield,
             std::chrono::milliseconds{100}
         );
+        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         client.gracefulShutdown();
 
@@ -463,17 +467,17 @@ TEST_F(ServerHttpTest, ClientIsDisconnectedIfServerStopped)
 {
     HttpAsyncClient client{ctx_};
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        auto maybeError =
+        auto expectedSuccess =
             client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         // Have to send a request here because the server does async_detect_ssl() which waits for some data to appear
-        maybeError = client.send(
+        expectedSuccess = client.send(
             http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
             yield,
             std::chrono::milliseconds{100}
         );
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         auto message = client.receive(yield, std::chrono::milliseconds{100});
         EXPECT_TRUE(message.has_value()) << message.error().message();
@@ -498,13 +502,13 @@ TEST_P(ServerHttpTest, RequestResponse)
     Response const response{http::status::ok, "some response", Request{request}};
 
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        auto maybeError =
+        auto expectedSuccess =
             client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
-            maybeError = client.send(request, yield, std::chrono::milliseconds{100});
-            EXPECT_FALSE(maybeError.has_value()) << maybeError->message();
+            expectedSuccess = client.send(request, yield, std::chrono::milliseconds{100});
+            EXPECT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message();
 
             auto const expectedResponse = client.receive(yield, std::chrono::milliseconds{100});
             [&]() { ASSERT_TRUE(expectedResponse.has_value()) << expectedResponse.error().message(); }();
@@ -548,9 +552,9 @@ TEST_F(ServerTest, WsClientDisconnects)
     WebSocketAsyncClient client{ctx_};
 
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        auto maybeError =
+        auto expectedSuccess =
             client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         client.close();
         server_->stop(yield);
@@ -570,13 +574,13 @@ TEST_F(ServerTest, WsRequestResponse)
     Response const response{http::status::ok, "some response", Request{requestMessage_, headers}};
 
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        auto maybeError =
+        auto expectedSuccess =
             client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
-        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
-            maybeError = client.send(yield, requestMessage_, std::chrono::milliseconds{100});
-            EXPECT_FALSE(maybeError.has_value()) << maybeError->message();
+            expectedSuccess = client.send(yield, requestMessage_, std::chrono::milliseconds{100});
+            EXPECT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message();
 
             auto const expectedResponse = client.receive(yield, std::chrono::milliseconds{100});
             [&]() { ASSERT_TRUE(expectedResponse.has_value()) << expectedResponse.error().message(); }();
@@ -608,10 +612,10 @@ TEST_F(ServerTest, WsClientIsDisconnectedIfServerStopped)
 {
     WebSocketAsyncClient client{ctx_};
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        auto maybeError =
+        auto expectedSuccess =
             client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
-        EXPECT_TRUE(maybeError.has_value());
-        EXPECT_EQ(maybeError.value().value(), static_cast<int>(boost::beast::websocket::error::upgrade_declined));
+        EXPECT_FALSE(expectedSuccess.has_value());
+        EXPECT_EQ(expectedSuccess.error().value(), static_cast<int>(boost::beast::websocket::error::upgrade_declined));
 
         ctx_.stop();
     });
