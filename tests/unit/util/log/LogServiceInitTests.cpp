@@ -142,9 +142,7 @@ TEST_F(LogServiceInitTests, ChannelLogLevel)
     auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::parse(configStr).as_object()});
     ASSERT_FALSE(parsingErrors.has_value());
 
-    std::cerr << "before init" << std::endl;
     EXPECT_TRUE(LogService::init(config_));
-    std::cerr << "after init" << std::endl;
 
     std::string const logString = "some log";
     for (auto const& channel : Logger::kCHANNELS) {
