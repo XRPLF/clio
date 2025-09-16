@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "etl/impl/GrpcSource.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockBackend.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockXrpLedgerAPIService.hpp"

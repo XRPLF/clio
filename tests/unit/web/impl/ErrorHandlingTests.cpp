@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "rpc/Errors.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
 #include "util/config/ConfigDefinition.hpp"

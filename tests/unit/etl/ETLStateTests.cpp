@@ -19,7 +19,6 @@
 
 #include "etl/ETLState.hpp"
 #include "rpc/Errors.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockSource.hpp"
 
 #include <boost/json/parse.hpp>
