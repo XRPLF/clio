@@ -24,7 +24,6 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/common/ValidationHelpers.hpp"
 #include "rpc/common/Validators.hpp"
-#include "util/LoggerFixtures.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>

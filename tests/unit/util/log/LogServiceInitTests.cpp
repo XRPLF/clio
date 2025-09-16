@@ -33,9 +33,6 @@
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <spdlog/pattern_formatter.h>
-#include <spdlog/sinks/ostream_sink.h>
-#include <spdlog/spdlog.h>
 
 #include <cstddef>
 #include <cstdint>

@@ -19,7 +19,6 @@
 
 #include "util/AsioContextTestFixture.hpp"
 #include "util/AssignRandomPort.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Spawn.hpp"

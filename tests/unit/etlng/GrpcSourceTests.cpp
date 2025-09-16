@@ -26,7 +26,6 @@
 #include "etlng/impl/GrpcSource.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/Assert.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockXrpLedgerAPIService.hpp"
 #include "util/Mutex.hpp"
 #include "util/TestObject.hpp"

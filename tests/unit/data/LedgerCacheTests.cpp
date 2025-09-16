@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "data/LedgerCache.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/prometheus/Bool.hpp"
 

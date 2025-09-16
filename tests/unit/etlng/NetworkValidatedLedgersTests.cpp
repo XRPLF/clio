@@ -20,7 +20,6 @@
 #include "etl/NetworkValidatedLedgers.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etlng/impl/AmendmentBlockHandler.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
 
 #include <gmock/gmock.h>

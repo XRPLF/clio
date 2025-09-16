@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "rpc/common/impl/APIVersionParser.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigValue.hpp"
 #include "util/config/Types.hpp"
