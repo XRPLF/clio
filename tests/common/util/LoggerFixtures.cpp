@@ -22,6 +22,7 @@
 #include "util/log/Logger.hpp"
 
 #include <spdlog/common.h>
+#include <spdlog/logger.h>
 #include <spdlog/pattern_formatter.h>
 #include <spdlog/sinks/ostream_sink.h>
 #include <spdlog/spdlog.h>
@@ -29,32 +30,40 @@
 #include <algorithm>
 #include <memory>
 
-LoggerFixture::LoggerFixture()
+void
+LoggerFixture::init()
 {
-    // Clear any existing loggers
-    spdlog::drop_all();
+    util::LogServiceState::init(false, util::Severity::FTL, {});
 
-    // Create ostream sink for testing
-    auto ostreamSink = std::make_shared<spdlog::sinks::ostream_sink_mt>(stream_);
-    ostreamSink->set_formatter(std::make_unique<spdlog::pattern_formatter>("%^%3!l:%n%$ - %v"));
-
-    // Create loggers for each channel
-    std::ranges::for_each(util::Logger::kCHANNELS, [&ostreamSink](char const* channel) {
-        auto logger = std::make_shared<spdlog::logger>(channel, ostreamSink);
-        logger->set_level(spdlog::level::trace);
-        spdlog::register_logger(logger);
+    std::ranges::for_each(util::Logger::kCHANNELS, [](char const* channel) {
+        util::LogService::registerLogger(channel);
     });
-
-    spdlog::get("General")->set_level(spdlog::level::debug);
-
-    auto traceLogger = std::make_shared<spdlog::logger>("Trace", ostreamSink);
-    traceLogger->set_level(spdlog::level::trace);
-    spdlog::register_logger(traceLogger);
 
     spdlog::set_default_logger(spdlog::get("General"));
 }
 
-NoLoggerFixture::NoLoggerFixture()
+void
+LoggerFixture::resetTestingLoggers()
 {
-    spdlog::set_level(spdlog::level::off);
+    auto ostreamSink = std::make_shared<spdlog::sinks::ostream_sink_mt>(buffer_.getStream());
+    ostreamSink->set_formatter(std::make_unique<spdlog::pattern_formatter>("%^%3!l:%n%$ - %v"));
+    ostreamSink->set_level(spdlog::level::trace);
+    util::LogServiceState::replaceSinks({ostreamSink});
+
+    spdlog::apply_all([](std::shared_ptr<spdlog::logger> logger) { logger->set_level(spdlog::level::trace); });
+    spdlog::get("General")->set_level(spdlog::level::debug);
+}
+
+LoggerFixture::LoggerFixture()
+{
+    util::LogServiceState::reset();
+    util::LogServiceState::init(false, util::Severity::TRC, {});
+
+    resetTestingLoggers();
+}
+
+LoggerFixture::~LoggerFixture()
+{
+    util::LogServiceState::replaceSinks({});
+    spdlog::apply_all([](std::shared_ptr<spdlog::logger> logger) { logger->set_level(spdlog::level::critical); });
 }

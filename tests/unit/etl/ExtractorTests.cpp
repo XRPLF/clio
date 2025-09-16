@@ -34,7 +34,7 @@
 using namespace testing;
 using namespace etl;
 
-struct ETLExtractorTest : util::prometheus::WithPrometheus, NoLoggerFixture {
+struct ETLExtractorTest : util::prometheus::WithPrometheus {
     using ExtractionDataPipeType = MockExtractionDataPipe;
     using LedgerFetcherType = MockLedgerFetcher;
     using ExtractorType = etl::impl::Extractor<ExtractionDataPipeType, LedgerFetcherType>;

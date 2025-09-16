@@ -54,7 +54,7 @@ using namespace app;
 namespace http = boost::beast::http;
 using namespace util::config;
 
-struct WebHandlersTest : virtual NoLoggerFixture {
+struct WebHandlersTest : virtual public ::testing::Test {
     DOSGuardStrictMock dosGuardMock;
     util::TagDecoratorFactory const tagFactory{
         ClioConfigDefinition{{"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}

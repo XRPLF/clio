@@ -38,7 +38,7 @@
 namespace http = boost::beast::http;
 using namespace util::config;
 
-class IPAdminVerificationStrategyTest : public NoLoggerFixture {
+class IPAdminVerificationStrategyTest : public virtual ::testing::Test {
 protected:
     web::IPAdminVerificationStrategy strat_;
     http::request<http::string_body> request_;
@@ -53,7 +53,7 @@ TEST_F(IPAdminVerificationStrategyTest, IsAdminOnlyForIP_127_0_0_1)
     EXPECT_FALSE(strat_.isAdmin(request_, "localhost"));
 }
 
-class PasswordAdminVerificationStrategyTest : public NoLoggerFixture {
+class PasswordAdminVerificationStrategyTest : public virtual ::testing::Test {
 protected:
     std::string const password_ = "secret";
     std::string const passwordHash_ = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";

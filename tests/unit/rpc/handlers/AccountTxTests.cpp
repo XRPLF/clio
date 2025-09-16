@@ -37,6 +37,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace rpc;
@@ -907,9 +908,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
     );
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ - 1);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillByDefault(Return(ledgerHeader));
-
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillOnce(Return(ledgerHeader));
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
     runSpawn([&, this](auto yield) {
@@ -937,8 +936,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
 
 TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
 {
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillOnce(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
@@ -962,8 +960,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
 
 TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
 {
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ - 1, _)).WillOnce(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
@@ -1000,11 +997,10 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ - 1, INT32_MAX})),
             testing::_
         )
-    )
-        .Times(1);
+    );
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ - 1);
-    EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
+    EXPECT_CALL(*backend_, fetchLedgerByHash);
     ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
 
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
@@ -1050,8 +1046,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
     );
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillByDefault(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillOnce(Return(ledgerHeader));
 
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
@@ -1591,6 +1586,96 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                 kACCOUNT,
                 -1,
                 -1
+            )
+        );
+        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2u});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, json::parse(out));
+    });
+}
+
+TEST_F(RPCAccountTxHandlerTest, MPTTxs_API_v2)
+{
+    auto const out = fmt::format(
+        R"JSON({{
+            "account": "{}",
+            "ledger_index_min": 10,
+            "ledger_index_max": 30,
+            "transactions": [
+                {{
+                    "meta": {{
+                        "AffectedNodes": [
+                            {{
+                                "CreatedNode": {{
+                                    "LedgerEntryType": "MPTokenIssuance",
+                                    "LedgerIndex": "0000000000000000000000000000000000000000000000000000000000000000",
+                                    "NewFields": {{
+                                        "Flags": 0,
+                                        "Issuer": "{}",
+                                        "LedgerEntryType": "MPTokenIssuance",
+                                        "MPTokenMetadata": "746573742D6D657461",
+                                        "MaximumAmount": "0",
+                                        "OutstandingAmount": "0",
+                                        "OwnerNode": "0",
+                                        "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                                        "PreviousTxnLgrSeq": 0,
+                                        "Sequence": 1
+                                    }}
+                                }}
+                            }}
+                        ],
+                        "TransactionIndex": 0,
+                        "TransactionResult": "tesSUCCESS"
+                    }},
+                    "hash": "A52221F4003C281D3C83F501F418B55A1F9DC1C6A129EF13E1A8F0E5C008DAE3",
+                    "ledger_index": 11,
+                    "ledger_hash": "{}",
+                    "close_time_iso": "2000-01-01T00:00:00Z",
+                    "tx_json": {{
+                        "Account": "{}",
+                        "Fee": "50",
+                        "Sequence": 1,
+                        "SigningPubKey": "74657374",
+                        "TransactionType": "MPTokenIssuanceCreate",
+                        "ledger_index": 11,
+                        "ctid": "C000000B00000000",
+                        "date": 1
+                    }},
+                    "validated": true
+                }}
+            ],
+            "validated": true
+        }})JSON",
+        kACCOUNT,
+        kACCOUNT,
+        kLEDGER_HASH,
+        kACCOUNT
+    );
+
+    auto mptTx = createMPTIssuanceCreateTxWithMetadata(kACCOUNT, 50, 1);
+    mptTx.ledgerSequence = kMIN_SEQ + 1;
+    mptTx.date = 1;
+
+    auto transactions = std::vector<TransactionAndMetadata>{std::move(mptTx)};
+    auto const transCursor = TransactionsAndCursor{.txns = std::move(transactions), .cursor = std::nullopt};
+
+    EXPECT_CALL(*backend_, fetchAccountTransactions).WillOnce(Return(transCursor));
+
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMIN_SEQ + 1);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kMIN_SEQ + 1, _)).WillOnce(Return(ledgerHeader));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}",
+                    "ledger_index_min": {},
+                    "ledger_index_max": {}
+                }})JSON",
+                kACCOUNT,
+                kMIN_SEQ,
+                kMAX_SEQ
             )
         );
         auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2u});

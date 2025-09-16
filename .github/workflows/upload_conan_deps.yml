@@ -60,6 +60,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      max-parallel: 10
 
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container != '' && fromJson(matrix.container) || null }}
@@ -94,8 +95,8 @@ jobs:
 
       - name: Login to Conan
         if: github.repository_owner == 'XRPLF' && github.event_name != 'pull_request'
-        run: conan remote login -p ${{ secrets.CONAN_PASSWORD }} ripple ${{ secrets.CONAN_USERNAME }}
+        run: conan remote login -p ${{ secrets.CONAN_PASSWORD }} xrplf ${{ secrets.CONAN_USERNAME }}
 
       - name: Upload Conan packages
         if: github.repository_owner == 'XRPLF' && github.event_name != 'pull_request' && github.event_name != 'schedule'
-        run: conan upload "*" -r=ripple --confirm ${{ github.event.inputs.force_upload == 'true' && '--force' || '' }}
+        run: conan upload "*" -r=xrplf --confirm ${{ github.event.inputs.force_upload == 'true' && '--force' || '' }}

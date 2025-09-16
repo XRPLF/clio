@@ -59,7 +59,7 @@ class WsConnectionBase : public Connection {
 public:
     using Connection::Connection;
 
-    virtual std::optional<Error>
+    virtual std::expected<void, Error>
     sendShared(std::shared_ptr<std::string> message, boost::asio::yield_context yield) = 0;
 };
 
@@ -108,14 +108,14 @@ public:
     WsConnection&
     operator=(WsConnection const&) = delete;
 
-    std::optional<Error>
+    std::expected<void, Error>
     performHandshake(boost::asio::yield_context yield)
     {
         Error error;
         stream_.async_accept(initialRequest_, yield[error]);
         if (error)
-            return error;
-        return std::nullopt;
+            return std::unexpected{error};
+        return {};
     }
 
     bool
@@ -124,7 +124,7 @@ public:
         return true;
     }
 
-    std::optional<Error>
+    std::expected<void, Error>
     sendShared(std::shared_ptr<std::string> message, boost::asio::yield_context yield) override
     {
         return sendingQueue_.send(std::move(message), yield);
@@ -140,7 +140,7 @@ public:
         stream_.set_option(wsTimeout);
     }
 
-    std::optional<Error>
+    std::expected<void, Error>
     send(Response response, boost::asio::yield_context yield) override
     {
         return sendingQueue_.send(std::move(response), yield);
@@ -206,9 +206,9 @@ makeWsConnection(
     auto connection = std::make_unique<WsConnection<StreamType>>(
         std::forward<StreamType>(stream), std::move(ip), std::move(buffer), std::move(request), tagDecoratorFactory
     );
-    auto maybeError = connection->performHandshake(yield);
-    if (maybeError.has_value())
-        return std::unexpected{maybeError.value()};
+    auto const expectedSuccess = connection->performHandshake(yield);
+    if (not expectedSuccess.has_value())
+        return std::unexpected{expectedSuccess.error()};
     return connection;
 }
 

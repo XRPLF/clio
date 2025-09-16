@@ -39,7 +39,7 @@ using namespace util::config;
 using testing::MockFunction;
 using testing::StrictMock;
 
-struct SignalsHandlerTestsBase : NoLoggerFixture {
+struct SignalsHandlerTestsBase : public virtual ::testing::Test {
     void
     allowTestToFinish()
     {

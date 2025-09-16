@@ -35,7 +35,7 @@
 
 using namespace util::config;
 
-struct ConfigValueTest : common::util::WithMockAssert, NoLoggerFixture {};
+struct ConfigValueTest : common::util::WithMockAssert {};
 
 TEST_F(ConfigValueTest, construct)
 {
@@ -138,7 +138,7 @@ TEST_F(ConfigValueConstraintTest, defaultValueWithConstraintCheckError)
 }
 
 // A test for each constraint so it's easy to change in the future
-struct ConstraintTest : NoLoggerFixture {};
+struct ConstraintTest : public virtual ::testing::Test {};
 
 TEST_F(ConstraintTest, PortConstraint)
 {

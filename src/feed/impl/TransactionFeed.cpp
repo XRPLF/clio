@@ -206,8 +206,9 @@ TransactionFeed::pub(
         pubObj[txKey] = rpc::toJson(*tx);
         pubObj[JS(meta)] = rpc::toJson(*meta);
         rpc::insertDeliveredAmount(pubObj[JS(meta)].as_object(), tx, meta, txMeta.date);
-        rpc::insertDeliverMaxAlias(pubObj[txKey].as_object(), version);
-        rpc::insertMPTIssuanceID(pubObj[JS(meta)].as_object(), tx, meta);
+
+        auto& txnPubobj = pubObj[txKey].as_object();
+        rpc::insertDeliverMaxAlias(txnPubobj, version);
 
         Json::Value nftJson;
         ripple::RPC::insertNFTSyntheticInJson(nftJson, tx, *meta);
