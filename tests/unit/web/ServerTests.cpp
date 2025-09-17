@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "util/AssignRandomPort.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestHttpClient.hpp"
 #include "util/TestWebSocketClient.hpp"

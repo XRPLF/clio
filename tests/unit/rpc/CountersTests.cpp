@@ -20,7 +20,6 @@
 #include "rpc/Counters.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/WorkQueue.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/prometheus/Counter.hpp"
 

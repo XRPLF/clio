@@ -23,7 +23,6 @@
 #include "etlng/Models.hpp"
 #include "etlng/impl/Extraction.hpp"
 #include "util/BinaryTestObject.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockAssert.hpp"
 #include "util/TestObject.hpp"
 

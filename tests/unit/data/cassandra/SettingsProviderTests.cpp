@@ -19,7 +19,6 @@
 
 #include "data/cassandra/SettingsProvider.hpp"
 #include "data/cassandra/Types.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/TmpFile.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigFileJson.hpp"

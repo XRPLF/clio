@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "rpc/Errors.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/NameGenerator.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/impl/ErrorHandling.hpp"

@@ -39,7 +39,7 @@ jobs:
     runs-on: ${{ inputs.runs_on }}
     container: ${{ inputs.container != '' && fromJson(inputs.container) || null }}
 
-    if: inputs.run_unit_tests
+    if: ${{ inputs.run_unit_tests }}
 
     env:
       # TODO: remove completely when we have fixed all currently existing issues with sanitizers
@@ -63,15 +63,15 @@ jobs:
         run: chmod +x ./clio_tests
 
       - name: Run clio_tests (regular)
-        if: env.SANITIZER_IGNORE_ERRORS == 'false'
+        if: ${{ env.SANITIZER_IGNORE_ERRORS == 'false' }}
         run: ./clio_tests
 
       - name: Run clio_tests (sanitizer errors ignored)
-        if: env.SANITIZER_IGNORE_ERRORS == 'true'
+        if: ${{ env.SANITIZER_IGNORE_ERRORS == 'true' }}
         run: ./.github/scripts/execute-tests-under-sanitizer ./clio_tests
 
       - name: Check for sanitizer report
-        if: env.SANITIZER_IGNORE_ERRORS == 'true'
+        if: ${{ env.SANITIZER_IGNORE_ERRORS == 'true' }}
         shell: bash
         id: check_report
         run: |
@@ -82,7 +82,7 @@ jobs:
           fi
 
       - name: Upload sanitizer report
-        if: env.SANITIZER_IGNORE_ERRORS == 'true' && steps.check_report.outputs.found_report == 'true'
+        if: ${{ env.SANITIZER_IGNORE_ERRORS == 'true' && steps.check_report.outputs.found_report == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: sanitizer_report_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
@@ -90,7 +90,7 @@ jobs:
           include-hidden-files: true
 
       - name: Create an issue
-        if: false && env.SANITIZER_IGNORE_ERRORS == 'true' && steps.check_report.outputs.found_report == 'true'
+        if: ${{ false && env.SANITIZER_IGNORE_ERRORS == 'true' && steps.check_report.outputs.found_report == 'true' }}
         uses: ./.github/actions/create_issue
         env:
           GH_TOKEN: ${{ github.token }}
@@ -108,7 +108,7 @@ jobs:
     runs-on: ${{ inputs.runs_on }}
     container: ${{ inputs.container != '' && fromJson(inputs.container) || null }}
 
-    if: inputs.run_integration_tests
+    if: ${{ inputs.run_integration_tests }}
 
     services:
       scylladb:

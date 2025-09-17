@@ -25,7 +25,6 @@
 #include "etlng/impl/Loading.hpp"
 #include "etlng/impl/TaskManager.hpp"
 #include "util/BinaryTestObject.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/TestObject.hpp"
 #include "util/async/AnyExecutionContext.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
