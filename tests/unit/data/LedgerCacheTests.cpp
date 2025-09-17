@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "data/LedgerCache.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/prometheus/Bool.hpp"
 
@@ -27,7 +26,7 @@
 
 using namespace data;
 
-struct LedgerCacheTest : util::prometheus::WithPrometheus, NoLoggerFixture {
+struct LedgerCacheTest : util::prometheus::WithPrometheus {
     LedgerCache cache;
 };
 
@@ -39,7 +38,7 @@ TEST_F(LedgerCacheTest, defaultState)
     EXPECT_EQ(cache.latestLedgerSequence(), 0u);
 }
 
-struct LedgerCachePrometheusMetricTest : util::prometheus::WithMockPrometheus, NoLoggerFixture {
+struct LedgerCachePrometheusMetricTest : util::prometheus::WithMockPrometheus {
     LedgerCache cache;
 };
 

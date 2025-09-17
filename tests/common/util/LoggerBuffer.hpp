@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -18,40 +18,26 @@
 //==============================================================================
 
 #pragma once
+#include "util/StringBuffer.hpp"
 
-#include "util/LoggerBuffer.hpp"
-
-#include <gtest/gtest.h>
-
+#include <ostream>
 #include <string>
 
-/**
- * @brief A fixture for testing LogService and Logger.
- */
-class LoggerFixture : virtual public ::testing::Test {
-protected:
-    LoggerBuffer buffer_;
-
+class LoggerBuffer {
 public:
-    LoggerFixture();
-    ~LoggerFixture() override;
-
-    /**
-     * @brief Sets up spdlog loggers for each channel. Should be called once before using any loggers.
-     * Simulates the `util::LogService::init(config)` call
-     */
-    static void
-    init();
-
-protected:
-    [[nodiscard]]
     std::string
-    getLoggerString()
+    getStrAndReset()
     {
         return buffer_.getStrAndReset();
     }
 
+    std::ostream&
+    getStream()
+    {
+        return stream_;
+    }
+
 private:
-    void
-    resetTestingLoggers();
+    StringBuffer buffer_;
+    std::ostream stream_ = std::ostream{&buffer_};
 };

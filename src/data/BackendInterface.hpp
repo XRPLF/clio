@@ -138,6 +138,7 @@ synchronousAndRetryOnTimeout(FnType&& func)
  */
 class BackendInterface {
 protected:
+    util::Logger log_{"Backend"};
     mutable std::shared_mutex rngMtx_;
     std::optional<LedgerRange> range_;
     std::reference_wrapper<LedgerCacheInterface> cache_;

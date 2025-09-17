@@ -56,6 +56,7 @@ class TaskManager : public TaskManagerInterface {
     std::vector<util::async::AnyOperation<void>> extractors_;
     std::vector<util::async::AnyOperation<void>> loaders_;
 
+    std::atomic_bool running_ = false;
     util::Logger log_{"ETL"};
 
 public:

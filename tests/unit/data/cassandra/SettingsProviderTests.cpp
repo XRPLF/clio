@@ -19,7 +19,6 @@
 
 #include "data/cassandra/SettingsProvider.hpp"
 #include "data/cassandra/Types.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/TmpFile.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigFileJson.hpp"
@@ -77,7 +76,7 @@ getParseSettingsConfig(boost::json::value val)
     return config;
 };
 
-class SettingsProviderTest : public NoLoggerFixture {};
+class SettingsProviderTest : virtual public ::testing::Test {};
 
 TEST_F(SettingsProviderTest, Defaults)
 {

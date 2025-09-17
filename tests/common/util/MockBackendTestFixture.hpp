@@ -29,7 +29,7 @@
 #include <memory>
 
 template <template <typename> typename MockType = ::testing::NiceMock>
-struct MockBackendTestBase : virtual public NoLoggerFixture {
+struct MockBackendTestBase : virtual public ::testing::Test {
     class BackendProxy {
         std::shared_ptr<MockType<MockBackend>> backend_ =
             std::make_shared<MockType<MockBackend>>(util::config::ClioConfigDefinition{{}});

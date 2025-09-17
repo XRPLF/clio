@@ -47,15 +47,15 @@ public:
     {
     }
 
-    std::optional<Error>
+    std::expected<void, Error>
     send(T message, boost::asio::yield_context yield)
     {
         if (error_)
-            return error_;
+            return std::unexpected{error_};
 
         queue_.push(std::move(message));
         if (isSending_)
-            return std::nullopt;
+            return {};
 
         isSending_ = true;
         while (not queue_.empty() and not error_) {
@@ -65,8 +65,8 @@ public:
         }
         isSending_ = false;
         if (error_)
-            return error_;
-        return std::nullopt;
+            return std::unexpected{error_};
+        return {};
     }
 };
 

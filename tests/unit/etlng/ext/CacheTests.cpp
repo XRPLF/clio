@@ -21,7 +21,6 @@
 #include "etlng/impl/CacheUpdater.hpp"
 #include "etlng/impl/ext/Cache.hpp"
 #include "util/BinaryTestObject.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockLedgerCache.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestObject.hpp"
@@ -59,7 +58,7 @@ createTestData()
 
 }  // namespace
 
-struct CacheExtTests : NoLoggerFixture, util::prometheus::WithPrometheus {
+struct CacheExtTests : util::prometheus::WithPrometheus {
 protected:
     MockLedgerCache cache_;
     std::shared_ptr<etlng::impl::CacheUpdater> updater_ = std::make_shared<etlng::impl::CacheUpdater>(cache_);

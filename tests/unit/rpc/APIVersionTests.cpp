@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "rpc/common/impl/APIVersionParser.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigValue.hpp"
 #include "util/config/Types.hpp"
@@ -38,7 +37,7 @@ using namespace util::config;
 using namespace rpc::impl;
 namespace json = boost::json;
 
-class RPCAPIVersionTest : public NoLoggerFixture {
+class RPCAPIVersionTest : public virtual ::testing::Test {
 protected:
     ProductionAPIVersionParser parser_{kDEFAULT_API_VERSION, kMIN_API_VERSION, kMAX_API_VERSION};
 };

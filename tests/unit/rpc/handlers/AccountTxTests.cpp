@@ -56,7 +56,6 @@ constexpr auto kNFT_ID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76
 constexpr auto kNFT_ID2 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA";
 constexpr auto kNFT_ID3 = "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
 constexpr auto kINDEX = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
-constexpr auto kMPT_ISSUANCE_ID = "000000014B4E9C06F24296074F7BC48F92A97916C6DC5EA9";
 
 }  // namespace
 
@@ -1638,7 +1637,6 @@ TEST_F(RPCAccountTxHandlerTest, MPTTxs_API_v2)
                         "Sequence": 1,
                         "SigningPubKey": "74657374",
                         "TransactionType": "MPTokenIssuanceCreate",
-                        "mpt_issuance_id": "{}",
                         "ledger_index": 11,
                         "ctid": "C000000B00000000",
                         "date": 1
@@ -1651,8 +1649,7 @@ TEST_F(RPCAccountTxHandlerTest, MPTTxs_API_v2)
         kACCOUNT,
         kACCOUNT,
         kLEDGER_HASH,
-        kACCOUNT,
-        kMPT_ISSUANCE_ID
+        kACCOUNT
     );
 
     auto mptTx = createMPTIssuanceCreateTxWithMetadata(kACCOUNT, 50, 1);

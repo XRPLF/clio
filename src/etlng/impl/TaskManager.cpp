@@ -26,6 +26,7 @@
 #include "etlng/SchedulerInterface.hpp"
 #include "etlng/impl/Monitor.hpp"
 #include "etlng/impl/TaskQueue.hpp"
+#include "util/Assert.hpp"
 #include "util/Constants.hpp"
 #include "util/LedgerUtils.hpp"
 #include "util/Profiler.hpp"
@@ -70,11 +71,10 @@ TaskManager::~TaskManager()
 void
 TaskManager::run(std::size_t numExtractors)
 {
-    LOG(log_.debug()) << "Starting task manager with " << numExtractors << " extractors...\n";
+    ASSERT(not running_, "TaskManager can only be started once");
+    running_ = true;
 
-    stop();
-    extractors_.clear();
-    loaders_.clear();
+    LOG(log_.debug()) << "Starting task manager with " << numExtractors << " extractors...\n";
 
     extractors_.reserve(numExtractors);
     for ([[maybe_unused]] auto _ : std::views::iota(0uz, numExtractors))
@@ -157,7 +157,8 @@ TaskManager::spawnLoader(TaskQueue& queue)
                 monitor_.get().notifySequenceLoaded(data->seq);
             } else {
                 // TODO (https://github.com/XRPLF/clio/issues/1852) this is probably better done with a timeout (on
-                // coroutine) so that the thread itself is not blocked
+                // coroutine) so that the thread itself is not blocked. for now this implies that the context
+                // (io_threads) needs at least 2 threads
                 queue.awaitTask();
             }
         }
@@ -178,6 +179,8 @@ TaskManager::wait()
 void
 TaskManager::stop()
 {
+    ASSERT(running_, "TaskManager is not running");
+
     for (auto& extractor : extractors_)
         extractor.abort();
     for (auto& loader : loaders_)

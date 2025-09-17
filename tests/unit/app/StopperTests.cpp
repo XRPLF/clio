@@ -18,7 +18,6 @@
 //==============================================================================
 #include "app/Stopper.hpp"
 #include "util/AsioContextTestFixture.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockBackend.hpp"
 #include "util/MockETLService.hpp"
 #include "util/MockLoadBalancer.hpp"
@@ -37,7 +36,7 @@
 
 using namespace app;
 
-struct StopperTest : NoLoggerFixture {
+struct StopperTest : virtual public ::testing::Test {
 protected:
     // Order here is important, stopper_ should die before mockCallback_, otherwise UB
     testing::StrictMock<testing::MockFunction<void(boost::asio::yield_context)>> mockCallback_;
