@@ -33,6 +33,7 @@
 #include "web/Context.hpp"
 
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/format/format_fwd.hpp>
 #include <boost/format/free_funcs.hpp>
@@ -172,10 +173,7 @@ canHaveDeliveredAmount(
     if (tt != ripple::ttPAYMENT && tt != ripple::ttCHECK_CASH && tt != ripple::ttACCOUNT_DELETE)
         return false;
 
-    if (meta->getResultTER() != ripple::tesSUCCESS)
-        return false;
-
-    return true;
+    return meta->getResultTER() == ripple::tesSUCCESS;
 }
 
 std::optional<ripple::AccountID>
@@ -371,13 +369,11 @@ insertMPTIssuanceID(boost::json::object& txnJson, std::shared_ptr<ripple::TxMeta
         txnJson.at(JS(TransactionType)).as_string() == JS(MPTokenIssuanceCreate))
         return false;
 
-    if (auto const id = getMPTIssuanceID(meta)) {
-        txnJson[JS(mpt_issuance_id)] = ripple::to_string(*id);
-        return true;
-    }
+    auto const id = getMPTIssuanceID(meta);
+    ASSERT(id.has_value(), "MPTIssuanceID must have value");
+    txnJson[JS(mpt_issuance_id)] = ripple::to_string(*id);
 
-    assert(false);
-    return false;
+    return true;
 }
 
 void

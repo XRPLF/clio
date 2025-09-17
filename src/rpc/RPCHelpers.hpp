@@ -206,7 +206,7 @@ insertDeliveredAmount(
  *
  * @param txnJson The transaction Json object
  * @param meta The metadata object
- * @return true if the "mpt_issuance_id" is added to the tx json object
+ * @return true if the "mpt_issuance_id" is added to the txnJson JSON object
  */
 bool
 insertMPTIssuanceID(boost::json::object& txnJson, std::shared_ptr<ripple::TxMeta const> const& meta);
