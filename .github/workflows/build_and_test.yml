@@ -23,8 +23,14 @@ on:
         required: true
         type: string
 
-      disable_cache:
-        description: Whether ccache should be disabled
+      download_ccache:
+        description: Whether to download ccache from the cache
+        required: false
+        type: boolean
+        default: true
+
+      upload_ccache:
+        description: Whether to upload ccache to the cache
         required: false
         type: boolean
         default: false
@@ -77,7 +83,8 @@ jobs:
       container: ${{ inputs.container }}
       conan_profile: ${{ inputs.conan_profile }}
       build_type: ${{ inputs.build_type }}
-      disable_cache: ${{ inputs.disable_cache }}
+      download_ccache: ${{ inputs.download_ccache }}
+      upload_ccache: ${{ inputs.upload_ccache }}
       code_coverage: false
       static: ${{ inputs.static }}
       upload_clio_server: ${{ inputs.upload_clio_server }}

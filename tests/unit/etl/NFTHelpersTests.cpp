@@ -19,7 +19,6 @@
 
 #include "data/DBHelpers.hpp"
 #include "etl/NFTHelpers.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/TestObject.hpp"
 
 #include <gtest/gtest.h>

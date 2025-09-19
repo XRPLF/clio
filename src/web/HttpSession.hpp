@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/LedgerCacheInterface.hpp"
 #include "util/Taggable.hpp"
 #include "web/AdminVerificationStrategy.hpp"
 #include "web/PlainWsSession.hpp"
@@ -69,6 +70,7 @@ public:
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
      * @param handler The server handler to use
+     * @param cache The ledger cache to use
      * @param buffer Buffer with initial data received from the peer
      * @param maxWsSendingQueueSize The maximum size of the sending queue for websocket
      */
@@ -80,6 +82,7 @@ public:
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
+        std::reference_wrapper<data::LedgerCacheInterface const> cache,
         boost::beast::flat_buffer buffer,
         std::uint32_t maxWsSendingQueueSize
     )
@@ -90,6 +93,7 @@ public:
               std::move(proxyIpResolver),
               dosGuard,
               handler,
+              cache,
               std::move(buffer)
           )
         , stream_(std::move(socket))

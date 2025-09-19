@@ -61,7 +61,8 @@ jobs:
       run_unit_tests: true
       run_integration_tests: true
       upload_clio_server: true
-      disable_cache: true
+      download_ccache: false
+      upload_ccache: false
 
   analyze_build_time:
     name: Analyze Build Time
@@ -84,7 +85,8 @@ jobs:
       container: ${{ matrix.container }}
       conan_profile: ${{ matrix.conan_profile }}
       build_type: Release
-      disable_cache: true
+      download_ccache: false
+      upload_ccache: false
       code_coverage: false
       static: ${{ matrix.static }}
       upload_clio_server: false

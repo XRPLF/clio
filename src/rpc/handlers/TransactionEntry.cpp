@@ -24,6 +24,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
+#include "util/JsonUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
@@ -33,6 +34,7 @@
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/jss.h>
 
+#include <cstdint>
 #include <string>
 #include <utility>
 
@@ -110,7 +112,7 @@ tag_invoke(boost::json::value_to_tag<TransactionEntryHandler::Input>, boost::jso
 
     if (jsonObject.contains(JS(ledger_index))) {
         if (!jsonObject.at(JS(ledger_index)).is_string()) {
-            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+            input.ledgerIndex = util::integralValueAs<uint32_t>(jv.at(JS(ledger_index)));
         } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jv.at(JS(ledger_index))));
         }

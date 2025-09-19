@@ -131,9 +131,8 @@ public:
                         !oracle.as_object().contains(JS(account)))
                         return Error{Status{RippledError::rpcORACLE_MALFORMED}};
 
-                    auto maybeError = validation::Type<std::uint32_t, std::string>{}.verify(
-                        oracle.as_object(), JS(oracle_document_id)
-                    );
+                    auto maybeError =
+                        validation::Type<std::uint32_t, std::string>{}.verify(oracle, JS(oracle_document_id));
                     if (!maybeError)
                         return maybeError;
 

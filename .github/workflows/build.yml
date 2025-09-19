@@ -62,6 +62,8 @@ jobs:
       container: ${{ matrix.container }}
       conan_profile: ${{ matrix.conan_profile }}
       build_type: ${{ matrix.build_type }}
+      download_ccache: true
+      upload_ccache: true
       static: ${{ matrix.static }}
       run_unit_tests: true
       run_integration_tests: false
@@ -76,7 +78,8 @@ jobs:
       container: '{ "image": "ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d" }'
       conan_profile: gcc
       build_type: Debug
-      disable_cache: false
+      download_ccache: true
+      upload_ccache: false
       code_coverage: true
       static: true
       upload_clio_server: false
@@ -94,7 +97,8 @@ jobs:
       container: '{ "image": "ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d" }'
       conan_profile: gcc
       build_type: Release
-      disable_cache: false
+      download_ccache: true
+      upload_ccache: false
       code_coverage: false
       static: true
       upload_clio_server: false

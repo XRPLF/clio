@@ -22,6 +22,7 @@
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/JS.hpp"
+#include "util/JsonUtils.hpp"
 #include "util/Retry.hpp"
 #include "util/Spawn.hpp"
 #include "util/log/Logger.hpp"
@@ -215,7 +216,7 @@ SubscriptionSource::handleMessage(std::string const& message)
         if (object.contains(JS(result))) {
             auto const& result = object.at(JS(result)).as_object();
             if (result.contains(JS(ledger_index)))
-                ledgerIndex = result.at(JS(ledger_index)).as_int64();
+                ledgerIndex = util::integralValueAs<uint32_t>(result.at(JS(ledger_index)));
 
             if (result.contains(JS(validated_ledgers))) {
                 auto validatedLedgers = boost::json::value_to<std::string>(result.at(JS(validated_ledgers)));
@@ -227,7 +228,7 @@ SubscriptionSource::handleMessage(std::string const& message)
             LOG(log_.debug()) << "Received a message of type 'ledgerClosed' on ledger subscription stream. Message: "
                               << object;
             if (object.contains(JS(ledger_index))) {
-                ledgerIndex = object.at(JS(ledger_index)).as_int64();
+                ledgerIndex = util::integralValueAs<uint32_t>(object.at(JS(ledger_index)));
             }
             if (object.contains(JS(validated_ledgers))) {
                 auto validatedLedgers = boost::json::value_to<std::string>(object.at(JS(validated_ledgers)));

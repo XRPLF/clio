@@ -189,6 +189,7 @@ ClioApplication::run(bool const useNgWebServer)
 
         httpServer->onGet("/metrics", MetricsHandler{adminVerifier});
         httpServer->onGet("/health", HealthCheckHandler{});
+        httpServer->onGet("/cache_state", CacheStateHandler{cache});
         auto requestHandler = RequestHandler{adminVerifier, handler};
         httpServer->onPost("/", requestHandler);
         httpServer->onWs(std::move(requestHandler));
@@ -214,7 +215,7 @@ ClioApplication::run(bool const useNgWebServer)
     // Init the web server
     auto handler = std::make_shared<web::RPCServerHandler<RPCEngineType>>(config_, backend, rpcEngine, etl, dosGuard);
 
-    auto const httpServer = web::makeHttpServer(config_, ioc, dosGuard, handler);
+    auto const httpServer = web::makeHttpServer(config_, ioc, dosGuard, handler, cache);
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope

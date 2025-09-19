@@ -18,7 +18,6 @@
 //==============================================================================
 #include "app/Stopper.hpp"
 #include "util/AsioContextTestFixture.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockBackend.hpp"
 #include "util/MockETLService.hpp"
 #include "util/MockLoadBalancer.hpp"
