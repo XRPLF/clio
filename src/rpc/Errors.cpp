@@ -60,14 +60,14 @@ operator<<(std::ostream& stream, Status const& status)
                 if (!status.message.empty())
                     stream << ", Message: " << status.message;
                 else
-                    stream << ", Message: " << std::string{getErrorInfo(err).message};
+                    stream << ", Message: " << getErrorInfo(err).message;
             }
         },
         status.code
     );
 
-    if (status.extraInfo)
-        stream << ", Extra Info: " << status.extraInfo.value();
+    if (status.extraInfo.has_value())
+        stream << ", Extra Info: " << *status.extraInfo;
 
     return stream;
 }
