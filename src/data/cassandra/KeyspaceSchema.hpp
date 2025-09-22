@@ -43,7 +43,7 @@ namespace data::cassandra {
  * @return The qualified table name
  */
 template <SomeSettingsProvider SettingsProviderType>
-[[nodiscard]] std::string inline qualifiedTableName(SettingsProviderType const& provider, std::string_view name)
+[[nodiscard]] std::string inline tableName(SettingsProviderType const& provider, std::string_view name)
 {
     return fmt::format("{}.{}{}", provider.getKeyspace(), provider.getTablePrefix().value_or(""), name);
 }
@@ -52,7 +52,7 @@ template <SomeSettingsProvider SettingsProviderType>
  * @brief Manages the DB schema and provides access to prepared statements.
  */
 template <SomeSettingsProvider SettingsProviderType>
-class Schema {
+class KeyspaceSchema {
     util::Logger log_{"Backend"};
     std::reference_wrapper<SettingsProviderType const> settingsProvider_;
 
@@ -62,7 +62,8 @@ public:
      *
      * @param settingsProvider The settings provider
      */
-    explicit Schema(SettingsProviderType const& settingsProvider) : settingsProvider_{std::cref(settingsProvider)}
+    explicit KeyspaceSchema(SettingsProviderType const& settingsProvider)
+        : settingsProvider_{std::cref(settingsProvider)}
     {
     }
 
@@ -100,7 +101,7 @@ public:
                   )
              WITH CLUSTERING ORDER BY (sequence DESC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "objects")
+                tableName(settingsProvider_.get(), "objects")
             )
         );
 
@@ -116,7 +117,7 @@ public:
                     metadata blob
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "transactions")
+                tableName(settingsProvider_.get(), "transactions")
             )
         );
 
@@ -130,7 +131,7 @@ public:
                      PRIMARY KEY (ledger_sequence, hash)
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "ledger_transactions")
+                tableName(settingsProvider_.get(), "ledger_transactions")
             )
         );
 
@@ -145,7 +146,7 @@ public:
                 PRIMARY KEY (key, seq)
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "successor")
+                tableName(settingsProvider_.get(), "successor")
             )
         );
 
@@ -159,7 +160,7 @@ public:
                 PRIMARY KEY (seq, key)
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "diff")
+                tableName(settingsProvider_.get(), "diff")
             )
         );
 
@@ -175,7 +176,7 @@ public:
                   )
              WITH CLUSTERING ORDER BY (seq_idx DESC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "account_tx")
+                tableName(settingsProvider_.get(), "account_tx")
             )
         );
 
@@ -188,7 +189,7 @@ public:
                       header blob
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "ledgers")
+                tableName(settingsProvider_.get(), "ledgers")
             )
         );
 
@@ -201,7 +202,7 @@ public:
                 sequence bigint
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "ledger_hashes")
+                tableName(settingsProvider_.get(), "ledger_hashes")
             )
         );
 
@@ -214,7 +215,7 @@ public:
                      sequence bigint
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "ledger_range")
+                tableName(settingsProvider_.get(), "ledger_range")
             )
         );
 
@@ -231,7 +232,7 @@ public:
                   )
              WITH CLUSTERING ORDER BY (sequence DESC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "nf_tokens")
+                tableName(settingsProvider_.get(), "nf_tokens")
             )
         );
 
@@ -247,7 +248,7 @@ public:
                   )
              WITH CLUSTERING ORDER BY (taxon ASC, token_id ASC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
+                tableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
             )
         );
 
@@ -263,7 +264,7 @@ public:
                   )
              WITH CLUSTERING ORDER BY (sequence DESC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
+                tableName(settingsProvider_.get(), "nf_token_uris")
             )
         );
 
@@ -279,7 +280,7 @@ public:
                   )
              WITH CLUSTERING ORDER BY (seq_idx DESC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
+                tableName(settingsProvider_.get(), "nf_token_transactions")
             )
         );
 
@@ -294,7 +295,7 @@ public:
                   )
              WITH CLUSTERING ORDER BY (holder ASC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
+                tableName(settingsProvider_.get(), "mp_token_holders")
             )
         );
 
@@ -308,7 +309,7 @@ public:
                          PRIMARY KEY (migrator_name)
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "migrator_status")
+                tableName(settingsProvider_.get(), "migrator_status")
             )
         );
 
@@ -323,7 +324,7 @@ public:
                   )
              WITH default_time_to_live = 2
             )",
-                qualifiedTableName(settingsProvider_.get(), "nodes_chat")
+                tableName(settingsProvider_.get(), "nodes_chat")
             )
         );
 
@@ -361,7 +362,7 @@ public:
                        (key, sequence, object)
                 VALUES (?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "objects")
+                    tableName(settingsProvider_.get(), "objects")
                 )
             );
         }();
@@ -374,7 +375,7 @@ public:
                        (hash, ledger_sequence, date, transaction, metadata)
                 VALUES (?, ?, ?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "transactions")
+                    tableName(settingsProvider_.get(), "transactions")
                 )
             );
         }();
@@ -387,7 +388,7 @@ public:
                        (ledger_sequence, hash)
                 VALUES (?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_transactions")
+                    tableName(settingsProvider_.get(), "ledger_transactions")
                 )
             );
         }();
@@ -400,7 +401,7 @@ public:
                        (key, seq, next)
                 VALUES (?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "successor")
+                    tableName(settingsProvider_.get(), "successor")
                 )
             );
         }();
@@ -413,7 +414,7 @@ public:
                        (seq, key)
                 VALUES (?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "diff")
+                    tableName(settingsProvider_.get(), "diff")
                 )
             );
         }();
@@ -426,7 +427,7 @@ public:
                        (account, seq_idx, hash)
                 VALUES (?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "account_tx")
+                    tableName(settingsProvider_.get(), "account_tx")
                 )
             );
         }();
@@ -439,7 +440,7 @@ public:
                        (token_id, sequence, owner, is_burned)
                 VALUES (?, ?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nf_tokens")
+                    tableName(settingsProvider_.get(), "nf_tokens")
                 )
             );
         }();
@@ -452,7 +453,7 @@ public:
                        (issuer, taxon, token_id)
                 VALUES (?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
+                    tableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
                 )
             );
         }();
@@ -465,7 +466,7 @@ public:
                        (token_id, sequence, uri)
                 VALUES (?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
+                    tableName(settingsProvider_.get(), "nf_token_uris")
                 )
             );
         }();
@@ -478,7 +479,23 @@ public:
                        (token_id, seq_idx, hash)
                 VALUES (?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
+                    tableName(settingsProvider_.get(), "nf_token_transactions")
+                )
+            );
+        }();
+
+        PreparedStatement selectNFTsAfterTaxonKeyspaces = [this]() {
+            return handle_.get().prepare(
+                fmt::format(
+                    R"(
+                SELECT token_id
+                  FROM {}
+                 WHERE issuer = ?
+                   AND taxon > ?
+              ORDER BY taxon ASC, token_id ASC
+                 LIMIT ?
+                )",
+                    tableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
                 )
             );
         }();
@@ -491,7 +508,7 @@ public:
                        (mpt_id, holder)
                 VALUES (?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
+                    tableName(settingsProvider_.get(), "mp_token_holders")
                 )
             );
         }();
@@ -504,7 +521,7 @@ public:
                        (sequence, header)
                 VALUES (?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledgers")
+                    tableName(settingsProvider_.get(), "ledgers")
                 )
             );
         }();
@@ -517,7 +534,7 @@ public:
                        (hash, sequence)
                 VALUES (?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_hashes")
+                    tableName(settingsProvider_.get(), "ledger_hashes")
                 )
             );
         }();
@@ -526,6 +543,17 @@ public:
         // Update (and "delete") queries
         //
 
+        PreparedStatement insertLedgerRange = [this]() {
+            return handle_.get().prepare(
+                fmt::format(
+                    R"(
+                    INSERT INTO {} (is_latest, sequence) VALUES (?, ?) IF NOT EXISTS
+                    )",
+                    tableName(settingsProvider_.get(), "ledger_range")
+                )
+            );
+        }();
+
         PreparedStatement updateLedgerRange = [this]() {
             return handle_.get().prepare(
                 fmt::format(
@@ -533,9 +561,9 @@ public:
                 UPDATE {}
                    SET sequence = ?
                  WHERE is_latest = ?
-                    IF sequence IN (?, null)
+                    IF sequence = ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_range")
+                    tableName(settingsProvider_.get(), "ledger_range")
                 )
             );
         }();
@@ -548,7 +576,7 @@ public:
                    SET sequence = ?
                  WHERE is_latest = False
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_range")
+                    tableName(settingsProvider_.get(), "ledger_range")
                 )
             );
         }();
@@ -561,7 +589,7 @@ public:
                        (migrator_name, status)
                 VALUES (?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "migrator_status")
+                    tableName(settingsProvider_.get(), "migrator_status")
                 )
             );
         }();
@@ -574,7 +602,7 @@ public:
                    SET message = ?
                  WHERE node_id = ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nodes_chat")
+                    tableName(settingsProvider_.get(), "nodes_chat")
                 )
             );
         }();
@@ -594,7 +622,7 @@ public:
               ORDER BY seq DESC
                  LIMIT 1
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "successor")
+                    tableName(settingsProvider_.get(), "successor")
                 )
             );
         }();
@@ -607,7 +635,7 @@ public:
                   FROM {}
                  WHERE seq = ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "diff")
+                    tableName(settingsProvider_.get(), "diff")
                 )
             );
         }();
@@ -623,7 +651,7 @@ public:
               ORDER BY sequence DESC
                  LIMIT 1
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "objects")
+                    tableName(settingsProvider_.get(), "objects")
                 )
             );
         }();
@@ -636,7 +664,7 @@ public:
                   FROM {}
                  WHERE hash = ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "transactions")
+                    tableName(settingsProvider_.get(), "transactions")
                 )
             );
         }();
@@ -649,10 +677,14 @@ public:
                   FROM {}
                  WHERE ledger_sequence = ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_transactions")
+                    tableName(settingsProvider_.get(), "ledger_transactions")
                 )
             );
         }();
+
+        /*
+        Currently, these two SELECT statements is not used.
+        If we ever use them, will need to change the PER PARTITION LIMIT to support for Keyspace
 
         PreparedStatement selectLedgerPageKeys = [this]() {
             return handle_.get().prepare(
@@ -666,7 +698,7 @@ public:
                  LIMIT ?
                  ALLOW FILTERING
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "objects")
+                    tableName(settingsProvider_.get(), "objects")
                 )
             );
         }();
@@ -683,10 +715,11 @@ public:
                  LIMIT ?
                  ALLOW FILTERING
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "objects")
+                    tableName(settingsProvider_.get(), "objects")
                 )
             );
         }();
+        */
 
         PreparedStatement getToken = [this]() {
             return handle_.get().prepare(
@@ -697,7 +730,7 @@ public:
                  WHERE key = ?
                  LIMIT 1
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "objects")
+                    tableName(settingsProvider_.get(), "objects")
                 )
             );
         }();
@@ -712,37 +745,7 @@ public:
                    AND seq_idx < ?
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "account_tx")
-                )
-            );
-        }();
-
-        PreparedStatement selectAccountFromBeginning = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
-                SELECT account
-                  FROM {}
-                 WHERE token(account) > 0
-                   PER PARTITION LIMIT 1
-                 LIMIT ?
-                )",
-                    qualifiedTableName(settingsProvider_.get(), "account_tx")
-                )
-            );
-        }();
-
-        PreparedStatement selectAccountFromToken = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
-                SELECT account
-                  FROM {}
-                 WHERE token(account) > token(?)
-                   PER PARTITION LIMIT 1
-                 LIMIT ?
-                )",
-                    qualifiedTableName(settingsProvider_.get(), "account_tx")
+                    tableName(settingsProvider_.get(), "account_tx")
                 )
             );
         }();
@@ -758,7 +761,7 @@ public:
               ORDER BY seq_idx ASC
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "account_tx")
+                    tableName(settingsProvider_.get(), "account_tx")
                 )
             );
         }();
@@ -774,7 +777,7 @@ public:
               ORDER BY sequence DESC
                  LIMIT 1
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nf_tokens")
+                    tableName(settingsProvider_.get(), "nf_tokens")
                 )
             );
         }();
@@ -790,7 +793,7 @@ public:
               ORDER BY sequence DESC
                  LIMIT 1
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
+                    tableName(settingsProvider_.get(), "nf_token_uris")
                 )
             );
         }();
@@ -806,7 +809,7 @@ public:
               ORDER BY seq_idx DESC
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
+                    tableName(settingsProvider_.get(), "nf_token_transactions")
                 )
             );
         }();
@@ -822,23 +825,7 @@ public:
               ORDER BY seq_idx ASC
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
-                )
-            );
-        }();
-
-        PreparedStatement selectNFTIDsByIssuer = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
-                SELECT token_id
-                  FROM {}
-                 WHERE issuer = ?
-                   AND (taxon, token_id) > ?
-              ORDER BY taxon ASC, token_id ASC
-                 LIMIT ?
-                )",
-                    qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
+                    tableName(settingsProvider_.get(), "nf_token_transactions")
                 )
             );
         }();
@@ -855,7 +842,7 @@ public:
               ORDER BY taxon ASC, token_id ASC
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
+                    tableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
                 )
             );
         }();
@@ -871,7 +858,7 @@ public:
               ORDER BY holder ASC
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
+                    tableName(settingsProvider_.get(), "mp_token_holders")
                 )
             );
         }();
@@ -885,7 +872,7 @@ public:
                  WHERE hash = ?
                  LIMIT 1
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_hashes")
+                    tableName(settingsProvider_.get(), "ledger_hashes")
                 )
             );
         }();
@@ -898,7 +885,7 @@ public:
                   FROM {}
                  WHERE sequence = ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledgers")
+                    tableName(settingsProvider_.get(), "ledgers")
                 )
             );
         }();
@@ -911,7 +898,7 @@ public:
                   FROM {}
                  WHERE is_latest = True
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_range")
+                    tableName(settingsProvider_.get(), "ledger_range")
                 )
             );
         }();
@@ -924,7 +911,7 @@ public:
                   FROM {}
                  WHERE is_latest in (True, False)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_range")
+                    tableName(settingsProvider_.get(), "ledger_range")
                 )
             );
         }();
@@ -937,7 +924,7 @@ public:
                   FROM {}
                  WHERE migrator_name = ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "migrator_status")
+                    tableName(settingsProvider_.get(), "migrator_status")
                 )
             );
         }();
@@ -949,7 +936,7 @@ public:
                 SELECT node_id, message
                   FROM {}
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nodes_chat")
+                    tableName(settingsProvider_.get(), "nodes_chat")
                 )
             );
         }();
@@ -963,7 +950,7 @@ public:
     void
     prepareStatements(Handle const& handle)
     {
-        LOG(log_.info()) << "Preparing cassandra statements";
+        LOG(log_.info()) << "Preparing keyspace cassandra statements";
         statements_ = std::make_unique<Statements>(settingsProvider_, handle);
         LOG(log_.info()) << "Finished preparing statements";
     }
