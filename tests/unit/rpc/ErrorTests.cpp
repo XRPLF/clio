@@ -26,6 +26,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -199,14 +200,14 @@ struct StatusStreamTestBundle {
 
 struct RPCErrorsStatusStreamTest : public ::testing::TestWithParam<StatusStreamTestBundle> {
 protected:
-    std::ostringstream oss;
+    std::ostringstream oss_;
 };
 
 TEST_P(RPCErrorsStatusStreamTest, StatusStreamOperator)
 {
     auto const param = GetParam();
-    oss << param.status;
-    EXPECT_EQ(oss.str(), param.expectedOutput);
+    oss_ << param.status;
+    EXPECT_EQ(oss_.str(), param.expectedOutput);
 }
 
 INSTANTIATE_TEST_SUITE_P(

@@ -30,9 +30,11 @@
 #include <cstdint>
 #include <iterator>
 #include <optional>
+#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <variant>
 
 using namespace std;
@@ -48,19 +50,21 @@ operator<<(std::ostream& stream, Status const& status)
                 stream << "Code: " << static_cast<std::underlying_type_t<RippledError>>(err);
                 if (!status.error.empty())
                     stream << ", Error: " << status.error;
-                if (!status.message.empty())
+                if (!status.message.empty()) {
                     stream << ", Message: " << status.message;
-                else
+                } else {
                     stream << ", Message: " << ripple::RPC::get_error_info(err).message;
+                }
             },
             [&stream, &status](ClioError err) {
                 stream << "Code: " << static_cast<std::underlying_type_t<ClioError>>(err);
                 if (!status.error.empty())
                     stream << ", Error: " << status.error;
-                if (!status.message.empty())
+                if (!status.message.empty()) {
                     stream << ", Message: " << status.message;
-                else
+                } else {
                     stream << ", Message: " << getErrorInfo(err).message;
+                }
             }
         },
         status.code
