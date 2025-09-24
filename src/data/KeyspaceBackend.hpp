@@ -20,6 +20,7 @@
 #pragma once
 
 #include "data/CassandraBackend.hpp"
+#include "data/LedgerCacheInterface.hpp"
 #include "data/LedgerHeaderCache.hpp"
 #include "data/Types.hpp"
 #include "data/cassandra/CassandraBackendFamily.hpp"
@@ -49,6 +50,7 @@
 #include <cstdint>
 #include <iterator>
 #include <optional>
+#include <stdexcept>
 #include <tuple>
 #include <vector>
 
@@ -70,14 +72,20 @@ template <
     SomeExecutionStrategy ExecutionStrategyType,
     typename FetchLedgerCacheType = FetchLedgerCache>
 class BasicKeyspaceBackend : public DefaultCassandraFamily {
-    util::Logger log_{"Backend"};
-
-    KeyspaceSchema<SettingsProviderType> keyspaceSchema_;
-    std::atomic_uint32_t ledgerSequence_ = 0u;
-    friend class ::CacheBackendCassandraTest;
+    KeyspaceSchema<SettingsProviderType>* keyspaceSchema_;
 
 public:
-    using DefaultCassandraFamily::DefaultCassandraFamily;
+    BasicKeyspaceBackend(SettingsProviderType settingsProvider, data::LedgerCacheInterface& cache, bool readOnly)
+        : DefaultCassandraFamily(
+              settingsProvider,
+              std::make_unique<KeyspaceSchema<SettingsProviderType>>(settingsProvider),
+              cache,
+              readOnly
+          )
+    {
+        // cast the pointer to KeyspaceSchema type as there is a few statements unique to KeyspaceBackend
+        keyspaceSchema_ = static_cast<KeyspaceSchema<SettingsProviderType>*>(this->schema_.get());
+    }
 
     bool
     doFinishWrites() override
@@ -88,12 +96,12 @@ public:
         // This would be the first write to the table.
         // In this case, insert both min_sequence/max_sequence range into the table.
         if (!range_.has_value()) {
-            executor_.writeSync(keyspaceSchema_->insertLedgerRange, false, ledgerSequence_);
-            executor_.writeSync(keyspaceSchema_->insertLedgerRange, true, ledgerSequence_);
+            executor_.writeSync(keyspaceSchema_->insertLedgerRange(), false, ledgerSequence_);
+            executor_.writeSync(keyspaceSchema_->insertLedgerRange(), true, ledgerSequence_);
         }
 
         if (not executeSyncUpdate(
-                keyspaceSchema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1)
+                keyspaceSchema_->updateLedgerRange().bind(ledgerSequence_, true, ledgerSequence_ - 1)
             )) {
             log_.warn() << "Update failed for ledger " << ledgerSequence_;
             return false;
@@ -122,7 +130,7 @@ public:
             auto const startTaxon = cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0;
             auto const startTokenID = cursorIn.value_or(ripple::uint256(0));
 
-            Statement firstQuery = keyspaceSchema_->selectNFTIDsByIssuerTaxon.bind(issuer);
+            Statement firstQuery = keyspaceSchema_->selectNFTIDsByIssuerTaxon().bind(issuer);
             firstQuery.bindAt(1, startTaxon);
             firstQuery.bindAt(2, startTokenID);
             firstQuery.bindAt(3, Limit{limit});
@@ -135,7 +143,7 @@ public:
 
             if (nftIDs.size() < limit) {
                 auto const remainingLimit = limit - nftIDs.size();
-                Statement secondQuery = keyspaceSchema_->selectNFTsAfterTaxonKeyspaces.bind(issuer);
+                Statement secondQuery = keyspaceSchema_->selectNFTsAfterTaxonKeyspaces().bind(issuer);
                 secondQuery.bindAt(1, startTaxon);
                 secondQuery.bindAt(2, Limit{remainingLimit});
 
@@ -147,6 +155,25 @@ public:
             }
         }
         return populateNFTsAndCreateCursor(nftIDs, ledgerSequence, limit, yield);
+    }
+
+    /**
+     * @brief Loading cache with account is currently unsupported by aws keyspace backend.
+     * The reason is because this function calls statements (selectAccountFromToken, selectaccountfrombeginning)
+     * that uses "PER PARTITION LIMIT 1". As keyspace currently doesn't support "PER PARTITION LIMIT" and there is
+     * no good way to filter out the result, we are disabling this feature for now. This should be okay for now as
+     * we load cache by diff or cursor from diff, rarely by accounts.
+     */
+    std::vector<ripple::uint256>
+    fetchAccountRoots(
+        [[maybe_unused]] std::uint32_t number,
+        [[maybe_unused]] std::uint32_t pageSize,
+        [[maybe_unused]] std::uint32_t seq,
+        [[maybe_unused]] boost::asio::yield_context yield
+    ) const override
+    {
+        LOG(log_.error()) << "Fetching account roots is not supported by the Keyspaces backend.";
+        throw std::runtime_error("Fetching all account roots is not supported by the Keyspaces backend.");
     }
 
 private:
@@ -184,7 +211,7 @@ private:
     ) const
     {
         std::vector<ripple::uint256> nftIDs;
-        Statement statement = keyspaceSchema_->selectNFTIDsByIssuerTaxon.bind(issuer);
+        Statement statement = keyspaceSchema_->selectNFTIDsByIssuerTaxon().bind(issuer);
         statement.bindAt(1, taxon);
         statement.bindAt(2, cursorIn.value_or(ripple::uint256(0)));
         statement.bindAt(3, Limit{limit});
@@ -206,48 +233,30 @@ private:
     ) const
     {
         std::vector<ripple::uint256> nftIDs;
-        if (settingsProvider_.getSettings().provider == "aws_keyspace") {
-            // --- Amazon Keyspaces Workflow ---
-            auto const startTaxon = cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0;
-            auto const startTokenID = cursorIn.value_or(ripple::uint256(0));
 
-            Statement firstQuery = keyspaceSchema_->selectNFTIDsByIssuerTaxon.bind(issuer);
-            firstQuery.bindAt(1, startTaxon);
-            firstQuery.bindAt(2, startTokenID);
-            firstQuery.bindAt(3, Limit{limit});
+        auto const startTaxon = cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0;
+        auto const startTokenID = cursorIn.value_or(ripple::uint256(0));
 
-            auto const firstRes = executor_.read(yield, firstQuery);
-            if (firstRes) {
-                for (auto const [nftID] : extract<ripple::uint256>(firstRes.value()))
-                    nftIDs.push_back(nftID);
-            }
+        Statement firstQuery = keyspaceSchema_->selectNFTIDsByIssuerTaxon().bind(issuer);
+        firstQuery.bindAt(1, startTaxon);
+        firstQuery.bindAt(2, startTokenID);
+        firstQuery.bindAt(3, Limit{limit});
 
-            if (nftIDs.size() < limit) {
-                auto const remainingLimit = limit - nftIDs.size();
-                Statement secondQuery = keyspaceSchema_->selectNFTsAfterTaxonKeyspaces.bind(issuer);
-                secondQuery.bindAt(1, startTaxon);
-                secondQuery.bindAt(2, Limit{remainingLimit});
+        auto const firstRes = executor_.read(yield, firstQuery);
+        if (firstRes) {
+            for (auto const [nftID] : extract<ripple::uint256>(firstRes.value()))
+                nftIDs.push_back(nftID);
+        }
 
-                auto const secondRes = executor_.read(yield, secondQuery);
-                if (secondRes) {
-                    for (auto const [nftID] : extract<ripple::uint256>(secondRes.value()))
-                        nftIDs.push_back(nftID);
-                }
-            }
-        } else if (settingsProvider_.getSettings().provider == "scylladb") {
-            auto r = keyspaceSchema_->selectNFTsByIssuerScylla->bind(issuer);
-            r.bindAt(
-                1,
-                std::make_tuple(
-                    cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0,
-                    cursorIn.value_or(ripple::uint256(0))
-                )
-            );
-            r.bindAt(2, Limit{limit});
+        if (nftIDs.size() < limit) {
+            auto const remainingLimit = limit - nftIDs.size();
+            Statement secondQuery = keyspaceSchema_->selectNFTsAfterTaxonKeyspaces().bind(issuer);
+            secondQuery.bindAt(1, startTaxon);
+            secondQuery.bindAt(2, Limit{remainingLimit});
 
-            auto const res = executor_.read(yield, r);
-            if (res && res.value().hasRows()) {
-                for (auto const [nftID] : extract<ripple::uint256>(res.value()))
+            auto const secondRes = executor_.read(yield, secondQuery);
+            if (secondRes) {
+                for (auto const [nftID] : extract<ripple::uint256>(secondRes.value()))
                     nftIDs.push_back(nftID);
             }
         }
@@ -279,7 +288,7 @@ private:
         selectNFTStatements.reserve(nftIDs.size());
         std::transform(
             std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTStatements), [&](auto const& nftID) {
-                return keyspaceSchema_->selectNFT.bind(nftID, ledgerSequence);
+                return keyspaceSchema_->selectNFT().bind(nftID, ledgerSequence);
             }
         );
 
@@ -287,7 +296,7 @@ private:
         selectNFTURIStatements.reserve(nftIDs.size());
         std::transform(
             std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTURIStatements), [&](auto const& nftID) {
-                return keyspaceSchema_->selectNFTURI.bind(nftID, ledgerSequence);
+                return keyspaceSchema_->selectNFTURI().bind(nftID, ledgerSequence);
             }
         );
 

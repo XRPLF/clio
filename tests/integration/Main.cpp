@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/LoggerFixtures.hpp"
 #include "util/TerminationHandler.hpp"
 
 #include <TestGlobals.hpp>
@@ -34,6 +35,7 @@ main(int argc, char* argv[])
     util::setTerminationHandler();
     testing::InitGoogleTest(&argc, argv);
     TestGlobals::instance().parse(argc, argv);
+    LoggerFixture::init();
 
     return RUN_ALL_TESTS();
 }

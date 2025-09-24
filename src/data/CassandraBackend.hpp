@@ -80,10 +80,25 @@ template <
     SomeSettingsProvider SettingsProviderType,
     SomeExecutionStrategy ExecutionStrategyType,
     typename FetchLedgerCacheType = FetchLedgerCache>
-class BasicCassandraBackend : public DefaultCassandraFamily {
-public:
-    using DefaultCassandraFamily::DefaultCassandraFamily;
+class BasicCassandraBackend
+    : public CassandraBackendFamily<SettingsProviderType, ExecutionStrategyType, FetchLedgerCacheType> {
+    using DefaultCassandraFamily =
+        CassandraBackendFamily<SettingsProviderType, ExecutionStrategyType, FetchLedgerCacheType>;
 
+    Schema<SettingsProviderType>* schemaPtr_{};
+
+public:
+    BasicCassandraBackend(SettingsProviderType settingsProvider, data::LedgerCacheInterface& cache, bool readOnly)
+        : DefaultCassandraFamily(
+              settingsProvider,
+              std::make_unique<Schema<SettingsProviderType>>(settingsProvider),
+              cache,
+              readOnly
+          )
+    {
+        // cast the pointer to Schema type as there is a few statements unique to CassandraBackend
+        schemaPtr_ = static_cast<Schema<SettingsProviderType>*>(this->schema_.get());
+    }
     /*
      * @brief Move constructor is deleted because handle_ is shared by reference with executor
      */
@@ -92,18 +107,22 @@ public:
     bool
     doFinishWrites() override
     {
-        waitForWritesToFinish();
+        this->waitForWritesToFinish();
 
-        if (!range_) {
-            executor_.writeSync(schema_->updateLedgerRange, ledgerSequence_, false, ledgerSequence_);
+        if (!this->range_) {
+            this->executor_.writeSync(
+                schemaPtr_->updateLedgerRange(), this->ledgerSequence_, false, this->ledgerSequence_
+            );
         }
 
-        if (not executeSyncUpdate(schema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1))) {
-            LOG(log_.warn()) << "Update failed for ledger " << ledgerSequence_;
+        if (not executeSyncUpdate(
+                schemaPtr_->updateLedgerRange().bind(this->ledgerSequence_, true, this->ledgerSequence_ - 1)
+            )) {
+            LOG(this->log_.warn()) << "Update failed for ledger " << this->ledgerSequence_;
             return false;
         }
 
-        LOG(log_.info()) << "Committed ledger " << ledgerSequence_;
+        LOG(this->log_.info()) << "Committed ledger " << this->ledgerSequence_;
         return true;
     }
 
@@ -121,14 +140,14 @@ public:
 
         Statement const idQueryStatement = [&taxon, &issuer, &cursorIn, &limit, this]() {
             if (taxon.has_value()) {
-                auto r = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
+                auto r = schemaPtr_->selectNFTIDsByIssuerTaxon().bind(issuer);
                 r.bindAt(1, *taxon);
                 r.bindAt(2, cursorIn.value_or(ripple::uint256(0)));
                 r.bindAt(3, Limit{limit});
                 return r;
             }
 
-            auto r = schema_->selectNFTIDsByIssuer.bind(issuer);
+            auto r = schemaPtr_->selectNFTIDsByIssuer().bind(issuer);
             r.bindAt(
                 1,
                 std::make_tuple(
@@ -141,11 +160,11 @@ public:
         }();
 
         // Query for all the NFTs issued by the account, potentially filtered by the taxon
-        auto const res = executor_.read(yield, idQueryStatement);
+        auto const res = this->executor_.read(yield, idQueryStatement);
 
         auto const& idQueryResults = res.value();
         if (not idQueryResults.hasRows()) {
-            LOG(log_.debug()) << "No rows returned";
+            LOG(this->log_.debug()) << "No rows returned";
             return {};
         }
 
@@ -164,22 +183,22 @@ public:
 
         std::transform(
             std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTStatements), [&](auto const& nftID) {
-                return schema_->selectNFT.bind(nftID, ledgerSequence);
+                return schemaPtr_->selectNFT().bind(nftID, ledgerSequence);
             }
         );
 
-        auto const nftInfos = executor_.readEach(yield, selectNFTStatements);
+        auto const nftInfos = this->executor_.readEach(yield, selectNFTStatements);
 
         std::vector<Statement> selectNFTURIStatements;
         selectNFTURIStatements.reserve(nftIDs.size());
 
         std::transform(
             std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTURIStatements), [&](auto const& nftID) {
-                return schema_->selectNFTURI.bind(nftID, ledgerSequence);
+                return schemaPtr_->selectNFTURI().bind(nftID, ledgerSequence);
             }
         );
 
-        auto const nftUris = executor_.readEach(yield, selectNFTURIStatements);
+        auto const nftUris = this->executor_.readEach(yield, selectNFTURIStatements);
 
         for (auto i = 0u; i < nftIDs.size(); i++) {
             if (auto const maybeRow = nftInfos[i].template get<uint32_t, ripple::AccountID, bool>(); maybeRow) {
@@ -205,14 +224,14 @@ public:
         std::optional<ripple::AccountID> lastItem;
 
         while (liveAccounts.size() < number) {
-            Statement const statement = lastItem ? schema_->selectAccountFromToken.bind(*lastItem, Limit{pageSize})
-                                                 : schema_->selectAccountFromBeginning.bind(Limit{pageSize});
+            Statement const statement = lastItem ? schemaPtr_->selectAccountFromToken().bind(*lastItem, Limit{pageSize})
+                                                 : schemaPtr_->selectAccountFromBeginning().bind(Limit{pageSize});
 
-            auto const res = executor_.read(yield, statement);
+            auto const res = this->executor_.read(yield, statement);
             if (res) {
                 auto const& results = res.value();
                 if (not results.hasRows()) {
-                    LOG(log_.debug()) << "No rows returned";
+                    LOG(this->log_.debug()) << "No rows returned";
                     break;
                 }
                 // The results should not contain duplicates, we just filter out deleted accounts
@@ -221,7 +240,7 @@ public:
                     fullAccounts.push_back(ripple::keylet::account(account).key);
                     lastItem = account;
                 }
-                auto const objs = doFetchLedgerObjects(fullAccounts, seq, yield);
+                auto const objs = this->doFetchLedgerObjects(fullAccounts, seq, yield);
 
                 for (auto i = 0u; i < fullAccounts.size(); i++) {
                     if (not objs[i].empty()) {
@@ -233,7 +252,7 @@ public:
                     }
                 }
             } else {
-                LOG(log_.error()) << "Could not fetch account from account_tx: " << res.error();
+                LOG(this->log_.error()) << "Could not fetch account from account_tx: " << res.error();
                 break;
             }
         }
@@ -245,22 +264,22 @@ private:
     bool
     executeSyncUpdate(Statement statement)
     {
-        auto const res = executor_.writeSync(statement);
+        auto const res = this->executor_.writeSync(statement);
         auto maybeSuccess = res->template get<bool>();
         if (not maybeSuccess) {
-            LOG(log_.error()) << "executeSyncUpdate - error getting result - no row";
+            LOG(this->log_.error()) << "executeSyncUpdate - error getting result - no row";
             return false;
         }
 
         if (not maybeSuccess.value()) {
-            LOG(log_.warn()) << "Update failed. Checking if DB state is what we expect";
+            LOG(this->log_.warn()) << "Update failed. Checking if DB state is what we expect";
 
             // error may indicate that another writer wrote something.
             // in this case let's just compare the current state of things
             // against what we were trying to write in the first place and
             // use that as the source of truth for the result.
-            auto rng = hardFetchLedgerRangeNoThrow();
-            return rng && rng->maxSequence == ledgerSequence_;
+            auto rng = this->hardFetchLedgerRangeNoThrow();
+            return rng && rng->maxSequence == this->ledgerSequence_;
         }
 
         return true;
