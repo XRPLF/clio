@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "migration/impl/MigrationManagerFactory.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockLedgerCache.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigValue.hpp"

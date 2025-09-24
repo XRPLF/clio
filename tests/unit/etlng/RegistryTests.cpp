@@ -22,7 +22,6 @@
 #include "etlng/MonitorInterface.hpp"
 #include "etlng/impl/Registry.hpp"
 #include "util/BinaryTestObject.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestObject.hpp"
 

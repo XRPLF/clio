@@ -34,6 +34,8 @@ main(int argc, char* argv[])
 {
     util::setTerminationHandler();
     testing::InitGoogleTest(&argc, argv);
+    LoggerFixture::init();
+
     TestGlobals::instance().parse(argc, argv);
     LoggerFixture::init();
 

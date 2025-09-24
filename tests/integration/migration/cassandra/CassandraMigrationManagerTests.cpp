@@ -33,7 +33,6 @@
 #include "migration/impl/MigrationManagerBase.hpp"
 #include "migration/impl/MigratorsRegister.hpp"
 #include "util/CassandraDBHelper.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/config/ConfigConstraints.hpp"
 #include "util/config/ConfigDefinition.hpp"

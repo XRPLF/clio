@@ -19,6 +19,7 @@
 
 #include "rpc/common/impl/APIVersionParser.hpp"
 
+#include "util/JsonUtils.hpp"
 #include "util/config/ObjectView.hpp"
 #include "util/log/Logger.hpp"
 
@@ -62,7 +63,7 @@ ProductionAPIVersionParser::parse(boost::json::object const& request) const
         if (!request.at("api_version").is_int64())
             return Error{"API version must be an integer"};
 
-        auto const version = request.at("api_version").as_int64();
+        auto const version = util::integralValueAs<uint32_t>(request.at("api_version"));
 
         if (version > maxVersion_)
             return Error{fmt::format("Requested API version is higher than maximum supported ({})", maxVersion_)};

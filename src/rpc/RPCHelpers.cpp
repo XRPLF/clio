@@ -28,11 +28,13 @@
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
 #include "util/Assert.hpp"
+#include "util/JsonUtils.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
 
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/format/format_fwd.hpp>
 #include <boost/format/free_funcs.hpp>
@@ -172,10 +174,7 @@ canHaveDeliveredAmount(
     if (tt != ripple::ttPAYMENT && tt != ripple::ttCHECK_CASH && tt != ripple::ttACCOUNT_DELETE)
         return false;
 
-    if (meta->getResultTER() != ripple::tesSUCCESS)
-        return false;
-
-    return true;
+    return meta->getResultTER() == ripple::tesSUCCESS;
 }
 
 std::optional<ripple::AccountID>
@@ -259,6 +258,7 @@ toExpandedJson(
     auto metaJson = toJson(*meta);
     insertDeliveredAmount(metaJson, txn, meta, blobs.date);
     insertDeliverMaxAlias(txnJson, apiVersion);
+    insertMPTIssuanceID(txnJson, meta);
 
     if (nftEnabled == NFTokenjson::ENABLE) {
         Json::Value nftJson;
@@ -315,6 +315,66 @@ insertDeliveredAmount(
         return true;
     }
     return false;
+}
+
+/**
+ * @brief Get the delivered amount
+ *
+ * @param meta The metadata
+ * @return The mpt_issuance_id or std::nullopt if not available
+ */
+static std::optional<ripple::uint192>
+getMPTIssuanceID(std::shared_ptr<ripple::TxMeta const> const& meta)
+{
+    ripple::TxMeta const& transactionMeta = *meta;
+
+    for (ripple::STObject const& node : transactionMeta.getNodes()) {
+        if (node.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltMPTOKEN_ISSUANCE ||
+            node.getFName() != ripple::sfCreatedNode)
+            continue;
+
+        auto const& mptNode = node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>();
+        return ripple::makeMptID(mptNode[ripple::sfSequence], mptNode[ripple::sfIssuer]);
+    }
+
+    return {};
+}
+
+/**
+ * @brief Check if transaction has a new MPToken created
+ *
+ * @param txnJson The transaction Json
+ * @param meta The metadata
+ * @return true if the transaction can have a mpt_issuance_id
+ */
+static bool
+canHaveMPTIssuanceID(boost::json::object const& txnJson, std::shared_ptr<ripple::TxMeta const> const& meta)
+{
+    if (txnJson.at(JS(TransactionType)).is_string() and
+        not boost::iequals(txnJson.at(JS(TransactionType)).as_string(), JS(MPTokenIssuanceCreate)))
+        return false;
+
+    if (meta->getResultTER() != ripple::tesSUCCESS)
+        return false;
+
+    return true;
+}
+
+bool
+insertMPTIssuanceID(boost::json::object& txnJson, std::shared_ptr<ripple::TxMeta const> const& meta)
+{
+    if (!canHaveMPTIssuanceID(txnJson, meta))
+        return false;
+
+    if (txnJson.contains(JS(TransactionType)) && txnJson.at(JS(TransactionType)).is_string() and
+        txnJson.at(JS(TransactionType)).as_string() == JS(MPTokenIssuanceCreate))
+        return false;
+
+    auto const id = getMPTIssuanceID(meta);
+    ASSERT(id.has_value(), "MPTIssuanceID must have value");
+    txnJson[JS(mpt_issuance_id)] = ripple::to_string(*id);
+
+    return true;
 }
 
 void
@@ -433,8 +493,8 @@ ledgerHeaderFromRequest(std::shared_ptr<data::BackendInterface const> const& bac
             } else {
                 ledgerSequence = parseStringAsUInt(stringIndex);
             }
-        } else if (indexValue.is_int64()) {
-            ledgerSequence = indexValue.as_int64();
+        } else if (indexValue.is_int64() or indexValue.is_uint64()) {
+            ledgerSequence = util::integralValueAs<uint32_t>(indexValue);
         }
     } else {
         ledgerSequence = ctx.range.maxSequence;

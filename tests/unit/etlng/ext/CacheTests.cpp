@@ -21,7 +21,6 @@
 #include "etlng/impl/CacheUpdater.hpp"
 #include "etlng/impl/ext/Cache.hpp"
 #include "util/BinaryTestObject.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockLedgerCache.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestObject.hpp"

@@ -46,7 +46,6 @@
 #include <openssl/tls1.h>
 
 #include <chrono>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>

@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "util/LoggerFixtures.hpp"
 #include "util/MockAssert.hpp"
 #include "util/SignalsHandler.hpp"
 #include "util/config/ConfigDefinition.hpp"

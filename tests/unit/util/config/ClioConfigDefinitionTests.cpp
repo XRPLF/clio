@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "util/LoggerFixtures.hpp"
 #include "util/MockAssert.hpp"
 #include "util/config/Array.hpp"
 #include "util/config/ArrayView.hpp"

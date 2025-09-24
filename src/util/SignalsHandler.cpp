@@ -30,7 +30,6 @@
 #include <utility>
 
 namespace util {
-
 namespace impl {
 
 class SignalsHandlerStatic {
