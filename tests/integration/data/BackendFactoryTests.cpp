@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
+#include "TestGlobals.hpp"
 #include "data/BackendFactory.hpp"
 #include "data/LedgerCache.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
-#include "util/TestGlobals.hpp"
 #include "util/config/ConfigConstraints.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigFileJson.hpp"

@@ -12,9 +12,9 @@ target_sources(
           migration/cassandra/ExampleLedgerMigrator.cpp
           migration/cassandra/ExampleDropTableMigrator.cpp
           util/CassandraDBHelper.cpp
-          util/TestGlobals.cpp
           # Test runner
           Main.cpp
+          TestGlobals.cpp
 )
 
 # Fix for dwarf5 bug on ci. IS STILL NEEDED???

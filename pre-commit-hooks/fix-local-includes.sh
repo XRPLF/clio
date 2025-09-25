@@ -16,6 +16,16 @@ else
     main_src_dirs=$(find ./src -maxdepth 1 -type d -exec basename {} \; | paste -sd '|' | sed 's/|/\\|/g')
 fi
 
+# Get a list of all header filenames in src/ and tests/ (recursively, unique)
+all_local_headers=$(find ./src ./tests -type f \( -name '*.hpp' -o -name '*.h' \) -exec basename {} \; | sort -u)
+
+# Generate a sed script for batch replacements
+sed_script=$(mktemp)
+for header in $all_local_headers; do
+    escaped_header=$(printf '%s\n' "$header" | sed 's/[\/&]/\\&/g')
+    echo "s|#include[[:space:]]*[\"<]$escaped_header[\">]|#include \"$header\"|g" >> "$sed_script"
+done
+
 fix_includes() {
     file_path="$1"
 
@@ -28,6 +38,9 @@ fix_includes() {
     # Make local includes to be "..." style
     sed -E "s|#include <(($main_src_dirs)/.*)>|#include \"\1\"|g" "$file_path_all_global" > "$file_path_fixed"
     rm "$file_path_all_global"
+
+    # Make local includes without prefix to be "..." style
+    sed -i -f "$sed_script" "$file_path_fixed"
 
     # Check if the temporary file is different from the original file
     if ! cmp -s "$file_path" "$file_path_fixed"; then
@@ -42,3 +55,6 @@ fix_includes() {
 for file in $files; do
     fix_includes "$file"
 done
+
+# Remove the temporary sed script
+rm "$sed_script"

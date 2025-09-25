@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "TestGlobals.hpp"
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
 #include "data/LedgerCache.hpp"
@@ -34,7 +35,6 @@
 #include "migration/impl/MigratorsRegister.hpp"
 #include "util/CassandraDBHelper.hpp"
 #include "util/MockPrometheus.hpp"
-#include "util/TestGlobals.hpp"
 #include "util/config/ConfigConstraints.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigValue.hpp"

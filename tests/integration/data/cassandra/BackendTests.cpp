@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "TestGlobals.hpp"
 #include "data/BackendInterface.hpp"
 #include "data/CassandraBackend.hpp"
 #include "data/DBHelpers.hpp"
@@ -35,7 +36,6 @@
 #include "util/Random.hpp"
 #include "util/Spawn.hpp"
 #include "util/StringUtils.hpp"
-#include "util/TestGlobals.hpp"
 #include "util/config/ConfigValue.hpp"
 #include "util/config/ObjectView.hpp"
 #include "util/config/Types.hpp"
