@@ -21,6 +21,8 @@
 
 #include "util/SourceLocation.hpp"
 
+#include <spdlog/fwd.h>
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -30,18 +32,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-// We forward declare spdlog::logger and spdlog::sinks::sink
-// to avoid including the spdlog headers in this header file.
-namespace spdlog {
-
-class logger;  // NOLINT(readability-identifier-naming)
-
-namespace sinks {
-class sink;  // NOLINT(readability-identifier-naming)
-}  // namespace sinks
-
-}  // namespace spdlog
 
 struct BenchmarkLoggingInitializer;
 class LoggerFixture;
