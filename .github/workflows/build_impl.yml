@@ -23,10 +23,17 @@ on:
         required: true
         type: string
 
-      disable_cache:
-        description: Whether ccache should be disabled
+      download_ccache:
+        description: Whether to download ccache from the cache
         required: false
         type: boolean
+        default: true
+
+      upload_ccache:
+        description: Whether to upload ccache to the cache
+        required: false
+        type: boolean
+        default: false
 
       code_coverage:
         description: Whether to enable code coverage
@@ -90,15 +97,15 @@ jobs:
       - name: Prepare runner
         uses: XRPLF/actions/.github/actions/prepare-runner@7951b682e5a2973b28b0719a72f01fc4b0d0c34f
         with:
-          disable_ccache: ${{ inputs.disable_cache }}
+          disable_ccache: ${{ !inputs.download_ccache }}
 
       - name: Setup conan on macOS
-        if: runner.os == 'macOS'
+        if: ${{ runner.os == 'macOS' }}
         shell: bash
         run: ./.github/scripts/conan/init.sh
 
       - name: Restore cache
-        if: ${{ !inputs.disable_cache }}
+        if: ${{ inputs.download_ccache }}
         uses: ./.github/actions/restore_cache
         id: restore_cache
         with:
@@ -144,7 +151,7 @@ jobs:
           path: build_time_report.txt
 
       - name: Show ccache's statistics
-        if: ${{ !inputs.disable_cache }}
+        if: ${{ inputs.download_ccache }}
         shell: bash
         id: ccache_stats
         run: |
@@ -162,7 +169,7 @@ jobs:
         run: strip build/clio_integration_tests
 
       - name: Upload clio_server
-        if: inputs.upload_clio_server && !inputs.code_coverage && !inputs.analyze_build_time
+        if: ${{ inputs.upload_clio_server && !inputs.code_coverage && !inputs.analyze_build_time }}
         uses: actions/upload-artifact@v4
         with:
           name: clio_server_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
@@ -183,14 +190,14 @@ jobs:
           path: build/clio_integration_tests
 
       - name: Upload Clio Linux package
-        if: inputs.package
+        if: ${{ inputs.package }}
         uses: actions/upload-artifact@v4
         with:
           name: clio_deb_package_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/*.deb
 
       - name: Save cache
-        if: ${{ !inputs.disable_cache && github.ref == 'refs/heads/develop' }}
+        if: ${{ inputs.upload_ccache && github.ref == 'refs/heads/develop' }}
         uses: ./.github/actions/save_cache
         with:
           conan_profile: ${{ inputs.conan_profile }}

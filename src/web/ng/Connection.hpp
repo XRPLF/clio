@@ -143,9 +143,9 @@ public:
      *
      * @param response The response to send.
      * @param yield The yield context.
-     * @return An error if the operation failed or nullopt if it succeeded.
+     * @return An error if the operation fails, otherwise nothing.
      */
-    virtual std::optional<Error>
+    virtual std::expected<void, Error>
     send(Response response, boost::asio::yield_context yield) = 0;
 
     /**

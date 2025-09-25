@@ -332,10 +332,10 @@ private:
             input.binary = boost::json::value_to<JsonBool>(jsonObject.at(JS(binary)));
 
         if (jsonObject.contains(JS(min_ledger)))
-            input.minLedger = jv.at(JS(min_ledger)).as_int64();
+            input.minLedger = util::integralValueAs<uint32_t>(jv.at(JS(min_ledger)));
 
         if (jsonObject.contains(JS(max_ledger)))
-            input.maxLedger = jv.at(JS(max_ledger)).as_int64();
+            input.maxLedger = util::integralValueAs<uint32_t>(jv.at(JS(max_ledger)));
 
         return input;
     }

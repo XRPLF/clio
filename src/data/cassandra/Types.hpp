@@ -25,8 +25,8 @@
 #include <utility>
 
 namespace data::cassandra {
-
 namespace impl {
+
 struct Settings;
 class Session;
 class Cluster;
@@ -36,6 +36,7 @@ struct Result;
 class Statement;
 class PreparedStatement;
 struct Batch;
+
 }  // namespace impl
 
 using Settings = impl::Settings;

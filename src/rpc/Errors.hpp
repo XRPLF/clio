@@ -182,6 +182,16 @@ struct Status {
 
         return false;
     }
+
+    /**
+     * @brief Custom output stream for Status
+     *
+     * @param stream The output stream
+     * @param status The Status
+     * @return The same ostream we were given
+     */
+    friend std::ostream&
+    operator<<(std::ostream& stream, Status const& status);
 };
 
 /** @brief Warning codes that can be returned by clio. */

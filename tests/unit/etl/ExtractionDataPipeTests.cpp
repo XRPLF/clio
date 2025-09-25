@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "etl/impl/ExtractionDataPipe.hpp"
-#include "util/LoggerFixtures.hpp"
 
 #include <gtest/gtest.h>
 
@@ -35,7 +34,7 @@ constexpr auto kSTART_SEQ = 1234;
 
 }  // namespace
 
-class ETLExtractionDataPipeTest : public NoLoggerFixture {
+class ETLExtractionDataPipeTest : public ::testing::Test {
 protected:
     etl::impl::ExtractionDataPipe<uint32_t> pipe_{kSTRIDE, kSTART_SEQ};
 };

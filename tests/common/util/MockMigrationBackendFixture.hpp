@@ -28,7 +28,7 @@
 #include <memory>
 
 template <template <typename> typename MockType = ::testing::NiceMock>
-struct MockMigrationBackendTestBase : virtual public NoLoggerFixture {
+struct MockMigrationBackendTestBase : virtual public ::testing::Test {
     class BackendProxy {
         std::shared_ptr<MockType<MockMigrationBackend>> backend_ =
             std::make_shared<MockType<MockMigrationBackend>>(util::config::ClioConfigDefinition{});

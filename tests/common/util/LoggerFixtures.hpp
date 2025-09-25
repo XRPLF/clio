@@ -19,37 +19,39 @@
 
 #pragma once
 
-#include "util/StringBuffer.hpp"
+#include "util/LoggerBuffer.hpp"
 
 #include <gtest/gtest.h>
 
-#include <ostream>
 #include <string>
 
 /**
  * @brief A fixture for testing LogService and Logger.
  */
 class LoggerFixture : virtual public ::testing::Test {
-    StringBuffer buffer_;
-    std::ostream stream_ = std::ostream{&buffer_};
+protected:
+    LoggerBuffer buffer_;
 
 public:
-    // Simulates the `util::LogService::init(config)` call
     LoggerFixture();
+    ~LoggerFixture() override;
+
+    /**
+     * @brief Sets up spdlog loggers for each channel. Should be called once before using any loggers.
+     * Simulates the `util::LogService::init(config)` call
+     */
+    static void
+    init();
 
 protected:
+    [[nodiscard]]
     std::string
     getLoggerString()
     {
         return buffer_.getStrAndReset();
     }
-};
 
-/**
- * @brief Fixture with util::Logger support but completely disabled logging.
- *
- * This is meant to be used as a base for other fixtures.
- */
-struct NoLoggerFixture : virtual LoggerFixture {
-    NoLoggerFixture();
+private:
+    void
+    resetTestingLoggers();
 };

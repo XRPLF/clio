@@ -41,7 +41,8 @@ jobs:
       run_unit_tests: true
       run_integration_tests: true
       upload_clio_server: true
-      disable_cache: true
+      download_ccache: false
+      upload_ccache: false
       expected_version: ${{ github.event_name == 'push' && github.ref_name || '' }}
 
   release:

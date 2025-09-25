@@ -20,7 +20,6 @@
 #include "etl/SystemState.hpp"
 #include "etl/impl/Extractor.hpp"
 #include "util/FakeFetchResponse.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockExtractionDataPipe.hpp"
 #include "util/MockLedgerFetcher.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
@@ -34,7 +33,7 @@
 using namespace testing;
 using namespace etl;
 
-struct ETLExtractorTest : util::prometheus::WithPrometheus, NoLoggerFixture {
+struct ETLExtractorTest : util::prometheus::WithPrometheus {
     using ExtractionDataPipeType = MockExtractionDataPipe;
     using LedgerFetcherType = MockLedgerFetcher;
     using ExtractorType = etl::impl::Extractor<ExtractionDataPipeType, LedgerFetcherType>;

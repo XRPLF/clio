@@ -25,7 +25,6 @@
 #include "etlng/impl/Loading.hpp"
 #include "etlng/impl/TaskManager.hpp"
 #include "util/BinaryTestObject.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/TestObject.hpp"
 #include "util/async/AnyExecutionContext.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
@@ -86,7 +85,7 @@ struct MockMonitor : etlng::MonitorInterface {
     MOCK_METHOD(void, stop, (), (override));
 };
 
-struct TaskManagerTests : NoLoggerFixture {
+struct TaskManagerTests : virtual public ::testing::Test {
     using MockSchedulerType = testing::NiceMock<MockScheduler>;
     using MockExtractorType = testing::NiceMock<MockExtractor>;
     using MockLoaderType = testing::NiceMock<MockLoader>;

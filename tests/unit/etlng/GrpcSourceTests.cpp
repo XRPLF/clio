@@ -26,7 +26,6 @@
 #include "etlng/impl/GrpcSource.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/Assert.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockXrpLedgerAPIService.hpp"
 #include "util/Mutex.hpp"
 #include "util/TestObject.hpp"
@@ -67,7 +66,7 @@ struct MockLoadObserver : etlng::InitialLoadObserverInterface {
     );
 };
 
-struct GrpcSourceNgTests : virtual NoLoggerFixture, tests::util::WithMockXrpLedgerAPIService {
+struct GrpcSourceNgTests : virtual public ::testing::Test, tests::util::WithMockXrpLedgerAPIService {
     GrpcSourceNgTests()
         : WithMockXrpLedgerAPIService("localhost:0"), grpcSource_("localhost", std::to_string(getXRPLMockPort()))
     {

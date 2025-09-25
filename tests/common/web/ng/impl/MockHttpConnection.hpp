@@ -44,7 +44,7 @@ struct MockHttpConnectionImpl : web::ng::impl::UpgradableConnection {
 
     MOCK_METHOD(void, setTimeout, (std::chrono::steady_clock::duration), (override));
 
-    using SendReturnType = std::optional<web::ng::Error>;
+    using SendReturnType = std::expected<void, web::ng::Error>;
     MOCK_METHOD(SendReturnType, send, (web::ng::Response, boost::asio::yield_context), (override));
 
     MOCK_METHOD(

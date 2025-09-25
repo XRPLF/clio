@@ -20,7 +20,6 @@
 #include "rpc/Counters.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/WorkQueue.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/prometheus/Counter.hpp"
 
@@ -38,7 +37,7 @@ using util::prometheus::CounterInt;
 using util::prometheus::WithMockPrometheus;
 using util::prometheus::WithPrometheus;
 
-struct RPCCountersTest : WithPrometheus, NoLoggerFixture {
+struct RPCCountersTest : WithPrometheus {
     WorkQueue queue{4u, 1024u};  // todo: mock instead
     Counters counters{queue};
 };

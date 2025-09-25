@@ -19,7 +19,6 @@
 
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/Types.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/TestGlobals.hpp"
 
 #include <cassandra.h>
@@ -41,7 +40,7 @@ using namespace std;
 
 using namespace data::cassandra;
 
-class BackendCassandraBaseTest : public NoLoggerFixture {
+class BackendCassandraBaseTest : public virtual ::testing::Test {
 protected:
     static Handle
     createHandle(std::string_view contactPoints, std::string_view keyspace)

@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/LedgerCacheInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "util/Assert.hpp"
 #include "util/Taggable.hpp"
@@ -68,6 +69,22 @@ static constexpr auto kHEALTH_CHECK_HTML = R"html(
     <html>
         <head><title>Test page for Clio</title></head>
         <body><h1>Clio Test</h1><p>This page shows Clio http(s) connectivity is working.</p></body>
+    </html>
+)html";
+
+static constexpr auto kCACHE_CHECK_LOADED_HTML = R"html(
+    <!DOCTYPE html>
+    <html>
+        <head><title>Cache state</title></head>
+        <body><h1>Cache state</h1><p>Cache is fully loaded</p></body>
+    </html>
+)html";
+
+static constexpr auto kCACHE_CHECK_NOT_LOADED_HTML = R"html(
+    <!DOCTYPE html>
+    <html>
+        <head><title>Cache state</title></head>
+        <body><h1>Cache state</h1><p>Cache is not yet loaded</p></body>
     </html>
 )html";
 
@@ -128,6 +145,7 @@ protected:
     http::request<http::string_body> req_;
     std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard_;
     std::shared_ptr<HandlerType> const handler_;
+    std::reference_wrapper<data::LedgerCacheInterface const> cache_;
     util::Logger log_{"WebServer"};
     util::Logger perfLog_{"Performance"};
 
@@ -169,6 +187,7 @@ public:
         std::shared_ptr<ProxyIpResolver> proxyIpResolver,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> handler,
+        std::reference_wrapper<data::LedgerCacheInterface const> cache,
         boost::beast::flat_buffer buffer
     )
         : ConnectionBase(tagFactory, ip)
@@ -178,6 +197,7 @@ public:
         , buffer_(std::move(buffer))
         , dosGuard_(dosGuard)
         , handler_(std::move(handler))
+        , cache_(cache)
     {
         LOG(perfLog_.debug()) << tag() << "http session created";
         dosGuard_.get().increment(ip);
@@ -221,6 +241,13 @@ public:
 
         if (req_.method() == http::verb::get and req_.target() == "/health")
             return sender_(httpResponse(http::status::ok, "text/html", kHEALTH_CHECK_HTML));
+
+        if (req_.method() == http::verb::get and req_.target() == "/cache_state") {
+            if (cache_.get().isFull())
+                return sender_(httpResponse(http::status::ok, "text/html", kCACHE_CHECK_LOADED_HTML));
+
+            return sender_(httpResponse(http::status::service_unavailable, "text/html", kCACHE_CHECK_NOT_LOADED_HTML));
+        }
 
         if (auto resolvedIp = proxyIpResolver_->resolveClientIp(clientIp_, req_); resolvedIp != clientIp_) {
             LOG(log_.info()) << tag() << "Detected a forwarded request from proxy. Proxy ip: " << clientIp_
