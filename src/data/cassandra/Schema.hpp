@@ -19,12 +19,12 @@
 
 #pragma once
 
-#include "data/AbstractSchema.hpp"
 #include "data/cassandra/Concepts.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/Types.hpp"
 #include "util/log/Logger.hpp"
 
+#include <boost/json/string.hpp>
 #include <fmt/compile.h>
 
 #include <functional>
@@ -53,7 +53,8 @@ template <SomeSettingsProvider SettingsProviderType>
  * @brief Manages the DB schema and provides access to prepared statements.
  */
 template <SomeSettingsProvider SettingsProviderType>
-class Schema : public AbstractSchema<SettingsProviderType> {
+class Schema {
+protected:
     util::Logger log_{"Backend"};
     std::reference_wrapper<SettingsProviderType const> settingsProvider_;
 
@@ -958,226 +959,13 @@ public:
         }();
     };
 
-    std::string const&
-    getCreateKeyspaceQuery() const override
-    {
-        return createKeyspace;
-    }
-
-    std::vector<Statement> const&
-    getCreateSchemaQueries() const override
-    {
-        return createSchema;
-    }
-
-    PreparedStatement const&
-    insertObject() const override
-    {
-        return statements_->insertObject;
-    }
-    PreparedStatement const&
-    insertTransaction() const override
-    {
-        return statements_->insertTransaction;
-    }
-    PreparedStatement const&
-    insertLedgerTransaction() const override
-    {
-        return statements_->insertLedgerTransaction;
-    }
-    PreparedStatement const&
-    insertSuccessor() const override
-    {
-        return statements_->insertSuccessor;
-    }
-    PreparedStatement const&
-    insertDiff() const override
-    {
-        return statements_->insertDiff;
-    }
-    PreparedStatement const&
-    insertAccountTx() const override
-    {
-        return statements_->insertAccountTx;
-    }
-    PreparedStatement const&
-    insertNFT() const override
-    {
-        return statements_->insertNFT;
-    }
-    PreparedStatement const&
-    insertIssuerNFT() const override
-    {
-        return statements_->insertIssuerNFT;
-    }
-    PreparedStatement const&
-    insertNFTURI() const override
-    {
-        return statements_->insertNFTURI;
-    }
-    PreparedStatement const&
-    insertNFTTx() const override
-    {
-        return statements_->insertNFTTx;
-    }
-    PreparedStatement const&
-    insertMPTHolder() const override
-    {
-        return statements_->insertMPTHolder;
-    }
-    PreparedStatement const&
-    insertLedgerHeader() const override
-    {
-        return statements_->insertLedgerHeader;
-    }
-    PreparedStatement const&
-    insertLedgerHash() const override
-    {
-        return statements_->insertLedgerHash;
-    }
-    PreparedStatement const&
-    insertMigratorStatus() const override
-    {
-        return statements_->insertMigratorStatus;
-    }
-    PreparedStatement const&
-    updateLedgerRange() const override
-    {
-        return statements_->updateLedgerRange;
-    }
-    PreparedStatement const&
-    deleteLedgerRange() const override
-    {
-        return statements_->deleteLedgerRange;
-    }
-    PreparedStatement const&
-    updateClioNodeMessage() const override
-    {
-        return statements_->updateClioNodeMessage;
-    }
-    PreparedStatement const&
-    selectSuccessor() const override
-    {
-        return statements_->selectSuccessor;
-    }
-    PreparedStatement const&
-    selectDiff() const override
-    {
-        return statements_->selectDiff;
-    }
-    PreparedStatement const&
-    selectObject() const override
-    {
-        return statements_->selectObject;
-    }
-    PreparedStatement const&
-    selectTransaction() const override
-    {
-        return statements_->selectTransaction;
-    }
-    PreparedStatement const&
-    selectAllTransactionHashesInLedger() const override
-    {
-        return statements_->selectAllTransactionHashesInLedger;
-    }
-    PreparedStatement const&
-    setToken() const override
-    {
-        return statements_->getToken;
-    }
-    PreparedStatement const&
-    selectAccountTx() const override
-    {
-        return statements_->selectAccountTx;
-    }
-    PreparedStatement const&
-    selectAccountFromBeginning() const
-    {
-        return statements_->selectAccountFromBeginning;
-    }
-    PreparedStatement const&
-    selectAccountFromToken() const
-    {
-        return statements_->selectAccountFromToken;
-    }
-    PreparedStatement const&
-    selectAccountTxForward() const override
-    {
-        return statements_->selectAccountTxForward;
-    }
-    PreparedStatement const&
-    selectNFT() const override
-    {
-        return statements_->selectNFT;
-    }
-    PreparedStatement const&
-    selectNFTURI() const override
-    {
-        return statements_->selectNFTURI;
-    }
-    PreparedStatement const&
-    selectNFTTx() const override
-    {
-        return statements_->selectNFTTx;
-    }
-    PreparedStatement const&
-    selectNFTTxForward() const override
-    {
-        return statements_->selectNFTTxForward;
-    }
-    PreparedStatement const&
-    selectNFTIDsByIssuer() const
-    {
-        return statements_->selectNFTIDsByIssuer;
-    }
-    PreparedStatement const&
-    selectNFTIDsByIssuerTaxon() const override
-    {
-        return statements_->selectNFTIDsByIssuerTaxon;
-    }
-    PreparedStatement const&
-    selectMPTHolders() const override
-    {
-        return statements_->selectMPTHolders;
-    }
-    PreparedStatement const&
-    selectLedgerByHash() const override
-    {
-        return statements_->selectLedgerByHash;
-    }
-    PreparedStatement const&
-    selectLedgerBySeq() const override
-    {
-        return statements_->selectLedgerBySeq;
-    }
-    PreparedStatement const&
-    selectLatestLedger() const override
-    {
-        return statements_->selectLatestLedger;
-    }
-    PreparedStatement const&
-    selectLedgerRange() const override
-    {
-        return statements_->selectLedgerRange;
-    }
-    PreparedStatement const&
-    selectMigratorStatus() const override
-    {
-        return statements_->selectMigratorStatus;
-    }
-    PreparedStatement const&
-    selectClioNodesData() const override
-    {
-        return statements_->selectClioNodesData;
-    }
-
     /**
      * @brief Recreates the prepared statements.
      *
      * @param handle The handle to the DB
      */
     void
-    prepareStatements(Handle const& handle) override
+    prepareStatements(Handle const& handle)
     {
         LOG(log_.info()) << "Preparing cassandra statements";
         statements_ = std::make_unique<Statements>(settingsProvider_, handle);

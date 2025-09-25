@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "data/CassandraBackend.hpp"
 #include "data/LedgerCacheInterface.hpp"
 #include "data/LedgerHeaderCache.hpp"
 #include "data/Types.hpp"
@@ -45,16 +44,12 @@
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/nft.h>
 
-#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <optional>
 #include <stdexcept>
-#include <tuple>
 #include <vector>
-
-class CacheBackendCassandraTest;
 
 namespace data::cassandra {
 
@@ -71,38 +66,48 @@ template <
     SomeSettingsProvider SettingsProviderType,
     SomeExecutionStrategy ExecutionStrategyType,
     typename FetchLedgerCacheType = FetchLedgerCache>
-class BasicKeyspaceBackend : public DefaultCassandraFamily {
-    KeyspaceSchema<SettingsProviderType>* keyspaceSchema_;
+class BasicKeyspaceBackend : public CassandraBackendFamily<
+                                 SettingsProviderType,
+                                 ExecutionStrategyType,
+                                 KeyspaceSchema<SettingsProviderType>,
+                                 FetchLedgerCacheType> {
+    using DefaultCassandraFamily = CassandraBackendFamily<
+        SettingsProviderType,
+        ExecutionStrategyType,
+        KeyspaceSchema<SettingsProviderType>,
+        FetchLedgerCacheType>;
+
+    using DefaultCassandraFamily::executor_;
+    using DefaultCassandraFamily::ledgerSequence_;
+    using DefaultCassandraFamily::log_;
+    using DefaultCassandraFamily::range_;
+    using DefaultCassandraFamily::schema_;
 
 public:
     BasicKeyspaceBackend(SettingsProviderType settingsProvider, data::LedgerCacheInterface& cache, bool readOnly)
-        : DefaultCassandraFamily(
-              settingsProvider,
-              std::make_unique<KeyspaceSchema<SettingsProviderType>>(settingsProvider),
-              cache,
-              readOnly
-          )
+        : DefaultCassandraFamily(settingsProvider, cache, readOnly)
     {
-        // cast the pointer to KeyspaceSchema type as there is a few statements unique to KeyspaceBackend
-        keyspaceSchema_ = static_cast<KeyspaceSchema<SettingsProviderType>*>(this->schema_.get());
     }
+
+    /**
+     * @brief Move constructor is deleted because handle_ is shared by reference with executor
+     */
+    BasicKeyspaceBackend(BasicKeyspaceBackend&&) = delete;
 
     bool
     doFinishWrites() override
     {
-        waitForWritesToFinish();
+        this->waitForWritesToFinish();
 
         // !range_.has_value() means the table 'ledger_range' is not populated;
         // This would be the first write to the table.
         // In this case, insert both min_sequence/max_sequence range into the table.
-        if (!range_.has_value()) {
-            executor_.writeSync(keyspaceSchema_->insertLedgerRange(), false, ledgerSequence_);
-            executor_.writeSync(keyspaceSchema_->insertLedgerRange(), true, ledgerSequence_);
+        if (not(range_.has_value())) {
+            executor_.writeSync(schema_->insertLedgerRange, false, ledgerSequence_);
+            executor_.writeSync(schema_->insertLedgerRange, true, ledgerSequence_);
         }
 
-        if (not executeSyncUpdate(
-                keyspaceSchema_->updateLedgerRange().bind(ledgerSequence_, true, ledgerSequence_ - 1)
-            )) {
+        if (not executeSyncUpdate(schema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1))) {
             log_.warn() << "Update failed for ledger " << ledgerSequence_;
             return false;
         }
@@ -130,7 +135,7 @@ public:
             auto const startTaxon = cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0;
             auto const startTokenID = cursorIn.value_or(ripple::uint256(0));
 
-            Statement firstQuery = keyspaceSchema_->selectNFTIDsByIssuerTaxon().bind(issuer);
+            Statement firstQuery = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
             firstQuery.bindAt(1, startTaxon);
             firstQuery.bindAt(2, startTokenID);
             firstQuery.bindAt(3, Limit{limit});
@@ -143,7 +148,7 @@ public:
 
             if (nftIDs.size() < limit) {
                 auto const remainingLimit = limit - nftIDs.size();
-                Statement secondQuery = keyspaceSchema_->selectNFTsAfterTaxonKeyspaces().bind(issuer);
+                Statement secondQuery = schema_->selectNFTsAfterTaxonKeyspaces.bind(issuer);
                 secondQuery.bindAt(1, startTaxon);
                 secondQuery.bindAt(2, Limit{remainingLimit});
 
@@ -194,7 +199,7 @@ private:
             // in this case let's just compare the current state of things
             // against what we were trying to write in the first place and
             // use that as the source of truth for the result.
-            auto rng = hardFetchLedgerRangeNoThrow();
+            auto rng = this->hardFetchLedgerRangeNoThrow();
             return rng && rng->maxSequence == ledgerSequence_;
         }
 
@@ -211,7 +216,7 @@ private:
     ) const
     {
         std::vector<ripple::uint256> nftIDs;
-        Statement statement = keyspaceSchema_->selectNFTIDsByIssuerTaxon().bind(issuer);
+        Statement statement = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
         statement.bindAt(1, taxon);
         statement.bindAt(2, cursorIn.value_or(ripple::uint256(0)));
         statement.bindAt(3, Limit{limit});
@@ -237,7 +242,7 @@ private:
         auto const startTaxon = cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0;
         auto const startTokenID = cursorIn.value_or(ripple::uint256(0));
 
-        Statement firstQuery = keyspaceSchema_->selectNFTIDsByIssuerTaxon().bind(issuer);
+        Statement firstQuery = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
         firstQuery.bindAt(1, startTaxon);
         firstQuery.bindAt(2, startTokenID);
         firstQuery.bindAt(3, Limit{limit});
@@ -250,7 +255,7 @@ private:
 
         if (nftIDs.size() < limit) {
             auto const remainingLimit = limit - nftIDs.size();
-            Statement secondQuery = keyspaceSchema_->selectNFTsAfterTaxonKeyspaces().bind(issuer);
+            Statement secondQuery = schema_->selectNFTsAfterTaxonKeyspaces.bind(issuer);
             secondQuery.bindAt(1, startTaxon);
             secondQuery.bindAt(2, Limit{remainingLimit});
 
@@ -288,7 +293,7 @@ private:
         selectNFTStatements.reserve(nftIDs.size());
         std::transform(
             std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTStatements), [&](auto const& nftID) {
-                return keyspaceSchema_->selectNFT().bind(nftID, ledgerSequence);
+                return schema_->selectNFT.bind(nftID, ledgerSequence);
             }
         );
 
@@ -296,7 +301,7 @@ private:
         selectNFTURIStatements.reserve(nftIDs.size());
         std::transform(
             std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTURIStatements), [&](auto const& nftID) {
-                return keyspaceSchema_->selectNFTURI().bind(nftID, ledgerSequence);
+                return schema_->selectNFTURI.bind(nftID, ledgerSequence);
             }
         );
 
