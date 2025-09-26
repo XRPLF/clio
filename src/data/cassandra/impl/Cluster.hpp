@@ -31,9 +31,28 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <utility>
 #include <variant>
 
 namespace data::cassandra::impl {
+
+namespace {
+
+enum class Provider { CASSANDRA, KEYSPACE };
+
+inline std::string
+toString(Provider provider)
+{
+    switch (provider) {
+        case Provider::CASSANDRA:
+            return "cassandra";
+        case Provider::KEYSPACE:
+            return "aws_keyspaces";
+    }
+    std::unreachable();
+}
+
+}  // namespace
 
 // TODO: move Settings to public interface, not impl
 
@@ -45,7 +64,7 @@ struct Settings {
     static constexpr uint32_t kDEFAULT_MAX_WRITE_REQUESTS_OUTSTANDING = 10'000;
     static constexpr uint32_t kDEFAULT_MAX_READ_REQUESTS_OUTSTANDING = 100'000;
     static constexpr std::size_t kDEFAULT_BATCH_SIZE = 20;
-    static constexpr std::string kDEFAULT_PROVIDER = "cassandra";
+    static constexpr Provider kDEFAULT_PROVIDER = Provider::CASSANDRA;
 
     /**
      * @brief Represents the configuration of contact points for cassandra.
@@ -90,7 +109,7 @@ struct Settings {
     std::size_t writeBatchSize = kDEFAULT_BATCH_SIZE;
 
     /** @brief Provider to know if we are using scylladb or keyspace */
-    std::string provider = kDEFAULT_PROVIDER;
+    std::string provider = toString(kDEFAULT_PROVIDER);
 
     /** @brief Size of the IO queue */
     std::optional<uint32_t> queueSizeIO = std::nullopt;  // NOLINT(readability-redundant-member-init)

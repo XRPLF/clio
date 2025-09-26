@@ -57,9 +57,7 @@
 namespace data::cassandra {
 
 /**
- * @brief Implements @ref BackendInterface for Cassandra/ScyllaDB.
- *
- * Note: This is a safer and more correct rewrite of the original implementation of the backend.
+ * @brief Implements @ref CassandraBackendFamily for Cassandra/ScyllaDB.
  *
  * @tparam SettingsProviderType The settings provider type to use
  * @tparam ExecutionStrategyType The execution strategy type to use
