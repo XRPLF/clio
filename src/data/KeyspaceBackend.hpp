@@ -84,10 +84,10 @@ class BasicKeyspaceBackend : public CassandraBackendFamily<
     using DefaultCassandraFamily::schema_;
 
 public:
-    BasicKeyspaceBackend(SettingsProviderType settingsProvider, data::LedgerCacheInterface& cache, bool readOnly)
-        : DefaultCassandraFamily(settingsProvider, cache, readOnly)
-    {
-    }
+    /**
+     * @brief Inherit the constructors of the base class.
+     */
+    using DefaultCassandraFamily::DefaultCassandraFamily;
 
     /**
      * @brief Move constructor is deleted because handle_ is shared by reference with executor
@@ -163,11 +163,17 @@ public:
     }
 
     /**
-     * @brief Loading cache with account is currently unsupported by aws keyspace backend.
-     * The reason is because this function calls statements (selectAccountFromToken, selectaccountfrombeginning)
-     * that uses "PER PARTITION LIMIT 1". As keyspace currently doesn't support "PER PARTITION LIMIT" and there is
-     * no good way to filter out the result, we are disabling this feature for now. This should be okay for now as
-     * we load cache by diff or cursor from diff, rarely by accounts.
+     * @brief (Unsupported in Keyspaces) Fetches account root object indexes by page.
+     * * @note Loading the cache by enumerating all accounts is currently unsupported by the AWS Keyspaces backend.
+     * This function's logic relies on "PER PARTITION LIMIT 1", which Keyspaces does not support, and there is
+     * no efficient alternative. This is acceptable as the cache is primarily loaded via diffs. Calling this
+     * function will throw an exception.
+     *
+     * @param number The total number of accounts to fetch.
+     * @param pageSize The maximum number of accounts per page.
+     * @param seq The accounts need to exist at this ledger sequence.
+     * @param yield The coroutine context.
+     * @return A vector of ripple::uint256 representing the account root hashes.
      */
     std::vector<ripple::uint256>
     fetchAccountRoots(

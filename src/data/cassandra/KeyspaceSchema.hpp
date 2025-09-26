@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -910,6 +910,11 @@ public:
         }();
     };
 
+    /**
+     * @brief Recreates the prepared statements.
+     *
+     * @param handle The handle to the DB
+     */
     void
     prepareStatements(Handle const& handle)
     {

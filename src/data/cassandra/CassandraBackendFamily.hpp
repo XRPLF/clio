@@ -145,6 +145,9 @@ public:
      */
     CassandraBackendFamily(CassandraBackendFamily&&) = delete;
 
+    /**
+     * @copydoc BackendInterface::fetchAccountTransactions
+     */
     TransactionsAndCursor
     fetchAccountTransactions(
         ripple::AccountID const& account,
@@ -213,12 +216,18 @@ public:
         return {txns, {}};
     }
 
+    /**
+     * @copydoc BackendInterface::waitForWritesToFinish
+     */
     void
     waitForWritesToFinish() override
     {
         executor_.sync();
     }
 
+    /**
+     * @copydoc BackendInterface::writeLedger
+     */
     void
     writeLedger(ripple::LedgerHeader const& ledgerHeader, std::string&& blob) override
     {
@@ -229,6 +238,9 @@ public:
         ledgerSequence_ = ledgerHeader.seq;
     }
 
+    /**
+     * @copydoc BackendInterface::fetchLatestLedgerSequence
+     */
     std::optional<std::uint32_t>
     fetchLatestLedgerSequence(boost::asio::yield_context yield) const override
     {
@@ -249,6 +261,9 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @copydoc BackendInterface::fetchLedgerBySequence
+     */
     std::optional<ripple::LedgerHeader>
     fetchLedgerBySequence(std::uint32_t const sequence, boost::asio::yield_context yield) const override
     {
@@ -276,6 +291,9 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @copydoc BackendInterface::fetchLedgerByHash
+     */
     std::optional<ripple::LedgerHeader>
     fetchLedgerByHash(ripple::uint256 const& hash, boost::asio::yield_context yield) const override
     {
@@ -296,6 +314,9 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @copydoc BackendInterface::hardFetchLedgerRange
+     */
     std::optional<LedgerRange>
     hardFetchLedgerRange(boost::asio::yield_context yield) const override
     {
@@ -341,6 +362,9 @@ public:
         return fetchTransactions(hashes, yield);
     }
 
+    /**
+     * @copydoc BackendInterface::fetchAllTransactionHashesInLedger
+     */
     std::vector<ripple::uint256>
     fetchAllTransactionHashesInLedger(
         std::uint32_t const ledgerSequence,
@@ -374,6 +398,9 @@ public:
         return hashes;
     }
 
+    /**
+     * @copydoc BackendInterface::fetchNFT
+     */
     std::optional<NFT>
     fetchNFT(
         ripple::uint256 const& tokenID,
@@ -413,6 +440,9 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @copydoc BackendInterface::fetchNFTTransactions
+     */
     TransactionsAndCursor
     fetchNFTTransactions(
         ripple::uint256 const& tokenID,
@@ -484,6 +514,9 @@ public:
         return {txns, {}};
     }
 
+    /**
+     * @copydoc BackendInterface::fetchMPTHolders
+     */
     MPTHoldersAndCursor
     fetchMPTHolders(
         ripple::uint192 const& mptID,
@@ -523,6 +556,9 @@ public:
         return {mptObjects, {}};
     }
 
+    /**
+     * @copydoc BackendInterface::doFetchLedgerObject
+     */
     std::optional<Blob>
     doFetchLedgerObject(
         ripple::uint256 const& key,
@@ -545,6 +581,9 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @copydoc BackendInterface::doFetchLedgerObjectSeq
+     */
     std::optional<std::uint32_t>
     doFetchLedgerObjectSeq(
         ripple::uint256 const& key,
@@ -566,6 +605,9 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @copydoc BackendInterface::fetchTransaction
+     */
     std::optional<TransactionAndMetadata>
     fetchTransaction(ripple::uint256 const& hash, boost::asio::yield_context yield) const override
     {
@@ -583,6 +625,9 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @copydoc BackendInterface::doFetchSuccessorKey
+     */
     std::optional<ripple::uint256>
     doFetchSuccessorKey(
         ripple::uint256 key,
@@ -605,6 +650,9 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @copydoc BackendInterface::fetchTransactions
+     */
     std::vector<TransactionAndMetadata>
     fetchTransactions(std::vector<ripple::uint256> const& hashes, boost::asio::yield_context yield) const override
     {
@@ -646,6 +694,9 @@ public:
         return results;
     }
 
+    /**
+     * @copydoc BackendInterface::doFetchLedgerObjects
+     */
     std::vector<Blob>
     doFetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
@@ -686,6 +737,9 @@ public:
         return results;
     }
 
+    /**
+     * @copydoc BackendInterface::fetchLedgerDiff
+     */
     std::vector<LedgerObject>
     fetchLedgerDiff(std::uint32_t const ledgerSequence, boost::asio::yield_context yield) const override
     {
@@ -731,6 +785,9 @@ public:
         return results;
     }
 
+    /**
+     * @copydoc BackendInterface::fetchMigratorStatus
+     */
     std::optional<std::string>
     fetchMigratorStatus(std::string const& migratorName, boost::asio::yield_context yield) const override
     {
@@ -751,6 +808,9 @@ public:
         return {};
     }
 
+    /**
+     * @copydoc BackendInterface::fetchClioNodesData
+     */
     std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>
     fetchClioNodesData(boost::asio::yield_context yield) const override
     {
@@ -767,17 +827,9 @@ public:
         return result;
     }
 
-    void
-    doWriteLedgerObject(std::string&& key, std::uint32_t const seq, std::string&& blob) override
-    {
-        LOG(log_.trace()) << " Writing ledger object " << key.size() << ":" << seq << " [" << blob.size() << " bytes]";
-
-        if (range_)
-            executor_.write(schema_->insertDiff, seq, key);
-
-        executor_.write(schema_->insertObject, std::move(key), seq, std::move(blob));
-    }
-
+    /**
+     * @copydoc BackendInterface::writeSuccessor
+     */
     void
     writeSuccessor(std::string&& key, std::uint32_t const seq, std::string&& successor) override
     {
@@ -789,6 +841,9 @@ public:
         executor_.write(schema_->insertSuccessor, std::move(key), seq, std::move(successor));
     }
 
+    /**
+     * @copydoc BackendInterface::writeAccountTransactions
+     */
     void
     writeAccountTransactions(std::vector<AccountTransactionsData> data) override
     {
@@ -808,6 +863,9 @@ public:
         executor_.write(std::move(statements));
     }
 
+    /**
+     * @copydoc BackendInterface::writeAccountTransaction
+     */
     void
     writeAccountTransaction(AccountTransactionsData record) override
     {
@@ -825,6 +883,9 @@ public:
         executor_.write(std::move(statements));
     }
 
+    /**
+     * @copydoc BackendInterface::writeNFTTransactions
+     */
     void
     writeNFTTransactions(std::vector<NFTTransactionsData> const& data) override
     {
@@ -840,6 +901,9 @@ public:
         executor_.write(std::move(statements));
     }
 
+    /**
+     * @copydoc BackendInterface::writeTransaction
+     */
     void
     writeTransaction(
         std::string&& hash,
@@ -857,6 +921,9 @@ public:
         );
     }
 
+    /**
+     * @copydoc BackendInterface::writeNFTs
+     */
     void
     writeNFTs(std::vector<NFTsData> const& data) override
     {
@@ -895,6 +962,9 @@ public:
         executor_.writeEach(std::move(statements));
     }
 
+    /**
+     * @copydoc BackendInterface::writeMPTHolders
+     */
     void
     writeMPTHolders(std::vector<MPTHolderData> const& data) override
     {
@@ -906,6 +976,9 @@ public:
         executor_.write(std::move(statements));
     }
 
+    /**
+     * @copydoc BackendInterface::startWrites
+     */
     void
     startWrites() const override
     {
@@ -913,6 +986,9 @@ public:
         // probably was used in PG to start a transaction or smth.
     }
 
+    /**
+     * @copydoc BackendInterface::writeMigratorStatus
+     */
     void
     writeMigratorStatus(std::string const& migratorName, std::string const& status) override
     {
@@ -921,18 +997,27 @@ public:
         );
     }
 
+    /**
+     * @copydoc BackendInterface::writeNodeMessage
+     */
     void
     writeNodeMessage(boost::uuids::uuid const& uuid, std::string message) override
     {
         executor_.writeSync(schema_->updateClioNodeMessage, data::cassandra::Text{std::move(message)}, uuid);
     }
 
+    /**
+     * @copydoc BackendInterface::isTooBusy
+     */
     bool
     isTooBusy() const override
     {
         return executor_.isTooBusy();
     }
 
+    /**
+     * @copydoc BackendInterface::stats
+     */
     boost::json::object
     stats() const override
     {
@@ -940,6 +1025,17 @@ public:
     }
 
 private:
+    void
+    doWriteLedgerObject(std::string&& key, std::uint32_t const seq, std::string&& blob) override
+    {
+        LOG(log_.trace()) << " Writing ledger object " << key.size() << ":" << seq << " [" << blob.size() << " bytes]";
+
+        if (range_)
+            executor_.write(schema_->insertDiff, seq, key);
+
+        executor_.write(schema_->insertObject, std::move(key), seq, std::move(blob));
+    }
+
     bool
     executeSyncUpdate(Statement statement)
     {

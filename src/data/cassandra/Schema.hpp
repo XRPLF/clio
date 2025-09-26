@@ -54,7 +54,6 @@ template <SomeSettingsProvider SettingsProviderType>
  */
 template <SomeSettingsProvider SettingsProviderType>
 class Schema {
-protected:
     util::Logger log_{"Backend"};
     std::reference_wrapper<SettingsProviderType const> settingsProvider_;
 
@@ -656,7 +655,6 @@ public:
             );
         }();
 
-        /*
         PreparedStatement selectLedgerPageKeys = [this]() {
             return handle_.get().prepare(
                 fmt::format(
@@ -690,7 +688,6 @@ public:
                 )
             );
         }();
-            */
 
         PreparedStatement getToken = [this]() {
             return handle_.get().prepare(

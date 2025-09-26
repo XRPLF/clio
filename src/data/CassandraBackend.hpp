@@ -89,12 +89,12 @@ protected:
     using DefaultCassandraFamily::schema_;
 
 public:
-    BasicCassandraBackend(SettingsProviderType settingsProvider, data::LedgerCacheInterface& cache, bool readOnly)
-        : DefaultCassandraFamily(settingsProvider, cache, readOnly)
-    {
-    }
-
     /**
+     * @brief Inherit the constructors of the base class.
+     */
+    using DefaultCassandraFamily::DefaultCassandraFamily;
+
+    /*
      * @brief Move constructor is deleted because handle_ is shared by reference with executor
      */
     BasicCassandraBackend(BasicCassandraBackend&&) = delete;

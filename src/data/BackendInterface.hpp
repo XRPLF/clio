@@ -304,7 +304,7 @@ public:
         ripple::AccountID const& account,
         std::uint32_t limit,
         bool forward,
-        std::optional<TransactionsCursor> const& cursor,
+        std::optional<TransactionsCursor> const& cursorIn,
         boost::asio::yield_context yield
     ) const = 0;
 
