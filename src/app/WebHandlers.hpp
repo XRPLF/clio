@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/LedgerCacheInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "util/log/Logger.hpp"
 #include "web/AdminVerificationStrategy.hpp"
@@ -148,6 +149,37 @@ public:
  */
 class HealthCheckHandler {
 public:
+    /**
+     * @brief The call of the function object.
+     *
+     * @param request The request to handle.
+     * @return The response to the request
+     */
+    web::ng::Response
+    operator()(
+        web::ng::Request const& request,
+        web::ng::ConnectionMetadata&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    );
+};
+
+/**
+ * @brief A function object that handles the cache state check endpoint.
+ */
+class CacheStateHandler {
+    std::reference_wrapper<data::LedgerCacheInterface const> cache_;
+
+public:
+    /**
+     * @brief Construct a new CacheStateHandler object.
+     *
+     * @param cache The ledger cache to use.
+     */
+    CacheStateHandler(data::LedgerCacheInterface const& cache) : cache_{cache}
+    {
+    }
+
     /**
      * @brief The call of the function object.
      *

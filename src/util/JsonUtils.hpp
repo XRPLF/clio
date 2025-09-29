@@ -24,6 +24,8 @@
 
 #include <algorithm>
 #include <cctype>
+#include <concepts>
+#include <stdexcept>
 #include <string>
 
 /**
@@ -84,6 +86,28 @@ removeSecret(boost::json::object const& object)
     }
 
     return newObject;
+}
+
+/**
+ * @brief Detects the type of number stored in value and casts it back to the requested Type.
+ * @note This conversion can possibly cause wrapping around or UB. Use with caution.
+ *
+ * @tparam Type The type to cast to
+ * @param value The JSON value to cast
+ * @return Value casted to the requested type
+ * @throws logic_error if the underlying number is neither int64 nor uint64
+ */
+template <std::integral Type>
+Type
+integralValueAs(boost::json::value const& value)
+{
+    if (value.is_uint64())
+        return static_cast<Type>(value.as_uint64());
+
+    if (value.is_int64())
+        return static_cast<Type>(value.as_int64());
+
+    throw std::logic_error("Value neither uint64 nor int64");
 }
 
 }  // namespace util

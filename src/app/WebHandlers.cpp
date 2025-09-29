@@ -120,4 +120,34 @@ HealthCheckHandler::operator()(
     return web::ng::Response{boost::beast::http::status::ok, kHEALTH_CHECK_HTML, request};
 }
 
+web::ng::Response
+CacheStateHandler::operator()(
+    web::ng::Request const& request,
+    web::ng::ConnectionMetadata&,
+    web::SubscriptionContextPtr,
+    boost::asio::yield_context
+)
+{
+    static constexpr auto kCACHE_CHECK_LOADED_HTML = R"html(
+    <!DOCTYPE html>
+    <html>
+        <head><title>Cache state</title></head>
+        <body><h1>Cache state</h1><p>Cache is fully loaded</p></body>
+    </html>
+)html";
+
+    static constexpr auto kCACHE_CHECK_NOT_LOADED_HTML = R"html(
+    <!DOCTYPE html>
+    <html>
+        <head><title>Cache state</title></head>
+        <body><h1>Cache state</h1><p>Cache is not yet loaded</p></body>
+    </html>
+)html";
+
+    if (cache_.get().isFull())
+        return web::ng::Response{boost::beast::http::status::ok, kCACHE_CHECK_LOADED_HTML, request};
+
+    return web::ng::Response{boost::beast::http::status::service_unavailable, kCACHE_CHECK_NOT_LOADED_HTML, request};
+}
+
 }  // namespace app

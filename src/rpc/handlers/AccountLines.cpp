@@ -24,6 +24,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
+#include "util/JsonUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
@@ -40,6 +41,7 @@
 #include <xrpl/protocol/UintTypes.h>
 #include <xrpl/protocol/jss.h>
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <utility>
@@ -199,7 +201,7 @@ tag_invoke(boost::json::value_to_tag<AccountLinesHandler::Input>, boost::json::v
 
     input.account = boost::json::value_to<std::string>(jv.at(JS(account)));
     if (jsonObject.contains(JS(limit)))
-        input.limit = jv.at(JS(limit)).as_int64();
+        input.limit = util::integralValueAs<uint32_t>(jv.at(JS(limit)));
 
     if (jsonObject.contains(JS(marker)))
         input.marker = boost::json::value_to<std::string>(jv.at(JS(marker)));
@@ -215,7 +217,7 @@ tag_invoke(boost::json::value_to_tag<AccountLinesHandler::Input>, boost::json::v
 
     if (jsonObject.contains(JS(ledger_index))) {
         if (!jsonObject.at(JS(ledger_index)).is_string()) {
-            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+            input.ledgerIndex = util::integralValueAs<uint32_t>(jv.at(JS(ledger_index)));
         } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jv.at(JS(ledger_index))));
         }

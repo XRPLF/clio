@@ -1247,6 +1247,133 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
     testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
 }
 
+TEST_F(FeedTransactionTest, PublishesMPTokenIssuanceCreateTx)
+{
+    constexpr auto kMPTOKEN_ISSUANCE_CREATE_TRAN_V1 =
+        R"JSON({
+            "transaction": {
+                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Fee": "12",
+                "Sequence": 1,
+                "SigningPubKey": "74657374",
+                "TransactionType": "MPTokenIssuanceCreate",
+                "hash": "B565E9E541E9C4615C920807AC8104D26F961424A06F3BB25A083DD47680EF45",
+                "date": 0
+            },
+            "meta": {
+                "AffectedNodes": [
+                    {
+                        "CreatedNode": {
+                            "LedgerEntryType": "MPTokenIssuance",
+                            "LedgerIndex": "0000000000000000000000000000000000000000000000000000000000000000",
+                            "NewFields": {
+                                "Flags": 0,
+                                "Issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                "LedgerEntryType": "MPTokenIssuance",
+                                "MPTokenMetadata": "746573742D6D657461",
+                                "MaximumAmount": "0",
+                                "OutstandingAmount": "0",
+                                "OwnerNode": "0",
+                                "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+                                "PreviousTxnLgrSeq": 0,
+                                "Sequence": 1
+                            }
+                        }
+                    }
+                ],
+                "TransactionIndex": 0,
+                "TransactionResult": "tesSUCCESS"
+            },
+            "ctid": "C000002100000000",
+            "type": "transaction",
+            "validated": true,
+            "status": "closed",
+            "ledger_index": 33,
+            "close_time_iso": "2000-01-01T00:00:00Z",
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "engine_result_code": 0,
+            "engine_result": "tesSUCCESS",
+            "engine_result_message": "The transaction was applied. Only final in a validated ledger."
+        })JSON";
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(sessionPtr);
+    EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
+
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    auto const trans = createMPTIssuanceCreateTxWithMetadata(kACCOUNT1, 12, 1);
+
+    EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMPTOKEN_ISSUANCE_CREATE_TRAN_V1)));
+
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+
+    testFeedPtr->unsub(sessionPtr);
+    EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
+
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+}
+
+TEST_F(FeedTransactionTest, PublishesMPTokenAuthorizeTx)
+{
+    constexpr auto kMPTOKEN_AUTHORIZE_TRAN_V1 =
+        R"JSON({
+            "transaction": {
+                "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Fee": "15",
+                "MPTokenIssuanceID": "000000014B4E9C06F24296074F7BC48F92A97916C6DC5EA9",
+                "Sequence": 5,
+                "SigningPubKey": "74657374",
+                "TransactionType": "MPTokenAuthorize",
+                "hash": "94ACAB5D571C4A2B8D76979B76E8A82FA91915AEB3FD0A9917223308D5EAE331",
+                "date": 0
+            },
+            "meta": {
+                "AffectedNodes": [
+                    {
+                        "ModifiedNode": {
+                            "FinalFields": {
+                                "LedgerEntryType": "MPToken",
+                                "MPTAmount": "0",
+                                "MPTokenIssuanceID": "000000014B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
+                            },
+                            "LedgerEntryType": "MPToken",
+                            "LedgerIndex": "0000000000000000000000000000000000000000000000000000000000000000"
+                        }
+                    }
+                ],
+                "TransactionIndex": 0,
+                "TransactionResult": "tesSUCCESS"
+            },
+            "ctid": "C000002100000000",
+            "type": "transaction",
+            "validated": true,
+            "status": "closed",
+            "ledger_index": 33,
+            "close_time_iso": "2000-01-01T00:00:00Z",
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "engine_result_code": 0,
+            "engine_result": "tesSUCCESS",
+            "engine_result_message": "The transaction was applied. Only final in a validated ledger."
+        })JSON";
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(sessionPtr);
+
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
+    // The issuance ID that this transaction is authorizing
+    auto const mptIssuanceID = ripple::makeMptID(1, getAccountIdWithString(kACCOUNT1));
+    auto const trans = createMPTokenAuthorizeTxWithMetadata(kACCOUNT1, mptIssuanceID, 15, 5);
+
+    EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kMPTOKEN_AUTHORIZE_TRAN_V1)));
+
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+
+    testFeedPtr->unsub(sessionPtr);
+    testFeedPtr->pub(trans, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
+}
+
 struct TransactionFeedMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {
 protected:
     web::SubscriptionContextPtr sessionPtr_ = std::make_shared<MockSession>();

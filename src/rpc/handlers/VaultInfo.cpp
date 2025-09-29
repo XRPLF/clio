@@ -25,6 +25,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
+#include "util/JsonUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
@@ -171,14 +172,14 @@ tag_invoke(boost::json::value_to_tag<VaultInfoHandler::Input>, boost::json::valu
         input.owner = jsonObject.at(JS(owner)).as_string();
 
     if (jsonObject.contains(JS(seq)))
-        input.tnxSequence = static_cast<uint32_t>(jsonObject.at(JS(seq)).as_int64());
+        input.tnxSequence = util::integralValueAs<uint32_t>(jsonObject.at(JS(seq)));
 
     if (jsonObject.contains(JS(vault_id)))
         input.vaultID = jsonObject.at(JS(vault_id)).as_string();
 
     if (jsonObject.contains(JS(ledger_index))) {
         if (not jsonObject.at(JS(ledger_index)).is_string()) {
-            input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+            input.ledgerIndex = util::integralValueAs<uint32_t>(jsonObject.at(JS(ledger_index)));
         } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
         }

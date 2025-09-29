@@ -36,6 +36,7 @@
 #include <xrpl/protocol/ErrorCodes.h>
 
 #include <cstdint>
+#include <limits>
 #include <string>
 #include <string_view>
 
@@ -50,39 +51,97 @@ namespace json = boost::json;
 
 class RPCBaseTest : public virtual ::testing::Test {};
 
-TEST_F(RPCBaseTest, CheckType)
+TEST_F(RPCBaseTest, CheckTypeString)
 {
-    auto const jstr = json::value("a string");
-    ASSERT_TRUE(checkType<string>(jstr));
-    ASSERT_FALSE(checkType<int>(jstr));
+    auto const jString = json::value("a string");
+    ASSERT_TRUE(checkType<string>(jString));
+    ASSERT_FALSE(checkType<int>(jString));
+}
 
-    auto const juint = json::value(123u);
-    ASSERT_TRUE(checkType<uint32_t>(juint));
-    ASSERT_TRUE(checkType<int32_t>(juint));
-    ASSERT_FALSE(checkType<bool>(juint));
+TEST_F(RPCBaseTest, CheckTypeUint)
+{
+    auto const jUint = json::value(123u);
+    ASSERT_TRUE(checkType<uint32_t>(jUint));
+    ASSERT_TRUE(checkType<int32_t>(jUint));
+    ASSERT_FALSE(checkType<bool>(jUint));
+}
 
-    auto jint = json::value(123);
-    ASSERT_TRUE(checkType<int32_t>(jint));
-    ASSERT_TRUE(checkType<uint32_t>(jint));
-    ASSERT_FALSE(checkType<bool>(jint));
+TEST_F(RPCBaseTest, CheckTypeInt)
+{
+    auto jInt = json::value(123);
+    ASSERT_TRUE(checkType<int32_t>(jInt));
+    ASSERT_TRUE(checkType<uint32_t>(jInt));
+    ASSERT_FALSE(checkType<bool>(jInt));
 
-    jint = json::value(-123);
-    ASSERT_TRUE(checkType<int32_t>(jint));
-    ASSERT_FALSE(checkType<uint32_t>(jint));
-    ASSERT_FALSE(checkType<bool>(jint));
+    jInt = json::value(-123);
+    ASSERT_TRUE(checkType<int32_t>(jInt));
+    ASSERT_FALSE(checkType<uint32_t>(jInt));  // Unsigned can't be negative
+    ASSERT_FALSE(checkType<bool>(jInt));
+}
 
-    auto const jbool = json::value(true);
-    ASSERT_TRUE(checkType<bool>(jbool));
-    ASSERT_FALSE(checkType<int>(jbool));
+TEST_F(RPCBaseTest, CheckTypeBool)
+{
+    auto const jBool = json::value(true);
+    ASSERT_TRUE(checkType<bool>(jBool));
+    ASSERT_FALSE(checkType<int>(jBool));
+}
 
-    auto const jdouble = json::value(0.123);
-    ASSERT_TRUE(checkType<double>(jdouble));
-    ASSERT_TRUE(checkType<float>(jdouble));
-    ASSERT_FALSE(checkType<bool>(jdouble));
+TEST_F(RPCBaseTest, CheckTypeDouble)
+{
+    auto const jDouble = json::value(0.123);
+    ASSERT_TRUE(checkType<double>(jDouble));
+    ASSERT_TRUE(checkType<float>(jDouble));
+    ASSERT_FALSE(checkType<bool>(jDouble));
+}
 
-    auto const jarr = json::value({1, 2, 3});
-    ASSERT_TRUE(checkType<json::array>(jarr));
-    ASSERT_FALSE(checkType<int>(jarr));
+TEST_F(RPCBaseTest, CheckTypeArray)
+{
+    auto const jArr = json::value({1, 2, 3});
+    ASSERT_TRUE(checkType<json::array>(jArr));
+    ASSERT_FALSE(checkType<int>(jArr));
+}
+
+TEST_F(RPCBaseTest, CheckTypeAndClampValueUnchanged)
+{
+    auto jUint = json::value(123u);
+    ASSERT_TRUE(checkTypeAndClamp<uint32_t>(jUint));
+    ASSERT_EQ(jUint.as_uint64(), 123u);
+    ASSERT_TRUE(checkTypeAndClamp<int32_t>(jUint));
+    ASSERT_EQ(jUint.as_uint64(), 123u);
+
+    auto jInt = json::value(123);
+    ASSERT_TRUE(checkTypeAndClamp<int32_t>(jInt));
+    ASSERT_EQ(jInt.as_int64(), 123);
+    ASSERT_TRUE(checkTypeAndClamp<uint32_t>(jInt));
+    ASSERT_EQ(jInt.as_int64(), 123);
+
+    jInt = json::value(-123);
+    ASSERT_TRUE(checkTypeAndClamp<int32_t>(jInt));
+    ASSERT_EQ(jInt.as_int64(), -123);
+}
+
+TEST_F(RPCBaseTest, CheckTypeAndClampInvalidValues)
+{
+    auto jInt = json::value(-123);
+    ASSERT_FALSE(checkTypeAndClamp<uint32_t>(jInt));  // Unsigned can't be negative
+}
+
+TEST_F(RPCBaseTest, CheckTypeAndClampOverflow)
+{
+    auto jBigUint = json::value(std::numeric_limits<uint64_t>::max());
+    ASSERT_TRUE(checkTypeAndClamp<uint32_t>(jBigUint));
+    ASSERT_EQ(jBigUint.as_uint64(), std::numeric_limits<uint32_t>::max());
+
+    auto jBigInt = json::value(std::numeric_limits<int64_t>::max());
+    ASSERT_TRUE(checkTypeAndClamp<int32_t>(jBigInt));
+    ASSERT_EQ(jBigInt.as_int64(), std::numeric_limits<int32_t>::max());
+}
+
+TEST_F(RPCBaseTest, CheckTypeAndClampUnderflow)
+{
+    auto jLowInt = json::value(std::numeric_limits<int64_t>::min());
+    ASSERT_TRUE(checkTypeAndClamp<int32_t>(jLowInt));
+    ASSERT_EQ(jLowInt.as_int64(), std::numeric_limits<int32_t>::min());
 }
 
 TEST_F(RPCBaseTest, TypeValidator)
@@ -203,6 +262,18 @@ TEST_F(RPCBaseTest, MinValidator)
     ASSERT_FALSE(spec.process(failingInput));
 }
 
+TEST_F(RPCBaseTest, MinValidatorAfterType)
+{
+    auto spec = RpcSpec{
+        {"amount", Type<std::uint32_t>{}, Min{std::numeric_limits<uint32_t>::max()}},
+        {"amount2", Type<std::int32_t>{}, Min{std::numeric_limits<int32_t>::max()}},
+        {"amount3", Type<std::int32_t>{}, Min{std::numeric_limits<int32_t>::min()}},
+    };
+
+    auto bigInput = json::parse(R"JSON({ "amount": 9999999999, "amount2": 9999999999, "amount3": -9999999999 })JSON");
+    ASSERT_TRUE(spec.process(bigInput));  // type check clamps to type's max/min value
+}
+
 TEST_F(RPCBaseTest, MaxValidator)
 {
     auto spec = RpcSpec{
@@ -217,6 +288,18 @@ TEST_F(RPCBaseTest, MaxValidator)
 
     auto failingInput = json::parse(R"JSON({ "amount": 7 })JSON");
     ASSERT_FALSE(spec.process(failingInput));
+}
+
+TEST_F(RPCBaseTest, MaxValidatorAfterType)
+{
+    auto spec = RpcSpec{
+        {"amount", Type<std::uint32_t>{}, Max{std::numeric_limits<uint32_t>::max()}},
+        {"amount2", Type<std::int32_t>{}, Max{std::numeric_limits<int32_t>::max()}},
+        {"amount3", Type<std::int32_t>{}, Max{std::numeric_limits<int32_t>::min()}},
+    };
+
+    auto bigInput = json::parse(R"JSON({ "amount": 9999999999, "amount2": 9999999999, "amount3": -9999999999 })JSON");
+    ASSERT_TRUE(spec.process(bigInput));  // type check clamps to type's min/max value
 }
 
 TEST_F(RPCBaseTest, OneOfValidator)

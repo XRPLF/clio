@@ -37,9 +37,10 @@
 #include <optional>
 
 namespace util {
-
 namespace impl {
+
 class SignalsHandlerStatic;
+
 }  // namespace impl
 
 /**

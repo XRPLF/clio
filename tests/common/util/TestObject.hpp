@@ -462,6 +462,26 @@ createMPTIssuanceCreateTx(std::string_view accountId, uint32_t fee, uint32_t seq
 [[nodiscard]] data::TransactionAndMetadata
 createMPTIssuanceCreateTxWithMetadata(std::string_view accountId, uint32_t fee, uint32_t seq);
 
+[[nodiscard]]
+ripple::STObject
+createMPTokenAuthorizeTx(
+    std::string_view accountId,
+    ripple::uint192 const& mptIssuanceID,
+    uint32_t fee,
+    uint32_t seq,
+    std::optional<std::string_view> holder = std::nullopt,
+    std::optional<std::uint32_t> flags = std::nullopt
+);
+
+[[nodiscard]]
+data::TransactionAndMetadata
+createMPTokenAuthorizeTxWithMetadata(
+    std::string_view accountId,
+    ripple::uint192 const& mptIssuanceID,
+    uint32_t fee,
+    uint32_t seq
+);
+
 [[nodiscard]] ripple::STObject
 createPermissionedDomainObject(
     std::string_view accountId,

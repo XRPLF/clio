@@ -1,6 +1,8 @@
 name: Clang-tidy check
 
 on:
+  push:
+    branches: [develop]
   schedule:
     - cron: "0 9 * * 1-5"
   workflow_dispatch:
@@ -22,6 +24,7 @@ env:
 
 jobs:
   clang_tidy:
+    if: github.event_name != 'push' || contains(github.event.head_commit.message, 'clang-tidy auto fixes')
     runs-on: heavy
     container:
       image: ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d

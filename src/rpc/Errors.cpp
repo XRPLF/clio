@@ -30,14 +30,51 @@
 #include <cstdint>
 #include <iterator>
 #include <optional>
+#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <variant>
 
 using namespace std;
 
 namespace rpc {
+
+std::ostream&
+operator<<(std::ostream& stream, Status const& status)
+{
+    std::visit(
+        util::OverloadSet{
+            [&stream, &status](RippledError err) {
+                stream << "Code: " << static_cast<std::underlying_type_t<RippledError>>(err);
+                if (!status.error.empty())
+                    stream << ", Error: " << status.error;
+                if (!status.message.empty()) {
+                    stream << ", Message: " << status.message;
+                } else {
+                    stream << ", Message: " << ripple::RPC::get_error_info(err).message;
+                }
+            },
+            [&stream, &status](ClioError err) {
+                stream << "Code: " << static_cast<std::underlying_type_t<ClioError>>(err);
+                if (!status.error.empty())
+                    stream << ", Error: " << status.error;
+                if (!status.message.empty()) {
+                    stream << ", Message: " << status.message;
+                } else {
+                    stream << ", Message: " << getErrorInfo(err).message;
+                }
+            }
+        },
+        status.code
+    );
+
+    if (status.extraInfo.has_value())
+        stream << ", Extra Info: " << *status.extraInfo;
+
+    return stream;
+}
 
 WarningInfo const&
 getWarningInfo(WarningCode code)
