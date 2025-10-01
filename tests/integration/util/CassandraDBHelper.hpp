@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "data/cassandra/Handle.hpp"
 #include "data/cassandra/Types.hpp"
 
 #include <cstdint>
