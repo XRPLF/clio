@@ -125,7 +125,7 @@ public:
     {
         std::vector<ripple::uint256> nftIDs;
         if (taxon.has_value()) {
-            // Keyspace and ScyllaDB can use the same logic for taxon-filtered queries
+            // Keyspace and ScyllaDB uses the same logic for taxon-filtered queries
             nftIDs = fetchNFTIDsByTaxon(issuer, *taxon, limit, cursorIn, yield);
         } else {
             // --- Amazon Keyspaces Workflow for non-taxon queries ---
@@ -181,7 +181,7 @@ public:
     ) const override
     {
         LOG(log_.error()) << "Fetching account roots is not supported by the Keyspaces backend.";
-        throw std::runtime_error("Fetching all account roots is not supported by the Keyspaces backend.");
+        throw std::runtime_error("Fetching account roots is not supported by the Keyspaces backend.");
     }
 
 private:

@@ -37,5 +37,6 @@ main(int argc, char* argv[])
     LoggerFixture::init();
 
     TestGlobals::instance().parse(argc, argv);
+
     return RUN_ALL_TESTS();
 }
