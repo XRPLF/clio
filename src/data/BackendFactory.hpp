@@ -56,7 +56,7 @@ makeBackend(util::config::ClioConfigDefinition const& config, data::LedgerCacheI
 
     if (boost::iequals(type, "cassandra")) {
         auto const cfg = config.getObject("database." + type);
-        if (cfg.getValueView("provider").asString() == "aws_keyspace") {
+        if (cfg.getValueView("provider").asString() == toString(cassandra::impl::Provider::Keyspace)) {
             backend = std::make_shared<data::cassandra::KeyspaceBackend>(
                 data::cassandra::SettingsProvider{cfg}, cache, readOnly
             );

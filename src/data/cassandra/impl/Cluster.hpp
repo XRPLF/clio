@@ -38,15 +38,15 @@ namespace data::cassandra::impl {
 
 namespace {
 
-enum class Provider { CASSANDRA, KEYSPACE };
+enum class Provider { Cassandra, Keyspace };
 
 inline std::string
 toString(Provider provider)
 {
     switch (provider) {
-        case Provider::CASSANDRA:
+        case Provider::Cassandra:
             return "cassandra";
-        case Provider::KEYSPACE:
+        case Provider::Keyspace:
             return "aws_keyspaces";
     }
     std::unreachable();
@@ -64,7 +64,7 @@ struct Settings {
     static constexpr uint32_t kDEFAULT_MAX_WRITE_REQUESTS_OUTSTANDING = 10'000;
     static constexpr uint32_t kDEFAULT_MAX_READ_REQUESTS_OUTSTANDING = 100'000;
     static constexpr std::size_t kDEFAULT_BATCH_SIZE = 20;
-    static constexpr Provider kDEFAULT_PROVIDER = Provider::CASSANDRA;
+    static constexpr Provider kDEFAULT_PROVIDER = Provider::Cassandra;
 
     /**
      * @brief Represents the configuration of contact points for cassandra.
