@@ -27,6 +27,7 @@
 #include "data/cassandra/SettingsProvider.hpp"
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/ExecutionStrategy.hpp"
+#include "util/Assert.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -48,6 +49,7 @@
 #include <iterator>
 #include <optional>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace data::cassandra {
@@ -104,7 +106,7 @@ public:
             executor_.writeSync(schema_->insertLedgerRange, true, ledgerSequence_);
         }
 
-        if (not executeSyncUpdate(schema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1))) {
+        if (not this->executeSyncUpdate(schema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1))) {
             log_.warn() << "Update failed for ledger " << ledgerSequence_;
             return false;
         }
@@ -180,35 +182,11 @@ public:
         [[maybe_unused]] boost::asio::yield_context yield
     ) const override
     {
-        LOG(log_.error()) << "Fetching account roots is not supported by the Keyspaces backend.";
-        throw std::runtime_error("Fetching account roots is not supported by the Keyspaces backend.");
+        ASSERT(false, "Fetching account roots is not supported by the Keyspaces backend.");
+        std::unreachable();
     }
 
 private:
-    bool
-    executeSyncUpdate(Statement statement)
-    {
-        auto const res = executor_.writeSync(statement);
-        auto maybeSuccess = res->template get<bool>();
-        if (not maybeSuccess) {
-            LOG(log_.error()) << "executeSyncUpdate - error getting result - no row";
-            return false;
-        }
-
-        if (not maybeSuccess.value()) {
-            LOG(log_.warn()) << "Update failed. Checking if DB state is what we expect";
-
-            // error may indicate that another writer wrote something.
-            // in this case let's just compare the current state of things
-            // against what we were trying to write in the first place and
-            // use that as the source of truth for the result.
-            auto rng = this->hardFetchLedgerRangeNoThrow();
-            return rng && rng->maxSequence == ledgerSequence_;
-        }
-
-        return true;
-    }
-
     std::vector<ripple::uint256>
     fetchNFTIDsByTaxon(
         ripple::AccountID const& issuer,
@@ -295,17 +273,19 @@ private:
         std::vector<Statement> selectNFTStatements;
         selectNFTStatements.reserve(nftIDs.size());
         std::transform(
-            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTStatements), [&](auto const& nftID) {
-                return schema_->selectNFT.bind(nftID, ledgerSequence);
-            }
+            std::cbegin(nftIDs),
+            std::cend(nftIDs),
+            std::back_inserter(selectNFTStatements),
+            [&](auto const& nftID) { return schema_->selectNFT.bind(nftID, ledgerSequence); }
         );
 
         std::vector<Statement> selectNFTURIStatements;
         selectNFTURIStatements.reserve(nftIDs.size());
         std::transform(
-            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTURIStatements), [&](auto const& nftID) {
-                return schema_->selectNFTURI.bind(nftID, ledgerSequence);
-            }
+            std::cbegin(nftIDs),
+            std::cend(nftIDs),
+            std::back_inserter(selectNFTURIStatements),
+            [&](auto const& nftID) { return schema_->selectNFTURI.bind(nftID, ledgerSequence); }
         );
 
         auto const nftInfos = executor_.readEach(yield, selectNFTStatements);

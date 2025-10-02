@@ -343,10 +343,8 @@ public:
     }
 
     std::vector<ripple::uint256>
-    fetchAllTransactionHashesInLedger(
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context yield
-    ) const override
+    fetchAllTransactionHashesInLedger(std::uint32_t const ledgerSequence, boost::asio::yield_context yield)
+        const override
     {
         auto start = std::chrono::system_clock::now();
         auto const res = executor_.read(yield, schema_->selectAllTransactionHashesInLedger, ledgerSequence);
@@ -376,11 +374,8 @@ public:
     }
 
     std::optional<NFT>
-    fetchNFT(
-        ripple::uint256 const& tokenID,
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context yield
-    ) const override
+    fetchNFT(ripple::uint256 const& tokenID, std::uint32_t const ledgerSequence, boost::asio::yield_context yield)
+        const override
     {
         auto const res = executor_.read(yield, schema_->selectNFT, tokenID, ledgerSequence);
         if (not res)
@@ -525,11 +520,8 @@ public:
     }
 
     std::optional<Blob>
-    doFetchLedgerObject(
-        ripple::uint256 const& key,
-        std::uint32_t const sequence,
-        boost::asio::yield_context yield
-    ) const override
+    doFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context yield)
+        const override
     {
         LOG(log_.debug()) << "Fetching ledger object for seq " << sequence << ", key = " << ripple::to_string(key);
         if (auto const res = executor_.read(yield, schema_->selectObject, key, sequence); res) {
@@ -547,11 +539,8 @@ public:
     }
 
     std::optional<std::uint32_t>
-    doFetchLedgerObjectSeq(
-        ripple::uint256 const& key,
-        std::uint32_t const sequence,
-        boost::asio::yield_context yield
-    ) const override
+    doFetchLedgerObjectSeq(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context yield)
+        const override
     {
         LOG(log_.debug()) << "Fetching ledger object for seq " << sequence << ", key = " << ripple::to_string(key);
         if (auto const res = executor_.read(yield, schema_->selectObject, key, sequence); res) {
@@ -585,11 +574,8 @@ public:
     }
 
     std::optional<ripple::uint256>
-    doFetchSuccessorKey(
-        ripple::uint256 key,
-        std::uint32_t const ledgerSequence,
-        boost::asio::yield_context yield
-    ) const override
+    doFetchSuccessorKey(ripple::uint256 key, std::uint32_t const ledgerSequence, boost::asio::yield_context yield)
+        const override
     {
         if (auto const res = executor_.read(yield, schema_->selectSuccessor, key, ledgerSequence); res) {
             if (auto const result = res->template get<ripple::uint256>(); result) {
@@ -622,9 +608,10 @@ public:
         auto const timeDiff = util::timed([this, yield, &results, &hashes, &statements]() {
             // TODO: seems like a job for "hash IN (list of hashes)" instead?
             std::transform(
-                std::cbegin(hashes), std::cend(hashes), std::back_inserter(statements), [this](auto const& hash) {
-                    return schema_->selectTransaction.bind(hash);
-                }
+                std::cbegin(hashes),
+                std::cend(hashes),
+                std::back_inserter(statements),
+                [this](auto const& hash) { return schema_->selectTransaction.bind(hash); }
             );
 
             auto const entries = executor_.readEach(yield, statements);
@@ -668,14 +655,18 @@ public:
 
         // TODO: seems like a job for "key IN (list of keys)" instead?
         std::transform(
-            std::cbegin(keys), std::cend(keys), std::back_inserter(statements), [this, &sequence](auto const& key) {
-                return schema_->selectObject.bind(key, sequence);
-            }
+            std::cbegin(keys),
+            std::cend(keys),
+            std::back_inserter(statements),
+            [this, &sequence](auto const& key) { return schema_->selectObject.bind(key, sequence); }
         );
 
         auto const entries = executor_.readEach(yield, statements);
         std::transform(
-            std::cbegin(entries), std::cend(entries), std::back_inserter(results), [](auto const& res) -> Blob {
+            std::cbegin(entries),
+            std::cend(entries),
+            std::back_inserter(results),
+            [](auto const& res) -> Blob {
                 if (auto const maybeValue = res.template get<Blob>(); maybeValue)
                     return *maybeValue;
 
@@ -940,7 +931,7 @@ public:
         return executor_.stats();
     }
 
-private:
+protected:
     bool
     executeSyncUpdate(Statement statement)
     {

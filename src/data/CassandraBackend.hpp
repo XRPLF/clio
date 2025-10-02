@@ -70,12 +70,12 @@ template <
 class BasicCassandraBackend : public CassandraBackendFamily<
                                   SettingsProviderType,
                                   ExecutionStrategyType,
-                                  Schema<SettingsProviderType>,
+                                  CassandraSchema<SettingsProviderType>,
                                   FetchLedgerCacheType> {
     using DefaultCassandraFamily = CassandraBackendFamily<
         SettingsProviderType,
         ExecutionStrategyType,
-        Schema<SettingsProviderType>,
+        CassandraSchema<SettingsProviderType>,
         FetchLedgerCacheType>;
 
     // protected because CassandraMigrationBackend inherits from this class
@@ -106,7 +106,7 @@ public:
             executor_.writeSync(schema_->updateLedgerRange, ledgerSequence_, false, ledgerSequence_);
         }
 
-        if (not executeSyncUpdate(schema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1))) {
+        if (not this->executeSyncUpdate(schema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1))) {
             LOG(log_.warn()) << "Update failed for ledger " << ledgerSequence_;
             return false;
         }
@@ -171,9 +171,10 @@ public:
         selectNFTStatements.reserve(nftIDs.size());
 
         std::transform(
-            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTStatements), [&](auto const& nftID) {
-                return schema_->selectNFT.bind(nftID, ledgerSequence);
-            }
+            std::cbegin(nftIDs),
+            std::cend(nftIDs),
+            std::back_inserter(selectNFTStatements),
+            [&](auto const& nftID) { return schema_->selectNFT.bind(nftID, ledgerSequence); }
         );
 
         auto const nftInfos = executor_.readEach(yield, selectNFTStatements);
@@ -182,9 +183,10 @@ public:
         selectNFTURIStatements.reserve(nftIDs.size());
 
         std::transform(
-            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTURIStatements), [&](auto const& nftID) {
-                return schema_->selectNFTURI.bind(nftID, ledgerSequence);
-            }
+            std::cbegin(nftIDs),
+            std::cend(nftIDs),
+            std::back_inserter(selectNFTURIStatements),
+            [&](auto const& nftID) { return schema_->selectNFTURI.bind(nftID, ledgerSequence); }
         );
 
         auto const nftUris = executor_.readEach(yield, selectNFTURIStatements);
@@ -202,12 +204,8 @@ public:
     }
 
     std::vector<ripple::uint256>
-    fetchAccountRoots(
-        std::uint32_t number,
-        std::uint32_t pageSize,
-        std::uint32_t seq,
-        boost::asio::yield_context yield
-    ) const override
+    fetchAccountRoots(std::uint32_t number, std::uint32_t pageSize, std::uint32_t seq, boost::asio::yield_context yield)
+        const override
     {
         std::vector<ripple::uint256> liveAccounts;
         std::optional<ripple::AccountID> lastItem;
@@ -247,31 +245,6 @@ public:
         }
 
         return liveAccounts;
-    }
-
-private:
-    bool
-    executeSyncUpdate(Statement statement)
-    {
-        auto const res = executor_.writeSync(statement);
-        auto maybeSuccess = res->template get<bool>();
-        if (not maybeSuccess) {
-            LOG(log_.error()) << "executeSyncUpdate - error getting result - no row";
-            return false;
-        }
-
-        if (not maybeSuccess.value()) {
-            LOG(log_.warn()) << "Update failed. Checking if DB state is what we expect";
-
-            // error may indicate that another writer wrote something.
-            // in this case let's just compare the current state of things
-            // against what we were trying to write in the first place and
-            // use that as the source of truth for the result.
-            auto rng = this->hardFetchLedgerRangeNoThrow();
-            return rng && rng->maxSequence == ledgerSequence_;
-        }
-
-        return true;
     }
 };
 

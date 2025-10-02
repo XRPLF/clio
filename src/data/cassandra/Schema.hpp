@@ -21,6 +21,7 @@
 
 #include "data/cassandra/Concepts.hpp"
 #include "data/cassandra/Handle.hpp"
+#include "data/cassandra/SettingsProvider.hpp"
 #include "data/cassandra/Types.hpp"
 #include "util/log/Logger.hpp"
 
@@ -54,10 +55,13 @@ template <SomeSettingsProvider SettingsProviderType>
  */
 template <SomeSettingsProvider SettingsProviderType>
 class Schema {
+protected:
     util::Logger log_{"Backend"};
     std::reference_wrapper<SettingsProviderType const> settingsProvider_;
 
 public:
+    virtual ~Schema() = default;
+
     /**
      * @brief Construct a new Schema object
      *
@@ -89,9 +93,8 @@ public:
     std::vector<Statement> createSchema = [this]() {
         std::vector<Statement> statements;
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
                          key blob,
@@ -101,13 +104,11 @@ public:
                   )
              WITH CLUSTERING ORDER BY (sequence DESC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "objects")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "objects")
+        ));
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
                         hash blob PRIMARY KEY,
@@ -117,13 +118,11 @@ public:
                     metadata blob
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "transactions")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "transactions")
+        ));
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
              ledger_sequence bigint,
@@ -131,13 +130,11 @@ public:
                      PRIMARY KEY (ledger_sequence, hash)
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "ledger_transactions")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "ledger_transactions")
+        ));
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
                     key blob,
@@ -146,13 +143,11 @@ public:
                 PRIMARY KEY (key, seq)
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "successor")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "successor")
+        ));
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
                     seq bigint,
@@ -160,13 +155,11 @@ public:
                 PRIMARY KEY (seq, key)
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "diff")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "diff")
+        ));
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
                     account blob,
@@ -176,52 +169,44 @@ public:
                   )
              WITH CLUSTERING ORDER BY (seq_idx DESC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "account_tx")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "account_tx")
+        ));
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
                     sequence bigint PRIMARY KEY,
                       header blob
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "ledgers")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "ledgers")
+        ));
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
                     hash blob PRIMARY KEY,
                 sequence bigint
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "ledger_hashes")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "ledger_hashes")
+        ));
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
                     is_latest boolean PRIMARY KEY,
                      sequence bigint
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "ledger_range")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "ledger_range")
+        ));
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
                     token_id blob,
@@ -232,13 +217,11 @@ public:
                   )
              WITH CLUSTERING ORDER BY (sequence DESC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "nf_tokens")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "nf_tokens")
+        ));
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
                       issuer blob,
@@ -248,13 +231,11 @@ public:
                   )
              WITH CLUSTERING ORDER BY (taxon ASC, token_id ASC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
+        ));
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
                     token_id blob,
@@ -264,13 +245,11 @@ public:
                   )
              WITH CLUSTERING ORDER BY (sequence DESC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
+        ));
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
                     token_id blob,
@@ -280,13 +259,11 @@ public:
                   )
              WITH CLUSTERING ORDER BY (seq_idx DESC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
+        ));
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
                     mpt_id blob,
@@ -295,13 +272,11 @@ public:
                   )
              WITH CLUSTERING ORDER BY (holder ASC)
             )",
-                qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
+        ));
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
                    migrator_name TEXT,
@@ -309,13 +284,11 @@ public:
                          PRIMARY KEY (migrator_name)
                   )
             )",
-                qualifiedTableName(settingsProvider_.get(), "migrator_status")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "migrator_status")
+        ));
 
-        statements.emplace_back(
-            fmt::format(
-                R"(
+        statements.emplace_back(fmt::format(
+            R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
                    node_id UUID,
@@ -324,9 +297,8 @@ public:
                   )
              WITH default_time_to_live = 2
             )",
-                qualifiedTableName(settingsProvider_.get(), "nodes_chat")
-            )
-        );
+            qualifiedTableName(settingsProvider_.get(), "nodes_chat")
+        ));
 
         return statements;
     }();
@@ -335,6 +307,7 @@ public:
      * @brief Prepared statements holder.
      */
     class Statements {
+    protected:
         std::reference_wrapper<SettingsProviderType const> settingsProvider_;
         std::reference_wrapper<Handle const> handle_;
 
@@ -355,229 +328,183 @@ public:
         //
 
         PreparedStatement insertObject = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 INSERT INTO {}
                        (key, sequence, object)
                 VALUES (?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "objects")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "objects")
+            ));
         }();
 
         PreparedStatement insertTransaction = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 INSERT INTO {}
                        (hash, ledger_sequence, date, transaction, metadata)
                 VALUES (?, ?, ?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "transactions")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "transactions")
+            ));
         }();
 
         PreparedStatement insertLedgerTransaction = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 INSERT INTO {}
                        (ledger_sequence, hash)
                 VALUES (?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_transactions")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "ledger_transactions")
+            ));
         }();
 
         PreparedStatement insertSuccessor = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 INSERT INTO {}
                        (key, seq, next)
                 VALUES (?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "successor")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "successor")
+            ));
         }();
 
         PreparedStatement insertDiff = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 INSERT INTO {}
                        (seq, key)
                 VALUES (?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "diff")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "diff")
+            ));
         }();
 
         PreparedStatement insertAccountTx = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 INSERT INTO {}
                        (account, seq_idx, hash)
                 VALUES (?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "account_tx")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "account_tx")
+            ));
         }();
 
         PreparedStatement insertNFT = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 INSERT INTO {}
                        (token_id, sequence, owner, is_burned)
                 VALUES (?, ?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nf_tokens")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "nf_tokens")
+            ));
         }();
 
         PreparedStatement insertIssuerNFT = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 INSERT INTO {}
                        (issuer, taxon, token_id)
                 VALUES (?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
+            ));
         }();
 
         PreparedStatement insertNFTURI = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 INSERT INTO {}
                        (token_id, sequence, uri)
                 VALUES (?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
+            ));
         }();
 
         PreparedStatement insertNFTTx = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 INSERT INTO {}
                        (token_id, seq_idx, hash)
                 VALUES (?, ?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
+            ));
         }();
 
         PreparedStatement insertMPTHolder = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 INSERT INTO {}
                        (mpt_id, holder)
                 VALUES (?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
+            ));
         }();
 
         PreparedStatement insertLedgerHeader = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 INSERT INTO {}
                        (sequence, header)
                 VALUES (?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledgers")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "ledgers")
+            ));
         }();
 
         PreparedStatement insertLedgerHash = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 INSERT INTO {}
                        (hash, sequence)
                 VALUES (?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_hashes")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "ledger_hashes")
+            ));
         }();
 
         //
         // Update (and "delete") queries
         //
 
-        PreparedStatement updateLedgerRange = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
-                UPDATE {}
-                   SET sequence = ?
-                 WHERE is_latest = ?
-                    IF sequence IN (?, null)
-                )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_range")
-                )
-            );
-        }();
-
         PreparedStatement deleteLedgerRange = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 UPDATE {}
                    SET sequence = ?
                  WHERE is_latest = False
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_range")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "ledger_range")
+            ));
         }();
 
         PreparedStatement insertMigratorStatus = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 INSERT INTO {}
                        (migrator_name, status)
                 VALUES (?, ?)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "migrator_status")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "migrator_status")
+            ));
         }();
 
         PreparedStatement updateClioNodeMessage = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 UPDATE {}
                    SET message = ?
                  WHERE node_id = ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nodes_chat")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "nodes_chat")
+            ));
         }();
 
         //
@@ -585,9 +512,8 @@ public:
         //
 
         PreparedStatement selectSuccessor = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT next
                   FROM {}
                  WHERE key = ?
@@ -595,28 +521,24 @@ public:
               ORDER BY seq DESC
                  LIMIT 1
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "successor")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "successor")
+            ));
         }();
 
         PreparedStatement selectDiff = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT key
                   FROM {}
                  WHERE seq = ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "diff")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "diff")
+            ));
         }();
 
         PreparedStatement selectObject = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT object, sequence
                   FROM {}
                  WHERE key = ?
@@ -624,41 +546,35 @@ public:
               ORDER BY sequence DESC
                  LIMIT 1
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "objects")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "objects")
+            ));
         }();
 
         PreparedStatement selectTransaction = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT transaction, metadata, ledger_sequence, date
                   FROM {}
                  WHERE hash = ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "transactions")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "transactions")
+            ));
         }();
 
         PreparedStatement selectAllTransactionHashesInLedger = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT hash
                   FROM {}
                  WHERE ledger_sequence = ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_transactions")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "ledger_transactions")
+            ));
         }();
 
         PreparedStatement selectLedgerPageKeys = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT key
                   FROM {}
                  WHERE TOKEN(key) >= ?
@@ -667,15 +583,13 @@ public:
                  LIMIT ?
                  ALLOW FILTERING
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "objects")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "objects")
+            ));
         }();
 
         PreparedStatement selectLedgerPage = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT object, key
                   FROM {}
                  WHERE TOKEN(key) >= ?
@@ -684,74 +598,64 @@ public:
                  LIMIT ?
                  ALLOW FILTERING
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "objects")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "objects")
+            ));
         }();
 
         PreparedStatement getToken = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT TOKEN(key)
                   FROM {}
                  WHERE key = ?
                  LIMIT 1
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "objects")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "objects")
+            ));
         }();
 
         PreparedStatement selectAccountTx = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT hash, seq_idx
                   FROM {}
                  WHERE account = ?
                    AND seq_idx < ?
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "account_tx")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "account_tx")
+            ));
         }();
 
         PreparedStatement selectAccountFromBeginning = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT account
                   FROM {}
                  WHERE token(account) > 0
                    PER PARTITION LIMIT 1
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "account_tx")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "account_tx")
+            ));
         }();
 
         PreparedStatement selectAccountFromToken = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT account
                   FROM {}
                  WHERE token(account) > token(?)
                    PER PARTITION LIMIT 1
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "account_tx")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "account_tx")
+            ));
         }();
 
         PreparedStatement selectAccountTxForward = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT hash, seq_idx
                   FROM {}
                  WHERE account = ?
@@ -759,15 +663,13 @@ public:
               ORDER BY seq_idx ASC
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "account_tx")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "account_tx")
+            ));
         }();
 
         PreparedStatement selectNFT = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT sequence, owner, is_burned
                   FROM {}
                  WHERE token_id = ?
@@ -775,15 +677,13 @@ public:
               ORDER BY sequence DESC
                  LIMIT 1
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nf_tokens")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "nf_tokens")
+            ));
         }();
 
         PreparedStatement selectNFTURI = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT uri
                   FROM {}
                  WHERE token_id = ?
@@ -791,15 +691,13 @@ public:
               ORDER BY sequence DESC
                  LIMIT 1
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
+            ));
         }();
 
         PreparedStatement selectNFTTx = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT hash, seq_idx
                   FROM {}
                  WHERE token_id = ?
@@ -807,15 +705,13 @@ public:
               ORDER BY seq_idx DESC
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
+            ));
         }();
 
         PreparedStatement selectNFTTxForward = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT hash, seq_idx
                   FROM {}
                  WHERE token_id = ?
@@ -823,15 +719,13 @@ public:
               ORDER BY seq_idx ASC
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
+            ));
         }();
 
         PreparedStatement selectNFTIDsByIssuer = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT token_id
                   FROM {}
                  WHERE issuer = ?
@@ -839,32 +733,13 @@ public:
               ORDER BY taxon ASC, token_id ASC
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
-                )
-            );
-        }();
-
-        PreparedStatement selectNFTIDsByIssuerTaxon = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
-                SELECT token_id
-                  FROM {}
-                 WHERE issuer = ?
-                   AND taxon = ?
-                   AND token_id > ?
-              ORDER BY taxon ASC, token_id ASC
-                 LIMIT ?
-                )",
-                    qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
+            ));
         }();
 
         PreparedStatement selectMPTHolders = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT holder
                   FROM {}
                  WHERE mpt_id = ?
@@ -872,87 +747,74 @@ public:
               ORDER BY holder ASC
                  LIMIT ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
+            ));
         }();
 
         PreparedStatement selectLedgerByHash = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT sequence
                   FROM {}
                  WHERE hash = ?
                  LIMIT 1
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_hashes")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "ledger_hashes")
+            ));
         }();
 
         PreparedStatement selectLedgerBySeq = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT header
                   FROM {}
                  WHERE sequence = ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledgers")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "ledgers")
+            ));
         }();
 
         PreparedStatement selectLatestLedger = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT sequence
                   FROM {}
                  WHERE is_latest = True
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_range")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "ledger_range")
+            ));
         }();
 
         PreparedStatement selectLedgerRange = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT sequence
                   FROM {}
                  WHERE is_latest in (True, False)
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_range")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "ledger_range")
+            ));
         }();
 
         PreparedStatement selectMigratorStatus = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT status
                   FROM {}
                  WHERE migrator_name = ?
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "migrator_status")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "migrator_status")
+            ));
         }();
 
         PreparedStatement selectClioNodesData = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
+            return handle_.get().prepare(fmt::format(
+                R"(
                 SELECT node_id, message
                   FROM {}
                 )",
-                    qualifiedTableName(settingsProvider_.get(), "nodes_chat")
-                )
-            );
+                qualifiedTableName(settingsProvider_.get(), "nodes_chat")
+            ));
         }();
     };
 
@@ -961,11 +823,60 @@ public:
      *
      * @param handle The handle to the DB
      */
+    virtual void
+    prepareStatements(Handle const& handle) = 0;
+};
+
+/**
+ * @brief Manages the DB schema and provides access to prepared statements.
+ */
+template <SomeSettingsProvider SettingsProviderType>
+class CassandraSchema : public Schema<SettingsProvider> {
+    using Schema::Schema;
+
+public:
+    struct CassandraStatements : public Schema<SettingsProvider>::Statements {
+        using Schema<SettingsProvider>::Statements::Statements;
+
+        //
+        // Update (and "delete") queries
+        //
+        PreparedStatement updateLedgerRange = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                UPDATE {}
+                   SET sequence = ?
+                 WHERE is_latest = ?
+                    IF sequence IN (?, null)
+                )",
+                qualifiedTableName(settingsProvider_.get(), "ledger_range")
+            ));
+        }();
+
+        //
+        // Select queries
+        //
+        PreparedStatement selectNFTIDsByIssuerTaxon = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                SELECT token_id
+                  FROM {}
+                 WHERE issuer = ?
+                   AND taxon = ?
+                   AND token_id > ?
+              ORDER BY taxon ASC, token_id ASC
+                 LIMIT ?
+                )",
+                qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
+            ));
+        }();
+    };
+
     void
-    prepareStatements(Handle const& handle)
+    prepareStatements(Handle const& handle) override
     {
         LOG(log_.info()) << "Preparing cassandra statements";
-        statements_ = std::make_unique<Statements>(settingsProvider_, handle);
+        statements_ = std::make_unique<CassandraStatements>(settingsProvider_, handle);
         LOG(log_.info()) << "Finished preparing statements";
     }
 
@@ -974,14 +885,14 @@ public:
      *
      * @return The statements
      */
-    std::unique_ptr<Statements> const&
+    std::unique_ptr<CassandraStatements> const&
     operator->() const
     {
         return statements_;
     }
 
 private:
-    std::unique_ptr<Statements> statements_{nullptr};
+    std::unique_ptr<CassandraStatements> statements_{nullptr};
 };
 
 }  // namespace data::cassandra
