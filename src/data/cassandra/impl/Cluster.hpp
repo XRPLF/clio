@@ -47,7 +47,7 @@ toString(Provider provider)
         case Provider::Cassandra:
             return "cassandra";
         case Provider::Keyspace:
-            return "aws_keyspaces";
+            return "aws_keyspace";
     }
     std::unreachable();
 }

@@ -19,13 +19,12 @@
 
 #pragma once
 
-#include "data/LedgerCacheInterface.hpp"
 #include "data/LedgerHeaderCache.hpp"
 #include "data/Types.hpp"
 #include "data/cassandra/CassandraBackendFamily.hpp"
+#include "data/cassandra/CassandraSchema.hpp"
 #include "data/cassandra/Concepts.hpp"
 #include "data/cassandra/Handle.hpp"
-#include "data/cassandra/Schema.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/ExecutionStrategy.hpp"
@@ -171,10 +170,9 @@ public:
         selectNFTStatements.reserve(nftIDs.size());
 
         std::transform(
-            std::cbegin(nftIDs),
-            std::cend(nftIDs),
-            std::back_inserter(selectNFTStatements),
-            [&](auto const& nftID) { return schema_->selectNFT.bind(nftID, ledgerSequence); }
+            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTStatements), [&](auto const& nftID) {
+                return schema_->selectNFT.bind(nftID, ledgerSequence);
+            }
         );
 
         auto const nftInfos = executor_.readEach(yield, selectNFTStatements);
@@ -183,10 +181,9 @@ public:
         selectNFTURIStatements.reserve(nftIDs.size());
 
         std::transform(
-            std::cbegin(nftIDs),
-            std::cend(nftIDs),
-            std::back_inserter(selectNFTURIStatements),
-            [&](auto const& nftID) { return schema_->selectNFTURI.bind(nftID, ledgerSequence); }
+            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTURIStatements), [&](auto const& nftID) {
+                return schema_->selectNFTURI.bind(nftID, ledgerSequence);
+            }
         );
 
         auto const nftUris = executor_.readEach(yield, selectNFTURIStatements);
@@ -204,8 +201,12 @@ public:
     }
 
     std::vector<ripple::uint256>
-    fetchAccountRoots(std::uint32_t number, std::uint32_t pageSize, std::uint32_t seq, boost::asio::yield_context yield)
-        const override
+    fetchAccountRoots(
+        std::uint32_t number,
+        std::uint32_t pageSize,
+        std::uint32_t seq,
+        boost::asio::yield_context yield
+    ) const override
     {
         std::vector<ripple::uint256> liveAccounts;
         std::optional<ripple::AccountID> lastItem;

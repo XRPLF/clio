@@ -295,7 +295,7 @@ public:
      * @param account The account to fetch transactions for
      * @param limit The maximum number of transactions per result page
      * @param forward Whether to fetch the page forwards or backwards from the given cursor
-     * @param cursor The cursor to resume fetching from
+     * @param txnCursor The cursor to resume fetching from
      * @param yield The coroutine context
      * @return Results and a cursor to resume from
      */
@@ -304,7 +304,7 @@ public:
         ripple::AccountID const& account,
         std::uint32_t limit,
         bool forward,
-        std::optional<TransactionsCursor> const& cursor,
+        std::optional<TransactionsCursor> const& txnCursor,
         boost::asio::yield_context yield
     ) const = 0;
 

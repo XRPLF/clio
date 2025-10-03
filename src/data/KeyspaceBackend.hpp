@@ -273,19 +273,17 @@ private:
         std::vector<Statement> selectNFTStatements;
         selectNFTStatements.reserve(nftIDs.size());
         std::transform(
-            std::cbegin(nftIDs),
-            std::cend(nftIDs),
-            std::back_inserter(selectNFTStatements),
-            [&](auto const& nftID) { return schema_->selectNFT.bind(nftID, ledgerSequence); }
+            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTStatements), [&](auto const& nftID) {
+                return schema_->selectNFT.bind(nftID, ledgerSequence);
+            }
         );
 
         std::vector<Statement> selectNFTURIStatements;
         selectNFTURIStatements.reserve(nftIDs.size());
         std::transform(
-            std::cbegin(nftIDs),
-            std::cend(nftIDs),
-            std::back_inserter(selectNFTURIStatements),
-            [&](auto const& nftID) { return schema_->selectNFTURI.bind(nftID, ledgerSequence); }
+            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTURIStatements), [&](auto const& nftID) {
+                return schema_->selectNFTURI.bind(nftID, ledgerSequence);
+            }
         );
 
         auto const nftInfos = executor_.readEach(yield, selectNFTStatements);
