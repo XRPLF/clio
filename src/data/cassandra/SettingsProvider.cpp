@@ -97,6 +97,7 @@ SettingsProvider::parseSettings() const
     settings.coreConnectionsPerHost = config_.get<uint32_t>("core_connections_per_host");
     settings.queueSizeIO = config_.maybeValue<uint32_t>("queue_size_io");
     settings.writeBatchSize = config_.get<std::size_t>("write_batch_size");
+    settings.provider = config_.get<std::string>("provider");
 
     if (config_.getValueView("connect_timeout").hasValue()) {
         auto const connectTimeoutSecond = config_.get<uint32_t>("connect_timeout");

@@ -24,10 +24,10 @@
 #include "data/cassandra/Types.hpp"
 #include "util/log/Logger.hpp"
 
+#include <boost/json/string.hpp>
 #include <fmt/compile.h>
 
 #include <functional>
-#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -53,12 +53,15 @@ template <SomeSettingsProvider SettingsProviderType>
  */
 template <SomeSettingsProvider SettingsProviderType>
 class Schema {
+protected:
     util::Logger log_{"Backend"};
     std::reference_wrapper<SettingsProviderType const> settingsProvider_;
 
 public:
+    virtual ~Schema() = default;
+
     /**
-     * @brief Construct a new Schema object
+     * @brief Shared Schema's between all Schema classes (Cassandra and Keyspace)
      *
      * @param settingsProvider The settings provider
      */
@@ -334,6 +337,7 @@ public:
      * @brief Prepared statements holder.
      */
     class Statements {
+    protected:
         std::reference_wrapper<SettingsProviderType const> settingsProvider_;
         std::reference_wrapper<Handle const> handle_;
 
@@ -526,20 +530,6 @@ public:
         // Update (and "delete") queries
         //
 
-        PreparedStatement updateLedgerRange = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
-                UPDATE {}
-                   SET sequence = ?
-                 WHERE is_latest = ?
-                    IF sequence IN (?, null)
-                )",
-                    qualifiedTableName(settingsProvider_.get(), "ledger_range")
-                )
-            );
-        }();
-
         PreparedStatement deleteLedgerRange = [this]() {
             return handle_.get().prepare(
                 fmt::format(
@@ -654,40 +644,6 @@ public:
             );
         }();
 
-        PreparedStatement selectLedgerPageKeys = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
-                SELECT key
-                  FROM {}
-                 WHERE TOKEN(key) >= ?
-                   AND sequence <= ?
-         PER PARTITION LIMIT 1
-                 LIMIT ?
-                 ALLOW FILTERING
-                )",
-                    qualifiedTableName(settingsProvider_.get(), "objects")
-                )
-            );
-        }();
-
-        PreparedStatement selectLedgerPage = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
-                SELECT object, key
-                  FROM {}
-                 WHERE TOKEN(key) >= ?
-                   AND sequence <= ?
-         PER PARTITION LIMIT 1
-                 LIMIT ?
-                 ALLOW FILTERING
-                )",
-                    qualifiedTableName(settingsProvider_.get(), "objects")
-                )
-            );
-        }();
-
         PreparedStatement getToken = [this]() {
             return handle_.get().prepare(
                 fmt::format(
@@ -710,36 +666,6 @@ public:
                   FROM {}
                  WHERE account = ?
                    AND seq_idx < ?
-                 LIMIT ?
-                )",
-                    qualifiedTableName(settingsProvider_.get(), "account_tx")
-                )
-            );
-        }();
-
-        PreparedStatement selectAccountFromBeginning = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
-                SELECT account
-                  FROM {}
-                 WHERE token(account) > 0
-                   PER PARTITION LIMIT 1
-                 LIMIT ?
-                )",
-                    qualifiedTableName(settingsProvider_.get(), "account_tx")
-                )
-            );
-        }();
-
-        PreparedStatement selectAccountFromToken = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
-                SELECT account
-                  FROM {}
-                 WHERE token(account) > token(?)
-                   PER PARTITION LIMIT 1
                  LIMIT ?
                 )",
                     qualifiedTableName(settingsProvider_.get(), "account_tx")
@@ -823,22 +749,6 @@ public:
                  LIMIT ?
                 )",
                     qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
-                )
-            );
-        }();
-
-        PreparedStatement selectNFTIDsByIssuer = [this]() {
-            return handle_.get().prepare(
-                fmt::format(
-                    R"(
-                SELECT token_id
-                  FROM {}
-                 WHERE issuer = ?
-                   AND (taxon, token_id) > ?
-              ORDER BY taxon ASC, token_id ASC
-                 LIMIT ?
-                )",
-                    qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
                 )
             );
         }();
@@ -960,27 +870,8 @@ public:
      *
      * @param handle The handle to the DB
      */
-    void
-    prepareStatements(Handle const& handle)
-    {
-        LOG(log_.info()) << "Preparing cassandra statements";
-        statements_ = std::make_unique<Statements>(settingsProvider_, handle);
-        LOG(log_.info()) << "Finished preparing statements";
-    }
-
-    /**
-     * @brief Provides access to statements.
-     *
-     * @return The statements
-     */
-    std::unique_ptr<Statements> const&
-    operator->() const
-    {
-        return statements_;
-    }
-
-private:
-    std::unique_ptr<Statements> statements_{nullptr};
+    virtual void
+    prepareStatements(Handle const& handle) = 0;
 };
 
 }  // namespace data::cassandra

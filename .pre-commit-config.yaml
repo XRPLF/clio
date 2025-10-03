@@ -37,13 +37,13 @@ repos:
         exclude: LICENSE.md
 
   - repo: https://github.com/hadolint/hadolint
-    rev: c3dc18df7a501f02a560a2cc7ba3c69a85ca01d3 # frozen: v2.13.1-beta
+    rev: 4e697ba704fd23b2409b947a319c19c3ee54d24f # frozen: v2.14.0
     hooks:
       - id: hadolint-docker
         # hadolint-docker is a special hook that runs hadolint in a Docker container
         # Docker is not installed in the environment where pre-commit is run
         stages: [manual]
-        entry: hadolint/hadolint:v2.12.1-beta hadolint
+        entry: hadolint/hadolint:v2.14 hadolint
 
   - repo: https://github.com/codespell-project/codespell
     rev: 63c8f8312b7559622c0d82815639671ae42132ac # frozen: v2.4.1
@@ -80,7 +80,7 @@ repos:
         language: script
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: 86fdcc9bd34d6afbbd29358b97436c8ffe3aa3b2 # frozen: v21.1.0
+    rev: 719856d56a62953b8d2839fb9e851f25c3cfeef8 # frozen: v21.1.2
     hooks:
       - id: clang-format
         args: [--style=file]
