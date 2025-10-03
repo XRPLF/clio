@@ -61,14 +61,14 @@ public:
         // TODO: figure out how to set consistency level in config
         // NOTE: Keyspace doesn't support QUORUM at write level
         // cass_statement_set_consistency(*this, CASS_CONSISTENCY_LOCAL_QUORUM);
-        // cass_statement_set_is_idempotent(*this, cass_true);
+        cass_statement_set_is_idempotent(*this, cass_true);
         bind<Args...>(std::forward<Args>(args)...);
     }
 
     /* implicit */ Statement(CassStatement* ptr) : ManagedObject{ptr, kDELETER}
     {
         // cass_statement_set_consistency(*this, CASS_CONSISTENCY_LOCAL_QUORUM);
-        // cass_statement_set_is_idempotent(*this, cass_true);
+        cass_statement_set_is_idempotent(*this, cass_true);
     }
 
     /**
