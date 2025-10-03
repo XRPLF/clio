@@ -17,6 +17,8 @@
 */
 //==============================================================================
 
+#include "util/CassandraDBHelper.hpp"
+
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/Result.hpp"
