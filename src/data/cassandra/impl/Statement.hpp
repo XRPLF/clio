@@ -58,14 +58,16 @@ public:
     explicit Statement(std::string_view query, Args&&... args)
         : ManagedObject{cass_statement_new_n(query.data(), query.size(), sizeof...(args)), kDELETER}
     {
-        cass_statement_set_consistency(*this, CASS_CONSISTENCY_QUORUM);
+        // TODO: figure out how to set consistency level in config
+        // NOTE: Keyspace doesn't support QUORUM at write level
+        // cass_statement_set_consistency(*this, CASS_CONSISTENCY_LOCAL_QUORUM);
         cass_statement_set_is_idempotent(*this, cass_true);
         bind<Args...>(std::forward<Args>(args)...);
     }
 
     /* implicit */ Statement(CassStatement* ptr) : ManagedObject{ptr, kDELETER}
     {
-        cass_statement_set_consistency(*this, CASS_CONSISTENCY_QUORUM);
+        // cass_statement_set_consistency(*this, CASS_CONSISTENCY_LOCAL_QUORUM);
         cass_statement_set_is_idempotent(*this, cass_true);
     }
 

@@ -44,6 +44,7 @@ using namespace util::config;
 
 struct BackendCassandraFactoryTest : SyncAsioContextTest, util::prometheus::WithPrometheus {
     static constexpr auto kKEYSPACE = "factory_test";
+    static constexpr auto kPROVIDER = "cassandra";
 
 protected:
     ClioConfigDefinition cfg_{
@@ -53,6 +54,7 @@ protected:
         {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.port", ConfigValue{ConfigType::Integer}.optional()},
         {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue(kKEYSPACE)},
+        {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue(kPROVIDER)},
         {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
         {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.max_write_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(10'000)},

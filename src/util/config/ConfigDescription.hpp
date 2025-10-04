@@ -173,6 +173,7 @@ This document provides a list of all available Clio configuration properties in 
                "Maximum number of outstanding read requests. Read requests are API calls that read from the database."},
         KV{.key = "database.cassandra.threads",
            .value = "Represents the number of threads that will be used for database operations."},
+        KV{.key = "database.cassandra.provider", .value = "The specific database backend provider we are using."},
         KV{.key = "database.cassandra.core_connections_per_host",
            .value = "The number of core connections per host for the Cassandra database."},
         KV{.key = "database.cassandra.queue_size_io",
