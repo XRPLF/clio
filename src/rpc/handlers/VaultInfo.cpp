@@ -107,7 +107,7 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
                     sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
 
                 if (!accountLedgerObject)
-                    return std::unexpected{Status{ClioError::RpcEntryNotFound}};
+                    return std::unexpected{Status{RippledError::rpcENTRY_NOT_FOUND}};
             }
 
             return ripple::keylet::vault(*accountID, *input.tnxSequence);
@@ -116,7 +116,7 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
         if (nodeIndex.parseHex(*input.vaultID))
             return ripple::keylet::vault(nodeIndex);
 
-        return std::unexpected{Status{ClioError::RpcEntryNotFound}};
+        return std::unexpected{Status{RippledError::rpcENTRY_NOT_FOUND}};
     }();
 
     if (not vaultKeylet.has_value())
@@ -127,7 +127,7 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
         sharedPtrBackend_->fetchLedgerObject(vaultKeylet.value().key, lgrInfo.seq, ctx.yield);
 
     if (not vaultLedgerObject)
-        return Error{Status{ClioError::RpcEntryNotFound, "vault object not found."}};
+        return Error{Status{RippledError::rpcENTRY_NOT_FOUND, "vault object not found."}};
 
     ripple::STLedgerEntry const vaultSle{
         ripple::SerialIter{vaultLedgerObject->data(), vaultLedgerObject->size()}, vaultKeylet.value().key
@@ -137,7 +137,7 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
     auto const issuanceObject = sharedPtrBackend_->fetchLedgerObject(issuanceKeylet, lgrInfo.seq, ctx.yield);
 
     if (not issuanceObject)
-        return Error{Status{ClioError::RpcEntryNotFound, "issuance object not found."}};
+        return Error{Status{RippledError::rpcENTRY_NOT_FOUND, "issuance object not found."}};
 
     ripple::STLedgerEntry const issuanceSle{
         ripple::SerialIter{issuanceObject->data(), issuanceObject->size()}, issuanceKeylet

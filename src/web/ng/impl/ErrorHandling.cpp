@@ -105,7 +105,6 @@ ErrorHelper::makeError(rpc::Status const& err) const
             case rpc::ClioError::RpcFieldNotFoundTransaction:
             case rpc::ClioError::RpcMalformedOracleDocumentId:
             case rpc::ClioError::RpcMalformedAuthorizedCredentials:
-            case rpc::ClioError::RpcEntryNotFound:
             case rpc::ClioError::EtlConnectionError:
             case rpc::ClioError::EtlRequestError:
             case rpc::ClioError::EtlRequestTimeout:
