@@ -15,3 +15,10 @@ jobs:
           task_types: '["build","feat","fix","docs","test","ci","style","refactor","perf","chore"]'
           add_label: false
           custom_labels: '{"build":"build", "feat":"enhancement", "fix":"bug", "docs":"documentation", "test":"testability", "ci":"ci", "style":"refactoring", "refactor":"refactoring", "perf":"performance", "chore":"tooling"}'
+
+      - name: Check if message starts with upper-case letter
+        run: |
+          if [[ ! "${{ github.event.pull_request.title }}" =~ ^[a-z]+:\ [A-Z] ]]; then
+            echo "Error: PR title must start with an upper-case letter."
+            exit 1
+          fi
