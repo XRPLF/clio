@@ -77,7 +77,7 @@ on:
 
 jobs:
   build:
-    uses: ./.github/workflows/build_impl.yml
+    uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: ${{ inputs.runs_on }}
       container: ${{ inputs.container }}
@@ -95,7 +95,7 @@ jobs:
 
   test:
     needs: build
-    uses: ./.github/workflows/test_impl.yml
+    uses: ./.github/workflows/reusable-test.yml
     with:
       runs_on: ${{ inputs.runs_on }}
       container: ${{ inputs.container }}

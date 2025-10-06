@@ -238,6 +238,6 @@ jobs:
     if: ${{ inputs.code_coverage }}
     name: Codecov
     needs: build
-    uses: ./.github/workflows/upload_coverage_report.yml
+    uses: ./.github/workflows/reusable-upload-coverage-report.yml
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
