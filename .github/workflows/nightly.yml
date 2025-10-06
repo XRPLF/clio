@@ -8,11 +8,11 @@ on:
     paths:
       - .github/workflows/nightly.yml
 
-      - .github/workflows/release_impl.yml
-      - .github/workflows/build_and_test.yml
-      - .github/workflows/build_impl.yml
-      - .github/workflows/test_impl.yml
-      - .github/workflows/build_clio_docker_image.yml
+      - .github/workflows/reusable-release.yml
+      - .github/workflows/reusable-build-test.yml
+      - .github/workflows/reusable-build.yml
+      - .github/workflows/reusable-test.yml
+      - .github/workflows/build-clio-docker-image.yml
 
       - ".github/actions/**"
       - "!.github/actions/code_coverage/**"
@@ -51,7 +51,7 @@ jobs:
             static: false
             container: '{ "image": "ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d" }'
 
-    uses: ./.github/workflows/build_and_test.yml
+    uses: ./.github/workflows/reusable-build-test.yml
     with:
       runs_on: ${{ matrix.os }}
       container: ${{ matrix.container }}
@@ -79,7 +79,7 @@ jobs:
             conan_profile: apple-clang
             container: ""
             static: false
-    uses: ./.github/workflows/build_impl.yml
+    uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: ${{ matrix.os }}
       container: ${{ matrix.container }}
@@ -95,7 +95,7 @@ jobs:
 
   nightly_release:
     needs: build-and-test
-    uses: ./.github/workflows/release_impl.yml
+    uses: ./.github/workflows/reusable-release.yml
     with:
       overwrite_release: true
       prerelease: true
@@ -109,7 +109,7 @@ jobs:
       draft: false
 
   build_and_publish_docker_image:
-    uses: ./.github/workflows/build_clio_docker_image.yml
+    uses: ./.github/workflows/build-clio-docker-image.yml
     needs: build-and-test
     secrets: inherit
     with:

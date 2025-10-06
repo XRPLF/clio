@@ -3,7 +3,7 @@ name: Update CI docker image
 on:
   pull_request:
     paths:
-      - .github/workflows/update_docker_ci.yml
+      - .github/workflows/update-docker-ci.yml
 
       - ".github/actions/build_docker_image/**"
 
@@ -13,7 +13,7 @@ on:
   push:
     branches: [develop]
     paths:
-      - .github/workflows/update_docker_ci.yml
+      - .github/workflows/update-docker-ci.yml
 
       - ".github/actions/build_docker_image/**"
 
@@ -94,7 +94,7 @@ jobs:
 
       - name: Get changed files
         id: changed-files
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
         with:
           files: "docker/compilers/gcc/**"
 
@@ -250,7 +250,7 @@ jobs:
 
       - name: Get changed files
         id: changed-files
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
         with:
           files: "docker/tools/**"
 

@@ -8,9 +8,9 @@ on:
     paths:
       - .github/workflows/sanitizers.yml
 
-      - .github/workflows/build_and_test.yml
-      - .github/workflows/build_impl.yml
-      - .github/workflows/test_impl.yml
+      - .github/workflows/reusable-build-test.yml
+      - .github/workflows/reusable-build.yml
+      - .github/workflows/reusable-test.yml
 
       - ".github/actions/**"
       - "!.github/actions/build_docker_image/**"
@@ -41,7 +41,7 @@ jobs:
         sanitizer_ext: [.asan, .tsan, .ubsan]
         build_type: [Release, Debug]
 
-    uses: ./.github/workflows/build_and_test.yml
+    uses: ./.github/workflows/reusable-build-test.yml
     with:
       runs_on: heavy
       container: '{ "image": "ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d" }'

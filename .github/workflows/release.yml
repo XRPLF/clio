@@ -31,7 +31,7 @@ jobs:
             static: true
             container: '{ "image": "ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d" }'
 
-    uses: ./.github/workflows/build_and_test.yml
+    uses: ./.github/workflows/reusable-build-test.yml
     with:
       runs_on: ${{ matrix.os }}
       container: ${{ matrix.container }}
@@ -47,7 +47,7 @@ jobs:
 
   release:
     needs: build-and-test
-    uses: ./.github/workflows/release_impl.yml
+    uses: ./.github/workflows/reusable-release.yml
     with:
       overwrite_release: false
       prerelease: ${{ contains(github.ref_name, '-') }}
