@@ -60,6 +60,11 @@ GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::
         ss << resolverResult.begin()->endpoint();
         grpc::ChannelArguments chArgs;
         chArgs.SetMaxReceiveMessageSize(-1);
+        // Configure keepalive to detect dead connections faster
+        chArgs.SetInt(GRPC_ARG_KEEPALIVE_TIME_MS, 10000);           // Send keepalive ping every 10 seconds
+        chArgs.SetInt(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 5000);         // Wait 5 seconds for keepalive response
+        chArgs.SetInt(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);  // Allow keepalive pings when no calls
+        chArgs.SetInt(GRPC_ARG_HTTP2_MAX_PINGS_WITHOUT_DATA, 0);    // No limit on pings without data
         stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
             grpc::CreateCustomChannel(ss.str(), grpc::InsecureChannelCredentials(), chArgs)
         );
@@ -79,6 +84,8 @@ GrpcSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighb
     // Ledger header with txns and metadata
     org::xrpl::rpc::v1::GetLedgerRequest request;
     grpc::ClientContext context;
+    // Set a deadline to prevent indefinite blocking
+    context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(30));
 
     request.mutable_ledger()->set_sequence(sequence);
     request.set_transactions(true);
