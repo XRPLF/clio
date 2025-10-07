@@ -51,11 +51,6 @@ namespace etl::impl {
 GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::shared_ptr<BackendInterface> backend)
     : log_(fmt::format("GrpcSource[{}:{}]", ip, grpcPort)), backend_(std::move(backend))
 {
-    static constexpr auto kKEEPALIVE_PING_INTERVAL_MS = 10000;
-    static constexpr auto kKEEPALIVE_TIMEOUT_MS = 5000;
-    static constexpr auto kKEEPALIVE_PERMIT_WITHOUT_CALLS = true;  // Allow keepalive pings when no calls
-    static constexpr auto kMAX_PINGS_WITHOUT_DATA = 0;             // No limit
-
     try {
         boost::asio::io_context ctx;
         boost::asio::ip::tcp::resolver resolver{ctx};
@@ -94,7 +89,7 @@ GrpcSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighb
     org::xrpl::rpc::v1::GetLedgerRequest request;
     grpc::ClientContext context;
 
-    context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(30));  // Prevent indefinite blocking
+    context.set_deadline(std::chrono::system_clock::now() + kDEADLINE);  // Prevent indefinite blocking
 
     request.mutable_ledger()->set_sequence(sequence);
     request.set_transactions(true);
