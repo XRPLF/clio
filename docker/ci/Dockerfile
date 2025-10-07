@@ -43,26 +43,20 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python tools
-ARG PYTHON_VERSION=3.13
-
-RUN add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update \
+RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests \
-        python${PYTHON_VERSION} \
-        python${PYTHON_VERSION}-venv \
+        python3 \
+        python3-pip \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -sS https://bootstrap.pypa.io/get-pip.py | python${PYTHON_VERSION}
-
-# Create a virtual environment for python tools
-RUN python${PYTHON_VERSION} -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pip install -q --no-cache-dir \
+        # TODO: Remove this once we switch to newer Ubuntu base image
+        # lxml 6.0.0 is not compatible with our image
+        'lxml<6.0.0' \
         cmake \
         conan==2.20.1 \
-        gcovr \
-        pre-commit
+        gcovr
 
 # Install LLVM tools
 ARG LLVM_TOOLS_VERSION=20
