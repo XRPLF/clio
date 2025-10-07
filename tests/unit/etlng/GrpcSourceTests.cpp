@@ -41,16 +41,20 @@
 #include <xrpl/basics/strHex.h>
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <future>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <queue>
+#include <semaphore>
 #include <string>
+#include <thread>
 #include <vector>
 
 using namespace etlng::model;
@@ -356,4 +360,41 @@ TEST_F(GrpcSourceStopTests, LoadInitialLedgerStopsWhenRequested)
 
     ASSERT_FALSE(res.has_value());
     EXPECT_EQ(res.error(), etlng::InitialLedgerLoadError::Cancelled);
+}
+
+TEST_F(GrpcSourceNgTests, DeadlineIsHandledCorrectly)
+{
+    uint32_t const sequence = 123u;
+    bool const getObjects = true;
+    bool const getObjectNeighbors = false;
+
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool finished = false;
+
+    auto grpcSource = std::make_unique<etlng::impl::GrpcSource>(
+        "localhost", std::to_string(getXRPLMockPort()), std::chrono::milliseconds{1}
+    );
+
+    EXPECT_CALL(mockXrpLedgerAPIService, GetLedger)
+        .WillOnce([&](grpc::ServerContext*,
+                      org::xrpl::rpc::v1::GetLedgerRequest const*,
+                      org::xrpl::rpc::v1::GetLedgerResponse*) {
+            std::unique_lock lk(mtx);
+            cv.wait(lk, [&] { return finished; });
+
+            return grpc::Status{};
+        });
+
+    auto const [status, response] = grpcSource->fetchLedger(sequence, getObjects, getObjectNeighbors);
+
+    {
+        std::unique_lock lk(mtx);
+        finished = true;
+    }
+    cv.notify_all();
+    grpcSource.reset();
+
+    ASSERT_FALSE(status.ok());
+    shutdown(std::chrono::milliseconds{10});
 }

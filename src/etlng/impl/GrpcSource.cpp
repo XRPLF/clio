@@ -65,9 +65,10 @@ resolve(std::string const& ip, std::string const& port)
 
 namespace etlng::impl {
 
-GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort)
+GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::chrono::system_clock::duration deadline)
     : log_(fmt::format("ETL_Grpc[{}:{}]", ip, grpcPort))
     , initialLoadShouldStop_(std::make_unique<std::atomic_bool>(false))
+    , deadline_{deadline}
 {
     try {
         grpc::ChannelArguments chArgs;
@@ -97,7 +98,7 @@ GrpcSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighb
     org::xrpl::rpc::v1::GetLedgerRequest request;
     grpc::ClientContext context;
 
-    context.set_deadline(std::chrono::system_clock::now() + kDEADLINE);  // Prevent indefinite blocking
+    context.set_deadline(std::chrono::system_clock::now() + deadline_);  // Prevent indefinite blocking
 
     request.mutable_ledger()->set_sequence(sequence);
     request.set_transactions(true);

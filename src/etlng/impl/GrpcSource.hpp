@@ -41,6 +41,7 @@ class GrpcSource {
     util::Logger log_;
     std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub> stub_;
     std::unique_ptr<std::atomic_bool> initialLoadShouldStop_;
+    std::chrono::system_clock::duration deadline_;
 
     static constexpr auto kKEEPALIVE_PING_INTERVAL_MS = 10000;
     static constexpr auto kKEEPALIVE_TIMEOUT_MS = 5000;
@@ -49,7 +50,11 @@ class GrpcSource {
     static constexpr auto kDEADLINE = std::chrono::seconds(30);
 
 public:
-    GrpcSource(std::string const& ip, std::string const& grpcPort);
+    GrpcSource(
+        std::string const& ip,
+        std::string const& grpcPort,
+        std::chrono::system_clock::duration deadline = kDEADLINE
+    );
 
     /**
      * @brief Fetch data for a specific ledger.
