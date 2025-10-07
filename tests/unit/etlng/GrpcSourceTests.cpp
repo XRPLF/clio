@@ -364,37 +364,30 @@ TEST_F(GrpcSourceStopTests, LoadInitialLedgerStopsWhenRequested)
 
 TEST_F(GrpcSourceNgTests, DeadlineIsHandledCorrectly)
 {
+    static constexpr auto kDEADLINE = std::chrono::milliseconds{5};
+
     uint32_t const sequence = 123u;
     bool const getObjects = true;
     bool const getObjectNeighbors = false;
 
-    std::mutex mtx;
-    std::condition_variable cv;
-    bool finished = false;
+    std::binary_semaphore sem(0);
 
-    auto grpcSource = std::make_unique<etlng::impl::GrpcSource>(
-        "localhost", std::to_string(getXRPLMockPort()), std::chrono::milliseconds{1}
-    );
+    auto grpcSource =
+        std::make_unique<etlng::impl::GrpcSource>("localhost", std::to_string(getXRPLMockPort()), kDEADLINE);
 
     EXPECT_CALL(mockXrpLedgerAPIService, GetLedger)
         .WillOnce([&](grpc::ServerContext*,
                       org::xrpl::rpc::v1::GetLedgerRequest const*,
                       org::xrpl::rpc::v1::GetLedgerResponse*) {
-            std::unique_lock lk(mtx);
-            cv.wait(lk, [&] { return finished; });
-
+            sem.acquire();  // wait for main thread to discard us
             return grpc::Status{};
         });
 
     auto const [status, response] = grpcSource->fetchLedger(sequence, getObjects, getObjectNeighbors);
+    ASSERT_FALSE(status.ok());  // timed out after kDEADLINE
 
-    {
-        std::unique_lock lk(mtx);
-        finished = true;
-    }
-    cv.notify_all();
+    sem.release();  // we don't need to hold GetLedger thread any longer
     grpcSource.reset();
 
-    ASSERT_FALSE(status.ok());
     shutdown(std::chrono::milliseconds{10});
 }
