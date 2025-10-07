@@ -7,9 +7,9 @@ on:
 
       - ".github/actions/build-docker-image/**"
 
-      - "docker/ci/**"
-      - "docker/compilers/**"
-      - "docker/tools/**"
+      - "docker/**"
+      - "!docker/clio/**"
+      - "!docker/develop/**"
   push:
     branches: [develop]
     paths:
@@ -17,9 +17,9 @@ on:
 
       - ".github/actions/build-docker-image/**"
 
-      - "docker/ci/**"
-      - "docker/compilers/**"
-      - "docker/tools/**"
+      - "docker/**"
+      - "!docker/clio/**"
+      - "!docker/develop/**"
   workflow_dispatch:
 
 concurrency:

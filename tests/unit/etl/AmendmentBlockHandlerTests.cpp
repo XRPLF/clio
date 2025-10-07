@@ -36,7 +36,7 @@ struct AmendmentBlockHandlerTest : util::prometheus::WithPrometheus, SyncAsioCon
     etl::SystemState state;
 };
 
-TEST_F(AmendmentBlockHandlerTest, CallTonotifyAmendmentBlockedSetsStateAndRepeatedlyCallsAction)
+TEST_F(AmendmentBlockHandlerTest, CallToNotifyAmendmentBlockedSetsStateAndRepeatedlyCallsAction)
 {
     AmendmentBlockHandler handler{ctx_, state, std::chrono::nanoseconds{1}, actionMock.AsStdFunction()};
 
