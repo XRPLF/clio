@@ -306,6 +306,28 @@ jobs:
             $image:arm64-latest \
             $image:amd64-latest
 
+  pre-commit:
+    name: Build and push pre-commit docker image
+    runs-on: heavy
+    needs: [repo, tools-merge]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/build-docker-image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          images: |
+            ${{ needs.repo.outputs.GHCR_REPO }}/clio-pre-commit
+          push_image: ${{ github.event_name != 'pull_request' }}
+          directory: docker/pre-commit
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ github.sha }}
+          platforms: linux/amd64,linux/arm64
+          build_args: |
+            GHCR_REPO=${{ needs.repo.outputs.GHCR_REPO }}
+
   ci:
     name: Build and push CI docker image
     runs-on: heavy
