@@ -54,7 +54,6 @@
 #include <queue>
 #include <semaphore>
 #include <string>
-#include <thread>
 #include <vector>
 
 using namespace etlng::model;
