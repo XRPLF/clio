@@ -1,0 +1,761 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2025, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#include "data/Types.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/common/AnyHandler.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/handlers/AccountMPTokens.hpp"
+#include "util/HandlerBaseTestFixture.hpp"
+#include "util/NameGenerator.hpp"
+#include "util/TestObject.hpp"
+
+#include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
+#include <fmt/format.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STObject.h>
+
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <vector>
+
+using namespace rpc;
+using namespace data;
+namespace json = boost::json;
+using namespace testing;
+
+namespace {
+
+constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+constexpr auto kISSUANCE_ID_HEX = "00080000B43A1A953EADDB3314A73523789947C752044C49";
+constexpr auto kTOKEN_INDEX1 = "A6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
+constexpr auto kTOKEN_INDEX2 = "B6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
+
+constexpr uint64_t kTOKEN1_AMOUNT = 500;
+constexpr uint64_t kTOKEN1_LOCKED_AMOUNT = 50;
+constexpr uint64_t kTOKEN2_AMOUNT = 250;
+
+// define expected JSON for mptokens
+auto const kTOKEN_OUT1 = fmt::format(
+    R"JSON({{
+        "account": "{}",
+        "mpt_issuance_id": "{}",
+        "mpt_amount": {},
+        "locked_amount": {},
+        "mpt_locked": true
+    }})JSON",
+    kACCOUNT,
+    kISSUANCE_ID_HEX,
+    kTOKEN1_AMOUNT,
+    kTOKEN1_LOCKED_AMOUNT
+);
+
+auto const kTOKEN_OUT2 = fmt::format(
+    R"JSON({{
+        "account": "{}",
+        "mpt_issuance_id": "{}",
+        "mpt_amount": {},
+        "mpt_authorized": true
+    }})JSON",
+    kACCOUNT,
+    kISSUANCE_ID_HEX,
+    kTOKEN2_AMOUNT
+);
+
+}  // namespace
+
+struct RPCAccountMPTokensHandlerTest : HandlerBaseTest {
+    RPCAccountMPTokensHandlerTest()
+    {
+        backend_->setRange(10, 30);
+    }
+};
+
+struct AccountMPTokensParamTestCaseBundle {
+    std::string testName;
+    std::string testJson;
+    std::string expectedError;
+    std::string expectedErrorMessage;
+};
+
+struct AccountMPTokensParameterTest : RPCAccountMPTokensHandlerTest,
+                                      WithParamInterface<AccountMPTokensParamTestCaseBundle> {};
+
+// generate values for invalid params test
+static auto
+generateTestValuesForInvalidParamsTest()
+{
+    return std::vector<AccountMPTokensParamTestCaseBundle>{
+        {"NonHexLedgerHash",
+         fmt::format(R"JSON({{ "account": "{}", "ledger_hash": "xxx" }})JSON", kACCOUNT),
+         "invalidParams",
+         "ledger_hashMalformed"},
+        {"NonStringLedgerHash",
+         fmt::format(R"JSON({{ "account": "{}", "ledger_hash": 123 }})JSON", kACCOUNT),
+         "invalidParams",
+         "ledger_hashNotString"},
+        {"InvalidLedgerIndexString",
+         fmt::format(R"JSON({{ "account": "{}", "ledger_index": "notvalidated" }})JSON", kACCOUNT),
+         "invalidParams",
+         "ledgerIndexMalformed"},
+        {"MarkerNotString",
+         fmt::format(R"JSON({{ "account": "{}", "marker": 9 }})JSON", kACCOUNT),
+         "invalidParams",
+         "markerNotString"},
+        {"InvalidMarkerContent",
+         fmt::format(R"JSON({{ "account": "{}", "marker": "123invalid" }})JSON", kACCOUNT),
+         "invalidParams",
+         "Malformed cursor."},
+        {"AccountMissing", R"JSON({ "limit": 10 })JSON", "invalidParams", "Required field 'account' missing"},
+        {"AccountNotString", R"JSON({ "account": 123 })JSON", "actMalformed", "Account malformed."},
+        {"AccountMalformed",
+         fmt::format(R"JSON({{ "account": "{}" }})JSON", "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp"),
+         "actMalformed",
+         "Account malformed."},
+        {"LimitNotInteger",
+         fmt::format(R"JSON({{ "account": "{}", "limit": "t" }})JSON", kACCOUNT),
+         "invalidParams",
+         "Invalid parameters."},
+        {"LimitNegative",
+         fmt::format(R"JSON({{ "account": "{}", "limit": -1 }})JSON", kACCOUNT),
+         "invalidParams",
+         "Invalid parameters."},
+        {"LimitZero",
+         fmt::format(R"JSON({{ "account": "{}", "limit": 0 }})JSON", kACCOUNT),
+         "invalidParams",
+         "Invalid parameters."},
+        {"LimitTypeInvalid",
+         fmt::format(R"JSON({{ "account": "{}", "limit": true }})JSON", kACCOUNT),
+         "invalidParams",
+         "Invalid parameters."}
+    };
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    RPCAccountMPTokensInvalidParamsGroup,
+    AccountMPTokensParameterTest,
+    ValuesIn(generateTestValuesForInvalidParamsTest()),
+    tests::util::kNAME_GENERATOR
+);
+
+// test invalid params bundle
+TEST_P(AccountMPTokensParameterTest, InvalidParams)
+{
+    auto const testBundle = GetParam();
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountMPTokensHandler{backend_}};
+        auto const req = json::parse(testBundle.testJson);
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
+        EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
+    });
+}
+
+TEST_F(RPCAccountMPTokensHandlerTest, NonExistLedgerViaLedgerHash)
+{
+    // mock fetchLedgerByHash to return empty
+    EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
+    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
+                "account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountMPTokensHandler{backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_FALSE(output);
+
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCAccountMPTokensHandlerTest, NonExistLedgerViaLedgerStringIndex)
+{
+    // mock fetchLedgerBySequence to return empty
+    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
+                "account": "{}",
+                "ledger_index": "4"
+            }})JSON",
+            kACCOUNT
+        )
+    );
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountMPTokensHandler{backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCAccountMPTokensHandlerTest, NonExistLedgerViaLedgerIntIndex)
+{
+    // mock fetchLedgerBySequence to return empty
+    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
+                "account": "{}",
+                "ledger_index": 4
+            }})JSON",
+            kACCOUNT
+        )
+    );
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountMPTokensHandler{backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCAccountMPTokensHandlerTest, LedgerSeqOutOfRangeByHash)
+{
+    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 31);
+    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
+
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
+                "account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountMPTokensHandler{backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_FALSE(output);
+
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCAccountMPTokensHandlerTest, LedgerSeqOutOfRangeByIndex)
+{
+    // No need to check from db, call fetchLedgerBySequence 0 times
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(0);
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
+                "account": "{}",
+                "ledger_index": "31"
+            }})JSON",
+            kACCOUNT
+        )
+    );
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountMPTokensHandler{backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCAccountMPTokensHandlerTest, NonExistAccount)
+{
+    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
+
+    ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
+    auto const input = json::parse(
+        fmt::format(
+            R"JSON({{
+                "account": "{}",
+                "ledger_hash": "{}"
+            }})JSON",
+            kACCOUNT,
+            kLEDGER_HASH
+        )
+    );
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountMPTokensHandler{backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "actNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
+    });
+}
+
+TEST_F(RPCAccountMPTokensHandlerTest, DefaultParameters)
+{
+    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
+
+    auto account = getAccountIdWithString(kACCOUNT);
+    auto accountKk = ripple::keylet::account(account).key;
+    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    ripple::STObject const ownerDir =
+        createOwnerDirLedgerObject({ripple::uint256{kTOKEN_INDEX1}, ripple::uint256{kTOKEN_INDEX2}}, kTOKEN_INDEX1);
+    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
+
+    std::vector<Blob> bbs;
+    auto const token1 = createMpTokenObject(
+        kACCOUNT, ripple::uint192(kISSUANCE_ID_HEX), kTOKEN1_AMOUNT, ripple::lsfMPTLocked, kTOKEN1_LOCKED_AMOUNT
+    );
+
+    auto const token2 = createMpTokenObject(
+        kACCOUNT, ripple::uint192(kISSUANCE_ID_HEX), kTOKEN2_AMOUNT, ripple::lsfMPTAuthorized, std::nullopt
+    );
+
+    bbs.push_back(token1.getSerializer().peekData());
+    bbs.push_back(token2.getSerializer().peekData());
+
+    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+
+    runSpawn([this](auto yield) {
+        auto const expected = fmt::format(
+            R"JSON({{
+                "account": "{}",
+                "ledger_hash": "{}",
+                "ledger_index": 30,
+                "validated": true,
+                "limit": {},
+                "mptokens": [
+                    {},
+                    {}
+                ]
+            }})JSON",
+            kACCOUNT,
+            kLEDGER_HASH,
+            AccountMPTokensHandler::kLIMIT_DEFAULT,
+            kTOKEN_OUT1,
+            kTOKEN_OUT2
+        );
+        auto const input = json::parse(fmt::format(R"JSON({{"account": "{}"}})JSON", kACCOUNT));
+        auto handler = AnyHandler{AccountMPTokensHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(json::parse(expected), *output.result);
+    });
+}
+
+TEST_F(RPCAccountMPTokensHandlerTest, UseLimit)
+{
+    constexpr int limit = 20;
+    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
+
+    auto account = getAccountIdWithString(kACCOUNT);
+    auto accountKk = ripple::keylet::account(account).key;
+    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    std::vector<ripple::uint256> indexes;
+    std::vector<Blob> bbs;
+
+    for (int i = 0; i < 50; ++i) {
+        indexes.emplace_back(ripple::uint256{kTOKEN_INDEX1});
+        auto const token = createMpTokenObject(kACCOUNT, ripple::uint192(kISSUANCE_ID_HEX), i, 0, std::nullopt);
+        bbs.push_back(token.getSerializer().peekData());
+    }
+
+    ripple::STObject ownerDir = createOwnerDirLedgerObject(indexes, kTOKEN_INDEX1);
+    ownerDir.setFieldU64(ripple::sfIndexNext, 99);
+    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(7);
+
+    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(3);
+
+    runSpawn([this, limit](auto yield) {
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}",
+                    "limit": {}
+                }})JSON",
+                kACCOUNT,
+                limit
+            )
+        );
+
+        auto handler = AnyHandler{AccountMPTokensHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+
+        auto const resultJson = (*output.result).as_object();
+        EXPECT_EQ(resultJson.at("mptokens").as_array().size(), limit);
+        ASSERT_TRUE(resultJson.contains("marker"));
+        EXPECT_THAT(boost::json::value_to<std::string>(resultJson.at("marker")), EndsWith(",0"));
+    });
+
+    runSpawn([this](auto yield) {
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}",
+                    "limit": {}
+                }})JSON",
+                kACCOUNT,
+                AccountMPTokensHandler::kLIMIT_MIN - 1
+            )
+        );
+
+        auto handler = AnyHandler{AccountMPTokensHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ((*output.result).as_object().at("limit").as_uint64(), AccountMPTokensHandler::kLIMIT_MIN);
+    });
+
+    runSpawn([this](auto yield) {
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}",
+                    "limit": {}
+                }})JSON",
+                kACCOUNT,
+                AccountMPTokensHandler::kLIMIT_MAX + 1
+            )
+        );
+
+        auto handler = AnyHandler{AccountMPTokensHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ((*output.result).as_object().at("limit").as_uint64(), AccountMPTokensHandler::kLIMIT_MAX);
+    });
+}
+
+TEST_F(RPCAccountMPTokensHandlerTest, MarkerOutput)
+{
+    constexpr auto kNEXT_PAGE = 99;
+    constexpr auto kLIMIT = 15;
+    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+
+    auto account = getAccountIdWithString(kACCOUNT);
+    auto accountKk = ripple::keylet::account(account).key;
+    auto ownerDirKk = ripple::keylet::ownerDir(account).key;
+    auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), kNEXT_PAGE).key;
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    std::vector<Blob> bbs;
+    for (int i = 0; i < kLIMIT; ++i) {
+        bbs.push_back(createMpTokenObject(kACCOUNT, ripple::uint192(kISSUANCE_ID_HEX), i, 0, std::nullopt)
+                          .getSerializer()
+                          .peekData());
+    }
+    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+
+    std::vector<ripple::uint256> indexes1;
+    for (int i = 0; i < 10; ++i) {
+        indexes1.emplace_back(kTOKEN_INDEX1);
+    }
+    ripple::STObject ownerDir1 = createOwnerDirLedgerObject(indexes1, kTOKEN_INDEX1);
+    ownerDir1.setFieldU64(ripple::sfIndexNext, kNEXT_PAGE);
+    ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
+        .WillByDefault(Return(ownerDir1.getSerializer().peekData()));
+
+    ripple::STObject ownerDir2 = createOwnerDirLedgerObject(indexes1, kTOKEN_INDEX2);
+    ownerDir2.setFieldU64(ripple::sfIndexNext, 0);
+    ON_CALL(*backend_, doFetchLedgerObject(ownerDir2Kk, _, _))
+        .WillByDefault(Return(ownerDir2.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
+
+    runSpawn([this, kLIMIT, kNEXT_PAGE](auto yield) {
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}",
+                    "limit": {}
+                }})JSON",
+                kACCOUNT,
+                kLIMIT
+            )
+        );
+        auto handler = AnyHandler{AccountMPTokensHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        auto const& resultJson = (*output.result).as_object();
+        EXPECT_EQ(resultJson.at("mptokens").as_array().size(), kLIMIT);
+        EXPECT_EQ(
+            boost::json::value_to<std::string>(resultJson.at("marker")), fmt::format("{},{}", kTOKEN_INDEX1, kNEXT_PAGE)
+        );
+    });
+}
+
+TEST_F(RPCAccountMPTokensHandlerTest, MarkerInput)
+{
+    constexpr auto kNEXT_PAGE = 99;
+    constexpr auto kLIMIT = 15;
+
+    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+
+    auto account = getAccountIdWithString(kACCOUNT);
+    auto accountKk = ripple::keylet::account(account).key;
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    auto ownerDirKk = ripple::keylet::page(ripple::keylet::ownerDir(account), kNEXT_PAGE).key;
+
+    std::vector<Blob> bbs;
+    std::vector<ripple::uint256> indexes;
+    for (int i = 0; i < kLIMIT; ++i) {
+        indexes.emplace_back(kTOKEN_INDEX1);
+        bbs.push_back(createMpTokenObject(kACCOUNT, ripple::uint192(kISSUANCE_ID_HEX), i, 0, std::nullopt)
+                          .getSerializer()
+                          .peekData());
+    }
+
+    ripple::STObject ownerDir = createOwnerDirLedgerObject(indexes, kTOKEN_INDEX1);
+    ownerDir.setFieldU64(ripple::sfIndexNext, 0);
+    ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
+
+    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+
+    runSpawn([this, kLIMIT, kNEXT_PAGE](auto yield) {
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}",
+                    "limit": {},
+                    "marker": "{},{}"
+                }})JSON",
+                kACCOUNT,
+                kLIMIT,
+                kTOKEN_INDEX1,
+                kNEXT_PAGE
+            )
+        );
+        auto handler = AnyHandler{AccountMPTokensHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        auto const& resultJson = (*output.result).as_object();
+        EXPECT_TRUE(resultJson.if_contains("marker") == nullptr);
+        EXPECT_EQ(resultJson.at("mptokens").as_array().size(), kLIMIT - 1);
+    });
+}
+
+TEST_F(RPCAccountMPTokensHandlerTest, LimitLessThanMin)
+{
+    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+
+    auto account = getAccountIdWithString(kACCOUNT);
+    auto accountKk = ripple::keylet::account(account).key;
+    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    ripple::STObject const ownerDir =
+        createOwnerDirLedgerObject({ripple::uint256{kTOKEN_INDEX1}, ripple::uint256{kTOKEN_INDEX2}}, kTOKEN_INDEX1);
+    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+
+    std::vector<Blob> bbs;
+    auto const token1 = createMpTokenObject(
+        kACCOUNT, ripple::uint192(kISSUANCE_ID_HEX), kTOKEN1_AMOUNT, ripple::lsfMPTLocked, kTOKEN1_LOCKED_AMOUNT
+    );
+    bbs.push_back(token1.getSerializer().peekData());
+
+    auto const token2 = createMpTokenObject(
+        kACCOUNT, ripple::uint192(kISSUANCE_ID_HEX), kTOKEN2_AMOUNT, ripple::lsfMPTAuthorized, std::nullopt
+    );
+    bbs.push_back(token2.getSerializer().peekData());
+
+    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+
+    runSpawn([this](auto yield) {
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}",
+                    "limit": {}
+                }})JSON",
+                kACCOUNT,
+                AccountMPTokensHandler::kLIMIT_MIN - 1
+            )
+        );
+
+        auto const correctOutput = fmt::format(
+            R"JSON({{
+                "account": "{}",
+                "ledger_hash": "{}",
+                "ledger_index": 30,
+                "validated": true,
+                "limit": {},
+                "mptokens": [
+                    {},
+                    {}
+                ]
+            }})JSON",
+            kACCOUNT,
+            kLEDGER_HASH,
+            AccountMPTokensHandler::kLIMIT_MIN,
+            kTOKEN_OUT1,
+            kTOKEN_OUT2
+        );
+
+        auto handler = AnyHandler{AccountMPTokensHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(json::parse(correctOutput), *output.result);
+    });
+}
+
+TEST_F(RPCAccountMPTokensHandlerTest, LimitMoreThanMax)
+{
+    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+
+    auto account = getAccountIdWithString(kACCOUNT);
+    auto accountKk = ripple::keylet::account(account).key;
+    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    ripple::STObject const ownerDir =
+        createOwnerDirLedgerObject({ripple::uint256{kTOKEN_INDEX1}, ripple::uint256{kTOKEN_INDEX2}}, kTOKEN_INDEX1);
+    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+
+    std::vector<Blob> bbs;
+    auto const token1 = createMpTokenObject(
+        kACCOUNT, ripple::uint192(kISSUANCE_ID_HEX), kTOKEN1_AMOUNT, ripple::lsfMPTLocked, kTOKEN1_LOCKED_AMOUNT
+    );
+    bbs.push_back(token1.getSerializer().peekData());
+
+    auto const token2 = createMpTokenObject(
+        kACCOUNT, ripple::uint192(kISSUANCE_ID_HEX), kTOKEN2_AMOUNT, ripple::lsfMPTAuthorized, std::nullopt
+    );
+    bbs.push_back(token2.getSerializer().peekData());
+
+    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+
+    runSpawn([this](auto yield) {
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}",
+                    "limit": {}
+                }})JSON",
+                kACCOUNT,
+                AccountMPTokensHandler::kLIMIT_MAX + 1
+            )
+        );
+
+        auto const correctOutput = fmt::format(
+            R"JSON({{
+                "account": "{}",
+                "ledger_hash": "{}",
+                "ledger_index": 30,
+                "validated": true,
+                "limit": {},
+                "mptokens": [
+                    {},
+                    {}
+                ]
+            }})JSON",
+            kACCOUNT,
+            kLEDGER_HASH,
+            AccountMPTokensHandler::kLIMIT_MAX,
+            kTOKEN_OUT1,
+            kTOKEN_OUT2
+        );
+
+        auto handler = AnyHandler{AccountMPTokensHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(json::parse(correctOutput), *output.result);
+    });
+}
+
+TEST_F(RPCAccountMPTokensHandlerTest, EmptyResult)
+{
+    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+
+    auto account = getAccountIdWithString(kACCOUNT);
+    auto accountKk = ripple::keylet::account(account).key;
+    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    ripple::STObject const ownerDir = createOwnerDirLedgerObject({}, kTOKEN_INDEX1);
+    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+
+    runSpawn([this](auto yield) {
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}"
+                }})JSON",
+                kACCOUNT
+            )
+        );
+        auto handler = AnyHandler{AccountMPTokensHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ((*output.result).as_object().at("mptokens").as_array().size(), 0);
+    });
+}

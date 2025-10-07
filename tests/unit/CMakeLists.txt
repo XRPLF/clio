@@ -100,6 +100,8 @@ target_sources(
           rpc/handlers/AccountCurrenciesTests.cpp
           rpc/handlers/AccountInfoTests.cpp
           rpc/handlers/AccountLinesTests.cpp
+          rpc/handlers/AccountMPTokenIssuancesTests.cpp
+          rpc/handlers/AccountMPTokensTests.cpp
           rpc/handlers/AccountNFTsTests.cpp
           rpc/handlers/AccountObjectsTests.cpp
           rpc/handlers/AccountOffersTests.cpp
