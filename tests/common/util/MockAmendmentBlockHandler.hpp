@@ -25,4 +25,5 @@
 
 struct MockAmendmentBlockHandler : etlng::AmendmentBlockHandlerInterface {
     MOCK_METHOD(void, notifyAmendmentBlocked, (), (override));
+    MOCK_METHOD(void, stop, (), (override));
 };

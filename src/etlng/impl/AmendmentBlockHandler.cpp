@@ -25,6 +25,7 @@
 
 #include <chrono>
 #include <functional>
+#include <optional>
 #include <utility>
 
 namespace etlng::impl {
@@ -45,12 +46,26 @@ AmendmentBlockHandler::AmendmentBlockHandler(
 {
 }
 
+AmendmentBlockHandler::~AmendmentBlockHandler()
+{
+    stop();
+}
+
 void
 AmendmentBlockHandler::notifyAmendmentBlocked()
 {
     state_.get().isAmendmentBlocked = true;
     if (not operation_.has_value())
         operation_.emplace(ctx_.executeRepeatedly(interval_, action_));
+}
+
+void
+AmendmentBlockHandler::stop()
+{
+    if (operation_.has_value()) {
+        operation_->abort();
+        operation_.reset();
+    }
 }
 
 }  // namespace etlng::impl
