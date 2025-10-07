@@ -4,7 +4,7 @@
 
 The backend of Clio is responsible for handling the proper reading and writing of past ledger data from and to a given database. Currently, Cassandra and ScyllaDB are the only supported databases that are production-ready.
 
-To support additional database types, you can create new classes that implement the virtual methods in [BackendInterface.h](https://github.com/XRPLF/clio/blob/develop/src/data/BackendInterface.hpp). Then, leveraging the Factory Object Design Pattern, modify [BackendFactory.h](https://github.com/XRPLF/clio/blob/develop/src/data/BackendFactory.hpp) with logic that returns the new database interface if the relevant `type` is provided in Clio's configuration file.
+To support additional database types, you can create new classes that implement the virtual methods in [BackendInterface.hpp](https://github.com/XRPLF/clio/blob/develop/src/data/BackendInterface.hpp). Then, leveraging the Factory Object Design Pattern, modify [BackendFactory.hpp](https://github.com/XRPLF/clio/blob/develop/src/data/BackendFactory.hpp) with logic that returns the new database interface if the relevant `type` is provided in Clio's configuration file.
 
 ## Data Model
 
