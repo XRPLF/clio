@@ -193,7 +193,7 @@ public:
                 maybeRow.has_value()) {
                 auto [seq, owner, isBurned] = *maybeRow;
                 NFT nft(nftIDs[i], seq, owner, isBurned);
-                if (auto const maybeUri = nftUris[i].template get<ripple::Blob>(); maybeUri)
+                if (auto const maybeUri = nftUris[i].template get<ripple::Blob>(); maybeUri.has_value())
                     nft.uri = *maybeUri;
                 ret.nfts.push_back(nft);
             }

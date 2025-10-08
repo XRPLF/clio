@@ -111,11 +111,11 @@ public:
         , handle_{settingsProvider_.getSettings()}
         , executor_{settingsProvider_.getSettings(), handle_}
     {
-        if (auto const res = handle_.connect(); not res)
+        if (auto const res = handle_.connect(); not res.has_value())
             throw std::runtime_error("Could not connect to database: " + res.error());
 
         if (not readOnly) {
-            if (auto const res = handle_.execute(schema_.createKeyspace); not res) {
+            if (auto const res = handle_.execute(schema_.createKeyspace); not res.has_value()) {
                 // on datastax, creation of keyspaces can be configured to only be done thru the admin
                 // interface. this does not mean that the keyspace does not already exist tho.
                 if (res.error().code() != CASS_ERROR_SERVER_UNAUTHORIZED)
