@@ -3,23 +3,23 @@ name: Update CI docker image
 on:
   pull_request:
     paths:
-      - .github/workflows/update_docker_ci.yml
+      - .github/workflows/update-docker-ci.yml
 
-      - ".github/actions/build_docker_image/**"
+      - ".github/actions/build-docker-image/**"
 
-      - "docker/ci/**"
-      - "docker/compilers/**"
-      - "docker/tools/**"
+      - "docker/**"
+      - "!docker/clio/**"
+      - "!docker/develop/**"
   push:
     branches: [develop]
     paths:
-      - .github/workflows/update_docker_ci.yml
+      - .github/workflows/update-docker-ci.yml
 
-      - ".github/actions/build_docker_image/**"
+      - ".github/actions/build-docker-image/**"
 
-      - "docker/ci/**"
-      - "docker/compilers/**"
-      - "docker/tools/**"
+      - "docker/**"
+      - "!docker/clio/**"
+      - "!docker/develop/**"
   workflow_dispatch:
 
 concurrency:
@@ -60,7 +60,7 @@ jobs:
         with:
           files: "docker/compilers/gcc/**"
 
-      - uses: ./.github/actions/build_docker_image
+      - uses: ./.github/actions/build-docker-image
         if: ${{ steps.changed-files.outputs.any_changed == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -94,11 +94,11 @@ jobs:
 
       - name: Get changed files
         id: changed-files
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
         with:
           files: "docker/compilers/gcc/**"
 
-      - uses: ./.github/actions/build_docker_image
+      - uses: ./.github/actions/build-docker-image
         if: ${{ steps.changed-files.outputs.any_changed == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -141,7 +141,7 @@ jobs:
 
       - name: Login to GitHub Container Registry
         if: ${{ github.event_name != 'pull_request' }}
-        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -149,7 +149,7 @@ jobs:
 
       - name: Login to DockerHub
         if: ${{ github.repository_owner == 'XRPLF' && github.event_name != 'pull_request' }}
-        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PW }}
@@ -187,7 +187,7 @@ jobs:
         with:
           files: "docker/compilers/clang/**"
 
-      - uses: ./.github/actions/build_docker_image
+      - uses: ./.github/actions/build-docker-image
         if: ${{ steps.changed-files.outputs.any_changed == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -223,7 +223,7 @@ jobs:
         with:
           files: "docker/tools/**"
 
-      - uses: ./.github/actions/build_docker_image
+      - uses: ./.github/actions/build-docker-image
         if: ${{ steps.changed-files.outputs.any_changed == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -250,11 +250,11 @@ jobs:
 
       - name: Get changed files
         id: changed-files
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
         with:
           files: "docker/tools/**"
 
-      - uses: ./.github/actions/build_docker_image
+      - uses: ./.github/actions/build-docker-image
         if: ${{ steps.changed-files.outputs.any_changed == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -290,7 +290,7 @@ jobs:
 
       - name: Login to GitHub Container Registry
         if: ${{ github.event_name != 'pull_request' }}
-        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -306,6 +306,28 @@ jobs:
             $image:arm64-latest \
             $image:amd64-latest
 
+  pre-commit:
+    name: Build and push pre-commit docker image
+    runs-on: heavy
+    needs: [repo, tools-merge]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/build-docker-image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          images: |
+            ${{ needs.repo.outputs.GHCR_REPO }}/clio-pre-commit
+          push_image: ${{ github.event_name != 'pull_request' }}
+          directory: docker/pre-commit
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ github.sha }}
+          platforms: linux/amd64,linux/arm64
+          build_args: |
+            GHCR_REPO=${{ needs.repo.outputs.GHCR_REPO }}
+
   ci:
     name: Build and push CI docker image
     runs-on: heavy
@@ -313,7 +335,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/build_docker_image
+      - uses: ./.github/actions/build-docker-image
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}

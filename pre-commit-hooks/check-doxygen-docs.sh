@@ -36,19 +36,19 @@ EOF
     exit 0
 fi
 
-# Check version of doxygen is at least 1.12
+# Check version of doxygen is at least 1.14
 version=$($DOXYGEN --version | grep -o '[0-9\.]*')
 
-if [[ "1.12.0" > "$version" ]]; then
+if [[ "1.14.0" > "$version" ]]; then
     # No hard error if doxygen version is not the one we want - let CI deal with it
     cat <<EOF
 
                                     ERROR
 -----------------------------------------------------------------------------
-        A minimum of version 1.12 of `which doxygen` is required.
-        Your version is $version. Please upgrade it for next time.
+        A minimum of version 1.14 of `which doxygen` is required.
+        Your version is $version. Please upgrade it.
 
-        Your changes may fail to pass CI once pushed.
+        Your changes may fail CI checks.
 -----------------------------------------------------------------------------
 
 EOF
