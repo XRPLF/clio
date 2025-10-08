@@ -91,7 +91,7 @@ jobs:
 
       - name: Create an issue
         if: ${{ false && env.SANITIZER_IGNORE_ERRORS == 'true' && steps.check_report.outputs.found_report == 'true' }}
-        uses: ./.github/actions/create_issue
+        uses: ./.github/actions/create-issue
         env:
           GH_TOKEN: ${{ github.token }}
         with:

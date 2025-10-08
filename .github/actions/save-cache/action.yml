@@ -28,7 +28,7 @@ runs:
   steps:
     - name: Find common commit
       id: git_common_ancestor
-      uses: ./.github/actions/git_common_ancestor
+      uses: ./.github/actions/git-common-ancestor
 
     - name: Save ccache cache
       if: ${{ inputs.ccache_cache_hit != 'true' || inputs.ccache_cache_miss_rate == '100.0' }}

@@ -27,6 +27,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <fmt/format.h>
+#include <grpc/grpc.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/security/credentials.h>
 #include <grpcpp/support/channel_arguments.h>
@@ -34,6 +35,7 @@
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
 #include <org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -52,17 +54,25 @@ GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::
     try {
         boost::asio::io_context ctx;
         boost::asio::ip::tcp::resolver resolver{ctx};
+
         auto const resolverResult = resolver.resolve(ip, grpcPort);
-        if (resolverResult.empty()) {
+        if (resolverResult.empty())
             throw std::runtime_error("Failed to resolve " + ip + ":" + grpcPort);
-        }
+
         std::stringstream ss;
         ss << resolverResult.begin()->endpoint();
+
         grpc::ChannelArguments chArgs;
         chArgs.SetMaxReceiveMessageSize(-1);
+        chArgs.SetInt(GRPC_ARG_KEEPALIVE_TIME_MS, kKEEPALIVE_PING_INTERVAL_MS);
+        chArgs.SetInt(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, kKEEPALIVE_TIMEOUT_MS);
+        chArgs.SetInt(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, static_cast<int>(kKEEPALIVE_PERMIT_WITHOUT_CALLS));
+        chArgs.SetInt(GRPC_ARG_HTTP2_MAX_PINGS_WITHOUT_DATA, kMAX_PINGS_WITHOUT_DATA);
+
         stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
             grpc::CreateCustomChannel(ss.str(), grpc::InsecureChannelCredentials(), chArgs)
         );
+
         LOG(log_.debug()) << "Made stub for remote.";
     } catch (std::exception const& e) {
         LOG(log_.warn()) << "Exception while creating stub: " << e.what() << ".";
@@ -76,9 +86,10 @@ GrpcSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighb
     if (!stub_)
         return {{grpc::StatusCode::INTERNAL, "No Stub"}, response};
 
-    // Ledger header with txns and metadata
     org::xrpl::rpc::v1::GetLedgerRequest request;
     grpc::ClientContext context;
+
+    context.set_deadline(std::chrono::system_clock::now() + kDEADLINE);  // Prevent indefinite blocking
 
     request.mutable_ledger()->set_sequence(sequence);
     request.set_transactions(true);

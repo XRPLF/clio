@@ -27,7 +27,7 @@ runs:
   steps:
     - name: Find common commit
       id: git_common_ancestor
-      uses: ./.github/actions/git_common_ancestor
+      uses: ./.github/actions/git-common-ancestor
 
     - name: Restore ccache cache
       uses: actions/cache/restore@v4
