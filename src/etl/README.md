@@ -1,5 +1,7 @@
 # ETL subsystem
 
+@page "etl" ETL subsystem
+
 A single Clio node has one or more ETL sources specified in the config file. Clio subscribes to the `ledgers` stream of each of the ETL sources. The stream sends a message whenever a new ledger is validated.
 
 Upon receiving a message on the stream, Clio fetches the data associated with the newly validated ledger from one of the ETL sources. The fetch is performed via a gRPC request called `GetLedger`. This request returns the ledger header, transactions and metadata blobs, and every ledger object added/modified/deleted as part of this ledger. The ETL subsystem then writes all of this data to the databases, and moves on to the next ledger.

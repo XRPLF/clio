@@ -106,7 +106,7 @@ jobs:
 
       - name: Restore cache
         if: ${{ inputs.download_ccache }}
-        uses: ./.github/actions/restore_cache
+        uses: ./.github/actions/restore-cache
         id: restore_cache
         with:
           conan_profile: ${{ inputs.conan_profile }}
@@ -131,7 +131,7 @@ jobs:
           package: ${{ inputs.package }}
 
       - name: Build Clio
-        uses: ./.github/actions/build_clio
+        uses: ./.github/actions/build-clio
         with:
           targets: ${{ inputs.targets }}
 
@@ -198,7 +198,7 @@ jobs:
 
       - name: Save cache
         if: ${{ inputs.upload_ccache && github.ref == 'refs/heads/develop' }}
-        uses: ./.github/actions/save_cache
+        uses: ./.github/actions/save-cache
         with:
           conan_profile: ${{ inputs.conan_profile }}
           ccache_dir: ${{ env.CCACHE_DIR }}
@@ -216,7 +216,7 @@ jobs:
       # It's all available in the build job, but not in the test job
       - name: Run code coverage
         if: ${{ inputs.code_coverage }}
-        uses: ./.github/actions/code_coverage
+        uses: ./.github/actions/code-coverage
 
       - name: Verify expected version
         if: ${{ inputs.expected_version != '' }}
@@ -238,6 +238,6 @@ jobs:
     if: ${{ inputs.code_coverage }}
     name: Codecov
     needs: build
-    uses: ./.github/workflows/upload_coverage_report.yml
+    uses: ./.github/workflows/reusable-upload-coverage-report.yml
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

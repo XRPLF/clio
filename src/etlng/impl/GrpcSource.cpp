@@ -28,6 +28,7 @@
 
 #include <boost/asio/spawn.hpp>
 #include <fmt/format.h>
+#include <grpc/grpc.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/security/credentials.h>
 #include <grpcpp/support/channel_arguments.h>
@@ -36,6 +37,7 @@
 #include <org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <atomic>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -63,13 +65,18 @@ resolve(std::string const& ip, std::string const& port)
 
 namespace etlng::impl {
 
-GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort)
+GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::chrono::system_clock::duration deadline)
     : log_(fmt::format("ETL_Grpc[{}:{}]", ip, grpcPort))
     , initialLoadShouldStop_(std::make_unique<std::atomic_bool>(false))
+    , deadline_{deadline}
 {
     try {
         grpc::ChannelArguments chArgs;
         chArgs.SetMaxReceiveMessageSize(-1);
+        chArgs.SetInt(GRPC_ARG_KEEPALIVE_TIME_MS, kKEEPALIVE_PING_INTERVAL_MS);
+        chArgs.SetInt(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, kKEEPALIVE_TIMEOUT_MS);
+        chArgs.SetInt(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, static_cast<int>(kKEEPALIVE_PERMIT_WITHOUT_CALLS));
+        chArgs.SetInt(GRPC_ARG_HTTP2_MAX_PINGS_WITHOUT_DATA, kMAX_PINGS_WITHOUT_DATA);
 
         stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
             grpc::CreateCustomChannel(resolve(ip, grpcPort), grpc::InsecureChannelCredentials(), chArgs)
@@ -88,9 +95,10 @@ GrpcSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighb
     if (!stub_)
         return {{grpc::StatusCode::INTERNAL, "No Stub"}, response};
 
-    // Ledger header with txns and metadata
     org::xrpl::rpc::v1::GetLedgerRequest request;
     grpc::ClientContext context;
+
+    context.set_deadline(std::chrono::system_clock::now() + deadline_);  // Prevent indefinite blocking
 
     request.mutable_ledger()->set_sequence(sequence);
     request.set_transactions(true);

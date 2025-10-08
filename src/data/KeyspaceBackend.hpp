@@ -134,7 +134,7 @@ public:
             auto const startTaxon = cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0;
             auto const startTokenID = cursorIn.value_or(ripple::uint256(0));
 
-            Statement firstQuery = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
+            Statement const firstQuery = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
             firstQuery.bindAt(1, startTaxon);
             firstQuery.bindAt(2, startTokenID);
             firstQuery.bindAt(3, Limit{limit});
@@ -147,7 +147,7 @@ public:
 
             if (nftIDs.size() < limit) {
                 auto const remainingLimit = limit - nftIDs.size();
-                Statement secondQuery = schema_->selectNFTsAfterTaxonKeyspaces.bind(issuer);
+                Statement const secondQuery = schema_->selectNFTsAfterTaxonKeyspaces.bind(issuer);
                 secondQuery.bindAt(1, startTaxon);
                 secondQuery.bindAt(2, Limit{remainingLimit});
 
@@ -197,7 +197,7 @@ private:
     ) const
     {
         std::vector<ripple::uint256> nftIDs;
-        Statement statement = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
+        Statement const statement = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
         statement.bindAt(1, taxon);
         statement.bindAt(2, cursorIn.value_or(ripple::uint256(0)));
         statement.bindAt(3, Limit{limit});

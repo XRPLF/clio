@@ -6,7 +6,7 @@ inputs:
     description: Space-separated build target names
     default: all
   subtract_threads:
-    description: An option for the action get_number_of_threads. See get_number_of_threads
+    description: An option for the action get-threads-number.
     required: true
     default: "0"
 
@@ -14,7 +14,7 @@ runs:
   using: composite
   steps:
     - name: Get number of threads
-      uses: ./.github/actions/get_number_of_threads
+      uses: ./.github/actions/get-threads-number
       id: number_of_threads
       with:
         subtract_threads: ${{ inputs.subtract_threads }}
