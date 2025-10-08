@@ -41,15 +41,18 @@
 #include <xrpl/basics/strHex.h>
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <future>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <queue>
+#include <semaphore>
 #include <string>
 #include <vector>
 
@@ -356,4 +359,35 @@ TEST_F(GrpcSourceStopTests, LoadInitialLedgerStopsWhenRequested)
 
     ASSERT_FALSE(res.has_value());
     EXPECT_EQ(res.error(), etlng::InitialLedgerLoadError::Cancelled);
+}
+
+TEST_F(GrpcSourceNgTests, DeadlineIsHandledCorrectly)
+{
+    static constexpr auto kDEADLINE = std::chrono::milliseconds{5};
+
+    uint32_t const sequence = 123u;
+    bool const getObjects = true;
+    bool const getObjectNeighbors = false;
+
+    std::binary_semaphore sem(0);
+
+    auto grpcSource =
+        std::make_unique<etlng::impl::GrpcSource>("localhost", std::to_string(getXRPLMockPort()), kDEADLINE);
+
+    EXPECT_CALL(mockXrpLedgerAPIService, GetLedger)
+        .WillOnce([&](grpc::ServerContext*,
+                      org::xrpl::rpc::v1::GetLedgerRequest const*,
+                      org::xrpl::rpc::v1::GetLedgerResponse*) {
+            // wait for main thread to discard us and fail the test if unsuccessful within expected timeframe
+            [&] { ASSERT_TRUE(sem.try_acquire_for(std::chrono::milliseconds{50})); }();
+            return grpc::Status{};
+        });
+
+    auto const [status, response] = grpcSource->fetchLedger(sequence, getObjects, getObjectNeighbors);
+    ASSERT_FALSE(status.ok());  // timed out after kDEADLINE
+
+    sem.release();  // we don't need to hold GetLedger thread any longer
+    grpcSource.reset();
+
+    shutdown(std::chrono::milliseconds{10});
 }
