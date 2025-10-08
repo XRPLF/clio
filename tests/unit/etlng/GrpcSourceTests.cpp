@@ -378,7 +378,8 @@ TEST_F(GrpcSourceNgTests, DeadlineIsHandledCorrectly)
         .WillOnce([&](grpc::ServerContext*,
                       org::xrpl::rpc::v1::GetLedgerRequest const*,
                       org::xrpl::rpc::v1::GetLedgerResponse*) {
-            sem.acquire();  // wait for main thread to discard us
+            // wait for main thread to discard us and fail the test if unsuccessfull within expected timeframe
+            [&] { ASSERT_TRUE(sem.try_acquire_for(std::chrono::milliseconds{50})); }();
             return grpc::Status{};
         });
 
