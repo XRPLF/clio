@@ -40,7 +40,7 @@ protected:
     util::async::CoroExecutionContext ctx_;
 };
 
-TEST_F(AmendmentBlockHandlerNgTests, CallTonotifyAmendmentBlockedSetsStateAndRepeatedlyCallsAction)
+TEST_F(AmendmentBlockHandlerNgTests, CallToNotifyAmendmentBlockedSetsStateAndRepeatedlyCallsAction)
 {
     static constexpr auto kMAX_ITERATIONS = 10uz;
     etlng::impl::AmendmentBlockHandler handler{ctx_, state_, std::chrono::nanoseconds{1}, actionMock_.AsStdFunction()};
@@ -55,6 +55,7 @@ TEST_F(AmendmentBlockHandlerNgTests, CallTonotifyAmendmentBlockedSetsStateAndRep
 
     handler.notifyAmendmentBlocked();
     stop.acquire();  // wait for the counter to reach over kMAX_ITERATIONS
+    handler.stop();
 
     EXPECT_TRUE(state_.isAmendmentBlocked);
 }

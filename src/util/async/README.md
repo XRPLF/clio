@@ -1,5 +1,7 @@
 # Async framework
 
+@page "async" Async framework
+
 ## Introduction
 
 Clio uses threads intensively. Multiple parts of Clio were/are implemented by running a `std::thread` with some sort of loop inside. Every time this pattern is reimplemented in a slightly different way. State is managed using asynchronous queues, atomic flags, mutexes and other low level primitives.

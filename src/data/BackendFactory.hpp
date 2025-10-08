@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/CassandraBackend.hpp"
+#include "data/KeyspaceBackend.hpp"
 #include "data/LedgerCacheInterface.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
 #include "util/config/ConfigDefinition.hpp"
@@ -55,9 +56,15 @@ makeBackend(util::config::ClioConfigDefinition const& config, data::LedgerCacheI
 
     if (boost::iequals(type, "cassandra")) {
         auto const cfg = config.getObject("database." + type);
-        backend = std::make_shared<data::cassandra::CassandraBackend>(
-            data::cassandra::SettingsProvider{cfg}, cache, readOnly
-        );
+        if (cfg.getValueView("provider").asString() == toString(cassandra::impl::Provider::Keyspace)) {
+            backend = std::make_shared<data::cassandra::KeyspaceBackend>(
+                data::cassandra::SettingsProvider{cfg}, cache, readOnly
+            );
+        } else {
+            backend = std::make_shared<data::cassandra::CassandraBackend>(
+                data::cassandra::SettingsProvider{cfg}, cache, readOnly
+            );
+        }
     }
 
     if (!backend)

@@ -1,5 +1,7 @@
 # Clio Migration
 
+@page "migration" Clio Migration
+
 Clio maintains the off-chain data of XRPL and multiple indexes tables to powering complex queries. To simplify the creation of index tables, this migration framework handles the process of database change and facilitates the migration of historical data seamlessly.
 
 ## Command Line Usage

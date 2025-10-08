@@ -20,9 +20,13 @@
 #include "util/CassandraDBHelper.hpp"
 
 #include "data/cassandra/Handle.hpp"
+#include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/Result.hpp"
 
 #include <fmt/format.h>
+
+#include <cstdint>
+#include <string>
 
 data::cassandra::ResultOrError
 writeTxFromCSVString(std::string const& space, std::string const& record, data::cassandra::Handle const& handler)
