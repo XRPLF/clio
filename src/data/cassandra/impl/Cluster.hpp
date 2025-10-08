@@ -20,6 +20,7 @@
 #pragma once
 
 #include "data/cassandra/impl/ManagedObject.hpp"
+#include "util/Assert.hpp"
 #include "util/log/Logger.hpp"
 
 #include <cassandra.h>
@@ -31,22 +32,21 @@
 #include <string>
 #include <string_view>
 #include <thread>
-#include <utility>
 #include <variant>
 
 namespace data::cassandra::impl {
-
-namespace {
 
 enum class Provider { Cassandra, Keyspace };
 
 inline Provider
 providerFromString(std::string const& provider)
 {
+    ASSERT(
+        provider == "cassandra" || provider == "aws_keyspace",
+        "Provider type must be one of 'cassandra' or 'aws_keyspace'"
+    );
     return provider == "cassandra" ? Provider::Cassandra : Provider::Keyspace;
 }
-
-}  // namespace
 
 // TODO: move Settings to public interface, not impl
 

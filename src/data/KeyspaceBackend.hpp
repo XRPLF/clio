@@ -203,7 +203,7 @@ private:
         statement.bindAt(3, Limit{limit});
 
         auto const res = executor_.read(yield, statement);
-        if (res.has_value() && (*res).hasRows()) {
+        if (res.has_value() && res->hasRows()) {
             for (auto const [nftID] : extract<ripple::uint256>(*res))
                 nftIDs.push_back(nftID);
         }

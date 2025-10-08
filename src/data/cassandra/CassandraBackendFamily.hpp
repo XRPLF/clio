@@ -234,9 +234,9 @@ public:
     fetchLatestLedgerSequence(boost::asio::yield_context yield) const override
     {
         if (auto const res = executor_.read(yield, schema_->selectLatestLedger); res.has_value()) {
-            if (auto const& result = *res; result) {
-                if (auto const maybeValue = result.template get<uint32_t>(); maybeValue.has_value())
-                    return maybeValue;
+            if (auto const& rows = *res; rows) {
+                if (auto const maybeRow = rows.template get<uint32_t>(); maybeRow.has_value())
+                    return maybeRow;
 
                 LOG(log_.error()) << "Could not fetch latest ledger - no rows";
                 return std::nullopt;
