@@ -32,7 +32,9 @@
 #include <org/xrpl/rpc/v1/get_ledger_entry.pb.h>
 #include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
+#include <chrono>
 #include <memory>
+#include <optional>
 #include <string>
 #include <thread>
 
@@ -90,8 +92,7 @@ struct WithMockXrpLedgerAPIService : virtual ::testing::Test {
 
     ~WithMockXrpLedgerAPIService() override
     {
-        server_->Shutdown();
-        serverThread_.join();
+        shutdown();
     }
 
     int
@@ -99,6 +100,19 @@ struct WithMockXrpLedgerAPIService : virtual ::testing::Test {
     {
         return port_;
     }
+
+    void
+    shutdown(std::optional<std::chrono::system_clock::duration> deadline = std::nullopt)
+    {
+        if (deadline.has_value()) {
+            server_->Shutdown(std::chrono::system_clock::now() + *deadline);
+        } else {
+            server_->Shutdown();
+        }
+        if (serverThread_.joinable())
+            serverThread_.join();
+    }
+
     MockXrpLedgerAPIService mockXrpLedgerAPIService;
 
 private:

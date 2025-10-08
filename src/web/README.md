@@ -1,5 +1,7 @@
 # Web server subsystem
 
+@page "web" Web server subsystem
+
 This folder contains all of the classes for running the web server.
 
 The web server subsystem:

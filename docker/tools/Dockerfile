@@ -51,7 +51,7 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-ARG DOXYGEN_VERSION=1.12.0
+ARG DOXYGEN_VERSION=1.14.0
 RUN wget --progress=dot:giga "https://github.com/doxygen/doxygen/releases/download/Release_${DOXYGEN_VERSION//./_}/doxygen-${DOXYGEN_VERSION}.src.tar.gz" \
     && tar xf "doxygen-${DOXYGEN_VERSION}.src.tar.gz" \
     && cd "doxygen-${DOXYGEN_VERSION}" \
