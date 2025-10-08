@@ -1,4 +1,6 @@
-﻿# RPC subsystem
+# RPC subsystem
+
+@page "rpc" RPC subsystem
 
 The RPC subsystem is where the common framework for handling incoming JSON requests is implemented.
 

@@ -14,7 +14,7 @@ updates:
     target-branch: develop
 
   - package-ecosystem: github-actions
-    directory: .github/actions/build_clio/
+    directory: .github/actions/build-clio/
     schedule:
       interval: weekly
       day: monday
@@ -27,7 +27,7 @@ updates:
     target-branch: develop
 
   - package-ecosystem: github-actions
-    directory: .github/actions/build_docker_image/
+    directory: .github/actions/build-docker-image/
     schedule:
       interval: weekly
       day: monday
@@ -53,7 +53,7 @@ updates:
     target-branch: develop
 
   - package-ecosystem: github-actions
-    directory: .github/actions/code_coverage/
+    directory: .github/actions/code-coverage/
     schedule:
       interval: weekly
       day: monday
@@ -79,7 +79,7 @@ updates:
     target-branch: develop
 
   - package-ecosystem: github-actions
-    directory: .github/actions/create_issue/
+    directory: .github/actions/create-issue/
     schedule:
       interval: weekly
       day: monday
@@ -92,7 +92,7 @@ updates:
     target-branch: develop
 
   - package-ecosystem: github-actions
-    directory: .github/actions/get_number_of_threads/
+    directory: .github/actions/get-threads-number/
     schedule:
       interval: weekly
       day: monday
@@ -105,7 +105,7 @@ updates:
     target-branch: develop
 
   - package-ecosystem: github-actions
-    directory: .github/actions/git_common_ancestor/
+    directory: .github/actions/git-common-ancestor/
     schedule:
       interval: weekly
       day: monday
@@ -118,7 +118,7 @@ updates:
     target-branch: develop
 
   - package-ecosystem: github-actions
-    directory: .github/actions/restore_cache/
+    directory: .github/actions/restore-cache/
     schedule:
       interval: weekly
       day: monday
@@ -131,7 +131,7 @@ updates:
     target-branch: develop
 
   - package-ecosystem: github-actions
-    directory: .github/actions/save_cache/
+    directory: .github/actions/save-cache/
     schedule:
       interval: weekly
       day: monday

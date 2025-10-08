@@ -18,7 +18,7 @@ on:
   pull_request:
     branches: [develop]
     paths:
-      - .github/workflows/upload_conan_deps.yml
+      - .github/workflows/upload-conan-deps.yml
 
       - .github/actions/conan/action.yml
       - ".github/scripts/conan/**"
@@ -28,7 +28,7 @@ on:
   push:
     branches: [develop]
     paths:
-      - .github/workflows/upload_conan_deps.yml
+      - .github/workflows/upload-conan-deps.yml
 
       - .github/actions/conan/action.yml
       - ".github/scripts/conan/**"

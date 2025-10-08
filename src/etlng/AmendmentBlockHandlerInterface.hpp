@@ -32,6 +32,12 @@ struct AmendmentBlockHandlerInterface {
      */
     virtual void
     notifyAmendmentBlocked() = 0;
+
+    /**
+     * @brief Stop the block handler from repeatedly executing
+     */
+    virtual void
+    stop() = 0;
 };
 
 }  // namespace etlng

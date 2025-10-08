@@ -56,11 +56,10 @@ public:
         ActionType action = kDEFAULT_AMENDMENT_BLOCK_ACTION
     );
 
-    ~AmendmentBlockHandler() override
-    {
-        if (operation_.has_value())
-            operation_.value().abort();
-    }
+    ~AmendmentBlockHandler() override;
+
+    void
+    stop() override;
 
     void
     notifyAmendmentBlocked() override;
