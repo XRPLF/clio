@@ -70,10 +70,10 @@ namespace data::cassandra {
  *
  * Note: This is a safer and more correct rewrite of the original implementation of the backend.
  *
- * @tparam SettingsProviderType The settings provider type to use
- * @tparam ExecutionStrategyType The execution strategy type to use
- * @tparam SchemaType The Schema type to use
- * @tparam FetchLedgerCacheType The ledger header cache type to use
+ * @tparam SettingsProviderType The settings provider type
+ * @tparam ExecutionStrategyType The execution strategy type
+ * @tparam SchemaType The Schema type
+ * @tparam FetchLedgerCacheType The ledger header cache type
  */
 template <
     SomeSettingsProvider SettingsProviderType,
@@ -100,8 +100,8 @@ public:
     /**
      * @brief Create a new cassandra/scylla backend instance.
      *
-     * @param settingsProvider The settings provider to use
-     * @param cache The ledger cache to use
+     * @param settingsProvider The settings provider
+     * @param cache The ledger cache
      * @param readOnly Whether the database should be in readonly mode
      */
     CassandraBackendFamily(SettingsProviderType settingsProvider, data::LedgerCacheInterface& cache, bool readOnly)
@@ -122,7 +122,7 @@ public:
                     throw std::runtime_error("Could not create keyspace: " + res.error());
             }
 
-            if (auto const res = handle_.executeEach(schema_.createSchema); not res)
+            if (auto const res = handle_.executeEach(schema_.createSchema); not res.has_value())
                 throw std::runtime_error("Could not create schema: " + res.error());
         }
 
@@ -233,9 +233,9 @@ public:
     std::optional<std::uint32_t>
     fetchLatestLedgerSequence(boost::asio::yield_context yield) const override
     {
-        if (auto const res = executor_.read(yield, schema_->selectLatestLedger); res) {
-            if (auto const& result = res.value(); result) {
-                if (auto const maybeValue = result.template get<uint32_t>(); maybeValue)
+        if (auto const res = executor_.read(yield, schema_->selectLatestLedger); res.has_value()) {
+            if (auto const& result = *res; result) {
+                if (auto const maybeValue = result.template get<uint32_t>(); maybeValue.has_value())
                     return maybeValue;
 
                 LOG(log_.error()) << "Could not fetch latest ledger - no rows";

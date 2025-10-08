@@ -40,16 +40,10 @@ namespace {
 
 enum class Provider { Cassandra, Keyspace };
 
-inline std::string
-toString(Provider provider)
+inline Provider
+providerFromString(std::string const& provider)
 {
-    switch (provider) {
-        case Provider::Cassandra:
-            return "cassandra";
-        case Provider::Keyspace:
-            return "aws_keyspace";
-    }
-    std::unreachable();
+    return provider == "cassandra" ? Provider::Cassandra : Provider::Keyspace;
 }
 
 }  // namespace
@@ -109,7 +103,7 @@ struct Settings {
     std::size_t writeBatchSize = kDEFAULT_BATCH_SIZE;
 
     /** @brief Provider to know if we are using scylladb or keyspace */
-    std::string provider = toString(kDEFAULT_PROVIDER);
+    Provider provider = kDEFAULT_PROVIDER;
 
     /** @brief Size of the IO queue */
     std::optional<uint32_t> queueSizeIO = std::nullopt;  // NOLINT(readability-redundant-member-init)
