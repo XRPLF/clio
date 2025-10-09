@@ -35,7 +35,7 @@ LoggerFixture::init()
 {
     util::LogServiceState::init(false, util::Severity::FTL, {});
 
-    std::ranges::for_each(util::Logger::kCHANNELS, [](char const* channel) {
+    std::ranges::for_each(util::Logger::kCHANNELS, [](std::string_view const channel) {
         util::LogService::registerLogger(channel);
     });
 
