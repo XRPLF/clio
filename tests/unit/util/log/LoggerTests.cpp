@@ -21,10 +21,22 @@
 #include "util/log/Logger.hpp"
 
 #include <gtest/gtest.h>
+#include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 
 #include <cstddef>
 #include <string>
 using namespace util;
+
+namespace {
+size_t
+loggersNum()
+{
+    size_t counter = 0;
+    spdlog::apply_all([&counter](std::shared_ptr<spdlog::logger>) { ++counter; });
+    return counter;
+}
+}  // namespace
 
 // Used as a fixture for tests with enabled logging
 class LoggerTest : public LoggerFixture {};
@@ -71,3 +83,24 @@ TEST_F(LoggerTest, LOGMacro)
     EXPECT_TRUE(computeCalled);
 }
 #endif
+
+TEST_F(LoggerTest, ManyDynamicLoggers)
+{
+    static constexpr size_t kNUM_LOGGERS = 10'000;
+
+    auto initialLoggers = loggersNum();
+
+    for (size_t i = 0; i < kNUM_LOGGERS; ++i) {
+        std::string const loggerName = "DynamicLogger" + std::to_string(i);
+
+        Logger log{loggerName};
+        log.info() << "Logger number " << i;
+        ASSERT_EQ(getLoggerString(), "inf:" + loggerName + " - Logger number " + std::to_string(i) + "\n");
+
+        Logger copy = log;
+        copy.info() << "Copy of logger number " << i;
+        ASSERT_EQ(getLoggerString(), "inf:" + loggerName + " - Copy of logger number " + std::to_string(i) + "\n");
+    }
+
+    ASSERT_EQ(loggersNum(), initialLoggers);
+}

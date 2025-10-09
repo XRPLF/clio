@@ -101,7 +101,7 @@ TEST_F(LogServiceInitTests, DefaultLogLevel)
     EXPECT_TRUE(LogService::init(config_));
 
     std::string const logString = "some log";
-    for (auto const& channel : Logger::kCHANNELS) {
+    for (std::string_view const channel : Logger::kCHANNELS) {
         Logger const log{channel};
         log.trace() << logString;
         auto loggerStr = getLoggerString();

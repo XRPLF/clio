@@ -29,6 +29,7 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 // We forward declare spdlog::logger and spdlog::sinks::sink
@@ -91,7 +92,7 @@ enum class Severity {
  * otherwise. See @ref LogService::init() for setup of the logging core and
  * severity levels for each channel.
  */
-class Logger final {
+class Logger {
     std::shared_ptr<spdlog::logger> logger_;
 
     friend class LogService;  // to expose the Pump interface
@@ -145,7 +146,7 @@ class Logger final {
     };
 
 public:
-    static constexpr std::array<char const*, 8> kCHANNELS = {
+    static constexpr std::array<std::string_view, 8> kCHANNELS = {
         "General",
         "WebServer",
         "Backend",
@@ -165,10 +166,10 @@ public:
      *
      * @param channel The channel this logger will report into.
      */
-    Logger(std::string channel);
+    Logger(std::string_view const channel);
 
     Logger(Logger const&) = default;
-    ~Logger() = default;
+    ~Logger();
 
     Logger(Logger&&) = default;
     Logger&
@@ -291,7 +292,7 @@ protected:
      * @return Shared pointer to the registered spdlog logger
      */
     static std::shared_ptr<spdlog::logger>
-    registerLogger(std::string const& channel, std::optional<Severity> severity = std::nullopt);
+    registerLogger(std::string_view channel, std::optional<Severity> severity = std::nullopt);
 
 protected:
     static bool isAsync_;                                             // NOLINT(readability-identifier-naming)
