@@ -435,11 +435,15 @@ Logger::Logger(std::string_view const channel) : logger_(LogServiceState::regist
 
 Logger::~Logger()
 {
+    // One reference is held by logger_ and the other by spdlog registry
+    static constexpr size_t kLAST_LOGGER_REF_COUNT = 2;
+
     if (logger_ == nullptr) {
         return;
     }
+
     bool const isDynamic = !std::ranges::contains(kCHANNELS, logger_->name());
-    if (isDynamic && logger_.use_count() == 2) {
+    if (isDynamic && logger_.use_count() == kLAST_LOGGER_REF_COUNT) {
         spdlog::drop(logger_->name());
     }
 }

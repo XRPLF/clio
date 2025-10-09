@@ -91,18 +91,15 @@ TEST_F(LoggerTest, ManyDynamicLoggers)
     auto initialLoggers = loggersNum();
 
     for (size_t i = 0; i < kNUM_LOGGERS; ++i) {
-        Logger log{"DynamicLogger" + std::to_string(i)};
+        std::string const loggerName = "DynamicLogger" + std::to_string(i);
+
+        Logger log{loggerName};
         log.info() << "Logger number " << i;
-        ASSERT_EQ(
-            getLoggerString(), "inf:DynamicLogger" + std::to_string(i) + " - Logger number " + std::to_string(i) + "\n"
-        );
+        ASSERT_EQ(getLoggerString(), "inf:" + loggerName + " - Logger number " + std::to_string(i) + "\n");
 
         Logger copy = log;
         copy.info() << "Copy of logger number " << i;
-        ASSERT_EQ(
-            getLoggerString(),
-            "inf:DynamicLogger" + std::to_string(i) + " - Copy of logger number " + std::to_string(i) + "\n"
-        );
+        ASSERT_EQ(getLoggerString(), "inf:" + loggerName + " - Copy of logger number " + std::to_string(i) + "\n");
     }
 
     ASSERT_EQ(loggersNum(), initialLoggers);
