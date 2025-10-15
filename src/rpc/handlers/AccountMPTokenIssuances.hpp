@@ -50,7 +50,7 @@ namespace rpc {
  */
 class AccountMPTokenIssuancesHandler {
     // dependencies
-    std::shared_ptr<BackendInterface> const sharedPtrBackend_;
+    std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
     static constexpr auto kLIMIT_MIN = 10;
@@ -113,8 +113,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use.
      */
-    AccountMPTokenIssuancesHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    AccountMPTokenIssuancesHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
+        : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
     }
 
@@ -156,7 +156,6 @@ public:
     Result
     process(Input const& input, Context const& ctx) const;
 
-private:
     /**
      * @brief Populates an MPTokenIssuanceResponse from a ledger entry and adds it to the list.
      */

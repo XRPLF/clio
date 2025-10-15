@@ -45,11 +45,10 @@ namespace rpc {
 
 /**
  * @brief The account_mptokens method returns information about the MPTokens the account currently holds.
- *
  */
 class AccountMPTokensHandler {
     // dependencies
-    std::shared_ptr<BackendInterface> const sharedPtrBackend_;
+    std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
     static constexpr auto kLIMIT_MIN = 10;
@@ -100,8 +99,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use.
      */
-    AccountMPTokensHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    AccountMPTokensHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
+        : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
     }
 

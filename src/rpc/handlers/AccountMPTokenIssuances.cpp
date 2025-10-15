@@ -62,20 +62,18 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
     issuance.sequence = sle.getFieldU32(ripple::sfSequence);
     auto const flags = sle.getFieldU32(ripple::sfFlags);
 
-    if ((flags & ripple::lsfMPTLocked) != 0u)
-        issuance.mptLocked = true;
-    if ((flags & ripple::lsfMPTCanLock) != 0u)
-        issuance.mptCanLock = true;
-    if ((flags & ripple::lsfMPTRequireAuth) != 0u)
-        issuance.mptRequireAuth = true;
-    if ((flags & ripple::lsfMPTCanEscrow) != 0u)
-        issuance.mptCanEscrow = true;
-    if ((flags & ripple::lsfMPTCanTrade) != 0u)
-        issuance.mptCanTrade = true;
-    if ((flags & ripple::lsfMPTCanTransfer) != 0u)
-        issuance.mptCanTransfer = true;
-    if ((flags & ripple::lsfMPTCanClawback) != 0u)
-        issuance.mptCanClawback = true;
+    auto const setFlag = [&](std::optional<bool>& field, std::uint32_t mask) {
+        if ((flags & mask) != 0u)
+            field = true;
+    };
+
+    setFlag(issuance.mptLocked, ripple::lsfMPTLocked);
+    setFlag(issuance.mptCanLock, ripple::lsfMPTCanLock);
+    setFlag(issuance.mptRequireAuth, ripple::lsfMPTRequireAuth);
+    setFlag(issuance.mptCanEscrow, ripple::lsfMPTCanEscrow);
+    setFlag(issuance.mptCanTrade, ripple::lsfMPTCanTrade);
+    setFlag(issuance.mptCanTransfer, ripple::lsfMPTCanTransfer);
+    setFlag(issuance.mptCanClawback, ripple::lsfMPTCanClawback);
 
     if (sle.isFieldPresent(ripple::sfTransferFee))
         issuance.transferFee = sle.getFieldU16(ripple::sfTransferFee);
@@ -119,7 +117,7 @@ AccountMPTokenIssuancesHandler::process(AccountMPTokenIssuancesHandler::Input co
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
 
     if (not accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
+        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     Output response;
     response.issuances.reserve(input.limit);
@@ -211,35 +209,27 @@ tag_invoke(
         {JS(sequence), issuance.sequence},
     };
 
-    if (issuance.transferFee)
-        obj["transfer_fee"] = *issuance.transferFee;
-    if (issuance.assetScale)
-        obj["asset_scale"] = *issuance.assetScale;
-    if (issuance.maximumAmount)
-        obj["maximum_amount"] = *issuance.maximumAmount;
-    if (issuance.outstandingAmount)
-        obj["outstanding_amount"] = *issuance.outstandingAmount;
-    if (issuance.lockedAmount)
-        obj["locked_amount"] = *issuance.lockedAmount;
-    if (issuance.mptokenMetadata)
-        obj["mptoken_metadata"] = *issuance.mptokenMetadata;
-    if (issuance.domainID)
-        obj["domain_id"] = *issuance.domainID;
+    auto const setIfPresent = [&](boost::json::string_view field, auto const& value) {
+        if (value.has_value()) {
+            obj[field] = *value;
+        }
+    };
 
-    if (issuance.mptLocked)
-        obj["mpt_locked"] = *issuance.mptLocked;
-    if (issuance.mptCanLock)
-        obj["mpt_can_lock"] = *issuance.mptCanLock;
-    if (issuance.mptRequireAuth)
-        obj["mpt_require_auth"] = *issuance.mptRequireAuth;
-    if (issuance.mptCanEscrow)
-        obj["mpt_can_escrow"] = *issuance.mptCanEscrow;
-    if (issuance.mptCanTrade)
-        obj["mpt_can_trade"] = *issuance.mptCanTrade;
-    if (issuance.mptCanTransfer)
-        obj["mpt_can_transfer"] = *issuance.mptCanTransfer;
-    if (issuance.mptCanClawback)
-        obj["mpt_can_clawback"] = *issuance.mptCanClawback;
+    setIfPresent("transfer_fee", issuance.transferFee);
+    setIfPresent("asset_scale", issuance.assetScale);
+    setIfPresent("maximum_amount", issuance.maximumAmount);
+    setIfPresent("outstanding_amount", issuance.outstandingAmount);
+    setIfPresent("locked_amount", issuance.lockedAmount);
+    setIfPresent("mptoken_metadata", issuance.mptokenMetadata);
+    setIfPresent("domain_id", issuance.domainID);
+
+    setIfPresent("mpt_locked", issuance.mptLocked);
+    setIfPresent("mpt_can_lock", issuance.mptCanLock);
+    setIfPresent("mpt_require_auth", issuance.mptRequireAuth);
+    setIfPresent("mpt_can_escrow", issuance.mptCanEscrow);
+    setIfPresent("mpt_can_trade", issuance.mptCanTrade);
+    setIfPresent("mpt_can_transfer", issuance.mptCanTransfer);
+    setIfPresent("mpt_can_clawback", issuance.mptCanClawback);
 
     jv = std::move(obj);
 }

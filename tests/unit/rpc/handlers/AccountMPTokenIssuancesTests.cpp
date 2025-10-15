@@ -66,8 +66,8 @@ constexpr uint64_t kISSUANCE2_MAX_AMOUNT = 20000;
 constexpr uint64_t kISSUANCE2_OUTSTANDING_AMOUNT = 800;
 constexpr uint64_t kISSUANCE2_LOCKED_AMOUNT = 100;
 constexpr uint16_t kISSUANCE2_TRANSFER_FEE = 5;
-std::string const kISSUANCE2_METADATA = "test-meta";
-std::string const kISSUANCE2_METADATA_HEX = "746573742D6D657461";
+constexpr auto kISSUANCE2_METADATA = "test-meta";
+constexpr auto kISSUANCE2_METADATA_HEX = "746573742D6D657461";
 constexpr auto kISSUANCE2_DOMAIN_ID_HEX = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
 // define expected JSON for mpt issuances
@@ -208,9 +208,8 @@ TEST_P(AccountMPTokenIssuancesParameterTest, InvalidParams)
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, NonExistLedgerViaLedgerHash)
 {
     // mock fetchLedgerByHash return empty
-    EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+        .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto const input = json::parse(
         fmt::format(
@@ -237,8 +236,8 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, NonExistLedgerViaLedgerHash)
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
+
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
@@ -262,8 +261,8 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, NonExistLedgerViaLedgerStringIndex
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
+
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
@@ -287,8 +286,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, NonExistLedgerViaLedgerIntIndex)
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LedgerSeqOutOfRangeByHash)
 {
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 31);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
-    EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
+    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillOnce(Return(ledgerHeader));
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
@@ -336,11 +334,10 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LedgerSeqOutOfRangeByIndex)
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, NonExistAccount)
 {
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
-    EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
+    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillOnce(Return(ledgerHeader));
     // fetch account object return empty
-    ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
+    EXPECT_CALL(*backend_, doFetchLedgerObject).WillOnce(Return(std::optional<Blob>{}));
+
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
@@ -357,7 +354,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, NonExistAccount)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
-        EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "Account not found.");
     });
 }
 
@@ -365,7 +362,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, NonExistAccount)
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, DefaultParameters)
 {
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     // return non-empty account
     auto account = getAccountIdWithString(kACCOUNT);
@@ -407,8 +404,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, DefaultParameters)
 
     bbs.push_back(issuance1.getSerializer().peekData());
     bbs.push_back(issuance2.getSerializer().peekData());
-    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     runSpawn([this](auto yield) {
         auto const expected = fmt::format(
@@ -528,8 +524,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerOutput)
     constexpr auto kNEXT_PAGE = 99;
     constexpr auto kLIMIT = 15;
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto account = getAccountIdWithString(kACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
@@ -547,8 +542,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerOutput)
     for (int i = 0; i < kLIMIT; ++i) {
         bbs.push_back(createMptIssuanceObject(kACCOUNT, i).getSerializer().peekData());
     }
-    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     // mock the first directory page
     ripple::STObject ownerDir1 = createOwnerDirLedgerObject(indexes, kISSUANCE_INDEX1);
@@ -591,8 +585,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerInput)
     constexpr auto kLIMIT = 15;
 
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto account = getAccountIdWithString(kACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
@@ -612,8 +605,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerInput)
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
 
-    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     runSpawn([this, kLIMIT, kNEXT_PAGE](auto yield) {
         auto const input = json::parse(
@@ -642,8 +634,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerInput)
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitLessThanMin)
 {
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto account = getAccountIdWithString(kACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
@@ -684,8 +675,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitLessThanMin)
     bbs.push_back(issuance1.getSerializer().peekData());
     bbs.push_back(issuance2.getSerializer().peekData());
 
-    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     runSpawn([this](auto yield) {
         auto const input = json::parse(
@@ -728,8 +718,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitLessThanMin)
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitMoreThanMax)
 {
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto account = getAccountIdWithString(kACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
@@ -770,8 +759,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitMoreThanMax)
     bbs.push_back(issuance1.getSerializer().peekData());
     bbs.push_back(issuance2.getSerializer().peekData());
 
-    ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     runSpawn([this](auto yield) {
         auto const input = json::parse(
@@ -814,8 +802,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitMoreThanMax)
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, EmptyResult)
 {
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto account = getAccountIdWithString(kACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;

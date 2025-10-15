@@ -62,10 +62,13 @@ AccountMPTokensHandler::addMPToken(std::vector<MPTokenResponse>& mpts, ripple::S
     if (sle.isFieldPresent(ripple::sfLockedAmount))
         token.lockedAmount = sle.getFieldU64(ripple::sfLockedAmount);
 
-    if ((flags & ripple::lsfMPTLocked) != 0u)
-        token.mptLocked = true;
-    if ((flags & ripple::lsfMPTAuthorized) != 0u)
-        token.mptAuthorized = true;
+    auto const setFlag = [&](std::optional<bool>& field, std::uint32_t mask) {
+        if ((flags & mask) != 0u)
+            field = true;
+    };
+
+    setFlag(token.mptLocked, ripple::lsfMPTLocked);
+    setFlag(token.mptAuthorized, ripple::lsfMPTAuthorized);
 
     mpts.push_back(token);
 }
@@ -88,7 +91,7 @@ AccountMPTokensHandler::process(AccountMPTokensHandler::Input const& input, Cont
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
 
     if (not accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
+        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     Output response;
     response.mpts.reserve(input.limit);
@@ -172,12 +175,15 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountMPTokensH
         {JS(mpt_amount), mptoken.MPTAmount},
     };
 
-    if (mptoken.lockedAmount)
-        obj["locked_amount"] = *mptoken.lockedAmount;
-    if (mptoken.mptLocked)
-        obj["mpt_locked"] = *mptoken.mptLocked;
-    if (mptoken.mptAuthorized)
-        obj["mpt_authorized"] = *mptoken.mptAuthorized;
+    auto const setIfPresent = [&](boost::json::string_view field, auto const& value) {
+        if (value.has_value()) {
+            obj[field] = *value;
+        }
+    };
+
+    setIfPresent("locked_amount", mptoken.lockedAmount);
+    setIfPresent("mpt_locked", mptoken.mptLocked);
+    setIfPresent("mpt_authorized", mptoken.mptAuthorized);
 
     jv = std::move(obj);
 }
