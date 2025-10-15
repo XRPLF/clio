@@ -333,7 +333,13 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(mptoken), ripple::ltMPTOKEN},
         {JS(permissioned_domain), ripple::ltPERMISSIONED_DOMAIN},
         {JS(vault), ripple::ltVAULT},
-        {JS(delegate), ripple::ltDELEGATE}
+        {JS(delegate), ripple::ltDELEGATE},
+        {JS(amendments), ripple::ltAMENDMENTS},
+        {JS(fee), ripple::ltFEE_SETTINGS},
+        {JS(hashes), ripple::ltLEDGER_HASHES},
+        {JS(nft_offer), ripple::ltNFTOKEN_OFFER},
+        {JS(nunl), ripple::ltNEGATIVE_UNL},
+        {JS(signer_list), ripple::ltSIGNER_LIST}
     };
 
     auto const parseBridgeFromJson = [](boost::json::value const& bridgeJson) {

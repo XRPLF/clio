@@ -189,10 +189,11 @@ public:
         auto const nftUris = executor_.readEach(yield, selectNFTURIStatements);
 
         for (auto i = 0u; i < nftIDs.size(); i++) {
-            if (auto const maybeRow = nftInfos[i].template get<uint32_t, ripple::AccountID, bool>(); maybeRow) {
+            if (auto const maybeRow = nftInfos[i].template get<uint32_t, ripple::AccountID, bool>();
+                maybeRow.has_value()) {
                 auto [seq, owner, isBurned] = *maybeRow;
                 NFT nft(nftIDs[i], seq, owner, isBurned);
-                if (auto const maybeUri = nftUris[i].template get<ripple::Blob>(); maybeUri)
+                if (auto const maybeUri = nftUris[i].template get<ripple::Blob>(); maybeUri.has_value())
                     nft.uri = *maybeUri;
                 ret.nfts.push_back(nft);
             }

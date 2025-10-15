@@ -36,6 +36,9 @@ struct AmendmentBlockHandlerTest : util::prometheus::WithPrometheus, SyncAsioCon
     etl::SystemState state;
 };
 
+// Note: This test can be flaky due to the way it was written (depends on time)
+// Since the old ETL is going to be replaced by ETLng all tests including this one will be deleted anyway so the fix for
+// flakiness is to increase the context runtime to 50ms until then (to not waste time).
 TEST_F(AmendmentBlockHandlerTest, CallToNotifyAmendmentBlockedSetsStateAndRepeatedlyCallsAction)
 {
     AmendmentBlockHandler handler{ctx_, state, std::chrono::nanoseconds{1}, actionMock.AsStdFunction()};
@@ -45,12 +48,7 @@ TEST_F(AmendmentBlockHandlerTest, CallToNotifyAmendmentBlockedSetsStateAndRepeat
     handler.notifyAmendmentBlocked();
     EXPECT_TRUE(state.isAmendmentBlocked);
 
-// Code runs significantly slower when assertions are enabled
-#ifdef _GLIBCXX_ASSERTIONS
-    runContextFor(std::chrono::milliseconds{10});
-#else
-    runContextFor(std::chrono::milliseconds{1});
-#endif
+    runContextFor(std::chrono::milliseconds{50});
 }
 
 struct DefaultAmendmentBlockActionTest : LoggerFixture {};

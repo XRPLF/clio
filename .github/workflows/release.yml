@@ -51,9 +51,9 @@ jobs:
     with:
       overwrite_release: false
       prerelease: ${{ contains(github.ref_name, '-') }}
-      title: "${{ github.ref_name}}"
+      title: "${{ github.ref_name }}"
       version: "${{ github.ref_name }}"
       header: >
         ${{ contains(github.ref_name, '-') && '> **Note:** Please remember that this is a release candidate and it is not recommended for production use.' || '' }}
       generate_changelog: ${{ !contains(github.ref_name, '-') }}
-      draft: true
+      draft: ${{ !contains(github.ref_name, '-') }}

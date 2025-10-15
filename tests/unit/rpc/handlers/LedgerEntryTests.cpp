@@ -2311,11 +2311,23 @@ struct IndexTest : public HandlerBaseTest, public WithParamInterface<std::string
     };
 };
 
-// content of index, payment_channel, nft_page and check fields is ledger index.
+// content of index, amendments, check, fee, hashes, nft_offer, nunl, nft_page, payment_channel, signer_list fields is
+// ledger index.
 INSTANTIATE_TEST_CASE_P(
     RPCLedgerEntryGroup3,
     IndexTest,
-    Values("index", "nft_page", "payment_channel", "check"),
+    Values(
+        "index",
+        "amendments",
+        "check",
+        "fee",
+        "hashes",
+        "nft_offer",
+        "nunl",
+        "nft_page",
+        "payment_channel",
+        "signer_list"
+    ),
     IndexTest::NameGenerator{}
 );
 

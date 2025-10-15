@@ -57,9 +57,9 @@ namespace data::cassandra {
 /**
  * @brief Implements @ref CassandraBackendFamily for Keyspace
  *
- * @tparam SettingsProviderType The settings provider type to use
- * @tparam ExecutionStrategyType The execution strategy type to use
- * @tparam FetchLedgerCacheType The ledger header cache type to use
+ * @tparam SettingsProviderType The settings provider type
+ * @tparam ExecutionStrategyType The execution strategy type
+ * @tparam FetchLedgerCacheType The ledger header cache type
  */
 template <
     SomeSettingsProvider SettingsProviderType,
@@ -101,9 +101,9 @@ public:
         // !range_.has_value() means the table 'ledger_range' is not populated;
         // This would be the first write to the table.
         // In this case, insert both min_sequence/max_sequence range into the table.
-        if (not(range_.has_value())) {
-            executor_.writeSync(schema_->insertLedgerRange, false, ledgerSequence_);
-            executor_.writeSync(schema_->insertLedgerRange, true, ledgerSequence_);
+        if (not range_.has_value()) {
+            executor_.writeSync(schema_->insertLedgerRange, /* isLatestLedger =*/false, ledgerSequence_);
+            executor_.writeSync(schema_->insertLedgerRange, /* isLatestLedger =*/true, ledgerSequence_);
         }
 
         if (not this->executeSyncUpdate(schema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1))) {
@@ -130,7 +130,7 @@ public:
             // Keyspace and ScyllaDB uses the same logic for taxon-filtered queries
             nftIDs = fetchNFTIDsByTaxon(issuer, *taxon, limit, cursorIn, yield);
         } else {
-            // --- Amazon Keyspaces Workflow for non-taxon queries ---
+            // Amazon Keyspaces Workflow for non-taxon queries
             auto const startTaxon = cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0;
             auto const startTokenID = cursorIn.value_or(ripple::uint256(0));
 
@@ -140,8 +140,8 @@ public:
             firstQuery.bindAt(3, Limit{limit});
 
             auto const firstRes = executor_.read(yield, firstQuery);
-            if (firstRes) {
-                for (auto const [nftID] : extract<ripple::uint256>(firstRes.value()))
+            if (firstRes.has_value()) {
+                for (auto const [nftID] : extract<ripple::uint256>(*firstRes))
                     nftIDs.push_back(nftID);
             }
 
@@ -152,8 +152,8 @@ public:
                 secondQuery.bindAt(2, Limit{remainingLimit});
 
                 auto const secondRes = executor_.read(yield, secondQuery);
-                if (secondRes) {
-                    for (auto const [nftID] : extract<ripple::uint256>(secondRes.value()))
+                if (secondRes.has_value()) {
+                    for (auto const [nftID] : extract<ripple::uint256>(*secondRes))
                         nftIDs.push_back(nftID);
                 }
             }
@@ -163,7 +163,7 @@ public:
 
     /**
      * @brief (Unsupported in Keyspaces) Fetches account root object indexes by page.
-     * * @note Loading the cache by enumerating all accounts is currently unsupported by the AWS Keyspaces backend.
+     * @note Loading the cache by enumerating all accounts is currently unsupported by the AWS Keyspaces backend.
      * This function's logic relies on "PER PARTITION LIMIT 1", which Keyspaces does not support, and there is
      * no efficient alternative. This is acceptable as the cache is primarily loaded via diffs. Calling this
      * function will throw an exception.
@@ -203,8 +203,8 @@ private:
         statement.bindAt(3, Limit{limit});
 
         auto const res = executor_.read(yield, statement);
-        if (res && res.value().hasRows()) {
-            for (auto const [nftID] : extract<ripple::uint256>(res.value()))
+        if (res.has_value() && res->hasRows()) {
+            for (auto const [nftID] : extract<ripple::uint256>(*res))
                 nftIDs.push_back(nftID);
         }
         return nftIDs;
@@ -229,8 +229,8 @@ private:
         firstQuery.bindAt(3, Limit{limit});
 
         auto const firstRes = executor_.read(yield, firstQuery);
-        if (firstRes) {
-            for (auto const [nftID] : extract<ripple::uint256>(firstRes.value()))
+        if (firstRes.has_value()) {
+            for (auto const [nftID] : extract<ripple::uint256>(*firstRes))
                 nftIDs.push_back(nftID);
         }
 
@@ -241,8 +241,8 @@ private:
             secondQuery.bindAt(2, Limit{remainingLimit});
 
             auto const secondRes = executor_.read(yield, secondQuery);
-            if (secondRes) {
-                for (auto const [nftID] : extract<ripple::uint256>(secondRes.value()))
+            if (secondRes.has_value()) {
+                for (auto const [nftID] : extract<ripple::uint256>(*secondRes))
                     nftIDs.push_back(nftID);
             }
         }
@@ -291,10 +291,11 @@ private:
 
         // Combine the results into final NFT objects.
         for (auto i = 0u; i < nftIDs.size(); ++i) {
-            if (auto const maybeRow = nftInfos[i].template get<uint32_t, ripple::AccountID, bool>(); maybeRow) {
+            if (auto const maybeRow = nftInfos[i].template get<uint32_t, ripple::AccountID, bool>();
+                maybeRow.has_value()) {
                 auto [seq, owner, isBurned] = *maybeRow;
                 NFT nft(nftIDs[i], seq, owner, isBurned);
-                if (auto const maybeUri = nftUris[i].template get<ripple::Blob>(); maybeUri)
+                if (auto const maybeUri = nftUris[i].template get<ripple::Blob>(); maybeUri.has_value())
                     nft.uri = *maybeUri;
                 ret.nfts.push_back(nft);
             }
