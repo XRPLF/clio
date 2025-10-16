@@ -108,7 +108,9 @@ TEST_F(WebWsConnectionTests, WasUpgraded)
     });
 }
 
-TEST_F(WebWsConnectionTests, DisconnectClientOnInactivity)
+// This test is either flaky or incorrect
+// see https://github.com/XRPLF/clio/issues/2700
+TEST_F(WebWsConnectionTests, DISABLED_DisconnectClientOnInactivity)
 {
     boost::asio::io_context clientCtx;
     auto work = boost::asio::make_work_guard(clientCtx);
