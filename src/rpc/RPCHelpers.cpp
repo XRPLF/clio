@@ -258,7 +258,7 @@ toExpandedJson(
     auto metaJson = toJson(*meta);
     insertDeliveredAmount(metaJson, txn, meta, blobs.date);
     insertDeliverMaxAlias(txnJson, apiVersion);
-    insertMPTIssuanceID(txnJson, meta);
+    insertMPTIssuanceID(txnJson, txn, metaJson, meta);
 
     if (nftEnabled == NFTokenjson::ENABLE) {
         Json::Value nftJson;
@@ -343,36 +343,41 @@ getMPTIssuanceID(std::shared_ptr<ripple::TxMeta const> const& meta)
 /**
  * @brief Check if transaction has a new MPToken created
  *
- * @param txnJson The transaction Json
- * @param meta The metadata
+ * @param txn The transaction object
+ * @param meta The metadata object
  * @return true if the transaction can have a mpt_issuance_id
  */
 static bool
-canHaveMPTIssuanceID(boost::json::object const& txnJson, std::shared_ptr<ripple::TxMeta const> const& meta)
+canHaveMPTIssuanceID(std::shared_ptr<ripple::STTx const> const& txn, std::shared_ptr<ripple::TxMeta const> const& meta)
 {
-    if (txnJson.at(JS(TransactionType)).is_string() and
-        not boost::iequals(txnJson.at(JS(TransactionType)).as_string(), JS(MPTokenIssuanceCreate)))
+    if (txn->getTxnType() != ripple::ttMPTOKEN_ISSUANCE_CREATE)
         return false;
 
-    if (meta->getResultTER() != ripple::tesSUCCESS)
-        return false;
-
-    return true;
+    return (meta->getResultTER() == ripple::tesSUCCESS);
 }
 
 bool
-insertMPTIssuanceID(boost::json::object& txnJson, std::shared_ptr<ripple::TxMeta const> const& meta)
+insertMPTIssuanceID(
+    boost::json::object& txnJson,
+    std::shared_ptr<ripple::STTx const> const& txn,
+    boost::json::object& metaJson,
+    std::shared_ptr<ripple::TxMeta const> const& meta
+)
 {
-    if (!canHaveMPTIssuanceID(txnJson, meta))
-        return false;
-
-    if (txnJson.contains(JS(TransactionType)) && txnJson.at(JS(TransactionType)).is_string() and
-        txnJson.at(JS(TransactionType)).as_string() == JS(MPTokenIssuanceCreate))
+    if (!canHaveMPTIssuanceID(txn, meta))
         return false;
 
     auto const id = getMPTIssuanceID(meta);
     ASSERT(id.has_value(), "MPTIssuanceID must have value");
-    txnJson[JS(mpt_issuance_id)] = ripple::to_string(*id);
+
+    // For mpttokenissuance create, add mpt_issuance_id to metajson
+    // Otherwise, add it to txn json
+    if (txnJson.contains(JS(TransactionType)) && txnJson.at(JS(TransactionType)).is_string() and
+        txnJson.at(JS(TransactionType)).as_string() == JS(MPTokenIssuanceCreate)) {
+        metaJson[JS(mpt_issuance_id)] = ripple::to_string(*id);
+    } else {
+        txnJson[JS(mpt_issuance_id)] = ripple::to_string(*id);
+    }
 
     return true;
 }
