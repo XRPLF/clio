@@ -201,15 +201,23 @@ insertDeliveredAmount(
 
 /**
  * @brief Add "mpt_issuance_id" into various MPTToken transaction json.
- * @note We exclude "mpt_issuance_id" for MPTokenIssuanceCreate only. The reason is because the mpt_issuance_id
- * is generated only after one submits MPTokenIssuanceCreate, so there’s no way to know what the id is. (rippled)
+ * @note We add "mpt_issuance_id" into the meta part of MPTokenIssuanceCreate only. The reason is because the
+ * mpt_issuance_id is generated only after one submits MPTokenIssuanceCreate, so there’s no way to know what the id is.
+ * (rippled)
  *
  * @param txnJson The transaction Json object
+ * @param txn The txn object
+ * @param metaJson The metadata Json object
  * @param meta The metadata object
- * @return true if the "mpt_issuance_id" is added to the txnJson JSON object
+ * @return true if the "mpt_issuance_id" is added to either txnJson or metaJson object
  */
 bool
-insertMPTIssuanceID(boost::json::object& txnJson, std::shared_ptr<ripple::TxMeta const> const& meta);
+insertMPTIssuanceID(
+    boost::json::object& txnJson,
+    std::shared_ptr<ripple::STTx const> const& txn,
+    boost::json::object& metaJson,
+    std::shared_ptr<ripple::TxMeta const> const& meta
+);
 
 /**
  * @brief Convert STBase object to JSON

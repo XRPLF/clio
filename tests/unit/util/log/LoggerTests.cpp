@@ -25,6 +25,7 @@
 #include <spdlog/spdlog.h>
 
 #include <cstddef>
+#include <memory>
 #include <string>
 using namespace util;
 
@@ -93,11 +94,11 @@ TEST_F(LoggerTest, ManyDynamicLoggers)
     for (size_t i = 0; i < kNUM_LOGGERS; ++i) {
         std::string const loggerName = "DynamicLogger" + std::to_string(i);
 
-        Logger log{loggerName};
+        Logger const log{loggerName};
         log.info() << "Logger number " << i;
         ASSERT_EQ(getLoggerString(), "inf:" + loggerName + " - Logger number " + std::to_string(i) + "\n");
 
-        Logger copy = log;
+        Logger const copy = log;
         copy.info() << "Copy of logger number " << i;
         ASSERT_EQ(getLoggerString(), "inf:" + loggerName + " - Copy of logger number " + std::to_string(i) + "\n");
     }

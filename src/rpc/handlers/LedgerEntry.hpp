@@ -428,6 +428,12 @@ public:
                       validation::CustomValidators::accountBase58Validator, Status(ClioError::RpcMalformedAddress)
                   }}
              }}},
+            {JS(amendments), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+            {JS(fee), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+            {JS(hashes), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+            {JS(nft_offer), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+            {JS(nunl), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
+            {JS(signer_list), kMALFORMED_REQUEST_HEX_STRING_VALIDATOR},
             {JS(ledger), check::Deprecated{}},
             {"include_deleted", validation::Type<bool>{}},
         };
