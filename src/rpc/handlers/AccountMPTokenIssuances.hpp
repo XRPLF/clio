@@ -156,9 +156,7 @@ public:
     Result
     process(Input const& input, Context const& ctx) const;
 
-    /**
-     * @brief Populates an MPTokenIssuanceResponse from a ledger entry and adds it to the list.
-     */
+private:
     static void
     addMPTokenIssuance(
         std::vector<MPTokenIssuanceResponse>& issuances,

@@ -143,9 +143,6 @@ public:
     process(Input const& input, Context const& ctx) const;
 
 private:
-    /**
-     * @brief Populates an MPTokenResponse from a ledger entry and adds it to the list.
-     */
     static void
     addMPToken(std::vector<MPTokenResponse>& mpts, ripple::SLE const& sle);
 
