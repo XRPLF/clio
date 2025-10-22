@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: ytanikin/pr-conventional-commits@b72758283dcbee706975950e96bc4bf323a8d8c0 # v1.4.2
+      - uses: ytanikin/pr-conventional-commits@b72758283dcbee706975950e96bc4bf323a8d8c0 # 1.4.2
         with:
           task_types: '["build","feat","fix","docs","test","ci","style","refactor","perf","chore"]'
           add_label: false
