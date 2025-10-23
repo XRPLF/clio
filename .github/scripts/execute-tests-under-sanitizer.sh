@@ -31,15 +31,16 @@ TESTS=$($TEST_BINARY --gtest_list_tests | awk '/^  / {print suite $1} !/^  / {su
 OUTPUT_DIR="./.sanitizer-report"
 mkdir -p "$OUTPUT_DIR"
 
+export TSAN_OPTIONS="die_after_fork=0"
+export MallocNanoZone='0' # for MacOSX
+
 for TEST in $TESTS; do
-  OUTPUT_FILE="$OUTPUT_DIR/${TEST//\//_}"
-  export TSAN_OPTIONS="log_path=\"$OUTPUT_FILE\" die_after_fork=0"
-  export ASAN_OPTIONS="log_path=\"$OUTPUT_FILE\""
-  export UBSAN_OPTIONS="log_path=\"$OUTPUT_FILE\""
-  export MallocNanoZone='0' # for MacOSX
-  $TEST_BINARY --gtest_filter="$TEST" > /dev/null 2>&1
+  OUTPUT_FILE="$OUTPUT_DIR/${TEST//\//_}.log"
+  $TEST_BINARY --gtest_filter="$TEST" > "$OUTPUT_FILE" 2>&1
 
   if [ $? -ne 0 ]; then
     echo "'$TEST' failed a sanitizer check."
+  else
+    rm "$OUTPUT_FILE"
   fi
 done

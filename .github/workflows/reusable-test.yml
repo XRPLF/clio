@@ -68,7 +68,7 @@ jobs:
 
       - name: Run clio_tests (sanitizer errors ignored)
         if: ${{ env.SANITIZER_IGNORE_ERRORS == 'true' }}
-        run: ./.github/scripts/execute-tests-under-sanitizer ./clio_tests
+        run: ./.github/scripts/execute-tests-under-sanitizer.sh ./clio_tests
 
       - name: Check for sanitizer report
         if: ${{ env.SANITIZER_IGNORE_ERRORS == 'true' }}
