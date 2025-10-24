@@ -116,7 +116,7 @@ AccountMPTokenIssuancesHandler::process(AccountMPTokenIssuancesHandler::Input co
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
 
-    if (not accountLedgerObject)
+    if (not accountLedgerObject.has_value())
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     Output response;
@@ -191,8 +191,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountMPTokenIs
         {"mpt_issuances", value_from(output.issuances)},
     };
 
-    if (output.marker)
-        obj[JS(marker)] = output.marker.value();
+    if (output.marker.has_value())
+        obj[JS(marker)] = *output.marker;
 
     jv = std::move(obj);
 }

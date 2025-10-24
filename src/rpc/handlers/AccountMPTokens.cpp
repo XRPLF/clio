@@ -90,7 +90,7 @@ AccountMPTokensHandler::process(AccountMPTokensHandler::Input const& input, Cont
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
 
-    if (not accountLedgerObject)
+    if (not accountLedgerObject.has_value())
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     Output response;
@@ -109,7 +109,7 @@ AccountMPTokensHandler::process(AccountMPTokensHandler::Input const& input, Cont
     if (!expectedNext.has_value())
         return Error{expectedNext.error()};
 
-    auto const nextMarker = expectedNext.value();
+    auto const& nextMarker = expectedNext.value();
 
     response.account = input.account;
     response.limit = input.limit;
@@ -126,7 +126,7 @@ AccountMPTokensHandler::process(AccountMPTokensHandler::Input const& input, Cont
 AccountMPTokensHandler::Input
 tag_invoke(boost::json::value_to_tag<AccountMPTokensHandler::Input>, boost::json::value const& jv)
 {
-    auto input = AccountMPTokensHandler::Input{};
+    AccountMPTokensHandler::Input input{};
     auto const& jsonObject = jv.as_object();
 
     input.account = boost::json::value_to<std::string>(jv.at(JS(account)));
@@ -160,7 +160,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountMPTokensH
         {"mptokens", boost::json::value_from(output.mpts)},
     };
 
-    if (output.marker)
+    if (output.marker.has_value())
         obj[JS(marker)] = *output.marker;
 
     jv = std::move(obj);

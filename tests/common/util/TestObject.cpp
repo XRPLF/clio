@@ -1465,19 +1465,19 @@ createMptIssuanceObject(
     mptIssuance.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
     mptIssuance.setFieldU64(ripple::sfOutstandingAmount, outstandingAmount);
 
-    if (transferFee)
+    if (transferFee.has_value())
         mptIssuance.setFieldU16(ripple::sfTransferFee, *transferFee);
-    if (assetScale)
+    if (assetScale.has_value())
         mptIssuance.setFieldU8(ripple::sfAssetScale, *assetScale);
-    if (maxAmount)
+    if (maxAmount.has_value())
         mptIssuance.setFieldU64(ripple::sfMaximumAmount, *maxAmount);
-    if (lockedAmount)
+    if (lockedAmount.has_value())
         mptIssuance.setFieldU64(ripple::sfLockedAmount, *lockedAmount);
-    if (metadata) {
+    if (metadata.has_value()) {
         ripple::Slice const sliceMetadata(metadata->data(), metadata->size());
         mptIssuance.setFieldVL(ripple::sfMPTokenMetadata, sliceMetadata);
     }
-    if (domainId)
+    if (domainId.has_value())
         mptIssuance.setFieldH256(ripple::sfDomainID, ripple::uint256{*domainId});
 
     return mptIssuance;
@@ -1503,7 +1503,7 @@ createMpTokenObject(
 
     if (mptAmount != 0u)
         mptoken.setFieldU64(ripple::sfMPTAmount, mptAmount);
-    if (lockedAmount)
+    if (lockedAmount.has_value())
         mptoken.setFieldU64(ripple::sfLockedAmount, *lockedAmount);
 
     return mptoken;
