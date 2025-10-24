@@ -44,11 +44,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
 
       - name: Download Clio binary from artifact
         if: ${{ inputs.artifact_name != null }}
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: ${{ inputs.artifact_name }}
           path: ./docker/clio/artifact/
@@ -56,9 +56,12 @@ jobs:
       - name: Download Clio binary from url
         if: ${{ inputs.clio_server_binary_url != null }}
         shell: bash
+        env:
+          BINARY_URL: ${{ inputs.clio_server_binary_url }}
+          BINARY_SHA256: ${{ inputs.binary_sha256 }}
         run: |
-          wget "${{inputs.clio_server_binary_url}}" -P ./docker/clio/artifact/
-          if [ "$(sha256sum ./docker/clio/clio_server | awk '{print $1}')" != "${{inputs.binary_sha256}}" ]; then
+          wget "${BINARY_URL}" -P ./docker/clio/artifact/
+          if [ "$(sha256sum ./docker/clio/clio_server | awk '{print $1}')" != "${BINARY_SHA256}" ]; then
             echo "Binary sha256 sum doesn't match"
             exit 1
           fi

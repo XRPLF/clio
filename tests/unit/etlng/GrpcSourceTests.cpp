@@ -374,10 +374,12 @@ TEST_F(GrpcSourceNgTests, DeadlineIsHandledCorrectly)
     auto grpcSource =
         std::make_unique<etlng::impl::GrpcSource>("localhost", std::to_string(getXRPLMockPort()), kDEADLINE);
 
+    // Note: this may not be called at all if gRPC cancels before it gets a chance to call the stub
     EXPECT_CALL(mockXrpLedgerAPIService, GetLedger)
-        .WillOnce([&](grpc::ServerContext*,
-                      org::xrpl::rpc::v1::GetLedgerRequest const*,
-                      org::xrpl::rpc::v1::GetLedgerResponse*) {
+        .Times(testing::AtMost(1))
+        .WillRepeatedly([&](grpc::ServerContext*,
+                            org::xrpl::rpc::v1::GetLedgerRequest const*,
+                            org::xrpl::rpc::v1::GetLedgerResponse*) {
             // wait for main thread to discard us and fail the test if unsuccessful within expected timeframe
             [&] { ASSERT_TRUE(sem.try_acquire_for(std::chrono::milliseconds{50})); }();
             return grpc::Status{};

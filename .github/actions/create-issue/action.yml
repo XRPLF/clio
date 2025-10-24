@@ -28,12 +28,17 @@ runs:
     - name: Create an issue
       id: create_issue
       shell: bash
+      env:
+        ISSUE_BODY: ${{ inputs.body }}
+        ISSUE_ASSIGNEES: ${{ inputs.assignees }}
+        ISSUE_LABELS: ${{ inputs.labels }}
+        ISSUE_TITLE: ${{ inputs.title }}
       run: |
-        echo -e '${{ inputs.body }}' > issue.md
+        echo -e "${ISSUE_BODY}" > issue.md
         gh issue create \
-          --assignee '${{ inputs.assignees }}' \
-          --label '${{ inputs.labels }}' \
-          --title '${{ inputs.title }}' \
+          --assignee "${ISSUE_ASSIGNEES}" \
+          --label "${ISSUE_LABELS}" \
+          --title "${ISSUE_TITLE}" \
           --body-file ./issue.md \
           > create_issue.log
         created_issue="$(sed 's|.*/||' create_issue.log)"

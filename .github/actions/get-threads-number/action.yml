@@ -29,8 +29,10 @@ runs:
     - name: Shift and export number of threads
       id: number_of_threads_export
       shell: bash
+      env:
+        SUBTRACT_THREADS: ${{ inputs.subtract_threads }}
       run: |
         num_of_threads="${{ steps.mac_threads.outputs.num || steps.linux_threads.outputs.num }}"
-        shift_by="${{ inputs.subtract_threads }}"
+        shift_by="${SUBTRACT_THREADS}"
         shifted="$((num_of_threads - shift_by))"
         echo "num=$(( shifted > 1 ? shifted : 1 ))" >> $GITHUB_OUTPUT

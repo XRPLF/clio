@@ -51,7 +51,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           fetch-depth: 0
 
@@ -60,17 +60,19 @@ jobs:
         with:
           disable_ccache: true
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           path: release_artifacts
           pattern: clio_server_*
 
       - name: Create release notes
         shell: bash
+        env:
+          RELEASE_HEADER: ${{ inputs.header }}
         run: |
           echo "# Release notes" > "${RUNNER_TEMP}/release_notes.md"
           echo "" >> "${RUNNER_TEMP}/release_notes.md"
-          printf '%s\n' "${{ inputs.header }}" >> "${RUNNER_TEMP}/release_notes.md"
+          printf '%s\n' "${RELEASE_HEADER}" >> "${RUNNER_TEMP}/release_notes.md"
 
       - name: Generate changelog
         shell: bash
@@ -87,7 +89,7 @@ jobs:
         run: .github/scripts/prepare-release-artifacts.sh release_artifacts
 
       - name: Upload release notes
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: release_notes_${{ inputs.version }}
           path: "${RUNNER_TEMP}/release_notes.md"
@@ -95,18 +97,25 @@ jobs:
       - name: Remove current release and tag
         if: ${{ github.event_name != 'pull_request' && inputs.overwrite_release }}
         shell: bash
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
-          gh release delete ${{ inputs.version }} --yes || true
-          git push origin :${{ inputs.version }} || true
+          gh release delete "${RELEASE_VERSION}" --yes || true
+          git push origin :"${RELEASE_VERSION}" || true
 
       - name: Publish release
         if: ${{ github.event_name != 'pull_request' }}
         shell: bash
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          PRERELEASE_OPTION: ${{ inputs.prerelease && '--prerelease' || '' }}
+          RELEASE_TITLE: ${{ inputs.title }}
+          DRAFT_OPTION: ${{ inputs.draft && '--draft' || '' }}
         run: |
-          gh release create "${{ inputs.version }}" \
-            ${{ inputs.prerelease && '--prerelease' || '' }} \
-            --title "${{ inputs.title }}" \
+          gh release create "${RELEASE_VERSION}" \
+            ${PRERELEASE_OPTION} \
+            --title "${RELEASE_TITLE}" \
             --target "${GITHUB_SHA}" \
-            ${{ inputs.draft && '--draft' || '' }} \
+            ${DRAFT_OPTION} \
             --notes-file "${RUNNER_TEMP}/release_notes.md" \
             ./release_artifacts/clio_server*

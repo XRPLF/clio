@@ -15,7 +15,7 @@ on:
       - ".github/actions/**"
       - "!.github/actions/build-docker-image/**"
       - "!.github/actions/create-issue/**"
-      - .github/scripts/execute-tests-under-sanitizer
+      - .github/scripts/execute-tests-under-sanitizer.sh
 
       - CMakeLists.txt
       - conanfile.py

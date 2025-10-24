@@ -21,9 +21,11 @@ runs:
 
     - name: Build targets
       shell: bash
+      env:
+        CMAKE_TARGETS: ${{ inputs.targets }}
       run: |
         cd build
         cmake \
           --build . \
           --parallel "${{ steps.number_of_threads.outputs.threads_number }}" \
-          --target ${{ inputs.targets }}
+          --target ${CMAKE_TARGETS}

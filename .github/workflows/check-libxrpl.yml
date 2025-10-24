@@ -20,7 +20,7 @@ jobs:
       image: ghcr.io/xrplf/clio-ci:b2be4b51d1d81548ca48e2f2b8f67356b880c96d
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           fetch-depth: 0
 
@@ -57,7 +57,7 @@ jobs:
         run: strip build/clio_tests
 
       - name: Upload clio_tests
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: clio_tests_check_libxrpl
           path: build/clio_tests
@@ -70,7 +70,7 @@ jobs:
       image: ghcr.io/xrplf/clio-ci:b2be4b51d1d81548ca48e2f2b8f67356b880c96d
 
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: clio_tests_check_libxrpl
 
@@ -90,7 +90,7 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
 
       - name: Create an issue
         uses: ./.github/actions/create-issue
