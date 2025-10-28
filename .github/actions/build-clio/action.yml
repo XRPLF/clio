@@ -5,19 +5,19 @@ inputs:
   targets:
     description: Space-separated build target names
     default: all
-  subtract_threads:
-    description: An option for the action get-threads-number.
+  nproc_subtract:
+    description: The number of processors to subtract when calculating parallelism.
     required: true
     default: "0"
 
 runs:
   using: composite
   steps:
-    - name: Get number of threads
-      uses: ./.github/actions/get-threads-number
-      id: number_of_threads
+    - name: Get number of processors
+      uses: XRPLF/actions/.github/actions/get-nproc@046b1620f6bfd6cd0985dc82c3df02786801fe0a
+      id: nproc
       with:
-        subtract_threads: ${{ inputs.subtract_threads }}
+        subtract: ${{ inputs.nproc_subtract }}
 
     - name: Build targets
       shell: bash
@@ -27,5 +27,5 @@ runs:
         cd build
         cmake \
           --build . \
-          --parallel "${{ steps.number_of_threads.outputs.threads_number }}" \
+          --parallel "${{ steps.nproc.outputs.nproc }}" \
           --target ${CMAKE_TARGETS}
