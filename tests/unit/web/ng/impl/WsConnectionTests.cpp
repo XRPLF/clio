@@ -125,6 +125,7 @@ TEST_F(WebWsConnectionTests, DisconnectClientOnInactivity)
             wsClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
         [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
         std::unique_lock lock{mutex};
+        // Wait for 2 seconds to not block the test infinitely in case of failure
         auto const gotNotified = cv.wait_for(lock, std::chrono::seconds{2}, [&finished]() { return finished; });
         [&]() { EXPECT_TRUE(gotNotified); }();
         work.reset();
