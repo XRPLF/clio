@@ -113,6 +113,12 @@ ClioApplication::run(bool const useNgWebServer)
     auto dosGuard = web::dosguard::DOSGuard{config_, whitelistHandler, dosguardWeights};
     auto sweepHandler = web::dosguard::IntervalSweepHandler{config_, ioc, dosGuard};
     auto cache = data::LedgerCache{};
+    if (auto c = data::LedgerCache::fromFile()) {
+        cache = std::move(c).value();
+    } else {
+        std::cerr << c.error() << std::endl;
+        std::exit(1);
+    }
 
     // Interface to the database
     auto backend = data::makeBackend(config_, cache);

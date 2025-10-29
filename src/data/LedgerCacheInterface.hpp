@@ -168,6 +168,9 @@ public:
      */
     virtual void
     waitUntilCacheContainsSeq(uint32_t seq) = 0;
+
+    virtual void
+    serialize() = 0;
 };
 
 }  // namespace data

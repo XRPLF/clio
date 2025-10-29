@@ -37,6 +37,7 @@
 #include <map>
 #include <optional>
 #include <shared_mutex>
+#include <string>
 #include <unordered_set>
 #include <vector>
 
@@ -94,6 +95,12 @@ class LedgerCache : public LedgerCacheInterface {
     std::unordered_set<ripple::uint256, ripple::hardened_hash<>> deletes_;
 
 public:
+    LedgerCache() = default;
+
+    LedgerCache(LedgerCache&& other);
+    LedgerCache&
+    operator=(LedgerCache&& other);
+
     void
     update(std::vector<LedgerObject> const& objs, uint32_t seq, bool isBackground) override;
 
@@ -138,6 +145,12 @@ public:
 
     void
     waitUntilCacheContainsSeq(uint32_t seq) override;
+
+    void
+    serialize() override;
+
+    static std::expected<LedgerCache, std::string>
+    fromFile();
 };
 
 }  // namespace data
