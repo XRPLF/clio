@@ -49,7 +49,7 @@ jobs:
     needs: build-and-test
     uses: ./.github/workflows/reusable-release.yml
     with:
-      overwrite_release: false
+      delete_pattern: ""
       prerelease: ${{ contains(github.ref_name, '-') }}
       title: "${{ github.ref_name }}"
       version: "${{ github.ref_name }}"

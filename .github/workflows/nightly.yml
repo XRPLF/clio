@@ -93,14 +93,25 @@ jobs:
       targets: all
       analyze_build_time: true
 
+  get_date:
+    name: Get Date
+    runs-on: ubuntu-latest
+    outputs:
+      date: ${{ steps.get_date.outputs.date }}
+    steps:
+      - name: Get current date
+        id: get_date
+        run: |
+          echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
   nightly_release:
-    needs: build-and-test
+    needs: [build-and-test, get_date]
     uses: ./.github/workflows/reusable-release.yml
     with:
-      overwrite_release: true
+      delete_pattern: "nightly-*"
       prerelease: true
       title: "Clio development (nightly) build"
-      version: nightly
+      version: nightly-${{ needs.get_date.outputs.date }}
       header: >
         > **Note:** Please remember that this is a development release and it is not recommended for production use.
 
