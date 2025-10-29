@@ -37,7 +37,6 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/status.hpp>
 #include <gmock/gmock.h>
@@ -139,7 +138,7 @@ TEST_F(WebWsConnectionTests, DisconnectClientOnInactivity)
         auto const receivedMessage = wsConnection->receive(yield);
 
         {
-            std::unique_lock lock{mutex};
+            std::unique_lock const lock{mutex};
             finished = true;
             cv.notify_one();
         }
