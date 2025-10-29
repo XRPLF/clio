@@ -104,7 +104,7 @@ jobs:
           if [ -n "$RELEASES_TO_DELETE" ]; then
             for RELEASE in $RELEASES_TO_DELETE; do
               echo "Deleting release: $RELEASE"
-              gh release delete "$RELEASE" --repo "${GH_REPO}" --yes
+              gh release delete "$RELEASE" --repo "${GH_REPO}" --yes --cleanup-tag
             done
           fi
 
