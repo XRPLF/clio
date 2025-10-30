@@ -31,6 +31,8 @@
 #include "rpc/handlers/AccountCurrencies.hpp"
 #include "rpc/handlers/AccountInfo.hpp"
 #include "rpc/handlers/AccountLines.hpp"
+#include "rpc/handlers/AccountMPTokenIssuances.hpp"
+#include "rpc/handlers/AccountMPTokens.hpp"
 #include "rpc/handlers/AccountNFTs.hpp"
 #include "rpc/handlers/AccountObjects.hpp"
 #include "rpc/handlers/AccountOffers.hpp"
@@ -85,6 +87,9 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"account_currencies", {.handler = AccountCurrenciesHandler{backend}}},
           {"account_info", {.handler = AccountInfoHandler{backend, amendmentCenter}}},
           {"account_lines", {.handler = AccountLinesHandler{backend}}},
+          {"account_mptoken_issuances",
+           {.handler = AccountMPTokenIssuancesHandler{backend}, .isClioOnly = true}},              // clio only
+          {"account_mptokens", {.handler = AccountMPTokensHandler{backend}, .isClioOnly = true}},  // clio only
           {"account_nfts", {.handler = AccountNFTsHandler{backend}}},
           {"account_objects", {.handler = AccountObjectsHandler{backend}}},
           {"account_offers", {.handler = AccountOffersHandler{backend}}},
