@@ -655,6 +655,49 @@ TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
     });
 }
 
+TEST_F(RPCAccountInfoHandlerTest, EmptySignerLists)
+{
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
+
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const accountRoot = createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::DisallowIncoming, _)).WillOnce(Return(false));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::Clawback, _)).WillOnce(Return(false));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _)).WillOnce(Return(false));
+
+    auto signersKey = ripple::keylet::signers(account).key;
+    ON_CALL(*backend_, doFetchLedgerObject(signersKey, 30, _)).WillByDefault(Return(std::optional<Blob>{}));
+
+    static auto const kINPUT = json::parse(
+        fmt::format(
+            R"JSON({{
+                "account": "{}",
+                "signer_lists": true
+            }})JSON",
+            kACCOUNT
+        )
+    );
+
+    auto const handler = AnyHandler{AccountInfoHandler{backend_, mockAmendmentCenterPtr_}};
+
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
+        ASSERT_TRUE(output);
+
+        auto const& resultObj = output.result->as_object();
+        ASSERT_TRUE(resultObj.contains("signer_lists"));
+
+        auto const& signerListsJson = resultObj.at("signer_lists");
+        EXPECT_TRUE(signerListsJson.is_array());
+        EXPECT_TRUE(signerListsJson.as_array().empty());
+    });
+}
+
 TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
 {
     auto const expectedOutput = fmt::format(
