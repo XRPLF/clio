@@ -112,48 +112,48 @@ static auto
 generateTestValuesForInvalidParamsTest()
 {
     return std::vector<AccountMPTokensParamTestCaseBundle>{
-        {"NonHexLedgerHash",
-         fmt::format(R"JSON({{ "account": "{}", "ledger_hash": "xxx" }})JSON", kACCOUNT),
-         "invalidParams",
-         "ledger_hashMalformed"},
-        {"NonStringLedgerHash",
-         fmt::format(R"JSON({{ "account": "{}", "ledger_hash": 123 }})JSON", kACCOUNT),
-         "invalidParams",
-         "ledger_hashNotString"},
-        {"InvalidLedgerIndexString",
-         fmt::format(R"JSON({{ "account": "{}", "ledger_index": "notvalidated" }})JSON", kACCOUNT),
-         "invalidParams",
-         "ledgerIndexMalformed"},
-        {"MarkerNotString",
-         fmt::format(R"JSON({{ "account": "{}", "marker": 9 }})JSON", kACCOUNT),
-         "invalidParams",
-         "markerNotString"},
-        {"InvalidMarkerContent",
-         fmt::format(R"JSON({{ "account": "{}", "marker": "123invalid" }})JSON", kACCOUNT),
-         "invalidParams",
-         "Malformed cursor."},
-        {"AccountMissing", R"JSON({ "limit": 10 })JSON", "invalidParams", "Required field 'account' missing"},
-        {"AccountNotString", R"JSON({ "account": 123 })JSON", "actMalformed", "Account malformed."},
-        {"AccountMalformed",
-         fmt::format(R"JSON({{ "account": "{}" }})JSON", "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp"),
-         "actMalformed",
-         "Account malformed."},
-        {"LimitNotInteger",
-         fmt::format(R"JSON({{ "account": "{}", "limit": "t" }})JSON", kACCOUNT),
-         "invalidParams",
-         "Invalid parameters."},
-        {"LimitNegative",
-         fmt::format(R"JSON({{ "account": "{}", "limit": -1 }})JSON", kACCOUNT),
-         "invalidParams",
-         "Invalid parameters."},
-        {"LimitZero",
-         fmt::format(R"JSON({{ "account": "{}", "limit": 0 }})JSON", kACCOUNT),
-         "invalidParams",
-         "Invalid parameters."},
-        {"LimitTypeInvalid",
-         fmt::format(R"JSON({{ "account": "{}", "limit": true }})JSON", kACCOUNT),
-         "invalidParams",
-         "Invalid parameters."}
+        {.testName="NonHexLedgerHash",
+         .testJson=fmt::format(R"JSON({{ "account": "{}", "ledger_hash": "xxx" }})JSON", kACCOUNT),
+         .expectedError="invalidParams",
+         .expectedErrorMessage="ledger_hashMalformed"},
+        {.testName="NonStringLedgerHash",
+         .testJson=fmt::format(R"JSON({{ "account": "{}", "ledger_hash": 123 }})JSON", kACCOUNT),
+         .expectedError="invalidParams",
+         .expectedErrorMessage="ledger_hashNotString"},
+        {.testName="InvalidLedgerIndexString",
+         .testJson=fmt::format(R"JSON({{ "account": "{}", "ledger_index": "notvalidated" }})JSON", kACCOUNT),
+         .expectedError="invalidParams",
+         .expectedErrorMessage="ledgerIndexMalformed"},
+        {.testName="MarkerNotString",
+         .testJson=fmt::format(R"JSON({{ "account": "{}", "marker": 9 }})JSON", kACCOUNT),
+         .expectedError="invalidParams",
+         .expectedErrorMessage="markerNotString"},
+        {.testName="InvalidMarkerContent",
+         .testJson=fmt::format(R"JSON({{ "account": "{}", "marker": "123invalid" }})JSON", kACCOUNT),
+         .expectedError="invalidParams",
+         .expectedErrorMessage="Malformed cursor."},
+        {.testName="AccountMissing", .testJson=R"JSON({ "limit": 10 })JSON", .expectedError="invalidParams", .expectedErrorMessage="Required field 'account' missing"},
+        {.testName="AccountNotString", .testJson=R"JSON({ "account": 123 })JSON", .expectedError="actMalformed", .expectedErrorMessage="Account malformed."},
+        {.testName="AccountMalformed",
+         .testJson=fmt::format(R"JSON({{ "account": "{}" }})JSON", "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp"),
+         .expectedError="actMalformed",
+         .expectedErrorMessage="Account malformed."},
+        {.testName="LimitNotInteger",
+         .testJson=fmt::format(R"JSON({{ "account": "{}", "limit": "t" }})JSON", kACCOUNT),
+         .expectedError="invalidParams",
+         .expectedErrorMessage="Invalid parameters."},
+        {.testName="LimitNegative",
+         .testJson=fmt::format(R"JSON({{ "account": "{}", "limit": -1 }})JSON", kACCOUNT),
+         .expectedError="invalidParams",
+         .expectedErrorMessage="Invalid parameters."},
+        {.testName="LimitZero",
+         .testJson=fmt::format(R"JSON({{ "account": "{}", "limit": 0 }})JSON", kACCOUNT),
+         .expectedError="invalidParams",
+         .expectedErrorMessage="Invalid parameters."},
+        {.testName="LimitTypeInvalid",
+         .testJson=fmt::format(R"JSON({{ "account": "{}", "limit": true }})JSON", kACCOUNT),
+         .expectedError="invalidParams",
+         .expectedErrorMessage="Invalid parameters."}
     };
 }
 
@@ -388,7 +388,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, DefaultParameters)
 
 TEST_F(RPCAccountMPTokensHandlerTest, UseLimit)
 {
-    constexpr int limit = 20;
+    constexpr int kLIMIT = 20;
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
@@ -401,7 +401,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, UseLimit)
     std::vector<Blob> bbs;
 
     for (int i = 0; i < 50; ++i) {
-        indexes.emplace_back(ripple::uint256{kTOKEN_INDEX1});
+        indexes.emplace_back(kTOKEN_INDEX1);
         auto const token = createMpTokenObject(kACCOUNT, ripple::uint192(kISSUANCE_ID_HEX), i, 0, std::nullopt);
         bbs.push_back(token.getSerializer().peekData());
     }
@@ -414,7 +414,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, UseLimit)
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(3);
 
-    runSpawn([this, limit](auto yield) {
+    runSpawn([this, kLIMIT](auto yield) {
         auto const input = json::parse(
             fmt::format(
                 R"JSON({{
@@ -422,7 +422,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, UseLimit)
                     "limit": {}
                 }})JSON",
                 kACCOUNT,
-                limit
+                kLIMIT
             )
         );
 
@@ -431,7 +431,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, UseLimit)
         ASSERT_TRUE(output);
 
         auto const resultJson = (*output.result).as_object();
-        EXPECT_EQ(resultJson.at("mptokens").as_array().size(), limit);
+        EXPECT_EQ(resultJson.at("mptokens").as_array().size(), kLIMIT);
         ASSERT_TRUE(resultJson.contains("marker"));
         EXPECT_THAT(boost::json::value_to<std::string>(resultJson.at("marker")), EndsWith(",0"));
     });
@@ -487,7 +487,8 @@ TEST_F(RPCAccountMPTokensHandlerTest, MarkerOutput)
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     std::vector<Blob> bbs;
-    for (int i = 0; i < kLIMIT; ++i) {
+    bbs.reserve(kLIMIT);
+for (int i = 0; i < kLIMIT; ++i) {
         bbs.push_back(createMpTokenObject(kACCOUNT, ripple::uint192(kISSUANCE_ID_HEX), i, 0, std::nullopt)
                           .getSerializer()
                           .peekData());
@@ -495,7 +496,8 @@ TEST_F(RPCAccountMPTokensHandlerTest, MarkerOutput)
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     std::vector<ripple::uint256> indexes1;
-    for (int i = 0; i < 10; ++i) {
+    indexes1.reserve(10);
+for (int i = 0; i < 10; ++i) {
         indexes1.emplace_back(kTOKEN_INDEX1);
     }
     ripple::STObject ownerDir1 = createOwnerDirLedgerObject(indexes1, kTOKEN_INDEX1);

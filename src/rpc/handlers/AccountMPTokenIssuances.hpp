@@ -64,8 +64,8 @@ public:
         std::string issuer;
         uint32_t sequence{};
 
-        std::optional<uint16_t> transferFee{};
-        std::optional<uint8_t> assetScale{};
+        std::optional<uint16_t> transferFee;
+        std::optional<uint8_t> assetScale;
 
         std::optional<std::uint64_t> maximumAmount;
         std::optional<std::uint64_t> outstandingAmount;
