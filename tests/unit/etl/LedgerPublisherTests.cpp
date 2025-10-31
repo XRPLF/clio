@@ -65,7 +65,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderIsWritingFalseAndCacheDisabled
     SystemState dummyState;
     dummyState.isWriting = false;
     auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, kAGE);
-    impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
+    etl::impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerHeader);
     EXPECT_CALL(mockCache, isDisabled).WillOnce(Return(true));
     EXPECT_CALL(*backend_, fetchLedgerDiff(kSEQ, _)).Times(0);
@@ -85,7 +85,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderIsWritingFalseAndCacheEnabled)
     SystemState dummyState;
     dummyState.isWriting = false;
     auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, kAGE);
-    impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
+    etl::impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerHeader);
     EXPECT_CALL(mockCache, isDisabled).WillOnce(Return(false));
     EXPECT_CALL(*backend_, fetchLedgerDiff(kSEQ, _)).Times(1);
@@ -107,7 +107,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderIsWritingTrue)
     SystemState dummyState;
     dummyState.isWriting = true;
     auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, kAGE);
-    impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
+    etl::impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerHeader);
 
     // setLastPublishedSequence not in strand, should verify before run
@@ -124,7 +124,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderInRange)
     dummyState.isWriting = true;
 
     auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, 0);  // age is 0
-    impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
+    etl::impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
     backend_->setRange(kSEQ - 1, kSEQ);
 
     publisher.publish(dummyLedgerHeader);
@@ -167,7 +167,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderCloseTimeGreaterThanNow)
 
     backend_->setRange(kSEQ - 1, kSEQ);
 
-    impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
+    etl::impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerHeader);
 
     // mock fetch fee
@@ -201,7 +201,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsTrue)
 {
     SystemState dummyState;
     dummyState.isStopping = true;
-    impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
+    etl::impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
     EXPECT_FALSE(publisher.publish(kSEQ, {}));
 }
 
@@ -209,7 +209,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttempt)
 {
     SystemState dummyState;
     dummyState.isStopping = false;
-    impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
+    etl::impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
 
     static constexpr auto kMAX_ATTEMPT = 2;
 
@@ -223,7 +223,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsFalse)
 {
     SystemState dummyState;
     dummyState.isStopping = false;
-    impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
+    etl::impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
 
     LedgerRange const range{.minSequence = kSEQ, .maxSequence = kSEQ};
     EXPECT_CALL(*backend_, hardFetchLedgerRange).WillOnce(Return(range));
@@ -244,7 +244,7 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleTxInOrder)
     dummyState.isWriting = true;
 
     auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, 0);  // age is 0
-    impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
+    etl::impl::LedgerPublisher publisher(ctx_, backend_, mockCache, mockSubscriptionManagerPtr, dummyState);
     backend_->setRange(kSEQ - 1, kSEQ);
 
     publisher.publish(dummyLedgerHeader);

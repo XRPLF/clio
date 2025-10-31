@@ -14,6 +14,7 @@ target_sources(
           cassandra/impl/SslContext.cpp
           cassandra/Handle.cpp
           cassandra/SettingsProvider.cpp
+          impl/LedgerCacheFile.cpp
 )
 
 target_link_libraries(clio_data PUBLIC cassandra-cpp-driver::cassandra-cpp-driver clio_util)

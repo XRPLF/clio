@@ -43,10 +43,18 @@
 
 namespace data {
 
+namespace impl {
+
+class LedgerCacheFile;
+
+}  // namespace impl
+
 /**
  * @brief Cache for an entire ledger.
  */
 class LedgerCache : public LedgerCacheInterface {
+    friend impl::LedgerCacheFile;
+
     struct CacheEntry {
         uint32_t seq = 0;
         Blob blob;
@@ -74,8 +82,9 @@ class LedgerCache : public LedgerCacheInterface {
         util::prometheus::Labels({{"type", "cache_hit"}, {"fetch", "successor_key"}})
     )};
 
-    std::map<ripple::uint256, CacheEntry> map_;
-    std::map<ripple::uint256, CacheEntry> deleted_;
+    using CacheMap = std::map<ripple::uint256, CacheEntry>;
+    CacheMap map_;
+    CacheMap deleted_;
 
     mutable std::shared_mutex mtx_;
     std::condition_variable_any cv_;
