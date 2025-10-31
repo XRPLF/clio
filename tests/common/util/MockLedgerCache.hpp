@@ -77,5 +77,4 @@ struct MockLedgerCache : data::LedgerCacheInterface {
     MOCK_METHOD(float, getSuccessorHitRate, (), (const, override));
 
     MOCK_METHOD(void, waitUntilCacheContainsSeq, (uint32_t), (override));
-    MOCK_METHOD(void, serialize, (), (override));
 };

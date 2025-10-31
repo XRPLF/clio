@@ -206,9 +206,6 @@ ETLService::lastCloseAgeSeconds() const
 std::optional<data::LedgerRange>
 ETLService::loadInitialLedgerIfNeeded()
 {
-    if (backend_->cache().isFull()) {
-        return data::LedgerRange{.maxSequence = backend_->cache().latestLedgerSequence()};
-    }
     auto rng = backend_->hardFetchLedgerRangeNoThrow();
     if (not rng.has_value()) {
         ASSERT(

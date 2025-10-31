@@ -101,6 +101,9 @@ public:
     LedgerCache&
     operator=(LedgerCache&& other);
 
+    bool
+    operator==(LedgerCache const& other) const;
+
     void
     update(std::vector<LedgerObject> const& objs, uint32_t seq, bool isBackground) override;
 
@@ -147,7 +150,7 @@ public:
     waitUntilCacheContainsSeq(uint32_t seq) override;
 
     void
-    serialize() override;
+    serialize();
 
     static std::expected<LedgerCache, std::string>
     fromFile();

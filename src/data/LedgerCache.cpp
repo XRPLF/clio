@@ -29,6 +29,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -385,7 +386,7 @@ LedgerCache::fromFile()
         }
 
         Blob blob;
-        blob.reserve(blobSize);
+        blob.resize(blobSize);
         file.read(reinterpret_cast<char*>(blob.data()), blobSize);
         if (!file) {
             return std::unexpected("Failed to read blob data from map at index " + std::to_string(i));

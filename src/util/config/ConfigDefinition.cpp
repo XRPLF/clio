@@ -360,6 +360,9 @@ getClioConfig()
           ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateNumCursors)},
          {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(gValidateUint16)},
          {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(gValidateLoadMode)},
+         {"cache.local_file.path", ConfigValue{ConfigType::String}.optional()},
+         {"cache.local_file.buffered_read_write", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+         {"cache.local_file.compress", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
          {"log.channels.[].channel",
           Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateChannelName)}},

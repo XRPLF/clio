@@ -441,6 +441,30 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The value must be one of the following: `sync`, `async`, `none`.
 - **Description**: The strategy used for Cache loading.
 
+### cache.local_file.path
+
+- **Required**: False
+- **Type**: string
+- **Default value**: None
+- **Constraints**: None
+- **Description**: The path to a file where cache will be saved to on shutdown and loaded from on startup. If the file couldn't be read Clio will load cache as usual (from DB or from rippled).
+
+### cache.local_file.buffered_read_write
+
+- **Required**: True
+- **Type**: boolean
+- **Default value**: `False`
+- **Constraints**: None
+- **Description**: Specifies if writing and reading cache file should be done by using extra buffer. This option speeds up reading and writing cache file but it makes Clio to use extra RAM.
+
+### cache.local_file.compress
+
+- **Required**: True
+- **Type**: boolean
+- **Default value**: `False`
+- **Constraints**: None
+- **Description**: Specifies if cache file should be compressed. Copmressing will take some extra time, but the file size should be reduced by about 30%.
+
 ### log.channels.[].channel
 
 - **Required**: False
