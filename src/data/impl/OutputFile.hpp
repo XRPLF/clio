@@ -103,6 +103,7 @@ public:
         cursorPosition_ += size;
     }
 
+private:
     void
     flush()
     {
