@@ -19,6 +19,84 @@
 
 #include "data/impl/InputFile.hpp"
 
+#include <cstddef>
+#include <cstring>
+#include <ios>
+#include <iosfwd>
+#include <string>
+
 namespace data::impl {
+
+bool
+InputFile::readFromFile(char* data, size_t size)
+{
+    file_.read(data, size);
+    return not file_.fail();
+}
+
+size_t
+InputFile::fileSize()
+{
+    if (!file_.is_open()) {
+        return 0;
+    }
+
+    auto const previousPosition = file_.tellg();
+    if (previousPosition == std::streampos(-1)) {
+        return 0;
+    }
+
+    file_.seekg(0, std::ios::end);
+    auto const endPosition = file_.tellg();
+    file_.seekg(previousPosition);
+
+    if (endPosition == std::streampos(-1)) {
+        return 0;
+    }
+
+    return static_cast<size_t>(endPosition);
+}
+
+InputFile::InputFile(std::string const& path, [[maybe_unused]] bool useCompression)
+    : file_(path, std::ios::binary | std::ios::in)
+{
+}
+
+bool
+InputFile::isOpen() const
+{
+    return file_.is_open();
+}
+
+bool
+InputFile::readRaw(char* data, size_t size)
+{
+    file_.read(data, size);
+    return not file_.fail();
+}
+
+BufferedInputFile::BufferedInputFile(std::string const& path, bool useCompression) : InputFile(path, useCompression)
+{
+    if (isOpen()) {
+        buffer_.resize(fileSize());
+        failed_ = !readFromFile(buffer_.data(), buffer_.size());
+        cursor_ = buffer_.data();
+        cursorPosition_ = 0;
+    } else {
+        failed_ = true;
+    }
+}
+
+bool
+BufferedInputFile::readRaw(char* data, size_t size)
+{
+    if (failed_ || (buffer_.size() < cursorPosition_ + size)) {
+        return false;
+    }
+    std::memcpy(data, cursor_, size);
+    cursor_ += size;
+    cursorPosition_ += size;
+    return true;
+}
 
 }  // namespace data::impl

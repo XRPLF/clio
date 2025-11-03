@@ -19,12 +19,9 @@
 
 #pragma once
 
-#include "util/Assert.hpp"
-
 #include <cstddef>
 #include <cstring>
 #include <fstream>
-#include <ios>
 #include <string>
 #include <vector>
 
@@ -35,24 +32,15 @@ class OutputFile {
 
 protected:
     void
-    writeToFile(char const* data, size_t size)
-    {
-        file_.write(data, size);
-    }
+    writeToFile(char const* data, size_t size);
 
 public:
-    OutputFile(std::string const& path, [[maybe_unused]] bool useCompression)
-        : file_(path, std::ios::binary | std::ios::out)
-    {
-    }
+    OutputFile(std::string const& path, bool useCompression);
 
     virtual ~OutputFile() = default;
 
     bool
-    isOpen() const
-    {
-        return file_.is_open();
-    }
+    isOpen() const;
 
     template <typename T>
     void
@@ -69,10 +57,7 @@ public:
     }
 
     virtual void
-    writeRaw(char const* data, size_t size)
-    {
-        writeToFile(data, size);
-    }
+    writeRaw(char const* data, size_t size);
 };
 
 class BufferedOutputFile : public OutputFile {
@@ -81,40 +66,16 @@ class BufferedOutputFile : public OutputFile {
     size_t cursorPosition_ = 0;
 
 public:
-    BufferedOutputFile(std::string const& path, bool useCompression, size_t bufferSize)
-        : OutputFile(path, useCompression)
-    {
-        buffer_.resize(bufferSize);
-        cursor_ = buffer_.data();
-        cursorPosition_ = 0;
-    }
+    BufferedOutputFile(std::string const& path, bool useCompression, size_t bufferSize);
 
-    ~BufferedOutputFile() override
-    {
-        flush();
-    }
+    ~BufferedOutputFile() override;
 
     void
-    writeRaw(char const* data, size_t size) override
-    {
-        ASSERT(cursorPosition_ + size <= buffer_.size(), "Not enough space in buffer");
-        std::memcpy(cursor_, data, size);
-        cursor_ += size;
-        cursorPosition_ += size;
-    }
+    writeRaw(char const* data, size_t size) override;
 
 private:
     void
-    flush()
-    {
-        if (cursorPosition_ == 0) {
-            return;
-        }
-
-        writeToFile(buffer_.data(), cursorPosition_);
-        cursorPosition_ = 0;
-        cursor_ = buffer_.data();
-    }
+    flush();
 };
 
 }  // namespace data::impl

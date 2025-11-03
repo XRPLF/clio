@@ -19,6 +19,70 @@
 
 #include "data/impl/OutputFile.hpp"
 
+#include "util/Assert.hpp"
+
+#include <cstddef>
+#include <cstring>
+#include <ios>
+#include <string>
+
 namespace data::impl {
+
+void
+OutputFile::writeToFile(char const* data, size_t size)
+{
+    file_.write(data, size);
+}
+
+OutputFile::OutputFile(std::string const& path, [[maybe_unused]] bool useCompression)
+    : file_(path, std::ios::binary | std::ios::out)
+{
+}
+
+bool
+OutputFile::isOpen() const
+{
+    return file_.is_open();
+}
+
+void
+OutputFile::writeRaw(char const* data, size_t size)
+{
+    writeToFile(data, size);
+}
+
+BufferedOutputFile::BufferedOutputFile(std::string const& path, bool useCompression, size_t bufferSize)
+    : OutputFile(path, useCompression)
+{
+    buffer_.resize(bufferSize);
+    cursor_ = buffer_.data();
+    cursorPosition_ = 0;
+}
+
+BufferedOutputFile::~BufferedOutputFile()
+{
+    flush();
+}
+
+void
+BufferedOutputFile::writeRaw(char const* data, size_t size)
+{
+    ASSERT(cursorPosition_ + size <= buffer_.size(), "Not enough space in buffer");
+    std::memcpy(cursor_, data, size);
+    cursor_ += size;
+    cursorPosition_ += size;
+}
+
+void
+BufferedOutputFile::flush()
+{
+    if (cursorPosition_ == 0) {
+        return;
+    }
+
+    writeToFile(buffer_.data(), cursorPosition_);
+    cursorPosition_ = 0;
+    cursor_ = buffer_.data();
+}
 
 }  // namespace data::impl

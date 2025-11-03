@@ -22,7 +22,6 @@
 #include <cstddef>
 #include <cstring>
 #include <fstream>
-#include <ios>
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -32,50 +31,11 @@ namespace data::impl {
 class InputFile {
     std::ifstream file_;
 
-protected:
-    bool
-    readFromFile(char* data, size_t size)
-    {
-        file_.read(data, size);
-        return not file_.fail();
-    }
-
-    size_t
-    fileSize()
-    {
-        if (!file_.is_open()) {
-            return 0;
-        }
-
-        auto const previousPosition = file_.tellg();
-        if (previousPosition == std::streampos(-1)) {
-            return 0;
-        }
-
-        file_.seekg(0, std::ios::end);
-        auto const endPosition = file_.tellg();
-        file_.seekg(previousPosition);
-
-        if (endPosition == std::streampos(-1)) {
-            return 0;
-        }
-
-        return static_cast<size_t>(endPosition);
-    }
-
 public:
-    InputFile(std::string const& path, [[maybe_unused]] bool useCompression)
-        : file_(path, std::ios::binary | std::ios::in)
-    {
-    }
-
+    InputFile(std::string const& path, bool useCompression);
     virtual ~InputFile() = default;
-
     bool
-    isOpen() const
-    {
-        return file_.is_open();
-    }
+    isOpen() const;
 
     template <typename T>
     bool
@@ -85,11 +45,13 @@ public:
     }
 
     virtual bool
-    readRaw(char* data, size_t size)
-    {
-        file_.read(data, size);
-        return not file_.fail();
-    }
+    readRaw(char* data, size_t size);
+
+protected:
+    bool
+    readFromFile(char* data, size_t size);
+    size_t
+    fileSize();
 };
 
 class BufferedInputFile : public InputFile {
@@ -99,29 +61,9 @@ class BufferedInputFile : public InputFile {
     bool failed_ = false;
 
 public:
-    BufferedInputFile(std::string const& path, bool useCompression) : InputFile(path, useCompression)
-    {
-        if (isOpen()) {
-            buffer_.resize(fileSize());
-            failed_ = !readFromFile(buffer_.data(), buffer_.size());
-            cursor_ = buffer_.data();
-            cursorPosition_ = 0;
-        } else {
-            failed_ = true;
-        }
-    }
-
+    BufferedInputFile(std::string const& path, bool useCompression);
     bool
-    readRaw(char* data, size_t size) override
-    {
-        if (failed_ || (buffer_.size() < cursorPosition_ + size)) {
-            return false;
-        }
-        std::memcpy(data, cursor_, size);
-        cursor_ += size;
-        cursorPosition_ += size;
-        return true;
-    }
+    readRaw(char* data, size_t size) override;
 };
 
 }  // namespace data::impl
