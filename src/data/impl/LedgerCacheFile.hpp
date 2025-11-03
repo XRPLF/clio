@@ -21,7 +21,8 @@
 
 #include "data/LedgerCache.hpp"
 #include "data/Types.hpp"
-#include "util/Assert.hpp"
+#include "data/impl/InputFile.hpp"
+#include "data/impl/OutputFile.hpp"
 #include "util/Shasum.hpp"
 
 #include <fmt/format.h>
@@ -33,182 +34,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <fstream>
-#include <ios>
 #include <memory>
 #include <string>
 #include <utility>
-#include <vector>
 
 namespace data::impl {
-
-class InputFile {
-    std::ifstream file_;
-
-protected:
-    bool
-    readFromFile(char* data, size_t size)
-    {
-        file_.read(data, size);
-        return not file_.fail();
-    }
-
-    size_t
-    fileSize()
-    {
-        auto const previousPosition = file_.tellg();
-        file_.seekg(std::fstream::end);
-        auto const size = file_.tellg();
-        file_.seekg(previousPosition);
-        return size;
-    }
-
-public:
-    InputFile(std::string const& path, [[maybe_unused]] bool useCompression)
-        : file_(path, std::ios::binary | std::ios::in)
-    {
-    }
-
-    virtual ~InputFile() = default;
-
-    bool
-    isOpen() const
-    {
-        return file_.is_open();
-    }
-
-    template <typename T>
-    bool
-    read(T& t)
-    {
-        return readRaw(reinterpret_cast<char*>(&t), sizeof(T));
-    }
-
-    virtual bool
-    readRaw(char* data, size_t size)
-    {
-        file_.read(data, size);
-        return not file_.fail();
-    }
-};
-
-class BufferedInputFile : public InputFile {
-    std::vector<char> buffer_;
-    char* cursor_ = nullptr;
-    size_t cursorPosition_ = 0;
-    bool failed_ = false;
-
-public:
-    BufferedInputFile(std::string const& path, bool useCompression) : InputFile(path, useCompression)
-    {
-        if (isOpen()) {
-            buffer_.resize(fileSize());
-            failed_ = !readFromFile(buffer_.data(), buffer_.size());
-            cursor_ = buffer_.data();
-            cursorPosition_ = 0;
-        } else {
-            failed_ = true;
-        }
-    }
-
-    bool
-    readRaw(char* data, size_t size) override
-    {
-        if (failed_ || (buffer_.size() < cursorPosition_ + size)) {
-            return false;
-        }
-        std::memcpy(data, cursor_, size);
-        cursor_ += size;
-        cursorPosition_ += size;
-        return true;
-    }
-};
-
-class OutputFile {
-    std::ofstream file_;
-
-protected:
-    void
-    writeToFile(char const* data, size_t size)
-    {
-        file_.write(data, size);
-    }
-
-public:
-    OutputFile(std::string const& path, [[maybe_unused]] bool useCompression)
-        : file_(path, std::ios::binary | std::ios::out)
-    {
-    }
-
-    virtual ~OutputFile() = default;
-
-    bool
-    isOpen() const
-    {
-        return file_.is_open();
-    }
-
-    template <typename T>
-    void
-    write(T&& data)
-    {
-        writeRaw(reinterpret_cast<char const*>(&data), sizeof(T));
-    }
-
-    template <typename T>
-    void
-    write(T const* data, size_t const size)
-    {
-        writeRaw(reinterpret_cast<char const*>(data), size);
-    }
-
-    virtual void
-    writeRaw(char const* data, size_t size)
-    {
-        writeToFile(data, size);
-    }
-};
-
-class BufferedOutputFile : public OutputFile {
-    std::vector<char> buffer_;
-    char* cursor_ = nullptr;
-    size_t cursorPosition_ = 0;
-
-public:
-    BufferedOutputFile(std::string const& path, bool useCompression, size_t bufferSize)
-        : OutputFile(path, useCompression)
-    {
-        buffer_.resize(bufferSize);
-        cursor_ = buffer_.data();
-        cursorPosition_ = 0;
-    }
-
-    ~BufferedOutputFile() override
-    {
-        flush();
-    }
-
-    void
-    writeRaw(char const* data, size_t size) override
-    {
-        ASSERT(cursorPosition_ + size <= buffer_.size(), "Not enough space in buffer");
-        std::memcpy(cursor_, data, size);
-        cursor_ += size;
-        cursorPosition_ += size;
-    }
-
-    void
-    flush()
-    {
-        if (cursorPosition_ == 0) {
-            return;
-        }
-
-        writeToFile(buffer_.data(), cursorPosition_);
-        cursorPosition_ = 0;
-        cursor_ = buffer_.data();
-    }
-};
 
 class LedgerCacheFile {
     std::string path_;

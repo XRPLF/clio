@@ -16,6 +16,9 @@ target_sources(
           data/cassandra/LedgerHeaderCacheTests.cpp
           data/cassandra/RetryPolicyTests.cpp
           data/cassandra/SettingsProviderTests.cpp
+          data/impl/InputFileTests.cpp
+          data/impl/LedgerCacheFileTests.cpp
+          data/impl/OutputFileTests.cpp
           # Cluster
           cluster/ClioNodeTests.cpp
           cluster/ClusterCommunicationServiceTests.cpp
