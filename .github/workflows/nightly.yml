@@ -110,7 +110,7 @@ jobs:
     with:
       delete_pattern: "nightly-*"
       prerelease: true
-      title: "Clio development (nightly) build"
+      title: "Clio development build (`nightly-${{ needs.get_date.outputs.date }}`)"
       version: nightly-${{ needs.get_date.outputs.date }}
       header: >
         > **Note:** Please remember that this is a development release and it is not recommended for production use.
