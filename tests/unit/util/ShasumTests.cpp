@@ -24,6 +24,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 
 using namespace util;
 
@@ -52,7 +53,7 @@ TEST_F(ShasumTest, sha256sumString)
 TEST_F(ShasumTest, Sha256sumStreamingEmpty)
 {
     Sha256sum hasher;
-    auto result = hasher.finalize();
+    auto result = std::move(hasher).finalize();
 
     ripple::uint256 expected;
     ASSERT_TRUE(expected.parseHex(kEMPTY_HASH));
@@ -64,7 +65,7 @@ TEST_F(ShasumTest, Sha256sumStreamingSingleUpdate)
     Sha256sum hasher;
     std::string data = "hello world";
     hasher.update(data.data(), data.size());
-    auto result = hasher.finalize();
+    auto result = std::move(hasher).finalize();
 
     ripple::uint256 expected;
     ASSERT_TRUE(expected.parseHex(kHELLO_WORLD_HASH));
@@ -77,7 +78,7 @@ TEST_F(ShasumTest, Sha256sumStreamingMultipleUpdates)
     hasher.update("hello", 5);
     hasher.update(" ", 1);
     hasher.update("world", 5);
-    auto result = hasher.finalize();
+    auto result = std::move(hasher).finalize();
 
     ripple::uint256 expected;
     ASSERT_TRUE(expected.parseHex(kHELLO_WORLD_HASH));
@@ -94,14 +95,14 @@ TEST_F(ShasumTest, Sha256sumUpdateTemplate)
     hasher.update(value32);
     hasher.update(value64);
 
-    auto result1 = hasher.finalize();
+    auto result1 = std::move(hasher).finalize();
 
     // Verify same result with raw data
     Sha256sum hasher2;
     hasher2.update(&value32, sizeof(value32));
     hasher2.update(&value64, sizeof(value64));
 
-    auto result2 = hasher2.finalize();
+    auto result2 = std::move(hasher2).finalize();
 
     EXPECT_EQ(result1, result2);
 }

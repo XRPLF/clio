@@ -52,11 +52,12 @@ Sha256sum::update(void const* data, size_t size)
 }
 
 ripple::uint256
-Sha256sum::finalize()
+Sha256sum::finalize() &&
 {
     auto const hashData = static_cast<ripple::sha256_hasher::result_type>(hasher_);
     ripple::uint256 result;
     std::memcpy(result.data(), hashData.data(), hashData.size());
+    hasher_ = ripple::sha256_hasher{};
     return result;
 }
 

@@ -82,7 +82,7 @@ public:
      * @return The SHA-256 hash.
      */
     ripple::uint256
-    finalize();
+    finalize() &&;
 };
 
 }  // namespace util
