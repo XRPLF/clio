@@ -20,6 +20,7 @@
 #include "data/LedgerCache.hpp"
 
 #include "data/Types.hpp"
+#include "data/impl/LedgerCacheFile.hpp"
 #include "etlng/Models.hpp"
 #include "util/Assert.hpp"
 
@@ -30,7 +31,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -291,190 +291,29 @@ public:
     }
 };
 
-void
-LedgerCache::serialize()
+std::expected<void, std::string>
+LedgerCache::saveToFile(std::string const& path) const
 {
-    std::ofstream file("data.bin", std::ios::binary);
-    if (not file.is_open()) {
-        std::cerr << "error opening data.bin for writing" << std::endl;
-        return;
-    }
-
-    struct Header {
-        uint32_t version = 1;
-        uint32_t latestSeq{};
-        uint64_t mapSize{};
-        uint64_t deletedSize{};
-    };
-    std::shared_lock lock{mtx_};
-
-    Logger logger;
-    Header const header{.latestSeq = latestSeq_, .mapSize = map_.size(), .deletedSize = deleted_.size()};
-    file.write(reinterpret_cast<char const*>(&header), sizeof(header));
-    logger.log("wrote header");
-
-    for (auto const& [k, v] : map_) {
-        file.write(reinterpret_cast<char const*>(k.data()), ripple::base_uint<256>::bytes);
-        file.write(reinterpret_cast<char const*>(&v.seq), sizeof(v.seq));
-        auto const blobSize = v.blob.size();
-        file.write(reinterpret_cast<char const*>(&blobSize), sizeof(blobSize));
-        file.write(reinterpret_cast<char const*>(v.blob.data()), v.blob.size());
-    }
-    file << std::string(16, 0);
-    logger.log("wrote map");
-
-    for (auto const& [k, v] : deleted_) {
-        file.write(reinterpret_cast<char const*>(k.data()), ripple::base_uint<256>::bytes);
-        file.write(reinterpret_cast<char const*>(&v.seq), sizeof(v.seq));
-        auto const blobSize = v.blob.size();
-        file.write(reinterpret_cast<char const*>(&blobSize), sizeof(blobSize));
-        file.write(reinterpret_cast<char const*>(v.blob.data()), v.blob.size());
-    }
-    file << std::string(16, 0);
-    logger.log("wrote deleted");
+    impl::LedgerCacheFile file{path, false, false};
+    std::unique_lock lock{mtx_};
+    impl::LedgerCacheFile::DataView data{.latestSeq = latestSeq_, .map = map_, .deleted = deleted_};
+    return file.write(data);
 }
 
-std::expected<LedgerCache, std::string>
-LedgerCache::fromFile()
+std::expected<void, std::string>
+LedgerCache::loadFromFile(std::string const& path)
 {
-    std::ifstream file("data.bin", std::ios::binary);
-    if (!file.is_open()) {
-        return std::unexpected("Failed to open data.bin for reading");
+    impl::LedgerCacheFile file{path, false, false};
+    auto data = file.read();
+    if (not data.has_value()) {
+        return std::unexpected(std::move(data).error());
     }
-
-    struct Header {
-        uint32_t version = 1;
-        uint32_t latestSeq{};
-        uint64_t mapSize{};
-        uint64_t deletedSize{};
-    };
-
-    Logger logger;
-    Header header;
-    file.read(reinterpret_cast<char*>(&header), sizeof(header));
-    if (!file) {
-        return std::unexpected("Failed to read header from file");
-    }
-
-    if (header.version != 1) {
-        return std::unexpected("Unsupported file version: " + std::to_string(header.version));
-    }
-    logger.log("read header");
-
-    LedgerCache cache;
-    cache.latestSeq_ = header.latestSeq;
-    cache.full_ = true;  // Assume cache is full when loaded from file
-
-    // Read main map
-    for (uint64_t i = 0; i < header.mapSize; ++i) {
-        ripple::uint256 key;
-        file.read(reinterpret_cast<char*>(key.data()), ripple::base_uint<256>::bytes);
-        if (!file) {
-            return std::unexpected("Failed to read key from map at index " + std::to_string(i));
-        }
-
-        uint32_t seq{};
-        file.read(reinterpret_cast<char*>(&seq), sizeof(seq));
-        if (!file) {
-            return std::unexpected("Failed to read sequence from map at index " + std::to_string(i));
-        }
-
-        size_t blobSize{};
-        file.read(reinterpret_cast<char*>(&blobSize), sizeof(blobSize));
-        if (!file) {
-            return std::unexpected("Failed to read blob size from map at index " + std::to_string(i));
-        }
-
-        Blob blob;
-        blob.resize(blobSize);
-        file.read(reinterpret_cast<char*>(blob.data()), blobSize);
-        if (!file) {
-            return std::unexpected("Failed to read blob data from map at index " + std::to_string(i));
-        }
-
-        cache.map_.insert(cache.map_.end(), std::make_pair(key, CacheEntry{.seq = seq, .blob = std::move(blob)}));
-    }
-
-    // Read separator after map
-    std::string separator(16, 0);
-    file.read(separator.data(), 16);
-    if (!file) {
-        return std::unexpected("Failed to read separator after map");
-    }
-
-    // Verify separator is all zeros
-    for (size_t i = 0; i < 16; ++i) {
-        if (separator[i] != 0) {
-            return std::unexpected(
-                "Invalid separator after map: expected zeros but found non-zero byte at position " + std::to_string(i)
-            );
-        }
-    }
-
-    logger.log("read map");
-
-    // Read deleted map
-    for (uint64_t i = 0; i < header.deletedSize; ++i) {
-        ripple::uint256 key;
-        file.read(reinterpret_cast<char*>(key.data()), ripple::base_uint<256>::bytes);
-        if (!file) {
-            return std::unexpected("Failed to read key from deleted at index " + std::to_string(i));
-        }
-
-        uint32_t seq{};
-        file.read(reinterpret_cast<char*>(&seq), sizeof(seq));
-        if (!file) {
-            return std::unexpected("Failed to read sequence from deleted at index " + std::to_string(i));
-        }
-
-        size_t blobSize{};
-        file.read(reinterpret_cast<char*>(&blobSize), sizeof(blobSize));
-        if (!file) {
-            return std::unexpected("Failed to read blob size from deleted at index " + std::to_string(i));
-        }
-
-        Blob blob(blobSize);
-        file.read(reinterpret_cast<char*>(blob.data()), blobSize);
-        if (!file) {
-            return std::unexpected("Failed to read blob data from deleted at index " + std::to_string(i));
-        }
-
-        cache.deleted_.insert(cache.map_.end(), std::make_pair(key, CacheEntry{.seq = seq, .blob = std::move(blob)}));
-    }
-
-    // Read final separator
-    file.read(separator.data(), 16);
-    if (!file) {
-        return std::unexpected("Failed to read final separator");
-    }
-
-    // Verify final separator is all zeros
-    for (size_t i = 0; i < 16; ++i) {
-        if (separator[i] != 0) {
-            return std::unexpected(
-                "Invalid final separator: expected zeros but found non-zero byte at position " + std::to_string(i)
-            );
-        }
-    }
-
-    logger.log("read deleted");
-
-    return cache;
-}
-
-LedgerCache::LedgerCache(LedgerCache&& other)
-{
-    *this = std::move(other);
-}
-
-LedgerCache&
-LedgerCache::operator=(LedgerCache&& other)
-{
-    full_ = other.full_;
-    map_ = std::move(other.map_);
-    deleted_ = std::move(other.deleted_);
-    latestSeq_ = other.latestSeq_;
-    return *this;
+    auto [latestSeq, map, deleted] = std::move(data).value();
+    std::unique_lock lock{mtx_};
+    latestSeq_ = latestSeq;
+    map_ = std::move(map);
+    deleted_ = std::move(deleted);
+    return {};
 }
 
 }  // namespace data

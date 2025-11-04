@@ -105,15 +105,6 @@ private:
     std::unordered_set<ripple::uint256, ripple::hardened_hash<>> deletes_;
 
 public:
-    LedgerCache() = default;
-
-    LedgerCache(LedgerCache&& other);
-    LedgerCache&
-    operator=(LedgerCache&& other);
-
-    bool
-    operator==(LedgerCache const& other) const;
-
     void
     update(std::vector<LedgerObject> const& objs, uint32_t seq, bool isBackground) override;
 
@@ -159,11 +150,25 @@ public:
     void
     waitUntilCacheContainsSeq(uint32_t seq) override;
 
-    void
-    serialize();
+    /**
+     * @brief Save the cache to file
+     * @note This operation takes about 7 seconds and it keeps mtx_ exclusively locked
+     *
+     * @param path The file path to save the cache to
+     * @return An error as a string if any
+     */
+    std::expected<void, std::string>
+    saveToFile(std::string const& path) const;
 
-    static std::expected<LedgerCache, std::string>
-    fromFile();
+    /**
+     * @brief Load the cache from file
+     * @note This operation takes about 7 seconds and it keeps mtx_ exclusively locked
+     *
+     * @param path The file path to load data from
+     * @return An error as a string if any
+     */
+    std::expected<void, std::string>
+    loadFromFile(std::string const& path);
 };
 
 }  // namespace data

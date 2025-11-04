@@ -24,7 +24,29 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <chrono>
+#include <iostream>
+#include <string>
+#include <utility>
+
 using namespace data;
+
+struct TimeMeasurement {
+    std::chrono::high_resolution_clock::time_point start;
+    std::string operation;
+
+    explicit TimeMeasurement(std::string op) : operation(std::move(op))
+    {
+        start = std::chrono::high_resolution_clock::now();
+    }
+
+    ~TimeMeasurement()
+    {
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        std::cout << operation << " took: " << duration.count() << " ms" << std::endl;
+    }
+};
 
 struct LedgerCacheTest : util::prometheus::WithPrometheus {
     LedgerCache cache;
@@ -64,4 +86,17 @@ TEST_F(LedgerCachePrometheusMetricTest, setFull)
 
     EXPECT_CALL(fullMock, value()).WillOnce(testing::Return(1));
     EXPECT_TRUE(cache.isFull());
+}
+
+TEST_F(LedgerCacheTest, saveLoad)
+{
+    LedgerCache cache{};
+    {
+        TimeMeasurement timer("Load operation");
+        ASSERT_TRUE(cache.loadFromFile("cache_with_hash.bin").has_value());
+    }
+    {
+        TimeMeasurement timer("Save operation");
+        ASSERT_TRUE(cache.saveToFile("cache_with_hash.bin").has_value());
+    }
 }
