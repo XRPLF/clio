@@ -34,6 +34,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <exception>
 #include <memory>
 #include <string>
 #include <utility>
@@ -41,15 +42,7 @@
 namespace data::impl {
 
 class LedgerCacheFile {
-    std::string path_;
-    bool isBuffered_;
-    bool useCompression_;
-
-    static constexpr uint32_t kVERSION = 1;
-    using Separator = std::array<char, 16>;
-    static constexpr Separator kSEPARATOR = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    using Hash = ripple::uint256;
-
+public:
     struct Header {
         uint32_t version = kVERSION;
         uint64_t datetime{};
@@ -57,6 +50,16 @@ class LedgerCacheFile {
         uint64_t mapSize{};
         uint64_t deletedSize{};
     };
+
+private:
+    using Separator = std::array<char, 16>;
+    std::string path_;
+    bool isBuffered_;
+    bool useCompression_;
+
+    static constexpr uint32_t kVERSION = 1;
+    static constexpr Separator kSEPARATOR = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    using Hash = ripple::uint256;
 
 public:
     template <typename T>
@@ -72,22 +75,6 @@ public:
     LedgerCacheFile(std::string path, bool isBuffered, bool useCompression)
         : path_(std::move(path)), isBuffered_(isBuffered), useCompression_(useCompression)
     {
-    }
-
-    static size_t
-    outputSize(DataView dataView)
-    {
-        size_t size = sizeof(Header) + (4 * sizeof(Separator)) + (2 * sizeof(Hash));
-
-        for (auto const& [k, v] : dataView.map) {
-            size += decltype(k)::bytes + sizeof(v.seq) + sizeof(size_t) + v.blob.size();
-        }
-
-        for (auto const& [k, v] : dataView.deleted) {
-            size += decltype(k)::bytes + sizeof(v.seq) + sizeof(size_t) + v.blob.size();
-        }
-
-        return size;
     }
 
     std::expected<void, std::string>
@@ -141,92 +128,98 @@ public:
     std::expected<Data, std::string>
     read()
     {
-        auto file = [&]() -> std::unique_ptr<InputFile> {
-            if (isBuffered_) {
-                return std::make_unique<BufferedInputFile>(path_, useCompression_);
+        try {
+            auto file = [&]() -> std::unique_ptr<InputFile> {
+                if (isBuffered_) {
+                    return std::make_unique<BufferedInputFile>(path_, useCompression_);
+                }
+                return std::make_unique<InputFile>(path_, useCompression_);
+            }();
+            if (not file->isOpen()) {
+                return std::unexpected{fmt::format("Couldn't open file: {}", path_)};
             }
-            return std::make_unique<InputFile>(path_, useCompression_);
-        }();
-        if (not file->isOpen()) {
-            return std::unexpected{fmt::format("Couldn't open file: {}", path_)};
-        }
 
-        Data result;
+            Data result;
 
-        Header header{};
-        if (not file->read(header)) {
-            return std::unexpected{"Error reading cache header"};
-        }
-        if (header.version != kVERSION) {
-            return std::unexpected{
-                fmt::format("Cache has wrong version: expected {} found {}", kVERSION, header.version)
-            };
-        }
-        result.latestSeq = header.latestSeq;
-        // TODO: check datetime or add sequence range
-
-        Separator separator{};
-        if (not file->readRaw(separator.data(), separator.size())) {
-            return std::unexpected{"Error reading cache header"};
-        }
-        if (auto verificationResult = verifySeparator(separator); not verificationResult.has_value()) {
-            return std::unexpected{std::move(verificationResult).error()};
-        }
-
-        for (size_t i = 0; i < header.mapSize; ++i) {
-            auto cacheEntryExpected = readCacheEntry(*file, i);
-            if (not cacheEntryExpected.has_value()) {
-                return std::unexpected{std::move(cacheEntryExpected).error()};
+            Header header{};
+            if (not file->read(header)) {
+                return std::unexpected{"Error reading cache header"};
             }
-            result.map.insert(result.map.end(), std::move(cacheEntryExpected).value());
-        }
-
-        Hash expectedMapHash;
-        if (not file->readRaw(reinterpret_cast<char*>(expectedMapHash.data()), decltype(expectedMapHash)::bytes)) {
-            return std::unexpected{"Error reading map hash"};
-        }
-
-        auto const actualMapHash = calculateMapHash(result.map);
-        if (expectedMapHash != actualMapHash) {
-            return std::unexpected{"Map hash verification failed - data corruption detected"};
-        }
-
-        if (not file->readRaw(separator.data(), separator.size())) {
-            return std::unexpected{"Error reading separator"};
-        }
-        if (auto verificationResult = verifySeparator(separator); not verificationResult.has_value()) {
-            return std::unexpected{std::move(verificationResult).error()};
-        }
-
-        for (size_t i = 0; i < header.deletedSize; ++i) {
-            auto cacheEntryExpected = readCacheEntry(*file, i);
-            if (not cacheEntryExpected.has_value()) {
-                return std::unexpected{std::move(cacheEntryExpected).error()};
+            if (header.version != kVERSION) {
+                return std::unexpected{
+                    fmt::format("Cache has wrong version: expected {} found {}", kVERSION, header.version)
+                };
             }
-            result.deleted.insert(result.deleted.end(), std::move(cacheEntryExpected).value());
-        }
+            result.latestSeq = header.latestSeq;
+            // TODO: check datetime or add sequence range
 
-        // Read and verify deleted hash
-        Hash expectedDeletedHash;
-        if (not file->readRaw(
-                reinterpret_cast<char*>(expectedDeletedHash.data()), decltype(expectedDeletedHash)::bytes
-            )) {
-            return std::unexpected{"Error reading deleted hash"};
-        }
+            Separator separator{};
+            if (not file->readRaw(separator.data(), separator.size())) {
+                return std::unexpected{"Error reading cache header"};
+            }
+            if (auto verificationResult = verifySeparator(separator); not verificationResult.has_value()) {
+                return std::unexpected{std::move(verificationResult).error()};
+            }
 
-        auto const actualDeletedHash = calculateMapHash(result.deleted);
-        if (expectedDeletedHash != actualDeletedHash) {
-            return std::unexpected{"Deleted hash verification failed - data corruption detected"};
-        }
+            for (size_t i = 0; i < header.mapSize; ++i) {
+                auto cacheEntryExpected = readCacheEntry(*file, i);
+                if (not cacheEntryExpected.has_value()) {
+                    return std::unexpected{std::move(cacheEntryExpected).error()};
+                }
+                result.map.insert(result.map.end(), std::move(cacheEntryExpected).value());
+            }
 
-        if (not file->readRaw(separator.data(), separator.size())) {
-            return std::unexpected{"Error reading separator"};
-        }
-        if (auto verificationResult = verifySeparator(separator); not verificationResult.has_value()) {
-            return std::unexpected{std::move(verificationResult).error()};
-        }
+            Hash expectedMapHash;
+            if (not file->readRaw(reinterpret_cast<char*>(expectedMapHash.data()), decltype(expectedMapHash)::bytes)) {
+                return std::unexpected{"Error reading map hash"};
+            }
 
-        return result;
+            auto const actualMapHash = calculateMapHash(result.map);
+            if (expectedMapHash != actualMapHash) {
+                return std::unexpected{"Map hash verification failed - data corruption detected"};
+            }
+
+            if (not file->readRaw(separator.data(), separator.size())) {
+                return std::unexpected{"Error reading separator"};
+            }
+            if (auto verificationResult = verifySeparator(separator); not verificationResult.has_value()) {
+                return std::unexpected{std::move(verificationResult).error()};
+            }
+
+            for (size_t i = 0; i < header.deletedSize; ++i) {
+                auto cacheEntryExpected = readCacheEntry(*file, i);
+                if (not cacheEntryExpected.has_value()) {
+                    return std::unexpected{std::move(cacheEntryExpected).error()};
+                }
+                result.deleted.insert(result.deleted.end(), std::move(cacheEntryExpected).value());
+            }
+
+            // Read and verify deleted hash
+            Hash expectedDeletedHash;
+            if (not file->readRaw(
+                    reinterpret_cast<char*>(expectedDeletedHash.data()), decltype(expectedDeletedHash)::bytes
+                )) {
+                return std::unexpected{"Error reading deleted hash"};
+            }
+
+            auto const actualDeletedHash = calculateMapHash(result.deleted);
+            if (expectedDeletedHash != actualDeletedHash) {
+                return std::unexpected{"Deleted hash verification failed - data corruption detected"};
+            }
+
+            if (not file->readRaw(separator.data(), separator.size())) {
+                return std::unexpected{"Error reading separator"};
+            }
+            if (auto verificationResult = verifySeparator(separator); not verificationResult.has_value()) {
+                return std::unexpected{std::move(verificationResult).error()};
+            }
+
+            return result;
+        } catch (std::exception const& e) {
+            return std::unexpected{fmt::format(" Error reading cache file: {}", e.what())};
+        } catch (...) {
+            return std::unexpected{fmt::format(" Error reading cache file")};
+        }
     }
 
 private:
@@ -279,6 +272,22 @@ private:
             return std::unexpected{"Separator verification failed - data corruption detected"};
         }
         return {};
+    }
+
+    static size_t
+    outputSize(DataView dataView)
+    {
+        size_t size = sizeof(Header) + (4 * sizeof(Separator)) + (2 * sizeof(Hash));
+
+        for (auto const& [k, v] : dataView.map) {
+            size += decltype(k)::bytes + sizeof(v.seq) + sizeof(size_t) + v.blob.size();
+        }
+
+        for (auto const& [k, v] : dataView.deleted) {
+            size += decltype(k)::bytes + sizeof(v.seq) + sizeof(size_t) + v.blob.size();
+        }
+
+        return size;
     }
 };
 

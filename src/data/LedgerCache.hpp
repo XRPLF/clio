@@ -53,13 +53,15 @@ class LedgerCacheFile;
  * @brief Cache for an entire ledger.
  */
 class LedgerCache : public LedgerCacheInterface {
-    friend impl::LedgerCacheFile;
-
+public:
     struct CacheEntry {
         uint32_t seq = 0;
         Blob blob;
     };
 
+    using CacheMap = std::map<ripple::uint256, CacheEntry>;
+
+private:
     // counters for fetchLedgerObject(s) hit rate
     std::reference_wrapper<util::prometheus::CounterInt> objectReqCounter_{PrometheusService::counterInt(
         "ledger_cache_counter_total_number",
@@ -82,7 +84,6 @@ class LedgerCache : public LedgerCacheInterface {
         util::prometheus::Labels({{"type", "cache_hit"}, {"fetch", "successor_key"}})
     )};
 
-    using CacheMap = std::map<ripple::uint256, CacheEntry>;
     CacheMap map_;
     CacheMap deleted_;
 
