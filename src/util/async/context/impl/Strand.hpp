@@ -81,12 +81,12 @@ public:
                     TimerContextProvider::getContext(parentContext_.get()), timeout, stopSource
                 );
 
-                using FnRetType = std::decay_t<decltype(fn(std::declval<StopToken>()))>;
+                using FnRetType = std::decay_t<std::invoke_result_t<decltype(fn), StopToken>>;
                 if constexpr (std::is_void_v<FnRetType>) {
-                    fn(std::move(stopToken));
+                    std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
                     outcome.setValue();
                 } else {
-                    outcome.setValue(fn(std::move(stopToken)));
+                    outcome.setValue(std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken)));
                 }
             })
         );
@@ -108,12 +108,12 @@ public:
             context_,
             impl::outcomeForHandler<StopSourceType>(fn),
             ErrorHandlerType::wrap([fn = std::forward<decltype(fn)>(fn)](auto& outcome) mutable {
-                using FnRetType = std::decay_t<decltype(fn())>;
+                using FnRetType = std::decay_t<std::invoke_result_t<decltype(fn)>>;
                 if constexpr (std::is_void_v<FnRetType>) {
-                    fn();
+                    std::invoke(std::forward<decltype(fn)>(fn));
                     outcome.setValue();
                 } else {
-                    outcome.setValue(fn());
+                    outcome.setValue(std::invoke(std::forward<decltype(fn)>(fn)));
                 }
             })
         );
@@ -127,6 +127,12 @@ public:
         } else {
             return RepeatedOperation(impl::extractAssociatedExecutor(*this), interval, std::forward<decltype(fn)>(fn));
         }
+    }
+
+    void
+    submit(SomeHandlerWithoutStopToken auto&& fn) noexcept(kIS_NOEXCEPT)
+    {
+        DispatcherType::post(context_, ErrorHandlerType::catchAndAssert(fn));
     }
 };
 

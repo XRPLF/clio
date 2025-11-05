@@ -28,36 +28,26 @@ target_sources(
           etl/CursorFromFixDiffNumProviderTests.cpp
           etl/CorruptionDetectorTests.cpp
           etl/ETLStateTests.cpp
-          etl/ExtractionDataPipeTests.cpp
-          etl/ExtractorTests.cpp
+          etl/ETLServiceTests.cpp
+          etl/ExtractionTests.cpp
           etl/ForwardingSourceTests.cpp
           etl/GrpcSourceTests.cpp
           etl/LedgerPublisherTests.cpp
           etl/LoadBalancerTests.cpp
+          etl/LoadingTests.cpp
+          etl/MonitorTests.cpp
+          etl/NetworkValidatedLedgersTests.cpp
           etl/NFTHelpersTests.cpp
+          etl/RegistryTests.cpp
+          etl/SchedulingTests.cpp
           etl/SourceImplTests.cpp
           etl/SubscriptionSourceTests.cpp
-          etl/TransformerTests.cpp
-          # ETLng
-          etlng/AmendmentBlockHandlerTests.cpp
-          etlng/ETLServiceTests.cpp
-          etlng/ExtractionTests.cpp
-          etlng/ForwardingSourceTests.cpp
-          etlng/GrpcSourceTests.cpp
-          etlng/LedgerPublisherTests.cpp
-          etlng/RegistryTests.cpp
-          etlng/SchedulingTests.cpp
-          etlng/TaskManagerTests.cpp
-          etlng/LoadingTests.cpp
-          etlng/LoadBalancerTests.cpp
-          etlng/NetworkValidatedLedgersTests.cpp
-          etlng/MonitorTests.cpp
-          etlng/SourceImplTests.cpp
-          etlng/ext/CoreTests.cpp
-          etlng/ext/CacheTests.cpp
-          etlng/ext/MPTTests.cpp
-          etlng/ext/NFTTests.cpp
-          etlng/ext/SuccessorTests.cpp
+          etl/TaskManagerTests.cpp
+          etl/ext/CoreTests.cpp
+          etl/ext/CacheTests.cpp
+          etl/ext/MPTTests.cpp
+          etl/ext/NFTTests.cpp
+          etl/ext/SuccessorTests.cpp
           # Feed
           feed/BookChangesFeedTests.cpp
           feed/ForwardFeedTests.cpp

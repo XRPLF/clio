@@ -289,7 +289,6 @@ getClioConfig()
           ConfigValue{ConfigType::String}.defaultValue("cassandra").withConstraint(gValidateProvider)},
 
          {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-         {"__ng_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
          {"etl_sources.[].ip", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)}},
          {"etl_sources.[].ws_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
          {"etl_sources.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},

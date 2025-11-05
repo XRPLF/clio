@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,9 @@
 */
 //==============================================================================
 
+#include "etl/InitialLoadObserverInterface.hpp"
+#include "etl/LoadBalancerInterface.hpp"
+#include "etl/Models.hpp"
 #include "etl/impl/SourceImpl.hpp"
 #include "rpc/Errors.hpp"
 #include "util/Spawn.hpp"
@@ -32,6 +35,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <string>
@@ -44,12 +48,16 @@ using namespace etl::impl;
 using testing::Return;
 using testing::StrictMock;
 
+namespace {
+
 struct GrpcSourceMock {
     using FetchLedgerReturnType = std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>;
     MOCK_METHOD(FetchLedgerReturnType, fetchLedger, (uint32_t, bool, bool));
 
-    using LoadLedgerReturnType = std::pair<std::vector<std::string>, bool>;
-    MOCK_METHOD(LoadLedgerReturnType, loadInitialLedger, (uint32_t, uint32_t));
+    using LoadLedgerReturnType = etl::InitialLedgerLoadResult;
+    MOCK_METHOD(LoadLedgerReturnType, loadInitialLedger, (uint32_t, uint32_t, etl::InitialLoadObserverInterface&));
+
+    MOCK_METHOD(void, stop, (boost::asio::yield_context), ());
 };
 
 struct SubscriptionSourceMock {
@@ -74,6 +82,23 @@ struct ForwardingSourceMock {
         (const)
     );
 };
+
+struct InitialLoadObserverMock : etl::InitialLoadObserverInterface {
+    MOCK_METHOD(
+        void,
+        onInitialLoadGotMoreObjects,
+        (uint32_t, std::vector<etl::model::Object> const&, std::optional<std::string>),
+        (override)
+    );
+
+    void
+    onInitialLoadGotMoreObjects(uint32_t seq, std::vector<etl::model::Object> const& data)
+    {
+        onInitialLoadGotMoreObjects(seq, data, std::nullopt);
+    }
+};
+
+}  // namespace
 
 struct SourceImplTest : public ::testing::Test {
 protected:
@@ -107,6 +132,7 @@ TEST_F(SourceImplTest, run)
 TEST_F(SourceImplTest, stop)
 {
     EXPECT_CALL(*subscriptionSourceMock_, stop);
+    EXPECT_CALL(grpcSourceMock_, stop);
     boost::asio::io_context ctx;
     util::spawn(ctx, [&](boost::asio::yield_context yield) { source_.stop(yield); });
     ctx.run();
@@ -170,17 +196,33 @@ TEST_F(SourceImplTest, fetchLedger)
     EXPECT_EQ(actualStatus.error_code(), grpc::StatusCode::OK);
 }
 
-TEST_F(SourceImplTest, loadInitialLedger)
+TEST_F(SourceImplTest, loadInitialLedgerErrorPath)
 {
     uint32_t const ledgerSeq = 123;
     uint32_t const numMarkers = 3;
 
-    EXPECT_CALL(grpcSourceMock_, loadInitialLedger(ledgerSeq, numMarkers))
-        .WillOnce(Return(std::make_pair(std::vector<std::string>{}, true)));
-    auto const [actualLedgers, actualSuccess] = source_.loadInitialLedger(ledgerSeq, numMarkers);
+    auto observerMock = testing::StrictMock<InitialLoadObserverMock>();
 
-    EXPECT_TRUE(actualLedgers.empty());
-    EXPECT_TRUE(actualSuccess);
+    EXPECT_CALL(grpcSourceMock_, loadInitialLedger(ledgerSeq, numMarkers, testing::_))
+        .WillOnce(Return(std::unexpected{etl::InitialLedgerLoadError::Errored}));
+    auto const res = source_.loadInitialLedger(ledgerSeq, numMarkers, observerMock);
+
+    EXPECT_FALSE(res.has_value());
+}
+
+TEST_F(SourceImplTest, loadInitialLedgerSuccessPath)
+{
+    uint32_t const ledgerSeq = 123;
+    uint32_t const numMarkers = 3;
+    auto response = etl::InitialLedgerLoadResult{{"1", "2", "3"}};
+
+    auto observerMock = testing::StrictMock<InitialLoadObserverMock>();
+
+    EXPECT_CALL(grpcSourceMock_, loadInitialLedger(ledgerSeq, numMarkers, testing::_)).WillOnce(Return(response));
+    auto const res = source_.loadInitialLedger(ledgerSeq, numMarkers, observerMock);
+
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res, response);
 }
 
 TEST_F(SourceImplTest, forwardToRippled)

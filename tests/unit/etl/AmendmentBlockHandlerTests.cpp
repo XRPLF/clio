@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,36 +19,45 @@
 
 #include "etl/SystemState.hpp"
 #include "etl/impl/AmendmentBlockHandler.hpp"
-#include "util/AsioContextTestFixture.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
+#include "util/async/context/BasicExecutionContext.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
 #include <cstddef>
+#include <semaphore>
 
 using namespace etl::impl;
 
-struct AmendmentBlockHandlerTest : util::prometheus::WithPrometheus, SyncAsioContextTest {
-    testing::StrictMock<testing::MockFunction<void()>> actionMock;
-    etl::SystemState state;
+struct AmendmentBlockHandlerTests : util::prometheus::WithPrometheus {
+protected:
+    testing::StrictMock<testing::MockFunction<void()>> actionMock_;
+    etl::SystemState state_;
+
+    util::async::CoroExecutionContext ctx_;
 };
 
-// Note: This test can be flaky due to the way it was written (depends on time)
-// Since the old ETL is going to be replaced by ETLng all tests including this one will be deleted anyway so the fix for
-// flakiness is to increase the context runtime to 50ms until then (to not waste time).
-TEST_F(AmendmentBlockHandlerTest, CallToNotifyAmendmentBlockedSetsStateAndRepeatedlyCallsAction)
+TEST_F(AmendmentBlockHandlerTests, CallToNotifyAmendmentBlockedSetsStateAndRepeatedlyCallsAction)
 {
-    AmendmentBlockHandler handler{ctx_, state, std::chrono::nanoseconds{1}, actionMock.AsStdFunction()};
+    static constexpr auto kMAX_ITERATIONS = 10uz;
+    etl::impl::AmendmentBlockHandler handler{ctx_, state_, std::chrono::nanoseconds{1}, actionMock_.AsStdFunction()};
+    auto counter = 0uz;
+    std::binary_semaphore stop{0};
 
-    EXPECT_FALSE(state.isAmendmentBlocked);
-    EXPECT_CALL(actionMock, Call()).Times(testing::AtLeast(10));
+    EXPECT_FALSE(state_.isAmendmentBlocked);
+    EXPECT_CALL(actionMock_, Call()).Times(testing::AtLeast(10)).WillRepeatedly([&]() {
+        if (++counter; counter > kMAX_ITERATIONS)
+            stop.release();
+    });
+
     handler.notifyAmendmentBlocked();
-    EXPECT_TRUE(state.isAmendmentBlocked);
+    stop.acquire();  // wait for the counter to reach over kMAX_ITERATIONS
+    handler.stop();
 
-    runContextFor(std::chrono::milliseconds{50});
+    EXPECT_TRUE(state_.isAmendmentBlocked);
 }
 
 struct DefaultAmendmentBlockActionTest : LoggerFixture {};

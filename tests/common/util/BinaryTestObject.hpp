@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "etlng/Models.hpp"
-#include "etlng/impl/Extraction.hpp"
+#include "etl/Models.hpp"
+#include "etl/impl/Extraction.hpp"
 
 #include <gtest/gtest.h>
 #include <xrpl/protocol/STTx.h>
@@ -153,7 +153,7 @@ createTxAndMeta(
     std::string txnStr = kDEFAULT_TXN_HEX
 );
 
-[[maybe_unused, nodiscard]] etlng::model::Transaction
+[[maybe_unused, nodiscard]] etl::model::Transaction
 createTransaction(
     ripple::TxType type,
     std::string hashStr = kDEFAULT_HASH,
@@ -161,31 +161,31 @@ createTransaction(
     std::string txnStr = kDEFAULT_TXN_HEX
 );
 
-[[maybe_unused, nodiscard]] etlng::model::Object
+[[maybe_unused, nodiscard]] etl::model::Object
 createObject(
-    etlng::model::Object::ModType modType = etlng::model::Object::ModType::Created,
+    etl::model::Object::ModType modType = etl::model::Object::ModType::Created,
     std::string key = kDEFAULT_OBJ_KEY
 );
 
-[[maybe_unused, nodiscard]] etlng::model::Object
+[[maybe_unused, nodiscard]] etl::model::Object
 createObjectWithBookBase(
-    etlng::model::Object::ModType modType = etlng::model::Object::ModType::Created,
+    etl::model::Object::ModType modType = etl::model::Object::ModType::Created,
     std::string key = kDEFAULT_OBJ_KEY
 );
 
-[[maybe_unused, nodiscard]] etlng::model::Object
+[[maybe_unused, nodiscard]] etl::model::Object
 createObjectWithTwoNFTs();
 
-[[maybe_unused, nodiscard]] etlng::model::Object
+[[maybe_unused, nodiscard]] etl::model::Object
 createObjectWithMPT();
 
-[[maybe_unused, nodiscard]] etlng::model::BookSuccessor
+[[maybe_unused, nodiscard]] etl::model::BookSuccessor
 createSuccessor();
 
-[[maybe_unused, nodiscard]] etlng::impl::PBLedgerResponseType
+[[maybe_unused, nodiscard]] etl::impl::PBLedgerResponseType
 createDataAndDiff();
 
-[[maybe_unused, nodiscard]] etlng::impl::PBLedgerResponseType
+[[maybe_unused, nodiscard]] etl::impl::PBLedgerResponseType
 createData();
 
 }  // namespace util

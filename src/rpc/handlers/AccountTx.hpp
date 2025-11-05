@@ -20,7 +20,7 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "etlng/ETLServiceInterface.hpp"
+#include "etl/ETLServiceInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/JsonBool.hpp"
@@ -56,7 +56,7 @@ namespace rpc {
 class AccountTxHandler {
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
-    std::shared_ptr<etlng::ETLServiceInterface const> etl_;
+    std::shared_ptr<etl::ETLServiceInterface const> etl_;
 
 public:
     static constexpr auto kLIMIT_MIN = 1;
@@ -115,7 +115,7 @@ public:
      */
     AccountTxHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
-        std::shared_ptr<etlng::ETLServiceInterface const> const& etl
+        std::shared_ptr<etl::ETLServiceInterface const> const& etl
     )
         : sharedPtrBackend_(sharedPtrBackend), etl_{etl}
     {

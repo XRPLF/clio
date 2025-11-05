@@ -69,19 +69,11 @@ protected:
 };
 
 /**
- * @brief Fixture with a mock NG etl balancer
- */
-struct MockNgLoadBalancerTest : virtual public ::testing::Test {
-protected:
-    std::shared_ptr<MockNgLoadBalancer> mockLoadBalancerPtr_ = std::make_shared<MockNgLoadBalancer>();
-};
-
-/**
  * @brief Fixture with a mock ledger fetcher
  */
 struct MockLedgerFetcherTest : virtual public ::testing::Test {
 protected:
-    std::shared_ptr<MockNgLedgerFetcher> mockLedgerFetcherPtr_ = std::make_shared<MockNgLedgerFetcher>();
+    std::shared_ptr<MockLedgerFetcher> mockLedgerFetcherPtr_ = std::make_shared<MockLedgerFetcher>();
 };
 
 /**

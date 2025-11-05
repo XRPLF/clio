@@ -21,12 +21,12 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/LedgerCacheInterface.hpp"
+#include "etl/CacheLoaderInterface.hpp"
 #include "etl/CacheLoaderSettings.hpp"
 #include "etl/impl/CacheLoader.hpp"
 #include "etl/impl/CursorFromAccountProvider.hpp"
 #include "etl/impl/CursorFromDiffProvider.hpp"
 #include "etl/impl/CursorFromFixDiffNumProvider.hpp"
-#include "etlng/CacheLoaderInterface.hpp"
 #include "util/Assert.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
 #include "util/log/Logger.hpp"
@@ -48,7 +48,7 @@ namespace etl {
  * @tparam ExecutionContextType The type of the execution context to use
  */
 template <typename ExecutionContextType = util::async::CoroExecutionContext>
-class CacheLoader : public etlng::CacheLoaderInterface {
+class CacheLoader : public CacheLoaderInterface {
     using CacheLoaderType = impl::CacheLoaderImpl<data::LedgerCacheInterface>;
 
     util::Logger log_{"ETL"};

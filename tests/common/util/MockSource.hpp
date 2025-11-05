@@ -18,7 +18,8 @@
 //==============================================================================
 #pragma once
 
-#include "data/BackendInterface.hpp"
+#include "etl/InitialLoadObserverInterface.hpp"
+#include "etl/LoadBalancerInterface.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
@@ -60,7 +61,12 @@ struct MockSource : etl::SourceBase {
         (uint32_t, bool, bool),
         (override)
     );
-    MOCK_METHOD((std::pair<std::vector<std::string>, bool>), loadInitialLedger, (uint32_t, uint32_t), (override));
+    MOCK_METHOD(
+        etl::InitialLedgerLoadResult,
+        loadInitialLedger,
+        (uint32_t, uint32_t, etl::InitialLoadObserverInterface&),
+        (override)
+    );
 
     using ForwardToRippledReturnType = std::expected<boost::json::object, rpc::ClioError>;
     MOCK_METHOD(
@@ -131,10 +137,10 @@ public:
         return mock_->fetchLedger(sequence, getObjects, getObjectNeighbors);
     }
 
-    std::pair<std::vector<std::string>, bool>
-    loadInitialLedger(uint32_t sequence, uint32_t maxLedger) override
+    etl::InitialLedgerLoadResult
+    loadInitialLedger(uint32_t sequence, uint32_t maxLedger, etl::InitialLoadObserverInterface& observer) override
     {
-        return mock_->loadInitialLedger(sequence, maxLedger);
+        return mock_->loadInitialLedger(sequence, maxLedger, observer);
     }
 
     std::expected<boost::json::object, rpc::ClioError>
@@ -174,7 +180,6 @@ public:
             .WillByDefault([this](
                                util::config::ObjectView const&,
                                boost::asio::io_context&,
-                               std::shared_ptr<BackendInterface>,
                                std::shared_ptr<feed::SubscriptionManagerInterface>,
                                std::shared_ptr<etl::NetworkValidatedLedgersInterface>,
                                std::chrono::steady_clock::duration,
@@ -214,7 +219,6 @@ public:
         makeSource,
         (util::config::ObjectView const&,
          boost::asio::io_context&,
-         std::shared_ptr<BackendInterface>,
          std::shared_ptr<feed::SubscriptionManagerInterface>,
          std::shared_ptr<etl::NetworkValidatedLedgersInterface>,
          std::chrono::steady_clock::duration,
