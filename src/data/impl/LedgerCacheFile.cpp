@@ -21,7 +21,6 @@
 
 #include "data/LedgerCache.hpp"
 #include "data/Types.hpp"
-#include "util/Shasum.hpp"
 
 #include <fmt/format.h>
 #include <xrpl/basics/base_uint.h>
@@ -69,22 +68,6 @@ readCacheEntry(InputFile& file, size_t i)
     return std::make_pair(key, LedgerCache::CacheEntry{.seq = seq, .blob = std::move(blob)});
 }
 
-Hash
-calculateMapHash(LedgerCache::CacheMap const& map)
-{
-    util::Sha256sum hasher;
-
-    for (auto const& [key, entry] : map) {
-        hasher.update(key.data(), decltype(key)::bytes);
-        hasher.update(entry.seq);
-        size_t const blobSize = entry.blob.size();
-        hasher.update(blobSize);
-        hasher.update(entry.blob.data(), entry.blob.size());
-    }
-
-    return std::move(hasher).finalize();
-}
-
 std::expected<void, std::string>
 verifySeparator(Separator const& s)
 {
@@ -125,8 +108,6 @@ LedgerCacheFile::write(DataView dataView)
         file.write(v.blob.size());
         file.writeRaw(reinterpret_cast<char const*>(v.blob.data()), v.blob.size());
     }
-    auto mapHash = calculateMapHash(dataView.map);
-    file.write(mapHash.data(), decltype(mapHash)::bytes);
     file.write(kSEPARATOR);
 
     for (auto const& [k, v] : dataView.deleted) {
@@ -135,9 +116,9 @@ LedgerCacheFile::write(DataView dataView)
         file.write(v.blob.size());
         file.writeRaw(reinterpret_cast<char const*>(v.blob.data()), v.blob.size());
     }
-    auto deletedHash = calculateMapHash(dataView.deleted);
-    file.write(deletedHash.data(), decltype(deletedHash)::bytes);
     file.write(kSEPARATOR);
+    auto const hash = file.hash();
+    file.write(hash.data(), decltype(hash)::bytes);
 
     return {};
 }
@@ -181,16 +162,6 @@ LedgerCacheFile::read()
             result.map.insert(result.map.end(), std::move(cacheEntryExpected).value());
         }
 
-        Hash expectedMapHash;
-        if (not file.readRaw(reinterpret_cast<char*>(expectedMapHash.data()), decltype(expectedMapHash)::bytes)) {
-            return std::unexpected{"Error reading map hash"};
-        }
-
-        auto const actualMapHash = calculateMapHash(result.map);
-        if (expectedMapHash != actualMapHash) {
-            return std::unexpected{"Map hash verification failed - data corruption detected"};
-        }
-
         if (not file.readRaw(separator.data(), separator.size())) {
             return std::unexpected{"Error reading separator"};
         }
@@ -206,23 +177,21 @@ LedgerCacheFile::read()
             result.deleted.insert(result.deleted.end(), std::move(cacheEntryExpected).value());
         }
 
-        Hash expectedDeletedHash;
-        if (not file.readRaw(
-                reinterpret_cast<char*>(expectedDeletedHash.data()), decltype(expectedDeletedHash)::bytes
-            )) {
-            return std::unexpected{"Error reading deleted hash"};
-        }
-
-        auto const actualDeletedHash = calculateMapHash(result.deleted);
-        if (expectedDeletedHash != actualDeletedHash) {
-            return std::unexpected{"Deleted hash verification failed - data corruption detected"};
-        }
-
         if (not file.readRaw(separator.data(), separator.size())) {
             return std::unexpected{"Error reading separator"};
         }
         if (auto verificationResult = verifySeparator(separator); not verificationResult.has_value()) {
             return std::unexpected{std::move(verificationResult).error()};
+        }
+
+        auto const dataHash = file.hash();
+        ripple::uint256 hashFromFile{};
+        if (not file.readRaw(reinterpret_cast<char*>(hashFromFile.data()), decltype(hashFromFile)::bytes)) {
+            return std::unexpected{"Error reading hash"};
+        }
+
+        if (dataHash != hashFromFile) {
+            return std::unexpected{"Hash file corruption detected"};
         }
 
         return result;

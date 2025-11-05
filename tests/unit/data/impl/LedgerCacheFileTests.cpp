@@ -80,12 +80,11 @@ struct LedgerCacheFileTestBase : ::testing::Test {
         size_t separator1Offset;
         size_t mapStartOffset;
         std::vector<EntryOffsets> mapEntries;
-        size_t mapHashOffset;
         size_t separator2Offset;
         size_t deletedStartOffset;
         std::vector<EntryOffsets> deletedEntries;
-        size_t deletedHashOffset;
         size_t separator3Offset;
+        size_t hashOffset;
 
         static FileOffsets
         calculate(LedgerCacheFile::DataView const& dataView)
@@ -112,11 +111,7 @@ struct LedgerCacheFileTestBase : ::testing::Test {
                 currentOffset += 32 + 4 + 8 + entry.blob.size();  // key + seq + size + blob
             }
 
-            // Map hash
-            offsets.mapHashOffset = currentOffset;
-            currentOffset += 32;  // uint256 size
-
-            // Separator 2 (after map hash)
+            // Separator 2 (after map entries)
             offsets.separator2Offset = currentOffset;
             currentOffset += 16;
 
@@ -133,12 +128,12 @@ struct LedgerCacheFileTestBase : ::testing::Test {
                 currentOffset += 32 + 4 + 8 + entry.blob.size();
             }
 
-            // Deleted hash
-            offsets.deletedHashOffset = currentOffset;
-            currentOffset += 32;
-
-            // Separator 3 (after deleted hash)
+            // Separator 3 (after deleted entries)
             offsets.separator3Offset = currentOffset;
+            currentOffset += 16;
+
+            // Overall file hash
+            offsets.hashOffset = currentOffset;
 
             return offsets;
         }
@@ -419,7 +414,7 @@ TEST_P(LedgerCacheFileCorruptionTest, HandleCorruption)
                 ::testing::AnyOf(
                     ::testing::HasSubstr("Error reading cache file"),
                     ::testing::HasSubstr("Failed to read blob"),
-                    ::testing::HasSubstr("Map hash verification failed")
+                    ::testing::HasSubstr("Hash file corruption detected")
                 )
             );
             break;
@@ -427,7 +422,7 @@ TEST_P(LedgerCacheFileCorruptionTest, HandleCorruption)
             EXPECT_THAT(
                 error,
                 ::testing::AnyOf(
-                    ::testing::HasSubstr("Map hash verification failed"),
+                    ::testing::HasSubstr("Hash file corruption detected"),
                     ::testing::HasSubstr("Error reading cache file")
                 )
             );
@@ -442,7 +437,7 @@ TEST_P(LedgerCacheFileCorruptionTest, HandleCorruption)
                 ::testing::AnyOf(
                     ::testing::HasSubstr("Error reading cache file"),
                     ::testing::HasSubstr("Failed to read blob"),
-                    ::testing::HasSubstr("Deleted hash verification failed")
+                    ::testing::HasSubstr("Hash file corruption detected")
                 )
             );
             break;
@@ -450,7 +445,7 @@ TEST_P(LedgerCacheFileCorruptionTest, HandleCorruption)
             EXPECT_THAT(
                 error,
                 ::testing::AnyOf(
-                    ::testing::HasSubstr("Deleted hash verification failed"),
+                    ::testing::HasSubstr("Hash file corruption detected"),
                     ::testing::HasSubstr("Error reading cache file")
                 )
             );
