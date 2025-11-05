@@ -120,7 +120,7 @@ integralValueAs(boost::json::value const& value)
  * @throws logic_error comes from integralValueAs if the underlying number is neither int64 nor uint64
  * @throws std::invalid_argument or std::out_of_range if the string cannot be converted to a number
  */
-inline std::optional<uint32_t>
+[[nodiscard]] inline std::optional<uint32_t>
 getLedgerIndex(boost::json::value const& value)
 {
     std::optional<uint32_t> ledgerIndex;
