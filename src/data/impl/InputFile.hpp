@@ -19,6 +19,10 @@
 
 #pragma once
 
+#include "util/Shasum.hpp"
+
+#include <xrpl/basics/base_uint.h>
+
 #include <cstddef>
 #include <cstring>
 #include <fstream>
@@ -29,6 +33,7 @@ namespace data::impl {
 
 class InputFile {
     std::ifstream file_;
+    util::Sha256sum shasum_;
 
 public:
     InputFile(std::string const& path);
@@ -46,9 +51,7 @@ public:
     bool
     readRaw(char* data, size_t size);
 
-private:
-    bool
-    readFromFile(char* data, size_t size);
+    ripple::uint256
+    hash() const;
 };
-
 }  // namespace data::impl

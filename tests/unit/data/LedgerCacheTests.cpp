@@ -93,7 +93,7 @@ TEST_F(LedgerCacheTest, saveLoad)
     LedgerCache cache{};
     {
         TimeMeasurement timer("Load operation");
-        ASSERT_TRUE(cache.loadFromFile("cache_with_hash.bin").has_value());
+        ASSERT_TRUE(cache.loadFromFile("../cache_with_hash.bin").has_value());
     }
     {
         TimeMeasurement timer("Save operation");

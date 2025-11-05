@@ -19,11 +19,14 @@
 
 #include "data/impl/InputFile.hpp"
 
+#include <xrpl/basics/base_uint.h>
+
 #include <cstddef>
 #include <cstring>
 #include <ios>
 #include <iosfwd>
 #include <string>
+#include <utility>
 
 namespace data::impl {
 
@@ -41,14 +44,15 @@ bool
 InputFile::readRaw(char* data, size_t size)
 {
     file_.read(data, size);
+    shasum_.update(data, size);
     return not file_.fail();
 }
 
-bool
-InputFile::readFromFile(char* data, size_t size)
+ripple::uint256
+InputFile::hash() const
 {
-    file_.read(data, size);
-    return not file_.fail();
+    auto sum = shasum_;
+    return std::move(sum).finalize();
 }
 
 }  // namespace data::impl

@@ -18,9 +18,11 @@
 //==============================================================================
 
 #include "data/impl/InputFile.hpp"
+#include "util/Shasum.hpp"
 #include "util/TmpFile.hpp"
 
 #include <gtest/gtest.h>
+#include <xrpl/basics/base_uint.h>
 
 #include <cstdint>
 #include <string>
@@ -144,4 +146,51 @@ TEST_F(InputFileTest, ReadFromEmptyFile)
 
     char byte = 0;
     EXPECT_FALSE(inputFile.readRaw(&byte, 1));
+}
+
+TEST_F(InputFileTest, HashOfEmptyFile)
+{
+    auto tmpFile = TmpFile::empty();
+    InputFile inputFile(tmpFile.path);
+
+    ASSERT_TRUE(inputFile.isOpen());
+    EXPECT_EQ(inputFile.hash(), util::sha256sum(""));
+}
+
+TEST_F(InputFileTest, HashAfterReading)
+{
+    std::string const content = "Hello, World!";
+    auto tmpFile = TmpFile{content};
+    InputFile inputFile(tmpFile.path);
+
+    ASSERT_TRUE(inputFile.isOpen());
+
+    EXPECT_EQ(inputFile.hash(), util::sha256sum(""));
+
+    std::vector<char> buffer(content.size());
+    EXPECT_TRUE(inputFile.readRaw(buffer.data(), buffer.size()));
+    EXPECT_EQ(std::string(buffer.data(), buffer.size()), content);
+
+    EXPECT_EQ(inputFile.hash(), util::sha256sum(content));
+}
+
+TEST_F(InputFileTest, HashProgressesWithReading)
+{
+    std::string const content = "Hello, World!";
+    auto tmpFile = TmpFile{content};
+    InputFile inputFile(tmpFile.path);
+
+    ASSERT_TRUE(inputFile.isOpen());
+
+    EXPECT_EQ(inputFile.hash(), util::sha256sum(""));
+
+    // Read first part
+    std::vector<char> buffer1(5);
+    EXPECT_TRUE(inputFile.readRaw(buffer1.data(), buffer1.size()));
+    EXPECT_EQ(inputFile.hash(), util::sha256sum("Hello"));
+
+    // Read second part
+    std::vector<char> buffer2(8);
+    EXPECT_TRUE(inputFile.readRaw(buffer2.data(), buffer2.size()));
+    EXPECT_EQ(inputFile.hash(), util::sha256sum(content));
 }

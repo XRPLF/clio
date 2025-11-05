@@ -18,9 +18,11 @@
 //==============================================================================
 
 #include "data/impl/OutputFile.hpp"
+#include "util/Shasum.hpp"
 #include "util/TmpFile.hpp"
 
 #include <gtest/gtest.h>
+#include <xrpl/basics/base_uint.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -125,4 +127,43 @@ TEST_F(OutputFileTest, WriteMultipleChunks)
 
     std::string contents = readFileContents();
     EXPECT_EQ(contents, chunk1 + chunk2 + chunk3);
+}
+
+TEST_F(OutputFileTest, HashOfEmptyFile)
+{
+    OutputFile file(tmpFile.path);
+    ASSERT_TRUE(file.isOpen());
+
+    // Hash of empty file should match SHA256 of empty string
+    EXPECT_EQ(file.hash(), util::sha256sum(""));
+}
+
+TEST_F(OutputFileTest, HashAfterWriting)
+{
+    std::string const testData = "Hello, World!";
+    {
+        OutputFile file(tmpFile.path);
+        file.writeRaw(testData.data(), testData.size());
+
+        // Hash should match SHA256 of the written data
+        EXPECT_EQ(file.hash(), util::sha256sum(testData));
+    }
+}
+
+TEST_F(OutputFileTest, HashProgressesWithWrites)
+{
+    std::string const part1 = "Hello, ";
+    std::string const part2 = "World!";
+    std::string const combined = part1 + part2;
+
+    OutputFile file(tmpFile.path);
+    ASSERT_TRUE(file.isOpen());
+
+    EXPECT_EQ(file.hash(), util::sha256sum(""));
+
+    file.writeRaw(part1.data(), part1.size());
+    EXPECT_EQ(file.hash(), util::sha256sum(part1));
+
+    file.writeRaw(part2.data(), part2.size());
+    EXPECT_EQ(file.hash(), util::sha256sum(combined));
 }

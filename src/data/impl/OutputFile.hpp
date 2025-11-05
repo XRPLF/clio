@@ -19,6 +19,10 @@
 
 #pragma once
 
+#include "util/Shasum.hpp"
+
+#include <xrpl/basics/base_uint.h>
+
 #include <cstddef>
 #include <cstring>
 #include <fstream>
@@ -28,6 +32,7 @@ namespace data::impl {
 
 class OutputFile {
     std::ofstream file_;
+    util::Sha256sum shasum_;
 
 public:
     OutputFile(std::string const& path);
@@ -51,6 +56,9 @@ public:
 
     void
     writeRaw(char const* data, size_t size);
+
+    ripple::uint256
+    hash() const;
 
 private:
     void

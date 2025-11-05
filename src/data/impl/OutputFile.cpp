@@ -19,12 +19,13 @@
 
 #include "data/impl/OutputFile.hpp"
 
-#include "util/Assert.hpp"
+#include <xrpl/basics/base_uint.h>
 
 #include <cstddef>
 #include <cstring>
 #include <ios>
 #include <string>
+#include <utility>
 
 namespace data::impl {
 
@@ -48,6 +49,14 @@ void
 OutputFile::writeToFile(char const* data, size_t size)
 {
     file_.write(data, size);
+    shasum_.update(data, size);
+}
+
+ripple::uint256
+OutputFile::hash() const
+{
+    auto sum = shasum_;
+    return std::move(sum).finalize();
 }
 
 }  // namespace data::impl
