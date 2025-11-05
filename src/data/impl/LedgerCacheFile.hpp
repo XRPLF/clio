@@ -44,11 +44,9 @@ public:
     };
 
 private:
-    std::string path_;
-    bool isBuffered_;
-    bool useCompression_;
-
     static constexpr uint32_t kVERSION = 1;
+
+    std::string path_;
 
 public:
     template <typename T>
@@ -61,7 +59,7 @@ public:
     using DataView = DataBase<LedgerCache::CacheMap const&>;
     using Data = DataBase<LedgerCache::CacheMap>;
 
-    LedgerCacheFile(std::string path, bool isBuffered, bool useCompression);
+    LedgerCacheFile(std::string path);
 
     std::expected<void, std::string>
     write(DataView dataView);

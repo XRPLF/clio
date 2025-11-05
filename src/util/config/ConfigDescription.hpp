@@ -279,12 +279,6 @@ This document provides a list of all available Clio configuration properties in 
         KV{.key = "cache.local_file.path",
            .value = "The path to a file where cache will be saved to on shutdown and loaded from on startup. "
                     "If the file couldn't be read Clio will load cache as usual (from DB or from rippled)."},
-        KV{.key = "cache.local_file.buffered_read_write",
-           .value = "Specifies if writing and reading cache file should be done by using extra buffer. "
-                    "This option speeds up reading and writing cache file but it makes Clio to use extra RAM."},
-        KV{.key = "cache.local_file.compress",
-           .value = "Specifies if cache file should be compressed. Copmressing will take some extra time, but the file "
-                    "size should be reduced by about 30%."},
         KV{.key = "log.channels.[].channel", .value = "The name of the log channel."},
         KV{.key = "log.channels.[].level", .value = "The log level for the specific log channel."},
         KV{.key = "log.level",

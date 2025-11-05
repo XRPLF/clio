@@ -24,7 +24,6 @@
 #include <fstream>
 #include <iosfwd>
 #include <string>
-#include <vector>
 
 namespace data::impl {
 
@@ -32,8 +31,8 @@ class InputFile {
     std::ifstream file_;
 
 public:
-    InputFile(std::string const& path, bool useCompression);
-    virtual ~InputFile() = default;
+    InputFile(std::string const& path);
+
     bool
     isOpen() const;
 
@@ -44,26 +43,12 @@ public:
         return readRaw(reinterpret_cast<char*>(&t), sizeof(T));
     }
 
-    virtual bool
+    bool
     readRaw(char* data, size_t size);
 
-protected:
+private:
     bool
     readFromFile(char* data, size_t size);
-    size_t
-    fileSize();
-};
-
-class BufferedInputFile : public InputFile {
-    std::vector<char> buffer_;
-    char* cursor_ = nullptr;
-    size_t cursorPosition_ = 0;
-    bool failed_ = false;
-
-public:
-    BufferedInputFile(std::string const& path, bool useCompression);
-    bool
-    readRaw(char* data, size_t size) override;
 };
 
 }  // namespace data::impl

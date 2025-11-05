@@ -23,152 +23,125 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
-#include <memory>
 #include <string>
 #include <vector>
 
 using namespace data::impl;
 
-using InputFileTypes = ::testing::Types<InputFile, BufferedInputFile>;
+struct InputFileTest : ::testing::Test {};
 
-template <typename T>
-class InputFileTypedTest : public ::testing::Test {
-protected:
-    std::unique_ptr<InputFile>
-    createInputFile(std::string const& path, bool useCompression = false)
-    {
-        return std::make_unique<T>(path, useCompression);
-    }
-};
-
-struct NameGenerator {
-    template <typename T>
-    static std::string
-    GetName(int)  // NOLINT(readability-identifier-naming)
-    {
-        if constexpr (std::is_same_v<T, InputFile>) {
-            return "InputFile";
-        } else if constexpr (std::is_same_v<T, BufferedInputFile>) {
-            return "BufferedInputFile";
-        } else {
-            static_assert(false, "Unknown class");
-        }
-    }
-};
-TYPED_TEST_SUITE(InputFileTypedTest, InputFileTypes, NameGenerator);
-
-TYPED_TEST(InputFileTypedTest, ConstructorWithValidFile)
+TEST_F(InputFileTest, ConstructorWithValidFile)
 {
     auto const tmpFile = TmpFile{"Hello, World!"};
-    auto inputFile = this->createInputFile(tmpFile.path);
+    InputFile inputFile(tmpFile.path);
 
-    EXPECT_TRUE(inputFile->isOpen());
+    EXPECT_TRUE(inputFile.isOpen());
 }
 
-TYPED_TEST(InputFileTypedTest, ConstructorWithInvalidFile)
+TEST_F(InputFileTest, ConstructorWithInvalidFile)
 {
-    auto inputFile = this->createInputFile("/nonexistent/path/file.txt");
+    InputFile inputFile("/nonexistent/path/file.txt");
 
-    EXPECT_FALSE(inputFile->isOpen());
+    EXPECT_FALSE(inputFile.isOpen());
 
     char i = 0;
-    EXPECT_FALSE(inputFile->read(i));
-    EXPECT_FALSE(inputFile->readRaw(&i, 1));
+    EXPECT_FALSE(inputFile.read(i));
+    EXPECT_FALSE(inputFile.readRaw(&i, 1));
 }
 
-TYPED_TEST(InputFileTypedTest, ReadRawFromFile)
+TEST_F(InputFileTest, ReadRawFromFile)
 {
     std::string const content = "Test content for reading";
     auto tmpFile = TmpFile{content};
-    auto inputFile = this->createInputFile(tmpFile.path);
+    InputFile inputFile(tmpFile.path);
 
-    ASSERT_TRUE(inputFile->isOpen());
+    ASSERT_TRUE(inputFile.isOpen());
 
     std::vector<char> buffer(content.size());
-    EXPECT_TRUE(inputFile->readRaw(buffer.data(), buffer.size()));
+    EXPECT_TRUE(inputFile.readRaw(buffer.data(), buffer.size()));
     EXPECT_EQ(std::string(buffer.data(), buffer.size()), content);
 }
 
-TYPED_TEST(InputFileTypedTest, ReadRawFromFilePartial)
+TEST_F(InputFileTest, ReadRawFromFilePartial)
 {
     std::string content = "Hello, World!";
     auto tmpFile = TmpFile{content};
-    auto inputFile = this->createInputFile(tmpFile.path, false);
+    InputFile inputFile(tmpFile.path);
 
-    ASSERT_TRUE(inputFile->isOpen());
+    ASSERT_TRUE(inputFile.isOpen());
 
     std::vector<char> buffer(3);
-    EXPECT_TRUE(inputFile->readRaw(buffer.data(), buffer.size()));
+    EXPECT_TRUE(inputFile.readRaw(buffer.data(), buffer.size()));
     EXPECT_EQ(std::string(buffer.data(), buffer.size()), "Hel");  // codespell:ignore
 
     buffer.resize(6);
-    EXPECT_TRUE(inputFile->readRaw(buffer.data(), buffer.size()));
+    EXPECT_TRUE(inputFile.readRaw(buffer.data(), buffer.size()));
     EXPECT_EQ(std::string(buffer.data(), buffer.size()), "lo, Wo");
 
     buffer.resize(4);
-    EXPECT_TRUE(inputFile->readRaw(buffer.data(), buffer.size()));
+    EXPECT_TRUE(inputFile.readRaw(buffer.data(), buffer.size()));
     EXPECT_EQ(std::string(buffer.data(), buffer.size()), "rld!");
 }
 
-TYPED_TEST(InputFileTypedTest, ReadRawAfterEnd)
+TEST_F(InputFileTest, ReadRawAfterEnd)
 {
     std::string content = "Test";
     auto tmpFile = TmpFile{content};
-    auto inputFile = this->createInputFile(tmpFile.path);
+    InputFile inputFile(tmpFile.path);
 
-    ASSERT_TRUE(inputFile->isOpen());
+    ASSERT_TRUE(inputFile.isOpen());
 
     std::vector<char> buffer(content.size());
-    EXPECT_TRUE(inputFile->readRaw(buffer.data(), buffer.size()));
+    EXPECT_TRUE(inputFile.readRaw(buffer.data(), buffer.size()));
 
     char extraByte = 0;
-    EXPECT_FALSE(inputFile->readRaw(&extraByte, 1));
+    EXPECT_FALSE(inputFile.readRaw(&extraByte, 1));
 }
 
-TYPED_TEST(InputFileTypedTest, ReadRawFromFileExceedsSize)
+TEST_F(InputFileTest, ReadRawFromFileExceedsSize)
 {
     auto tmpFile = TmpFile{"Test"};
-    auto inputFile = this->createInputFile(tmpFile.path, false);
+    InputFile inputFile(tmpFile.path);
 
-    ASSERT_TRUE(inputFile->isOpen());
+    ASSERT_TRUE(inputFile.isOpen());
 
     std::vector<char> buffer(10);  // Larger than file content
-    EXPECT_FALSE(inputFile->readRaw(buffer.data(), buffer.size()));
+    EXPECT_FALSE(inputFile.readRaw(buffer.data(), buffer.size()));
 }
 
-TYPED_TEST(InputFileTypedTest, ReadTemplateMethod)
+TEST_F(InputFileTest, ReadTemplateMethod)
 {
     auto tmpFile = TmpFile{"\x01\x02\x03\x04"};
-    auto inputFile = this->createInputFile(tmpFile.path, false);
+    InputFile inputFile(tmpFile.path);
 
-    ASSERT_TRUE(inputFile->isOpen());
+    ASSERT_TRUE(inputFile.isOpen());
 
     std::uint32_t value{0};
-    bool success = inputFile->read(value);
+    bool success = inputFile.read(value);
 
     EXPECT_TRUE(success);
     // Note: The actual value depends on endianness
     EXPECT_NE(value, 0u);
 }
 
-TYPED_TEST(InputFileTypedTest, ReadTemplateMethodFailure)
+TEST_F(InputFileTest, ReadTemplateMethodFailure)
 {
     auto tmpFile = TmpFile{"Hi"};  // Only 2 bytes
-    auto inputFile = this->createInputFile(tmpFile.path, false);
+    InputFile inputFile(tmpFile.path);
 
-    ASSERT_TRUE(inputFile->isOpen());
+    ASSERT_TRUE(inputFile.isOpen());
 
     std::uint64_t value{0};  // Trying to read 8 bytes
-    EXPECT_FALSE(inputFile->read(value));
+    EXPECT_FALSE(inputFile.read(value));
 }
 
-TYPED_TEST(InputFileTypedTest, ReadFromEmptyFile)
+TEST_F(InputFileTest, ReadFromEmptyFile)
 {
     auto tmpFile = TmpFile::empty();
-    auto inputFile = this->createInputFile(tmpFile.path, false);
+    InputFile inputFile(tmpFile.path);
 
-    ASSERT_TRUE(inputFile->isOpen());
+    ASSERT_TRUE(inputFile.isOpen());
 
     char byte = 0;
-    EXPECT_FALSE(inputFile->readRaw(&byte, 1));
+    EXPECT_FALSE(inputFile.readRaw(&byte, 1));
 }

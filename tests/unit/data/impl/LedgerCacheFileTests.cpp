@@ -41,12 +41,6 @@
 using namespace data::impl;
 
 struct LedgerCacheFileTestBase : ::testing::Test {
-    struct ConfigParams {
-        bool isBuffered;
-        bool useCompression;
-        std::string description;
-    };
-
     struct DataSizeParams {
         size_t mapEntries;
         size_t deletedEntries;
@@ -150,7 +144,6 @@ struct LedgerCacheFileTestBase : ::testing::Test {
         }
     };
 
-    static std::vector<ConfigParams> const kCONFIG_PARAMS;
     static std::vector<DataSizeParams> const kDATA_SIZE_PARAMS;
     static std::vector<CorruptionParams> const kCORRUPTION_PARAMS;
 
@@ -315,13 +308,6 @@ struct LedgerCacheFileTestBase : ::testing::Test {
     }
 };
 
-std::vector<LedgerCacheFileTestBase::ConfigParams> const LedgerCacheFileTestBase::kCONFIG_PARAMS = {
-    {.isBuffered = false, .useCompression = false, .description = "unbuffered_uncompressed"},
-    {.isBuffered = false, .useCompression = true, .description = "unbuffered_compressed"},
-    {.isBuffered = true, .useCompression = false, .description = "buffered_uncompressed"},
-    {.isBuffered = true, .useCompression = true, .description = "buffered_compressed"}
-};
-
 std::vector<LedgerCacheFileTestBase::DataSizeParams> const LedgerCacheFileTestBase::kDATA_SIZE_PARAMS = {
     {.mapEntries = 0, .deletedEntries = 0, .blobSize = 0, .description = "empty"},
     {.mapEntries = 1, .deletedEntries = 0, .blobSize = 10, .description = "single_map_small_blob"},
@@ -345,32 +331,26 @@ std::vector<LedgerCacheFileTestBase::CorruptionParams> const LedgerCacheFileTest
     {.type = CorruptionType::DeletedBlobDataCorrupted, .description = "deleted_blob_data_corrupted"}
 };
 
-struct LedgerCacheFileTest
-    : LedgerCacheFileTestBase,
-      ::testing::WithParamInterface<
-          std::tuple<LedgerCacheFileTestBase::ConfigParams, LedgerCacheFileTestBase::DataSizeParams>> {
+struct LedgerCacheFileTest : LedgerCacheFileTestBase,
+                             ::testing::WithParamInterface<LedgerCacheFileTestBase::DataSizeParams> {
     static std::string
-    roundTripParamName(::testing::TestParamInfo<std::tuple<ConfigParams, DataSizeParams>> const& info)
+    roundTripParamName(::testing::TestParamInfo<DataSizeParams> const& info)
     {
-        auto const& [config, data] = info.param;
-        return fmt::format("{}_{}", config.description, data.description);
+        return info.param.description;
     }
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    AllConfigsAndDataSizes,
+    AllDataSizes,
     LedgerCacheFileTest,
-    ::testing::Combine(
-        ::testing::ValuesIn(LedgerCacheFileTestBase::kCONFIG_PARAMS),
-        ::testing::ValuesIn(LedgerCacheFileTestBase::kDATA_SIZE_PARAMS)
-    ),
+    ::testing::ValuesIn(LedgerCacheFileTestBase::kDATA_SIZE_PARAMS),
     LedgerCacheFileTest::roundTripParamName
 );
 
 TEST_P(LedgerCacheFileTest, WriteAndReadData)
 {
-    auto [configParams, dataParams] = GetParam();
-    LedgerCacheFile cacheFile(tmpFile.path, configParams.isBuffered, configParams.useCompression);
+    auto dataParams = GetParam();
+    LedgerCacheFile cacheFile(tmpFile.path);
 
     auto testData = createTestData(dataParams.mapEntries, dataParams.deletedEntries, dataParams.blobSize);
     auto dataView = toDataView(testData);
@@ -387,32 +367,26 @@ TEST_P(LedgerCacheFileTest, WriteAndReadData)
     verifyDataEquals(testData, readResult.value());
 }
 
-struct LedgerCacheFileCorruptionTest
-    : LedgerCacheFileTestBase,
-      ::testing::WithParamInterface<
-          std::tuple<LedgerCacheFileTestBase::ConfigParams, LedgerCacheFileTestBase::CorruptionParams>> {
+struct LedgerCacheFileCorruptionTest : LedgerCacheFileTestBase,
+                                       ::testing::WithParamInterface<LedgerCacheFileTestBase::CorruptionParams> {
     static std::string
-    corruptionParamName(::testing::TestParamInfo<std::tuple<ConfigParams, CorruptionParams>> const& info)
+    corruptionParamName(::testing::TestParamInfo<CorruptionParams> const& info)
     {
-        auto const& [config, corruption] = info.param;
-        return fmt::format("{}_{}", config.description, corruption.description);
+        return info.param.description;
     }
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    AllConfigsAndCorruptions,
+    AllCorruptions,
     LedgerCacheFileCorruptionTest,
-    ::testing::Combine(
-        ::testing::ValuesIn(LedgerCacheFileTestBase::kCONFIG_PARAMS),
-        ::testing::ValuesIn(LedgerCacheFileTestBase::kCORRUPTION_PARAMS)
-    ),
+    ::testing::ValuesIn(LedgerCacheFileTestBase::kCORRUPTION_PARAMS),
     LedgerCacheFileCorruptionTest::corruptionParamName
 );
 
 TEST_P(LedgerCacheFileCorruptionTest, HandleCorruption)
 {
-    auto [configParams, corruptionParams] = GetParam();
-    LedgerCacheFile cacheFile(tmpFile.path, configParams.isBuffered, configParams.useCompression);
+    auto corruptionParams = GetParam();
+    LedgerCacheFile cacheFile(tmpFile.path);
 
     auto testData = createTestData(3, 2, 100);
     auto dataView = toDataView(testData);
@@ -484,27 +458,11 @@ TEST_P(LedgerCacheFileCorruptionTest, HandleCorruption)
     }
 }
 
-struct LedgerCacheFileEdgeCaseTest : LedgerCacheFileTestBase,
-                                     ::testing::WithParamInterface<LedgerCacheFileTestBase::ConfigParams> {
-    static std::string
-    configParamName(::testing::TestParamInfo<ConfigParams> const& info)
-    {
-        return info.param.description;
-    }
-};
+struct LedgerCacheFileEdgeCaseTest : LedgerCacheFileTestBase {};
 
-INSTANTIATE_TEST_SUITE_P(
-    AllConfigs,
-    LedgerCacheFileEdgeCaseTest,
-    ::testing::ValuesIn(LedgerCacheFileTestBase::kCONFIG_PARAMS),
-    LedgerCacheFileEdgeCaseTest::configParamName
-);
-
-TEST_P(LedgerCacheFileEdgeCaseTest, NonExistingFile)
+TEST_F(LedgerCacheFileEdgeCaseTest, NonExistingFile)
 {
-    auto const config = GetParam();
-
-    LedgerCacheFile invalidPathFile("/invalid/path/file.cache", config.isBuffered, config.useCompression);
+    LedgerCacheFile invalidPathFile("/invalid/path/file.cache");
 
     auto testData = createTestData(1, 1, 10);
     auto dataView = toDataView(testData);
@@ -518,10 +476,9 @@ TEST_P(LedgerCacheFileEdgeCaseTest, NonExistingFile)
     EXPECT_THAT(readResult.error(), ::testing::HasSubstr("Couldn't open file"));
 }
 
-TEST_P(LedgerCacheFileEdgeCaseTest, MaxSequenceNumber)
+TEST_F(LedgerCacheFileEdgeCaseTest, MaxSequenceNumber)
 {
-    auto const config = GetParam();
-    LedgerCacheFile cacheFile(tmpFile.path, config.isBuffered, config.useCompression);
+    LedgerCacheFile cacheFile(tmpFile.path);
 
     auto testData = createTestData(1, 1, 10);
     testData.latestSeq = std::numeric_limits<uint32_t>::max();
@@ -536,10 +493,9 @@ TEST_P(LedgerCacheFileEdgeCaseTest, MaxSequenceNumber)
     verifyDataEquals(testData, readResult.value());
 }
 
-TEST_P(LedgerCacheFileEdgeCaseTest, ZeroSizedBlobs)
+TEST_F(LedgerCacheFileEdgeCaseTest, ZeroSizedBlobs)
 {
-    auto const config = GetParam();
-    LedgerCacheFile cacheFile(tmpFile.path, config.isBuffered, config.useCompression);
+    LedgerCacheFile cacheFile(tmpFile.path);
 
     auto testData = createTestData(3, 2, 0);
     auto dataView = toDataView(testData);
@@ -553,10 +509,9 @@ TEST_P(LedgerCacheFileEdgeCaseTest, ZeroSizedBlobs)
     verifyDataEquals(testData, readResult.value());
 }
 
-TEST_P(LedgerCacheFileEdgeCaseTest, SpecialKeyPatterns)
+TEST_F(LedgerCacheFileEdgeCaseTest, SpecialKeyPatterns)
 {
-    auto const config = GetParam();
-    LedgerCacheFile cacheFile(tmpFile.path, config.isBuffered, config.useCompression);
+    LedgerCacheFile cacheFile(tmpFile.path);
 
     LedgerCacheFile::Data testData;
     testData.latestSeq = 100;
@@ -586,10 +541,9 @@ TEST_P(LedgerCacheFileEdgeCaseTest, SpecialKeyPatterns)
     verifyDataEquals(testData, readResult.value());
 }
 
-TEST_P(LedgerCacheFileEdgeCaseTest, LargeBlobs)
+TEST_F(LedgerCacheFileEdgeCaseTest, LargeBlobs)
 {
-    auto const config = GetParam();
-    LedgerCacheFile cacheFile(tmpFile.path, config.isBuffered, config.useCompression);
+    LedgerCacheFile cacheFile(tmpFile.path);
 
     // Test with 1MB blob
     auto testData = createTestData(1, 1, 1024 * 1024);
@@ -604,10 +558,9 @@ TEST_P(LedgerCacheFileEdgeCaseTest, LargeBlobs)
     verifyDataEquals(testData, readResult.value());
 }
 
-TEST_P(LedgerCacheFileEdgeCaseTest, SequenceNumber)
+TEST_F(LedgerCacheFileEdgeCaseTest, SequenceNumber)
 {
-    auto const config = GetParam();
-    LedgerCacheFile cacheFile(tmpFile.path, config.isBuffered, config.useCompression);
+    LedgerCacheFile cacheFile(tmpFile.path);
 
     LedgerCacheFile::Data testData;
     testData.latestSeq = 0;
@@ -634,10 +587,9 @@ TEST_P(LedgerCacheFileEdgeCaseTest, SequenceNumber)
     verifyDataEquals(testData, readResult.value());
 }
 
-TEST_P(LedgerCacheFileEdgeCaseTest, OnlyMapEntries)
+TEST_F(LedgerCacheFileEdgeCaseTest, OnlyMapEntries)
 {
-    auto const config = GetParam();
-    LedgerCacheFile cacheFile(tmpFile.path, config.isBuffered, config.useCompression);
+    LedgerCacheFile cacheFile(tmpFile.path);
 
     auto testData = createTestData(5, 0, 100);
     auto dataView = toDataView(testData);
@@ -651,10 +603,9 @@ TEST_P(LedgerCacheFileEdgeCaseTest, OnlyMapEntries)
     verifyDataEquals(testData, readResult.value());
 }
 
-TEST_P(LedgerCacheFileEdgeCaseTest, OnlyDeletedEntries)
+TEST_F(LedgerCacheFileEdgeCaseTest, OnlyDeletedEntries)
 {
-    auto const config = GetParam();
-    LedgerCacheFile cacheFile(tmpFile.path, config.isBuffered, config.useCompression);
+    LedgerCacheFile cacheFile(tmpFile.path);
 
     auto testData = createTestData(0, 5, 100);
     auto dataView = toDataView(testData);

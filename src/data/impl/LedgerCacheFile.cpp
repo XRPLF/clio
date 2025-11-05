@@ -32,7 +32,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <exception>
-#include <memory>
 #include <string>
 #include <utility>
 
@@ -95,39 +94,17 @@ verifySeparator(Separator const& s)
     return {};
 }
 
-size_t
-outputSize(LedgerCacheFile::DataView dataView)
-{
-    size_t size = sizeof(LedgerCacheFile::Header) + (4 * sizeof(Separator)) + (2 * sizeof(Hash));
-
-    for (auto const& [k, v] : dataView.map) {
-        size += decltype(k)::bytes + sizeof(v.seq) + sizeof(size_t) + v.blob.size();
-    }
-
-    for (auto const& [k, v] : dataView.deleted) {
-        size += decltype(k)::bytes + sizeof(v.seq) + sizeof(size_t) + v.blob.size();
-    }
-
-    return size;
-}
-
 }  // anonymous namespace
 
-LedgerCacheFile::LedgerCacheFile(std::string path, bool isBuffered, bool useCompression)
-    : path_(std::move(path)), isBuffered_(isBuffered), useCompression_(useCompression)
+LedgerCacheFile::LedgerCacheFile(std::string path) : path_(std::move(path))
 {
 }
 
 std::expected<void, std::string>
 LedgerCacheFile::write(DataView dataView)
 {
-    auto file = [&]() -> std::unique_ptr<OutputFile> {
-        if (isBuffered_) {
-            return std::make_unique<BufferedOutputFile>(path_, useCompression_, outputSize(dataView));
-        }
-        return std::make_unique<OutputFile>(path_, useCompression_);
-    }();
-    if (not file->isOpen()) {
+    auto file = OutputFile{path_};
+    if (not file.isOpen()) {
         return std::unexpected{fmt::format("Couldn't open file: {}", path_)};
     }
 
@@ -139,28 +116,28 @@ LedgerCacheFile::write(DataView dataView)
         .mapSize = dataView.map.size(),
         .deletedSize = dataView.deleted.size()
     };
-    file->write(header);
-    file->write(kSEPARATOR);
+    file.write(header);
+    file.write(kSEPARATOR);
 
     for (auto const& [k, v] : dataView.map) {
-        file->write(k.data(), decltype(k)::bytes);
-        file->write(v.seq);
-        file->write(v.blob.size());
-        file->writeRaw(reinterpret_cast<char const*>(v.blob.data()), v.blob.size());
+        file.write(k.data(), decltype(k)::bytes);
+        file.write(v.seq);
+        file.write(v.blob.size());
+        file.writeRaw(reinterpret_cast<char const*>(v.blob.data()), v.blob.size());
     }
     auto mapHash = calculateMapHash(dataView.map);
-    file->write(mapHash.data(), decltype(mapHash)::bytes);
-    file->write(kSEPARATOR);
+    file.write(mapHash.data(), decltype(mapHash)::bytes);
+    file.write(kSEPARATOR);
 
     for (auto const& [k, v] : dataView.deleted) {
-        file->write(k.data(), decltype(k)::bytes);
-        file->write(v.seq);
-        file->write(v.blob.size());
-        file->writeRaw(reinterpret_cast<char const*>(v.blob.data()), v.blob.size());
+        file.write(k.data(), decltype(k)::bytes);
+        file.write(v.seq);
+        file.write(v.blob.size());
+        file.writeRaw(reinterpret_cast<char const*>(v.blob.data()), v.blob.size());
     }
     auto deletedHash = calculateMapHash(dataView.deleted);
-    file->write(deletedHash.data(), decltype(deletedHash)::bytes);
-    file->write(kSEPARATOR);
+    file.write(deletedHash.data(), decltype(deletedHash)::bytes);
+    file.write(kSEPARATOR);
 
     return {};
 }
@@ -169,20 +146,15 @@ std::expected<LedgerCacheFile::Data, std::string>
 LedgerCacheFile::read()
 {
     try {
-        auto file = [&]() -> std::unique_ptr<InputFile> {
-            if (isBuffered_) {
-                return std::make_unique<BufferedInputFile>(path_, useCompression_);
-            }
-            return std::make_unique<InputFile>(path_, useCompression_);
-        }();
-        if (not file->isOpen()) {
+        auto file = InputFile{path_};
+        if (not file.isOpen()) {
             return std::unexpected{fmt::format("Couldn't open file: {}", path_)};
         }
 
         Data result;
 
         Header header{};
-        if (not file->read(header)) {
+        if (not file.read(header)) {
             return std::unexpected{"Error reading cache header"};
         }
         if (header.version != kVERSION) {
@@ -194,7 +166,7 @@ LedgerCacheFile::read()
         // TODO: check datetime or remove it. Maybe check the latestSeq
 
         Separator separator{};
-        if (not file->readRaw(separator.data(), separator.size())) {
+        if (not file.readRaw(separator.data(), separator.size())) {
             return std::unexpected{"Error reading cache header"};
         }
         if (auto verificationResult = verifySeparator(separator); not verificationResult.has_value()) {
@@ -202,7 +174,7 @@ LedgerCacheFile::read()
         }
 
         for (size_t i = 0; i < header.mapSize; ++i) {
-            auto cacheEntryExpected = readCacheEntry(*file, i);
+            auto cacheEntryExpected = readCacheEntry(file, i);
             if (not cacheEntryExpected.has_value()) {
                 return std::unexpected{std::move(cacheEntryExpected).error()};
             }
@@ -210,7 +182,7 @@ LedgerCacheFile::read()
         }
 
         Hash expectedMapHash;
-        if (not file->readRaw(reinterpret_cast<char*>(expectedMapHash.data()), decltype(expectedMapHash)::bytes)) {
+        if (not file.readRaw(reinterpret_cast<char*>(expectedMapHash.data()), decltype(expectedMapHash)::bytes)) {
             return std::unexpected{"Error reading map hash"};
         }
 
@@ -219,7 +191,7 @@ LedgerCacheFile::read()
             return std::unexpected{"Map hash verification failed - data corruption detected"};
         }
 
-        if (not file->readRaw(separator.data(), separator.size())) {
+        if (not file.readRaw(separator.data(), separator.size())) {
             return std::unexpected{"Error reading separator"};
         }
         if (auto verificationResult = verifySeparator(separator); not verificationResult.has_value()) {
@@ -227,7 +199,7 @@ LedgerCacheFile::read()
         }
 
         for (size_t i = 0; i < header.deletedSize; ++i) {
-            auto cacheEntryExpected = readCacheEntry(*file, i);
+            auto cacheEntryExpected = readCacheEntry(file, i);
             if (not cacheEntryExpected.has_value()) {
                 return std::unexpected{std::move(cacheEntryExpected).error()};
             }
@@ -235,7 +207,7 @@ LedgerCacheFile::read()
         }
 
         Hash expectedDeletedHash;
-        if (not file->readRaw(
+        if (not file.readRaw(
                 reinterpret_cast<char*>(expectedDeletedHash.data()), decltype(expectedDeletedHash)::bytes
             )) {
             return std::unexpected{"Error reading deleted hash"};
@@ -246,7 +218,7 @@ LedgerCacheFile::read()
             return std::unexpected{"Deleted hash verification failed - data corruption detected"};
         }
 
-        if (not file->readRaw(separator.data(), separator.size())) {
+        if (not file.readRaw(separator.data(), separator.size())) {
             return std::unexpected{"Error reading separator"};
         }
         if (auto verificationResult = verifySeparator(separator); not verificationResult.has_value()) {

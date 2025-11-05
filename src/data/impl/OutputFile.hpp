@@ -23,21 +23,14 @@
 #include <cstring>
 #include <fstream>
 #include <string>
-#include <vector>
 
 namespace data::impl {
 
 class OutputFile {
     std::ofstream file_;
 
-protected:
-    void
-    writeToFile(char const* data, size_t size);
-
 public:
-    OutputFile(std::string const& path, bool useCompression);
-
-    virtual ~OutputFile() = default;
+    OutputFile(std::string const& path);
 
     bool
     isOpen() const;
@@ -56,26 +49,12 @@ public:
         writeRaw(reinterpret_cast<char const*>(data), size);
     }
 
-    virtual void
-    writeRaw(char const* data, size_t size);
-};
-
-class BufferedOutputFile : public OutputFile {
-    std::vector<char> buffer_;
-    char* cursor_ = nullptr;
-    size_t cursorPosition_ = 0;
-
-public:
-    BufferedOutputFile(std::string const& path, bool useCompression, size_t bufferSize);
-
-    ~BufferedOutputFile() override;
-
     void
-    writeRaw(char const* data, size_t size) override;
+    writeRaw(char const* data, size_t size);
 
 private:
     void
-    flush();
+    writeToFile(char const* data, size_t size);
 };
 
 }  // namespace data::impl

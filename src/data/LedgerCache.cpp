@@ -294,7 +294,7 @@ public:
 std::expected<void, std::string>
 LedgerCache::saveToFile(std::string const& path) const
 {
-    impl::LedgerCacheFile file{path, false, false};
+    impl::LedgerCacheFile file{path};
     std::unique_lock lock{mtx_};
     impl::LedgerCacheFile::DataView data{.latestSeq = latestSeq_, .map = map_, .deleted = deleted_};
     return file.write(data);
@@ -303,7 +303,7 @@ LedgerCache::saveToFile(std::string const& path) const
 std::expected<void, std::string>
 LedgerCache::loadFromFile(std::string const& path)
 {
-    impl::LedgerCacheFile file{path, false, false};
+    impl::LedgerCacheFile file{path};
     auto data = file.read();
     if (not data.has_value()) {
         return std::unexpected(std::move(data).error());
