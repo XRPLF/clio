@@ -266,11 +266,11 @@ BackendInterface::fetchLedgerRange() const
 }
 
 void
-BackendInterface::updateRange(uint32_t newMax)
+BackendInterface::updateRange(uint32_t newMax, bool force)
 {
     std::scoped_lock const lck(rngMtx_);
 
-    if (range_.has_value() && newMax < range_->maxSequence) {
+    if (range_.has_value() and not force and newMax < range_->maxSequence) {
         ASSERT(
             false,
             "Range shouldn't exist yet or newMax should be at least range->maxSequence. newMax = {}, "

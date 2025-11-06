@@ -247,7 +247,7 @@ public:
      * @param newMax The new maximum sequence available
      */
     void
-    updateRange(uint32_t newMax);
+    updateRange(uint32_t newMax, bool force = false);
 
     /**
      * @brief Sets the range of sequences that are stored in the DB.

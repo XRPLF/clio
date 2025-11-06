@@ -313,6 +313,7 @@ LedgerCache::loadFromFile(std::string const& path)
     latestSeq_ = latestSeq;
     map_ = std::move(map);
     deleted_ = std::move(deleted);
+    full_ = true;
     return {};
 }
 

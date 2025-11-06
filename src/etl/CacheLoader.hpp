@@ -90,6 +90,14 @@ public:
     void
     load(uint32_t const seq) override
     {
+        if (auto success = cache_.get().loadFromFile("./cache.bin"); not success.has_value()) {
+            LOG(util::LogService::warn()) << success.error();
+        } else {
+            LOG(util::LogService::info())
+                << "Loaded cache from file. Latest sequence: " << cache_.get().latestLedgerSequence();
+            backend_->updateRange(cache_.get().latestLedgerSequence(), true);
+            return;
+        }
         ASSERT(not cache_.get().isFull(), "Cache must not be full. seq = {}", seq);
 
         if (settings_.isDisabled()) {

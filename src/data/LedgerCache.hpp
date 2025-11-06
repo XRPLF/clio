@@ -168,7 +168,7 @@ public:
      * @return An error as a string if any
      */
     std::expected<void, std::string>
-    loadFromFile(std::string const& path);
+    loadFromFile(std::string const& path) override;
 };
 
 }  // namespace data

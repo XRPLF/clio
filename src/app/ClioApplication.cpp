@@ -113,6 +113,11 @@ ClioApplication::run(bool const useNgWebServer)
     auto dosGuard = web::dosguard::DOSGuard{config_, whitelistHandler, dosguardWeights};
     auto sweepHandler = web::dosguard::IntervalSweepHandler{config_, ioc, dosGuard};
     auto cache = data::LedgerCache{};
+    appStopper_.setOnStop([&cache](auto&&) {
+        if (auto const success = cache.saveToFile("./cache.bin"); not success.has_value()) {
+            LOG(util::LogService::error()) << "Error saving LedgerCache to file";
+        }
+    });
 
     // Interface to the database
     auto backend = data::makeBackend(config_, cache);
