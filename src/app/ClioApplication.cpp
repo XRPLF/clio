@@ -27,7 +27,6 @@
 #include "data/LedgerCache.hpp"
 #include "etl/ETLService.hpp"
 #include "etl/LoadBalancer.hpp"
-#include "etl/LoadBalancerInterface.hpp"
 #include "etl/NetworkValidatedLedgers.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "migration/MigrationInspectorFactory.hpp"
