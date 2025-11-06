@@ -207,8 +207,9 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
 
 TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
 {
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(std::nullopt));
+    ON_CALL(*backend_, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::nullopt));
 
     static auto const kINPUT = json::parse(
         fmt::format(
