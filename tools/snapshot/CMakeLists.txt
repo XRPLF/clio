@@ -8,8 +8,11 @@ set(GO_OUTPUT "${CMAKE_BINARY_DIR}/clio_snapshot")
 file(GLOB_RECURSE GO_SOURCES ${GO_SOURCE_DIR}/*.go)
 
 set(PROTO_FILES
-    ${PROTO_SOURCE_DIR}/xrp_ledger.proto ${PROTO_SOURCE_DIR}/ledger.proto ${PROTO_SOURCE_DIR}/get_ledger.proto
-    ${PROTO_SOURCE_DIR}/get_ledger_entry.proto ${PROTO_SOURCE_DIR}/get_ledger_data.proto
+    ${PROTO_SOURCE_DIR}/xrp_ledger.proto
+    ${PROTO_SOURCE_DIR}/ledger.proto
+    ${PROTO_SOURCE_DIR}/get_ledger.proto
+    ${PROTO_SOURCE_DIR}/get_ledger_entry.proto
+    ${PROTO_SOURCE_DIR}/get_ledger_data.proto
     ${PROTO_SOURCE_DIR}/get_ledger_diff.proto
 )
 

@@ -20,8 +20,8 @@
 #pragma once
 
 #include "etl/ETLState.hpp"
-#include "etlng/InitialLoadObserverInterface.hpp"
-#include "etlng/LoadBalancerInterface.hpp"
+#include "etl/InitialLoadObserverInterface.hpp"
+#include "etl/LoadBalancerInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "util/FakeFetchResponse.hpp"
 
@@ -36,21 +36,14 @@
 #include <expected>
 #include <optional>
 #include <string>
-#include <vector>
 
-struct MockNgLoadBalancer : etlng::LoadBalancerInterface {
+struct MockLoadBalancer : etl::LoadBalancerInterface {
     using RawLedgerObjectType = FakeLedgerObject;
 
     MOCK_METHOD(
-        etlng::InitialLedgerLoadResult,
+        etl::InitialLedgerLoadResult,
         loadInitialLedger,
-        (uint32_t, etlng::InitialLoadObserverInterface&, std::chrono::steady_clock::duration),
-        (override)
-    );
-    MOCK_METHOD(
-        std::vector<std::string>,
-        loadInitialLedger,
-        (uint32_t, std::chrono::steady_clock::duration),
+        (uint32_t, etl::InitialLoadObserverInterface&, std::chrono::steady_clock::duration),
         (override)
     );
     MOCK_METHOD(
@@ -71,5 +64,3 @@ struct MockNgLoadBalancer : etlng::LoadBalancerInterface {
     );
     MOCK_METHOD(void, stop, (boost::asio::yield_context), ());
 };
-
-using MockLoadBalancer = MockNgLoadBalancer;

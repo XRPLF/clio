@@ -19,8 +19,8 @@
 
 #pragma once
 
+#include "etl/ETLServiceInterface.hpp"
 #include "etl/ETLState.hpp"
-#include "etlng/ETLServiceInterface.hpp"
 
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
@@ -29,7 +29,7 @@
 #include <cstdint>
 #include <optional>
 
-struct MockETLService : etlng::ETLServiceInterface {
+struct MockETLService : etl::ETLServiceInterface {
     MOCK_METHOD(void, run, (), (override));
     MOCK_METHOD(void, stop, (), (override));
     MOCK_METHOD(boost::json::object, getInfo, (), (const, override));

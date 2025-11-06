@@ -27,9 +27,8 @@
 #include "data/LedgerCache.hpp"
 #include "etl/ETLService.hpp"
 #include "etl/LoadBalancer.hpp"
+#include "etl/LoadBalancerInterface.hpp"
 #include "etl/NetworkValidatedLedgers.hpp"
-#include "etlng/LoadBalancer.hpp"
-#include "etlng/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "migration/MigrationInspectorFactory.hpp"
 #include "rpc/Counters.hpp"
@@ -103,7 +102,7 @@ ClioApplication::run(bool const useNgWebServer)
     // This is not the only io context in the application.
     boost::asio::io_context ioc{threads};
 
-    // Similarly we need a context to run ETLng on
+    // Similarly we need a context to run ETL on
     // In the future we can remove the raw ioc and use ctx instead
     util::async::CoroExecutionContext ctx{threads};
 
@@ -142,20 +141,12 @@ ClioApplication::run(bool const useNgWebServer)
     // ETL uses the balancer to extract data.
     // The server uses the balancer to forward RPCs to a rippled node.
     // The balancer itself publishes to streams (transactions_proposed and accounts_proposed)
-    auto balancer = [&] -> std::shared_ptr<etlng::LoadBalancerInterface> {
-        if (config_.get<bool>("__ng_etl")) {
-            return etlng::LoadBalancer::makeLoadBalancer(
-                config_, ioc, backend, subscriptions, std::make_unique<util::MTRandomGenerator>(), ledgers
-            );
-        }
-
-        return etl::LoadBalancer::makeLoadBalancer(
-            config_, ioc, backend, subscriptions, std::make_unique<util::MTRandomGenerator>(), ledgers
-        );
-    }();
+    auto balancer = etl::LoadBalancer::makeLoadBalancer(
+        config_, ioc, backend, subscriptions, std::make_unique<util::MTRandomGenerator>(), ledgers
+    );
 
     // ETL is responsible for writing and publishing to streams. In read-only mode, ETL only publishes
-    auto etl = etl::ETLService::makeETLService(config_, ioc, ctx, backend, subscriptions, balancer, ledgers);
+    auto etl = etl::ETLService::makeETLService(config_, ctx, backend, subscriptions, balancer, ledgers);
 
     auto workQueue = rpc::WorkQueue::makeWorkQueue(config_);
     auto counters = rpc::Counters::makeCounters(workQueue);

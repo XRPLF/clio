@@ -29,6 +29,7 @@
 
 #include <expected>
 #include <optional>
+#include <type_traits>
 
 namespace util::async::impl {
 
@@ -61,12 +62,12 @@ template <SomeStopSource StopSourceType>
 outcomeForHandler(auto&& fn)
 {
     if constexpr (SomeHandlerWith<decltype(fn), typename StopSourceType::Token>) {
-        using FnRetType = decltype(fn(std::declval<typename StopSourceType::Token>()));
+        using FnRetType = std::decay_t<std::invoke_result_t<decltype(fn), typename StopSourceType::Token>>;
         using RetType = std::expected<FnRetType, ExecutionError>;
 
         return StoppableOutcome<RetType, StopSourceType>();
     } else {
-        using FnRetType = decltype(fn());
+        using FnRetType = std::decay_t<std::invoke_result_t<decltype(fn)>>;
         using RetType = std::expected<FnRetType, ExecutionError>;
 
         return Outcome<RetType>();
