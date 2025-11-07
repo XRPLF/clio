@@ -43,12 +43,6 @@
 
 namespace data {
 
-namespace impl {
-
-class LedgerCacheFile;
-
-}  // namespace impl
-
 /**
  * @brief Cache for an entire ledger.
  */

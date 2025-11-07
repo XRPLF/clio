@@ -22,6 +22,8 @@
 #include "util/config/ConfigDefinition.hpp"
 
 #include <cstddef>
+#include <optional>
+#include <string>
 
 namespace etl {
 
@@ -40,6 +42,8 @@ struct CacheLoaderSettings {
     size_t numCacheCursorsFromAccount = 0; /**< number of cursors to fetch from account_tx */
 
     LoadStyle loadStyle = LoadStyle::ASYNC; /**< how to load the cache */
+    std::optional<std::string>
+        cacheFilePath; /**< optional path to the file to load cache from on start and save cache to on shutdown */
 
     auto
     operator<=>(CacheLoaderSettings const&) const = default;

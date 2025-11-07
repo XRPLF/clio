@@ -28,7 +28,9 @@
 #include "etl/impl/CursorFromFixDiffNumProvider.hpp"
 #include "etlng/CacheLoaderInterface.hpp"
 #include "util/Assert.hpp"
+#include "util/Profiler.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
 
 #include <cstdint>
@@ -90,19 +92,15 @@ public:
     void
     load(uint32_t const seq) override
     {
-        if (auto success = cache_.get().loadFromFile("./cache.bin"); not success.has_value()) {
-            LOG(util::LogService::warn()) << success.error();
-        } else {
-            LOG(util::LogService::info())
-                << "Loaded cache from file. Latest sequence: " << cache_.get().latestLedgerSequence();
-            backend_->updateRange(cache_.get().latestLedgerSequence(), true);
-            return;
-        }
         ASSERT(not cache_.get().isFull(), "Cache must not be full. seq = {}", seq);
 
         if (settings_.isDisabled()) {
             cache_.get().setDisabled();
             LOG(log_.warn()) << "Cache is disabled. Not loading";
+            return;
+        }
+
+        if (loadCacheFromFile()) {
             return;
         }
 
@@ -156,6 +154,28 @@ public:
     {
         if (loader_ != nullptr)
             loader_->wait();
+    }
+
+private:
+    bool
+    loadCacheFromFile()
+    {
+        if (not settings_.cacheFilePath.has_value()) {
+            return false;
+        }
+        LOG(log_.info()) << "Loading ledger cache from " << *settings_.cacheFilePath;
+        auto const [success, duration_ms] =
+            util::timed([&]() { return cache_.get().loadFromFile(*settings_.cacheFilePath); });
+
+        if (not success.has_value()) {
+            LOG(log_.warn()) << "Error loading cache from file: " << success.error();
+            return false;
+        }
+
+        LOG(log_.info()) << "Loaded cache from file in " << duration_ms
+                         << " ms. Latest sequence: " << cache_.get().latestLedgerSequence();
+        backend_->forceUpdateRange(cache_.get().latestLedgerSequence());
+        return true;
     }
 };
 

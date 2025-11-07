@@ -26,19 +26,15 @@
 
 #include <xrpl/basics/base_uint.h>
 
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <iostream>
 #include <map>
 #include <mutex>
 #include <optional>
-#include <ostream>
 #include <shared_mutex>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -261,39 +257,13 @@ LedgerCache::getSuccessorHitRate() const
     return static_cast<float>(successorHitCounter_.get().value()) / successorReqCounter_.get().value();
 }
 
-void
-log(std::chrono::steady_clock::time_point const& start, std::string_view message)
-{
-    auto const now = std::chrono::steady_clock::now();
-    auto const elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
-    std::cout << elapsed << " ms: " << message << std::endl;
-}
-
-class Logger {
-    std::chrono::steady_clock::time_point start_;
-
-public:
-    Logger() : start_(std::chrono::steady_clock::now())
-    {
-    }
-
-    ~Logger()
-    {
-        log("done");
-    }
-
-    void
-    log(std::string_view m) const
-    {
-        auto const now = std::chrono::steady_clock::now();
-        auto const elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_).count();
-        std::cout << elapsedMs << " ms: " << m << std::endl;
-    }
-};
-
 std::expected<void, std::string>
 LedgerCache::saveToFile(std::string const& path) const
 {
+    if (not isFull()) {
+        return std::unexpected{"Ledger cache is not full"};
+    }
+
     impl::LedgerCacheFile file{path};
     std::unique_lock lock{mtx_};
     impl::LedgerCacheFile::DataView data{.latestSeq = latestSeq_, .map = map_, .deleted = deleted_};

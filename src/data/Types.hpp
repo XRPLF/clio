@@ -247,6 +247,9 @@ struct MPTHoldersAndCursor {
 struct LedgerRange {
     std::uint32_t minSequence = 0;
     std::uint32_t maxSequence = 0;
+
+    bool
+    operator==(LedgerRange const&) const = default;
 };
 
 /**
