@@ -25,6 +25,8 @@
 
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
+#include <fmt/core.h>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 
 namespace json = boost::json;
@@ -42,7 +44,8 @@ generateDefaultCacheConfig()
          {"cache.num_cursors_from_diff", ConfigValue{ConfigType::Integer}.defaultValue(0)},
          {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0)},
          {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512)},
-         {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")}}
+         {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")},
+         {"cache.file_path", ConfigValue{ConfigType::String}.optional()}}
     };
 }
 
@@ -133,4 +136,23 @@ TEST_F(CacheLoaderSettingsTest, NoLoadStyleCorrectlyPropagatedThroughConfig)
         EXPECT_EQ(settings.loadStyle, CacheLoaderSettings::LoadStyle::NONE);
         EXPECT_TRUE(settings.isDisabled());
     }
+}
+
+TEST_F(CacheLoaderSettingsTest, CacheFilePathCorrectlyPropagatedThroughConfig)
+{
+    static constexpr auto kCACHE_FILE_PATH = "/path/to/cache.dat";
+    auto const jsonStr = fmt::format(R"JSON({{"cache": {{"file_path": "{}"}}}})JSON", kCACHE_FILE_PATH);
+    auto const cfg = getParseCacheConfig(json::parse(jsonStr));
+    auto const settings = makeCacheLoaderSettings(cfg);
+
+    ASSERT_TRUE(settings.cacheFilePath.has_value());
+    EXPECT_EQ(settings.cacheFilePath.value(), kCACHE_FILE_PATH);
+}
+
+TEST_F(CacheLoaderSettingsTest, CacheFilePathNotSetWhenAbsentFromConfig)
+{
+    auto const cfg = generateDefaultCacheConfig();
+    auto const settings = makeCacheLoaderSettings(cfg);
+
+    EXPECT_FALSE(settings.cacheFilePath.has_value());
 }
