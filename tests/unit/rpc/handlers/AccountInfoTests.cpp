@@ -261,7 +261,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
+    EXPECT_CALL(*backend_, doFetchLedgerObject);
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -288,7 +288,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
 
     // return a valid ledger object but not account root
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
+    EXPECT_CALL(*backend_, doFetchLedgerObject);
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -661,6 +661,9 @@ TEST_F(RPCAccountInfoHandlerTest, EmptySignerLists)
 
     auto signersKey = ripple::keylet::signers(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(signersKey, 30, _)).WillByDefault(Return(std::optional<Blob>{}));
+
+    // Once for signer object, once for keylet
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     static auto const kINPUT = json::parse(
         fmt::format(
