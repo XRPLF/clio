@@ -276,7 +276,7 @@ This document provides a list of all available Clio configuration properties in 
                     "If set to `0`, the system defaults to generating cursors based on `cache.num_diffs`."},
         KV{.key = "cache.page_fetch_size", .value = "The number of ledger objects to fetch concurrently per marker."},
         KV{.key = "cache.load", .value = "The strategy used for Cache loading."},
-        KV{.key = "cache.file.path",
+        KV{.key = "cache.file_path",
            .value = "The path to a file where cache will be saved to on shutdown and loaded from on startup. "
                     "If the file couldn't be read Clio will load cache as usual (from DB or from rippled)."},
         KV{.key = "log.channels.[].channel", .value = "The name of the log channel."},

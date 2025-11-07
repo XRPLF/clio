@@ -213,7 +213,10 @@ ETLService::run()
             return;
         }
 
-        auto const nextSequence = rng->maxSequence + 1;
+        auto nextSequence = rng->maxSequence + 1;
+        if (backend_->cache().latestLedgerSequence() != 0) {
+            nextSequence = backend_->cache().latestLedgerSequence();
+        }
 
         LOG(log_.debug()) << "Database is populated. Starting monitor loop. sequence = " << nextSequence;
         startMonitor(nextSequence);
@@ -333,7 +336,9 @@ ETLService::loadInitialLedgerIfNeeded()
     }
 
     LOG(log_.info()) << "Database already populated. Picking up from the tip of history";
-    cacheLoader_->load(rng->maxSequence);
+    if (not backend_->cache().isFull()) {
+        cacheLoader_->load(rng->maxSequence);
+    }
 
     return rng;
 }

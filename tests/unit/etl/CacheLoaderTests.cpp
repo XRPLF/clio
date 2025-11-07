@@ -392,8 +392,7 @@ TEST_F(CacheLoaderFromFileTest, FailureBackToNormalLoad)
     auto const loops = diffs.size() + 1;
     auto const keysSize = 14;
 
-    EXPECT_CALL(cache, isFull).WillOnce(Return(false));
-    EXPECT_CALL(cache, loadFromFile("/tmp/cache.bin"))
+    EXPECT_CALL(cache, loadFromFile(filePath))
         .WillOnce(Return(std::expected<void, std::string>(std::unexpected("File not found"))));
 
     EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).Times(32).WillRepeatedly(Return(diffs));

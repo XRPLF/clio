@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "data/LedgerCache.hpp"
-#include "etlng/Models.hpp"
+#include "etl/Models.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TmpFile.hpp"
 #include "util/prometheus/Bool.hpp"
@@ -96,8 +96,8 @@ TEST_F(LedgerCachePrometheusMetricTest, setFull)
 struct LedgerCacheSaveLoadTest : LedgerCacheTest {
     ripple::uint256 const key1{1};
     ripple::uint256 const key2{2};
-    std::vector<etlng::model::Object> const objs{
-        etlng::model::Object{
+    std::vector<etl::model::Object> const objs{
+        etl::model::Object{
             .key = key1,
             .keyRaw = {},
             .data = {1, 2, 3, 4, 5},
@@ -106,7 +106,7 @@ struct LedgerCacheSaveLoadTest : LedgerCacheTest {
             .predecessor = {},
             .type = {}
         },
-        etlng::model::Object{
+        etl::model::Object{
             .key = key2,
             .keyRaw = {},
             .data = {6, 7, 8, 9, 10},

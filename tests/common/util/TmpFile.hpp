@@ -23,6 +23,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -32,6 +33,7 @@ struct TmpFile {
 
     TmpFile(std::string_view content) : path{std::tmpnam(nullptr)}
     {
+        std::cout << "creating " << path << std::endl;
         std::ofstream ofs;
         ofs.open(path, std::ios::out);
         ofs << content;
