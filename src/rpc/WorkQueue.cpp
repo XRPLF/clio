@@ -19,40 +19,28 @@
 
 #include "rpc/WorkQueue.hpp"
 
+#include "util/Assert.hpp"
+#include "util/Spawn.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
+#include <boost/asio/dispatch.hpp>
+#include <boost/asio/post.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/json/object.hpp>
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <utility>
+#include <vector>
 
 namespace rpc {
 
-void
-WorkQueue::OneTimeCallable::setCallable(std::function<void()> func)
-{
-    func_ = func;
-}
-
-void
-WorkQueue::OneTimeCallable::operator()()
-{
-    if (not called_) {
-        func_();
-        called_ = true;
-    }
-}
-WorkQueue::OneTimeCallable::
-operator bool() const
-{
-    return func_.operator bool();
-}
-
-WorkQueue::WorkQueue(std::uint32_t numWorkers, uint32_t maxSize)
+WorkQueue::WorkQueue(DontStartProcessingTag, std::uint32_t numWorkers, uint32_t maxSize)
     : queued_{PrometheusService::counterInt(
           "work_queue_queued_total_number",
           util::prometheus::Labels(),
@@ -69,25 +57,156 @@ WorkQueue::WorkQueue(std::uint32_t numWorkers, uint32_t maxSize)
           "The current number of tasks in the queue"
       )}
     , ioc_{numWorkers}
+    , strand_{ioc_.get_executor()}
+    , waitTimer_(ioc_)
 {
     if (maxSize != 0)
         maxSize_ = maxSize;
 }
 
+WorkQueue::WorkQueue(std::uint32_t numWorkers, uint32_t maxSize)
+    : WorkQueue(kDONT_START_PROCESSING_TAG, numWorkers, maxSize)
+{
+    startProcessing();
+}
+
 WorkQueue::~WorkQueue()
 {
-    join();
+    stop();
 }
 
 void
-WorkQueue::stop(std::function<void()> onQueueEmpty)
+WorkQueue::startProcessing()
+{
+    util::spawn(strand_, [this](auto yield) {
+        ASSERT(not hasDispatcher_, "Dispatcher already running");
+
+        hasDispatcher_ = true;
+        dispatcherLoop(yield);
+    });
+}
+
+bool
+WorkQueue::postCoro(TaskType func, bool isWhiteListed, Priority priority)
+{
+    if (stopping_) {
+        LOG(log_.warn()) << "Queue is stopping, rejecting incoming task.";
+        return false;
+    }
+
+    if (size() >= maxSize_ && !isWhiteListed) {
+        LOG(log_.warn()) << "Queue is full. rejecting job. current size = " << size() << "; max size = " << maxSize_;
+        return false;
+    }
+
+    ++curSize_.get();
+    auto needsWakeup = false;
+
+    {
+        auto state = dispatcherState_.lock();
+
+        needsWakeup = std::exchange(state->isIdle, false);
+
+        state->push(priority, std::move(func));
+    }
+
+    if (needsWakeup)
+        boost::asio::post(strand_, [this] { waitTimer_.cancel(); });
+
+    return true;
+}
+
+void
+WorkQueue::dispatcherLoop(boost::asio::yield_context yield)
+{
+    LOG(log_.info()) << "WorkQueue dispatcher starting";
+
+    // all ongoing tasks must be completed before stopping fully
+    while (not stopping_ or size() > 0) {
+        std::vector<TaskType> batch;
+
+        {
+            auto state = dispatcherState_.lock();
+
+            if (state->empty()) {
+                state->isIdle = true;
+            } else {
+                for (auto count = 0uz; count < kTAKE_HIGH_PRIO and not state->high.empty(); ++count) {
+                    batch.push_back(std::move(state->high.front()));
+                    state->high.pop();
+                }
+
+                if (not state->normal.empty()) {
+                    batch.push_back(std::move(state->normal.front()));
+                    state->normal.pop();
+                }
+            }
+        }
+
+        if (not stopping_ and batch.empty()) {
+            waitTimer_.expires_at(std::chrono::steady_clock::time_point::max());
+            boost::system::error_code ec;
+            waitTimer_.async_wait(yield[ec]);
+        } else {
+            for (auto task : std::move(batch)) {
+                util::spawn(
+                    ioc_,
+                    [this, spawnedAt = std::chrono::system_clock::now(), task = std::move(task)](auto yield) mutable {
+                        auto const takenAt = std::chrono::system_clock::now();
+                        auto const waited =
+                            std::chrono::duration_cast<std::chrono::microseconds>(takenAt - spawnedAt).count();
+
+                        ++queued_.get();
+                        durationUs_.get() += waited;
+                        LOG(log_.info()) << "WorkQueue wait time: " << waited << ", queue size: " << size();
+
+                        task(yield);
+
+                        --curSize_.get();
+                    }
+                );
+            }
+
+            boost::asio::post(ioc_.get_executor(), yield);  // yield back to avoid hijacking the thread
+        }
+    }
+
+    LOG(log_.info()) << "WorkQueue dispatcher shutdown requested - time to execute onTasksComplete";
+
+    {
+        auto onTasksComplete = onQueueEmpty_.lock();
+        ASSERT(onTasksComplete->operator bool(), "onTasksComplete must be set when stopping is true.");
+        onTasksComplete->operator()();
+    }
+
+    LOG(log_.info()) << "WorkQueue dispatcher finished";
+}
+
+void
+WorkQueue::requestStop(std::function<void()> onQueueEmpty)
 {
     auto handler = onQueueEmpty_.lock();
-    handler->setCallable(std::move(onQueueEmpty));
+    *handler = std::move(onQueueEmpty);
+
     stopping_ = true;
-    if (size() == 0) {
-        handler->operator()();
+    auto needsWakeup = false;
+
+    {
+        auto state = dispatcherState_.lock();
+        needsWakeup = std::exchange(state->isIdle, false);
     }
+
+    if (needsWakeup)
+        boost::asio::post(strand_, [this] { waitTimer_.cancel(); });
+}
+
+void
+WorkQueue::stop()
+{
+    if (not stopping_.exchange(true))
+        requestStop();
+
+    ioc_.join();
 }
 
 WorkQueue
@@ -113,12 +232,6 @@ WorkQueue::report() const
     obj["max_queue_size"] = maxSize_;
 
     return obj;
-}
-
-void
-WorkQueue::join()
-{
-    ioc_.join();
 }
 
 size_t
