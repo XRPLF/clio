@@ -20,8 +20,8 @@
 #include "util/BinaryTestObject.hpp"
 
 #include "data/DBHelpers.hpp"
-#include "etlng/Models.hpp"
-#include "etlng/impl/Extraction.hpp"
+#include "etl/Models.hpp"
+#include "etl/impl/Extraction.hpp"
 #include "util/StringUtils.hpp"
 #include "util/TestObject.hpp"
 
@@ -74,7 +74,7 @@ createTxAndMeta(std::string hashStr, std::string metaStr, std::string txnStr)
     return {ripple::STTx{it}, ripple::TxMeta{hash, kSEQ, metaBlob}};
 }
 
-etlng::model::Transaction
+etl::model::Transaction
 createTransaction(ripple::TxType type, std::string hashStr, std::string metaStr, std::string txnStr)
 {
     auto const [sttx, meta] = createTxAndMeta(hashStr, metaStr, txnStr);
@@ -89,8 +89,8 @@ createTransaction(ripple::TxType type, std::string hashStr, std::string metaStr,
     };
 }
 
-etlng::model::Object
-createObject(etlng::model::Object::ModType modType, std::string key)
+etl::model::Object
+createObject(etl::model::Object::ModType modType, std::string key)
 {
     // random object taken from initial ledger load
     static constinit auto const kOBJ_PRED = "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960A";
@@ -104,16 +104,16 @@ createObject(etlng::model::Object::ModType modType, std::string key)
     return {
         .key = binaryStringToUint256(hexStringToBinaryString(key)),
         .keyRaw = hexStringToBinaryString(key),
-        .data = modType == etlng::model::Object::ModType::Deleted ? ripple::Blob{} : *ripple::strUnHex(kOBJ_BLOB),
-        .dataRaw = modType == etlng::model::Object::ModType::Deleted ? "" : hexStringToBinaryString(kOBJ_BLOB),
+        .data = modType == etl::model::Object::ModType::Deleted ? ripple::Blob{} : *ripple::strUnHex(kOBJ_BLOB),
+        .dataRaw = modType == etl::model::Object::ModType::Deleted ? "" : hexStringToBinaryString(kOBJ_BLOB),
         .successor = hexStringToBinaryString(kOBJ_SUCC),
         .predecessor = hexStringToBinaryString(kOBJ_PRED),
         .type = modType,
     };
 }
 
-etlng::model::Object
-createObjectWithBookBase(etlng::model::Object::ModType modType, std::string key)
+etl::model::Object
+createObjectWithBookBase(etl::model::Object::ModType modType, std::string key)
 {
     // random object taken from initial ledger load
     static constinit auto const kOBJ_PRED = "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960A";
@@ -126,15 +126,15 @@ createObjectWithBookBase(etlng::model::Object::ModType modType, std::string key)
     return {
         .key = binaryStringToUint256(hexStringToBinaryString(key)),
         .keyRaw = hexStringToBinaryString(key),
-        .data = modType == etlng::model::Object::ModType::Deleted ? ripple::Blob{} : *ripple::strUnHex(kOBJ_BLOB),
-        .dataRaw = modType == etlng::model::Object::ModType::Deleted ? "" : hexStringToBinaryString(kOBJ_BLOB),
+        .data = modType == etl::model::Object::ModType::Deleted ? ripple::Blob{} : *ripple::strUnHex(kOBJ_BLOB),
+        .dataRaw = modType == etl::model::Object::ModType::Deleted ? "" : hexStringToBinaryString(kOBJ_BLOB),
         .successor = hexStringToBinaryString(kOBJ_SUCC),
         .predecessor = hexStringToBinaryString(kOBJ_PRED),
         .type = modType,
     };
 }
 
-etlng::model::Object
+etl::model::Object
 createObjectWithTwoNFTs()
 {
     std::string const url1 = "abcd1";
@@ -163,11 +163,11 @@ createObjectWithTwoNFTs()
             std::string(static_cast<char const*>(serializerNftPage.getDataPtr()), serializerNftPage.getDataLength()),
         .successor = "",
         .predecessor = "",
-        .type = etlng::model::Object::ModType::Created,
+        .type = etl::model::Object::ModType::Created,
     };
 }
 
-etlng::model::Object
+etl::model::Object
 createObjectWithMPT()
 {
     constexpr auto kACCOUNT = "rM2AGCCCRb373FRuD8wHyUwUsh2dV4BW5Q";
@@ -191,11 +191,11 @@ createObjectWithMPT()
         ),
         .successor = "",
         .predecessor = "",
-        .type = etlng::model::Object::ModType::Created,
+        .type = etl::model::Object::ModType::Created,
     };
 }
 
-etlng::model::BookSuccessor
+etl::model::BookSuccessor
 createSuccessor()
 {
     return {
@@ -206,12 +206,12 @@ createSuccessor()
     };
 }
 
-etlng::impl::PBLedgerResponseType
+etl::impl::PBLedgerResponseType
 createDataAndDiff()
 {
     auto const rawHeaderBlob = hexStringToBinaryString(kRAW_HEADER);
 
-    auto res = etlng::impl::PBLedgerResponseType();
+    auto res = etl::impl::PBLedgerResponseType();
     res.set_ledger_header(rawHeaderBlob);
     res.set_objects_included(true);
     res.set_object_neighbors_included(true);
@@ -252,12 +252,12 @@ createDataAndDiff()
     return res;
 }
 
-etlng::impl::PBLedgerResponseType
+etl::impl::PBLedgerResponseType
 createData()
 {
     auto const rawHeaderBlob = hexStringToBinaryString(kRAW_HEADER);
 
-    auto res = etlng::impl::PBLedgerResponseType();
+    auto res = etl::impl::PBLedgerResponseType();
     res.set_ledger_header(rawHeaderBlob);
     res.set_objects_included(false);
     res.set_object_neighbors_included(false);

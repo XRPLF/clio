@@ -5,17 +5,17 @@ It is used in [Clio Github Actions](https://github.com/XRPLF/clio/actions) but c
 
 The image is based on Ubuntu 20.04 and contains:
 
-- ccache 4.11.3
+- ccache 4.12.1
 - Clang 19
 - ClangBuildAnalyzer 1.6.0
-- Conan 2.20.1
-- Doxygen 1.14
+- Conan 2.22.1
+- Doxygen 1.15.0
 - GCC 15.2.0
 - GDB 16.3
-- gh 2.74
-- git-cliff 2.9.1
-- mold 2.40.1
-- Python 3.13
+- gh 2.82.1
+- git-cliff 2.10.1
+- mold 2.40.4
+- Python 3.8
 - and some other useful tools
 
 Conan is set up to build Clio without any additional steps.

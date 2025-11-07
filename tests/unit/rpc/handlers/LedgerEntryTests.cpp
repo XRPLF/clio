@@ -3756,7 +3756,6 @@ TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
             "Issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "LedgerEntryType": "MPTokenIssuance",
             "MPTokenMetadata": "6D65746164617461",
-            "MaximumAmount": "0",
             "OutstandingAmount": "0",
             "OwnerNode": "0",
             "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",

@@ -3,10 +3,10 @@ name: Make release
 on:
   workflow_call:
     inputs:
-      overwrite_release:
-        description: "Overwrite the current release and tag"
+      delete_pattern:
+        description: "Pattern to delete previous releases"
         required: true
-        type: boolean
+        type: string
 
       prerelease:
         description: "Create a prerelease"
@@ -42,7 +42,7 @@ jobs:
   release:
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:b2be4b51d1d81548ca48e2f2b8f67356b880c96d
+      image: ghcr.io/xrplf/clio-ci:c117f470f2ef954520ab5d1c8a5ed2b9e68d6f8a
     env:
       GH_REPO: ${{ github.repository }}
       GH_TOKEN: ${{ github.token }}
@@ -51,12 +51,12 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
 
       - name: Prepare runner
-        uses: XRPLF/actions/.github/actions/prepare-runner@7951b682e5a2973b28b0719a72f01fc4b0d0c34f
+        uses: XRPLF/actions/.github/actions/prepare-runner@8abb0722cbff83a9a2dc7d06c473f7a4964b7382
         with:
           disable_ccache: true
 
@@ -94,14 +94,19 @@ jobs:
           name: release_notes_${{ inputs.version }}
           path: "${RUNNER_TEMP}/release_notes.md"
 
-      - name: Remove current release and tag
-        if: ${{ github.event_name != 'pull_request' && inputs.overwrite_release }}
+      - name: Remove previous release with a pattern
+        if: ${{ github.event_name != 'pull_request' && inputs.delete_pattern != '' }}
         shell: bash
         env:
-          RELEASE_VERSION: ${{ inputs.version }}
+          DELETE_PATTERN: ${{ inputs.delete_pattern }}
         run: |
-          gh release delete "${RELEASE_VERSION}" --yes || true
-          git push origin :"${RELEASE_VERSION}" || true
+          RELEASES_TO_DELETE=$(gh release list --limit 50 --repo "${GH_REPO}" | grep -E "${DELETE_PATTERN}" | awk -F'\t' '{print $3}' || true)
+          if [ -n "$RELEASES_TO_DELETE" ]; then
+            for RELEASE in $RELEASES_TO_DELETE; do
+              echo "Deleting release: $RELEASE"
+              gh release delete "$RELEASE" --repo "${GH_REPO}" --yes --cleanup-tag
+            done
+          fi
 
       - name: Publish release
         if: ${{ github.event_name != 'pull_request' }}

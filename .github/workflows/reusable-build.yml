@@ -86,7 +86,7 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         uses: XRPLF/actions/.github/actions/cleanup-workspace@ea9970b7c211b18f4c8bcdb28c29f5711752029f
 
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
           # We need to fetch tags to have correct version in the release
@@ -95,7 +95,7 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Prepare runner
-        uses: XRPLF/actions/.github/actions/prepare-runner@7951b682e5a2973b28b0719a72f01fc4b0d0c34f
+        uses: XRPLF/actions/.github/actions/prepare-runner@8abb0722cbff83a9a2dc7d06c473f7a4964b7382
         with:
           disable_ccache: ${{ !inputs.download_ccache }}
 

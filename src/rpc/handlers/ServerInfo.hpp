@@ -21,8 +21,8 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
-#include "etlng/ETLServiceInterface.hpp"
-#include "etlng/LoadBalancerInterface.hpp"
+#include "etl/ETLServiceInterface.hpp"
+#include "etl/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
@@ -68,8 +68,8 @@ class BaseServerInfoHandler {
 
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
-    std::shared_ptr<etlng::LoadBalancerInterface> balancer_;
-    std::shared_ptr<etlng::ETLServiceInterface const> etl_;
+    std::shared_ptr<etl::LoadBalancerInterface> balancer_;
+    std::shared_ptr<etl::ETLServiceInterface const> etl_;
     std::reference_wrapper<CountersType const> counters_;
 
 public:
@@ -154,8 +154,8 @@ public:
     BaseServerInfoHandler(
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions,
-        std::shared_ptr<etlng::LoadBalancerInterface> const& balancer,
-        std::shared_ptr<etlng::ETLServiceInterface const> const& etl,
+        std::shared_ptr<etl::LoadBalancerInterface> const& balancer,
+        std::shared_ptr<etl::ETLServiceInterface const> const& etl,
         CountersType const& counters
     )
         : backend_(backend)

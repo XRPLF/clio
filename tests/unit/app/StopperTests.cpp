@@ -67,7 +67,7 @@ struct StopperMakeCallbackTest : util::prometheus::WithPrometheus, SyncAsioConte
 
 protected:
     testing::StrictMock<ServerMock> serverMock_;
-    testing::StrictMock<MockNgLoadBalancer> loadBalancerMock_;
+    testing::StrictMock<MockLoadBalancer> loadBalancerMock_;
     testing::StrictMock<MockETLService> etlServiceMock_;
     testing::StrictMock<MockSubscriptionManager> subscriptionManagerMock_;
     testing::StrictMock<MockBackend> backendMock_{util::config::ClioConfigDefinition{}};

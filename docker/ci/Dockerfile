@@ -55,8 +55,11 @@ RUN pip install -q --no-cache-dir \
         # lxml 6.0.0 is not compatible with our image
         'lxml<6.0.0' \
         cmake \
-        conan==2.20.1 \
-        gcovr
+        conan==2.22.1 \
+        gcovr \
+        # We're adding pre-commit to this image as well,
+        # because clang-tidy workflow requires it
+        pre-commit
 
 # Install LLVM tools
 ARG LLVM_TOOLS_VERSION=20

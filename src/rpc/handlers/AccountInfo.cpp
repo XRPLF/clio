@@ -113,6 +113,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
         auto const signers = sharedPtrBackend_->fetchLedgerObject(signersKey.key, lgrInfo.seq, ctx.yield);
+        out.signerLists = std::vector<ripple::STLedgerEntry>();
 
         if (signers) {
             ripple::STLedgerEntry const sleSigners{
@@ -122,7 +123,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
             if (!signersKey.check(sleSigners))
                 return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
 
-            out.signerLists = std::vector<ripple::STLedgerEntry>{sleSigners};
+            out.signerLists->push_back(sleSigners);
         }
     }
 

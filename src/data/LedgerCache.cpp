@@ -95,7 +95,7 @@ LedgerCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool is
 }
 
 void
-LedgerCache::update(std::vector<etlng::model::Object> const& objs, uint32_t seq)
+LedgerCache::update(std::vector<etl::model::Object> const& objs, uint32_t seq)
 {
     if (disabled_)
         return;
