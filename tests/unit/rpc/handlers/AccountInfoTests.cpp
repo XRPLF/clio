@@ -184,7 +184,7 @@ TEST_F(AccountInfoParameterTest, ApiV1SignerListIsNotBool)
 TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
 {
     // return empty ledgerHeader
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(30, _)).WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -207,9 +207,8 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
 
 TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
 {
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(30, _)).WillOnce(Return(std::nullopt));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -232,10 +231,9 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
 
 TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
 {
-    EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+        .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
