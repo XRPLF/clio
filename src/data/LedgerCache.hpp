@@ -48,6 +48,7 @@ namespace data {
  */
 class LedgerCache : public LedgerCacheInterface {
 public:
+    /** @brief An entry of the cache */
     struct CacheEntry {
         uint32_t seq = 0;
         Blob blob;
