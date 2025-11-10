@@ -203,28 +203,28 @@ struct LedgerCacheFileTestBase : ::testing::Test {
             case CorruptionType::CorruptedSeparator1:
                 file.seekp(offsets.separator1Offset);
                 {
-                    char corruptByte = 0xFF;
+                    char corruptByte = static_cast<char>(0xFF);
                     file.write(&corruptByte, 1);
                 }
                 break;
             case CorruptionType::CorruptedSeparator2:
                 file.seekp(offsets.separator2Offset);
                 {
-                    char corruptByte = 0xFF;
+                    char corruptByte = static_cast<char>(0xFF);
                     file.write(&corruptByte, 1);
                 }
                 break;
             case CorruptionType::CorruptedSeparator3:
                 file.seekp(offsets.separator3Offset);
                 {
-                    char corruptByte = 0xFF;
+                    char corruptByte = static_cast<char>(0xFF);
                     file.write(&corruptByte, 1);
                 }
                 break;
             case CorruptionType::MapKeyCorrupted:
                 if (!offsets.mapEntries.empty()) {
                     file.seekp(offsets.mapEntries[0].keyOffset);
-                    char corruptByte = 0xFF;
+                    char corruptByte = static_cast<char>(0xFF);
                     file.write(&corruptByte, 1);
                 }
                 break;
@@ -245,14 +245,14 @@ struct LedgerCacheFileTestBase : ::testing::Test {
             case CorruptionType::MapBlobDataCorrupted:
                 if (!offsets.mapEntries.empty() && !dataView.map.begin()->second.blob.empty()) {
                     file.seekp(offsets.mapEntries[0].blobDataOffset);
-                    char corruptByte = 0xFF;
+                    char corruptByte = static_cast<char>(0xFF);
                     file.write(&corruptByte, 1);
                 }
                 break;
             case CorruptionType::DeletedKeyCorrupted:
                 if (!offsets.deletedEntries.empty()) {
                     file.seekp(offsets.deletedEntries[0].keyOffset);
-                    char corruptByte = 0xFF;
+                    char corruptByte = static_cast<char>(0xFF);
                     file.write(&corruptByte, 1);
                 }
                 break;
@@ -273,7 +273,7 @@ struct LedgerCacheFileTestBase : ::testing::Test {
             case CorruptionType::DeletedBlobDataCorrupted:
                 if (!offsets.deletedEntries.empty() && !dataView.deleted.begin()->second.blob.empty()) {
                     file.seekp(offsets.deletedEntries[0].blobDataOffset);
-                    char corruptByte = 0xFF;
+                    char corruptByte = static_cast<char>(0xFF);
                     file.write(&corruptByte, 1);
                 }
                 break;
