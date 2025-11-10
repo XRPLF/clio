@@ -20,7 +20,6 @@
 #include "data/DBHelpers.hpp"
 #include "data/Types.hpp"
 #include "etl/SystemState.hpp"
-#include "etlng/impl/LedgerPublisher.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
@@ -28,6 +27,7 @@
 #include "util/TestObject.hpp"
 #include "util/config/ConfigDefinition.hpp"
 
+#include <etlng/impl/LedgerPublisher.hpp>
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
