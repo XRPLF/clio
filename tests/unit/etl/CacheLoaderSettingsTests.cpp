@@ -45,7 +45,8 @@ generateDefaultCacheConfig()
          {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0)},
          {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512)},
          {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")},
-         {"cache.file_path", ConfigValue{ConfigType::String}.optional()}}
+         {"cache.file.path", ConfigValue{ConfigType::String}.optional()},
+         {"cache.file.max_sequence_lag", ConfigValue{ConfigType::Integer}.defaultValue(5000)}}
     };
 }
 
@@ -141,7 +142,7 @@ TEST_F(CacheLoaderSettingsTest, NoLoadStyleCorrectlyPropagatedThroughConfig)
 TEST_F(CacheLoaderSettingsTest, CacheFilePathCorrectlyPropagatedThroughConfig)
 {
     static constexpr auto kCACHE_FILE_PATH = "/path/to/cache.dat";
-    auto const jsonStr = fmt::format(R"JSON({{"cache": {{"file_path": "{}"}}}})JSON", kCACHE_FILE_PATH);
+    auto const jsonStr = fmt::format(R"JSON({{"cache": {{"file": {{"path": "{}"}}}}}})JSON", kCACHE_FILE_PATH);
     auto const cfg = getParseCacheConfig(json::parse(jsonStr));
     auto const settings = makeCacheLoaderSettings(cfg);
 
@@ -155,4 +156,14 @@ TEST_F(CacheLoaderSettingsTest, CacheFilePathNotSetWhenAbsentFromConfig)
     auto const settings = makeCacheLoaderSettings(cfg);
 
     EXPECT_FALSE(settings.cacheFilePath.has_value());
+}
+
+TEST_F(CacheLoaderSettingsTest, MaxSequenceLagPropagatedThoughConfig)
+{
+    auto const seq = 1234;
+    auto const jsonStr = fmt::format(R"JSON({{"cache": {{"file": {{"max_sequence_lag": {} }}}}}})JSON", seq);
+    auto const cfg = getParseCacheConfig(json::parse(jsonStr));
+    auto const settings = makeCacheLoaderSettings(cfg);
+
+    EXPECT_EQ(settings.cacheFileMaxLag, seq);
 }

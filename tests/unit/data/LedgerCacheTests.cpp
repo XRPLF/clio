@@ -150,7 +150,7 @@ TEST_F(LedgerCacheSaveLoadTest, saveAndLoadFromFile)
     ASSERT_TRUE(saveResult.has_value()) << "Save failed: " << saveResult.error();
 
     LedgerCache newCache;
-    auto const loadResult = newCache.loadFromFile(tmpFile.path);
+    auto const loadResult = newCache.loadFromFile(tmpFile.path, 0);
     ASSERT_TRUE(loadResult.has_value()) << "Load failed: " << loadResult.error();
 
     EXPECT_TRUE(newCache.isFull());
@@ -196,7 +196,7 @@ TEST_F(LedgerCacheSaveLoadTest, saveAndLoadFromFileWithDeletedObjects)
     ASSERT_TRUE(saveResult.has_value()) << "Save failed: " << saveResult.error();
 
     LedgerCache newCache;
-    auto loadResult = newCache.loadFromFile(tmpFile.path);
+    auto loadResult = newCache.loadFromFile(tmpFile.path, 0);
     ASSERT_TRUE(loadResult.has_value()) << "Load failed: " << loadResult.error();
 
     // Verify deleted object is preserved
@@ -226,7 +226,39 @@ TEST_F(LedgerCacheTest, SaveFailedDueToFilePermissions)
 
 TEST_F(LedgerCacheTest, loadFromNonExistentFileReturnsError)
 {
-    auto const result = cache.loadFromFile("/nonexistent/path/cache.dat");
+    auto const result = cache.loadFromFile("/nonexistent/path/cache.dat", 0);
     ASSERT_FALSE(result.has_value());
     EXPECT_FALSE(result.error().empty());
+}
+
+TEST_F(LedgerCacheSaveLoadTest, RejectOldCacheFile)
+{
+    uint32_t const cacheSeq = 100;
+    cache.update(objs, cacheSeq);
+    cache.setFull();
+
+    auto const tmpFile = TmpFile::empty();
+    auto const saveResult = cache.saveToFile(tmpFile.path);
+    ASSERT_TRUE(saveResult.has_value());
+
+    LedgerCache newCache;
+    auto const loadResult = newCache.loadFromFile(tmpFile.path, cacheSeq + 1);
+    EXPECT_FALSE(loadResult.has_value());
+    EXPECT_THAT(loadResult.error(), ::testing::HasSubstr("too low"));
+}
+
+TEST_F(LedgerCacheSaveLoadTest, AcceptRecentCacheFile)
+{
+    uint32_t const cacheSeq = 100;
+    cache.update(objs, cacheSeq);
+    cache.setFull();
+
+    auto const tmpFile = TmpFile::empty();
+    auto const saveResult = cache.saveToFile(tmpFile.path);
+    ASSERT_TRUE(saveResult.has_value());
+
+    LedgerCache newCache;
+    auto const loadResult = newCache.loadFromFile(tmpFile.path, cacheSeq - 1);
+    ASSERT_TRUE(loadResult.has_value());
+    EXPECT_EQ(newCache.latestLedgerSequence(), cacheSeq);
 }

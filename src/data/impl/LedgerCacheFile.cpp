@@ -27,7 +27,6 @@
 
 #include <algorithm>
 #include <array>
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -92,12 +91,7 @@ LedgerCacheFile::write(DataView dataView)
     }
 
     Header const header{
-        .datetime =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
-                .count(),
-        .latestSeq = dataView.latestSeq,
-        .mapSize = dataView.map.size(),
-        .deletedSize = dataView.deleted.size()
+        .latestSeq = dataView.latestSeq, .mapSize = dataView.map.size(), .deletedSize = dataView.deleted.size()
     };
     file.write(header);
     file.write(kSEPARATOR);
@@ -124,7 +118,7 @@ LedgerCacheFile::write(DataView dataView)
 }
 
 std::expected<LedgerCacheFile::Data, std::string>
-LedgerCacheFile::read()
+LedgerCacheFile::read(uint32_t minLatestSequence)
 {
     try {
         auto file = InputFile{path_};
@@ -143,8 +137,10 @@ LedgerCacheFile::read()
                 fmt::format("Cache has wrong version: expected {} found {}", kVERSION, header.version)
             };
         }
+        if (header.latestSeq < minLatestSequence) {
+            return std::unexpected{fmt::format("Latest sequence ({}) in the cache file is too low.", header.latestSeq)};
+        }
         result.latestSeq = header.latestSeq;
-        // TODO: check datetime or remove it. Maybe check the latestSeq
 
         Separator separator{};
         if (not file.readRaw(separator.data(), separator.size())) {

@@ -80,5 +80,10 @@ struct MockLedgerCache : data::LedgerCacheInterface {
     MOCK_METHOD(void, waitUntilCacheContainsSeq, (uint32_t), (override));
 
     using LoadFromFileReturnType = std::expected<void, std::string>;
-    MOCK_METHOD(LoadFromFileReturnType, loadFromFile, (std::string const& path), (override));
+    MOCK_METHOD(
+        LoadFromFileReturnType,
+        loadFromFile,
+        (std::string const& path, uint32_t minLatestSequence),
+        (override)
+    );
 };

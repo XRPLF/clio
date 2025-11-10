@@ -271,10 +271,10 @@ LedgerCache::saveToFile(std::string const& path) const
 }
 
 std::expected<void, std::string>
-LedgerCache::loadFromFile(std::string const& path)
+LedgerCache::loadFromFile(std::string const& path, uint32_t minLatestSequence)
 {
     impl::LedgerCacheFile file{path};
-    auto data = file.read();
+    auto data = file.read(minLatestSequence);
     if (not data.has_value()) {
         return std::unexpected(std::move(data).error());
     }

@@ -138,10 +138,9 @@
     "num_markers": 48, // The number of markers is the number of coroutines to load the cache concurrently.
     "page_fetch_size": 512, // The number of rows to load for each page.
     "load": "async", // "sync" to load cache synchronously  or "async" to load cache asynchronously or "none"/"no" to turn off the cache.
-    "local_file": {
+    "file": {
       "path": "./cache.bin",
-      "buffered_read_write": false,
-      "compress": false
+      "max_sequence_lag": 5000
     }
   },
   "prometheus": {

@@ -37,7 +37,6 @@ class LedgerCacheFile {
 public:
     struct Header {
         uint32_t version = kVERSION;
-        uint64_t datetime{};
         uint32_t latestSeq{};
         uint64_t mapSize{};
         uint64_t deletedSize{};
@@ -65,7 +64,7 @@ public:
     write(DataView dataView);
 
     std::expected<Data, std::string>
-    read();
+    read(uint32_t minLatestSequence);
 };
 
 }  // namespace data::impl

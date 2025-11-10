@@ -62,7 +62,8 @@ makeCacheLoaderSettings(util::config::ClioConfigDefinition const& config)
 
     settings.numCacheMarkers = cache.get<std::size_t>("num_markers");
     settings.cachePageFetchSize = cache.get<std::size_t>("page_fetch_size");
-    settings.cacheFilePath = cache.maybeValue<std::string>("file_path");
+    settings.cacheFilePath = cache.maybeValue<std::string>("file.path");
+    settings.cacheFileMaxLag = cache.get<uint32_t>("file.max_sequence_lag");
 
     auto const entry = cache.get<std::string>("load");
     if (boost::iequals(entry, "sync"))

@@ -62,7 +62,8 @@ generateDefaultCacheConfig()
          {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0)},
          {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512)},
          {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")},
-         {"cache.file_path", ConfigValue{ConfigType::String}.optional()}}
+         {"cache.file.path", ConfigValue{ConfigType::String}.optional()},
+         {"cache.file.max_sequence_lag", ConfigValue{ConfigType::Integer}.defaultValue(10)}}
     };
 }
 
@@ -100,84 +101,96 @@ INSTANTIATE_TEST_CASE_P(
             .numCacheMarkers = 48,
             .cachePageFetchSize = 512,
             .numThreads = 2,
-            .cacheFilePath = std::nullopt
+            .cacheFilePath = std::nullopt,
+            .cacheFileMaxLag = 0,
         },
         Settings{
             .numCacheDiffs = 32,
             .numCacheMarkers = 48,
             .cachePageFetchSize = 512,
             .numThreads = 4,
-            .cacheFilePath = std::nullopt
+            .cacheFilePath = std::nullopt,
+            .cacheFileMaxLag = 0,
         },
         Settings{
             .numCacheDiffs = 32,
             .numCacheMarkers = 48,
             .cachePageFetchSize = 512,
             .numThreads = 8,
-            .cacheFilePath = std::nullopt
+            .cacheFilePath = std::nullopt,
+            .cacheFileMaxLag = 0,
         },
         Settings{
             .numCacheDiffs = 32,
             .numCacheMarkers = 48,
             .cachePageFetchSize = 512,
             .numThreads = 16,
-            .cacheFilePath = std::nullopt
+            .cacheFilePath = std::nullopt,
+            .cacheFileMaxLag = 0,
         },
         Settings{
             .numCacheDiffs = 32,
             .numCacheMarkers = 128,
             .cachePageFetchSize = 24,
             .numThreads = 2,
-            .cacheFilePath = std::nullopt
+            .cacheFilePath = std::nullopt,
+            .cacheFileMaxLag = 0,
         },
         Settings{
             .numCacheDiffs = 32,
             .numCacheMarkers = 64,
             .cachePageFetchSize = 48,
             .numThreads = 4,
-            .cacheFilePath = std::nullopt
+            .cacheFilePath = std::nullopt,
+            .cacheFileMaxLag = 0,
         },
         Settings{
             .numCacheDiffs = 32,
             .numCacheMarkers = 48,
             .cachePageFetchSize = 64,
             .numThreads = 8,
-            .cacheFilePath = std::nullopt
+            .cacheFilePath = std::nullopt,
+            .cacheFileMaxLag = 0,
         },
         Settings{
             .numCacheDiffs = 32,
             .numCacheMarkers = 24,
             .cachePageFetchSize = 128,
             .numThreads = 16,
-            .cacheFilePath = std::nullopt
+            .cacheFilePath = std::nullopt,
+            .cacheFileMaxLag = 0,
         },
         Settings{
             .numCacheDiffs = 128,
             .numCacheMarkers = 128,
             .cachePageFetchSize = 24,
             .numThreads = 2,
-            .cacheFilePath = std::nullopt
+            .cacheFilePath = std::nullopt,
+            .cacheFileMaxLag = 0,
         },
         Settings{
             .numCacheDiffs = 1024,
             .numCacheMarkers = 64,
             .cachePageFetchSize = 48,
             .numThreads = 4,
-            .cacheFilePath = std::nullopt
+            .cacheFilePath = std::nullopt,
+            .cacheFileMaxLag = 0,
         },
         Settings{
             .numCacheDiffs = 512,
             .numCacheMarkers = 48,
             .cachePageFetchSize = 64,
             .numThreads = 8,
-            .cacheFilePath = std::nullopt
+            .cacheFilePath = std::nullopt,
+            .cacheFileMaxLag = 0,
         },
         Settings{
             .numCacheDiffs = 64,
             .numCacheMarkers = 24,
             .cachePageFetchSize = 128,
             .numThreads = 16,
-            .cacheFilePath = std::nullopt
+            .cacheFilePath = std::nullopt,
+            .cacheFileMaxLag = 0,
         }
     ),
     [](auto const& info) {
@@ -364,9 +377,21 @@ TEST_F(CacheLoaderTest, DisabledCacheLoaderCanCallStopAndWait)
 }
 
 struct CacheLoaderFromFileTest : CacheLoaderTest {
+    CacheLoaderFromFileTest()
+    {
+        backend_->setRange(kSEQ - 20, kSEQ);
+    }
+
     std::string const filePath = "./cache.bin";
+    uint32_t const maxSequenceLag = 10;
     ClioConfigDefinition const cfg = getParseCacheConfig(
-        json::parse(fmt::format(R"JSON({{"cache": {{"load": "sync", "file_path": "{}"}}}})JSON", filePath))
+        json::parse(
+            fmt::format(
+                R"JSON({{"cache": {{"load": "sync", "file": {{"path": "{}", "max_sequence_lag": {}}}}}}})JSON",
+                filePath,
+                maxSequenceLag
+            )
+        )
     );
     CacheLoader<> loader{cfg, backend_, cache};
 };
@@ -376,13 +401,14 @@ TEST_F(CacheLoaderFromFileTest, Success)
     constexpr uint32_t kLOADED_SEQ = 12345;
 
     EXPECT_CALL(cache, isFull).WillOnce(Return(false));
-    EXPECT_CALL(cache, loadFromFile(filePath)).WillOnce(Return(std::expected<void, std::string>{}));
+    EXPECT_CALL(cache, loadFromFile(filePath, kSEQ - maxSequenceLag))
+        .WillOnce(Return(std::expected<void, std::string>{}));
     EXPECT_CALL(cache, latestLedgerSequence).WillOnce(Return(kLOADED_SEQ));
 
     loader.load(kSEQ);
 
     std::optional<LedgerRange> const expectedLedgerRange =
-        LedgerRange{.minSequence = kLOADED_SEQ, .maxSequence = kLOADED_SEQ};
+        LedgerRange{.minSequence = kSEQ - 20, .maxSequence = kLOADED_SEQ};
     EXPECT_EQ(backend_->fetchLedgerRange(), expectedLedgerRange);
 }
 
@@ -392,7 +418,7 @@ TEST_F(CacheLoaderFromFileTest, FailureBackToNormalLoad)
     auto const loops = diffs.size() + 1;
     auto const keysSize = 14;
 
-    EXPECT_CALL(cache, loadFromFile(filePath))
+    EXPECT_CALL(cache, loadFromFile(filePath, kSEQ - maxSequenceLag))
         .WillOnce(Return(std::expected<void, std::string>(std::unexpected("File not found"))));
 
     EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).Times(32).WillRepeatedly(Return(diffs));
@@ -415,11 +441,36 @@ TEST_F(CacheLoaderFromFileTest, FailureBackToNormalLoad)
 TEST_F(CacheLoaderFromFileTest, DontLoadWhenCacheIsDisabled)
 {
     auto const disabledCacheCfg =
-        getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "none", "file_path": "/tmp/cache.bin"}})JSON"));
+        getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "none", "file": {"path": "/tmp/cache.bin"}}})JSON"));
     CacheLoader loaderWithCacheDisabled{disabledCacheCfg, backend_, cache};
 
     EXPECT_CALL(cache, isFull).WillOnce(Return(false));
     EXPECT_CALL(cache, setDisabled);
 
     loaderWithCacheDisabled.load(kSEQ);
+}
+
+TEST_F(CacheLoaderFromFileTest, MaxSequenceLagCalculation)
+{
+    constexpr uint32_t kLOADED_SEQ = 12345;
+
+    EXPECT_CALL(cache, isFull).WillOnce(Return(false));
+    EXPECT_CALL(cache, loadFromFile(filePath, kSEQ - maxSequenceLag))
+        .WillOnce(Return(std::expected<void, std::string>{}));
+    EXPECT_CALL(cache, latestLedgerSequence).WillOnce(Return(kLOADED_SEQ));
+
+    loader.load(kSEQ);
+}
+
+TEST_F(CacheLoaderFromFileTest, MaxSequenceLagClampedToMinOfLedgerRange)
+{
+    uint32_t const currentSeq = 110;
+    uint32_t const minSeq = currentSeq - maxSequenceLag + 10;
+    backend_->setRange(minSeq, currentSeq, true);
+
+    EXPECT_CALL(cache, isFull).WillOnce(Return(false));
+    EXPECT_CALL(cache, loadFromFile(filePath, minSeq)).WillOnce(Return(std::expected<void, std::string>{}));
+    EXPECT_CALL(cache, latestLedgerSequence).WillOnce(Return(minSeq + 1));
+
+    loader.load(currentSeq);
 }

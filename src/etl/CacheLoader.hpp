@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/LedgerCacheInterface.hpp"
+#include "data/Types.hpp"
 #include "etl/CacheLoaderInterface.hpp"
 #include "etl/CacheLoaderSettings.hpp"
 #include "etl/impl/CacheLoader.hpp"
@@ -33,6 +34,7 @@
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -164,8 +166,15 @@ private:
             return false;
         }
         LOG(log_.info()) << "Loading ledger cache from " << *settings_.cacheFilePath;
+        auto const minLatestSequence =
+            backend_->fetchLedgerRange()
+                .transform([this](data::LedgerRange const& range) {
+                    return std::max(range.maxSequence - settings_.cacheFileMaxLag, range.minSequence);
+                })
+                .value_or(0);
+
         auto const [success, duration_ms] =
-            util::timed([&]() { return cache_.get().loadFromFile(*settings_.cacheFilePath); });
+            util::timed([&]() { return cache_.get().loadFromFile(*settings_.cacheFilePath, minLatestSequence); });
 
         if (not success.has_value()) {
             LOG(log_.warn()) << "Error loading cache from file: " << success.error();

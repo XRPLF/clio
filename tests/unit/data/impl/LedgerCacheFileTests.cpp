@@ -19,6 +19,7 @@
 
 #include "data/LedgerCache.hpp"
 #include "data/impl/LedgerCacheFile.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TmpFile.hpp"
 
 #include <fmt/format.h>
@@ -60,7 +61,8 @@ struct LedgerCacheFileTestBase : ::testing::Test {
         DeletedKeyCorrupted,
         DeletedSeqCorrupted,
         DeletedBlobSizeCorrupted,
-        DeletedBlobDataCorrupted
+        DeletedBlobDataCorrupted,
+        HeaderLatestSeqCorrupted
     };
 
     struct CorruptionParams {
@@ -277,6 +279,13 @@ struct LedgerCacheFileTestBase : ::testing::Test {
                     file.write(&corruptByte, 1);
                 }
                 break;
+            case CorruptionType::HeaderLatestSeqCorrupted:
+                file.seekp(offsets.headerOffset + sizeof(uint32_t));  // skip version
+                {
+                    uint32_t corruptSeq = 0;  // set to 0 to fail validation if minLatestSequence > 0
+                    file.write(reinterpret_cast<char const*>(&corruptSeq), sizeof(corruptSeq));
+                }
+                break;
         }
     }
 
@@ -323,7 +332,8 @@ std::vector<LedgerCacheFileTestBase::CorruptionParams> const LedgerCacheFileTest
     {.type = CorruptionType::DeletedKeyCorrupted, .description = "deleted_key_corrupted"},
     {.type = CorruptionType::DeletedSeqCorrupted, .description = "deleted_seq_corrupted"},
     {.type = CorruptionType::DeletedBlobSizeCorrupted, .description = "deleted_blob_size_corrupted"},
-    {.type = CorruptionType::DeletedBlobDataCorrupted, .description = "deleted_blob_data_corrupted"}
+    {.type = CorruptionType::DeletedBlobDataCorrupted, .description = "deleted_blob_data_corrupted"},
+    {.type = CorruptionType::HeaderLatestSeqCorrupted, .description = "header_latest_seq_corrupted"}
 };
 
 struct LedgerCacheFileTest : LedgerCacheFileTestBase,
@@ -356,7 +366,7 @@ TEST_P(LedgerCacheFileTest, WriteAndReadData)
     EXPECT_TRUE(std::filesystem::exists(tmpFile.path));
     EXPECT_GT(std::filesystem::file_size(tmpFile.path), 0u);
 
-    auto readResult = cacheFile.read();
+    auto readResult = cacheFile.read(0);
     ASSERT_TRUE(readResult.has_value()) << "Failed to read: " << readResult.error();
 
     verifyDataEquals(testData, readResult.value());
@@ -391,7 +401,7 @@ TEST_P(LedgerCacheFileCorruptionTest, HandleCorruption)
 
     corruptFile(corruptionParams.type, dataView);
 
-    auto readResult = cacheFile.read();
+    auto readResult = cacheFile.read(0);
     EXPECT_FALSE(readResult.has_value()) << "Should have failed to read corrupted file";
 
     std::string const& error = readResult.error();
@@ -450,6 +460,9 @@ TEST_P(LedgerCacheFileCorruptionTest, HandleCorruption)
                 )
             );
             break;
+        case CorruptionType::HeaderLatestSeqCorrupted:
+            EXPECT_THAT(error, ::testing::HasSubstr("Hash file corruption detected"));
+            break;
     }
 }
 
@@ -466,7 +479,7 @@ TEST_F(LedgerCacheFileEdgeCaseTest, NonExistingFile)
     EXPECT_FALSE(writeResult.has_value());
     EXPECT_THAT(writeResult.error(), ::testing::HasSubstr("Couldn't open file"));
 
-    auto readResult = invalidPathFile.read();
+    auto readResult = invalidPathFile.read(0);
     EXPECT_FALSE(readResult.has_value());
     EXPECT_THAT(readResult.error(), ::testing::HasSubstr("Couldn't open file"));
 }
@@ -482,7 +495,7 @@ TEST_F(LedgerCacheFileEdgeCaseTest, MaxSequenceNumber)
     auto writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value());
 
-    auto readResult = cacheFile.read();
+    auto readResult = cacheFile.read(0);
     ASSERT_TRUE(readResult.has_value());
 
     verifyDataEquals(testData, readResult.value());
@@ -498,7 +511,7 @@ TEST_F(LedgerCacheFileEdgeCaseTest, ZeroSizedBlobs)
     auto writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value());
 
-    auto readResult = cacheFile.read();
+    auto readResult = cacheFile.read(0);
     ASSERT_TRUE(readResult.has_value());
 
     verifyDataEquals(testData, readResult.value());
@@ -530,7 +543,7 @@ TEST_F(LedgerCacheFileEdgeCaseTest, SpecialKeyPatterns)
     auto writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value());
 
-    auto readResult = cacheFile.read();
+    auto readResult = cacheFile.read(0);
     ASSERT_TRUE(readResult.has_value());
 
     verifyDataEquals(testData, readResult.value());
@@ -540,14 +553,13 @@ TEST_F(LedgerCacheFileEdgeCaseTest, LargeBlobs)
 {
     LedgerCacheFile cacheFile(tmpFile.path);
 
-    // Test with 1MB blob
     auto testData = createTestData(1, 1, 1024 * 1024);
     auto dataView = toDataView(testData);
 
     auto writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value());
 
-    auto readResult = cacheFile.read();
+    auto readResult = cacheFile.read(0);
     ASSERT_TRUE(readResult.has_value());
 
     verifyDataEquals(testData, readResult.value());
@@ -576,7 +588,7 @@ TEST_F(LedgerCacheFileEdgeCaseTest, SequenceNumber)
     auto writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value());
 
-    auto readResult = cacheFile.read();
+    auto readResult = cacheFile.read(0);
     ASSERT_TRUE(readResult.has_value());
 
     verifyDataEquals(testData, readResult.value());
@@ -592,7 +604,7 @@ TEST_F(LedgerCacheFileEdgeCaseTest, OnlyMapEntries)
     auto writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value());
 
-    auto readResult = cacheFile.read();
+    auto readResult = cacheFile.read(0);
     ASSERT_TRUE(readResult.has_value());
 
     verifyDataEquals(testData, readResult.value());
@@ -608,8 +620,77 @@ TEST_F(LedgerCacheFileEdgeCaseTest, OnlyDeletedEntries)
     auto writeResult = cacheFile.write(dataView);
     ASSERT_TRUE(writeResult.has_value());
 
-    auto readResult = cacheFile.read();
+    auto readResult = cacheFile.read(0);
     ASSERT_TRUE(readResult.has_value());
 
     verifyDataEquals(testData, readResult.value());
+}
+
+struct LedgerCacheFileMinSequenceValidationParams {
+    uint32_t latestSeq;
+    uint32_t minLatestSeq;
+    bool shouldSucceed;
+    std::string testName;
+};
+
+struct LedgerCacheFileMinSequenceValidationTest
+    : LedgerCacheFileTestBase,
+      ::testing::WithParamInterface<LedgerCacheFileMinSequenceValidationParams> {};
+
+INSTANTIATE_TEST_SUITE_P(
+    LedgerCacheFileMinSequenceValidationTests,
+    LedgerCacheFileMinSequenceValidationTest,
+    ::testing::Values(
+        LedgerCacheFileMinSequenceValidationParams{
+            .latestSeq = 1000u,
+            .minLatestSeq = 500u,
+            .shouldSucceed = true,
+            .testName = "accept_when_min_less_than_latest"
+        },
+        LedgerCacheFileMinSequenceValidationParams{
+            .latestSeq = 1000u,
+            .minLatestSeq = 2000u,
+            .shouldSucceed = false,
+            .testName = "reject_when_min_greater_than_latest"
+        },
+        LedgerCacheFileMinSequenceValidationParams{
+            .latestSeq = 1000u,
+            .minLatestSeq = 1000u,
+            .shouldSucceed = true,
+            .testName = "accept_when_min_equals_latest"
+        },
+        LedgerCacheFileMinSequenceValidationParams{
+            .latestSeq = 0u,
+            .minLatestSeq = 0u,
+            .shouldSucceed = true,
+            .testName = "accept_zero_sequence"
+        }
+    ),
+    tests::util::kNAME_GENERATOR
+);
+
+TEST_P(LedgerCacheFileMinSequenceValidationTest, ValidateMinSequence)
+{
+    auto const params = GetParam();
+    auto const latestSeq = params.latestSeq;
+    auto const minLatestSeq = params.minLatestSeq;
+    auto const shouldSucceed = params.shouldSucceed;
+
+    LedgerCacheFile cacheFile(tmpFile.path);
+    auto testData = createTestData(3, 2, 100);
+    testData.latestSeq = latestSeq;
+    auto dataView = toDataView(testData);
+
+    auto writeResult = cacheFile.write(dataView);
+    ASSERT_TRUE(writeResult.has_value());
+
+    auto readResult = cacheFile.read(minLatestSeq);
+
+    if (shouldSucceed) {
+        ASSERT_TRUE(readResult.has_value()) << "Expected read to succeed but got error: " << readResult.error();
+        EXPECT_EQ(readResult.value().latestSeq, latestSeq);
+    } else {
+        EXPECT_FALSE(readResult.has_value()) << "Expected read to fail but it succeeded";
+        EXPECT_THAT(readResult.error(), ::testing::HasSubstr("too low"));
+    }
 }

@@ -359,7 +359,8 @@ getClioConfig()
           ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateNumCursors)},
          {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(gValidateUint16)},
          {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(gValidateLoadMode)},
-         {"cache.file_path", ConfigValue{ConfigType::String}.optional()},
+         {"cache.file.path", ConfigValue{ConfigType::String}.optional()},
+         {"cache.file.max_sequence_lag", ConfigValue{ConfigType::Integer}.defaultValue(5000)},
 
          {"log.channels.[].channel",
           Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateChannelName)}},
