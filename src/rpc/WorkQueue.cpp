@@ -25,7 +25,6 @@
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
-#include <boost/asio/dispatch.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/strand.hpp>
