@@ -155,13 +155,6 @@ public:
     std::expected<void, std::string>
     saveToFile(std::string const& path) const;
 
-    /**
-     * @brief Load the cache from file
-     * @note This operation takes about 7 seconds and it keeps mtx_ exclusively locked
-     *
-     * @param path The file path to load data from
-     * @return An error as a string if any
-     */
     std::expected<void, std::string>
     loadFromFile(std::string const& path, uint32_t minLatestSequence) override;
 };
