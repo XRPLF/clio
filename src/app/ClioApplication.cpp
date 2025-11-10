@@ -115,7 +115,7 @@ ClioApplication::run(bool const useNgWebServer)
     auto cache = data::LedgerCache{};
     appStopper_.setOnStop([&cache, this](auto&&) {
         // TODO(kuznetsss): move this into Stopper::makeOnStopCallback()
-        auto const cacheFilePath = config_.maybeValue<std::string>("cache.file_path");
+        auto const cacheFilePath = config_.maybeValue<std::string>("cache.file.path");
         if (not cacheFilePath.has_value()) {
             return;
         }
