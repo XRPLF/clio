@@ -49,7 +49,6 @@ IndentFunctionDeclarationAfterType: false
 IndentWidth: 4
 IndentWrappedFunctionNames: false
 IndentRequiresClause: true
-InsertNewlineAtEOF: true
 RequiresClausePosition: OwnLine
 KeepEmptyLinesAtTheStartOfBlocks: false
 MaxEmptyLinesToKeep: 1

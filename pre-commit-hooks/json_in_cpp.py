@@ -44,13 +44,7 @@ def fix_colon_spacing(cpp_content: str) -> str:
 
 
 def fix_indentation(cpp_content: str) -> str:
-    # Handle edge case: if content doesn't contain JSON patterns, return unchanged
-    if "JSON(" not in cpp_content:
-        return cpp_content
-
     lines = cpp_content.splitlines()
-    # Preserve original ending - check if original content ended with newline
-    ends_with_newline = cpp_content.endswith('\n')
 
     def find_indentation(line: str) -> int:
         return len(line) - len(line.lstrip())
@@ -72,11 +66,7 @@ def fix_indentation(cpp_content: str) -> str:
                         break
                     lines[i] = lines[i][by_how_much:] if by_how_much > 0 else " " * (-by_how_much) + lines[i]
 
-    result = "\n".join(lines)
-    # Only add newline if original content had one
-    if ends_with_newline:
-        result += "\n"
-    return result
+    return "\n".join(lines) + "\n"
 
 
 def process_file(file_path: Path, dry_run: bool) -> bool:
