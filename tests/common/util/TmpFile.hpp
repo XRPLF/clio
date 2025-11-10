@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <fmt/format.h>
+
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -33,7 +35,6 @@ struct TmpFile {
 
     TmpFile(std::string_view content) : path{std::tmpnam(nullptr)}
     {
-        std::cout << "creating " << path << std::endl;
         std::ofstream ofs;
         ofs.open(path, std::ios::out);
         ofs << content;
@@ -65,5 +66,10 @@ struct TmpFile {
     {
         if (not path.empty())
             std::filesystem::remove(path);
+
+        // Some code, e.g. LedgerCacheFile may add prefix .new to the path
+        auto const pathWithNewPrefix = fmt::format("{}.new", path);
+        if (std::filesystem::exists(pathWithNewPrefix))
+            std::filesystem::remove(pathWithNewPrefix);
     }
 };

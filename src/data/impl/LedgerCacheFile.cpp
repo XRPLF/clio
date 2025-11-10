@@ -30,6 +30,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <exception>
+#include <filesystem>
 #include <string>
 #include <utility>
 
@@ -85,9 +86,10 @@ LedgerCacheFile::LedgerCacheFile(std::string path) : path_(std::move(path))
 std::expected<void, std::string>
 LedgerCacheFile::write(DataView dataView)
 {
-    auto file = OutputFile{path_};
+    auto const newFilePath = fmt::format("{}.new", path_);
+    auto file = OutputFile{newFilePath};
     if (not file.isOpen()) {
-        return std::unexpected{fmt::format("Couldn't open file: {}", path_)};
+        return std::unexpected{fmt::format("Couldn't open file: {}", newFilePath)};
     }
 
     Header const header{
@@ -113,6 +115,12 @@ LedgerCacheFile::write(DataView dataView)
     file.write(kSEPARATOR);
     auto const hash = file.hash();
     file.write(hash.data(), decltype(hash)::bytes);
+
+    try {
+        std::filesystem::rename(newFilePath, path_);
+    } catch (std::exception const& e) {
+        return std::unexpected{fmt::format("Error moving cache file from {} to {}: {}", newFilePath, path_, e.what())};
+    }
 
     return {};
 }

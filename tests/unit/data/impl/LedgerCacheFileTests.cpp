@@ -626,6 +626,26 @@ TEST_F(LedgerCacheFileEdgeCaseTest, OnlyDeletedEntries)
     verifyDataEquals(testData, readResult.value());
 }
 
+TEST_F(LedgerCacheFileEdgeCaseTest, WriteCreatesFileWithSuffixNew)
+{
+    // The test causes failure of rename operation by creating destination as directory
+    std::filesystem::remove(tmpFile.path);
+    std::filesystem::create_directory(tmpFile.path);
+
+    LedgerCacheFile cacheFile(tmpFile.path);
+    auto testData = createTestData(1, 1, 10);
+    auto dataView = toDataView(testData);
+
+    auto writeResult = cacheFile.write(dataView);
+
+    EXPECT_FALSE(writeResult.has_value());
+    auto newFilePath = fmt::format("{}.new", tmpFile.path);
+    EXPECT_THAT(writeResult.error(), ::testing::HasSubstr(newFilePath));
+
+    EXPECT_TRUE(std::filesystem::exists(newFilePath));
+    EXPECT_TRUE(std::filesystem::is_regular_file(newFilePath));
+}
+
 struct LedgerCacheFileMinSequenceValidationParams {
     uint32_t latestSeq;
     uint32_t minLatestSeq;
