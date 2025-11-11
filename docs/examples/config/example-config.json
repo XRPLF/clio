@@ -140,7 +140,7 @@
     "load": "async", // "sync" to load cache synchronously  or "async" to load cache asynchronously or "none"/"no" to turn off the cache.
     "file": {
       "path": "./cache.bin",
-      "max_sequence_lag": 5000
+      "max_sequence_age": 5000
     }
   },
   "prometheus": {

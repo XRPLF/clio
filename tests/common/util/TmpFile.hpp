@@ -66,10 +66,5 @@ struct TmpFile {
     {
         if (not path.empty())
             std::filesystem::remove(path);
-
-        // Some code, e.g. LedgerCacheFile may add prefix .new to the path
-        auto const pathWithNewPrefix = fmt::format("{}.new", path);
-        if (std::filesystem::exists(pathWithNewPrefix))
-            std::filesystem::remove(pathWithNewPrefix);
     }
 };

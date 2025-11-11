@@ -46,7 +46,7 @@ generateDefaultCacheConfig()
          {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512)},
          {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")},
          {"cache.file.path", ConfigValue{ConfigType::String}.optional()},
-         {"cache.file.max_sequence_lag", ConfigValue{ConfigType::Integer}.defaultValue(5000)}}
+         {"cache.file.max_sequence_age", ConfigValue{ConfigType::Integer}.defaultValue(5000)}}
     };
 }
 
@@ -161,7 +161,7 @@ TEST_F(CacheLoaderSettingsTest, CacheFilePathNotSetWhenAbsentFromConfig)
 TEST_F(CacheLoaderSettingsTest, MaxSequenceLagPropagatedThoughConfig)
 {
     auto const seq = 1234;
-    auto const jsonStr = fmt::format(R"JSON({{"cache": {{"file": {{"max_sequence_lag": {} }}}}}})JSON", seq);
+    auto const jsonStr = fmt::format(R"JSON({{"cache": {{"file": {{"max_sequence_age": {} }}}}}})JSON", seq);
     auto const cfg = getParseCacheConfig(json::parse(jsonStr));
     auto const settings = makeCacheLoaderSettings(cfg);
 

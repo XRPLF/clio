@@ -141,6 +141,13 @@ struct LedgerCacheFileTestBase : ::testing::Test {
         }
     };
 
+    ~LedgerCacheFileTestBase() override
+    {
+        auto const pathWithNewPrefix = fmt::format("{}.new", tmpFile.path);
+        if (std::filesystem::exists(pathWithNewPrefix))
+            std::filesystem::remove(pathWithNewPrefix);
+    }
+
     static std::vector<DataSizeParams> const kDATA_SIZE_PARAMS;
     static std::vector<CorruptionParams> const kCORRUPTION_PARAMS;
 

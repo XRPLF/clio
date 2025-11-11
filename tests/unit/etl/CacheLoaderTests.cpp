@@ -63,7 +63,7 @@ generateDefaultCacheConfig()
          {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512)},
          {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")},
          {"cache.file.path", ConfigValue{ConfigType::String}.optional()},
-         {"cache.file.max_sequence_lag", ConfigValue{ConfigType::Integer}.defaultValue(10)}}
+         {"cache.file.max_sequence_age", ConfigValue{ConfigType::Integer}.defaultValue(10)}}
     };
 }
 
@@ -387,7 +387,7 @@ struct CacheLoaderFromFileTest : CacheLoaderTest {
     ClioConfigDefinition const cfg = getParseCacheConfig(
         json::parse(
             fmt::format(
-                R"JSON({{"cache": {{"load": "sync", "file": {{"path": "{}", "max_sequence_lag": {}}}}}}})JSON",
+                R"JSON({{"cache": {{"load": "sync", "file": {{"path": "{}", "max_sequence_age": {}}}}}}})JSON",
                 filePath,
                 maxSequenceLag
             )

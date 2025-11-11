@@ -27,31 +27,11 @@
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
 
-#include <chrono>
 #include <cstdint>
-#include <iostream>
 #include <string>
-#include <utility>
 #include <vector>
 
 using namespace data;
-
-struct TimeMeasurement {
-    std::chrono::high_resolution_clock::time_point start;
-    std::string operation;
-
-    explicit TimeMeasurement(std::string op) : operation(std::move(op))
-    {
-        start = std::chrono::high_resolution_clock::now();
-    }
-
-    ~TimeMeasurement()
-    {
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-        std::cout << operation << " took: " << duration.count() << " ms" << std::endl;
-    }
-};
 
 struct LedgerCacheTest : util::prometheus::WithPrometheus {
     LedgerCache cache;
