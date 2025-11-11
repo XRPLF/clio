@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <limits>
 #include <stdexcept>
+#include <tuple>
 
 TEST(JsonUtils, RemoveSecrets)
 {

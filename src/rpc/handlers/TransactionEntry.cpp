@@ -34,7 +34,6 @@
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/jss.h>
 
-#include <cstdint>
 #include <string>
 #include <utility>
 

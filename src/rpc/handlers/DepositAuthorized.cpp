@@ -43,7 +43,6 @@
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/jss.h>
 
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>

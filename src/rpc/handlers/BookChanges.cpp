@@ -36,7 +36,6 @@
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/jss.h>
 
-#include <cstdint>
 #include <string>
 #include <vector>
 

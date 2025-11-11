@@ -43,7 +43,6 @@
 #include <xrpl/protocol/jss.h>
 
 #include <algorithm>
-#include <cstdint>
 #include <iterator>
 #include <string>
 #include <utility>

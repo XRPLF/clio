@@ -37,7 +37,6 @@
 #include <xrpl/protocol/jss.h>
 #include <xrpl/protocol/nft.h>
 
-#include <cstdint>
 #include <string>
 
 using namespace ripple;
