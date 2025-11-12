@@ -449,7 +449,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: None
 - **Description**: The path to a file where cache will be saved to on shutdown and loaded from on startup. If the file couldn't be read Clio will load cache as usual (from DB or from rippled).
 
-### cache.file.max_sequence_lag
+### cache.file.max_sequence_age
 
 - **Required**: True
 - **Type**: int
