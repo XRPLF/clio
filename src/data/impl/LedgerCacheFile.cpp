@@ -162,7 +162,7 @@ LedgerCacheFile::read(uint32_t minLatestSequence)
             if (not cacheEntryExpected.has_value()) {
                 return std::unexpected{std::move(cacheEntryExpected).error()};
             }
-            // Using insert with hint here to dectrease insert operation complexity to the amortized constant instead of
+            // Using insert with hint here to decrease insert operation complexity to the amortized constant instead of
             // logN
             result.map.insert(result.map.end(), std::move(cacheEntryExpected).value());
         }
