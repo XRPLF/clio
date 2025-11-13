@@ -75,6 +75,10 @@ on:
       CODECOV_TOKEN:
         required: false
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     name: Build
@@ -86,7 +90,7 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         uses: XRPLF/actions/.github/actions/cleanup-workspace@ea9970b7c211b18f4c8bcdb28c29f5711752029f
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
           # We need to fetch tags to have correct version in the release
@@ -95,13 +99,12 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Prepare runner
-        uses: XRPLF/actions/.github/actions/prepare-runner@7951b682e5a2973b28b0719a72f01fc4b0d0c34f
+        uses: XRPLF/actions/.github/actions/prepare-runner@8abb0722cbff83a9a2dc7d06c473f7a4964b7382
         with:
           disable_ccache: ${{ !inputs.download_ccache }}
 
       - name: Setup conan on macOS
         if: ${{ runner.os == 'macOS' }}
-        shell: bash
         run: ./.github/scripts/conan/init.sh
 
       - name: Restore cache
@@ -141,18 +144,16 @@ jobs:
           ClangBuildAnalyzer --all build/ build_time_report.bin
           ClangBuildAnalyzer --analyze build_time_report.bin > build_time_report.txt
           cat build_time_report.txt
-        shell: bash
 
       - name: Upload build time analyze report
         if: ${{ inputs.analyze_build_time }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: build_time_report_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build_time_report.txt
 
       - name: Show ccache's statistics
         if: ${{ inputs.download_ccache }}
-        shell: bash
         id: ccache_stats
         run: |
           ccache -s > /tmp/ccache.stats
@@ -170,28 +171,28 @@ jobs:
 
       - name: Upload clio_server
         if: ${{ inputs.upload_clio_server && !inputs.code_coverage && !inputs.analyze_build_time }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: clio_server_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_server
 
       - name: Upload clio_tests
         if: ${{ !inputs.code_coverage && !inputs.analyze_build_time && !inputs.package }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_tests
 
       - name: Upload clio_integration_tests
         if: ${{ !inputs.code_coverage && !inputs.analyze_build_time && !inputs.package }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_integration_tests
 
       - name: Upload Clio Linux package
         if: ${{ inputs.package }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: clio_deb_package_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/*.deb
@@ -220,13 +221,14 @@ jobs:
 
       - name: Verify expected version
         if: ${{ inputs.expected_version != '' }}
-        shell: bash
+        env:
+          INPUT_EXPECTED_VERSION: ${{ inputs.expected_version }}
         run: |
           set -e
-          EXPECTED_VERSION="clio-${{ inputs.expected_version }}"
+          EXPECTED_VERSION="clio-${INPUT_EXPECTED_VERSION}"
           actual_version=$(./build/clio_server --version)
           if [[ "$actual_version" != "$EXPECTED_VERSION" ]]; then
-            echo "Expected version '$EXPECTED_VERSION', but got '$actual_version'"
+            echo "Expected version '${EXPECTED_VERSION}', but got '${actual_version}'"
             exit 1
           fi
 

@@ -19,13 +19,14 @@
 
 #include "etl/impl/GrpcSource.hpp"
 
-#include "data/BackendInterface.hpp"
-#include "etl/impl/AsyncData.hpp"
+#include "etl/InitialLoadObserverInterface.hpp"
+#include "etl/LoadBalancerInterface.hpp"
+#include "etl/impl/AsyncGrpcCall.hpp"
 #include "util/Assert.hpp"
 #include "util/log/Logger.hpp"
+#include "web/Resolver.hpp"
 
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/spawn.hpp>
 #include <fmt/format.h>
 #include <grpc/grpc.h>
 #include <grpcpp/client_context.h>
@@ -35,33 +36,41 @@
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
 #include <org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
+#include <expected>
 #include <memory>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
+namespace {
+
+std::string
+resolve(std::string const& ip, std::string const& port)
+{
+    web::Resolver resolver;
+
+    if (auto const results = resolver.resolve(ip, port); not results.empty())
+        return results.at(0);
+
+    throw std::runtime_error("Failed to resolve " + ip + ":" + port);
+}
+
+}  // namespace
+
 namespace etl::impl {
 
-GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::shared_ptr<BackendInterface> backend)
-    : log_(fmt::format("GrpcSource[{}:{}]", ip, grpcPort)), backend_(std::move(backend))
+GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::chrono::system_clock::duration deadline)
+    : log_(fmt::format("ETL_Grpc[{}:{}]", ip, grpcPort))
+    , initialLoadShouldStop_(std::make_unique<std::atomic_bool>(false))
+    , deadline_{deadline}
 {
     try {
-        boost::asio::io_context ctx;
-        boost::asio::ip::tcp::resolver resolver{ctx};
-
-        auto const resolverResult = resolver.resolve(ip, grpcPort);
-        if (resolverResult.empty())
-            throw std::runtime_error("Failed to resolve " + ip + ":" + grpcPort);
-
-        std::stringstream ss;
-        ss << resolverResult.begin()->endpoint();
-
         grpc::ChannelArguments chArgs;
         chArgs.SetMaxReceiveMessageSize(-1);
         chArgs.SetInt(GRPC_ARG_KEEPALIVE_TIME_MS, kKEEPALIVE_PING_INTERVAL_MS);
@@ -70,7 +79,7 @@ GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::
         chArgs.SetInt(GRPC_ARG_HTTP2_MAX_PINGS_WITHOUT_DATA, kMAX_PINGS_WITHOUT_DATA);
 
         stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
-            grpc::CreateCustomChannel(ss.str(), grpc::InsecureChannelCredentials(), chArgs)
+            grpc::CreateCustomChannel(resolve(ip, grpcPort), grpc::InsecureChannelCredentials(), chArgs)
         );
 
         LOG(log_.debug()) << "Made stub for remote.";
@@ -89,7 +98,7 @@ GrpcSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighb
     org::xrpl::rpc::v1::GetLedgerRequest request;
     grpc::ClientContext context;
 
-    context.set_deadline(std::chrono::system_clock::now() + kDEADLINE);  // Prevent indefinite blocking
+    context.set_deadline(std::chrono::system_clock::now() + deadline_);  // Prevent indefinite blocking
 
     request.mutable_ledger()->set_sequence(sequence);
     request.set_transactions(true);
@@ -100,7 +109,7 @@ GrpcSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighb
 
     grpc::Status const status = stub_->GetLedger(&context, request, &response);
 
-    if (status.ok() && !response.is_unlimited()) {
+    if (status.ok() and not response.is_unlimited()) {
         log_.warn() << "is_unlimited is false. Make sure secure_gateway is set correctly on the ETL source. Status = "
                     << status.error_message();
     }
@@ -108,41 +117,46 @@ GrpcSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighb
     return {status, std::move(response)};
 }
 
-std::pair<std::vector<std::string>, bool>
-GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers)
+InitialLedgerLoadResult
+GrpcSource::loadInitialLedger(
+    uint32_t const sequence,
+    uint32_t const numMarkers,
+    InitialLoadObserverInterface& observer
+)
 {
-    if (!stub_)
-        return {{}, false};
+    if (*initialLoadShouldStop_)
+        return std::unexpected{InitialLedgerLoadError::Cancelled};
 
-    std::vector<etl::impl::AsyncCallData> calls = impl::makeAsyncCallData(sequence, numMarkers);
+    if (!stub_)
+        return std::unexpected{InitialLedgerLoadError::Errored};
+
+    std::vector<AsyncGrpcCall> calls = AsyncGrpcCall::makeAsyncCalls(sequence, numMarkers);
 
     LOG(log_.debug()) << "Starting data download for ledger " << sequence << ".";
 
-    grpc::CompletionQueue cq;
-    for (auto& c : calls)
-        c.call(stub_, cq);
+    grpc::CompletionQueue queue;
+    for (auto& call : calls)
+        call.call(stub_, queue);
 
+    std::vector<std::string> edgeKeys;
     void* tag = nullptr;
     bool ok = false;
-    size_t numFinished = 0;
     bool abort = false;
-    size_t const incr = 500000;
-    size_t progress = incr;
-    std::vector<std::string> edgeKeys;
+    size_t numFinished = 0;
 
-    while (numFinished < calls.size() && cq.Next(&tag, &ok)) {
+    while (numFinished < calls.size() && queue.Next(&tag, &ok)) {
         ASSERT(tag != nullptr, "Tag can't be null.");
-        auto ptr = static_cast<etl::impl::AsyncCallData*>(tag);
+        auto ptr = static_cast<AsyncGrpcCall*>(tag);
 
-        if (!ok) {
-            LOG(log_.error()) << "loadInitialLedger - ok is false";
-            return {{}, false};  // handle cancelled
+        if (not ok or *initialLoadShouldStop_) {
+            LOG(log_.error()) << "loadInitialLedger cancelled";
+            return std::unexpected{InitialLedgerLoadError::Cancelled};
         }
 
         LOG(log_.trace()) << "Marker prefix = " << ptr->getMarkerPrefix();
 
-        auto result = ptr->process(stub_, cq, *backend_, abort);
-        if (result != etl::impl::AsyncCallData::CallStatus::MORE) {
+        auto result = ptr->process(stub_, queue, observer, abort);
+        if (result != AsyncGrpcCall::CallStatus::More) {
             ++numFinished;
             LOG(log_.debug()) << "Finished a marker. Current number of finished = " << numFinished;
 
@@ -150,18 +164,20 @@ GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers
                 edgeKeys.push_back(std::move(lastKey));
         }
 
-        if (result == etl::impl::AsyncCallData::CallStatus::ERRORED)
+        if (result == AsyncGrpcCall::CallStatus::Errored)
             abort = true;
-
-        if (backend_->cache().size() > progress) {
-            LOG(log_.info()) << "Downloaded " << backend_->cache().size() << " records from rippled";
-            progress += incr;
-        }
     }
 
-    LOG(log_.info()) << "Finished loadInitialLedger. cache size = " << backend_->cache().size() << ", abort = " << abort
-                     << ".";
-    return {std::move(edgeKeys), !abort};
+    if (abort)
+        return std::unexpected{InitialLedgerLoadError::Errored};
+
+    return edgeKeys;
+}
+
+void
+GrpcSource::stop(boost::asio::yield_context)
+{
+    initialLoadShouldStop_->store(true);
 }
 
 }  // namespace etl::impl

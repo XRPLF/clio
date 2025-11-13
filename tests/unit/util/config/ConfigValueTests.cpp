@@ -31,6 +31,7 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <string_view>
 
 using namespace util::config;
 
@@ -164,7 +165,7 @@ TEST_F(ConstraintTest, SetValuesOnPortConstraint)
 
 TEST_F(ConstraintTest, OneOfConstraintOneValue)
 {
-    std::array<char const*, 1> const arr = {"tracer"};
+    std::array<std::string_view, 1> const arr = {"tracer"};
     auto const databaseConstraint{OneOf{"database.type", arr}};
     EXPECT_FALSE(databaseConstraint.checkConstraint("tracer").has_value());
 
@@ -180,7 +181,7 @@ TEST_F(ConstraintTest, OneOfConstraintOneValue)
 
 TEST_F(ConstraintTest, OneOfConstraint)
 {
-    std::array<char const*, 3> const arr = {"123", "trace", "haha"};
+    std::array<std::string_view, 3> const arr = {"123", "trace", "haha"};
     auto const oneOfCons{OneOf{"log.level", arr}};
 
     EXPECT_FALSE(oneOfCons.checkConstraint("trace").has_value());

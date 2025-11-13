@@ -27,12 +27,7 @@
 #include <cstdint>
 #include <optional>
 
-struct MockLedgerFetcher {
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchData, (uint32_t), ());
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchDataAndDiff, (uint32_t), ());
-};
-
-struct MockNgLedgerFetcher : etl::LedgerFetcherInterface {
+struct MockLedgerFetcher : etl::LedgerFetcherInterface {
     MOCK_METHOD(OptionalGetLedgerResponseType, fetchData, (uint32_t), (override));
     MOCK_METHOD(OptionalGetLedgerResponseType, fetchDataAndDiff, (uint32_t), (override));
 };

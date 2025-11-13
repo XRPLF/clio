@@ -95,14 +95,15 @@ class MigrationCassandraSimpleTest : public WithPrometheus {
     }
 
 protected:
-    ClioConfigDefinition cfg_{
+    static constexpr auto kCASSANDRA = "cassandra";
 
-        {{"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
+    ClioConfigDefinition cfg_{
+        {{"database.type", ConfigValue{ConfigType::String}.defaultValue(kCASSANDRA)},
          {"database.cassandra.contact_points",
           ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
          {"database.cassandra.keyspace",
           ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendKeyspace)},
-         {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
+         {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue(kCASSANDRA)},
          {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
          {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
          {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.defaultValue(2)},

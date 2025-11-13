@@ -91,11 +91,14 @@ Scheduled operations can be aborted by calling
 
 ### Error handling
 
-By default, exceptions that happen during the execution of user-provided code are caught and returned in the error channel of `std::expected` as an instance of the `ExecutionError` struct. The user can then extract the error message by calling `what()` or directly accessing the `message` member.
+For APIs that return an Operation, by default, exceptions that happen during the execution of user-provided code are caught and returned in the error channel of `std::expected` as an instance of the `ExecutionError` struct. The user can then extract the error message by calling `what()` or directly accessing the `message` member.
+In the `submit` API however, exceptions are caught and `ASSERT`ed on.
 
 ### Returned value
 
-If the user-provided lambda returns anything but `void`, the type and value will propagate through the operation object and can be received by calling `get` which will block until a value or an error is available.
+For `submit` API the return type is always `void`.
+
+For other APIs, if the user-provided lambda returns anything but `void`, the type and value will propagate through the operation object and can be received by calling `get` which will block until a value or an error is available.
 
 The `wait` member function can be used when the user just wants to wait for the value to become available but not necessarily getting at the value just yet.
 
@@ -121,6 +124,12 @@ Since this wrapper does not know which operation type it's wrapping it only prov
 This section provides some examples. For more examples take a look at `ExecutionContextBenchmarks`, `AsyncExecutionContextTests` and `AnyExecutionContextTests`.
 
 ### Regular operation
+
+#### One shot tasks
+
+```cpp
+ctx.submit([]() { /* do something */ });
+```
 
 #### Awaiting and reading values
 

@@ -61,7 +61,7 @@
     "ip": "0.0.0.0",
     "port": 51233,
     // Max number of requests to queue up before rejecting further requests.
-    // Defaults to 0, which disables the limit.
+    // Defaults to 1000 (use 0 to make the queue unbound).
     "max_queue_size": 500,
     // If request contains header with authorization, Clio will check if it matches the prefix 'Password ' + this value's sha256 hash
     // If matches, the request will be considered as admin request

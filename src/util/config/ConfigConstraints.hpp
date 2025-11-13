@@ -45,7 +45,7 @@ class ConfigValue;
 /**
  * @brief specific values that are accepted for logger levels in config.
  */
-static constexpr std::array<char const*, 6> kLOG_LEVELS = {
+static constexpr std::array<std::string_view, 6> kLOG_LEVELS = {
     "trace",
     "debug",
     "info",
@@ -57,7 +57,7 @@ static constexpr std::array<char const*, 6> kLOG_LEVELS = {
 /**
  * @brief specific values that are accepted for logger tag style in config.
  */
-static constexpr std::array<char const*, 5> kLOG_TAGS = {
+static constexpr std::array<std::string_view, 5> kLOG_TAGS = {
     "int",
     "uint",
     "null",
@@ -68,7 +68,7 @@ static constexpr std::array<char const*, 5> kLOG_TAGS = {
 /**
  * @brief specific values that are accepted for cache loading in config.
  */
-static constexpr std::array<char const*, 3> kLOAD_CACHE_MODE = {
+static constexpr std::array<std::string_view, 3> kLOAD_CACHE_MODE = {
     "sync",
     "async",
     "none",
@@ -77,17 +77,17 @@ static constexpr std::array<char const*, 3> kLOAD_CACHE_MODE = {
 /**
  * @brief specific values that are accepted for database type in config.
  */
-static constexpr std::array<char const*, 1> kDATABASE_TYPE = {"cassandra"};
+static constexpr std::array<std::string_view, 1> kDATABASE_TYPE = {"cassandra"};
 
 /**
  * @brief specific values that are accepted for server's processing_policy in config.
  */
-static constexpr std::array<char const*, 2> kPROCESSING_POLICY = {"parallel", "sequent"};
+static constexpr std::array<std::string_view, 2> kPROCESSING_POLICY = {"parallel", "sequent"};
 
 /**
  * @brief specific values that are accepted for database provider in config.
  */
-static constexpr std::array<char const*, 2> kPROVIDER = {"cassandra", "aws_keyspace"};
+static constexpr std::array<std::string_view, 2> kPROVIDER = {"cassandra", "aws_keyspace"};
 
 /**
  * @brief An interface to enforce constraints on certain values within ClioConfigDefinition.
@@ -123,7 +123,7 @@ protected:
      */
     template <std::size_t ArrSize>
     constexpr std::string
-    makeErrorMsg(std::string_view key, Value const& value, std::array<char const*, ArrSize> arr) const
+    makeErrorMsg(std::string_view key, Value const& value, std::array<std::string_view, ArrSize> arr) const
     {
         // Extract the value from the variant
         auto const valueStr = std::visit([](auto const& v) { return fmt::format("{}", v); }, value);
@@ -271,7 +271,7 @@ public:
      * @param key The key of the ConfigValue that has this constraint
      * @param arr The value that has this constraint must be of the values in arr
      */
-    constexpr OneOf(std::string_view key, std::array<char const*, ArrSize> arr) : key_{key}, arr_{arr}
+    constexpr OneOf(std::string_view key, std::array<std::string_view, ArrSize> arr) : key_{key}, arr_{arr}
     {
     }
 
@@ -318,7 +318,7 @@ private:
     print(std::ostream& stream) const override
     {
         std::string valuesStream;
-        std::ranges::for_each(arr_, [&valuesStream](std::string const& elem) {
+        std::ranges::for_each(arr_, [&valuesStream](std::string_view elem) {
             valuesStream += fmt::format(" `{}`,", elem);
         });
         // replace the last "," with "."
@@ -327,7 +327,7 @@ private:
     }
 
     std::string_view key_;
-    std::array<char const*, ArrSize> arr_;
+    std::array<std::string_view, ArrSize> arr_;
 };
 
 /**

@@ -305,13 +305,8 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
 
-    if (jsonObject.contains(JS(ledger_index))) {
-        if (!jsonObject.at(JS(ledger_index)).is_string()) {
-            input.ledgerIndex = util::integralValueAs<uint32_t>(jv.at(JS(ledger_index)));
-        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jv.at(JS(ledger_index))));
-        }
-    }
+    if (jsonObject.contains(JS(ledger_index)))
+        input.ledgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
 
     if (jsonObject.contains(JS(binary)))
         input.binary = jv.at(JS(binary)).as_bool();
@@ -335,7 +330,13 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(mptoken), ripple::ltMPTOKEN},
         {JS(permissioned_domain), ripple::ltPERMISSIONED_DOMAIN},
         {JS(vault), ripple::ltVAULT},
-        {JS(delegate), ripple::ltDELEGATE}
+        {JS(delegate), ripple::ltDELEGATE},
+        {JS(amendments), ripple::ltAMENDMENTS},
+        {JS(fee), ripple::ltFEE_SETTINGS},
+        {JS(hashes), ripple::ltLEDGER_HASHES},
+        {JS(nft_offer), ripple::ltNFTOKEN_OFFER},
+        {JS(nunl), ripple::ltNEGATIVE_UNL},
+        {JS(signer_list), ripple::ltSIGNER_LIST}
     };
 
     auto const parseBridgeFromJson = [](boost::json::value const& bridgeJson) {

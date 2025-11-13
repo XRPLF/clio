@@ -289,7 +289,6 @@ getClioConfig()
           ConfigValue{ConfigType::String}.defaultValue("cassandra").withConstraint(gValidateProvider)},
 
          {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-         {"__ng_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
          {"etl_sources.[].ip", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)}},
          {"etl_sources.[].ws_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
          {"etl_sources.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
@@ -329,7 +328,7 @@ getClioConfig()
               .withConstraint(gValidateUint32)},
          {"server.ip", ConfigValue{ConfigType::String}.withConstraint(gValidateIp)},
          {"server.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort)},
-         {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint32)},
+         {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1000).withConstraint(gValidateUint32)},
          {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
          {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
          {"server.processing_policy",

@@ -20,7 +20,7 @@
 #include "data/LedgerCache.hpp"
 
 #include "data/Types.hpp"
-#include "etlng/Models.hpp"
+#include "etl/Models.hpp"
 #include "util/Assert.hpp"
 
 #include <xrpl/basics/base_uint.h>
@@ -89,7 +89,7 @@ LedgerCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool is
 }
 
 void
-LedgerCache::update(std::vector<etlng::model::Object> const& objs, uint32_t seq)
+LedgerCache::update(std::vector<etl::model::Object> const& objs, uint32_t seq)
 {
     if (disabled_)
         return;

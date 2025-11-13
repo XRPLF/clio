@@ -20,7 +20,7 @@
 #pragma once
 
 #include "data/Types.hpp"
-#include "etlng/Models.hpp"
+#include "etl/Models.hpp"
 
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/hardened_hash.h>
@@ -63,7 +63,7 @@ public:
      * @param seq The sequence to update cache for
      */
     virtual void
-    update(std::vector<etlng::model::Object> const& objs, uint32_t seq) = 0;
+    update(std::vector<etl::model::Object> const& objs, uint32_t seq) = 0;
 
     /**
      * @brief Fetch a cached object by its key and sequence number.

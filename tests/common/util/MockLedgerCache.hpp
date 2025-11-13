@@ -21,7 +21,7 @@
 
 #include "data/LedgerCacheInterface.hpp"
 #include "data/Types.hpp"
-#include "etlng/Models.hpp"
+#include "etl/Models.hpp"
 
 #include <gmock/gmock.h>
 #include <xrpl/basics/base_uint.h>
@@ -42,7 +42,7 @@ struct MockLedgerCache : data::LedgerCacheInterface {
 
     MOCK_METHOD(std::optional<data::Blob>, get, (ripple::uint256 const& a, uint32_t b), (const, override));
 
-    MOCK_METHOD(void, update, (std::vector<etlng::model::Object> const&, uint32_t), (override));
+    MOCK_METHOD(void, update, (std::vector<etl::model::Object> const&, uint32_t), (override));
 
     MOCK_METHOD(std::optional<data::Blob>, getDeleted, (ripple::uint256 const&, uint32_t), (const, override));
 

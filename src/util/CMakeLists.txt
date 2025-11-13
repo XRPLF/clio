@@ -52,6 +52,8 @@ target_link_libraries(
   clio_util
   PUBLIC Boost::headers
          Boost::iostreams
+         Boost::coroutine
+         Boost::context
          fmt::fmt
          openssl::openssl
          xrpl::libxrpl
