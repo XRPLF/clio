@@ -132,17 +132,15 @@ tag_invoke(boost::json::value_to_tag<AccountMPTokensHandler::Input>, boost::json
 
     if (jsonObject.contains(JS(limit)))
         input.limit = util::integralValueAs<uint32_t>(jv.at(JS(limit)));
+
     if (jsonObject.contains(JS(marker)))
         input.marker = boost::json::value_to<std::string>(jv.at(JS(marker)));
+
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
-    if (jsonObject.contains(JS(ledger_index))) {
-        if (!jv.at(JS(ledger_index)).is_string()) {
-            input.ledgerIndex = util::integralValueAs<uint32_t>(jv.at(JS(ledger_index)));
-        } else if (boost::json::value_to<std::string>(jv.at(JS(ledger_index))) != "validated") {
-            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jv.at(JS(ledger_index))));
-        }
-    }
+
+    if (jsonObject.contains(JS(ledger_index)))
+        input.ledgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
 
     return input;
 }

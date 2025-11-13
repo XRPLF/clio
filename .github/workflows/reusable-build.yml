@@ -75,6 +75,10 @@ on:
       CODECOV_TOKEN:
         required: false
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     name: Build
@@ -101,7 +105,6 @@ jobs:
 
       - name: Setup conan on macOS
         if: ${{ runner.os == 'macOS' }}
-        shell: bash
         run: ./.github/scripts/conan/init.sh
 
       - name: Restore cache
@@ -141,7 +144,6 @@ jobs:
           ClangBuildAnalyzer --all build/ build_time_report.bin
           ClangBuildAnalyzer --analyze build_time_report.bin > build_time_report.txt
           cat build_time_report.txt
-        shell: bash
 
       - name: Upload build time analyze report
         if: ${{ inputs.analyze_build_time }}
@@ -152,7 +154,6 @@ jobs:
 
       - name: Show ccache's statistics
         if: ${{ inputs.download_ccache }}
-        shell: bash
         id: ccache_stats
         run: |
           ccache -s > /tmp/ccache.stats
@@ -220,7 +221,6 @@ jobs:
 
       - name: Verify expected version
         if: ${{ inputs.expected_version != '' }}
-        shell: bash
         env:
           INPUT_EXPECTED_VERSION: ${{ inputs.expected_version }}
         run: |

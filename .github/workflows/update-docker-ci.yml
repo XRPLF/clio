@@ -33,6 +33,10 @@ env:
   GCC_MAJOR_VERSION: 15
   GCC_VERSION: 15.2.0
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   repo:
     name: Calculate repo name

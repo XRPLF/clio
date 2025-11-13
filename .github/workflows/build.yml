@@ -33,6 +33,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/develop' && github.run_number || 'branch' }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build-and-test:
     name: Build and Test
@@ -121,7 +125,6 @@ jobs:
           name: clio_server_Linux_Release_gcc
 
       - name: Compare Config Description
-        shell: bash
         run: |
           repoConfigFile=docs/config-description.md
           configDescriptionFile=config_description_new.md

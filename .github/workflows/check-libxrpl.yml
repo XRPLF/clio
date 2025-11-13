@@ -12,6 +12,10 @@ concurrency:
 env:
   CONAN_PROFILE: gcc
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     name: Build Clio / `libXRPL ${{ github.event.client_payload.version }}`
@@ -30,13 +34,11 @@ jobs:
           disable_ccache: true
 
       - name: Update libXRPL version requirement
-        shell: bash
         run: |
           sed -i.bak -E "s|'xrpl/[a-zA-Z0-9\\.\\-]+'|'xrpl/${{ github.event.client_payload.conan_ref }}'|g" conanfile.py
           rm -f conanfile.py.bak
 
       - name: Update conan lockfile
-        shell: bash
         run: |
           conan lock create . --profile:all ${{ env.CONAN_PROFILE }}
 

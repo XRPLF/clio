@@ -328,7 +328,7 @@ getClioConfig()
               .withConstraint(gValidateUint32)},
          {"server.ip", ConfigValue{ConfigType::String}.withConstraint(gValidateIp)},
          {"server.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort)},
-         {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint32)},
+         {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1000).withConstraint(gValidateUint32)},
          {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
          {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
          {"server.processing_policy",

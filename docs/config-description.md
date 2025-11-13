@@ -293,7 +293,7 @@ This document provides a list of all available Clio configuration properties in 
 
 - **Required**: True
 - **Type**: int
-- **Default value**: `1`
+- **Default value**: `1000`
 - **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The maximum size of the server's request queue. If set to `0`, this means there is no queue size limit.
 

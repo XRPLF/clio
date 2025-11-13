@@ -6,6 +6,10 @@ on:
       CODECOV_TOKEN:
         required: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   upload_report:
     name: Upload report

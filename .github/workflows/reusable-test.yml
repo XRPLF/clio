@@ -33,6 +33,10 @@ on:
         required: true
         type: boolean
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   unit_tests:
     name: Unit testing
@@ -59,7 +63,6 @@ jobs:
           name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
 
       - name: Make clio_tests executable
-        shell: bash
         run: chmod +x ./clio_tests
 
       - name: Run clio_tests (regular)
@@ -72,7 +75,6 @@ jobs:
 
       - name: Check for sanitizer report
         if: ${{ env.SANITIZER_IGNORE_ERRORS == 'true' }}
-        shell: bash
         id: check_report
         run: |
           if ls .sanitizer-report/* 1> /dev/null 2>&1; then

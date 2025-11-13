@@ -5,6 +5,10 @@ on:
     types: [opened, edited, reopened, synchronize]
     branches: [develop]
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   check_title:
     runs-on: ubuntu-latest

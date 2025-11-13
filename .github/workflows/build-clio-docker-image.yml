@@ -38,6 +38,10 @@ on:
         description: Whether to strip clio binary
         default: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build_and_publish_image:
     name: Build and publish image
@@ -55,7 +59,6 @@ jobs:
 
       - name: Download Clio binary from url
         if: ${{ inputs.clio_server_binary_url != null }}
-        shell: bash
         env:
           BINARY_URL: ${{ inputs.clio_server_binary_url }}
           BINARY_SHA256: ${{ inputs.binary_sha256 }}
@@ -66,7 +69,6 @@ jobs:
             exit 1
           fi
       - name: Unpack binary
-        shell: bash
         run: |
           sudo apt update && sudo apt install -y tar unzip
           cd docker/clio/artifact
@@ -83,7 +85,6 @@ jobs:
 
       - name: Strip binary
         if: ${{ inputs.strip_binary }}
-        shell: bash
         run: strip ./docker/clio/clio_server
 
       - name: Set GHCR_REPO
