@@ -21,7 +21,7 @@
 
 #include "data/LedgerCacheInterface.hpp"
 #include "data/Types.hpp"
-#include "etlng/Models.hpp"
+#include "etl/Models.hpp"
 #include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Label.hpp"
@@ -98,7 +98,7 @@ public:
     update(std::vector<LedgerObject> const& objs, uint32_t seq, bool isBackground) override;
 
     void
-    update(std::vector<etlng::model::Object> const& objs, uint32_t seq) override;
+    update(std::vector<etl::model::Object> const& objs, uint32_t seq) override;
 
     std::optional<Blob>
     get(ripple::uint256 const& key, uint32_t seq) const override;

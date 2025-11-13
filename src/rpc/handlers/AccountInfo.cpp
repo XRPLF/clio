@@ -43,7 +43,6 @@
 #include <xrpl/protocol/jss.h>
 
 #include <algorithm>
-#include <cstdint>
 #include <iterator>
 #include <optional>
 #include <string>
@@ -113,6 +112,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
         auto const signers = sharedPtrBackend_->fetchLedgerObject(signersKey.key, lgrInfo.seq, ctx.yield);
+        out.signerLists = std::vector<ripple::STLedgerEntry>();
 
         if (signers) {
             ripple::STLedgerEntry const sleSigners{
@@ -122,7 +122,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
             if (!signersKey.check(sleSigners))
                 return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
 
-            out.signerLists = std::vector<ripple::STLedgerEntry>{sleSigners};
+            out.signerLists->push_back(sleSigners);
         }
     }
 
@@ -204,13 +204,8 @@ tag_invoke(boost::json::value_to_tag<AccountInfoHandler::Input>, boost::json::va
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
 
-    if (jsonObject.contains(JS(ledger_index))) {
-        if (!jsonObject.at(JS(ledger_index)).is_string()) {
-            input.ledgerIndex = util::integralValueAs<uint32_t>(jsonObject.at(JS(ledger_index)));
-        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jsonObject.at(JS(ledger_index))));
-        }
-    }
+    if (jsonObject.contains(JS(ledger_index)))
+        input.ledgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
 
     if (jsonObject.contains(JS(signer_lists)))
         input.signerLists = boost::json::value_to<JsonBool>(jsonObject.at(JS(signer_lists)));

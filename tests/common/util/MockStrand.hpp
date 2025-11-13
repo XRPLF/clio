@@ -69,4 +69,5 @@ struct MockStrand {
         (std::chrono::milliseconds, std::function<std::any()>),
         (const)
     );
+    MOCK_METHOD(void, submit, (std::function<void()>), (const));
 };

@@ -20,7 +20,7 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "etlng/ETLServiceInterface.hpp"
+#include "etl/ETLServiceInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/Factories.hpp"
 #include "rpc/JS.hpp"
@@ -70,7 +70,7 @@ template <typename RPCEngineType>
 class RPCServerHandler {
     std::shared_ptr<BackendInterface const> const backend_;
     std::shared_ptr<RPCEngineType> const rpcEngine_;
-    std::shared_ptr<etlng::ETLServiceInterface const> const etl_;
+    std::shared_ptr<etl::ETLServiceInterface const> const etl_;
     std::reference_wrapper<dosguard::DOSGuardInterface> dosguard_;
     util::TagDecoratorFactory const tagFactory_;
     rpc::impl::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
@@ -92,7 +92,7 @@ public:
         util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<RPCEngineType> const& rpcEngine,
-        std::shared_ptr<etlng::ETLServiceInterface const> const& etl,
+        std::shared_ptr<etl::ETLServiceInterface const> const& etl,
         dosguard::DOSGuardInterface& dosguard
     )
         : backend_(backend)

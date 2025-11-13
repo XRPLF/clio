@@ -34,7 +34,6 @@
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/jss.h>
 
-#include <cstdint>
 #include <string>
 #include <utility>
 
@@ -110,13 +109,8 @@ tag_invoke(boost::json::value_to_tag<TransactionEntryHandler::Input>, boost::jso
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
 
-    if (jsonObject.contains(JS(ledger_index))) {
-        if (!jsonObject.at(JS(ledger_index)).is_string()) {
-            input.ledgerIndex = util::integralValueAs<uint32_t>(jv.at(JS(ledger_index)));
-        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jv.at(JS(ledger_index))));
-        }
-    }
+    if (jsonObject.contains(JS(ledger_index)))
+        input.ledgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
 
     return input;
 }

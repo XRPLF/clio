@@ -21,8 +21,8 @@
 
 #include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
-#include "etlng/ETLServiceInterface.hpp"
-#include "etlng/LoadBalancerInterface.hpp"
+#include "etl/ETLServiceInterface.hpp"
+#include "etl/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Counters.hpp"
 #include "rpc/common/AnyHandler.hpp"
@@ -31,6 +31,8 @@
 #include "rpc/handlers/AccountCurrencies.hpp"
 #include "rpc/handlers/AccountInfo.hpp"
 #include "rpc/handlers/AccountLines.hpp"
+#include "rpc/handlers/AccountMPTokenIssuances.hpp"
+#include "rpc/handlers/AccountMPTokens.hpp"
 #include "rpc/handlers/AccountNFTs.hpp"
 #include "rpc/handlers/AccountObjects.hpp"
 #include "rpc/handlers/AccountOffers.hpp"
@@ -75,8 +77,8 @@ ProductionHandlerProvider::ProductionHandlerProvider(
     util::config::ClioConfigDefinition const& config,
     std::shared_ptr<BackendInterface> const& backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptionManager,
-    std::shared_ptr<etlng::LoadBalancerInterface> const& balancer,
-    std::shared_ptr<etlng::ETLServiceInterface const> const& etl,
+    std::shared_ptr<etl::LoadBalancerInterface> const& balancer,
+    std::shared_ptr<etl::ETLServiceInterface const> const& etl,
     std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
     Counters const& counters
 )
@@ -85,6 +87,9 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"account_currencies", {.handler = AccountCurrenciesHandler{backend}}},
           {"account_info", {.handler = AccountInfoHandler{backend, amendmentCenter}}},
           {"account_lines", {.handler = AccountLinesHandler{backend}}},
+          {"account_mptoken_issuances",
+           {.handler = AccountMPTokenIssuancesHandler{backend}, .isClioOnly = true}},              // clio only
+          {"account_mptokens", {.handler = AccountMPTokensHandler{backend}, .isClioOnly = true}},  // clio only
           {"account_nfts", {.handler = AccountNFTsHandler{backend}}},
           {"account_objects", {.handler = AccountObjectsHandler{backend}}},
           {"account_offers", {.handler = AccountOffersHandler{backend}}},

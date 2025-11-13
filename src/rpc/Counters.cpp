@@ -102,7 +102,7 @@ Counters::getMethodInfo(std::string const& method)
     return it->second;
 }
 
-Counters::Counters(WorkQueue const& wq)
+Counters::Counters(Reportable const& wq)
     : tooBusyCounter_(
           PrometheusService::counterInt(
               "rpc_error_total_number",

@@ -220,10 +220,10 @@ LogService::createFileSink(FileLoggingParams const& params, std::string const& f
  * @param defaultSeverity The default severity level to use if not overridden.
  * @return A map of channel names to their minimum severity levels, or an error message if parsing fails.
  */
-static std::expected<std::unordered_map<std::string, Severity>, std::string>
+static std::expected<std::unordered_map<std::string_view, Severity>, std::string>
 getMinSeverity(config::ClioConfigDefinition const& config, Severity defaultSeverity)
 {
-    std::unordered_map<std::string, Severity> minSeverity;
+    std::unordered_map<std::string_view, Severity> minSeverity;
     for (auto const& channel : Logger::kCHANNELS)
         minSeverity[channel] = defaultSeverity;
 
@@ -284,13 +284,15 @@ LogServiceState::reset()
 }
 
 std::shared_ptr<spdlog::logger>
-LogServiceState::registerLogger(std::string const& channel, std::optional<Severity> severity)
+LogServiceState::registerLogger(std::string_view channel, std::optional<Severity> severity)
 {
     if (not initialized_) {
         throw std::logic_error("LogService is not initialized");
     }
 
-    std::shared_ptr<spdlog::logger> existingLogger = spdlog::get(channel);
+    std::string const channelStr{channel};
+
+    std::shared_ptr<spdlog::logger> existingLogger = spdlog::get(channelStr);
     if (existingLogger != nullptr) {
         if (severity.has_value())
             existingLogger->set_level(toSpdlogLevel(*severity));
@@ -300,10 +302,10 @@ LogServiceState::registerLogger(std::string const& channel, std::optional<Severi
     std::shared_ptr<spdlog::logger> logger;
     if (isAsync_) {
         logger = std::make_shared<spdlog::async_logger>(
-            channel, sinks_.begin(), sinks_.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block
+            channelStr, sinks_.begin(), sinks_.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block
         );
     } else {
-        logger = std::make_shared<spdlog::logger>(channel, sinks_.begin(), sinks_.end());
+        logger = std::make_shared<spdlog::logger>(channelStr, sinks_.begin(), sinks_.end());
     }
 
     logger->set_level(toSpdlogLevel(severity.value_or(defaultSeverity_)));
@@ -427,8 +429,23 @@ LogServiceState::replaceSinks(std::vector<std::shared_ptr<spdlog::sinks::sink>> 
     spdlog::apply_all([](std::shared_ptr<spdlog::logger> logger) { logger->sinks() = sinks_; });
 }
 
-Logger::Logger(std::string channel) : logger_(LogServiceState::registerLogger(channel))
+Logger::Logger(std::string_view const channel) : logger_(LogServiceState::registerLogger(channel))
 {
+}
+
+Logger::~Logger()
+{
+    // One reference is held by logger_ and the other by spdlog registry
+    static constexpr size_t kLAST_LOGGER_REF_COUNT = 2;
+
+    if (logger_ == nullptr) {
+        return;
+    }
+
+    bool const isDynamic = !std::ranges::contains(kCHANNELS, logger_->name());
+    if (isDynamic && logger_.use_count() == kLAST_LOGGER_REF_COUNT) {
+        spdlog::drop(logger_->name());
+    }
 }
 
 Logger::Pump::Pump(std::shared_ptr<spdlog::logger> logger, Severity sev, SourceLocationType const& loc)

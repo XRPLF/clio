@@ -33,6 +33,10 @@ on:
         required: true
         type: boolean
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   unit_tests:
     name: Unit testing
@@ -43,23 +47,22 @@ jobs:
 
     env:
       # TODO: remove completely when we have fixed all currently existing issues with sanitizers
-      SANITIZER_IGNORE_ERRORS: ${{ endsWith(inputs.conan_profile, '.tsan') || inputs.conan_profile == 'clang.asan' || (inputs.conan_profile == 'gcc.asan' && inputs.build_type == 'Release') }}
+      SANITIZER_IGNORE_ERRORS: ${{ endsWith(inputs.conan_profile, '.tsan') || (inputs.conan_profile == 'gcc.asan' && inputs.build_type == 'Release') }}
 
     steps:
       - name: Cleanup workspace
         if: ${{ runner.os == 'macOS' }}
         uses: XRPLF/actions/.github/actions/cleanup-workspace@ea9970b7c211b18f4c8bcdb28c29f5711752029f
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
 
       - name: Make clio_tests executable
-        shell: bash
         run: chmod +x ./clio_tests
 
       - name: Run clio_tests (regular)
@@ -68,11 +71,10 @@ jobs:
 
       - name: Run clio_tests (sanitizer errors ignored)
         if: ${{ env.SANITIZER_IGNORE_ERRORS == 'true' }}
-        run: ./.github/scripts/execute-tests-under-sanitizer ./clio_tests
+        run: ./.github/scripts/execute-tests-under-sanitizer.sh ./clio_tests
 
       - name: Check for sanitizer report
         if: ${{ env.SANITIZER_IGNORE_ERRORS == 'true' }}
-        shell: bash
         id: check_report
         run: |
           if ls .sanitizer-report/* 1> /dev/null 2>&1; then
@@ -83,7 +85,7 @@ jobs:
 
       - name: Upload sanitizer report
         if: ${{ env.SANITIZER_IGNORE_ERRORS == 'true' && steps.check_report.outputs.found_report == 'true' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: sanitizer_report_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: .sanitizer-report/*
@@ -144,7 +146,7 @@ jobs:
             sleep 5
           done
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
 

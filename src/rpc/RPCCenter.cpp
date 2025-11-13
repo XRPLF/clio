@@ -35,6 +35,8 @@ handledRpcs()
         "account_currencies",
         "account_info",
         "account_lines",
+        "account_mptoken_issuances",
+        "account_mptokens",
         "account_nfts",
         "account_objects",
         "account_offers",

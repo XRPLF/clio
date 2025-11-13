@@ -64,16 +64,16 @@ public:
     [[nodiscard]] auto
     execute(SomeHandlerWithoutStopToken auto&& fn)
     {
-        using RetType = std::decay_t<decltype(fn())>;
+        using RetType = std::decay_t<std::invoke_result_t<decltype(fn)>>;
         static_assert(not std::is_same_v<RetType, std::any>);
 
         return AnyOperation<RetType>(  //
-            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)]() -> std::any {
+            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)] mutable -> std::any {
                 if constexpr (std::is_void_v<RetType>) {
-                    fn();
+                    std::invoke(std::forward<decltype(fn)>(fn));
                     return {};
                 } else {
-                    return std::make_any<RetType>(fn());
+                    return std::make_any<RetType>(std::invoke(std::forward<decltype(fn)>(fn)));
                 }
             })
         );
@@ -88,16 +88,16 @@ public:
     [[nodiscard]] auto
     execute(SomeHandlerWith<AnyStopToken> auto&& fn)
     {
-        using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
+        using RetType = std::decay_t<std::invoke_result_t<decltype(fn), AnyStopToken>>;
         static_assert(not std::is_same_v<RetType, std::any>);
 
         return AnyOperation<RetType>(  //
-            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> std::any {
+            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> std::any {
                 if constexpr (std::is_void_v<RetType>) {
-                    fn(std::move(stopToken));
+                    std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
                     return {};
                 } else {
-                    return std::make_any<RetType>(fn(std::move(stopToken)));
+                    return std::make_any<RetType>(std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken)));
                 }
             })
         );
@@ -113,17 +113,19 @@ public:
     [[nodiscard]] auto
     execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout)
     {
-        using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
+        using RetType = std::decay_t<std::invoke_result_t<decltype(fn), AnyStopToken>>;
         static_assert(not std::is_same_v<RetType, std::any>);
 
         return AnyOperation<RetType>(  //
             pimpl_->execute(
-                [fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> std::any {
+                [fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> std::any {
                     if constexpr (std::is_void_v<RetType>) {
-                        fn(std::move(stopToken));
+                        std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
                         return {};
                     } else {
-                        return std::make_any<RetType>(fn(std::move(stopToken)));
+                        return std::make_any<RetType>(
+                            std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken))
+                        );
                     }
                 },
                 std::chrono::duration_cast<std::chrono::milliseconds>(timeout)
@@ -141,16 +143,28 @@ public:
     [[nodiscard]] auto
     executeRepeatedly(SomeStdDuration auto interval, SomeHandlerWithoutStopToken auto&& fn)
     {
-        using RetType = std::decay_t<decltype(fn())>;
+        using RetType = std::decay_t<std::invoke_result_t<decltype(fn)>>;
         static_assert(not std::is_same_v<RetType, std::any>);
 
         auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(interval);
         return AnyOperation<RetType>(  //
-            pimpl_->executeRepeatedly(millis, [fn = std::forward<decltype(fn)>(fn)] -> std::any {
-                fn();
+            pimpl_->executeRepeatedly(millis, [fn = std::forward<decltype(fn)>(fn)] mutable -> std::any {
+                std::invoke(std::forward<decltype(fn)>(fn));
                 return {};
             })
         );
+    }
+
+    /**
+     * @brief Schedule an operation on the execution context without expectations of a result
+     * @note Exceptions are caught internally and `ASSERT`ed on
+     *
+     * @param fn The block of code to execute
+     */
+    void
+    submit(SomeHandlerWithoutStopToken auto&& fn)
+    {
+        pimpl_->submit(std::forward<decltype(fn)>(fn));
     }
 
 private:
@@ -165,6 +179,7 @@ private:
         [[nodiscard]] virtual impl::ErasedOperation execute(std::function<std::any()>) = 0;
         [[nodiscard]] virtual impl::ErasedOperation
             executeRepeatedly(std::chrono::milliseconds, std::function<std::any()>) = 0;
+        virtual void submit(std::function<void()>) = 0;
     };
 
     template <typename StrandType>
@@ -193,6 +208,12 @@ private:
         executeRepeatedly(std::chrono::milliseconds interval, std::function<std::any()> fn) override
         {
             return strand.executeRepeatedly(interval, std::move(fn));
+        }
+
+        void
+        submit(std::function<void()> fn) override
+        {
+            return strand.submit(std::move(fn));
         }
     };
 

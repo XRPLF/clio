@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "etl/InitialLoadObserverInterface.hpp"
+#include "etl/LoadBalancerInterface.hpp"
 #include "etl/Source.hpp"
 #include "etl/impl/ForwardingSource.hpp"
 #include "etl/impl/GrpcSource.hpp"
@@ -51,8 +53,8 @@ namespace etl::impl {
  */
 template <
     typename GrpcSourceType = GrpcSource,
-    typename SubscriptionSourceTypePtr = std::unique_ptr<SubscriptionSource>,
-    typename ForwardingSourceType = ForwardingSource>
+    typename SubscriptionSourceTypePtr = std::unique_ptr<impl::SubscriptionSource>,
+    typename ForwardingSourceType = impl::ForwardingSource>
 class SourceImpl : public SourceBase {
     std::string ip_;
     std::string wsPort_;
@@ -106,6 +108,7 @@ public:
     stop(boost::asio::yield_context yield) final
     {
         subscriptionSource_->stop(yield);
+        grpcSource_.stop(yield);
     }
 
     /**
@@ -198,12 +201,13 @@ public:
      *
      * @param sequence Sequence of the ledger to download
      * @param numMarkers Number of markers to generate for async calls
+     * @param loader InitialLoadObserverInterface implementation
      * @return A std::pair of the data and a bool indicating whether the download was successful
      */
-    std::pair<std::vector<std::string>, bool>
-    loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers) final
+    InitialLedgerLoadResult
+    loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, InitialLoadObserverInterface& loader) final
     {
-        return grpcSource_.loadInitialLedger(sequence, numMarkers);
+        return grpcSource_.loadInitialLedger(sequence, numMarkers, loader);
     }
 
     /**

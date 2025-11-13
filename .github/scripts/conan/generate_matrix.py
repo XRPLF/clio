@@ -4,7 +4,7 @@ import json
 
 LINUX_OS = ["heavy", "heavy-arm64"]
 LINUX_CONTAINERS = [
-    '{ "image": "ghcr.io/xrplf/clio-ci:213752862ca95ecadeb59a6176c3db91a7864b3e" }'
+    '{ "image": "ghcr.io/xrplf/clio-ci:c117f470f2ef954520ab5d1c8a5ed2b9e68d6f8a" }'
 ]
 LINUX_COMPILERS = ["gcc", "clang"]
 

@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <limits>
 #include <stdexcept>
+#include <tuple>
 
 TEST(JsonUtils, RemoveSecrets)
 {
@@ -87,4 +88,30 @@ TEST(JsonUtils, integralValueAs)
 
     auto const stringJson = boost::json::value("not a number");
     EXPECT_THROW(util::integralValueAs<int>(stringJson), std::logic_error);
+}
+
+TEST(JsonUtils, getLedgerIndex)
+{
+    auto const emptyJson = boost::json::value();
+    EXPECT_THROW(std::ignore = util::getLedgerIndex(emptyJson), std::logic_error);
+
+    auto const boolJson = boost::json::value(true);
+    EXPECT_THROW(std::ignore = util::getLedgerIndex(emptyJson), std::logic_error);
+
+    auto const numberJson = boost::json::value(12345);
+    auto ledgerIndex = util::getLedgerIndex(numberJson);
+    EXPECT_TRUE(ledgerIndex.has_value());
+    EXPECT_EQ(ledgerIndex.value(), 12345u);
+
+    auto const validStringJson = boost::json::value("12345");
+    ledgerIndex = util::getLedgerIndex(validStringJson);
+    EXPECT_TRUE(ledgerIndex.has_value());
+    EXPECT_EQ(ledgerIndex.value(), 12345u);
+
+    auto const invalidStringJson = boost::json::value("invalid123");
+    EXPECT_THROW(std::ignore = util::getLedgerIndex(invalidStringJson), std::invalid_argument);
+
+    auto const validatedJson = boost::json::value("validated");
+    ledgerIndex = util::getLedgerIndex(validatedJson);
+    EXPECT_FALSE(ledgerIndex.has_value());
 }

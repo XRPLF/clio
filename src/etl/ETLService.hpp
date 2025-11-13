@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -20,56 +20,63 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "etl/CacheLoader.hpp"
+#include "data/Types.hpp"
+#include "etl/CacheLoaderInterface.hpp"
+#include "etl/CacheUpdaterInterface.hpp"
+#include "etl/ETLServiceInterface.hpp"
 #include "etl/ETLState.hpp"
+#include "etl/ExtractorInterface.hpp"
+#include "etl/InitialLoadObserverInterface.hpp"
+#include "etl/LedgerPublisherInterface.hpp"
+#include "etl/LoadBalancerInterface.hpp"
+#include "etl/LoaderInterface.hpp"
+#include "etl/MonitorInterface.hpp"
+#include "etl/MonitorProviderInterface.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/SystemState.hpp"
+#include "etl/TaskManagerInterface.hpp"
+#include "etl/TaskManagerProviderInterface.hpp"
 #include "etl/impl/AmendmentBlockHandler.hpp"
-#include "etl/impl/ExtractionDataPipe.hpp"
-#include "etl/impl/Extractor.hpp"
+#include "etl/impl/CacheUpdater.hpp"
+#include "etl/impl/Extraction.hpp"
 #include "etl/impl/LedgerFetcher.hpp"
-#include "etl/impl/LedgerLoader.hpp"
 #include "etl/impl/LedgerPublisher.hpp"
-#include "etl/impl/Transformer.hpp"
-#include "etlng/ETLServiceInterface.hpp"
-#include "etlng/LoadBalancerInterface.hpp"
-#include "etlng/impl/LedgerPublisher.hpp"
-#include "etlng/impl/TaskManagerProvider.hpp"
+#include "etl/impl/Loading.hpp"
+#include "etl/impl/Registry.hpp"
+#include "etl/impl/Scheduling.hpp"
+#include "etl/impl/TaskManager.hpp"
+#include "etl/impl/ext/Cache.hpp"
+#include "etl/impl/ext/Core.hpp"
+#include "etl/impl/ext/NFT.hpp"
+#include "etl/impl/ext/Successor.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/async/AnyExecutionContext.hpp"
+#include "util/async/AnyOperation.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/json/object.hpp>
-#include <grpcpp/grpcpp.h>
-#include <org/xrpl/rpc/v1/get_ledger.pb.h>
-#include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+#include <boost/signals2/connection.hpp>
+#include <fmt/format.h>
+#include <xrpl/basics/Blob.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/proto/org/xrpl/rpc/v1/get_ledger.pb.h>
+#include <xrpl/proto/org/xrpl/rpc/v1/ledger.pb.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/STTx.h>
+#include <xrpl/protocol/TxFormats.h>
+#include <xrpl/protocol/TxMeta.h>
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
-#include <thread>
 
-struct AccountTransactionsData;
-struct NFTTransactionsData;
-struct NFTsData;
-
-/**
- * @brief This namespace contains everything to do with the ETL and ETL sources.
- */
 namespace etl {
-
-/**
- * @brief A tag class to help identify ETLService in templated code.
- */
-struct ETLServiceTag {
-    virtual ~ETLServiceTag() = default;
-};
-
-template <typename T>
-concept SomeETLService = std::derived_from<T, ETLServiceTag>;
 
 /**
  * @brief This class is responsible for continuously extracting data from a p2p node, and writing that data to the
@@ -84,71 +91,42 @@ concept SomeETLService = std::derived_from<T, ETLServiceTag>;
  * the others will fall back to monitoring/publishing. In this sense, this class dynamically transitions from monitoring
  * to writing and from writing to monitoring, based on the activity of other processes running on different machines.
  */
-class ETLService : public etlng::ETLServiceInterface, ETLServiceTag {
-    // TODO: make these template parameters in ETLService
-    using DataPipeType = etl::impl::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
-    using CacheLoaderType = etl::CacheLoader<>;
-    using LedgerFetcherType = etl::impl::LedgerFetcher;
-    using ExtractorType = etl::impl::Extractor<DataPipeType, LedgerFetcherType>;
-    using LedgerLoaderType = etl::impl::LedgerLoader<LedgerFetcherType>;
-    using LedgerPublisherType = etl::impl::LedgerPublisher;
-    using AmendmentBlockHandlerType = etl::impl::AmendmentBlockHandler;
-    using TransformerType =
-        etl::impl::Transformer<DataPipeType, LedgerLoaderType, LedgerPublisherType, AmendmentBlockHandlerType>;
-
+class ETLService : public ETLServiceInterface {
     util::Logger log_{"ETL"};
 
+    util::async::AnyExecutionContext ctx_;
+    std::reference_wrapper<util::config::ClioConfigDefinition const> config_;
     std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<etlng::LoadBalancerInterface> loadBalancer_;
-    std::shared_ptr<NetworkValidatedLedgersInterface> networkValidatedLedgers_;
+    std::shared_ptr<LoadBalancerInterface> balancer_;
+    std::shared_ptr<NetworkValidatedLedgersInterface> ledgers_;
+    std::shared_ptr<LedgerPublisherInterface> publisher_;
+    std::shared_ptr<CacheLoaderInterface> cacheLoader_;
+    std::shared_ptr<CacheUpdaterInterface> cacheUpdater_;
+    std::shared_ptr<ExtractorInterface> extractor_;
+    std::shared_ptr<LoaderInterface> loader_;
+    std::shared_ptr<InitialLoadObserverInterface> initialLoadObserver_;
+    std::shared_ptr<TaskManagerProviderInterface> taskManagerProvider_;
+    std::shared_ptr<MonitorProviderInterface> monitorProvider_;
+    std::shared_ptr<SystemState> state_;
 
-    std::uint32_t extractorThreads_ = 1;
-    std::thread worker_;
-
-    CacheLoaderType cacheLoader_;
-    LedgerFetcherType ledgerFetcher_;
-    LedgerLoaderType ledgerLoader_;
-    LedgerPublisherType ledgerPublisher_;
-    AmendmentBlockHandlerType amendmentBlockHandler_;
-
-    SystemState state_;
-
-    size_t numMarkers_ = 2;
     std::optional<uint32_t> startSequence_;
     std::optional<uint32_t> finishSequence_;
 
+    std::unique_ptr<MonitorInterface> monitor_;
+    std::unique_ptr<TaskManagerInterface> taskMan_;
+
+    boost::signals2::scoped_connection monitorNewSeqSubscription_;
+    boost::signals2::scoped_connection monitorDbStalledSubscription_;
+
+    std::optional<util::async::AnyOperation<void>> mainLoop_;
+
 public:
-    /**
-     * @brief Create an instance of ETLService.
-     *
-     * @param config The configuration to use
-     * @param ioc io context to run on
-     * @param backend BackendInterface implementation
-     * @param subscriptions Subscription manager
-     * @param balancer Load balancer to use
-     * @param ledgers The network validated ledgers datastructure
-     */
-    ETLService(
-        util::config::ClioConfigDefinition const& config,
-        boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
-        std::shared_ptr<etlng::LoadBalancerInterface> balancer,
-        std::shared_ptr<NetworkValidatedLedgersInterface> ledgers
-    );
-
-    /**
-     * @brief Move constructor is deleted because ETL service shares its fields by reference
-     */
-    ETLService(ETLService&&) = delete;
-
     /**
      * @brief A factory function to spawn new ETLService instances.
      *
      * Creates and runs the ETL service.
      *
      * @param config The configuration to use
-     * @param ioc io context to run on
      * @param ctx Execution context for asynchronous operations
      * @param backend BackendInterface implementation
      * @param subscriptions Subscription manager
@@ -156,182 +134,89 @@ public:
      * @param ledgers The network validated ledgers datastructure
      * @return A shared pointer to a new instance of ETLService
      */
-    static std::shared_ptr<etlng::ETLServiceInterface>
+    static std::shared_ptr<ETLServiceInterface>
     makeETLService(
         util::config::ClioConfigDefinition const& config,
-        boost::asio::io_context& ioc,
         util::async::AnyExecutionContext ctx,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
-        std::shared_ptr<etlng::LoadBalancerInterface> balancer,
+        std::shared_ptr<LoadBalancerInterface> balancer,
         std::shared_ptr<NetworkValidatedLedgersInterface> ledgers
     );
 
     /**
-     * @brief Stops components and joins worker thread.
-     */
-    ~ETLService() override
-    {
-        if (not state_.isStopping)
-            stop();
-    }
-
-    /**
-     * @brief Stop the ETL service.
-     * @note This method blocks until the ETL service has stopped.
-     */
-    void
-    stop() override
-    {
-        LOG(log_.info()) << "Stop called";
-
-        state_.isStopping = true;
-        cacheLoader_.stop();
-
-        if (worker_.joinable())
-            worker_.join();
-
-        LOG(log_.debug()) << "Joined ETLService worker thread";
-    }
-
-    /**
-     * @brief Get time passed since last ledger close, in seconds.
+     * @brief Create an instance of ETLService.
      *
-     * @return Time passed since last ledger close
+     * @param ctx The execution context for asynchronous operations
+     * @param config The Clio configuration definition
+     * @param backend Interface to the backend database
+     * @param balancer Load balancer for distributing work
+     * @param ledgers Interface for accessing network validated ledgers
+     * @param publisher Interface for publishing ledger data
+     * @param cacheLoader Interface for loading cache data
+     * @param cacheUpdater Interface for updating cache data
+     * @param extractor The extractor to use
+     * @param loader Interface for loading data
+     * @param initialLoadObserver The observer for initial data loading
+     * @param taskManagerProvider The provider of the task manager instance
+     * @param monitorProvider The provider of the monitor instance
+     * @param state System state tracking object
      */
-    std::uint32_t
-    lastCloseAgeSeconds() const override
-    {
-        return ledgerPublisher_.lastCloseAgeSeconds();
-    }
+    ETLService(
+        util::async::AnyExecutionContext ctx,
+        std::reference_wrapper<util::config::ClioConfigDefinition const> config,
+        std::shared_ptr<data::BackendInterface> backend,
+        std::shared_ptr<LoadBalancerInterface> balancer,
+        std::shared_ptr<NetworkValidatedLedgersInterface> ledgers,
+        std::shared_ptr<LedgerPublisherInterface> publisher,
+        std::shared_ptr<CacheLoaderInterface> cacheLoader,
+        std::shared_ptr<CacheUpdaterInterface> cacheUpdater,
+        std::shared_ptr<ExtractorInterface> extractor,
+        std::shared_ptr<LoaderInterface> loader,
+        std::shared_ptr<InitialLoadObserverInterface> initialLoadObserver,
+        std::shared_ptr<TaskManagerProviderInterface> taskManagerProvider,
+        std::shared_ptr<MonitorProviderInterface> monitorProvider,
+        std::shared_ptr<SystemState> state
+    );
 
-    /**
-     * @brief Check for the amendment blocked state.
-     *
-     * @return true if currently amendment blocked; false otherwise
-     */
-    bool
-    isAmendmentBlocked() const override
-    {
-        return state_.isAmendmentBlocked;
-    }
+    ~ETLService() override;
 
-    /**
-     * @brief Check whether Clio detected DB corruptions.
-     *
-     * @return true if corruption of DB was detected and cache was stopped.
-     */
-    bool
-    isCorruptionDetected() const override
-    {
-        return state_.isCorruptionDetected;
-    }
-
-    /**
-     * @brief Get state of ETL as a JSON object
-     *
-     * @return The state of ETL as a JSON object
-     */
-    boost::json::object
-    getInfo() const override
-    {
-        boost::json::object result;
-
-        result["etl_sources"] = loadBalancer_->toJson();
-        result["is_writer"] = static_cast<int>(state_.isWriting);
-        result["read_only"] = static_cast<int>(state_.isStrictReadonly);
-        auto last = ledgerPublisher_.getLastPublish();
-        if (last.time_since_epoch().count() != 0)
-            result["last_publish_age_seconds"] = std::to_string(ledgerPublisher_.lastPublishAgeSeconds());
-        return result;
-    }
-
-    /**
-     * @brief Get the etl nodes' state
-     * @return The etl nodes' state, nullopt if etl nodes are not connected
-     */
-    std::optional<etl::ETLState>
-    getETLState() const noexcept override
-    {
-        return loadBalancer_->getETLState();
-    }
-
-    /**
-     * @brief Start all components to run ETL service.
-     */
     void
     run() override;
 
-private:
-    /**
-     * @brief Run the ETL pipeline.
-     *
-     * Extracts ledgers and writes them to the database, until a write conflict occurs (or the server shuts down).
-     * @note database must already be populated when this function is called
-     *
-     * @param startSequence the first ledger to extract
-     * @param numExtractors number of extractors to use
-     * @return The last ledger written to the database, if any
-     */
-    std::optional<uint32_t>
-    runETLPipeline(uint32_t startSequence, uint32_t numExtractors);
-
-    /**
-     * @brief Monitor the network for newly validated ledgers.
-     *
-     * Also monitor the database to see if any process is writing those ledgers.
-     * This function is called when the application starts, and will only return when the application is shutting down.
-     * If the software detects the database is empty, this function will call loadInitialLedger(). If the software
-     * detects ledgers are not being written, this function calls runETLPipeline(). Otherwise, this function publishes
-     * ledgers as they are written to the database.
-     */
     void
-    monitor();
+    stop() override;
 
-    /**
-     * @brief Monitor the network for newly validated ledgers and publish them to the ledgers stream
-     *
-     * @param nextSequence the ledger sequence to publish
-     * @return The next ledger sequence to publish
-     */
-    uint32_t
-    publishNextSequence(uint32_t nextSequence);
+    boost::json::object
+    getInfo() const override;
 
-    /**
-     * @brief Monitor the database for newly written ledgers.
-     *
-     * Similar to the monitor(), except this function will never call runETLPipeline() or loadInitialLedger().
-     * This function only publishes ledgers as they are written to the database.
-     */
-    void
-    monitorReadOnly();
-
-    /**
-     * @return true if stopping; false otherwise
-     */
     bool
-    isStopping() const
-    {
-        return state_.isStopping;
-    }
+    isAmendmentBlocked() const override;
 
-    /**
-     * @brief Get the number of markers to use during the initial ledger download.
-     *
-     * This is equivalent to the degree of parallelism during the initial ledger download.
-     *
-     * @return The number of markers
-     */
+    bool
+    isCorruptionDetected() const override;
+
+    std::optional<ETLState>
+    getETLState() const override;
+
     std::uint32_t
-    getNumMarkers() const
-    {
-        return numMarkers_;
-    }
+    lastCloseAgeSeconds() const override;
 
-    /**
-     * @brief Spawn the worker thread and start monitoring.
-     */
+private:
+    std::optional<data::LedgerRange>
+    loadInitialLedgerIfNeeded();
+
     void
-    doWork();
+    startMonitor(uint32_t seq);
+
+    void
+    startLoading(uint32_t seq);
+
+    void
+    attemptTakeoverWriter();
+
+    void
+    giveUpWriter();
 };
+
 }  // namespace etl

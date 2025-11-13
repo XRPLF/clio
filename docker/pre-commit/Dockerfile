@@ -17,6 +17,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests \
         curl \
         git \
+        libatomic1 \
         software-properties-common \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*

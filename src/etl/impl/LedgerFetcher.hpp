@@ -21,7 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "etl/LedgerFetcherInterface.hpp"
-#include "etlng/LoadBalancerInterface.hpp"
+#include "etl/LoadBalancerInterface.hpp"
 #include "util/log/Logger.hpp"
 
 #include <grpcpp/grpcpp.h>
@@ -41,13 +41,13 @@ private:
     util::Logger log_{"ETL"};
 
     std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<etlng::LoadBalancerInterface> loadBalancer_;
+    std::shared_ptr<LoadBalancerInterface> loadBalancer_;
 
 public:
     /**
      * @brief Create an instance of the fetcher
      */
-    LedgerFetcher(std::shared_ptr<BackendInterface> backend, std::shared_ptr<etlng::LoadBalancerInterface> balancer)
+    LedgerFetcher(std::shared_ptr<BackendInterface> backend, std::shared_ptr<LoadBalancerInterface> balancer)
         : backend_(std::move(backend)), loadBalancer_(std::move(balancer))
     {
     }

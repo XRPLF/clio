@@ -20,8 +20,8 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "etlng/ETLServiceInterface.hpp"
-#include "etlng/LoadBalancerInterface.hpp"
+#include "etl/ETLServiceInterface.hpp"
+#include "etl/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/CoroutineGroup.hpp"
 #include "util/log/Logger.hpp"
@@ -78,8 +78,8 @@ public:
     static std::function<void(boost::asio::yield_context)>
     makeOnStopCallback(
         ServerType& server,
-        etlng::LoadBalancerInterface& balancer,
-        etlng::ETLServiceInterface& etl,
+        etl::LoadBalancerInterface& balancer,
+        etl::ETLServiceInterface& etl,
         feed::SubscriptionManagerInterface& subscriptions,
         data::BackendInterface& backend,
         boost::asio::io_context& ioc

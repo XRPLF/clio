@@ -138,7 +138,8 @@ class BasicExecutionContext {
 
 public:
     /** @brief Whether operations on this execution context are noexcept */
-    static constexpr bool kIS_NOEXCEPT = noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; }));
+    static constexpr bool kIS_NOEXCEPT = noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; })) and
+        noexcept(ErrorHandlerType::catchAndAssert([] { throw 0; }));
 
     using ContextHolderType = ContextType;
 
@@ -209,17 +210,17 @@ public:
                 delay, std::forward<decltype(fn)>(fn), timeout
             );
         } else {
-            using FnRetType = std::decay_t<decltype(fn(std::declval<StopToken>()))>;
+            using FnRetType = std::decay_t<std::invoke_result_t<decltype(fn), StopToken>>;
             return ScheduledOperation<FnRetType>(
                 impl::extractAssociatedExecutor(*this),
                 delay,
                 [this, timeout, fn = std::forward<decltype(fn)>(fn)](auto) mutable {
                     return this->execute(
-                        [fn = std::forward<decltype(fn)>(fn)](auto stopToken) {
+                        [fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable {
                             if constexpr (std::is_void_v<FnRetType>) {
-                                fn(std::move(stopToken));
+                                std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
                             } else {
-                                return fn(std::move(stopToken));
+                                return std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
                             }
                         },
                         timeout
@@ -249,18 +250,18 @@ public:
                 delay, std::forward<decltype(fn)>(fn), timeout
             );
         } else {
-            using FnRetType = std::decay_t<decltype(fn(std::declval<StopToken>(), true))>;
+            using FnRetType = std::decay_t<std::invoke_result_t<decltype(fn), StopToken, bool>>;
             return ScheduledOperation<FnRetType>(
                 impl::extractAssociatedExecutor(*this),
                 delay,
                 [this, timeout, fn = std::forward<decltype(fn)>(fn)](auto ec) mutable {
                     return this->execute(
                         [fn = std::forward<decltype(fn)>(fn),
-                         isAborted = (ec == boost::asio::error::operation_aborted)](auto stopToken) {
+                         isAborted = (ec == boost::asio::error::operation_aborted)](auto stopToken) mutable {
                             if constexpr (std::is_void_v<FnRetType>) {
-                                fn(std::move(stopToken), isAborted);
+                                std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken), isAborted);
                             } else {
-                                return fn(std::move(stopToken), isAborted);
+                                return std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken), isAborted);
                             }
                         },
                         timeout
@@ -310,12 +311,12 @@ public:
                 [[maybe_unused]] auto timeoutHandler =
                     impl::getTimeoutHandleIfNeeded(TimerContextProvider::getContext(*this), timeout, stopSource);
 
-                using FnRetType = std::decay_t<decltype(fn(std::declval<StopToken>()))>;
+                using FnRetType = std::decay_t<std::invoke_result_t<decltype(fn), StopToken>>;
                 if constexpr (std::is_void_v<FnRetType>) {
-                    fn(std::move(stopToken));
+                    std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
                     outcome.setValue();
                 } else {
-                    outcome.setValue(fn(std::move(stopToken)));
+                    outcome.setValue(std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken)));
                 }
             })
         );
@@ -350,15 +351,27 @@ public:
             context_,
             impl::outcomeForHandler<StopSourceType>(fn),
             ErrorHandlerType::wrap([fn = std::forward<decltype(fn)>(fn)](auto& outcome) mutable {
-                using FnRetType = std::decay_t<decltype(fn())>;
+                using FnRetType = std::decay_t<std::invoke_result_t<decltype(fn)>>;
                 if constexpr (std::is_void_v<FnRetType>) {
-                    fn();
+                    std::invoke(std::forward<decltype(fn)>(fn));
                     outcome.setValue();
                 } else {
-                    outcome.setValue(fn());
+                    outcome.setValue(std::invoke(std::forward<decltype(fn)>(fn)));
                 }
             })
         );
+    }
+
+    /**
+     * @brief Schedule an operation on the execution context without expectations of a result
+     * @note Exceptions are caught internally and `ASSERT`ed on
+     *
+     * @param fn The block of code to execute
+     */
+    void
+    submit(SomeHandlerWithoutStopToken auto&& fn) noexcept(kIS_NOEXCEPT)
+    {
+        DispatcherType::post(context_, ErrorHandlerType::catchAndAssert(fn));
     }
 
     /**
