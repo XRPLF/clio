@@ -162,19 +162,20 @@ private:
     bool
     loadCacheFromFile()
     {
-        if (not settings_.cacheFilePath.has_value()) {
+        if (not settings_.cacheFileSettings.has_value()) {
             return false;
         }
-        LOG(log_.info()) << "Loading ledger cache from " << *settings_.cacheFilePath;
+        LOG(log_.info()) << "Loading ledger cache from " << settings_.cacheFileSettings->path;
         auto const minLatestSequence =
             backend_->fetchLedgerRange()
                 .transform([this](data::LedgerRange const& range) {
-                    return std::max(range.maxSequence - settings_.cacheFileMaxLag, range.minSequence);
+                    return std::max(range.maxSequence - settings_.cacheFileSettings->maxAge, range.minSequence);
                 })
                 .value_or(0);
 
-        auto const [success, duration_ms] =
-            util::timed([&]() { return cache_.get().loadFromFile(*settings_.cacheFilePath, minLatestSequence); });
+        auto const [success, duration_ms] = util::timed([&]() {
+            return cache_.get().loadFromFile(settings_.cacheFileSettings->path, minLatestSequence);
+        });
 
         if (not success.has_value()) {
             LOG(log_.warn()) << "Error loading cache from file: " << success.error();

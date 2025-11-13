@@ -101,96 +101,84 @@ INSTANTIATE_TEST_CASE_P(
             .numCacheMarkers = 48,
             .cachePageFetchSize = 512,
             .numThreads = 2,
-            .cacheFilePath = std::nullopt,
-            .cacheFileMaxLag = 0,
+            .cacheFileSettings = std::nullopt,
         },
         Settings{
             .numCacheDiffs = 32,
             .numCacheMarkers = 48,
             .cachePageFetchSize = 512,
             .numThreads = 4,
-            .cacheFilePath = std::nullopt,
-            .cacheFileMaxLag = 0,
+            .cacheFileSettings = std::nullopt,
         },
         Settings{
             .numCacheDiffs = 32,
             .numCacheMarkers = 48,
             .cachePageFetchSize = 512,
             .numThreads = 8,
-            .cacheFilePath = std::nullopt,
-            .cacheFileMaxLag = 0,
+            .cacheFileSettings = std::nullopt,
         },
         Settings{
             .numCacheDiffs = 32,
             .numCacheMarkers = 48,
             .cachePageFetchSize = 512,
             .numThreads = 16,
-            .cacheFilePath = std::nullopt,
-            .cacheFileMaxLag = 0,
+            .cacheFileSettings = std::nullopt,
         },
         Settings{
             .numCacheDiffs = 32,
             .numCacheMarkers = 128,
             .cachePageFetchSize = 24,
             .numThreads = 2,
-            .cacheFilePath = std::nullopt,
-            .cacheFileMaxLag = 0,
+            .cacheFileSettings = std::nullopt,
         },
         Settings{
             .numCacheDiffs = 32,
             .numCacheMarkers = 64,
             .cachePageFetchSize = 48,
             .numThreads = 4,
-            .cacheFilePath = std::nullopt,
-            .cacheFileMaxLag = 0,
+            .cacheFileSettings = std::nullopt
         },
         Settings{
             .numCacheDiffs = 32,
             .numCacheMarkers = 48,
             .cachePageFetchSize = 64,
             .numThreads = 8,
-            .cacheFilePath = std::nullopt,
-            .cacheFileMaxLag = 0,
+            .cacheFileSettings = std::nullopt
         },
         Settings{
             .numCacheDiffs = 32,
             .numCacheMarkers = 24,
             .cachePageFetchSize = 128,
             .numThreads = 16,
-            .cacheFilePath = std::nullopt,
-            .cacheFileMaxLag = 0,
+            .cacheFileSettings = std::nullopt
         },
         Settings{
             .numCacheDiffs = 128,
             .numCacheMarkers = 128,
             .cachePageFetchSize = 24,
             .numThreads = 2,
-            .cacheFilePath = std::nullopt,
-            .cacheFileMaxLag = 0,
+            .cacheFileSettings = std::nullopt
         },
         Settings{
             .numCacheDiffs = 1024,
             .numCacheMarkers = 64,
             .cachePageFetchSize = 48,
             .numThreads = 4,
-            .cacheFilePath = std::nullopt,
-            .cacheFileMaxLag = 0,
+            .cacheFileSettings = std::nullopt
         },
         Settings{
             .numCacheDiffs = 512,
             .numCacheMarkers = 48,
             .cachePageFetchSize = 64,
             .numThreads = 8,
-            .cacheFilePath = std::nullopt,
-            .cacheFileMaxLag = 0,
+            .cacheFileSettings = std::nullopt
         },
         Settings{
             .numCacheDiffs = 64,
             .numCacheMarkers = 24,
             .cachePageFetchSize = 128,
             .numThreads = 16,
-            .cacheFilePath = std::nullopt,
-            .cacheFileMaxLag = 0,
+            .cacheFileSettings = std::nullopt
         }
     ),
     [](auto const& info) {

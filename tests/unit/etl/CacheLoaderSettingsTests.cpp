@@ -146,8 +146,8 @@ TEST_F(CacheLoaderSettingsTest, CacheFilePathCorrectlyPropagatedThroughConfig)
     auto const cfg = getParseCacheConfig(json::parse(jsonStr));
     auto const settings = makeCacheLoaderSettings(cfg);
 
-    ASSERT_TRUE(settings.cacheFilePath.has_value());
-    EXPECT_EQ(settings.cacheFilePath.value(), kCACHE_FILE_PATH);
+    ASSERT_TRUE(settings.cacheFileSettings.has_value());
+    EXPECT_EQ(settings.cacheFileSettings->path, kCACHE_FILE_PATH);
 }
 
 TEST_F(CacheLoaderSettingsTest, CacheFilePathNotSetWhenAbsentFromConfig)
@@ -155,15 +155,17 @@ TEST_F(CacheLoaderSettingsTest, CacheFilePathNotSetWhenAbsentFromConfig)
     auto const cfg = generateDefaultCacheConfig();
     auto const settings = makeCacheLoaderSettings(cfg);
 
-    EXPECT_FALSE(settings.cacheFilePath.has_value());
+    EXPECT_FALSE(settings.cacheFileSettings.has_value());
 }
 
 TEST_F(CacheLoaderSettingsTest, MaxSequenceLagPropagatedThoughConfig)
 {
     auto const seq = 1234;
-    auto const jsonStr = fmt::format(R"JSON({{"cache": {{"file": {{"max_sequence_age": {} }}}}}})JSON", seq);
+    auto const jsonStr =
+        fmt::format(R"JSON({{"cache": {{"file": {{"path": "doesnt_matter", "max_sequence_age": {} }}}}}})JSON", seq);
     auto const cfg = getParseCacheConfig(json::parse(jsonStr));
     auto const settings = makeCacheLoaderSettings(cfg);
 
-    EXPECT_EQ(settings.cacheFileMaxLag, seq);
+    ASSERT_TRUE(settings.cacheFileSettings.has_value());
+    EXPECT_EQ(settings.cacheFileSettings->maxAge, seq);
 }

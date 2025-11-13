@@ -60,8 +60,7 @@ readCacheEntry(InputFile& file, size_t i)
         return std::unexpected(fmt::format("Failed to read blob size at index {}", i));
     }
 
-    Blob blob;
-    blob.resize(blobSize);
+    Blob blob(blobSize);
     if (not file.readRaw(reinterpret_cast<char*>(blob.data()), blobSize)) {
         return std::unexpected(fmt::format("Failed to read blob data at index {}", i));
     }
@@ -163,6 +162,8 @@ LedgerCacheFile::read(uint32_t minLatestSequence)
             if (not cacheEntryExpected.has_value()) {
                 return std::unexpected{std::move(cacheEntryExpected).error()};
             }
+            // Using insert with hint here to dectrease insert operation complexity to the amortized constant instead of
+            // logN
             result.map.insert(result.map.end(), std::move(cacheEntryExpected).value());
         }
 
