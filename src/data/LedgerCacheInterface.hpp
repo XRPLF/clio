@@ -27,7 +27,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace data {
@@ -168,6 +170,17 @@ public:
      */
     virtual void
     waitUntilCacheContainsSeq(uint32_t seq) = 0;
+
+    /**
+     * @brief Load the cache from file
+     * @note This operation takes about 7 seconds and it keeps mtx_ exclusively locked
+     *
+     * @param path The file path to load data from
+     * @param minLatestSequence The minimum allowed value of the latestLedgerSequence in cache file
+     * @return An error as a string if any
+     */
+    [[nodiscard]] virtual std::expected<void, std::string>
+    loadFromFile(std::string const& path, uint32_t minLatestSequence) = 0;
 };
 
 }  // namespace data

@@ -137,7 +137,11 @@
     // "num_cursors_from_account": 3200, // Read the cursors from the account table until we have enough cursors to partition the ledger to load concurrently.
     "num_markers": 48, // The number of markers is the number of coroutines to load the cache concurrently.
     "page_fetch_size": 512, // The number of rows to load for each page.
-    "load": "async" // "sync" to load cache synchronously  or "async" to load cache asynchronously or "none"/"no" to turn off the cache.
+    "load": "async", // "sync" to load cache synchronously  or "async" to load cache asynchronously or "none"/"no" to turn off the cache.
+    "file": {
+      "path": "./cache.bin",
+      "max_sequence_age": 5000
+    }
   },
   "prometheus": {
     "enabled": true,

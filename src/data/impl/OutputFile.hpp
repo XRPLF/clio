@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,52 +19,50 @@
 
 #pragma once
 
-#include <fmt/format.h>
+#include "util/Shasum.hpp"
 
-#include <cstdio>
-#include <filesystem>
+#include <xrpl/basics/base_uint.h>
+
+#include <cstddef>
+#include <cstring>
 #include <fstream>
-#include <ios>
-#include <iostream>
 #include <string>
-#include <string_view>
-#include <utility>
 
-struct TmpFile {
-    std::string path;
+namespace data::impl {
 
-    TmpFile(std::string_view content) : path{std::tmpnam(nullptr)}
+class OutputFile {
+    std::ofstream file_;
+    util::Sha256sum shasum_;
+
+public:
+    OutputFile(std::string const& path);
+
+    bool
+    isOpen() const;
+
+    template <typename T>
+    void
+    write(T&& data)
     {
-        std::ofstream ofs;
-        ofs.open(path, std::ios::out);
-        ofs << content;
+        writeRaw(reinterpret_cast<char const*>(&data), sizeof(T));
     }
 
-    static TmpFile
-    empty()
+    template <typename T>
+    void
+    write(T const* data, size_t const size)
     {
-        return TmpFile{""};
+        writeRaw(reinterpret_cast<char const*>(data), size);
     }
 
-    TmpFile(TmpFile const&) = delete;
-    TmpFile(TmpFile&& other) : path{std::move(other.path)}
-    {
-        other.path.clear();
-    }
-    TmpFile&
-    operator=(TmpFile const&) = delete;
-    TmpFile&
+    void
+    writeRaw(char const* data, size_t size);
 
-    operator=(TmpFile&& other)
-    {
-        if (this != &other)
-            *this = std::move(other);
-        return *this;
-    }
+    ripple::uint256
+    hash() const;
 
-    ~TmpFile()
-    {
-        if (not path.empty())
-            std::filesystem::remove(path);
-    }
+private:
+    void
+    writeToFile(char const* data, size_t size);
 };
+
+}  // namespace data::impl

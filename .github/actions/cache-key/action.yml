@@ -1,0 +1,36 @@
+name: Cache key
+description: Generate cache key for ccache
+
+inputs:
+  conan_profile:
+    description: Conan profile name
+    required: true
+  build_type:
+    description: Current build type (e.g. Release, Debug)
+    required: true
+    default: Release
+  code_coverage:
+    description: Whether code coverage is on
+    required: true
+    default: "false"
+
+outputs:
+  key:
+    description: Generated cache key for ccache
+    value: ${{ steps.key_without_commit.outputs.key }}-${{ steps.git_common_ancestor.outputs.commit }}
+  restore_keys:
+    description: Cache restore keys for fallback
+    value: ${{ steps.key_without_commit.outputs.key }}
+
+runs:
+  using: composite
+  steps:
+    - name: Find common commit
+      id: git_common_ancestor
+      uses: ./.github/actions/git-common-ancestor
+
+    - name: Set cache key without commit
+      id: key_without_commit
+      shell: bash
+      run: |
+        echo "key=clio-ccache-${{ runner.os }}-${{ inputs.build_type }}${{ inputs.code_coverage == 'true' && '-code_coverage' || '' }}-${{ inputs.conan_profile }}-develop" >> "${GITHUB_OUTPUT}"

@@ -250,6 +250,15 @@ public:
     updateRange(uint32_t newMax);
 
     /**
+     * @brief Updates the range of sequences that are stored in the DB without any checks
+     * @note In the most cases you should use updateRange() instead
+     *
+     * @param newMax The new maximum sequence available
+     */
+    void
+    forceUpdateRange(uint32_t newMax);
+
+    /**
      * @brief Sets the range of sequences that are stored in the DB.
      *
      * @param min The new minimum sequence available
@@ -776,6 +785,9 @@ private:
      */
     virtual bool
     doFinishWrites() = 0;
+
+    void
+    updateRangeImpl(uint32_t newMax);
 };
 
 }  // namespace data

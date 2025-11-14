@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,52 +19,52 @@
 
 #pragma once
 
+#include "data/LedgerCache.hpp"
+#include "data/impl/InputFile.hpp"
+#include "data/impl/OutputFile.hpp"
+
 #include <fmt/format.h>
+#include <xrpl/basics/base_uint.h>
 
-#include <cstdio>
-#include <filesystem>
-#include <fstream>
-#include <ios>
-#include <iostream>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <string>
-#include <string_view>
-#include <utility>
 
-struct TmpFile {
-    std::string path;
+namespace data::impl {
 
-    TmpFile(std::string_view content) : path{std::tmpnam(nullptr)}
-    {
-        std::ofstream ofs;
-        ofs.open(path, std::ios::out);
-        ofs << content;
-    }
+class LedgerCacheFile {
+public:
+    struct Header {
+        uint32_t version = kVERSION;
+        uint32_t latestSeq{};
+        uint64_t mapSize{};
+        uint64_t deletedSize{};
+    };
 
-    static TmpFile
-    empty()
-    {
-        return TmpFile{""};
-    }
+private:
+    static constexpr uint32_t kVERSION = 1;
 
-    TmpFile(TmpFile const&) = delete;
-    TmpFile(TmpFile&& other) : path{std::move(other.path)}
-    {
-        other.path.clear();
-    }
-    TmpFile&
-    operator=(TmpFile const&) = delete;
-    TmpFile&
+    std::string path_;
 
-    operator=(TmpFile&& other)
-    {
-        if (this != &other)
-            *this = std::move(other);
-        return *this;
-    }
+public:
+    template <typename T>
+    struct DataBase {
+        uint32_t latestSeq{0};
+        T map;
+        T deleted;
+    };
 
-    ~TmpFile()
-    {
-        if (not path.empty())
-            std::filesystem::remove(path);
-    }
+    using DataView = DataBase<LedgerCache::CacheMap const&>;
+    using Data = DataBase<LedgerCache::CacheMap>;
+
+    LedgerCacheFile(std::string path);
+
+    std::expected<void, std::string>
+    write(DataView dataView);
+
+    std::expected<Data, std::string>
+    read(uint32_t minLatestSequence);
 };
+
+}  // namespace data::impl

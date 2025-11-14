@@ -29,6 +29,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <vector>
 
 struct MockLedgerCache : data::LedgerCacheInterface {
@@ -77,4 +78,12 @@ struct MockLedgerCache : data::LedgerCacheInterface {
     MOCK_METHOD(float, getSuccessorHitRate, (), (const, override));
 
     MOCK_METHOD(void, waitUntilCacheContainsSeq, (uint32_t), (override));
+
+    using LoadFromFileReturnType = std::expected<void, std::string>;
+    MOCK_METHOD(
+        LoadFromFileReturnType,
+        loadFromFile,
+        (std::string const& path, uint32_t minLatestSequence),
+        (override)
+    );
 };

@@ -441,6 +441,22 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The value must be one of the following: `sync`, `async`, `none`.
 - **Description**: The strategy used for Cache loading.
 
+### cache.file.path
+
+- **Required**: False
+- **Type**: string
+- **Default value**: None
+- **Constraints**: None
+- **Description**: The path to a file where cache will be saved to on shutdown and loaded from on startup. If the file couldn't be read Clio will load cache as usual (from DB or from rippled).
+
+### cache.file.max_sequence_age
+
+- **Required**: True
+- **Type**: int
+- **Default value**: `5000`
+- **Constraints**: None
+- **Description**: Max allowed difference between the latest sequence in DB and in cache file. If the cache file is too old (contains too low latest sequence) Clio will reject using it.
+
 ### log.channels.[].channel
 
 - **Required**: False

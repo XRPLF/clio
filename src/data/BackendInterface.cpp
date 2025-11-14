@@ -270,7 +270,7 @@ BackendInterface::updateRange(uint32_t newMax)
 {
     std::scoped_lock const lck(rngMtx_);
 
-    if (range_.has_value() && newMax < range_->maxSequence) {
+    if (range_.has_value() and newMax < range_->maxSequence) {
         ASSERT(
             false,
             "Range shouldn't exist yet or newMax should be at least range->maxSequence. newMax = {}, "
@@ -280,11 +280,14 @@ BackendInterface::updateRange(uint32_t newMax)
         );
     }
 
-    if (!range_.has_value()) {
-        range_ = {.minSequence = newMax, .maxSequence = newMax};
-    } else {
-        range_->maxSequence = newMax;
-    }
+    updateRangeImpl(newMax);
+}
+
+void
+BackendInterface::forceUpdateRange(uint32_t newMax)
+{
+    std::scoped_lock const lck(rngMtx_);
+    updateRangeImpl(newMax);
 }
 
 void
@@ -408,6 +411,16 @@ BackendInterface::fetchFees(std::uint32_t const seq, boost::asio::yield_context 
     }
 
     return fees;
+}
+
+void
+BackendInterface::updateRangeImpl(uint32_t newMax)
+{
+    if (!range_.has_value()) {
+        range_ = {.minSequence = newMax, .maxSequence = newMax};
+    } else {
+        range_->maxSequence = newMax;
+    }
 }
 
 }  // namespace data

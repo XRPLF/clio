@@ -28,11 +28,14 @@ runs:
     - name: Run conan
       shell: bash
       env:
+        BUILD_DIR: "${{ inputs.build_dir }}"
         CONAN_BUILD_OPTION: "${{ inputs.force_conan_source_build == 'true' && '*' || 'missing' }}"
+        BUILD_TYPE: "${{ inputs.build_type }}"
+        CONAN_PROFILE: "${{ inputs.conan_profile }}"
       run: |
         conan \
           install . \
-          -of build \
-          -b "$CONAN_BUILD_OPTION" \
-          -s "build_type=${{ inputs.build_type }}" \
-          --profile:all "${{ inputs.conan_profile }}"
+          -of "${BUILD_DIR}" \
+          -b "${CONAN_BUILD_OPTION}" \
+          -s "build_type=${BUILD_TYPE}" \
+          --profile:all "${CONAN_PROFILE}"

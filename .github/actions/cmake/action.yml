@@ -44,6 +44,7 @@ runs:
     - name: Run cmake
       shell: bash
       env:
+        BUILD_DIR: "${{ inputs.build_dir }}"
         BUILD_TYPE: "${{ inputs.build_type }}"
         SANITIZER_OPTION: |-
           ${{ endsWith(inputs.conan_profile, '.asan') && '-Dsan=address' ||
@@ -58,7 +59,7 @@ runs:
         PACKAGE: "${{ inputs.package == 'true' && 'ON' || 'OFF' }}"
       run: |
         cmake \
-          -B ${{inputs.build_dir}} \
+          -B "${BUILD_DIR}" \
           -S . \
           -G Ninja \
           -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake \

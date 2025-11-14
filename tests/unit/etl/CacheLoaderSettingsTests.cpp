@@ -25,6 +25,8 @@
 
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
+#include <fmt/core.h>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 
 namespace json = boost::json;
@@ -42,7 +44,9 @@ generateDefaultCacheConfig()
          {"cache.num_cursors_from_diff", ConfigValue{ConfigType::Integer}.defaultValue(0)},
          {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0)},
          {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512)},
-         {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")}}
+         {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")},
+         {"cache.file.path", ConfigValue{ConfigType::String}.optional()},
+         {"cache.file.max_sequence_age", ConfigValue{ConfigType::Integer}.defaultValue(5000)}}
     };
 }
 
@@ -133,4 +137,35 @@ TEST_F(CacheLoaderSettingsTest, NoLoadStyleCorrectlyPropagatedThroughConfig)
         EXPECT_EQ(settings.loadStyle, CacheLoaderSettings::LoadStyle::NONE);
         EXPECT_TRUE(settings.isDisabled());
     }
+}
+
+TEST_F(CacheLoaderSettingsTest, CacheFilePathCorrectlyPropagatedThroughConfig)
+{
+    static constexpr auto kCACHE_FILE_PATH = "/path/to/cache.dat";
+    auto const jsonStr = fmt::format(R"JSON({{"cache": {{"file": {{"path": "{}"}}}}}})JSON", kCACHE_FILE_PATH);
+    auto const cfg = getParseCacheConfig(json::parse(jsonStr));
+    auto const settings = makeCacheLoaderSettings(cfg);
+
+    ASSERT_TRUE(settings.cacheFileSettings.has_value());
+    EXPECT_EQ(settings.cacheFileSettings->path, kCACHE_FILE_PATH);
+}
+
+TEST_F(CacheLoaderSettingsTest, CacheFilePathNotSetWhenAbsentFromConfig)
+{
+    auto const cfg = generateDefaultCacheConfig();
+    auto const settings = makeCacheLoaderSettings(cfg);
+
+    EXPECT_FALSE(settings.cacheFileSettings.has_value());
+}
+
+TEST_F(CacheLoaderSettingsTest, MaxSequenceLagPropagatedThoughConfig)
+{
+    auto const seq = 1234;
+    auto const jsonStr =
+        fmt::format(R"JSON({{"cache": {{"file": {{"path": "doesnt_matter", "max_sequence_age": {} }}}}}})JSON", seq);
+    auto const cfg = getParseCacheConfig(json::parse(jsonStr));
+    auto const settings = makeCacheLoaderSettings(cfg);
+
+    ASSERT_TRUE(settings.cacheFileSettings.has_value());
+    EXPECT_EQ(settings.cacheFileSettings->maxAge, seq);
 }
