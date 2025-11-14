@@ -107,15 +107,23 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         run: ./.github/scripts/conan/init.sh
 
-      - name: Restore cache
-        if: ${{ inputs.download_ccache }}
-        uses: ./.github/actions/restore-cache
-        id: restore_cache
+      - name: Generate cache key
+        uses: ./.github/actions/cache-key
+        id: cache_key
         with:
           conan_profile: ${{ inputs.conan_profile }}
-          ccache_dir: ${{ env.CCACHE_DIR }}
           build_type: ${{ inputs.build_type }}
           code_coverage: ${{ inputs.code_coverage }}
+
+      - name: Restore ccache cache
+        if: ${{ inputs.download_ccache }}
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        id: restore_cache
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ steps.cache_key.outputs.key }}
+          restore-keys: |
+            ${{ steps.cache_key.outputs.restore_keys }}
 
       - name: Run conan
         uses: ./.github/actions/conan
@@ -161,6 +169,13 @@ jobs:
           echo "miss_rate=${miss_rate}" >> $GITHUB_OUTPUT
           cat /tmp/ccache.stats
 
+      - name: Save ccache cache
+        if: ${{ inputs.upload_ccache && github.ref == 'refs/heads/develop' && (steps.restore_cache.outputs.cache-hit != 'true' || steps.ccache_stats.outputs.miss_rate == '100.0') }}
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ steps.cache_key.outputs.key }}
+
       - name: Strip unit_tests
         if: ${{ !endsWith(inputs.conan_profile, 'san') && !inputs.code_coverage && !inputs.analyze_build_time }}
         run: strip build/clio_tests
@@ -196,18 +211,6 @@ jobs:
         with:
           name: clio_deb_package_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/*.deb
-
-      - name: Save cache
-        if: ${{ inputs.upload_ccache && github.ref == 'refs/heads/develop' }}
-        uses: ./.github/actions/save-cache
-        with:
-          conan_profile: ${{ inputs.conan_profile }}
-          ccache_dir: ${{ env.CCACHE_DIR }}
-          build_type: ${{ inputs.build_type }}
-          code_coverage: ${{ inputs.code_coverage }}
-
-          ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
-          ccache_cache_miss_rate: ${{ steps.ccache_stats.outputs.miss_rate }}
 
       # This is run as part of the build job, because it requires the following:
       # - source code

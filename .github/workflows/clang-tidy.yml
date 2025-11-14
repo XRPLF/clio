@@ -48,13 +48,6 @@ jobs:
         with:
           disable_ccache: true
 
-      - name: Restore cache
-        uses: ./.github/actions/restore-cache
-        id: restore_cache
-        with:
-          conan_profile: ${{ env.CONAN_PROFILE }}
-          ccache_dir: ${{ env.CCACHE_DIR }}
-
       - name: Run conan
         uses: ./.github/actions/conan
         with:

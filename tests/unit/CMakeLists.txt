@@ -11,6 +11,7 @@ target_sources(
           data/BackendCountersTests.cpp
           data/BackendInterfaceTests.cpp
           data/LedgerCacheTests.cpp
+          data/LedgerCacheSaverTests.cpp
           data/cassandra/AsyncExecutorTests.cpp
           data/cassandra/ExecutionStrategyTests.cpp
           data/cassandra/LedgerHeaderCacheTests.cpp
