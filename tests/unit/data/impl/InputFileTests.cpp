@@ -22,7 +22,6 @@
 #include "util/TmpFile.hpp"
 
 #include <gtest/gtest.h>
-#include <xrpl/basics/base_uint.h>
 
 #include <cstdint>
 #include <string>
@@ -35,7 +34,7 @@ struct InputFileTest : ::testing::Test {};
 TEST_F(InputFileTest, ConstructorWithValidFile)
 {
     auto const tmpFile = TmpFile{"Hello, World!"};
-    InputFile inputFile(tmpFile.path);
+    InputFile const inputFile(tmpFile.path);
 
     EXPECT_TRUE(inputFile.isOpen());
 }
@@ -66,7 +65,7 @@ TEST_F(InputFileTest, ReadRawFromFile)
 
 TEST_F(InputFileTest, ReadRawFromFilePartial)
 {
-    std::string content = "Hello, World!";
+    std::string const content = "Hello, World!";
     auto tmpFile = TmpFile{content};
     InputFile inputFile(tmpFile.path);
 
@@ -87,7 +86,7 @@ TEST_F(InputFileTest, ReadRawFromFilePartial)
 
 TEST_F(InputFileTest, ReadRawAfterEnd)
 {
-    std::string content = "Test";
+    std::string const content = "Test";
     auto tmpFile = TmpFile{content};
     InputFile inputFile(tmpFile.path);
 
@@ -119,7 +118,7 @@ TEST_F(InputFileTest, ReadTemplateMethod)
     ASSERT_TRUE(inputFile.isOpen());
 
     std::uint32_t value{0};
-    bool success = inputFile.read(value);
+    bool const success = inputFile.read(value);
 
     EXPECT_TRUE(success);
     // Note: The actual value depends on endianness
@@ -151,7 +150,7 @@ TEST_F(InputFileTest, ReadFromEmptyFile)
 TEST_F(InputFileTest, HashOfEmptyFile)
 {
     auto tmpFile = TmpFile::empty();
-    InputFile inputFile(tmpFile.path);
+    InputFile const inputFile(tmpFile.path);
 
     ASSERT_TRUE(inputFile.isOpen());
     EXPECT_EQ(inputFile.hash(), util::sha256sum(""));

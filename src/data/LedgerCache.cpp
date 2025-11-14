@@ -265,8 +265,8 @@ LedgerCache::saveToFile(std::string const& path) const
     }
 
     impl::LedgerCacheFile file{path};
-    std::unique_lock lock{mtx_};
-    impl::LedgerCacheFile::DataView data{.latestSeq = latestSeq_, .map = map_, .deleted = deleted_};
+    std::unique_lock const lock{mtx_};
+    impl::LedgerCacheFile::DataView const data{.latestSeq = latestSeq_, .map = map_, .deleted = deleted_};
     return file.write(data);
 }
 
@@ -279,7 +279,7 @@ LedgerCache::loadFromFile(std::string const& path, uint32_t minLatestSequence)
         return std::unexpected(std::move(data).error());
     }
     auto [latestSeq, map, deleted] = std::move(data).value();
-    std::unique_lock lock{mtx_};
+    std::unique_lock const lock{mtx_};
     latestSeq_ = latestSeq;
     map_ = std::move(map);
     deleted_ = std::move(deleted);

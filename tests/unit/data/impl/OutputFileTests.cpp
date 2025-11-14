@@ -22,7 +22,6 @@
 #include "util/TmpFile.hpp"
 
 #include <gtest/gtest.h>
-#include <xrpl/basics/base_uint.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -48,14 +47,14 @@ struct OutputFileTest : ::testing::Test {
 
 TEST_F(OutputFileTest, ConstructorOpensFile)
 {
-    OutputFile file(tmpFile.path);
+    OutputFile const file(tmpFile.path);
     EXPECT_TRUE(file.isOpen());
 }
 
 TEST_F(OutputFileTest, NonExistingFile)
 {
     std::string const invalidPath = "/invalid/nonexistent/directory/file.dat";
-    OutputFile file(invalidPath);
+    OutputFile const file(invalidPath);
     EXPECT_FALSE(file.isOpen());
 }
 
@@ -107,7 +106,7 @@ TEST_F(OutputFileTest, WriteRawData)
         file.writeRaw(testData.data(), testData.size());
     }
 
-    std::string contents = readFileContents();
+    std::string const contents = readFileContents();
     EXPECT_EQ(contents, testData);
 }
 
@@ -125,13 +124,13 @@ TEST_F(OutputFileTest, WriteMultipleChunks)
         file.writeRaw(chunk3.data(), chunk3.size());
     }
 
-    std::string contents = readFileContents();
+    std::string const contents = readFileContents();
     EXPECT_EQ(contents, chunk1 + chunk2 + chunk3);
 }
 
 TEST_F(OutputFileTest, HashOfEmptyFile)
 {
-    OutputFile file(tmpFile.path);
+    OutputFile const file(tmpFile.path);
     ASSERT_TRUE(file.isOpen());
 
     // Hash of empty file should match SHA256 of empty string
