@@ -93,25 +93,31 @@ TEST(JsonUtils, integralValueAs)
 TEST(JsonUtils, getLedgerIndex)
 {
     auto const emptyJson = boost::json::value();
-    EXPECT_THROW(std::ignore = util::getLedgerIndex(emptyJson), std::logic_error);
+    auto ledgerIndex = util::getLedgerIndex(emptyJson);
+    EXPECT_FALSE(ledgerIndex.has_value());
+    EXPECT_EQ(ledgerIndex.error(), "Value neither uint64 nor int64");
 
     auto const boolJson = boost::json::value(true);
-    EXPECT_THROW(std::ignore = util::getLedgerIndex(emptyJson), std::logic_error);
+    ledgerIndex = util::getLedgerIndex(boolJson);
+    EXPECT_FALSE(ledgerIndex.has_value());
+    EXPECT_EQ(ledgerIndex.error(), "Value neither uint64 nor int64");
 
-    auto const numberJson = boost::json::value(12345);
-    auto ledgerIndex = util::getLedgerIndex(numberJson);
+    auto const numberJson = boost::json::value(123);
+    ledgerIndex = util::getLedgerIndex(numberJson);
     EXPECT_TRUE(ledgerIndex.has_value());
-    EXPECT_EQ(ledgerIndex.value(), 12345u);
+    EXPECT_EQ(ledgerIndex.value(), 123u);
 
-    auto const validStringJson = boost::json::value("12345");
+    auto const validStringJson = boost::json::value("123");
     ledgerIndex = util::getLedgerIndex(validStringJson);
     EXPECT_TRUE(ledgerIndex.has_value());
-    EXPECT_EQ(ledgerIndex.value(), 12345u);
+    EXPECT_EQ(ledgerIndex.value(), 123u);
 
     auto const invalidStringJson = boost::json::value("invalid123");
-    EXPECT_THROW(std::ignore = util::getLedgerIndex(invalidStringJson), std::invalid_argument);
+    ledgerIndex = util::getLedgerIndex(invalidStringJson);
+    EXPECT_FALSE(ledgerIndex.has_value());
 
     auto const validatedJson = boost::json::value("validated");
     ledgerIndex = util::getLedgerIndex(validatedJson);
     EXPECT_FALSE(ledgerIndex.has_value());
+    EXPECT_EQ(ledgerIndex.error(), "'validated' ledger index is requested");
 }

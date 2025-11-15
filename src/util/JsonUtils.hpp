@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <cctype>
 #include <concepts>
+#include <expected>
 #include <stdexcept>
 #include <string>
 
@@ -116,22 +117,23 @@ integralValueAs(boost::json::value const& value)
  * @brief Extracts ledger index from a JSON value which can be either a number or a string.
  *
  * @param value The JSON value to extract ledger index from
- * @return An optional containing the ledger index if it is a number; std::nullopt otherwise
- * @throws logic_error comes from integralValueAs if the underlying number is neither int64 nor uint64
- * @throws std::invalid_argument or std::out_of_range if the string cannot be converted to a number
+ * @return The extracted ledger index or an error message
  */
-[[nodiscard]] inline std::optional<uint32_t>
+[[nodiscard]] inline std::expected<uint32_t, std::string>
 getLedgerIndex(boost::json::value const& value)
 {
-    std::optional<uint32_t> ledgerIndex;
-
-    if (not value.is_string()) {
-        ledgerIndex = util::integralValueAs<uint32_t>(value);
-    } else if (value.as_string() != "validated") {
-        ledgerIndex = std::stoi(value.as_string().c_str());
+    try {
+        if (not value.is_string())
+            return util::integralValueAs<uint32_t>(value);
+        else if (value.as_string() != "validated")
+            return std::stoi(value.as_string().c_str());
+        else
+            return std::unexpected("'validated' ledger index is requested");
+    } catch (std::exception const& ex) {
+        return std::unexpected(ex.what());
+    } catch (...) {
+        return std::unexpected("Unknown error in getLedgerIndex");
     }
-
-    return ledgerIndex;
 }
 
 }  // namespace util
