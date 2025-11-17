@@ -32,5 +32,10 @@ runs:
     - name: Set cache key without commit
       id: key_without_commit
       shell: bash
+      env:
+        RUNNER_OS: ${{ runner.os }}
+        BUILD_TYPE: ${{ inputs.build_type }}
+        CODE_COVERAGE: ${{ inputs.code_coverage == 'true' && '-code_coverage' || '' }}
+        CONAN_PROFILE: ${{ inputs.conan_profile }}
       run: |
-        echo "key=clio-ccache-${{ runner.os }}-${{ inputs.build_type }}${{ inputs.code_coverage == 'true' && '-code_coverage' || '' }}-${{ inputs.conan_profile }}-develop" >> "${GITHUB_OUTPUT}"
+        echo "key=clio-ccache-${RUNNER_OS}-${BUILD_TYPE}${CODE_COVERAGE}-${CONAN_PROFILE}-develop" >> "${GITHUB_OUTPUT}"
