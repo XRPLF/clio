@@ -47,7 +47,7 @@ jobs:
 
     env:
       # TODO: remove completely when we have fixed all currently existing issues with sanitizers
-      SANITIZER_IGNORE_ERRORS: ${{ endsWith(inputs.conan_profile, '.tsan') || (inputs.conan_profile == 'gcc.asan' && inputs.build_type == 'Release') }}
+      SANITIZER_IGNORE_ERRORS: ${{ endsWith(inputs.conan_profile, '.tsan') }}
 
     steps:
       - name: Cleanup workspace

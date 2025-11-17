@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/LedgerCacheInterface.hpp"
+#include "data/Types.hpp"
 #include "etl/CacheLoaderInterface.hpp"
 #include "etl/CacheLoaderSettings.hpp"
 #include "etl/impl/CacheLoader.hpp"
@@ -28,9 +29,12 @@
 #include "etl/impl/CursorFromDiffProvider.hpp"
 #include "etl/impl/CursorFromFixDiffNumProvider.hpp"
 #include "util/Assert.hpp"
+#include "util/Profiler.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -98,6 +102,10 @@ public:
             return;
         }
 
+        if (loadCacheFromFile()) {
+            return;
+        }
+
         std::shared_ptr<impl::BaseCursorProvider> provider;
         if (settings_.numCacheCursorsFromDiff != 0) {
             LOG(log_.info()) << "Loading cache with cursor from num_cursors_from_diff="
@@ -148,6 +156,36 @@ public:
     {
         if (loader_ != nullptr)
             loader_->wait();
+    }
+
+private:
+    bool
+    loadCacheFromFile()
+    {
+        if (not settings_.cacheFileSettings.has_value()) {
+            return false;
+        }
+        LOG(log_.info()) << "Loading ledger cache from " << settings_.cacheFileSettings->path;
+        auto const minLatestSequence =
+            backend_->fetchLedgerRange()
+                .transform([this](data::LedgerRange const& range) {
+                    return std::max(range.maxSequence - settings_.cacheFileSettings->maxAge, range.minSequence);
+                })
+                .value_or(0);
+
+        auto const [success, duration_ms] = util::timed([&]() {
+            return cache_.get().loadFromFile(settings_.cacheFileSettings->path, minLatestSequence);
+        });
+
+        if (not success.has_value()) {
+            LOG(log_.warn()) << "Error loading cache from file: " << success.error();
+            return false;
+        }
+
+        LOG(log_.info()) << "Loaded cache from file in " << duration_ms
+                         << " ms. Latest sequence: " << cache_.get().latestLedgerSequence();
+        backend_->forceUpdateRange(cache_.get().latestLedgerSequence());
+        return true;
     }
 };
 

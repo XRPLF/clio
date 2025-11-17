@@ -22,6 +22,9 @@
 #include "util/config/ConfigDefinition.hpp"
 
 #include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <string>
 
 namespace etl {
 
@@ -32,6 +35,15 @@ struct CacheLoaderSettings {
     /** @brief Ways to load the cache */
     enum class LoadStyle { ASYNC, SYNC, NONE };
 
+    /** @brief Settings for cache file operations */
+    struct CacheFileSettings {
+        std::string path;       /**< path to the file to load cache from on start and save cache to on shutdown */
+        uint32_t maxAge = 5000; /**< max difference between latest sequence in cache file and DB */
+
+        auto
+        operator<=>(CacheFileSettings const&) const = default;
+    };
+
     size_t numCacheDiffs = 32;             /**< number of diffs to use to generate cursors */
     size_t numCacheMarkers = 48;           /**< number of markers to use at one time to traverse the ledger */
     size_t cachePageFetchSize = 512;       /**< number of ledger objects to fetch concurrently per marker */
@@ -39,7 +51,8 @@ struct CacheLoaderSettings {
     size_t numCacheCursorsFromDiff = 0;    /**< number of cursors to fetch from diff */
     size_t numCacheCursorsFromAccount = 0; /**< number of cursors to fetch from account_tx */
 
-    LoadStyle loadStyle = LoadStyle::ASYNC; /**< how to load the cache */
+    LoadStyle loadStyle = LoadStyle::ASYNC;             /**< how to load the cache */
+    std::optional<CacheFileSettings> cacheFileSettings; /**< optional settings for cache file operations */
 
     auto
     operator<=>(CacheLoaderSettings const&) const = default;

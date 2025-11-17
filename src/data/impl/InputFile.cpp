@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,54 +17,42 @@
 */
 //==============================================================================
 
-#pragma once
+#include "data/impl/InputFile.hpp"
 
-#include <fmt/format.h>
+#include <xrpl/basics/base_uint.h>
 
-#include <cstdio>
-#include <filesystem>
-#include <fstream>
+#include <cstddef>
+#include <cstring>
 #include <ios>
-#include <iostream>
+#include <iosfwd>
 #include <string>
-#include <string_view>
 #include <utility>
 
-struct TmpFile {
-    std::string path;
+namespace data::impl {
 
-    TmpFile(std::string_view content) : path{std::tmpnam(nullptr)}
-    {
-        std::ofstream ofs;
-        ofs.open(path, std::ios::out);
-        ofs << content;
-    }
+InputFile::InputFile(std::string const& path) : file_(path, std::ios::binary | std::ios::in)
+{
+}
 
-    static TmpFile
-    empty()
-    {
-        return TmpFile{""};
-    }
+bool
+InputFile::isOpen() const
+{
+    return file_.is_open();
+}
 
-    TmpFile(TmpFile const&) = delete;
-    TmpFile(TmpFile&& other) : path{std::move(other.path)}
-    {
-        other.path.clear();
-    }
-    TmpFile&
-    operator=(TmpFile const&) = delete;
-    TmpFile&
+bool
+InputFile::readRaw(char* data, size_t size)
+{
+    file_.read(data, size);
+    shasum_.update(data, size);
+    return not file_.fail();
+}
 
-    operator=(TmpFile&& other)
-    {
-        if (this != &other)
-            *this = std::move(other);
-        return *this;
-    }
+ripple::uint256
+InputFile::hash() const
+{
+    auto sum = shasum_;
+    return std::move(sum).finalize();
+}
 
-    ~TmpFile()
-    {
-        if (not path.empty())
-            std::filesystem::remove(path);
-    }
-};
+}  // namespace data::impl

@@ -55,6 +55,7 @@
 #include <cstdlib>
 #include <memory>
 #include <optional>
+#include <string>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -110,7 +111,23 @@ ClioApplication::run(bool const useNgWebServer)
     auto const dosguardWeights = web::dosguard::Weights::make(config_);
     auto dosGuard = web::dosguard::DOSGuard{config_, whitelistHandler, dosguardWeights};
     auto sweepHandler = web::dosguard::IntervalSweepHandler{config_, ioc, dosGuard};
+
     auto cache = data::LedgerCache{};
+    appStopper_.setOnStop([&cache, this](auto&&) {
+        // TODO(kuznetsss): move this into Stopper::makeOnStopCallback()
+        auto const cacheFilePath = config_.maybeValue<std::string>("cache.file.path");
+        if (not cacheFilePath.has_value()) {
+            return;
+        }
+
+        LOG(util::LogService::info()) << "Saving ledger cache to " << *cacheFilePath;
+        if (auto const [success, duration_ms] = util::timed([&]() { return cache.saveToFile(*cacheFilePath); });
+            success.has_value()) {
+            LOG(util::LogService::info()) << "Successfully saved ledger cache in " << duration_ms << " ms";
+        } else {
+            LOG(util::LogService::error()) << "Error saving LedgerCache to file";
+        }
+    });
 
     // Interface to the database
     auto backend = data::makeBackend(config_, cache);
