@@ -147,9 +147,12 @@ getLedgerIndex(boost::json::value const& value)
     if (not value.is_string()) {
         return tryIntegralValueAs<uint32_t>(value);
     } else if (value.as_string() != "validated") {
-        uint32_t ledgerIndex{};
         auto first = value.as_string().data();
         auto last = value.as_string().data() + value.as_string().size();
+        if (first != last && *first == '+')
+            ++first;
+
+        uint32_t ledgerIndex{};
         auto const ret = std::from_chars(first, last, ledgerIndex);
         if (ret.ec == std::errc() && ret.ptr == last)
             return ledgerIndex;

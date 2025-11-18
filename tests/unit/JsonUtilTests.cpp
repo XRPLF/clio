@@ -165,6 +165,16 @@ INSTANTIATE_TEST_CASE_P(
             .expectedResult = 123u
         },
         GetLedgerIndexParameterTestBundle{
+            .testName = "StringNumberWithPlusSignValue",
+            .jv = boost::json::value("+123"),
+            .expectedResult = 123u
+        },
+        GetLedgerIndexParameterTestBundle{
+            .testName = "StringEmptyValue",
+            .jv = boost::json::value(""),
+            .expectedResult = std::unexpected{"Invalid ledger index string"}
+        },
+        GetLedgerIndexParameterTestBundle{
             .testName = "StringWithLeadingCharsValue",
             .jv = boost::json::value("123invalid"),
             .expectedResult = std::unexpected{"Invalid ledger index string"}
