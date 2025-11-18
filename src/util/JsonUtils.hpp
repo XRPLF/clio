@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <charconv>
 #include <concepts>
 #include <expected>
 #include <stdexcept>
@@ -114,6 +115,27 @@ integralValueAs(boost::json::value const& value)
 }
 
 /**
+ * @brief Detects the type of number stored in value and casts it back to the requested Type.
+ * @note This conversion can possibly cause wrapping around or UB. Use with caution.
+ *
+ * @tparam Type The type to cast to
+ * @param value The JSON value to cast
+ * @return Value casted to the requested type or an error message
+ */
+template <std::integral Type>
+std::expected<Type, std::string>
+tryIntegralValueAs(boost::json::value const& value)
+{
+    if (value.is_uint64())
+        return static_cast<Type>(value.as_uint64());
+
+    if (value.is_int64())
+        return static_cast<Type>(value.as_int64());
+
+    return std::unexpected("Value neither uint64 nor int64");
+}
+
+/**
  * @brief Extracts ledger index from a JSON value which can be either a number or a string.
  *
  * @param value The JSON value to extract ledger index from
@@ -122,17 +144,19 @@ integralValueAs(boost::json::value const& value)
 [[nodiscard]] inline std::expected<uint32_t, std::string>
 getLedgerIndex(boost::json::value const& value)
 {
-    try {
-        if (not value.is_string())
-            return util::integralValueAs<uint32_t>(value);
-        else if (value.as_string() != "validated")
-            return std::stoi(value.as_string().c_str());
+    if (not value.is_string()) {
+        return tryIntegralValueAs<uint32_t>(value);
+    } else if (value.as_string() != "validated") {
+        uint32_t ledgerIndex{};
+        auto first = value.as_string().data();
+        auto last = value.as_string().data() + value.as_string().size();
+        auto const ret = std::from_chars(first, last, ledgerIndex);
+        if (ret.ec == std::errc() && ret.ptr == last)
+            return ledgerIndex;
         else
-            return std::unexpected("'validated' ledger index is requested");
-    } catch (std::exception const& ex) {
-        return std::unexpected(ex.what());
-    } catch (...) {
-        return std::unexpected("Unknown error in getLedgerIndex");
+            return std::unexpected("Invalid ledger index string");
+    } else {
+        return std::unexpected("'validated' ledger index is requested");
     }
 }
 

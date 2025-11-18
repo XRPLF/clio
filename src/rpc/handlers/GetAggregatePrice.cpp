@@ -266,7 +266,7 @@ tag_invoke(boost::json::value_to_tag<GetAggregatePriceHandler::Input>, boost::js
     if (jsonObject.contains(JS(ledger_index))) {
         auto const expectedLedgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
         if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = expectedLedgerIndex.value();
+            input.ledgerIndex = *expectedLedgerIndex;
     }
 
     for (auto const& oracle : jsonObject.at(JS(oracles)).as_array()) {

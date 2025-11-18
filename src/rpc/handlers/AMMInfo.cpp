@@ -319,7 +319,7 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
     if (jsonObject.contains(JS(ledger_index))) {
         auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
         if (expectedLedgerIndex.has_value())
-            input.ledgerIndex = expectedLedgerIndex.value();
+            input.ledgerIndex = *expectedLedgerIndex;
     }
 
     if (jsonObject.contains(JS(asset)))
