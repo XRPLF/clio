@@ -65,6 +65,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
 
     if (input.index) {
         key = ripple::uint256{std::string_view(*(input.index))};
+        if (key.isZero())
+            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
     } else if (input.accountRoot) {
         key = ripple::keylet::account(*util::parseBase58Wrapper<ripple::AccountID>(*(input.accountRoot))).key;
     } else if (input.did) {
@@ -201,7 +203,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         // Must specify 1 of the following fields to indicate what type
         if (ctx.apiVersion == 1)
             return Error{Status{ClioError::RpcUnknownOption}};
-        return Error{Status{RippledError::rpcINVALID_PARAMS}};
+        return Error{Status{RippledError::rpcINVALID_PARAMS, "No ledger_entry params provided."}};
     }
 
     // check ledger exists
@@ -220,20 +222,20 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
 
     if (!ledgerObject || ledgerObject->empty()) {
         if (not input.includeDeleted)
-            return Error{Status{ClioError::RpcEntryNotFound}};
+            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
         auto const deletedSeq = sharedPtrBackend_->fetchLedgerObjectSeq(key, lgrInfo.seq, ctx.yield);
         if (!deletedSeq)
-            return Error{Status{ClioError::RpcEntryNotFound}};
+            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
         ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, deletedSeq.value() - 1, ctx.yield);
         if (!ledgerObject || ledgerObject->empty())
-            return Error{Status{ClioError::RpcEntryNotFound}};
+            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
         output.deletedLedgerIndex = deletedSeq;
     }
 
     ripple::STLedgerEntry const sle{ripple::SerialIter{ledgerObject->data(), ledgerObject->size()}, key};
 
     if (input.expectedType != ripple::ltANY && sle.getType() != input.expectedType)
-        return Error{Status{"unexpectedLedgerType"}};
+        return Error{Status{RippledError::rpcUNEXPECTED_LEDGER_TYPE}};
 
     output.index = ripple::strHex(key);
     output.ledgerIndex = lgrInfo.seq;

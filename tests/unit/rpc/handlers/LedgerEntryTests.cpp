@@ -152,7 +152,7 @@ generateTestValuesForParametersTest()
             .testName = "UnknownOption",
             .testJson = R"JSON({})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "No ledger_entry params provided."
         },
 
         ParamTestCaseBundle{
@@ -3386,7 +3386,7 @@ TEST_F(RPCLedgerEntryTest, InvalidEntryTypeVersion2)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
+        EXPECT_EQ(err.at("error_message").as_string(), "No ledger_entry params provided.");
     });
 }
 
