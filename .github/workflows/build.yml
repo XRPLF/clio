@@ -83,7 +83,7 @@ jobs:
       conan_profile: gcc
       build_type: Debug
       download_ccache: true
-      upload_ccache: false
+      upload_ccache: true
       code_coverage: true
       static: true
       upload_clio_server: false

@@ -172,6 +172,16 @@ public:
     waitUntilCacheContainsSeq(uint32_t seq) = 0;
 
     /**
+     * @brief Save the cache to file
+     * @note This operation takes about 7 seconds and it keeps a shared lock of mtx_
+     *
+     * @param path The file path to save the cache to
+     * @return An error as a string if any
+     */
+    [[nodiscard]] virtual std::expected<void, std::string>
+    saveToFile(std::string const& path) const = 0;
+
+    /**
      * @brief Load the cache from file
      * @note This operation takes about 7 seconds and it keeps mtx_ exclusively locked
      *

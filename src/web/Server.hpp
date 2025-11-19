@@ -34,6 +34,7 @@
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/socket_base.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/error.hpp>
 #include <boost/asio/strand.hpp>
@@ -43,6 +44,7 @@
 #include <boost/beast/core/tcp_stream.hpp>
 #include <fmt/format.h>
 
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <exception>
@@ -221,7 +223,8 @@ template <
     template <typename> class PlainSessionType,
     template <typename> class SslSessionType,
     SomeServerHandler HandlerType>
-class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>> {
+class Server : public ServerTag,
+               public std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>> {
     using std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>>::shared_from_this;
 
     util::Logger log_{"WebServer"};
@@ -235,6 +238,7 @@ class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslS
     std::shared_ptr<AdminVerificationStrategy> adminVerification_;
     std::uint32_t maxWsSendingQueueSize_;
     std::shared_ptr<ProxyIpResolver> proxyIpResolver_;
+    std::atomic_bool isStopped_{false};
 
 public:
     /**
@@ -308,6 +312,13 @@ public:
         doAccept();
     }
 
+    /** @brief Stop accepting new connections */
+    void
+    stop(boost::asio::yield_context)
+    {
+        isStopped_ = true;
+    }
+
 private:
     void
     doAccept()
@@ -321,6 +332,10 @@ private:
     void
     onAccept(boost::beast::error_code ec, tcp::socket socket)
     {
+        if (isStopped_) {
+            return;
+        }
+
         if (!ec) {
             auto ctxRef =
                 ctx_ ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_.value()} : std::nullopt;

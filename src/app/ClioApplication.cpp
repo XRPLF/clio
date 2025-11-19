@@ -25,6 +25,7 @@
 #include "data/AmendmentCenter.hpp"
 #include "data/BackendFactory.hpp"
 #include "data/LedgerCache.hpp"
+#include "data/LedgerCacheSaver.hpp"
 #include "etl/ETLService.hpp"
 #include "etl/LoadBalancer.hpp"
 #include "etl/NetworkValidatedLedgers.hpp"
@@ -98,13 +99,14 @@ ClioApplication::run(bool const useNgWebServer)
     auto const threads = config_.get<uint16_t>("io_threads");
     LOG(util::LogService::info()) << "Number of io threads = " << threads;
 
+    // Similarly we need a context to run ETL on
+    // In the future we can remove the raw ioc and use ctx instead
+    // This context should be above ioc because its reference is getting into tasks inside ioc
+    util::async::CoroExecutionContext ctx{threads};
+
     // IO context to handle all incoming requests, as well as other things.
     // This is not the only io context in the application.
     boost::asio::io_context ioc{threads};
-
-    // Similarly we need a context to run ETL on
-    // In the future we can remove the raw ioc and use ctx instead
-    util::async::CoroExecutionContext ctx{threads};
 
     // Rate limiter, to prevent abuse
     auto whitelistHandler = web::dosguard::WhitelistHandler{config_};
@@ -113,21 +115,7 @@ ClioApplication::run(bool const useNgWebServer)
     auto sweepHandler = web::dosguard::IntervalSweepHandler{config_, ioc, dosGuard};
 
     auto cache = data::LedgerCache{};
-    appStopper_.setOnStop([&cache, this](auto&&) {
-        // TODO(kuznetsss): move this into Stopper::makeOnStopCallback()
-        auto const cacheFilePath = config_.maybeValue<std::string>("cache.file.path");
-        if (not cacheFilePath.has_value()) {
-            return;
-        }
-
-        LOG(util::LogService::info()) << "Saving ledger cache to " << *cacheFilePath;
-        if (auto const [success, duration_ms] = util::timed([&]() { return cache.saveToFile(*cacheFilePath); });
-            success.has_value()) {
-            LOG(util::LogService::info()) << "Successfully saved ledger cache in " << duration_ms << " ms";
-        } else {
-            LOG(util::LogService::error()) << "Error saving LedgerCache to file";
-        }
-    });
+    auto cacheSaver = data::LedgerCacheSaver{config_, cache};
 
     // Interface to the database
     auto backend = data::makeBackend(config_, cache);
@@ -208,7 +196,7 @@ ClioApplication::run(bool const useNgWebServer)
         }
 
         appStopper_.setOnStop(
-            Stopper::makeOnStopCallback(httpServer.value(), *balancer, *etl, *subscriptions, *backend, ioc)
+            Stopper::makeOnStopCallback(httpServer.value(), *balancer, *etl, *subscriptions, *backend, cacheSaver, ioc)
         );
 
         // Blocks until stopped.
@@ -223,6 +211,9 @@ ClioApplication::run(bool const useNgWebServer)
     auto handler = std::make_shared<web::RPCServerHandler<RPCEngineType>>(config_, backend, rpcEngine, etl, dosGuard);
 
     auto const httpServer = web::makeHttpServer(config_, ioc, dosGuard, handler, cache);
+    appStopper_.setOnStop(
+        Stopper::makeOnStopCallback(*httpServer, *balancer, *etl, *subscriptions, *backend, cacheSaver, ioc)
+    );
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope
