@@ -24,7 +24,7 @@
 #include "util/MockPrometheus.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/config/ConfigDefinition.hpp"
-#include "web/ng/Server.hpp"
+#include "web/interface/Concepts.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
@@ -61,8 +61,13 @@ TEST_F(StopperTest, stopCalledMultipleTimes)
 }
 
 struct StopperMakeCallbackTest : util::prometheus::WithPrometheus, SyncAsioContextTest {
-    struct ServerMock : web::ng::ServerTag {
+    struct ServerMock : web::ServerTag {
         MOCK_METHOD(void, stop, (boost::asio::yield_context), ());
+    };
+
+    struct MockLedgerCacheSaver {
+        MOCK_METHOD(void, save, ());
+        MOCK_METHOD(void, waitToFinish, ());
     };
 
 protected:
@@ -71,6 +76,7 @@ protected:
     testing::StrictMock<MockETLService> etlServiceMock_;
     testing::StrictMock<MockSubscriptionManager> subscriptionManagerMock_;
     testing::StrictMock<MockBackend> backendMock_{util::config::ClioConfigDefinition{}};
+    testing::StrictMock<MockLedgerCacheSaver> cacheSaverMock_;
     boost::asio::io_context ioContextToStop_;
 
     bool
@@ -86,10 +92,17 @@ TEST_F(StopperMakeCallbackTest, makeCallbackTest)
     std::thread t{[this]() { ioContextToStop_.run(); }};
 
     auto callback = Stopper::makeOnStopCallback(
-        serverMock_, loadBalancerMock_, etlServiceMock_, subscriptionManagerMock_, backendMock_, ioContextToStop_
+        serverMock_,
+        loadBalancerMock_,
+        etlServiceMock_,
+        subscriptionManagerMock_,
+        backendMock_,
+        cacheSaverMock_,
+        ioContextToStop_
     );
 
     testing::Sequence const s1, s2;
+    EXPECT_CALL(cacheSaverMock_, save).InSequence(s1).WillOnce([this]() { EXPECT_FALSE(isContextStopped()); });
     EXPECT_CALL(serverMock_, stop).InSequence(s1).WillOnce([this]() { EXPECT_FALSE(isContextStopped()); });
     EXPECT_CALL(loadBalancerMock_, stop).InSequence(s2).WillOnce([this]() { EXPECT_FALSE(isContextStopped()); });
     EXPECT_CALL(etlServiceMock_, stop).InSequence(s1, s2).WillOnce([this]() { EXPECT_FALSE(isContextStopped()); });
@@ -99,6 +112,7 @@ TEST_F(StopperMakeCallbackTest, makeCallbackTest)
     EXPECT_CALL(backendMock_, waitForWritesToFinish).InSequence(s1, s2).WillOnce([this]() {
         EXPECT_FALSE(isContextStopped());
     });
+    EXPECT_CALL(cacheSaverMock_, waitToFinish).InSequence(s1).WillOnce([this]() { EXPECT_FALSE(isContextStopped()); });
 
     runSpawn([&](boost::asio::yield_context yield) {
         callback(yield);
