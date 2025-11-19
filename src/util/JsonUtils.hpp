@@ -23,6 +23,7 @@
 
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
+#include <xrpl/beast/core/LexicalCast.h>
 
 #include <algorithm>
 #include <cctype>
@@ -147,14 +148,8 @@ getLedgerIndex(boost::json::value const& value)
     if (not value.is_string()) {
         return tryIntegralValueAs<uint32_t>(value);
     } else if (value.as_string() != "validated") {
-        auto first = value.as_string().data();
-        auto last = value.as_string().data() + value.as_string().size();
-        if (first != last && *first == '+')
-            ++first;
-
         uint32_t ledgerIndex{};
-        auto const ret = std::from_chars(first, last, ledgerIndex);
-        if (ret.ec == std::errc() && ret.ptr == last)
+        if (beast::lexicalCastChecked(ledgerIndex, value.as_string().c_str()))
             return ledgerIndex;
         else
             return std::unexpected("Invalid ledger index string");
