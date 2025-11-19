@@ -391,7 +391,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: double
 - **Default value**: `10`
 - **Constraints**: The value must be a positive double number.
-- **Description**: The number of milliseconds the server waits to shutdown gracefully. If Clio does not shutdown gracefully after the specified value, it will be killed instead.
+- **Description**: The number of seconds the server waits to shutdown gracefully. If Clio does not shutdown gracefully after the specified value, it will be killed instead.
 
 ### cache.num_diffs
 
