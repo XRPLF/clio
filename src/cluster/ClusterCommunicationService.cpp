@@ -150,7 +150,10 @@ ClioNode
 ClusterCommunicationService::selfData() const
 {
     ClioNode result{};
-    util::spawn(strand_, [this, &result](boost::asio::yield_context) { result = selfData_; });
+    boost::asio::spawn(
+        strand_, [this, &result](boost::asio::yield_context) { result = selfData_; }, boost::asio::use_future
+    )
+        .wait();
     return result;
 }
 
@@ -161,10 +164,15 @@ ClusterCommunicationService::clusterData() const
         return std::unexpected{"Service is not healthy"};
     }
     std::vector<ClioNode> result;
-    util::spawn(strand_, [this, &result](boost::asio::yield_context) {
-        result = otherNodesData_;
-        result.push_back(selfData_);
-    });
+    boost::asio::spawn(
+        strand_,
+        [this, &result](boost::asio::yield_context) {
+            result = otherNodesData_;
+            result.push_back(selfData_);
+        },
+        boost::asio::use_future
+    )
+        .wait();
     return result;
 }
 
@@ -220,7 +228,8 @@ ClusterCommunicationService::doWrite()
 {
     selfData_.updateTime = std::chrono::system_clock::now();
     boost::json::value jsonValue{};
-    boost::json::value_from(selfData_, jsonValue);
+    auto const& selfDataRef = selfData_;
+    boost::json::value_from(selfDataRef, jsonValue);
     backend_->writeNodeMessage(*selfData_.uuid, boost::json::serialize(jsonValue.as_object()));
 }
 
