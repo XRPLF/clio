@@ -145,15 +145,8 @@ public:
     void
     waitUntilCacheContainsSeq(uint32_t seq) override;
 
-    /**
-     * @brief Save the cache to file
-     * @note This operation takes about 7 seconds and it keeps mtx_ exclusively locked
-     *
-     * @param path The file path to save the cache to
-     * @return An error as a string if any
-     */
     std::expected<void, std::string>
-    saveToFile(std::string const& path) const;
+    saveToFile(std::string const& path) const override;
 
     std::expected<void, std::string>
     loadFromFile(std::string const& path, uint32_t minLatestSequence) override;

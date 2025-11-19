@@ -49,7 +49,7 @@ jobs:
         build_type: [Release, Debug]
         container:
           [
-            '{ "image": "ghcr.io/xrplf/clio-ci:62369411404eb32b0140603a785ff05e1dc36ce8" }',
+            '{ "image": "ghcr.io/xrplf/clio-ci:77387d8f9f13aea8f23831d221ac3e7683bb69b7" }',
           ]
         static: [true]
 
@@ -79,7 +79,7 @@ jobs:
     uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-ci:62369411404eb32b0140603a785ff05e1dc36ce8" }'
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:77387d8f9f13aea8f23831d221ac3e7683bb69b7" }'
       conan_profile: gcc
       build_type: Debug
       download_ccache: true
@@ -98,7 +98,7 @@ jobs:
     uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-ci:62369411404eb32b0140603a785ff05e1dc36ce8" }'
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:77387d8f9f13aea8f23831d221ac3e7683bb69b7" }'
       conan_profile: gcc
       build_type: Release
       download_ccache: true
@@ -115,7 +115,7 @@ jobs:
     needs: build-and-test
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:62369411404eb32b0140603a785ff05e1dc36ce8
+      image: ghcr.io/xrplf/clio-ci:77387d8f9f13aea8f23831d221ac3e7683bb69b7
 
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0

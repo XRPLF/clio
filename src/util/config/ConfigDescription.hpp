@@ -255,7 +255,7 @@ This document provides a list of all available Clio configuration properties in 
            .value = "The number of worker threads or processes that are responsible for managing and processing "
                     "subscription-based tasks from `rippled`."},
         KV{.key = "graceful_period",
-           .value = "The number of milliseconds the server waits to shutdown gracefully. If Clio does not shutdown "
+           .value = "The number of seconds the server waits to shutdown gracefully. If Clio does not shutdown "
                     "gracefully after the specified value, it will be killed instead."},
         KV{.key = "cache.num_diffs",
            .value = "The number of cursors generated is the number of changed (without counting deleted) objects in "

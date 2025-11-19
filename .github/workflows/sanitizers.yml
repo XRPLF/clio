@@ -44,14 +44,13 @@ jobs:
     uses: ./.github/workflows/reusable-build-test.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-ci:62369411404eb32b0140603a785ff05e1dc36ce8" }'
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:77387d8f9f13aea8f23831d221ac3e7683bb69b7" }'
       download_ccache: false
       upload_ccache: false
       conan_profile: ${{ matrix.compiler }}${{ matrix.sanitizer_ext }}
       build_type: ${{ matrix.build_type }}
       static: false
-      # Currently, both gcc.tsan and clang.tsan unit tests hang
-      run_unit_tests: ${{ matrix.sanitizer_ext != '.tsan' }}
+      run_unit_tests: true
       run_integration_tests: false
       upload_clio_server: false
       targets: clio_tests clio_integration_tests

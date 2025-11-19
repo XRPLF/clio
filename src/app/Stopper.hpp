@@ -20,12 +20,13 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "data/LedgerCacheSaver.hpp"
 #include "etl/ETLServiceInterface.hpp"
 #include "etl/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/CoroutineGroup.hpp"
 #include "util/log/Logger.hpp"
-#include "web/ng/Server.hpp"
+#include "web/interface/Concepts.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
@@ -71,10 +72,11 @@ public:
      * @param etl The ETL service to stop.
      * @param subscriptions The subscription manager to stop.
      * @param backend The backend to stop.
+     * @param cacheSaver The ledger cache saver
      * @param ioc The io_context to stop.
      * @return The callback to be called on application stop.
      */
-    template <web::ng::SomeServer ServerType>
+    template <web::SomeServer ServerType, data::SomeLedgerCacheSaver LedgerCacheSaverType>
     static std::function<void(boost::asio::yield_context)>
     makeOnStopCallback(
         ServerType& server,
@@ -82,10 +84,13 @@ public:
         etl::ETLServiceInterface& etl,
         feed::SubscriptionManagerInterface& subscriptions,
         data::BackendInterface& backend,
+        LedgerCacheSaverType& cacheSaver,
         boost::asio::io_context& ioc
     )
     {
         return [&](boost::asio::yield_context yield) {
+            cacheSaver.save();
+
             util::CoroutineGroup coroutineGroup{yield};
             coroutineGroup.spawn(yield, [&server](auto innerYield) {
                 server.stop(innerYield);
@@ -105,6 +110,8 @@ public:
 
             backend.waitForWritesToFinish();
             LOG(util::LogService::info()) << "Backend writes finished";
+
+            cacheSaver.waitToFinish();
 
             ioc.stop();
             LOG(util::LogService::info()) << "io_context stopped";
