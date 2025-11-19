@@ -5,6 +5,7 @@ target_sources(
           BackendCounters.cpp
           BackendInterface.cpp
           LedgerCache.cpp
+          LedgerCacheSaver.cpp
           LedgerHeaderCache.cpp
           cassandra/impl/Future.cpp
           cassandra/impl/Cluster.cpp
@@ -14,6 +15,9 @@ target_sources(
           cassandra/impl/SslContext.cpp
           cassandra/Handle.cpp
           cassandra/SettingsProvider.cpp
+          impl/InputFile.cpp
+          impl/LedgerCacheFile.cpp
+          impl/OutputFile.cpp
 )
 
 target_link_libraries(clio_data PUBLIC cassandra-cpp-driver::cassandra-cpp-driver clio_util)

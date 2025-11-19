@@ -8,7 +8,7 @@ ARG UBUNTU_VERSION
 
 ARG GCC_MAJOR_VERSION
 
-ARG BUILD_VERSION=1
+ARG BUILD_VERSION=0
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
@@ -34,6 +34,7 @@ RUN wget --progress=dot:giga https://gcc.gnu.org/pub/gcc/releases/gcc-$GCC_VERSI
 WORKDIR /gcc-$GCC_VERSION
 RUN ./contrib/download_prerequisites
 
+# hadolint ignore=DL3059
 RUN mkdir /gcc-build
 WORKDIR /gcc-build
 RUN /gcc-$GCC_VERSION/configure \

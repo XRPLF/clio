@@ -19,9 +19,7 @@
 
 #pragma once
 
-#include "util/Assert.hpp"
 #include "util/Mutex.hpp"
-#include "util/Spawn.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Counter.hpp"
@@ -29,23 +27,80 @@
 
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
 
 #include <atomic>
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <limits>
+#include <queue>
 
 namespace rpc {
 
 /**
+ * @brief An interface for any class providing a report as json object
+ */
+struct Reportable {
+    virtual ~Reportable() = default;
+
+    /**
+     * @brief Generate a report of the work queue state.
+     *
+     * @return The report as a JSON object.
+     */
+    [[nodiscard]] virtual boost::json::object
+    report() const = 0;
+};
+
+/**
  * @brief An asynchronous, thread-safe queue for RPC requests.
  */
-class WorkQueue {
+class WorkQueue : public Reportable {
+    using TaskType = std::function<void(boost::asio::yield_context)>;
+    using QueueType = std::queue<TaskType>;
+
+public:
+    /**
+     * @brief Represents a task scheduling priority
+     */
+    enum class Priority : uint8_t {
+        High,
+        Default,
+    };
+
+private:
+    struct DispatcherState {
+        QueueType high;
+        QueueType normal;
+
+        bool isIdle = false;
+
+        void
+        push(Priority priority, auto&& task)
+        {
+            auto& queue = [this, priority] -> QueueType& {
+                if (priority == Priority::High)
+                    return high;
+                return normal;
+            }();
+            queue.push(std::forward<decltype(task)>(task));
+        }
+
+        [[nodiscard]] bool
+        empty() const
+        {
+            return high.empty() and normal.empty();
+        }
+    };
+
+private:
+    static constexpr auto kTAKE_HIGH_PRIO = 4uz;
+
     // these are cumulative for the lifetime of the process
     std::reference_wrapper<util::prometheus::CounterInt> queued_;
     std::reference_wrapper<util::prometheus::CounterInt> durationUs_;
@@ -55,33 +110,46 @@ class WorkQueue {
 
     util::Logger log_{"RPC"};
     boost::asio::thread_pool ioc_;
+    boost::asio::strand<boost::asio::thread_pool::executor_type> strand_;
+    bool hasDispatcher_ = false;
 
     std::atomic_bool stopping_;
 
-    class OneTimeCallable {
-        std::function<void()> func_;
-        bool called_{false};
-
-    public:
-        void
-        setCallable(std::function<void()> func);
-
-        void
-        operator()();
-
-        operator bool() const;
-    };
-    util::Mutex<OneTimeCallable> onQueueEmpty_;
+    util::Mutex<std::function<void()>> onQueueEmpty_;
+    util::Mutex<DispatcherState> dispatcherState_;
+    boost::asio::steady_timer waitTimer_;
 
 public:
+    struct DontStartProcessingTag {};
+    static constexpr DontStartProcessingTag kDONT_START_PROCESSING_TAG = {};
+
     /**
-     * @brief Create an we instance of the work queue.
+     * @brief Create an instance of the work queue.
+     *
+     * The work queue immediately starts to process tasks as they come.
      *
      * @param numWorkers The amount of threads to spawn in the pool
      * @param maxSize The maximum capacity of the queue; 0 means unlimited
      */
     WorkQueue(std::uint32_t numWorkers, uint32_t maxSize = 0);
-    ~WorkQueue();
+
+    /**
+     * @brief Create an instance of the work queue without starting the processing of events.
+     *
+     * Clients are expected to call `startProcessing` manually once ready to start processing tasks.
+     *
+     * @param numWorkers The amount of threads to spawn in the pool
+     * @param maxSize The maximum capacity of the queue; 0 means unlimited
+     */
+    WorkQueue(DontStartProcessingTag, std::uint32_t numWorkers, uint32_t maxSize = 0);
+
+    ~WorkQueue() override;
+
+    /**
+     * @brief Start processing of the enqueued tasks.
+     */
+    void
+    startProcessing();
 
     /**
      * @brief Put the work queue into a stopping state. This will prevent new jobs from being queued.
@@ -89,7 +157,13 @@ public:
      * @param onQueueEmpty A callback to run when the last task in the queue is completed
      */
     void
-    stop(std::function<void()> onQueueEmpty);
+    requestStop(std::function<void()> onQueueEmpty = [] {});
+
+    /**
+     * @brief Put the work queue into a stopping state and await workers to finish.
+     */
+    void
+    stop();
 
     /**
      * @brief A factory function that creates the work queue based on a config.
@@ -97,7 +171,7 @@ public:
      * @param config The Clio config to use
      * @return The work queue
      */
-    static WorkQueue
+    [[nodiscard]] static WorkQueue
     makeWorkQueue(util::config::ClioConfigDefinition const& config);
 
     /**
@@ -105,60 +179,21 @@ public:
      *
      * The job will be rejected if isWhiteListed is set to false and the current size of the queue reached capacity.
      *
-     * @tparam FnType The function object type
      * @param func The function object to queue as a job
      * @param isWhiteListed Whether the queue capacity applies to this job
+     * @param priority The priority of the task
      * @return true if the job was successfully queued; false otherwise
      */
-    template <typename FnType>
     bool
-    postCoro(FnType&& func, bool isWhiteListed)
-    {
-        if (stopping_) {
-            LOG(log_.warn()) << "Queue is stopping, rejecting incoming task.";
-            return false;
-        }
-
-        if (curSize_.get().value() >= maxSize_ && !isWhiteListed) {
-            LOG(log_.warn()) << "Queue is full. rejecting job. current size = " << curSize_.get().value()
-                             << "; max size = " << maxSize_;
-            return false;
-        }
-
-        ++curSize_.get();
-
-        // Each time we enqueue a job, we want to post a symmetrical job that will dequeue and run the job at the front
-        // of the job queue.
-        util::spawn(
-            ioc_,
-            [this, func = std::forward<FnType>(func), start = std::chrono::system_clock::now()](auto yield) mutable {
-                auto const run = std::chrono::system_clock::now();
-                auto const wait = std::chrono::duration_cast<std::chrono::microseconds>(run - start).count();
-
-                ++queued_.get();
-                durationUs_.get() += wait;
-                LOG(log_.info()) << "WorkQueue wait time = " << wait << " queue size = " << curSize_.get().value();
-
-                func(yield);
-                --curSize_.get();
-                if (curSize_.get().value() == 0 && stopping_) {
-                    auto onTasksComplete = onQueueEmpty_.lock();
-                    ASSERT(onTasksComplete->operator bool(), "onTasksComplete must be set when stopping is true.");
-                    onTasksComplete->operator()();
-                }
-            }
-        );
-
-        return true;
-    }
+    postCoro(TaskType func, bool isWhiteListed, Priority priority = Priority::Default);
 
     /**
      * @brief Generate a report of the work queue state.
      *
      * @return The report as a JSON object.
      */
-    boost::json::object
-    report() const;
+    [[nodiscard]] boost::json::object
+    report() const override;
 
     /**
      * @brief Wait until all the jobs in the queue are finished.
@@ -171,8 +206,12 @@ public:
      *
      * @return The number of jobs in the queue.
      */
-    size_t
+    [[nodiscard]] size_t
     size() const;
+
+private:
+    void
+    dispatcherLoop(boost::asio::yield_context yield);
 };
 
 }  // namespace rpc

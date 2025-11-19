@@ -21,7 +21,7 @@
 
 #include "data/LedgerCacheInterface.hpp"
 #include "data/Types.hpp"
-#include "etlng/Models.hpp"
+#include "etl/Models.hpp"
 
 #include <gmock/gmock.h>
 #include <xrpl/basics/base_uint.h>
@@ -29,6 +29,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <vector>
 
 struct MockLedgerCache : data::LedgerCacheInterface {
@@ -42,7 +43,7 @@ struct MockLedgerCache : data::LedgerCacheInterface {
 
     MOCK_METHOD(std::optional<data::Blob>, get, (ripple::uint256 const& a, uint32_t b), (const, override));
 
-    MOCK_METHOD(void, update, (std::vector<etlng::model::Object> const&, uint32_t), (override));
+    MOCK_METHOD(void, update, (std::vector<etl::model::Object> const&, uint32_t), (override));
 
     MOCK_METHOD(std::optional<data::Blob>, getDeleted, (ripple::uint256 const&, uint32_t), (const, override));
 
@@ -77,4 +78,15 @@ struct MockLedgerCache : data::LedgerCacheInterface {
     MOCK_METHOD(float, getSuccessorHitRate, (), (const, override));
 
     MOCK_METHOD(void, waitUntilCacheContainsSeq, (uint32_t), (override));
+
+    using SaveToFileReturnType = std::expected<void, std::string>;
+    MOCK_METHOD(SaveToFileReturnType, saveToFile, (std::string const& path), (const, override));
+
+    using LoadFromFileReturnType = std::expected<void, std::string>;
+    MOCK_METHOD(
+        LoadFromFileReturnType,
+        loadFromFile,
+        (std::string const& path, uint32_t minLatestSequence),
+        (override)
+    );
 };

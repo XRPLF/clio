@@ -177,13 +177,8 @@ tag_invoke(boost::json::value_to_tag<VaultInfoHandler::Input>, boost::json::valu
     if (jsonObject.contains(JS(vault_id)))
         input.vaultID = jsonObject.at(JS(vault_id)).as_string();
 
-    if (jsonObject.contains(JS(ledger_index))) {
-        if (not jsonObject.at(JS(ledger_index)).is_string()) {
-            input.ledgerIndex = util::integralValueAs<uint32_t>(jsonObject.at(JS(ledger_index)));
-        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
-        }
-    }
+    if (jsonObject.contains(JS(ledger_index)))
+        input.ledgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
 
     return input;
 }

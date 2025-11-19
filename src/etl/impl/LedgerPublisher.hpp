@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -21,12 +21,14 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
-#include "data/LedgerCacheInterface.hpp"
-#include "data/Types.hpp"
+#include "etl/LedgerPublisherInterface.hpp"
 #include "etl/SystemState.hpp"
-#include "etlng/LedgerPublisherInterface.hpp"
+#include "etl/impl/Loading.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Assert.hpp"
+#include "util/Mutex.hpp"
+#include "util/async/AnyExecutionContext.hpp"
+#include "util/async/AnyStrand.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Prometheus.hpp"
@@ -34,6 +36,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/strand.hpp>
+#include <fmt/format.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/protocol/Fees.h>
 #include <xrpl/protocol/LedgerHeader.h>
@@ -68,18 +71,16 @@ namespace etl::impl {
  * includes reading all of the transactions from the database) is done from the application wide asio io_service, and a
  * strand is used to ensure ledgers are published in order.
  */
-class LedgerPublisher : public etlng::LedgerPublisherInterface {
+class LedgerPublisher : public LedgerPublisherInterface {
     util::Logger log_{"ETL"};
 
-    boost::asio::strand<boost::asio::io_context::executor_type> publishStrand_;
+    util::async::AnyStrand publishStrand_;
 
     std::shared_ptr<BackendInterface> backend_;
-    std::reference_wrapper<data::LedgerCacheInterface> cache_;
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
     std::reference_wrapper<SystemState const> state_;  // shared state for ETL
 
-    std::chrono::time_point<ripple::NetClock> lastCloseTime_;
-    mutable std::shared_mutex closeTimeMtx_;
+    util::Mutex<std::chrono::time_point<ripple::NetClock>, std::shared_mutex> lastCloseTime_;
 
     std::reference_wrapper<util::prometheus::CounterInt> lastPublishSeconds_ = PrometheusService::counterInt(
         "etl_last_publish_seconds",
@@ -87,23 +88,20 @@ class LedgerPublisher : public etlng::LedgerPublisherInterface {
         "Seconds since epoch of the last published ledger"
     );
 
-    std::optional<uint32_t> lastPublishedSequence_;
-    mutable std::shared_mutex lastPublishedSeqMtx_;
+    util::Mutex<std::optional<uint32_t>, std::shared_mutex> lastPublishedSequence_;
 
 public:
     /**
      * @brief Create an instance of the publisher
      */
     LedgerPublisher(
-        boost::asio::io_context& ioc,
+        util::async::AnyExecutionContext ctx,
         std::shared_ptr<BackendInterface> backend,
-        data::LedgerCacheInterface& cache,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         SystemState const& state
     )
-        : publishStrand_{boost::asio::make_strand(ioc)}
+        : publishStrand_{ctx.makeStrand()}
         , backend_{std::move(backend)}
-        , cache_{cache}
         , subscriptions_{std::move(subscriptions)}
         , state_{std::cref(state)}
     {
@@ -165,28 +163,13 @@ public:
     void
     publish(ripple::LedgerHeader const& lgrInfo)
     {
-        boost::asio::post(publishStrand_, [this, lgrInfo = lgrInfo]() {
+        publishStrand_.submit([this, lgrInfo = lgrInfo] {
             LOG(log_.info()) << "Publishing ledger " << std::to_string(lgrInfo.seq);
-
-            if (!state_.get().isWriting) {
-                LOG(log_.info()) << "Updating ledger range for read node.";
-
-                if (!cache_.get().isDisabled()) {
-                    std::vector<data::LedgerObject> const diff = data::synchronousAndRetryOnTimeout([&](auto yield) {
-                        return backend_->fetchLedgerDiff(lgrInfo.seq, yield);
-                    });
-
-                    cache_.get().update(diff, lgrInfo.seq);
-                }
-
-                backend_->updateRange(lgrInfo.seq);
-            }
 
             setLastClose(lgrInfo.closeTime);
             auto age = lastCloseAgeSeconds();
 
             // if the ledger closed over MAX_LEDGER_AGE_SECONDS ago, assume we are still catching up and don't publish
-            // TODO: this probably should be a strategy
             static constexpr std::uint32_t kMAX_LEDGER_AGE_SECONDS = 600;
             if (age < kMAX_LEDGER_AGE_SECONDS) {
                 std::optional<ripple::Fees> fees = data::synchronousAndRetryOnTimeout([&](auto yield) {
@@ -194,17 +177,14 @@ public:
                 });
                 ASSERT(fees.has_value(), "Fees must exist for ledger {}", lgrInfo.seq);
 
-                std::vector<data::TransactionAndMetadata> transactions =
-                    data::synchronousAndRetryOnTimeout([&](auto yield) {
-                        return backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield);
-                    });
+                auto transactions = data::synchronousAndRetryOnTimeout([&](auto yield) {
+                    return backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield);
+                });
 
                 auto const ledgerRange = backend_->fetchLedgerRange();
                 ASSERT(ledgerRange.has_value(), "Ledger range must exist");
 
-                std::string const range =
-                    std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);
-
+                auto const range = fmt::format("{}-{}", ledgerRange->minSequence, ledgerRange->maxSequence);
                 subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
 
                 // order with transaction index
@@ -217,15 +197,15 @@ public:
                         object2.getFieldU32(ripple::sfTransactionIndex);
                 });
 
-                for (auto& txAndMeta : transactions)
+                for (auto const& txAndMeta : transactions)
                     subscriptions_->pubTransaction(txAndMeta, lgrInfo);
 
                 subscriptions_->pubBookChanges(lgrInfo, transactions);
 
                 setLastPublishTime();
-                LOG(log_.info()) << "Published ledger " << std::to_string(lgrInfo.seq);
+                LOG(log_.info()) << "Published ledger " << lgrInfo.seq;
             } else {
-                LOG(log_.info()) << "Skipping publishing ledger " << std::to_string(lgrInfo.seq);
+                LOG(log_.info()) << "Skipping publishing ledger " << lgrInfo.seq;
             }
         });
 
@@ -260,32 +240,30 @@ public:
     std::uint32_t
     lastCloseAgeSeconds() const override
     {
-        std::shared_lock const lck(closeTimeMtx_);
+        auto closeTime = lastCloseTime_.lock()->time_since_epoch().count();
         auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())
                        .count();
-        auto closeTime = lastCloseTime_.time_since_epoch().count();
         if (now < (kRIPPLE_EPOCH_START + closeTime))
             return 0;
         return now - (kRIPPLE_EPOCH_START + closeTime);
     }
 
     /**
-     * @brief Get the sequence of the last scheduled ledger to publish, Be aware that the ledger may not have been
+     * @brief Get the sequence of the last schueduled ledger to publish, Be aware that the ledger may not have been
      * published to network
      */
     std::optional<uint32_t>
     getLastPublishedSequence() const
     {
-        std::scoped_lock const lck(lastPublishedSeqMtx_);
-        return lastPublishedSequence_;
+        return *lastPublishedSequence_.lock();
     }
 
 private:
     void
     setLastClose(std::chrono::time_point<ripple::NetClock> lastCloseTime)
     {
-        std::scoped_lock const lck(closeTimeMtx_);
-        lastCloseTime_ = lastCloseTime;
+        auto closeTime = lastCloseTime_.lock<std::scoped_lock>();
+        *closeTime = lastCloseTime;
     }
 
     void
@@ -299,8 +277,8 @@ private:
     void
     setLastPublishedSequence(std::optional<uint32_t> lastPublishedSequence)
     {
-        std::scoped_lock const lck(lastPublishedSeqMtx_);
-        lastPublishedSequence_ = lastPublishedSequence;
+        auto lastPublishSeq = lastPublishedSequence_.lock();
+        *lastPublishSeq = lastPublishedSequence;
     }
 };
 

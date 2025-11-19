@@ -22,6 +22,7 @@
 #include "util/SourceLocation.hpp"
 
 #include <boost/log/core/core.hpp>
+#include <fmt/base.h>
 
 #include <functional>
 #include <string_view>

@@ -61,7 +61,7 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), k
     cass_cluster_set_request_timeout(*this, settings.requestTimeout.count());
 
     // TODO: AWS keyspace reads should be local_one to save cost
-    if (settings.provider == toString(cassandra::impl::Provider::Keyspace)) {
+    if (settings.provider == cassandra::impl::Provider::Keyspace) {
         if (auto const rc = cass_cluster_set_consistency(*this, CASS_CONSISTENCY_LOCAL_QUORUM); rc != CASS_OK) {
             throw std::runtime_error(fmt::format("Error setting keyspace consistency: {}", cass_error_desc(rc)));
         }

@@ -1,8 +1,8 @@
 name: Pre-commit auto-update
 
 on:
-  # every first day of the month
   schedule:
+    # every first day of the month
     - cron: "0 0 1 * *"
   pull_request:
     branches: [release/*, develop]

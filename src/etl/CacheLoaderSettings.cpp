@@ -26,6 +26,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <utility>
 
 namespace etl {
 
@@ -62,6 +63,12 @@ makeCacheLoaderSettings(util::config::ClioConfigDefinition const& config)
 
     settings.numCacheMarkers = cache.get<std::size_t>("num_markers");
     settings.cachePageFetchSize = cache.get<std::size_t>("page_fetch_size");
+
+    if (auto filePath = cache.maybeValue<std::string>("file.path"); filePath.has_value()) {
+        settings.cacheFileSettings = CacheLoaderSettings::CacheFileSettings{
+            .path = std::move(filePath).value(), .maxAge = cache.get<uint32_t>("file.max_sequence_age")
+        };
+    }
 
     auto const entry = cache.get<std::string>("load");
     if (boost::iequals(entry, "sync"))

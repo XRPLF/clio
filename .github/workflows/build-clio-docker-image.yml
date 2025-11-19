@@ -38,32 +38,37 @@ on:
         description: Whether to strip clio binary
         default: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build_and_publish_image:
     name: Build and publish image
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Download Clio binary from artifact
         if: ${{ inputs.artifact_name != null }}
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: ${{ inputs.artifact_name }}
           path: ./docker/clio/artifact/
 
       - name: Download Clio binary from url
         if: ${{ inputs.clio_server_binary_url != null }}
-        shell: bash
+        env:
+          BINARY_URL: ${{ inputs.clio_server_binary_url }}
+          BINARY_SHA256: ${{ inputs.binary_sha256 }}
         run: |
-          wget "${{inputs.clio_server_binary_url}}" -P ./docker/clio/artifact/
-          if [ "$(sha256sum ./docker/clio/clio_server | awk '{print $1}')" != "${{inputs.binary_sha256}}" ]; then
+          wget "${BINARY_URL}" -P ./docker/clio/artifact/
+          if [ "$(sha256sum ./docker/clio/clio_server | awk '{print $1}')" != "${BINARY_SHA256}" ]; then
             echo "Binary sha256 sum doesn't match"
             exit 1
           fi
       - name: Unpack binary
-        shell: bash
         run: |
           sudo apt update && sudo apt install -y tar unzip
           cd docker/clio/artifact
@@ -80,7 +85,6 @@ jobs:
 
       - name: Strip binary
         if: ${{ inputs.strip_binary }}
-        shell: bash
         run: strip ./docker/clio/clio_server
 
       - name: Set GHCR_REPO

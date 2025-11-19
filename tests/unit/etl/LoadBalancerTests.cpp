@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2025, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,10 @@
 */
 //==============================================================================
 
+#include "etl/InitialLoadObserverInterface.hpp"
 #include "etl/LoadBalancer.hpp"
+#include "etl/LoadBalancerInterface.hpp"
+#include "etl/Models.hpp"
 #include "etl/Source.hpp"
 #include "rpc/Errors.hpp"
 #include "util/AsioContextTestFixture.hpp"
@@ -62,7 +65,9 @@ using namespace util::config;
 using testing::Return;
 using namespace util::prometheus;
 
-static constexpr auto kTWO_SOURCES_LEDGER_RESPONSE = R"JSON({
+namespace {
+
+constinit auto const kTWO_SOURCES_LEDGER_RESPONSE = R"JSON({
     "etl_sources": [
         {
             "ip": "127.0.0.1",
@@ -77,7 +82,7 @@ static constexpr auto kTWO_SOURCES_LEDGER_RESPONSE = R"JSON({
     ]
 })JSON";
 
-static constexpr auto kTHREE_SOURCES_LEDGER_RESPONSE = R"JSON({
+constinit auto const kTHREE_SOURCES_LEDGER_RESPONSE = R"JSON({
     "etl_sources": [
         {
             "ip": "127.0.0.1",
@@ -97,7 +102,7 @@ static constexpr auto kTHREE_SOURCES_LEDGER_RESPONSE = R"JSON({
     ]
 })JSON";
 
-inline static ClioConfigDefinition
+inline ClioConfigDefinition
 getParseLoadBalancerConfig(boost::json::value val)
 {
     ClioConfigDefinition config{
@@ -117,6 +122,23 @@ getParseLoadBalancerConfig(boost::json::value val)
 
     return config;
 }
+
+struct InitialLoadObserverMock : etl::InitialLoadObserverInterface {
+    MOCK_METHOD(
+        void,
+        onInitialLoadGotMoreObjects,
+        (uint32_t, std::vector<etl::model::Object> const&, std::optional<std::string>),
+        (override)
+    );
+
+    void
+    onInitialLoadGotMoreObjects(uint32_t seq, std::vector<etl::model::Object> const& data)
+    {
+        onInitialLoadGotMoreObjects(seq, data, std::nullopt);
+    }
+};
+
+}  // namespace
 
 struct LoadBalancerConstructorTests : util::prometheus::WithPrometheus, MockBackendTestStrict {
     std::unique_ptr<LoadBalancer>
@@ -164,7 +186,6 @@ TEST_F(LoadBalancerConstructorTests, forwardingTimeoutPassedToSourceFactory)
     EXPECT_CALL(
         sourceFactory_,
         makeSource(
-            testing::_,
             testing::_,
             testing::_,
             testing::_,
@@ -439,51 +460,57 @@ struct LoadBalancerLoadInitialLedgerTests : LoadBalancerOnConnectHookTests {
 protected:
     uint32_t const sequence_ = 123;
     uint32_t const numMarkers_ = 16;
-    std::pair<std::vector<std::string>, bool> const response_ = {{"1", "2", "3"}, true};
+    InitialLedgerLoadResult const response_{std::vector<std::string>{"1", "2", "3"}};
+    testing::StrictMock<InitialLoadObserverMock> observer_;
 };
 
 TEST_F(LoadBalancerLoadInitialLedgerTests, load)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, testing::_))
+        .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.value());
 }
 
 TEST_F(LoadBalancerLoadInitialLedgerTests, load_source0DoesntHaveLedger)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, testing::_))
+        .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.value());
 }
 
 TEST_F(LoadBalancerLoadInitialLedgerTests, load_bothSourcesDontHaveLedger)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).Times(2).WillRepeatedly(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(false)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, testing::_))
+        .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, std::chrono::milliseconds{1}), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.value());
 }
 
 TEST_F(LoadBalancerLoadInitialLedgerTests, load_source0ReturnsStatusFalse)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_))
-        .WillOnce(Return(std::make_pair(std::vector<std::string>{}, false)));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, testing::_))
+        .WillOnce(Return(std::unexpected{InitialLedgerLoadError::Errored}));
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, testing::_))
+        .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_), response_.first);
+    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.value());
 }
 
 struct LoadBalancerLoadInitialLedgerCustomNumMarkersTests : LoadBalancerConstructorTests {
 protected:
     uint32_t const numMarkers_ = 16;
     uint32_t const sequence_ = 123;
-    std::pair<std::vector<std::string>, bool> const response_ = {{"1", "2", "3"}, true};
+    InitialLedgerLoadResult const response_{std::vector<std::string>{"1", "2", "3"}};
+    testing::StrictMock<InitialLoadObserverMock> observer_;
 };
 
 TEST_F(LoadBalancerLoadInitialLedgerCustomNumMarkersTests, loadInitialLedger)
@@ -498,9 +525,10 @@ TEST_F(LoadBalancerLoadInitialLedgerCustomNumMarkersTests, loadInitialLedger)
     auto loadBalancer = makeLoadBalancer();
 
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_)).WillOnce(Return(response_));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, testing::_))
+        .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer->loadInitialLedger(sequence_), response_.first);
+    EXPECT_EQ(loadBalancer->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.value());
 }
 
 struct LoadBalancerFetchLegerTests : LoadBalancerOnConnectHookTests {
@@ -813,6 +841,7 @@ TEST_F(LoadBalancerForwardToRippledTests, onLedgerClosedHookInvalidatesCache)
     auto const request = boost::json::object{{"command", "server_info"}};
 
     EXPECT_CALL(*randomGenerator_, uniform(0, 1)).WillOnce(Return(0)).WillOnce(Return(1));
+
     EXPECT_CALL(
         sourceFactory_.sourceAt(0),
         forwardToRippled(request, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_)

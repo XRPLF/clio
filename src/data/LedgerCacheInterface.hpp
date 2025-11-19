@@ -20,14 +20,16 @@
 #pragma once
 
 #include "data/Types.hpp"
-#include "etlng/Models.hpp"
+#include "etl/Models.hpp"
 
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/hardened_hash.h>
 
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace data {
@@ -63,7 +65,7 @@ public:
      * @param seq The sequence to update cache for
      */
     virtual void
-    update(std::vector<etlng::model::Object> const& objs, uint32_t seq) = 0;
+    update(std::vector<etl::model::Object> const& objs, uint32_t seq) = 0;
 
     /**
      * @brief Fetch a cached object by its key and sequence number.
@@ -168,6 +170,27 @@ public:
      */
     virtual void
     waitUntilCacheContainsSeq(uint32_t seq) = 0;
+
+    /**
+     * @brief Save the cache to file
+     * @note This operation takes about 7 seconds and it keeps a shared lock of mtx_
+     *
+     * @param path The file path to save the cache to
+     * @return An error as a string if any
+     */
+    [[nodiscard]] virtual std::expected<void, std::string>
+    saveToFile(std::string const& path) const = 0;
+
+    /**
+     * @brief Load the cache from file
+     * @note This operation takes about 7 seconds and it keeps mtx_ exclusively locked
+     *
+     * @param path The file path to load data from
+     * @param minLatestSequence The minimum allowed value of the latestLedgerSequence in cache file
+     * @return An error as a string if any
+     */
+    [[nodiscard]] virtual std::expected<void, std::string>
+    loadFromFile(std::string const& path, uint32_t minLatestSequence) = 0;
 };
 
 }  // namespace data

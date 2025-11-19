@@ -255,7 +255,7 @@ This document provides a list of all available Clio configuration properties in 
            .value = "The number of worker threads or processes that are responsible for managing and processing "
                     "subscription-based tasks from `rippled`."},
         KV{.key = "graceful_period",
-           .value = "The number of milliseconds the server waits to shutdown gracefully. If Clio does not shutdown "
+           .value = "The number of seconds the server waits to shutdown gracefully. If Clio does not shutdown "
                     "gracefully after the specified value, it will be killed instead."},
         KV{.key = "cache.num_diffs",
            .value = "The number of cursors generated is the number of changed (without counting deleted) objects in "
@@ -276,6 +276,12 @@ This document provides a list of all available Clio configuration properties in 
                     "If set to `0`, the system defaults to generating cursors based on `cache.num_diffs`."},
         KV{.key = "cache.page_fetch_size", .value = "The number of ledger objects to fetch concurrently per marker."},
         KV{.key = "cache.load", .value = "The strategy used for Cache loading."},
+        KV{.key = "cache.file.path",
+           .value = "The path to a file where cache will be saved to on shutdown and loaded from on startup. "
+                    "If the file couldn't be read Clio will load cache as usual (from DB or from rippled)."},
+        KV{.key = "cache.file.max_sequence_age",
+           .value = "Max allowed difference between the latest sequence in DB and in cache file. If the cache file is "
+                    "too old (contains too low latest sequence) Clio will reject using it."},
         KV{.key = "log.channels.[].channel", .value = "The name of the log channel."},
         KV{.key = "log.channels.[].level", .value = "The log level for the specific log channel."},
         KV{.key = "log.level",

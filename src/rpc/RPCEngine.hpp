@@ -20,7 +20,7 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "etlng/LoadBalancerInterface.hpp"
+#include "etl/LoadBalancerInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/WorkQueue.hpp"
@@ -88,7 +88,7 @@ public:
     RPCEngine(
         util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<etlng::LoadBalancerInterface> const& balancer,
+        std::shared_ptr<etl::LoadBalancerInterface> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
         CountersType& counters,
@@ -130,7 +130,7 @@ public:
     makeRPCEngine(
         util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<etlng::LoadBalancerInterface> const& balancer,
+        std::shared_ptr<etl::LoadBalancerInterface> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
         CountersType& counters,

@@ -293,7 +293,7 @@ This document provides a list of all available Clio configuration properties in 
 
 - **Required**: True
 - **Type**: int
-- **Default value**: `1`
+- **Default value**: `1000`
 - **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The maximum size of the server's request queue. If set to `0`, this means there is no queue size limit.
 
@@ -391,7 +391,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Type**: double
 - **Default value**: `10`
 - **Constraints**: The value must be a positive double number.
-- **Description**: The number of milliseconds the server waits to shutdown gracefully. If Clio does not shutdown gracefully after the specified value, it will be killed instead.
+- **Description**: The number of seconds the server waits to shutdown gracefully. If Clio does not shutdown gracefully after the specified value, it will be killed instead.
 
 ### cache.num_diffs
 
@@ -440,6 +440,22 @@ This document provides a list of all available Clio configuration properties in 
 - **Default value**: `async`
 - **Constraints**: The value must be one of the following: `sync`, `async`, `none`.
 - **Description**: The strategy used for Cache loading.
+
+### cache.file.path
+
+- **Required**: False
+- **Type**: string
+- **Default value**: None
+- **Constraints**: None
+- **Description**: The path to a file where cache will be saved to on shutdown and loaded from on startup. If the file couldn't be read Clio will load cache as usual (from DB or from rippled).
+
+### cache.file.max_sequence_age
+
+- **Required**: True
+- **Type**: int
+- **Default value**: `5000`
+- **Constraints**: None
+- **Description**: Max allowed difference between the latest sequence in DB and in cache file. If the cache file is too old (contains too low latest sequence) Clio will reject using it.
 
 ### log.channels.[].channel
 

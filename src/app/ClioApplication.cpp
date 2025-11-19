@@ -25,11 +25,10 @@
 #include "data/AmendmentCenter.hpp"
 #include "data/BackendFactory.hpp"
 #include "data/LedgerCache.hpp"
+#include "data/LedgerCacheSaver.hpp"
 #include "etl/ETLService.hpp"
 #include "etl/LoadBalancer.hpp"
 #include "etl/NetworkValidatedLedgers.hpp"
-#include "etlng/LoadBalancer.hpp"
-#include "etlng/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "migration/MigrationInspectorFactory.hpp"
 #include "rpc/Counters.hpp"
@@ -57,6 +56,7 @@
 #include <cstdlib>
 #include <memory>
 #include <optional>
+#include <string>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -99,20 +99,23 @@ ClioApplication::run(bool const useNgWebServer)
     auto const threads = config_.get<uint16_t>("io_threads");
     LOG(util::LogService::info()) << "Number of io threads = " << threads;
 
+    // Similarly we need a context to run ETL on
+    // In the future we can remove the raw ioc and use ctx instead
+    // This context should be above ioc because its reference is getting into tasks inside ioc
+    util::async::CoroExecutionContext ctx{threads};
+
     // IO context to handle all incoming requests, as well as other things.
     // This is not the only io context in the application.
     boost::asio::io_context ioc{threads};
-
-    // Similarly we need a context to run ETLng on
-    // In the future we can remove the raw ioc and use ctx instead
-    util::async::CoroExecutionContext ctx{threads};
 
     // Rate limiter, to prevent abuse
     auto whitelistHandler = web::dosguard::WhitelistHandler{config_};
     auto const dosguardWeights = web::dosguard::Weights::make(config_);
     auto dosGuard = web::dosguard::DOSGuard{config_, whitelistHandler, dosguardWeights};
     auto sweepHandler = web::dosguard::IntervalSweepHandler{config_, ioc, dosGuard};
+
     auto cache = data::LedgerCache{};
+    auto cacheSaver = data::LedgerCacheSaver{config_, cache};
 
     // Interface to the database
     auto backend = data::makeBackend(config_, cache);
@@ -142,20 +145,12 @@ ClioApplication::run(bool const useNgWebServer)
     // ETL uses the balancer to extract data.
     // The server uses the balancer to forward RPCs to a rippled node.
     // The balancer itself publishes to streams (transactions_proposed and accounts_proposed)
-    auto balancer = [&] -> std::shared_ptr<etlng::LoadBalancerInterface> {
-        if (config_.get<bool>("__ng_etl")) {
-            return etlng::LoadBalancer::makeLoadBalancer(
-                config_, ioc, backend, subscriptions, std::make_unique<util::MTRandomGenerator>(), ledgers
-            );
-        }
-
-        return etl::LoadBalancer::makeLoadBalancer(
-            config_, ioc, backend, subscriptions, std::make_unique<util::MTRandomGenerator>(), ledgers
-        );
-    }();
+    auto balancer = etl::LoadBalancer::makeLoadBalancer(
+        config_, ioc, backend, subscriptions, std::make_unique<util::MTRandomGenerator>(), ledgers
+    );
 
     // ETL is responsible for writing and publishing to streams. In read-only mode, ETL only publishes
-    auto etl = etl::ETLService::makeETLService(config_, ioc, ctx, backend, subscriptions, balancer, ledgers);
+    auto etl = etl::ETLService::makeETLService(config_, ctx, backend, subscriptions, balancer, ledgers);
 
     auto workQueue = rpc::WorkQueue::makeWorkQueue(config_);
     auto counters = rpc::Counters::makeCounters(workQueue);
@@ -201,7 +196,7 @@ ClioApplication::run(bool const useNgWebServer)
         }
 
         appStopper_.setOnStop(
-            Stopper::makeOnStopCallback(httpServer.value(), *balancer, *etl, *subscriptions, *backend, ioc)
+            Stopper::makeOnStopCallback(httpServer.value(), *balancer, *etl, *subscriptions, *backend, cacheSaver, ioc)
         );
 
         // Blocks until stopped.
@@ -216,6 +211,9 @@ ClioApplication::run(bool const useNgWebServer)
     auto handler = std::make_shared<web::RPCServerHandler<RPCEngineType>>(config_, backend, rpcEngine, etl, dosGuard);
 
     auto const httpServer = web::makeHttpServer(config_, ioc, dosGuard, handler, cache);
+    appStopper_.setOnStop(
+        Stopper::makeOnStopCallback(*httpServer, *balancer, *etl, *subscriptions, *backend, cacheSaver, ioc)
+    );
 
     // Blocks until stopped.
     // When stopped, shared_ptrs fall out of scope

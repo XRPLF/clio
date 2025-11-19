@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "rpc/JS.hpp"
+
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
 
@@ -108,6 +110,28 @@ integralValueAs(boost::json::value const& value)
         return static_cast<Type>(value.as_int64());
 
     throw std::logic_error("Value neither uint64 nor int64");
+}
+
+/**
+ * @brief Extracts ledger index from a JSON value which can be either a number or a string.
+ *
+ * @param value The JSON value to extract ledger index from
+ * @return An optional containing the ledger index if it is a number; std::nullopt otherwise
+ * @throws logic_error comes from integralValueAs if the underlying number is neither int64 nor uint64
+ * @throws std::invalid_argument or std::out_of_range if the string cannot be converted to a number
+ */
+[[nodiscard]] inline std::optional<uint32_t>
+getLedgerIndex(boost::json::value const& value)
+{
+    std::optional<uint32_t> ledgerIndex;
+
+    if (not value.is_string()) {
+        ledgerIndex = util::integralValueAs<uint32_t>(value);
+    } else if (value.as_string() != "validated") {
+        ledgerIndex = std::stoi(value.as_string().c_str());
+    }
+
+    return ledgerIndex;
 }
 
 }  // namespace util

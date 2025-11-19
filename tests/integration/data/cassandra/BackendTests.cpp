@@ -85,15 +85,17 @@ using namespace data::cassandra;
 
 class BackendCassandraTestBase : public SyncAsioContextTest, public WithPrometheus {
 protected:
+    static constexpr auto kCASSANDRA = "cassandra";
+
     ClioConfigDefinition cfg_{
-        {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
+        {"database.type", ConfigValue{ConfigType::String}.defaultValue(kCASSANDRA)},
         {"database.cassandra.contact_points",
          ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
         {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.port", ConfigValue{ConfigType::Integer}.optional()},
         {"database.cassandra.keyspace",
          ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendKeyspace)},
-        {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
+        {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue(kCASSANDRA)},
         {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
         {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.max_write_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(10'000)},

@@ -1,0 +1,146 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2024, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+/** @file */
+#pragma once
+
+#include "etl/ETLState.hpp"
+#include "etl/InitialLoadObserverInterface.hpp"
+#include "rpc/Errors.hpp"
+
+#include <boost/asio/spawn.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
+#include <org/xrpl/rpc/v1/ledger.pb.h>
+#include <xrpl/proto/org/xrpl/rpc/v1/get_ledger.pb.h>
+
+#include <chrono>
+#include <cstdint>
+#include <expected>
+#include <optional>
+#include <string>
+#include <vector>
+
+namespace etl {
+
+/**
+ * @brief Represents possible errors for initial ledger load
+ */
+enum class InitialLedgerLoadError {
+    Cancelled, /*< Indicating the initial load got cancelled by user */
+    Errored,   /*< Indicating some error happened during initial ledger load */
+};
+
+/**
+ * @brief The result type of the initial ledger load
+ * @note The successful value represents edge keys
+ */
+using InitialLedgerLoadResult = std::expected<std::vector<std::string>, InitialLedgerLoadError>;
+
+/**
+ * @brief An interface for LoadBalancer
+ */
+class LoadBalancerInterface {
+public:
+    using RawLedgerObjectType = org::xrpl::rpc::v1::RawLedgerObject;
+    using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;
+    using OptionalGetLedgerResponseType = std::optional<GetLedgerResponseType>;
+
+    virtual ~LoadBalancerInterface() = default;
+
+    /**
+     * @brief Load the initial ledger, writing data to the queue.
+     * @note This function will retry indefinitely until the ledger is downloaded or the download is cancelled.
+     *
+     * @param sequence Sequence of ledger to download
+     * @param loader InitialLoadObserverInterface implementation
+     * @param retryAfter Time to wait between retries (2 seconds by default)
+     * @return A std::expected with ledger edge keys on success, or InitialLedgerLoadError on failure
+     */
+    [[nodiscard]] virtual InitialLedgerLoadResult
+    loadInitialLedger(
+        uint32_t sequence,
+        InitialLoadObserverInterface& loader,
+        std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2}
+    ) = 0;
+
+    /**
+     * @brief Fetch data for a specific ledger.
+     *
+     * This function will continuously try to fetch data for the specified ledger until the fetch succeeds, the ledger
+     * is found in the database, or the server is shutting down.
+     *
+     * @param ledgerSequence Sequence of the ledger to fetch
+     * @param getObjects Whether to get the account state diff between this ledger and the prior one
+     * @param getObjectNeighbors Whether to request object neighbors
+     * @param retryAfter Time to wait between retries (2 seconds by default)
+     * @return The extracted data, if extraction was successful. If the ledger was found
+     * in the database or the server is shutting down, the optional will be empty
+     */
+    [[nodiscard]] virtual OptionalGetLedgerResponseType
+    fetchLedger(
+        uint32_t ledgerSequence,
+        bool getObjects,
+        bool getObjectNeighbors,
+        std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2}
+    ) = 0;
+
+    /**
+     * @brief Represent the state of this load balancer as a JSON object
+     *
+     * @return JSON representation of the state of this load balancer.
+     */
+    [[nodiscard]] virtual boost::json::value
+    toJson() const = 0;
+
+    /**
+     * @brief Forward a JSON RPC request to a randomly selected rippled node.
+     *
+     * @param request JSON-RPC request to forward
+     * @param clientIp The IP address of the peer, if known
+     * @param isAdmin Whether the request is from an admin
+     * @param yield The coroutine context
+     * @return Response received from rippled node as JSON object on success or error on failure
+     */
+    [[nodiscard]] virtual std::expected<boost::json::object, rpc::CombinedError>
+    forwardToRippled(
+        boost::json::object const& request,
+        std::optional<std::string> const& clientIp,
+        bool isAdmin,
+        boost::asio::yield_context yield
+    ) = 0;
+
+    /**
+     * @brief Return state of ETL nodes.
+     * @return ETL state, nullopt if etl nodes not available
+     */
+    [[nodiscard]] virtual std::optional<ETLState>
+    getETLState() noexcept = 0;
+
+    /**
+     * @brief Stop the load balancer. This will stop all subscription sources.
+     * @note This function will asynchronously wait for all sources to stop.
+     *
+     * @param yield The coroutine context
+     */
+    virtual void
+    stop(boost::asio::yield_context yield) = 0;
+};
+
+}  // namespace etl

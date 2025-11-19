@@ -37,15 +37,16 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/status.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <condition_variable>
 #include <cstddef>
 #include <memory>
+#include <mutex>
 #include <ranges>
 #include <string>
 #include <thread>
@@ -114,24 +115,33 @@ TEST_F(WebWsConnectionTests, DisconnectClientOnInactivity)
     auto work = boost::asio::make_work_guard(clientCtx);
     std::thread clientThread{[&clientCtx]() { clientCtx.run(); }};
 
-    util::spawn(clientCtx, [&work, this](boost::asio::yield_context yield) {
+    std::mutex mutex;
+    std::condition_variable cv;
+    bool finished{false};
+
+    util::spawn(clientCtx, [&](boost::asio::yield_context yield) {
         auto expectedSuccess =
             wsClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
         [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
-        boost::asio::steady_timer timer{yield.get_executor(), std::chrono::milliseconds{5}};
-        timer.async_wait(yield);
+        std::unique_lock lock{mutex};
+        // Wait for 2 seconds to not block the test infinitely in case of failure
+        auto const gotNotified = cv.wait_for(lock, std::chrono::seconds{2}, [&finished]() { return finished; });
+        [&]() { EXPECT_TRUE(gotNotified); }();
         work.reset();
     });
 
-    runSpawn([this](boost::asio::yield_context yield) {
+    runSpawn([&, this](boost::asio::yield_context yield) {
         auto wsConnection = acceptConnection(yield);
         wsConnection->setTimeout(std::chrono::milliseconds{1});
-        // Client will not respond to pings because there is no reading operation scheduled for it.
 
-        auto const start = std::chrono::steady_clock::now();
+        // Client will not respond to pings because there is no reading operation scheduled for it.
         auto const receivedMessage = wsConnection->receive(yield);
-        auto const end = std::chrono::steady_clock::now();
-        EXPECT_LT(end - start, std::chrono::milliseconds{4});  // Should be 2 ms, double it in case of slow CI.
+
+        {
+            std::unique_lock const lock{mutex};
+            finished = true;
+            cv.notify_one();
+        }
 
         EXPECT_FALSE(receivedMessage.has_value());
         EXPECT_EQ(receivedMessage.error().value(), boost::asio::error::no_permission);

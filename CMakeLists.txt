@@ -75,10 +75,6 @@ if (san)
   endif ()
   target_compile_options(clio_options INTERFACE ${SAN_OPTIMIZATION_FLAG} ${SAN_FLAG} -fno-omit-frame-pointer)
 
-  target_compile_definitions(
-    clio_options INTERFACE $<$<STREQUAL:${san},address>:SANITIZER=ASAN> $<$<STREQUAL:${san},thread>:SANITIZER=TSAN>
-                           $<$<STREQUAL:${san},memory>:SANITIZER=MSAN> $<$<STREQUAL:${san},undefined>:SANITIZER=UBSAN>
-  )
   target_link_libraries(clio_options INTERFACE ${SAN_FLAG} ${SAN_LIB})
 endif ()
 

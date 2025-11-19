@@ -65,6 +65,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
 
     if (input.index) {
         key = ripple::uint256{std::string_view(*(input.index))};
+        if (key.isZero())
+            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
     } else if (input.accountRoot) {
         key = ripple::keylet::account(*util::parseBase58Wrapper<ripple::AccountID>(*(input.accountRoot))).key;
     } else if (input.did) {
@@ -201,7 +203,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         // Must specify 1 of the following fields to indicate what type
         if (ctx.apiVersion == 1)
             return Error{Status{ClioError::RpcUnknownOption}};
-        return Error{Status{RippledError::rpcINVALID_PARAMS}};
+        return Error{Status{RippledError::rpcINVALID_PARAMS, "No ledger_entry params provided."}};
     }
 
     // check ledger exists
@@ -220,20 +222,20 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
 
     if (!ledgerObject || ledgerObject->empty()) {
         if (not input.includeDeleted)
-            return Error{Status{ClioError::RpcEntryNotFound}};
+            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
         auto const deletedSeq = sharedPtrBackend_->fetchLedgerObjectSeq(key, lgrInfo.seq, ctx.yield);
         if (!deletedSeq)
-            return Error{Status{ClioError::RpcEntryNotFound}};
+            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
         ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, deletedSeq.value() - 1, ctx.yield);
         if (!ledgerObject || ledgerObject->empty())
-            return Error{Status{ClioError::RpcEntryNotFound}};
+            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
         output.deletedLedgerIndex = deletedSeq;
     }
 
     ripple::STLedgerEntry const sle{ripple::SerialIter{ledgerObject->data(), ledgerObject->size()}, key};
 
     if (input.expectedType != ripple::ltANY && sle.getType() != input.expectedType)
-        return Error{Status{"unexpectedLedgerType"}};
+        return Error{Status{RippledError::rpcUNEXPECTED_LEDGER_TYPE}};
 
     output.index = ripple::strHex(key);
     output.ledgerIndex = lgrInfo.seq;
@@ -303,13 +305,8 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
 
-    if (jsonObject.contains(JS(ledger_index))) {
-        if (!jsonObject.at(JS(ledger_index)).is_string()) {
-            input.ledgerIndex = util::integralValueAs<uint32_t>(jv.at(JS(ledger_index)));
-        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jv.at(JS(ledger_index))));
-        }
-    }
+    if (jsonObject.contains(JS(ledger_index)))
+        input.ledgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
 
     if (jsonObject.contains(JS(binary)))
         input.binary = jv.at(JS(binary)).as_bool();
@@ -333,7 +330,13 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(mptoken), ripple::ltMPTOKEN},
         {JS(permissioned_domain), ripple::ltPERMISSIONED_DOMAIN},
         {JS(vault), ripple::ltVAULT},
-        {JS(delegate), ripple::ltDELEGATE}
+        {JS(delegate), ripple::ltDELEGATE},
+        {JS(amendments), ripple::ltAMENDMENTS},
+        {JS(fee), ripple::ltFEE_SETTINGS},
+        {JS(hashes), ripple::ltLEDGER_HASHES},
+        {JS(nft_offer), ripple::ltNFTOKEN_OFFER},
+        {JS(nunl), ripple::ltNEGATIVE_UNL},
+        {JS(signer_list), ripple::ltSIGNER_LIST}
     };
 
     auto const parseBridgeFromJson = [](boost::json::value const& bridgeJson) {

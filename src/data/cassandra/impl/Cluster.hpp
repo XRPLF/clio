@@ -20,6 +20,7 @@
 #pragma once
 
 #include "data/cassandra/impl/ManagedObject.hpp"
+#include "util/Assert.hpp"
 #include "util/log/Logger.hpp"
 
 #include <cassandra.h>
@@ -31,28 +32,21 @@
 #include <string>
 #include <string_view>
 #include <thread>
-#include <utility>
 #include <variant>
 
 namespace data::cassandra::impl {
 
-namespace {
-
 enum class Provider { Cassandra, Keyspace };
 
-inline std::string
-toString(Provider provider)
+inline Provider
+providerFromString(std::string const& provider)
 {
-    switch (provider) {
-        case Provider::Cassandra:
-            return "cassandra";
-        case Provider::Keyspace:
-            return "aws_keyspace";
-    }
-    std::unreachable();
+    ASSERT(
+        provider == "cassandra" || provider == "aws_keyspace",
+        "Provider type must be one of 'cassandra' or 'aws_keyspace'"
+    );
+    return provider == "cassandra" ? Provider::Cassandra : Provider::Keyspace;
 }
-
-}  // namespace
 
 // TODO: move Settings to public interface, not impl
 
@@ -109,7 +103,7 @@ struct Settings {
     std::size_t writeBatchSize = kDEFAULT_BATCH_SIZE;
 
     /** @brief Provider to know if we are using scylladb or keyspace */
-    std::string provider = toString(kDEFAULT_PROVIDER);
+    Provider provider = kDEFAULT_PROVIDER;
 
     /** @brief Size of the IO queue */
     std::optional<uint32_t> queueSizeIO = std::nullopt;  // NOLINT(readability-redundant-member-init)

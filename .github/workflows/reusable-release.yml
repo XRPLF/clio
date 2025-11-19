@@ -3,10 +3,10 @@ name: Make release
 on:
   workflow_call:
     inputs:
-      overwrite_release:
-        description: "Overwrite the current release and tag"
+      delete_pattern:
+        description: "Pattern to delete previous releases"
         required: true
-        type: boolean
+        type: string
 
       prerelease:
         description: "Create a prerelease"
@@ -38,11 +38,15 @@ on:
         required: true
         type: boolean
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   release:
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:213752862ca95ecadeb59a6176c3db91a7864b3e
+      image: ghcr.io/xrplf/clio-ci:77387d8f9f13aea8f23831d221ac3e7683bb69b7
     env:
       GH_REPO: ${{ github.repository }}
       GH_TOKEN: ${{ github.token }}
@@ -51,29 +55,29 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
 
       - name: Prepare runner
-        uses: XRPLF/actions/.github/actions/prepare-runner@7951b682e5a2973b28b0719a72f01fc4b0d0c34f
+        uses: XRPLF/actions/.github/actions/prepare-runner@8abb0722cbff83a9a2dc7d06c473f7a4964b7382
         with:
           disable_ccache: true
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           path: release_artifacts
           pattern: clio_server_*
 
       - name: Create release notes
-        shell: bash
+        env:
+          RELEASE_HEADER: ${{ inputs.header }}
         run: |
           echo "# Release notes" > "${RUNNER_TEMP}/release_notes.md"
           echo "" >> "${RUNNER_TEMP}/release_notes.md"
-          printf '%s\n' "${{ inputs.header }}" >> "${RUNNER_TEMP}/release_notes.md"
+          printf '%s\n' "${RELEASE_HEADER}" >> "${RUNNER_TEMP}/release_notes.md"
 
       - name: Generate changelog
-        shell: bash
         if: ${{ inputs.generate_changelog }}
         run: |
           LAST_TAG="$(gh release view --json tagName -q .tagName --repo XRPLF/clio)"
@@ -83,30 +87,39 @@ jobs:
           cat CHANGELOG.md >> "${RUNNER_TEMP}/release_notes.md"
 
       - name: Prepare release artifacts
-        shell: bash
         run: .github/scripts/prepare-release-artifacts.sh release_artifacts
 
       - name: Upload release notes
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: release_notes_${{ inputs.version }}
           path: "${RUNNER_TEMP}/release_notes.md"
 
-      - name: Remove current release and tag
-        if: ${{ github.event_name != 'pull_request' && inputs.overwrite_release }}
-        shell: bash
+      - name: Remove previous release with a pattern
+        if: ${{ github.event_name != 'pull_request' && inputs.delete_pattern != '' }}
+        env:
+          DELETE_PATTERN: ${{ inputs.delete_pattern }}
         run: |
-          gh release delete ${{ inputs.version }} --yes || true
-          git push origin :${{ inputs.version }} || true
+          RELEASES_TO_DELETE=$(gh release list --limit 50 --repo "${GH_REPO}" | grep -E "${DELETE_PATTERN}" | awk -F'\t' '{print $3}' || true)
+          if [ -n "$RELEASES_TO_DELETE" ]; then
+            for RELEASE in $RELEASES_TO_DELETE; do
+              echo "Deleting release: $RELEASE"
+              gh release delete "$RELEASE" --repo "${GH_REPO}" --yes --cleanup-tag
+            done
+          fi
 
       - name: Publish release
         if: ${{ github.event_name != 'pull_request' }}
-        shell: bash
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          PRERELEASE_OPTION: ${{ inputs.prerelease && '--prerelease' || '' }}
+          RELEASE_TITLE: ${{ inputs.title }}
+          DRAFT_OPTION: ${{ inputs.draft && '--draft' || '' }}
         run: |
-          gh release create "${{ inputs.version }}" \
-            ${{ inputs.prerelease && '--prerelease' || '' }} \
-            --title "${{ inputs.title }}" \
+          gh release create "${RELEASE_VERSION}" \
+            ${PRERELEASE_OPTION} \
+            --title "${RELEASE_TITLE}" \
             --target "${GITHUB_SHA}" \
-            ${{ inputs.draft && '--draft' || '' }} \
+            ${DRAFT_OPTION} \
             --notes-file "${RUNNER_TEMP}/release_notes.md" \
             ./release_artifacts/clio_server*

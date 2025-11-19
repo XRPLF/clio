@@ -1282,7 +1282,8 @@ TEST_F(FeedTransactionTest, PublishesMPTokenIssuanceCreateTx)
                     }
                 ],
                 "TransactionIndex": 0,
-                "TransactionResult": "tesSUCCESS"
+                "TransactionResult": "tesSUCCESS",
+                "mpt_issuance_id": "000000014B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
             },
             "ctid": "C000002100000000",
             "type": "transaction",

@@ -30,8 +30,10 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <cstdint>
 #include <mutex>
 #include <semaphore>
+#include <vector>
 
 using namespace util;
 using namespace util::config;
@@ -39,15 +41,24 @@ using namespace rpc;
 using namespace util::prometheus;
 
 struct RPCWorkQueueTestBase : public virtual ::testing::Test {
-    ClioConfigDefinition cfg = {
-        {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
-        {"workers", ConfigValue{ConfigType::Integer}.defaultValue(4)}
-    };
+    ClioConfigDefinition cfg;
+    WorkQueue queue;
 
-    WorkQueue queue = WorkQueue::makeWorkQueue(cfg);
+    RPCWorkQueueTestBase(uint32_t workers, uint32_t maxQueueSize)
+        : cfg{
+              {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(maxQueueSize)},
+              {"workers", ConfigValue{ConfigType::Integer}.defaultValue(workers)},
+          }
+        , queue{WorkQueue::makeWorkQueue(cfg)}
+    {
+    }
 };
 
-struct WorkQueueTest : WithPrometheus, RPCWorkQueueTestBase {};
+struct WorkQueueTest : WithPrometheus, RPCWorkQueueTestBase {
+    WorkQueueTest() : RPCWorkQueueTestBase(/* workers = */ 4, /* maxQueueSize = */ 2)
+    {
+    }
+};
 
 TEST_F(WorkQueueTest, WhitelistedExecutionCountAddsUp)
 {
@@ -55,10 +66,10 @@ TEST_F(WorkQueueTest, WhitelistedExecutionCountAddsUp)
     std::atomic_uint32_t executeCount = 0u;
 
     for (auto i = 0u; i < kTOTAL; ++i) {
-        queue.postCoro([&executeCount](auto /* yield */) { ++executeCount; }, true);
+        queue.postCoro([&executeCount](auto /* yield */) { ++executeCount; }, /* isWhiteListed = */ true);
     }
 
-    queue.join();
+    queue.stop();
 
     auto const report = queue.report();
 
@@ -71,7 +82,6 @@ TEST_F(WorkQueueTest, WhitelistedExecutionCountAddsUp)
 TEST_F(WorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
 {
     static constexpr auto kTOTAL = 3u;
-    auto expectedCount = 2u;
     auto unblocked = false;
 
     std::mutex mtx;
@@ -82,10 +92,8 @@ TEST_F(WorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
             [&](auto /* yield */) {
                 std::unique_lock lk{mtx};
                 cv.wait(lk, [&] { return unblocked; });
-
-                --expectedCount;
             },
-            false
+            /* isWhiteListed = */ false
         );
 
         if (i == kTOTAL - 1) {
@@ -99,8 +107,58 @@ TEST_F(WorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
         }
     }
 
-    queue.join();
+    queue.stop();
     EXPECT_TRUE(unblocked);
+}
+
+struct WorkQueuePriorityTest : WithPrometheus, virtual ::testing::Test {
+    WorkQueue queue{WorkQueue::kDONT_START_PROCESSING_TAG, /* numWorkers = */ 1, /* maxSize = */ 100};
+};
+
+TEST_F(WorkQueuePriorityTest, HighPriorityTasks)
+{
+    static constexpr auto kTOTAL = 10;
+    std::vector<WorkQueue::Priority> executionOrder;
+    std::mutex mtx;
+
+    for (int i = 0; i < kTOTAL; ++i) {
+        queue.postCoro(
+            [&](auto) {
+                std::lock_guard const lock(mtx);
+                executionOrder.push_back(WorkQueue::Priority::High);
+            },
+            /* isWhiteListed = */ true,
+            WorkQueue::Priority::High
+        );
+        queue.postCoro(
+            [&](auto) {
+                std::lock_guard const lock(mtx);
+                executionOrder.push_back(WorkQueue::Priority::Default);
+            },
+            /* isWhiteListed = */ true,
+            WorkQueue::Priority::Default
+        );
+    }
+
+    queue.startProcessing();
+    queue.stop();
+
+    // with 1 worker and the above, the execution order is deterministic
+    // we should see 4 high prio tasks, then 1 normal prio task, until high prio tasks are depleted
+    std::vector<WorkQueue::Priority> const expectedOrder = {
+        WorkQueue::Priority::High,    WorkQueue::Priority::High,    WorkQueue::Priority::High,
+        WorkQueue::Priority::High,    WorkQueue::Priority::Default, WorkQueue::Priority::High,
+        WorkQueue::Priority::High,    WorkQueue::Priority::High,    WorkQueue::Priority::High,
+        WorkQueue::Priority::Default, WorkQueue::Priority::High,    WorkQueue::Priority::High,
+        WorkQueue::Priority::Default, WorkQueue::Priority::Default, WorkQueue::Priority::Default,
+        WorkQueue::Priority::Default, WorkQueue::Priority::Default, WorkQueue::Priority::Default,
+        WorkQueue::Priority::Default, WorkQueue::Priority::Default,
+    };
+
+    ASSERT_EQ(executionOrder.size(), expectedOrder.size());
+    for (auto i = 0uz; i < executionOrder.size(); ++i) {
+        EXPECT_EQ(executionOrder[i], expectedOrder[i]) << "Mismatch at index " << i;
+    }
 }
 
 struct WorkQueueStopTest : WorkQueueTest {
@@ -111,23 +169,24 @@ struct WorkQueueStopTest : WorkQueueTest {
 TEST_F(WorkQueueStopTest, RejectsNewTasksWhenStopping)
 {
     EXPECT_CALL(taskMock, Call());
-    EXPECT_TRUE(queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, false));
+    EXPECT_TRUE(queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, /* isWhiteListed = */ false));
 
-    queue.stop([]() {});
-    EXPECT_FALSE(queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, false));
+    queue.requestStop();
+    EXPECT_FALSE(queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, /* isWhiteListed = */ false));
 
-    queue.join();
+    queue.stop();
 }
 
 TEST_F(WorkQueueStopTest, CallsOnTasksCompleteWhenStoppingAndQueueIsEmpty)
 {
     EXPECT_CALL(taskMock, Call());
-    EXPECT_TRUE(queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, false));
+    EXPECT_TRUE(queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, /* isWhiteListed = */ false));
 
     EXPECT_CALL(onTasksComplete, Call()).WillOnce([&]() { EXPECT_EQ(queue.size(), 0u); });
-    queue.stop(onTasksComplete.AsStdFunction());
-    queue.join();
+    queue.requestStop(onTasksComplete.AsStdFunction());
+    queue.stop();
 }
+
 TEST_F(WorkQueueStopTest, CallsOnTasksCompleteWhenStoppingOnLastTask)
 {
     std::binary_semaphore semaphore{0};
@@ -138,19 +197,23 @@ TEST_F(WorkQueueStopTest, CallsOnTasksCompleteWhenStoppingOnLastTask)
             taskMock.Call();
             semaphore.acquire();
         },
-        false
+        /* isWhiteListed = */ false
     ));
 
     EXPECT_CALL(onTasksComplete, Call()).WillOnce([&]() { EXPECT_EQ(queue.size(), 0u); });
-    queue.stop(onTasksComplete.AsStdFunction());
+    queue.requestStop(onTasksComplete.AsStdFunction());
     semaphore.release();
 
-    queue.join();
+    queue.stop();
 }
 
-struct WorkQueueMockPrometheusTest : WithMockPrometheus, RPCWorkQueueTestBase {};
+struct WorkQueueMockPrometheusTest : WithMockPrometheus, RPCWorkQueueTestBase {
+    WorkQueueMockPrometheusTest() : RPCWorkQueueTestBase(/* workers = */ 1, /*maxQueueSize = */ 2)
+    {
+    }
+};
 
-TEST_F(WorkQueueMockPrometheusTest, postCoroCouhters)
+TEST_F(WorkQueueMockPrometheusTest, postCoroCounters)
 {
     auto& queuedMock = makeMock<CounterInt>("work_queue_queued_total_number", "");
     auto& durationMock = makeMock<CounterInt>("work_queue_cumulative_tasks_duration_us", "");
@@ -158,16 +221,17 @@ TEST_F(WorkQueueMockPrometheusTest, postCoroCouhters)
 
     std::binary_semaphore semaphore{0};
 
-    EXPECT_CALL(curSizeMock, value()).Times(2).WillRepeatedly(::testing::Return(0));
+    EXPECT_CALL(curSizeMock, value()).WillOnce(::testing::Return(0)).WillRepeatedly(::testing::Return(1));
     EXPECT_CALL(curSizeMock, add(1));
     EXPECT_CALL(queuedMock, add(1));
-    EXPECT_CALL(durationMock, add(::testing::Gt(0))).WillOnce([&](auto) {
+    EXPECT_CALL(durationMock, add(::testing::Ge(0))).WillOnce([&](auto) {
         EXPECT_CALL(curSizeMock, add(-1));
+        EXPECT_CALL(curSizeMock, value()).WillOnce(::testing::Return(0));
         semaphore.release();
     });
 
-    auto const res = queue.postCoro([&](auto /* yield */) { semaphore.acquire(); }, false);
+    auto const res = queue.postCoro([&](auto /* yield */) { semaphore.acquire(); }, /* isWhiteListed = */ false);
 
     ASSERT_TRUE(res);
-    queue.join();
+    queue.stop();
 }

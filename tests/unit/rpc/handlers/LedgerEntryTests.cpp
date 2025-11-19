@@ -152,7 +152,7 @@ generateTestValuesForParametersTest()
             .testName = "UnknownOption",
             .testJson = R"JSON({})JSON",
             .expectedError = "invalidParams",
-            .expectedErrorMessage = "Invalid parameters."
+            .expectedErrorMessage = "No ledger_entry params provided."
         },
 
         ParamTestCaseBundle{
@@ -2311,11 +2311,23 @@ struct IndexTest : public HandlerBaseTest, public WithParamInterface<std::string
     };
 };
 
-// content of index, payment_channel, nft_page and check fields is ledger index.
+// content of index, amendments, check, fee, hashes, nft_offer, nunl, nft_page, payment_channel, signer_list fields is
+// ledger index.
 INSTANTIATE_TEST_CASE_P(
     RPCLedgerEntryGroup3,
     IndexTest,
-    Values("index", "nft_page", "payment_channel", "check"),
+    Values(
+        "index",
+        "amendments",
+        "check",
+        "fee",
+        "hashes",
+        "nft_offer",
+        "nunl",
+        "nft_page",
+        "payment_channel",
+        "signer_list"
+    ),
     IndexTest::NameGenerator{}
 );
 
@@ -3374,7 +3386,7 @@ TEST_F(RPCLedgerEntryTest, InvalidEntryTypeVersion2)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
+        EXPECT_EQ(err.at("error_message").as_string(), "No ledger_entry params provided.");
     });
 }
 
@@ -3744,7 +3756,6 @@ TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
             "Issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "LedgerEntryType": "MPTokenIssuance",
             "MPTokenMetadata": "6D65746164617461",
-            "MaximumAmount": "0",
             "OutstandingAmount": "0",
             "OwnerNode": "0",
             "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",

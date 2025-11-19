@@ -1625,7 +1625,8 @@ TEST_F(RPCAccountTxHandlerTest, MPTTxs_API_v2)
                             }}
                         ],
                         "TransactionIndex": 0,
-                        "TransactionResult": "tesSUCCESS"
+                        "TransactionResult": "tesSUCCESS",
+                        "mpt_issuance_id": "000000014B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
                     }},
                     "hash": "A52221F4003C281D3C83F501F418B55A1F9DC1C6A129EF13E1A8F0E5C008DAE3",
                     "ledger_index": 11,

@@ -20,16 +20,22 @@
 #include "data/LedgerCache.hpp"
 
 #include "data/Types.hpp"
-#include "etlng/Models.hpp"
+#include "data/impl/LedgerCacheFile.hpp"
+#include "etl/Models.hpp"
 #include "util/Assert.hpp"
 
 #include <xrpl/basics/base_uint.h>
 
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <map>
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace data {
@@ -89,7 +95,7 @@ LedgerCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool is
 }
 
 void
-LedgerCache::update(std::vector<etlng::model::Object> const& objs, uint32_t seq)
+LedgerCache::update(std::vector<etl::model::Object> const& objs, uint32_t seq)
 {
     if (disabled_)
         return;
@@ -249,6 +255,36 @@ LedgerCache::getSuccessorHitRate() const
     if (successorReqCounter_.get().value() == 0u)
         return 1;
     return static_cast<float>(successorHitCounter_.get().value()) / successorReqCounter_.get().value();
+}
+
+std::expected<void, std::string>
+LedgerCache::saveToFile(std::string const& path) const
+{
+    if (not isFull()) {
+        return std::unexpected{"Ledger cache is not full"};
+    }
+
+    impl::LedgerCacheFile file{path};
+    std::shared_lock const lock{mtx_};
+    impl::LedgerCacheFile::DataView const data{.latestSeq = latestSeq_, .map = map_, .deleted = deleted_};
+    return file.write(data);
+}
+
+std::expected<void, std::string>
+LedgerCache::loadFromFile(std::string const& path, uint32_t minLatestSequence)
+{
+    impl::LedgerCacheFile file{path};
+    auto data = file.read(minLatestSequence);
+    if (not data.has_value()) {
+        return std::unexpected(std::move(data).error());
+    }
+    auto [latestSeq, map, deleted] = std::move(data).value();
+    std::unique_lock const lock{mtx_};
+    latestSeq_ = latestSeq;
+    map_ = std::move(map);
+    deleted_ = std::move(deleted);
+    full_ = true;
+    return {};
 }
 
 }  // namespace data
