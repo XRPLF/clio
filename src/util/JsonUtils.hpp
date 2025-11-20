@@ -127,11 +127,11 @@ template <std::integral Type>
 Type
 integralValueAs(boost::json::value const& value)
 {
-    auto const expectedResult = tryIntegralValueAs<Type>(value);
+    auto expectedResult = tryIntegralValueAs<Type>(value);
     if (expectedResult.has_value())
         return *expectedResult;
 
-    throw std::logic_error("Value neither uint64 nor int64");
+    throw std::logic_error(std::move(expectedResult).error());
 }
 
 /**
