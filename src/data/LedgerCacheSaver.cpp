@@ -53,7 +53,7 @@ LedgerCacheSaver::save()
             success.has_value()) {
             LOG(util::LogService::info()) << "Successfully saved ledger cache in " << durationMs << " ms";
         } else {
-            LOG(util::LogService::error()) << "Error saving LedgerCache to file";
+            LOG(util::LogService::error()) << "Error saving LedgerCache to file: " << success.error();
         }
     });
 }
