@@ -370,13 +370,13 @@ TEST_F(ETLServiceTests, HandlesWriteConflictInMonitorSubscription)
     EXPECT_CALL(*cacheLoader_, load(kSEQ));
 
     service_.run();
-    systemState_->writeConflict = true;
+    systemState_->shouldGiveUpWriter = true;
 
     EXPECT_CALL(*publisher_, publish(kSEQ + 1, testing::_, testing::_));
     ASSERT_TRUE(capturedCallback);
     capturedCallback(kSEQ + 1);
 
-    EXPECT_FALSE(systemState_->writeConflict);
+    EXPECT_FALSE(systemState_->shouldGiveUpWriter);
     EXPECT_FALSE(systemState_->isWriting);
 }
 
@@ -424,7 +424,11 @@ TEST_F(ETLServiceTests, AttemptTakeoverWriter)
         return std::move(mockMonitor);
     });
 
-    EXPECT_CALL(mockMonitorRef, subscribeToNewSequence);
+    std::function<void(uint32_t)> onNewSeqCallback;
+    EXPECT_CALL(mockMonitorRef, subscribeToNewSequence).WillOnce([&onNewSeqCallback](auto cb) {
+        onNewSeqCallback = std::move(cb);
+        return boost::signals2::scoped_connection{};
+    });
     EXPECT_CALL(mockMonitorRef, subscribeToDbStalled).WillOnce([&capturedDbStalledCallback](auto callback) {
         capturedDbStalledCallback = callback;
         return boost::signals2::scoped_connection{};
@@ -450,6 +454,8 @@ TEST_F(ETLServiceTests, AttemptTakeoverWriter)
     ASSERT_TRUE(capturedDbStalledCallback);
     capturedDbStalledCallback();
 
+    EXPECT_FALSE(systemState_->isWriting);  // will attempt to become writer after new sequence appears but not yet
+    onNewSeqCallback(kSEQ);
     EXPECT_TRUE(systemState_->isWriting);  // should attempt to become writer
 }
 
@@ -477,15 +483,15 @@ TEST_F(ETLServiceTests, GiveUpWriterAfterWriteConflict)
 
     service_.run();
     systemState_->isWriting = true;
-    systemState_->writeConflict = true;  // got a write conflict along the way
+    systemState_->shouldGiveUpWriter = true;  // got a write conflict along the way
 
     EXPECT_CALL(*publisher_, publish(kSEQ + 1, testing::_, testing::_));
 
     ASSERT_TRUE(capturedCallback);
     capturedCallback(kSEQ + 1);
 
-    EXPECT_FALSE(systemState_->isWriting);      // gives up writing
-    EXPECT_FALSE(systemState_->writeConflict);  // and removes write conflict flag
+    EXPECT_FALSE(systemState_->isWriting);           // gives up writing
+    EXPECT_FALSE(systemState_->shouldGiveUpWriter);  // and removes write conflict flag
 }
 
 TEST_F(ETLServiceTests, CancelledLoadInitialLedger)
