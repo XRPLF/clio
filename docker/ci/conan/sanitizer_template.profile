@@ -3,7 +3,11 @@
 {% set sanitizer_opt_map = {"asan": "address", "tsan": "thread", "ubsan": "undefined"} %}
 {% set sanitizer = sanitizer_opt_map[sani] %}
 
-{% set sanitizer_b2_flags_map = {"address": "define=BOOST_USE_ASAN=1 context-impl=ucontext address-sanitizer=on", "thread": "thread-sanitizer=on", "undefined": "undefined-sanitizer=on"} %}
+{% set sanitizer_b2_flags_map = {
+    "address": "context-impl=ucontext address-sanitizer=norecover",
+    "thread": "context-impl=ucontext thread-sanitizer=norecover",
+    "undefined": "undefined-sanitizer=norecover"
+} %}
 {% set sanitizer_b2_flags_str = sanitizer_b2_flags_map[sanitizer] %}
 
 {% set sanitizer_build_flags_str = "-fsanitize=" ~ sanitizer ~ " -g -O1 -fno-omit-frame-pointer" %}
@@ -24,4 +28,10 @@ tools.build:cxxflags+={{ sanitizer_build_flags }}
 tools.build:exelinkflags+={{ sanitizer_link_flags }}
 tools.build:sharedlinkflags+={{ sanitizer_link_flags }}
 
-tools.info.package_id:confs+=["tools.build:cflags", "tools.build:cxxflags", "tools.build:exelinkflags", "tools.build:sharedlinkflags"]
+{% if sanitizer == "address" %}
+    tools.build:defines+=["BOOST_USE_ASAN", "BOOST_USE_UCONTEXT"]
+{% elif sanitizer == "thread" %}
+    tools.build:defines+=["BOOST_USE_TSAN", "BOOST_USE_UCONTEXT"]
+{% endif %}
+
+tools.info.package_id:confs+=["tools.build:cflags", "tools.build:cxxflags", "tools.build:exelinkflags", "tools.build:sharedlinkflags", "tools.build:defines"]

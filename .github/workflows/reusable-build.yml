@@ -116,9 +116,8 @@ jobs:
           code_coverage: ${{ inputs.code_coverage }}
 
       - name: Restore ccache cache
-        if: ${{ inputs.download_ccache }}
+        if: ${{ inputs.download_ccache && github.ref != 'refs/heads/develop' }}
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        id: restore_cache
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ${{ steps.cache_key.outputs.key }}
@@ -160,17 +159,14 @@ jobs:
           name: build_time_report_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build_time_report.txt
 
-      - name: Show ccache's statistics
+      - name: Show ccache's statistics and zero it
         if: ${{ inputs.download_ccache }}
-        id: ccache_stats
         run: |
-          ccache -s > /tmp/ccache.stats
-          miss_rate=$(cat /tmp/ccache.stats | grep 'Misses' | head -n1 | sed 's/.*(\(.*\)%).*/\1/')
-          echo "miss_rate=${miss_rate}" >> $GITHUB_OUTPUT
-          cat /tmp/ccache.stats
+          ccache --show-stats
+          ccache --zero-stats
 
       - name: Save ccache cache
-        if: ${{ inputs.upload_ccache && github.ref == 'refs/heads/develop' && (steps.restore_cache.outputs.cache-hit != 'true' || steps.ccache_stats.outputs.miss_rate == '100.0') }}
+        if: ${{ inputs.upload_ccache && github.ref == 'refs/heads/develop' }}
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.CCACHE_DIR }}
