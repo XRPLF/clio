@@ -26,6 +26,7 @@
 #include <boost/json/value.hpp>
 #include <boost/uuid/uuid.hpp>
 
+#include <cstdint>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -37,6 +38,7 @@ namespace {
 
 struct Fields {
     static constexpr std::string_view const kUPDATE_TIME = "update_time";
+    static constexpr std::string_view const kDB_ROLE = "db_role";
 };
 
 }  // namespace
@@ -46,6 +48,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, ClioNode const& 
 {
     jv = {
         {Fields::kUPDATE_TIME, util::systemTpToUtcStr(node.updateTime, ClioNode::kTIME_FORMAT)},
+        {Fields::kDB_ROLE, static_cast<int64_t>(node.dbRole)}
     };
 }
 
@@ -58,7 +61,15 @@ tag_invoke(boost::json::value_to_tag<ClioNode>, boost::json::value const& jv)
         throw std::runtime_error("Failed to parse update time");
     }
 
-    return ClioNode{.uuid = std::make_shared<boost::uuids::uuid>(), .updateTime = updateTime.value()};
+    auto const dbRoleValue = jv.as_object().at(Fields::kDB_ROLE).as_int64();
+    if (dbRoleValue > static_cast<int64_t>(ClioNode::DbRole::MAX))
+        throw std::runtime_error("Invalid db_role value");
+
+    return ClioNode{
+        .uuid = std::make_shared<boost::uuids::uuid>(),
+        .updateTime = updateTime.value(),
+        .dbRole = static_cast<ClioNode::DbRole>(dbRoleValue)
+    };
 }
 
 }  // namespace cluster

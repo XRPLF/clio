@@ -77,8 +77,8 @@ class ClusterCommunicationService : public ClusterCommunicationServiceInterface 
     std::vector<ClioNode> otherNodesData_;
 
 public:
-    static constexpr std::chrono::milliseconds kDEFAULT_READ_INTERVAL{2100};
-    static constexpr std::chrono::milliseconds kDEFAULT_WRITE_INTERVAL{1200};
+    static constexpr std::chrono::milliseconds kDEFAULT_READ_INTERVAL{1000};
+    static constexpr std::chrono::milliseconds kDEFAULT_WRITE_INTERVAL{1000};
     /**
      * @brief Construct a new Cluster Communication Service object.
      *

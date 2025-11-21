@@ -37,16 +37,12 @@ struct ClioNode {
      */
     static constexpr char const* kTIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ";
 
-    // enum class WriterRole {
-    //     ReadOnly,
-    //     NotWriter,
-    //     Writer
-    // };
+    /** @brief Database role */
+    enum class DbRole { ReadOnly = 0, NotWriter = 1, Writer = 2, MAX = 2 };
 
     std::shared_ptr<boost::uuids::uuid> uuid;          ///< The UUID of the node.
     std::chrono::system_clock::time_point updateTime;  ///< The time the data about the node was last updated.
-
-    // WriterRole writerRole;
+    DbRole dbRole;                                     ///< The database role of the node
 };
 
 void

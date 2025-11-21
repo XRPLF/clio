@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "cluster/ClioNode.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TimeUtils.hpp"
 
 #include <boost/json/object.hpp>
@@ -29,6 +30,7 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <cstdint>
 #include <ctime>
 #include <memory>
 #include <stdexcept>
@@ -44,44 +46,44 @@ struct ClioNodeTest : testing::Test {
 
 TEST_F(ClioNodeTest, Serialization)
 {
-    // Create a ClioNode with test data
     ClioNode const node{
-        .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()()), .updateTime = updateTime
+        .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()()),
+        .updateTime = updateTime,
+        .dbRole = ClioNode::DbRole::Writer
     };
 
-    // Serialize to JSON
     boost::json::value jsonValue;
     EXPECT_NO_THROW(boost::json::value_from(node, jsonValue));
 
-    // Verify JSON structure
     ASSERT_TRUE(jsonValue.is_object()) << jsonValue;
     auto const& obj = jsonValue.as_object();
 
-    // Check update_time exists and is a string
     EXPECT_TRUE(obj.contains("update_time"));
     EXPECT_TRUE(obj.at("update_time").is_string());
+
+    EXPECT_TRUE(obj.contains("db_role"));
+    EXPECT_TRUE(obj.at("db_role").is_number());
+    EXPECT_EQ(obj.at("db_role").as_int64(), static_cast<int64_t>(node.dbRole));
 }
 
 TEST_F(ClioNodeTest, Deserialization)
 {
-    boost::json::value const jsonValue = {{"update_time", updateTimeStr}};
+    boost::json::value const jsonValue = {{"update_time", updateTimeStr}, {"db_role", 1}};
 
-    // Deserialize to ClioNode
-    ClioNode node{.uuid = std::make_shared<boost::uuids::uuid>(), .updateTime = {}};
-    EXPECT_NO_THROW(node = boost::json::value_to<ClioNode>(jsonValue));
+    ClioNode node{
+        .uuid = std::make_shared<boost::uuids::uuid>(), .updateTime = {}, .dbRole = ClioNode::DbRole::ReadOnly
+    };
+    ASSERT_NO_THROW(node = boost::json::value_to<ClioNode>(jsonValue));
 
-    // Verify deserialized data
     EXPECT_NE(node.uuid, nullptr);
     EXPECT_EQ(*node.uuid, boost::uuids::uuid{});
     EXPECT_EQ(node.updateTime, updateTime);
+    EXPECT_EQ(node.dbRole, ClioNode::DbRole::NotWriter);
 }
 
 TEST_F(ClioNodeTest, DeserializationInvalidTime)
 {
-    // Prepare an invalid time format
     boost::json::value const jsonValue{"update_time", "invalid_format"};
-
-    // Expect an exception during deserialization
     EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
 }
 
@@ -91,5 +93,57 @@ TEST_F(ClioNodeTest, DeserializationMissingTime)
     boost::json::value const jsonValue = {{}};
 
     // Expect an exception
+    EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
+}
+
+struct ClioNodeDbRoleTestBundle {
+    std::string testName;
+    ClioNode::DbRole role;
+};
+
+struct ClioNodeDbRoleTest : ClioNodeTest, testing::WithParamInterface<ClioNodeDbRoleTestBundle> {};
+
+INSTANTIATE_TEST_SUITE_P(
+    AllDbRoles,
+    ClioNodeDbRoleTest,
+    testing::Values(
+        ClioNodeDbRoleTestBundle{.testName = "ReadOnly", .role = ClioNode::DbRole::ReadOnly},
+        ClioNodeDbRoleTestBundle{.testName = "NotWriter", .role = ClioNode::DbRole::NotWriter},
+        ClioNodeDbRoleTestBundle{.testName = "Writer", .role = ClioNode::DbRole::Writer}
+    ),
+    tests::util::kNAME_GENERATOR
+);
+
+TEST_P(ClioNodeDbRoleTest, Serialization)
+{
+    auto const param = GetParam();
+    ClioNode const node{
+        .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()()),
+        .updateTime = updateTime,
+        .dbRole = param.role
+    };
+    auto const jsonValue = boost::json::value_from(node);
+    EXPECT_EQ(jsonValue.as_object().at("db_role").as_int64(), static_cast<int64_t>(param.role));
+}
+
+TEST_P(ClioNodeDbRoleTest, Deserialization)
+{
+    auto const param = GetParam();
+    boost::json::value const jsonValue = {
+        {"update_time", updateTimeStr}, {"db_role", static_cast<int64_t>(param.role)}
+    };
+    auto const node = boost::json::value_to<ClioNode>(jsonValue);
+    EXPECT_EQ(node.dbRole, param.role);
+}
+
+TEST_F(ClioNodeDbRoleTest, DeserializationInvalidDbRole)
+{
+    boost::json::value const jsonValue = {{"update_time", updateTimeStr}, {"db_role", 10}};
+    EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
+}
+
+TEST_F(ClioNodeDbRoleTest, DeserializationMissingDbRole)
+{
+    boost::json::value const jsonValue = {{"update_time", updateTimeStr}};
     EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
 }
