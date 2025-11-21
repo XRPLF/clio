@@ -152,9 +152,8 @@ getLedgerIndex(boost::json::value const& value)
             return ledgerIndex;
         }
         return std::unexpected("Invalid ledger index string");
-    } else {
-        return std::unexpected("'validated' ledger index is requested");
     }
+    return std::unexpected("'validated' ledger index is requested");
 }
 
 }  // namespace util
