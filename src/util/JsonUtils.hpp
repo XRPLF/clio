@@ -148,10 +148,10 @@ getLedgerIndex(boost::json::value const& value)
     }
     if (value.as_string() != "validated") {
         uint32_t ledgerIndex{};
-        if (beast::lexicalCastChecked(ledgerIndex, value.as_string().c_str()))
+        if (beast::lexicalCastChecked(ledgerIndex, value.as_string().c_str())) {
             return ledgerIndex;
-        else
-            return std::unexpected("Invalid ledger index string");
+        }
+        return std::unexpected("Invalid ledger index string");
     } else {
         return std::unexpected("'validated' ledger index is requested");
     }
