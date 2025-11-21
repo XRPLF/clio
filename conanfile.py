@@ -14,14 +14,13 @@ class ClioConan(ConanFile):
     requires = [
         'boost/1.83.0',
         'cassandra-cpp-driver/2.17.0',
-        'fmt/11.2.0',
         'protobuf/3.21.12',
         'grpc/1.50.1',
         'openssl/1.1.1w',
         'xrpl/3.0.0-rc1',
         'zlib/1.3.1',
         'libbacktrace/cci.20210118',
-        'spdlog/1.15.3',
+        'spdlog/1.16.0',
     ]
 
     default_options = {
@@ -47,6 +46,7 @@ class ClioConan(ConanFile):
     def requirements(self):
         self.requires('gtest/1.14.0')
         self.requires('benchmark/1.9.4')
+        self.requires('fmt/12.1.0', force=True)
 
     def configure(self):
         if self.settings.compiler == 'apple-clang':
