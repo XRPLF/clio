@@ -64,6 +64,7 @@ jobs:
 
       - name: Run clang-tidy (several times)
         continue-on-error: true
+        id: clang_tidy
         run: |
           CLANG_TIDY_COMMAND="run-clang-tidy-${{ env.LLVM_TOOLS_VERSION }} -p build -j ${{ steps.nproc.outputs.nproc }} -fix -quiet"
           ${CLANG_TIDY_COMMAND} ||
@@ -83,7 +84,7 @@ jobs:
           pre-commit run --all-files clang-format || true
 
       - name: Create an issue
-        if: ${{ steps.files_changed.outcome != 'success' && github.event_name != 'pull_request' }}
+        if: ${{ (steps.clang_tidy.outcome != 'success' || steps.files_changed.outcome != 'success') && github.event_name != 'pull_request' }}
         id: create_issue
         uses: ./.github/actions/create-issue
         env:
@@ -120,5 +121,5 @@ jobs:
           reviewers: "godexsoft,kuznetsss,PeterChen13579,mathbunnyru"
 
       - name: Fail the job
-        if: ${{ steps.files_changed.outcome != 'success' }}
+        if: ${{ steps.clang_tidy.outcome != 'success' || steps.files_changed.outcome != 'success' }}
         run: exit 1
