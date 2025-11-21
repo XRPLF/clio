@@ -62,27 +62,28 @@ jobs:
         uses: XRPLF/actions/.github/actions/get-nproc@046b1620f6bfd6cd0985dc82c3df02786801fe0a
         id: nproc
 
-      - name: Run clang-tidy
+      - name: Run clang-tidy (several times)
         continue-on-error: true
-        id: run_clang_tidy
         run: |
-          run-clang-tidy-${{ env.LLVM_TOOLS_VERSION }} -p build -j "${{ steps.nproc.outputs.nproc }}" -fix -quiet 1>output.txt
+          CLANG_TIDY_COMMAND="run-clang-tidy-${{ env.LLVM_TOOLS_VERSION }} -p build -j ${{ steps.nproc.outputs.nproc }} -fix -quiet"
+          ${CLANG_TIDY_COMMAND} ||
+          ${CLANG_TIDY_COMMAND} ||
+          ${CLANG_TIDY_COMMAND}
+
+      - name: Check for changes
+        id: files_changed
+        continue-on-error: true
+        run: |
+          git diff --exit-code
 
       - name: Fix local includes and clang-format style
-        if: ${{ steps.run_clang_tidy.outcome != 'success' }}
+        if: ${{ steps.files_changed.outcome != 'success' }}
         run: |
           pre-commit run --all-files fix-local-includes || true
           pre-commit run --all-files clang-format || true
 
-      - name: Print issues found
-        if: ${{ steps.run_clang_tidy.outcome != 'success' }}
-        run: |
-          sed -i '/error\||/!d' ./output.txt
-          cat output.txt
-          rm output.txt
-
       - name: Create an issue
-        if: ${{ steps.run_clang_tidy.outcome != 'success' && github.event_name != 'pull_request' }}
+        if: ${{ steps.files_changed.outcome != 'success' && github.event_name != 'pull_request' }}
         id: create_issue
         uses: ./.github/actions/create-issue
         env:
@@ -95,7 +96,7 @@ jobs:
             List of the issues found: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/
 
       - uses: crazy-max/ghaction-import-gpg@e89d40939c28e39f97cf32126055eeae86ba74ec # v6.3.0
-        if: ${{ steps.run_clang_tidy.outcome != 'success' && github.event_name != 'pull_request' }}
+        if: ${{ steps.files_changed.outcome != 'success' && github.event_name != 'pull_request' }}
         with:
           gpg_private_key: ${{ secrets.ACTIONS_GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.ACTIONS_GPG_PASSPHRASE }}
@@ -103,7 +104,7 @@ jobs:
           git_commit_gpgsign: true
 
       - name: Create PR with fixes
-        if: ${{ steps.run_clang_tidy.outcome != 'success' && github.event_name != 'pull_request' }}
+        if: ${{ steps.files_changed.outcome != 'success' && github.event_name != 'pull_request' }}
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         env:
           GH_REPO: ${{ github.repository }}
@@ -119,5 +120,5 @@ jobs:
           reviewers: "godexsoft,kuznetsss,PeterChen13579,mathbunnyru"
 
       - name: Fail the job
-        if: ${{ steps.run_clang_tidy.outcome != 'success' }}
+        if: ${{ steps.files_changed.outcome != 'success' }}
         run: exit 1
