@@ -66,6 +66,7 @@ jobs:
         continue-on-error: true
         id: clang_tidy
         run: |
+          # We run clang-tidy several times, because some fixes may enable new fixes in subsequent runs.
           CLANG_TIDY_COMMAND="run-clang-tidy-${{ env.LLVM_TOOLS_VERSION }} -p build -j ${{ steps.nproc.outputs.nproc }} -fix -quiet"
           ${CLANG_TIDY_COMMAND} ||
           ${CLANG_TIDY_COMMAND} ||
