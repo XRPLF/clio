@@ -40,7 +40,10 @@ struct ClioNode {
     /** @brief Database role */
     enum class DbRole { ReadOnly = 0, NotWriter = 1, Writer = 2, MAX = 2 };
 
-    std::shared_ptr<boost::uuids::uuid> uuid;          ///< The UUID of the node.
+    using UUID = std::shared_ptr<boost::uuids::uuid>;
+    using cUUID = std::shared_ptr<boost::uuids::uuid const>;
+
+    UUID uuid;                                         ///< The UUID of the node.
     std::chrono::system_clock::time_point updateTime;  ///< The time the data about the node was last updated.
     DbRole dbRole;                                     ///< The database role of the node
 };

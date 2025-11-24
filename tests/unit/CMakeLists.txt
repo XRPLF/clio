@@ -47,6 +47,7 @@ target_sources(
           etl/SourceImplTests.cpp
           etl/SubscriptionSourceTests.cpp
           etl/TaskManagerTests.cpp
+          etl/WriterStateTests.cpp
           etl/ext/CoreTests.cpp
           etl/ext/CacheTests.cpp
           etl/ext/MPTTests.cpp
