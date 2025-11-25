@@ -55,7 +55,7 @@ namespace cluster {
 class Backend {
 public:
     /** @brief Type representing cluster data result - either a vector of nodes or an error message */
-    using ClusterData = std::expected<std::shared_ptr<std::vector<ClioNode> const>, std::string>;
+    using ClusterData = std::expected<std::vector<ClioNode>, std::string>;
 
 private:
     /** @brief Logger for cluster communication activities */
@@ -77,7 +77,7 @@ private:
     ClioNode::UUID selfUuid_;
 
     /** @brief Signal emitted when new cluster state is available */
-    boost::signals2::signal<void(ClioNode::cUUID, ClusterData)> onNewState_;
+    boost::signals2::signal<void(ClioNode::cUUID, std::shared_ptr<ClusterData const>)> onNewState_;
 
 public:
     /**
@@ -130,7 +130,7 @@ public:
      * @return A connection object that can be used to unsubscribe
      */
     template <typename S>
-        requires std::invocable<S, ClioNode::cUUID, ClusterData>
+        requires std::invocable<S, ClioNode::cUUID, std::shared_ptr<ClusterData const>>
     boost::signals2::connection
     subscribeToNewState(S&& s)
     {
@@ -144,7 +144,7 @@ private:
      * @param yield Coroutine yield context
      * @return Cluster data containing all nodes' state, or an error message
      */
-    std::expected<std::shared_ptr<std::vector<ClioNode> const>, std::string>
+    ClusterData
     doRead(boost::asio::yield_context yield);
 
     /**

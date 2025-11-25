@@ -43,7 +43,6 @@
 
 #include <chrono>
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -69,7 +68,7 @@ Backend::run()
 {
     readerTask_.run([this](boost::asio::yield_context yield) {
         auto clusterState = doRead(yield);
-        onNewState_(selfUuid_, std::move(clusterState));
+        onNewState_(selfUuid_, std::make_shared<ClusterData>(std::move(clusterState)));
     });
 
     writerTask_.run([this]() { doWrite(); });
@@ -87,7 +86,7 @@ Backend::stop()
     writerTask_.stop();
 }
 
-std::expected<std::shared_ptr<std::vector<ClioNode> const>, std::string>
+Backend::ClusterData
 Backend::doRead(boost::asio::yield_context yield)
 {
     BackendInterface::ClioNodesDataFetchResult expectedResult;
@@ -121,7 +120,7 @@ Backend::doRead(boost::asio::yield_context yield)
         otherNodesData.push_back(std::move(expectedNodeData).value());
     }
     otherNodesData.push_back(ClioNode::from(selfUuid_, *writerState_));
-    return std::make_shared<std::vector<ClioNode>>(otherNodesData);
+    return std::vector<ClioNode>(otherNodesData);
 }
 
 void

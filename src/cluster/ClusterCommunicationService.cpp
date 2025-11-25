@@ -51,13 +51,14 @@ ClusterCommunicationService::ClusterCommunicationService(
 )
     : backend_(ctx_.executor(), std::move(backend), std::move(writerState), readInterval, writeInterval)
 {
-    nodesInClusterMetric_.set(1);  // The node always sees itself
-    isHealthy_ = true;
 }
 
 void
 ClusterCommunicationService::run()
 {
+    backend_.subscribeToNewState([this](auto&&... args) {
+        metrics_.onNewState(std::forward<decltype(args)>(args)...);
+    });
     backend_.run();
 }
 

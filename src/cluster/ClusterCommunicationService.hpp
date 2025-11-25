@@ -20,11 +20,9 @@
 #pragma once
 
 #include "cluster/Backend.hpp"
+#include "cluster/Metrics.hpp"
 #include "data/BackendInterface.hpp"
 #include "etl/WriterState.hpp"
-#include "util/prometheus/Bool.hpp"
-#include "util/prometheus/Gauge.hpp"
-#include "util/prometheus/Prometheus.hpp"
 
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/spawn.hpp>
@@ -34,7 +32,6 @@
 
 #include <chrono>
 #include <memory>
-#include <string>
 
 namespace cluster {
 
@@ -42,20 +39,10 @@ namespace cluster {
  * @brief Service to post and read messages to/from the cluster. It uses a backend to communicate with the cluster.
  */
 class ClusterCommunicationService {
-    util::prometheus::GaugeInt& nodesInClusterMetric_ = PrometheusService::gaugeInt(
-        "cluster_nodes_total_number",
-        {},
-        "Total number of nodes this node can detect in the cluster."
-    );
-    util::prometheus::Bool isHealthy_ = PrometheusService::boolMetric(
-        "cluster_communication_is_healthy",
-        {},
-        "Whether cluster communication service is operating healthy (1 - healthy, 0 - we have a problem)"
-    );
-
     // TODO: Use util::async::CoroExecutionContext after https://github.com/XRPLF/clio/issues/1973 is implemented
     boost::asio::thread_pool ctx_{1};
     Backend backend_;
+    Metrics metrics_;
 
 public:
     static constexpr std::chrono::milliseconds kDEFAULT_READ_INTERVAL{1000};
