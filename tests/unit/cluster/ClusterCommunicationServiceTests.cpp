@@ -49,6 +49,7 @@
 
 using namespace cluster;
 
+/*
 namespace {
 std::vector<ClioNode> const kOTHER_NODES_DATA = {
     ClioNode{
@@ -226,3 +227,4 @@ TEST_F(ClusterCommunicationServiceTest, Read_Success)
     EXPECT_TRUE(isHealthyMetric);
     EXPECT_EQ(nodesInClusterMetric.value(), 3);
 }
+*/

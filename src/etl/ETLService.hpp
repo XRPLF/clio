@@ -137,6 +137,7 @@ public:
     static std::shared_ptr<ETLServiceInterface>
     makeETLService(
         util::config::ClioConfigDefinition const& config,
+        std::shared_ptr<SystemState> state,
         util::async::AnyExecutionContext ctx,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,

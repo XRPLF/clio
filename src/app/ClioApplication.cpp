@@ -29,6 +29,8 @@
 #include "etl/ETLService.hpp"
 #include "etl/LoadBalancer.hpp"
 #include "etl/NetworkValidatedLedgers.hpp"
+#include "etl/SystemState.hpp"
+#include "etl/WriterState.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "migration/MigrationInspectorFactory.hpp"
 #include "rpc/Counters.hpp"
@@ -120,7 +122,11 @@ ClioApplication::run(bool const useNgWebServer)
     // Interface to the database
     auto backend = data::makeBackend(config_, cache);
 
-    cluster::ClusterCommunicationService clusterCommunicationService{backend};
+    auto systemState = etl::SystemState::makeSystemState(config_);
+
+    cluster::ClusterCommunicationService clusterCommunicationService{
+        backend, std::make_unique<etl::WriterState>(systemState)
+    };
     clusterCommunicationService.run();
 
     auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
@@ -150,7 +156,9 @@ ClioApplication::run(bool const useNgWebServer)
     );
 
     // ETL is responsible for writing and publishing to streams. In read-only mode, ETL only publishes
-    auto etl = etl::ETLService::makeETLService(config_, ctx, backend, subscriptions, balancer, ledgers);
+    auto etl = etl::ETLService::makeETLService(
+        config_, std::move(systemState), ctx, backend, subscriptions, balancer, ledgers
+    );
 
     auto workQueue = rpc::WorkQueue::makeWorkQueue(config_);
     auto counters = rpc::Counters::makeCounters(workQueue);

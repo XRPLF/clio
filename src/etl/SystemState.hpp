@@ -19,11 +19,14 @@
 
 #pragma once
 
+#include "util/config/ConfigDefinition.hpp"
+#include "util/log/Logger.hpp"
 #include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
 #include <atomic>
+#include <memory>
 
 namespace etl {
 
@@ -31,6 +34,14 @@ namespace etl {
  * @brief Represents the state of the ETL subsystem.
  */
 struct SystemState {
+    static std::shared_ptr<SystemState>
+    makeSystemState(util::config::ClioConfigDefinition const& config)
+    {
+        auto state = std::make_shared<SystemState>();
+        state->isStrictReadonly = config.get<bool>("read_only");
+        return state;
+    }
+
     /**
      * @brief Whether the process is in strict read-only mode.
      *

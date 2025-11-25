@@ -78,6 +78,7 @@ namespace etl {
 std::shared_ptr<ETLServiceInterface>
 ETLService::makeETLService(
     util::config::ClioConfigDefinition const& config,
+    std::shared_ptr<SystemState> state,
     util::async::AnyExecutionContext ctx,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
@@ -86,9 +87,6 @@ ETLService::makeETLService(
 )
 {
     std::shared_ptr<ETLServiceInterface> ret;
-
-    auto state = std::make_shared<SystemState>();
-    state->isStrictReadonly = config.get<bool>("read_only");
 
     auto fetcher = std::make_shared<impl::LedgerFetcher>(backend, balancer);
     auto extractor = std::make_shared<impl::Extractor>(fetcher);

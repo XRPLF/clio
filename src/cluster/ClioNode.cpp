@@ -19,6 +19,7 @@
 
 #include "cluster/ClioNode.hpp"
 
+#include "etl/WriterState.hpp"
 #include "util/TimeUtils.hpp"
 
 #include <boost/json/conversion.hpp>
@@ -26,11 +27,13 @@
 #include <boost/json/value.hpp>
 #include <boost/uuid/uuid.hpp>
 
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace cluster {
 
@@ -42,6 +45,19 @@ struct Fields {
 };
 
 }  // namespace
+
+ClioNode
+ClioNode::from(ClioNode::UUID uuid, etl::WriterStateInterface const& writerState)
+{
+    auto const dbRole = [&writerState]() {
+        if (writerState.isReadOnly()) {
+            return ClioNode::DbRole::ReadOnly;
+        }
+
+        return writerState.isWriting() ? ClioNode::DbRole::Writer : ClioNode::DbRole::NotWriter;
+    }();
+    return ClioNode{.uuid = std::move(uuid), .updateTime = std::chrono::system_clock::now(), .dbRole = dbRole};
+}
 
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, ClioNode const& node)

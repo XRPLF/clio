@@ -36,6 +36,9 @@ class WriterStateInterface {
 public:
     virtual ~WriterStateInterface() = default;
 
+    [[nodiscard]] virtual bool
+    isReadOnly() const = 0;
+
     /**
      * @brief Check if the ETL process is currently writing to the database.
      * @return true if the process is writing, false otherwise
@@ -79,6 +82,9 @@ public:
      * @param state Shared pointer to the system state for coordination
      */
     WriterState(std::shared_ptr<SystemState> state);
+
+    bool
+    isReadOnly() const override;
 
     /**
      * @brief Check if the ETL process is currently writing to the database.

@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "etl/WriterState.hpp"
+
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -46,6 +48,9 @@ struct ClioNode {
     UUID uuid;                                         ///< The UUID of the node.
     std::chrono::system_clock::time_point updateTime;  ///< The time the data about the node was last updated.
     DbRole dbRole;                                     ///< The database role of the node
+
+    static ClioNode
+    from(UUID uuid, etl::WriterStateInterface const& writerState);
 };
 
 void

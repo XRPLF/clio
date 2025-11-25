@@ -31,6 +31,12 @@ WriterState::WriterState(std::shared_ptr<SystemState> state) : systemState_(std:
 }
 
 bool
+WriterState::isReadOnly() const
+{
+    return systemState_->isStrictReadonly;
+}
+
+bool
 WriterState::isWriting() const
 {
     return systemState_->isWriting;
