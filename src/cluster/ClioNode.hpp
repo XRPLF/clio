@@ -49,6 +49,13 @@ struct ClioNode {
     std::chrono::system_clock::time_point updateTime;  ///< The time the data about the node was last updated.
     DbRole dbRole;                                     ///< The database role of the node
 
+    /**
+     * @brief Create a ClioNode from writer state.
+     *
+     * @param uuid The UUID of the node
+     * @param writerState The writer state to determine the node's database role
+     * @return A ClioNode with the current time and role derived from writerState
+     */
     static ClioNode
     from(UUID uuid, etl::WriterStateInterface const& writerState);
 };

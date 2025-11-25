@@ -36,6 +36,10 @@ class WriterStateInterface {
 public:
     virtual ~WriterStateInterface() = default;
 
+    /**
+     * @brief Check if the ETL process is in strict read-only mode.
+     * @return true if the process is in strict read-only mode, false otherwise
+     */
     [[nodiscard]] virtual bool
     isReadOnly() const = 0;
 
@@ -106,7 +110,7 @@ public:
      * @brief Request to stop writing to the database.
      *
      * If not currently writing, this method does nothing. Otherwise, it sets the
-     * shouldTakeoverWriting flag in the system state to signal the request.
+     * shouldGiveUpWriter flag in the system state to signal the request.
      */
     void
     giveUpWriting() override;

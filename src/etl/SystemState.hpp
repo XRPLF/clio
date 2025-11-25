@@ -34,6 +34,12 @@ namespace etl {
  * @brief Represents the state of the ETL subsystem.
  */
 struct SystemState {
+    /**
+     * @brief Factory method to create a SystemState instance.
+     *
+     * @param config The configuration to use for initializing the system state
+     * @return A shared pointer to the newly created SystemState
+     */
     static std::shared_ptr<SystemState>
     makeSystemState(util::config::ClioConfigDefinition const& config)
     {

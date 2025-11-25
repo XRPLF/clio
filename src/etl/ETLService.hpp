@@ -127,6 +127,7 @@ public:
      * Creates and runs the ETL service.
      *
      * @param config The configuration to use
+     * @param state The system state tracking object
      * @param ctx Execution context for asynchronous operations
      * @param backend BackendInterface implementation
      * @param subscriptions Subscription manager
@@ -161,7 +162,7 @@ public:
      * @param initialLoadObserver The observer for initial data loading
      * @param taskManagerProvider The provider of the task manager instance
      * @param monitorProvider The provider of the monitor instance
-     * @param state System state tracking object
+     * @param state The system state tracking object
      */
     ETLService(
         util::async::AnyExecutionContext ctx,

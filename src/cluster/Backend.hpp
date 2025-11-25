@@ -45,24 +45,50 @@
 
 namespace cluster {
 
+/**
+ * @brief Backend communication handler for cluster state synchronization.
+ *
+ * This class manages reading and writing cluster state information to/from the backend database.
+ * It periodically reads the state of other nodes in the cluster and writes the current node's state,
+ * enabling cluster-wide coordination and awareness.
+ */
 class Backend {
 public:
+    /** @brief Type representing cluster data result - either a vector of nodes or an error message */
     using ClusterData = std::expected<std::shared_ptr<std::vector<ClioNode> const>, std::string>;
 
 private:
+    /** @brief Logger for cluster communication activities */
     util::Logger log_{"ClusterCommunication"};
 
+    /** @brief Interface to the backend database for reading/writing cluster state */
     std::shared_ptr<data::BackendInterface> backend_;
+
+    /** @brief State indicating whether this node is writing to the database */
     std::unique_ptr<etl::WriterStateInterface const> writerState_;
 
+    /** @brief Repeated task for reading cluster state from the backend */
     impl::RepeatedTask<boost::asio::thread_pool::executor_type> readerTask_;
+
+    /** @brief Repeated task for writing this node's state to the backend */
     impl::RepeatedTask<boost::asio::thread_pool::executor_type> writerTask_;
 
+    /** @brief UUID uniquely identifying this node in the cluster */
     ClioNode::UUID selfUuid_;
 
+    /** @brief Signal emitted when new cluster state is available */
     boost::signals2::signal<void(ClioNode::cUUID, ClusterData)> onNewState_;
 
 public:
+    /**
+     * @brief Construct a Backend communication handler.
+     *
+     * @param ctx The executor context for asynchronous operations
+     * @param backend Interface to the backend database
+     * @param writerState State indicating whether this node is writing to the database
+     * @param readInterval How often to read cluster state from the backend
+     * @param writeInterval How often to write this node's state to the backend
+     */
     Backend(
         boost::asio::thread_pool::executor_type ctx,
         std::shared_ptr<data::BackendInterface> backend,
@@ -80,12 +106,29 @@ public:
     Backend&
     operator=(Backend const&) = delete;
 
+    /**
+     * @brief Start the backend read and write tasks.
+     *
+     * Begins periodic reading of cluster state from the backend and writing of this node's state.
+     */
     void
     run();
 
+    /**
+     * @brief Stop the backend read and write tasks.
+     *
+     * Stops all periodic tasks and waits for them to complete.
+     */
     void
     stop();
 
+    /**
+     * @brief Subscribe to new cluster state notifications.
+     *
+     * @tparam S Callable type accepting (ClioNode::cUUID, ClusterData)
+     * @param s Subscriber callback to be invoked when new cluster state is available
+     * @return A connection object that can be used to unsubscribe
+     */
     template <typename S>
         requires std::invocable<S, ClioNode::cUUID, ClusterData>
     boost::signals2::connection
@@ -95,9 +138,18 @@ public:
     }
 
 private:
+    /**
+     * @brief Read cluster state from the backend.
+     *
+     * @param yield Coroutine yield context
+     * @return Cluster data containing all nodes' state, or an error message
+     */
     std::expected<std::shared_ptr<std::vector<ClioNode> const>, std::string>
     doRead(boost::asio::yield_context yield);
 
+    /**
+     * @brief Write this node's state to the backend.
+     */
     void
     doWrite();
 };
