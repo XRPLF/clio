@@ -62,6 +62,7 @@ constexpr auto kISSUANCE_INDEX2 = "B6DBAFC99223B42257915A63DFC6B0C032D4070F9A574
 constexpr uint64_t kISSUANCE1_MAX_AMOUNT = 10000;
 constexpr uint64_t kISSUANCE1_OUTSTANDING_AMOUNT = 5000;
 constexpr uint8_t kISSUANCE1_ASSET_SCALE = 2;
+constexpr uint16_t kISSUANCE1_TRANSFER_FEE = 10;
 
 // unique values for issuance2
 constexpr uint64_t kISSUANCE2_MAX_AMOUNT = 20000;
@@ -836,5 +837,122 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, EmptyResult)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ((*output.result).as_object().at("mpt_issuances").as_array().size(), 0);
+    });
+}
+
+TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
+{
+    uint32_t const mutableFlags1 = ripple::lsmfMPTCanMutateCanLock | ripple::lsmfMPTCanMutateRequireAuth |
+        ripple::lsmfMPTCanMutateCanEscrow | ripple::lsmfMPTCanMutateCanTrade;
+
+    uint32_t const mutableFlags2 = ripple::lsmfMPTCanMutateCanTransfer | ripple::lsmfMPTCanMutateCanClawback |
+        ripple::lsmfMPTCanMutateMetadata | ripple::lsmfMPTCanMutateTransferFee;
+
+    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    auto account = getAccountIdWithString(kACCOUNT);
+    auto accountKk = ripple::keylet::account(account).key;
+    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    ripple::STObject const ownerDir = createOwnerDirLedgerObject(
+        {ripple::uint256{kISSUANCE_INDEX1}, ripple::uint256{kISSUANCE_INDEX2}}, kISSUANCE_INDEX1
+    );
+    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+
+    std::vector<Blob> bbs;
+    auto const issuance1 = createMptIssuanceObject(
+        kACCOUNT,
+        3,
+        std::nullopt,
+        ripple::lsfMPTCanTransfer,
+        kISSUANCE1_OUTSTANDING_AMOUNT,
+        kISSUANCE1_TRANSFER_FEE,
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        mutableFlags1
+    );
+
+    auto const issuance2 = createMptIssuanceObject(
+        kACCOUNT,
+        5,
+        kISSUANCE2_METADATA,
+        ripple::lsfMPTCanTransfer,
+        kISSUANCE2_OUTSTANDING_AMOUNT,
+        kISSUANCE2_TRANSFER_FEE,
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        mutableFlags2
+    );
+
+    bbs.push_back(issuance1.getSerializer().peekData());
+    bbs.push_back(issuance2.getSerializer().peekData());
+
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
+
+    runSpawn([this](auto yield) {
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}"
+                }})JSON",
+                kACCOUNT
+            )
+        );
+
+        auto const correctOutput = fmt::format(
+            R"JSON({{
+                "account": "{}",
+                "ledger_hash": "{}",
+                "ledger_index": 30,
+                "validated": true,
+                "limit": 200,
+                "mpt_issuances": [
+                    {{
+                        "issuer": "{}",
+                        "sequence": 3,
+                        "outstanding_amount": {},
+                        "transfer_fee": {},
+                        "mpt_can_transfer": true,
+                        "mpt_can_mutate_can_lock": true,
+                        "mpt_can_mutate_require_auth": true,
+                        "mpt_can_mutate_can_escrow": true,
+                        "mpt_can_mutate_can_trade": true
+                    }},
+                    {{
+                        "issuer": "{}",
+                        "sequence": 5,
+                        "outstanding_amount": {},
+                        "transfer_fee": {},
+                        "mptoken_metadata": "{}",
+                        "mpt_can_transfer": true,
+                        "mpt_can_mutate_can_transfer": true,
+                        "mpt_can_mutate_can_clawback": true,
+                        "mpt_can_mutate_metadata": true,
+                        "mpt_can_mutate_transfer_fee": true
+                    }}
+                ]
+            }})JSON",
+            kACCOUNT,
+            kLEDGER_HASH,
+            kACCOUNT,
+            kISSUANCE1_OUTSTANDING_AMOUNT,
+            kISSUANCE1_TRANSFER_FEE,
+            kACCOUNT,
+            kISSUANCE2_OUTSTANDING_AMOUNT,
+            kISSUANCE2_TRANSFER_FEE,
+            kISSUANCE2_METADATA_HEX
+        );
+
+        auto handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(json::parse(correctOutput), *output.result);
     });
 }

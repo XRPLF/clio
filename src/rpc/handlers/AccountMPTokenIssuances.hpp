@@ -80,6 +80,15 @@ public:
         std::optional<bool> mptCanTrade;
         std::optional<bool> mptCanTransfer;
         std::optional<bool> mptCanClawback;
+
+        std::optional<bool> mptCanMutateCanLock;
+        std::optional<bool> mptCanMutateRequireAuth;
+        std::optional<bool> mptCanMutateCanEscrow;
+        std::optional<bool> mptCanMutateCanTrade;
+        std::optional<bool> mptCanMutateCanTransfer;
+        std::optional<bool> mptCanMutateCanClawback;
+        std::optional<bool> mptCanMutateMetadata;
+        std::optional<bool> mptCanMutateTransferFee;
     };
 
     /**
