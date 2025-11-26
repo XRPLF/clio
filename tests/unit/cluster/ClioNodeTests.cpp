@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "cluster/ClioNode.hpp"
+#include "util/MockWriterState.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/TimeUtils.hpp"
 
@@ -27,6 +28,7 @@
 #include <boost/json/value_to.hpp>
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
@@ -146,4 +148,62 @@ TEST_F(ClioNodeDbRoleTest, DeserializationMissingDbRole)
 {
     boost::json::value const jsonValue = {{"update_time", updateTimeStr}};
     EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
+}
+
+struct ClioNodeFromTestBundle {
+    std::string testName;
+    bool readOnly;
+    bool writing;
+    ClioNode::DbRole expectedRole;
+};
+
+struct ClioNodeFromTest : ClioNodeTest, testing::WithParamInterface<ClioNodeFromTestBundle> {
+    std::shared_ptr<boost::uuids::uuid> uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()());
+
+    MockWriterState writerState;
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    AllWriterStates,
+    ClioNodeFromTest,
+    testing::Values(
+        ClioNodeFromTestBundle{
+            .testName = "ReadOnly",
+            .readOnly = true,
+            .writing = false,
+            .expectedRole = ClioNode::DbRole::ReadOnly
+        },
+        ClioNodeFromTestBundle{
+            .testName = "NotWriterNotReadOnly",
+            .readOnly = false,
+            .writing = false,
+            .expectedRole = ClioNode::DbRole::NotWriter
+        },
+        ClioNodeFromTestBundle{
+            .testName = "Writer",
+            .readOnly = false,
+            .writing = true,
+            .expectedRole = ClioNode::DbRole::Writer
+        }
+    ),
+    tests::util::kNAME_GENERATOR
+);
+
+TEST_P(ClioNodeFromTest, FromWriterState)
+{
+    auto const& param = GetParam();
+
+    EXPECT_CALL(writerState, isReadOnly()).WillOnce(testing::Return(param.readOnly));
+    if (not param.readOnly) {
+        EXPECT_CALL(writerState, isWriting()).WillOnce(testing::Return(param.writing));
+    }
+
+    auto const beforeTime = std::chrono::system_clock::now();
+    auto const node = ClioNode::from(uuid, writerState);
+    auto const afterTime = std::chrono::system_clock::now();
+
+    EXPECT_EQ(node.uuid, uuid);
+    EXPECT_EQ(node.dbRole, param.expectedRole);
+    EXPECT_GE(node.updateTime, beforeTime);
+    EXPECT_LE(node.updateTime, afterTime);
 }
