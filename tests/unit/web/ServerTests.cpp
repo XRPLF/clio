@@ -54,11 +54,9 @@
 #include <gtest/gtest.h>
 #include <test_data/SslCert.hpp>
 
-#include <condition_variable>
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <stdexcept>
 #include <string>
