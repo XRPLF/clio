@@ -70,11 +70,12 @@ public:
         util::spawn(strand_, [this, t = std::forward<Fn>(f)](boost::asio::yield_context yield) {
             boost::asio::steady_timer timer(yield.get_executor());
             boost::system::error_code ec;
+            auto token = cancelSignal_.slot();
+            auto slot = boost::asio::bind_cancellation_slot(token, yield[ec]);
 
             while (state_ == State::Running) {
                 timer.expires_after(interval_);
-                auto token = cancelSignal_.slot();
-                timer.async_wait(boost::asio::bind_cancellation_slot(token, yield[ec]));
+                timer.async_wait(slot);
 
                 if (ec == boost::asio::error::operation_aborted or state_ != State::Running)
                     break;

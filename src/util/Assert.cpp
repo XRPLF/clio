@@ -54,7 +54,7 @@ OnAssert::resetAction()
 void
 OnAssert::defaultAction(std::string_view message)
 {
-    if (LogServiceState::initialized()) {
+    if (LogServiceState::initialized() and LogServiceState::hasSinks()) {
         LOG(LogService::fatal()) << message;
     } else {
         std::cerr << message;

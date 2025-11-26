@@ -21,6 +21,7 @@ target_sources(
           data/impl/LedgerCacheFileTests.cpp
           data/impl/OutputFileTests.cpp
           # Cluster
+          cluster/BackendTests.cpp
           cluster/ClioNodeTests.cpp
           cluster/ClusterCommunicationServiceTests.cpp
           # ETL
