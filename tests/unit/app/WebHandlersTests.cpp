@@ -19,6 +19,7 @@
 
 #include "app/WebHandlers.hpp"
 #include "rpc/Errors.hpp"
+#include "rpc/WorkQueue.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockLedgerCache.hpp"
 #include "util/MockPrometheus.hpp"
@@ -122,7 +123,9 @@ struct MetricsHandlerTests : util::prometheus::WithPrometheus, SyncAsioContextTe
         std::make_shared<testing::StrictMock<AdminVerificationStrategyMock>>()
     };
 
-    MetricsHandler metricsHandler{adminVerifier};
+    rpc::WorkQueue workQueue{1};
+
+    MetricsHandler metricsHandler{adminVerifier, workQueue};
     web::ng::Request request{http::request<http::string_body>{http::verb::get, "/metrics", 11}};
 };
 

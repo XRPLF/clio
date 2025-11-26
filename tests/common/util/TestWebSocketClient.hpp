@@ -80,7 +80,7 @@ public:
 
 class WebServerSslSyncClient {
     boost::asio::io_context ioc_;
-    std::optional<boost::beast::websocket::stream<boost::beast::ssl_stream<boost::asio::ip::tcp::socket>>> ws_;
+    std::optional<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>> ws_;
 
 public:
     void

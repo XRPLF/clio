@@ -15,6 +15,7 @@ The image is based on Ubuntu 20.04 and contains:
 - gh 2.82.1
 - git-cliff 2.10.1
 - mold 2.40.4
+- Ninja 1.13.2
 - Python 3.8
 - and some other useful tools
 

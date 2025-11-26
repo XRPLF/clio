@@ -51,7 +51,7 @@ namespace web {
  */
 template <SomeServerHandler HandlerType>
 class SslWsSession : public impl::WsBase<SslWsSession, HandlerType> {
-    using StreamType = boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>;
+    using StreamType = boost::beast::websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>;
     StreamType ws_;
 
 public:
@@ -68,7 +68,7 @@ public:
      * @param maxWsSendingQueueSize The maximum size of the sending queue for websocket
      */
     explicit SslWsSession(
-        boost::beast::ssl_stream<boost::beast::tcp_stream>&& stream,
+        boost::asio::ssl::stream<boost::beast::tcp_stream>&& stream,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
@@ -107,7 +107,7 @@ template <SomeServerHandler HandlerType>
 class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader<HandlerType>> {
     using std::enable_shared_from_this<SslWsUpgrader<HandlerType>>::shared_from_this;
 
-    boost::beast::ssl_stream<boost::beast::tcp_stream> https_;
+    boost::asio::ssl::stream<boost::beast::tcp_stream> https_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
     std::string ip_;
@@ -133,7 +133,7 @@ public:
      * @param maxWsSendingQueueSize The maximum size of the sending queue for websocket
      */
     SslWsUpgrader(
-        boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
+        boost::asio::ssl::stream<boost::beast::tcp_stream> stream,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,

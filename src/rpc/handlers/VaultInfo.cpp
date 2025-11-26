@@ -177,8 +177,11 @@ tag_invoke(boost::json::value_to_tag<VaultInfoHandler::Input>, boost::json::valu
     if (jsonObject.contains(JS(vault_id)))
         input.vaultID = jsonObject.at(JS(vault_id)).as_string();
 
-    if (jsonObject.contains(JS(ledger_index)))
-        input.ledgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
+    if (jsonObject.contains(JS(ledger_index))) {
+        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
+        if (expectedLedgerIndex.has_value())
+            input.ledgerIndex = *expectedLedgerIndex;
+    }
 
     return input;
 }

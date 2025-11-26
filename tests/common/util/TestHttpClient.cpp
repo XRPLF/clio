@@ -148,7 +148,7 @@ HttpsSyncClient::syncPost(std::string const& host, std::string const& port, std:
     ctx.set_verify_mode(ssl::verify_none);
 
     tcp::resolver resolver(ioc);
-    boost::beast::ssl_stream<boost::beast::tcp_stream> stream(ioc, ctx);
+    boost::asio::ssl::stream<boost::beast::tcp_stream> stream(ioc, ctx);
 
 // We can't fix this so have to ignore
 #pragma GCC diagnostic push

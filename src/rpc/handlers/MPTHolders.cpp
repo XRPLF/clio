@@ -124,8 +124,11 @@ tag_invoke(boost::json::value_to_tag<MPTHoldersHandler::Input>, boost::json::val
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
 
-    if (jsonObject.contains(JS(ledger_index)))
-        input.ledgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
+    if (jsonObject.contains(JS(ledger_index))) {
+        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
+        if (expectedLedgerIndex.has_value())
+            input.ledgerIndex = *expectedLedgerIndex;
+    }
 
     if (jsonObject.contains(JS(limit)))
         input.limit = util::integralValueAs<uint32_t>(jsonObject.at(JS(limit)));

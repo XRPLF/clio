@@ -21,9 +21,11 @@
 
 #include "util/Assert.hpp"
 
+#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/steady_timer.hpp>
+#include <boost/asio/strand.hpp>
 
 #include <atomic>
 #include <chrono>
@@ -41,10 +43,11 @@ namespace util {
 class Repeat {
     struct Control {
         boost::asio::steady_timer timer;
+        boost::asio::strand<boost::asio::any_io_executor> strand;
         std::atomic_bool stopping{true};
         std::binary_semaphore semaphore{0};
 
-        Control(auto& ctx) : timer(ctx)
+        Control(auto& ctx) : timer(ctx), strand(boost::asio::make_strand(ctx))
         {
         }
     };
@@ -98,15 +101,24 @@ private:
     static void
     startImpl(std::shared_ptr<Control> control, std::chrono::steady_clock::duration interval, Action&& action)
     {
-        control->timer.expires_after(interval);
-        control->timer.async_wait([control, interval, action = std::forward<Action>(action)](auto const& ec) mutable {
-            if (ec or control->stopping) {
+        boost::asio::post(control->strand, [control, interval, action = std::forward<Action>(action)]() mutable {
+            if (control->stopping) {
                 control->semaphore.release();
                 return;
             }
-            action();
 
-            startImpl(std::move(control), interval, std::forward<Action>(action));
+            control->timer.expires_after(interval);
+            control->timer.async_wait(
+                [control, interval, action = std::forward<Action>(action)](auto const& ec) mutable {
+                    if (ec or control->stopping) {
+                        control->semaphore.release();
+                        return;
+                    }
+                    action();
+
+                    startImpl(std::move(control), interval, std::forward<Action>(action));
+                }
+            );
         });
     }
 };

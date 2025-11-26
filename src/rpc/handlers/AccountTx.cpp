@@ -258,8 +258,10 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
         input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
 
     if (jsonObject.contains(JS(ledger_index))) {
-        input.ledgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
-        if (not input.ledgerIndex.has_value()) {
+        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
+        if (expectedLedgerIndex.has_value()) {
+            input.ledgerIndex = *expectedLedgerIndex;
+        } else {
             // could not get the latest validated ledger seq here, using this flag to indicate that
             input.usingValidatedLedger = true;
         }
