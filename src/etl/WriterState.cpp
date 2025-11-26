@@ -60,4 +60,11 @@ WriterState::giveUpWriting()
     systemState_->shouldTakeoverWriting = true;
 }
 
+std::unique_ptr<WriterStateInterface>
+WriterState::clone() const
+{
+    auto c = WriterState(*this);
+    return std::make_unique<WriterState>(std::move(c));
+}
+
 }  // namespace etl

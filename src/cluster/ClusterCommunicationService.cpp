@@ -49,7 +49,8 @@ ClusterCommunicationService::ClusterCommunicationService(
     std::chrono::steady_clock::duration readInterval,
     std::chrono::steady_clock::duration writeInterval
 )
-    : backend_(ctx_.executor(), std::move(backend), std::move(writerState), readInterval, writeInterval)
+    : backend_(ctx_, std::move(backend), writerState->clone(), readInterval, writeInterval)
+    , writerDecider_(ctx_, std::move(writerState))
 {
 }
 
@@ -58,6 +59,9 @@ ClusterCommunicationService::run()
 {
     backend_.subscribeToNewState([this](auto&&... args) {
         metrics_.onNewState(std::forward<decltype(args)>(args)...);
+    });
+    backend_.subscribeToNewState([this](auto&&... args) {
+        writerDecider_.onNewState(std::forward<decltype(args)>(args)...);
     });
     backend_.run();
 }

@@ -49,7 +49,7 @@
 namespace cluster {
 
 Backend::Backend(
-    boost::asio::thread_pool::executor_type ctx,
+    boost::asio::thread_pool& ctx,
     std::shared_ptr<data::BackendInterface> backend,
     std::unique_ptr<etl::WriterStateInterface const> writerState,
     std::chrono::steady_clock::duration readInterval,

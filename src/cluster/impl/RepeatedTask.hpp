@@ -39,10 +39,10 @@
 namespace cluster::impl {
 
 // TODO: Try to replace util/Repeat by this
-template <typename AsioExecutorType>
+template <typename Context>
 class RepeatedTask {
     std::chrono::steady_clock::duration interval_;
-    boost::asio::strand<AsioExecutorType> strand_;
+    boost::asio::strand<typename Context::executor_type> strand_;
 
     enum class State { Running, Stopped };
     std::atomic<State> state_ = State::Stopped;
@@ -50,7 +50,7 @@ class RepeatedTask {
     boost::asio::cancellation_signal cancelSignal_;
 
 public:
-    RepeatedTask(std::chrono::steady_clock::duration interval, AsioExecutorType& ctx)
+    RepeatedTask(std::chrono::steady_clock::duration interval, Context& ctx)
         : interval_(interval), strand_(boost::asio::make_strand(ctx))
     {
     }

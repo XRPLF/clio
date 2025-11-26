@@ -58,39 +58,30 @@ public:
     using ClusterData = std::expected<std::vector<ClioNode>, std::string>;
 
 private:
-    /** @brief Logger for cluster communication activities */
     util::Logger log_{"ClusterCommunication"};
 
-    /** @brief Interface to the backend database for reading/writing cluster state */
     std::shared_ptr<data::BackendInterface> backend_;
-
-    /** @brief State indicating whether this node is writing to the database */
     std::unique_ptr<etl::WriterStateInterface const> writerState_;
 
-    /** @brief Repeated task for reading cluster state from the backend */
-    impl::RepeatedTask<boost::asio::thread_pool::executor_type> readerTask_;
+    impl::RepeatedTask<boost::asio::thread_pool> readerTask_;
+    impl::RepeatedTask<boost::asio::thread_pool> writerTask_;
 
-    /** @brief Repeated task for writing this node's state to the backend */
-    impl::RepeatedTask<boost::asio::thread_pool::executor_type> writerTask_;
-
-    /** @brief UUID uniquely identifying this node in the cluster */
     ClioNode::UUID selfUuid_;
 
-    /** @brief Signal emitted when new cluster state is available */
     boost::signals2::signal<void(ClioNode::cUUID, std::shared_ptr<ClusterData const>)> onNewState_;
 
 public:
     /**
      * @brief Construct a Backend communication handler.
      *
-     * @param ctx The executor context for asynchronous operations
+     * @param ctx The execution context for asynchronous operations
      * @param backend Interface to the backend database
      * @param writerState State indicating whether this node is writing to the database
      * @param readInterval How often to read cluster state from the backend
      * @param writeInterval How often to write this node's state to the backend
      */
     Backend(
-        boost::asio::thread_pool::executor_type ctx,
+        boost::asio::thread_pool& ctx,
         std::shared_ptr<data::BackendInterface> backend,
         std::unique_ptr<etl::WriterStateInterface const> writerState,
         std::chrono::steady_clock::duration readInterval,
@@ -138,18 +129,9 @@ public:
     }
 
 private:
-    /**
-     * @brief Read cluster state from the backend.
-     *
-     * @param yield Coroutine yield context
-     * @return Cluster data containing all nodes' state, or an error message
-     */
     ClusterData
     doRead(boost::asio::yield_context yield);
 
-    /**
-     * @brief Write this node's state to the backend.
-     */
     void
     doWrite();
 };

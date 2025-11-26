@@ -22,6 +22,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/strand.hpp>
 
+#include <concepts>
 #include <exception>
 #include <type_traits>
 

@@ -21,6 +21,7 @@
 
 #include "cluster/Backend.hpp"
 #include "cluster/Metrics.hpp"
+#include "cluster/WriterDecider.hpp"
 #include "data/BackendInterface.hpp"
 #include "etl/WriterState.hpp"
 
@@ -43,6 +44,7 @@ class ClusterCommunicationService {
     boost::asio::thread_pool ctx_{1};
     Backend backend_;
     Metrics metrics_;
+    WriterDecider writerDecider_;
 
 public:
     static constexpr std::chrono::milliseconds kDEFAULT_READ_INTERVAL{1000};

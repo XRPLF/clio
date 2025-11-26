@@ -19,6 +19,11 @@
 
 #include "cluster/Metrics.hpp"
 
+#include "cluster/Backend.hpp"
+#include "cluster/ClioNode.hpp"
+
+#include <memory>
+
 namespace cluster {
 
 Metrics::Metrics()
