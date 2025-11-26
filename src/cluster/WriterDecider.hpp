@@ -22,57 +22,54 @@
 #include "cluster/Backend.hpp"
 #include "cluster/ClioNode.hpp"
 #include "etl/WriterState.hpp"
-#include "util/Spawn.hpp"
-#include "util/log/Logger.hpp"
 
 #include <boost/asio/thread_pool.hpp>
 
-#include <algorithm>
 #include <memory>
-#include <utility>
 
 namespace cluster {
 
+/**
+ * @brief Decides which node in the cluster should be the writer based on cluster state.
+ *
+ * This class monitors cluster state changes and determines whether the current node
+ * should act as the writer to the database. The decision is made by:
+ * 1. Sorting all nodes by UUID for deterministic ordering
+ * 2. Selecting the first node that is allowed to write (not ReadOnly)
+ * 3. Activating writing on this node if it's the current node, otherwise deactivating
+ *
+ * This ensures only one node in the cluster actively writes to the database at a time.
+ */
 class WriterDecider {
+    /** @brief Thread pool for spawning asynchronous tasks */
     boost::asio::thread_pool& ctx_;
+
+    /** @brief Interface for controlling the writer state of this node */
     std::unique_ptr<etl::WriterStateInterface> writerState_;
 
 public:
-    WriterDecider(boost::asio::thread_pool& ctx, std::unique_ptr<etl::WriterStateInterface> writerState)
-        : ctx_(ctx), writerState_(std::move(writerState))
-    {
-    }
+    /**
+     * @brief Constructs a WriterDecider.
+     *
+     * @param ctx Thread pool for executing asynchronous operations
+     * @param writerState Writer state interface for controlling write operations
+     */
+    WriterDecider(boost::asio::thread_pool& ctx, std::unique_ptr<etl::WriterStateInterface> writerState);
 
+    /**
+     * @brief Handles cluster state changes and decides whether this node should be the writer.
+     *
+     * This method is called when cluster state changes. It asynchronously:
+     * - Sorts all nodes by UUID to establish a deterministic order
+     * - Identifies the first node allowed to write (not ReadOnly)
+     * - Activates writing if this node is selected, otherwise deactivates writing
+     * - Logs a warning if no nodes in the cluster are allowed to write
+     *
+     * @param selfId The UUID of the current node
+     * @param clusterData Shared pointer to current cluster data; may be empty if communication failed
+     */
     void
-    onNewState(ClioNode::cUUID selfId, std::shared_ptr<Backend::ClusterData const> clusterData)
-    {
-        util::spawn(
-            ctx_,
-            [writerState = writerState_->clone(),
-             selfId = std::move(selfId),
-             clusterData = std::move(clusterData)](auto&&) {
-                if (not clusterData->has_value())
-                    return;
-                auto data = clusterData->value();
-                std::ranges::sort(data, [](ClioNode const& lhs, ClioNode const& rhs) { return lhs.uuid < rhs.uuid; });
-
-                auto const it = std::ranges::find_if(data, [](ClioNode const& node) {
-                    return node.dbRole != ClioNode::DbRole::ReadOnly;
-                });
-
-                if (it == data.end()) {
-                    LOG(util::LogService::warn()) << "No nodes allowed to write in the cluster";
-                    return;
-                }
-
-                if (it->uuid == selfId) {
-                    writerState->startWriting();
-                } else {
-                    writerState->giveUpWriting();
-                }
-            }
-        );
-    }
+    onNewState(ClioNode::cUUID selfId, std::shared_ptr<Backend::ClusterData const> clusterData);
 };
 
 }  // namespace cluster
