@@ -35,6 +35,7 @@
 #include <atomic>
 #include <chrono>
 #include <concepts>
+#include <semaphore>
 
 namespace cluster::impl {
 
@@ -47,11 +48,12 @@ class RepeatedTask {
     enum class State { Running, Stopped };
     std::atomic<State> state_ = State::Stopped;
 
-    boost::asio::cancellation_signal cancelSignal_;
+    std::binary_semaphore semaphore_{0};
+    boost::asio::steady_timer timer_;
 
 public:
     RepeatedTask(std::chrono::steady_clock::duration interval, Context& ctx)
-        : interval_(interval), strand_(boost::asio::make_strand(ctx))
+        : interval_(interval), strand_(boost::asio::make_strand(ctx)), timer_(strand_)
     {
     }
 
@@ -67,41 +69,35 @@ public:
     {
         ASSERT(state_ == State::Stopped, "Can only be ran once");
         state_ = State::Running;
-        util::spawn(strand_, [this, t = std::forward<Fn>(f)](boost::asio::yield_context yield) {
-            boost::asio::steady_timer timer(yield.get_executor());
+        util::spawn(strand_, [this, f = std::forward<Fn>(f)](boost::asio::yield_context yield) {
             boost::system::error_code ec;
-            auto token = cancelSignal_.slot();
-            auto slot = boost::asio::bind_cancellation_slot(token, yield[ec]);
 
             while (state_ == State::Running) {
-                timer.expires_after(interval_);
-                timer.async_wait(slot);
+                timer_.expires_after(interval_);
+                timer_.async_wait(yield[ec]);
 
-                if (ec == boost::asio::error::operation_aborted or state_ != State::Running)
+                if (ec or state_ != State::Running)
                     break;
 
-                if constexpr (std::invocable<decltype(t), boost::asio::yield_context>) {
-                    t(yield);
+                if constexpr (std::invocable<decltype(f), boost::asio::yield_context>) {
+                    f(yield);
                 } else {
-                    t();
+                    f();
                 }
             }
+
+            semaphore_.release();
         });
     }
 
     void
     stop()
     {
-        if (state_ == State::Stopped)
-            return;
+        if (auto expected = State::Running; not state_.compare_exchange_strong(expected, State::Stopped))
+            return;  // Already stopped or not started
 
-        state_ = State::Stopped;
-        boost::asio::spawn(
-            strand_,
-            [this](auto&&) { cancelSignal_.emit(boost::asio::cancellation_type::all); },
-            boost::asio::use_future
-        )
-            .wait();
+        boost::asio::spawn(strand_, [this](auto&&) { timer_.cancel(); }, boost::asio::use_future).wait();
+        semaphore_.acquire();
     }
 };
 
