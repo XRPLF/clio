@@ -71,6 +71,7 @@ struct VaultInfoParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
+    CombinedError expectedErrorCode;
     std::string expectedErrorMessage;
 };
 
@@ -86,6 +87,7 @@ generateTestValuesForParametersTest()
                 "idk": "idk"
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
@@ -94,6 +96,7 @@ generateTestValuesForParametersTest()
                 "seq": 4
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
@@ -102,6 +105,7 @@ generateTestValuesForParametersTest()
                 "owner": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
@@ -111,6 +115,7 @@ generateTestValuesForParametersTest()
                 "seq": "asdf"
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
@@ -120,6 +125,7 @@ generateTestValuesForParametersTest()
                 "seq": 3
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "OwnerNotHexString"
         },
         VaultInfoParamTestCaseBundle{
@@ -129,6 +135,7 @@ generateTestValuesForParametersTest()
                 "seq": 3
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "OwnerNotHexString"
         },
         VaultInfoParamTestCaseBundle{
@@ -137,6 +144,7 @@ generateTestValuesForParametersTest()
                 "vault_id": 3
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
@@ -145,6 +153,7 @@ generateTestValuesForParametersTest()
                 "vault_id": "idk"
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
@@ -158,6 +167,7 @@ generateTestValuesForParametersTest()
                 kACCOUNT
             ),
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "Malformed request."
         }
     };
@@ -181,6 +191,10 @@ TEST_P(VaultInfoParameterTest, InvalidParams)
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
+        EXPECT_EQ(
+            err.at("error_code").as_uint64(),
+            std::visit([](auto code) { return static_cast<uint32_t>(code); }, testBundle.expectedErrorCode)
+        );
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
 }
@@ -208,6 +222,7 @@ TEST_F(RPCVaultInfoHandlerTest, InputHasOwnerButNotFoundResultsInError)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
+        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::RippledError::rpcENTRY_NOT_FOUND);
         EXPECT_EQ(err.at("error_message").as_string(), "Entry not found.");
     });
 }
@@ -238,6 +253,7 @@ TEST_F(RPCVaultInfoHandlerTest, VaultIDFailsVaultDeserializationReturnsEntryNotF
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
+        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::RippledError::rpcENTRY_NOT_FOUND);
         EXPECT_EQ(err.at("error_message").as_string(), "vault object not found.");
     });
 }
@@ -279,6 +295,7 @@ TEST_F(RPCVaultInfoHandlerTest, MissingIssuanceObject)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
+        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::RippledError::rpcENTRY_NOT_FOUND);
         EXPECT_EQ(err.at("error_message").as_string(), "issuance object not found.");
     });
 }
