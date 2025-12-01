@@ -122,7 +122,9 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
     auto const limit = input.limit.value_or(kLIMIT_DEFAULT);
     auto const accountID = accountFromStringStrict(input.account);
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
-        return sharedPtrBackend_->fetchAccountTransactions(*accountID, limit, input.forward, cursor, input.delegateFilter,ctx.yield);
+        return sharedPtrBackend_->fetchAccountTransactions(
+            *accountID, limit, input.forward, cursor, input.delegateFilter, ctx.yield
+        );
     });
 
     LOG(log_.info()) << "db fetch took " << timeDiff << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
@@ -197,14 +199,13 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                         if (input.delegateFilter->delegateType == rpc::DelegateFilter::Role::Delegator) {
                             // filtering by the txns where other accounts sent txns for this delegatedAccount
                             obj["delegator"] = to_string(*txnPlusMeta.delegatedAccount);
-                        }
-                        else if (input.delegateFilter->delegateType == rpc::DelegateFilter::Role::Delegatee) {
+                        } else if (input.delegateFilter->delegateType == rpc::DelegateFilter::Role::Delegatee) {
                             // filtering by the txns where this delegatedAccount sent txn on behalf of other users
                             obj["delegatee"] = to_string(*txnPlusMeta.delegatedAccount);
                         }
                     }
                 }
-                
+
                 obj[JS(validated)] = true;
                 response.transactions.push_back(std::move(obj));
                 continue;
@@ -300,7 +301,7 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
     if (jsonObject.contains("tx_type"))
         input.transactionTypeInLowercase = boost::json::value_to<std::string>(jsonObject.at("tx_type"));
 
-    if (jsonObject.contains("delegate")){
+    if (jsonObject.contains("delegate")) {
         input.delegateFilter = parseDelegateFilter(jsonObject.at("delegate").as_object());
     }
 

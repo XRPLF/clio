@@ -198,18 +198,18 @@ struct AccountCursor {
  * @brief A delegate object used filter account_tx by specific delegate accounts
  */
 struct DelegateFilter {
-    /** 
-    * @brief A delegate type used in delegate filter
-    */
+    /**
+     * @brief A delegate type used in delegate filter
+     */
     enum class Role {
-       // This account is the *active* sender, acting on behalf of another party.
-       // e.g., Account A in "A sends payment to B on behalf of C."
-       Delegatee,  
+        // This account is the *active* sender, acting on behalf of another party.
+        // e.g., Account A in "A sends payment to B on behalf of C."
+        Delegatee,
 
-       // This account is the *passive* party whose funds are being moved from.
-       // e.g., Account C in "A sends payment to B on behalf of C."
-       Delegator
-   };
+        // This account is the *passive* party whose funds are being moved from.
+        // e.g., Account C in "A sends payment to B on behalf of C."
+        Delegator
+    };
 
     Role delegateType;
     std::optional<std::string> counterParty;

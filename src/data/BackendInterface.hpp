@@ -306,6 +306,7 @@ public:
      * @param limit The maximum number of transactions per result page
      * @param forward Whether to fetch the page forwards or backwards from the given cursor
      * @param txnCursor The cursor to resume fetching from
+     * @param delegateFilter Delegate filter to restrict results to transactions involving permission delegation
      * @param yield The coroutine context
      * @return Results and a cursor to resume from
      */

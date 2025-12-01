@@ -630,7 +630,8 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Success)
     {
         auto const json = boost::json::parse(R"JSON({
             "delegate_filter": "delegator"
-        })JSON").as_object();
+        })JSON")
+                              .as_object();
 
         auto const result = parseDelegateFilter(json);
         ASSERT_TRUE(result.has_value());
@@ -643,7 +644,8 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Success)
         auto const json = boost::json::parse(R"JSON({
             "delegate_filter": "delegatee",
             "counterparty": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
-        })JSON").as_object();
+        })JSON")
+                              .as_object();
 
         auto const result = parseDelegateFilter(json);
         ASSERT_TRUE(result.has_value());
@@ -659,7 +661,8 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Failures)
     {
         auto const json = boost::json::parse(R"JSON({
             "counterparty": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
-        })JSON").as_object();
+        })JSON")
+                              .as_object();
         EXPECT_FALSE(parseDelegateFilter(json).has_value());
     }
 
@@ -667,7 +670,8 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Failures)
     {
         auto const json = boost::json::parse(R"JSON({
             "delegate_filter": 123
-        })JSON").as_object();
+        })JSON")
+                              .as_object();
         EXPECT_FALSE(parseDelegateFilter(json).has_value());
     }
 
@@ -675,7 +679,8 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Failures)
     {
         auto const json = boost::json::parse(R"JSON({
             "delegate_filter": "random_string"
-        })JSON").as_object();
+        })JSON")
+                              .as_object();
         EXPECT_FALSE(parseDelegateFilter(json).has_value());
     }
 
@@ -684,11 +689,11 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Failures)
         auto const json = boost::json::parse(R"JSON({
             "delegate_filter": "delegator",
             "counterparty": 9999
-        })JSON").as_object();
+        })JSON")
+                              .as_object();
         EXPECT_FALSE(parseDelegateFilter(json).has_value());
     }
 }
-
 
 TEST_F(RPCHelpersTest, isGlobalFrozen_AccountIsGlobalFrozen)
 {

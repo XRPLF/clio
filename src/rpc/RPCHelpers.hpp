@@ -879,5 +879,4 @@ parseDelegateType(boost::json::value const& delegateType);
 std::optional<DelegateFilter>
 parseDelegateFilter(boost::json::object const& delegateObject);
 
-
 }  // namespace rpc

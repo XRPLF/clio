@@ -218,37 +218,39 @@ public:
         std::optional<ripple::AccountID> filterCounterpartyID;
         if (delegateFilter && delegateFilter->counterParty) {
             filterCounterpartyID = ripple::parseBase58<ripple::AccountID>(*delegateFilter->counterParty);
-            
-            // If the counterparty string is invalid, we don't return anything. Error should have been caught by validators.
+
+            // If the counterparty string is invalid, we don't return anything. Error should have been caught by
+            // validators.
             if (!filterCounterpartyID) {
-                 LOG(log_.warn()) << "Invalid counterparty account in filter";
-                 return {.txns={}, .cursor={}}; 
+                LOG(log_.warn()) << "Invalid counterparty account in filter";
+                return {.txns = {}, .cursor = {}};
             }
         }
 
         std::vector<TransactionAndMetadata> resultTxns;
         if (delegateFilter.has_value()) {
             resultTxns.reserve(txns.size());
-            
-            for (auto& txn : txns) { 
+
+            for (auto& txn : txns) {
                 try {
-                    auto const delegationInfo = getDelegationInfo(txn.transaction, txn.metadata);
+                    auto const delegationInfo = getDelegationInfo(txn.transaction);
 
                     if (delegationInfo) {
                         auto const& [delegatee, delegator] = *delegationInfo;
                         bool match = false;
-                        
+
                         // Filter by "Delegator" ie. User wants to find the Owner (Delegator).
-                        // This implies the User (account) must be the Signer (Delegatee) that acted on someone's behalf.
+                        // This implies the User (account) must be the Signer (Delegatee) that acted on someone's
+                        // behalf.
                         if (delegateFilter->delegateType == rpc::DelegateFilter::Role::Delegator) {
                             // The user (account) must be delegatee
                             if (account == delegatee) {
                                 if (!filterCounterpartyID || *filterCounterpartyID == delegator) {
-                                    txn.delegatedAccount = delegator; 
+                                    txn.delegatedAccount = delegator;
                                     match = true;
                                 }
                             }
-                        } 
+                        }
                         // Filter by "Delegatee" ie. User wants to find the Signer (Delegatee).
                         // This implies the User (account) must be the Owner (Delegator).
                         else if (delegateFilter->delegateType == rpc::DelegateFilter::Role::Delegatee) {
@@ -260,16 +262,15 @@ public:
                                 }
                             }
                         }
-                        
-                        if (match) 
+
+                        if (match)
                             resultTxns.push_back(txn);
-                        
                     }
                 } catch (std::exception const& e) {
                     LOG(log_.warn()) << "Failed to parse tx for filter";
                 }
             }
-            return {.txns=resultTxns, .cursor=cursor};
+            return {.txns = resultTxns, .cursor = cursor};
         }
 
         if (txns.size() == limit) {
@@ -1037,44 +1038,38 @@ protected:
         return true;
     }
 
-/**
- * @brief Extracts delegation information from a transaction.
- *
- * Parses the transaction blob and checks whether the signer
- * (derived from the SigningPubKey) differs from the delegator
- * account. If so, returns {delegatee, delegator}. Otherwise returns null.
- *
- * @param txnBlob Serialized transaction blob.
- * @param metaBlob Unused metadata blob fetched from rippled.
- * @return pair of {delegatee, delegator} if delegated, otherwise std::nullopt
- */
-static std::optional<std::pair<ripple::AccountID, ripple::AccountID>>
-getDelegationInfo(ripple::Blob const& txnBlob, ripple::Blob const& /*metaBlob*/)
-{
-
+    /**
+     * @brief Extracts delegation information from a transaction.
+     *
+     * Parses the transaction blob and checks whether the signer
+     * (derived from the SigningPubKey) differs from the delegator
+     * account. If so, returns {delegatee, delegator}. Otherwise returns null.
+     *
+     * @param txnBlob Serialized transaction blob.
+     * @return pair of {delegatee, delegator} if delegated, otherwise std::nullopt
+     */
+    static std::optional<std::pair<ripple::AccountID, ripple::AccountID>>
+    getDelegationInfo(ripple::Blob const& txnBlob)
+    {
         ripple::SerialIter it{txnBlob.data(), txnBlob.size()};
         ripple::STTx const txn{it};
 
         auto const delegator = txn.getAccountID(ripple::sfAccount);
-        if (txn.isFieldPresent(ripple::sfSigningPubKey))
-        {
+        if (txn.isFieldPresent(ripple::sfSigningPubKey)) {
             auto const pubKeyBlob = txn.getFieldVL(ripple::sfSigningPubKey);
             ripple::PublicKey const pubKey{ripple::Slice{pubKeyBlob.data(), pubKeyBlob.size()}};
-            
+
             auto const delegatee = ripple::calcAccountID(pubKey);
 
             // Delegation Check
             // If the signer (delegatee) is NOT the account owner (delegator), it's delegated.
-            if (delegatee != delegator)
-            {
+            if (delegatee != delegator) {
                 return std::make_pair(delegatee, delegator);
             }
         }
 
         return std::nullopt;
-
-}
-
+    }
 };
 
 }  // namespace data::cassandra

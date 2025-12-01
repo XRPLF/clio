@@ -157,10 +157,8 @@ public:
                 validation::Type<std::string>{},
                 modifiers::ToLower{},
                 validation::OneOf<std::string>(typesKeysInLowercase.cbegin(), typesKeysInLowercase.cend()),
-            }, {
-                "delegate",
-                 validation::CustomValidators::delegateValidator
-            }
+            },
+            {"delegate", validation::CustomValidators::delegateValidator}
         };
 
         static auto const kRPC_SPEC = RpcSpec{

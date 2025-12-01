@@ -431,7 +431,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 .testName = "DelegateCounterpartyInvalid",
                 .testJson = R"JSON({
                     "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                    "delegate": { 
+                    "delegate": {
                         "delegate_filter": "delegatee",
                         "counterparty": "not_an_account"
                     }
@@ -443,7 +443,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 .testName = "DelegateOnlyCounterparty",
                 .testJson = R"JSON({
                     "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                    "delegate": { 
+                    "delegate": {
                         "counterparty": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
                     }
                 })JSON",
@@ -843,7 +843,12 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
     EXPECT_CALL(
         *backend_,
         fetchAccountTransactions(
-            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_, testing::_
+            testing::_,
+            testing::_,
+            false,
+            testing::Optional(testing::Eq(TransactionsCursor{10, 11})),
+            testing::_,
+            testing::_
         )
     )
         .WillOnce(Return(transCursor));
@@ -1234,17 +1239,20 @@ TEST_F(RPCAccountTxHandlerTest, WithDelegateAgent)
     EXPECT_CALL(
         *backend_,
         fetchAccountTransactions(
-            testing::_, 
-            testing::_, 
-            false,     
             testing::_,
-            testing::Optional(testing::AllOf(
-                testing::Field(&DelegateFilter::delegateType, DelegateFilter::Role::Delegator),
-                testing::Field(&DelegateFilter::counterParty, testing::Eq(std::nullopt))
-            )),
-            testing::_ 
+            testing::_,
+            false,
+            testing::_,
+            testing::Optional(
+                testing::AllOf(
+                    testing::Field(&DelegateFilter::delegateType, DelegateFilter::Role::Delegator),
+                    testing::Field(&DelegateFilter::counterParty, testing::Eq(std::nullopt))
+                )
+            ),
+            testing::_
         )
-    ).WillOnce(Return(transCursor));
+    )
+        .WillOnce(Return(transCursor));
 
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
@@ -1256,18 +1264,17 @@ TEST_F(RPCAccountTxHandlerTest, WithDelegateAgent)
                 "delegate_filter": "delegator"
             }
         })JSON");
-        
+
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
 
         EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
         auto const& txs = output.result->at("transactions").as_array();
         ASSERT_EQ(txs.size(), 2);
-        
+
         // Check the transactions contains delegator
         EXPECT_TRUE(txs[0].as_object().contains("delegator"));
         EXPECT_TRUE(txs[1].as_object().contains("delegator"));
-
     });
 }
 
@@ -1285,31 +1292,39 @@ TEST_F(RPCAccountTxHandlerTest, WithDelegateFromAndCounterparty)
     EXPECT_CALL(
         *backend_,
         fetchAccountTransactions(
-            testing::_, 
-            testing::_, 
-            false, 
-            testing::_, 
-            testing::Optional(testing::AllOf(
-                testing::Field(&DelegateFilter::delegateType, DelegateFilter::Role::Delegatee),
-                testing::Field(&DelegateFilter::counterParty, testing::Optional(std::string(kCOUNTERPARTY)))
-            )),
-            testing::_ 
+            testing::_,
+            testing::_,
+            false,
+            testing::_,
+            testing::Optional(
+                testing::AllOf(
+                    testing::Field(&DelegateFilter::delegateType, DelegateFilter::Role::Delegatee),
+                    testing::Field(&DelegateFilter::counterParty, testing::Optional(std::string(kCOUNTERPARTY)))
+                )
+            ),
+            testing::_
         )
-    ).WillOnce(Return(transCursor));
+    )
+        .WillOnce(Return(transCursor));
 
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
-        static auto const kINPUT = json::parse(fmt::format(R"JSON({{
-            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "delegate": {{
-                "delegate_filter": "delegatee",
-                "counterparty": "{}"
-            }}
-        }})JSON", kCOUNTERPARTY));
-        
-       auto const output = handler.process(kINPUT, Context{yield});
+        static auto const kINPUT = json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "delegate": {{
+                        "delegate_filter": "delegatee",
+                        "counterparty": "{}"
+                    }}
+                }})JSON",
+                kCOUNTERPARTY
+            )
+        );
+
+        auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
 
         auto const& txs = output.result->at("transactions").as_array();
@@ -1504,7 +1519,12 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
     EXPECT_CALL(
         *backend_,
         fetchAccountTransactions(
-            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_, testing::_
+            testing::_,
+            testing::_,
+            false,
+            testing::Optional(testing::Eq(TransactionsCursor{10, 11})),
+            testing::_,
+            testing::_
         )
     );
 
@@ -1723,7 +1743,12 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
     EXPECT_CALL(
         *backend_,
         fetchAccountTransactions(
-            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_, testing::_
+            testing::_,
+            testing::_,
+            false,
+            testing::Optional(testing::Eq(TransactionsCursor{10, 11})),
+            testing::_,
+            testing::_
         )
     );
 

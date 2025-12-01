@@ -1601,10 +1601,10 @@ parseDelegateFilter(boost::json::object const& delegateObject)
     delegate.delegateType = *delegateTypeOpt;
     if (delegateObject.contains("counterparty")) {
         auto const& counterpartyVal = delegateObject.at("counterparty");
-        
+
         if (!counterpartyVal.is_string())
             return {};
-            
+
         delegate.counterParty = counterpartyVal.as_string();
     }
 
