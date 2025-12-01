@@ -294,7 +294,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, NonExistLedgerViaLedgerIntIndex)
 // ledger not found via hash (seq > max)
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LedgerSeqOutOfRangeByHash)
 {
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 31);
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 31);
     EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillOnce(Return(ledgerHeader));
     auto const input = json::parse(
         fmt::format(
@@ -342,7 +342,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LedgerSeqOutOfRangeByIndex)
 // account not exist
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, NonExistAccount)
 {
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillOnce(Return(ledgerHeader));
     // fetch account object return empty
     EXPECT_CALL(*backend_, doFetchLedgerObject).WillOnce(Return(std::optional<Blob>{}));
@@ -370,13 +370,13 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, NonExistAccount)
 // fetch mptoken issuances via account successfully
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, DefaultParameters)
 {
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     // return non-empty account
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const owneDirKk = ripple::keylet::ownerDir(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     // return two mptoken issuance objects
@@ -438,7 +438,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, DefaultParameters)
             kISSUANCE_OUT2
         );
         auto const input = json::parse(fmt::format(R"JSON({{"account": "{}"}})JSON", kACCOUNT));
-        auto handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
 
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
@@ -449,12 +449,12 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, DefaultParameters)
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, UseLimit)
 {
     constexpr int kLIMIT = 20;
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const owneDirKk = ripple::keylet::ownerDir(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const indexes = std::vector<ripple::uint256>(50, ripple::uint256{kISSUANCE_INDEX1});
@@ -487,7 +487,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, UseLimit)
             )
         );
 
-        auto handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
 
@@ -536,13 +536,13 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerOutput)
 {
     constexpr auto kNEXT_PAGE = 99;
     constexpr auto kLIMIT = 15;
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto ownerDirKk = ripple::keylet::ownerDir(account).key;
-    auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), kNEXT_PAGE).key;
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+    auto const ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), kNEXT_PAGE).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
@@ -580,7 +580,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerOutput)
                 kLIMIT
             )
         );
-        auto handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         auto const& resultJson = (*output.result).as_object();
@@ -597,12 +597,12 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerInput)
     constexpr auto kNEXT_PAGE = 99;
     constexpr auto kLIMIT = 15;
 
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto ownerDirKk = ripple::keylet::page(ripple::keylet::ownerDir(account), kNEXT_PAGE).key;
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const ownerDirKk = ripple::keylet::page(ripple::keylet::ownerDir(account), kNEXT_PAGE).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
@@ -637,7 +637,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerInput)
                 kNEXT_PAGE
             )
         );
-        auto handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
 
@@ -649,12 +649,12 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerInput)
 
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitLessThanMin)
 {
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const owneDirKk = ripple::keylet::ownerDir(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     ripple::STObject const ownerDir = createOwnerDirLedgerObject(
@@ -726,7 +726,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitLessThanMin)
             kISSUANCE_OUT2
         );
 
-        auto handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output.result);
@@ -735,12 +735,12 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitLessThanMin)
 
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitMoreThanMax)
 {
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const owneDirKk = ripple::keylet::ownerDir(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     ripple::STObject const ownerDir = createOwnerDirLedgerObject(
@@ -812,7 +812,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitMoreThanMax)
             kISSUANCE_OUT2
         );
 
-        auto handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output.result);
@@ -821,12 +821,12 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitMoreThanMax)
 
 TEST_F(RPCAccountMPTokenIssuancesHandlerTest, EmptyResult)
 {
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const owneDirKk = ripple::keylet::ownerDir(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     ripple::STObject const ownerDir = createOwnerDirLedgerObject({}, kISSUANCE_INDEX1);
@@ -842,7 +842,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, EmptyResult)
                 kACCOUNT
             )
         );
-        auto handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ((*output.result).as_object().at("mpt_issuances").as_array().size(), 0);
@@ -857,12 +857,12 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
     uint32_t const mutableFlags2 = ripple::lsmfMPTCanMutateCanTransfer | ripple::lsmfMPTCanMutateCanClawback |
         ripple::lsmfMPTCanMutateMetadata | ripple::lsmfMPTCanMutateTransferFee;
 
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const owneDirKk = ripple::keylet::ownerDir(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     ripple::STObject const ownerDir = createOwnerDirLedgerObject(
@@ -961,7 +961,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
             kISSUANCE2_METADATA_HEX
         );
 
-        auto handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output.result);
@@ -1002,12 +1002,12 @@ TEST_P(AccountMPTokenIssuancesImmutableFlagsTest, SingleFlag)
 {
     auto const testParams = GetParam();
 
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const owneDirKk = ripple::keylet::ownerDir(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     ripple::STObject const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kISSUANCE_INDEX1}}, kISSUANCE_INDEX1);
@@ -1029,7 +1029,7 @@ TEST_P(AccountMPTokenIssuancesImmutableFlagsTest, SingleFlag)
                 kACCOUNT
             )
         );
-        auto handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
@@ -1078,12 +1078,12 @@ TEST_P(AccountMPTokenIssuancesMutableFlagsTest, SingleMutableFlag)
 {
     auto const testParams = GetParam();
 
-    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    auto account = getAccountIdWithString(kACCOUNT);
-    auto accountKk = ripple::keylet::account(account).key;
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto const account = getAccountIdWithString(kACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    auto const owneDirKk = ripple::keylet::ownerDir(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     ripple::STObject const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kISSUANCE_INDEX1}}, kISSUANCE_INDEX1);
@@ -1117,7 +1117,7 @@ TEST_P(AccountMPTokenIssuancesMutableFlagsTest, SingleMutableFlag)
                 kACCOUNT
             )
         );
-        auto handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
