@@ -386,33 +386,36 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, DefaultParameters)
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
 
     // mocking mptoken issuance ledger objects
-    std::vector<Blob> bbs;
-    auto const issuance1 = createMptIssuanceObject(
-        kACCOUNT,
-        1,
-        std::nullopt,
-        ripple::lsfMPTCanTrade | ripple::lsfMPTRequireAuth | ripple::lsfMPTCanTransfer | ripple::lsfMPTCanEscrow,
-        kISSUANCE1_OUTSTANDING_AMOUNT,
-        std::nullopt,
-        kISSUANCE1_ASSET_SCALE,
-        kISSUANCE1_MAX_AMOUNT
-    );
+    auto const bbs = std::vector<Blob>{
+        createMptIssuanceObject(
+            kACCOUNT,
+            1,
+            std::nullopt,
+            ripple::lsfMPTCanTrade | ripple::lsfMPTRequireAuth | ripple::lsfMPTCanTransfer | ripple::lsfMPTCanEscrow,
+            kISSUANCE1_OUTSTANDING_AMOUNT,
+            std::nullopt,
+            kISSUANCE1_ASSET_SCALE,
+            kISSUANCE1_MAX_AMOUNT
+        )
+            .getSerializer()
+            .peekData(),
 
-    auto const issuance2 = createMptIssuanceObject(
-        kACCOUNT,
-        2,
-        kISSUANCE2_METADATA,
-        ripple::lsfMPTLocked | ripple::lsfMPTCanLock | ripple::lsfMPTCanClawback,
-        kISSUANCE2_OUTSTANDING_AMOUNT,
-        kISSUANCE2_TRANSFER_FEE,
-        std::nullopt,
-        kISSUANCE2_MAX_AMOUNT,
-        kISSUANCE2_LOCKED_AMOUNT,
-        kISSUANCE2_DOMAIN_ID_HEX
-    );
+        createMptIssuanceObject(
+            kACCOUNT,
+            2,
+            kISSUANCE2_METADATA,
+            ripple::lsfMPTLocked | ripple::lsfMPTCanLock | ripple::lsfMPTCanClawback,
+            kISSUANCE2_OUTSTANDING_AMOUNT,
+            kISSUANCE2_TRANSFER_FEE,
+            std::nullopt,
+            kISSUANCE2_MAX_AMOUNT,
+            kISSUANCE2_LOCKED_AMOUNT,
+            kISSUANCE2_DOMAIN_ID_HEX
+        )
+            .getSerializer()
+            .peekData()
+    };
 
-    bbs.push_back(issuance1.getSerializer().peekData());
-    bbs.push_back(issuance2.getSerializer().peekData());
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     runSpawn([this](auto yield) {
@@ -454,14 +457,15 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, UseLimit)
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    std::vector<ripple::uint256> indexes;
-    std::vector<Blob> bbs;
-
-    for (int i = 0; i < 50; ++i) {
-        indexes.emplace_back(kISSUANCE_INDEX1);
-        auto const issuance = createMptIssuanceObject(kACCOUNT, i);
-        bbs.push_back(issuance.getSerializer().peekData());
-    }
+    auto const indexes = std::vector<ripple::uint256>(50, ripple::uint256{kISSUANCE_INDEX1});
+    auto const bbs = [&]() {
+        std::vector<Blob> v;
+        v.reserve(50);
+        for (int i = 0; i < 50; ++i) {
+            v.push_back(createMptIssuanceObject(kACCOUNT, i).getSerializer().peekData());
+        }
+        return v;
+    }();
 
     ripple::STObject ownerDir = createOwnerDirLedgerObject(indexes, kISSUANCE_INDEX1);
     ownerDir.setFieldU64(ripple::sfIndexNext, 99);
@@ -542,17 +546,15 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerOutput)
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    std::vector<ripple::uint256> indexes;
-    indexes.reserve(10);
-    for (int i = 0; i < 10; ++i) {
-        indexes.emplace_back(kISSUANCE_INDEX1);
-    }
-
-    std::vector<Blob> bbs;
-    bbs.reserve(kLIMIT);
-    for (int i = 0; i < kLIMIT; ++i) {
-        bbs.push_back(createMptIssuanceObject(kACCOUNT, i).getSerializer().peekData());
-    }
+    auto const indexes = std::vector<ripple::uint256>(10, ripple::uint256{kISSUANCE_INDEX1});
+    auto const bbs = [&]() {
+        std::vector<Blob> v;
+        v.reserve(kLIMIT);
+        for (int i = 0; i < kLIMIT; ++i) {
+            v.push_back(createMptIssuanceObject(kACCOUNT, i).getSerializer().peekData());
+        }
+        return v;
+    }();
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     // mock the first directory page
@@ -604,12 +606,15 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerInput)
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
-    std::vector<Blob> bbs;
-    std::vector<ripple::uint256> indexes;
-    for (int i = 0; i < kLIMIT; ++i) {
-        indexes.emplace_back(kISSUANCE_INDEX1);
-        bbs.push_back(createMptIssuanceObject(kACCOUNT, i).getSerializer().peekData());
-    }
+    auto const indexes = std::vector<ripple::uint256>(kLIMIT, ripple::uint256{kISSUANCE_INDEX1});
+    auto const bbs = [&]() {
+        std::vector<Blob> v;
+        v.reserve(kLIMIT);
+        for (int i = 0; i < kLIMIT; ++i) {
+            v.push_back(createMptIssuanceObject(kACCOUNT, i).getSerializer().peekData());
+        }
+        return v;
+    }();
 
     ripple::STObject ownerDir = createOwnerDirLedgerObject(indexes, kISSUANCE_INDEX1);
     ownerDir.setFieldU64(ripple::sfIndexNext, 0);
@@ -658,33 +663,35 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitLessThanMin)
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    std::vector<Blob> bbs;
-    auto const issuance1 = createMptIssuanceObject(
-        kACCOUNT,
-        1,
-        std::nullopt,
-        ripple::lsfMPTCanTrade | ripple::lsfMPTRequireAuth | ripple::lsfMPTCanTransfer | ripple::lsfMPTCanEscrow,
-        kISSUANCE1_OUTSTANDING_AMOUNT,
-        std::nullopt,
-        kISSUANCE1_ASSET_SCALE,
-        kISSUANCE1_MAX_AMOUNT
-    );
+    auto const bbs = std::vector<Blob>{
+        createMptIssuanceObject(
+            kACCOUNT,
+            1,
+            std::nullopt,
+            ripple::lsfMPTCanTrade | ripple::lsfMPTRequireAuth | ripple::lsfMPTCanTransfer | ripple::lsfMPTCanEscrow,
+            kISSUANCE1_OUTSTANDING_AMOUNT,
+            std::nullopt,
+            kISSUANCE1_ASSET_SCALE,
+            kISSUANCE1_MAX_AMOUNT
+        )
+            .getSerializer()
+            .peekData(),
 
-    auto const issuance2 = createMptIssuanceObject(
-        kACCOUNT,
-        2,
-        kISSUANCE2_METADATA,
-        ripple::lsfMPTLocked | ripple::lsfMPTCanLock | ripple::lsfMPTCanClawback,
-        kISSUANCE2_OUTSTANDING_AMOUNT,
-        kISSUANCE2_TRANSFER_FEE,
-        std::nullopt,
-        kISSUANCE2_MAX_AMOUNT,
-        kISSUANCE2_LOCKED_AMOUNT,
-        kISSUANCE2_DOMAIN_ID_HEX
-    );
-
-    bbs.push_back(issuance1.getSerializer().peekData());
-    bbs.push_back(issuance2.getSerializer().peekData());
+        createMptIssuanceObject(
+            kACCOUNT,
+            2,
+            kISSUANCE2_METADATA,
+            ripple::lsfMPTLocked | ripple::lsfMPTCanLock | ripple::lsfMPTCanClawback,
+            kISSUANCE2_OUTSTANDING_AMOUNT,
+            kISSUANCE2_TRANSFER_FEE,
+            std::nullopt,
+            kISSUANCE2_MAX_AMOUNT,
+            kISSUANCE2_LOCKED_AMOUNT,
+            kISSUANCE2_DOMAIN_ID_HEX
+        )
+            .getSerializer()
+            .peekData()
+    };
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
@@ -742,33 +749,35 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitMoreThanMax)
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    std::vector<Blob> bbs;
-    auto const issuance1 = createMptIssuanceObject(
-        kACCOUNT,
-        1,
-        std::nullopt,
-        ripple::lsfMPTCanTrade | ripple::lsfMPTRequireAuth | ripple::lsfMPTCanTransfer | ripple::lsfMPTCanEscrow,
-        kISSUANCE1_OUTSTANDING_AMOUNT,
-        std::nullopt,
-        kISSUANCE1_ASSET_SCALE,
-        kISSUANCE1_MAX_AMOUNT
-    );
+    auto const bbs = std::vector<Blob>{
+        createMptIssuanceObject(
+            kACCOUNT,
+            1,
+            std::nullopt,
+            ripple::lsfMPTCanTrade | ripple::lsfMPTRequireAuth | ripple::lsfMPTCanTransfer | ripple::lsfMPTCanEscrow,
+            kISSUANCE1_OUTSTANDING_AMOUNT,
+            std::nullopt,
+            kISSUANCE1_ASSET_SCALE,
+            kISSUANCE1_MAX_AMOUNT
+        )
+            .getSerializer()
+            .peekData(),
 
-    auto const issuance2 = createMptIssuanceObject(
-        kACCOUNT,
-        2,
-        kISSUANCE2_METADATA,
-        ripple::lsfMPTLocked | ripple::lsfMPTCanLock | ripple::lsfMPTCanClawback,
-        kISSUANCE2_OUTSTANDING_AMOUNT,
-        kISSUANCE2_TRANSFER_FEE,
-        std::nullopt,
-        kISSUANCE2_MAX_AMOUNT,
-        kISSUANCE2_LOCKED_AMOUNT,
-        kISSUANCE2_DOMAIN_ID_HEX
-    );
-
-    bbs.push_back(issuance1.getSerializer().peekData());
-    bbs.push_back(issuance2.getSerializer().peekData());
+        createMptIssuanceObject(
+            kACCOUNT,
+            2,
+            kISSUANCE2_METADATA,
+            ripple::lsfMPTLocked | ripple::lsfMPTCanLock | ripple::lsfMPTCanClawback,
+            kISSUANCE2_OUTSTANDING_AMOUNT,
+            kISSUANCE2_TRANSFER_FEE,
+            std::nullopt,
+            kISSUANCE2_MAX_AMOUNT,
+            kISSUANCE2_LOCKED_AMOUNT,
+            kISSUANCE2_DOMAIN_ID_HEX
+        )
+            .getSerializer()
+            .peekData()
+    };
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
@@ -862,37 +871,39 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
-    std::vector<Blob> bbs;
-    auto const issuance1 = createMptIssuanceObject(
-        kACCOUNT,
-        3,
-        std::nullopt,
-        ripple::lsfMPTCanTransfer,
-        kISSUANCE1_OUTSTANDING_AMOUNT,
-        kISSUANCE1_TRANSFER_FEE,
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        mutableFlags1
-    );
+    auto const bbs = std::vector<Blob>{
+        createMptIssuanceObject(
+            kACCOUNT,
+            3,
+            std::nullopt,
+            ripple::lsfMPTCanTransfer,
+            kISSUANCE1_OUTSTANDING_AMOUNT,
+            kISSUANCE1_TRANSFER_FEE,
+            std::nullopt,
+            std::nullopt,
+            std::nullopt,
+            std::nullopt,
+            mutableFlags1
+        )
+            .getSerializer()
+            .peekData(),
 
-    auto const issuance2 = createMptIssuanceObject(
-        kACCOUNT,
-        5,
-        kISSUANCE2_METADATA,
-        ripple::lsfMPTCanTransfer,
-        kISSUANCE2_OUTSTANDING_AMOUNT,
-        kISSUANCE2_TRANSFER_FEE,
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        mutableFlags2
-    );
-
-    bbs.push_back(issuance1.getSerializer().peekData());
-    bbs.push_back(issuance2.getSerializer().peekData());
+        createMptIssuanceObject(
+            kACCOUNT,
+            5,
+            kISSUANCE2_METADATA,
+            ripple::lsfMPTCanTransfer,
+            kISSUANCE2_OUTSTANDING_AMOUNT,
+            kISSUANCE2_TRANSFER_FEE,
+            std::nullopt,
+            std::nullopt,
+            std::nullopt,
+            std::nullopt,
+            mutableFlags2
+        )
+            .getSerializer()
+            .peekData()
+    };
 
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
@@ -954,5 +965,168 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output.result);
+    });
+}
+
+struct SingleFlagTest {
+    std::string testName;
+    uint32_t flag;
+    std::string expectedJsonKey;
+};
+
+struct AccountMPTokenIssuancesImmutableFlagsTest : RPCAccountMPTokenIssuancesHandlerTest,
+                                                   WithParamInterface<SingleFlagTest> {};
+
+static auto
+generateSingleFlagTests()
+{
+    return std::vector<SingleFlagTest>{
+        {"Locked", ripple::lsfMPTLocked, "mpt_locked"},
+        {"CanLock", ripple::lsfMPTCanLock, "mpt_can_lock"},
+        {"RequireAuth", ripple::lsfMPTRequireAuth, "mpt_require_auth"},
+        {"CanEscrow", ripple::lsfMPTCanEscrow, "mpt_can_escrow"},
+        {"CanTrade", ripple::lsfMPTCanTrade, "mpt_can_trade"},
+        {"CanTransfer", ripple::lsfMPTCanTransfer, "mpt_can_transfer"},
+        {"CanClawback", ripple::lsfMPTCanClawback, "mpt_can_clawback"},
+    };
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    RPCAccountMPTokenIssuancesImmutableFlagsGroup,
+    AccountMPTokenIssuancesImmutableFlagsTest,
+    ValuesIn(generateSingleFlagTests()),
+    tests::util::kNAME_GENERATOR
+);
+
+TEST_P(AccountMPTokenIssuancesImmutableFlagsTest, SingleFlag)
+{
+    auto const testParams = GetParam();
+
+    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    auto account = getAccountIdWithString(kACCOUNT);
+    auto accountKk = ripple::keylet::account(account).key;
+    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    ripple::STObject const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kISSUANCE_INDEX1}}, kISSUANCE_INDEX1);
+    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+
+    auto const bbs = std::vector<Blob>{
+        createMptIssuanceObject(kACCOUNT, 1, std::nullopt, testParams.flag, 0).getSerializer().peekData()
+    };
+
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
+
+    runSpawn([this, &testParams](auto yield) {
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}"
+                }})JSON",
+                kACCOUNT
+            )
+        );
+        auto handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+
+        ASSERT_TRUE(output);
+        auto const& resultJson = (*output.result).as_object();
+        auto const& issuances = resultJson.at("mpt_issuances").as_array();
+        ASSERT_EQ(issuances.size(), 1);
+
+        auto const& issuanceJson = issuances[0].as_object();
+        EXPECT_TRUE(issuanceJson.contains(testParams.expectedJsonKey));
+        EXPECT_EQ(issuanceJson.at(testParams.expectedJsonKey), true);
+    });
+}
+
+struct SingleMutableFlagTest {
+    std::string testName;
+    uint32_t mutableFlag;
+    std::string expectedJsonKey;
+};
+
+struct AccountMPTokenIssuancesMutableFlagsTest : RPCAccountMPTokenIssuancesHandlerTest,
+                                                 WithParamInterface<SingleMutableFlagTest> {};
+
+static auto
+generateSingleMutableFlagTests()
+{
+    return std::vector<SingleMutableFlagTest>{
+        {"CanMutateCanLock", ripple::lsmfMPTCanMutateCanLock, "mpt_can_mutate_can_lock"},
+        {"CanMutateRequireAuth", ripple::lsmfMPTCanMutateRequireAuth, "mpt_can_mutate_require_auth"},
+        {"CanMutateCanEscrow", ripple::lsmfMPTCanMutateCanEscrow, "mpt_can_mutate_can_escrow"},
+        {"CanMutateCanTrade", ripple::lsmfMPTCanMutateCanTrade, "mpt_can_mutate_can_trade"},
+        {"CanMutateCanTransfer", ripple::lsmfMPTCanMutateCanTransfer, "mpt_can_mutate_can_transfer"},
+        {"CanMutateCanClawback", ripple::lsmfMPTCanMutateCanClawback, "mpt_can_mutate_can_clawback"},
+        {"CanMutateMetadata", ripple::lsmfMPTCanMutateMetadata, "mpt_can_mutate_metadata"},
+        {"CanMutateTransferFee", ripple::lsmfMPTCanMutateTransferFee, "mpt_can_mutate_transfer_fee"},
+    };
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    RPCAccountMPTokenIssuancesMutableFlagsGroup,
+    AccountMPTokenIssuancesMutableFlagsTest,
+    ValuesIn(generateSingleMutableFlagTests()),
+    tests::util::kNAME_GENERATOR
+);
+
+TEST_P(AccountMPTokenIssuancesMutableFlagsTest, SingleMutableFlag)
+{
+    auto const testParams = GetParam();
+
+    auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
+
+    auto account = getAccountIdWithString(kACCOUNT);
+    auto accountKk = ripple::keylet::account(account).key;
+    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    ripple::STObject const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kISSUANCE_INDEX1}}, kISSUANCE_INDEX1);
+    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+
+    auto const bbs = std::vector<Blob>{createMptIssuanceObject(
+                                           kACCOUNT,
+                                           1,
+                                           std::nullopt,
+                                           0,
+                                           0,
+                                           std::nullopt,
+                                           std::nullopt,
+                                           std::nullopt,
+                                           std::nullopt,
+                                           std::nullopt,
+                                           testParams.mutableFlag
+    )
+                                           .getSerializer()
+                                           .peekData()};
+
+    EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
+
+    runSpawn([this, &testParams](auto yield) {
+        auto const input = json::parse(
+            fmt::format(
+                R"JSON({{
+                    "account": "{}"
+                }})JSON",
+                kACCOUNT
+            )
+        );
+        auto handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
+        auto const output = handler.process(input, Context{yield});
+
+        ASSERT_TRUE(output);
+        auto const& resultJson = (*output.result).as_object();
+        auto const& issuances = resultJson.at("mpt_issuances").as_array();
+        ASSERT_EQ(issuances.size(), 1);
+
+        auto const& issuanceJson = issuances[0].as_object();
+        EXPECT_TRUE(issuanceJson.contains(testParams.expectedJsonKey));
+        EXPECT_EQ(issuanceJson.at(testParams.expectedJsonKey), true);
     });
 }
