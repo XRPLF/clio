@@ -29,12 +29,12 @@ repos:
 
   # Autoformat: YAML, JSON, Markdown, etc.
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: 5ba47274f9b181bce26a5150a725577f3c336011 # frozen: v3.6.2
+    rev: 3c603eae8faac85303ae675fd33325cff699a797 # frozen: v3.7.3
     hooks:
       - id: prettier
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: 192ad822316c3a22fb3d3cc8aa6eafa0b8488360 # frozen: v0.45.0
+    rev: c8fd5003603dd6f12447314ecd935ba87c09aff5 # frozen: v0.46.0
     hooks:
       - id: markdownlint-fix
         exclude: LICENSE.md
@@ -59,7 +59,7 @@ repos:
           ]
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 25.11.0
+    rev: 2892f1f81088477370d4fbc56545c05d33d2493f # frozen: 25.11.0
     hooks:
       - id: black
 
@@ -88,7 +88,7 @@ repos:
         language: script
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: 719856d56a62953b8d2839fb9e851f25c3cfeef8 # frozen: v21.1.2
+    rev: 4c26f99731e7c22a047c35224150ee9e43d7c03e # frozen: v21.1.6
     hooks:
       - id: clang-format
         args: [--style=file]
