@@ -23,6 +23,7 @@
 #include "data/DBHelpers.hpp"
 #include "data/LedgerCache.hpp"
 #include "data/Types.hpp"
+#include "rpc/common/Types.hpp"
 #include "util/config/ConfigDefinition.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -86,6 +87,7 @@ struct MockBackend : public BackendInterface {
          std::uint32_t const,
          bool,
          std::optional<data::TransactionsCursor> const&,
+         std::optional<rpc::DelegateFilter> const&,
          boost::asio::yield_context),
         (const, override)
     );

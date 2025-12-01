@@ -32,6 +32,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/STObject.h>
 
 #include <cstdint>
@@ -398,6 +399,56 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 })JSON",
                 .expectedError = "invalidParams",
                 .expectedErrorMessage = "Invalid field 'tx_type'."
+            },
+            AccountTxParamTestCaseBundle{
+                .testName = "DelegateNotObject",
+                .testJson = R"JSON({
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "delegate": 123
+                })JSON",
+                .expectedError = "invalidParams",
+                .expectedErrorMessage = "delegate not object"
+            },
+            AccountTxParamTestCaseBundle{
+                .testName = "DelegateFilterMissing",
+                .testJson = R"JSON({
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "delegate": { "other_field": "value" }
+                })JSON",
+                .expectedError = "invalidParams",
+                .expectedErrorMessage = "Field 'delegate_filter' is required but missing."
+            },
+            AccountTxParamTestCaseBundle{
+                .testName = "DelegateFilterInvalidValue",
+                .testJson = R"JSON({
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "delegate": { "delegate_filter": "invalid_mode" }
+                })JSON",
+                .expectedError = "invalidParams",
+                .expectedErrorMessage = "Field 'delegate_filter' value must be 'delegator' or 'delegatee'."
+            },
+            AccountTxParamTestCaseBundle{
+                .testName = "DelegateCounterpartyInvalid",
+                .testJson = R"JSON({
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "delegate": { 
+                        "delegate_filter": "delegatee",
+                        "counterparty": "not_an_account"
+                    }
+                })JSON",
+                .expectedError = "invalidParams",
+                .expectedErrorMessage = "Field 'counterparty' value must be a valid account."
+            },
+            AccountTxParamTestCaseBundle{
+                .testName = "DelegateOnlyCounterparty",
+                .testJson = R"JSON({
+                    "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                    "delegate": { 
+                        "counterparty": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
+                    }
+                })JSON",
+                .expectedError = "invalidParams",
+                .expectedErrorMessage = "Field 'delegate_filter' is required but missing."
             }
         };
     };
@@ -503,6 +554,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
             testing::_,
             true,
             testing::Optional(testing::Eq(TransactionsCursor{kMIN_SEQ, INT32_MAX})),
+            testing::_,
             testing::_
         )
     );
@@ -547,6 +599,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ - 1, INT32_MAX})),
+            testing::_,
             testing::_
         )
     );
@@ -591,6 +644,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
             testing::_,
             true,
             testing::Optional(testing::Eq(TransactionsCursor{kMIN_SEQ - 1, INT32_MAX})),
+            testing::_,
             testing::_
         )
     );
@@ -635,6 +689,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})),
+            testing::_,
             testing::_
         )
     );
@@ -679,6 +734,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})),
+            testing::_,
             testing::_
         )
     );
@@ -734,6 +790,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrueV2)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})),
+            testing::_,
             testing::_
         )
     )
@@ -786,7 +843,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
     EXPECT_CALL(
         *backend_,
         fetchAccountTransactions(
-            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
+            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_, testing::_
         )
     )
         .WillOnce(Return(transCursor));
@@ -825,7 +882,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitIsCapped)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
-    EXPECT_CALL(*backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_))
+    EXPECT_CALL(*backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_, testing::_))
         .WillOnce(Return(transCursor));
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
@@ -859,7 +916,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAllowedUpToCap)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
-    EXPECT_CALL(*backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_))
+    EXPECT_CALL(*backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_, testing::_))
         .WillOnce(Return(transCursor));
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
@@ -903,6 +960,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ - 1, INT32_MAX})),
+            testing::_,
             testing::_
         )
     );
@@ -995,6 +1053,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ - 1, INT32_MAX})),
+            testing::_,
             testing::_
         )
     );
@@ -1041,6 +1100,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})),
+            testing::_,
             testing::_
         )
     );
@@ -1084,6 +1144,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ - 1, INT32_MAX})),
+            testing::_,
             testing::_
         )
     );
@@ -1128,6 +1189,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ - 2, INT32_MAX})),
+            testing::_,
             testing::_
         )
     );
@@ -1157,6 +1219,104 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 1);
         EXPECT_FALSE(output.result->as_object().contains("limit"));
         EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+    });
+}
+
+TEST_F(RPCAccountTxHandlerTest, WithDelegateAgent)
+{
+    auto transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
+    auto const accountId = *ripple::parseBase58<ripple::AccountID>(kACCOUNT);
+    for (auto& txn : transactions) {
+        txn.delegatedAccount = accountId;
+    }
+
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    EXPECT_CALL(
+        *backend_,
+        fetchAccountTransactions(
+            testing::_, 
+            testing::_, 
+            false,     
+            testing::_,
+            testing::Optional(testing::AllOf(
+                testing::Field(&DelegateFilter::delegateType, DelegateFilter::Role::Delegator),
+                testing::Field(&DelegateFilter::counterParty, testing::Eq(std::nullopt))
+            )),
+            testing::_ 
+        )
+    ).WillOnce(Return(transCursor));
+
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
+        static auto const kINPUT = json::parse(R"JSON({
+            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "delegate": {
+                "delegate_filter": "delegator"
+            }
+        })JSON");
+        
+        auto const output = handler.process(kINPUT, Context{yield});
+        ASSERT_TRUE(output);
+
+        EXPECT_EQ(output.result->at("account").as_string(), kACCOUNT);
+        auto const& txs = output.result->at("transactions").as_array();
+        ASSERT_EQ(txs.size(), 2);
+        
+        // Check the transactions contains delegator
+        EXPECT_TRUE(txs[0].as_object().contains("delegator"));
+        EXPECT_TRUE(txs[1].as_object().contains("delegator"));
+
+    });
+}
+
+TEST_F(RPCAccountTxHandlerTest, WithDelegateFromAndCounterparty)
+{
+    auto transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
+    auto const kCOUNTERPARTY = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+    auto const counterpartyID = *ripple::parseBase58<ripple::AccountID>(kCOUNTERPARTY);
+    for (auto& txn : transactions) {
+        txn.delegatedAccount = counterpartyID;
+    }
+
+    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+
+    EXPECT_CALL(
+        *backend_,
+        fetchAccountTransactions(
+            testing::_, 
+            testing::_, 
+            false, 
+            testing::_, 
+            testing::Optional(testing::AllOf(
+                testing::Field(&DelegateFilter::delegateType, DelegateFilter::Role::Delegatee),
+                testing::Field(&DelegateFilter::counterParty, testing::Optional(std::string(kCOUNTERPARTY)))
+            )),
+            testing::_ 
+        )
+    ).WillOnce(Return(transCursor));
+
+    ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{backend_, mockETLServicePtr_}};
+        static auto const kINPUT = json::parse(fmt::format(R"JSON({{
+            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "delegate": {{
+                "delegate_filter": "delegatee",
+                "counterparty": "{}"
+            }}
+        }})JSON", kCOUNTERPARTY));
+        
+       auto const output = handler.process(kINPUT, Context{yield});
+        ASSERT_TRUE(output);
+
+        auto const& txs = output.result->at("transactions").as_array();
+        ASSERT_EQ(txs.size(), 2);
+
+        EXPECT_TRUE(txs[0].as_object().contains("delegatee"));
+        EXPECT_EQ(txs[0].at("delegatee").as_string(), kCOUNTERPARTY);
     });
 }
 
@@ -1344,7 +1504,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
     EXPECT_CALL(
         *backend_,
         fetchAccountTransactions(
-            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
+            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_, testing::_
         )
     );
 
@@ -1563,7 +1723,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
     EXPECT_CALL(
         *backend_,
         fetchAccountTransactions(
-            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
+            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_, testing::_
         )
     );
 
@@ -2181,7 +2341,7 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *backend_, fetchAccountTransactions(_, _, false, Optional(Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})), _)
+        *backend_, fetchAccountTransactions(_, _, false, Optional(Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})), _, _)
     );
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);

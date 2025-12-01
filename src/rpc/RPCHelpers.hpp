@@ -861,4 +861,23 @@ getDeliveredAmount(
     uint32_t date
 );
 
+/**
+ * @brief Parse the delegate type from a JSON value
+ *
+ * @param delegateType The JSON value containing the delegate type string
+ * @return The parsed delegate type or std::nullopt if the input is invalid or not a string
+ */
+std::optional<DelegateFilter::Role>
+parseDelegateType(boost::json::value const& delegateType);
+
+/**
+ * @brief Parse a delegate filter object from JSON
+ *
+ * @param delegateObject The JSON object containing the delegate filter input from user
+ * @return The constructed DelegateFilter or std::nullopt if parsing fails
+ */
+std::optional<DelegateFilter>
+parseDelegateFilter(boost::json::object const& delegateObject);
+
+
 }  // namespace rpc

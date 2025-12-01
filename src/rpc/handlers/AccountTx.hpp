@@ -103,6 +103,7 @@ public:
         std::optional<uint32_t> limit;
         std::optional<Marker> marker;
         std::optional<std::string> transactionTypeInLowercase;
+        std::optional<DelegateFilter> delegateFilter;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -156,7 +157,10 @@ public:
                 validation::Type<std::string>{},
                 modifiers::ToLower{},
                 validation::OneOf<std::string>(typesKeysInLowercase.cbegin(), typesKeysInLowercase.cend()),
-            },
+            }, {
+                "delegate",
+                 validation::CustomValidators::delegateValidator
+            }
         };
 
         static auto const kRPC_SPEC = RpcSpec{

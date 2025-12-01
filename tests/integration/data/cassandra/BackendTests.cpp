@@ -481,7 +481,7 @@ TEST_F(BackendCassandraTest, Basic)
             EXPECT_EQ(hashes.size(), 1);
             EXPECT_EQ(ripple::strHex(hashes[0]), hashHex);
             for (auto& a : affectedAccounts) {
-                auto [accountTransactions, cursor] = backend_->fetchAccountTransactions(a, 100, true, {}, yield);
+                auto [accountTransactions, cursor] = backend_->fetchAccountTransactions(a, 100, true, {}, {}, yield);
                 EXPECT_EQ(accountTransactions.size(), 1);
                 EXPECT_EQ(accountTransactions[0], accountTransactions[0]);
                 EXPECT_FALSE(cursor);
@@ -709,7 +709,7 @@ TEST_F(BackendCassandraTest, Basic)
             auto retTxns = backend_->fetchAllTransactionsInLedger(seq, yield);
             for (auto [hash, txn, meta] : txns) {
                 bool found = false;
-                for (auto [retTxn, retMeta, retSeq, retDate] : retTxns) {
+                for (auto [retTxn, retMeta, retSeq, retDate, retFilter] : retTxns) {
                     if (std::strncmp(
                             reinterpret_cast<char const*>(retTxn.data()),
                             static_cast<char const*>(txn.data()),
@@ -730,7 +730,7 @@ TEST_F(BackendCassandraTest, Basic)
                 do {
                     uint32_t const limit = 10;
                     auto [accountTransactions, retCursor] =
-                        backend_->fetchAccountTransactions(account, limit, false, cursor, yield);
+                        backend_->fetchAccountTransactions(account, limit, false, cursor, {}, yield);
                     if (retCursor)
                         EXPECT_EQ(accountTransactions.size(), limit);
                     retData.insert(retData.end(), accountTransactions.begin(), accountTransactions.end());
@@ -738,8 +738,8 @@ TEST_F(BackendCassandraTest, Basic)
                 } while (cursor);
                 EXPECT_EQ(retData.size(), data.size());
                 for (size_t i = 0; i < retData.size(); ++i) {
-                    auto [txn, meta, _, _2] = retData[i];
-                    auto [_3, expTxn, expMeta] = data[i];
+                    auto [txn, meta, _, _2, _3] = retData[i];
+                    auto [_4, expTxn, expMeta] = data[i];
                     EXPECT_STREQ(reinterpret_cast<char const*>(txn.data()), static_cast<char const*>(expTxn.data()));
                     EXPECT_STREQ(reinterpret_cast<char const*>(meta.data()), static_cast<char const*>(expMeta.data()));
                 }

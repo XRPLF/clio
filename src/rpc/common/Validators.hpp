@@ -592,6 +592,13 @@ struct CustomValidators final {
      * Used by AuthorizeCredentialValidator in deposit_preauth.
      */
     static CustomValidator credentialTypeValidator;
+
+    /**
+     * @brief Provides a validator for validating filtering by delegation.
+     *
+     * Used by account_tx if user wants to filter by delegation.
+     */
+    static CustomValidator delegateValidator;
 };
 
 /**

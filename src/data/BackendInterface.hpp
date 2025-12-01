@@ -23,6 +23,7 @@
 #include "data/LedgerCacheInterface.hpp"
 #include "data/Types.hpp"
 #include "etl/CorruptionDetector.hpp"
+#include "rpc/common/Types.hpp"
 #include "util/Spawn.hpp"
 #include "util/log/Logger.hpp"
 
@@ -314,6 +315,7 @@ public:
         std::uint32_t limit,
         bool forward,
         std::optional<TransactionsCursor> const& txnCursor,
+        std::optional<rpc::DelegateFilter> const& delegateFilter,
         boost::asio::yield_context yield
     ) const = 0;
 

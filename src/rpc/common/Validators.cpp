@@ -357,4 +357,22 @@ CustomValidator CustomValidators::authorizeCredentialValidator =
         return MaybeError{};
     }};
 
+    CustomValidator CustomValidators::delegateValidator = 
+        CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+            if (!value.is_object())
+                return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + " not object"}};
+
+            auto const& delegate = value.as_object();
+            if (!delegate.contains("delegate_filter"))
+                return Error{Status{RippledError::rpcINVALID_PARAMS, "Field 'delegate_filter' is required but missing."}};
+
+            if (!parseDelegateType(delegate.at("delegate_filter")).has_value())
+                return Error{Status{RippledError::rpcINVALID_PARAMS, "Field 'delegate_filter' value must be 'delegator' or 'delegatee'."}};
+            
+            if (delegate.contains("counterparty") && !accountValidator.verify(delegate, "counterparty"))
+                return Error{Status{RippledError::rpcINVALID_PARAMS, "Field 'counterparty' value must be a valid account."}};
+            
+            return MaybeError{};
+        }};
+
 }  // namespace rpc::validation

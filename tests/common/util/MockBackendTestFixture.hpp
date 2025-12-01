@@ -20,7 +20,6 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockBackend.hpp"
 #include "util/config/ConfigDefinition.hpp"
 

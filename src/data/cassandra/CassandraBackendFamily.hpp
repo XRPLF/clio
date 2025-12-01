@@ -28,6 +28,7 @@
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/ExecutionStrategy.hpp"
+#include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
 #include "util/LedgerUtils.hpp"
 #include "util/Profiler.hpp"
@@ -40,18 +41,25 @@
 #include <cassandra.h>
 #include <fmt/format.h>
 #include <xrpl/basics/Blob.h>
+#include <xrpl/basics/Slice.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/PublicKey.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STTx.h>
+#include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/nft.h>
+#include <xrpl/protocol/tokens.h>
 
 #include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <iterator>
 #include <limits>
 #include <optional>
@@ -152,6 +160,7 @@ public:
         std::uint32_t const limit,
         bool forward,
         std::optional<TransactionsCursor> const& txnCursor,
+        std::optional<rpc::DelegateFilter> const& delegateFilter,
         boost::asio::yield_context yield
     ) const override
     {
@@ -203,8 +212,65 @@ public:
             }
         }
 
-        auto const txns = fetchTransactions(hashes, yield);
+        auto txns = fetchTransactions(hashes, yield);
         LOG(log_.debug()) << "Txns = " << txns.size();
+
+        std::optional<ripple::AccountID> filterCounterpartyID;
+        if (delegateFilter && delegateFilter->counterParty) {
+            filterCounterpartyID = ripple::parseBase58<ripple::AccountID>(*delegateFilter->counterParty);
+            
+            // If the counterparty string is invalid, we don't return anything. Error should have been caught by validators.
+            if (!filterCounterpartyID) {
+                 LOG(log_.warn()) << "Invalid counterparty account in filter";
+                 return {.txns={}, .cursor={}}; 
+            }
+        }
+
+        std::vector<TransactionAndMetadata> resultTxns;
+        if (delegateFilter.has_value()) {
+            resultTxns.reserve(txns.size());
+            
+            for (auto& txn : txns) { 
+                try {
+                    auto const delegationInfo = getDelegationInfo(txn.transaction, txn.metadata);
+
+                    if (delegationInfo) {
+                        auto const& [delegatee, delegator] = *delegationInfo;
+                        bool match = false;
+                        
+                        // Filter by "Delegator" ie. User wants to find the Owner (Delegator).
+                        // This implies the User (account) must be the Signer (Delegatee) that acted on someone's behalf.
+                        if (delegateFilter->delegateType == rpc::DelegateFilter::Role::Delegator) {
+                            // The user (account) must be delegatee
+                            if (account == delegatee) {
+                                if (!filterCounterpartyID || *filterCounterpartyID == delegator) {
+                                    txn.delegatedAccount = delegator; 
+                                    match = true;
+                                }
+                            }
+                        } 
+                        // Filter by "Delegatee" ie. User wants to find the Signer (Delegatee).
+                        // This implies the User (account) must be the Owner (Delegator).
+                        else if (delegateFilter->delegateType == rpc::DelegateFilter::Role::Delegatee) {
+                            // The user (account) must be delegator
+                            if (account == delegator) {
+                                if (!filterCounterpartyID || *filterCounterpartyID == delegatee) {
+                                    txn.delegatedAccount = delegatee;
+                                    match = true;
+                                }
+                            }
+                        }
+                        
+                        if (match) 
+                            resultTxns.push_back(txn);
+                        
+                    }
+                } catch (std::exception const& e) {
+                    LOG(log_.warn()) << "Failed to parse tx for filter";
+                }
+            }
+            return {.txns=resultTxns, .cursor=cursor};
+        }
 
         if (txns.size() == limit) {
             LOG(log_.debug()) << "Returning cursor";
@@ -970,6 +1036,45 @@ protected:
 
         return true;
     }
+
+/**
+ * @brief Extracts delegation information from a transaction.
+ *
+ * Parses the transaction blob and checks whether the signer
+ * (derived from the SigningPubKey) differs from the delegator
+ * account. If so, returns {delegatee, delegator}. Otherwise returns null.
+ *
+ * @param txnBlob Serialized transaction blob.
+ * @param metaBlob Unused metadata blob fetched from rippled.
+ * @return pair of {delegatee, delegator} if delegated, otherwise std::nullopt
+ */
+static std::optional<std::pair<ripple::AccountID, ripple::AccountID>>
+getDelegationInfo(ripple::Blob const& txnBlob, ripple::Blob const& /*metaBlob*/)
+{
+
+        ripple::SerialIter it{txnBlob.data(), txnBlob.size()};
+        ripple::STTx const txn{it};
+
+        auto const delegator = txn.getAccountID(ripple::sfAccount);
+        if (txn.isFieldPresent(ripple::sfSigningPubKey))
+        {
+            auto const pubKeyBlob = txn.getFieldVL(ripple::sfSigningPubKey);
+            ripple::PublicKey const pubKey{ripple::Slice{pubKeyBlob.data(), pubKeyBlob.size()}};
+            
+            auto const delegatee = ripple::calcAccountID(pubKey);
+
+            // Delegation Check
+            // If the signer (delegatee) is NOT the account owner (delegator), it's delegated.
+            if (delegatee != delegator)
+            {
+                return std::make_pair(delegatee, delegator);
+            }
+        }
+
+        return std::nullopt;
+
+}
+
 };
 
 }  // namespace data::cassandra

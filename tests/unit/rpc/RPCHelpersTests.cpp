@@ -603,6 +603,93 @@ TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_TrustLineIsFrozenAndCheckFreez
     });
 }
 
+TEST_F(RPCHelpersTest, ParseDelegateType)
+{
+    auto result = parseDelegateType(boost::json::value("delegator"));
+    EXPECT_TRUE(result.has_value());
+    EXPECT_EQ(*result, DelegateFilter::Role::Delegator);
+
+    result = parseDelegateType(boost::json::value("delegatee"));
+    EXPECT_TRUE(result.has_value());
+    EXPECT_EQ(*result, DelegateFilter::Role::Delegatee);
+
+    // invalid types
+    result = parseDelegateType(boost::json::value("invalid_type"));
+    EXPECT_FALSE(result.has_value());
+
+    result = parseDelegateType(boost::json::value(123));
+    EXPECT_FALSE(result.has_value());
+
+    result = parseDelegateType(boost::json::value(true));
+    EXPECT_FALSE(result.has_value());
+}
+
+TEST_F(RPCHelpersTest, ParseDelegateFilter_Success)
+{
+    // only delegate agent is valid
+    {
+        auto const json = boost::json::parse(R"JSON({
+            "delegate_filter": "delegator"
+        })JSON").as_object();
+
+        auto const result = parseDelegateFilter(json);
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result->delegateType, DelegateFilter::Role::Delegator);
+        EXPECT_FALSE(result->counterParty.has_value());
+    }
+
+    // delegate agent + counterparty is valid
+    {
+        auto const json = boost::json::parse(R"JSON({
+            "delegate_filter": "delegatee",
+            "counterparty": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
+        })JSON").as_object();
+
+        auto const result = parseDelegateFilter(json);
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result->delegateType, DelegateFilter::Role::Delegatee);
+        ASSERT_TRUE(result->counterParty.has_value());
+        EXPECT_EQ(*result->counterParty, "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun");
+    }
+}
+
+TEST_F(RPCHelpersTest, ParseDelegateFilter_Failures)
+{
+    // Missing required "delegate_filter" key
+    {
+        auto const json = boost::json::parse(R"JSON({
+            "counterparty": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
+        })JSON").as_object();
+        EXPECT_FALSE(parseDelegateFilter(json).has_value());
+    }
+
+    // "delegate_filter" is not a string (it's an integer)
+    {
+        auto const json = boost::json::parse(R"JSON({
+            "delegate_filter": 123
+        })JSON").as_object();
+        EXPECT_FALSE(parseDelegateFilter(json).has_value());
+    }
+
+    // "delegate_filter" is a string but invalid value
+    {
+        auto const json = boost::json::parse(R"JSON({
+            "delegate_filter": "random_string"
+        })JSON").as_object();
+        EXPECT_FALSE(parseDelegateFilter(json).has_value());
+    }
+
+    // "counterparty" exists but is not a string (it's a number)
+    {
+        auto const json = boost::json::parse(R"JSON({
+            "delegate_filter": "delegator",
+            "counterparty": 9999
+        })JSON").as_object();
+        EXPECT_FALSE(parseDelegateFilter(json).has_value());
+    }
+}
+
+
 TEST_F(RPCHelpersTest, isGlobalFrozen_AccountIsGlobalFrozen)
 {
     auto const account = getAccountIdWithString(kACCOUNT);
