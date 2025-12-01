@@ -655,13 +655,12 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitLessThanMin)
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
     auto const owneDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     ripple::STObject const ownerDir = createOwnerDirLedgerObject(
         {ripple::uint256{kISSUANCE_INDEX1}, ripple::uint256{kISSUANCE_INDEX2}}, kISSUANCE_INDEX1
     );
-    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const bbs = std::vector<Blob>{
         createMptIssuanceObject(
@@ -741,13 +740,12 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, LimitMoreThanMax)
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
     auto const owneDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     ripple::STObject const ownerDir = createOwnerDirLedgerObject(
         {ripple::uint256{kISSUANCE_INDEX1}, ripple::uint256{kISSUANCE_INDEX2}}, kISSUANCE_INDEX1
     );
-    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const bbs = std::vector<Blob>{
         createMptIssuanceObject(
@@ -827,11 +825,10 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, EmptyResult)
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
     auto const owneDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     ripple::STObject const ownerDir = createOwnerDirLedgerObject({}, kISSUANCE_INDEX1);
-    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     runSpawn([this](auto yield) {
         auto const input = json::parse(
@@ -863,13 +860,12 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
     auto const owneDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     ripple::STObject const ownerDir = createOwnerDirLedgerObject(
         {ripple::uint256{kISSUANCE_INDEX1}, ripple::uint256{kISSUANCE_INDEX2}}, kISSUANCE_INDEX1
     );
-    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const bbs = std::vector<Blob>{
         createMptIssuanceObject(
@@ -1008,11 +1004,10 @@ TEST_P(AccountMPTokenIssuancesImmutableFlagsTest, SingleFlag)
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
     auto const owneDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     ripple::STObject const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kISSUANCE_INDEX1}}, kISSUANCE_INDEX1);
-    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const bbs = std::vector<Blob>{
         createMptIssuanceObject(kACCOUNT, 1, std::nullopt, testParams.flag, 0).getSerializer().peekData()
@@ -1084,11 +1079,10 @@ TEST_P(AccountMPTokenIssuancesMutableFlagsTest, SingleMutableFlag)
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
     auto const owneDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     ripple::STObject const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kISSUANCE_INDEX1}}, kISSUANCE_INDEX1);
-    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const bbs = std::vector<Blob>{createMptIssuanceObject(
                                            kACCOUNT,

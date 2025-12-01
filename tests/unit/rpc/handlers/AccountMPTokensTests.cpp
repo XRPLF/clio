@@ -611,12 +611,11 @@ TEST_F(RPCAccountMPTokensHandlerTest, LimitLessThanMin)
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
     auto const owneDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     ripple::STObject const ownerDir =
         createOwnerDirLedgerObject({ripple::uint256{kTOKEN_INDEX1}, ripple::uint256{kTOKEN_INDEX2}}, kTOKEN_INDEX1);
-    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const bbs = std::vector<Blob>{
         createMpTokenObject(
@@ -680,12 +679,11 @@ TEST_F(RPCAccountMPTokensHandlerTest, LimitMoreThanMax)
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
     auto const owneDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     ripple::STObject const ownerDir =
         createOwnerDirLedgerObject({ripple::uint256{kTOKEN_INDEX1}, ripple::uint256{kTOKEN_INDEX2}}, kTOKEN_INDEX1);
-    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const bbs = std::vector<Blob>{
         createMpTokenObject(
@@ -749,11 +747,10 @@ TEST_F(RPCAccountMPTokensHandlerTest, EmptyResult)
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
     auto const owneDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     ripple::STObject const ownerDir = createOwnerDirLedgerObject({}, kTOKEN_INDEX1);
-    ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _)).WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     runSpawn([this](auto yield) {
         auto const input = json::parse(
