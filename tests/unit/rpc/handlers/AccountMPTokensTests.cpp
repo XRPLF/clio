@@ -64,12 +64,14 @@ constexpr uint64_t kTOKEN2_AMOUNT = 250;
 // define expected JSON for mptokens
 auto const kTOKEN_OUT1 = fmt::format(
     R"JSON({{
+        "mpt_id": "{}",
         "account": "{}",
         "mpt_issuance_id": "{}",
         "mpt_amount": {},
         "locked_amount": {},
         "mpt_locked": true
     }})JSON",
+    kTOKEN_INDEX1,
     kACCOUNT,
     kISSUANCE_ID_HEX,
     kTOKEN1_AMOUNT,
@@ -78,11 +80,13 @@ auto const kTOKEN_OUT1 = fmt::format(
 
 auto const kTOKEN_OUT2 = fmt::format(
     R"JSON({{
+        "mpt_id": "{}",
         "account": "{}",
         "mpt_issuance_id": "{}",
         "mpt_amount": {},
         "mpt_authorized": true
     }})JSON",
+    kTOKEN_INDEX2,
     kACCOUNT,
     kISSUANCE_ID_HEX,
     kTOKEN2_AMOUNT

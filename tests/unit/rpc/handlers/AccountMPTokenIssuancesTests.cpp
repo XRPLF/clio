@@ -76,6 +76,7 @@ constexpr auto kISSUANCE2_DOMAIN_ID_HEX = "E6DBAFC99223B42257915A63DFC6B0C032D40
 // define expected JSON for mpt issuances
 auto const kISSUANCE_OUT1 = fmt::format(
     R"JSON({{
+        "mpt_issuance_id": "{}",
         "issuer": "{}",
         "sequence": 1,
         "maximum_amount": {},
@@ -86,6 +87,7 @@ auto const kISSUANCE_OUT1 = fmt::format(
         "mpt_require_auth": true,
         "mpt_can_transfer": true
     }})JSON",
+    kISSUANCE_INDEX1,
     kACCOUNT,
     kISSUANCE1_MAX_AMOUNT,
     kISSUANCE1_OUTSTANDING_AMOUNT,
@@ -94,6 +96,7 @@ auto const kISSUANCE_OUT1 = fmt::format(
 
 auto const kISSUANCE_OUT2 = fmt::format(
     R"JSON({{
+        "mpt_issuance_id": "{}",
         "issuer": "{}",
         "sequence": 2,
         "maximum_amount": {},
@@ -106,6 +109,7 @@ auto const kISSUANCE_OUT2 = fmt::format(
         "mpt_locked": true,
         "mpt_can_clawback": true
     }})JSON",
+    kISSUANCE_INDEX2,
     kACCOUNT,
     kISSUANCE2_MAX_AMOUNT,
     kISSUANCE2_OUTSTANDING_AMOUNT,
@@ -922,6 +926,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
                 "limit": 200,
                 "mpt_issuances": [
                     {{
+                        "mpt_issuance_id": "{}",
                         "issuer": "{}",
                         "sequence": 3,
                         "outstanding_amount": {},
@@ -933,6 +938,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
                         "mpt_can_mutate_can_trade": true
                     }},
                     {{
+                        "mpt_issuance_id": "{}",
                         "issuer": "{}",
                         "sequence": 5,
                         "outstanding_amount": {},
@@ -948,9 +954,11 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MutableFlags)
             }})JSON",
             kACCOUNT,
             kLEDGER_HASH,
+            kISSUANCE_INDEX1,
             kACCOUNT,
             kISSUANCE1_OUTSTANDING_AMOUNT,
             kISSUANCE1_TRANSFER_FEE,
+            kISSUANCE_INDEX2,
             kACCOUNT,
             kISSUANCE2_OUTSTANDING_AMOUNT,
             kISSUANCE2_TRANSFER_FEE,

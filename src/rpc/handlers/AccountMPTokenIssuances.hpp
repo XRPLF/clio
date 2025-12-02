@@ -61,6 +61,7 @@ public:
      * @brief A struct to hold data for one MPTokenIssuance response.
      */
     struct MPTokenIssuanceResponse {
+        std::string MPTokenIssuanceID;
         std::string issuer;
         uint32_t sequence{};
 
