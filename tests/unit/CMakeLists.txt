@@ -24,6 +24,7 @@ target_sources(
           cluster/BackendTests.cpp
           cluster/ClioNodeTests.cpp
           cluster/ClusterCommunicationServiceTests.cpp
+          cluster/MetricsTests.cpp
           cluster/RepeatedTaskTests.cpp
           # ETL
           etl/AmendmentBlockHandlerTests.cpp
