@@ -26,6 +26,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/error.hpp>
+#include <boost/asio/ssl/stream.hpp>
 #include <boost/asio/ssl/stream_base.hpp>
 #include <boost/asio/ssl/verify_context.hpp>
 #include <boost/asio/ssl/verify_mode.hpp>
@@ -40,7 +41,6 @@
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/beast/http/write.hpp>  // IWYU pragma: keep
-#include <boost/beast/ssl/ssl_stream.hpp>
 #include <boost/beast/version.hpp>
 #include <openssl/err.h>
 #include <openssl/tls1.h>

@@ -35,7 +35,6 @@
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
-#include <boost/beast/ssl/ssl_stream.hpp>
 #include <openssl/err.h>
 #include <openssl/tls1.h>
 

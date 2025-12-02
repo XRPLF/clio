@@ -91,6 +91,7 @@ ClioApplication::ClioApplication(util::config::ClioConfigDefinition const& confi
 {
     LOG(util::LogService::info()) << "Clio version: " << util::build::getClioFullVersionString();
     signalsHandler_.subscribeToStop([this]() { appStopper_.stop(); });
+    appStopper_.setOnComplete([this]() { signalsHandler_.notifyGracefulShutdownComplete(); });
 }
 
 int
