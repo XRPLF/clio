@@ -232,42 +232,38 @@ public:
             resultTxns.reserve(txns.size());
 
             for (auto& txn : txns) {
-                try {
-                    auto const delegationInfo = getDelegationInfo(txn.transaction);
+                auto const delegationInfo = getDelegationInfo(txn.transaction);
 
-                    if (delegationInfo) {
-                        auto const& [delegatee, delegator] = *delegationInfo;
-                        bool match = false;
+                if (delegationInfo) {
+                    auto const& [delegatee, delegator] = *delegationInfo;
+                    bool match = false;
 
-                        // Filter by "Delegator" ie. User wants to find the Owner (Delegator).
-                        // This implies the User (account) must be the Signer (Delegatee) that acted on someone's
-                        // behalf.
-                        if (delegateFilter->delegateType == rpc::DelegateFilter::Role::Delegator) {
-                            // The user (account) must be delegatee
-                            if (account == delegatee) {
-                                if (!filterCounterpartyID || *filterCounterpartyID == delegator) {
-                                    txn.delegatedAccount = delegator;
-                                    match = true;
-                                }
+                    // Filter by "Delegator" ie. User wants to find the Owner (Delegator).
+                    // This implies the User (account) must be the Signer (Delegatee) that acted on someone's
+                    // behalf.
+                    if (delegateFilter->delegateType == rpc::DelegateFilter::Role::Delegator) {
+                        // The user (account) must be delegatee
+                        if (account == delegatee) {
+                            if (!filterCounterpartyID || *filterCounterpartyID == delegator) {
+                                txn.delegatedAccount = delegator;
+                                match = true;
                             }
                         }
-                        // Filter by "Delegatee" ie. User wants to find the Signer (Delegatee).
-                        // This implies the User (account) must be the Owner (Delegator).
-                        else if (delegateFilter->delegateType == rpc::DelegateFilter::Role::Delegatee) {
-                            // The user (account) must be delegator
-                            if (account == delegator) {
-                                if (!filterCounterpartyID || *filterCounterpartyID == delegatee) {
-                                    txn.delegatedAccount = delegatee;
-                                    match = true;
-                                }
-                            }
-                        }
-
-                        if (match)
-                            resultTxns.push_back(txn);
                     }
-                } catch (std::exception const& e) {
-                    LOG(log_.warn()) << "Failed to parse tx for filter";
+                    // Filter by "Delegatee" ie. User wants to find the Signer (Delegatee).
+                    // This implies the User (account) must be the Owner (Delegator).
+                    else if (delegateFilter->delegateType == rpc::DelegateFilter::Role::Delegatee) {
+                        // The user (account) must be delegator
+                        if (account == delegator) {
+                            if (!filterCounterpartyID || *filterCounterpartyID == delegatee) {
+                                txn.delegatedAccount = delegatee;
+                                match = true;
+                            }
+                        }
+                    }
+
+                    if (match)
+                        resultTxns.push_back(txn);
                 }
             }
             return {.txns = resultTxns, .cursor = cursor};
