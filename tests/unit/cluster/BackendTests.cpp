@@ -29,6 +29,7 @@
 #include <boost/json/serialize.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
+#include <boost/json/value_to.hpp>
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -37,8 +38,12 @@
 
 #include <chrono>
 #include <memory>
+#include <semaphore>
+#include <stdexcept>
+#include <string>
 #include <thread>
 #include <utility>
+#include <vector>
 
 using namespace cluster;
 
@@ -54,7 +59,50 @@ struct ClusterBackendTest : util::prometheus::WithPrometheus, MockBackendTestStr
     MockWriterState& writerStateRef = *writerState;
     testing::StrictMock<testing::MockFunction<void(ClioNode::cUUID, std::shared_ptr<Backend::ClusterData const>)>>
         callbackMock;
+    std::binary_semaphore semaphore{0};
+
+    class SemaphoreReleaseGuard {
+        std::binary_semaphore& semaphore_;
+
+    public:
+        SemaphoreReleaseGuard(std::binary_semaphore& s) : semaphore_(s)
+        {
+        }
+        ~SemaphoreReleaseGuard()
+        {
+            semaphore_.release();
+        }
+    };
 };
+
+TEST_F(ClusterBackendTest, SubscribeToNewState)
+{
+    Backend clusterBackend{
+        ctx, backend_, std::move(writerState), std::chrono::milliseconds(1), std::chrono::milliseconds(1)
+    };
+
+    clusterBackend.subscribeToNewState(callbackMock.AsStdFunction());
+
+    EXPECT_CALL(*backend_, fetchClioNodesData)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(BackendInterface::ClioNodesDataFetchResult{}));
+    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AtLeast(1));
+    EXPECT_CALL(writerStateRef, isReadOnly).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(true));
+    EXPECT_CALL(callbackMock, Call)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly([this](ClioNode::cUUID selfId, std::shared_ptr<Backend::ClusterData const> clusterData) {
+            SemaphoreReleaseGuard guard{semaphore};
+            ASSERT_TRUE(clusterData->has_value());
+            EXPECT_EQ(clusterData->value().size(), 1);
+            auto const& nodeData = clusterData->value().front();
+            EXPECT_EQ(nodeData.uuid, selfId);
+            EXPECT_EQ(nodeData.dbRole, ClioNode::DbRole::ReadOnly);
+            EXPECT_LE(nodeData.updateTime, std::chrono::system_clock::now());
+        });
+
+    clusterBackend.run();
+    semaphore.acquire();
+}
 
 TEST_F(ClusterBackendTest, Stop)
 {
@@ -66,7 +114,6 @@ TEST_F(ClusterBackendTest, Stop)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(BackendInterface::ClioNodesDataFetchResult{}));
     EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AtLeast(1));
-    EXPECT_CALL(callbackMock, Call).Times(testing::AtLeast(1));
     EXPECT_CALL(writerStateRef, isReadOnly).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(true));
 
     clusterBackend.run();
@@ -76,4 +123,152 @@ TEST_F(ClusterBackendTest, Stop)
     testing::Mock::VerifyAndClearExpectations(&(*backend_));
     // Wait to make sure there is no new calls of mockDbBackend
     std::this_thread::sleep_for(std::chrono::milliseconds{20});
+}
+
+TEST_F(ClusterBackendTest, FetchClioNodesDataThrowsException)
+{
+    Backend clusterBackend{
+        ctx, backend_, std::move(writerState), std::chrono::milliseconds(1), std::chrono::milliseconds(1)
+    };
+
+    clusterBackend.subscribeToNewState(callbackMock.AsStdFunction());
+
+    EXPECT_CALL(*backend_, fetchClioNodesData)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Throw(std::runtime_error("Database connection failed")));
+    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AtLeast(1));
+    EXPECT_CALL(writerStateRef, isReadOnly).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(true));
+    EXPECT_CALL(callbackMock, Call)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly([this](ClioNode::cUUID, std::shared_ptr<Backend::ClusterData const> clusterData) {
+            SemaphoreReleaseGuard guard{semaphore};
+            ASSERT_FALSE(clusterData->has_value());
+            EXPECT_EQ(clusterData->error(), "Failed to fetch nodes data");
+        });
+
+    clusterBackend.run();
+    semaphore.acquire();
+}
+
+TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsDataWithOtherNodes)
+{
+    Backend clusterBackend{
+        ctx, backend_, std::move(writerState), std::chrono::milliseconds(1), std::chrono::milliseconds(1)
+    };
+
+    clusterBackend.subscribeToNewState(callbackMock.AsStdFunction());
+
+    auto const otherUuid = boost::uuids::random_generator{}();
+    auto const otherNodeJson = R"({
+        "db_role": 2,
+        "update_time": "2025-01-15T10:30:00Z"
+    })";
+
+    EXPECT_CALL(*backend_, fetchClioNodesData)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(
+            testing::Return(
+                BackendInterface::ClioNodesDataFetchResult{
+                    std::vector<std::pair<boost::uuids::uuid, std::string>>{{otherUuid, otherNodeJson}}
+                }
+            )
+        );
+    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AtLeast(1));
+    EXPECT_CALL(writerStateRef, isReadOnly).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isWriting).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(callbackMock, Call)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly([&](ClioNode::cUUID selfId, std::shared_ptr<Backend::ClusterData const> clusterData) {
+            SemaphoreReleaseGuard guard{semaphore};
+            ASSERT_TRUE(clusterData->has_value()) << clusterData->error();
+            EXPECT_EQ(clusterData->value().size(), 2);
+            EXPECT_EQ(selfId, clusterBackend.selfId());
+
+            bool foundSelf = false;
+            bool foundOther = false;
+
+            for (auto const& node : clusterData->value()) {
+                if (*node.uuid == *selfId) {
+                    foundSelf = true;
+                    EXPECT_EQ(node.dbRole, ClioNode::DbRole::NotWriter);
+                } else if (*node.uuid == otherUuid) {
+                    foundOther = true;
+                    EXPECT_EQ(node.dbRole, ClioNode::DbRole::Writer);
+                }
+                EXPECT_LE(node.updateTime, std::chrono::system_clock::now());
+            }
+
+            EXPECT_TRUE(foundSelf);
+            EXPECT_TRUE(foundOther);
+        });
+
+    clusterBackend.run();
+    semaphore.acquire();
+}
+
+TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsInvalidJson)
+{
+    Backend clusterBackend{
+        ctx, backend_, std::move(writerState), std::chrono::milliseconds(1), std::chrono::milliseconds(1)
+    };
+
+    clusterBackend.subscribeToNewState(callbackMock.AsStdFunction());
+
+    auto const otherUuid = boost::uuids::random_generator{}();
+    auto const invalidJson = "{ invalid json";
+
+    EXPECT_CALL(*backend_, fetchClioNodesData)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(
+            testing::Return(
+                BackendInterface::ClioNodesDataFetchResult{
+                    std::vector<std::pair<boost::uuids::uuid, std::string>>{{otherUuid, invalidJson}}
+                }
+            )
+        );
+    EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AtLeast(1));
+    EXPECT_CALL(writerStateRef, isReadOnly).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(true));
+    EXPECT_CALL(callbackMock, Call)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly([this, invalidJson](ClioNode::cUUID, std::shared_ptr<Backend::ClusterData const> clusterData) {
+            SemaphoreReleaseGuard guard{semaphore};
+            ASSERT_FALSE(clusterData->has_value());
+            EXPECT_THAT(clusterData->error(), testing::HasSubstr("Error parsing json from DB"));
+            EXPECT_THAT(clusterData->error(), testing::HasSubstr(invalidJson));
+        });
+
+    clusterBackend.run();
+    semaphore.acquire();
+}
+
+TEST_F(ClusterBackendTest, WriteNodeMessageWritesSelfDataWithRecentTimestampAndDbRole)
+{
+    Backend clusterBackend{
+        ctx, backend_, std::move(writerState), std::chrono::milliseconds(1), std::chrono::milliseconds(1)
+    };
+
+    auto const beforeRun = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+
+    EXPECT_CALL(*backend_, fetchClioNodesData)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(BackendInterface::ClioNodesDataFetchResult{}));
+    EXPECT_CALL(writerStateRef, isReadOnly).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isWriting).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(*backend_, writeNodeMessage)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly([&](boost::uuids::uuid const& uuid, std::string message) {
+            SemaphoreReleaseGuard guard{semaphore};
+            auto const afterWrite = std::chrono::system_clock::now();
+
+            EXPECT_EQ(uuid, *clusterBackend.selfId());
+            auto const json = boost::json::parse(message);
+            auto const node = boost::json::try_value_to<ClioNode>(json);
+            ASSERT_TRUE(node.has_value());
+            EXPECT_EQ(node->dbRole, ClioNode::DbRole::NotWriter);
+            EXPECT_GE(node->updateTime, beforeRun);
+            EXPECT_LE(node->updateTime, afterWrite);
+        });
+
+    clusterBackend.run();
+    semaphore.acquire();
 }

@@ -128,6 +128,9 @@ public:
         return onNewState_.connect(s);
     }
 
+    ClioNode::cUUID
+    selfId() const;
+
 private:
     ClusterData
     doRead(boost::asio::yield_context yield);

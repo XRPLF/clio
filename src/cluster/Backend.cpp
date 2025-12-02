@@ -67,8 +67,8 @@ void
 Backend::run()
 {
     readerTask_.run([this](boost::asio::yield_context yield) {
-        auto clusterState = doRead(yield);
-        onNewState_(selfUuid_, std::make_shared<ClusterData>(std::move(clusterState)));
+        auto clusterData = doRead(yield);
+        onNewState_(selfUuid_, std::make_shared<ClusterData>(std::move(clusterData)));
     });
 
     writerTask_.run([this]() { doWrite(); });
@@ -84,6 +84,12 @@ Backend::stop()
 {
     readerTask_.stop();
     writerTask_.stop();
+}
+
+ClioNode::cUUID
+Backend::selfId() const
+{
+    return selfUuid_;
 }
 
 Backend::ClusterData
