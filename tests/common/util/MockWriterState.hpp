@@ -34,3 +34,4 @@ struct MockWriterStateBase : public etl::WriterStateInterface {
 };
 
 using MockWriterState = testing::StrictMock<MockWriterStateBase>;
+using NiceMockWriterState = testing::NiceMock<MockWriterStateBase>;
