@@ -36,7 +36,6 @@ RUN apt-get update \
         libmpfr-dev \
         libncurses-dev \
         make \
-        ninja-build \
         wget \
         zip \
     && apt-get clean \
@@ -107,6 +106,7 @@ COPY --from=clio-tools \
     /usr/local/bin/git-cliff \
     /usr/local/bin/gh \
     /usr/local/bin/gdb \
+    /usr/local/bin/ninja \
     /usr/local/bin/
 
 WORKDIR /root

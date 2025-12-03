@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "util/JsonUtils.hpp"
+#include "util/NameGenerator.hpp"
 
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
@@ -26,7 +27,8 @@
 #include <cstdint>
 #include <limits>
 #include <stdexcept>
-#include <tuple>
+#include <string>
+#include <type_traits>
 
 TEST(JsonUtils, RemoveSecrets)
 {
@@ -90,28 +92,123 @@ TEST(JsonUtils, integralValueAs)
     EXPECT_THROW(util::integralValueAs<int>(stringJson), std::logic_error);
 }
 
-TEST(JsonUtils, getLedgerIndex)
+TEST(JsonUtils, tryIntegralValueAs)
 {
-    auto const emptyJson = boost::json::value();
-    EXPECT_THROW(std::ignore = util::getLedgerIndex(emptyJson), std::logic_error);
+    auto const expectedResultUint64 = static_cast<uint64_t>(std::numeric_limits<int32_t>::max()) + 1u;
+    auto const uint64Json = boost::json::value(expectedResultUint64);
 
-    auto const boolJson = boost::json::value(true);
-    EXPECT_THROW(std::ignore = util::getLedgerIndex(emptyJson), std::logic_error);
+    auto const expectedResultInt64 = static_cast<int64_t>(std::numeric_limits<int32_t>::max()) + 1u;
+    auto const int64Json = boost::json::value(expectedResultInt64);
 
-    auto const numberJson = boost::json::value(12345);
-    auto ledgerIndex = util::getLedgerIndex(numberJson);
-    EXPECT_TRUE(ledgerIndex.has_value());
-    EXPECT_EQ(ledgerIndex.value(), 12345u);
+    auto checkHasValue = [&](boost::json::value const& jv, auto const& expectedValue) {
+        using T = std::remove_cvref_t<decltype(expectedValue)>;
+        auto const res = util::tryIntegralValueAs<T>(jv);
+        ASSERT_TRUE(res.has_value());
+        EXPECT_EQ(res.value(), expectedValue);
+    };
 
-    auto const validStringJson = boost::json::value("12345");
-    ledgerIndex = util::getLedgerIndex(validStringJson);
-    EXPECT_TRUE(ledgerIndex.has_value());
-    EXPECT_EQ(ledgerIndex.value(), 12345u);
+    auto checkError = [&](boost::json::value const& jv) {
+        auto res = util::tryIntegralValueAs<int>(jv);
+        EXPECT_FALSE(res.has_value());
+        EXPECT_EQ(res.error(), "Value neither uint64 nor int64");
+    };
 
-    auto const invalidStringJson = boost::json::value("invalid123");
-    EXPECT_THROW(std::ignore = util::getLedgerIndex(invalidStringJson), std::invalid_argument);
+    // checks for uint64Json
+    checkHasValue(uint64Json, std::numeric_limits<int32_t>::min());
+    checkHasValue(uint64Json, static_cast<uint32_t>(expectedResultUint64));
+    checkHasValue(uint64Json, static_cast<int64_t>(expectedResultUint64));
+    checkHasValue(uint64Json, expectedResultUint64);
 
-    auto const validatedJson = boost::json::value("validated");
-    ledgerIndex = util::getLedgerIndex(validatedJson);
-    EXPECT_FALSE(ledgerIndex.has_value());
+    // checks for int64Json
+    checkHasValue(int64Json, std::numeric_limits<int32_t>::min());
+    checkHasValue(int64Json, static_cast<uint32_t>(expectedResultInt64));
+    checkHasValue(int64Json, expectedResultInt64);
+    checkHasValue(int64Json, static_cast<uint64_t>(expectedResultInt64));
+
+    // non-integral inputs
+    checkError(boost::json::value());
+    checkError(boost::json::value(false));
+    checkError(boost::json::value(3.14));
+    checkError(boost::json::value("not a number"));
+}
+
+struct GetLedgerIndexParameterTestBundle {
+    std::string testName;
+    boost::json::value jv;
+    std::expected<uint32_t, std::string> expectedResult;
+};
+
+// parameterized test cases for parameters check
+struct GetLedgerIndexParameterTest : ::testing::TestWithParam<GetLedgerIndexParameterTestBundle> {};
+
+INSTANTIATE_TEST_CASE_P(
+    JsonUtils,
+    GetLedgerIndexParameterTest,
+    testing::Values(
+        GetLedgerIndexParameterTestBundle{
+            .testName = "EmptyValue",
+            .jv = boost::json::value(),
+            .expectedResult = std::unexpected{"Value neither uint64 nor int64"}
+        },
+        GetLedgerIndexParameterTestBundle{
+            .testName = "BoolValue",
+            .jv = boost::json::value(false),
+            .expectedResult = std::unexpected{"Value neither uint64 nor int64"}
+        },
+        GetLedgerIndexParameterTestBundle{
+            .testName = "NumberValue",
+            .jv = boost::json::value(123),
+            .expectedResult = 123u
+        },
+        GetLedgerIndexParameterTestBundle{
+            .testName = "StringNumberValue",
+            .jv = boost::json::value("123"),
+            .expectedResult = 123u
+        },
+        GetLedgerIndexParameterTestBundle{
+            .testName = "StringNumberWithPlusSignValue",
+            .jv = boost::json::value("+123"),
+            .expectedResult = 123u
+        },
+        GetLedgerIndexParameterTestBundle{
+            .testName = "StringEmptyValue",
+            .jv = boost::json::value(""),
+            .expectedResult = std::unexpected{"Invalid ledger index string"}
+        },
+        GetLedgerIndexParameterTestBundle{
+            .testName = "StringWithLeadingCharsValue",
+            .jv = boost::json::value("123invalid"),
+            .expectedResult = std::unexpected{"Invalid ledger index string"}
+        },
+        GetLedgerIndexParameterTestBundle{
+            .testName = "StringWithTrailingCharsValue",
+            .jv = boost::json::value("invalid123"),
+            .expectedResult = std::unexpected{"Invalid ledger index string"}
+        },
+        GetLedgerIndexParameterTestBundle{
+            .testName = "StringWithLeadingAndTrailingCharsValue",
+            .jv = boost::json::value("123invalid123"),
+            .expectedResult = std::unexpected{"Invalid ledger index string"}
+        },
+        GetLedgerIndexParameterTestBundle{
+            .testName = "ValidatedStringValue",
+            .jv = boost::json::value("validated"),
+            .expectedResult = std::unexpected{"'validated' ledger index is requested"}
+        }
+    ),
+    tests::util::kNAME_GENERATOR
+);
+
+TEST_P(GetLedgerIndexParameterTest, getLedgerIndexParams)
+{
+    auto const& testBundle = GetParam();
+    auto const ledgerIndex = util::getLedgerIndex(testBundle.jv);
+
+    if (testBundle.expectedResult.has_value()) {
+        EXPECT_TRUE(ledgerIndex.has_value());
+        EXPECT_EQ(ledgerIndex.value(), testBundle.expectedResult.value());
+    } else {
+        EXPECT_FALSE(ledgerIndex.has_value());
+        EXPECT_EQ(ledgerIndex.error(), testBundle.expectedResult.error());
+    }
 }

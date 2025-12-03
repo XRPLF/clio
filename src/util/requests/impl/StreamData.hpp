@@ -78,8 +78,8 @@ private:
     }
 };
 
-using SslTcpStreamData = SslStreamData<boost::beast::ssl_stream<boost::beast::tcp_stream>>;
+using SslTcpStreamData = SslStreamData<boost::asio::ssl::stream<boost::beast::tcp_stream>>;
 using SslWsStreamData =
-    SslStreamData<boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>>;
+    SslStreamData<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>>;
 
 }  // namespace util::requests::impl

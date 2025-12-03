@@ -154,8 +154,11 @@ tag_invoke(boost::json::value_to_tag<AccountChannelsHandler::Input>, boost::json
     if (jsonObject.contains(JS(destination_account)))
         input.destinationAccount = boost::json::value_to<std::string>(jv.at(JS(destination_account)));
 
-    if (jsonObject.contains(JS(ledger_index)))
-        input.ledgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
+    if (jsonObject.contains(JS(ledger_index))) {
+        auto const expectedLedgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
+        if (expectedLedgerIndex.has_value())
+            input.ledgerIndex = *expectedLedgerIndex;
+    }
 
     return input;
 }

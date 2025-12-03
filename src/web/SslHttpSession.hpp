@@ -61,7 +61,7 @@ using tcp = boost::asio::ip::tcp;
 template <SomeServerHandler HandlerType>
 class SslHttpSession : public impl::HttpBase<SslHttpSession, HandlerType>,
                        public std::enable_shared_from_this<SslHttpSession<HandlerType>> {
-    boost::beast::ssl_stream<boost::beast::tcp_stream> stream_;
+    boost::asio::ssl::stream<boost::beast::tcp_stream> stream_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
     std::uint32_t maxWsSendingQueueSize_;
 
@@ -113,7 +113,7 @@ public:
     ~SslHttpSession() override = default;
 
     /** @return The SSL stream. */
-    boost::beast::ssl_stream<boost::beast::tcp_stream>&
+    boost::asio::ssl::stream<boost::beast::tcp_stream>&
     stream()
     {
         return stream_;

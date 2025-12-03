@@ -93,6 +93,7 @@ ClioApplication::ClioApplication(util::config::ClioConfigDefinition const& confi
 {
     LOG(util::LogService::info()) << "Clio version: " << util::build::getClioFullVersionString();
     signalsHandler_.subscribeToStop([this]() { appStopper_.stop(); });
+    appStopper_.setOnComplete([this]() { signalsHandler_.notifyGracefulShutdownComplete(); });
 }
 
 int
@@ -190,7 +191,7 @@ ClioApplication::run(bool const useNgWebServer)
             return EXIT_FAILURE;
         }
 
-        httpServer->onGet("/metrics", MetricsHandler{adminVerifier});
+        httpServer->onGet("/metrics", MetricsHandler{adminVerifier, workQueue});
         httpServer->onGet("/health", HealthCheckHandler{});
         httpServer->onGet("/cache_state", CacheStateHandler{cache});
         auto requestHandler = RequestHandler{adminVerifier, handler};

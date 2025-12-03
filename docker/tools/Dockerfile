@@ -12,7 +12,6 @@ ARG BUILD_VERSION=0
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests \
-        ninja-build \
         python3 \
         python3-pip \
         software-properties-common \
@@ -23,6 +22,15 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /tmp
+
+ARG NINJA_VERSION=1.13.2
+
+RUN wget --progress=dot:giga "https://github.com/ninja-build/ninja/archive/refs/tags/v${NINJA_VERSION}.tar.gz" \
+    && tar xf "v${NINJA_VERSION}.tar.gz" \
+    && cd "ninja-${NINJA_VERSION}" \
+    && ./configure.py --bootstrap \
+    && mv ninja /usr/local/bin/ninja \
+    && rm -rf /tmp/* /var/tmp/*
 
 ARG MOLD_VERSION=2.40.4
 RUN wget --progress=dot:giga "https://github.com/rui314/mold/archive/refs/tags/v${MOLD_VERSION}.tar.gz" \

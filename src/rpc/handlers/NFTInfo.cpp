@@ -115,8 +115,11 @@ tag_invoke(boost::json::value_to_tag<NFTInfoHandler::Input>, boost::json::value 
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
 
-    if (jsonObject.contains(JS(ledger_index)))
-        input.ledgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
+    if (jsonObject.contains(JS(ledger_index))) {
+        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
+        if (expectedLedgerIndex.has_value())
+            input.ledgerIndex = *expectedLedgerIndex;
+    }
 
     return input;
 }

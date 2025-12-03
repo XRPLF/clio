@@ -4,7 +4,6 @@ import argparse
 import re
 from pathlib import Path
 
-
 PATTERN = r'R"JSON\((.*?)\)JSON"'
 
 
@@ -40,6 +39,7 @@ def fix_colon_spacing(cpp_content: str) -> str:
         raw_json = match.group(1)
         raw_json = re.sub(r'":\n\s*(\[|\{)', r'": \1', raw_json)
         return f'R"JSON({raw_json})JSON"'
+
     return re.sub(PATTERN, replace_json, cpp_content, flags=re.DOTALL)
 
 
@@ -49,12 +49,12 @@ def fix_indentation(cpp_content: str) -> str:
 
     lines = cpp_content.splitlines()
 
-    ends_with_newline = cpp_content.endswith('\n')
+    ends_with_newline = cpp_content.endswith("\n")
 
     def find_indentation(line: str) -> int:
         return len(line) - len(line.lstrip())
 
-    for (line_num, (line, next_line)) in enumerate(zip(lines[:-1], lines[1:])):
+    for line_num, (line, next_line) in enumerate(zip(lines[:-1], lines[1:])):
         if "JSON(" in line and ")JSON" not in line:
             indent = find_indentation(line)
             next_indent = find_indentation(next_line)
@@ -69,7 +69,11 @@ def fix_indentation(cpp_content: str) -> str:
                     if ")JSON" in lines[i]:
                         lines[i] = " " * indent + lines[i].lstrip()
                         break
-                    lines[i] = lines[i][by_how_much:] if by_how_much > 0 else " " * (-by_how_much) + lines[i]
+                    lines[i] = (
+                        lines[i][by_how_much:]
+                        if by_how_much > 0
+                        else " " * (-by_how_much) + lines[i]
+                    )
 
     result = "\n".join(lines)
 
