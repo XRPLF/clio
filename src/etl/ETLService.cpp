@@ -349,7 +349,7 @@ ETLService::startMonitor(uint32_t seq)
     monitorNewSeqSubscription_ = monitor_->subscribeToNewSequence([this](uint32_t seq) {
         LOG(log_.info()) << "ETLService (via Monitor) got new seq from db: " << seq;
 
-        if (state_->shouldGiveUpWriter) {
+        if (state_->shouldGiveUpWriting) {
             giveUpWriter();
         }
 
@@ -406,7 +406,7 @@ ETLService::giveUpWriter()
 {
     ASSERT(not state_->isStrictReadonly, "This should only happen on writer nodes");
     state_->isWriting = false;
-    state_->shouldGiveUpWriter = false;
+    state_->shouldGiveUpWriting = false;
     LOG(log_.info()) << "Giving up writer seat";
     taskMan_ = nullptr;
 }

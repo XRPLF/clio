@@ -370,13 +370,13 @@ TEST_F(ETLServiceTests, HandlesWriteConflictInMonitorSubscription)
     EXPECT_CALL(*cacheLoader_, load(kSEQ));
 
     service_.run();
-    systemState_->shouldGiveUpWriter = true;
+    systemState_->shouldGiveUpWriting = true;
 
     EXPECT_CALL(*publisher_, publish(kSEQ + 1, testing::_, testing::_));
     ASSERT_TRUE(capturedCallback);
     capturedCallback(kSEQ + 1);
 
-    EXPECT_FALSE(systemState_->shouldGiveUpWriter);
+    EXPECT_FALSE(systemState_->shouldGiveUpWriting);
     EXPECT_FALSE(systemState_->isWriting);
 }
 
@@ -483,15 +483,15 @@ TEST_F(ETLServiceTests, GiveUpWriterAfterWriteConflict)
 
     service_.run();
     systemState_->isWriting = true;
-    systemState_->shouldGiveUpWriter = true;  // got a write conflict along the way
+    systemState_->shouldGiveUpWriting = true;  // got a write conflict along the way
 
     EXPECT_CALL(*publisher_, publish(kSEQ + 1, testing::_, testing::_));
 
     ASSERT_TRUE(capturedCallback);
     capturedCallback(kSEQ + 1);
 
-    EXPECT_FALSE(systemState_->isWriting);           // gives up writing
-    EXPECT_FALSE(systemState_->shouldGiveUpWriter);  // and removes write conflict flag
+    EXPECT_FALSE(systemState_->isWriting);            // gives up writing
+    EXPECT_FALSE(systemState_->shouldGiveUpWriting);  // and removes write conflict flag
 }
 
 TEST_F(ETLServiceTests, CancelledLoadInitialLedger)

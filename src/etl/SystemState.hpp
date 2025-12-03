@@ -69,7 +69,7 @@ struct SystemState {
 
     std::atomic_bool isStopping = false;            /**< @brief Whether the software is stopping. */
     std::atomic_bool shouldTakeoverWriting = false; /**< @brief Whether ETL should start writing to DB. */
-    std::atomic_bool shouldGiveUpWriter = false;    /**< @brief Whether ETL should stop writing to DB. */
+    std::atomic_bool shouldGiveUpWriting = false;   /**< @brief Whether ETL should stop writing to DB. */
 
     /**
      * @brief Whether clio detected an amendment block.

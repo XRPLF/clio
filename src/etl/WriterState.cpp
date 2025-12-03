@@ -57,7 +57,7 @@ WriterState::giveUpWriting()
     if (not isWriting())
         return;
 
-    systemState_->shouldTakeoverWriting = true;
+    systemState_->shouldGiveUpWriting = true;
 }
 
 std::unique_ptr<WriterStateInterface>

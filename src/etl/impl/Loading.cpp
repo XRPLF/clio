@@ -75,7 +75,7 @@ Loader::load(model::LedgerData const& data)
                              << "; took " << duration << "ms";
 
             if (not success) {
-                state_->shouldGiveUpWriter = true;
+                state_->shouldGiveUpWriting = true;
                 LOG(log_.warn()) << "Another node wrote a ledger into the DB - we have a write conflict";
                 return std::unexpected(LoaderError::WriteConflict);
             }

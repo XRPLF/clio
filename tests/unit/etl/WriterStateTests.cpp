@@ -64,11 +64,11 @@ TEST_F(WriterStateTest, StartWritingDoesNothingWhenAlreadyWriting)
 TEST_F(WriterStateTest, GiveUpWritingSetsFlag)
 {
     systemState->isWriting = true;
-    systemState->shouldTakeoverWriting = false;
+    systemState->shouldGiveUpWriting = false;
 
     writerState.giveUpWriting();
 
-    EXPECT_TRUE(systemState->shouldTakeoverWriting);
+    EXPECT_TRUE(systemState->shouldGiveUpWriting);
 }
 
 TEST_F(WriterStateTest, GiveUpWritingDoesNothingWhenNotWriting)
