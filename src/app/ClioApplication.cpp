@@ -205,7 +205,16 @@ ClioApplication::run(bool const useNgWebServer)
         }
 
         appStopper_.setOnStop(
-            Stopper::makeOnStopCallback(httpServer.value(), *balancer, *etl, *subscriptions, *backend, cacheSaver, ioc)
+            Stopper::makeOnStopCallback(
+                httpServer.value(),
+                *balancer,
+                *etl,
+                *subscriptions,
+                *backend,
+                cacheSaver,
+                clusterCommunicationService,
+                ioc
+            )
         );
 
         // Blocks until stopped.
@@ -221,7 +230,9 @@ ClioApplication::run(bool const useNgWebServer)
 
     auto const httpServer = web::makeHttpServer(config_, ioc, dosGuard, handler, cache);
     appStopper_.setOnStop(
-        Stopper::makeOnStopCallback(*httpServer, *balancer, *etl, *subscriptions, *backend, cacheSaver, ioc)
+        Stopper::makeOnStopCallback(
+            *httpServer, *balancer, *etl, *subscriptions, *backend, cacheSaver, clusterCommunicationService, ioc
+        )
     );
 
     // Blocks until stopped.

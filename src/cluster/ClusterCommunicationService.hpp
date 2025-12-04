@@ -20,6 +20,7 @@
 #pragma once
 
 #include "cluster/Backend.hpp"
+#include "cluster/Concepts.hpp"
 #include "cluster/Metrics.hpp"
 #include "cluster/WriterDecider.hpp"
 #include "data/BackendInterface.hpp"
@@ -39,7 +40,7 @@ namespace cluster {
 /**
  * @brief Service to post and read messages to/from the cluster. It uses a backend to communicate with the cluster.
  */
-class ClusterCommunicationService {
+class ClusterCommunicationService : public ClusterCommunicationServiceTag {
     // TODO: Use util::async::CoroExecutionContext after https://github.com/XRPLF/clio/issues/1973 is implemented
     boost::asio::thread_pool ctx_{1};
     Backend backend_;
@@ -65,7 +66,7 @@ public:
         std::chrono::steady_clock::duration writeInterval = kDEFAULT_WRITE_INTERVAL
     );
 
-    ~ClusterCommunicationService();
+    ~ClusterCommunicationService() override;
 
     ClusterCommunicationService(ClusterCommunicationService&&) = delete;
     ClusterCommunicationService(ClusterCommunicationService const&) = delete;
