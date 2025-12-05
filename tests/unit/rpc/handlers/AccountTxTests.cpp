@@ -554,7 +554,6 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
             testing::_,
             true,
             testing::Optional(testing::Eq(TransactionsCursor{kMIN_SEQ, INT32_MAX})),
-            testing::_,
             testing::_
         )
     );
@@ -599,7 +598,6 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ - 1, INT32_MAX})),
-            testing::_,
             testing::_
         )
     );
@@ -644,7 +642,6 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
             testing::_,
             true,
             testing::Optional(testing::Eq(TransactionsCursor{kMIN_SEQ - 1, INT32_MAX})),
-            testing::_,
             testing::_
         )
     );
@@ -689,7 +686,6 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})),
-            testing::_,
             testing::_
         )
     );
@@ -734,7 +730,6 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})),
-            testing::_,
             testing::_
         )
     );
@@ -790,7 +785,6 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrueV2)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})),
-            testing::_,
             testing::_
         )
     )
@@ -843,12 +837,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
     EXPECT_CALL(
         *backend_,
         fetchAccountTransactions(
-            testing::_,
-            testing::_,
-            false,
-            testing::Optional(testing::Eq(TransactionsCursor{10, 11})),
-            testing::_,
-            testing::_
+            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
         )
     )
         .WillOnce(Return(transCursor));
@@ -887,7 +876,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitIsCapped)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
-    EXPECT_CALL(*backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_, testing::_))
+    EXPECT_CALL(*backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_))
         .WillOnce(Return(transCursor));
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
@@ -921,7 +910,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAllowedUpToCap)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
-    EXPECT_CALL(*backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_, testing::_))
+    EXPECT_CALL(*backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_))
         .WillOnce(Return(transCursor));
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
 
@@ -965,7 +954,6 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ - 1, INT32_MAX})),
-            testing::_,
             testing::_
         )
     );
@@ -1058,7 +1046,6 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ - 1, INT32_MAX})),
-            testing::_,
             testing::_
         )
     );
@@ -1105,7 +1092,6 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})),
-            testing::_,
             testing::_
         )
     );
@@ -1149,7 +1135,6 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ - 1, INT32_MAX})),
-            testing::_,
             testing::_
         )
     );
@@ -1194,7 +1179,6 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{kMAX_SEQ - 2, INT32_MAX})),
-            testing::_,
             testing::_
         )
     );
@@ -1230,28 +1214,13 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
 TEST_F(RPCAccountTxHandlerTest, WithDelegateAgent)
 {
     auto transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const accountId = *ripple::parseBase58<ripple::AccountID>(kACCOUNT);
+
     for (auto& txn : transactions) {
-        txn.delegatedAccount = accountId;
+        txn.transaction = createDelegateBlob(kACCOUNT2, kACCOUNT);
     }
 
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
-    EXPECT_CALL(
-        *backend_,
-        fetchAccountTransactions(
-            testing::_,
-            testing::_,
-            false,
-            testing::_,
-            testing::Optional(
-                testing::AllOf(
-                    testing::Field(&DelegateFilter::delegateType, DelegateFilter::Role::Delegator),
-                    testing::Field(&DelegateFilter::counterParty, testing::Eq(std::nullopt))
-                )
-            ),
-            testing::_
-        )
-    )
+    EXPECT_CALL(*backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_))
         .WillOnce(Return(transCursor));
 
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
@@ -1281,30 +1250,15 @@ TEST_F(RPCAccountTxHandlerTest, WithDelegateAgent)
 TEST_F(RPCAccountTxHandlerTest, WithDelegateFromAndCounterparty)
 {
     auto transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const kCOUNTERPARTY = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-    auto const counterpartyID = *ripple::parseBase58<ripple::AccountID>(kCOUNTERPARTY);
+    auto constexpr kCOUNTERPARTY = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+
     for (auto& txn : transactions) {
-        txn.delegatedAccount = counterpartyID;
+        txn.transaction = createDelegateBlob(kACCOUNT, kCOUNTERPARTY);
     }
 
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
 
-    EXPECT_CALL(
-        *backend_,
-        fetchAccountTransactions(
-            testing::_,
-            testing::_,
-            false,
-            testing::_,
-            testing::Optional(
-                testing::AllOf(
-                    testing::Field(&DelegateFilter::delegateType, DelegateFilter::Role::Delegatee),
-                    testing::Field(&DelegateFilter::counterParty, testing::Optional(std::string(kCOUNTERPARTY)))
-                )
-            ),
-            testing::_
-        )
-    )
+    EXPECT_CALL(*backend_, fetchAccountTransactions(testing::_, testing::_, false, testing::_, testing::_))
         .WillOnce(Return(transCursor));
 
     ON_CALL(*mockETLServicePtr_, getETLState).WillByDefault(Return(etl::ETLState{}));
@@ -1519,12 +1473,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
     EXPECT_CALL(
         *backend_,
         fetchAccountTransactions(
-            testing::_,
-            testing::_,
-            false,
-            testing::Optional(testing::Eq(TransactionsCursor{10, 11})),
-            testing::_,
-            testing::_
+            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
         )
     );
 
@@ -1743,12 +1692,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
     EXPECT_CALL(
         *backend_,
         fetchAccountTransactions(
-            testing::_,
-            testing::_,
-            false,
-            testing::Optional(testing::Eq(TransactionsCursor{10, 11})),
-            testing::_,
-            testing::_
+            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
         )
     );
 
@@ -2366,7 +2310,7 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
     auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *backend_, fetchAccountTransactions(_, _, false, Optional(Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})), _, _)
+        *backend_, fetchAccountTransactions(_, _, false, Optional(Eq(TransactionsCursor{kMAX_SEQ, INT32_MAX})), _)
     );
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ);

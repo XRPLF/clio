@@ -25,6 +25,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/JsonBool.hpp"
 #include "rpc/common/Types.hpp"
+#include "rpc/filters/impl/DelegateTransactionsFilter.hpp"
 #include "util/Assert.hpp"
 #include "util/JsonUtils.hpp"
 #include "util/Profiler.hpp"
@@ -119,12 +120,16 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
         }
     }
 
+    std::optional<rpc::DelegateTransactionFilter> txFilter;
+    if (input.delegateFilter) {
+        auto const accountID = accountFromStringStrict(input.account);
+        txFilter.emplace(*input.delegateFilter, *accountID);
+    }
+
     auto const limit = input.limit.value_or(kLIMIT_DEFAULT);
     auto const accountID = accountFromStringStrict(input.account);
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
-        return sharedPtrBackend_->fetchAccountTransactions(
-            *accountID, limit, input.forward, cursor, input.delegateFilter, ctx.yield
-        );
+        return sharedPtrBackend_->fetchAccountTransactions(*accountID, limit, input.forward, cursor, ctx.yield);
     });
 
     LOG(log_.info()) << "db fetch took " << timeDiff << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
@@ -145,6 +150,15 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
         if (txnPlusMeta.ledgerSequence > maxIndex && !input.forward) {
             LOG(log_.debug()) << "Skipping over transactions from incomplete ledger";
             continue;
+        }
+
+        std::optional<ripple::AccountID> relevantAccount;
+        if (txFilter) {
+            auto const result = txFilter->check(txnPlusMeta);
+            if (not result.shouldInclude)
+                continue;
+
+            relevantAccount = result.relevantAccount;
         }
 
         boost::json::object obj;
@@ -194,15 +208,11 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                     }
                 }
 
-                if (txnPlusMeta.delegatedAccount.has_value()) {
-                    if (input.delegateFilter) {
-                        if (input.delegateFilter->delegateType == rpc::DelegateFilter::Role::Delegator) {
-                            // filtering by the txns where other accounts sent txns for this delegatedAccount
-                            obj["delegator"] = to_string(*txnPlusMeta.delegatedAccount);
-                        } else if (input.delegateFilter->delegateType == rpc::DelegateFilter::Role::Delegatee) {
-                            // filtering by the txns where this delegatedAccount sent txn on behalf of other users
-                            obj["delegatee"] = to_string(*txnPlusMeta.delegatedAccount);
-                        }
+                if (relevantAccount) {
+                    if (input.delegateFilter->delegateType == rpc::DelegateFilter::Role::Delegator) {
+                        obj["delegator"] = ripple::to_string(*relevantAccount);
+                    } else {
+                        obj["delegatee"] = ripple::to_string(*relevantAccount);
                     }
                 }
 

@@ -481,7 +481,7 @@ TEST_F(BackendCassandraTest, Basic)
             EXPECT_EQ(hashes.size(), 1);
             EXPECT_EQ(ripple::strHex(hashes[0]), hashHex);
             for (auto& a : affectedAccounts) {
-                auto [accountTransactions, cursor] = backend_->fetchAccountTransactions(a, 100, true, {}, {}, yield);
+                auto [accountTransactions, cursor] = backend_->fetchAccountTransactions(a, 100, true, {}, yield);
                 EXPECT_EQ(accountTransactions.size(), 1);
                 EXPECT_EQ(accountTransactions[0], accountTransactions[0]);
                 EXPECT_FALSE(cursor);
@@ -730,7 +730,7 @@ TEST_F(BackendCassandraTest, Basic)
                 do {
                     uint32_t const limit = 10;
                     auto [accountTransactions, retCursor] =
-                        backend_->fetchAccountTransactions(account, limit, false, cursor, {}, yield);
+                        backend_->fetchAccountTransactions(account, limit, false, cursor, yield);
                     if (retCursor)
                         EXPECT_EQ(accountTransactions.size(), limit);
                     retData.insert(retData.end(), accountTransactions.begin(), accountTransactions.end());

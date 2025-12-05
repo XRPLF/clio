@@ -580,3 +580,6 @@ createVault(
     ripple::uint256 previousTxId,
     uint32_t previousTxSeq
 );
+
+[[nodiscard]] ripple::Blob
+createDelegateBlob(std::string_view owner, std::string_view delegate);

@@ -43,7 +43,9 @@
 #include <xrpl/protocol/STIssue.h>
 #include <xrpl/protocol/STNumber.h>
 #include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/STTx.h>
 #include <xrpl/protocol/STVector256.h>
+#include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/TER.h>
 #include <xrpl/protocol/TxFormats.h>
 #include <xrpl/protocol/UintTypes.h>
@@ -1796,4 +1798,28 @@ createVault(
     vault.setFieldU16(ripple::sfLedgerEntryType, ripple::ltVAULT);
 
     return vault;
+}
+
+ripple::Blob
+createDelegateBlob(std::string_view owner, std::string_view delegate)
+{
+    ripple::STObject obj(ripple::sfTransaction);
+    obj.setFieldU16(ripple::sfTransactionType, ripple::ttPAYMENT);
+
+    if (auto const acc = ripple::parseBase58<ripple::AccountID>(std::string(owner))) {
+        obj.setAccountID(ripple::sfAccount, *acc);
+        obj.setAccountID(ripple::sfDestination, *acc);
+    }
+    if (auto const acc = ripple::parseBase58<ripple::AccountID>(std::string(delegate)))
+        obj.setAccountID(ripple::sfDelegate, *acc);
+
+    obj.setFieldAmount(ripple::sfAmount, ripple::STAmount(100));
+    obj.setFieldAmount(ripple::sfFee, ripple::STAmount(10));
+    obj.setFieldU32(ripple::sfSequence, 1);
+    obj.setFieldVL(ripple::sfSigningPubKey, ripple::Slice(nullptr, 0));
+
+    ripple::STTx tx(std::move(obj));
+    ripple::Serializer s;
+    tx.add(s);
+    return s.getData();
 }

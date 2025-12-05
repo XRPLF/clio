@@ -23,7 +23,6 @@
 #include "data/LedgerCacheInterface.hpp"
 #include "data/Types.hpp"
 #include "etl/CorruptionDetector.hpp"
-#include "rpc/common/Types.hpp"
 #include "util/Spawn.hpp"
 #include "util/log/Logger.hpp"
 
@@ -306,7 +305,6 @@ public:
      * @param limit The maximum number of transactions per result page
      * @param forward Whether to fetch the page forwards or backwards from the given cursor
      * @param txnCursor The cursor to resume fetching from
-     * @param delegateFilter Delegate filter to restrict results to transactions involving permission delegation
      * @param yield The coroutine context
      * @return Results and a cursor to resume from
      */
@@ -316,7 +314,6 @@ public:
         std::uint32_t limit,
         bool forward,
         std::optional<TransactionsCursor> const& txnCursor,
-        std::optional<rpc::DelegateFilter> const& delegateFilter,
         boost::asio::yield_context yield
     ) const = 0;
 
