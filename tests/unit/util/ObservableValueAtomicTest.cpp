@@ -25,7 +25,6 @@
 
 #include <atomic>
 #include <chrono>
-#include <functional>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -41,7 +40,7 @@ class ObservableValueAtomicTest : public ::testing::Test {};
 
 TEST_F(ObservableValueAtomicTest, BasicConstruction)
 {
-    ObservableValue<std::atomic<int>> obs{42};
+    ObservableValue<std::atomic<int>> const obs{42};
 
     EXPECT_EQ(obs.get(), 42);
     EXPECT_EQ(static_cast<int>(obs), 42);
@@ -50,10 +49,10 @@ TEST_F(ObservableValueAtomicTest, BasicConstruction)
 
 TEST_F(ObservableValueAtomicTest, DefaultConstruction)
 {
-    ObservableValue<std::atomic<int>> obsInt;
+    ObservableValue<std::atomic<int>> const obsInt;
     EXPECT_EQ(obsInt.get(), 0);
 
-    ObservableValue<std::atomic<bool>> obsBool;
+    ObservableValue<std::atomic<bool>> const obsBool;
     EXPECT_FALSE(obsBool.get());
 
     EXPECT_FALSE(obsInt.hasObservers());
@@ -173,7 +172,7 @@ TEST_F(ObservableValueAtomicTest, ThreadSafetyBasic)
 
     auto connection = obs.observe([&](int const& value) {
         notificationCount.fetch_add(1);
-        std::lock_guard<std::mutex> lock(valuesMutex);
+        std::lock_guard<std::mutex> const lock(valuesMutex);
         values.push_back(value);
     });
 
@@ -186,8 +185,8 @@ TEST_F(ObservableValueAtomicTest, ThreadSafetyBasic)
     for (int i = 0; i < kNUM_THREADS; ++i) {
         threads.emplace_back([&obs]() {
             for (int j = 0; j < kINCREMENTS_PER_THREAD; ++j) {
-                int expected = obs.get();
-                int newValue = expected + 1;
+                int const expected = obs.get();
+                int const newValue = expected + 1;
                 obs.set(newValue);
                 std::this_thread::sleep_for(std::chrono::microseconds(1));
             }
@@ -201,7 +200,7 @@ TEST_F(ObservableValueAtomicTest, ThreadSafetyBasic)
     EXPECT_GT(obs.get(), 0);
     EXPECT_GT(notificationCount.load(), 0);
 
-    std::lock_guard<std::mutex> lock(valuesMutex);
+    std::lock_guard<std::mutex> const lock(valuesMutex);
     for (auto const& value : values) {
         EXPECT_GT(value, 0);
     }
@@ -223,7 +222,7 @@ TEST_F(ObservableValueAtomicTest, ThreadSafetyWithDirectAccess)
     for (int i = 0; i < kNUM_THREADS; ++i) {
         threads.emplace_back([&obs]() {
             for (int j = 0; j < kOPERATIONS_PER_THREAD; ++j) {
-                int current = obs.get();
+                int const current = obs.get();
                 obs.set(current + 1);
                 std::this_thread::sleep_for(std::chrono::microseconds(1));
             }
@@ -278,7 +277,7 @@ TEST_F(ObservableValueAtomicTest, RaceConditionNotificationIntegrity)
 
     auto connection = obs.observe([&](int const& value) {
         notificationCount.fetch_add(1);
-        std::lock_guard<std::mutex> lock(valuesMutex);
+        std::lock_guard<std::mutex> const lock(valuesMutex);
         values.push_back(value);
     });
 
@@ -302,13 +301,13 @@ TEST_F(ObservableValueAtomicTest, RaceConditionNotificationIntegrity)
 
     EXPECT_GT(notificationCount.load(), 0);
 
-    std::lock_guard<std::mutex> lock(valuesMutex);
+    std::lock_guard<std::mutex> const lock(valuesMutex);
     for (auto const& value : values) {
         EXPECT_GE(value, 0);
         EXPECT_LE(value, 2);
     }
 
-    int finalValue = obs.get();
+    int const finalValue = obs.get();
     EXPECT_GE(finalValue, 0);
     EXPECT_LE(finalValue, 2);
 }
@@ -322,7 +321,7 @@ TEST_F(ObservableValueAtomicTest, DeterministicNotificationTest)
 
     auto connection = obs.observe([&](int const& value) {
         notificationCount.fetch_add(1);
-        std::lock_guard<std::mutex> lock(valuesMutex);
+        std::lock_guard<std::mutex> const lock(valuesMutex);
         values.push_back(value);
     });
 
@@ -341,7 +340,7 @@ TEST_F(ObservableValueAtomicTest, DeterministicNotificationTest)
     // Each thread sets a unique value, so expect exactly kNumThreads notifications
     EXPECT_EQ(notificationCount.load(), kNUM_THREADS);
 
-    std::lock_guard<std::mutex> lock(valuesMutex);
+    std::lock_guard<std::mutex> const lock(valuesMutex);
     EXPECT_EQ(values.size(), kNUM_THREADS);
 
     for (auto const& value : values) {
@@ -349,7 +348,7 @@ TEST_F(ObservableValueAtomicTest, DeterministicNotificationTest)
         EXPECT_LE(value, kNUM_THREADS);
     }
 
-    int finalValue = obs.get();
+    int const finalValue = obs.get();
     EXPECT_GE(finalValue, 1);
     EXPECT_LE(finalValue, kNUM_THREADS);
 }
@@ -386,7 +385,7 @@ TEST_F(ObservableValueAtomicTest, AtomicRaceConditionCorrectness)
 
     auto connection = obs.observe([&](int const& value) {
         notificationCount.fetch_add(1);
-        std::lock_guard<std::mutex> lock(valuesMutex);
+        std::lock_guard<std::mutex> const lock(valuesMutex);
         values.push_back(value);
     });
 
@@ -399,9 +398,9 @@ TEST_F(ObservableValueAtomicTest, AtomicRaceConditionCorrectness)
     // Each thread will make unique changes to avoid race condition conflicts
     for (int i = 0; i < kNUM_THREADS; ++i) {
         threads.emplace_back([&obs, i]() {
-            int baseValue = (i + 1) * 10;  // 10, 20, 30
-            obs.set(baseValue);            // Store unique values
-            obs.set(baseValue + 1);        // Then increment
+            int const baseValue = (i + 1) * 10;  // 10, 20, 30
+            obs.set(baseValue);                  // Store unique values
+            obs.set(baseValue + 1);              // Then increment
         });
     }
 
@@ -412,7 +411,7 @@ TEST_F(ObservableValueAtomicTest, AtomicRaceConditionCorrectness)
     // but at least one per thread since they use unique base values
     EXPECT_GE(notificationCount.load(), kNUM_THREADS);
 
-    std::lock_guard<std::mutex> lock(valuesMutex);
+    std::lock_guard<std::mutex> const lock(valuesMutex);
     EXPECT_GE(values.size(), kNUM_THREADS);
 
     for (auto const& value : values)

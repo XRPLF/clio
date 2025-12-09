@@ -25,9 +25,11 @@
 
 #include <concepts>
 #include <map>
+#include <memory>
 #include <set>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -148,7 +150,7 @@ TEST_F(ObservableValueTest, ConceptCompliance)
 
 TEST_F(ObservableValueTest, Construction)
 {
-    ObservableValue<int> obs{42};
+    ObservableValue<int> const obs{42};
 
     EXPECT_EQ(static_cast<int>(obs), 42);
     EXPECT_EQ(obs.get(), 42);
@@ -157,28 +159,28 @@ TEST_F(ObservableValueTest, Construction)
 
 TEST_F(ObservableValueTest, ConstructionWithDifferentTypes)
 {
-    ObservableValue<std::string> obsStr{"hello"};
+    ObservableValue<std::string> const obsStr{"hello"};
     EXPECT_EQ(obsStr.get(), "hello");
 
-    ObservableValue<double> obsDouble{3.14};
+    ObservableValue<double> const obsDouble{3.14};
     EXPECT_DOUBLE_EQ(obsDouble.get(), 3.14);
 
-    ObservableValue<bool> obsBool{true};
+    ObservableValue<bool> const obsBool{true};
     EXPECT_TRUE(obsBool.get());
 }
 
 TEST_F(ObservableValueTest, DefaultConstruction)
 {
-    ObservableValue<int> obsInt;
+    ObservableValue<int> const obsInt;
     EXPECT_EQ(obsInt.get(), 0);
 
-    ObservableValue<double> obsDouble;
+    ObservableValue<double> const obsDouble;
     EXPECT_DOUBLE_EQ(obsDouble.get(), 0.0);
 
-    ObservableValue<bool> obsBool;
+    ObservableValue<bool> const obsBool;
     EXPECT_FALSE(obsBool.get());
 
-    ObservableValue<char> obsChar;
+    ObservableValue<char> const obsChar;
     EXPECT_EQ(obsChar.get(), '\0');
 
     EXPECT_FALSE(obsInt.hasObservers());
@@ -189,26 +191,26 @@ TEST_F(ObservableValueTest, DefaultConstruction)
 
 TEST_F(ObservableValueTest, DefaultConstructionWithContainers)
 {
-    ObservableValue<std::string> obsString;
+    ObservableValue<std::string> const obsString;
     EXPECT_EQ(obsString.get(), "");
     EXPECT_TRUE(obsString.get().empty());
 
-    ObservableValue<std::vector<int>> obsVector;
+    ObservableValue<std::vector<int>> const obsVector;
     EXPECT_TRUE(obsVector.get().empty());
     EXPECT_EQ(obsVector.get().size(), 0);
 
-    ObservableValue<std::set<int>> obsSet;
+    ObservableValue<std::set<int>> const obsSet;
     EXPECT_TRUE(obsSet.get().empty());
     EXPECT_EQ(obsSet.get().size(), 0);
 
-    ObservableValue<std::map<int, std::string>> obsMap;
+    ObservableValue<std::map<int, std::string>> const obsMap;
     EXPECT_TRUE(obsMap.get().empty());
     EXPECT_EQ(obsMap.get().size(), 0);
 }
 
 TEST_F(ObservableValueTest, DefaultConstructionWithCustomType)
 {
-    ObservableValue<TestStruct> obsStruct;
+    ObservableValue<TestStruct> const obsStruct;
     EXPECT_EQ(obsStruct.get().value, 0);
     EXPECT_EQ(obsStruct.get().name, "");
 }
@@ -299,9 +301,9 @@ TEST_F(ObservableValueTest, NonDefaultInitializableTypeWithParameterizedConstruc
 
 TEST_F(ObservableValueTest, MoveSemantics)
 {
-    ObservableValue<int> obs1{100};
+    ObservableValue<int> const obs1{100};
 
-    ObservableValue<int> obs2 = std::move(obs1);
+    ObservableValue<int> const obs2 = std::move(obs1);
     EXPECT_EQ(obs2.get(), 100);
 
     ObservableValue<int> obs3{200};
@@ -435,13 +437,13 @@ TEST_F(ObservableValueTest, ObservableGuardMultipleChanges)
 
 TEST_F(ObservableValueTest, ComplexTypeObservation)
 {
-    TestStruct initial{.value = 42, .name = "test"};
+    TestStruct const initial{.value = 42, .name = "test"};
     ObservableValue<TestStruct> obs{initial};
 
     testing::StrictMock<testing::MockFunction<void(TestStruct const&)>> mockObserver;
     auto connection = obs.observe(mockObserver.AsStdFunction());
 
-    TestStruct newValue{.value = 100, .name = "changed"};
+    TestStruct const newValue{.value = 100, .name = "changed"};
     EXPECT_CALL(
         mockObserver,
         Call(testing::AllOf(testing::Field(&TestStruct::value, 100), testing::Field(&TestStruct::name, "changed")))
@@ -451,7 +453,7 @@ TEST_F(ObservableValueTest, ComplexTypeObservation)
 
 TEST_F(ObservableValueTest, ComplexTypeGuardModification)
 {
-    TestStruct initial{.value = 10, .name = "initial"};
+    TestStruct const initial{.value = 10, .name = "initial"};
     ObservableValue<TestStruct> obs{initial};
 
     testing::StrictMock<testing::MockFunction<void(TestStruct const&)>> mockObserver;
@@ -625,7 +627,7 @@ TEST_F(ObservableValueTest, EnhancedConceptRequirements)
     testing::StrictMock<testing::MockFunction<void(ComplexObservable const&)>> mockObserver;
     auto connection = obs.observe(mockObserver.AsStdFunction());
 
-    ComplexObservable newValue{"changed", 100, {4, 5, 6}};
+    ComplexObservable const newValue{"changed", 100, {4, 5, 6}};
     EXPECT_CALL(
         mockObserver,
         Call(
@@ -636,10 +638,10 @@ TEST_F(ObservableValueTest, EnhancedConceptRequirements)
             )
         )
     );
-    obs = std::move(newValue);
+    obs = newValue;
 
-    ComplexObservable sameValue{"changed", 100, {4, 5, 6}};
-    obs = std::move(sameValue);  // Same value, should not notify
+    ComplexObservable const sameValue{"changed", 100, {4, 5, 6}};
+    obs = sameValue;  // Same value, should not notify
 }
 
 TEST_F(ObservableValueTest, ExceptionInObserver)
@@ -739,7 +741,7 @@ TEST_F(ObservableValueTest, ScopedConnectionDisconnectsOnDestruction)
     testing::StrictMock<testing::MockFunction<void(int const&)>> mockObserver;
 
     {
-        boost::signals2::scoped_connection scoped = obs.observe(mockObserver.AsStdFunction());
+        boost::signals2::scoped_connection const scoped = obs.observe(mockObserver.AsStdFunction());
         EXPECT_CALL(mockObserver, Call(1));
         obs = 1;
         EXPECT_TRUE(obs.hasObservers());
@@ -771,7 +773,7 @@ TEST_F(ObservableValueTest, ScopedConnectionCanBeDisconnectedManually)
     ObservableValue<int> obs{0};
     testing::StrictMock<testing::MockFunction<void(int const&)>> mockObserver;
 
-    boost::signals2::scoped_connection scoped = obs.observe(mockObserver.AsStdFunction());
+    boost::signals2::scoped_connection const scoped = obs.observe(mockObserver.AsStdFunction());
 
     EXPECT_CALL(mockObserver, Call(1));
     obs = 1;
@@ -793,8 +795,8 @@ TEST_F(ObservableValueTest, MixedConnectionTypes)
     auto regularConn = obs.observe(mockObserver1.AsStdFunction());
 
     {
-        boost::signals2::scoped_connection scoped1 = obs.observe(mockObserver2.AsStdFunction());
-        boost::signals2::scoped_connection scoped2 = obs.observe(mockObserver3.AsStdFunction());
+        boost::signals2::scoped_connection const scoped1 = obs.observe(mockObserver2.AsStdFunction());
+        boost::signals2::scoped_connection const scoped2 = obs.observe(mockObserver3.AsStdFunction());
 
         EXPECT_CALL(mockObserver1, Call(1));
         EXPECT_CALL(mockObserver2, Call(1));
