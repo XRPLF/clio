@@ -1792,7 +1792,6 @@ createVault(
     vault[ripple::sfShareMPTID] = shareMPTID;
     vault.setFieldNumber(ripple::sfAssetsTotal, ripple::STNumber{ripple::sfAssetsTotal, 300});
     vault.setFieldNumber(ripple::sfAssetsAvailable, ripple::STNumber{ripple::sfAssetsAvailable, 300});
-    vault.setFieldNumber(ripple::sfLossUnrealized, ripple::STNumber{ripple::sfLossUnrealized, 0});
     vault.setFieldU8(ripple::sfWithdrawalPolicy, 200);
 
     vault.setFieldU32(ripple::sfFlags, 0);
