@@ -10,37 +10,36 @@ CLIO_BIN="$CLIO_PREFIX/bin/${CLIO_EXECUTABLE}"
 CLIO_CONFIG="$CLIO_PREFIX/etc/config.json"
 
 case "$1" in
-    configure)
-        if ! id -u "$USER_NAME" >/dev/null 2>&1; then
-            # Users who should not have a home directory should have their home directory set to /nonexistent
-            # https://www.debian.org/doc/debian-policy/ch-opersys.html#non-existent-home-directories
-            useradd \
-                --system \
-                --home-dir /nonexistent \
-                --no-create-home \
-                --shell /usr/sbin/nologin \
-                --comment "system user for ${CLIO_EXECUTABLE}" \
-                --user-group \
-                ${USER_NAME}
-        fi
+configure)
+    if ! id -u "$USER_NAME" >/dev/null 2>&1; then
+        # Users who should not have a home directory should have their home directory set to /nonexistent
+        # https://www.debian.org/doc/debian-policy/ch-opersys.html#non-existent-home-directories
+        useradd \
+            --system \
+            --home-dir /nonexistent \
+            --no-create-home \
+            --shell /usr/sbin/nologin \
+            --comment "system user for ${CLIO_EXECUTABLE}" \
+            --user-group \
+            ${USER_NAME}
+    fi
 
-        install -d -o "$USER_NAME" -g "$GROUP_NAME" /var/log/clio
+    install -d -o "$USER_NAME" -g "$GROUP_NAME" /var/log/clio
 
-        if [ -f "$CLIO_CONFIG" ]; then
-            chown "$USER_NAME:$GROUP_NAME" "$CLIO_CONFIG"
-        fi
+    if [ -f "$CLIO_CONFIG" ]; then
+        chown "$USER_NAME:$GROUP_NAME" "$CLIO_CONFIG"
+    fi
 
-        chown -R "$USER_NAME:$GROUP_NAME" "$CLIO_PREFIX"
+    chown -R "$USER_NAME:$GROUP_NAME" "$CLIO_PREFIX"
 
-        ln -sf "$CLIO_BIN" "/usr/bin/${CLIO_EXECUTABLE}"
+    ln -sf "$CLIO_BIN" "/usr/bin/${CLIO_EXECUTABLE}"
 
-        ;;
-    abort-upgrade|abort-remove|abort-deconfigure)
-        ;;
-    *)
-        echo "postinst called with unknown argument \`$1'" >&2
-        exit 1
-        ;;
+    ;;
+abort-upgrade | abort-remove | abort-deconfigure) ;;
+*)
+    echo "postinst called with unknown argument \`$1'" >&2
+    exit 1
+    ;;
 esac
 
 exit 0

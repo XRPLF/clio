@@ -40,6 +40,7 @@ struct StopperTest : virtual public ::testing::Test {
 protected:
     // Order here is important, stopper_ should die before mockCallback_, otherwise UB
     testing::StrictMock<testing::MockFunction<void(boost::asio::yield_context)>> mockCallback_;
+    testing::StrictMock<testing::MockFunction<void()>> mockCompleteCallback_;
     Stopper stopper_;
 };
 
@@ -57,6 +58,22 @@ TEST_F(StopperTest, stopCalledMultipleTimes)
     stopper_.stop();
     stopper_.stop();
     stopper_.stop();
+    stopper_.stop();
+}
+
+TEST_F(StopperTest, stopCallsCompletionCallback)
+{
+    stopper_.setOnStop(mockCallback_.AsStdFunction());
+    stopper_.setOnComplete(mockCompleteCallback_.AsStdFunction());
+    EXPECT_CALL(mockCallback_, Call);
+    EXPECT_CALL(mockCompleteCallback_, Call);
+    stopper_.stop();
+}
+
+TEST_F(StopperTest, stopWithoutCompletionCallback)
+{
+    stopper_.setOnStop(mockCallback_.AsStdFunction());
+    EXPECT_CALL(mockCallback_, Call);
     stopper_.stop();
 }
 

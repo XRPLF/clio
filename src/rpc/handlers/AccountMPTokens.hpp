@@ -59,6 +59,7 @@ public:
      * @brief A struct to hold data for one MPToken response.
      */
     struct MPTokenResponse {
+        std::string MPTokenID;
         std::string account;
         std::string MPTokenIssuanceID;
         uint64_t MPTAmount{};

@@ -56,6 +56,7 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
 {
     MPTokenIssuanceResponse issuance;
 
+    issuance.MPTokenIssuanceID = ripple::strHex(sle.key());
     issuance.issuer = ripple::to_string(account);
     issuance.sequence = sle.getFieldU32(ripple::sfSequence);
     auto const flags = sle.getFieldU32(ripple::sfFlags);
@@ -72,6 +73,24 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
     setFlag(issuance.mptCanTrade, ripple::lsfMPTCanTrade);
     setFlag(issuance.mptCanTransfer, ripple::lsfMPTCanTransfer);
     setFlag(issuance.mptCanClawback, ripple::lsfMPTCanClawback);
+
+    if (sle.isFieldPresent(ripple::sfMutableFlags)) {
+        auto const mutableFlags = sle.getFieldU32(ripple::sfMutableFlags);
+
+        auto const setMutableFlag = [&](std::optional<bool>& field, std::uint32_t mask) {
+            if ((mutableFlags & mask) != 0u)
+                field = true;
+        };
+
+        setMutableFlag(issuance.mptCanMutateCanLock, ripple::lsmfMPTCanMutateCanLock);
+        setMutableFlag(issuance.mptCanMutateRequireAuth, ripple::lsmfMPTCanMutateRequireAuth);
+        setMutableFlag(issuance.mptCanMutateCanEscrow, ripple::lsmfMPTCanMutateCanEscrow);
+        setMutableFlag(issuance.mptCanMutateCanTrade, ripple::lsmfMPTCanMutateCanTrade);
+        setMutableFlag(issuance.mptCanMutateCanTransfer, ripple::lsmfMPTCanMutateCanTransfer);
+        setMutableFlag(issuance.mptCanMutateCanClawback, ripple::lsmfMPTCanMutateCanClawback);
+        setMutableFlag(issuance.mptCanMutateMetadata, ripple::lsmfMPTCanMutateMetadata);
+        setMutableFlag(issuance.mptCanMutateTransferFee, ripple::lsmfMPTCanMutateTransferFee);
+    }
 
     if (sle.isFieldPresent(ripple::sfTransferFee))
         issuance.transferFee = sle.getFieldU16(ripple::sfTransferFee);
@@ -201,6 +220,7 @@ tag_invoke(
 )
 {
     auto obj = boost::json::object{
+        {JS(mpt_issuance_id), issuance.MPTokenIssuanceID},
         {JS(issuer), issuance.issuer},
         {JS(sequence), issuance.sequence},
     };
@@ -226,6 +246,15 @@ tag_invoke(
     setIfPresent("mpt_can_trade", issuance.mptCanTrade);
     setIfPresent("mpt_can_transfer", issuance.mptCanTransfer);
     setIfPresent("mpt_can_clawback", issuance.mptCanClawback);
+
+    setIfPresent("mpt_can_mutate_can_lock", issuance.mptCanMutateCanLock);
+    setIfPresent("mpt_can_mutate_require_auth", issuance.mptCanMutateRequireAuth);
+    setIfPresent("mpt_can_mutate_can_escrow", issuance.mptCanMutateCanEscrow);
+    setIfPresent("mpt_can_mutate_can_trade", issuance.mptCanMutateCanTrade);
+    setIfPresent("mpt_can_mutate_can_transfer", issuance.mptCanMutateCanTransfer);
+    setIfPresent("mpt_can_mutate_can_clawback", issuance.mptCanMutateCanClawback);
+    setIfPresent("mpt_can_mutate_metadata", issuance.mptCanMutateMetadata);
+    setIfPresent("mpt_can_mutate_transfer_fee", issuance.mptCanMutateTransferFee);
 
     jv = std::move(obj);
 }

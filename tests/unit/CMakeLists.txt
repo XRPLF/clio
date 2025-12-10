@@ -169,6 +169,8 @@ target_sources(
           util/BytesConverterTests.cpp
           util/CoroutineTest.cpp
           util/MoveTrackerTests.cpp
+          util/ObservableValueTest.cpp
+          util/ObservableValueAtomicTest.cpp
           util/RandomTests.cpp
           util/RepeatTests.cpp
           util/ResponseExpirationCacheTests.cpp
