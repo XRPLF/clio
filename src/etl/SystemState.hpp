@@ -51,7 +51,23 @@ struct SystemState {
         "Whether the process is writing to the database"
     );
 
-    enum class WriteCommand { StartWriting, StopWriting };
+    /**
+     * @brief Commands for controlling the ETL writer state.
+     *
+     * These commands are emitted via writeCommandSignal to coordinate writer state transitions across components.
+     */
+    enum class WriteCommand {
+        StartWriting, /**< Request to attempt taking over as the ETL writer */
+        StopWriting   /**< Request to give up the ETL writer role (e.g., due to write conflict) */
+    };
+
+    /**
+     * @brief Signal for coordinating ETL writer state transitions.
+     *
+     * This signal allows components to request changes to the writer state without direct coupling.
+     * - Emitted with StartWriting when database stalls and node should attempt to become writer
+     * - Emitted with StopWriting when write conflicts are detected
+     */
     boost::signals2::signal<void(WriteCommand)> writeCommandSignal;
 
     /**
