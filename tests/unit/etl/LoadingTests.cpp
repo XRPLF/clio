@@ -188,3 +188,53 @@ TEST_F(LoadingAssertTest, LoadInitialLedgerHasDataInDB)
 
     EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = loader_.loadInitialLedger(data); });
 }
+
+TEST_F(LoadingTests, LoadWriteConflictEmitsStopWritingSignal)
+{
+    state_->isWriting = true;  // writer is active
+    auto const data = createTestData();
+    testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>> mockSignalCallback;
+
+    auto connection = state_->writeCommandSignal.connect(mockSignalCallback.AsStdFunction());
+
+    EXPECT_CALL(*mockRegistryPtr_, dispatch(data));
+    EXPECT_CALL(*backend_, doFinishWrites()).WillOnce(testing::Return(false));  // simulate write conflict
+    EXPECT_CALL(mockSignalCallback, Call(etl::SystemState::WriteCommand::StopWriting));
+
+    auto result = loader_.load(data);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), etl::LoaderError::WriteConflict);
+}
+
+TEST_F(LoadingTests, LoadSuccessDoesNotEmitSignal)
+{
+    state_->isWriting = true;  // writer is active
+    auto const data = createTestData();
+    testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>> mockSignalCallback;
+
+    auto connection = state_->writeCommandSignal.connect(mockSignalCallback.AsStdFunction());
+
+    EXPECT_CALL(*mockRegistryPtr_, dispatch(data));
+    EXPECT_CALL(*backend_, doFinishWrites()).WillOnce(testing::Return(true));  // success
+    // No signal should be emitted on success
+
+    auto result = loader_.load(data);
+    EXPECT_TRUE(result.has_value());
+}
+
+TEST_F(LoadingTests, LoadWhenNotWritingDoesNotCheckConflict)
+{
+    state_->isWriting = false;  // not a writer
+    auto const data = createTestData();
+    testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>> mockSignalCallback;
+
+    auto connection = state_->writeCommandSignal.connect(mockSignalCallback.AsStdFunction());
+
+    EXPECT_CALL(*mockRegistryPtr_, dispatch(data));
+    // doFinishWrites should not be called when not writing
+    EXPECT_CALL(*backend_, doFinishWrites()).Times(0);
+    // No signal should be emitted
+
+    auto result = loader_.load(data);
+    EXPECT_TRUE(result.has_value());
+}

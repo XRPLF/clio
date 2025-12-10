@@ -23,7 +23,8 @@
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
-#include <atomic>
+#include <boost/signals2/signal.hpp>
+#include <boost/signals2/variadic_signal.hpp>
 
 namespace etl {
 
@@ -50,8 +51,8 @@ struct SystemState {
         "Whether the process is writing to the database"
     );
 
-    std::atomic_bool isStopping = false;    /**< @brief Whether the software is stopping. */
-    std::atomic_bool writeConflict = false; /**< @brief Whether a write conflict was detected. */
+    enum class WriteCommand { StartWriting, StopWriting };
+    boost::signals2::signal<void(WriteCommand)> writeCommandSignal;
 
     /**
      * @brief Whether clio detected an amendment block.
