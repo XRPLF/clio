@@ -45,7 +45,7 @@ if [[ "1.14.0" > "$version" ]]; then
 
                                     ERROR
 -----------------------------------------------------------------------------
-        A minimum of version 1.14 of `which doxygen` is required.
+        A minimum of version 1.14 of $(which doxygen) is required.
         Your version is $version. Please upgrade it.
 
         Your changes may fail CI checks.
@@ -55,26 +55,26 @@ EOF
     exit 0
 fi
 
-mkdir -p ${DOCDIR} > /dev/null 2>&1
-pushd ${DOCDIR} > /dev/null 2>&1
+mkdir -p ${DOCDIR} >/dev/null 2>&1
+pushd ${DOCDIR} >/dev/null 2>&1
 
-cat ${ROOT}/docs/Doxyfile | \
-sed \
-    -e "s/\${LINT}/YES/" \
-    -e "s/\${WARN_AS_ERROR}/NO/" \
-    -e "s!\${SOURCE}!${ROOT}!" \
-    -e "s/\${USE_DOT}/NO/" \
-    -e "s/\${EXCLUDES}/impl/" \
-| ${DOXYGEN} - 2> ${TMPFILE} 1> /dev/null
+cat ${ROOT}/docs/Doxyfile |
+    sed \
+        -e "s/\${LINT}/YES/" \
+        -e "s/\${WARN_AS_ERROR}/NO/" \
+        -e "s!\${SOURCE}!${ROOT}!" \
+        -e "s/\${USE_DOT}/NO/" \
+        -e "s/\${EXCLUDES}/impl/" |
+    ${DOXYGEN} - 2>${TMPFILE} 1>/dev/null
 
 # We don't want to check for default values and typedefs as well as for member variables
-OUT=$(cat ${TMPFILE} \
-    | grep -v "=default" \
-    | grep -v "\(variable\)" \
-    | grep -v "\(typedef\)")
+OUT=$(cat ${TMPFILE} |
+    grep -v "=default" |
+    grep -v "\(variable\)" |
+    grep -v "\(typedef\)")
 
-rm -rf ${TMPFILE} > /dev/null 2>&1
-popd > /dev/null 2>&1
+rm -rf ${TMPFILE} >/dev/null 2>&1
+popd >/dev/null 2>&1
 
 if [[ ! -z "$OUT" ]]; then
     cat <<EOF

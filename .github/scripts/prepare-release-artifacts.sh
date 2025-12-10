@@ -20,5 +20,5 @@ for artifact_name in $(ls); do
     rm "${artifact_name}/${BINARY_NAME}"
     rm -r "${artifact_name}"
 
-    sha256sum "./${artifact_name}.zip" > "./${artifact_name}.zip.sha256sum"
+    sha256sum "./${artifact_name}.zip" >"./${artifact_name}.zip.sha256sum"
 done
