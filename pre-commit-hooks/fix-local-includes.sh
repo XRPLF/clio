@@ -23,10 +23,10 @@ fix_includes() {
     file_path_fixed="${file_path}.tmp.fixed"
 
     # Make all includes to be <...> style
-    sed -E 's|#include "(.*)"|#include <\1>|g' "$file_path" > "$file_path_all_global"
+    sed -E 's|#include "(.*)"|#include <\1>|g' "$file_path" >"$file_path_all_global"
 
     # Make local includes to be "..." style
-    sed -E "s|#include <(($main_src_dirs)/.*)>|#include \"\1\"|g" "$file_path_all_global" > "$file_path_fixed"
+    sed -E "s|#include <(($main_src_dirs)/.*)>|#include \"\1\"|g" "$file_path_all_global" >"$file_path_fixed"
     rm "$file_path_all_global"
 
     # Check if the temporary file is different from the original file

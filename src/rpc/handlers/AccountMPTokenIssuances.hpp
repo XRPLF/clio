@@ -61,6 +61,7 @@ public:
      * @brief A struct to hold data for one MPTokenIssuance response.
      */
     struct MPTokenIssuanceResponse {
+        std::string MPTokenIssuanceID;
         std::string issuer;
         uint32_t sequence{};
 
@@ -80,6 +81,15 @@ public:
         std::optional<bool> mptCanTrade;
         std::optional<bool> mptCanTransfer;
         std::optional<bool> mptCanClawback;
+
+        std::optional<bool> mptCanMutateCanLock;
+        std::optional<bool> mptCanMutateRequireAuth;
+        std::optional<bool> mptCanMutateCanEscrow;
+        std::optional<bool> mptCanMutateCanTrade;
+        std::optional<bool> mptCanMutateCanTransfer;
+        std::optional<bool> mptCanMutateCanClawback;
+        std::optional<bool> mptCanMutateMetadata;
+        std::optional<bool> mptCanMutateTransferFee;
     };
 
     /**

@@ -152,6 +152,7 @@ struct Amendments {
     REGISTER(fixDirectoryLimit);
     REGISTER(fixIncludeKeyletFields);
     REGISTER(fixTokenEscrowV1);
+    REGISTER(LendingProtocol);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);

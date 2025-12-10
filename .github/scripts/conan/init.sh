@@ -40,9 +40,9 @@ mkdir -p "$PROFILES_DIR"
 
 if [[ "$(uname)" == "Darwin" ]]; then
     create_profile_with_sanitizers "apple-clang" "$APPLE_CLANG_PROFILE"
-    echo "include(apple-clang)" > "$PROFILES_DIR/default"
+    echo "include(apple-clang)" >"$PROFILES_DIR/default"
 else
     create_profile_with_sanitizers "clang" "$CLANG_PROFILE"
     create_profile_with_sanitizers "gcc" "$GCC_PROFILE"
-    echo "include(gcc)" > "$PROFILES_DIR/default"
+    echo "include(gcc)" >"$PROFILES_DIR/default"
 fi
