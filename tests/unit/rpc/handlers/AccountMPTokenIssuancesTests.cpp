@@ -985,13 +985,13 @@ static auto
 generateSingleFlagTests()
 {
     return std::vector<SingleFlagTest>{
-        {"Locked", ripple::lsfMPTLocked, "mpt_locked"},
-        {"CanLock", ripple::lsfMPTCanLock, "mpt_can_lock"},
-        {"RequireAuth", ripple::lsfMPTRequireAuth, "mpt_require_auth"},
-        {"CanEscrow", ripple::lsfMPTCanEscrow, "mpt_can_escrow"},
-        {"CanTrade", ripple::lsfMPTCanTrade, "mpt_can_trade"},
-        {"CanTransfer", ripple::lsfMPTCanTransfer, "mpt_can_transfer"},
-        {"CanClawback", ripple::lsfMPTCanClawback, "mpt_can_clawback"},
+        {.testName = "Locked", .flag = ripple::lsfMPTLocked, .expectedJsonKey = "mpt_locked"},
+        {.testName = "CanLock", .flag = ripple::lsfMPTCanLock, .expectedJsonKey = "mpt_can_lock"},
+        {.testName = "RequireAuth", .flag = ripple::lsfMPTRequireAuth, .expectedJsonKey = "mpt_require_auth"},
+        {.testName = "CanEscrow", .flag = ripple::lsfMPTCanEscrow, .expectedJsonKey = "mpt_can_escrow"},
+        {.testName = "CanTrade", .flag = ripple::lsfMPTCanTrade, .expectedJsonKey = "mpt_can_trade"},
+        {.testName = "CanTransfer", .flag = ripple::lsfMPTCanTransfer, .expectedJsonKey = "mpt_can_transfer"},
+        {.testName = "CanClawback", .flag = ripple::lsfMPTCanClawback, .expectedJsonKey = "mpt_can_clawback"},
     };
 }
 
@@ -1059,14 +1059,30 @@ static auto
 generateSingleMutableFlagTests()
 {
     return std::vector<SingleMutableFlagTest>{
-        {"CanMutateCanLock", ripple::lsmfMPTCanMutateCanLock, "mpt_can_mutate_can_lock"},
-        {"CanMutateRequireAuth", ripple::lsmfMPTCanMutateRequireAuth, "mpt_can_mutate_require_auth"},
-        {"CanMutateCanEscrow", ripple::lsmfMPTCanMutateCanEscrow, "mpt_can_mutate_can_escrow"},
-        {"CanMutateCanTrade", ripple::lsmfMPTCanMutateCanTrade, "mpt_can_mutate_can_trade"},
-        {"CanMutateCanTransfer", ripple::lsmfMPTCanMutateCanTransfer, "mpt_can_mutate_can_transfer"},
-        {"CanMutateCanClawback", ripple::lsmfMPTCanMutateCanClawback, "mpt_can_mutate_can_clawback"},
-        {"CanMutateMetadata", ripple::lsmfMPTCanMutateMetadata, "mpt_can_mutate_metadata"},
-        {"CanMutateTransferFee", ripple::lsmfMPTCanMutateTransferFee, "mpt_can_mutate_transfer_fee"},
+        {.testName = "CanMutateCanLock",
+         .mutableFlag = ripple::lsmfMPTCanMutateCanLock,
+         .expectedJsonKey = "mpt_can_mutate_can_lock"},
+        {.testName = "CanMutateRequireAuth",
+         .mutableFlag = ripple::lsmfMPTCanMutateRequireAuth,
+         .expectedJsonKey = "mpt_can_mutate_require_auth"},
+        {.testName = "CanMutateCanEscrow",
+         .mutableFlag = ripple::lsmfMPTCanMutateCanEscrow,
+         .expectedJsonKey = "mpt_can_mutate_can_escrow"},
+        {.testName = "CanMutateCanTrade",
+         .mutableFlag = ripple::lsmfMPTCanMutateCanTrade,
+         .expectedJsonKey = "mpt_can_mutate_can_trade"},
+        {.testName = "CanMutateCanTransfer",
+         .mutableFlag = ripple::lsmfMPTCanMutateCanTransfer,
+         .expectedJsonKey = "mpt_can_mutate_can_transfer"},
+        {.testName = "CanMutateCanClawback",
+         .mutableFlag = ripple::lsmfMPTCanMutateCanClawback,
+         .expectedJsonKey = "mpt_can_mutate_can_clawback"},
+        {.testName = "CanMutateMetadata",
+         .mutableFlag = ripple::lsmfMPTCanMutateMetadata,
+         .expectedJsonKey = "mpt_can_mutate_metadata"},
+        {.testName = "CanMutateTransferFee",
+         .mutableFlag = ripple::lsmfMPTCanMutateTransferFee,
+         .expectedJsonKey = "mpt_can_mutate_transfer_fee"},
     };
 }
 
