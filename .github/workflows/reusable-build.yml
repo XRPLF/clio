@@ -88,7 +88,7 @@ jobs:
     steps:
       - name: Cleanup workspace
         if: ${{ runner.os == 'macOS' }}
-        uses: XRPLF/actions/.github/actions/cleanup-workspace@ea9970b7c211b18f4c8bcdb28c29f5711752029f
+        uses: XRPLF/actions/cleanup-workspace@cf0433aa74563aead044a1e395610c96d65a37cf
 
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
@@ -99,7 +99,7 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Prepare runner
-        uses: XRPLF/actions/.github/actions/prepare-runner@8abb0722cbff83a9a2dc7d06c473f7a4964b7382
+        uses: XRPLF/actions/prepare-runner@2ece4ec6ab7de266859a6f053571425b2bd684b6
         with:
           disable_ccache: ${{ !inputs.download_ccache }}
 
