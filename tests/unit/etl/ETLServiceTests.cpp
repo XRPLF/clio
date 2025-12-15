@@ -216,10 +216,6 @@ protected:
     std::shared_ptr<testing::NiceMock<MockMonitorProvider>> monitorProvider_ =
         std::make_shared<testing::NiceMock<MockMonitorProvider>>();
     std::shared_ptr<etl::SystemState> systemState_ = std::make_shared<etl::SystemState>();
-    testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>> mockWriteSignalCommandCallback_;
-    boost::signals2::scoped_connection writeCommandConnection_{
-        systemState_->writeCommandSignal.connect(mockWriteSignalCommandCallback_.AsStdFunction())
-    };
 
     etl::ETLService service_{
         ctx_,
@@ -374,13 +370,13 @@ TEST_F(ETLServiceTests, HandlesWriteConflictInMonitorSubscription)
     EXPECT_CALL(*cacheLoader_, load(kSEQ));
 
     service_.run();
-    writeCommandConnection_.disconnect();
-    systemState_->writeCommandSignal(etl::SystemState::WriteCommand::StopWriting);
+    systemState_->writeConflict = true;
 
     EXPECT_CALL(*publisher_, publish(kSEQ + 1, testing::_, testing::_));
     ASSERT_TRUE(capturedCallback);
     capturedCallback(kSEQ + 1);
 
+    EXPECT_FALSE(systemState_->writeConflict);
     EXPECT_FALSE(systemState_->isWriting);
 }
 
@@ -451,8 +447,6 @@ TEST_F(ETLServiceTests, AttemptTakeoverWriter)
     EXPECT_CALL(*taskManagerProvider_, make(testing::_, testing::_, kSEQ + 1, testing::_))
         .WillOnce(testing::Return(std::move(mockTaskManager)));
 
-    EXPECT_CALL(mockWriteSignalCommandCallback_, Call(etl::SystemState::WriteCommand::StartWriting));
-
     ASSERT_TRUE(capturedDbStalledCallback);
     capturedDbStalledCallback();
 
@@ -483,15 +477,15 @@ TEST_F(ETLServiceTests, GiveUpWriterAfterWriteConflict)
 
     service_.run();
     systemState_->isWriting = true;
-    writeCommandConnection_.disconnect();
-    systemState_->writeCommandSignal(etl::SystemState::WriteCommand::StopWriting);
+    systemState_->writeConflict = true;  // got a write conflict along the way
 
     EXPECT_CALL(*publisher_, publish(kSEQ + 1, testing::_, testing::_));
 
     ASSERT_TRUE(capturedCallback);
     capturedCallback(kSEQ + 1);
 
-    EXPECT_FALSE(systemState_->isWriting);  // gives up writing
+    EXPECT_FALSE(systemState_->isWriting);      // gives up writing
+    EXPECT_FALSE(systemState_->writeConflict);  // and removes write conflict flag
 }
 
 TEST_F(ETLServiceTests, CancelledLoadInitialLedger)
@@ -544,66 +538,4 @@ TEST_F(ETLServiceTests, RunStopsIfInitialLoadIsCancelledByBalancer)
     EXPECT_TRUE(systemState_->isWriting);
     EXPECT_FALSE(service_.isAmendmentBlocked());
     EXPECT_FALSE(service_.isCorruptionDetected());
-}
-
-TEST_F(ETLServiceTests, DbStalledDoesNotTriggerSignalWhenStrictReadonly)
-{
-    auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
-    auto& mockMonitorRef = *mockMonitor;
-    std::function<void()> capturedDbStalledCallback;
-
-    EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
-        return std::move(mockMonitor);
-    });
-    EXPECT_CALL(mockMonitorRef, subscribeToNewSequence);
-    EXPECT_CALL(mockMonitorRef, subscribeToDbStalled).WillOnce([&capturedDbStalledCallback](auto callback) {
-        capturedDbStalledCallback = callback;
-        return boost::signals2::scoped_connection{};
-    });
-    EXPECT_CALL(mockMonitorRef, run);
-
-    EXPECT_CALL(*backend_, hardFetchLedgerRange)
-        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
-    EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
-    EXPECT_CALL(*cacheLoader_, load(kSEQ));
-
-    service_.run();
-    systemState_->isStrictReadonly = true;  // strict readonly mode
-    systemState_->isWriting = false;
-
-    // No signal should be emitted because node is in strict readonly mode
-
-    ASSERT_TRUE(capturedDbStalledCallback);
-    capturedDbStalledCallback();
-}
-
-TEST_F(ETLServiceTests, DbStalledDoesNotTriggerSignalWhenAlreadyWriting)
-{
-    auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
-    auto& mockMonitorRef = *mockMonitor;
-    std::function<void()> capturedDbStalledCallback;
-
-    EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
-        return std::move(mockMonitor);
-    });
-    EXPECT_CALL(mockMonitorRef, subscribeToNewSequence);
-    EXPECT_CALL(mockMonitorRef, subscribeToDbStalled).WillOnce([&capturedDbStalledCallback](auto callback) {
-        capturedDbStalledCallback = callback;
-        return boost::signals2::scoped_connection{};
-    });
-    EXPECT_CALL(mockMonitorRef, run);
-
-    EXPECT_CALL(*backend_, hardFetchLedgerRange)
-        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
-    EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
-    EXPECT_CALL(*cacheLoader_, load(kSEQ));
-
-    service_.run();
-    systemState_->isStrictReadonly = false;
-    systemState_->isWriting = true;  // already writing
-
-    // No signal should be emitted because node is already writing
-
-    ASSERT_TRUE(capturedDbStalledCallback);
-    capturedDbStalledCallback();
 }

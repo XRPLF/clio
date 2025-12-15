@@ -45,7 +45,6 @@
 #include <xrpl/protocol/Serializer.h>
 
 #include <algorithm>
-#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -76,8 +75,6 @@ class LedgerPublisher : public LedgerPublisherInterface {
     util::Logger log_{"ETL"};
 
     util::async::AnyStrand publishStrand_;
-
-    std::atomic_bool stop_{false};
 
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
@@ -128,7 +125,7 @@ public:
     {
         LOG(log_.info()) << "Attempting to publish ledger = " << ledgerSequence;
         size_t numAttempts = 0;
-        while (not stop_) {
+        while (not state_.get().isStopping) {
             auto range = backend_->hardFetchLedgerRangeNoThrow();
 
             if (!range || range->maxSequence < ledgerSequence) {
@@ -259,18 +256,6 @@ public:
     getLastPublishedSequence() const
     {
         return *lastPublishedSequence_.lock();
-    }
-
-    /**
-     * @brief Stops publishing
-     *
-     * @note This is a basic implementation to satisfy tests. This will be improved in
-     * https://github.com/XRPLF/clio/issues/2833
-     */
-    void
-    stop()
-    {
-        stop_ = true;
     }
 
 private:

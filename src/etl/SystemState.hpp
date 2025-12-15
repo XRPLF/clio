@@ -23,8 +23,7 @@
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
-#include <boost/signals2/signal.hpp>
-#include <boost/signals2/variadic_signal.hpp>
+#include <atomic>
 
 namespace etl {
 
@@ -51,24 +50,8 @@ struct SystemState {
         "Whether the process is writing to the database"
     );
 
-    /**
-     * @brief Commands for controlling the ETL writer state.
-     *
-     * These commands are emitted via writeCommandSignal to coordinate writer state transitions across components.
-     */
-    enum class WriteCommand {
-        StartWriting, /**< Request to attempt taking over as the ETL writer */
-        StopWriting   /**< Request to give up the ETL writer role (e.g., due to write conflict) */
-    };
-
-    /**
-     * @brief Signal for coordinating ETL writer state transitions.
-     *
-     * This signal allows components to request changes to the writer state without direct coupling.
-     * - Emitted with StartWriting when database stalls and node should attempt to become writer
-     * - Emitted with StopWriting when write conflicts are detected
-     */
-    boost::signals2::signal<void(WriteCommand)> writeCommandSignal;
+    std::atomic_bool isStopping = false;    /**< @brief Whether the software is stopping. */
+    std::atomic_bool writeConflict = false; /**< @brief Whether a write conflict was detected. */
 
     /**
      * @brief Whether clio detected an amendment block.
