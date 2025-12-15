@@ -72,7 +72,7 @@ jobs:
       image: ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f
 
     steps:
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: clio_tests_check_libxrpl
 
