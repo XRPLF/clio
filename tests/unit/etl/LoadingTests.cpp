@@ -19,7 +19,6 @@
 
 #include "data/Types.hpp"
 #include "etl/InitialLoadObserverInterface.hpp"
-#include "etl/LoaderInterface.hpp"
 #include "etl/Models.hpp"
 #include "etl/RegistryInterface.hpp"
 #include "etl/SystemState.hpp"
