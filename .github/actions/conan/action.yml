@@ -27,19 +27,23 @@ runs:
   steps:
     - name: Create build directory
       shell: bash
-      run: mkdir -p "${{ inputs.build_dir }}"
+      env:
+        BUILD_DIR: "${{ inputs.build_dir }}"
+      run: mkdir -p "${BUILD_DIR}"
 
     - name: Run conan
       shell: bash
       env:
-        CONAN_BUILD_OPTION: "${{ inputs.force_conan_source_build == 'true' && '*' || 'missing' }}"
         BUILD_BENCHMARK: "${{ inputs.build_benchmark == 'true' && 'True' || 'False' }}"
+        BUILD_TYPE: "${{ inputs.build_type }}"
+        CONAN_BUILD_OPTION: "${{ inputs.force_conan_source_build == 'true' && '*' || 'missing' }}"
+        CONAN_PROFILE: "${{ inputs.conan_profile }}"
       run: |
         conan \
           install . \
           -of build \
           -b "$CONAN_BUILD_OPTION" \
-          -s "build_type=${{ inputs.build_type }}" \
+          -s "build_type=${BUILD_TYPE}" \
           -o "&:tests=True" \
           -o "&:benchmark=${BUILD_BENCHMARK}" \
-          --profile:all "${{ inputs.conan_profile }}"
+          --profile:all "${CONAN_PROFILE}"
