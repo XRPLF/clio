@@ -53,7 +53,7 @@ class CacheLoaderImpl {
     std::shared_ptr<BackendInterface> backend_;
     std::reference_wrapper<CacheType> cache_;
 
-    etl::ThreadSafeQueue<CursorPair> queue_;
+    ThreadSafeQueue<CursorPair> queue_;
     std::atomic_int16_t remaining_;
 
     std::chrono::steady_clock::time_point startTime_ = std::chrono::steady_clock::now();

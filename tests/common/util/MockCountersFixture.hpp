@@ -25,7 +25,7 @@
 /**
  * @brief Fixture with mock counters
  */
-struct MockCountersTest : virtual public NoLoggerFixture {
+struct MockCountersTest : virtual public ::testing::Test {
 protected:
     std::shared_ptr<MockCounters> mockCountersPtr_ = std::make_shared<MockCounters>();
 };

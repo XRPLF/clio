@@ -19,7 +19,6 @@
 
 #include "etl/CorruptionDetector.hpp"
 #include "etl/SystemState.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockLedgerCache.hpp"
 #include "util/MockPrometheus.hpp"
 
@@ -30,7 +29,7 @@ using namespace data;
 using namespace util::prometheus;
 using namespace testing;
 
-struct CorruptionDetectorTest : NoLoggerFixture, WithPrometheus {};
+struct CorruptionDetectorTest : WithPrometheus {};
 
 TEST_F(CorruptionDetectorTest, DisableCacheOnCorruption)
 {

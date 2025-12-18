@@ -1,0 +1,31 @@
+name: Build clio
+description: Build clio in build directory
+
+inputs:
+  targets:
+    description: Space-separated build target names
+    default: all
+  nproc_subtract:
+    description: The number of processors to subtract when calculating parallelism.
+    required: true
+    default: "0"
+
+runs:
+  using: composite
+  steps:
+    - name: Get number of processors
+      uses: XRPLF/actions/get-nproc@cf0433aa74563aead044a1e395610c96d65a37cf
+      id: nproc
+      with:
+        subtract: ${{ inputs.nproc_subtract }}
+
+    - name: Build targets
+      shell: bash
+      env:
+        CMAKE_TARGETS: ${{ inputs.targets }}
+      run: |
+        cd build
+        cmake \
+          --build . \
+          --parallel "${{ steps.nproc.outputs.nproc }}" \
+          --target ${CMAKE_TARGETS}

@@ -26,6 +26,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "util/Assert.hpp"
+#include "util/JsonUtils.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -208,8 +209,9 @@ TransactionFeed::pub(
         rpc::insertDeliveredAmount(pubObj[JS(meta)].as_object(), tx, meta, txMeta.date);
 
         auto& txnPubobj = pubObj[txKey].as_object();
+        auto& metaPubobj = pubObj[JS(meta)].as_object();
         rpc::insertDeliverMaxAlias(txnPubobj, version);
-        rpc::insertMPTIssuanceID(txnPubobj, meta);
+        rpc::insertMPTIssuanceID(txnPubobj, tx, metaPubobj, meta);
 
         Json::Value nftJson;
         ripple::RPC::insertNFTSyntheticInJson(nftJson, tx, *meta);
@@ -223,8 +225,9 @@ TransactionFeed::pub(
         auto const& metaObj = pubObj[JS(meta)];
         ASSERT(metaObj.is_object(), "meta must be an obj in rippled and clio");
         if (metaObj.as_object().contains("TransactionIndex") && metaObj.as_object().at("TransactionIndex").is_int64()) {
-            if (auto const& ctid =
-                    rpc::encodeCTID(lgrInfo.seq, metaObj.as_object().at("TransactionIndex").as_int64(), networkID);
+            if (auto const& ctid = rpc::encodeCTID(
+                    lgrInfo.seq, util::integralValueAs<uint16_t>(metaObj.as_object().at("TransactionIndex")), networkID
+                );
                 ctid)
                 pubObj[JS(ctid)] = ctid.value();
         }

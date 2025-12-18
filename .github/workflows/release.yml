@@ -29,9 +29,9 @@ jobs:
             conan_profile: gcc
             build_type: Release
             static: true
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
 
-    uses: ./.github/workflows/build_and_test.yml
+    uses: ./.github/workflows/reusable-build-test.yml
     with:
       runs_on: ${{ matrix.os }}
       container: ${{ matrix.container }}
@@ -41,18 +41,37 @@ jobs:
       run_unit_tests: true
       run_integration_tests: true
       upload_clio_server: true
-      disable_cache: true
+      download_ccache: false
+      upload_ccache: false
       expected_version: ${{ github.event_name == 'push' && github.ref_name || '' }}
 
-  release:
-    needs: build-and-test
-    uses: ./.github/workflows/release_impl.yml
+  package:
+    name: Build debian package
+
+    uses: ./.github/workflows/reusable-build.yml
     with:
-      overwrite_release: false
+      runs_on: heavy
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
+      conan_profile: gcc
+      build_type: Release
+      download_ccache: false
+      upload_ccache: false
+      code_coverage: false
+      static: true
+      upload_clio_server: false
+      package: true
+      targets: package
+      analyze_build_time: false
+
+  release:
+    needs: [build-and-test, package]
+    uses: ./.github/workflows/reusable-release.yml
+    with:
+      delete_pattern: ""
       prerelease: ${{ contains(github.ref_name, '-') }}
-      title: "${{ github.ref_name}}"
+      title: "${{ github.ref_name }}"
       version: "${{ github.ref_name }}"
       header: >
         ${{ contains(github.ref_name, '-') && '> **Note:** Please remember that this is a release candidate and it is not recommended for production use.' || '' }}
       generate_changelog: ${{ !contains(github.ref_name, '-') }}
-      draft: true
+      draft: ${{ !contains(github.ref_name, '-') }}

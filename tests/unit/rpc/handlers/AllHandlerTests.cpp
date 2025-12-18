@@ -23,6 +23,8 @@
 #include "rpc/handlers/AccountCurrencies.hpp"
 #include "rpc/handlers/AccountInfo.hpp"
 #include "rpc/handlers/AccountLines.hpp"
+#include "rpc/handlers/AccountMPTokenIssuances.hpp"
+#include "rpc/handlers/AccountMPTokens.hpp"
 #include "rpc/handlers/AccountNFTs.hpp"
 #include "rpc/handlers/AccountObjects.hpp"
 #include "rpc/handlers/AccountOffers.hpp"
@@ -86,6 +88,8 @@ using AnyHandlerType = Types<
     AccountCurrenciesHandler,
     AccountInfoHandler,
     AccountLinesHandler,
+    AccountMPTokenIssuancesHandler,
+    AccountMPTokensHandler,
     AccountNFTsHandler,
     AccountObjectsHandler,
     AccountOffersHandler,

@@ -1,0 +1,109 @@
+name: Upload Conan Dependencies
+
+on:
+  schedule:
+    - cron: "0 9 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      force_source_build:
+        description: "Force source build of all dependencies"
+        required: false
+        default: false
+        type: boolean
+      force_upload:
+        description: "Force upload of all dependencies"
+        required: false
+        default: false
+        type: boolean
+  pull_request:
+    branches: [develop]
+    paths:
+      - .github/workflows/upload-conan-deps.yml
+
+      - .github/actions/conan/action.yml
+      - ".github/scripts/conan/**"
+      - "!.github/scripts/conan/regenerate_lockfile.sh"
+
+      - conanfile.py
+      - conan.lock
+  push:
+    branches: [develop]
+    paths:
+      - .github/workflows/upload-conan-deps.yml
+
+      - .github/actions/conan/action.yml
+      - ".github/scripts/conan/**"
+      - "!.github/scripts/conan/regenerate_lockfile.sh"
+
+      - conanfile.py
+      - conan.lock
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Calculate conan matrix
+        id: set-matrix
+        run: .github/scripts/conan/generate_matrix.py >> "${GITHUB_OUTPUT}"
+
+  upload-conan-deps:
+    name: Build ${{ matrix.compiler }}${{ matrix.sanitizer_ext }} ${{ matrix.build_type }}
+
+    needs: generate-matrix
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      max-parallel: 10
+
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container != '' && fromJson(matrix.container) || null }}
+
+    env:
+      CONAN_PROFILE: ${{ matrix.compiler }}${{ matrix.sanitizer_ext }}
+
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Prepare runner
+        uses: XRPLF/actions/prepare-runner@2ece4ec6ab7de266859a6f053571425b2bd684b6
+        with:
+          disable_ccache: true
+
+      - name: Setup conan on macOS
+        if: ${{ runner.os == 'macOS' }}
+        run: ./.github/scripts/conan/init.sh
+
+      - name: Show conan profile
+        run: conan profile show --profile:all ${{ env.CONAN_PROFILE }}
+
+      - name: Run conan
+        uses: ./.github/actions/conan
+        with:
+          conan_profile: ${{ env.CONAN_PROFILE }}
+          # We check that everything builds fine from source on scheduled runs
+          # But we do build and upload packages with build=missing by default
+          force_conan_source_build: ${{ github.event_name == 'schedule' || github.event.inputs.force_source_build == 'true' }}
+          build_type: ${{ matrix.build_type }}
+
+      - name: Login to Conan
+        if: ${{ github.repository_owner == 'XRPLF' && github.event_name != 'pull_request' }}
+        run: conan remote login -p ${{ secrets.CONAN_PASSWORD }} xrplf ${{ secrets.CONAN_USERNAME }}
+
+      - name: Upload Conan packages
+        if: ${{ github.repository_owner == 'XRPLF' && github.event_name != 'pull_request' && github.event_name != 'schedule' }}
+        env:
+          FORCE_OPTION: ${{ github.event.inputs.force_upload == 'true' && '--force' || '' }}
+        run: conan upload "*" -r=xrplf --confirm ${FORCE_OPTION}

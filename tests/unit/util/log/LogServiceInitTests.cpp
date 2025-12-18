@@ -17,7 +17,8 @@
 */
 //==============================================================================
 
-#include "util/StringBuffer.hpp"
+#include "util/LoggerBuffer.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/config/Array.hpp"
 #include "util/config/ConfigConstraints.hpp"
 #include "util/config/ConfigDefinition.hpp"
@@ -32,15 +33,10 @@
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <spdlog/pattern_formatter.h>
-#include <spdlog/sinks/ostream_sink.h>
-#include <spdlog/spdlog.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <memory>
-#include <ostream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -51,7 +47,21 @@ using util::config::ConfigFileJson;
 using util::config::ConfigType;
 using util::config::ConfigValue;
 
-struct LogServiceInitTests : virtual public ::testing::Test {
+struct LogServiceInitTests : virtual public LoggerFixture {
+public:
+    LogServiceInitTests()
+    {
+        LogServiceState::reset();
+    }
+
+    ~LogServiceInitTests() override
+    {
+        if (LogService::initialized()) {
+            LogService::reset();
+        }
+        LogServiceState::init(false, Severity::FTL, {});
+    }
+
 protected:
     util::config::ClioConfigDefinition config_{
         {"log.channels.[].channel", Array{ConfigValue{ConfigType::String}}},
@@ -80,26 +90,6 @@ protected:
     {
         return buffer_.getStrAndReset();
     }
-
-    void
-    replaceSinks()
-    {
-        auto ostreamSink = std::make_shared<spdlog::sinks::ostream_sink_mt>(stream_);
-        ostreamSink->set_formatter(std::make_unique<spdlog::pattern_formatter>("%^%3!l:%n%$ - %v"));
-
-        for (auto const& channel : Logger::kCHANNELS) {
-            auto logger = spdlog::get(channel);
-            ASSERT_TRUE(logger != nullptr);
-            // It is expected that only stderrSink is present
-            ASSERT_EQ(logger->sinks().size(), 1);
-            logger->sinks().clear();
-            logger->sinks().push_back(ostreamSink);
-        }
-    }
-
-private:
-    StringBuffer buffer_;
-    std::ostream stream_ = std::ostream{&buffer_};
 };
 
 TEST_F(LogServiceInitTests, DefaultLogLevel)
@@ -107,15 +97,15 @@ TEST_F(LogServiceInitTests, DefaultLogLevel)
     auto const parsingErrors =
         config_.parse(ConfigFileJson{boost::json::object{{"log", boost::json::object{{"level", "warn"}}}}});
     ASSERT_FALSE(parsingErrors.has_value());
-    std::string const logString = "some log";
 
     EXPECT_TRUE(LogService::init(config_));
-    replaceSinks();
 
-    for (auto const& channel : Logger::kCHANNELS) {
+    std::string const logString = "some log";
+    for (std::string_view const channel : Logger::kCHANNELS) {
         Logger const log{channel};
         log.trace() << logString;
-        ASSERT_TRUE(getLoggerString().empty());
+        auto loggerStr = getLoggerString();
+        ASSERT_TRUE(loggerStr.empty()) << " channel: " << channel << " logger_str: " << loggerStr;
 
         log.debug() << logString;
         ASSERT_TRUE(getLoggerString().empty());
@@ -149,11 +139,10 @@ TEST_F(LogServiceInitTests, ChannelLogLevel)
 
     auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::parse(configStr).as_object()});
     ASSERT_FALSE(parsingErrors.has_value());
-    std::string const logString = "some log";
 
     EXPECT_TRUE(LogService::init(config_));
-    replaceSinks();
 
+    std::string const logString = "some log";
     for (auto const& channel : Logger::kCHANNELS) {
         Logger const log{channel};
         log.trace() << logString;

@@ -22,6 +22,7 @@
 #include <boost/beast.hpp>
 #include <boost/beast/core/error.hpp>
 
+#include <concepts>
 #include <memory>
 #include <string>
 
@@ -38,5 +39,15 @@ concept SomeServerHandler =
         // the callback when server receives a request
         { handler(req, ws) };
     };
+
+/**
+ * @brief A tag class for server to help identify Server in templated code.
+ */
+struct ServerTag {
+    virtual ~ServerTag() = default;
+};
+
+template <typename T>
+concept SomeServer = std::derived_from<T, ServerTag>;
 
 }  // namespace web

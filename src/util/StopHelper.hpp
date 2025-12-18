@@ -36,6 +36,16 @@ class StopHelper {
     std::unique_ptr<std::atomic_bool> stopped_ = std::make_unique<std::atomic_bool>(false);
 
 public:
+    StopHelper() = default;
+    ~StopHelper() = default;
+
+    StopHelper(StopHelper&&) = delete;
+    StopHelper&
+    operator=(StopHelper&&) = delete;
+    StopHelper(StopHelper const&) = delete;
+    StopHelper&
+    operator=(StopHelper const&) = delete;
+
     /**
      * @brief Notify that the class is ready to stop.
      */

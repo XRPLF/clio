@@ -23,6 +23,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
+#include "util/JsonUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
@@ -37,6 +38,7 @@
 #include <xrpl/protocol/UintTypes.h>
 #include <xrpl/protocol/jss.h>
 
+#include <cstdint>
 #include <string>
 
 namespace rpc {
@@ -121,11 +123,9 @@ tag_invoke(boost::json::value_to_tag<BookOffersHandler::Input>, boost::json::val
         input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
 
     if (jsonObject.contains(JS(ledger_index))) {
-        if (!jsonObject.at(JS(ledger_index)).is_string()) {
-            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jv.at(JS(ledger_index))));
-        }
+        auto const expectedLedgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
+        if (expectedLedgerIndex.has_value())
+            input.ledgerIndex = *expectedLedgerIndex;
     }
 
     if (jsonObject.contains(JS(taker)))
@@ -135,7 +135,7 @@ tag_invoke(boost::json::value_to_tag<BookOffersHandler::Input>, boost::json::val
         input.domain = boost::json::value_to<std::string>(jv.at(JS(domain)));
 
     if (jsonObject.contains(JS(limit)))
-        input.limit = jv.at(JS(limit)).as_int64();
+        input.limit = util::integralValueAs<uint32_t>(jv.at(JS(limit)));
 
     return input;
 }

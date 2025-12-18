@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "util/LoggerFixtures.hpp"
 #include "util/MockAssert.hpp"
 #include "util/config/ConfigConstraints.hpp"
 #include "util/config/ConfigValue.hpp"
@@ -32,10 +31,11 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <string_view>
 
 using namespace util::config;
 
-struct ConfigValueTest : common::util::WithMockAssert, NoLoggerFixture {};
+struct ConfigValueTest : common::util::WithMockAssert {};
 
 TEST_F(ConfigValueTest, construct)
 {
@@ -138,7 +138,7 @@ TEST_F(ConfigValueConstraintTest, defaultValueWithConstraintCheckError)
 }
 
 // A test for each constraint so it's easy to change in the future
-struct ConstraintTest : NoLoggerFixture {};
+struct ConstraintTest : public virtual ::testing::Test {};
 
 TEST_F(ConstraintTest, PortConstraint)
 {
@@ -165,7 +165,7 @@ TEST_F(ConstraintTest, SetValuesOnPortConstraint)
 
 TEST_F(ConstraintTest, OneOfConstraintOneValue)
 {
-    std::array<char const*, 1> const arr = {"tracer"};
+    std::array<std::string_view, 1> const arr = {"tracer"};
     auto const databaseConstraint{OneOf{"database.type", arr}};
     EXPECT_FALSE(databaseConstraint.checkConstraint("tracer").has_value());
 
@@ -181,7 +181,7 @@ TEST_F(ConstraintTest, OneOfConstraintOneValue)
 
 TEST_F(ConstraintTest, OneOfConstraint)
 {
-    std::array<char const*, 3> const arr = {"123", "trace", "haha"};
+    std::array<std::string_view, 3> const arr = {"123", "trace", "haha"};
     auto const oneOfCons{OneOf{"log.level", arr}};
 
     EXPECT_FALSE(oneOfCons.checkConstraint("trace").has_value());

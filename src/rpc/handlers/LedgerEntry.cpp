@@ -26,6 +26,7 @@
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
 #include "util/Assert.hpp"
+#include "util/JsonUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
@@ -64,6 +65,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
 
     if (input.index) {
         key = ripple::uint256{std::string_view(*(input.index))};
+        if (key.isZero())
+            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
     } else if (input.accountRoot) {
         key = ripple::keylet::account(*util::parseBase58Wrapper<ripple::AccountID>(*(input.accountRoot))).key;
     } else if (input.did) {
@@ -94,7 +97,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         auto const id = util::parseBase58Wrapper<ripple::AccountID>(
             boost::json::value_to<std::string>(input.escrow->at(JS(owner)))
         );
-        key = ripple::keylet::escrow(*id, input.escrow->at(JS(seq)).as_int64()).key;
+        key = ripple::keylet::escrow(*id, util::integralValueAs<uint32_t>(input.escrow->at(JS(seq)))).key;
     } else if (input.depositPreauth) {
         auto const owner = util::parseBase58Wrapper<ripple::AccountID>(
             boost::json::value_to<std::string>(input.depositPreauth->at(JS(owner)))
@@ -128,7 +131,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
             boost::json::value_to<std::string>(input.ticket->at(JS(account)))
         );
 
-        key = ripple::getTicketIndex(*id, input.ticket->at(JS(ticket_seq)).as_int64());
+        key = ripple::getTicketIndex(*id, util::integralValueAs<uint32_t>(input.ticket->at(JS(ticket_seq))));
     } else if (input.amm) {
         auto const getIssuerFromJson = [](auto const& assetJson) {
             // the field check has been done in validator
@@ -182,12 +185,12 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         auto const account = ripple::parseBase58<ripple::AccountID>(
             boost::json::value_to<std::string>(input.permissionedDomain->at(JS(account)))
         );
-        auto const seq = input.permissionedDomain->at(JS(seq)).as_int64();
+        auto const seq = util::integralValueAs<uint32_t>(input.permissionedDomain->at(JS(seq)));
         key = ripple::keylet::permissionedDomain(*account, seq).key;
     } else if (input.vault) {
         auto const account =
             ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.vault->at(JS(owner))));
-        auto const seq = input.vault->at(JS(seq)).as_int64();
+        auto const seq = util::integralValueAs<uint32_t>(input.vault->at(JS(seq)));
         key = ripple::keylet::vault(*account, seq).key;
     } else if (input.delegate) {
         auto const account =
@@ -200,7 +203,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         // Must specify 1 of the following fields to indicate what type
         if (ctx.apiVersion == 1)
             return Error{Status{ClioError::RpcUnknownOption}};
-        return Error{Status{RippledError::rpcINVALID_PARAMS}};
+        return Error{Status{RippledError::rpcINVALID_PARAMS, "No ledger_entry params provided."}};
     }
 
     // check ledger exists
@@ -219,20 +222,20 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
 
     if (!ledgerObject || ledgerObject->empty()) {
         if (not input.includeDeleted)
-            return Error{Status{ClioError::RpcEntryNotFound}};
+            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
         auto const deletedSeq = sharedPtrBackend_->fetchLedgerObjectSeq(key, lgrInfo.seq, ctx.yield);
         if (!deletedSeq)
-            return Error{Status{ClioError::RpcEntryNotFound}};
+            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
         ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, deletedSeq.value() - 1, ctx.yield);
         if (!ledgerObject || ledgerObject->empty())
-            return Error{Status{ClioError::RpcEntryNotFound}};
+            return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
         output.deletedLedgerIndex = deletedSeq;
     }
 
     ripple::STLedgerEntry const sle{ripple::SerialIter{ledgerObject->data(), ledgerObject->size()}, key};
 
     if (input.expectedType != ripple::ltANY && sle.getType() != input.expectedType)
-        return Error{Status{"unexpectedLedgerType"}};
+        return Error{Status{RippledError::rpcUNEXPECTED_LEDGER_TYPE}};
 
     output.index = ripple::strHex(key);
     output.ledgerIndex = lgrInfo.seq;
@@ -303,11 +306,9 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
 
     if (jsonObject.contains(JS(ledger_index))) {
-        if (!jsonObject.at(JS(ledger_index)).is_string()) {
-            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jv.at(JS(ledger_index))));
-        }
+        auto const expectedLedgerIndex = util::getLedgerIndex(jv.at(JS(ledger_index)));
+        if (expectedLedgerIndex.has_value())
+            input.ledgerIndex = *expectedLedgerIndex;
     }
 
     if (jsonObject.contains(JS(binary)))
@@ -332,7 +333,13 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(mptoken), ripple::ltMPTOKEN},
         {JS(permissioned_domain), ripple::ltPERMISSIONED_DOMAIN},
         {JS(vault), ripple::ltVAULT},
-        {JS(delegate), ripple::ltDELEGATE}
+        {JS(delegate), ripple::ltDELEGATE},
+        {JS(amendments), ripple::ltAMENDMENTS},
+        {JS(fee), ripple::ltFEE_SETTINGS},
+        {JS(hashes), ripple::ltLEDGER_HASHES},
+        {JS(nft_offer), ripple::ltNFTOKEN_OFFER},
+        {JS(nunl), ripple::ltNEGATIVE_UNL},
+        {JS(signer_list), ripple::ltSIGNER_LIST}
     };
 
     auto const parseBridgeFromJson = [](boost::json::value const& bridgeJson) {

@@ -19,6 +19,8 @@
 
 #include "util/Repeat.hpp"
 
+#include <boost/asio/post.hpp>
+
 namespace util {
 
 void
@@ -27,8 +29,11 @@ Repeat::stop()
     if (control_->stopping)
         return;
 
-    control_->stopping = true;
-    control_->timer.cancel();
+    boost::asio::post(control_->strand, [control = control_] {
+        control->stopping = true;
+        control->timer.cancel();
+    });
+
     control_->semaphore.acquire();
 }
 

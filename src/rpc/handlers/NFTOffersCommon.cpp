@@ -24,6 +24,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
+#include "util/JsonUtils.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/conversion.hpp>
@@ -194,18 +195,16 @@ tag_invoke(boost::json::value_to_tag<NFTOffersHandlerBase::Input>, boost::json::
         input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
 
     if (jsonObject.contains(JS(ledger_index))) {
-        if (!jsonObject.at(JS(ledger_index)).is_string()) {
-            input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
-        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jsonObject.at(JS(ledger_index))));
-        }
+        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
+        if (expectedLedgerIndex.has_value())
+            input.ledgerIndex = *expectedLedgerIndex;
     }
 
     if (jsonObject.contains(JS(marker)))
         input.marker = boost::json::value_to<std::string>(jsonObject.at(JS(marker)));
 
     if (jsonObject.contains(JS(limit)))
-        input.limit = jsonObject.at(JS(limit)).as_int64();
+        input.limit = util::integralValueAs<uint32_t>(jsonObject.at(JS(limit)));
 
     return input;
 }

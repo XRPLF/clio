@@ -19,11 +19,18 @@
 
 #pragma once
 
+#include "rpc/JS.hpp"
+
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
+#include <xrpl/beast/core/LexicalCast.h>
 
 #include <algorithm>
 #include <cctype>
+#include <charconv>
+#include <concepts>
+#include <expected>
+#include <stdexcept>
 #include <string>
 
 /**
@@ -84,6 +91,69 @@ removeSecret(boost::json::object const& object)
     }
 
     return newObject;
+}
+
+/**
+ * @brief Detects the type of number stored in value and casts it back to the requested Type.
+ * @note This conversion can possibly cause wrapping around or UB. Use with caution.
+ *
+ * @tparam Type The type to cast to
+ * @param value The JSON value to cast
+ * @return Value casted to the requested type or an error message
+ */
+template <std::integral Type>
+std::expected<Type, std::string>
+tryIntegralValueAs(boost::json::value const& value)
+{
+    if (value.is_uint64())
+        return static_cast<Type>(value.as_uint64());
+
+    if (value.is_int64())
+        return static_cast<Type>(value.as_int64());
+
+    return std::unexpected("Value neither uint64 nor int64");
+}
+
+/**
+ * @brief Detects the type of number stored in value and casts it back to the requested Type.
+ * @note This conversion can possibly cause wrapping around or UB. Use with caution.
+ *
+ * @tparam Type The type to cast to
+ * @param value The JSON value to cast
+ * @return Value casted to the requested type
+ * @throws logic_error if the underlying number is neither int64 nor uint64
+ */
+template <std::integral Type>
+Type
+integralValueAs(boost::json::value const& value)
+{
+    auto expectedResult = tryIntegralValueAs<Type>(value);
+    if (expectedResult.has_value())
+        return *expectedResult;
+
+    throw std::logic_error(std::move(expectedResult).error());
+}
+
+/**
+ * @brief Extracts ledger index from a JSON value which can be either a number or a string.
+ *
+ * @param value The JSON value to extract ledger index from
+ * @return The extracted ledger index or an error message
+ */
+[[nodiscard]] inline std::expected<uint32_t, std::string>
+getLedgerIndex(boost::json::value const& value)
+{
+    if (not value.is_string()) {
+        return tryIntegralValueAs<uint32_t>(value);
+    }
+    if (value.as_string() != "validated") {
+        uint32_t ledgerIndex{};
+        if (beast::lexicalCastChecked(ledgerIndex, value.as_string().c_str())) {
+            return ledgerIndex;
+        }
+        return std::unexpected("Invalid ledger index string");
+    }
+    return std::unexpected("'validated' ledger index is requested");
 }
 
 }  // namespace util

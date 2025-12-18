@@ -451,16 +451,54 @@ createDidObject(std::string_view accountId, std::string_view didDoc, std::string
 createLptCurrency(std::string_view assetCurrency, std::string_view asset2Currency);
 
 [[nodiscard]] ripple::STObject
-createMptIssuanceObject(std::string_view accountId, std::uint32_t seq, std::string_view metadata);
+createMptIssuanceObject(
+    std::string_view accountId,
+    std::uint32_t seq,
+    std::optional<std::string_view> metadata = std::nullopt,
+    std::uint32_t flags = 0,
+    std::uint64_t outstandingAmount = 0,
+    std::optional<std::uint16_t> transferFee = std::nullopt,
+    std::optional<std::uint8_t> assetScale = std::nullopt,
+    std::optional<std::uint64_t> maxAmount = std::nullopt,
+    std::optional<std::uint64_t> lockedAmount = std::nullopt,
+    std::optional<std::string_view> domainId = std::nullopt,
+    std::optional<std::uint32_t> mutableFlags = std::nullopt
+);
 
 [[nodiscard]] ripple::STObject
-createMpTokenObject(std::string_view accountId, ripple::uint192 issuanceID, std::uint64_t mptAmount = 1);
+createMpTokenObject(
+    std::string_view accountId,
+    ripple::uint192 issuanceID,
+    std::uint64_t mptAmount = 1,
+    std::uint32_t flags = 0,
+    std::optional<uint64_t> lockedAmount = std::nullopt
+);
 
 [[nodiscard]] ripple::STObject
 createMPTIssuanceCreateTx(std::string_view accountId, uint32_t fee, uint32_t seq);
 
 [[nodiscard]] data::TransactionAndMetadata
 createMPTIssuanceCreateTxWithMetadata(std::string_view accountId, uint32_t fee, uint32_t seq);
+
+[[nodiscard]]
+ripple::STObject
+createMPTokenAuthorizeTx(
+    std::string_view accountId,
+    ripple::uint192 const& mptIssuanceID,
+    uint32_t fee,
+    uint32_t seq,
+    std::optional<std::string_view> holder = std::nullopt,
+    std::optional<std::uint32_t> flags = std::nullopt
+);
+
+[[nodiscard]]
+data::TransactionAndMetadata
+createMPTokenAuthorizeTxWithMetadata(
+    std::string_view accountId,
+    ripple::uint192 const& mptIssuanceID,
+    uint32_t fee,
+    uint32_t seq
+);
 
 [[nodiscard]] ripple::STObject
 createPermissionedDomainObject(

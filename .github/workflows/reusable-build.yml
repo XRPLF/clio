@@ -1,0 +1,244 @@
+name: Reusable build
+
+on:
+  workflow_call:
+    inputs:
+      runs_on:
+        description: Runner to run the job on
+        required: true
+        type: string
+
+      container:
+        description: "The container object as a JSON string (leave empty to run natively)"
+        required: true
+        type: string
+
+      conan_profile:
+        description: Conan profile to use
+        required: true
+        type: string
+
+      build_type:
+        description: Build type
+        required: true
+        type: string
+
+      download_ccache:
+        description: Whether to download ccache from the cache
+        required: false
+        type: boolean
+        default: true
+
+      upload_ccache:
+        description: Whether to upload ccache to the cache
+        required: false
+        type: boolean
+        default: false
+
+      code_coverage:
+        description: Whether to enable code coverage
+        required: true
+        type: boolean
+
+      static:
+        description: Whether to build static binaries
+        required: true
+        type: boolean
+
+      upload_clio_server:
+        description: Whether to upload clio_server
+        required: true
+        type: boolean
+
+      targets:
+        description: Space-separated build target names
+        required: true
+        type: string
+
+      analyze_build_time:
+        description: Whether to enable build time analysis
+        required: true
+        type: boolean
+
+      expected_version:
+        description: Expected version of the clio_server binary
+        required: false
+        type: string
+        default: ""
+
+      package:
+        description: Whether to generate Debian package
+        required: false
+        type: boolean
+
+    secrets:
+      CODECOV_TOKEN:
+        required: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ inputs.runs_on }}
+    container: ${{ inputs.container != '' && fromJson(inputs.container) || null }}
+
+    steps:
+      - name: Cleanup workspace
+        if: ${{ runner.os == 'macOS' }}
+        uses: XRPLF/actions/cleanup-workspace@cf0433aa74563aead044a1e395610c96d65a37cf
+
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          fetch-depth: 0
+          # We need to fetch tags to have correct version in the release
+          # The workaround is based on https://github.com/actions/checkout/issues/1467
+          fetch-tags: true
+          ref: ${{ github.ref }}
+
+      - name: Prepare runner
+        uses: XRPLF/actions/prepare-runner@2ece4ec6ab7de266859a6f053571425b2bd684b6
+        with:
+          disable_ccache: ${{ !inputs.download_ccache }}
+
+      - name: Setup conan on macOS
+        if: ${{ runner.os == 'macOS' }}
+        run: ./.github/scripts/conan/init.sh
+
+      - name: Generate cache key
+        uses: ./.github/actions/cache-key
+        id: cache_key
+        with:
+          conan_profile: ${{ inputs.conan_profile }}
+          build_type: ${{ inputs.build_type }}
+          code_coverage: ${{ inputs.code_coverage }}
+
+      - name: Restore ccache cache
+        if: ${{ inputs.download_ccache && github.ref != 'refs/heads/develop' }}
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ steps.cache_key.outputs.key }}
+          restore-keys: |
+            ${{ steps.cache_key.outputs.restore_keys }}
+
+      - name: Run conan
+        uses: ./.github/actions/conan
+        with:
+          conan_profile: ${{ inputs.conan_profile }}
+          build_type: ${{ inputs.build_type }}
+
+      - name: Run CMake
+        uses: ./.github/actions/cmake
+        with:
+          conan_profile: ${{ inputs.conan_profile }}
+          build_type: ${{ inputs.build_type }}
+          code_coverage: ${{ inputs.code_coverage }}
+          static: ${{ inputs.static }}
+          time_trace: ${{ inputs.analyze_build_time }}
+          package: ${{ inputs.package }}
+
+      - name: Build Clio
+        uses: ./.github/actions/build-clio
+        with:
+          targets: ${{ inputs.targets }}
+
+      - name: Show build time analyze report
+        if: ${{ inputs.analyze_build_time }}
+        run: |
+          ClangBuildAnalyzer --all build/ build_time_report.bin
+          ClangBuildAnalyzer --analyze build_time_report.bin > build_time_report.txt
+          cat build_time_report.txt
+
+      - name: Upload build time analyze report
+        if: ${{ inputs.analyze_build_time }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: build_time_report_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+          path: build_time_report.txt
+
+      - name: Show ccache's statistics and zero it
+        if: ${{ inputs.download_ccache }}
+        run: |
+          ccache --show-stats
+          ccache --zero-stats
+
+      - name: Save ccache cache
+        if: ${{ inputs.upload_ccache && github.ref == 'refs/heads/develop' }}
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ steps.cache_key.outputs.key }}
+
+      - name: Strip unit_tests
+        if: ${{ !endsWith(inputs.conan_profile, 'san') && !inputs.code_coverage && !inputs.analyze_build_time }}
+        run: strip build/clio_tests
+
+      - name: Strip integration_tests
+        if: ${{ !endsWith(inputs.conan_profile, 'san') && !inputs.code_coverage && !inputs.analyze_build_time }}
+        run: strip build/clio_integration_tests
+
+      - name: Upload clio_server
+        if: ${{ inputs.upload_clio_server && !inputs.code_coverage && !inputs.analyze_build_time }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: clio_server_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+          path: build/clio_server
+
+      - name: Upload clio_tests
+        if: ${{ !inputs.code_coverage && !inputs.analyze_build_time && !inputs.package }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+          path: build/clio_tests
+
+      - name: Upload clio_integration_tests
+        if: ${{ !inputs.code_coverage && !inputs.analyze_build_time && !inputs.package }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+          path: build/clio_integration_tests
+
+      - name: Upload Clio Linux package
+        if: ${{ inputs.package }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: clio_deb_package_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
+          path: build/*.deb
+
+      # This is run as part of the build job, because it requires the following:
+      # - source code
+      # - conan packages
+      # - .gcno files in build directory
+      #
+      # It's all available in the build job, but not in the test job
+      - name: Run code coverage
+        if: ${{ inputs.code_coverage }}
+        uses: ./.github/actions/code-coverage
+
+      - name: Verify expected version
+        if: ${{ inputs.expected_version != '' }}
+        env:
+          INPUT_EXPECTED_VERSION: ${{ inputs.expected_version }}
+        run: |
+          set -e
+          EXPECTED_VERSION="clio-${INPUT_EXPECTED_VERSION}"
+          actual_version=$(./build/clio_server --version)
+          if [[ "$actual_version" != "$EXPECTED_VERSION" ]]; then
+            echo "Expected version '${EXPECTED_VERSION}', but got '${actual_version}'"
+            exit 1
+          fi
+
+  # `codecov/codecov-action` will rerun `gcov` if it's available and build directory is present
+  # To prevent this from happening, we run this action in a separate workflow
+  #
+  # More info: https://github.com/XRPLF/clio/pull/2066
+  upload_coverage_report:
+    if: ${{ inputs.code_coverage }}
+    name: Codecov
+    needs: build
+    uses: ./.github/workflows/reusable-upload-coverage-report.yml
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

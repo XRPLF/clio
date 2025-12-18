@@ -19,7 +19,9 @@
 
 #pragma once
 
+#include "data/LedgerCacheInterface.hpp"
 #include "rpc/Errors.hpp"
+#include "rpc/WorkQueue.hpp"
 #include "util/log/Logger.hpp"
 #include "web/AdminVerificationStrategy.hpp"
 #include "web/SubscriptionContextInterface.hpp"
@@ -118,20 +120,23 @@ public:
  */
 class MetricsHandler {
     std::shared_ptr<web::AdminVerificationStrategy> adminVerifier_;
+    std::reference_wrapper<rpc::WorkQueue> workQueue_;
 
 public:
     /**
      * @brief Construct a new MetricsHandler object
      *
      * @param adminVerifier The AdminVerificationStrategy to use for verifying the connection for admin access.
+     * @param workQueue The WorkQueue to use for handling the request.
      */
-    MetricsHandler(std::shared_ptr<web::AdminVerificationStrategy> adminVerifier);
+    MetricsHandler(std::shared_ptr<web::AdminVerificationStrategy> adminVerifier, rpc::WorkQueue& workQueue);
 
     /**
      * @brief The call of the function object.
      *
      * @param request The request to handle.
      * @param connectionMetadata The connection metadata.
+     * @param yield The yield context.
      * @return The response to the request.
      */
     web::ng::Response
@@ -139,7 +144,7 @@ public:
         web::ng::Request const& request,
         web::ng::ConnectionMetadata& connectionMetadata,
         web::SubscriptionContextPtr,
-        boost::asio::yield_context
+        boost::asio::yield_context yield
     );
 };
 
@@ -148,6 +153,37 @@ public:
  */
 class HealthCheckHandler {
 public:
+    /**
+     * @brief The call of the function object.
+     *
+     * @param request The request to handle.
+     * @return The response to the request
+     */
+    web::ng::Response
+    operator()(
+        web::ng::Request const& request,
+        web::ng::ConnectionMetadata&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    );
+};
+
+/**
+ * @brief A function object that handles the cache state check endpoint.
+ */
+class CacheStateHandler {
+    std::reference_wrapper<data::LedgerCacheInterface const> cache_;
+
+public:
+    /**
+     * @brief Construct a new CacheStateHandler object.
+     *
+     * @param cache The ledger cache to use.
+     */
+    CacheStateHandler(data::LedgerCacheInterface const& cache) : cache_{cache}
+    {
+    }
+
     /**
      * @brief The call of the function object.
      *

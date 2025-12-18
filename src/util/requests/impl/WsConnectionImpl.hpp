@@ -124,6 +124,6 @@ public:
 
 using PlainWsConnection = WsConnectionImpl<boost::beast::websocket::stream<boost::beast::tcp_stream>>;
 using SslWsConnection =
-    WsConnectionImpl<boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>>;
+    WsConnectionImpl<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>>;
 
 }  // namespace util::requests::impl

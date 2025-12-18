@@ -84,6 +84,7 @@ struct MockExecutionContext {
         (std::chrono::milliseconds, std::function<std::any()>),
         ()
     );
+    MOCK_METHOD(void, submit, (std::function<void()>), ());
 
     MOCK_METHOD(MockStrand const&, makeStrand, (), ());
     MOCK_METHOD(void, stop, (), (const));

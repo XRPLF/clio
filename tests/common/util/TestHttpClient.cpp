@@ -26,6 +26,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/error.hpp>
+#include <boost/asio/ssl/stream.hpp>
 #include <boost/asio/ssl/stream_base.hpp>
 #include <boost/asio/ssl/verify_context.hpp>
 #include <boost/asio/ssl/verify_mode.hpp>
@@ -40,13 +41,11 @@
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/beast/http/write.hpp>  // IWYU pragma: keep
-#include <boost/beast/ssl/ssl_stream.hpp>
 #include <boost/beast/version.hpp>
 #include <openssl/err.h>
 #include <openssl/tls1.h>
 
 #include <chrono>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -149,7 +148,7 @@ HttpsSyncClient::syncPost(std::string const& host, std::string const& port, std:
     ctx.set_verify_mode(ssl::verify_none);
 
     tcp::resolver resolver(ioc);
-    boost::beast::ssl_stream<boost::beast::tcp_stream> stream(ioc, ctx);
+    boost::asio::ssl::stream<boost::beast::tcp_stream> stream(ioc, ctx);
 
 // We can't fix this so have to ignore
 #pragma GCC diagnostic push
@@ -186,7 +185,7 @@ HttpAsyncClient::HttpAsyncClient(boost::asio::io_context& ioContext) : stream_{i
 {
 }
 
-std::optional<boost::system::error_code>
+std::expected<void, boost::system::error_code>
 HttpAsyncClient::connect(
     std::string_view host,
     std::string_view port,
@@ -198,18 +197,18 @@ HttpAsyncClient::connect(
     boost::asio::ip::tcp::resolver resolver{stream_.get_executor()};
     auto const resolverResults = resolver.resolve(host, port, error);
     if (error)
-        return error;
+        return std::unexpected{error};
 
     ASSERT(!resolverResults.empty(), "No results from resolver");
 
     boost::beast::get_lowest_layer(stream_).expires_after(timeout);
     stream_.async_connect(resolverResults.begin()->endpoint(), yield[error]);
     if (error)
-        return error;
-    return std::nullopt;
+        return std::unexpected{error};
+    return {};
 }
 
-std::optional<boost::system::error_code>
+std::expected<void, boost::system::error_code>
 HttpAsyncClient::send(
     boost::beast::http::request<boost::beast::http::string_body> request,
     boost::asio::yield_context yield,
@@ -221,8 +220,8 @@ HttpAsyncClient::send(
     boost::beast::get_lowest_layer(stream_).expires_after(timeout);
     http::async_write(stream_, request, yield[error]);
     if (error)
-        return error;
-    return std::nullopt;
+        return std::unexpected{error};
+    return {};
 }
 
 std::expected<boost::beast::http::response<boost::beast::http::string_body>, boost::system::error_code>

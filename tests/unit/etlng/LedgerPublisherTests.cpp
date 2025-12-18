@@ -20,7 +20,6 @@
 #include "data/DBHelpers.hpp"
 #include "data/Types.hpp"
 #include "etl/SystemState.hpp"
-#include "etlng/impl/LedgerPublisher.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
@@ -28,6 +27,7 @@
 #include "util/TestObject.hpp"
 #include "util/config/ConfigDefinition.hpp"
 
+#include <etlng/impl/LedgerPublisher.hpp>
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -74,7 +74,7 @@ TEST_F(ETLLedgerPublisherNgTest, PublishLedgerHeaderSkipDueToAge)
     // Use kAGE (800) which is > MAX_LEDGER_AGE_SECONDS (600) to test skipping
     auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, kAGE);
     auto dummyState = etl::SystemState{};
-    auto publisher = impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
+    auto publisher = etlng::impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
 
     backend_->setRange(kSEQ - 1, kSEQ);
     publisher.publish(dummyLedgerHeader);
@@ -98,7 +98,7 @@ TEST_F(ETLLedgerPublisherNgTest, PublishLedgerHeaderWithinAgeLimit)
     // Use age 0 which is < MAX_LEDGER_AGE_SECONDS to ensure publishing happens
     auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, 0);
     auto dummyState = etl::SystemState{};
-    auto publisher = impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
+    auto publisher = etlng::impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
 
     backend_->setRange(kSEQ - 1, kSEQ);
     publisher.publish(dummyLedgerHeader);
@@ -124,7 +124,7 @@ TEST_F(ETLLedgerPublisherNgTest, PublishLedgerHeaderIsWritingTrue)
     auto dummyState = etl::SystemState{};
     dummyState.isWriting = true;
     auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, kAGE);
-    auto publisher = impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
+    auto publisher = etlng::impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerHeader);
 
     EXPECT_TRUE(publisher.getLastPublishedSequence());
@@ -140,7 +140,7 @@ TEST_F(ETLLedgerPublisherNgTest, PublishLedgerHeaderInRange)
     dummyState.isWriting = true;
 
     auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, 0);  // age is 0
-    auto publisher = impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
+    auto publisher = etlng::impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
     backend_->setRange(kSEQ - 1, kSEQ);
 
     publisher.publish(dummyLedgerHeader);
@@ -182,7 +182,7 @@ TEST_F(ETLLedgerPublisherNgTest, PublishLedgerHeaderCloseTimeGreaterThanNow)
 
     backend_->setRange(kSEQ - 1, kSEQ);
 
-    auto publisher = impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
+    auto publisher = etlng::impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerHeader);
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kSEQ, _))
@@ -214,7 +214,7 @@ TEST_F(ETLLedgerPublisherNgTest, PublishLedgerSeqStopIsTrue)
 {
     auto dummyState = etl::SystemState{};
     dummyState.isStopping = true;
-    auto publisher = impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
+    auto publisher = etlng::impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
     EXPECT_FALSE(publisher.publish(kSEQ, {}));
 }
 
@@ -222,7 +222,7 @@ TEST_F(ETLLedgerPublisherNgTest, PublishLedgerSeqMaxAttempt)
 {
     auto dummyState = etl::SystemState{};
     dummyState.isStopping = false;
-    auto publisher = impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
+    auto publisher = etlng::impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
 
     static constexpr auto kMAX_ATTEMPT = 2;
 
@@ -236,7 +236,7 @@ TEST_F(ETLLedgerPublisherNgTest, PublishLedgerSeqStopIsFalse)
 {
     auto dummyState = etl::SystemState{};
     dummyState.isStopping = false;
-    auto publisher = impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
+    auto publisher = etlng::impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
 
     LedgerRange const range{.minSequence = kSEQ, .maxSequence = kSEQ};
     EXPECT_CALL(*backend_, hardFetchLedgerRange).WillOnce(Return(range));
@@ -254,7 +254,7 @@ TEST_F(ETLLedgerPublisherNgTest, PublishMultipleTxInOrder)
     dummyState.isWriting = true;
 
     auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, 0);  // age is 0
-    auto publisher = impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
+    auto publisher = etlng::impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
     backend_->setRange(kSEQ - 1, kSEQ);
 
     publisher.publish(dummyLedgerHeader);
@@ -304,7 +304,7 @@ TEST_F(ETLLedgerPublisherNgTest, PublishVeryOldLedgerShouldSkip)
 
     // Create a ledger header with age (800) greater than MAX_LEDGER_AGE_SECONDS (600)
     auto const dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, 800);
-    auto publisher = impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
+    auto publisher = etlng::impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
     backend_->setRange(kSEQ - 1, kSEQ);
 
     publisher.publish(dummyLedgerHeader);
@@ -326,7 +326,7 @@ TEST_F(ETLLedgerPublisherNgTest, PublishMultipleLedgersInQuickSuccession)
 
     auto const dummyLedgerHeader1 = createLedgerHeader(kLEDGER_HASH, kSEQ, 0);
     auto const dummyLedgerHeader2 = createLedgerHeader(kLEDGER_HASH, kSEQ + 1, 0);
-    auto publisher = impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
+    auto publisher = etlng::impl::LedgerPublisher(ctx_, backend_, mockSubscriptionManagerPtr, dummyState);
     backend_->setRange(kSEQ - 1, kSEQ + 1);
 
     // Publish two ledgers in quick succession

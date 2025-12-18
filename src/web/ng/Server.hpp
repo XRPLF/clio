@@ -23,6 +23,7 @@
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
 #include "web/ProxyIpResolver.hpp"
+#include "web/interface/Concepts.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/ProcessingPolicy.hpp"
@@ -34,23 +35,12 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 
-#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <optional>
 #include <string>
 
 namespace web::ng {
-
-/**
- * @brief A tag class for server to help identify Server in templated code.
- */
-struct ServerTag {
-    virtual ~ServerTag() = default;
-};
-
-template <typename T>
-concept SomeServer = std::derived_from<T, ServerTag>;
 
 /**
  * @brief Web server class.

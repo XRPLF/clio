@@ -8,14 +8,14 @@ on:
     paths:
       - .github/workflows/build.yml
 
-      - .github/workflows/build_and_test.yml
-      - .github/workflows/build_impl.yml
-      - .github/workflows/test_impl.yml
-      - .github/workflows/upload_coverage_report.yml
+      - .github/workflows/reusable-build-test.yml
+      - .github/workflows/reusable-build.yml
+      - .github/workflows/reusable-test.yml
+      - .github/workflows/reusable-upload-coverage-report.yml
 
       - ".github/actions/**"
-      - "!.github/actions/build_docker_image/**"
-      - "!.github/actions/create_issue/**"
+      - "!.github/actions/build-docker-image/**"
+      - "!.github/actions/create-issue/**"
 
       - CMakeLists.txt
       - conanfile.py
@@ -33,6 +33,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/develop' && github.run_number || 'branch' }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build-and-test:
     name: Build and Test
@@ -45,7 +49,7 @@ jobs:
         build_type: [Release, Debug]
         container:
           [
-            '{ "image": "ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d" }',
+            '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }',
           ]
         static: [true]
 
@@ -56,12 +60,14 @@ jobs:
             container: ""
             static: false
 
-    uses: ./.github/workflows/build_and_test.yml
+    uses: ./.github/workflows/reusable-build-test.yml
     with:
       runs_on: ${{ matrix.os }}
       container: ${{ matrix.container }}
       conan_profile: ${{ matrix.conan_profile }}
       build_type: ${{ matrix.build_type }}
+      download_ccache: true
+      upload_ccache: true
       static: ${{ matrix.static }}
       run_unit_tests: true
       run_integration_tests: false
@@ -70,13 +76,14 @@ jobs:
   code_coverage:
     name: Run Code Coverage
 
-    uses: ./.github/workflows/build_impl.yml
+    uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d" }'
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
       conan_profile: gcc
       build_type: Debug
-      disable_cache: false
+      download_ccache: true
+      upload_ccache: true
       code_coverage: true
       static: true
       upload_clio_server: false
@@ -85,39 +92,21 @@ jobs:
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  package:
-    name: Build packages
-
-    uses: ./.github/workflows/build_impl.yml
-    with:
-      runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d" }'
-      conan_profile: gcc
-      build_type: Release
-      disable_cache: false
-      code_coverage: false
-      static: true
-      upload_clio_server: false
-      package: true
-      targets: package
-      analyze_build_time: false
-
   check_config:
     name: Check Config Description
     needs: build-and-test
     runs-on: heavy
     container:
-      image: ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d
+      image: ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: clio_server_Linux_Release_gcc
 
       - name: Compare Config Description
-        shell: bash
         run: |
           repoConfigFile=docs/config-description.md
           configDescriptionFile=config_description_new.md

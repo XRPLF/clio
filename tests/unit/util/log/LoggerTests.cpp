@@ -21,20 +21,31 @@
 #include "util/log/Logger.hpp"
 
 #include <gtest/gtest.h>
+#include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 
 #include <cstddef>
+#include <memory>
 #include <string>
 using namespace util;
+
+namespace {
+size_t
+loggersNum()
+{
+    size_t counter = 0;
+    spdlog::apply_all([&counter](std::shared_ptr<spdlog::logger>) { ++counter; });
+    return counter;
+}
+}  // namespace
 
 // Used as a fixture for tests with enabled logging
 class LoggerTest : public LoggerFixture {};
 
-// Used as a fixture for tests with disabled logging
-class NoLoggerTest : public NoLoggerFixture {};
-
 TEST_F(LoggerTest, Basic)
 {
     Logger const log{"General"};
+
     log.info() << "Info line logged";
     ASSERT_EQ(getLoggerString(), "inf:General - Info line logged\n");
 
@@ -53,10 +64,6 @@ TEST_F(LoggerTest, Filtering)
 
     log.warn() << "Warning is logged";
     ASSERT_EQ(getLoggerString(), "war:General - Warning is logged\n");
-
-    Logger const tlog{"Trace"};
-    tlog.trace() << "Trace line logged for 'Trace' component";
-    ASSERT_EQ(getLoggerString(), "tra:Trace - Trace line logged for 'Trace' component\n");
 }
 
 #ifndef COVERAGE_ENABLED
@@ -78,12 +85,23 @@ TEST_F(LoggerTest, LOGMacro)
 }
 #endif
 
-TEST_F(NoLoggerTest, Basic)
+TEST_F(LoggerTest, ManyDynamicLoggers)
 {
-    Logger const log{"Trace"};
-    log.trace() << "Nothing";
-    ASSERT_TRUE(getLoggerString().empty());
+    static constexpr size_t kNUM_LOGGERS = 10'000;
 
-    LogService::fatal() << "Still nothing";
-    ASSERT_TRUE(getLoggerString().empty());
+    auto initialLoggers = loggersNum();
+
+    for (size_t i = 0; i < kNUM_LOGGERS; ++i) {
+        std::string const loggerName = "DynamicLogger" + std::to_string(i);
+
+        Logger const log{loggerName};
+        log.info() << "Logger number " << i;
+        ASSERT_EQ(getLoggerString(), "inf:" + loggerName + " - Logger number " + std::to_string(i) + "\n");
+
+        Logger const copy = log;
+        copy.info() << "Copy of logger number " << i;
+        ASSERT_EQ(getLoggerString(), "inf:" + loggerName + " - Copy of logger number " + std::to_string(i) + "\n");
+    }
+
+    ASSERT_EQ(loggersNum(), initialLoggers);
 }

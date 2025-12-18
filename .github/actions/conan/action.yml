@@ -17,10 +17,6 @@ inputs:
     description: Build type for third-party libraries and clio. Could be 'Release', 'Debug'
     required: true
     default: "Release"
-  build_benchmark:
-    description: Whether to build benchmark tests
-    required: true
-    default: "true"
 
 runs:
   using: composite
@@ -34,16 +30,14 @@ runs:
     - name: Run conan
       shell: bash
       env:
-        BUILD_BENCHMARK: "${{ inputs.build_benchmark == 'true' && 'True' || 'False' }}"
-        BUILD_TYPE: "${{ inputs.build_type }}"
+        BUILD_DIR: "${{ inputs.build_dir }}"
         CONAN_BUILD_OPTION: "${{ inputs.force_conan_source_build == 'true' && '*' || 'missing' }}"
+        BUILD_TYPE: "${{ inputs.build_type }}"
         CONAN_PROFILE: "${{ inputs.conan_profile }}"
       run: |
         conan \
           install . \
-          -of build \
-          -b "$CONAN_BUILD_OPTION" \
+          -of "${BUILD_DIR}" \
+          -b "${CONAN_BUILD_OPTION}" \
           -s "build_type=${BUILD_TYPE}" \
-          -o "&:tests=True" \
-          -o "&:benchmark=${BUILD_BENCHMARK}" \
           --profile:all "${CONAN_PROFILE}"

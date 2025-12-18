@@ -21,13 +21,12 @@
 
 #include "data/BackendInterface.hpp"
 #include "etl/ETLState.hpp"
+#include "etl/InitialLoadObserverInterface.hpp"
+#include "etl/LoadBalancerInterface.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
-#include "etlng/InitialLoadObserverInterface.hpp"
-#include "etlng/LoadBalancerInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
-#include "util/Assert.hpp"
 #include "util/Mutex.hpp"
 #include "util/Random.hpp"
 #include "util/ResponseExpirationCache.hpp"
@@ -54,7 +53,6 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 namespace etl {
@@ -76,7 +74,7 @@ concept SomeLoadBalancer = std::derived_from<T, LoadBalancerTag>;
  * which ledgers have been validated by the network, and the range of ledgers each etl source has). This class also
  * allows requests for ledger data to be load balanced across all possible ETL sources.
  */
-class LoadBalancer : public etlng::LoadBalancerInterface, LoadBalancerTag {
+class LoadBalancer : public LoadBalancerInterface, LoadBalancerTag {
 public:
     using RawLedgerObjectType = org::xrpl::rpc::v1::RawLedgerObject;
     using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;
@@ -149,7 +147,7 @@ public:
      * @param backend BackendInterface implementation
      * @param subscriptions Subscription manager
      * @param randomGenerator A random generator to use for selecting sources
-     * @param validatedLedgers The network validated ledgers data structure
+     * @param validatedLedgers The network validated ledgers datastructure
      * @param sourceFactory A factory function to create a source
      * @return A shared pointer to a new instance of LoadBalancer
      */
@@ -166,20 +164,6 @@ public:
 
     /**
      * @brief Load the initial ledger, writing data to the queue.
-     * @note This function will retry indefinitely until the ledger is downloaded.
-     *
-     * @param sequence Sequence of ledger to download
-     * @param retryAfter Time to wait between retries (2 seconds by default)
-     * @return A std::vector<std::string> The ledger data
-     */
-    std::vector<std::string>
-    loadInitialLedger(
-        uint32_t sequence,
-        std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2}
-    ) override;
-
-    /**
-     * @brief Load the initial ledger, writing data to the queue.
      * @note This function will retry indefinitely until the ledger is downloaded or the download is cancelled.
      *
      * @param sequence Sequence of ledger to download
@@ -187,16 +171,12 @@ public:
      * @param retryAfter Time to wait between retries (2 seconds by default)
      * @return A std::expected with ledger edge keys on success, or InitialLedgerLoadError on failure
      */
-    etlng::InitialLedgerLoadResult
+    InitialLedgerLoadResult
     loadInitialLedger(
-        [[maybe_unused]] uint32_t sequence,
-        [[maybe_unused]] etlng::InitialLoadObserverInterface& observer,
-        [[maybe_unused]] std::chrono::steady_clock::duration retryAfter
-    ) override
-    {
-        ASSERT(false, "Not available for old ETL");
-        std::unreachable();
-    }
+        uint32_t sequence,
+        InitialLoadObserverInterface& observer,
+        std::chrono::steady_clock::duration retryAfter
+    ) override;
 
     /**
      * @brief Fetch data for a specific ledger.

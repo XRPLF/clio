@@ -21,16 +21,20 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/LedgerCacheInterface.hpp"
+#include "data/Types.hpp"
+#include "etl/CacheLoaderInterface.hpp"
 #include "etl/CacheLoaderSettings.hpp"
 #include "etl/impl/CacheLoader.hpp"
 #include "etl/impl/CursorFromAccountProvider.hpp"
 #include "etl/impl/CursorFromDiffProvider.hpp"
 #include "etl/impl/CursorFromFixDiffNumProvider.hpp"
-#include "etlng/CacheLoaderInterface.hpp"
 #include "util/Assert.hpp"
+#include "util/Profiler.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
+#include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -48,7 +52,7 @@ namespace etl {
  * @tparam ExecutionContextType The type of the execution context to use
  */
 template <typename ExecutionContextType = util::async::CoroExecutionContext>
-class CacheLoader : public etlng::CacheLoaderInterface {
+class CacheLoader : public CacheLoaderInterface {
     using CacheLoaderType = impl::CacheLoaderImpl<data::LedgerCacheInterface>;
 
     util::Logger log_{"ETL"};
@@ -95,6 +99,10 @@ public:
         if (settings_.isDisabled()) {
             cache_.get().setDisabled();
             LOG(log_.warn()) << "Cache is disabled. Not loading";
+            return;
+        }
+
+        if (loadCacheFromFile()) {
             return;
         }
 
@@ -148,6 +156,36 @@ public:
     {
         if (loader_ != nullptr)
             loader_->wait();
+    }
+
+private:
+    bool
+    loadCacheFromFile()
+    {
+        if (not settings_.cacheFileSettings.has_value()) {
+            return false;
+        }
+        LOG(log_.info()) << "Loading ledger cache from " << settings_.cacheFileSettings->path;
+        auto const minLatestSequence =
+            backend_->fetchLedgerRange()
+                .transform([this](data::LedgerRange const& range) {
+                    return std::max(range.maxSequence - settings_.cacheFileSettings->maxAge, range.minSequence);
+                })
+                .value_or(0);
+
+        auto const [success, duration_ms] = util::timed([&]() {
+            return cache_.get().loadFromFile(settings_.cacheFileSettings->path, minLatestSequence);
+        });
+
+        if (not success.has_value()) {
+            LOG(log_.warn()) << "Error loading cache from file: " << success.error();
+            return false;
+        }
+
+        LOG(log_.info()) << "Loaded cache from file in " << duration_ms
+                         << " ms. Latest sequence: " << cache_.get().latestLedgerSequence();
+        backend_->forceUpdateRange(cache_.get().latestLedgerSequence());
+        return true;
     }
 };
 

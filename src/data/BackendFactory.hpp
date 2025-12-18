@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/CassandraBackend.hpp"
+#include "data/KeyspaceBackend.hpp"
 #include "data/LedgerCacheInterface.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
 #include "util/config/ConfigDefinition.hpp"
@@ -45,6 +46,7 @@ namespace data {
 inline std::shared_ptr<BackendInterface>
 makeBackend(util::config::ClioConfigDefinition const& config, data::LedgerCacheInterface& cache)
 {
+    using namespace cassandra::impl;
     static util::Logger const log{"Backend"};  // NOLINT(readability-identifier-naming)
     LOG(log.info()) << "Constructing BackendInterface";
 
@@ -55,9 +57,15 @@ makeBackend(util::config::ClioConfigDefinition const& config, data::LedgerCacheI
 
     if (boost::iequals(type, "cassandra")) {
         auto const cfg = config.getObject("database." + type);
-        backend = std::make_shared<data::cassandra::CassandraBackend>(
-            data::cassandra::SettingsProvider{cfg}, cache, readOnly
-        );
+        if (providerFromString(cfg.getValueView("provider").asString()) == Provider::Keyspace) {
+            backend = std::make_shared<data::cassandra::KeyspaceBackend>(
+                data::cassandra::SettingsProvider{cfg}, cache, readOnly
+            );
+        } else {
+            backend = std::make_shared<data::cassandra::CassandraBackend>(
+                data::cassandra::SettingsProvider{cfg}, cache, readOnly
+            );
+        }
     }
 
     if (!backend)

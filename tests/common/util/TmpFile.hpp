@@ -19,10 +19,13 @@
 
 #pragma once
 
+#include <fmt/format.h>
+
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <utility>

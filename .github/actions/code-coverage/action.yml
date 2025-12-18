@@ -1,0 +1,31 @@
+name: Generate code coverage report
+description: Run tests, generate code coverage report and upload it to codecov.io
+
+runs:
+  using: composite
+
+  steps:
+    - name: Run tests
+      shell: bash
+      run: |
+        build/clio_tests
+
+    # Please keep exclude list in sync with .codecov.yml
+    - name: Run gcovr
+      shell: bash
+      run: |
+        gcovr \
+          -e benchmarks \
+          -e tests \
+          -e src/data/cassandra \
+          -e src/data/CassandraBackend.hpp \
+          -e 'src/data/BackendFactory.*' \
+          --xml build/coverage_report.xml \
+          -j8 --exclude-throw-branches
+
+    - name: Archive coverage report
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      with:
+        name: coverage-report.xml
+        path: build/coverage_report.xml
+        retention-days: 30

@@ -21,7 +21,7 @@
 
 #include "data/LedgerCacheInterface.hpp"
 #include "data/Types.hpp"
-#include "etlng/Models.hpp"
+#include "etl/Models.hpp"
 #include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Label.hpp"
@@ -37,6 +37,7 @@
 #include <map>
 #include <optional>
 #include <shared_mutex>
+#include <string>
 #include <unordered_set>
 #include <vector>
 
@@ -46,11 +47,16 @@ namespace data {
  * @brief Cache for an entire ledger.
  */
 class LedgerCache : public LedgerCacheInterface {
+public:
+    /** @brief An entry of the cache */
     struct CacheEntry {
         uint32_t seq = 0;
         Blob blob;
     };
 
+    using CacheMap = std::map<ripple::uint256, CacheEntry>;
+
+private:
     // counters for fetchLedgerObject(s) hit rate
     std::reference_wrapper<util::prometheus::CounterInt> objectReqCounter_{PrometheusService::counterInt(
         "ledger_cache_counter_total_number",
@@ -73,8 +79,8 @@ class LedgerCache : public LedgerCacheInterface {
         util::prometheus::Labels({{"type", "cache_hit"}, {"fetch", "successor_key"}})
     )};
 
-    std::map<ripple::uint256, CacheEntry> map_;
-    std::map<ripple::uint256, CacheEntry> deleted_;
+    CacheMap map_;
+    CacheMap deleted_;
 
     mutable std::shared_mutex mtx_;
     std::condition_variable_any cv_;
@@ -98,7 +104,7 @@ public:
     update(std::vector<LedgerObject> const& objs, uint32_t seq, bool isBackground) override;
 
     void
-    update(std::vector<etlng::model::Object> const& objs, uint32_t seq) override;
+    update(std::vector<etl::model::Object> const& objs, uint32_t seq) override;
 
     std::optional<Blob>
     get(ripple::uint256 const& key, uint32_t seq) const override;
@@ -138,6 +144,12 @@ public:
 
     void
     waitUntilCacheContainsSeq(uint32_t seq) override;
+
+    std::expected<void, std::string>
+    saveToFile(std::string const& path) const override;
+
+    std::expected<void, std::string>
+    loadFromFile(std::string const& path, uint32_t minLatestSequence) override;
 };
 
 }  // namespace data

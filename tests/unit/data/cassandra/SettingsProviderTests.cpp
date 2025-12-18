@@ -19,7 +19,6 @@
 
 #include "data/cassandra/SettingsProvider.hpp"
 #include "data/cassandra/Types.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/TmpFile.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigFileJson.hpp"
@@ -59,6 +58,7 @@ getParseSettingsConfig(boost::json::value val)
         {"database.cassandra.certificate", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
         {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional()},
         {"database.cassandra.write_batch_size", ConfigValue{ConfigType::Integer}.defaultValue(20)},
         {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.optional()},
@@ -77,7 +77,7 @@ getParseSettingsConfig(boost::json::value val)
     return config;
 };
 
-class SettingsProviderTest : public NoLoggerFixture {};
+class SettingsProviderTest : virtual public ::testing::Test {};
 
 TEST_F(SettingsProviderTest, Defaults)
 {

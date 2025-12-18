@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "util/LoggerFixtures.hpp"
 #include "util/config/Array.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigFileJson.hpp"
@@ -39,7 +38,7 @@ using namespace util;
 using namespace util::config;
 using namespace web::dosguard;
 
-struct WhitelistHandlerTest : NoLoggerFixture {};
+struct WhitelistHandlerTest : public virtual ::testing::Test {};
 
 inline static ClioConfigDefinition
 getParseWhitelistHandlerConfig(boost::json::value val)

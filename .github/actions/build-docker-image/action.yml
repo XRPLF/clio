@@ -1,0 +1,68 @@
+name: Build and push Docker image
+description: Build and push Docker image to DockerHub and GitHub Container Registry
+
+inputs:
+  images:
+    description: Name of the images to use as a base name
+    required: true
+  push_image:
+    description: Whether to push the image to the registry (true/false)
+    required: true
+  directory:
+    description: The directory containing the Dockerfile
+    required: true
+  tags:
+    description: Comma separated tags to apply to the image
+    required: true
+  platforms:
+    description: Platforms to build the image for (e.g. linux/amd64,linux/arm64)
+    required: true
+  build_args:
+    description: List of build-time variables
+    required: false
+
+  dockerhub_repo:
+    description: DockerHub repository name
+    required: false
+    default: ""
+  dockerhub_description:
+    description: Short description of the image
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Login to DockerHub
+      if: ${{ inputs.push_image == 'true' && inputs.dockerhub_repo != '' }}
+      uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+      with:
+        username: ${{ env.DOCKERHUB_USER }}
+        password: ${{ env.DOCKERHUB_PW }}
+
+    - name: Login to GitHub Container Registry
+      if: ${{ inputs.push_image == 'true' }}
+      uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ env.GITHUB_TOKEN }}
+
+    - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+      with:
+        cache-image: false
+    - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+    - uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+      id: meta
+      with:
+        images: ${{ inputs.images }}
+        tags: ${{ inputs.tags }}
+
+    - name: Build and push
+      uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+      with:
+        context: ${{ inputs.directory }}
+        platforms: ${{ inputs.platforms }}
+        push: ${{ inputs.push_image == 'true' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        build-args: ${{ inputs.build_args }}

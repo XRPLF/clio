@@ -21,7 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
-#include "etlng/ETLServiceInterface.hpp"
+#include "etl/ETLServiceInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -60,7 +60,7 @@ namespace rpc {
  */
 class TxHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
-    std::shared_ptr<etlng::ETLServiceInterface const> etl_;
+    std::shared_ptr<etl::ETLServiceInterface const> etl_;
 
 public:
     /**
@@ -103,7 +103,7 @@ public:
      */
     TxHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
-        std::shared_ptr<etlng::ETLServiceInterface const> const& etl
+        std::shared_ptr<etl::ETLServiceInterface const> const& etl
     )
         : sharedPtrBackend_(sharedPtrBackend), etl_(etl)
     {
@@ -332,10 +332,10 @@ private:
             input.binary = boost::json::value_to<JsonBool>(jsonObject.at(JS(binary)));
 
         if (jsonObject.contains(JS(min_ledger)))
-            input.minLedger = jv.at(JS(min_ledger)).as_int64();
+            input.minLedger = util::integralValueAs<uint32_t>(jv.at(JS(min_ledger)));
 
         if (jsonObject.contains(JS(max_ledger)))
-            input.maxLedger = jv.at(JS(max_ledger)).as_int64();
+            input.maxLedger = util::integralValueAs<uint32_t>(jv.at(JS(max_ledger)));
 
         return input;
     }

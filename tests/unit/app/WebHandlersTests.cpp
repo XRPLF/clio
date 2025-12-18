@@ -19,8 +19,9 @@
 
 #include "app/WebHandlers.hpp"
 #include "rpc/Errors.hpp"
+#include "rpc/WorkQueue.hpp"
 #include "util/AsioContextTestFixture.hpp"
-#include "util/LoggerFixtures.hpp"
+#include "util/MockLedgerCache.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/Taggable.hpp"
 #include "util/config/ConfigDefinition.hpp"
@@ -54,7 +55,7 @@ using namespace app;
 namespace http = boost::beast::http;
 using namespace util::config;
 
-struct WebHandlersTest : virtual NoLoggerFixture {
+struct WebHandlersTest : virtual public ::testing::Test {
     DOSGuardStrictMock dosGuardMock;
     util::TagDecoratorFactory const tagFactory{
         ClioConfigDefinition{{"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
@@ -122,7 +123,9 @@ struct MetricsHandlerTests : util::prometheus::WithPrometheus, SyncAsioContextTe
         std::make_shared<testing::StrictMock<AdminVerificationStrategyMock>>()
     };
 
-    MetricsHandler metricsHandler{adminVerifier};
+    rpc::WorkQueue workQueue{1};
+
+    MetricsHandler metricsHandler{adminVerifier, workQueue};
     web::ng::Request request{http::request<http::string_body>{http::verb::get, "/metrics", 11}};
 };
 
@@ -147,6 +150,32 @@ TEST_F(HealthCheckHandlerTests, Call)
         auto response = healthCheckHandler(request, connectionMock, nullptr, yield);
         auto const httpResponse = std::move(response).intoHttpResponse();
         EXPECT_EQ(httpResponse.result(), boost::beast::http::status::ok);
+    });
+}
+
+struct CacheStateHandlerTests : SyncAsioContextTest, WebHandlersTest {
+    web::ng::Request request{http::request<http::string_body>{http::verb::get, "/", 11}};
+    MockLedgerCache cache;
+    CacheStateHandler cacheStateHandler{cache};
+};
+
+TEST_F(CacheStateHandlerTests, CallWithCacheLoaded)
+{
+    EXPECT_CALL(cache, isFull()).WillRepeatedly(testing::Return(true));
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto response = cacheStateHandler(request, connectionMock, nullptr, yield);
+        auto const httpResponse = std::move(response).intoHttpResponse();
+        EXPECT_EQ(httpResponse.result(), boost::beast::http::status::ok);
+    });
+}
+
+TEST_F(CacheStateHandlerTests, CallWithoutCacheLoaded)
+{
+    EXPECT_CALL(cache, isFull()).WillRepeatedly(testing::Return(false));
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto response = cacheStateHandler(request, connectionMock, nullptr, yield);
+        auto const httpResponse = std::move(response).intoHttpResponse();
+        EXPECT_EQ(httpResponse.result(), boost::beast::http::status::service_unavailable);
     });
 }
 

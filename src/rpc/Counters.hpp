@@ -66,7 +66,7 @@ class Counters {
     CounterType unknownCommandCounter_;
     CounterType internalErrorCounter_;
 
-    std::reference_wrapper<WorkQueue const> workQueue_;
+    std::reference_wrapper<Reportable const> workQueue_;
     std::chrono::time_point<std::chrono::system_clock> startupTime_;
 
 public:
@@ -75,7 +75,7 @@ public:
      *
      * @param wq The work queue to operate on
      */
-    Counters(WorkQueue const& wq);
+    Counters(Reportable const& wq);
 
     /**
      * @brief A factory function that creates a new counters instance.

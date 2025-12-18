@@ -20,6 +20,7 @@
 #pragma once
 
 #include "data/cassandra/impl/ManagedObject.hpp"
+#include "util/Assert.hpp"
 #include "util/log/Logger.hpp"
 
 #include <cassandra.h>
@@ -35,6 +36,18 @@
 
 namespace data::cassandra::impl {
 
+enum class Provider { Cassandra, Keyspace };
+
+inline Provider
+providerFromString(std::string const& provider)
+{
+    ASSERT(
+        provider == "cassandra" || provider == "aws_keyspace",
+        "Provider type must be one of 'cassandra' or 'aws_keyspace'"
+    );
+    return provider == "cassandra" ? Provider::Cassandra : Provider::Keyspace;
+}
+
 // TODO: move Settings to public interface, not impl
 
 /**
@@ -45,6 +58,7 @@ struct Settings {
     static constexpr uint32_t kDEFAULT_MAX_WRITE_REQUESTS_OUTSTANDING = 10'000;
     static constexpr uint32_t kDEFAULT_MAX_READ_REQUESTS_OUTSTANDING = 100'000;
     static constexpr std::size_t kDEFAULT_BATCH_SIZE = 20;
+    static constexpr Provider kDEFAULT_PROVIDER = Provider::Cassandra;
 
     /**
      * @brief Represents the configuration of contact points for cassandra.
@@ -83,10 +97,13 @@ struct Settings {
     uint32_t maxReadRequestsOutstanding = kDEFAULT_MAX_READ_REQUESTS_OUTSTANDING;
 
     /** @brief The number of connection per host to always have active */
-    uint32_t coreConnectionsPerHost = 1u;
+    uint32_t coreConnectionsPerHost = 3u;
 
     /** @brief Size of batches when writing */
     std::size_t writeBatchSize = kDEFAULT_BATCH_SIZE;
+
+    /** @brief Provider to know if we are using scylladb or keyspace */
+    Provider provider = kDEFAULT_PROVIDER;
 
     /** @brief Size of the IO queue */
     std::optional<uint32_t> queueSizeIO = std::nullopt;  // NOLINT(readability-redundant-member-init)

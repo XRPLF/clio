@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "rpc/Errors.hpp"
+#include "util/NameGenerator.hpp"
 
 #include <boost/json/fwd.hpp>
 #include <boost/json/object.hpp>
@@ -25,6 +26,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -139,7 +141,7 @@ TEST(RPCErrorsTest, InvalidClioErrorToJSON)
 }
 
 struct WarningCodeTestBundle {
-    std::string name;
+    std::string testName;
     WarningCode code;
     std::string message;
 };
@@ -166,7 +168,7 @@ INSTANTIATE_TEST_SUITE_P(
             "https://xrpl.org/docs/references/http-websocket-apis/ and update your request."
         }
     ),
-    [](testing::TestParamInfo<WarningCodeTestBundle> const& info) { return info.param.name; }
+    tests::util::kNAME_GENERATOR
 );
 
 TEST_P(WarningCodeTest, WarningToJSON)
@@ -189,3 +191,69 @@ TEST(RPCErrorsTest, InvalidWarningToJSON)
     };
     EXPECT_ANY_THROW((void)notSanitizedMakeWarning());
 }
+
+struct StatusStreamTestBundle {
+    std::string testName;
+    rpc::Status status;
+    std::string expectedOutput;
+};
+
+struct RPCErrorsStatusStreamTest : public ::testing::TestWithParam<StatusStreamTestBundle> {
+protected:
+    std::ostringstream oss_;
+};
+
+TEST_P(RPCErrorsStatusStreamTest, StatusStreamOperator)
+{
+    auto const param = GetParam();
+    oss_ << param.status;
+    EXPECT_EQ(oss_.str(), param.expectedOutput);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    RPCErrorsTest,
+    RPCErrorsStatusStreamTest,
+    testing::Values(
+        StatusStreamTestBundle{
+            .testName = "EmptyStatus",
+            .status = Status{},
+            .expectedOutput = "Code: 0, Message: An unknown error code."
+        },
+        StatusStreamTestBundle{
+            .testName = "StatusWithRippledError",
+            .status = Status{RippledError::rpcSUCCESS},
+            .expectedOutput = "Code: 0, Message: An unknown error code."
+        },
+        StatusStreamTestBundle{
+            .testName = "StatusWithClioError",
+            .status = Status{ClioError::RpcParamsUnparsable},
+            .expectedOutput = "Code: 6004, Message: Params must be an array holding exactly one object."
+        },
+        StatusStreamTestBundle{
+            .testName = "StatusWithCodeAndExtraInfo",
+            .status = Status{ClioError::EtlConnectionError, boost::json::object{}},
+            .expectedOutput = "Code: 7000, Message: Couldn't connect to rippled., Extra Info: {}"
+        },
+        StatusStreamTestBundle{
+            .testName = "StatusWithMessage",
+            .status = Status{"test message."},
+            .expectedOutput = "Code: -1, Message: test message."
+        },
+        StatusStreamTestBundle{
+            .testName = "StatusWithRippledErrorAndMessage",
+            .status = Status{RippledError::rpcSUCCESS, "test message."},
+            .expectedOutput = "Code: 0, Message: test message."
+        },
+        StatusStreamTestBundle{
+            .testName = "StatusWithClioErrorAndMessage",
+            .status = Status{ClioError::RpcParamsUnparsable, "Missing params array."},
+            .expectedOutput = "Code: 6004, Message: Missing params array."
+        },
+        StatusStreamTestBundle{
+            .testName = "StatusWithCodeErrorMessage",
+            .status = Status{ClioError::EtlInvalidResponse, "invalidResponse", "Rippled returned an invalid response."},
+            .expectedOutput = "Code: 7003, Error: invalidResponse, Message: Rippled returned an invalid response."
+        }
+    ),
+    tests::util::kNAME_GENERATOR
+);

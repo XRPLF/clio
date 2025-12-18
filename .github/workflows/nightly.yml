@@ -8,20 +8,24 @@ on:
     paths:
       - .github/workflows/nightly.yml
 
-      - .github/workflows/release_impl.yml
-      - .github/workflows/build_and_test.yml
-      - .github/workflows/build_impl.yml
-      - .github/workflows/test_impl.yml
-      - .github/workflows/build_clio_docker_image.yml
+      - .github/workflows/reusable-release.yml
+      - .github/workflows/reusable-build-test.yml
+      - .github/workflows/reusable-build.yml
+      - .github/workflows/reusable-test.yml
+      - .github/workflows/build-clio-docker-image.yml
 
       - ".github/actions/**"
-      - "!.github/actions/code_coverage/**"
+      - "!.github/actions/code-coverage/**"
       - .github/scripts/prepare-release-artifacts.sh
 
 concurrency:
   # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   build-and-test:
@@ -39,19 +43,19 @@ jobs:
             conan_profile: gcc
             build_type: Release
             static: true
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
           - os: heavy
             conan_profile: gcc
             build_type: Debug
             static: true
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
           - os: heavy
             conan_profile: gcc.ubsan
             build_type: Release
             static: false
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
 
-    uses: ./.github/workflows/build_and_test.yml
+    uses: ./.github/workflows/reusable-build-test.yml
     with:
       runs_on: ${{ matrix.os }}
       container: ${{ matrix.container }}
@@ -61,7 +65,26 @@ jobs:
       run_unit_tests: true
       run_integration_tests: true
       upload_clio_server: true
-      disable_cache: true
+      download_ccache: false
+      upload_ccache: false
+
+  package:
+    name: Build debian package
+
+    uses: ./.github/workflows/reusable-build.yml
+    with:
+      runs_on: heavy
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
+      conan_profile: gcc
+      build_type: Release
+      download_ccache: false
+      upload_ccache: false
+      code_coverage: false
+      static: true
+      upload_clio_server: false
+      package: true
+      targets: package
+      analyze_build_time: false
 
   analyze_build_time:
     name: Analyze Build Time
@@ -72,42 +95,54 @@ jobs:
         include:
           - os: heavy
             conan_profile: clang
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
             static: true
           - os: macos15
             conan_profile: apple-clang
             container: ""
             static: false
-    uses: ./.github/workflows/build_impl.yml
+    uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: ${{ matrix.os }}
       container: ${{ matrix.container }}
       conan_profile: ${{ matrix.conan_profile }}
       build_type: Release
-      disable_cache: true
+      download_ccache: false
+      upload_ccache: false
       code_coverage: false
       static: ${{ matrix.static }}
       upload_clio_server: false
       targets: all
       analyze_build_time: true
 
+  get_date:
+    name: Get Date
+    runs-on: ubuntu-latest
+    outputs:
+      date: ${{ steps.get_date.outputs.date }}
+    steps:
+      - name: Get current date
+        id: get_date
+        run: |
+          echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
   nightly_release:
-    needs: build-and-test
-    uses: ./.github/workflows/release_impl.yml
+    needs: [build-and-test, package, get_date]
+    uses: ./.github/workflows/reusable-release.yml
     with:
-      overwrite_release: true
+      delete_pattern: "nightly-*"
       prerelease: true
-      title: "Clio development (nightly) build"
-      version: nightly
+      title: "Clio development build (nightly-${{ needs.get_date.outputs.date }})"
+      version: nightly-${{ needs.get_date.outputs.date }}
       header: >
         > **Note:** Please remember that this is a development release and it is not recommended for production use.
 
-        Changelog (including previous releases): <https://github.com/XRPLF/clio/commits/nightly>
+        Changelog (including previous releases): <https://github.com/XRPLF/clio/commits/nightly-${{ needs.get_date.outputs.date }}>
       generate_changelog: false
       draft: false
 
   build_and_publish_docker_image:
-    uses: ./.github/workflows/build_clio_docker_image.yml
+    uses: ./.github/workflows/build-clio-docker-image.yml
     needs: build-and-test
     secrets: inherit
     with:
@@ -128,10 +163,10 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Create an issue
-        uses: ./.github/actions/create_issue
+        uses: ./.github/actions/create-issue
         env:
           GH_TOKEN: ${{ github.token }}
         with:

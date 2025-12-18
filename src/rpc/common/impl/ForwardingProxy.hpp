@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "etlng/LoadBalancerInterface.hpp"
+#include "etl/LoadBalancerInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/RPCCenter.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -41,13 +41,13 @@ template <typename CountersType, typename HandlerProviderType>
 class ForwardingProxy {
     util::Logger log_{"RPC"};
 
-    std::shared_ptr<etlng::LoadBalancerInterface> balancer_;
+    std::shared_ptr<etl::LoadBalancerInterface> balancer_;
     std::reference_wrapper<CountersType> counters_;
     std::shared_ptr<HandlerProviderType const> handlerProvider_;
 
 public:
     ForwardingProxy(
-        std::shared_ptr<etlng::LoadBalancerInterface> const& balancer,
+        std::shared_ptr<etl::LoadBalancerInterface> const& balancer,
         CountersType& counters,
         std::shared_ptr<HandlerProviderType const> const& handlerProvider
     )

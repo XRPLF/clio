@@ -30,7 +30,7 @@
  * @brief Fixture with an embedded AnyExecutionContext wrapping a SyncExecutionContext
  *
  */
-struct SyncExecutionCtxFixture : virtual public NoLoggerFixture {
+struct SyncExecutionCtxFixture : virtual public ::testing::Test {
 protected:
     util::async::SyncExecutionContext syncCtx_;
     util::async::AnyExecutionContext ctx_{syncCtx_};

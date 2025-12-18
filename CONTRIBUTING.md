@@ -180,6 +180,7 @@ Existing maintainers can resign, or be subject to a vote for removal at the behe
 - [kuznetsss](https://github.com/kuznetsss) (Ripple)
 - [legleux](https://github.com/legleux) (Ripple)
 - [PeterChen13579](https://github.com/PeterChen13579) (Ripple)
+- [mathbunnyru](https://github.com/mathbunnyru) (Ripple)
 
 ### Honorable ex-Maintainers
 

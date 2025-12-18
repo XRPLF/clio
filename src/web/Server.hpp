@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/LedgerCacheInterface.hpp"
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
 #include "web/AdminVerificationStrategy.hpp"
@@ -33,6 +34,7 @@
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/socket_base.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/error.hpp>
 #include <boost/asio/strand.hpp>
@@ -42,6 +44,7 @@
 #include <boost/beast/core/tcp_stream.hpp>
 #include <fmt/format.h>
 
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <exception>
@@ -85,6 +88,7 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, 
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
     std::reference_wrapper<dosguard::DOSGuardInterface> const dosGuard_;
     std::shared_ptr<HandlerType> const handler_;
+    std::reference_wrapper<data::LedgerCacheInterface const> cache_;
     boost::beast::flat_buffer buffer_;
     std::shared_ptr<AdminVerificationStrategy> const adminVerification_;
     std::uint32_t maxWsSendingQueueSize_;
@@ -99,6 +103,7 @@ public:
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
      * @param handler The server handler to use
+     * @param cache The ledger cache to use
      * @param adminVerification The admin verification strategy to use
      * @param maxWsSendingQueueSize The maximum size of the sending queue for websocket
      * @param proxyIpResolver The client ip resolver if a request was forwarded by a proxy
@@ -109,6 +114,7 @@ public:
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> handler,
+        std::reference_wrapper<data::LedgerCacheInterface const> cache,
         std::shared_ptr<AdminVerificationStrategy> adminVerification,
         std::uint32_t maxWsSendingQueueSize,
         std::shared_ptr<ProxyIpResolver> proxyIpResolver
@@ -118,6 +124,7 @@ public:
         , tagFactory_(std::cref(tagFactory))
         , dosGuard_(dosGuard)
         , handler_(std::move(handler))
+        , cache_(cache)
         , adminVerification_(std::move(adminVerification))
         , maxWsSendingQueueSize_(maxWsSendingQueueSize)
         , proxyIpResolver_(std::move(proxyIpResolver))
@@ -179,6 +186,7 @@ public:
                 tagFactory_,
                 dosGuard_,
                 handler_,
+                cache_,
                 std::move(buffer_),
                 maxWsSendingQueueSize_
             )
@@ -194,6 +202,7 @@ public:
             tagFactory_,
             dosGuard_,
             handler_,
+            cache_,
             std::move(buffer_),
             maxWsSendingQueueSize_
         )
@@ -214,7 +223,8 @@ template <
     template <typename> class PlainSessionType,
     template <typename> class SslSessionType,
     SomeServerHandler HandlerType>
-class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>> {
+class Server : public ServerTag,
+               public std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>> {
     using std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>>::shared_from_this;
 
     util::Logger log_{"WebServer"};
@@ -223,10 +233,12 @@ class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslS
     util::TagDecoratorFactory tagFactory_;
     std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard_;
     std::shared_ptr<HandlerType> handler_;
+    std::reference_wrapper<data::LedgerCacheInterface const> cache_;
     tcp::acceptor acceptor_;
     std::shared_ptr<AdminVerificationStrategy> adminVerification_;
     std::uint32_t maxWsSendingQueueSize_;
     std::shared_ptr<ProxyIpResolver> proxyIpResolver_;
+    std::atomic_bool isStopped_{false};
 
 public:
     /**
@@ -238,6 +250,7 @@ public:
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
      * @param handler The server handler to use
+     * @param cache The ledger cache to use
      * @param adminVerification The admin verification strategy to use
      * @param maxWsSendingQueueSize The maximum size of the sending queue for websocket
      * @param proxyIpResolver The client ip resolver if a request was forwarded by a proxy
@@ -249,6 +262,7 @@ public:
         util::TagDecoratorFactory tagFactory,
         dosguard::DOSGuardInterface& dosGuard,
         std::shared_ptr<HandlerType> handler,
+        std::reference_wrapper<data::LedgerCacheInterface const> cache,
         std::shared_ptr<AdminVerificationStrategy> adminVerification,
         std::uint32_t maxWsSendingQueueSize,
         ProxyIpResolver proxyIpResolver
@@ -258,6 +272,7 @@ public:
         , tagFactory_(tagFactory)
         , dosGuard_(std::ref(dosGuard))
         , handler_(std::move(handler))
+        , cache_(cache)
         , acceptor_(boost::asio::make_strand(ioc))
         , adminVerification_(std::move(adminVerification))
         , maxWsSendingQueueSize_(maxWsSendingQueueSize)
@@ -297,6 +312,13 @@ public:
         doAccept();
     }
 
+    /** @brief Stop accepting new connections */
+    void
+    stop(boost::asio::yield_context)
+    {
+        isStopped_ = true;
+    }
+
 private:
     void
     doAccept()
@@ -310,6 +332,10 @@ private:
     void
     onAccept(boost::beast::error_code ec, tcp::socket socket)
     {
+        if (isStopped_) {
+            return;
+        }
+
         if (!ec) {
             auto ctxRef =
                 ctx_ ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_.value()} : std::nullopt;
@@ -320,6 +346,7 @@ private:
                 std::cref(tagFactory_),
                 dosGuard_,
                 handler_,
+                cache_,
                 adminVerification_,
                 maxWsSendingQueueSize_,
                 proxyIpResolver_
@@ -343,6 +370,7 @@ using HttpServer = Server<HttpSession, SslHttpSession, HandlerType>;
  * @param ioc The server will run under this io_context
  * @param dosGuard The dos guard to protect the server
  * @param handler The handler to process the request
+ * @param cache The ledger cache to use
  * @return The server instance
  */
 template <typename HandlerType>
@@ -351,7 +379,8 @@ makeHttpServer(
     util::config::ClioConfigDefinition const& config,
     boost::asio::io_context& ioc,
     dosguard::DOSGuardInterface& dosGuard,
-    std::shared_ptr<HandlerType> const& handler
+    std::shared_ptr<HandlerType> const& handler,
+    std::reference_wrapper<data::LedgerCacheInterface const> cache
 )
 {
     static util::Logger const log{"WebServer"};  // NOLINT(readability-identifier-naming)
@@ -385,6 +414,7 @@ makeHttpServer(
         util::TagDecoratorFactory(config),
         dosGuard,
         handler,
+        cache,
         std::move(expectedAdminVerification).value(),
         maxWsSendingQueueSize,
         std::move(proxyIpResolver)

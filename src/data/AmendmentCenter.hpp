@@ -147,6 +147,12 @@ struct Amendments {
     REGISTER(fixAMMClawbackRounding);
     REGISTER(fixMPTDeliveredAmount);
     REGISTER(fixPriceOracleOrder);
+    REGISTER(DynamicMPT);
+    REGISTER(fixDelegateV1_1);
+    REGISTER(fixDirectoryLimit);
+    REGISTER(fixIncludeKeyletFields);
+    REGISTER(fixTokenEscrowV1);
+    REGISTER(LendingProtocol);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);

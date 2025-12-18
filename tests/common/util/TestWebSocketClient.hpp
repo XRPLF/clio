@@ -56,7 +56,7 @@ class WebSocketAsyncClient {
 public:
     WebSocketAsyncClient(boost::asio::io_context& ioContext);
 
-    std::optional<boost::system::error_code>
+    std::expected<void, boost::system::error_code>
     connect(
         std::string const& host,
         std::string const& port,
@@ -65,7 +65,7 @@ public:
         std::vector<WebHeader> additionalHeaders = {}
     );
 
-    std::optional<boost::system::error_code>
+    std::expected<void, boost::system::error_code>
     send(boost::asio::yield_context yield, std::string_view message, std::chrono::steady_clock::duration timeout);
 
     std::expected<std::string, boost::system::error_code>
@@ -80,7 +80,7 @@ public:
 
 class WebServerSslSyncClient {
     boost::asio::io_context ioc_;
-    std::optional<boost::beast::websocket::stream<boost::beast::ssl_stream<boost::asio::ip::tcp::socket>>> ws_;
+    std::optional<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>> ws_;
 
 public:
     void

@@ -33,7 +33,6 @@
 #include "migration/impl/MigrationManagerBase.hpp"
 #include "migration/impl/MigratorsRegister.hpp"
 #include "util/CassandraDBHelper.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/config/ConfigConstraints.hpp"
 #include "util/config/ConfigDefinition.hpp"
@@ -86,7 +85,7 @@ makeMigrationTestManagerAndBackend(ClioConfigDefinition const& config)
 }
 }  // namespace
 
-class MigrationCassandraSimpleTest : public WithPrometheus, public NoLoggerFixture {
+class MigrationCassandraSimpleTest : public WithPrometheus {
     // This function is used to prepare the database before running the tests
     // It is called in the SetUp function. Different tests can override this function to prepare the database
     // differently
@@ -96,13 +95,15 @@ class MigrationCassandraSimpleTest : public WithPrometheus, public NoLoggerFixtu
     }
 
 protected:
-    ClioConfigDefinition cfg_{
+    static constexpr auto kCASSANDRA = "cassandra";
 
-        {{"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
+    ClioConfigDefinition cfg_{
+        {{"database.type", ConfigValue{ConfigType::String}.defaultValue(kCASSANDRA)},
          {"database.cassandra.contact_points",
           ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
          {"database.cassandra.keyspace",
           ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendKeyspace)},
+         {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue(kCASSANDRA)},
          {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
          {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
          {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.defaultValue(2)},

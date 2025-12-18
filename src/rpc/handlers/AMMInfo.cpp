@@ -29,6 +29,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
 #include "util/Assert.hpp"
+#include "util/JsonUtils.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
@@ -316,11 +317,9 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
         input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
 
     if (jsonObject.contains(JS(ledger_index))) {
-        if (!jsonObject.at(JS(ledger_index)).is_string()) {
-            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jv.at(JS(ledger_index))));
-        }
+        auto const expectedLedgerIndex = util::getLedgerIndex(jsonObject.at(JS(ledger_index)));
+        if (expectedLedgerIndex.has_value())
+            input.ledgerIndex = *expectedLedgerIndex;
     }
 
     if (jsonObject.contains(JS(asset)))
@@ -331,6 +330,7 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
 
     if (jsonObject.contains(JS(account)))
         input.accountID = accountFromStringStrict(boost::json::value_to<std::string>(jsonObject.at(JS(account))));
+
     if (jsonObject.contains(JS(amm_account)))
         input.ammAccount = accountFromStringStrict(boost::json::value_to<std::string>(jsonObject.at(JS(amm_account))));
 

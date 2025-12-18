@@ -36,32 +36,28 @@ RUN apt-get update \
         libmpfr-dev \
         libncurses-dev \
         make \
-        ninja-build \
         wget \
         zip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python tools
-ARG PYTHON_VERSION=3.13
-
-RUN add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update \
+RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests \
-        python${PYTHON_VERSION} \
-        python${PYTHON_VERSION}-venv \
+        python3 \
+        python3-pip \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -sS https://bootstrap.pypa.io/get-pip.py | python${PYTHON_VERSION}
-
-# Create a virtual environment for python tools
-RUN python${PYTHON_VERSION} -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pip install -q --no-cache-dir \
+        # TODO: Remove this once we switch to newer Ubuntu base image
+        # lxml 6.0.0 is not compatible with our image
+        'lxml<6.0.0' \
         cmake \
-        conan==2.20.1 \
+        conan==2.22.1 \
         gcovr \
+        # We're adding pre-commit to this image as well,
+        # because clang-tidy workflow requires it
         pre-commit
 
 # Install LLVM tools
@@ -110,6 +106,7 @@ COPY --from=clio-tools \
     /usr/local/bin/git-cliff \
     /usr/local/bin/gh \
     /usr/local/bin/gdb \
+    /usr/local/bin/ninja \
     /usr/local/bin/
 
 WORKDIR /root

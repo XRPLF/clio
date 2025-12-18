@@ -8,14 +8,14 @@ on:
     paths:
       - .github/workflows/sanitizers.yml
 
-      - .github/workflows/build_and_test.yml
-      - .github/workflows/build_impl.yml
-      - .github/workflows/test_impl.yml
+      - .github/workflows/reusable-build-test.yml
+      - .github/workflows/reusable-build.yml
+      - .github/workflows/reusable-test.yml
 
       - ".github/actions/**"
-      - "!.github/actions/build_docker_image/**"
-      - "!.github/actions/create_issue/**"
-      - .github/scripts/execute-tests-under-sanitizer
+      - "!.github/actions/build-docker-image/**"
+      - "!.github/actions/create-issue/**"
+      - .github/scripts/execute-tests-under-sanitizer.sh
 
       - CMakeLists.txt
       - conanfile.py
@@ -41,16 +41,16 @@ jobs:
         sanitizer_ext: [.asan, .tsan, .ubsan]
         build_type: [Release, Debug]
 
-    uses: ./.github/workflows/build_and_test.yml
+    uses: ./.github/workflows/reusable-build-test.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-ci:384e79cd32f5f6c0ab9be3a1122ead41c5a7e67d" }'
-      disable_cache: true
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
+      download_ccache: false
+      upload_ccache: false
       conan_profile: ${{ matrix.compiler }}${{ matrix.sanitizer_ext }}
       build_type: ${{ matrix.build_type }}
       static: false
-      # Currently, both gcc.tsan and clang.tsan unit tests hang
-      run_unit_tests: ${{ matrix.sanitizer_ext != '.tsan' }}
+      run_unit_tests: true
       run_integration_tests: false
       upload_clio_server: false
       targets: clio_tests clio_integration_tests

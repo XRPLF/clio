@@ -1442,38 +1442,72 @@ createLptCurrency(std::string_view assetCurrency, std::string_view asset2Currenc
 }
 
 ripple::STObject
-createMptIssuanceObject(std::string_view accountId, std::uint32_t seq, std::string_view metadata)
+createMptIssuanceObject(
+    std::string_view accountId,
+    std::uint32_t seq,
+    std::optional<std::string_view> metadata,
+    std::uint32_t flags,
+    std::uint64_t outstandingAmount,
+    std::optional<std::uint16_t> transferFee,
+    std::optional<std::uint8_t> assetScale,
+    std::optional<std::uint64_t> maxAmount,
+    std::optional<std::uint64_t> lockedAmount,
+    std::optional<std::string_view> domainId,
+    std::optional<std::uint32_t> mutableFlags
+)
 {
     ripple::STObject mptIssuance(ripple::sfLedgerEntry);
     mptIssuance.setAccountID(ripple::sfIssuer, getAccountIdWithString(accountId));
     mptIssuance.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN_ISSUANCE);
-    mptIssuance.setFieldU32(ripple::sfFlags, 0);
     mptIssuance.setFieldU32(ripple::sfSequence, seq);
     mptIssuance.setFieldU64(ripple::sfOwnerNode, 0);
     mptIssuance.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    mptIssuance.setFieldU32(ripple::sfFlags, flags);
     mptIssuance.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
-    mptIssuance.setFieldU64(ripple::sfMaximumAmount, 0);
-    mptIssuance.setFieldU64(ripple::sfOutstandingAmount, 0);
-    ripple::Slice const sliceMetadata(metadata.data(), metadata.size());
-    mptIssuance.setFieldVL(ripple::sfMPTokenMetadata, sliceMetadata);
+    mptIssuance.setFieldU64(ripple::sfOutstandingAmount, outstandingAmount);
+
+    if (transferFee.has_value())
+        mptIssuance.setFieldU16(ripple::sfTransferFee, *transferFee);
+    if (assetScale.has_value())
+        mptIssuance.setFieldU8(ripple::sfAssetScale, *assetScale);
+    if (maxAmount.has_value())
+        mptIssuance.setFieldU64(ripple::sfMaximumAmount, *maxAmount);
+    if (lockedAmount.has_value())
+        mptIssuance.setFieldU64(ripple::sfLockedAmount, *lockedAmount);
+    if (metadata.has_value()) {
+        ripple::Slice const sliceMetadata(metadata->data(), metadata->size());
+        mptIssuance.setFieldVL(ripple::sfMPTokenMetadata, sliceMetadata);
+    }
+    if (domainId.has_value())
+        mptIssuance.setFieldH256(ripple::sfDomainID, ripple::uint256{*domainId});
+    if (mutableFlags.has_value())
+        mptIssuance.setFieldU32(ripple::sfMutableFlags, *mutableFlags);
 
     return mptIssuance;
 }
 
 ripple::STObject
-createMpTokenObject(std::string_view accountId, ripple::uint192 issuanceID, std::uint64_t mptAmount)
+createMpTokenObject(
+    std::string_view accountId,
+    ripple::uint192 issuanceID,
+    std::uint64_t mptAmount,
+    std::uint32_t flags,
+    std::optional<uint64_t> lockedAmount
+)
 {
     ripple::STObject mptoken(ripple::sfLedgerEntry);
     mptoken.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
     mptoken[ripple::sfMPTokenIssuanceID] = issuanceID;
     mptoken.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN);
-    mptoken.setFieldU32(ripple::sfFlags, 0);
+    mptoken.setFieldU32(ripple::sfFlags, flags);
     mptoken.setFieldU64(ripple::sfOwnerNode, 0);
     mptoken.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
     mptoken.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
 
     if (mptAmount != 0u)
         mptoken.setFieldU64(ripple::sfMPTAmount, mptAmount);
+    if (lockedAmount.has_value())
+        mptoken.setFieldU64(ripple::sfLockedAmount, *lockedAmount);
 
     return mptoken;
 }
@@ -1493,7 +1527,7 @@ createMPTIssuanceCreateTx(std::string_view accountId, uint32_t fee, uint32_t seq
 data::TransactionAndMetadata
 createMPTIssuanceCreateTxWithMetadata(std::string_view accountId, uint32_t fee, uint32_t seq)
 {
-    ripple::STObject tx = createMPTIssuanceCreateTx(accountId, fee, seq);
+    ripple::STObject const tx = createMPTIssuanceCreateTx(accountId, fee, seq);
 
     ripple::STObject metaObj(ripple::sfTransactionMetaData);
     metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
@@ -1509,7 +1543,7 @@ createMPTIssuanceCreateTxWithMetadata(std::string_view accountId, uint32_t fee, 
     newFields.setFieldU64(ripple::sfOutstandingAmount, 0);
     newFields.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
     newFields.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
-    std::string_view metadata = "test-meta";
+    std::string_view const metadata = "test-meta";
     ripple::Slice const sliceMetadata(metadata.data(), metadata.size());
     newFields.setFieldVL(ripple::sfMPTokenMetadata, sliceMetadata);
 
@@ -1520,6 +1554,66 @@ createMPTIssuanceCreateTxWithMetadata(std::string_view accountId, uint32_t fee, 
 
     ripple::STArray affectedNodes(ripple::sfAffectedNodes);
     affectedNodes.push_back(std::move(createdNode));
+    metaObj.setFieldArray(ripple::sfAffectedNodes, affectedNodes);
+
+    data::TransactionAndMetadata ret;
+    ret.transaction = tx.getSerializer().peekData();
+    ret.metadata = metaObj.getSerializer().peekData();
+    return ret;
+}
+
+ripple::STObject
+createMPTokenAuthorizeTx(
+    std::string_view accountId,
+    ripple::uint192 const& mptIssuanceID,
+    uint32_t fee,
+    uint32_t seq,
+    std::optional<std::string_view> holder,
+    std::optional<std::uint32_t> flags
+)
+{
+    ripple::STObject tx(ripple::sfTransaction);
+    tx.setFieldU16(ripple::sfTransactionType, ripple::ttMPTOKEN_AUTHORIZE);
+    tx.setAccountID(ripple::sfAccount, getAccountIdWithString(accountId));
+    tx[ripple::sfMPTokenIssuanceID] = mptIssuanceID;
+    tx.setFieldAmount(ripple::sfFee, ripple::STAmount(fee, false));
+    tx.setFieldU32(ripple::sfSequence, seq);
+    tx.setFieldVL(ripple::sfSigningPubKey, kSLICE);
+
+    if (holder)
+        tx.setAccountID(ripple::sfHolder, getAccountIdWithString(*holder));
+    if (flags)
+        tx.setFieldU32(ripple::sfFlags, *flags);
+
+    return tx;
+}
+
+data::TransactionAndMetadata
+createMPTokenAuthorizeTxWithMetadata(
+    std::string_view accountId,
+    ripple::uint192 const& mptIssuanceID,
+    uint32_t fee,
+    uint32_t seq
+)
+{
+    ripple::STObject const tx = createMPTokenAuthorizeTx(accountId, mptIssuanceID, fee, seq);
+
+    ripple::STObject metaObj(ripple::sfTransactionMetaData);
+    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
+    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+
+    ripple::STObject finalFields(ripple::sfFinalFields);
+    finalFields.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN);
+    finalFields[ripple::sfMPTokenIssuanceID] = mptIssuanceID;
+    finalFields.setFieldU64(ripple::sfMPTAmount, 0);
+
+    ripple::STObject modifiedNode(ripple::sfModifiedNode);
+    modifiedNode.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN);
+    modifiedNode.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{});
+    modifiedNode.emplace_back(std::move(finalFields));
+
+    ripple::STArray affectedNodes(ripple::sfAffectedNodes);
+    affectedNodes.push_back(std::move(modifiedNode));
     metaObj.setFieldArray(ripple::sfAffectedNodes, affectedNodes);
 
     data::TransactionAndMetadata ret;
@@ -1698,7 +1792,7 @@ createVault(
     vault[ripple::sfShareMPTID] = shareMPTID;
     vault.setFieldNumber(ripple::sfAssetsTotal, ripple::STNumber{ripple::sfAssetsTotal, 300});
     vault.setFieldNumber(ripple::sfAssetsAvailable, ripple::STNumber{ripple::sfAssetsAvailable, 300});
-    vault.setFieldNumber(ripple::sfLossUnrealized, ripple::STNumber{ripple::sfLossUnrealized, 0});
+    vault.setFieldNumber(ripple::sfLossUnrealized, ripple::STNumber{ripple::sfLossUnrealized, 1});
     vault.setFieldU8(ripple::sfWithdrawalPolicy, 200);
 
     vault.setFieldU32(ripple::sfFlags, 0);

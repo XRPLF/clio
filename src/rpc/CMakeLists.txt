@@ -24,6 +24,8 @@ target_sources(
           handlers/AccountCurrencies.cpp
           handlers/AccountInfo.cpp
           handlers/AccountLines.cpp
+          handlers/AccountMPTokenIssuances.cpp
+          handlers/AccountMPTokens.cpp
           handlers/AccountNFTs.cpp
           handlers/AccountObjects.cpp
           handlers/AccountOffers.cpp
