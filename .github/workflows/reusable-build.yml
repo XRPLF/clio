@@ -88,9 +88,9 @@ jobs:
     steps:
       - name: Cleanup workspace
         if: ${{ runner.os == 'macOS' }}
-        uses: XRPLF/actions/.github/actions/cleanup-workspace@ea9970b7c211b18f4c8bcdb28c29f5711752029f
+        uses: XRPLF/actions/cleanup-workspace@cf0433aa74563aead044a1e395610c96d65a37cf
 
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
           # We need to fetch tags to have correct version in the release
@@ -99,7 +99,7 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Prepare runner
-        uses: XRPLF/actions/.github/actions/prepare-runner@8abb0722cbff83a9a2dc7d06c473f7a4964b7382
+        uses: XRPLF/actions/prepare-runner@2ece4ec6ab7de266859a6f053571425b2bd684b6
         with:
           disable_ccache: ${{ !inputs.download_ccache }}
 
@@ -154,7 +154,7 @@ jobs:
 
       - name: Upload build time analyze report
         if: ${{ inputs.analyze_build_time }}
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: build_time_report_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build_time_report.txt
@@ -182,28 +182,28 @@ jobs:
 
       - name: Upload clio_server
         if: ${{ inputs.upload_clio_server && !inputs.code_coverage && !inputs.analyze_build_time }}
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: clio_server_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_server
 
       - name: Upload clio_tests
         if: ${{ !inputs.code_coverage && !inputs.analyze_build_time && !inputs.package }}
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_tests
 
       - name: Upload clio_integration_tests
         if: ${{ !inputs.code_coverage && !inputs.analyze_build_time && !inputs.package }}
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/clio_integration_tests
 
       - name: Upload Clio Linux package
         if: ${{ inputs.package }}
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: clio_deb_package_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: build/*.deb

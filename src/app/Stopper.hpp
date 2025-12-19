@@ -43,6 +43,7 @@ namespace app {
 class Stopper {
     boost::asio::io_context ctx_;
     std::thread worker_;
+    std::function<void()> onCompleteCallback_;
 
 public:
     /**
@@ -57,6 +58,14 @@ public:
      */
     void
     setOnStop(std::function<void(boost::asio::yield_context)> cb);
+
+    /**
+     * @brief Set the callback to be called when graceful shutdown completes.
+     *
+     * @param cb The callback to be called when shutdown completes.
+     */
+    void
+    setOnComplete(std::function<void()> cb);
 
     /**
      * @brief Stop the application and run the shutdown tasks.

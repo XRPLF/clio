@@ -45,8 +45,26 @@ jobs:
       upload_ccache: false
       expected_version: ${{ github.event_name == 'push' && github.ref_name || '' }}
 
+  package:
+    name: Build debian package
+
+    uses: ./.github/workflows/reusable-build.yml
+    with:
+      runs_on: heavy
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
+      conan_profile: gcc
+      build_type: Release
+      download_ccache: false
+      upload_ccache: false
+      code_coverage: false
+      static: true
+      upload_clio_server: false
+      package: true
+      targets: package
+      analyze_build_time: false
+
   release:
-    needs: build-and-test
+    needs: [build-and-test, package]
     uses: ./.github/workflows/reusable-release.yml
     with:
       delete_pattern: ""

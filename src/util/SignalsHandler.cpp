@@ -23,10 +23,13 @@
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
 
+#include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <csignal>
 #include <functional>
-#include <optional>
+#include <mutex>
+#include <thread>
 #include <utility>
 
 namespace util {
@@ -50,17 +53,11 @@ public:
     }
 
     static void
-    handleSignal(int signal)
+    handleSignal(int /* signal */)
     {
         ASSERT(installedHandler != nullptr, "SignalsHandler is not initialized");
-        installedHandler->stopHandler_(signal);
-    }
-
-    static void
-    handleSecondSignal(int signal)
-    {
-        ASSERT(installedHandler != nullptr, "SignalsHandler is not initialized");
-        installedHandler->secondSignalHandler_(signal);
+        installedHandler->signalReceived_ = true;
+        installedHandler->cv_.notify_one();
     }
 };
 
@@ -69,56 +66,109 @@ SignalsHandler* SignalsHandlerStatic::installedHandler = nullptr;
 }  // namespace impl
 
 SignalsHandler::SignalsHandler(config::ClioConfigDefinition const& config, std::function<void()> forceExitHandler)
-    : gracefulPeriod_(0)
-    , context_(1)
-    , stopHandler_([this, forceExitHandler](int) mutable {
-        LOG(LogService::info()) << "Got stop signal. Stopping Clio. Graceful period is "
-                                << std::chrono::duration_cast<std::chrono::milliseconds>(gracefulPeriod_).count()
-                                << " milliseconds.";
-        setHandler(impl::SignalsHandlerStatic::handleSecondSignal);
-        timer_.emplace(context_.scheduleAfter(
-            gracefulPeriod_, [forceExitHandler = std::move(forceExitHandler)](auto&& stopToken, bool canceled) {
-                // TODO: Update this after https://github.com/XRPLF/clio/issues/1380
-                if (not stopToken.isStopRequested() and not canceled) {
-                    LOG(LogService::warn()) << "Force exit at the end of graceful period.";
-                    forceExitHandler();
-                }
-            }
-        ));
-        stopSignal_();
-    })
-    , secondSignalHandler_([this, forceExitHandler = std::move(forceExitHandler)](int) {
-        LOG(LogService::warn()) << "Force exit on second signal.";
-        forceExitHandler();
-        cancelTimer();
-        setHandler();
-    })
+    : gracefulPeriod_(util::config::ClioConfigDefinition::toMilliseconds(config.get<float>("graceful_period")))
+    , forceExitHandler_(std::move(forceExitHandler))
 {
     impl::SignalsHandlerStatic::registerHandler(*this);
-
-    gracefulPeriod_ = util::config::ClioConfigDefinition::toMilliseconds(config.get<float>("graceful_period"));
+    workerThread_ = std::thread([this]() { runStateMachine(); });
     setHandler(impl::SignalsHandlerStatic::handleSignal);
 }
 
 SignalsHandler::~SignalsHandler()
 {
-    cancelTimer();
     setHandler();
+
+    state_ = State::NormalExit;
+    cv_.notify_one();
+
+    if (workerThread_.joinable())
+        workerThread_.join();
+
     impl::SignalsHandlerStatic::resetHandler();  // This is needed mostly for tests to reset static state
 }
 
 void
-SignalsHandler::cancelTimer()
+SignalsHandler::notifyGracefulShutdownComplete()
 {
-    if (timer_.has_value())
-        timer_->abort();
+    if (state_ == State::GracefulShutdown) {
+        LOG(LogService::info()) << "Graceful shutdown completed successfully.";
+        state_ = State::NormalExit;
+        cv_.notify_one();
+    }
 }
 
 void
 SignalsHandler::setHandler(void (*handler)(int))
 {
-    for (int const signal : kHANDLED_SIGNALS) {
+    for (int const signal : kHANDLED_SIGNALS)
         std::signal(signal, handler == nullptr ? SIG_DFL : handler);
+}
+
+void
+SignalsHandler::runStateMachine()
+{
+    while (state_ != State::NormalExit) {
+        auto currentState = state_.load();
+
+        switch (currentState) {
+            case State::WaitingForSignal: {
+                {
+                    std::unique_lock<std::mutex> lock(mutex_);
+                    cv_.wait(lock, [this]() { return signalReceived_ or state_ == State::NormalExit; });
+                }
+
+                if (state_ == State::NormalExit)
+                    return;
+
+                LOG(
+                    LogService::info()
+                ) << "Got stop signal. Stopping Clio. Graceful period is "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(gracefulPeriod_).count() << " milliseconds.";
+
+                state_ = State::GracefulShutdown;
+                signalReceived_ = false;
+
+                stopSignal_();
+                break;
+            }
+
+            case State::GracefulShutdown: {
+                bool waitResult = false;
+                {
+                    std::unique_lock<std::mutex> lock(mutex_);
+
+                    // Wait for either:
+                    // 1. Graceful period to elapse (timeout)
+                    // 2. Another signal (signalReceived_)
+                    // 3. Graceful shutdown completion (state changes to NormalExit)
+                    waitResult = cv_.wait_for(lock, gracefulPeriod_, [this]() {
+                        return signalReceived_ or state_ == State::NormalExit;
+                    });
+                }
+
+                if (state_ == State::NormalExit)
+                    break;
+
+                if (signalReceived_) {
+                    LOG(LogService::warn()) << "Force exit on second signal.";
+                    state_ = State::ForceExit;
+                    signalReceived_ = false;
+                } else if (not waitResult) {
+                    LOG(LogService::warn()) << "Force exit at the end of graceful period.";
+                    state_ = State::ForceExit;
+                }
+                break;
+            }
+
+            case State::ForceExit: {
+                forceExitHandler_();
+                state_ = State::NormalExit;
+                break;
+            }
+
+            case State::NormalExit:
+                return;
+        }
     }
 }
 

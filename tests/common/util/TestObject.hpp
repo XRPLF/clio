@@ -461,7 +461,8 @@ createMptIssuanceObject(
     std::optional<std::uint8_t> assetScale = std::nullopt,
     std::optional<std::uint64_t> maxAmount = std::nullopt,
     std::optional<std::uint64_t> lockedAmount = std::nullopt,
-    std::optional<std::string_view> domainId = std::nullopt
+    std::optional<std::string_view> domainId = std::nullopt,
+    std::optional<std::uint32_t> mutableFlags = std::nullopt
 );
 
 [[nodiscard]] ripple::STObject

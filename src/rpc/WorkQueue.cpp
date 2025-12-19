@@ -34,8 +34,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <utility>
-#include <vector>
 
 namespace rpc {
 
@@ -122,7 +122,7 @@ WorkQueue::dispatcherLoop(boost::asio::yield_context yield)
 
     // all ongoing tasks must be completed before stopping fully
     while (not stopping_ or size() > 0) {
-        std::vector<TaskType> batch;
+        std::optional<TaskType> task;
 
         {
             auto state = dispatcherState_.lock();
@@ -130,43 +130,31 @@ WorkQueue::dispatcherLoop(boost::asio::yield_context yield)
             if (state->empty()) {
                 state->isIdle = true;
             } else {
-                for (auto count = 0uz; count < kTAKE_HIGH_PRIO and not state->high.empty(); ++count) {
-                    batch.push_back(std::move(state->high.front()));
-                    state->high.pop();
-                }
-
-                if (not state->normal.empty()) {
-                    batch.push_back(std::move(state->normal.front()));
-                    state->normal.pop();
-                }
+                task = state->popNext();
             }
         }
 
-        if (not stopping_ and batch.empty()) {
+        if (not stopping_ and not task.has_value()) {
             waitTimer_.expires_at(std::chrono::steady_clock::time_point::max());
             boost::system::error_code ec;
             waitTimer_.async_wait(yield[ec]);
-        } else {
-            for (auto task : std::move(batch)) {
-                util::spawn(
-                    ioc_,
-                    [this, spawnedAt = std::chrono::system_clock::now(), task = std::move(task)](auto yield) mutable {
-                        auto const takenAt = std::chrono::system_clock::now();
-                        auto const waited =
-                            std::chrono::duration_cast<std::chrono::microseconds>(takenAt - spawnedAt).count();
+        } else if (task.has_value()) {
+            util::spawn(
+                ioc_,
+                [this, spawnedAt = std::chrono::system_clock::now(), task = std::move(*task)](auto yield) mutable {
+                    auto const takenAt = std::chrono::system_clock::now();
+                    auto const waited =
+                        std::chrono::duration_cast<std::chrono::microseconds>(takenAt - spawnedAt).count();
 
-                        ++queued_.get();
-                        durationUs_.get() += waited;
-                        LOG(log_.info()) << "WorkQueue wait time: " << waited << ", queue size: " << size();
+                    ++queued_.get();
+                    durationUs_.get() += waited;
+                    LOG(log_.info()) << "WorkQueue wait time: " << waited << ", queue size: " << size();
 
-                        task(yield);
+                    task(yield);
 
-                        --curSize_.get();
-                    }
-                );
-            }
-
-            boost::asio::post(ioc_.get_executor(), yield);  // yield back to avoid hijacking the thread
+                    --curSize_.get();
+                }
+            );
         }
     }
 
