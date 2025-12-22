@@ -28,12 +28,7 @@
 #include "util/prometheus/Prometheus.hpp"
 
 #include <benchmark/benchmark.h>
-#include <boost/asio.hpp>
-#include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/asio/thread_pool.hpp>
-#include <boost/json.hpp>
-#include <boost/json/object.hpp>
 
 #include <atomic>
 #include <cassert>
