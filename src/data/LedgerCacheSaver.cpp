@@ -30,7 +30,9 @@
 namespace data {
 
 LedgerCacheSaver::LedgerCacheSaver(util::config::ClioConfigDefinition const& config, LedgerCacheInterface const& cache)
-    : cacheFilePath_(config.maybeValue<std::string>("cache.file.path")), cache_(cache)
+    : cacheFilePath_(config.maybeValue<std::string>("cache.file.path"))
+    , cache_(cache)
+    , isAsync_(config.get<bool>("cache.file.async_save"))
 {
 }
 
@@ -56,6 +58,9 @@ LedgerCacheSaver::save()
             LOG(util::LogService::error()) << "Error saving LedgerCache to file: " << success.error();
         }
     });
+    if (not isAsync_) {
+        waitToFinish();
+    }
 }
 
 void

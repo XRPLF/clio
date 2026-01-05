@@ -53,6 +53,7 @@ class LedgerCacheSaver {
     std::optional<std::string> cacheFilePath_;
     std::reference_wrapper<LedgerCacheInterface const> cache_;
     std::optional<std::thread> savingThread_;
+    bool isAsync_;
 
 public:
     /**
