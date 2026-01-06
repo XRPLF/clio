@@ -8,7 +8,54 @@ on:
 
 jobs:
   run-hooks:
-    uses: XRPLF/actions/.github/workflows/pre-commit.yml@34790936fae4c6c751f62ec8c06696f9c1a5753a
-    with:
-      runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-pre-commit:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
+    runs-on: heavy
+    container:
+      image: ghcr.io/xrplf/clio-pre-commit:067449c3f8ae6755ea84752ea2962b589fe56c8f
+
+    steps:
+      - name: Checkout Repo ⚡️
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+
+      - name: Prepare runner 🚀
+        uses: XRPLF/actions/.github/actions/prepare-runner@7951b682e5a2973b28b0719a72f01fc4b0d0c34f
+        with:
+          disable_ccache: true
+
+      - name: Restore pre-commit cache 💾
+        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            pre-commit-${{ runner.os }}-
+
+      - name: Run pre-commit ✅
+        env:
+          MESSAGE: |
+            One or more files did not conform to the formatting.
+            Maybe you did not enable 'pre-commit' hooks in your local repository?
+
+            To install the `pre-commit` hooks, run: `pre-commit install`
+
+            To run `pre-commit` hooks on all files, run 'pre-commit run --all-files' in the repo.
+            Then commit and push the changes.
+        run: |
+          set +e
+          pre-commit run --all-files --show-diff-on-failure --color always
+          rc=$?
+          set -e
+
+          if [ $rc -ne 0 ]; then
+            # Print the files that changed to give the contributor a hint about
+            # what to expect when running `pre-commit` on their own machine.
+            git status
+            echo "${MESSAGE}"
+            exit 1
+          fi
+
+      - name: Save pre-commit cache 💾
+        if: github.ref == 'refs/heads/develop'
+        uses: actions/cache/save@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
