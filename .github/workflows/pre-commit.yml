@@ -9,6 +9,8 @@ on:
 jobs:
   run-hooks:
     runs-on: heavy
+    permissions:
+      contents: read
     container:
       image: ghcr.io/xrplf/clio-pre-commit:067449c3f8ae6755ea84752ea2962b589fe56c8f
 
