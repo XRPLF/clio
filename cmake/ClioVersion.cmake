@@ -25,7 +25,7 @@ else ()
   )
 
   if (DEFINED ENV{GITHUB_BRANCH_NAME})
-    # Please, see cmake action in .github/actions/ for details
+    # Please, see .github/actions/cmake/action.yml for details
     set(BRANCH $ENV{GITHUB_BRANCH_NAME})
     set(GITHUB_HEAD_SHA $ENV{GITHUB_HEAD_SHA})
     string(SUBSTRING ${GITHUB_HEAD_SHA} 0 7 REV)
