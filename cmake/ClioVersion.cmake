@@ -27,7 +27,8 @@ else ()
   if (DEFINED ENV{GITHUB_REF_NAME})
     # Please, see cmake action in .github/actions/ for details
     set(BRANCH $ENV{GITHUB_REF_NAME})
-    set(REV $ENV{GITHUB_HEAD_SHA})
+    set(GITHUB_HEAD_SHA $ENV{GITHUB_HEAD_SHA})
+    string(SUBSTRING ${GITHUB_HEAD_SHA} 0 7 REV)
   else ()
     set(GIT_COMMAND branch --show-current)
     execute_process(
