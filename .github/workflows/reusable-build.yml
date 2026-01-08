@@ -85,10 +85,6 @@ jobs:
     runs-on: ${{ inputs.runs_on }}
     container: ${{ inputs.container != '' && fromJson(inputs.container) || null }}
 
-    env:
-      # The way we checkout the code overrides github.head_ref, so we need to set the branch name manually
-      GITHUB_BRANCH_NAME: "${{ github.head_ref || github.ref_name }}"
-
     steps:
       - name: Cleanup workspace
         if: ${{ runner.os == 'macOS' }}

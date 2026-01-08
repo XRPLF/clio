@@ -58,7 +58,9 @@ runs:
         TIME_TRACE: "${{ inputs.time_trace == 'true' && 'ON' || 'OFF' }}"
         PACKAGE: "${{ inputs.package == 'true' && 'ON' || 'OFF' }}"
         # GitHub creates merge commits for PRS, so we:
+        # - explicitly provide branch name
         # - provide `github.head_ref` to get the actual commit SHA of the PR branch.
+        GITHUB_BRANCH_NAME: "${{ github.head_ref || github.ref_name }}"
         GITHUB_HEAD_SHA: "${{ github.event.pull_request.head.sha || github.sha }}"
       run: |
         cmake \
