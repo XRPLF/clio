@@ -52,6 +52,7 @@
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/async/AnyExecutionContext.hpp"
 #include "util/async/AnyOperation.hpp"
+#include "util/async/AnyStrand.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
 
@@ -69,6 +70,7 @@
 #include <xrpl/protocol/TxFormats.h>
 #include <xrpl/protocol/TxMeta.h>
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -117,6 +119,8 @@ class ETLService : public ETLServiceInterface {
     boost::signals2::scoped_connection monitorNewSeqSubscription_;
     boost::signals2::scoped_connection monitorDbStalledSubscription_;
     boost::signals2::scoped_connection systemStateWriteCommandSubscription_;
+    util::async::AnyStrand writeCommandStrand_;
+    std::atomic<size_t> runningWriteCommandHandlers_{0};
 
     std::optional<util::async::AnyOperation<void>> mainLoop_;
 
