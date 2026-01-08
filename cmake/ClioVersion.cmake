@@ -24,9 +24,9 @@ else ()
     OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ERROR_IS_FATAL ANY
   )
 
-  if (DEFINED ENV{GITHUB_REF_NAME})
+  if (DEFINED ENV{GITHUB_BRANCH_NAME})
     # Please, see cmake action in .github/actions/ for details
-    set(BRANCH $ENV{GITHUB_REF_NAME})
+    set(BRANCH $ENV{GITHUB_BRANCH_NAME})
     set(GITHUB_HEAD_SHA $ENV{GITHUB_HEAD_SHA})
     string(SUBSTRING ${GITHUB_HEAD_SHA} 0 7 REV)
   else ()
