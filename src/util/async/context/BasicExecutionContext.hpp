@@ -129,7 +129,7 @@ template <
     typename DispatcherType,
     typename TimerContextProvider = impl::SelfContextProvider,
     typename ErrorHandlerType = impl::DefaultErrorHandler>
-class BasicExecutionContext {
+class BasicExecutionContext : public ExecutionContextTag {
     ContextType context_;
 
     /** @cond */
@@ -182,7 +182,7 @@ public:
     /**
      * @brief Stops the underlying thread pool.
      */
-    ~BasicExecutionContext()
+    ~BasicExecutionContext() override
     {
         stop();
     }
@@ -402,6 +402,20 @@ public:
     {
         context_.join();
     }
+
+    /**
+     * @brief Get the underlying executor.
+     *
+     * Provides access to the wrapped executor for cases where the execution context
+     * needs to interact with components that require explicit executor access (like Channel).
+     *
+     * @return Reference to the underlying executor
+     */
+    typename ContextType::Executor&
+    getExecutor()
+    {
+        return context_.getExecutor();
+    }
 };
 
 /**
@@ -428,3 +442,4 @@ using PoolExecutionContext =
     BasicExecutionContext<impl::AsioPoolContext, impl::BasicStopSource, impl::PostDispatchStrategy>;
 
 }  // namespace util::async
+

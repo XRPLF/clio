@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "util/async/Concepts.hpp"
+
 #include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/experimental/channel.hpp>
 #include <boost/asio/experimental/concurrent_channel.hpp>
@@ -42,7 +44,20 @@ struct ChannelInstantiated;
 }  // namespace detail
 #endif
 
+/**
+ * @brief Specifies the producer concurrency model for a Channel.
+ *
+ * - Single: Only one Sender can exist (non-copyable). Uses direct Guard ownership for zero overhead.
+ * - Multi: Multiple Senders can exist (copyable). Uses shared_ptr<Guard> for shared ownership.
+ */
 enum class ProducerType { Single, Multi };
+
+/**
+ * @brief Specifies the consumer concurrency model for a Channel.
+ *
+ * - Single: Only one Receiver can exist (non-copyable). Uses direct Guard ownership for zero overhead.
+ * - Multi: Multiple Receivers can exist (copyable). Uses shared_ptr<Guard> for shared ownership.
+ */
 enum class ConsumerType { Single, Multi };
 
 /**
@@ -66,7 +81,16 @@ private:
         InternalChannelType ch_;
 
     public:
-        ControlBlock(auto&& context, std::size_t capacity) : executor_(context.get_executor()), ch_(context, capacity)
+        template <typename ContextType>
+            requires(not async::SomeExecutionContext<ContextType>)
+        ControlBlock(ContextType&& context, std::size_t capacity)
+            : executor_(context.get_executor()), ch_(context, capacity)
+        {
+        }
+
+        template <async::SomeExecutionContext ContextType>
+        ControlBlock(ContextType&& context, std::size_t capacity)
+            : executor_(context.getExecutor().get_executor()), ch_(context.getExecutor(), capacity)
         {
         }
 

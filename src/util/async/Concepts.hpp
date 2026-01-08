@@ -30,6 +30,27 @@
 namespace util::async {
 
 /**
+ * @brief Tag type for identifying execution context types.
+ *
+ * Types that inherit from this tag can be detected using the SomeExecutionContext concept.
+ * This allows generic code to differentiate between raw Boost.Asio contexts and wrapped execution contexts.
+ */
+struct ExecutionContextTag {
+    virtual ~ExecutionContextTag() = default;
+};
+
+/**
+ * @brief Concept that identifies types derived from ExecutionContextTag.
+ *
+ * This concept is used to detect custom execution context wrappers (like BasicExecutionContext)
+ * and distinguish them from raw Boost.Asio contexts (io_context, thread_pool, etc.).
+ *
+ * @tparam T The type to check
+ */
+template <typename T>
+concept SomeExecutionContext = std::derived_from<std::remove_cvref_t<T>, ExecutionContextTag>;
+
+/**
  * @brief Specifies the interface for an entity that can be stopped
  */
 template <typename T>
