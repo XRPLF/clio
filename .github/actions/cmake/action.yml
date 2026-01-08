@@ -59,8 +59,8 @@ runs:
         PACKAGE: "${{ inputs.package == 'true' && 'ON' || 'OFF' }}"
         # GitHub creates merge commits for PRS, so we:
         # - explicitly provide branch name
-        # - provide `github.event.pull_request.head.sha` to get the actual commit SHA of the PR branch.
-        GITHUB_BRANCH_NAME: "${{ github.event.pull_request.head.ref || github.ref_name }}"
+        # - provide `github.head_ref` to get the actual commit SHA of the PR branch.
+        GITHUB_BRANCH_NAME: "${{ github.head_ref || github.ref_name }}"
         GITHUB_HEAD_SHA: "${{ github.event.pull_request.head.sha || github.sha }}"
       run: |
         cmake \
