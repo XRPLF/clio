@@ -442,4 +442,3 @@ using PoolExecutionContext =
     BasicExecutionContext<impl::AsioPoolContext, impl::BasicStopSource, impl::PostDispatchStrategy>;
 
 }  // namespace util::async
-

@@ -376,7 +376,6 @@ ETLService::startMonitor(uint32_t seq)
     monitorNewSeqSubscription_ = monitor_->subscribeToNewSequence([this](uint32_t seq) {
         LOG(log_.info()) << "ETLService (via Monitor) got new seq from db: " << seq;
 
-        // TODO(skuznetsov): check that this doesn't break anything
         auto const cacheNeedsUpdate = backend_->cache().latestLedgerSequence() < seq;
         auto const backendRange = backend_->fetchLedgerRange();
         auto const backendNeedsUpdate = backendRange.has_value() and backendRange->maxSequence < seq;

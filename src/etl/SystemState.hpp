@@ -19,10 +19,10 @@
 
 #pragma once
 
+#include "util/Channel.hpp"
 #include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
-#include "util/Channel.hpp"
 
 #include <boost/signals2/signal.hpp>
 #include <boost/signals2/variadic_signal.hpp>
