@@ -165,7 +165,7 @@ private:
         asyncSend(D&& data, std::invocable<bool> auto&& fn)
             requires(std::convertible_to<std::remove_cvref_t<D>, std::remove_cvref_t<T>>)
         {
-            boost::system::error_code ecIn;
+            boost::system::error_code const ecIn;
             shared_->channel().async_send(
                 ecIn,
                 std::forward<D>(data),

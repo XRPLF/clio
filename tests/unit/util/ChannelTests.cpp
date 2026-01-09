@@ -27,11 +27,8 @@
 #include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/asio/strand.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/system/detail/error_code.hpp>
-#include <fmt/format.h>
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -238,7 +235,7 @@ TEST_P(ChannelSpawnTest, ChannelClosureScenarios)
 
             EXPECT_FALSE(receiver.isClosed());
 
-            bool success = sender.asyncSend(42, yield);
+            bool const success = sender.asyncSend(42, yield);
             EXPECT_TRUE(success);
 
             auto value = receiver.asyncReceive(yield);
@@ -575,7 +572,7 @@ TEST(ChannelTest, MultipleSenderCopiesErrorHandling)
     util::spawn(executor, [&executor, &testCompleted](boost::asio::yield_context yield) mutable {
         auto [sender, receiver] = util::Channel<int>::create(executor, 5);
 
-        bool success = sender.asyncSend(42, yield);
+        bool const success = sender.asyncSend(42, yield);
         EXPECT_TRUE(success);
 
         auto value = receiver.asyncReceive(yield);
