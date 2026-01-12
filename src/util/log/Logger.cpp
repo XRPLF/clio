@@ -271,6 +271,12 @@ LogServiceState::initialized()
     return initialized_;
 }
 
+bool
+LogServiceState::hasSinks()
+{
+    return not sinks_.empty();
+}
+
 void
 LogServiceState::reset()
 {

@@ -268,6 +268,14 @@ protected:
     initialized();
 
     /**
+     * @brief Whether the LogService has any sink. If there is no sink, logger will not log messages anywhere.
+     *
+     * @return true if the LogService has at least one sink
+     */
+    [[nodiscard]] static bool
+    hasSinks();
+
+    /**
      * @brief Reset the logging service to uninitialized state.
      */
     static void
