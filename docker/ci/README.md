@@ -5,15 +5,15 @@ It is used in [Clio Github Actions](https://github.com/XRPLF/clio/actions) but c
 
 The image is based on Ubuntu 20.04 and contains:
 
-- ccache 4.12.1
+- ccache 4.12.2
 - Clang 19
 - ClangBuildAnalyzer 1.6.0
-- Conan 2.22.1
-- Doxygen 1.15.0
+- Conan 2.24.0
+- Doxygen 1.16.1
 - GCC 15.2.0
-- GDB 16.3
-- gh 2.82.1
-- git-cliff 2.10.1
+- GDB 17.1
+- gh 2.83.2
+- git-cliff 2.11.0
 - mold 2.40.4
 - Ninja 1.13.2
 - Python 3.8

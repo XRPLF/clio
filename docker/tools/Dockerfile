@@ -42,7 +42,7 @@ RUN wget --progress=dot:giga "https://github.com/rui314/mold/archive/refs/tags/v
     && ninja install \
     && rm -rf /tmp/* /var/tmp/*
 
-ARG CCACHE_VERSION=4.12.1
+ARG CCACHE_VERSION=4.12.2
 RUN wget --progress=dot:giga "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}.tar.gz" \
     && tar xf "ccache-${CCACHE_VERSION}.tar.gz" \
     && cd "ccache-${CCACHE_VERSION}" \
@@ -59,7 +59,7 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-ARG DOXYGEN_VERSION=1.15.0
+ARG DOXYGEN_VERSION=1.16.1
 RUN wget --progress=dot:giga "https://github.com/doxygen/doxygen/releases/download/Release_${DOXYGEN_VERSION//./_}/doxygen-${DOXYGEN_VERSION}.src.tar.gz" \
     && tar xf "doxygen-${DOXYGEN_VERSION}.src.tar.gz" \
     && cd "doxygen-${DOXYGEN_VERSION}" \
@@ -79,13 +79,13 @@ RUN wget --progress=dot:giga "https://github.com/aras-p/ClangBuildAnalyzer/archi
     && ninja install \
     && rm -rf /tmp/* /var/tmp/*
 
-ARG GIT_CLIFF_VERSION=2.10.1
+ARG GIT_CLIFF_VERSION=2.11.0
 RUN wget --progress=dot:giga "https://github.com/orhun/git-cliff/releases/download/v${GIT_CLIFF_VERSION}/git-cliff-${GIT_CLIFF_VERSION}-x86_64-unknown-linux-musl.tar.gz" \
     && tar xf git-cliff-${GIT_CLIFF_VERSION}-x86_64-unknown-linux-musl.tar.gz \
     && mv git-cliff-${GIT_CLIFF_VERSION}/git-cliff /usr/local/bin/git-cliff \
     && rm -rf /tmp/* /var/tmp/*
 
-ARG GH_VERSION=2.82.1
+ARG GH_VERSION=2.83.2
 RUN wget --progress=dot:giga "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz" \
     && tar xf gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz \
     && mv gh_${GH_VERSION}_linux_${TARGETARCH}/bin/gh /usr/local/bin/gh \
@@ -100,7 +100,7 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-ARG GDB_VERSION=16.3
+ARG GDB_VERSION=17.1
 RUN wget --progress=dot:giga "https://sourceware.org/pub/gdb/releases/gdb-${GDB_VERSION}.tar.gz" \
     && tar xf "gdb-${GDB_VERSION}.tar.gz" \
     && cd "gdb-${GDB_VERSION}" \
