@@ -141,7 +141,8 @@ private:
         asyncSend(D&& data, boost::asio::yield_context yield)
             requires(std::convertible_to<std::remove_cvref_t<D>, std::remove_cvref_t<T>>)
         {
-            boost::system::error_code ecIn, ecOut;
+            boost::system::error_code const ecIn;
+            boost::system::error_code ecOut;
             shared_->channel().async_send(ecIn, std::forward<D>(data), yield[ecOut]);
 
             // Workaround: asio channels bug returns ec=0 on cancel, check isClosed() instead
