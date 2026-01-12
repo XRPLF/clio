@@ -20,7 +20,7 @@ class ClioConan(ConanFile):
         "xrpl/3.0.0",
         "zlib/1.3.1",
         "libbacktrace/cci.20210118",
-        "spdlog/1.16.0",
+        "spdlog/1.17.0",
     ]
 
     default_options = {
@@ -42,9 +42,9 @@ class ClioConan(ConanFile):
     exports_sources = ("CMakeLists.txt", "cmake/*", "src/*")
 
     def requirements(self):
-        self.requires("gtest/1.14.0")
+        self.requires("gtest/1.17.0")
         self.requires("benchmark/1.9.4")
-        self.requires("fmt/12.1.0", force=True)
+        self.requires("fmt/12.1.0")
 
     def configure(self):
         if self.settings.compiler == "apple-clang":
