@@ -51,13 +51,19 @@ WriterDecider::onNewState(ClioNode::cUUID selfId, std::shared_ptr<Backend::Clust
         [writerState = writerState_->clone(),
          selfId = std::move(selfId),
          clusterData = clusterData->value()](auto&&) mutable {
+            // Find this node's data in the cluster state
             auto const selfData =
                 std::ranges::find_if(clusterData, [&selfId](ClioNode const& node) { return node.uuid == selfId; });
             ASSERT(selfData != clusterData.end(), "Self data should always be in the cluster data");
+
+            // ReadOnly nodes never participate in writer decisions
+            // Fallback nodes have already switched to fallback mechanism
             if (selfData->dbRole == ClioNode::DbRole::ReadOnly or selfData->dbRole == ClioNode::DbRole::Fallback) {
                 return;
             }
 
+            // If any node in the cluster is in Fallback mode, the entire cluster must switch
+            // to the fallback writer decision mechanism for consistency
             if (std::ranges::any_of(clusterData, [](ClioNode const& node) {
                     return node.dbRole == ClioNode::DbRole::Fallback;
                 })) {

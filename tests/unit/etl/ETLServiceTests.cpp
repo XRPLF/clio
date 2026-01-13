@@ -459,8 +459,10 @@ TEST_F(ETLServiceTests, AttemptTakeoverWriter)
 
     ASSERT_TRUE(capturedDbStalledCallback);
     EXPECT_FALSE(systemState_->isWriting);  // will attempt to become writer after new sequence appears but not yet
+    EXPECT_FALSE(systemState_->isWriterDecidingFallback);
     capturedDbStalledCallback();
     EXPECT_TRUE(systemState_->isWriting);  // should attempt to become writer
+    EXPECT_TRUE(systemState_->isWriterDecidingFallback);  // fallback mode activated
 }
 
 TEST_F(ETLServiceTests, GiveUpWriterAfterWriteConflict)
@@ -576,9 +578,12 @@ TEST_F(ETLServiceTests, DbStalledDoesNotTriggerSignalWhenStrictReadonly)
     systemState_->isWriting = false;
 
     // No signal should be emitted because node is in strict readonly mode
+    // But fallback flag should still be set
 
     ASSERT_TRUE(capturedDbStalledCallback);
+    EXPECT_FALSE(systemState_->isWriterDecidingFallback);
     capturedDbStalledCallback();
+    EXPECT_TRUE(systemState_->isWriterDecidingFallback);  // fallback mode activated even in readonly
 }
 
 TEST_F(ETLServiceTests, DbStalledDoesNotTriggerSignalWhenAlreadyWriting)
@@ -607,9 +612,12 @@ TEST_F(ETLServiceTests, DbStalledDoesNotTriggerSignalWhenAlreadyWriting)
     systemState_->isWriting = true;  // already writing
 
     // No signal should be emitted because node is already writing
+    // But fallback flag should still be set
 
     ASSERT_TRUE(capturedDbStalledCallback);
+    EXPECT_FALSE(systemState_->isWriterDecidingFallback);
     capturedDbStalledCallback();
+    EXPECT_TRUE(systemState_->isWriterDecidingFallback);  // fallback mode activated
 }
 
 TEST_F(ETLServiceTests, CacheUpdatesDependOnActualCacheState_WriterMode)
@@ -849,3 +857,6 @@ TEST_F(ETLServiceTests, WriteCommandsAreSerializedOnStrand)
     // Final state should be writing (last signal was StartWriting)
     EXPECT_TRUE(systemState_->isWriting);
 }
+
+
+

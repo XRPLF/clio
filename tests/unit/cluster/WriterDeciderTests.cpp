@@ -37,7 +37,7 @@
 
 using namespace cluster;
 
-enum class ExpectedAction { StartWriting, GiveUpWriting, NoAction };
+enum class ExpectedAction { StartWriting, GiveUpWriting, NoAction, SetFallback };
 
 struct WriterDeciderTestParams {
     std::string testName;
@@ -97,6 +97,10 @@ TEST_P(WriterDeciderTest, WriterSelection)
             EXPECT_CALL(*clonedState, giveUpWriting());
             EXPECT_CALL(writerStateRef, clone()).WillOnce(testing::Return(testing::ByMove(std::move(clonedState))));
             break;
+        case ExpectedAction::SetFallback:
+            EXPECT_CALL(*clonedState, setWriterDecidingFallback());
+            EXPECT_CALL(writerStateRef, clone()).WillOnce(testing::Return(testing::ByMove(std::move(clonedState))));
+            break;
         case ExpectedAction::NoAction:
             if (not params.useEmptyClusterData) {
                 // For all-ReadOnly case, we still clone but don't call any action
@@ -107,19 +111,25 @@ TEST_P(WriterDeciderTest, WriterSelection)
     }
 
     std::shared_ptr<Backend::ClusterData> clusterData;
+    ClioNode::cUUID selfIdPtr;
 
     if (params.useEmptyClusterData) {
         clusterData = std::make_shared<Backend::ClusterData>(std::unexpected(std::string("Communication failed")));
+        selfIdPtr = std::make_shared<boost::uuids::uuid>(selfUuid);
     } else {
         std::vector<ClioNode> nodes;
         nodes.reserve(params.nodes.size());
         for (auto const& [uuidValue, role] : params.nodes) {
-            nodes.push_back(makeNode(makeUuid(uuidValue), role));
+            auto node = makeNode(makeUuid(uuidValue), role);
+            if (uuidValue == params.selfUuidValue) {
+                selfIdPtr = node.uuid;  // Use the same shared_ptr as in the node
+            }
+            nodes.push_back(std::move(node));
         }
         clusterData = std::make_shared<Backend::ClusterData>(std::move(nodes));
     }
 
-    decider.onNewState(std::make_shared<boost::uuids::uuid>(selfUuid), clusterData);
+    decider.onNewState(selfIdPtr, clusterData);
 
     ctx.join();
 }
@@ -220,6 +230,43 @@ INSTANTIATE_TEST_SUITE_P(
                  {0x03, ClioNode::DbRole::Writer},
                  {0x02, ClioNode::DbRole::ReadOnly}},
             .expectedAction = ExpectedAction::StartWriting
+        },
+        WriterDeciderTestParams{
+            .testName = "SelfIsFallbackNoActionTaken",
+            .selfUuidValue = 0x01,
+            .nodes = {{0x01, ClioNode::DbRole::Fallback}, {0x02, ClioNode::DbRole::Writer}},
+            .expectedAction = ExpectedAction::NoAction
+        },
+        WriterDeciderTestParams{
+            .testName = "OtherNodeIsFallbackSetsFallbackMode",
+            .selfUuidValue = 0x01,
+            .nodes = {{0x01, ClioNode::DbRole::Writer}, {0x02, ClioNode::DbRole::Fallback}},
+            .expectedAction = ExpectedAction::SetFallback
+        },
+        WriterDeciderTestParams{
+            .testName = "SelfIsReadOnlyOthersAreFallbackNoActionTaken",
+            .selfUuidValue = 0x01,
+            .nodes = {{0x01, ClioNode::DbRole::ReadOnly}, {0x02, ClioNode::DbRole::Fallback}},
+            .expectedAction = ExpectedAction::NoAction
+        },
+        WriterDeciderTestParams{
+            .testName = "MultipleFallbackNodesSelfNotFallbackSetsFallback",
+            .selfUuidValue = 0x03,
+            .nodes =
+                {{0x01, ClioNode::DbRole::Fallback},
+                 {0x02, ClioNode::DbRole::Fallback},
+                 {0x03, ClioNode::DbRole::Writer}},
+            .expectedAction = ExpectedAction::SetFallback
+        },
+        WriterDeciderTestParams{
+            .testName = "MixedRolesWithOneFallbackSetsFallback",
+            .selfUuidValue = 0x02,
+            .nodes =
+                {{0x01, ClioNode::DbRole::Writer},
+                 {0x02, ClioNode::DbRole::NotWriter},
+                 {0x03, ClioNode::DbRole::Fallback},
+                 {0x04, ClioNode::DbRole::Writer}},
+            .expectedAction = ExpectedAction::SetFallback
         }
     ),
     [](testing::TestParamInfo<WriterDeciderTestParams> const& info) { return info.param.testName; }

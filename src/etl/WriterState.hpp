@@ -68,9 +68,22 @@ public:
     virtual void
     giveUpWriting() = 0;
 
+    /**
+     * @brief Check if the cluster is using the fallback writer decision mechanism.
+     *
+     * @return true if the cluster has switched to fallback mode, false otherwise
+     */
     [[nodiscard]] virtual bool
     isFallback() const = 0;
 
+    /**
+     * @brief Switch the cluster to the fallback writer decision mechanism.
+     *
+     * This method is called when the cluster needs to transition from the cluster
+     * communication mechanism to the slower but more reliable fallback mechanism.
+     * Once set, this flag propagates to all nodes in the cluster through the
+     * ClioNode DbRole::Fallback state.
+     */
     virtual void
     setWriterDecidingFallback() = 0;
 
@@ -124,9 +137,20 @@ public:
     void
     giveUpWriting() override;
 
+    /**
+     * @brief Switch the cluster to the fallback writer decision mechanism.
+     *
+     * Sets the isWriterDecidingFallback flag in the system state, which will be
+     * propagated to other nodes in the cluster through the ClioNode DbRole::Fallback state.
+     */
     void
     setWriterDecidingFallback() override;
 
+    /**
+     * @brief Check if the cluster is using the fallback writer decision mechanism.
+     *
+     * @return true if the cluster has switched to fallback mode, false otherwise
+     */
     bool
     isFallback() const override;
 
@@ -135,3 +159,5 @@ public:
 };
 
 }  // namespace etl
+
+

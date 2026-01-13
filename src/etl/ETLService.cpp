@@ -395,6 +395,8 @@ ETLService::startMonitor(uint32_t seq)
 
     monitorDbStalledSubscription_ = monitor_->subscribeToDbStalled([this]() {
         LOG(log_.warn()) << "ETLService received DbStalled signal from Monitor";
+        // Database stall detected - no writer has been active for 10 seconds
+        // This triggers the fallback mechanism and attempts to become the writer
         if (not state_->isStrictReadonly and not state_->isWriting)
             state_->writeCommandSignal(SystemState::WriteCommand::StartWriting);
         state_->isWriterDecidingFallback = true;
@@ -435,3 +437,4 @@ ETLService::giveUpWriter()
 }
 
 }  // namespace etl
+

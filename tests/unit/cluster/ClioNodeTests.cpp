@@ -111,7 +111,8 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         ClioNodeDbRoleTestBundle{.testName = "ReadOnly", .role = ClioNode::DbRole::ReadOnly},
         ClioNodeDbRoleTestBundle{.testName = "NotWriter", .role = ClioNode::DbRole::NotWriter},
-        ClioNodeDbRoleTestBundle{.testName = "Writer", .role = ClioNode::DbRole::Writer}
+        ClioNodeDbRoleTestBundle{.testName = "Writer", .role = ClioNode::DbRole::Writer},
+        ClioNodeDbRoleTestBundle{.testName = "Fallback", .role = ClioNode::DbRole::Fallback}
     ),
     tests::util::kNAME_GENERATOR
 );
@@ -153,6 +154,7 @@ TEST_F(ClioNodeDbRoleTest, DeserializationMissingDbRole)
 struct ClioNodeFromTestBundle {
     std::string testName;
     bool readOnly;
+    bool fallback;
     bool writing;
     ClioNode::DbRole expectedRole;
 };
@@ -170,18 +172,28 @@ INSTANTIATE_TEST_SUITE_P(
         ClioNodeFromTestBundle{
             .testName = "ReadOnly",
             .readOnly = true,
+            .fallback = false,
             .writing = false,
             .expectedRole = ClioNode::DbRole::ReadOnly
         },
         ClioNodeFromTestBundle{
+            .testName = "Fallback",
+            .readOnly = false,
+            .fallback = true,
+            .writing = false,
+            .expectedRole = ClioNode::DbRole::Fallback
+        },
+        ClioNodeFromTestBundle{
             .testName = "NotWriterNotReadOnly",
             .readOnly = false,
+            .fallback = false,
             .writing = false,
             .expectedRole = ClioNode::DbRole::NotWriter
         },
         ClioNodeFromTestBundle{
             .testName = "Writer",
             .readOnly = false,
+            .fallback = false,
             .writing = true,
             .expectedRole = ClioNode::DbRole::Writer
         }
@@ -195,7 +207,10 @@ TEST_P(ClioNodeFromTest, FromWriterState)
 
     EXPECT_CALL(writerState, isReadOnly()).WillOnce(testing::Return(param.readOnly));
     if (not param.readOnly) {
-        EXPECT_CALL(writerState, isWriting()).WillOnce(testing::Return(param.writing));
+        EXPECT_CALL(writerState, isFallback()).WillOnce(testing::Return(param.fallback));
+        if (not param.fallback) {
+            EXPECT_CALL(writerState, isWriting()).WillOnce(testing::Return(param.writing));
+        }
     }
 
     auto const beforeTime = std::chrono::system_clock::now();
@@ -207,3 +222,7 @@ TEST_P(ClioNodeFromTest, FromWriterState)
     EXPECT_GE(node.updateTime, beforeTime);
     EXPECT_LE(node.updateTime, afterTime);
 }
+
+
+
+

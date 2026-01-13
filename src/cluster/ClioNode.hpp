@@ -39,7 +39,19 @@ struct ClioNode {
      */
     static constexpr char const* kTIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ";
 
-    /** @brief Database role */
+    /**
+     * @brief Database role of a node in the cluster.
+     *
+     * Roles are used to coordinate which node writes to the database:
+     * - ReadOnly: Node is configured to never write (strict read-only mode)
+     * - NotWriter: Node can write but is currently not the designated writer
+     * - Writer: Node is actively writing to the database
+     * - Fallback: Node is using the fallback writer decision mechanism
+     *
+     * When any node in the cluster is in Fallback mode, the entire cluster switches
+     * from the cluster communication mechanism to the slower but more reliable
+     * database-based conflict detection mechanism.
+     */
     enum class DbRole { ReadOnly = 0, NotWriter = 1, Writer = 2, Fallback = 3, MAX = 3 };
 
     using UUID = std::shared_ptr<boost::uuids::uuid>;

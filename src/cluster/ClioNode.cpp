@@ -49,6 +49,10 @@ struct Fields {
 ClioNode
 ClioNode::from(ClioNode::UUID uuid, etl::WriterStateInterface const& writerState)
 {
+    // Determine the database role based on writer state priority:
+    // 1. ReadOnly takes precedence (configured mode)
+    // 2. Fallback mode indicates cluster-wide fallback mechanism is active
+    // 3. Otherwise, Writer or NotWriter based on current writing state
     auto const dbRole = [&writerState]() {
         if (writerState.isReadOnly()) {
             return ClioNode::DbRole::ReadOnly;

@@ -175,6 +175,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsDataWithOtherNodes)
         );
     EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AtLeast(1));
     EXPECT_CALL(writerStateRef, isReadOnly).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isFallback).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
     EXPECT_CALL(writerStateRef, isWriting).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
@@ -253,6 +254,7 @@ TEST_F(ClusterBackendTest, WriteNodeMessageWritesSelfDataWithRecentTimestampAndD
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(BackendInterface::ClioNodesDataFetchResult{}));
     EXPECT_CALL(writerStateRef, isReadOnly).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isFallback).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
     EXPECT_CALL(writerStateRef, isWriting).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
     EXPECT_CALL(*backend_, writeNodeMessage)
         .Times(testing::AtLeast(1))

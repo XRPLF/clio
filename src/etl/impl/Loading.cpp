@@ -75,6 +75,8 @@ Loader::load(model::LedgerData const& data)
                              << "; took " << duration << "ms";
 
             if (not success) {
+                // Write conflict detected - another node wrote to the database
+                // This triggers the fallback mechanism and stops this node from writing
                 state_->writeCommandSignal(SystemState::WriteCommand::StopWriting);
                 state_->isWriterDecidingFallback = true;
                 LOG(log_.warn()) << "Another node wrote a ledger into the DB - we have a write conflict";
@@ -155,3 +157,4 @@ Loader::loadInitialLedger(model::LedgerData const& data)
 }
 
 }  // namespace etl::impl
+

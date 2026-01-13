@@ -201,9 +201,12 @@ TEST_F(LoadingTests, LoadWriteConflictEmitsStopWritingSignal)
     EXPECT_CALL(*backend_, doFinishWrites()).WillOnce(testing::Return(false));  // simulate write conflict
     EXPECT_CALL(mockSignalCallback, Call(etl::SystemState::WriteCommand::StopWriting));
 
+    EXPECT_FALSE(state_->isWriterDecidingFallback);
+
     auto result = loader_.load(data);
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), etl::LoaderError::WriteConflict);
+    EXPECT_TRUE(state_->isWriterDecidingFallback);
 }
 
 TEST_F(LoadingTests, LoadSuccessDoesNotEmitSignal)
@@ -218,8 +221,11 @@ TEST_F(LoadingTests, LoadSuccessDoesNotEmitSignal)
     EXPECT_CALL(*backend_, doFinishWrites()).WillOnce(testing::Return(true));  // success
     // No signal should be emitted on success
 
+    EXPECT_FALSE(state_->isWriterDecidingFallback);
+
     auto result = loader_.load(data);
     EXPECT_TRUE(result.has_value());
+    EXPECT_FALSE(state_->isWriterDecidingFallback);
 }
 
 TEST_F(LoadingTests, LoadWhenNotWritingDoesNotCheckConflict)

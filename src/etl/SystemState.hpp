@@ -113,11 +113,24 @@ struct SystemState {
         "Whether clio detected a corruption that needs manual attention"
     );
 
+    /**
+     * @brief Whether the cluster is using the fallback writer decision mechanism.
+     *
+     * The fallback mechanism is triggered when:
+     * - The database stalls for 10 seconds (detected by Monitor), indicating no active writer
+     * - A write conflict is detected, indicating multiple nodes attempting to write simultaneously
+     *
+     * When fallback mode is active, the cluster stops using the cluster communication mechanism
+     * (TTL-based role announcements) and relies on the slower but more reliable database-based
+     * conflict detection. This flag propagates across the cluster - if any node enters fallback
+     * mode, all nodes in the cluster will switch to fallback mode.
+     */
     util::prometheus::Bool isWriterDecidingFallback = PrometheusService::boolMetric(
         "etl_writing_deciding_fallback",
         util::prometheus::Labels{},
-        "Whether clio detected a corruption that needs manual attention"
+        "Whether the cluster is using the fallback writer decision mechanism"
     );
 };
 
 }  // namespace etl
+

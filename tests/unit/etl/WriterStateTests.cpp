@@ -84,3 +84,27 @@ TEST_F(WriterStateTest, GiveUpWritingDoesNothingWhenNotWriting)
 
     writerState.giveUpWriting();
 }
+
+TEST_F(WriterStateTest, IsFallbackReturnsFalseByDefault)
+{
+    EXPECT_FALSE(writerState.isFallback());
+}
+
+TEST_F(WriterStateTest, SetWriterDecidingFallbackSetsFlag)
+{
+    EXPECT_FALSE(systemState->isWriterDecidingFallback);
+
+    writerState.setWriterDecidingFallback();
+
+    EXPECT_TRUE(systemState->isWriterDecidingFallback);
+}
+
+TEST_F(WriterStateTest, IsFallbackReturnsSystemStateValue)
+{
+    systemState->isWriterDecidingFallback = false;
+    EXPECT_FALSE(writerState.isFallback());
+
+    systemState->isWriterDecidingFallback = true;
+    EXPECT_TRUE(writerState.isFallback());
+}
+
