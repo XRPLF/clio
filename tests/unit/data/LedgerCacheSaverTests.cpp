@@ -47,17 +47,23 @@ struct LedgerCacheSaverTest : virtual testing::Test {
     constexpr static auto kFILE_PATH = "./cache.bin";
 
     static ClioConfigDefinition
-    generateConfig(bool cacheFilePathHasValue)
+    generateConfig(bool cacheFilePathHasValue, bool asyncSave)
     {
         auto config = ClioConfigDefinition{{
             {"cache.file.path", ConfigValue{ConfigType::String}.optional()},
+            {"cache.file.async_save", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
         }};
 
         ConfigFileJson jsonFile{boost::json::object{}};
         if (cacheFilePathHasValue) {
-            auto const jsonObject =
-                boost::json::parse(fmt::format(R"JSON({{"cache": {{"file": {{"path": "{}"}}}}}})JSON", kFILE_PATH))
-                    .as_object();
+            auto const jsonObject = boost::json::parse(
+                                        fmt::format(
+                                            R"JSON({{"cache": {{"file": {{"path": "{}", "async_save": {} }} }} }})JSON",
+                                            kFILE_PATH,
+                                            asyncSave
+                                        )
+            )
+                                        .as_object();
             jsonFile = ConfigFileJson{jsonObject};
         }
         auto const errors = config.parse(jsonFile);
@@ -68,7 +74,7 @@ struct LedgerCacheSaverTest : virtual testing::Test {
 
 TEST_F(LedgerCacheSaverTest, SaveSuccessfully)
 {
-    auto const config = generateConfig(true);
+    auto const config = generateConfig(/* cacheFilePathHasValue = */ true, /* asyncSave = */ true);
     LedgerCacheSaver saver{config, cache};
 
     EXPECT_CALL(cache, saveToFile(kFILE_PATH)).WillOnce(testing::Return(std::expected<void, std::string>{}));
@@ -79,7 +85,7 @@ TEST_F(LedgerCacheSaverTest, SaveSuccessfully)
 
 TEST_F(LedgerCacheSaverTest, SaveWithError)
 {
-    auto const config = generateConfig(true);
+    auto const config = generateConfig(/* cacheFilePathHasValue = */ true, /* asyncSave = */ true);
     LedgerCacheSaver saver{config, cache};
 
     EXPECT_CALL(cache, saveToFile(kFILE_PATH))
@@ -91,7 +97,7 @@ TEST_F(LedgerCacheSaverTest, SaveWithError)
 
 TEST_F(LedgerCacheSaverTest, NoSaveWhenPathNotConfigured)
 {
-    auto const config = generateConfig(false);
+    auto const config = generateConfig(/* cacheFilePathHasValue = */ false, /* asyncSave = */ true);
 
     LedgerCacheSaver saver{config, cache};
     saver.save();
@@ -100,7 +106,7 @@ TEST_F(LedgerCacheSaverTest, NoSaveWhenPathNotConfigured)
 
 TEST_F(LedgerCacheSaverTest, DestructorWaitsForCompletion)
 {
-    auto const config = generateConfig(true);
+    auto const config = generateConfig(/* cacheFilePathHasValue = */ true, /* asyncSave = */ true);
 
     std::binary_semaphore semaphore{1};
     std::atomic_bool saveCompleted{false};
@@ -123,7 +129,7 @@ TEST_F(LedgerCacheSaverTest, DestructorWaitsForCompletion)
 
 TEST_F(LedgerCacheSaverTest, WaitToFinishCanBeCalledMultipleTimes)
 {
-    auto const config = generateConfig(true);
+    auto const config = generateConfig(/* cacheFilePathHasValue = */ true, /* asyncSave = */ true);
     LedgerCacheSaver saver{config, cache};
 
     EXPECT_CALL(cache, saveToFile(kFILE_PATH));
@@ -135,7 +141,7 @@ TEST_F(LedgerCacheSaverTest, WaitToFinishCanBeCalledMultipleTimes)
 
 TEST_F(LedgerCacheSaverTest, WaitToFinishWithoutSaveIsSafe)
 {
-    auto const config = generateConfig(true);
+    auto const config = generateConfig(/* cacheFilePathHasValue = */ true, /* asyncSave = */ true);
     LedgerCacheSaver saver{config, cache};
     EXPECT_NO_THROW(saver.waitToFinish());
 }
@@ -144,13 +150,61 @@ struct LedgerCacheSaverAssertTest : LedgerCacheSaverTest, common::util::WithMock
 
 TEST_F(LedgerCacheSaverAssertTest, MultipleSavesNotAllowed)
 {
-    auto const config = generateConfig(true);
+    auto const config = generateConfig(/* cacheFilePathHasValue = */ true, /* asyncSave = */ true);
 
     LedgerCacheSaver saver{config, cache};
+    std::binary_semaphore semaphore{0};
 
-    EXPECT_CALL(cache, saveToFile(kFILE_PATH));
+    EXPECT_CALL(cache, saveToFile(kFILE_PATH)).WillOnce([&](auto&&) {
+        semaphore.acquire();
+        return std::expected<void, std::string>{};
+    });
     saver.save();
     EXPECT_CLIO_ASSERT_FAIL({ saver.save(); });
+    semaphore.release();
 
     saver.waitToFinish();
+}
+
+TEST_F(LedgerCacheSaverTest, SyncSaveWaitsForCompletion)
+{
+    auto const config = generateConfig(/* cacheFilePathHasValue = */ true, /* asyncSave = */ false);
+
+    std::atomic_bool saveCompleted{false};
+
+    EXPECT_CALL(cache, saveToFile(kFILE_PATH)).WillOnce([&]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        saveCompleted = true;
+        return std::expected<void, std::string>{};
+    });
+
+    LedgerCacheSaver saver{config, cache};
+    saver.save();
+    EXPECT_TRUE(saveCompleted);
+}
+
+TEST_F(LedgerCacheSaverTest, AsyncSaveDoesNotWaitForCompletion)
+{
+    auto const config = generateConfig(/* cacheFilePathHasValue = */ true, /* asyncSave = */ true);
+
+    std::binary_semaphore saveStarted{0};
+    std::binary_semaphore continueExecution{0};
+    std::atomic_bool saveCompleted{false};
+
+    EXPECT_CALL(cache, saveToFile(kFILE_PATH)).WillOnce([&]() {
+        saveStarted.release();
+        continueExecution.acquire();
+        saveCompleted = true;
+        return std::expected<void, std::string>{};
+    });
+
+    LedgerCacheSaver saver{config, cache};
+    saver.save();
+
+    EXPECT_TRUE(saveStarted.try_acquire_for(std::chrono::seconds{5}));
+    EXPECT_FALSE(saveCompleted);
+
+    continueExecution.release();
+    saver.waitToFinish();
+    EXPECT_TRUE(saveCompleted);
 }

@@ -60,14 +60,22 @@ jobs:
           fetch-depth: 0
 
       - name: Prepare runner
-        uses: XRPLF/actions/.github/actions/prepare-runner@8abb0722cbff83a9a2dc7d06c473f7a4964b7382
+        uses: XRPLF/actions/prepare-runner@2ece4ec6ab7de266859a6f053571425b2bd684b6
         with:
           disable_ccache: true
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: release_artifacts
           pattern: clio_server_*
+
+      - name: Prepare release artifacts
+        run: .github/scripts/prepare-release-artifacts.sh release_artifacts
+
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          path: release_artifacts
+          pattern: clio_deb_package_*
 
       - name: Create release notes
         env:
@@ -86,11 +94,8 @@ jobs:
           git-cliff "${BASE_COMMIT}..HEAD" --ignore-tags "nightly|-b|-rc"
           cat CHANGELOG.md >> "${RUNNER_TEMP}/release_notes.md"
 
-      - name: Prepare release artifacts
-        run: .github/scripts/prepare-release-artifacts.sh release_artifacts
-
       - name: Upload release notes
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: release_notes_${{ inputs.version }}
           path: "${RUNNER_TEMP}/release_notes.md"
@@ -122,4 +127,4 @@ jobs:
             --target "${GITHUB_SHA}" \
             ${DRAFT_OPTION} \
             --notes-file "${RUNNER_TEMP}/release_notes.md" \
-            ./release_artifacts/clio_server*
+            ./release_artifacts/clio_*

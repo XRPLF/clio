@@ -21,15 +21,23 @@
 #include "etl/WriterState.hpp"
 #include "util/MockPrometheus.hpp"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <memory>
 
 using namespace etl;
+using namespace testing;
 
 struct WriterStateTest : util::prometheus::WithPrometheus {
     std::shared_ptr<SystemState> systemState = std::make_shared<SystemState>();
+    StrictMock<MockFunction<void(SystemState::WriteCommand)>> mockWriteCommand;
     WriterState writerState{systemState};
+
+    WriterStateTest()
+    {
+        systemState->writeCommandSignal.connect(mockWriteCommand.AsStdFunction());
+    }
 };
 
 TEST_F(WriterStateTest, IsWritingReturnsSystemStateValue)
@@ -41,42 +49,38 @@ TEST_F(WriterStateTest, IsWritingReturnsSystemStateValue)
     EXPECT_TRUE(writerState.isWriting());
 }
 
-TEST_F(WriterStateTest, StartWritingSetsFlag)
+TEST_F(WriterStateTest, StartWritingEmitsStartWritingCommand)
 {
     systemState->isWriting = false;
-    systemState->shouldTakeoverWriting = false;
+
+    EXPECT_CALL(mockWriteCommand, Call(SystemState::WriteCommand::StartWriting));
 
     writerState.startWriting();
-
-    EXPECT_TRUE(systemState->shouldTakeoverWriting);
 }
 
 TEST_F(WriterStateTest, StartWritingDoesNothingWhenAlreadyWriting)
 {
     systemState->isWriting = true;
-    systemState->shouldTakeoverWriting = false;
+
+    // No EXPECT_CALL - StrictMock will fail if any command is emitted
 
     writerState.startWriting();
-
-    EXPECT_FALSE(systemState->shouldTakeoverWriting);
 }
 
-TEST_F(WriterStateTest, GiveUpWritingSetsFlag)
+TEST_F(WriterStateTest, GiveUpWritingEmitsStopWritingCommand)
 {
     systemState->isWriting = true;
-    systemState->shouldGiveUpWriting = false;
+
+    EXPECT_CALL(mockWriteCommand, Call(SystemState::WriteCommand::StopWriting));
 
     writerState.giveUpWriting();
-
-    EXPECT_TRUE(systemState->shouldGiveUpWriting);
 }
 
 TEST_F(WriterStateTest, GiveUpWritingDoesNothingWhenNotWriting)
 {
     systemState->isWriting = false;
-    systemState->shouldTakeoverWriting = false;
+
+    // No EXPECT_CALL - StrictMock will fail if any command is emitted
 
     writerState.giveUpWriting();
-
-    EXPECT_FALSE(systemState->shouldTakeoverWriting);
 }

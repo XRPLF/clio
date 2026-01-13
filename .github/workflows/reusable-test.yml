@@ -52,13 +52,13 @@ jobs:
     steps:
       - name: Cleanup workspace
         if: ${{ runner.os == 'macOS' }}
-        uses: XRPLF/actions/.github/actions/cleanup-workspace@ea9970b7c211b18f4c8bcdb28c29f5711752029f
+        uses: XRPLF/actions/cleanup-workspace@cf0433aa74563aead044a1e395610c96d65a37cf
 
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: clio_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
 
@@ -85,7 +85,7 @@ jobs:
 
       - name: Upload sanitizer report
         if: ${{ env.SANITIZER_IGNORE_ERRORS == 'true' && steps.check_report.outputs.found_report == 'true' }}
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: sanitizer_report_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
           path: .sanitizer-report/*
@@ -124,7 +124,7 @@ jobs:
     steps:
       - name: Cleanup workspace
         if: ${{ runner.os == 'macOS' }}
-        uses: XRPLF/actions/.github/actions/cleanup-workspace@ea9970b7c211b18f4c8bcdb28c29f5711752029f
+        uses: XRPLF/actions/cleanup-workspace@cf0433aa74563aead044a1e395610c96d65a37cf
 
       - name: Spin up scylladb
         if: ${{ runner.os == 'macOS' }}
@@ -146,7 +146,7 @@ jobs:
             sleep 5
           done
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: clio_integration_tests_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
 

@@ -68,6 +68,24 @@ jobs:
       download_ccache: false
       upload_ccache: false
 
+  package:
+    name: Build debian package
+
+    uses: ./.github/workflows/reusable-build.yml
+    with:
+      runs_on: heavy
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
+      conan_profile: gcc
+      build_type: Release
+      download_ccache: false
+      upload_ccache: false
+      code_coverage: false
+      static: true
+      upload_clio_server: false
+      package: true
+      targets: package
+      analyze_build_time: false
+
   analyze_build_time:
     name: Analyze Build Time
 
@@ -109,7 +127,7 @@ jobs:
           echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
 
   nightly_release:
-    needs: [build-and-test, get_date]
+    needs: [build-and-test, package, get_date]
     uses: ./.github/workflows/reusable-release.yml
     with:
       delete_pattern: "nightly-*"

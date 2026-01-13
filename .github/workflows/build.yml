@@ -92,24 +92,6 @@ jobs:
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  package:
-    name: Build packages
-
-    uses: ./.github/workflows/reusable-build.yml
-    with:
-      runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
-      conan_profile: gcc
-      build_type: Release
-      download_ccache: true
-      upload_ccache: false
-      code_coverage: false
-      static: true
-      upload_clio_server: false
-      package: true
-      targets: package
-      analyze_build_time: false
-
   check_config:
     name: Check Config Description
     needs: build-and-test
@@ -120,7 +102,7 @@ jobs:
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: clio_server_Linux_Release_gcc
 

@@ -171,6 +171,7 @@ ETLService::ETLService(
     , state_(std::move(state))
     , startSequence_(config.get().maybeValue<uint32_t>("start_sequence"))
     , finishSequence_(config.get().maybeValue<uint32_t>("finish_sequence"))
+    , writeCommandStrand_(ctx_.makeStrand())
 {
     ASSERT(not state_->isWriting, "ETL should never start in writer mode");
 
@@ -229,6 +230,13 @@ void
 ETLService::stop()
 {
     LOG(log_.info()) << "Stop called";
+
+    systemStateWriteCommandSubscription_.disconnect();
+    auto count = runningWriteCommandHandlers_.load();
+    while (count != 0) {
+        runningWriteCommandHandlers_.wait(count);  // Blocks until value changes
+        count = runningWriteCommandHandlers_.load();
+    }
 
     if (mainLoop_)
         mainLoop_->wait();
@@ -348,26 +356,38 @@ ETLService::startMonitor(uint32_t seq)
 
     systemStateWriteCommandSubscription_ =
         state_->writeCommandSignal.connect([this](SystemState::WriteCommand command) {
-            switch (command) {
-                case etl::SystemState::WriteCommand::StartWriting:
-                    attemptTakeoverWriter();
-                    break;
-                case etl::SystemState::WriteCommand::StopWriting:
-                    giveUpWriter();
-                    break;
-            }
+            ++runningWriteCommandHandlers_;
+            writeCommandStrand_.submit([this, command]() {
+                switch (command) {
+                    case etl::SystemState::WriteCommand::StartWriting:
+                        attemptTakeoverWriter();
+                        break;
+                    case etl::SystemState::WriteCommand::StopWriting:
+                        giveUpWriter();
+                        break;
+                }
+                --runningWriteCommandHandlers_;
+                runningWriteCommandHandlers_.notify_one();
+            });
         });
 
     monitorNewSeqSubscription_ = monitor_->subscribeToNewSequence([this](uint32_t seq) {
         LOG(log_.info()) << "ETLService (via Monitor) got new seq from db: " << seq;
 
-        if (not state_->isWriting) {
+        auto const cacheNeedsUpdate = backend_->cache().latestLedgerSequence() < seq;
+        auto const backendRange = backend_->fetchLedgerRange();
+        auto const backendNeedsUpdate = backendRange.has_value() and backendRange->maxSequence < seq;
+
+        if (cacheNeedsUpdate or backendNeedsUpdate) {
             auto const diff = data::synchronousAndRetryOnTimeout([this, seq](auto yield) {
                 return backend_->fetchLedgerDiff(seq, yield);
             });
 
-            cacheUpdater_->update(seq, diff);
-            backend_->updateRange(seq);
+            if (cacheNeedsUpdate)
+                cacheUpdater_->update(seq, diff);
+
+            if (backendNeedsUpdate)
+                backend_->updateRange(seq);
         }
 
         publisher_->publish(seq, {});
@@ -400,7 +420,6 @@ ETLService::attemptTakeoverWriter()
     ASSERT(rng.has_value(), "Ledger range can't be null");
 
     state_->isWriting = true;  // switch to writer
-    state_->shouldTakeoverWriting = false;
     LOG(log_.info()) << "Taking over the ETL writer seat";
     startLoading(rng->maxSequence + 1);
 }

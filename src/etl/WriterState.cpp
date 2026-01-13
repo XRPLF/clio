@@ -48,7 +48,7 @@ WriterState::startWriting()
     if (isWriting())
         return;
 
-    systemState_->shouldTakeoverWriting = true;
+    systemState_->writeCommandSignal(SystemState::WriteCommand::StartWriting);
 }
 
 void
@@ -57,7 +57,7 @@ WriterState::giveUpWriting()
     if (not isWriting())
         return;
 
-    systemState_->shouldGiveUpWriting = true;
+    systemState_->writeCommandSignal(SystemState::WriteCommand::StopWriting);
 }
 
 std::unique_ptr<WriterStateInterface>

@@ -27,6 +27,7 @@
 
 #include <boost/signals2/signal.hpp>
 #include <boost/signals2/variadic_signal.hpp>
+#include <memory>
 
 namespace etl {
 

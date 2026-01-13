@@ -27,7 +27,7 @@ jobs:
           lfs: true
 
       - name: Prepare runner
-        uses: XRPLF/actions/.github/actions/prepare-runner@8abb0722cbff83a9a2dc7d06c473f7a4964b7382
+        uses: XRPLF/actions/prepare-runner@2ece4ec6ab7de266859a6f053571425b2bd684b6
         with:
           disable_ccache: true
 
