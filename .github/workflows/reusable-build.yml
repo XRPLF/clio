@@ -219,10 +219,11 @@ jobs:
         if: ${{ inputs.version != '' }}
         env:
           INPUT_VERSION: ${{ inputs.version }}
+          BUILD_TYPE: ${{ inputs.build_type }}
         run: |
           set -e
           EXPECTED_VERSION="clio-${INPUT_VERSION}"
-          if [[ ${{ inputs.build_type }} == "Debug" ]]; then
+          if [[ "${BUILD_TYPE}" == "Debug" ]]; then
             EXPECTED_VERSION="${EXPECTED_VERSION}+DEBUG"
           fi
 
