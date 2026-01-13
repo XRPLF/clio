@@ -126,11 +126,11 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         uses: XRPLF/actions/cleanup-workspace@cf0433aa74563aead044a1e395610c96d65a37cf
 
-      - name: Prune docker system (macOS)
+      - name: Restart colima (macOS)
         if: ${{ runner.os == 'macOS' }}
         run: |
-          docker rm --force scylladb
-          docker system prune --all --force --volumes
+          colima delete --force
+          colima start
 
       - name: Spin up scylladb (macOS)
         if: ${{ runner.os == 'macOS' }}
