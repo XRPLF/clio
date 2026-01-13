@@ -149,6 +149,7 @@ jobs:
 
       - name: Wait for scylladb to be healthy (macOS)
         if: ${{ runner.os == 'macOS' }}
+        timeout-minutes: 3
         run: |
           until [ "$(docker inspect -f '{{.State.Health.Status}}' scylladb)" == "healthy" ]; do
             sleep 5
