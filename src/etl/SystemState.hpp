@@ -133,4 +133,3 @@ struct SystemState {
 };
 
 }  // namespace etl
-

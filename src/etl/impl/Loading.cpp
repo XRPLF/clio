@@ -157,4 +157,3 @@ Loader::loadInitialLedger(model::LedgerData const& data)
 }
 
 }  // namespace etl::impl
-

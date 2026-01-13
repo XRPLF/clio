@@ -128,6 +128,11 @@ public:
         return onNewState_.connect(s);
     }
 
+    /**
+     * @brief Get the UUID of this node in the cluster.
+     *
+     * @return The UUID of this node.
+     */
     ClioNode::cUUID
     selfId() const;
 
@@ -140,3 +145,4 @@ private:
 };
 
 }  // namespace cluster
+

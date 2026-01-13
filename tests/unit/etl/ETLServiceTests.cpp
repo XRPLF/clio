@@ -461,7 +461,7 @@ TEST_F(ETLServiceTests, AttemptTakeoverWriter)
     EXPECT_FALSE(systemState_->isWriting);  // will attempt to become writer after new sequence appears but not yet
     EXPECT_FALSE(systemState_->isWriterDecidingFallback);
     capturedDbStalledCallback();
-    EXPECT_TRUE(systemState_->isWriting);  // should attempt to become writer
+    EXPECT_TRUE(systemState_->isWriting);                 // should attempt to become writer
     EXPECT_TRUE(systemState_->isWriterDecidingFallback);  // fallback mode activated
 }
 
@@ -857,6 +857,3 @@ TEST_F(ETLServiceTests, WriteCommandsAreSerializedOnStrand)
     // Final state should be writing (last signal was StartWriting)
     EXPECT_TRUE(systemState_->isWriting);
 }
-
-
-

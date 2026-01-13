@@ -87,6 +87,15 @@ public:
     virtual void
     setWriterDecidingFallback() = 0;
 
+    /**
+     * @brief Create a clone of this writer state.
+     *
+     * Creates a new instance of the writer state with the same underlying system state.
+     * This is used when spawning operations that need their own writer state instance
+     * while sharing the same system state.
+     *
+     * @return A unique pointer to the cloned writer state.
+     */
     [[nodiscard]] virtual std::unique_ptr<WriterStateInterface>
     clone() const = 0;
 };
@@ -154,6 +163,13 @@ public:
     bool
     isFallback() const override;
 
+    /**
+     * @brief Create a clone of this writer state.
+     *
+     * Creates a new WriterState instance sharing the same system state.
+     *
+     * @return A unique pointer to the cloned writer state.
+     */
     std::unique_ptr<WriterStateInterface>
     clone() const override;
 };

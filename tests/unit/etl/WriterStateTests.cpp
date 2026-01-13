@@ -107,4 +107,3 @@ TEST_F(WriterStateTest, IsFallbackReturnsSystemStateValue)
     systemState->isWriterDecidingFallback = true;
     EXPECT_TRUE(writerState.isFallback());
 }
-

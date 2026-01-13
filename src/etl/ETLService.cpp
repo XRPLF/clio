@@ -437,4 +437,3 @@ ETLService::giveUpWriter()
 }
 
 }  // namespace etl
-

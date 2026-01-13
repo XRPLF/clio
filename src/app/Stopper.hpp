@@ -83,6 +83,7 @@ public:
      * @param subscriptions The subscription manager to stop.
      * @param backend The backend to stop.
      * @param cacheSaver The ledger cache saver
+     * @param clusterCommunicationService The cluster communication service to stop.
      * @param ioc The io_context to stop.
      * @return The callback to be called on application stop.
      */
