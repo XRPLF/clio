@@ -126,11 +126,16 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         uses: XRPLF/actions/cleanup-workspace@cf0433aa74563aead044a1e395610c96d65a37cf
 
-      - name: Spin up scylladb
+      - name: Prune docker system (macOS)
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          docker rm --force scylladb
+          docker system prune --all --force --volumes
+
+      - name: Spin up scylladb (macOS)
         if: ${{ runner.os == 'macOS' }}
         timeout-minutes: 3
         run: |
-          docker rm --force scylladb || true
           docker run \
             --detach \
             --name scylladb \
@@ -142,6 +147,9 @@ jobs:
             --memory 16G \
             scylladb/scylla
 
+      - name: Wait for scylladb to be healthy (macOS)
+        if: ${{ runner.os == 'macOS' }}
+        run: |
           until [ "$(docker inspect -f '{{.State.Health.Status}}' scylladb)" == "healthy" ]; do
             sleep 5
           done
