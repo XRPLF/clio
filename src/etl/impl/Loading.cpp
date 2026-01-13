@@ -76,6 +76,7 @@ Loader::load(model::LedgerData const& data)
 
             if (not success) {
                 state_->writeCommandSignal(SystemState::WriteCommand::StopWriting);
+                state_->isWriterDecidingFallback = true;
                 LOG(log_.warn()) << "Another node wrote a ledger into the DB - we have a write conflict";
                 return std::unexpected(LoaderError::WriteConflict);
             }

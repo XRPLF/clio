@@ -68,6 +68,12 @@ public:
     virtual void
     giveUpWriting() = 0;
 
+    [[nodiscard]] virtual bool
+    isFallback() const = 0;
+
+    virtual void
+    setWriterDecidingFallback() = 0;
+
     [[nodiscard]] virtual std::unique_ptr<WriterStateInterface>
     clone() const = 0;
 };
@@ -117,6 +123,12 @@ public:
      */
     void
     giveUpWriting() override;
+
+    void
+    setWriterDecidingFallback() override;
+
+    bool
+    isFallback() const override;
 
     std::unique_ptr<WriterStateInterface>
     clone() const override;

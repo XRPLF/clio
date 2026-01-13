@@ -40,7 +40,7 @@ struct ClioNode {
     static constexpr char const* kTIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ";
 
     /** @brief Database role */
-    enum class DbRole { ReadOnly = 0, NotWriter = 1, Writer = 2, MAX = 2 };
+    enum class DbRole { ReadOnly = 0, NotWriter = 1, Writer = 2, Fallback = 3, MAX = 3 };
 
     using UUID = std::shared_ptr<boost::uuids::uuid>;
     using cUUID = std::shared_ptr<boost::uuids::uuid const>;

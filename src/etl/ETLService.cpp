@@ -397,6 +397,7 @@ ETLService::startMonitor(uint32_t seq)
         LOG(log_.warn()) << "ETLService received DbStalled signal from Monitor";
         if (not state_->isStrictReadonly and not state_->isWriting)
             state_->writeCommandSignal(SystemState::WriteCommand::StartWriting);
+        state_->isWriterDecidingFallback = true;
     });
 
     monitor_->run();

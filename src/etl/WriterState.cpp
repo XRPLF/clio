@@ -60,6 +60,18 @@ WriterState::giveUpWriting()
     systemState_->writeCommandSignal(SystemState::WriteCommand::StopWriting);
 }
 
+void
+WriterState::setWriterDecidingFallback()
+{
+    systemState_->isWriterDecidingFallback = true;
+}
+
+bool
+WriterState::isFallback() const
+{
+    return systemState_->isWriterDecidingFallback;
+}
+
 std::unique_ptr<WriterStateInterface>
 WriterState::clone() const
 {

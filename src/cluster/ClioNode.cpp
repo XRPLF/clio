@@ -53,6 +53,9 @@ ClioNode::from(ClioNode::UUID uuid, etl::WriterStateInterface const& writerState
         if (writerState.isReadOnly()) {
             return ClioNode::DbRole::ReadOnly;
         }
+        if (writerState.isFallback()) {
+            return ClioNode::DbRole::Fallback;
+        }
 
         return writerState.isWriting() ? ClioNode::DbRole::Writer : ClioNode::DbRole::NotWriter;
     }();

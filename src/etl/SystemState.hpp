@@ -27,6 +27,7 @@
 
 #include <boost/signals2/signal.hpp>
 #include <boost/signals2/variadic_signal.hpp>
+
 #include <memory>
 
 namespace etl {
@@ -108,6 +109,12 @@ struct SystemState {
      */
     util::prometheus::Bool isCorruptionDetected = PrometheusService::boolMetric(
         "etl_corruption_detected",
+        util::prometheus::Labels{},
+        "Whether clio detected a corruption that needs manual attention"
+    );
+
+    util::prometheus::Bool isWriterDecidingFallback = PrometheusService::boolMetric(
+        "etl_writing_deciding_fallback",
         util::prometheus::Labels{},
         "Whether clio detected a corruption that needs manual attention"
     );

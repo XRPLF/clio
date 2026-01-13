@@ -22,6 +22,7 @@
 #include "cluster/Backend.hpp"
 #include "cluster/ClioNode.hpp"
 #include "etl/WriterState.hpp"
+#include "util/Assert.hpp"
 #include "util/Spawn.hpp"
 #include "util/log/Logger.hpp"
 
@@ -50,6 +51,20 @@ WriterDecider::onNewState(ClioNode::cUUID selfId, std::shared_ptr<Backend::Clust
         [writerState = writerState_->clone(),
          selfId = std::move(selfId),
          clusterData = clusterData->value()](auto&&) mutable {
+            auto const selfData =
+                std::ranges::find_if(clusterData, [&selfId](ClioNode const& node) { return node.uuid == selfId; });
+            ASSERT(selfData != clusterData.end(), "Self data should always be in the cluster data");
+            if (selfData->dbRole == ClioNode::DbRole::ReadOnly or selfData->dbRole == ClioNode::DbRole::Fallback) {
+                return;
+            }
+
+            if (std::ranges::any_of(clusterData, [](ClioNode const& node) {
+                    return node.dbRole == ClioNode::DbRole::Fallback;
+                })) {
+                writerState->setWriterDecidingFallback();
+                return;
+            }
+
             std::ranges::sort(clusterData, [](ClioNode const& lhs, ClioNode const& rhs) {
                 return *lhs.uuid < *rhs.uuid;
             });

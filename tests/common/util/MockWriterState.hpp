@@ -30,6 +30,8 @@ struct MockWriterStateBase : public etl::WriterStateInterface {
     MOCK_METHOD(bool, isWriting, (), (const, override));
     MOCK_METHOD(void, startWriting, (), (override));
     MOCK_METHOD(void, giveUpWriting, (), (override));
+    MOCK_METHOD(void, setWriterDecidingFallback, (), (override));
+    MOCK_METHOD(bool, isFallback, (), (const, override));
     MOCK_METHOD(std::unique_ptr<etl::WriterStateInterface>, clone, (), (const, override));
 };
 
