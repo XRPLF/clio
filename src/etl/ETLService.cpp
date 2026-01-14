@@ -378,17 +378,15 @@ ETLService::startMonitor(uint32_t seq)
         auto const backendRange = backend_->fetchLedgerRange();
         auto const backendNeedsUpdate = backendRange.has_value() and backendRange->maxSequence < seq;
 
-        if (cacheNeedsUpdate or backendNeedsUpdate) {
+        if (cacheNeedsUpdate) {
             auto const diff = data::synchronousAndRetryOnTimeout([this, seq](auto yield) {
                 return backend_->fetchLedgerDiff(seq, yield);
             });
-
-            if (cacheNeedsUpdate)
-                cacheUpdater_->update(seq, diff);
-
-            if (backendNeedsUpdate)
-                backend_->updateRange(seq);
+            cacheUpdater_->update(seq, diff);
         }
+
+        if (backendNeedsUpdate)
+            backend_->updateRange(seq);
 
         publisher_->publish(seq, {});
     });

@@ -151,13 +151,15 @@ public:
          * @brief Constructs a Sender from a shared control block.
          * @param shared The shared control block managing the channel state
          */
-        Sender(std::shared_ptr<ControlBlock> shared) : shared_(shared)
+        Sender(std::shared_ptr<ControlBlock> shared)
+            : shared_(shared), guard_([shared = std::move(shared)]() {
+                if constexpr (kIS_MULTI_PRODUCER) {
+                    return std::make_shared<Guard>(std::move(shared));
+                } else {
+                    return Guard{std::move(shared)};
+                }
+            }())
         {
-            if constexpr (kIS_MULTI_PRODUCER) {
-                guard_ = std::make_shared<Guard>(shared);
-            } else {
-                guard_ = Guard{std::move(shared)};
-            }
         }
 
     public:
@@ -270,13 +272,15 @@ public:
          * @brief Constructs a Receiver from a shared control block.
          * @param shared The shared control block managing the channel state
          */
-        Receiver(std::shared_ptr<ControlBlock> shared) : shared_(shared)
+        Receiver(std::shared_ptr<ControlBlock> shared)
+            : shared_(shared), guard_([shared = std::move(shared)]() {
+                if constexpr (kIS_MULTI_CONSUMER) {
+                    return std::make_shared<Guard>(std::move(shared));
+                } else {
+                    return Guard{std::move(shared)};
+                }
+            }())
         {
-            if constexpr (kIS_MULTI_CONSUMER) {
-                guard_ = std::make_shared<Guard>(shared);
-            } else {
-                guard_ = Guard{std::move(shared)};
-            }
         }
 
     public:
