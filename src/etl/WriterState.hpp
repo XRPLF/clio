@@ -87,6 +87,9 @@ public:
     virtual void
     setWriterDecidingFallback() = 0;
 
+    [[nodiscard]] virtual bool
+    isLoadingCache() const = 0;
+
     /**
      * @brief Create a clone of this writer state.
      *
@@ -162,6 +165,9 @@ public:
      */
     bool
     isFallback() const override;
+
+    bool
+    isLoadingCache() const override;
 
     /**
      * @brief Create a clone of this writer state.

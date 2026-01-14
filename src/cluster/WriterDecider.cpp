@@ -76,7 +76,7 @@ WriterDecider::onNewState(ClioNode::cUUID selfId, std::shared_ptr<Backend::Clust
             });
 
             auto const it = std::ranges::find_if(clusterData, [](ClioNode const& node) {
-                return node.dbRole != ClioNode::DbRole::ReadOnly;
+                return node.dbRole == ClioNode::DbRole::NotWriter;
             });
 
             if (it == clusterData.end()) {

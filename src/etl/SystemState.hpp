@@ -36,6 +36,11 @@ namespace etl {
  * @brief Represents the state of the ETL subsystem.
  */
 struct SystemState {
+    SystemState()
+    {
+        isLoadingCache = true;
+    }
+
     /**
      * @brief Factory method to create a SystemState instance.
      *
@@ -67,6 +72,12 @@ struct SystemState {
         "etl_writing",
         util::prometheus::Labels{},
         "Whether the process is writing to the database"
+    );
+
+    util::prometheus::Bool isLoadingCache = PrometheusService::boolMetric(
+        "etl_loading_cache",
+        util::prometheus::Labels{},
+        "Whether etl is loading cache after clio startup"
     );
 
     /**

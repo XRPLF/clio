@@ -72,6 +72,12 @@ WriterState::isFallback() const
     return systemState_->isWriterDecidingFallback;
 }
 
+bool
+WriterState::isLoadingCache() const
+{
+    return systemState_->isLoadingCache;
+}
+
 std::unique_ptr<WriterStateInterface>
 WriterState::clone() const
 {
