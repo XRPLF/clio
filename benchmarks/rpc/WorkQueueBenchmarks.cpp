@@ -29,8 +29,6 @@
 
 #include <benchmark/benchmark.h>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/asio/thread_pool.hpp>
-#include <boost/json/object.hpp>
 
 #include <algorithm>
 #include <atomic>
