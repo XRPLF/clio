@@ -29,7 +29,7 @@ jobs:
           fetch-depth: 0
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@f05cab7b8541eee6473aa42beb9d2fe35608a190
+        uses: XRPLF/actions/prepare-runner@e8d2d2a546a03e1d161dca52890705f3bc641215
         with:
           enable_ccache: false
 
