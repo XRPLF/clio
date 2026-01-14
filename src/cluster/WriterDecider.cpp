@@ -51,14 +51,16 @@ WriterDecider::onNewState(ClioNode::cUUID selfId, std::shared_ptr<Backend::Clust
         [writerState = writerState_->clone(),
          selfId = std::move(selfId),
          clusterData = clusterData->value()](auto&&) mutable {
-            // Find this node's data in the cluster state
             auto const selfData =
                 std::ranges::find_if(clusterData, [&selfId](ClioNode const& node) { return node.uuid == selfId; });
             ASSERT(selfData != clusterData.end(), "Self data should always be in the cluster data");
 
-            // ReadOnly nodes never participate in writer decisions
-            // Fallback nodes have already switched to fallback mechanism
-            if (selfData->dbRole == ClioNode::DbRole::ReadOnly or selfData->dbRole == ClioNode::DbRole::Fallback) {
+            if (selfData->dbRole == ClioNode::DbRole::Fallback) {
+                return;
+            }
+
+            if (selfData->dbRole == ClioNode::DbRole::ReadOnly) {
+                writerState->giveUpWriting();
                 return;
             }
 
@@ -71,16 +73,17 @@ WriterDecider::onNewState(ClioNode::cUUID selfId, std::shared_ptr<Backend::Clust
                 return;
             }
 
+            // We are not ReadOnly and there is no Fallback in the cluster
             std::ranges::sort(clusterData, [](ClioNode const& lhs, ClioNode const& rhs) {
                 return *lhs.uuid < *rhs.uuid;
             });
 
             auto const it = std::ranges::find_if(clusterData, [](ClioNode const& node) {
-                return node.dbRole == ClioNode::DbRole::NotWriter;
+                return node.dbRole == ClioNode::DbRole::NotWriter or node.dbRole == ClioNode::DbRole::Writer;
             });
 
             if (it == clusterData.end()) {
-                LOG(util::LogService::warn()) << "No nodes allowed to write in the cluster";
+                // No writer nodes in the cluster yet
                 return;
             }
 

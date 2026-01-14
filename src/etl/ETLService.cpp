@@ -218,7 +218,12 @@ ETLService::run()
         }
 
         LOG(log_.debug()) << "Database is populated. Starting monitor loop. sequence = " << nextSequence;
+        nextSequence = syncCacheWithDb();
+
+
         startMonitor(nextSequence);
+
+        state_->isLoadingCache = false;
 
         // If we are a writer as the result of loading the initial ledger - start loading
         if (state_->isWriting)
@@ -349,7 +354,41 @@ ETLService::loadInitialLedgerIfNeeded()
     return rng;
 }
 
+uint32_t
+ETLService::syncCacheWithDb()
+{
+    auto rng = backend_->hardFetchLedgerRangeNoThrow();
+    while (rng->maxSequence > backend_->cache().latestLedgerSequence()) {
+        LOG(log_.info()) << "Syncing cache with DB. DB latest seq: " << rng->maxSequence << ". Cache latest seq: "
+                         << backend_->cache().latestLedgerSequence();
+        for (auto seq = backend_->cache().latestLedgerSequence(); seq <= rng->maxSequence; ++seq) {
+            LOG(log_.info()) << "ETLService (via syncCacheWithDb) got new seq from db: " << seq;
+            updateCache(seq);
+        }
+        rng = backend_->hardFetchLedgerRangeNoThrow();
+    }
+    return rng->maxSequence;
+}
 
+void
+ETLService::updateCache(uint32_t seq)
+{
+    auto const cacheNeedsUpdate = backend_->cache().latestLedgerSequence() < seq;
+    auto const backendRange = backend_->fetchLedgerRange();
+    auto const backendNeedsUpdate = backendRange.has_value() and backendRange->maxSequence < seq;
+
+    if (cacheNeedsUpdate) {
+        auto const diff = data::synchronousAndRetryOnTimeout([this, seq](auto yield) {
+            return backend_->fetchLedgerDiff(seq, yield);
+        });
+        cacheUpdater_->update(seq, diff);
+    }
+
+    if (backendNeedsUpdate)
+        backend_->updateRange(seq);
+
+    publisher_->publish(seq, {});
+}
 
 void
 ETLService::startMonitor(uint32_t seq)
@@ -375,24 +414,7 @@ ETLService::startMonitor(uint32_t seq)
 
     monitorNewSeqSubscription_ = monitor_->subscribeToNewSequence([this](uint32_t seq) {
         LOG(log_.info()) << "ETLService (via Monitor) got new seq from db: " << seq;
-
-        auto const cacheNeedsUpdate = backend_->cache().latestLedgerSequence() < seq;
-        auto const backendRange = backend_->fetchLedgerRange();
-        auto const backendNeedsUpdate = backendRange.has_value() and backendRange->maxSequence < seq;
-
-        if (cacheNeedsUpdate or backendNeedsUpdate) {
-            auto const diff = data::synchronousAndRetryOnTimeout([this, seq](auto yield) {
-                return backend_->fetchLedgerDiff(seq, yield);
-            });
-
-            if (cacheNeedsUpdate)
-                cacheUpdater_->update(seq, diff);
-
-            if (backendNeedsUpdate)
-                backend_->updateRange(seq);
-        }
-
-        publisher_->publish(seq, {});
+        updateCache(seq);
     });
 
     monitorDbStalledSubscription_ = monitor_->subscribeToDbStalled([this]() {

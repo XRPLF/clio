@@ -769,8 +769,7 @@ TEST_F(ETLServiceTests, StopWaitsForWriteCommandHandlersToComplete)
     // Stop should wait for the handler to complete and disconnect the subscription
     service_.stop();
 
-    // Verify stop() returned, meaning all handlers completed
-    SUCCEED();
+    // The test will hang on stop() or in service_ destructor if there is a problem.
 }
 
 TEST_F(ETLServiceTests, WriteConflictIsHandledImmediately_NotDelayed)

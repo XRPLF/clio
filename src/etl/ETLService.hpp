@@ -212,6 +212,11 @@ private:
     std::optional<data::LedgerRange>
     loadInitialLedgerIfNeeded();
 
+    [[nodiscard]] uint32_t
+    syncCacheWithDb();
+
+    void updateCache(uint32_t seq);
+
     void
     startMonitor(uint32_t seq);
 
