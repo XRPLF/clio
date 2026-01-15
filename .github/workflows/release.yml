@@ -29,7 +29,7 @@ jobs:
             conan_profile: gcc
             build_type: Release
             static: true
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
 
     uses: ./.github/workflows/reusable-build-test.yml
     with:
@@ -43,7 +43,7 @@ jobs:
       upload_clio_server: true
       download_ccache: false
       upload_ccache: false
-      expected_version: ${{ github.event_name == 'push' && github.ref_name || '' }}
+      version: ${{ github.event_name == 'push' && github.ref_name || '' }}
 
   package:
     name: Build debian package
@@ -51,7 +51,7 @@ jobs:
     uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
       conan_profile: gcc
       build_type: Release
       download_ccache: false
@@ -60,6 +60,7 @@ jobs:
       static: true
       upload_clio_server: false
       package: true
+      version: ${{ github.event_name == 'push' && github.ref_name || '' }}
       targets: package
       analyze_build_time: false
 

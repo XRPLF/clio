@@ -30,12 +30,15 @@
 #include <benchmark/benchmark.h>
 #include <boost/asio/steady_timer.hpp>
 
+#include <algorithm>
 #include <atomic>
 #include <cassert>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <mutex>
+#include <thread>
+#include <vector>
 
 using namespace rpc;
 using namespace util::config;
@@ -75,36 +78,56 @@ benchmarkWorkQueue(benchmark::State& state)
 {
     init();
 
-    auto const total = static_cast<size_t>(state.range(0));
-    auto const numThreads = static_cast<uint32_t>(state.range(1));
-    auto const maxSize = static_cast<uint32_t>(state.range(2));
-    auto const delayMs = static_cast<uint32_t>(state.range(3));
+    auto const wqThreads = static_cast<uint32_t>(state.range(0));
+    auto const maxQueueSize = static_cast<uint32_t>(state.range(1));
+    auto const clientThreads = static_cast<uint32_t>(state.range(2));
+    auto const itemsPerClient = static_cast<uint32_t>(state.range(3));
+    auto const clientProcessingMs = static_cast<uint32_t>(state.range(4));
 
     for (auto _ : state) {
         std::atomic_size_t totalExecuted = 0uz;
         std::atomic_size_t totalQueued = 0uz;
 
         state.PauseTiming();
-        WorkQueue queue(numThreads, maxSize);
+        WorkQueue queue(wqThreads, maxQueueSize);
         state.ResumeTiming();
 
-        for (auto i = 0uz; i < total; ++i) {
-            totalQueued += static_cast<std::size_t>(queue.postCoro(
-                [&delayMs, &totalExecuted](auto yield) {
-                    ++totalExecuted;
+        std::vector<std::thread> threads;
+        threads.reserve(clientThreads);
 
-                    boost::asio::steady_timer timer(yield.get_executor(), std::chrono::milliseconds{delayMs});
-                    timer.async_wait(yield);
-                },
-                /* isWhiteListed = */ false
-            ));
+        for (auto t = 0uz; t < clientThreads; ++t) {
+            threads.emplace_back([&] {
+                for (auto i = 0uz; i < itemsPerClient; ++i) {
+                    totalQueued += static_cast<std::size_t>(queue.postCoro(
+                        [&clientProcessingMs, &totalExecuted](auto yield) {
+                            ++totalExecuted;
+
+                            boost::asio::steady_timer timer(
+                                yield.get_executor(), std::chrono::milliseconds{clientProcessingMs}
+                            );
+                            timer.async_wait(yield);
+
+                            std::this_thread::sleep_for(std::chrono::microseconds{10});
+                        },
+                        /* isWhiteListed = */ false
+                    ));
+                }
+            });
         }
+
+        for (auto& t : threads)
+            t.join();
 
         queue.stop();
 
         ASSERT(totalExecuted == totalQueued, "Totals don't match");
-        ASSERT(totalQueued <= total, "Queued more than requested");
-        ASSERT(totalQueued >= maxSize, "Queued less than maxSize");
+        ASSERT(totalQueued <= itemsPerClient * clientThreads, "Queued more than requested");
+
+        if (maxQueueSize == 0) {
+            ASSERT(totalQueued == itemsPerClient * clientThreads, "Queued exactly the expected amount");
+        } else {
+            ASSERT(totalQueued >= std::min(maxQueueSize, itemsPerClient * clientThreads), "Queued less than expected");
+        }
     }
 }
 
@@ -118,5 +141,5 @@ benchmarkWorkQueue(benchmark::State& state)
 */
 // TODO: figure out what happens on 1 thread
 BENCHMARK(benchmarkWorkQueue)
-    ->ArgsProduct({{1'000, 10'000, 100'000}, {2, 4, 8}, {0, 5'000}, {10, 100, 250}})
+    ->ArgsProduct({{2, 4, 8, 16}, {0, 5'000}, {4, 8, 16}, {1'000, 10'000}, {10, 100, 250}})
     ->Unit(benchmark::kMillisecond);

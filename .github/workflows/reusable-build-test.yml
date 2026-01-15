@@ -63,17 +63,17 @@ on:
         type: string
         default: all
 
-      expected_version:
-        description: Expected version of the clio_server binary
-        required: false
-        type: string
-        default: ""
-
       package:
         description: Whether to generate Debian package
         required: false
         type: boolean
         default: false
+
+      version:
+        description: Version of the clio_server binary
+        required: false
+        type: string
+        default: ""
 
 jobs:
   build:
@@ -90,8 +90,8 @@ jobs:
       upload_clio_server: ${{ inputs.upload_clio_server }}
       targets: ${{ inputs.targets }}
       analyze_build_time: false
-      expected_version: ${{ inputs.expected_version }}
       package: ${{ inputs.package }}
+      version: ${{ inputs.version }}
 
   test:
     needs: build

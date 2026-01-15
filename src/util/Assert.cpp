@@ -57,7 +57,7 @@ OnAssert::defaultAction(std::string_view message)
     if (LogServiceState::initialized() and LogServiceState::hasSinks()) {
         LOG(LogService::fatal()) << message;
     } else {
-        std::cerr << message;
+        std::cerr << message << std::endl;
     }
     std::exit(EXIT_FAILURE);  // std::abort does not flush gcovr output and causes uncovered lines
 }

@@ -49,8 +49,6 @@ postprocessors = [
 ]
 # render body even when there are no releases to process
 # render_always = true
-# output file path
-output = "CHANGELOG.md"
 
 [git]
 # parse the commits based on https://www.conventionalcommits.org

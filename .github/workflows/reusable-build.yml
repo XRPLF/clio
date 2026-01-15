@@ -60,16 +60,16 @@ on:
         required: true
         type: boolean
 
-      expected_version:
-        description: Expected version of the clio_server binary
-        required: false
-        type: string
-        default: ""
-
       package:
         description: Whether to generate Debian package
         required: false
         type: boolean
+
+      version:
+        description: Version of the clio_server binary
+        required: false
+        type: string
+        default: ""
 
     secrets:
       CODECOV_TOKEN:
@@ -93,15 +93,11 @@ jobs:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
-          # We need to fetch tags to have correct version in the release
-          # The workaround is based on https://github.com/actions/checkout/issues/1467
-          fetch-tags: true
-          ref: ${{ github.ref }}
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@2ece4ec6ab7de266859a6f053571425b2bd684b6
+        uses: XRPLF/actions/prepare-runner@e8d2d2a546a03e1d161dca52890705f3bc641215
         with:
-          disable_ccache: ${{ !inputs.download_ccache }}
+          enable_ccache: ${{ inputs.download_ccache }}
 
       - name: Setup conan on macOS
         if: ${{ runner.os == 'macOS' }}
@@ -139,6 +135,7 @@ jobs:
           static: ${{ inputs.static }}
           time_trace: ${{ inputs.analyze_build_time }}
           package: ${{ inputs.package }}
+          version: ${{ inputs.version }}
 
       - name: Build Clio
         uses: ./.github/actions/build-clio
@@ -162,7 +159,7 @@ jobs:
       - name: Show ccache's statistics and zero it
         if: ${{ inputs.download_ccache }}
         run: |
-          ccache --show-stats
+          ccache --show-stats -vv
           ccache --zero-stats
 
       - name: Save ccache cache
@@ -218,15 +215,20 @@ jobs:
         if: ${{ inputs.code_coverage }}
         uses: ./.github/actions/code-coverage
 
-      - name: Verify expected version
-        if: ${{ inputs.expected_version != '' }}
+      - name: Verify version is expected
+        if: ${{ inputs.version != '' }}
         env:
-          INPUT_EXPECTED_VERSION: ${{ inputs.expected_version }}
+          INPUT_VERSION: ${{ inputs.version }}
+          BUILD_TYPE: ${{ inputs.build_type }}
         run: |
           set -e
-          EXPECTED_VERSION="clio-${INPUT_EXPECTED_VERSION}"
-          actual_version=$(./build/clio_server --version)
-          if [[ "$actual_version" != "$EXPECTED_VERSION" ]]; then
+          EXPECTED_VERSION="clio-${INPUT_VERSION}"
+          if [[ "${BUILD_TYPE}" == "Debug" ]]; then
+            EXPECTED_VERSION="${EXPECTED_VERSION}+DEBUG"
+          fi
+
+          actual_version=$(./build/clio_server --version | head -n 1)
+          if [[ "${actual_version}" != "${EXPECTED_VERSION}" ]]; then
             echo "Expected version '${EXPECTED_VERSION}', but got '${actual_version}'"
             exit 1
           fi

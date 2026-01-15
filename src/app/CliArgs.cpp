@@ -77,7 +77,10 @@ CliArgs::parse(int argc, char const* argv[])
     }
 
     if (parsed.contains("version")) {
-        std::cout << util::build::getClioFullVersionString() << '\n';
+        std::cout << util::build::getClioFullVersionString() << '\n'
+                  << "Git commit hash: " << util::build::getGitCommitHash() << '\n'
+                  << "Git build branch: " << util::build::getGitBuildBranch() << '\n'
+                  << "Build date: " << util::build::getBuildDate() << '\n';
         return Action{Action::Exit{EXIT_SUCCESS}};
     }
 

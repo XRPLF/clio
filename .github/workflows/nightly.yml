@@ -28,8 +28,20 @@ defaults:
     shell: bash
 
 jobs:
+  get_date:
+    name: Get Date
+    runs-on: ubuntu-latest
+    outputs:
+      date: ${{ steps.get_date.outputs.date }}
+    steps:
+      - name: Get current date
+        id: get_date
+        run: |
+          echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
   build-and-test:
     name: Build and Test
+    needs: get_date
 
     strategy:
       fail-fast: false
@@ -43,17 +55,17 @@ jobs:
             conan_profile: gcc
             build_type: Release
             static: true
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
           - os: heavy
             conan_profile: gcc
             build_type: Debug
             static: true
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
           - os: heavy
             conan_profile: gcc.ubsan
             build_type: Release
             static: false
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
 
     uses: ./.github/workflows/reusable-build-test.yml
     with:
@@ -67,14 +79,16 @@ jobs:
       upload_clio_server: true
       download_ccache: false
       upload_ccache: false
+      version: nightly-${{ needs.get_date.outputs.date }}
 
   package:
     name: Build debian package
+    needs: get_date
 
     uses: ./.github/workflows/reusable-build.yml
     with:
       runs_on: heavy
-      container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
+      container: '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
       conan_profile: gcc
       build_type: Release
       download_ccache: false
@@ -83,11 +97,13 @@ jobs:
       static: true
       upload_clio_server: false
       package: true
+      version: nightly-${{ needs.get_date.outputs.date }}
       targets: package
       analyze_build_time: false
 
   analyze_build_time:
     name: Analyze Build Time
+    needs: get_date
 
     strategy:
       fail-fast: false
@@ -95,7 +111,7 @@ jobs:
         include:
           - os: heavy
             conan_profile: clang
-            container: '{ "image": "ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f" }'
+            container: '{ "image": "ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696" }'
             static: true
           - os: macos15
             conan_profile: apple-clang
@@ -114,17 +130,7 @@ jobs:
       upload_clio_server: false
       targets: all
       analyze_build_time: true
-
-  get_date:
-    name: Get Date
-    runs-on: ubuntu-latest
-    outputs:
-      date: ${{ steps.get_date.outputs.date }}
-    steps:
-      - name: Get current date
-        id: get_date
-        run: |
-          echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+      version: nightly-${{ needs.get_date.outputs.date }}
 
   nightly_release:
     needs: [build-and-test, package, get_date]

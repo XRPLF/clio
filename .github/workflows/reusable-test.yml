@@ -126,11 +126,17 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         uses: XRPLF/actions/cleanup-workspace@cf0433aa74563aead044a1e395610c96d65a37cf
 
-      - name: Spin up scylladb
+      - name: Delete and start colima (macOS)
+        # This is a temporary workaround for colima issues on macOS runners
         if: ${{ runner.os == 'macOS' }}
-        timeout-minutes: 3
         run: |
-          docker rm --force scylladb || true
+          colima delete --force
+          colima start
+
+      - name: Spin up scylladb (macOS)
+        if: ${{ runner.os == 'macOS' }}
+        timeout-minutes: 1
+        run: |
           docker run \
             --detach \
             --name scylladb \
@@ -142,8 +148,12 @@ jobs:
             --memory 16G \
             scylladb/scylla
 
+      - name: Wait for scylladb container to be healthy (macOS)
+        if: ${{ runner.os == 'macOS' }}
+        timeout-minutes: 1
+        run: |
           until [ "$(docker inspect -f '{{.State.Health.Status}}' scylladb)" == "healthy" ]; do
-            sleep 5
+            sleep 1
           done
 
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0

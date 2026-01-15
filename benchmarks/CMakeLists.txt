@@ -16,5 +16,5 @@ target_sources(
 include(deps/gbench)
 
 target_include_directories(clio_benchmark PRIVATE .)
-target_link_libraries(clio_benchmark PUBLIC clio_util clio_rpc benchmark::benchmark_main spdlog::spdlog)
+target_link_libraries(clio_benchmark PRIVATE clio_rpc clio_util benchmark::benchmark_main spdlog::spdlog)
 set_target_properties(clio_benchmark PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
