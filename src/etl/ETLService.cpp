@@ -212,14 +212,8 @@ ETLService::run()
             return;
         }
 
-        auto nextSequence = rng->maxSequence + 1;
-        if (backend_->cache().latestLedgerSequence() != 0) {
-            nextSequence = backend_->cache().latestLedgerSequence();
-        }
-
+        auto const nextSequence = syncCacheWithDb();
         LOG(log_.debug()) << "Database is populated. Starting monitor loop. sequence = " << nextSequence;
-        nextSequence = syncCacheWithDb();
-
 
         startMonitor(nextSequence);
 
@@ -358,16 +352,17 @@ uint32_t
 ETLService::syncCacheWithDb()
 {
     auto rng = backend_->hardFetchLedgerRangeNoThrow();
-    while (rng->maxSequence > backend_->cache().latestLedgerSequence()) {
-        LOG(log_.info()) << "Syncing cache with DB. DB latest seq: " << rng->maxSequence << ". Cache latest seq: "
-                         << backend_->cache().latestLedgerSequence();
+
+    while (not backend_->cache().isDisabled() and rng->maxSequence > backend_->cache().latestLedgerSequence()) {
+        LOG(log_.info()) << "Syncing cache with DB. DB latest seq: " << rng->maxSequence
+                         << ". Cache latest seq: " << backend_->cache().latestLedgerSequence();
         for (auto seq = backend_->cache().latestLedgerSequence(); seq <= rng->maxSequence; ++seq) {
             LOG(log_.info()) << "ETLService (via syncCacheWithDb) got new seq from db: " << seq;
             updateCache(seq);
         }
         rng = backend_->hardFetchLedgerRangeNoThrow();
     }
-    return rng->maxSequence;
+    return rng->maxSequence + 1;
 }
 
 void
