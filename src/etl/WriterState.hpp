@@ -175,5 +175,3 @@ public:
 };
 
 }  // namespace etl
-
-
