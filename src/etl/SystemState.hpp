@@ -74,6 +74,7 @@ struct SystemState {
         "Whether the process is writing to the database"
     );
 
+    /** @brief Whether the process is still loading cache after startup. */
     util::prometheus::Bool isLoadingCache = PrometheusService::boolMetric(
         "etl_loading_cache",
         util::prometheus::Labels{},

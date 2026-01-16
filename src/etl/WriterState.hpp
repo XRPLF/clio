@@ -87,6 +87,11 @@ public:
     virtual void
     setWriterDecidingFallback() = 0;
 
+    /**
+     * @brief Whether clio is still loading cache after startup.
+     *
+     * @return true if clio is still loading cache, false otherwise.
+     */
     [[nodiscard]] virtual bool
     isLoadingCache() const = 0;
 
@@ -166,6 +171,11 @@ public:
     bool
     isFallback() const override;
 
+    /**
+     * @brief Whether clio is still loading cache after startup.
+     *
+     * @return true if clio is still loading cache, false otherwise.
+     */
     bool
     isLoadingCache() const override;
 
