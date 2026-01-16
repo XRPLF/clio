@@ -160,7 +160,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsDataWithOtherNodes)
 
     auto const otherUuid = boost::uuids::random_generator{}();
     auto const otherNodeJson = R"({
-        "db_role": 2,
+        "db_role": 3,
         "update_time": "2025-01-15T10:30:00Z"
     })";
 
@@ -176,6 +176,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsDataWithOtherNodes)
     EXPECT_CALL(*backend_, writeNodeMessage).Times(testing::AtLeast(1));
     EXPECT_CALL(writerStateRef, isReadOnly).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
     EXPECT_CALL(writerStateRef, isFallback).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isLoadingCache).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
     EXPECT_CALL(writerStateRef, isWriting).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
@@ -255,6 +256,7 @@ TEST_F(ClusterBackendTest, WriteNodeMessageWritesSelfDataWithRecentTimestampAndD
         .WillRepeatedly(testing::Return(BackendInterface::ClioNodesDataFetchResult{}));
     EXPECT_CALL(writerStateRef, isReadOnly).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
     EXPECT_CALL(writerStateRef, isFallback).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isLoadingCache).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
     EXPECT_CALL(writerStateRef, isWriting).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
     EXPECT_CALL(*backend_, writeNodeMessage)
         .Times(testing::AtLeast(1))
@@ -274,3 +276,4 @@ TEST_F(ClusterBackendTest, WriteNodeMessageWritesSelfDataWithRecentTimestampAndD
     clusterBackend.run();
     semaphore.acquire();
 }
+

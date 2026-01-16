@@ -176,10 +176,10 @@ INSTANTIATE_TEST_SUITE_P(
             .expectedAction = ExpectedAction::StartWriting
         },
         WriterDeciderTestParams{
-            .testName = "AllNodesReadOnlyNoActionTaken",
+            .testName = "AllNodesReadOnlyGiveUpWriting",
             .selfUuidValue = 0x01,
             .nodes = {{0x01, ClioNode::DbRole::ReadOnly}, {0x02, ClioNode::DbRole::ReadOnly}},
-            .expectedAction = ExpectedAction::NoAction
+            .expectedAction = ExpectedAction::GiveUpWriting
         },
         WriterDeciderTestParams{
             .testName = "EmptyClusterDataNoActionTaken",
@@ -244,10 +244,10 @@ INSTANTIATE_TEST_SUITE_P(
             .expectedAction = ExpectedAction::SetFallback
         },
         WriterDeciderTestParams{
-            .testName = "SelfIsReadOnlyOthersAreFallbackNoActionTaken",
+            .testName = "SelfIsReadOnlyOthersAreFallbackGiveUpWriting",
             .selfUuidValue = 0x01,
             .nodes = {{0x01, ClioNode::DbRole::ReadOnly}, {0x02, ClioNode::DbRole::Fallback}},
-            .expectedAction = ExpectedAction::NoAction
+            .expectedAction = ExpectedAction::GiveUpWriting
         },
         WriterDeciderTestParams{
             .testName = "MultipleFallbackNodesSelfNotFallbackSetsFallback",
@@ -267,6 +267,47 @@ INSTANTIATE_TEST_SUITE_P(
                  {0x03, ClioNode::DbRole::Fallback},
                  {0x04, ClioNode::DbRole::Writer}},
             .expectedAction = ExpectedAction::SetFallback
+        },
+        WriterDeciderTestParams{
+            .testName = "SelfIsLoadingCacheOtherIsWriter",
+            .selfUuidValue = 0x01,
+            .nodes = {{0x01, ClioNode::DbRole::LoadingCache}, {0x02, ClioNode::DbRole::Writer}},
+            .expectedAction = ExpectedAction::GiveUpWriting
+        },
+        WriterDeciderTestParams{
+            .testName = "OtherNodeIsLoadingCacheSkipToNextWriter",
+            .selfUuidValue = 0x02,
+            .nodes =
+                {{0x01, ClioNode::DbRole::LoadingCache},
+                 {0x02, ClioNode::DbRole::Writer},
+                 {0x03, ClioNode::DbRole::NotWriter}},
+            .expectedAction = ExpectedAction::StartWriting
+        },
+        WriterDeciderTestParams{
+            .testName = "AllNodesLoadingCacheNoActionTaken",
+            .selfUuidValue = 0x01,
+            .nodes = {{0x01, ClioNode::DbRole::LoadingCache}, {0x02, ClioNode::DbRole::LoadingCache}},
+            .expectedAction = ExpectedAction::NoAction
+        },
+        WriterDeciderTestParams{
+            .testName = "MixedWithLoadingCacheReadOnlyFirstNonReadOnlyNonLoadingCacheSelected",
+            .selfUuidValue = 0x03,
+            .nodes =
+                {{0x01, ClioNode::DbRole::ReadOnly},
+                 {0x02, ClioNode::DbRole::LoadingCache},
+                 {0x03, ClioNode::DbRole::Writer},
+                 {0x04, ClioNode::DbRole::NotWriter}},
+            .expectedAction = ExpectedAction::StartWriting
+        },
+        WriterDeciderTestParams{
+            .testName = "LoadingCacheBeforeWriterSkipsLoadingCache",
+            .selfUuidValue = 0x04,
+            .nodes =
+                {{0x01, ClioNode::DbRole::LoadingCache},
+                 {0x02, ClioNode::DbRole::LoadingCache},
+                 {0x03, ClioNode::DbRole::Writer},
+                 {0x04, ClioNode::DbRole::NotWriter}},
+            .expectedAction = ExpectedAction::GiveUpWriting
         }
     ),
     [](testing::TestParamInfo<WriterDeciderTestParams> const& info) { return info.param.testName; }
