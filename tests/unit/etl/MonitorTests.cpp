@@ -164,7 +164,10 @@ TEST_F(MonitorTests, DbStalledChannelTriggeredWhenTimeoutExceeded)
 
     EXPECT_CALL(*ledgers_, subscribe(testing::_));
     EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillRepeatedly(testing::Return(std::nullopt));
-    EXPECT_CALL(dbStalledMock_, Call()).WillOnce([&]() { unblock.release(); });
+    EXPECT_CALL(dbStalledMock_, Call()).WillOnce([&]() {
+        monitor_.stop(); // Prevent monitor to have another loop between semaphore and destructor
+        unblock.release();
+    });
 
     auto subscription = monitor_.subscribeToDbStalled(dbStalledMock_.AsStdFunction());
     monitor_.run(std::chrono::nanoseconds{100});
