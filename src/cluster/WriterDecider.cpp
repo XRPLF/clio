@@ -24,7 +24,6 @@
 #include "etl/WriterState.hpp"
 #include "util/Assert.hpp"
 #include "util/Spawn.hpp"
-#include "util/log/Logger.hpp"
 
 #include <boost/asio/thread_pool.hpp>
 

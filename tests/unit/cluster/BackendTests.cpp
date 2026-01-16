@@ -276,4 +276,3 @@ TEST_F(ClusterBackendTest, WriteNodeMessageWritesSelfDataWithRecentTimestampAndD
     clusterBackend.run();
     semaphore.acquire();
 }
-

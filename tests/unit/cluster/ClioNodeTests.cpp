@@ -239,8 +239,3 @@ TEST_P(ClioNodeFromTest, FromWriterState)
     EXPECT_GE(node.updateTime, beforeTime);
     EXPECT_LE(node.updateTime, afterTime);
 }
-
-
-
-
-
