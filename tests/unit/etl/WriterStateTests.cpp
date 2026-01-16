@@ -107,3 +107,56 @@ TEST_F(WriterStateTest, IsFallbackReturnsSystemStateValue)
     systemState->isWriterDecidingFallback = true;
     EXPECT_TRUE(writerState.isFallback());
 }
+
+TEST_F(WriterStateTest, IsReadOnlyReturnsSystemStateValue)
+{
+    systemState->isStrictReadonly = false;
+    EXPECT_FALSE(writerState.isReadOnly());
+
+    systemState->isStrictReadonly = true;
+    EXPECT_TRUE(writerState.isReadOnly());
+}
+
+TEST_F(WriterStateTest, IsLoadingCacheReturnsSystemStateValue)
+{
+    systemState->isLoadingCache = false;
+    EXPECT_FALSE(writerState.isLoadingCache());
+
+    systemState->isLoadingCache = true;
+    EXPECT_TRUE(writerState.isLoadingCache());
+}
+
+TEST_F(WriterStateTest, CloneCreatesNewInstanceWithSameSystemState)
+{
+    systemState->isWriting = true;
+    systemState->isStrictReadonly = true;
+    systemState->isLoadingCache = false;
+
+    auto cloned = writerState.clone();
+
+    ASSERT_NE(cloned.get(), &writerState);
+    EXPECT_TRUE(cloned->isWriting());
+    EXPECT_TRUE(cloned->isReadOnly());
+    EXPECT_FALSE(cloned->isLoadingCache());
+}
+
+TEST_F(WriterStateTest, ClonedInstanceSharesSystemState)
+{
+    auto cloned = writerState.clone();
+
+    systemState->isWriting = true;
+
+    EXPECT_TRUE(writerState.isWriting());
+    EXPECT_TRUE(cloned->isWriting());
+
+    systemState->isWriting = false;
+
+    EXPECT_FALSE(writerState.isWriting());
+    EXPECT_FALSE(cloned->isWriting());
+
+    EXPECT_FALSE(writerState.isFallback());
+    EXPECT_FALSE(cloned->isFallback());
+    cloned->setWriterDecidingFallback();
+    EXPECT_TRUE(writerState.isFallback());
+    EXPECT_TRUE(cloned->isFallback());
+}
