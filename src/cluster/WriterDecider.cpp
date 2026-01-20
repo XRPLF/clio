@@ -40,7 +40,7 @@ WriterDecider::WriterDecider(boost::asio::thread_pool& ctx, std::unique_ptr<etl:
 }
 
 void
-WriterDecider::onNewState(ClioNode::cUUID selfId, std::shared_ptr<Backend::ClusterData const> clusterData)
+WriterDecider::onNewState(ClioNode::CUuid selfId, std::shared_ptr<Backend::ClusterData const> clusterData)
 {
     if (not clusterData->has_value())
         return;

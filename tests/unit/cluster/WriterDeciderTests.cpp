@@ -111,7 +111,7 @@ TEST_P(WriterDeciderTest, WriterSelection)
     }
 
     std::shared_ptr<Backend::ClusterData> clusterData;
-    ClioNode::cUUID selfIdPtr;
+    ClioNode::CUuid selfIdPtr;
 
     if (params.useEmptyClusterData) {
         clusterData = std::make_shared<Backend::ClusterData>(std::unexpected(std::string("Communication failed")));

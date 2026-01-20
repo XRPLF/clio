@@ -39,7 +39,7 @@
 
 namespace cluster::impl {
 
-// TODO: Try to replace util/Repeat by this
+// TODO: Try to replace util::Repeat by this. https://github.com/XRPLF/clio/issues/2926
 template <typename Context>
 class RepeatedTask {
     std::chrono::steady_clock::duration interval_;

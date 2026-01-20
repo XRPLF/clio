@@ -86,7 +86,7 @@ Backend::stop()
     writerTask_.stop();
 }
 
-ClioNode::cUUID
+ClioNode::CUuid
 Backend::selfId() const
 {
     return selfUuid_;
@@ -103,7 +103,7 @@ Backend::doRead(boost::asio::yield_context yield)
     }
 
     if (!expectedResult.has_value()) {
-        return std::unexpected{"Failed to fetch nodes data"};
+        return std::unexpected{std::move(expectedResult).error()};
     }
 
     std::vector<ClioNode> otherNodesData;
@@ -126,7 +126,7 @@ Backend::doRead(boost::asio::yield_context yield)
         otherNodesData.push_back(std::move(expectedNodeData).value());
     }
     otherNodesData.push_back(ClioNode::from(selfUuid_, *writerState_));
-    return std::vector<ClioNode>(otherNodesData);
+    return otherNodesData;
 }
 
 void

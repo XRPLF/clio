@@ -54,10 +54,10 @@ struct ClioNode {
      */
     enum class DbRole { ReadOnly = 0, LoadingCache = 1, NotWriter = 2, Writer = 3, Fallback = 4, MAX = 4 };
 
-    using UUID = std::shared_ptr<boost::uuids::uuid>;
-    using cUUID = std::shared_ptr<boost::uuids::uuid const>;
+    using Uuid = std::shared_ptr<boost::uuids::uuid>;
+    using CUuid = std::shared_ptr<boost::uuids::uuid const>;
 
-    UUID uuid;                                         ///< The UUID of the node.
+    Uuid uuid;                                         ///< The UUID of the node.
     std::chrono::system_clock::time_point updateTime;  ///< The time the data about the node was last updated.
     DbRole dbRole;                                     ///< The database role of the node
 
@@ -69,7 +69,7 @@ struct ClioNode {
      * @return A ClioNode with the current time and role derived from writerState
      */
     static ClioNode
-    from(UUID uuid, etl::WriterStateInterface const& writerState);
+    from(Uuid uuid, etl::WriterStateInterface const& writerState);
 };
 
 void

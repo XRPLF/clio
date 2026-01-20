@@ -46,19 +46,19 @@ struct ChannelInstantiated;
 
 /**
  * @brief Specifies the producer concurrency model for a Channel.
- *
- * - Single: Only one Sender can exist (non-copyable). Uses direct Guard ownership for zero overhead.
- * - Multi: Multiple Senders can exist (copyable). Uses shared_ptr<Guard> for shared ownership.
  */
-enum class ProducerType { Single, Multi };
+enum class ProducerType {
+    Single, /**< Only one Sender can exist (non-copyable). Uses direct Guard ownership for zero overhead. */
+    Multi   /**< Multiple Senders can exist (copyable). Uses shared_ptr<Guard> for shared ownership. */
+};
 
 /**
  * @brief Specifies the consumer concurrency model for a Channel.
- *
- * - Single: Only one Receiver can exist (non-copyable). Uses direct Guard ownership for zero overhead.
- * - Multi: Multiple Receivers can exist (copyable). Uses shared_ptr<Guard> for shared ownership.
  */
-enum class ConsumerType { Single, Multi };
+enum class ConsumerType {
+    Single, /**< Only one Receiver can exist (non-copyable). Uses direct Guard ownership for zero overhead. */
+    Multi   /**< Multiple Receivers can exist (copyable). Uses shared_ptr<Guard> for shared ownership. */
+};
 
 /**
  * @brief Represents a go-like channel, a multi-producer (Sender) multi-consumer (Receiver) thread-safe data pipe.

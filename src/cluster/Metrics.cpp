@@ -33,11 +33,14 @@ Metrics::Metrics()
 }
 
 void
-Metrics::onNewState(ClioNode::cUUID, std::shared_ptr<Backend::ClusterData const> clusterData)
+Metrics::onNewState(ClioNode::CUuid, std::shared_ptr<Backend::ClusterData const> clusterData)
 {
-    isHealthy_ = clusterData->has_value();
     if (clusterData->has_value()) {
+        isHealthy_ = true;
         nodesInClusterMetric_.set(clusterData->value().size());
+    } else {
+        isHealthy_ = false;
+        nodesInClusterMetric_.set(1);
     }
 }
 

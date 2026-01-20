@@ -53,7 +53,7 @@ struct SystemStateReadOnlyTest : util::prometheus::WithPrometheus, testing::With
 TEST_P(SystemStateReadOnlyTest, MakeSystemStateWithReadOnly)
 {
     auto const readOnlyValue = GetParam();
-    auto const configJson = boost::json::parse(fmt::format(R"({{"read_only": {}}})", readOnlyValue));
+    auto const configJson = boost::json::parse(fmt::format(R"JSON({{"read_only": {}}})JSON", readOnlyValue));
 
     auto config = ClioConfigDefinition{{{"read_only", ConfigValue{ConfigType::Boolean}}}};
     auto const configFile = ConfigFileJson{configJson.as_object()};

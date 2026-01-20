@@ -70,7 +70,7 @@ public:
      * @param clusterData Shared pointer to the current cluster data; may be empty if communication failed
      */
     void
-    onNewState(ClioNode::cUUID uuid, std::shared_ptr<Backend::ClusterData const> clusterData);
+    onNewState(ClioNode::CUuid uuid, std::shared_ptr<Backend::ClusterData const> clusterData);
 };
 
 }  // namespace cluster

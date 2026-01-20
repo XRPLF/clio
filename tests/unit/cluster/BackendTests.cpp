@@ -57,7 +57,7 @@ struct ClusterBackendTest : util::prometheus::WithPrometheus, MockBackendTestStr
     boost::asio::thread_pool ctx;
     std::unique_ptr<MockWriterState> writerState = std::make_unique<MockWriterState>();
     MockWriterState& writerStateRef = *writerState;
-    testing::StrictMock<testing::MockFunction<void(ClioNode::cUUID, std::shared_ptr<Backend::ClusterData const>)>>
+    testing::StrictMock<testing::MockFunction<void(ClioNode::CUuid, std::shared_ptr<Backend::ClusterData const>)>>
         callbackMock;
     std::binary_semaphore semaphore{0};
 
@@ -90,7 +90,7 @@ TEST_F(ClusterBackendTest, SubscribeToNewState)
     EXPECT_CALL(writerStateRef, isReadOnly).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(true));
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
-        .WillRepeatedly([this](ClioNode::cUUID selfId, std::shared_ptr<Backend::ClusterData const> clusterData) {
+        .WillRepeatedly([this](ClioNode::CUuid selfId, std::shared_ptr<Backend::ClusterData const> clusterData) {
             SemaphoreReleaseGuard guard{semaphore};
             ASSERT_TRUE(clusterData->has_value());
             EXPECT_EQ(clusterData->value().size(), 1);
@@ -140,10 +140,10 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataThrowsException)
     EXPECT_CALL(writerStateRef, isReadOnly).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(true));
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
-        .WillRepeatedly([this](ClioNode::cUUID, std::shared_ptr<Backend::ClusterData const> clusterData) {
+        .WillRepeatedly([this](ClioNode::CUuid, std::shared_ptr<Backend::ClusterData const> clusterData) {
             SemaphoreReleaseGuard guard{semaphore};
             ASSERT_FALSE(clusterData->has_value());
-            EXPECT_EQ(clusterData->error(), "Failed to fetch nodes data");
+            EXPECT_EQ(clusterData->error(), "Failed to fetch Clio nodes data");
         });
 
     clusterBackend.run();
@@ -159,10 +159,10 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsDataWithOtherNodes)
     clusterBackend.subscribeToNewState(callbackMock.AsStdFunction());
 
     auto const otherUuid = boost::uuids::random_generator{}();
-    auto const otherNodeJson = R"({
+    auto const otherNodeJson = R"JSON({
         "db_role": 3,
         "update_time": "2025-01-15T10:30:00Z"
-    })";
+    })JSON";
 
     EXPECT_CALL(*backend_, fetchClioNodesData)
         .Times(testing::AtLeast(1))
@@ -180,7 +180,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsDataWithOtherNodes)
     EXPECT_CALL(writerStateRef, isWriting).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(false));
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
-        .WillRepeatedly([&](ClioNode::cUUID selfId, std::shared_ptr<Backend::ClusterData const> clusterData) {
+        .WillRepeatedly([&](ClioNode::CUuid selfId, std::shared_ptr<Backend::ClusterData const> clusterData) {
             SemaphoreReleaseGuard guard{semaphore};
             ASSERT_TRUE(clusterData->has_value()) << clusterData->error();
             EXPECT_EQ(clusterData->value().size(), 2);
@@ -216,10 +216,10 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsOnlySelfData)
 
     clusterBackend.subscribeToNewState(callbackMock.AsStdFunction());
 
-    auto const selfNodeJson = R"({
+    auto const selfNodeJson = R"JSON({
         "db_role": 1,
         "update_time": "2025-01-16T10:30:00Z"
-    })";
+    })JSON";
 
     EXPECT_CALL(*backend_, fetchClioNodesData).Times(testing::AtLeast(1)).WillRepeatedly([&]() {
         return BackendInterface::ClioNodesDataFetchResult{
@@ -230,7 +230,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsOnlySelfData)
     EXPECT_CALL(writerStateRef, isReadOnly).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(true));
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
-        .WillRepeatedly([this](ClioNode::cUUID selfId, std::shared_ptr<Backend::ClusterData const> clusterData) {
+        .WillRepeatedly([this](ClioNode::CUuid selfId, std::shared_ptr<Backend::ClusterData const> clusterData) {
             SemaphoreReleaseGuard guard{semaphore};
             ASSERT_TRUE(clusterData->has_value());
             EXPECT_EQ(clusterData->value().size(), 1);
@@ -268,7 +268,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsInvalidJson)
     EXPECT_CALL(writerStateRef, isReadOnly).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(true));
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
-        .WillRepeatedly([this, invalidJson](ClioNode::cUUID, std::shared_ptr<Backend::ClusterData const> clusterData) {
+        .WillRepeatedly([this, invalidJson](ClioNode::CUuid, std::shared_ptr<Backend::ClusterData const> clusterData) {
             SemaphoreReleaseGuard guard{semaphore};
             ASSERT_FALSE(clusterData->has_value());
             EXPECT_THAT(clusterData->error(), testing::HasSubstr("Error parsing json from DB"));
@@ -289,9 +289,9 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsValidJsonButCannotConvertToC
 
     auto const otherUuid = boost::uuids::random_generator{}();
     // Valid JSON but missing required field 'db_role'
-    auto const validJsonMissingField = R"({
+    auto const validJsonMissingField = R"JSON({
         "update_time": "2025-01-16T10:30:00Z"
-    })";
+    })JSON";
 
     EXPECT_CALL(*backend_, fetchClioNodesData)
         .Times(testing::AtLeast(1))
@@ -306,7 +306,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsValidJsonButCannotConvertToC
     EXPECT_CALL(writerStateRef, isReadOnly).Times(testing::AtLeast(1)).WillRepeatedly(testing::Return(true));
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
-        .WillRepeatedly([this](ClioNode::cUUID, std::shared_ptr<Backend::ClusterData const> clusterData) {
+        .WillRepeatedly([this](ClioNode::CUuid, std::shared_ptr<Backend::ClusterData const> clusterData) {
             SemaphoreReleaseGuard guard{semaphore};
             ASSERT_FALSE(clusterData->has_value());
             EXPECT_THAT(clusterData->error(), testing::HasSubstr("Error converting json to ClioNode"));

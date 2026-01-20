@@ -39,7 +39,7 @@ namespace cluster {
 
 namespace {
 
-struct Fields {
+struct JsonFields {
     static constexpr std::string_view const kUPDATE_TIME = "update_time";
     static constexpr std::string_view const kDB_ROLE = "db_role";
 };
@@ -47,7 +47,7 @@ struct Fields {
 }  // namespace
 
 ClioNode
-ClioNode::from(ClioNode::UUID uuid, etl::WriterStateInterface const& writerState)
+ClioNode::from(ClioNode::Uuid uuid, etl::WriterStateInterface const& writerState)
 {
     auto const dbRole = [&writerState]() {
         if (writerState.isReadOnly()) {
@@ -69,25 +69,26 @@ void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, ClioNode const& node)
 {
     jv = {
-        {Fields::kUPDATE_TIME, util::systemTpToUtcStr(node.updateTime, ClioNode::kTIME_FORMAT)},
-        {Fields::kDB_ROLE, static_cast<int64_t>(node.dbRole)}
+        {JsonFields::kUPDATE_TIME, util::systemTpToUtcStr(node.updateTime, ClioNode::kTIME_FORMAT)},
+        {JsonFields::kDB_ROLE, static_cast<int64_t>(node.dbRole)}
     };
 }
 
 ClioNode
 tag_invoke(boost::json::value_to_tag<ClioNode>, boost::json::value const& jv)
 {
-    auto const& updateTimeStr = jv.as_object().at(Fields::kUPDATE_TIME).as_string();
+    auto const& updateTimeStr = jv.as_object().at(JsonFields::kUPDATE_TIME).as_string();
     auto const updateTime = util::systemTpFromUtcStr(std::string(updateTimeStr), ClioNode::kTIME_FORMAT);
     if (!updateTime.has_value()) {
         throw std::runtime_error("Failed to parse update time");
     }
 
-    auto const dbRoleValue = jv.as_object().at(Fields::kDB_ROLE).as_int64();
+    auto const dbRoleValue = jv.as_object().at(JsonFields::kDB_ROLE).as_int64();
     if (dbRoleValue > static_cast<int64_t>(ClioNode::DbRole::MAX))
         throw std::runtime_error("Invalid db_role value");
 
     return ClioNode{
+        // Json data doesn't contain uuid so leaving it empty here. It will be filled outside of this parsing
         .uuid = std::make_shared<boost::uuids::uuid>(),
         .updateTime = updateTime.value(),
         .dbRole = static_cast<ClioNode::DbRole>(dbRoleValue)

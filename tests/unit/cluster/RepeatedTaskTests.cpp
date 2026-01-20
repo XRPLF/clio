@@ -177,17 +177,14 @@ TYPED_TEST(RepeatedTaskTypedTest, TaskStateTransitionsCorrectly)
 {
     RepeatedTask<boost::asio::io_context> task(std::chrono::milliseconds(1), this->ctx_);
 
-    // Initially not running
     task.stop();  // Should be no-op
 
     this->expectCalls(3);
 
-    // Start running
     task.run(this->mockFn.AsStdFunction());
 
     EXPECT_TRUE(this->semaphore.try_acquire_for(TestFixture::kTIMEOUT));
 
-    // Stop
     task.stop();
 
     // Stop again should be no-op

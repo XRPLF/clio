@@ -66,9 +66,9 @@ private:
     impl::RepeatedTask<boost::asio::thread_pool> readerTask_;
     impl::RepeatedTask<boost::asio::thread_pool> writerTask_;
 
-    ClioNode::UUID selfUuid_;
+    ClioNode::Uuid selfUuid_;
 
-    boost::signals2::signal<void(ClioNode::cUUID, std::shared_ptr<ClusterData const>)> onNewState_;
+    boost::signals2::signal<void(ClioNode::CUuid, std::shared_ptr<ClusterData const>)> onNewState_;
 
 public:
     /**
@@ -121,7 +121,7 @@ public:
      * @return A connection object that can be used to unsubscribe
      */
     template <typename S>
-        requires std::invocable<S, ClioNode::cUUID, std::shared_ptr<ClusterData const>>
+        requires std::invocable<S, ClioNode::CUuid, std::shared_ptr<ClusterData const>>
     boost::signals2::connection
     subscribeToNewState(S&& s)
     {
@@ -133,7 +133,7 @@ public:
      *
      * @return The UUID of this node.
      */
-    ClioNode::cUUID
+    ClioNode::CUuid
     selfId() const;
 
 private:

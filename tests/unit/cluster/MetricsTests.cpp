@@ -63,13 +63,11 @@ TEST_F(MetricsTest, OnNewStateWithValidClusterData)
     auto& nodesInClusterMock = makeMock<GaugeInt>("cluster_nodes_total_number", "");
     auto& isHealthyMock = makeMock<GaugeInt>("cluster_communication_is_healthy", "");
 
-    // Initial construction expectations
     EXPECT_CALL(nodesInClusterMock, set(1));
     EXPECT_CALL(isHealthyMock, set(1));
 
     Metrics metrics;
 
-    // Create cluster data with 3 nodes
     ClioNode node1{.uuid = uuid1, .updateTime = std::chrono::system_clock::now(), .dbRole = ClioNode::DbRole::Writer};
     ClioNode node2{.uuid = uuid2, .updateTime = std::chrono::system_clock::now(), .dbRole = ClioNode::DbRole::ReadOnly};
     ClioNode node3{
@@ -80,7 +78,6 @@ TEST_F(MetricsTest, OnNewStateWithValidClusterData)
     Backend::ClusterData clusterData = std::expected<std::vector<ClioNode>, std::string>(nodes);
     auto sharedClusterData = std::make_shared<Backend::ClusterData>(clusterData);
 
-    // Expect metrics to be updated: health = true (1), node count = 3
     EXPECT_CALL(isHealthyMock, set(1));
     EXPECT_CALL(nodesInClusterMock, set(3));
 
@@ -92,18 +89,15 @@ TEST_F(MetricsTest, OnNewStateWithEmptyClusterData)
     auto& nodesInClusterMock = makeMock<GaugeInt>("cluster_nodes_total_number", "");
     auto& isHealthyMock = makeMock<GaugeInt>("cluster_communication_is_healthy", "");
 
-    // Initial construction expectations
     EXPECT_CALL(nodesInClusterMock, set(1));
     EXPECT_CALL(isHealthyMock, set(1));
 
     Metrics metrics;
 
-    // Create empty cluster data (0 nodes)
     std::vector<ClioNode> nodes = {};
     Backend::ClusterData clusterData = std::expected<std::vector<ClioNode>, std::string>(nodes);
     auto sharedClusterData = std::make_shared<Backend::ClusterData>(clusterData);
 
-    // Expect metrics to be updated: health = true (1), node count = 0
     EXPECT_CALL(isHealthyMock, set(1));
     EXPECT_CALL(nodesInClusterMock, set(0));
 
@@ -115,19 +109,17 @@ TEST_F(MetricsTest, OnNewStateWithFailedClusterData)
     auto& nodesInClusterMock = makeMock<GaugeInt>("cluster_nodes_total_number", "");
     auto& isHealthyMock = makeMock<GaugeInt>("cluster_communication_is_healthy", "");
 
-    // Initial construction expectations
     EXPECT_CALL(nodesInClusterMock, set(1));
     EXPECT_CALL(isHealthyMock, set(1));
 
     Metrics metrics;
 
-    // Create failed cluster data (unexpected error)
     Backend::ClusterData clusterData =
         std::expected<std::vector<ClioNode>, std::string>(std::unexpected("Connection failed"));
     auto sharedClusterData = std::make_shared<Backend::ClusterData>(clusterData);
 
-    // Expect health to be set to false (0), node count should not be updated
     EXPECT_CALL(isHealthyMock, set(0));
+    EXPECT_CALL(nodesInClusterMock, set(1));
 
     metrics.onNewState(uuid1, sharedClusterData);
 }
@@ -137,20 +129,17 @@ TEST_F(MetricsTest, OnNewStateWithSingleNode)
     auto& nodesInClusterMock = makeMock<GaugeInt>("cluster_nodes_total_number", "");
     auto& isHealthyMock = makeMock<GaugeInt>("cluster_communication_is_healthy", "");
 
-    // Initial construction expectations
     EXPECT_CALL(nodesInClusterMock, set(1));
     EXPECT_CALL(isHealthyMock, set(1));
 
     Metrics metrics;
 
-    // Create cluster data with just 1 node (self)
     ClioNode node1{.uuid = uuid1, .updateTime = std::chrono::system_clock::now(), .dbRole = ClioNode::DbRole::Writer};
 
     std::vector<ClioNode> nodes = {node1};
     Backend::ClusterData clusterData = std::expected<std::vector<ClioNode>, std::string>(nodes);
     auto sharedClusterData = std::make_shared<Backend::ClusterData>(clusterData);
 
-    // Expect metrics to be updated: health = true (1), node count = 1
     EXPECT_CALL(isHealthyMock, set(1));
     EXPECT_CALL(nodesInClusterMock, set(1));
 
@@ -162,22 +151,20 @@ TEST_F(MetricsTest, OnNewStateRecoveryFromFailure)
     auto& nodesInClusterMock = makeMock<GaugeInt>("cluster_nodes_total_number", "");
     auto& isHealthyMock = makeMock<GaugeInt>("cluster_communication_is_healthy", "");
 
-    // Initial construction expectations
     EXPECT_CALL(nodesInClusterMock, set(1));
     EXPECT_CALL(isHealthyMock, set(1));
 
     Metrics metrics;
 
-    // First update: failure
     Backend::ClusterData clusterData1 =
         std::expected<std::vector<ClioNode>, std::string>(std::unexpected("Connection timeout"));
     auto sharedClusterData1 = std::make_shared<Backend::ClusterData>(clusterData1);
 
     EXPECT_CALL(isHealthyMock, set(0));
+    EXPECT_CALL(nodesInClusterMock, set(1));
 
     metrics.onNewState(uuid1, sharedClusterData1);
 
-    // Second update: recovery with 2 nodes
     ClioNode node1{.uuid = uuid1, .updateTime = std::chrono::system_clock::now(), .dbRole = ClioNode::DbRole::Writer};
     ClioNode node2{.uuid = uuid2, .updateTime = std::chrono::system_clock::now(), .dbRole = ClioNode::DbRole::ReadOnly};
 
