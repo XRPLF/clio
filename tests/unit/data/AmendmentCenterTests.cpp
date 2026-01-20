@@ -32,8 +32,8 @@
 #include <xrpl/protocol/Indexes.h>
 
 #include <algorithm>
+#include <functional>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -104,16 +104,13 @@ TEST_F(AmendmentCenterTest, IsMultipleEnabled)
     });
 }
 
-TEST_F(AmendmentCenterTest, IsEnabledThrowsWhenUnavailable)
+TEST_F(AmendmentCenterTest, IsEnabledReturnsFalseWhenAmendmentsLedgerObjectUnavailable)
 {
     EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amendments().key, kSEQ, testing::_))
         .WillOnce(testing::Return(std::nullopt));
 
     runSpawn([this](auto yield) {
-        EXPECT_THROW(
-            { [[maybe_unused]] auto const result = amendmentCenter.isEnabled(yield, "irrelevant", kSEQ); },
-            std::runtime_error
-        );
+        EXPECT_NO_THROW(EXPECT_FALSE(amendmentCenter.isEnabled(yield, "irrelevant", kSEQ)));
     });
 }
 
@@ -124,6 +121,21 @@ TEST_F(AmendmentCenterTest, IsEnabledReturnsFalseWhenNoAmendments)
         .WillOnce(testing::Return(amendments.getSerializer().peekData()));
 
     runSpawn([this](auto yield) { EXPECT_FALSE(amendmentCenter.isEnabled(yield, "irrelevant", kSEQ)); });
+}
+
+TEST_F(AmendmentCenterTest, IsEnabledReturnsVectorOfFalseWhenAmendmentsLedgerObjectUnavailable)
+{
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amendments().key, kSEQ, testing::_))
+        .WillOnce(testing::Return(std::nullopt));
+
+    runSpawn([this](auto yield) {
+        std::vector<data::AmendmentKey> const keys{"fixUniversalNumber", "ImmediateOfferKilled"};
+        std::vector<bool> vec;
+        EXPECT_NO_THROW(vec = amendmentCenter.isEnabled(yield, keys, kSEQ));
+
+        EXPECT_EQ(vec.size(), keys.size());
+        EXPECT_TRUE(std::ranges::all_of(vec, std::logical_not<>{}));
+    });
 }
 
 TEST_F(AmendmentCenterTest, IsEnabledReturnsVectorOfFalseWhenNoAmendments)

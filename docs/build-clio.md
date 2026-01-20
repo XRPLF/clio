@@ -97,30 +97,14 @@ Now you should be able to download the prebuilt dependencies (including `xrpl` p
 
 #### Conan lockfile
 
-To achieve reproducible dependencies, we use [Conan lockfile](https://docs.conan.io/2/tutorial/versioning/lockfiles.html).
+To achieve reproducible dependencies, we use a [Conan lockfile](https://docs.conan.io/2/tutorial/versioning/lockfiles.html).
 
 The `conan.lock` file in the repository contains a "snapshot" of the current dependencies.
 It is implicitly used when running `conan` commands, you don't need to specify it.
 
 You have to update this file every time you add a new dependency or change a revision or version of an existing dependency.
 
-> [!NOTE]
-> Conan uses local cache by default when creating a lockfile.
->
-> To ensure, that lockfile creation works the same way on all developer machines, you should clear the local cache before creating a new lockfile.
-
-To create a new lockfile, run the following commands in the repository root:
-
-```bash
-conan remove '*' --confirm
-rm conan.lock
-# This ensure that xrplf remote is the first to be consulted
-conan remote add --force --index 0 xrplf https://conan.ripplex.io
-conan lock create .
-```
-
-> [!NOTE]
-> If some dependencies are exclusive for some OS, you may need to run the last command for them adding `--profile:all <PROFILE>`.
+To update a lockfile, run from the repository root: `./.github/scripts/conan/regenerate_lockfile.sh`
 
 ## Building Clio
 
@@ -191,7 +175,7 @@ Open the `index.html` file in your browser to see the documentation pages.
 It is also possible to build Clio using [Docker](https://www.docker.com/) if you don't want to install all the dependencies on your machine.
 
 ```sh
-docker run -it ghcr.io/xrplf/clio-ci:067449c3f8ae6755ea84752ea2962b589fe56c8f
+docker run -it ghcr.io/xrplf/clio-ci:14342e087ceb8b593027198bf9ef06a43833c696
 git clone https://github.com/XRPLF/clio
 cd clio
 ```

@@ -361,6 +361,7 @@ getClioConfig()
          {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(gValidateLoadMode)},
          {"cache.file.path", ConfigValue{ConfigType::String}.optional()},
          {"cache.file.max_sequence_age", ConfigValue{ConfigType::Integer}.defaultValue(5000)},
+         {"cache.file.async_save", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
          {"log.channels.[].channel",
           Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateChannelName)}},

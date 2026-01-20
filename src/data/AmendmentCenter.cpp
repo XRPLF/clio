@@ -146,9 +146,12 @@ AmendmentCenter::isEnabled(AmendmentKey const& key, uint32_t seq) const
 bool
 AmendmentCenter::isEnabled(boost::asio::yield_context yield, AmendmentKey const& key, uint32_t seq) const
 {
-    if (auto const listAmendments = fetchAmendmentsList(yield, seq); listAmendments)
-        return lookupAmendment(all_, *listAmendments, key);
-
+    try {
+        if (auto const listAmendments = fetchAmendmentsList(yield, seq); listAmendments)
+            return lookupAmendment(all_, *listAmendments, key);
+    } catch (std::runtime_error const&) {
+        return false;  // Some old ledger does not contain Amendments ledger object so do best we can for now
+    }
     return false;
 }
 
@@ -157,13 +160,19 @@ AmendmentCenter::isEnabled(boost::asio::yield_context yield, std::vector<Amendme
 {
     namespace rg = std::ranges;
 
-    if (auto const listAmendments = fetchAmendmentsList(yield, seq); listAmendments) {
-        std::vector<bool> out;
-        rg::transform(keys, std::back_inserter(out), [this, &listAmendments](auto const& key) {
-            return lookupAmendment(all_, *listAmendments, key);
-        });
+    try {
+        if (auto const listAmendments = fetchAmendmentsList(yield, seq); listAmendments) {
+            std::vector<bool> out;
+            rg::transform(keys, std::back_inserter(out), [this, &listAmendments](auto const& key) {
+                return lookupAmendment(all_, *listAmendments, key);
+            });
 
-        return out;
+            return out;
+        }
+    } catch (std::runtime_error const&) {
+        return std::vector<bool>(
+            keys.size(), false
+        );  // Some old ledger does not contain Amendments ledger object so do best we can for now
     }
 
     return std::vector<bool>(keys.size(), false);

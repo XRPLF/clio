@@ -26,7 +26,20 @@ namespace util::build {
 #ifndef CLIO_VERSION
 #error "CLIO_VERSION must be defined"
 #endif
+#ifndef GIT_COMMIT_HASH
+#error "GIT_COMMIT_HASH must be defined"
+#endif
+#ifndef GIT_BUILD_BRANCH
+#error "GIT_BUILD_BRANCH must be defined"
+#endif
+#ifndef BUILD_DATE
+#error "BUILD_DATE must be defined"
+#endif
+
 static constexpr char kVERSION_STRING[] = CLIO_VERSION;
+static constexpr char kGIT_COMMIT_HASH[] = GIT_COMMIT_HASH;
+static constexpr char kGIT_BUILD_BRANCH[] = GIT_BUILD_BRANCH;
+static constexpr char kBUILD_DATE[] = BUILD_DATE;
 
 std::string const&
 getClioVersionString()
@@ -39,6 +52,27 @@ std::string const&
 getClioFullVersionString()
 {
     static std::string const value = "clio-" + getClioVersionString();  // NOLINT(readability-identifier-naming)
+    return value;
+}
+
+std::string const&
+getGitCommitHash()
+{
+    static std::string const value = kGIT_COMMIT_HASH;  // NOLINT(readability-identifier-naming)
+    return value;
+}
+
+std::string const&
+getGitBuildBranch()
+{
+    static std::string const value = kGIT_BUILD_BRANCH;  // NOLINT(readability-identifier-naming)
+    return value;
+}
+
+std::string const&
+getBuildDate()
+{
+    static std::string const value = kBUILD_DATE;  // NOLINT(readability-identifier-naming)
     return value;
 }
 

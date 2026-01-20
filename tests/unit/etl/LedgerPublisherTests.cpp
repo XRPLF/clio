@@ -216,14 +216,15 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderCloseTimeGreaterThanNow)
 TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsTrue)
 {
     auto dummyState = etl::SystemState{};
+    dummyState.isStopping = true;
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
-    publisher.stop();
     EXPECT_FALSE(publisher.publish(kSEQ, {}));
 }
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttempt)
 {
     auto dummyState = etl::SystemState{};
+    dummyState.isStopping = false;
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
 
     static constexpr auto kMAX_ATTEMPT = 2;
@@ -237,6 +238,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttempt)
 TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsFalse)
 {
     auto dummyState = etl::SystemState{};
+    dummyState.isStopping = false;
     auto publisher = impl::LedgerPublisher(ctx, backend_, mockSubscriptionManagerPtr, dummyState);
 
     LedgerRange const range{.minSequence = kSEQ, .maxSequence = kSEQ};

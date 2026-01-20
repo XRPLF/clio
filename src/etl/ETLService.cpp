@@ -348,20 +348,13 @@ ETLService::startMonitor(uint32_t seq)
 {
     monitor_ = monitorProvider_->make(ctx_, backend_, ledgers_, seq);
 
-    systemStateWriteCommandSubscription_ =
-        state_->writeCommandSignal.connect([this](SystemState::WriteCommand command) {
-            switch (command) {
-                case etl::SystemState::WriteCommand::StartWriting:
-                    attemptTakeoverWriter();
-                    break;
-                case etl::SystemState::WriteCommand::StopWriting:
-                    giveUpWriter();
-                    break;
-            }
-        });
-
     monitorNewSeqSubscription_ = monitor_->subscribeToNewSequence([this](uint32_t seq) {
         LOG(log_.info()) << "ETLService (via Monitor) got new seq from db: " << seq;
+
+        if (state_->writeConflict) {
+            LOG(log_.info()) << "Got a write conflict; Giving up writer seat immediately";
+            giveUpWriter();
+        }
 
         if (not state_->isWriting) {
             auto const diff = data::synchronousAndRetryOnTimeout([this, seq](auto yield) {
@@ -378,7 +371,7 @@ ETLService::startMonitor(uint32_t seq)
     monitorDbStalledSubscription_ = monitor_->subscribeToDbStalled([this]() {
         LOG(log_.warn()) << "ETLService received DbStalled signal from Monitor";
         if (not state_->isStrictReadonly and not state_->isWriting)
-            state_->writeCommandSignal(SystemState::WriteCommand::StartWriting);
+            attemptTakeoverWriter();
     });
 
     monitor_->run();
@@ -411,6 +404,7 @@ ETLService::giveUpWriter()
 {
     ASSERT(not state_->isStrictReadonly, "This should only happen on writer nodes");
     state_->isWriting = false;
+    state_->writeConflict = false;
     taskMan_ = nullptr;
 }
 

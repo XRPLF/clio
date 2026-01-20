@@ -74,6 +74,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <string>
 
 namespace etl {
 
@@ -116,7 +117,6 @@ class ETLService : public ETLServiceInterface {
 
     boost::signals2::scoped_connection monitorNewSeqSubscription_;
     boost::signals2::scoped_connection monitorDbStalledSubscription_;
-    boost::signals2::scoped_connection systemStateWriteCommandSubscription_;
 
     std::optional<util::async::AnyOperation<void>> mainLoop_;
 

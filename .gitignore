@@ -4,6 +4,7 @@
 .build
 .cache
 .vscode
+.zed
 .python-version
 .DS_Store
 .sanitizer-report

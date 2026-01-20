@@ -167,6 +167,7 @@ target_sources(
           util/AccountUtilsTests.cpp
           util/AssertTests.cpp
           util/BytesConverterTests.cpp
+          util/ChannelTests.cpp
           util/CoroutineTest.cpp
           util/MoveTrackerTests.cpp
           util/ObservableValueTest.cpp

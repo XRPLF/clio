@@ -282,6 +282,9 @@ This document provides a list of all available Clio configuration properties in 
         KV{.key = "cache.file.max_sequence_age",
            .value = "Max allowed difference between the latest sequence in DB and in cache file. If the cache file is "
                     "too old (contains too low latest sequence) Clio will reject using it."},
+        KV{.key = "cache.file.async_save",
+           .value = "When false, Clio waits for cache saving to finish before shutting down. When true, "
+                    "cache saving runs in parallel with other shutdown operations."},
         KV{.key = "log.channels.[].channel", .value = "The name of the log channel."},
         KV{.key = "log.channels.[].level", .value = "The log level for the specific log channel."},
         KV{.key = "log.level",
