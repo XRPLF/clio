@@ -25,6 +25,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <expected>
 #include <fstream>
 #include <string>
 
@@ -59,6 +60,9 @@ public:
 
     ripple::uint256
     hash() const;
+
+    std::expected<void, std::string>
+    close();
 
 private:
     void

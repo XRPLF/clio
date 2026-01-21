@@ -115,6 +115,11 @@ LedgerCacheFile::write(DataView dataView)
     auto const hash = file.hash();
     file.write(hash.data(), decltype(hash)::bytes);
 
+    // flush internal buffer explicitly before renaming
+    if (auto const expectedSuccess = file.close(); not expectedSuccess.has_value()) {
+        return expectedSuccess;
+    }
+
     try {
         std::filesystem::rename(newFilePath, path_);
     } catch (std::exception const& e) {

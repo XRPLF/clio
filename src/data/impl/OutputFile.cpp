@@ -23,6 +23,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <expected>
 #include <ios>
 #include <string>
 #include <utility>
@@ -57,6 +58,16 @@ OutputFile::hash() const
 {
     auto sum = shasum_;
     return std::move(sum).finalize();
+}
+
+std::expected<void, std::string>
+OutputFile::close()
+{
+    file_.close();
+    if (not file_) {
+        return std::unexpected{"Error closing cache file"};
+    }
+    return {};
 }
 
 }  // namespace data::impl
