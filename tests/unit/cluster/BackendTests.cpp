@@ -26,13 +26,9 @@
 
 #include <boost/asio/thread_pool.hpp>
 #include <boost/json/parse.hpp>
-#include <boost/json/serialize.hpp>
-#include <boost/json/value.hpp>
-#include <boost/json/value_from.hpp>
 #include <boost/json/value_to.hpp>
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -91,7 +87,7 @@ TEST_F(ClusterBackendTest, SubscribeToNewState)
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
         .WillRepeatedly([this](ClioNode::CUuid selfId, std::shared_ptr<Backend::ClusterData const> clusterData) {
-            SemaphoreReleaseGuard guard{semaphore};
+            SemaphoreReleaseGuard const guard{semaphore};
             ASSERT_TRUE(clusterData->has_value());
             EXPECT_EQ(clusterData->value().size(), 1);
             auto const& nodeData = clusterData->value().front();
@@ -141,7 +137,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataThrowsException)
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
         .WillRepeatedly([this](ClioNode::CUuid, std::shared_ptr<Backend::ClusterData const> clusterData) {
-            SemaphoreReleaseGuard guard{semaphore};
+            SemaphoreReleaseGuard const guard{semaphore};
             ASSERT_FALSE(clusterData->has_value());
             EXPECT_EQ(clusterData->error(), "Failed to fetch Clio nodes data");
         });
@@ -181,7 +177,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsDataWithOtherNodes)
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
         .WillRepeatedly([&](ClioNode::CUuid selfId, std::shared_ptr<Backend::ClusterData const> clusterData) {
-            SemaphoreReleaseGuard guard{semaphore};
+            SemaphoreReleaseGuard const guard{semaphore};
             ASSERT_TRUE(clusterData->has_value()) << clusterData->error();
             EXPECT_EQ(clusterData->value().size(), 2);
             EXPECT_EQ(selfId, clusterBackend.selfId());
@@ -231,7 +227,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsOnlySelfData)
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
         .WillRepeatedly([this](ClioNode::CUuid selfId, std::shared_ptr<Backend::ClusterData const> clusterData) {
-            SemaphoreReleaseGuard guard{semaphore};
+            SemaphoreReleaseGuard const guard{semaphore};
             ASSERT_TRUE(clusterData->has_value());
             EXPECT_EQ(clusterData->value().size(), 1);
             auto const& nodeData = clusterData->value().front();
@@ -269,7 +265,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsInvalidJson)
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
         .WillRepeatedly([this, invalidJson](ClioNode::CUuid, std::shared_ptr<Backend::ClusterData const> clusterData) {
-            SemaphoreReleaseGuard guard{semaphore};
+            SemaphoreReleaseGuard const guard{semaphore};
             ASSERT_FALSE(clusterData->has_value());
             EXPECT_THAT(clusterData->error(), testing::HasSubstr("Error parsing json from DB"));
             EXPECT_THAT(clusterData->error(), testing::HasSubstr(invalidJson));
@@ -307,7 +303,7 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsValidJsonButCannotConvertToC
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
         .WillRepeatedly([this](ClioNode::CUuid, std::shared_ptr<Backend::ClusterData const> clusterData) {
-            SemaphoreReleaseGuard guard{semaphore};
+            SemaphoreReleaseGuard const guard{semaphore};
             ASSERT_FALSE(clusterData->has_value());
             EXPECT_THAT(clusterData->error(), testing::HasSubstr("Error converting json to ClioNode"));
         });
@@ -334,7 +330,7 @@ TEST_F(ClusterBackendTest, WriteNodeMessageWritesSelfDataWithRecentTimestampAndD
     EXPECT_CALL(*backend_, writeNodeMessage)
         .Times(testing::AtLeast(1))
         .WillRepeatedly([&](boost::uuids::uuid const& uuid, std::string message) {
-            SemaphoreReleaseGuard guard{semaphore};
+            SemaphoreReleaseGuard const guard{semaphore};
             auto const afterWrite = std::chrono::system_clock::now();
 
             EXPECT_EQ(uuid, *clusterBackend.selfId());

@@ -898,7 +898,7 @@ TEST_F(ETLServiceTests, WriteCommandsAreSerializedOnStrand)
     // Set up expectations for the sequence of write commands
     // The signals should be processed in order: StartWriting, StopWriting, StartWriting
     {
-        testing::InSequence seq;
+        testing::InSequence const seq;
 
         // First StartWriting
         EXPECT_CALL(mockWriteSignalCommandCallback_, Call(etl::SystemState::WriteCommand::StartWriting));

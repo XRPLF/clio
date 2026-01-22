@@ -22,20 +22,6 @@
 #include "data/BackendInterface.hpp"
 #include "etl/WriterState.hpp"
 
-#include <boost/asio/bind_cancellation_slot.hpp>
-#include <boost/asio/cancellation_type.hpp>
-#include <boost/asio/error.hpp>
-#include <boost/asio/spawn.hpp>
-#include <boost/asio/steady_timer.hpp>
-#include <boost/asio/use_future.hpp>
-#include <boost/json/parse.hpp>
-#include <boost/json/serialize.hpp>
-#include <boost/json/value.hpp>
-#include <boost/json/value_from.hpp>
-#include <boost/json/value_to.hpp>
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid.hpp>
-
 #include <chrono>
 #include <ctime>
 #include <memory>

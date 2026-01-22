@@ -72,7 +72,7 @@ struct ClusterCommunicationServiceTest : util::prometheus::WithPrometheus, MockB
     static std::string
     nodeToJson(ClioNode const& node)
     {
-        boost::json::value v = boost::json::value_from(node);
+        boost::json::value const v = boost::json::value_from(node);
         return boost::json::serialize(v);
     }
 
