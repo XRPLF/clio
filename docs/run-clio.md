@@ -100,7 +100,7 @@ Since version 2.7.0, Clio supports saving the ledger cache to a local file on sh
 
 ### Benefits
 
-- **Faster startup**: Loading cache from a file takes less than a minute, compared to 40-90 minutes on mainnet when loading from the database
+- **Faster startup**: Loading cache from a file takes less than a minute, compared to 40-90 minutes on Mainnet when loading from the database.
 - **Reduced database load**: Clio doesn't put extra load on the database when starting with a cache file
 - **Improved availability**: Faster restart times mean less downtime during maintenance or updates
 
