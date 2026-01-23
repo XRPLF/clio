@@ -128,7 +128,7 @@ You can optionally configure additional settings such as [`cache.file.max_sequen
    - Verify the file's integrity to ensure it is complete and not corrupted
    - Compare the latest ledger sequence in the cache file with the latest sequence in the database.
    - Use the cache file only if the difference is less than [`cache.file.max_sequence_age`](./config-description.md#cachefilemax_sequence_age)
-   - If validation fails or the cache is too old, Clio will fall back to loading from the database
+   - If validation fails or the cache is too old, Clio will fall back to loading from the database.
 
 > [!IMPORTANT]
 > The cache file path should point to a location with sufficient disk space. On typical deployments, the cache file size can be several gigabytes.
