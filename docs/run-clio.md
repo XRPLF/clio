@@ -126,7 +126,7 @@ You can optionally configure additional settings such as [`cache.file.max_sequen
 1. **On shutdown**: Clio saves the current ledger cache to the specified file path. The file includes a hash for integrity verification.
 2. **On startup**: Clio checks if a cache file exists at the configured path. If the file exists, Clio will:
    - Verify the file's integrity to ensure it is complete and not corrupted
-   - Compare the latest ledger sequence in the cache file with the latest sequence in the database
+   - Compare the latest ledger sequence in the cache file with the latest sequence in the database.
    - Use the cache file only if the difference is less than [`cache.file.max_sequence_age`](./config-description.md#cachefilemax_sequence_age)
    - If validation fails or the cache is too old, Clio will fall back to loading from the database
 
