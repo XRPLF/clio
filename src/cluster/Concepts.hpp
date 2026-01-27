@@ -19,36 +19,21 @@
 
 #pragma once
 
-#include "cluster/ClioNode.hpp"
-
-#include <expected>
-#include <string>
-#include <vector>
+#include <concepts>
 
 namespace cluster {
 
 /**
- * @brief Interface for the cluster communication service.
+ * @brief Tag type for cluster communication service implementations.
+ *
+ * This tag is used to identify types that implement cluster communication functionality.
+ * Types should inherit from this tag to be recognized as cluster communication services.
  */
-class ClusterCommunicationServiceInterface {
-public:
-    virtual ~ClusterCommunicationServiceInterface() = default;
-
-    /**
-     * @brief Get the data of the current node.
-     *
-     * @return The data of the current node.
-     */
-    [[nodiscard]] virtual ClioNode
-    selfData() const = 0;
-
-    /**
-     * @brief Get the data of all nodes in the cluster (including self).
-     *
-     * @return The data of all nodes in the cluster or error if the service is not healthy.
-     */
-    [[nodiscard]] virtual std::expected<std::vector<ClioNode>, std::string>
-    clusterData() const = 0;
+struct ClusterCommunicationServiceTag {
+    virtual ~ClusterCommunicationServiceTag() = default;
 };
+
+template <typename T>
+concept SomeClusterCommunicationService = std::derived_from<T, ClusterCommunicationServiceTag>;
 
 }  // namespace cluster

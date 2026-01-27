@@ -216,6 +216,10 @@ protected:
     std::shared_ptr<testing::NiceMock<MockMonitorProvider>> monitorProvider_ =
         std::make_shared<testing::NiceMock<MockMonitorProvider>>();
     std::shared_ptr<etl::SystemState> systemState_ = std::make_shared<etl::SystemState>();
+    testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>> mockWriteSignalCommandCallback_;
+    boost::signals2::scoped_connection writeCommandConnection_{
+        systemState_->writeCommandSignal.connect(mockWriteSignalCommandCallback_.AsStdFunction())
+    };
 
     etl::ETLService service_{
         ctx_,
@@ -300,6 +304,7 @@ TEST_F(ETLServiceTests, RunWithEmptyDatabase)
     auto mockTaskManager = std::make_unique<testing::NiceMock<MockTaskManager>>();
     auto& mockTaskManagerRef = *mockTaskManager;
     auto ledgerData = createTestData(kSEQ);
+    EXPECT_TRUE(systemState_->isLoadingCache);
 
     testing::Sequence const s;
     EXPECT_CALL(*backend_, hardFetchLedgerRange).InSequence(s).WillOnce(testing::Return(std::nullopt));
@@ -308,25 +313,61 @@ TEST_F(ETLServiceTests, RunWithEmptyDatabase)
     EXPECT_CALL(*balancer_, loadInitialLedger(kSEQ, testing::_, testing::_))
         .WillOnce(testing::Return(std::vector<std::string>{}));
     EXPECT_CALL(*loader_, loadInitialLedger).WillOnce(testing::Return(ripple::LedgerHeader{}));
-    EXPECT_CALL(*backend_, hardFetchLedgerRange)
-        .InSequence(s)
-        .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
+    // In syncCacheWithDb()
+    EXPECT_CALL(*backend_, hardFetchLedgerRange).Times(2).InSequence(s).WillRepeatedly([this]() {
+        backend_->cache().update({}, kSEQ, false);
+        return data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ};
+    });
     EXPECT_CALL(mockTaskManagerRef, run);
-    EXPECT_CALL(*taskManagerProvider_, make(testing::_, testing::_, kSEQ + 1, testing::_))
-        .WillOnce(testing::Return(std::unique_ptr<etl::TaskManagerInterface>(mockTaskManager.release())));
-    EXPECT_CALL(*monitorProvider_, make(testing::_, testing::_, testing::_, testing::_, testing::_))
-        .WillOnce([](auto, auto, auto, auto, auto) { return std::make_unique<testing::NiceMock<MockMonitor>>(); });
+    EXPECT_CALL(*taskManagerProvider_, make(testing::_, testing::_, kSEQ + 1, testing::_)).WillOnce([&](auto&&...) {
+        EXPECT_FALSE(systemState_->isLoadingCache);
+        return std::unique_ptr<etl::TaskManagerInterface>(mockTaskManager.release());
+    });
+    EXPECT_CALL(*monitorProvider_, make(testing::_, testing::_, testing::_, kSEQ + 1, testing::_))
+        .WillOnce([this](auto, auto, auto, auto, auto) {
+            EXPECT_TRUE(systemState_->isLoadingCache);
+            return std::make_unique<testing::NiceMock<MockMonitor>>();
+        });
 
     service_.run();
 }
 
 TEST_F(ETLServiceTests, RunWithPopulatedDatabase)
 {
+    EXPECT_TRUE(systemState_->isLoadingCache);
+    backend_->cache().update({}, kSEQ, false);
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
         .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
-    EXPECT_CALL(*monitorProvider_, make).WillOnce([](auto, auto, auto, auto, auto) {
-        return std::make_unique<testing::NiceMock<MockMonitor>>();
-    });
+    EXPECT_CALL(*monitorProvider_, make(testing::_, testing::_, testing::_, kSEQ + 1, testing::_))
+        .WillOnce([this](auto, auto, auto, auto, auto) {
+            EXPECT_TRUE(systemState_->isLoadingCache);
+            return std::make_unique<testing::NiceMock<MockMonitor>>();
+        });
+    EXPECT_CALL(*ledgers_, getMostRecent()).WillRepeatedly(testing::Return(kSEQ));
+    EXPECT_CALL(*cacheLoader_, load(kSEQ));
+
+    service_.run();
+}
+
+TEST_F(ETLServiceTests, SyncCacheWithDbBeforeStartingMonitor)
+{
+    EXPECT_TRUE(systemState_->isLoadingCache);
+    backend_->cache().update({}, kSEQ - 2, false);
+    EXPECT_CALL(*backend_, hardFetchLedgerRange)
+        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
+
+    EXPECT_CALL(*backend_, fetchLedgerDiff(kSEQ - 1, testing::_));
+    EXPECT_CALL(*cacheUpdater_, update(kSEQ - 1, std::vector<data::LedgerObject>()))
+        .WillOnce([this](auto const seq, auto&&...) { backend_->cache().update({}, seq, false); });
+    EXPECT_CALL(*backend_, fetchLedgerDiff(kSEQ, testing::_));
+    EXPECT_CALL(*cacheUpdater_, update(kSEQ, std::vector<data::LedgerObject>()))
+        .WillOnce([this](auto const seq, auto&&...) { backend_->cache().update({}, seq, false); });
+
+    EXPECT_CALL(*monitorProvider_, make(testing::_, testing::_, testing::_, kSEQ + 1, testing::_))
+        .WillOnce([this](auto, auto, auto, auto, auto) {
+            EXPECT_TRUE(systemState_->isLoadingCache);
+            return std::make_unique<testing::NiceMock<MockMonitor>>();
+        });
     EXPECT_CALL(*ledgers_, getMostRecent()).WillRepeatedly(testing::Return(kSEQ));
     EXPECT_CALL(*cacheLoader_, load(kSEQ));
 
@@ -364,19 +405,22 @@ TEST_F(ETLServiceTests, HandlesWriteConflictInMonitorSubscription)
     EXPECT_CALL(mockMonitorRef, subscribeToDbStalled);
     EXPECT_CALL(mockMonitorRef, run);
 
+    // Set cache to be in sync with DB to avoid syncCacheWithDb loop
+    backend_->cache().update({}, kSEQ, false);
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
-        .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
+        .Times(2)
+        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
     EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
     EXPECT_CALL(*cacheLoader_, load(kSEQ));
 
     service_.run();
-    systemState_->writeConflict = true;
+    writeCommandConnection_.disconnect();
+    systemState_->writeCommandSignal(etl::SystemState::WriteCommand::StopWriting);
 
     EXPECT_CALL(*publisher_, publish(kSEQ + 1, testing::_, testing::_));
     ASSERT_TRUE(capturedCallback);
     capturedCallback(kSEQ + 1);
 
-    EXPECT_FALSE(systemState_->writeConflict);
     EXPECT_FALSE(systemState_->isWriting);
 }
 
@@ -397,8 +441,11 @@ TEST_F(ETLServiceTests, NormalFlowInMonitorSubscription)
     EXPECT_CALL(mockMonitorRef, subscribeToDbStalled);
     EXPECT_CALL(mockMonitorRef, run);
 
+    // Set cache to be in sync with DB to avoid syncCacheWithDb loop
+    backend_->cache().update({}, kSEQ, false);
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
-        .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
+        .Times(2)
+        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
     EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
     EXPECT_CALL(*cacheLoader_, load(kSEQ));
 
@@ -424,13 +471,19 @@ TEST_F(ETLServiceTests, AttemptTakeoverWriter)
         return std::move(mockMonitor);
     });
 
-    EXPECT_CALL(mockMonitorRef, subscribeToNewSequence);
+    std::function<void(uint32_t)> onNewSeqCallback;
+    EXPECT_CALL(mockMonitorRef, subscribeToNewSequence).WillOnce([&onNewSeqCallback](auto cb) {
+        onNewSeqCallback = std::move(cb);
+        return boost::signals2::scoped_connection{};
+    });
     EXPECT_CALL(mockMonitorRef, subscribeToDbStalled).WillOnce([&capturedDbStalledCallback](auto callback) {
         capturedDbStalledCallback = callback;
         return boost::signals2::scoped_connection{};
     });
     EXPECT_CALL(mockMonitorRef, run);
 
+    // Set cache to be in sync with DB to avoid syncCacheWithDb loop
+    backend_->cache().update({}, kSEQ, false);
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
         .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
     EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
@@ -447,10 +500,14 @@ TEST_F(ETLServiceTests, AttemptTakeoverWriter)
     EXPECT_CALL(*taskManagerProvider_, make(testing::_, testing::_, kSEQ + 1, testing::_))
         .WillOnce(testing::Return(std::move(mockTaskManager)));
 
-    ASSERT_TRUE(capturedDbStalledCallback);
-    capturedDbStalledCallback();
+    EXPECT_CALL(mockWriteSignalCommandCallback_, Call(etl::SystemState::WriteCommand::StartWriting));
 
-    EXPECT_TRUE(systemState_->isWriting);  // should attempt to become writer
+    ASSERT_TRUE(capturedDbStalledCallback);
+    EXPECT_FALSE(systemState_->isWriting);  // will attempt to become writer after new sequence appears but not yet
+    EXPECT_FALSE(systemState_->isWriterDecidingFallback);
+    capturedDbStalledCallback();
+    EXPECT_TRUE(systemState_->isWriting);                 // should attempt to become writer
+    EXPECT_TRUE(systemState_->isWriterDecidingFallback);  // fallback mode activated
 }
 
 TEST_F(ETLServiceTests, GiveUpWriterAfterWriteConflict)
@@ -470,22 +527,25 @@ TEST_F(ETLServiceTests, GiveUpWriterAfterWriteConflict)
     EXPECT_CALL(mockMonitorRef, subscribeToDbStalled);
     EXPECT_CALL(mockMonitorRef, run);
 
+    // Set cache to be in sync with DB to avoid syncCacheWithDb loop
+    backend_->cache().update({}, kSEQ, false);
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
-        .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
+        .Times(2)
+        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
     EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
     EXPECT_CALL(*cacheLoader_, load(kSEQ));
 
     service_.run();
     systemState_->isWriting = true;
-    systemState_->writeConflict = true;  // got a write conflict along the way
+    writeCommandConnection_.disconnect();
+    systemState_->writeCommandSignal(etl::SystemState::WriteCommand::StopWriting);
 
     EXPECT_CALL(*publisher_, publish(kSEQ + 1, testing::_, testing::_));
 
     ASSERT_TRUE(capturedCallback);
     capturedCallback(kSEQ + 1);
 
-    EXPECT_FALSE(systemState_->isWriting);      // gives up writing
-    EXPECT_FALSE(systemState_->writeConflict);  // and removes write conflict flag
+    EXPECT_FALSE(systemState_->isWriting);  // gives up writing
 }
 
 TEST_F(ETLServiceTests, CancelledLoadInitialLedger)
@@ -538,4 +598,328 @@ TEST_F(ETLServiceTests, RunStopsIfInitialLoadIsCancelledByBalancer)
     EXPECT_TRUE(systemState_->isWriting);
     EXPECT_FALSE(service_.isAmendmentBlocked());
     EXPECT_FALSE(service_.isCorruptionDetected());
+}
+
+TEST_F(ETLServiceTests, DbStalledDoesNotTriggerSignalWhenStrictReadonly)
+{
+    auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
+    auto& mockMonitorRef = *mockMonitor;
+    std::function<void()> capturedDbStalledCallback;
+
+    EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
+        return std::move(mockMonitor);
+    });
+    EXPECT_CALL(mockMonitorRef, subscribeToNewSequence);
+    EXPECT_CALL(mockMonitorRef, subscribeToDbStalled).WillOnce([&capturedDbStalledCallback](auto callback) {
+        capturedDbStalledCallback = callback;
+        return boost::signals2::scoped_connection{};
+    });
+    EXPECT_CALL(mockMonitorRef, run);
+
+    // Set cache to be in sync with DB to avoid syncCacheWithDb loop
+    backend_->cache().update({}, kSEQ, false);
+    EXPECT_CALL(*backend_, hardFetchLedgerRange)
+        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
+    EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
+    EXPECT_CALL(*cacheLoader_, load(kSEQ));
+
+    service_.run();
+    systemState_->isStrictReadonly = true;  // strict readonly mode
+    systemState_->isWriting = false;
+
+    // No signal should be emitted because node is in strict readonly mode
+    // But fallback flag should still be set
+
+    ASSERT_TRUE(capturedDbStalledCallback);
+    EXPECT_FALSE(systemState_->isWriterDecidingFallback);
+    capturedDbStalledCallback();
+    EXPECT_TRUE(systemState_->isWriterDecidingFallback);  // fallback mode activated even in readonly
+}
+
+TEST_F(ETLServiceTests, DbStalledDoesNotTriggerSignalWhenAlreadyWriting)
+{
+    auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
+    auto& mockMonitorRef = *mockMonitor;
+    std::function<void()> capturedDbStalledCallback;
+
+    EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
+        return std::move(mockMonitor);
+    });
+    EXPECT_CALL(mockMonitorRef, subscribeToNewSequence);
+    EXPECT_CALL(mockMonitorRef, subscribeToDbStalled).WillOnce([&capturedDbStalledCallback](auto callback) {
+        capturedDbStalledCallback = callback;
+        return boost::signals2::scoped_connection{};
+    });
+    EXPECT_CALL(mockMonitorRef, run);
+
+    // Set cache to be in sync with DB to avoid syncCacheWithDb loop
+    backend_->cache().update({}, kSEQ, false);
+    EXPECT_CALL(*backend_, hardFetchLedgerRange)
+        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
+    EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
+    EXPECT_CALL(*cacheLoader_, load(kSEQ));
+
+    service_.run();
+    systemState_->isStrictReadonly = false;
+    systemState_->isWriting = true;  // already writing
+
+    // No signal should be emitted because node is already writing
+    // But fallback flag should still be set
+
+    ASSERT_TRUE(capturedDbStalledCallback);
+    EXPECT_FALSE(systemState_->isWriterDecidingFallback);
+    capturedDbStalledCallback();
+    EXPECT_TRUE(systemState_->isWriterDecidingFallback);  // fallback mode activated
+}
+
+TEST_F(ETLServiceTests, CacheUpdatesDependOnActualCacheState_WriterMode)
+{
+    auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
+    auto& mockMonitorRef = *mockMonitor;
+    std::function<void(uint32_t)> capturedCallback;
+
+    EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
+        return std::move(mockMonitor);
+    });
+    EXPECT_CALL(mockMonitorRef, subscribeToNewSequence).WillOnce([&capturedCallback](auto callback) {
+        capturedCallback = callback;
+        return boost::signals2::scoped_connection{};
+    });
+    EXPECT_CALL(mockMonitorRef, subscribeToDbStalled);
+    EXPECT_CALL(mockMonitorRef, run);
+
+    // Set cache to be in sync with DB initially to avoid syncCacheWithDb loop
+    backend_->cache().update({}, kSEQ, false);
+    EXPECT_CALL(*backend_, hardFetchLedgerRange)
+        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
+    EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
+    EXPECT_CALL(*cacheLoader_, load(kSEQ));
+
+    service_.run();
+    systemState_->isWriting = true;  // In writer mode
+
+    // Simulate cache is behind (e.g., update failed previously)
+    // Cache latestLedgerSequence returns kSEQ (behind the new seq kSEQ + 1)
+    std::vector<data::LedgerObject> const emptyObjs = {};
+    backend_->cache().update(emptyObjs, kSEQ);  // Set cache to kSEQ
+
+    std::vector<data::LedgerObject> const dummyDiff = {};
+    EXPECT_CALL(*backend_, fetchLedgerDiff(kSEQ + 1, testing::_)).WillOnce(testing::Return(dummyDiff));
+
+    // Cache should be updated even though we're in writer mode
+    EXPECT_CALL(*cacheUpdater_, update(kSEQ + 1, testing::A<std::vector<data::LedgerObject> const&>()));
+
+    EXPECT_CALL(*publisher_, publish(kSEQ + 1, testing::_, testing::_));
+
+    ASSERT_TRUE(capturedCallback);
+    capturedCallback(kSEQ + 1);
+}
+
+TEST_F(ETLServiceTests, OnlyCacheUpdatesWhenBackendIsCurrent)
+{
+    auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
+    auto& mockMonitorRef = *mockMonitor;
+    std::function<void(uint32_t)> capturedCallback;
+    // Set cache to be in sync with DB initially to avoid syncCacheWithDb loop
+    backend_->cache().update({}, kSEQ, false);
+
+    EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
+        return std::move(mockMonitor);
+    });
+    EXPECT_CALL(mockMonitorRef, subscribeToNewSequence).WillOnce([&capturedCallback](auto callback) {
+        capturedCallback = callback;
+        return boost::signals2::scoped_connection{};
+    });
+    EXPECT_CALL(mockMonitorRef, subscribeToDbStalled);
+    EXPECT_CALL(mockMonitorRef, run);
+
+    // Set backend range to be at kSEQ + 1 (already current)
+    EXPECT_CALL(*backend_, hardFetchLedgerRange)
+        .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}))
+        .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}))
+        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ + 1}));
+    EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
+    EXPECT_CALL(*cacheLoader_, load(kSEQ));
+
+    service_.run();
+    systemState_->isWriting = false;
+
+    // Cache is behind (at kSEQ)
+    std::vector<data::LedgerObject> const emptyObjs = {};
+    backend_->cache().update(emptyObjs, kSEQ);
+
+    std::vector<data::LedgerObject> const dummyDiff = {};
+    EXPECT_CALL(*backend_, fetchLedgerDiff(kSEQ + 1, testing::_)).WillOnce(testing::Return(dummyDiff));
+    EXPECT_CALL(*cacheUpdater_, update(kSEQ + 1, testing::A<std::vector<data::LedgerObject> const&>()));
+
+    EXPECT_CALL(*publisher_, publish(kSEQ + 1, testing::_, testing::_));
+
+    ASSERT_TRUE(capturedCallback);
+    capturedCallback(kSEQ + 1);
+}
+
+TEST_F(ETLServiceTests, NoUpdatesWhenBothCacheAndBackendAreCurrent)
+{
+    auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
+    auto& mockMonitorRef = *mockMonitor;
+    std::function<void(uint32_t)> capturedCallback;
+    // Set cache to be in sync with DB initially to avoid syncCacheWithDb loop
+    backend_->cache().update({}, kSEQ, false);
+
+    EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
+        return std::move(mockMonitor);
+    });
+    EXPECT_CALL(mockMonitorRef, subscribeToNewSequence).WillOnce([&capturedCallback](auto callback) {
+        capturedCallback = callback;
+        return boost::signals2::scoped_connection{};
+    });
+    EXPECT_CALL(mockMonitorRef, subscribeToDbStalled);
+    EXPECT_CALL(mockMonitorRef, run);
+
+    // Set backend range to be at kSEQ + 1 (already current)
+    EXPECT_CALL(*backend_, hardFetchLedgerRange)
+        .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}))
+        .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}))
+        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ + 1}));
+    EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
+    EXPECT_CALL(*cacheLoader_, load(kSEQ));
+
+    service_.run();
+
+    // Cache is current (at kSEQ + 1)
+    std::vector<data::LedgerObject> const emptyObjs = {};
+    backend_->cache().update(emptyObjs, kSEQ + 1);
+
+    // Neither should be updated
+    EXPECT_CALL(*backend_, fetchLedgerDiff).Times(0);
+    EXPECT_CALL(*cacheUpdater_, update(testing::_, testing::A<std::vector<data::LedgerObject> const&>())).Times(0);
+
+    EXPECT_CALL(*publisher_, publish(kSEQ + 1, testing::_, testing::_));
+
+    ASSERT_TRUE(capturedCallback);
+    capturedCallback(kSEQ + 1);
+}
+
+TEST_F(ETLServiceTests, StopWaitsForWriteCommandHandlersToComplete)
+{
+    auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
+    // Set cache to be in sync with DB to avoid syncCacheWithDb loop
+    backend_->cache().update({}, kSEQ, false);
+
+    EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
+        return std::move(mockMonitor);
+    });
+
+    EXPECT_CALL(*backend_, hardFetchLedgerRange)
+        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
+    EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
+    EXPECT_CALL(*cacheLoader_, load(kSEQ));
+
+    service_.run();
+    systemState_->isStrictReadonly = false;
+
+    auto mockTaskManager = std::make_unique<testing::NiceMock<MockTaskManager>>();
+
+    EXPECT_CALL(mockWriteSignalCommandCallback_, Call(etl::SystemState::WriteCommand::StartWriting));
+    EXPECT_CALL(*taskManagerProvider_, make(testing::_, testing::_, kSEQ + 1, testing::_))
+        .WillOnce(testing::Return(std::move(mockTaskManager)));
+
+    // Emit a command
+    systemState_->writeCommandSignal(etl::SystemState::WriteCommand::StartWriting);
+
+    // The test context processes operations synchronously, so the handler should have run
+    // Stop should wait for the handler to complete and disconnect the subscription
+    service_.stop();
+
+    // Verify stop() returned, meaning all handlers completed
+    SUCCEED();
+}
+
+TEST_F(ETLServiceTests, WriteConflictIsHandledImmediately_NotDelayed)
+{
+    // This test verifies that write conflicts are handled immediately via signal,
+    // not delayed until the next sequence notification (the old behavior)
+
+    auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
+    auto& mockMonitorRef = *mockMonitor;
+    std::function<void(uint32_t)> capturedNewSeqCallback;
+
+    EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
+        return std::move(mockMonitor);
+    });
+    EXPECT_CALL(mockMonitorRef, subscribeToNewSequence).WillOnce([&capturedNewSeqCallback](auto callback) {
+        capturedNewSeqCallback = callback;
+        return boost::signals2::scoped_connection{};
+    });
+    EXPECT_CALL(mockMonitorRef, subscribeToDbStalled);
+    EXPECT_CALL(mockMonitorRef, run);
+
+    // Set cache to be in sync with DB to avoid syncCacheWithDb loop
+    backend_->cache().update({}, kSEQ, false);
+    EXPECT_CALL(*backend_, hardFetchLedgerRange)
+        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
+    EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
+    EXPECT_CALL(*cacheLoader_, load(kSEQ));
+
+    service_.run();
+    systemState_->isWriting = true;
+
+    // Emit StopWriting signal (simulating write conflict from Loader)
+    EXPECT_CALL(mockWriteSignalCommandCallback_, Call(etl::SystemState::WriteCommand::StopWriting));
+    systemState_->writeCommandSignal(etl::SystemState::WriteCommand::StopWriting);
+
+    // The test context processes operations synchronously, so the handler should have run immediately
+    // Verify that isWriting is immediately set to false
+    EXPECT_FALSE(systemState_->isWriting);
+}
+
+TEST_F(ETLServiceTests, WriteCommandsAreSerializedOnStrand)
+{
+    auto mockMonitor = std::make_unique<testing::NiceMock<MockMonitor>>();
+
+    EXPECT_CALL(*monitorProvider_, make).WillOnce([&mockMonitor](auto, auto, auto, auto, auto) {
+        return std::move(mockMonitor);
+    });
+
+    // Set cache to be in sync with DB to avoid syncCacheWithDb loop
+    backend_->cache().update({}, kSEQ, false);
+    EXPECT_CALL(*backend_, hardFetchLedgerRange)
+        .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
+    EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
+    EXPECT_CALL(*cacheLoader_, load(kSEQ));
+
+    service_.run();
+    systemState_->isStrictReadonly = false;
+    systemState_->isWriting = false;
+
+    auto mockTaskManager1 = std::make_unique<testing::NiceMock<MockTaskManager>>();
+    auto mockTaskManager2 = std::make_unique<testing::NiceMock<MockTaskManager>>();
+
+    // Set up expectations for the sequence of write commands
+    // The signals should be processed in order: StartWriting, StopWriting, StartWriting
+    {
+        testing::InSequence const seq;
+
+        // First StartWriting
+        EXPECT_CALL(mockWriteSignalCommandCallback_, Call(etl::SystemState::WriteCommand::StartWriting));
+        EXPECT_CALL(*taskManagerProvider_, make(testing::_, testing::_, kSEQ + 1, testing::_))
+            .WillOnce(testing::Return(std::move(mockTaskManager1)));
+
+        // Then StopWriting
+        EXPECT_CALL(mockWriteSignalCommandCallback_, Call(etl::SystemState::WriteCommand::StopWriting));
+
+        // Finally second StartWriting
+        EXPECT_CALL(mockWriteSignalCommandCallback_, Call(etl::SystemState::WriteCommand::StartWriting));
+        EXPECT_CALL(*taskManagerProvider_, make(testing::_, testing::_, kSEQ + 1, testing::_))
+            .WillOnce(testing::Return(std::move(mockTaskManager2)));
+    }
+
+    // Emit multiple signals rapidly - they should be serialized on the strand
+    systemState_->writeCommandSignal(etl::SystemState::WriteCommand::StartWriting);
+    systemState_->writeCommandSignal(etl::SystemState::WriteCommand::StopWriting);
+    systemState_->writeCommandSignal(etl::SystemState::WriteCommand::StartWriting);
+
+    // The test context processes operations synchronously, so all signals should have been processed
+    // Final state should be writing (last signal was StartWriting)
+    EXPECT_TRUE(systemState_->isWriting);
 }

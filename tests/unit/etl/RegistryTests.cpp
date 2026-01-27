@@ -260,7 +260,7 @@ struct RegistryTest : util::prometheus::WithPrometheus {
     }
 
 protected:
-    etl::SystemState state_{};
+    etl::SystemState state_;
 };
 
 }  // namespace

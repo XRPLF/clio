@@ -17,50 +17,72 @@
 */
 //==============================================================================
 
-#include "cluster/ClusterCommunicationService.hpp"
-
-#include "data/BackendInterface.hpp"
 #include "etl/WriterState.hpp"
 
-#include <chrono>
-#include <ctime>
+#include "etl/SystemState.hpp"
+
 #include <memory>
 #include <utility>
 
-namespace cluster {
+namespace etl {
 
-ClusterCommunicationService::ClusterCommunicationService(
-    std::shared_ptr<data::BackendInterface> backend,
-    std::unique_ptr<etl::WriterStateInterface> writerState,
-    std::chrono::steady_clock::duration readInterval,
-    std::chrono::steady_clock::duration writeInterval
-)
-    : backend_(ctx_, std::move(backend), writerState->clone(), readInterval, writeInterval)
-    , writerDecider_(ctx_, std::move(writerState))
+WriterState::WriterState(std::shared_ptr<SystemState> state) : systemState_(std::move(state))
 {
+}
+
+bool
+WriterState::isReadOnly() const
+{
+    return systemState_->isStrictReadonly;
+}
+
+bool
+WriterState::isWriting() const
+{
+    return systemState_->isWriting;
 }
 
 void
-ClusterCommunicationService::run()
+WriterState::startWriting()
 {
-    backend_.subscribeToNewState([this](auto&&... args) {
-        metrics_.onNewState(std::forward<decltype(args)>(args)...);
-    });
-    backend_.subscribeToNewState([this](auto&&... args) {
-        writerDecider_.onNewState(std::forward<decltype(args)>(args)...);
-    });
-    backend_.run();
-}
+    if (isWriting())
+        return;
 
-ClusterCommunicationService::~ClusterCommunicationService()
-{
-    stop();
+    systemState_->writeCommandSignal(SystemState::WriteCommand::StartWriting);
 }
 
 void
-ClusterCommunicationService::stop()
+WriterState::giveUpWriting()
 {
-    backend_.stop();
+    if (not isWriting())
+        return;
+
+    systemState_->writeCommandSignal(SystemState::WriteCommand::StopWriting);
 }
 
-}  // namespace cluster
+void
+WriterState::setWriterDecidingFallback()
+{
+    systemState_->isWriterDecidingFallback = true;
+}
+
+bool
+WriterState::isFallback() const
+{
+    return systemState_->isWriterDecidingFallback;
+}
+
+bool
+WriterState::isLoadingCache() const
+{
+    return systemState_->isLoadingCache;
+}
+
+std::unique_ptr<WriterStateInterface>
+WriterState::clone() const
+{
+    auto c = WriterState(*this);
+    return std::make_unique<WriterState>(std::move(c));
+}
+
+}  // namespace etl

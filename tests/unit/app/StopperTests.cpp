@@ -17,6 +17,7 @@
 */
 //==============================================================================
 #include "app/Stopper.hpp"
+#include "cluster/Concepts.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackend.hpp"
 #include "util/MockETLService.hpp"
@@ -87,6 +88,10 @@ struct StopperMakeCallbackTest : util::prometheus::WithPrometheus, SyncAsioConte
         MOCK_METHOD(void, waitToFinish, ());
     };
 
+    struct MockClusterCommunicationService : cluster::ClusterCommunicationServiceTag {
+        MOCK_METHOD(void, stop, (), ());
+    };
+
 protected:
     testing::StrictMock<ServerMock> serverMock_;
     testing::StrictMock<MockLoadBalancer> loadBalancerMock_;
@@ -94,6 +99,7 @@ protected:
     testing::StrictMock<MockSubscriptionManager> subscriptionManagerMock_;
     testing::StrictMock<MockBackend> backendMock_{util::config::ClioConfigDefinition{}};
     testing::StrictMock<MockLedgerCacheSaver> cacheSaverMock_;
+    testing::StrictMock<MockClusterCommunicationService> clusterCommunicationServiceMock_;
     boost::asio::io_context ioContextToStop_;
 
     bool
@@ -115,6 +121,7 @@ TEST_F(StopperMakeCallbackTest, makeCallbackTest)
         subscriptionManagerMock_,
         backendMock_,
         cacheSaverMock_,
+        clusterCommunicationServiceMock_,
         ioContextToStop_
     );
 
@@ -122,6 +129,9 @@ TEST_F(StopperMakeCallbackTest, makeCallbackTest)
     EXPECT_CALL(cacheSaverMock_, save).InSequence(s1).WillOnce([this]() { EXPECT_FALSE(isContextStopped()); });
     EXPECT_CALL(serverMock_, stop).InSequence(s1).WillOnce([this]() { EXPECT_FALSE(isContextStopped()); });
     EXPECT_CALL(loadBalancerMock_, stop).InSequence(s2).WillOnce([this]() { EXPECT_FALSE(isContextStopped()); });
+    EXPECT_CALL(clusterCommunicationServiceMock_, stop).InSequence(s1, s2).WillOnce([this]() {
+        EXPECT_FALSE(isContextStopped());
+    });
     EXPECT_CALL(etlServiceMock_, stop).InSequence(s1, s2).WillOnce([this]() { EXPECT_FALSE(isContextStopped()); });
     EXPECT_CALL(subscriptionManagerMock_, stop).InSequence(s1, s2).WillOnce([this]() {
         EXPECT_FALSE(isContextStopped());

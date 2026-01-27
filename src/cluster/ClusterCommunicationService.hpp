@@ -19,13 +19,12 @@
 
 #pragma once
 
-#include "cluster/ClioNode.hpp"
-#include "cluster/ClusterCommunicationServiceInterface.hpp"
+#include "cluster/Backend.hpp"
+#include "cluster/Concepts.hpp"
+#include "cluster/Metrics.hpp"
+#include "cluster/WriterDecider.hpp"
 #include "data/BackendInterface.hpp"
-#include "util/log/Logger.hpp"
-#include "util/prometheus/Bool.hpp"
-#include "util/prometheus/Gauge.hpp"
-#include "util/prometheus/Prometheus.hpp"
+#include "etl/WriterState.hpp"
 
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/spawn.hpp>
@@ -33,66 +32,48 @@
 #include <boost/asio/thread_pool.hpp>
 #include <boost/uuid/uuid.hpp>
 
-#include <atomic>
 #include <chrono>
-#include <latch>
 #include <memory>
-#include <string>
-#include <vector>
 
 namespace cluster {
 
 /**
  * @brief Service to post and read messages to/from the cluster. It uses a backend to communicate with the cluster.
  */
-class ClusterCommunicationService : public ClusterCommunicationServiceInterface {
-    util::prometheus::GaugeInt& nodesInClusterMetric_ = PrometheusService::gaugeInt(
-        "cluster_nodes_total_number",
-        {},
-        "Total number of nodes this node can detect in the cluster."
-    );
-    util::prometheus::Bool isHealthy_ = PrometheusService::boolMetric(
-        "cluster_communication_is_healthy",
-        {},
-        "Whether cluster communication service is operating healthy (1 - healthy, 0 - we have a problem)"
-    );
-
+class ClusterCommunicationService : public ClusterCommunicationServiceTag {
     // TODO: Use util::async::CoroExecutionContext after https://github.com/XRPLF/clio/issues/1973 is implemented
     boost::asio::thread_pool ctx_{1};
-    boost::asio::strand<boost::asio::thread_pool::executor_type> strand_ = boost::asio::make_strand(ctx_);
-
-    util::Logger log_{"ClusterCommunication"};
-
-    std::shared_ptr<data::BackendInterface> backend_;
-
-    std::chrono::steady_clock::duration readInterval_;
-    std::chrono::steady_clock::duration writeInterval_;
-
-    boost::asio::cancellation_signal cancelSignal_;
-    std::latch finishedCountdown_;
-    std::atomic_bool running_ = false;
-    bool stopped_ = false;
-
-    ClioNode selfData_;
-    std::vector<ClioNode> otherNodesData_;
+    Backend backend_;
+    Metrics metrics_;
+    WriterDecider writerDecider_;
 
 public:
-    static constexpr std::chrono::milliseconds kDEFAULT_READ_INTERVAL{2100};
-    static constexpr std::chrono::milliseconds kDEFAULT_WRITE_INTERVAL{1200};
+    static constexpr std::chrono::milliseconds kDEFAULT_READ_INTERVAL{1000};
+    static constexpr std::chrono::milliseconds kDEFAULT_WRITE_INTERVAL{1000};
+
     /**
      * @brief Construct a new Cluster Communication Service object.
      *
      * @param backend The backend to use for communication.
+     * @param writerState The state showing whether clio is writing to the database.
      * @param readInterval The interval to read messages from the cluster.
      * @param writeInterval The interval to write messages to the cluster.
      */
     ClusterCommunicationService(
         std::shared_ptr<data::BackendInterface> backend,
+        std::unique_ptr<etl::WriterStateInterface> writerState,
         std::chrono::steady_clock::duration readInterval = kDEFAULT_READ_INTERVAL,
         std::chrono::steady_clock::duration writeInterval = kDEFAULT_WRITE_INTERVAL
     );
 
     ~ClusterCommunicationService() override;
+
+    ClusterCommunicationService(ClusterCommunicationService&&) = delete;
+    ClusterCommunicationService(ClusterCommunicationService const&) = delete;
+    ClusterCommunicationService&
+    operator=(ClusterCommunicationService&&) = delete;
+    ClusterCommunicationService&
+    operator=(ClusterCommunicationService const&) = delete;
 
     /**
      * @brief Start the service.
@@ -105,44 +86,6 @@ public:
      */
     void
     stop();
-
-    ClusterCommunicationService(ClusterCommunicationService&&) = delete;
-    ClusterCommunicationService(ClusterCommunicationService const&) = delete;
-    ClusterCommunicationService&
-    operator=(ClusterCommunicationService&&) = delete;
-    ClusterCommunicationService&
-    operator=(ClusterCommunicationService const&) = delete;
-
-    /**
-     * @brief Get the UUID of the current node.
-     *
-     * @return The UUID of the current node.
-     */
-    std::shared_ptr<boost::uuids::uuid>
-    selfUuid() const;
-
-    /**
-     * @brief Get the data of the current node.
-     *
-     * @return The data of the current node.
-     */
-    ClioNode
-    selfData() const override;
-
-    /**
-     * @brief Get the data of all nodes in the cluster (including self).
-     *
-     * @return The data of all nodes in the cluster or error if the service is not healthy.
-     */
-    std::expected<std::vector<ClioNode>, std::string>
-    clusterData() const override;
-
-private:
-    void
-    doRead(boost::asio::yield_context yield);
-
-    void
-    doWrite();
 };
 
 }  // namespace cluster

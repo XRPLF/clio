@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "cluster/Concepts.hpp"
 #include "data/BackendInterface.hpp"
 #include "data/LedgerCacheSaver.hpp"
 #include "etl/ETLServiceInterface.hpp"
@@ -82,10 +83,14 @@ public:
      * @param subscriptions The subscription manager to stop.
      * @param backend The backend to stop.
      * @param cacheSaver The ledger cache saver
+     * @param clusterCommunicationService The cluster communication service to stop.
      * @param ioc The io_context to stop.
      * @return The callback to be called on application stop.
      */
-    template <web::SomeServer ServerType, data::SomeLedgerCacheSaver LedgerCacheSaverType>
+    template <
+        web::SomeServer ServerType,
+        data::SomeLedgerCacheSaver LedgerCacheSaverType,
+        cluster::SomeClusterCommunicationService ClusterCommunicationServiceType>
     static std::function<void(boost::asio::yield_context)>
     makeOnStopCallback(
         ServerType& server,
@@ -94,6 +99,7 @@ public:
         feed::SubscriptionManagerInterface& subscriptions,
         data::BackendInterface& backend,
         LedgerCacheSaverType& cacheSaver,
+        ClusterCommunicationServiceType& clusterCommunicationService,
         boost::asio::io_context& ioc
     )
     {
@@ -110,6 +116,8 @@ public:
                 LOG(util::LogService::info()) << "LoadBalancer stopped";
             });
             coroutineGroup.asyncWait(yield);
+
+            clusterCommunicationService.stop();
 
             etl.stop();
             LOG(util::LogService::info()) << "ETL stopped";

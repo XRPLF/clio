@@ -17,50 +17,31 @@
 */
 //==============================================================================
 
-#include "cluster/ClusterCommunicationService.hpp"
+#include "cluster/Metrics.hpp"
 
-#include "data/BackendInterface.hpp"
-#include "etl/WriterState.hpp"
+#include "cluster/Backend.hpp"
+#include "cluster/ClioNode.hpp"
 
-#include <chrono>
-#include <ctime>
 #include <memory>
-#include <utility>
 
 namespace cluster {
 
-ClusterCommunicationService::ClusterCommunicationService(
-    std::shared_ptr<data::BackendInterface> backend,
-    std::unique_ptr<etl::WriterStateInterface> writerState,
-    std::chrono::steady_clock::duration readInterval,
-    std::chrono::steady_clock::duration writeInterval
-)
-    : backend_(ctx_, std::move(backend), writerState->clone(), readInterval, writeInterval)
-    , writerDecider_(ctx_, std::move(writerState))
+Metrics::Metrics()
 {
+    nodesInClusterMetric_.set(1);  // The node always sees itself
+    isHealthy_ = true;
 }
 
 void
-ClusterCommunicationService::run()
+Metrics::onNewState(ClioNode::CUuid, std::shared_ptr<Backend::ClusterData const> clusterData)
 {
-    backend_.subscribeToNewState([this](auto&&... args) {
-        metrics_.onNewState(std::forward<decltype(args)>(args)...);
-    });
-    backend_.subscribeToNewState([this](auto&&... args) {
-        writerDecider_.onNewState(std::forward<decltype(args)>(args)...);
-    });
-    backend_.run();
-}
-
-ClusterCommunicationService::~ClusterCommunicationService()
-{
-    stop();
-}
-
-void
-ClusterCommunicationService::stop()
-{
-    backend_.stop();
+    if (clusterData->has_value()) {
+        isHealthy_ = true;
+        nodesInClusterMetric_.set(clusterData->value().size());
+    } else {
+        isHealthy_ = false;
+        nodesInClusterMetric_.set(1);
+    }
 }
 
 }  // namespace cluster

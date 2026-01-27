@@ -52,6 +52,7 @@
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/async/AnyExecutionContext.hpp"
 #include "util/async/AnyOperation.hpp"
+#include "util/async/AnyStrand.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
 
@@ -69,12 +70,12 @@
 #include <xrpl/protocol/TxFormats.h>
 #include <xrpl/protocol/TxMeta.h>
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>
-#include <string>
 
 namespace etl {
 
@@ -117,6 +118,9 @@ class ETLService : public ETLServiceInterface {
 
     boost::signals2::scoped_connection monitorNewSeqSubscription_;
     boost::signals2::scoped_connection monitorDbStalledSubscription_;
+    boost::signals2::scoped_connection systemStateWriteCommandSubscription_;
+    util::async::AnyStrand writeCommandStrand_;
+    std::atomic<size_t> runningWriteCommandHandlers_{0};
 
     std::optional<util::async::AnyOperation<void>> mainLoop_;
 
@@ -127,6 +131,7 @@ public:
      * Creates and runs the ETL service.
      *
      * @param config The configuration to use
+     * @param state The system state tracking object
      * @param ctx Execution context for asynchronous operations
      * @param backend BackendInterface implementation
      * @param subscriptions Subscription manager
@@ -137,6 +142,7 @@ public:
     static std::shared_ptr<ETLServiceInterface>
     makeETLService(
         util::config::ClioConfigDefinition const& config,
+        std::shared_ptr<SystemState> state,
         util::async::AnyExecutionContext ctx,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
@@ -160,7 +166,7 @@ public:
      * @param initialLoadObserver The observer for initial data loading
      * @param taskManagerProvider The provider of the task manager instance
      * @param monitorProvider The provider of the monitor instance
-     * @param state System state tracking object
+     * @param state The system state tracking object
      */
     ETLService(
         util::async::AnyExecutionContext ctx,
@@ -205,6 +211,12 @@ public:
 private:
     std::optional<data::LedgerRange>
     loadInitialLedgerIfNeeded();
+
+    [[nodiscard]] uint32_t
+    syncCacheWithDb();
+
+    void
+    updateCache(uint32_t seq);
 
     void
     startMonitor(uint32_t seq);

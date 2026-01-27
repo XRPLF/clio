@@ -22,207 +22,197 @@
 #include "data/BackendInterface.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
-#include "util/TimeUtils.hpp"
-#include "util/prometheus/Bool.hpp"
-#include "util/prometheus/Gauge.hpp"
+#include "util/MockWriterState.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
-#include <boost/json/parse.hpp>
+#include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>
-#include <boost/json/string.hpp>
-#include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
-#include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
-#include <condition_variable>
+#include <cstdint>
 #include <memory>
-#include <mutex>
+#include <semaphore>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
 using namespace cluster;
 
-namespace {
-std::vector<ClioNode> const kOTHER_NODES_DATA = {
-    ClioNode{
-        .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()()),
-        .updateTime = util::systemTpFromUtcStr("2015-05-15T12:00:00Z", ClioNode::kTIME_FORMAT).value()
-    },
-    ClioNode{
-        .uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()()),
-        .updateTime = util::systemTpFromUtcStr("2015-05-15T12:00:01Z", ClioNode::kTIME_FORMAT).value()
-    },
-};
-}  // namespace
+struct ClusterCommunicationServiceTest : util::prometheus::WithPrometheus, MockBackendTest {
+    std::unique_ptr<NiceMockWriterState> writerState = std::make_unique<NiceMockWriterState>();
+    NiceMockWriterState& writerStateRef = *writerState;
 
-struct ClusterCommunicationServiceTest : util::prometheus::WithPrometheus, MockBackendTestStrict {
-    ClusterCommunicationService clusterCommunicationService{
-        backend_,
-        std::chrono::milliseconds{5},
-        std::chrono::milliseconds{9}
-    };
+    static constexpr std::chrono::milliseconds kSHORT_INTERVAL{1};
 
-    util::prometheus::GaugeInt& nodesInClusterMetric = PrometheusService::gaugeInt("cluster_nodes_total_number", {});
-    util::prometheus::Bool isHealthyMetric = PrometheusService::boolMetric("cluster_communication_is_healthy", {});
-
-    std::mutex mtx;
-    std::condition_variable cv;
-
-    void
-    notify()
+    static boost::uuids::uuid
+    makeUuid(uint8_t value)
     {
-        std::unique_lock const lock{mtx};
-        cv.notify_one();
+        boost::uuids::uuid uuid{};
+        std::ranges::fill(uuid, value);
+        return uuid;
     }
 
-    void
-    wait()
+    static ClioNode
+    makeNode(boost::uuids::uuid const& uuid, ClioNode::DbRole role)
     {
-        std::unique_lock lock{mtx};
-        cv.wait_until(lock, std::chrono::steady_clock::now() + std::chrono::milliseconds{100});
+        return ClioNode{
+            .uuid = std::make_shared<boost::uuids::uuid>(uuid),
+            .updateTime = std::chrono::system_clock::now(),
+            .dbRole = role
+        };
+    }
+
+    static std::string
+    nodeToJson(ClioNode const& node)
+    {
+        boost::json::value const v = boost::json::value_from(node);
+        return boost::json::serialize(v);
+    }
+
+    ClusterCommunicationServiceTest()
+    {
+        ON_CALL(writerStateRef, clone()).WillByDefault(testing::Invoke([]() {
+            auto state = std::make_unique<NiceMockWriterState>();
+            ON_CALL(*state, isReadOnly()).WillByDefault(testing::Return(false));
+            ON_CALL(*state, isWriting()).WillByDefault(testing::Return(true));
+            return state;
+        }));
+        ON_CALL(writerStateRef, isReadOnly()).WillByDefault(testing::Return(false));
+        ON_CALL(writerStateRef, isWriting()).WillByDefault(testing::Return(true));
+    }
+
+    static bool
+    waitForSignal(std::binary_semaphore& sem, std::chrono::milliseconds timeout = std::chrono::milliseconds{1000})
+    {
+        return sem.try_acquire_for(timeout);
     }
 };
 
-TEST_F(ClusterCommunicationServiceTest, Write)
+TEST_F(ClusterCommunicationServiceTest, BackendReadsAndWritesData)
 {
-    auto const selfUuid = *clusterCommunicationService.selfUuid();
+    auto const otherUuid = makeUuid(0x02);
+    std::binary_semaphore fetchSemaphore{0};
+    std::binary_semaphore writeSemaphore{0};
 
-    auto const nowStr = util::systemTpToUtcStr(std::chrono::system_clock::now(), ClioNode::kTIME_FORMAT);
-    auto const nowStrPrefix = nowStr.substr(0, nowStr.size() - 3);
+    BackendInterface::ClioNodesDataFetchResult fetchResult{std::vector<std::pair<boost::uuids::uuid, std::string>>{
+        {otherUuid, nodeToJson(makeNode(otherUuid, ClioNode::DbRole::Writer))}
+    }};
 
-    EXPECT_CALL(*backend_, writeNodeMessage(selfUuid, testing::_)).WillOnce([&](auto&&, std::string const& jsonStr) {
-        auto const jv = boost::json::parse(jsonStr);
-        ASSERT_TRUE(jv.is_object());
-        auto const& obj = jv.as_object();
-        ASSERT_TRUE(obj.contains("update_time"));
-        ASSERT_TRUE(obj.at("update_time").is_string());
-        EXPECT_THAT(std::string{obj.at("update_time").as_string()}, testing::StartsWith(nowStrPrefix));
+    ON_CALL(*backend_, fetchClioNodesData).WillByDefault(testing::Invoke([&](auto) {
+        fetchSemaphore.release();
+        return fetchResult;
+    }));
 
-        notify();
-    });
+    ON_CALL(*backend_, writeNodeMessage).WillByDefault(testing::Invoke([&](auto, auto) { writeSemaphore.release(); }));
 
-    clusterCommunicationService.run();
-    wait();
-    // destructor of clusterCommunicationService calls .stop()
+    ClusterCommunicationService service{backend_, std::move(writerState), kSHORT_INTERVAL, kSHORT_INTERVAL};
+
+    service.run();
+
+    EXPECT_TRUE(waitForSignal(fetchSemaphore));
+    EXPECT_TRUE(waitForSignal(writeSemaphore));
+
+    service.stop();
 }
 
-TEST_F(ClusterCommunicationServiceTest, Read_FetchFailed)
+TEST_F(ClusterCommunicationServiceTest, MetricsGetsNewStateFromBackend)
 {
-    EXPECT_TRUE(isHealthyMetric);
-    EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([this](auto&&, auto&&) {
-        notify();
-    });
-    EXPECT_CALL(*backend_, fetchClioNodesData).WillRepeatedly([](auto&&) { return std::unexpected{"Failed"}; });
+    auto const otherUuid = makeUuid(0x02);
+    std::binary_semaphore writerActionSemaphore{0};
 
-    clusterCommunicationService.run();
-    wait();
-    // call .stop() manually so that workers exit before expectations are called more times than we want
-    clusterCommunicationService.stop();
+    BackendInterface::ClioNodesDataFetchResult fetchResult{std::vector<std::pair<boost::uuids::uuid, std::string>>{
+        {otherUuid, nodeToJson(makeNode(otherUuid, ClioNode::DbRole::Writer))}
+    }};
 
-    EXPECT_FALSE(isHealthyMetric);
+    ON_CALL(*backend_, fetchClioNodesData).WillByDefault(testing::Invoke([&](auto) { return fetchResult; }));
+
+    ON_CALL(writerStateRef, clone()).WillByDefault(testing::Invoke([&]() mutable {
+        auto state = std::make_unique<NiceMockWriterState>();
+        ON_CALL(*state, startWriting()).WillByDefault(testing::Invoke([&]() { writerActionSemaphore.release(); }));
+        ON_CALL(*state, giveUpWriting()).WillByDefault(testing::Invoke([&]() { writerActionSemaphore.release(); }));
+        return state;
+    }));
+
+    auto& nodesInClusterMetric = PrometheusService::gaugeInt("cluster_nodes_total_number", {});
+    auto isHealthyMetric = PrometheusService::boolMetric("cluster_communication_is_healthy", {});
+
+    ClusterCommunicationService service{backend_, std::move(writerState), kSHORT_INTERVAL, kSHORT_INTERVAL};
+
+    service.run();
+
+    // WriterDecider is called after metrics are updated so we could use it as a signal to stop
+    EXPECT_TRUE(waitForSignal(writerActionSemaphore));
+
+    service.stop();
+
+    EXPECT_EQ(nodesInClusterMetric.value(), 2);
+    EXPECT_TRUE(static_cast<bool>(isHealthyMetric));
 }
 
-TEST_F(ClusterCommunicationServiceTest, Read_FetchThrew)
+TEST_F(ClusterCommunicationServiceTest, WriterDeciderCallsWriterStateMethodsAccordingly)
 {
-    EXPECT_TRUE(isHealthyMetric);
-    EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([this](auto&&, auto&&) {
-        notify();
-    });
-    EXPECT_CALL(*backend_, fetchClioNodesData).WillRepeatedly(testing::Throw(data::DatabaseTimeout{}));
+    auto const smallerUuid = makeUuid(0x00);
+    std::binary_semaphore fetchSemaphore{0};
+    std::binary_semaphore writerActionSemaphore{0};
 
-    clusterCommunicationService.run();
-    wait();
-    clusterCommunicationService.stop();
+    BackendInterface::ClioNodesDataFetchResult fetchResult{std::vector<std::pair<boost::uuids::uuid, std::string>>{
+        {smallerUuid, nodeToJson(makeNode(smallerUuid, ClioNode::DbRole::Writer))}
+    }};
 
-    EXPECT_FALSE(isHealthyMetric);
-    EXPECT_FALSE(clusterCommunicationService.clusterData().has_value());
+    ON_CALL(*backend_, fetchClioNodesData).WillByDefault(testing::Invoke([&](auto) {
+        fetchSemaphore.release();
+        return fetchResult;
+    }));
+
+    ON_CALL(*backend_, writeNodeMessage).WillByDefault(testing::Return());
+
+    ON_CALL(writerStateRef, clone()).WillByDefault(testing::Invoke([&]() mutable {
+        auto state = std::make_unique<NiceMockWriterState>();
+        ON_CALL(*state, startWriting()).WillByDefault(testing::Invoke([&]() { writerActionSemaphore.release(); }));
+        ON_CALL(*state, giveUpWriting()).WillByDefault(testing::Invoke([&]() { writerActionSemaphore.release(); }));
+        return state;
+    }));
+
+    ClusterCommunicationService service{backend_, std::move(writerState), kSHORT_INTERVAL, kSHORT_INTERVAL};
+
+    service.run();
+
+    EXPECT_TRUE(waitForSignal(fetchSemaphore));
+    EXPECT_TRUE(waitForSignal(writerActionSemaphore));
+
+    service.stop();
 }
 
-TEST_F(ClusterCommunicationServiceTest, Read_GotInvalidJson)
+TEST_F(ClusterCommunicationServiceTest, StopHaltsBackendOperations)
 {
-    EXPECT_TRUE(isHealthyMetric);
-    EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([this](auto&&, auto&&) {
-        notify();
-    });
-    EXPECT_CALL(*backend_, fetchClioNodesData).WillRepeatedly([](auto&&) {
-        return std::vector<std::pair<boost::uuids::uuid, std::string>>{
-            {boost::uuids::random_generator()(), "invalid json"}
-        };
-    });
+    std::atomic<int> backendOperationsCount{0};
+    std::binary_semaphore fetchSemaphore{0};
 
-    clusterCommunicationService.run();
-    wait();
-    clusterCommunicationService.stop();
+    BackendInterface::ClioNodesDataFetchResult fetchResult{std::vector<std::pair<boost::uuids::uuid, std::string>>{}};
 
-    EXPECT_FALSE(isHealthyMetric);
-    EXPECT_FALSE(clusterCommunicationService.clusterData().has_value());
-}
+    ON_CALL(*backend_, fetchClioNodesData).WillByDefault(testing::Invoke([&](auto) {
+        backendOperationsCount++;
+        fetchSemaphore.release();
+        return fetchResult;
+    }));
+    ON_CALL(*backend_, writeNodeMessage).WillByDefault(testing::Invoke([&](auto&&, auto&&) {
+        backendOperationsCount++;
+    }));
 
-TEST_F(ClusterCommunicationServiceTest, Read_GotInvalidNodeData)
-{
-    EXPECT_TRUE(isHealthyMetric);
-    EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([this](auto&&, auto&&) {
-        notify();
-    });
-    EXPECT_CALL(*backend_, fetchClioNodesData).WillRepeatedly([](auto&&) {
-        return std::vector<std::pair<boost::uuids::uuid, std::string>>{{boost::uuids::random_generator()(), "{}"}};
-    });
+    ClusterCommunicationService service{backend_, std::move(writerState), kSHORT_INTERVAL, kSHORT_INTERVAL};
 
-    clusterCommunicationService.run();
-    wait();
-    clusterCommunicationService.stop();
+    service.run();
+    EXPECT_TRUE(waitForSignal(fetchSemaphore));
+    service.stop();
 
-    EXPECT_FALSE(isHealthyMetric);
-    EXPECT_FALSE(clusterCommunicationService.clusterData().has_value());
-}
-
-TEST_F(ClusterCommunicationServiceTest, Read_Success)
-{
-    EXPECT_TRUE(isHealthyMetric);
-    EXPECT_EQ(nodesInClusterMetric.value(), 1);
-
-    EXPECT_CALL(*backend_, writeNodeMessage).Times(2).WillOnce([](auto&&, auto&&) {}).WillOnce([this](auto&&, auto&&) {
-        auto const clusterData = clusterCommunicationService.clusterData();
-        ASSERT_TRUE(clusterData.has_value());
-        ASSERT_EQ(clusterData->size(), kOTHER_NODES_DATA.size() + 1);
-        for (auto const& node : kOTHER_NODES_DATA) {
-            auto const it =
-                std::ranges::find_if(*clusterData, [&](ClioNode const& n) { return *(n.uuid) == *(node.uuid); });
-            EXPECT_NE(it, clusterData->cend()) << boost::uuids::to_string(*node.uuid);
-        }
-        auto const selfUuid = clusterCommunicationService.selfUuid();
-        auto const it =
-            std::ranges::find_if(*clusterData, [&selfUuid](ClioNode const& node) { return node.uuid == selfUuid; });
-        EXPECT_NE(it, clusterData->end());
-
-        notify();
-    });
-
-    EXPECT_CALL(*backend_, fetchClioNodesData).WillRepeatedly([this](auto&&) {
-        auto const selfUuid = clusterCommunicationService.selfUuid();
-        std::vector<std::pair<boost::uuids::uuid, std::string>> result = {
-            {*selfUuid, R"JSON({"update_time": "2015-05-15:12:00:00"})JSON"},
-        };
-
-        for (auto const& node : kOTHER_NODES_DATA) {
-            boost::json::value jsonValue;
-            boost::json::value_from(node, jsonValue);
-            result.emplace_back(*node.uuid, boost::json::serialize(jsonValue));
-        }
-        return result;
-    });
-
-    clusterCommunicationService.run();
-    wait();
-    clusterCommunicationService.stop();
-
-    EXPECT_TRUE(isHealthyMetric);
-    EXPECT_EQ(nodesInClusterMetric.value(), 3);
+    auto const countAfterStop = backendOperationsCount.load();
+    std::this_thread::sleep_for(std::chrono::milliseconds{50});
+    EXPECT_EQ(backendOperationsCount.load(), countAfterStop);
 }

@@ -78,6 +78,7 @@ namespace etl {
 std::shared_ptr<ETLServiceInterface>
 ETLService::makeETLService(
     util::config::ClioConfigDefinition const& config,
+    std::shared_ptr<SystemState> state,
     util::async::AnyExecutionContext ctx,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
@@ -86,9 +87,6 @@ ETLService::makeETLService(
 )
 {
     std::shared_ptr<ETLServiceInterface> ret;
-
-    auto state = std::make_shared<SystemState>();
-    state->isStrictReadonly = config.get<bool>("read_only");
 
     auto fetcher = std::make_shared<impl::LedgerFetcher>(backend, balancer);
     auto extractor = std::make_shared<impl::Extractor>(fetcher);
@@ -173,6 +171,7 @@ ETLService::ETLService(
     , state_(std::move(state))
     , startSequence_(config.get().maybeValue<uint32_t>("start_sequence"))
     , finishSequence_(config.get().maybeValue<uint32_t>("finish_sequence"))
+    , writeCommandStrand_(ctx_.makeStrand())
 {
     ASSERT(not state_->isWriting, "ETL should never start in writer mode");
 
@@ -213,13 +212,12 @@ ETLService::run()
             return;
         }
 
-        auto nextSequence = rng->maxSequence + 1;
-        if (backend_->cache().latestLedgerSequence() != 0) {
-            nextSequence = backend_->cache().latestLedgerSequence();
-        }
-
+        auto const nextSequence = syncCacheWithDb();
         LOG(log_.debug()) << "Database is populated. Starting monitor loop. sequence = " << nextSequence;
+
         startMonitor(nextSequence);
+
+        state_->isLoadingCache = false;
 
         // If we are a writer as the result of loading the initial ledger - start loading
         if (state_->isWriting)
@@ -231,6 +229,13 @@ void
 ETLService::stop()
 {
     LOG(log_.info()) << "Stop called";
+
+    systemStateWriteCommandSubscription_.disconnect();
+    auto count = runningWriteCommandHandlers_.load();
+    while (count != 0) {
+        runningWriteCommandHandlers_.wait(count);  // Blocks until value changes
+        count = runningWriteCommandHandlers_.load();
+    }
 
     if (mainLoop_)
         mainLoop_->wait();
@@ -343,35 +348,77 @@ ETLService::loadInitialLedgerIfNeeded()
     return rng;
 }
 
+uint32_t
+ETLService::syncCacheWithDb()
+{
+    auto rng = backend_->hardFetchLedgerRangeNoThrow();
+
+    while (not backend_->cache().isDisabled() and rng->maxSequence > backend_->cache().latestLedgerSequence()) {
+        LOG(log_.info()) << "Syncing cache with DB. DB latest seq: " << rng->maxSequence
+                         << ". Cache latest seq: " << backend_->cache().latestLedgerSequence();
+        for (auto seq = backend_->cache().latestLedgerSequence(); seq <= rng->maxSequence; ++seq) {
+            LOG(log_.info()) << "ETLService (via syncCacheWithDb) got new seq from db: " << seq;
+            updateCache(seq);
+        }
+        rng = backend_->hardFetchLedgerRangeNoThrow();
+    }
+    return rng->maxSequence + 1;
+}
+
+void
+ETLService::updateCache(uint32_t seq)
+{
+    auto const cacheNeedsUpdate = backend_->cache().latestLedgerSequence() < seq;
+    auto const backendRange = backend_->fetchLedgerRange();
+    auto const backendNeedsUpdate = backendRange.has_value() and backendRange->maxSequence < seq;
+
+    if (cacheNeedsUpdate) {
+        auto const diff = data::synchronousAndRetryOnTimeout([this, seq](auto yield) {
+            return backend_->fetchLedgerDiff(seq, yield);
+        });
+        cacheUpdater_->update(seq, diff);
+    }
+
+    if (backendNeedsUpdate)
+        backend_->updateRange(seq);
+
+    publisher_->publish(seq, {});
+}
+
 void
 ETLService::startMonitor(uint32_t seq)
 {
     monitor_ = monitorProvider_->make(ctx_, backend_, ledgers_, seq);
 
+    systemStateWriteCommandSubscription_ =
+        state_->writeCommandSignal.connect([this](SystemState::WriteCommand command) {
+            ++runningWriteCommandHandlers_;
+            writeCommandStrand_.submit([this, command]() {
+                switch (command) {
+                    case etl::SystemState::WriteCommand::StartWriting:
+                        attemptTakeoverWriter();
+                        break;
+                    case etl::SystemState::WriteCommand::StopWriting:
+                        giveUpWriter();
+                        break;
+                }
+                --runningWriteCommandHandlers_;
+                runningWriteCommandHandlers_.notify_one();
+            });
+        });
+
     monitorNewSeqSubscription_ = monitor_->subscribeToNewSequence([this](uint32_t seq) {
         LOG(log_.info()) << "ETLService (via Monitor) got new seq from db: " << seq;
-
-        if (state_->writeConflict) {
-            LOG(log_.info()) << "Got a write conflict; Giving up writer seat immediately";
-            giveUpWriter();
-        }
-
-        if (not state_->isWriting) {
-            auto const diff = data::synchronousAndRetryOnTimeout([this, seq](auto yield) {
-                return backend_->fetchLedgerDiff(seq, yield);
-            });
-
-            cacheUpdater_->update(seq, diff);
-            backend_->updateRange(seq);
-        }
-
-        publisher_->publish(seq, {});
+        updateCache(seq);
     });
 
     monitorDbStalledSubscription_ = monitor_->subscribeToDbStalled([this]() {
         LOG(log_.warn()) << "ETLService received DbStalled signal from Monitor";
+        // Database stall detected - no writer has been active for 10 seconds
+        // This triggers the fallback mechanism and attempts to become the writer
         if (not state_->isStrictReadonly and not state_->isWriting)
-            attemptTakeoverWriter();
+            state_->writeCommandSignal(SystemState::WriteCommand::StartWriting);
+        state_->isWriterDecidingFallback = true;
     });
 
     monitor_->run();
@@ -394,6 +441,13 @@ ETLService::attemptTakeoverWriter()
     auto rng = backend_->hardFetchLedgerRangeNoThrow();
     ASSERT(rng.has_value(), "Ledger range can't be null");
 
+    if (backend_->cache().latestLedgerSequence() != rng->maxSequence) {
+        LOG(log_.info()) << "Wanted to take over the ETL writer seat but LedgerCache is outdated";
+        // Give ETL time to update LedgerCache. This method will be called because ClusterCommunication will likely to
+        // continue sending StartWriting signal every 1 second
+        return;
+    }
+
     state_->isWriting = true;  // switch to writer
     LOG(log_.info()) << "Taking over the ETL writer seat";
     startLoading(rng->maxSequence + 1);
@@ -404,7 +458,7 @@ ETLService::giveUpWriter()
 {
     ASSERT(not state_->isStrictReadonly, "This should only happen on writer nodes");
     state_->isWriting = false;
-    state_->writeConflict = false;
+    LOG(log_.info()) << "Giving up writer seat";
     taskMan_ = nullptr;
 }
 

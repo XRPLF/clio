@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "util/async/Concepts.hpp"
+
 #include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/experimental/channel.hpp>
 #include <boost/asio/experimental/concurrent_channel.hpp>
@@ -43,14 +45,35 @@ struct ChannelInstantiated;
 #endif
 
 /**
+ * @brief Specifies the producer concurrency model for a Channel.
+ */
+enum class ProducerType {
+    Single, /**< Only one Sender can exist (non-copyable). Uses direct Guard ownership for zero overhead. */
+    Multi   /**< Multiple Senders can exist (copyable). Uses shared_ptr<Guard> for shared ownership. */
+};
+
+/**
+ * @brief Specifies the consumer concurrency model for a Channel.
+ */
+enum class ConsumerType {
+    Single, /**< Only one Receiver can exist (non-copyable). Uses direct Guard ownership for zero overhead. */
+    Multi   /**< Multiple Receivers can exist (copyable). Uses shared_ptr<Guard> for shared ownership. */
+};
+
+/**
  * @brief Represents a go-like channel, a multi-producer (Sender) multi-consumer (Receiver) thread-safe data pipe.
  * @note Use INSTANTIATE_CHANNEL_FOR_CLANG macro when using this class. See docs at the bottom of the file for more
  * details.
  *
  * @tparam T The type of data the channel transfers
+ * @tparam P ProducerType::Multi (default) for multi-producer or ProducerType::Single for single-producer
+ * @tparam C ConsumerType::Multi (default) for multi-consumer or ConsumerType::Single for single-consumer
  */
-template <typename T>
+template <typename T, ProducerType P = ProducerType::Multi, ConsumerType C = ConsumerType::Multi>
 class Channel {
+    static constexpr bool kIS_MULTI_PRODUCER = (P == ProducerType::Multi);
+    static constexpr bool kIS_MULTI_CONSUMER = (C == ConsumerType::Multi);
+
 private:
     class ControlBlock {
         using InternalChannelType = boost::asio::experimental::concurrent_channel<void(boost::system::error_code, T)>;
@@ -58,7 +81,16 @@ private:
         InternalChannelType ch_;
 
     public:
-        ControlBlock(auto&& context, std::size_t capacity) : executor_(context.get_executor()), ch_(context, capacity)
+        template <typename ContextType>
+            requires(not async::SomeExecutionContext<ContextType>)
+        ControlBlock(ContextType&& context, std::size_t capacity)
+            : executor_(context.get_executor()), ch_(context, capacity)
+        {
+        }
+
+        template <async::SomeExecutionContext ContextType>
+        ControlBlock(ContextType&& context, std::size_t capacity)
+            : executor_(context.getExecutor().get_executor()), ch_(context.getExecutor(), capacity)
         {
         }
 
@@ -101,30 +133,54 @@ private:
         }
     };
 
+public:
     /**
      * @brief The sending end of a channel.
      *
-     * Sender is copyable and movable. The channel remains open as long as at least one Sender exists.
+     * Sender is movable. For multi-producer channels, Sender is also copyable.
+     * The channel remains open as long as at least one Sender exists.
      * When all Sender instances are destroyed, the channel is closed and receivers will receive std::nullopt.
      */
     class Sender {
         std::shared_ptr<ControlBlock> shared_;
-        std::shared_ptr<Guard> guard_;
+        std::conditional_t<kIS_MULTI_PRODUCER, std::shared_ptr<Guard>, Guard> guard_;
 
-    public:
+        friend class Channel<T, P, C>;
+
         /**
          * @brief Constructs a Sender from a shared control block.
          * @param shared The shared control block managing the channel state
          */
         Sender(std::shared_ptr<ControlBlock> shared)
-            : shared_(std::move(shared)), guard_(std::make_shared<Guard>(shared_)) {};
+            : shared_(shared), guard_([shared = std::move(shared)]() {
+                if constexpr (kIS_MULTI_PRODUCER) {
+                    return std::make_shared<Guard>(std::move(shared));
+                } else {
+                    return Guard{std::move(shared)};
+                }
+            }())
+        {
+        }
 
+    public:
         Sender(Sender&&) = default;
-        Sender(Sender const&) = default;
+        Sender(Sender const&)
+            requires kIS_MULTI_PRODUCER
+        = default;
+        Sender(Sender const&)
+            requires(!kIS_MULTI_PRODUCER)
+        = delete;
+
         Sender&
         operator=(Sender&&) = default;
         Sender&
-        operator=(Sender const&) = default;
+        operator=(Sender const&)
+            requires kIS_MULTI_PRODUCER
+        = default;
+        Sender&
+        operator=(Sender const&)
+            requires(!kIS_MULTI_PRODUCER)
+        = delete;
 
         /**
          * @brief Asynchronously sends data through the channel using a coroutine.
@@ -202,27 +258,50 @@ private:
     /**
      * @brief The receiving end of a channel.
      *
-     * Receiver is copyable and movable. Multiple receivers can consume from the same channel concurrently.
+     * Receiver is movable. For multi-consumer channels, Receiver is also copyable.
+     * Multiple receivers can consume from the same multi-consumer channel concurrently.
      * When all Receiver instances are destroyed, the channel is closed and senders will fail to send.
      */
     class Receiver {
         std::shared_ptr<ControlBlock> shared_;
-        std::shared_ptr<Guard> guard_;
+        std::conditional_t<kIS_MULTI_CONSUMER, std::shared_ptr<Guard>, Guard> guard_;
 
-    public:
+        friend class Channel<T, P, C>;
+
         /**
          * @brief Constructs a Receiver from a shared control block.
          * @param shared The shared control block managing the channel state
          */
         Receiver(std::shared_ptr<ControlBlock> shared)
-            : shared_(std::move(shared)), guard_(std::make_shared<Guard>(shared_)) {};
+            : shared_(shared), guard_([shared = std::move(shared)]() {
+                if constexpr (kIS_MULTI_CONSUMER) {
+                    return std::make_shared<Guard>(std::move(shared));
+                } else {
+                    return Guard{std::move(shared)};
+                }
+            }())
+        {
+        }
 
+    public:
         Receiver(Receiver&&) = default;
-        Receiver(Receiver const&) = default;
+        Receiver(Receiver const&)
+            requires kIS_MULTI_CONSUMER
+        = default;
+        Receiver(Receiver const&)
+            requires(!kIS_MULTI_CONSUMER)
+        = delete;
+
         Receiver&
         operator=(Receiver&&) = default;
         Receiver&
-        operator=(Receiver const&) = default;
+        operator=(Receiver const&)
+            requires kIS_MULTI_CONSUMER
+        = default;
+        Receiver&
+        operator=(Receiver const&)
+            requires(!kIS_MULTI_CONSUMER)
+        = delete;
 
         /**
          * @brief Attempts to receive data from the channel without blocking.
@@ -297,7 +376,6 @@ private:
         }
     };
 
-public:
     /**
      * @brief Factory function to create channel components.
      * @param context A supported context type (either io_context or thread_pool)

@@ -19,54 +19,22 @@
 
 #pragma once
 
-#include "util/Shasum.hpp"
+#include "etl/WriterState.hpp"
 
-#include <xrpl/basics/base_uint.h>
+#include <gmock/gmock.h>
 
-#include <cstddef>
-#include <cstring>
-#include <expected>
-#include <fstream>
-#include <string>
+#include <memory>
 
-namespace data::impl {
-
-class OutputFile {
-    std::ofstream file_;
-    util::Sha256sum shasum_;
-
-public:
-    OutputFile(std::string const& path);
-
-    bool
-    isOpen() const;
-
-    template <typename T>
-    void
-    write(T&& data)
-    {
-        writeRaw(reinterpret_cast<char const*>(&data), sizeof(T));
-    }
-
-    template <typename T>
-    void
-    write(T const* data, size_t const size)
-    {
-        writeRaw(reinterpret_cast<char const*>(data), size);
-    }
-
-    void
-    writeRaw(char const* data, size_t size);
-
-    ripple::uint256
-    hash() const;
-
-    std::expected<void, std::string>
-    close();
-
-private:
-    void
-    writeToFile(char const* data, size_t size);
+struct MockWriterStateBase : public etl::WriterStateInterface {
+    MOCK_METHOD(bool, isReadOnly, (), (const, override));
+    MOCK_METHOD(bool, isWriting, (), (const, override));
+    MOCK_METHOD(void, startWriting, (), (override));
+    MOCK_METHOD(void, giveUpWriting, (), (override));
+    MOCK_METHOD(void, setWriterDecidingFallback, (), (override));
+    MOCK_METHOD(bool, isFallback, (), (const, override));
+    MOCK_METHOD(bool, isLoadingCache, (), (const, override));
+    MOCK_METHOD(std::unique_ptr<etl::WriterStateInterface>, clone, (), (const, override));
 };
 
-}  // namespace data::impl
+using MockWriterState = testing::StrictMock<MockWriterStateBase>;
+using NiceMockWriterState = testing::NiceMock<MockWriterStateBase>;

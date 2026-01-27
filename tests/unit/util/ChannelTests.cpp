@@ -187,7 +187,7 @@ TEST_P(ChannelSpawnTest, MultipleSendersMultipleReceivers)
     context_.withExecutor([this](auto& executor) {
         auto [sender, receiver] = util::Channel<int>::create(executor, 10);
         util::Mutex<std::vector<int>> receivedValues;
-        std::vector<decltype(receiver)> receivers(kNUM_RECEIVERS, receiver);
+        std::vector receivers(kNUM_RECEIVERS, receiver);
 
         for (auto receiverId = 0uz; receiverId < kNUM_RECEIVERS; ++receiverId) {
             util::spawn(
@@ -402,7 +402,7 @@ TEST_P(ChannelCallbackTest, MultipleSendersMultipleReceivers)
     context_.withExecutor([this](auto& executor) {
         auto [sender, receiver] = util::Channel<int>::create(executor, 10);
         util::Mutex<std::vector<int>> receivedValues;
-        std::vector<decltype(receiver)> receivers(kNUM_RECEIVERS, receiver);
+        std::vector receivers(kNUM_RECEIVERS, receiver);
 
         for (auto receiverId = 0uz; receiverId < kNUM_RECEIVERS; ++receiverId) {
             auto& receiverRef = receivers[receiverId];
@@ -528,8 +528,8 @@ TEST_P(ChannelCallbackTest, TryMethodsWithClosedChannel)
     context_.withExecutor([this](auto& executor) {
         std::atomic_bool testCompleted{false};
         auto [sender, receiver] = util::Channel<int>::create(executor, 3);
-        auto receiverPtr = std::make_shared<decltype(receiver)>(std::move(receiver));
-        auto senderPtr = std::make_shared<std::optional<decltype(sender)>>(std::move(sender));
+        auto receiverPtr = std::make_shared<util::Channel<int>::Receiver>(std::move(receiver));
+        auto senderPtr = std::make_shared<std::optional<util::Channel<int>::Sender>>(std::move(sender));
 
         boost::asio::post(executor, [receiverPtr, senderPtr, &testCompleted]() {
             EXPECT_TRUE(senderPtr->value().trySend(100));

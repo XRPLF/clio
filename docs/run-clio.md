@@ -93,3 +93,42 @@ To completely disable Prometheus metrics add `"prometheus": { "enabled": false }
 It is important to know that Clio responds to Prometheus request only if they are admin requests. If you are using the admin password feature, the same password should be provided in the Authorization header of Prometheus requests.
 
 You can find an example Docker Compose file, with Prometheus and Grafana configs, in [examples/infrastructure](../docs/examples/infrastructure/).
+
+## Ledger cache file
+
+Since version 2.7.0, Clio supports saving the ledger cache to a local file on shutdown and loading it on startup. This feature is disabled by default but can significantly improve restart times.
+
+### Benefits
+
+- **Faster startup**: Loading cache from a file takes less than a minute, compared to 40-90 minutes on Mainnet when loading from the database.
+- **Reduced database load**: Clio doesn't put extra load on the database when starting with a cache file.
+- **Improved availability**: Faster restart times mean less downtime during maintenance or updates.
+
+> [!NOTE]
+> This feature only works when Clio is restarted. When starting Clio for the first time, the cache must be loaded from `rippled` or the database as usual.
+
+### Configuration
+
+To enable the ledger cache file feature, specify the [`cache.file.path`](./config-description.md#cachefilepath) option in your `config.json`:
+
+```json
+"cache": {
+    "file": {
+        "path": "/path/to/cache/file"
+    }
+}
+```
+
+You can optionally configure additional settings such as [`cache.file.max_sequence_age`](./config-description.md#cachefilemax_sequence_age) and [`cache.file.async_save`](./config-description.md#cachefileasync_save) to fine-tune the behavior. For a complete list of available options and their default values, see the [Configuration Description](./config-description.md#cachefilepath) documentation.
+
+### How it works
+
+1. **On shutdown**: Clio saves the current ledger cache to the specified file path. The file includes a hash for integrity verification.
+2. **On startup**: Clio checks if a cache file exists at the configured path. If the file exists, Clio will:
+   - Verify the file's integrity to ensure it is complete and not corrupted.
+   - Compare the latest ledger sequence in the cache file with the latest sequence in the database.
+   - Use the cache file only if the difference is less than [`cache.file.max_sequence_age`](./config-description.md#cachefilemax_sequence_age).
+   - If validation fails or the cache is too old, Clio will fall back to loading from the database.
+
+> [!IMPORTANT]
+> The cache file path should point to a location with sufficient disk space. On typical deployments, the cache file size can be several gigabytes.

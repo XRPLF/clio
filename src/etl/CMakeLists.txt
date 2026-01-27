@@ -11,6 +11,7 @@ target_sources(
           NetworkValidatedLedgers.cpp
           NFTHelpers.cpp
           Source.cpp
+          WriterState.cpp
           impl/AmendmentBlockHandler.cpp
           impl/AsyncGrpcCall.cpp
           impl/Extraction.cpp
