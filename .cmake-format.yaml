@@ -2,15 +2,6 @@ _help_parse: Options affecting listfile parsing
 parse:
   _help_additional_commands:
     - Specify structure for custom cmake functions
-  additional_commands:
-    foo:
-      flags:
-        - BAR
-        - BAZ
-      kwargs:
-        HEADERS: "*"
-        SOURCES: "*"
-        DEPENDS: "*"
   _help_override_spec:
     - Override configurations per-command where available
   override_spec: {}
@@ -30,7 +21,7 @@ format:
   line_width: 120
   _help_tab_size:
     - How many spaces to tab for indent
-  tab_size: 2
+  tab_size: 4
   _help_use_tabchars:
     - If true, lines are indented using tab characters (utf-8
     - 0x09) instead of <tab_size> space characters (utf-8 0x20).
@@ -70,19 +61,19 @@ format:
   _help_dangle_parens:
     - If a statement is wrapped to more than one line, than dangle
     - the closing parenthesis on its own line.
-  dangle_parens: true
+  dangle_parens: false
   _help_dangle_align:
     - If the trailing parenthesis must be 'dangled' on its on
     - "line, then align it to this reference: `prefix`: the start"
-    - "of the statement,  `prefix-indent`: the start of the"
-    - "statement, plus one indentation  level, `child`: align to"
+    - "of the statement, `prefix-indent`: the start of the"
+    - "statement, plus one indentation level, `child`: align to"
     - the column of the arguments
   dangle_align: prefix
   _help_min_prefix_chars:
     - If the statement spelling length (including space and
     - parenthesis) is smaller than this amount, then force reject
     - nested layouts.
-  min_prefix_chars: 4
+  min_prefix_chars: 18
   _help_max_prefix_chars:
     - If the statement spelling length (including space and
     - parenthesis) is larger than the tab width by more than this
@@ -127,7 +118,7 @@ _help_markup: Options affecting comment reflow and formatting.
 markup:
   _help_bullet_char:
     - What character to use for bulleted lists
-  bullet_char: "*"
+  bullet_char: "-"
   _help_enum_char:
     - What character to use as punctuation after numerals in an
     - enumerated list

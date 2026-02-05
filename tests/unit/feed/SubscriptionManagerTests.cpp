@@ -72,11 +72,11 @@ protected:
     }
 
     StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr_;
-    std::shared_ptr<SubscriptionManager> subscriptionManagerPtr_ =
-        std::make_shared<SubscriptionManager>(Execution(2), backend_, mockAmendmentCenterPtr_);
     web::SubscriptionContextPtr session_ = std::make_shared<MockSession>();
     MockSession* sessionPtr_ = dynamic_cast<MockSession*>(session_.get());
     uint32_t const networkID_ = 123;
+    std::shared_ptr<SubscriptionManager> subscriptionManagerPtr_ =
+        std::make_shared<SubscriptionManager>(Execution(2), backend_, mockAmendmentCenterPtr_);
 };
 
 using SubscriptionManagerTest = SubscriptionManagerBaseTest<util::async::SyncExecutionContext>;

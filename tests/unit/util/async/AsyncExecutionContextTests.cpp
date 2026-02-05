@@ -209,7 +209,7 @@ TYPED_TEST(ExecutionContextTests, repeatingOperation)
 {
     auto const repeatDelay = std::chrono::milliseconds{1};
     auto const timeout = std::chrono::milliseconds{15};
-    auto callCount = 0uz;
+    std::atomic_size_t callCount = 0uz;
 
     auto res = this->ctx.executeRepeatedly(repeatDelay, [&] { ++callCount; });
     auto timeSpent = util::timed([timeout] { std::this_thread::sleep_for(timeout); });  // calculate actual time spent

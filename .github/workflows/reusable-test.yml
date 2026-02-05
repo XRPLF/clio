@@ -45,10 +45,6 @@ jobs:
 
     if: ${{ inputs.run_unit_tests }}
 
-    env:
-      # TODO: remove completely when we have fixed all currently existing issues with sanitizers
-      SANITIZER_IGNORE_ERRORS: ${{ endsWith(inputs.conan_profile, '.tsan') }}
-
     steps:
       - name: Cleanup workspace
         if: ${{ runner.os == 'macOS' }}
@@ -65,34 +61,13 @@ jobs:
       - name: Make clio_tests executable
         run: chmod +x ./clio_tests
 
-      - name: Run clio_tests (regular)
-        if: ${{ env.SANITIZER_IGNORE_ERRORS == 'false' }}
+      - name: Run clio_tests
+        continue-on-error: true
+        id: run_clio_tests
         run: ./clio_tests
 
-      - name: Run clio_tests (sanitizer errors ignored)
-        if: ${{ env.SANITIZER_IGNORE_ERRORS == 'true' }}
-        run: ./.github/scripts/execute-tests-under-sanitizer.sh ./clio_tests
-
-      - name: Check for sanitizer report
-        if: ${{ env.SANITIZER_IGNORE_ERRORS == 'true' }}
-        id: check_report
-        run: |
-          if ls .sanitizer-report/* 1> /dev/null 2>&1; then
-            echo "found_report=true" >> $GITHUB_OUTPUT
-          else
-            echo "found_report=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Upload sanitizer report
-        if: ${{ env.SANITIZER_IGNORE_ERRORS == 'true' && steps.check_report.outputs.found_report == 'true' }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: sanitizer_report_${{ runner.os }}_${{ inputs.build_type }}_${{ inputs.conan_profile }}
-          path: .sanitizer-report/*
-          include-hidden-files: true
-
       - name: Create an issue
-        if: ${{ false && env.SANITIZER_IGNORE_ERRORS == 'true' && steps.check_report.outputs.found_report == 'true' }}
+        if: ${{ steps.run_clio_tests.outcome == 'failure' && endsWith(inputs.conan_profile, 'san') }}
         uses: ./.github/actions/create-issue
         env:
           GH_TOKEN: ${{ github.token }}
@@ -100,10 +75,13 @@ jobs:
           labels: "bug"
           title: "[${{ inputs.conan_profile }}] reported issues"
           body: >
-            Clio tests failed one or more sanitizer checks when built with ${{ inputs.conan_profile }}`.
+            Clio tests failed one or more sanitizer checks when built with `${{ inputs.conan_profile }}`.
 
             Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/
-            Reports are available as artifacts.
+
+      - name: Fail the job if clio_tests failed
+        if: ${{ steps.run_clio_tests.outcome == 'failure' }}
+        run: exit 1
 
   integration_tests:
     name: Integration testing

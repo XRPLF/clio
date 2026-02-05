@@ -64,7 +64,7 @@ SingleFeedBase::unsub(SubscriberSharedPtr const& subscriber)
 void
 SingleFeedBase::pub(std::string msg)
 {
-    [[maybe_unused]] auto task = strand_.execute([this, msg = std::move(msg)]() {
+    strand_.submit([this, msg = std::move(msg)] {
         auto const msgPtr = std::make_shared<std::string>(msg);
         signal_.emit(msgPtr);
     });

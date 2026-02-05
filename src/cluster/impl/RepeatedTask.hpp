@@ -30,7 +30,6 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/strand.hpp>
-#include <boost/asio/use_future.hpp>
 
 #include <atomic>
 #include <chrono>
@@ -96,7 +95,12 @@ public:
         if (auto expected = State::Running; not state_.compare_exchange_strong(expected, State::Stopped))
             return;  // Already stopped or not started
 
-        boost::asio::spawn(strand_, [this](auto&&) { timer_.cancel(); }, boost::asio::use_future).wait();
+        std::binary_semaphore cancelSemaphore{0};
+        boost::asio::post(strand_, [this, &cancelSemaphore]() {
+            timer_.cancel();
+            cancelSemaphore.release();
+        });
+        cancelSemaphore.acquire();
         semaphore_.acquire();
     }
 };
