@@ -274,6 +274,7 @@ private:
             } else {
                 // This can still technically be an error. Clio counts forwarded requests as successful.
                 rpcEngine_->notifyComplete(context->method, us);
+                rpcEngine_->recordLedgerMetrics(context->params, context->range.maxSequence);
 
                 auto& json = result.response.value();
                 auto const isForwarded =

@@ -237,6 +237,18 @@ public:
     }
 
     /**
+     * @brief Record ledger request metrics.
+     *
+     * @param params The request parameters containing ledger information
+     * @param currentLedgerSequence The current ledger sequence
+     */
+    void
+    recordLedgerMetrics(boost::json::object const& params, std::uint32_t currentLedgerSequence)
+    {
+        counters_.get().recordLedgerRequest(params, currentLedgerSequence);
+    }
+
+    /**
      * @brief Notify the system that specified method failed to execute due to a recoverable user error.
      *
      * Used for errors based on user input, not actual failures of the db or clio itself.
