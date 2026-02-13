@@ -25,9 +25,11 @@
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/json/object.hpp>
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <cstdint>
 #include <functional>
 #include <string>
 
@@ -56,6 +58,7 @@ struct MockAsyncRPCEngine {
     MOCK_METHOD(void, notifyTooBusy, (), ());
     MOCK_METHOD(void, notifyUnknownCommand, (), ());
     MOCK_METHOD(void, notifyInternalError, (), ());
+    MOCK_METHOD(void, recordLedgerMetrics, (boost::json::object const&, std::uint32_t), ());
     MOCK_METHOD(rpc::Result, buildResponse, (web::Context const&), ());
 };
 
@@ -70,5 +73,6 @@ struct MockRPCEngine {
     MOCK_METHOD(void, notifyTooBusy, (), ());
     MOCK_METHOD(void, notifyUnknownCommand, (), ());
     MOCK_METHOD(void, notifyInternalError, (), ());
+    MOCK_METHOD(void, recordLedgerMetrics, (boost::json::object const&, std::uint32_t), ());
     MOCK_METHOD(rpc::Result, buildResponse, (web::Context const&), ());
 };
