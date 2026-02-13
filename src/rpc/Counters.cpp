@@ -21,18 +21,24 @@
 
 #include "rpc/JS.hpp"
 #include "rpc/WorkQueue.hpp"
+#include "util/JsonUtils.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
 #include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/format.h>
 #include <xrpl/protocol/jss.h>
 
+#include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <functional>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace rpc {
 
@@ -138,6 +144,43 @@ Counters::Counters(Reportable const& wq)
               "Total number of internal errors"
           )
       )
+    , ledgerCurrentCounter_(
+          PrometheusService::counterInt(
+              "rpc_ledger_requests_total",
+              Labels({Label{"ledger_type", "current"}}),
+              "Total number of RPC requests for current ledger"
+          )
+      )
+    , ledgerValidatedCounter_(
+          PrometheusService::counterInt(
+              "rpc_ledger_requests_total",
+              Labels({Label{"ledger_type", "validated"}}),
+              "Total number of RPC requests for validated ledger"
+          )
+      )
+    , ledgerSpecificCounter_(
+          PrometheusService::counterInt(
+              "rpc_ledger_requests_total",
+              Labels({Label{"ledger_type", "specific"}}),
+              "Total number of RPC requests for specific ledger sequence"
+          )
+      )
+    , ledgerAgeSecondsHistogram_(
+          PrometheusService::histogramInt(
+              "rpc_ledger_age_seconds",
+              Labels{},
+              {0, 10, 30, 60, 300, 600, 1800, 3600, 7200, 14400, 86400},
+              "Age of requested ledgers in seconds (approximate)"
+          )
+      )
+    , ledgerAgeLedgersHistogram_(
+          PrometheusService::histogramInt(
+              "rpc_ledger_age_ledgers",
+              Labels{},
+              {0, 10, 100, 1000, 10000, 100000, 1000000},
+              "Age of requested ledgers in ledger count"
+          )
+      )
     , workQueue_(std::cref(wq))
     , startupTime_{std::chrono::system_clock::now()}
 {
@@ -215,6 +258,67 @@ void
 Counters::onInternalError()
 {
     ++internalErrorCounter_.get();
+}
+
+void
+Counters::recordLedgerRequest(boost::json::object const& params, std::uint32_t currentLedgerSequence)
+{
+    // Determine the requested ledger type
+    std::optional<std::uint32_t> requestedLedgerSeq;
+    bool isCurrent = false;
+    bool isValidated = false;
+
+    if (params.contains("ledger_index")) {
+        auto const& indexValue = params.at("ledger_index");
+        if (indexValue.is_string()) {
+            auto const indexStr = boost::json::value_to<std::string>(indexValue);
+            if (indexStr == "current") {
+                isCurrent = true;
+            } else if (indexStr == "validated") {
+                isValidated = true;
+            } else {
+                // Try to parse as number string
+                auto const parsed = util::getLedgerIndex(indexValue);
+                if (parsed.has_value()) {
+                    requestedLedgerSeq = *parsed;
+                }
+            }
+        } else {
+            // Numeric ledger index
+            auto const parsed = util::getLedgerIndex(indexValue);
+            if (parsed.has_value()) {
+                requestedLedgerSeq = *parsed;
+            }
+        }
+    } else if (params.contains("ledger_hash")) {
+        // For hash-based requests, we can't easily determine age without additional lookup
+        // Count it as "specific" but don't add to histogram
+        ++ledgerSpecificCounter_.get();
+        return;
+    } else {
+        // No ledger specified means validated ledger
+        isValidated = true;
+    }
+
+    // Update counters
+    if (isCurrent) {
+        ++ledgerCurrentCounter_.get();
+    } else if (isValidated) {
+        ++ledgerValidatedCounter_.get();
+    } else if (requestedLedgerSeq.has_value()) {
+        ++ledgerSpecificCounter_.get();
+
+        // Calculate age and update histograms
+        if (*requestedLedgerSeq <= currentLedgerSequence) {
+            auto const ageLedgers = static_cast<std::int64_t>(currentLedgerSequence - *requestedLedgerSeq);
+            ledgerAgeLedgersHistogram_.get().observe(ageLedgers);
+
+            // Estimate age in seconds (assuming ~4 seconds per ledger)
+            static constexpr std::int64_t kSECONDS_PER_LEDGER = 4;
+            auto const ageSeconds = ageLedgers * kSECONDS_PER_LEDGER;
+            ledgerAgeSecondsHistogram_.get().observe(ageSeconds);
+        }
+    }
 }
 
 std::chrono::seconds
