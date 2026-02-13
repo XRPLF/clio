@@ -246,7 +246,7 @@ TEST_F(RPCCountersMockPrometheusTests, recordLedgerRequestSpecificStringNumber)
     auto& ageLedgersHistogramMock = makeMock<util::prometheus::HistogramInt>("rpc_ledger_age_ledgers", "");
 
     EXPECT_CALL(specificCounterMock, add(1));
-    EXPECT_CALL(ageLedgersHistogramMock, observe(50));   // 1000 - 950 = 50 ledgers
+    EXPECT_CALL(ageLedgersHistogramMock, observe(50));  // 1000 - 950 = 50 ledgers
 
     boost::json::object params;
     params["ledger_index"] = "950";
