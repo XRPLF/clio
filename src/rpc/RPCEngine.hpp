@@ -237,6 +237,19 @@ public:
     }
 
     /**
+     * @brief Notify the system that specified method was executed and record ledger metrics.
+     *
+     * @param ctx The context containing method, params, and ledger information
+     * @param duration The time it took to execute the method specified in microseconds
+     */
+    void
+    notifyComplete(web::Context const& ctx, std::chrono::microseconds const& duration)
+    {
+        notifyComplete(ctx.method, duration);
+        counters_.get().recordLedgerRequest(ctx.params, ctx.range.maxSequence);
+    }
+
+    /**
      * @brief Record ledger request metrics.
      *
      * @param params The request parameters containing ledger information

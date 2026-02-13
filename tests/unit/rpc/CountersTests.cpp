@@ -230,12 +230,10 @@ TEST_F(RPCCountersMockPrometheusTests, recordLedgerRequestValidatedDefault)
 TEST_F(RPCCountersMockPrometheusTests, recordLedgerRequestSpecificNumber)
 {
     auto& specificCounterMock = makeMock<CounterInt>("rpc_ledger_requests_total", "{ledger_type=\"specific\"}");
-    auto& ageSecondsHistogramMock = makeMock<util::prometheus::HistogramInt>("rpc_ledger_age_seconds", "");
     auto& ageLedgersHistogramMock = makeMock<util::prometheus::HistogramInt>("rpc_ledger_age_ledgers", "");
 
     EXPECT_CALL(specificCounterMock, add(1));
     EXPECT_CALL(ageLedgersHistogramMock, observe(100));  // 1000 - 900 = 100 ledgers
-    EXPECT_CALL(ageSecondsHistogramMock, observe(400));  // 100 * 4 seconds per ledger
 
     boost::json::object params;
     params["ledger_index"] = 900;
@@ -245,12 +243,10 @@ TEST_F(RPCCountersMockPrometheusTests, recordLedgerRequestSpecificNumber)
 TEST_F(RPCCountersMockPrometheusTests, recordLedgerRequestSpecificStringNumber)
 {
     auto& specificCounterMock = makeMock<CounterInt>("rpc_ledger_requests_total", "{ledger_type=\"specific\"}");
-    auto& ageSecondsHistogramMock = makeMock<util::prometheus::HistogramInt>("rpc_ledger_age_seconds", "");
     auto& ageLedgersHistogramMock = makeMock<util::prometheus::HistogramInt>("rpc_ledger_age_ledgers", "");
 
     EXPECT_CALL(specificCounterMock, add(1));
     EXPECT_CALL(ageLedgersHistogramMock, observe(50));   // 1000 - 950 = 50 ledgers
-    EXPECT_CALL(ageSecondsHistogramMock, observe(200));  // 50 * 4 seconds per ledger
 
     boost::json::object params;
     params["ledger_index"] = "950";
@@ -271,12 +267,10 @@ TEST_F(RPCCountersMockPrometheusTests, recordLedgerRequestHash)
 TEST_F(RPCCountersMockPrometheusTests, recordLedgerRequestZeroAge)
 {
     auto& specificCounterMock = makeMock<CounterInt>("rpc_ledger_requests_total", "{ledger_type=\"specific\"}");
-    auto& ageSecondsHistogramMock = makeMock<util::prometheus::HistogramInt>("rpc_ledger_age_seconds", "");
     auto& ageLedgersHistogramMock = makeMock<util::prometheus::HistogramInt>("rpc_ledger_age_ledgers", "");
 
     EXPECT_CALL(specificCounterMock, add(1));
     EXPECT_CALL(ageLedgersHistogramMock, observe(0));  // 1000 - 1000 = 0 ledgers
-    EXPECT_CALL(ageSecondsHistogramMock, observe(0));  // 0 * 4 seconds per ledger
 
     boost::json::object params;
     params["ledger_index"] = 1000;  // Same as current

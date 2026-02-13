@@ -72,7 +72,6 @@ class Counters {
     CounterType ledgerCurrentCounter_;
     CounterType ledgerValidatedCounter_;
     CounterType ledgerSpecificCounter_;
-    std::reference_wrapper<util::prometheus::HistogramInt> ledgerAgeSecondsHistogram_;
     std::reference_wrapper<util::prometheus::HistogramInt> ledgerAgeLedgersHistogram_;
 
     std::reference_wrapper<Reportable const> workQueue_;

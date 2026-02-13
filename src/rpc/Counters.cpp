@@ -165,14 +165,6 @@ Counters::Counters(Reportable const& wq)
               "Total number of RPC requests for specific ledger sequence"
           )
       )
-    , ledgerAgeSecondsHistogram_(
-          PrometheusService::histogramInt(
-              "rpc_ledger_age_seconds",
-              Labels{},
-              {0, 10, 30, 60, 300, 600, 1800, 3600, 7200, 14400, 86400},
-              "Age of requested ledgers in seconds (approximate)"
-          )
-      )
     , ledgerAgeLedgersHistogram_(
           PrometheusService::histogramInt(
               "rpc_ledger_age_ledgers",
@@ -291,8 +283,8 @@ Counters::recordLedgerRequest(boost::json::object const& params, std::uint32_t c
             }
         }
     } else if (params.contains("ledger_hash")) {
-        // For hash-based requests, we can't easily determine age without additional lookup
-        // Count it as "specific" but don't add to histogram
+        // For hash-based requests, we can't determine age without additional lookup
+        // Count it as "specific"
         ++ledgerSpecificCounter_.get();
         return;
     } else {
@@ -308,15 +300,10 @@ Counters::recordLedgerRequest(boost::json::object const& params, std::uint32_t c
     } else if (requestedLedgerSeq.has_value()) {
         ++ledgerSpecificCounter_.get();
 
-        // Calculate age and update histograms
+        // Calculate age and update histogram
         if (*requestedLedgerSeq <= currentLedgerSequence) {
             auto const ageLedgers = static_cast<std::int64_t>(currentLedgerSequence - *requestedLedgerSeq);
             ledgerAgeLedgersHistogram_.get().observe(ageLedgers);
-
-            // Estimate age in seconds (assuming ~4 seconds per ledger)
-            static constexpr std::int64_t kSECONDS_PER_LEDGER = 4;
-            auto const ageSeconds = ageLedgers * kSECONDS_PER_LEDGER;
-            ledgerAgeSecondsHistogram_.get().observe(ageSeconds);
         }
     }
 }
