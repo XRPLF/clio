@@ -389,12 +389,12 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest)
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
-        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics(testing::_, testing::_));
+        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics);
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
                 .WillOnce(Return(rpc::Result{rpc::ReturnType{boost::json::object{{"some key", "some value"}}}}));
-            EXPECT_CALL(*rpcEngine_, notifyComplete(testing::_, testing::_));
+            EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
             fn(yield);
             return true;
@@ -423,12 +423,12 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_OutdatedWarning)
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
-        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics(testing::_, testing::_));
+        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics);
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
                 .WillOnce(Return(rpc::Result{rpc::ReturnType{boost::json::object{{"some key", "some value"}}}}));
-            EXPECT_CALL(*rpcEngine_, notifyComplete(testing::_, testing::_));
+            EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(61));
             fn(yield);
             return true;
@@ -471,7 +471,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_Forwarded)
                         {"result", boost::json::object{{"some key", "some value"}}}, {"forwarded", true}
                     }}}
                 ));
-            EXPECT_CALL(*rpcEngine_, notifyComplete(testing::_, testing::_));
+            EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
             fn(yield);
             return true;
@@ -501,7 +501,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_HasError)
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
-        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics(testing::_, testing::_));
+        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics);
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
@@ -510,7 +510,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_HasError)
                         rpc::ReturnType{boost::json::object{{"some key", "some value"}, {"error", "some error"}}}
                     }
                 ));
-            EXPECT_CALL(*rpcEngine_, notifyComplete(testing::_, testing::_));
+            EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
             fn(yield);
             return true;
@@ -556,12 +556,12 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest)
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
-        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics(testing::_, testing::_));
+        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics);
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
                 .WillOnce(Return(rpc::Result{rpc::ReturnType{boost::json::object{{"some key", "some value"}}}}));
-            EXPECT_CALL(*rpcEngine_, notifyComplete(testing::_, testing::_));
+            EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
             fn(yield);
             return true;
@@ -592,7 +592,7 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest_HasError)
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
-        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics(testing::_, testing::_));
+        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics);
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
@@ -601,7 +601,7 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest_HasError)
                         rpc::ReturnType{boost::json::object{{"some key", "some value"}, {"error", "some error"}}}
                     }
                 ));
-            EXPECT_CALL(*rpcEngine_, notifyComplete(testing::_, testing::_));
+            EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
             fn(yield);
             return true;
