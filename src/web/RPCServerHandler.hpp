@@ -224,12 +224,12 @@ private:
                 LOG(perfLog_.debug()) << context->tag() << "Encountered error: " << responseStr;
                 LOG(log_.debug()) << context->tag() << "Encountered error: " << responseStr;
             } else {
-                // This can still technically be an error. Clio counts forwarded requests as successful.
-                rpcEngine_->notifyComplete(*context, us);
-
                 auto& json = result.response.value();
                 auto const isForwarded =
                     json.contains("forwarded") && json.at("forwarded").is_bool() && json.at("forwarded").as_bool();
+
+                // This can still technically be an error. Clio counts forwarded requests as successful.
+                rpcEngine_->notifyComplete(*context, us, isForwarded);
 
                 if (isForwarded)
                     json.erase("forwarded");

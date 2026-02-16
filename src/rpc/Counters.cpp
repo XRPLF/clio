@@ -27,10 +27,10 @@
 
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <fmt/format.h>
 #include <xrpl/protocol/jss.h>
 
-#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <functional>
@@ -167,9 +167,9 @@ Counters::Counters(Reportable const& wq)
       )
     , ledgerAgeLedgersHistogram_(
           PrometheusService::histogramInt(
-              "rpc_ledger_age_ledgers",
+              "rpc_requested_ledger_age_histogram",
               Labels{},
-              {0, 10, 100, 1000, 10000, 100000, 1000000},
+              {0, 10, 100, 1'000, 10'000, 100'000, 1'000'000, 10'000'000, 100'000'000},
               "Age of requested ledgers in ledger count"
           )
       )
@@ -255,55 +255,23 @@ Counters::onInternalError()
 void
 Counters::recordLedgerRequest(boost::json::object const& params, std::uint32_t currentLedgerSequence)
 {
-    // Determine the requested ledger type
-    std::optional<std::uint32_t> requestedLedgerSeq;
-    bool isCurrent = false;
-    bool isValidated = false;
-
-    if (params.contains("ledger_index")) {
-        auto const& indexValue = params.at("ledger_index");
-        if (indexValue.is_string()) {
-            auto const indexStr = boost::json::value_to<std::string>(indexValue);
-            if (indexStr == "current") {
-                isCurrent = true;
-            } else if (indexStr == "validated") {
-                isValidated = true;
-            } else {
-                // Try to parse as number string
-                auto const parsed = util::getLedgerIndex(indexValue);
-                if (parsed.has_value()) {
-                    requestedLedgerSeq = *parsed;
-                }
-            }
-        } else {
-            // Numeric ledger index
-            auto const parsed = util::getLedgerIndex(indexValue);
-            if (parsed.has_value()) {
-                requestedLedgerSeq = *parsed;
-            }
-        }
-    } else if (params.contains("ledger_hash")) {
-        // For hash-based requests, we can't determine age without additional lookup
-        // Count it as "specific"
-        ++ledgerSpecificCounter_.get();
-        return;
-    } else {
-        // No ledger specified means validated ledger
-        isValidated = true;
-    }
-
-    // Update counters
-    if (isCurrent) {
-        ++ledgerCurrentCounter_.get();
-    } else if (isValidated) {
+    if (not params.contains("ledger_index")) {
         ++ledgerValidatedCounter_.get();
-    } else if (requestedLedgerSeq.has_value()) {
+        return;
+    }
+    auto const& indexValue = params.at("ledger_index");
+    if (auto const parsed = util::getLedgerIndex(indexValue); parsed.has_value()) {
         ++ledgerSpecificCounter_.get();
-
-        // Calculate age and update histogram
-        if (*requestedLedgerSeq <= currentLedgerSequence) {
-            auto const ageLedgers = static_cast<std::int64_t>(currentLedgerSequence - *requestedLedgerSeq);
+        if (*parsed <= currentLedgerSequence) {
+            auto const ageLedgers = static_cast<std::int64_t>(currentLedgerSequence - *parsed);
             ledgerAgeLedgersHistogram_.get().observe(ageLedgers);
+        }
+    } else if (indexValue.is_string()) {
+        auto const indexStr = boost::json::value_to<std::string>(indexValue);
+        if (indexStr == "current") {
+            ++ledgerCurrentCounter_.get();
+        } else if (indexStr == "validated") {
+            ++ledgerValidatedCounter_.get();
         }
     }
 }

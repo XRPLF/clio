@@ -223,17 +223,16 @@ TEST_F(RPCCountersMockPrometheusTests, recordLedgerRequestValidatedDefault)
     EXPECT_CALL(validatedCounterMock, add(1));
 
     boost::json::object params;
-    // No ledger_index means validated ledger
     counters.recordLedgerRequest(params, 1000);
 }
 
 TEST_F(RPCCountersMockPrometheusTests, recordLedgerRequestSpecificNumber)
 {
     auto& specificCounterMock = makeMock<CounterInt>("rpc_ledger_requests_total", "{ledger_type=\"specific\"}");
-    auto& ageLedgersHistogramMock = makeMock<util::prometheus::HistogramInt>("rpc_ledger_age_ledgers", "");
+    auto& ageLedgersHistogramMock = makeMock<util::prometheus::HistogramInt>("rpc_requested_ledger_age_histogram", "");
 
     EXPECT_CALL(specificCounterMock, add(1));
-    EXPECT_CALL(ageLedgersHistogramMock, observe(100));  // 1000 - 900 = 100 ledgers
+    EXPECT_CALL(ageLedgersHistogramMock, observe(100));  // age is 1000 - 900 = 100
 
     boost::json::object params;
     params["ledger_index"] = 900;
@@ -243,7 +242,7 @@ TEST_F(RPCCountersMockPrometheusTests, recordLedgerRequestSpecificNumber)
 TEST_F(RPCCountersMockPrometheusTests, recordLedgerRequestSpecificStringNumber)
 {
     auto& specificCounterMock = makeMock<CounterInt>("rpc_ledger_requests_total", "{ledger_type=\"specific\"}");
-    auto& ageLedgersHistogramMock = makeMock<util::prometheus::HistogramInt>("rpc_ledger_age_ledgers", "");
+    auto& ageLedgersHistogramMock = makeMock<util::prometheus::HistogramInt>("rpc_requested_ledger_age_histogram", "");
 
     EXPECT_CALL(specificCounterMock, add(1));
     EXPECT_CALL(ageLedgersHistogramMock, observe(50));  // 1000 - 950 = 50 ledgers
@@ -253,21 +252,10 @@ TEST_F(RPCCountersMockPrometheusTests, recordLedgerRequestSpecificStringNumber)
     counters.recordLedgerRequest(params, 1000);
 }
 
-TEST_F(RPCCountersMockPrometheusTests, recordLedgerRequestHash)
-{
-    auto& specificCounterMock = makeMock<CounterInt>("rpc_ledger_requests_total", "{ledger_type=\"specific\"}");
-    EXPECT_CALL(specificCounterMock, add(1));
-    // Histograms should not be called for hash-based requests
-
-    boost::json::object params;
-    params["ledger_hash"] = "ABCDEF1234567890";
-    counters.recordLedgerRequest(params, 1000);
-}
-
 TEST_F(RPCCountersMockPrometheusTests, recordLedgerRequestZeroAge)
 {
     auto& specificCounterMock = makeMock<CounterInt>("rpc_ledger_requests_total", "{ledger_type=\"specific\"}");
-    auto& ageLedgersHistogramMock = makeMock<util::prometheus::HistogramInt>("rpc_ledger_age_ledgers", "");
+    auto& ageLedgersHistogramMock = makeMock<util::prometheus::HistogramInt>("rpc_requested_ledger_age_histogram", "");
 
     EXPECT_CALL(specificCounterMock, add(1));
     EXPECT_CALL(ageLedgersHistogramMock, observe(0));  // 1000 - 1000 = 0 ledgers

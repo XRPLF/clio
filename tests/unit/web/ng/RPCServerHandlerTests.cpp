@@ -463,7 +463,6 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_Forwarded)
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
-        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics(testing::_, testing::_));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)

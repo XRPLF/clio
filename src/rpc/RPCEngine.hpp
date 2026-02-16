@@ -27,7 +27,6 @@
 #include "rpc/common/HandlerProvider.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/impl/ForwardingProxy.hpp"
-#include "util/OverloadSet.hpp"
 #include "util/ResponseExpirationCache.hpp"
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
@@ -41,6 +40,7 @@
 #include <xrpl/protocol/ErrorCodes.h>
 
 #include <chrono>
+#include <cstdint>
 #include <exception>
 #include <functional>
 #include <memory>
@@ -224,29 +224,21 @@ public:
     }
 
     /**
-     * @brief Notify the system that specified method was executed.
-     *
-     * @param method
-     * @param duration The time it took to execute the method specified in microseconds
-     */
-    void
-    notifyComplete(std::string const& method, std::chrono::microseconds const& duration)
-    {
-        if (validHandler(method))
-            counters_.get().rpcComplete(method, duration);
-    }
-
-    /**
      * @brief Notify the system that specified method was executed and record ledger metrics.
      *
-     * @param ctx The context containing method, params, and ledger information
+     * @param context The web context containing method, params, and ledger information
      * @param duration The time it took to execute the method specified in microseconds
+     * @param isForwarded Whether the request was forwarded to rippled or not
      */
     void
-    notifyComplete(web::Context const& ctx, std::chrono::microseconds const& duration)
+    notifyComplete(web::Context const& context, std::chrono::microseconds const& duration, bool isForwarded)
     {
-        notifyComplete(ctx.method, duration);
-        counters_.get().recordLedgerRequest(ctx.params, ctx.range.maxSequence);
+        if (validHandler(context.method)) {
+            counters_.get().rpcComplete(context.method, duration);
+            if (not isForwarded) {
+                counters_.get().recordLedgerRequest(context.params, context.range.maxSequence);
+            }
+        }
     }
 
     /**

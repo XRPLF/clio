@@ -50,10 +50,11 @@ struct MockAsyncRPCEngine {
 
     MOCK_METHOD(void, notifyComplete, (std::string const&, std::chrono::microseconds const&), ());
     void
-    notifyComplete(web::Context const& ctx, std::chrono::microseconds const& duration)
+    notifyComplete(web::Context const& ctx, std::chrono::microseconds const& duration, bool isForwarded)
     {
         notifyComplete(ctx.method, duration);
-        recordLedgerMetrics(ctx.params, ctx.range.maxSequence);
+        if (not isForwarded)
+            recordLedgerMetrics(ctx.params, ctx.range.maxSequence);
     }
     MOCK_METHOD(void, notifyFailed, (std::string const&), ());
     MOCK_METHOD(void, notifyErrored, (std::string const&), ());
@@ -72,10 +73,11 @@ struct MockRPCEngine {
     MOCK_METHOD(bool, post, (std::function<void(boost::asio::yield_context)>&&, std::string const&), ());
     MOCK_METHOD(void, notifyComplete, (std::string const&, std::chrono::microseconds const&), ());
     void
-    notifyComplete(web::Context const& ctx, std::chrono::microseconds const& duration)
+    notifyComplete(web::Context const& ctx, std::chrono::microseconds const& duration, bool isForwarded)
     {
         notifyComplete(ctx.method, duration);
-        recordLedgerMetrics(ctx.params, ctx.range.maxSequence);
+        if (not isForwarded)
+            recordLedgerMetrics(ctx.params, ctx.range.maxSequence);
     }
     MOCK_METHOD(void, notifyErrored, (std::string const&), ());
     MOCK_METHOD(void, notifyForwarded, (std::string const&), ());
