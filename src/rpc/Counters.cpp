@@ -144,27 +144,6 @@ Counters::Counters(Reportable const& wq)
               "Total number of internal errors"
           )
       )
-    , ledgerCurrentCounter_(
-          PrometheusService::counterInt(
-              "rpc_ledger_requests_total",
-              Labels({Label{"ledger_type", "current"}}),
-              "Total number of RPC requests for current ledger"
-          )
-      )
-    , ledgerValidatedCounter_(
-          PrometheusService::counterInt(
-              "rpc_ledger_requests_total",
-              Labels({Label{"ledger_type", "validated"}}),
-              "Total number of RPC requests for validated ledger"
-          )
-      )
-    , ledgerSpecificCounter_(
-          PrometheusService::counterInt(
-              "rpc_ledger_requests_total",
-              Labels({Label{"ledger_type", "specific"}}),
-              "Total number of RPC requests for specific ledger sequence"
-          )
-      )
     , ledgerAgeLedgersHistogram_(
           PrometheusService::histogramInt(
               "rpc_requested_ledger_age_histogram",
@@ -256,22 +235,19 @@ void
 Counters::recordLedgerRequest(boost::json::object const& params, std::uint32_t currentLedgerSequence)
 {
     if (not params.contains("ledger_index")) {
-        ++ledgerValidatedCounter_.get();
+        ledgerAgeLedgersHistogram_.get().observe(0);
         return;
     }
     auto const& indexValue = params.at("ledger_index");
     if (auto const parsed = util::getLedgerIndex(indexValue); parsed.has_value()) {
-        ++ledgerSpecificCounter_.get();
         if (*parsed <= currentLedgerSequence) {
             auto const ageLedgers = static_cast<std::int64_t>(currentLedgerSequence - *parsed);
             ledgerAgeLedgersHistogram_.get().observe(ageLedgers);
         }
     } else if (indexValue.is_string()) {
         auto const indexStr = boost::json::value_to<std::string>(indexValue);
-        if (indexStr == "current") {
-            ++ledgerCurrentCounter_.get();
-        } else if (indexStr == "validated") {
-            ++ledgerValidatedCounter_.get();
+        if (indexStr == "validated") {
+            ledgerAgeLedgersHistogram_.get().observe(0);
         }
     }
 }

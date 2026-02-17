@@ -68,10 +68,6 @@ class Counters {
     CounterType unknownCommandCounter_;
     CounterType internalErrorCounter_;
 
-    // ledger request tracking metrics
-    CounterType ledgerCurrentCounter_;
-    CounterType ledgerValidatedCounter_;
-    CounterType ledgerSpecificCounter_;
     std::reference_wrapper<util::prometheus::HistogramInt> ledgerAgeLedgersHistogram_;
 
     std::reference_wrapper<Reportable const> workQueue_;
