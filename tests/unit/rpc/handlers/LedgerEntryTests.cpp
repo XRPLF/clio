@@ -2174,6 +2174,154 @@ generateTestValuesForParametersTest()
             .expectedError = "malformedRequest",
             .expectedErrorMessage = "Malformed request.",
         },
+        // LoanBroker tests
+        ParamTestCaseBundle{
+            .testName = "LoanBroker_InvalidType",
+            .testJson = R"JSON({"loan_broker": 0})JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "LoanBroker_NotHex",
+            .testJson =
+                R"JSON({
+                    "loan_broker": "invalid_hex"
+                })JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "LoanBroker_MissingOwner",
+            .testJson =
+                R"JSON({
+                    "loan_broker": { "seq": 1 }
+                })JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "LoanBroker_MissingSeq",
+            .testJson =
+                R"JSON({
+                    "loan_broker": { "owner": "abcd" }
+                })JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "LoanBroker_SeqNotInteger",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "loan_broker": {{
+                       "owner": "{}",
+                       "seq": "notAnInteger"
+                    }}
+                }})JSON",
+                kACCOUNT
+            ),
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "LoanBroker_InvalidOwnerFormat",
+            .testJson =
+                R"JSON({
+                    "loan_broker": {
+                        "owner": "abcd",
+                        "seq": 10
+                    }
+                })JSON",
+            .expectedError = "malformedOwner",
+            .expectedErrorMessage = "Malformed owner.",
+        },
+        ParamTestCaseBundle{
+            .testName = "LoanBroker_NegativeSeq",
+            .testJson =
+                R"JSON({
+                    "loan_broker": {
+                        "owner": "abcd",
+                        "seq": -200
+                    }
+                })JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        // Loan tests
+        ParamTestCaseBundle{
+            .testName = "Loan_InvalidType",
+            .testJson = R"JSON({"loan": 0})JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "Loan_NotHex",
+            .testJson =
+                R"JSON({
+                    "loan": "invalid_hex"
+                })JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "Loan_MissingLoanBrokerId",
+            .testJson =
+                R"JSON({
+                    "loan": { "loan_seq": 1 }
+                })JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "Loan_MissingLoanSeq",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "loan": {{ "loan_broker_id": "{}" }}
+                }})JSON",
+                kINDEX1
+            ),
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "Loan_LoanSeqNotInteger",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "loan": {{
+                       "loan_broker_id": "{}",
+                       "loan_seq": "notAnInteger"
+                    }}
+                }})JSON",
+                kINDEX1
+            ),
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "Loan_InvalidLoanBrokerIdFormat",
+            .testJson =
+                R"JSON({
+                    "loan": {
+                        "loan_broker_id": "invalid_hex",
+                        "loan_seq": 10
+                    }
+                })JSON",
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
+        ParamTestCaseBundle{
+            .testName = "Loan_NegativeLoanSeq",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "loan": {{
+                        "loan_broker_id": "{}",
+                        "loan_seq": -200
+                    }}
+                }})JSON",
+                kINDEX1
+            ),
+            .expectedError = "malformedRequest",
+            .expectedErrorMessage = "Malformed request.",
+        },
         ParamTestCaseBundle{
             .testName = "Delegate_InvalidType",
             .testJson = R"JSON({"delegate": 123})JSON",
@@ -2377,7 +2525,6 @@ TEST_P(IndexTest, InvalidIndexNotString)
 
 TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
 {
-    // return valid ledgerHeader
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
 
@@ -3107,6 +3254,64 @@ generateTestValuesForNormalPathTest()
             )
         },
         NormalPathTestBundle{
+            .testName = "CreateLoanBrokerObjectByHexString",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "binary": true,
+                    "loan_broker": "{}"
+                }})JSON",
+                kINDEX1
+            ),
+            .expectedIndex = ripple::uint256(kINDEX1),
+            .mockedEntity =
+                createLoanBroker(kACCOUNT, kACCOUNT, kRANGE_MAX, ripple::uint256{kINDEX1}, 1, ripple::uint256{0}, 0)
+        },
+        NormalPathTestBundle{
+            .testName = "CreateLoanBrokerObjectByOwnerAndSeq",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "binary": true,
+                    "loan_broker": {{
+                        "owner": "{}",
+                        "seq": {}
+                    }}
+                }})JSON",
+                kACCOUNT,
+                kRANGE_MAX
+            ),
+            .expectedIndex =
+                ripple::keylet::loanbroker(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX).key,
+            .mockedEntity =
+                createLoanBroker(kACCOUNT, kACCOUNT, kRANGE_MAX, ripple::uint256{kINDEX1}, 1, ripple::uint256{0}, 0)
+        },
+        NormalPathTestBundle{
+            .testName = "CreateLoanObjectByHexString",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "binary": true,
+                    "loan": "{}"
+                }})JSON",
+                kINDEX1
+            ),
+            .expectedIndex = ripple::uint256(kINDEX1),
+            .mockedEntity = createLoan(kACCOUNT, ripple::uint256{kINDEX1}, 1, 1000, 86400, 100, ripple::uint256{0}, 0)
+        },
+        NormalPathTestBundle{
+            .testName = "CreateLoanObjectByLoanBrokerIdAndSeq",
+            .testJson = fmt::format(
+                R"JSON({{
+                    "binary": true,
+                    "loan": {{
+                        "loan_broker_id": "{}",
+                        "loan_seq": 1
+                    }}
+                }})JSON",
+                kINDEX1
+            ),
+            .expectedIndex = ripple::keylet::loan(ripple::uint256{kINDEX1}, 1).key,
+            .mockedEntity = createLoan(kACCOUNT, ripple::uint256{kINDEX1}, 1, 1000, 86400, 100, ripple::uint256{0}, 0)
+        },
+        NormalPathTestBundle{
             .testName = "DelegateViaStringIndex",
             .testJson = fmt::format(
                 R"JSON({{
@@ -3151,7 +3356,6 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
 {
     auto const testBundle = GetParam();
 
-    // return valid ledgerHeader
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
 
@@ -3199,7 +3403,6 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
         }
     })JSON";
 
-    // return valid ledgerHeader
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
 
@@ -3226,7 +3429,6 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
 
 TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
 {
-    // return valid ledgerHeader
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
 
@@ -3277,9 +3479,104 @@ TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
     });
 }
 
+TEST_F(RPCLedgerEntryTest, LoanBroker_BinaryFalse)
+{
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
+
+    boost::json::object const entry;
+
+    auto const loanBroker =
+        createLoanBroker(kACCOUNT, kACCOUNT, kRANGE_MAX, ripple::uint256{kINDEX1}, 1, ripple::uint256{1}, 0);
+
+    auto const loanBrokerKey =
+        ripple::keylet::loanbroker(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX).key;
+
+    ripple::STLedgerEntry const sle{
+        ripple::SerialIter{loanBroker.getSerializer().peekData().data(), loanBroker.getSerializer().peekData().size()},
+        loanBrokerKey
+    };
+
+    EXPECT_CALL(*backend_, doFetchLedgerObject(loanBrokerKey, testing::_, testing::_))
+        .WillOnce(Return(loanBroker.getSerializer().peekData()));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
+                    "binary": false,
+                    "loan_broker": {{
+                        "owner": "{}",
+                        "seq": {}
+                    }}
+                }})JSON",
+                kACCOUNT,
+                kRANGE_MAX
+            )
+        );
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+
+        EXPECT_EQ(output.result->at("node").at("Owner").as_string(), kACCOUNT);
+        EXPECT_EQ(output.result->at("node").at("Sequence").as_int64(), kRANGE_MAX);
+        EXPECT_EQ(output.result->at("node").at("LoanSequence").as_int64(), 1);
+    });
+}
+
+TEST_F(RPCLedgerEntryTest, Loan_BinaryFalse)
+{
+    static constexpr auto kLOAN_SEQ = 1;
+    static constexpr auto kSTART_DATE = 1000;
+    static constexpr auto kPAYMENT_INTERVAL = 86400;
+    static constexpr auto kINTEREST_RATE = 100;
+
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
+
+    boost::json::object const entry;
+
+    auto const loan = createLoan(
+        kACCOUNT,
+        ripple::uint256{kINDEX1},
+        kLOAN_SEQ,
+        kSTART_DATE,
+        kPAYMENT_INTERVAL,
+        kINTEREST_RATE,
+        ripple::uint256{1},
+        0
+    );
+
+    EXPECT_CALL(*backend_, doFetchLedgerObject(testing::_, testing::_, testing::_))
+        .WillOnce(Return(loan.getSerializer().peekData()));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
+        auto const req = json::parse(
+            fmt::format(
+                R"JSON({{
+                    "binary": false,
+                    "loan": {{
+                        "loan_broker_id": "{}",
+                        "loan_seq": {}
+                    }}
+                }})JSON",
+                kINDEX1,
+                kLOAN_SEQ
+            )
+        );
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+
+        EXPECT_EQ(output.result->at("node").at("Borrower").as_string(), kACCOUNT);
+        EXPECT_EQ(output.result->at("node").at("LoanSequence").as_int64(), kLOAN_SEQ);
+        EXPECT_EQ(output.result->at("node").at("StartDate").as_int64(), kSTART_DATE);
+        EXPECT_EQ(output.result->at("node").at("PaymentInterval").as_int64(), kPAYMENT_INTERVAL);
+    });
+}
+
 TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
 {
-    // return valid ledgerHeader
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
 
@@ -3768,7 +4065,6 @@ TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
 
     auto const mptId = ripple::makeMptID(2, getAccountIdWithString(kACCOUNT));
 
-    // return valid ledgerHeader
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
 

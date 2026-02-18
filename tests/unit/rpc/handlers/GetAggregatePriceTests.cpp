@@ -741,7 +741,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesOdd)
                 "entire_set": {{
                     "mean": "110",
                     "size": 3,
-                    "standard_deviation": "164.6207763315433"
+                    "standard_deviation": "164.6207763315432795"
                 }},
                 "median": "20",
                 "time": 4321,
@@ -817,7 +817,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesEven)
                 "entire_set": {{
                     "mean": "92.5",
                     "size": 4,
-                    "standard_deviation": "138.8944443333378"
+                    "standard_deviation": "138.8944443333377776"
                 }},
                 "median": "30",
                 "time": 4321,
@@ -895,12 +895,12 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
                 "entire_set": {{
                     "mean": "92.5",
                     "size": 4,
-                    "standard_deviation": "138.8944443333378"
+                    "standard_deviation": "138.8944443333377776"
                 }},
                 "trimmed_set": {{
                     "mean": "30",
                     "size": 2,
-                    "standard_deviation": "14.14213562373095"
+                    "standard_deviation": "14.14213562373095049"
                 }},
                 "median": "30",
                 "time": 4321,
@@ -1134,7 +1134,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
                 "entire_set": {{
                     "mean": "15",
                     "size": 2,
-                    "standard_deviation": "7.071067811865475"
+                    "standard_deviation": "7.071067811865475245"
                 }},
                 "median": "15",
                 "time": {},
@@ -1216,7 +1216,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
                 "entire_set": {{
                     "mean": "92.5",
                     "size": 4,
-                    "standard_deviation": "138.8944443333378"
+                    "standard_deviation": "138.8944443333377776"
                 }},
                 "median": "30",
                 "time": 1711461384,
@@ -1297,7 +1297,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIncludeOldest)
                 "entire_set": {{
                     "mean": "92.5",
                     "size": 4,
-                    "standard_deviation": "138.8944443333378"
+                    "standard_deviation": "138.8944443333377776"
                 }},
                 "median": "30",
                 "time": 1711461384,

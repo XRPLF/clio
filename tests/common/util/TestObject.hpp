@@ -581,3 +581,26 @@ createVault(
     ripple::uint256 previousTxId,
     uint32_t previousTxSeq
 );
+
+[[nodiscard]] ripple::STObject
+createLoanBroker(
+    std::string_view owner,
+    std::string_view account,
+    ripple::LedgerIndex seq,
+    ripple::uint256 vaultID,
+    uint32_t loanSequence,
+    ripple::uint256 previousTxId,
+    uint32_t previousTxSeq
+);
+
+[[nodiscard]] ripple::STObject
+createLoan(
+    std::string_view borrower,
+    ripple::uint256 loanBrokerID,
+    uint32_t loanSequence,
+    uint32_t startDate,
+    uint32_t paymentInterval,
+    int64_t periodicPaymentValue,
+    ripple::uint256 previousTxId,
+    uint32_t previousTxSeq
+);

@@ -34,6 +34,7 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <xrpl/basics/strHex.h>
+#include <xrpl/ledger/View.h>
 #include <xrpl/protocol/ErrorCodes.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
@@ -172,6 +173,21 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
         acctFlags[lsf.first] = output.accountData.isFlag(lsf.second);
 
     jv.as_object()[JS(account_flags)] = std::move(acctFlags);
+
+    auto const pseudoFields = ripple::getPseudoAccountFields();
+    for (auto const& pseudoField : pseudoFields) {
+        if (output.accountData.isFieldPresent(*pseudoField)) {
+            std::string name = pseudoField->fieldName;
+            if (name.ends_with("ID")) {
+                // Remove the ID suffix from the field name.
+                name = name.substr(0, name.size() - 2);
+                ASSERT(!name.empty(), "Field name is empty after stripping 'ID'");
+            }
+            // ValidPseudoAccounts invariant guarantees that only one field can be set
+            jv.as_object()[JS(pseudo_account)].as_object()[JS(type)] = name;
+            break;
+        }
+    }
 
     if (output.signerLists) {
         auto signers = boost::json::array();

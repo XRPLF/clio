@@ -192,6 +192,15 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
             ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.vault->at(JS(owner))));
         auto const seq = util::integralValueAs<uint32_t>(input.vault->at(JS(seq)));
         key = ripple::keylet::vault(*account, seq).key;
+    } else if (input.loanBroker) {
+        auto const account =
+            ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.loanBroker->at(JS(owner))));
+        auto const seq = util::integralValueAs<uint32_t>(input.loanBroker->at(JS(seq)));
+        key = ripple::keylet::loanbroker(*account, seq).key;
+    } else if (input.loan) {
+        auto const id = ripple::uint256{boost::json::value_to<std::string>(input.loan->at(JS(loan_broker_id))).data()};
+        auto const seq = util::integralValueAs<uint32_t>(input.loan->at(JS(loan_seq)));
+        key = ripple::keylet::loan(id, seq).key;
     } else if (input.delegate) {
         auto const account =
             ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.delegate->at(JS(account))));
@@ -333,13 +342,15 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(mptoken), ripple::ltMPTOKEN},
         {JS(permissioned_domain), ripple::ltPERMISSIONED_DOMAIN},
         {JS(vault), ripple::ltVAULT},
+        {JS(loan_broker), ripple::ltLOAN_BROKER},
+        {JS(loan), ripple::ltLOAN},
         {JS(delegate), ripple::ltDELEGATE},
         {JS(amendments), ripple::ltAMENDMENTS},
         {JS(fee), ripple::ltFEE_SETTINGS},
         {JS(hashes), ripple::ltLEDGER_HASHES},
         {JS(nft_offer), ripple::ltNFTOKEN_OFFER},
         {JS(nunl), ripple::ltNEGATIVE_UNL},
-        {JS(signer_list), ripple::ltSIGNER_LIST}
+        {JS(signer_list), ripple::ltSIGNER_LIST},
     };
 
     auto const parseBridgeFromJson = [](boost::json::value const& bridgeJson) {
@@ -430,6 +441,10 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         input.permissionedDomain = jv.at(JS(permissioned_domain)).as_object();
     } else if (jsonObject.contains(JS(vault))) {
         input.vault = jv.at(JS(vault)).as_object();
+    } else if (jsonObject.contains(JS(loan_broker))) {
+        input.loanBroker = jv.at(JS(loan_broker)).as_object();
+    } else if (jsonObject.contains(JS(loan))) {
+        input.loan = jv.at(JS(loan)).as_object();
     } else if (jsonObject.contains(JS(delegate))) {
         input.delegate = jv.at(JS(delegate)).as_object();
     }

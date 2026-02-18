@@ -1800,3 +1800,67 @@ createVault(
 
     return vault;
 }
+
+ripple::STObject
+createLoanBroker(
+    std::string_view owner,
+    std::string_view account,
+    ripple::LedgerIndex seq,
+    ripple::uint256 vaultID,
+    uint32_t loanSequence,
+    ripple::uint256 previousTxId,
+    uint32_t previousTxSeq
+)
+{
+    auto loanBroker = ripple::STObject(ripple::sfLedgerEntry);
+    loanBroker.setAccountID(ripple::sfOwner, getAccountIdWithString(owner));
+    loanBroker.setAccountID(ripple::sfAccount, getAccountIdWithString(account));
+    loanBroker.setFieldU32(ripple::sfSequence, seq);
+    loanBroker.setFieldU64(ripple::sfOwnerNode, 0);
+    loanBroker.setFieldU64(ripple::sfVaultNode, 0);
+    loanBroker.setFieldH256(ripple::sfVaultID, vaultID);
+    loanBroker.setFieldH256(ripple::sfPreviousTxnID, previousTxId);
+    loanBroker.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxSeq);
+    loanBroker.setFieldU32(ripple::sfLoanSequence, loanSequence);
+
+    // Optional/default fields - not setting them as they will use default values
+
+    loanBroker.setFieldU32(ripple::sfFlags, 0);
+    loanBroker.setFieldU16(ripple::sfLedgerEntryType, ripple::ltLOAN_BROKER);
+
+    return loanBroker;
+}
+
+ripple::STObject
+createLoan(
+    std::string_view borrower,
+    ripple::uint256 loanBrokerID,
+    uint32_t loanSequence,
+    uint32_t startDate,
+    uint32_t paymentInterval,
+    int64_t periodicPaymentValue,
+    ripple::uint256 previousTxId,
+    uint32_t previousTxSeq
+)
+{
+    auto loan = ripple::STObject(ripple::sfLedgerEntry);
+    loan.setAccountID(ripple::sfBorrower, getAccountIdWithString(borrower));
+    loan.setFieldH256(ripple::sfLoanBrokerID, loanBrokerID);
+    loan.setFieldU32(ripple::sfLoanSequence, loanSequence);
+    loan.setFieldU64(ripple::sfOwnerNode, 0);
+    loan.setFieldU64(ripple::sfLoanBrokerNode, 0);
+    loan.setFieldH256(ripple::sfPreviousTxnID, previousTxId);
+    loan.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxSeq);
+
+    loan.setFieldU32(ripple::sfStartDate, startDate);
+    loan.setFieldU32(ripple::sfPaymentInterval, paymentInterval);
+
+    loan.setFieldNumber(ripple::sfPeriodicPayment, ripple::STNumber{ripple::sfPeriodicPayment, periodicPaymentValue});
+
+    // Optional/default fields - not setting them as they will use default values
+
+    loan.setFieldU32(ripple::sfFlags, 0);
+    loan.setFieldU16(ripple::sfLedgerEntryType, ripple::ltLOAN);
+
+    return loan;
+}
