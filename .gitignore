@@ -10,3 +10,5 @@
 .sanitizer-report
 CMakeUserPresets.json
 config.json
+CLAUDE.md
+.claude/**

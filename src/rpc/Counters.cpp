@@ -152,6 +152,13 @@ Counters::Counters(Reportable const& wq)
               "Age of requested ledgers in ledger count"
           )
       )
+    , ledgerHashRequestsCounter_(
+          PrometheusService::counterInt(
+              "rpc_ledger_hash_requests_total_number",
+              Labels{},
+              "Total number of successful requests containing ledger_hash field"
+          )
+      )
     , workQueue_(std::cref(wq))
     , startupTime_{std::chrono::system_clock::now()}
 {
@@ -234,7 +241,12 @@ Counters::onInternalError()
 void
 Counters::recordLedgerRequest(boost::json::object const& params, std::uint32_t currentLedgerSequence)
 {
-    if (not params.contains("ledger_index")) {
+    if (params.contains(JS(ledger_hash))) {
+        ++ledgerHashRequestsCounter_.get();
+        return;
+    }
+
+    if (not params.contains(JS(ledger_index))) {
         ledgerAgeLedgersHistogram_.get().observe(0);
         return;
     }

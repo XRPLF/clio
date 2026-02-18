@@ -69,6 +69,7 @@ class Counters {
     CounterType internalErrorCounter_;
 
     std::reference_wrapper<util::prometheus::HistogramInt> ledgerAgeLedgersHistogram_;
+    CounterType ledgerHashRequestsCounter_;
 
     std::reference_wrapper<Reportable const> workQueue_;
     std::chrono::time_point<std::chrono::system_clock> startupTime_;

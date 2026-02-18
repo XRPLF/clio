@@ -259,3 +259,28 @@ TEST_F(RPCCountersMockPrometheusRecotdLedgerRequestTest, zeroAgeLedger)
     params["ledger_index"] = 1000;  // Same as current
     counters.recordLedgerRequest(params, 1000);
 }
+
+TEST_F(RPCCountersMockPrometheusRecotdLedgerRequestTest, ledgerHashRequest)
+{
+    auto& ledgerHashCounterMock = makeMock<CounterInt>("rpc_ledger_hash_requests_total_number", "");
+
+    EXPECT_CALL(ledgerHashCounterMock, add(1));
+
+    boost::json::object params;
+    params["ledger_hash"] = "ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789";
+    counters.recordLedgerRequest(params, 1000);
+}
+
+TEST_F(RPCCountersMockPrometheusRecotdLedgerRequestTest, ledgerHashWithIndexIgnoresIndex)
+{
+    auto& ledgerHashCounterMock = makeMock<CounterInt>("rpc_ledger_hash_requests_total_number", "");
+
+    // When both ledger_hash and ledger_index are present, only ledger_hash counter should be incremented
+    EXPECT_CALL(ledgerHashCounterMock, add(1));
+    // No histogram call should be made
+
+    boost::json::object params;
+    params["ledger_hash"] = "ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789";
+    params["ledger_index"] = 900;  // This should be ignored
+    counters.recordLedgerRequest(params, 1000);
+}
