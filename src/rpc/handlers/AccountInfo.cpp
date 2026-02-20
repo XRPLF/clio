@@ -177,7 +177,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
     auto const pseudoFields = ripple::getPseudoAccountFields();
     for (auto const& pseudoField : pseudoFields) {
         if (output.accountData.isFieldPresent(*pseudoField)) {
-            std::string name = pseudoField->fieldName;
+            std::string_view name = pseudoField->fieldName;
             if (name.ends_with("ID")) {
                 // Remove the ID suffix from the field name.
                 name = name.substr(0, name.size() - 2);
