@@ -32,6 +32,9 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Set up Docker
+      uses: docker/setup-docker-action@e43656e248c0bd0647d3f5c195d116aacf6fcaf4 # v4.7.0
+
     - name: Login to DockerHub
       if: ${{ inputs.push_image == 'true' && inputs.dockerhub_repo != '' }}
       uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
