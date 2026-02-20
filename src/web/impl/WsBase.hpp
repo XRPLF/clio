@@ -61,18 +61,19 @@
 namespace web::impl {
 
 /**
- * @brief Web socket implementation. This class is the base class of the web socket session, it will handle the read and
- * write operations.
+ * @brief Web socket implementation. This class is the base class of the web socket session, it will
+ * handle the read and write operations.
  *
  * The write operation is via a queue, each write operation of this session will be sent in order.
- * The write operation also supports shared_ptr of string, so the caller can keep the string alive until it is sent.
- * It is useful when we have multiple sessions sending the same content.
+ * The write operation also supports shared_ptr of string, so the caller can keep the string alive
+ * until it is sent. It is useful when we have multiple sessions sending the same content.
  *
  * @tparam Derived The derived class
  * @tparam HandlerType The handler type, will be called when a request is received.
  */
 template <template <typename> typename Derived, SomeServerHandler HandlerType>
-class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase<Derived, HandlerType>> {
+class WsBase : public ConnectionBase,
+               public std::enable_shared_from_this<WsBase<Derived, HandlerType>> {
     using std::enable_shared_from_this<WsBase<Derived, HandlerType>>::shared_from_this;
 
     boost::beast::flat_buffer buffer_;
@@ -93,7 +94,8 @@ protected:
     {
         // Don't log if the WebSocket stream was gracefully closed at both endpoints
         if (ec != boost::beast::websocket::error::closed)
-            LOG(log_.error()) << tag() << ": " << what << ": " << ec.message() << ": " << ec.value();
+            LOG(log_.error()) << tag() << ": " << what << ": " << ec.message() << ": "
+                              << ec.value();
 
         if (!ec_ && ec != boost::asio::error::operation_aborted) {
             ec_ = ec;
@@ -172,16 +174,18 @@ public:
 
     /**
      * @brief Send a message to the client
-     * @param msg The message to send, it will keep the string alive until it is sent. It is useful when we have
-     * multiple session sending the same content.
-     * Be aware that the message length will not be added to the DOSGuard from this function.
+     * @param msg The message to send, it will keep the string alive until it is sent. It is useful
+     * when we have multiple session sending the same content. Be aware that the message length will
+     * not be added to the DOSGuard from this function.
      */
     void
     send(std::shared_ptr<std::string> msg) override
     {
-        // Note: post used instead of dispatch to guarantee async behavior of wsFail and maybeSendNext
+        // Note: post used instead of dispatch to guarantee async behavior of wsFail and
+        // maybeSendNext
         boost::asio::post(
-            derived().ws().get_executor(), [this, self = derived().shared_from_this(), msg = std::move(msg)]() {
+            derived().ws().get_executor(),
+            [this, self = derived().shared_from_this(), msg = std::move(msg)]() {
                 if (messages_.size() > maxSendingQueueSize_) {
                     wsFail(boost::asio::error::timed_out, "Client is too slow");
                     return;
@@ -203,7 +207,8 @@ public:
     makeSubscriptionContext(util::TagDecoratorFactory const& factory) override
     {
         if (subscriptionContext_ == nullptr) {
-            subscriptionContext_ = std::make_shared<SubscriptionContext>(factory, shared_from_this());
+            subscriptionContext_ =
+                std::make_shared<SubscriptionContext>(factory, shared_from_this());
         }
         return subscriptionContext_;
     }
@@ -222,9 +227,12 @@ public:
             jsonResponse["warning"] = "load";
 
             if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {
-                jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::WarnRpcRateLimit));
+                jsonResponse["warnings"].as_array().push_back(
+                    rpc::makeWarning(rpc::WarnRpcRateLimit)
+                );
             } else {
-                jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::WarnRpcRateLimit)};
+                jsonResponse["warnings"] =
+                    boost::json::array{rpc::makeWarning(rpc::WarnRpcRateLimit)};
             }
 
             // Reserialize when we need to include this warning
@@ -245,11 +253,18 @@ public:
         derived().ws().set_option(websocket::stream_base::timeout::suggested(role_type::server));
 
         // Set a decorator to change the Server of the handshake
-        derived().ws().set_option(websocket::stream_base::decorator([](websocket::response_type& res) {
-            res.set(http::field::server, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-server-async");
-        }));
+        derived().ws().set_option(
+            websocket::stream_base::decorator([](websocket::response_type& res) {
+                res.set(
+                    http::field::server,
+                    std::string(BOOST_BEAST_VERSION_STRING) + " websocket-server-async"
+                );
+            })
+        );
 
-        derived().ws().async_accept(req, bind_front_handler(&WsBase::onAccept, this->shared_from_this()));
+        derived().ws().async_accept(
+            req, bind_front_handler(&WsBase::onAccept, this->shared_from_this())
+        );
     }
 
     void
@@ -269,10 +284,13 @@ public:
         if (dead())
             return;
 
-        // Note: use entirely new buffer so previously used, potentially large, capacity is deallocated
+        // Note: use entirely new buffer so previously used, potentially large, capacity is
+        // deallocated
         buffer_ = boost::beast::flat_buffer{};
 
-        derived().ws().async_read(buffer_, boost::beast::bind_front_handler(&WsBase::onRead, this->shared_from_this()));
+        derived().ws().async_read(
+            buffer_, boost::beast::bind_front_handler(&WsBase::onRead, this->shared_from_this())
+        );
     }
 
     void

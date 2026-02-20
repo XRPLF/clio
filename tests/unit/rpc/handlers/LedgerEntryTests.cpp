@@ -93,7 +93,8 @@ struct ParamTestCaseBundle {
 };
 
 // parameterized test cases for parameters check
-struct LedgerEntryParameterTest : public RPCLedgerEntryTest, public WithParamInterface<ParamTestCaseBundle> {};
+struct LedgerEntryParameterTest : public RPCLedgerEntryTest,
+                                  public WithParamInterface<ParamTestCaseBundle> {};
 
 // TODO: because we extract the error generation from the handler to framework
 // the error messages need one round fine tuning
@@ -2459,8 +2460,8 @@ struct IndexTest : public HandlerBaseTest, public WithParamInterface<std::string
     };
 };
 
-// content of index, amendments, check, fee, hashes, nft_offer, nunl, nft_page, payment_channel, signer_list fields is
-// ledger index.
+// content of index, amendments, check, fee, hashes, nft_offer, nunl, nft_page, payment_channel,
+// signer_list fields is ledger index.
 INSTANTIATE_TEST_CASE_P(
     RPCLedgerEntryGroup3,
     IndexTest,
@@ -2526,11 +2527,13 @@ TEST_P(IndexTest, InvalidIndexNotString)
 TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
 {
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _))
+        .WillRepeatedly(Return(ledgerHeader));
 
     // return null for ledger entry
     auto const key = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(key, kRANGE_MAX, _)).WillRepeatedly(Return(std::optional<Blob>{}));
+    EXPECT_CALL(*backend_, doFetchLedgerObject(key, kRANGE_MAX, _))
+        .WillRepeatedly(Return(std::optional<Blob>{}));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
@@ -2556,7 +2559,8 @@ struct NormalPathTestBundle {
     ripple::STObject mockedEntity;
 };
 
-struct RPCLedgerEntryNormalPathTest : public RPCLedgerEntryTest, public WithParamInterface<NormalPathTestBundle> {};
+struct RPCLedgerEntryNormalPathTest : public RPCLedgerEntryTest,
+                                      public WithParamInterface<NormalPathTestBundle> {};
 
 static auto
 generateTestValuesForNormalPathTest()
@@ -2577,7 +2581,8 @@ generateTestValuesForNormalPathTest()
                 kINDEX1
             ),
             .expectedIndex = ripple::uint256{kINDEX1},
-            .mockedEntity = createAccountRootObject(kACCOUNT2, ripple::lsfGlobalFreeze, 1, 10, 2, kINDEX1, 3)
+            .mockedEntity =
+                createAccountRootObject(kACCOUNT2, ripple::lsfGlobalFreeze, 1, 10, 2, kINDEX1, 3)
         },
         NormalPathTestBundle{
             .testName = "Payment_channel",
@@ -2589,7 +2594,8 @@ generateTestValuesForNormalPathTest()
                 kINDEX1
             ),
             .expectedIndex = ripple::uint256{kINDEX1},
-            .mockedEntity = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 200, 300, kINDEX1, 400)
+            .mockedEntity =
+                createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 200, 300, kINDEX1, 400)
         },
         NormalPathTestBundle{
             .testName = "Nft_page",
@@ -2602,7 +2608,8 @@ generateTestValuesForNormalPathTest()
             ),
             .expectedIndex = ripple::uint256{kINDEX1},
             .mockedEntity = createNftTokenPage(
-                std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, std::nullopt
+                std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")},
+                std::nullopt
             )
         },
         NormalPathTestBundle{
@@ -2627,7 +2634,9 @@ generateTestValuesForNormalPathTest()
                 kINDEX1
             ),
             .expectedIndex = ripple::uint256{kINDEX1},
-            .mockedEntity = createOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{kINDEX1}}, kINDEX1)
+            .mockedEntity = createOwnerDirLedgerObject(
+                std::vector<ripple::uint256>{ripple::uint256{kINDEX1}}, kINDEX1
+            )
         },
         NormalPathTestBundle{
             .testName = "OfferIndex",
@@ -2640,7 +2649,14 @@ generateTestValuesForNormalPathTest()
             ),
             .expectedIndex = ripple::uint256{kINDEX1},
             .mockedEntity = createOfferLedgerObject(
-                kACCOUNT, 100, 200, "USD", "XRP", kACCOUNT2, ripple::toBase58(ripple::xrpAccount()), kINDEX1
+                kACCOUNT,
+                100,
+                200,
+                "USD",
+                "XRP",
+                kACCOUNT2,
+                ripple::toBase58(ripple::xrpAccount()),
+                kINDEX1
             )
         },
         NormalPathTestBundle{
@@ -2716,7 +2732,9 @@ generateTestValuesForNormalPathTest()
                 kINDEX1
             ),
             .expectedIndex = ripple::keylet::page(ripple::uint256{kINDEX1}, 2).key,
-            .mockedEntity = createOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{kINDEX1}}, kINDEX1)
+            .mockedEntity = createOwnerDirLedgerObject(
+                std::vector<ripple::uint256>{ripple::uint256{kINDEX1}}, kINDEX1
+            )
         },
         NormalPathTestBundle{
             .testName = "DirectoryViaOwner",
@@ -2731,7 +2749,9 @@ generateTestValuesForNormalPathTest()
                 kACCOUNT
             ),
             .expectedIndex = ripple::keylet::page(ripple::keylet::ownerDir(account1), 2).key,
-            .mockedEntity = createOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{kINDEX1}}, kINDEX1)
+            .mockedEntity = createOwnerDirLedgerObject(
+                std::vector<ripple::uint256>{ripple::uint256{kINDEX1}}, kINDEX1
+            )
         },
         NormalPathTestBundle{
             .testName = "DirectoryViaDefaultSubIndex",
@@ -2746,7 +2766,9 @@ generateTestValuesForNormalPathTest()
             ),
             // default sub_index is 0
             .expectedIndex = ripple::keylet::page(ripple::keylet::ownerDir(account1), 0).key,
-            .mockedEntity = createOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{kINDEX1}}, kINDEX1)
+            .mockedEntity = createOwnerDirLedgerObject(
+                std::vector<ripple::uint256>{ripple::uint256{kINDEX1}}, kINDEX1
+            )
         },
         NormalPathTestBundle{
             .testName = "Escrow",
@@ -2798,15 +2820,17 @@ generateTestValuesForNormalPathTest()
                 kACCOUNT2,
                 kCREDENTIAL_TYPE
             ),
-            .expectedIndex =
-                ripple::keylet::depositPreauth(
-                    account1,
-                    credentials::createAuthCredentials(createAuthCredentialArray(
-                        std::vector<std::string_view>{kACCOUNT2}, std::vector<std::string_view>{kCREDENTIAL_TYPE}
-                    ))
-                )
-                    .key,
-            .mockedEntity = createDepositPreauthLedgerObjectByAuthCredentials(kACCOUNT, kACCOUNT2, kCREDENTIAL_TYPE)
+            .expectedIndex = ripple::keylet::depositPreauth(
+                                 account1,
+                                 credentials::createAuthCredentials(createAuthCredentialArray(
+                                     std::vector<std::string_view>{kACCOUNT2},
+                                     std::vector<std::string_view>{kCREDENTIAL_TYPE}
+                                 ))
+            )
+                                 .key,
+            .mockedEntity = createDepositPreauthLedgerObjectByAuthCredentials(
+                kACCOUNT, kACCOUNT2, kCREDENTIAL_TYPE
+            )
         },
         NormalPathTestBundle{
             .testName = "Credentials",
@@ -2823,15 +2847,15 @@ generateTestValuesForNormalPathTest()
                 kACCOUNT2,
                 kCREDENTIAL_TYPE
             ),
-            .expectedIndex =
-                ripple::keylet::credential(
-                    account1,
-                    account2,
-                    ripple::Slice(
-                        ripple::strUnHex(kCREDENTIAL_TYPE)->data(), ripple::strUnHex(kCREDENTIAL_TYPE)->size()
-                    )
-                )
-                    .key,
+            .expectedIndex = ripple::keylet::credential(
+                                 account1,
+                                 account2,
+                                 ripple::Slice(
+                                     ripple::strUnHex(kCREDENTIAL_TYPE)->data(),
+                                     ripple::strUnHex(kCREDENTIAL_TYPE)->size()
+                                 )
+            )
+                                 .key,
             .mockedEntity = createCredentialObject(kACCOUNT, kACCOUNT2, kCREDENTIAL_TYPE)
         },
         NormalPathTestBundle{
@@ -2848,8 +2872,9 @@ generateTestValuesForNormalPathTest()
                 kACCOUNT2
             ),
             .expectedIndex = ripple::keylet::line(account1, account2, currency).key,
-            .mockedEntity =
-                createRippleStateLedgerObject("USD", kACCOUNT2, 100, kACCOUNT, 10, kACCOUNT2, 20, kINDEX1, 123, 0)
+            .mockedEntity = createRippleStateLedgerObject(
+                "USD", kACCOUNT2, 100, kACCOUNT, 10, kACCOUNT2, 20, kINDEX1, 123, 0
+            )
         },
         NormalPathTestBundle{
             .testName = "Ticket",
@@ -2880,7 +2905,14 @@ generateTestValuesForNormalPathTest()
             ),
             .expectedIndex = ripple::keylet::offer(account1, 2).key,
             .mockedEntity = createOfferLedgerObject(
-                kACCOUNT, 100, 200, "USD", "XRP", kACCOUNT2, ripple::toBase58(ripple::xrpAccount()), kINDEX1
+                kACCOUNT,
+                100,
+                200,
+                "USD",
+                "XRP",
+                kACCOUNT2,
+                ripple::toBase58(ripple::xrpAccount()),
+                kINDEX1
             )
         },
         NormalPathTestBundle{
@@ -2893,7 +2925,9 @@ generateTestValuesForNormalPathTest()
                 kINDEX1
             ),
             .expectedIndex = ripple::uint256{kINDEX1},
-            .mockedEntity = createAmmObject(kACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", kACCOUNT2)
+            .mockedEntity = createAmmObject(
+                kACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", kACCOUNT2
+            )
         },
         NormalPathTestBundle{
             .testName = "AMMViaJson",
@@ -2913,10 +2947,14 @@ generateTestValuesForNormalPathTest()
                 "JPY",
                 kACCOUNT2
             ),
-            .expectedIndex =
-                ripple::keylet::amm(getIssue("XRP", ripple::toBase58(ripple::xrpAccount())), getIssue("JPY", kACCOUNT2))
-                    .key,
-            .mockedEntity = createAmmObject(kACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", kACCOUNT2)
+            .expectedIndex = ripple::keylet::amm(
+                                 getIssue("XRP", ripple::toBase58(ripple::xrpAccount())),
+                                 getIssue("JPY", kACCOUNT2)
+            )
+                                 .key,
+            .mockedEntity = createAmmObject(
+                kACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", kACCOUNT2
+            )
         },
         NormalPathTestBundle{
             .testName = "BridgeLocking",
@@ -3020,7 +3058,9 @@ generateTestValuesForNormalPathTest()
                                  10
             )
                                  .key,
-            .mockedEntity = createChainOwnedClaimIdObject(kACCOUNT, kACCOUNT, kACCOUNT2, "JPY", kACCOUNT3, kACCOUNT)
+            .mockedEntity = createChainOwnedClaimIdObject(
+                kACCOUNT, kACCOUNT, kACCOUNT2, "JPY", kACCOUNT3, kACCOUNT
+            )
         },
         NormalPathTestBundle{
             .testName = "XChainOwnedCreateAccountClaimId",
@@ -3054,7 +3094,9 @@ generateTestValuesForNormalPathTest()
                                  10
             )
                                  .key,
-            .mockedEntity = createChainOwnedClaimIdObject(kACCOUNT, kACCOUNT, kACCOUNT2, "JPY", kACCOUNT3, kACCOUNT)
+            .mockedEntity = createChainOwnedClaimIdObject(
+                kACCOUNT, kACCOUNT, kACCOUNT2, "JPY", kACCOUNT3, kACCOUNT
+            )
         },
         NormalPathTestBundle{
             .testName = "OracleEntryFoundViaIntOracleDocumentId",
@@ -3078,9 +3120,9 @@ generateTestValuesForNormalPathTest()
                 ripple::Blob(8, 's'),
                 kRANGE_MAX - 2,
                 ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
-                createPriceDataSeries(
-                    {createOraclePriceData(2e4, ripple::to_currency("XRP"), ripple::to_currency("USD"), 3)}
-                )
+                createPriceDataSeries({createOraclePriceData(
+                    2e4, ripple::to_currency("XRP"), ripple::to_currency("USD"), 3
+                )})
             )
         },
         NormalPathTestBundle{
@@ -3105,9 +3147,9 @@ generateTestValuesForNormalPathTest()
                 ripple::Blob(8, 's'),
                 kRANGE_MAX - 2,
                 ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
-                createPriceDataSeries(
-                    {createOraclePriceData(2e4, ripple::to_currency("XRP"), ripple::to_currency("USD"), 3)}
-                )
+                createPriceDataSeries({createOraclePriceData(
+                    2e4, ripple::to_currency("XRP"), ripple::to_currency("USD"), 3
+                )})
             )
         },
         NormalPathTestBundle{
@@ -3129,9 +3171,9 @@ generateTestValuesForNormalPathTest()
                 ripple::Blob(8, 'a'),
                 kRANGE_MAX - 4,
                 ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
-                createPriceDataSeries(
-                    {createOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)}
-                )
+                createPriceDataSeries({createOraclePriceData(
+                    1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2
+                )})
             )
         },
         NormalPathTestBundle{
@@ -3184,7 +3226,9 @@ generateTestValuesForNormalPathTest()
                 kINDEX1
             ),
             .expectedIndex = ripple::uint256(kINDEX1),
-            .mockedEntity = createPermissionedDomainObject(kACCOUNT, kINDEX1, kRANGE_MAX, 0, ripple::uint256{0}, 0)
+            .mockedEntity = createPermissionedDomainObject(
+                kACCOUNT, kINDEX1, kRANGE_MAX, 0, ripple::uint256{0}, 0
+            )
         },
         NormalPathTestBundle{
             .testName = "PermissionedDomainViaObject",
@@ -3200,9 +3244,13 @@ generateTestValuesForNormalPathTest()
                 kRANGE_MAX
             ),
             .expectedIndex =
-                ripple::keylet::permissionedDomain(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX)
+                ripple::keylet::permissionedDomain(
+                    ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX
+                )
                     .key,
-            .mockedEntity = createPermissionedDomainObject(kACCOUNT, kINDEX1, kRANGE_MAX, 0, ripple::uint256{0}, 0)
+            .mockedEntity = createPermissionedDomainObject(
+                kACCOUNT, kINDEX1, kRANGE_MAX, 0, ripple::uint256{0}, 0
+            )
         },
         NormalPathTestBundle{
             .testName = "CreateVaultObjectByHexString",
@@ -3240,7 +3288,10 @@ generateTestValuesForNormalPathTest()
                 kRANGE_MAX
             ),
             .expectedIndex =
-                ripple::keylet::vault(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX).key,
+                ripple::keylet::vault(
+                    ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX
+                )
+                    .key,
             .mockedEntity = createVault(
                 kACCOUNT,
                 kACCOUNT,
@@ -3263,8 +3314,9 @@ generateTestValuesForNormalPathTest()
                 kINDEX1
             ),
             .expectedIndex = ripple::uint256(kINDEX1),
-            .mockedEntity =
-                createLoanBroker(kACCOUNT, kACCOUNT, kRANGE_MAX, ripple::uint256{kINDEX1}, 1, ripple::uint256{0}, 0)
+            .mockedEntity = createLoanBroker(
+                kACCOUNT, kACCOUNT, kRANGE_MAX, ripple::uint256{kINDEX1}, 1, ripple::uint256{0}, 0
+            )
         },
         NormalPathTestBundle{
             .testName = "CreateLoanBrokerObjectByOwnerAndSeq",
@@ -3280,9 +3332,13 @@ generateTestValuesForNormalPathTest()
                 kRANGE_MAX
             ),
             .expectedIndex =
-                ripple::keylet::loanbroker(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX).key,
-            .mockedEntity =
-                createLoanBroker(kACCOUNT, kACCOUNT, kRANGE_MAX, ripple::uint256{kINDEX1}, 1, ripple::uint256{0}, 0)
+                ripple::keylet::loanbroker(
+                    ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX
+                )
+                    .key,
+            .mockedEntity = createLoanBroker(
+                kACCOUNT, kACCOUNT, kRANGE_MAX, ripple::uint256{kINDEX1}, 1, ripple::uint256{0}, 0
+            )
         },
         NormalPathTestBundle{
             .testName = "CreateLoanObjectByHexString",
@@ -3294,7 +3350,9 @@ generateTestValuesForNormalPathTest()
                 kINDEX1
             ),
             .expectedIndex = ripple::uint256(kINDEX1),
-            .mockedEntity = createLoan(kACCOUNT, ripple::uint256{kINDEX1}, 1, 1000, 86400, 100, ripple::uint256{0}, 0)
+            .mockedEntity = createLoan(
+                kACCOUNT, ripple::uint256{kINDEX1}, 1, 1000, 86400, 100, ripple::uint256{0}, 0
+            )
         },
         NormalPathTestBundle{
             .testName = "CreateLoanObjectByLoanBrokerIdAndSeq",
@@ -3309,7 +3367,9 @@ generateTestValuesForNormalPathTest()
                 kINDEX1
             ),
             .expectedIndex = ripple::keylet::loan(ripple::uint256{kINDEX1}, 1).key,
-            .mockedEntity = createLoan(kACCOUNT, ripple::uint256{kINDEX1}, 1, 1000, 86400, 100, ripple::uint256{0}, 0)
+            .mockedEntity = createLoan(
+                kACCOUNT, ripple::uint256{kINDEX1}, 1, 1000, 86400, 100, ripple::uint256{0}, 0
+            )
         },
         NormalPathTestBundle{
             .testName = "DelegateViaStringIndex",
@@ -3321,7 +3381,8 @@ generateTestValuesForNormalPathTest()
                 kINDEX1
             ),
             .expectedIndex = ripple::uint256{kINDEX1},
-            .mockedEntity = createDelegateObject(kACCOUNT, kACCOUNT2, kINDEX1, 0, ripple::uint256{0}, 0)
+            .mockedEntity =
+                createDelegateObject(kACCOUNT, kACCOUNT2, kINDEX1, 0, ripple::uint256{0}, 0)
         },
         NormalPathTestBundle{
             .testName = "DelegateViaObject",
@@ -3336,9 +3397,12 @@ generateTestValuesForNormalPathTest()
                 kACCOUNT,
                 kACCOUNT2
             ),
-            .expectedIndex =
-                ripple::keylet::delegate(getAccountIdWithString(kACCOUNT), getAccountIdWithString(kACCOUNT2)).key,
-            .mockedEntity = createDelegateObject(kACCOUNT, kACCOUNT2, kINDEX1, 0, ripple::uint256{0}, 0)
+            .expectedIndex = ripple::keylet::delegate(
+                                 getAccountIdWithString(kACCOUNT), getAccountIdWithString(kACCOUNT2)
+            )
+                                 .key,
+            .mockedEntity =
+                createDelegateObject(kACCOUNT, kACCOUNT2, kINDEX1, 0, ripple::uint256{0}, 0)
         },
     };
 }
@@ -3357,7 +3421,8 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
     auto const testBundle = GetParam();
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _))
+        .WillRepeatedly(Return(ledgerHeader));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(testBundle.expectedIndex, kRANGE_MAX, _))
         .WillRepeatedly(Return(testBundle.mockedEntity.getSerializer().peekData()));
@@ -3371,10 +3436,12 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
         EXPECT_EQ(outputJson.at("ledger_hash").as_string(), kLEDGER_HASH);
         EXPECT_EQ(outputJson.at("ledger_index").as_uint64(), kRANGE_MAX);
         EXPECT_EQ(
-            outputJson.at("node_binary").as_string(), ripple::strHex(testBundle.mockedEntity.getSerializer().peekData())
+            outputJson.at("node_binary").as_string(),
+            ripple::strHex(testBundle.mockedEntity.getSerializer().peekData())
         );
         EXPECT_EQ(
-            ripple::uint256(boost::json::value_to<std::string>(outputJson.at("index")).data()), testBundle.expectedIndex
+            ripple::uint256(boost::json::value_to<std::string>(outputJson.at("index")).data()),
+            testBundle.expectedIndex
         );
     });
 }
@@ -3404,10 +3471,12 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
     })JSON";
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _))
+        .WillRepeatedly(Return(ledgerHeader));
 
     // return valid ledger entry which can be deserialized
-    auto const ledgerEntry = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 200, 300, kINDEX1, 400);
+    auto const ledgerEntry =
+        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 200, 300, kINDEX1, 400);
     EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
@@ -3430,7 +3499,8 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
 TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
 {
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _))
+        .WillRepeatedly(Return(ledgerHeader));
 
     boost::json::object const entry;
 
@@ -3447,10 +3517,14 @@ TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
     );
 
     auto const vaultKey =
-        ripple::keylet::vault(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX).key;
+        ripple::keylet::vault(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX)
+            .key;
 
     ripple::STLedgerEntry const sle{
-        ripple::SerialIter{vault.getSerializer().peekData().data(), vault.getSerializer().peekData().size()}, vaultKey
+        ripple::SerialIter{
+            vault.getSerializer().peekData().data(), vault.getSerializer().peekData().size()
+        },
+        vaultKey
     };
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKey, testing::_, testing::_))
@@ -3482,18 +3556,26 @@ TEST_F(RPCLedgerEntryTest, Vault_BinaryFalse)
 TEST_F(RPCLedgerEntryTest, LoanBroker_BinaryFalse)
 {
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _))
+        .WillRepeatedly(Return(ledgerHeader));
 
     boost::json::object const entry;
 
-    auto const loanBroker =
-        createLoanBroker(kACCOUNT, kACCOUNT, kRANGE_MAX, ripple::uint256{kINDEX1}, 1, ripple::uint256{1}, 0);
+    auto const loanBroker = createLoanBroker(
+        kACCOUNT, kACCOUNT, kRANGE_MAX, ripple::uint256{kINDEX1}, 1, ripple::uint256{1}, 0
+    );
 
     auto const loanBrokerKey =
-        ripple::keylet::loanbroker(ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX).key;
+        ripple::keylet::loanbroker(
+            ripple::parseBase58<ripple::AccountID>(kACCOUNT).value(), kRANGE_MAX
+        )
+            .key;
 
     ripple::STLedgerEntry const sle{
-        ripple::SerialIter{loanBroker.getSerializer().peekData().data(), loanBroker.getSerializer().peekData().size()},
+        ripple::SerialIter{
+            loanBroker.getSerializer().peekData().data(),
+            loanBroker.getSerializer().peekData().size()
+        },
         loanBrokerKey
     };
 
@@ -3532,7 +3614,8 @@ TEST_F(RPCLedgerEntryTest, Loan_BinaryFalse)
     static constexpr auto kINTEREST_RATE = 100;
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _))
+        .WillRepeatedly(Return(ledgerHeader));
 
     boost::json::object const entry;
 
@@ -3578,10 +3661,12 @@ TEST_F(RPCLedgerEntryTest, Loan_BinaryFalse)
 TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
 {
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _))
+        .WillRepeatedly(Return(ledgerHeader));
 
     // return valid ledger entry which can be deserialized
-    auto const ledgerEntry = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 200, 300, kINDEX1, 400);
+    auto const ledgerEntry =
+        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 200, 300, kINDEX1, 400);
     EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
@@ -3604,7 +3689,8 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
 
 TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
 {
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _))
+        .WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
@@ -3628,7 +3714,8 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
 
 TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
 {
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _))
+        .WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
@@ -3652,7 +3739,8 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
 
 TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
 {
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillRepeatedly(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+        .WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend_}};
@@ -3710,8 +3798,12 @@ TEST(RPCLedgerEntrySpecTest, DeprecatedFields)
     auto const& warning = warnings[0].as_object();
     ASSERT_TRUE(warning.contains("id"));
     ASSERT_TRUE(warning.contains("message"));
-    EXPECT_EQ(warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::WarnRpcDeprecated));
-    EXPECT_NE(warning.at("message").as_string().find("Field 'ledger' is deprecated."), std::string::npos) << warning;
+    EXPECT_EQ(
+        warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::WarnRpcDeprecated)
+    );
+    EXPECT_NE(
+        warning.at("message").as_string().find("Field 'ledger' is deprecated."), std::string::npos
+    ) << warning;
 }
 
 // Same as BinaryFalse with include_deleted set to true
@@ -3744,7 +3836,8 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleted)
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerinfo));
 
     // return valid ledger entry which can be deserialized
-    auto const ledgerEntry = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 200, 300, kINDEX1, 400);
+    auto const ledgerEntry =
+        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 200, 300, kINDEX1, 400);
     EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
@@ -3877,7 +3970,8 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleteFalse)
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerinfo));
 
     // return valid ledger entry which can be deserialized
-    auto const ledgerEntry = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 200, 300, kINDEX1, 400);
+    auto const ledgerEntry =
+        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 200, 300, kINDEX1, 400);
     EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
@@ -3936,8 +4030,12 @@ TEST_F(RPCLedgerEntryTest, ObjectUpdateIncludeDelete)
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerinfo));
 
     // return valid ledger entry which can be deserialized
-    auto const line1 = createRippleStateLedgerObject("USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123);
-    auto const line2 = createRippleStateLedgerObject("USD", kACCOUNT, 10, kACCOUNT2, 100, kACCOUNT, 200, kTXN_ID, 123);
+    auto const line1 = createRippleStateLedgerObject(
+        "USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123
+    );
+    auto const line2 = createRippleStateLedgerObject(
+        "USD", kACCOUNT, 10, kACCOUNT2, 100, kACCOUNT, 200, kTXN_ID, 123
+    );
     EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillRepeatedly(Return(line1.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX - 1, _))
@@ -4066,11 +4164,14 @@ TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
     auto const mptId = ripple::makeMptID(2, getAccountIdWithString(kACCOUNT));
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillRepeatedly(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _))
+        .WillRepeatedly(Return(ledgerHeader));
 
     // return valid ledger entry which can be deserialized
     auto const ledgerEntry = createMptIssuanceObject(kACCOUNT, 2, "metadata");
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::mptIssuance(mptId).key, kRANGE_MAX, _))
+    EXPECT_CALL(
+        *backend_, doFetchLedgerObject(ripple::keylet::mptIssuance(mptId).key, kRANGE_MAX, _)
+    )
         .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {

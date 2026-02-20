@@ -93,19 +93,28 @@ etl::model::Object
 createObject(etl::model::Object::ModType modType, std::string key)
 {
     // random object taken from initial ledger load
-    static constinit auto const kOBJ_PRED = "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960A";
-    static constinit auto const kOBJ_SUCC = "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960F";
+    static constinit auto const kOBJ_PRED =
+        "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960A";
+    static constinit auto const kOBJ_SUCC =
+        "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960F";
     static constinit auto const kOBJ_BLOB =
-        "11007222002200002504270918370000000000000C4538000000000000000A554D94799200CC37EFAF45DA76704ED3CBEDBB4B4FCD"
-        "56E9CBA5399EB40A7B3BEC629546DD24CDB4C0004C4A50590000000000000000000000000000000000000000000000000000000000"
-        "000000000000016680000000000000004C4A505900000000000000000000000000000000368480B7780E3DCF5D062A7BB54129F42F"
-        "8BB63367D6C38D7EA4C680004C4A505900000000000000000000000000000000C8056BA4E36038A8A0D2C0A86963153E95A84D56";
+        "11007222002200002504270918370000000000000C4538000000000000000A554D94799200CC37EFAF45DA7670"
+        "4ED3CBEDBB4B4FCD"
+        "56E9CBA5399EB40A7B3BEC629546DD24CDB4C0004C4A5059000000000000000000000000000000000000000000"
+        "0000000000000000"
+        "000000000000016680000000000000004C4A505900000000000000000000000000000000368480B7780E3DCF5D"
+        "062A7BB54129F42F"
+        "8BB63367D6C38D7EA4C680004C4A505900000000000000000000000000000000C8056BA4E36038A8A0D2C0A869"
+        "63153E95A84D56";
 
     return {
         .key = binaryStringToUint256(hexStringToBinaryString(key)),
         .keyRaw = hexStringToBinaryString(key),
-        .data = modType == etl::model::Object::ModType::Deleted ? ripple::Blob{} : *ripple::strUnHex(kOBJ_BLOB),
-        .dataRaw = modType == etl::model::Object::ModType::Deleted ? "" : hexStringToBinaryString(kOBJ_BLOB),
+        .data = modType == etl::model::Object::ModType::Deleted ? ripple::Blob{}
+                                                                : *ripple::strUnHex(kOBJ_BLOB),
+        .dataRaw = modType == etl::model::Object::ModType::Deleted
+            ? ""
+            : hexStringToBinaryString(kOBJ_BLOB),
         .successor = hexStringToBinaryString(kOBJ_SUCC),
         .predecessor = hexStringToBinaryString(kOBJ_PRED),
         .type = modType,
@@ -116,18 +125,25 @@ etl::model::Object
 createObjectWithBookBase(etl::model::Object::ModType modType, std::string key)
 {
     // random object taken from initial ledger load
-    static constinit auto const kOBJ_PRED = "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960A";
-    static constinit auto const kOBJ_SUCC = "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960F";
+    static constinit auto const kOBJ_PRED =
+        "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960A";
+    static constinit auto const kOBJ_SUCC =
+        "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960F";
     static constinit auto const kOBJ_BLOB =
-        "11006422000000022505A681E855B4E076DD06D6D583804F9DC94F641337ECB97F71860300EEC17E530A2001D6C9583FFBFAD704E299BE"
-        "3E544090ECCB12AF45FD03CAEEA852E5048E57F48FD45B505A0008138882D0F98C64A1A0E6D15053589771AD08B8C13D5384FBDAE20000"
+        "11006422000000022505A681E855B4E076DD06D6D583804F9DC94F641337ECB97F71860300EEC17E530A2001D6"
+        "C9583FFBFAD704E299BE"
+        "3E544090ECCB12AF45FD03CAEEA852E5048E57F48FD45B505A0008138882D0F98C64A1A0E6D15053589771AD08"
+        "B8C13D5384FBDAE20000"
         "0948011320AC38AE866862CF5A8AF3578C600CEE8BFB894596584B60C0FFA7D22248E33CC3";
 
     return {
         .key = binaryStringToUint256(hexStringToBinaryString(key)),
         .keyRaw = hexStringToBinaryString(key),
-        .data = modType == etl::model::Object::ModType::Deleted ? ripple::Blob{} : *ripple::strUnHex(kOBJ_BLOB),
-        .dataRaw = modType == etl::model::Object::ModType::Deleted ? "" : hexStringToBinaryString(kOBJ_BLOB),
+        .data = modType == etl::model::Object::ModType::Deleted ? ripple::Blob{}
+                                                                : *ripple::strUnHex(kOBJ_BLOB),
+        .dataRaw = modType == etl::model::Object::ModType::Deleted
+            ? ""
+            : hexStringToBinaryString(kOBJ_BLOB),
         .successor = hexStringToBinaryString(kOBJ_SUCC),
         .predecessor = hexStringToBinaryString(kOBJ_PRED),
         .type = modType,
@@ -150,7 +166,8 @@ createObjectWithTwoNFTs()
     auto const serializerNftPage = nftPage.getSerializer();
     auto const account = getAccountIdWithString(kACCOUNT);
 
-    // key is a token made up from owner's account ID followed by unused (in Clio) value described here:
+    // key is a token made up from owner's account ID followed by unused (in Clio) value described
+    // here:
     // https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0020-non-fungible-tokens#tokenpage-id-format
     constexpr auto kEXTRA_BYTES = "000000000000";
     auto const key = std::string(std::begin(account), std::end(account)) + kEXTRA_BYTES;
@@ -159,8 +176,10 @@ createObjectWithTwoNFTs()
         .key = {},
         .keyRaw = key,
         .data = {},
-        .dataRaw =
-            std::string(static_cast<char const*>(serializerNftPage.getDataPtr()), serializerNftPage.getDataLength()),
+        .dataRaw = std::string(
+            static_cast<char const*>(serializerNftPage.getDataPtr()),
+            serializerNftPage.getDataLength()
+        ),
         .successor = "",
         .predecessor = "",
         .type = etl::model::Object::ModType::Created,
@@ -199,10 +218,12 @@ etl::model::BookSuccessor
 createSuccessor()
 {
     return {
-        .firstBook =
-            uint256ToString(ripple::uint256{"A000000000000000000000000000000000000000000000000000000000000000"}),
-        .bookBase =
-            uint256ToString(ripple::uint256{"A000000000000000000000000000000000000000000000000000000000000001"}),
+        .firstBook = uint256ToString(
+            ripple::uint256{"A000000000000000000000000000000000000000000000000000000000000000"}
+        ),
+        .bookBase = uint256ToString(
+            ripple::uint256{"A000000000000000000000000000000000000000000000000000000000000001"}
+        ),
     };
 }
 

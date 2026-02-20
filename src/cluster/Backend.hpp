@@ -49,12 +49,13 @@ namespace cluster {
  * @brief Backend communication handler for cluster state synchronization.
  *
  * This class manages reading and writing cluster state information to/from the backend database.
- * It periodically reads the state of other nodes in the cluster and writes the current node's state,
- * enabling cluster-wide coordination and awareness.
+ * It periodically reads the state of other nodes in the cluster and writes the current node's
+ * state, enabling cluster-wide coordination and awareness.
  */
 class Backend {
 public:
-    /** @brief Type representing cluster data result - either a vector of nodes or an error message */
+    /** @brief Type representing cluster data result - either a vector of nodes or an error message
+     */
     using ClusterData = std::expected<std::vector<ClioNode>, std::string>;
 
 private:

@@ -33,7 +33,8 @@ namespace util::async {
  * @brief Tag type for identifying execution context types.
  *
  * Types that inherit from this tag can be detected using the SomeExecutionContext concept.
- * This allows generic code to differentiate between raw Boost.Asio contexts and wrapped execution contexts.
+ * This allows generic code to differentiate between raw Boost.Asio contexts and wrapped execution
+ * contexts.
  */
 struct ExecutionContextTag {
     virtual ~ExecutionContextTag() = default;
@@ -190,7 +191,8 @@ concept SomeHandlerWith = requires(T fn) {
 template <typename T>
 concept SomeStdDuration = requires {
     // Thank you Ed Catmur for this trick.
-    // See https://stackoverflow.com/questions/74383254/concept-that-models-only-the-stdchrono-duration-types
+    // See
+    // https://stackoverflow.com/questions/74383254/concept-that-models-only-the-stdchrono-duration-types
     []<typename Rep, typename Period>(  //
         std::type_identity<std::chrono::duration<Rep, Period>>
     ) {}(std::type_identity<std::decay_t<T>>());

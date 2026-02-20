@@ -57,16 +57,17 @@ using namespace util::config;
 
 struct WebHandlersTest : virtual public ::testing::Test {
     DOSGuardStrictMock dosGuardMock;
-    util::TagDecoratorFactory const tagFactory{
-        ClioConfigDefinition{{"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
-    };
+    util::TagDecoratorFactory const tagFactory{ClioConfigDefinition{
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+    }};
     std::string const ip = "some ip";
     StrictMockConnection connectionMock{ip, boost::beast::flat_buffer{}, tagFactory};
 
     struct AdminVerificationStrategyMock : web::AdminVerificationStrategy {
         MOCK_METHOD(bool, isAdmin, (RequestHeader const&, std::string_view), (const, override));
     };
-    using AdminVerificationStrategyStrictMockPtr = std::shared_ptr<testing::StrictMock<AdminVerificationStrategyMock>>;
+    using AdminVerificationStrategyStrictMockPtr =
+        std::shared_ptr<testing::StrictMock<AdminVerificationStrategyMock>>;
 };
 
 struct OnConnectCheckTests : WebHandlersTest {
@@ -118,7 +119,9 @@ TEST_F(DisconnectHookTests, CallsDecrement)
     disconnectHook(connectionMock);
 }
 
-struct MetricsHandlerTests : util::prometheus::WithPrometheus, SyncAsioContextTest, WebHandlersTest {
+struct MetricsHandlerTests : util::prometheus::WithPrometheus,
+                             SyncAsioContextTest,
+                             WebHandlersTest {
     AdminVerificationStrategyStrictMockPtr adminVerifier{
         std::make_shared<testing::StrictMock<AdminVerificationStrategyMock>>()
     };

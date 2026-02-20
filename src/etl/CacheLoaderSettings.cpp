@@ -66,7 +66,8 @@ makeCacheLoaderSettings(util::config::ClioConfigDefinition const& config)
 
     if (auto filePath = cache.maybeValue<std::string>("file.path"); filePath.has_value()) {
         settings.cacheFileSettings = CacheLoaderSettings::CacheFileSettings{
-            .path = std::move(filePath).value(), .maxAge = cache.get<uint32_t>("file.max_sequence_age")
+            .path = std::move(filePath).value(),
+            .maxAge = cache.get<uint32_t>("file.max_sequence_age")
         };
     }
 

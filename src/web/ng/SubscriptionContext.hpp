@@ -42,13 +42,14 @@ namespace web::ng {
 
 /**
  * @brief Implementation of SubscriptionContextInterface.
- * @note This class is designed to be used with SubscriptionManager. The class is safe to use from multiple threads.
- * The method disconnect() must be called before the object is destroyed.
+ * @note This class is designed to be used with SubscriptionManager. The class is safe to use from
+ * multiple threads. The method disconnect() must be called before the object is destroyed.
  */
 class SubscriptionContext : public web::SubscriptionContextInterface {
 public:
     /**
-     * @brief Error handler definition. Error handler returns true if connection should be closed false otherwise.
+     * @brief Error handler definition. Error handler returns true if connection should be closed
+     * false otherwise.
      */
     using ErrorHandler = std::function<bool(Error const&, Connection const&)>;
 
@@ -65,8 +66,9 @@ private:
 
     /**
      * @brief The API version of the web stream client.
-     * This is used to track the api version of this connection, which mainly is used by subscription. It is different
-     * from the api version in Context, which is only used for the current request.
+     * This is used to track the api version of this connection, which mainly is used by
+     * subscription. It is different from the api version in Context, which is only used for the
+     * current request.
      */
     std::atomic_uint32_t apiSubversion_ = 0u;
 
@@ -76,7 +78,8 @@ public:
      *
      * @param factory The tag decorator factory to use to init taggable.
      * @param connection The connection for which the context is created.
-     * @param maxSendQueueSize The maximum size of the send queue. If the queue is full, the connection will be closed.
+     * @param maxSendQueueSize The maximum size of the send queue. If the queue is full, the
+     * connection will be closed.
      * @param yield The yield context to spawn sending coroutines.
      * @param errorHandler The error handler.
      */
@@ -123,7 +126,8 @@ public:
     apiSubversion() const override;
 
     /**
-     * @brief Notify the context that related connection is disconnected and wait for all the task to complete.
+     * @brief Notify the context that related connection is disconnected and wait for all the task
+     * to complete.
      * @note This method must be called before the object is destroyed.
      *
      * @param yield The yield context to wait for all the tasks to complete.

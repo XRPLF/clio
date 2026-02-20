@@ -82,12 +82,18 @@ AccountLinesHandler::addLine(
         balance.negate();
 
     bool const lineAuth = (flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth)) != 0u;
-    bool const lineAuthPeer = (flags & (not viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth)) != 0u;
-    bool const lineNoRipple = (flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
-    bool const lineNoRipplePeer = (flags & (not viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
-    bool const lineFreeze = (flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
-    bool const lineFreezePeer = (flags & (not viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
-    bool const lineDeepFreeze = (flags & (viewLowest ? ripple::lsfLowDeepFreeze : ripple::lsfHighDeepFreeze)) != 0u;
+    bool const lineAuthPeer =
+        (flags & (not viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth)) != 0u;
+    bool const lineNoRipple =
+        (flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
+    bool const lineNoRipplePeer =
+        (flags & (not viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
+    bool const lineFreeze =
+        (flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
+    bool const lineFreezePeer =
+        (flags & (not viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
+    bool const lineDeepFreeze =
+        (flags & (viewLowest ? ripple::lsfLowDeepFreeze : ripple::lsfHighDeepFreeze)) != 0u;
     bool const lineDeepFreezePeer =
         (flags & (not viewLowest ? ripple::lsfLowDeepFreeze : ripple::lsfHighDeepFreeze)) != 0u;
 
@@ -145,13 +151,15 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
-    auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+    );
 
     if (not accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
-    auto const peerAccountID = input.peer ? accountFromStringStrict(*(input.peer)) : std::optional<ripple::AccountID>{};
+    auto const peerAccountID =
+        input.peer ? accountFromStringStrict(*(input.peer)) : std::optional<ripple::AccountID>{};
 
     Output response;
     response.lines.reserve(input.limit);
@@ -173,7 +181,13 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
     };
 
     auto const expectedNext = traverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse
+        *sharedPtrBackend_,
+        *accountID,
+        lgrInfo.seq,
+        input.limit,
+        input.marker,
+        ctx.yield,
+        addToResponse
     );
 
     if (!expectedNext.has_value())
@@ -225,7 +239,11 @@ tag_invoke(boost::json::value_to_tag<AccountLinesHandler::Input>, boost::json::v
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountLinesHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountLinesHandler::Output const& output
+)
 {
     using boost::json::value_from;
 

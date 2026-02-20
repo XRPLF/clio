@@ -40,11 +40,12 @@ struct LedgerFetcherInterface {
     /**
      * @brief Extract data for a particular ledger from an ETL source
      *
-     * This function continuously tries to extract the specified ledger (using all available ETL sources) until the
-     * extraction succeeds, or the server shuts down.
+     * This function continuously tries to extract the specified ledger (using all available ETL
+     * sources) until the extraction succeeds, or the server shuts down.
      *
      * @param seq sequence of the ledger to extract
-     * @return Ledger header and transaction+metadata blobs; Empty optional if the server is shutting down
+     * @return Ledger header and transaction+metadata blobs; Empty optional if the server is
+     * shutting down
      */
     [[nodiscard]] virtual OptionalGetLedgerResponseType
     fetchData(uint32_t seq) = 0;
@@ -52,11 +53,12 @@ struct LedgerFetcherInterface {
     /**
      * @brief Extract diff data for a particular ledger from an ETL source.
      *
-     * This function continuously tries to extract the specified ledger (using all available ETL sources) until the
-     * extraction succeeds, or the server shuts down.
+     * This function continuously tries to extract the specified ledger (using all available ETL
+     * sources) until the extraction succeeds, or the server shuts down.
      *
      * @param seq sequence of the ledger to extract
-     * @return Ledger data diff between sequance and parent; Empty optional if the server is shutting down
+     * @return Ledger data diff between sequance and parent; Empty optional if the server is
+     * shutting down
      */
     [[nodiscard]] virtual OptionalGetLedgerResponseType
     fetchDataAndDiff(uint32_t seq) = 0;

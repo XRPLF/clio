@@ -122,16 +122,22 @@ TEST_F(MetricsFamilyTest, getMetric)
     EXPECT_EQ(&metricsFamily.getMetric(labels2), &metric2);
     EXPECT_NE(&metric, &metric2);
 
-    EXPECT_CALL(*metricMock, serializeValue(::testing::_)).WillOnce([](OStream& s) { s << "metric"; });
-    EXPECT_CALL(*metric2Mock, serializeValue(::testing::_)).WillOnce([](OStream& s) { s << "metric2"; });
+    EXPECT_CALL(*metricMock, serializeValue(::testing::_)).WillOnce([](OStream& s) {
+        s << "metric";
+    });
+    EXPECT_CALL(*metric2Mock, serializeValue(::testing::_)).WillOnce([](OStream& s) {
+        s << "metric2";
+    });
 
     OStream stream{false};
     stream << metricsFamily;
     auto const serialized = std::move(stream).data();
 
-    auto const expected =
-        fmt::format("# HELP {0} {1}\n# TYPE {0} {2}\nmetric\nmetric2\n\n", name, description, toString(type));
-    auto const anotherExpected =
-        fmt::format("# HELP {0} {1}\n# TYPE {0} {2}\nmetric2\nmetric\n\n", name, description, toString(type));
+    auto const expected = fmt::format(
+        "# HELP {0} {1}\n# TYPE {0} {2}\nmetric\nmetric2\n\n", name, description, toString(type)
+    );
+    auto const anotherExpected = fmt::format(
+        "# HELP {0} {1}\n# TYPE {0} {2}\nmetric2\nmetric\n\n", name, description, toString(type)
+    );
     EXPECT_TRUE(serialized == expected || serialized == anotherExpected);
 }

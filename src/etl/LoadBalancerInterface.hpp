@@ -66,12 +66,14 @@ public:
 
     /**
      * @brief Load the initial ledger, writing data to the queue.
-     * @note This function will retry indefinitely until the ledger is downloaded or the download is cancelled.
+     * @note This function will retry indefinitely until the ledger is downloaded or the download is
+     * cancelled.
      *
      * @param sequence Sequence of ledger to download
      * @param loader InitialLoadObserverInterface implementation
      * @param retryAfter Time to wait between retries (2 seconds by default)
-     * @return A std::expected with ledger edge keys on success, or InitialLedgerLoadError on failure
+     * @return A std::expected with ledger edge keys on success, or InitialLedgerLoadError on
+     * failure
      */
     [[nodiscard]] virtual InitialLedgerLoadResult
     loadInitialLedger(
@@ -83,8 +85,8 @@ public:
     /**
      * @brief Fetch data for a specific ledger.
      *
-     * This function will continuously try to fetch data for the specified ledger until the fetch succeeds, the ledger
-     * is found in the database, or the server is shutting down.
+     * This function will continuously try to fetch data for the specified ledger until the fetch
+     * succeeds, the ledger is found in the database, or the server is shutting down.
      *
      * @param ledgerSequence Sequence of the ledger to fetch
      * @param getObjects Whether to get the account state diff between this ledger and the prior one

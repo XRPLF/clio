@@ -112,11 +112,12 @@ public:
     /**
      * @brief Fetch data for a specific ledger.
      *
-     * This function will continuously try to fetch data for the specified ledger until the fetch succeeds, the ledger
-     * is found in the database, or the server is shutting down.
+     * This function will continuously try to fetch data for the specified ledger until the fetch
+     * succeeds, the ledger is found in the database, or the server is shutting down.
      *
      * @param sequence Sequence of the ledger to fetch
-     * @param getObjects Whether to get the account state diff between this ledger and the prior one; defaults to true
+     * @param getObjects Whether to get the account state diff between this ledger and the prior
+     * one; defaults to true
      * @param getObjectNeighbors Whether to request object neighbors; defaults to false
      * @return A std::pair of the response status and the response itself
      */
@@ -132,7 +133,11 @@ public:
      * @return A std::pair of the data and a bool indicating whether the download was successful
      */
     virtual InitialLedgerLoadResult
-    loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, InitialLoadObserverInterface& loader) = 0;
+    loadInitialLedger(
+        uint32_t sequence,
+        std::uint32_t numMarkers,
+        InitialLoadObserverInterface& loader
+    ) = 0;
 
     /**
      * @brief Forward a request to rippled.
@@ -175,8 +180,8 @@ using SourceFactory = std::function<SourcePtr(
  * @param forwardingTimeout The timeout for forwarding to rippled
  * @param onConnect The hook to call on connect
  * @param onDisconnect The hook to call on disconnect
- * @param onLedgerClosed The hook to call on ledger closed. This is called when a ledger is closed and the source is set
- * as forwarding.
+ * @param onLedgerClosed The hook to call on ledger closed. This is called when a ledger is closed
+ * and the source is set as forwarding.
  * @return The created source
  */
 [[nodiscard]] SourcePtr

@@ -71,16 +71,18 @@ class TransactionFeed {
     std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_;
     std::reference_wrapper<util::prometheus::GaugeInt> subBookCount_;
 
-    TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&> accountSignal_;
+    TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&>
+        accountSignal_;
     TrackableSignalMap<ripple::Book, Subscriber, AllVersionTransactionsType const&> bookSignal_;
     TrackableSignal<Subscriber, AllVersionTransactionsType const&> signal_;
 
     // Signals for proposed tx subscribers
-    TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&> accountProposedSignal_;
+    TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&>
+        accountProposedSignal_;
     TrackableSignal<Subscriber, AllVersionTransactionsType const&> txProposedSignal_;
 
-    std::unordered_set<SubscriberPtr>
-        notified_;  // Used by slots to prevent double notifications if tx contains multiple subscribed accounts
+    std::unordered_set<SubscriberPtr> notified_;  // Used by slots to prevent double notifications
+                                                  // if tx contains multiple subscribed accounts
 
 public:
     /**
@@ -108,7 +110,8 @@ public:
     sub(SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Subscribe to the transaction feed, only receive the feed when particular account is affected.
+     * @brief Subscribe to the transaction feed, only receive the feed when particular account is
+     * affected.
      * @param subscriber
      * @param account The account to watch.
      */
@@ -116,7 +119,8 @@ public:
     sub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Subscribe to the transaction feed, only receive the feed when particular order book is affected.
+     * @brief Subscribe to the transaction feed, only receive the feed when particular order book is
+     * affected.
      * @param subscriber
      * @param book The order book to watch.
      */
@@ -131,8 +135,8 @@ public:
     subProposed(SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Subscribe to the transaction feed for proposed account, only receive the feed when particular account is
-     * affected.
+     * @brief Subscribe to the transaction feed for proposed account, only receive the feed when
+     * particular account is affected.
      * @param subscriber
      * @param account The account to watch.
      */

@@ -44,8 +44,8 @@
 namespace rpc {
 
 /**
- * @brief The ledger_data method retrieves contents of the specified ledger. You can iterate through several calls to
- * retrieve the entire contents of a single ledger version.
+ * @brief The ledger_data method retrieves contents of the specified ledger. You can iterate through
+ * several calls to retrieve the entire contents of a single ledger version.
  *
  * For more details see: https://xrpl.org/ledger_data.html
  */
@@ -76,8 +76,8 @@ public:
     /**
      * @brief A struct to hold the input data for the command
      *
-     * @note `outOfOrder` is only for Clio, there is no document, traverse via seq diff (outOfOrder implementation is
-     * copied from old rpc handler)
+     * @note `outOfOrder` is only for Clio, there is no document, traverse via seq diff (outOfOrder
+     * implementation is copied from old rpc handler)
      */
     struct Input {
         std::optional<std::string> ledgerHash;
@@ -97,7 +97,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    LedgerDataHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
+    LedgerDataHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+        : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 

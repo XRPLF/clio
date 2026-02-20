@@ -58,7 +58,8 @@ struct MakeServerSslContextFromConfigTestBundle {
     }
 };
 
-struct MakeServerSslContextFromConfigTest : testing::TestWithParam<MakeServerSslContextFromConfigTestBundle> {};
+struct MakeServerSslContextFromConfigTest
+    : testing::TestWithParam<MakeServerSslContextFromConfigTestBundle> {};
 
 TEST_P(MakeServerSslContextFromConfigTest, makeFromConfig)
 {
@@ -74,7 +75,9 @@ TEST_P(MakeServerSslContextFromConfigTest, makeFromConfig)
     auto const expectedServerSslContext = makeServerSslContext(config);
     if (GetParam().expectedError.has_value()) {
         ASSERT_FALSE(expectedServerSslContext.has_value());
-        EXPECT_THAT(expectedServerSslContext.error(), testing::HasSubstr(*GetParam().expectedError));
+        EXPECT_THAT(
+            expectedServerSslContext.error(), testing::HasSubstr(*GetParam().expectedError)
+        );
     } else {
         EXPECT_EQ(expectedServerSslContext.value().has_value(), GetParam().expectContext);
     }
@@ -95,14 +98,16 @@ INSTANTIATE_TEST_SUITE_P(
              .testName = "CertOnly",
              .certFile = "some_path",
              .keyFile = std::nullopt,
-             .expectedError = "Config entries 'ssl_cert_file' and 'ssl_key_file' must be set or unset together.",
+             .expectedError =
+                 "Config entries 'ssl_cert_file' and 'ssl_key_file' must be set or unset together.",
              .expectContext = false
          },
          MakeServerSslContextFromConfigTestBundle{
              .testName = "KeyOnly",
              .certFile = std::nullopt,
              .keyFile = "some_path",
-             .expectedError = "Config entries 'ssl_cert_file' and 'ssl_key_file' must be set or unset together.",
+             .expectedError =
+                 "Config entries 'ssl_cert_file' and 'ssl_key_file' must be set or unset together.",
              .expectContext = false
          },
          MakeServerSslContextFromConfigTestBundle{
@@ -151,7 +156,8 @@ struct MakeServerSslContextFromDataTestBundle {
     bool expectedSuccess;
 };
 
-struct MakeServerSslContextFromDataTest : testing::TestWithParam<MakeServerSslContextFromDataTestBundle> {};
+struct MakeServerSslContextFromDataTest
+    : testing::TestWithParam<MakeServerSslContextFromDataTestBundle> {};
 
 TEST_P(MakeServerSslContextFromDataTest, makeFromData)
 {

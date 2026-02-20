@@ -54,7 +54,10 @@ public:
      * @param ctx Thread pool for executing asynchronous operations
      * @param writerState Writer state interface for controlling write operations
      */
-    WriterDecider(boost::asio::thread_pool& ctx, std::unique_ptr<etl::WriterStateInterface> writerState);
+    WriterDecider(
+        boost::asio::thread_pool& ctx,
+        std::unique_ptr<etl::WriterStateInterface> writerState
+    );
 
     /**
      * @brief Handles cluster state changes and decides whether this node should be the writer.
@@ -66,7 +69,8 @@ public:
      * - Logs a warning if no nodes in the cluster are allowed to write
      *
      * @param selfId The UUID of the current node
-     * @param clusterData Shared pointer to current cluster data; may be empty if communication failed
+     * @param clusterData Shared pointer to current cluster data; may be empty if communication
+     * failed
      */
     void
     onNewState(ClioNode::CUuid selfId, std::shared_ptr<Backend::ClusterData const> clusterData);

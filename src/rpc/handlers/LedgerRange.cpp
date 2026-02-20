@@ -39,7 +39,11 @@ LedgerRangeHandler::process([[maybe_unused]] Context const& ctx) const
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerRangeHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    LedgerRangeHandler::Output const& output
+)
 {
     jv = boost::json::object{
         {JS(ledger_index_min), output.range.minSequence},

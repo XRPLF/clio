@@ -87,7 +87,11 @@ struct ProcessorTestBundle {
 
 struct FieldProcessorTests : SpecsTests, testing::WithParamInterface<ProcessorTestBundle> {
 protected:
-    FieldSpec spec_{"key", RequirementMockRef(requirementMock), RequirementMockRef(anotherRequirementMock)};
+    FieldSpec spec_{
+        "key",
+        RequirementMockRef(requirementMock),
+        RequirementMockRef(anotherRequirementMock)
+    };
     boost::json::value json_;
 };
 
@@ -188,7 +192,10 @@ TEST_P(FieldCheckerTests, FieldSpecWithCheck)
 }
 
 struct RpcSpecProcessTests : SpecsTests, testing::WithParamInterface<ProcessorTestBundle> {
-    RpcSpec spec{{"key1", RequirementMockRef(requirementMock)}, {"key2", RequirementMockRef(anotherRequirementMock)}};
+    RpcSpec spec{
+        {"key1", RequirementMockRef(requirementMock)},
+        {"key2", RequirementMockRef(anotherRequirementMock)}
+    };
     boost::json::value json;
 };
 

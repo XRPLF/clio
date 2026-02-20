@@ -40,8 +40,8 @@
 namespace rpc {
 
 /**
- * @brief The account_channels method returns information about an account's Payment Channels. This includes only
- * channels where the specified account is the channel's source, not the destination.
+ * @brief The account_channels method returns information about an account's Payment Channels. This
+ * includes only channels where the specified account is the channel's source, not the destination.
  * All information retrieved is relative to a particular version of the ledger.
  *
  * For more details see: https://xrpl.org/account_channels.html
@@ -124,7 +124,9 @@ public:
     {
         static auto const kRPC_SPEC = RpcSpec{
             {JS(account), validation::Required{}, validation::CustomValidators::accountValidator},
-            {JS(destination_account), validation::Type<std::string>{}, validation::CustomValidators::accountValidator},
+            {JS(destination_account),
+             validation::Type<std::string>{},
+             validation::CustomValidators::accountValidator},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(limit),
              validation::Type<uint32_t>{},

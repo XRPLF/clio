@@ -112,7 +112,8 @@ ETLService::makeETLService(
         state
     );
 
-    auto taskManagerProvider = std::make_shared<impl::TaskManagerProvider>(*ledgers, extractor, loader);
+    auto taskManagerProvider =
+        std::make_shared<impl::TaskManagerProvider>(*ledgers, extractor, loader);
 
     ret = std::make_shared<ETLService>(
         ctx,
@@ -131,7 +132,8 @@ ETLService::makeETLService(
         state
     );
 
-    // inject networkID into subscriptions, as transaction feed require it to inject CTID in response
+    // inject networkID into subscriptions, as transaction feed require it to inject CTID in
+    // response
     if (auto const etlState = ret->getETLState(); etlState)
         subscriptions->setNetworkID(etlState->networkID);
 
@@ -181,7 +183,8 @@ ETLService::ETLService(
     if (finishSequence_.has_value())
         LOG(log_.info()) << "Finish sequence: " << *finishSequence_;
 
-    LOG(log_.info()) << "Starting in " << (state_->isStrictReadonly ? "STRICT READONLY MODE" : "WRITE MODE");
+    LOG(log_.info()) << "Starting in "
+                     << (state_->isStrictReadonly ? "STRICT READONLY MODE" : "WRITE MODE");
 }
 
 ETLService::~ETLService()
@@ -213,7 +216,8 @@ ETLService::run()
         }
 
         auto const nextSequence = syncCacheWithDb();
-        LOG(log_.debug()) << "Database is populated. Starting monitor loop. sequence = " << nextSequence;
+        LOG(log_.debug()) << "Database is populated. Starting monitor loop. sequence = "
+                          << nextSequence;
 
         startMonitor(nextSequence);
 
@@ -290,7 +294,8 @@ ETLService::loadInitialLedgerIfNeeded()
     if (not rng.has_value()) {
         ASSERT(
             not state_->isStrictReadonly,
-            "Database is empty but this node is in strict readonly mode. Can't write initial ledger."
+            "Database is empty but this node is in strict readonly mode. Can't write initial "
+            "ledger."
         );
 
         LOG(log_.info()) << "Database is empty. Will download a ledger from the network.";
@@ -309,9 +314,11 @@ ETLService::loadInitialLedgerIfNeeded()
             auto [ledger, timeDiff] = ::util::timed<std::chrono::duration<double>>([this, seq]() {
                 return extractor_->extractLedgerOnly(seq).and_then(
                     [this, seq](auto&& data) -> std::optional<ripple::LedgerHeader> {
-                        // TODO: loadInitialLedger in balancer should be called fetchEdgeKeys or similar
+                        // TODO: loadInitialLedger in balancer should be called fetchEdgeKeys or
+                        // similar
                         auto res = balancer_->loadInitialLedger(seq, *initialLoadObserver_);
-                        if (not res.has_value() and res.error() == InitialLedgerLoadError::Cancelled) {
+                        if (not res.has_value() and
+                            res.error() == InitialLedgerLoadError::Cancelled) {
                             LOG(log_.debug()) << "Initial ledger load got cancelled";
                             return std::nullopt;
                         }
@@ -330,7 +337,8 @@ ETLService::loadInitialLedgerIfNeeded()
             }
 
             LOG(log_.debug()) << "Time to download and store ledger = " << timeDiff;
-            LOG(log_.info()) << "Finished loadInitialLedger. cache size = " << backend_->cache().size();
+            LOG(log_.info()) << "Finished loadInitialLedger. cache size = "
+                             << backend_->cache().size();
 
             return backend_->hardFetchLedgerRangeNoThrow();
         }
@@ -353,7 +361,8 @@ ETLService::syncCacheWithDb()
 {
     auto rng = backend_->hardFetchLedgerRangeNoThrow();
 
-    while (not backend_->cache().isDisabled() and rng->maxSequence > backend_->cache().latestLedgerSequence()) {
+    while (not backend_->cache().isDisabled() and
+           rng->maxSequence > backend_->cache().latestLedgerSequence()) {
         LOG(log_.info()) << "Syncing cache with DB. DB latest seq: " << rng->maxSequence
                          << ". Cache latest seq: " << backend_->cache().latestLedgerSequence();
         for (auto seq = backend_->cache().latestLedgerSequence(); seq <= rng->maxSequence; ++seq) {
@@ -443,8 +452,8 @@ ETLService::attemptTakeoverWriter()
 
     if (backend_->cache().latestLedgerSequence() != rng->maxSequence) {
         LOG(log_.info()) << "Wanted to take over the ETL writer seat but LedgerCache is outdated";
-        // Give ETL time to update LedgerCache. This method will be called because ClusterCommunication will likely to
-        // continue sending StartWriting signal every 1 second
+        // Give ETL time to update LedgerCache. This method will be called because
+        // ClusterCommunication will likely to continue sending StartWriting signal every 1 second
         return;
     }
 

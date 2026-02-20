@@ -30,8 +30,8 @@ namespace etl {
 
 /**
  * @brief This is a base class for any ETL service implementations.
- * @note A ETL service is responsible for continuously extracting data from a p2p node, and writing that data to the
- * databases.
+ * @note A ETL service is responsible for continuously extracting data from a p2p node, and writing
+ * that data to the databases.
  */
 struct ETLServiceInterface {
     virtual ~ETLServiceInterface() = default;

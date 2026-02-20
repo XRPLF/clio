@@ -60,7 +60,12 @@ struct MockHttpConnectionImpl : web::ng::impl::UpgradableConnection {
     MOCK_METHOD(void, close, (boost::asio::yield_context), (override));
 
     using IsUpgradeRequestedReturnType = std::expected<bool, web::ng::Error>;
-    MOCK_METHOD(IsUpgradeRequestedReturnType, isUpgradeRequested, (boost::asio::yield_context), (override));
+    MOCK_METHOD(
+        IsUpgradeRequestedReturnType,
+        isUpgradeRequested,
+        (boost::asio::yield_context),
+        (override)
+    );
 
     using UpgradeReturnType = std::expected<web::ng::ConnectionPtr, web::ng::Error>;
     using OptionalSslContext = std::optional<boost::asio::ssl::context>;

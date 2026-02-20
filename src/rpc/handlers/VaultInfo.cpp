@@ -50,8 +50,8 @@ namespace rpc {
 namespace {
 
 /**
- * @brief Ensures that the input contains either a `vaultID` alone, or both `owner` and `tnxSequence`.
- * Any other combination is considered malformed.
+ * @brief Ensures that the input contains either a `vaultID` alone, or both `owner` and
+ * `tnxSequence`. Any other combination is considered malformed.
  *
  * @param input The input object containing optional fields for the vault request.
  * @return Returns true if the input is valid, false otherwise.
@@ -130,11 +130,13 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
         return Error{Status{RippledError::rpcENTRY_NOT_FOUND, "vault object not found."}};
 
     ripple::STLedgerEntry const vaultSle{
-        ripple::SerialIter{vaultLedgerObject->data(), vaultLedgerObject->size()}, vaultKeylet.value().key
+        ripple::SerialIter{vaultLedgerObject->data(), vaultLedgerObject->size()},
+        vaultKeylet.value().key
     };
 
     auto const issuanceKeylet = ripple::keylet::mptIssuance(vaultSle[ripple::sfShareMPTID]).key;
-    auto const issuanceObject = sharedPtrBackend_->fetchLedgerObject(issuanceKeylet, lgrInfo.seq, ctx.yield);
+    auto const issuanceObject =
+        sharedPtrBackend_->fetchLedgerObject(issuanceKeylet, lgrInfo.seq, ctx.yield);
 
     if (not issuanceObject)
         return Error{Status{RippledError::rpcENTRY_NOT_FOUND, "issuance object not found."}};
@@ -148,17 +150,24 @@ VaultInfoHandler::process(VaultInfoHandler::Input const& input, Context const& c
     // https://github.com/XRPLF/rippled/pull/5224/files#diff-6cb544622c7942261f097d628f61f1c1fcf34a1bcfd954aedbada4238fc28f69R107
     Output response;
     response.vault = toBoostJson(vaultSle.getJson(ripple::JsonOptions::none));
-    response.vault.as_object()[JS(shares)] = toBoostJson(issuanceSle.getJson(ripple::JsonOptions::none));
+    response.vault.as_object()[JS(shares)] =
+        toBoostJson(issuanceSle.getJson(ripple::JsonOptions::none));
     response.ledgerIndex = lgrInfo.seq;
 
     return response;
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, VaultInfoHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    VaultInfoHandler::Output const& output
+)
 {
     jv = boost::json::object{
-        {JS(ledger_index), output.ledgerIndex}, {JS(validated), output.validated}, {JS(vault), output.vault}
+        {JS(ledger_index), output.ledgerIndex},
+        {JS(validated), output.validated},
+        {JS(vault), output.vault}
     };
 }
 

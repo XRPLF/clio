@@ -63,8 +63,9 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
     auto const limit = input.limit.value_or(NFTsByIssuerHandler::kLIMIT_DEFAULT);
 
     auto const issuer = accountFromStringStrict(input.issuer);
-    auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*issuer).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::account(*issuer).key, lgrInfo.seq, ctx.yield
+    );
 
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
@@ -73,8 +74,9 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
     if (input.marker)
         cursor = uint256{input.marker->c_str()};
 
-    auto const dbResponse =
-        sharedPtrBackend_->fetchNFTsByIssuer(*issuer, input.nftTaxon, lgrInfo.seq, limit, cursor, ctx.yield);
+    auto const dbResponse = sharedPtrBackend_->fetchNFTsByIssuer(
+        *issuer, input.nftTaxon, lgrInfo.seq, limit, cursor, ctx.yield
+    );
 
     auto output = NFTsByIssuerHandler::Output{};
 
@@ -108,7 +110,11 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTsByIssuerHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    NFTsByIssuerHandler::Output const& output
+)
 {
     jv = {
         {JS(issuer), output.issuer},

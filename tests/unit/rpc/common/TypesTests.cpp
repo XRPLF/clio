@@ -33,8 +33,13 @@ TEST(MaybeErrorTest, OperatorEquals)
     EXPECT_EQ(MaybeError{}, MaybeError{});
     EXPECT_NE(MaybeError{}, MaybeError{std::unexpected{Status{"Error"}}});
     EXPECT_NE(MaybeError{std::unexpected{Status{"Error"}}}, MaybeError{});
-    EXPECT_EQ(MaybeError{std::unexpected{Status{"Error"}}}, MaybeError{std::unexpected{Status{"Error"}}});
-    EXPECT_NE(MaybeError{std::unexpected{Status{"Error"}}}, MaybeError{std::unexpected{Status{"Another_error"}}});
+    EXPECT_EQ(
+        MaybeError{std::unexpected{Status{"Error"}}}, MaybeError{std::unexpected{Status{"Error"}}}
+    );
+    EXPECT_NE(
+        MaybeError{std::unexpected{Status{"Error"}}},
+        MaybeError{std::unexpected{Status{"Another_error"}}}
+    );
 }
 
 TEST(ReturnTypeTests, Constructor)

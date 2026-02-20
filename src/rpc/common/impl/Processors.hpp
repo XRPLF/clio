@@ -30,7 +30,11 @@ namespace rpc::impl {
 template <SomeHandler HandlerType>
 struct DefaultProcessor final {
     [[nodiscard]] ReturnType
-    operator()(HandlerType const& handler, boost::json::value const& value, Context const& ctx) const
+    operator()(
+        HandlerType const& handler,
+        boost::json::value const& value,
+        Context const& ctx
+    ) const
     {
         using boost::json::value_from;
         using boost::json::value_to;
@@ -49,7 +53,9 @@ struct DefaultProcessor final {
 
             // real handler is given expected Input, not json
             if (!ret) {
-                return ReturnType{Error{std::move(ret).error()}, std::move(warnings)};  // forward Status
+                return ReturnType{
+                    Error{std::move(ret).error()}, std::move(warnings)
+                };  // forward Status
             }
             return ReturnType{value_from(std::move(ret).value()), std::move(warnings)};
         } else if constexpr (SomeHandlerWithoutInput<HandlerType>) {
@@ -60,7 +66,8 @@ struct DefaultProcessor final {
             }
             return ReturnType{value_from(ret.value())};
         } else {
-            // when concept SomeHandlerWithInput and SomeHandlerWithoutInput not cover all Handler case
+            // when concept SomeHandlerWithInput and SomeHandlerWithoutInput not cover all Handler
+            // case
             static_assert(util::Unsupported<HandlerType>);
         }
     }

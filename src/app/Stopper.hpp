@@ -39,7 +39,8 @@
 namespace app {
 
 /**
- * @brief Application stopper class. On stop it will create a new thread to run all the shutdown tasks.
+ * @brief Application stopper class. On stop it will create a new thread to run all the shutdown
+ * tasks.
  */
 class Stopper {
     boost::asio::io_context ctx_;

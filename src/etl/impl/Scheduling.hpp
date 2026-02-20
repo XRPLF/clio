@@ -49,7 +49,10 @@ class ForwardScheduler : public SchedulerInterface {
 
 public:
     ForwardScheduler(ForwardScheduler const& other)
-        : ledgers_(other.ledgers_), startSeq_(other.startSeq_), maxSeq_(other.maxSeq_), seq_(other.seq_.load())
+        : ledgers_(other.ledgers_)
+        , startSeq_(other.startSeq_)
+        , maxSeq_(other.maxSeq_)
+        , seq_(other.seq_.load())
     {
     }
 
@@ -70,7 +73,9 @@ public:
 
         if (ledgers_.get().getMostRecent() >= currentSeq) {
             while (currentSeq < maxSeq_.value_or(kMAX)) {
-                if (seq_.compare_exchange_weak(currentSeq, currentSeq + 1u, std::memory_order_acq_rel)) {
+                if (seq_.compare_exchange_weak(
+                        currentSeq, currentSeq + 1u, std::memory_order_acq_rel
+                    )) {
                     return {{.priority = model::Task::Priority::Higher, .seq = currentSeq}};
                 }
             }
@@ -102,7 +107,9 @@ public:
     {
         uint32_t currentSeq = seq_;
         while (currentSeq > minSeq_) {
-            if (seq_.compare_exchange_weak(currentSeq, currentSeq - 1u, std::memory_order_acq_rel)) {
+            if (seq_.compare_exchange_weak(
+                    currentSeq, currentSeq - 1u, std::memory_order_acq_rel
+                )) {
                 return {{.priority = model::Task::Priority::Lower, .seq = currentSeq}};
             }
         }

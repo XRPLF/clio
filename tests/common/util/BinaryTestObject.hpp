@@ -140,11 +140,16 @@ static constexpr auto kDEFAULT_TXN_META =
     "066240000002540BE3E081146203F49C21D5D6E022CB16DE3538F24866"
     "2FC73CE1E1F1031000";
 
-static constexpr auto kDEFAULT_HASH = "6C7F69A6D25A13AC4A2E9145999F45D4674F939900017A96885FDC2757E9284E";
-static constexpr auto kDEFAULT_OBJ_KEY = "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960D";
+static constexpr auto kDEFAULT_HASH =
+    "6C7F69A6D25A13AC4A2E9145999F45D4674F939900017A96885FDC2757E9284E";
+static constexpr auto kDEFAULT_OBJ_KEY =
+    "B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960D";
 
 [[maybe_unused, nodiscard]] std::pair<std::string, std::string>
-createTxAndMetaBlobs(std::string metaStr = kDEFAULT_TXN_META, std::string txnStr = kDEFAULT_TXN_HEX);
+createTxAndMetaBlobs(
+    std::string metaStr = kDEFAULT_TXN_META,
+    std::string txnStr = kDEFAULT_TXN_HEX
+);
 
 [[maybe_unused, nodiscard]] std::pair<ripple::STTx, ripple::TxMeta>
 createTxAndMeta(

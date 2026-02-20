@@ -98,10 +98,15 @@ TEST_F(BackendInterfaceTest, FetchLedgerPageSuccessPath)
     EXPECT_FALSE(backend_->cache().isDisabled());
     EXPECT_CALL(*backend_, doFetchSuccessorKey(_, _, _))
         .Times(10)
-        .WillRepeatedly(Return(uint256{"1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"}));
-    EXPECT_CALL(*backend_, doFetchLedgerObjects(_, _, _)).WillOnce(Return(std::vector<Blob>(10, Blob{'s'})));
+        .WillRepeatedly(
+            Return(uint256{"1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"})
+        );
+    EXPECT_CALL(*backend_, doFetchLedgerObjects(_, _, _))
+        .WillOnce(Return(std::vector<Blob>(10, Blob{'s'})));
 
-    runSpawn([this](auto yield) { backend_->fetchLedgerPage(std::nullopt, kMAX_SEQ, 10, false, yield); });
+    runSpawn([this](auto yield) {
+        backend_->fetchLedgerPage(std::nullopt, kMAX_SEQ, 10, false, yield);
+    });
     EXPECT_FALSE(backend_->cache().isDisabled());
 }
 
@@ -115,7 +120,9 @@ TEST_F(BackendInterfaceTest, FetchLedgerPageDisablesCacheOnMissingData)
     EXPECT_FALSE(backend_->cache().isDisabled());
     EXPECT_CALL(*backend_, doFetchSuccessorKey(_, _, _))
         .Times(10)
-        .WillRepeatedly(Return(uint256{"1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"}));
+        .WillRepeatedly(
+            Return(uint256{"1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"})
+        );
     EXPECT_CALL(*backend_, doFetchLedgerObjects(_, _, _))
         .WillOnce(Return(
             std::vector<Blob>{
@@ -132,18 +139,25 @@ TEST_F(BackendInterfaceTest, FetchLedgerPageDisablesCacheOnMissingData)
             }
         ));
 
-    runSpawn([this](auto yield) { backend_->fetchLedgerPage(std::nullopt, kMAX_SEQ, 10, false, yield); });
+    runSpawn([this](auto yield) {
+        backend_->fetchLedgerPage(std::nullopt, kMAX_SEQ, 10, false, yield);
+    });
     EXPECT_TRUE(backend_->cache().isDisabled());
 }
 
-TEST_F(BackendInterfaceTest, FetchLedgerPageWithoutCorruptionDetectorDoesNotDisableCacheOnMissingData)
+TEST_F(
+    BackendInterfaceTest,
+    FetchLedgerPageWithoutCorruptionDetectorDoesNotDisableCacheOnMissingData
+)
 {
     using namespace ripple;
 
     EXPECT_FALSE(backend_->cache().isDisabled());
     EXPECT_CALL(*backend_, doFetchSuccessorKey(_, _, _))
         .Times(10)
-        .WillRepeatedly(Return(uint256{"1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"}));
+        .WillRepeatedly(
+            Return(uint256{"1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"})
+        );
     EXPECT_CALL(*backend_, doFetchLedgerObjects(_, _, _))
         .WillOnce(Return(
             std::vector<Blob>{
@@ -160,6 +174,8 @@ TEST_F(BackendInterfaceTest, FetchLedgerPageWithoutCorruptionDetectorDoesNotDisa
             }
         ));
 
-    runSpawn([this](auto yield) { backend_->fetchLedgerPage(std::nullopt, kMAX_SEQ, 10, false, yield); });
+    runSpawn([this](auto yield) {
+        backend_->fetchLedgerPage(std::nullopt, kMAX_SEQ, 10, false, yield);
+    });
     EXPECT_FALSE(backend_->cache().isDisabled());
 }

@@ -39,7 +39,11 @@ ArrayView::ArrayView(std::string_view prefix, ClioConfigDefinition const& config
 ValueView
 ArrayView::valueAt(std::size_t idx) const
 {
-    ASSERT(clioConfig_.get().contains(prefix_), "Current string {} is a prefix, not a key of config", prefix_);
+    ASSERT(
+        clioConfig_.get().contains(prefix_),
+        "Current string {} is a prefix, not a key of config",
+        prefix_
+    );
     ConfigValue const& val = clioConfig_.get().asArray(prefix_).at(idx);
     return ValueView{val};
 }

@@ -42,10 +42,9 @@
 namespace rpc {
 
 /**
- * @brief The account_objects command returns the raw ledger format for all objects owned by an account.
- * The results can be filtered by the type.
- * The valid types are: check, deposit_preauth, escrow, nft_offer, offer, payment_channel, signer_list, state (trust
- * line), did and ticket.
+ * @brief The account_objects command returns the raw ledger format for all objects owned by an
+ * account. The results can be filtered by the type. The valid types are: check, deposit_preauth,
+ * escrow, nft_offer, offer, payment_channel, signer_list, state (trust line), did and ticket.
  *
  * For more details see: https://xrpl.org/account_objects.html
  */

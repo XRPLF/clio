@@ -55,7 +55,8 @@ BookChangesHandler::process(BookChangesHandler::Input const& input, Context cons
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = expectedLgrInfo.value();
-    auto const transactions = sharedPtrBackend_->fetchAllTransactionsInLedger(lgrInfo.seq, ctx.yield);
+    auto const transactions =
+        sharedPtrBackend_->fetchAllTransactionsInLedger(lgrInfo.seq, ctx.yield);
 
     Output response;
     response.bookChanges = BookChanges::compute(transactions);
@@ -67,7 +68,11 @@ BookChangesHandler::process(BookChangesHandler::Input const& input, Context cons
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChangesHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    BookChangesHandler::Output const& output
+)
 {
     using boost::json::value_from;
 
@@ -100,7 +105,10 @@ tag_invoke(boost::json::value_to_tag<BookChangesHandler::Input>, boost::json::va
 }
 
 [[nodiscard]] boost::json::object
-computeBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions)
+computeBookChanges(
+    ripple::LedgerHeader const& lgrInfo,
+    std::vector<data::TransactionAndMetadata> const& transactions
+)
 {
     using boost::json::value_from;
 

@@ -72,7 +72,8 @@ struct MakeServerTestBundle {
     bool expectSuccess;
 };
 
-struct MakeServerTest : util::prometheus::WithPrometheus, testing::WithParamInterface<MakeServerTestBundle> {
+struct MakeServerTest : util::prometheus::WithPrometheus,
+                        testing::WithParamInterface<MakeServerTestBundle> {
 protected:
     boost::asio::io_context ioContext_;
 };
@@ -174,8 +175,10 @@ protected:
     uint32_t const serverPort_ = tests::util::generateFreePort();
 
     ClioConfigDefinition const config_{
-        {"server.ip", ConfigValue{ConfigType::String}.defaultValue("127.0.0.1").withConstraint(gValidateIp)},
-        {"server.port", ConfigValue{ConfigType::Integer}.defaultValue(serverPort_).withConstraint(gValidatePort)},
+        {"server.ip",
+         ConfigValue{ConfigType::String}.defaultValue("127.0.0.1").withConstraint(gValidateIp)},
+        {"server.port",
+         ConfigValue{ConfigType::Integer}.defaultValue(serverPort_).withConstraint(gValidatePort)},
         {"server.processing_policy", ConfigValue{ConfigType::String}.defaultValue("parallel")},
         {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
         {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
@@ -188,7 +191,9 @@ protected:
         {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()}
     };
 
-    Server::OnConnectCheck emptyOnConnectCheck_ = [](auto&&) -> std::expected<void, Response> { return {}; };
+    Server::OnConnectCheck emptyOnConnectCheck_ = [](auto&&) -> std::expected<void, Response> {
+        return {};
+    };
     std::expected<Server, std::string> server_ =
         makeServer(config_, emptyOnConnectCheck_, [](auto&&, auto&&) {}, [](auto&&) {}, ctx_);
 
@@ -196,23 +201,35 @@ protected:
     std::string const headerName_ = "Some-header";
     std::string const headerValue_ = "some value";
 
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         getHandler_;
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         postHandler_;
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         wsHandler_;
 };
 
 TEST_F(ServerTest, BadEndpoint)
 {
     boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::make_address("1.2.3.4"), 0};
-    util::TagDecoratorFactory const tagDecoratorFactory{
-        ClioConfigDefinition{{"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
-    };
+    util::TagDecoratorFactory const tagDecoratorFactory{ClioConfigDefinition{
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+    }};
     Server server{
         ctx_,
         endpoint,
@@ -258,8 +275,9 @@ TEST_F(ServerHttpTest, ClientDisconnects)
 {
     HttpAsyncClient client{ctx_};
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        auto expectedSuccess =
-            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        auto expectedSuccess = client.connect(
+            "127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100}
+        );
         [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         client.disconnect();
@@ -274,12 +292,15 @@ TEST_F(ServerHttpTest, ClientDisconnects)
 TEST_F(ServerHttpTest, OnConnectCheck)
 {
     auto const serverPort = tests::util::generateFreePort();
-    boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::make_address("0.0.0.0"), serverPort};
-    util::TagDecoratorFactory const tagDecoratorFactory{
-        ClioConfigDefinition{{"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
+    boost::asio::ip::tcp::endpoint const endpoint{
+        boost::asio::ip::make_address("0.0.0.0"), serverPort
     };
+    util::TagDecoratorFactory const tagDecoratorFactory{ClioConfigDefinition{
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+    }};
 
-    testing::StrictMock<testing::MockFunction<std::expected<void, Response>(Connection const&)>> onConnectCheck;
+    testing::StrictMock<testing::MockFunction<std::expected<void, Response>(Connection const&)>>
+        onConnectCheck;
 
     Server server{
         ctx_,
@@ -309,11 +330,13 @@ TEST_F(ServerHttpTest, OnConnectCheck)
                 return {};
             });
 
-        auto expectedSuccess =
-            client.connect("127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100});
+        auto expectedSuccess = client.connect(
+            "127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100}
+        );
         [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
-        // Have to send a request here because the server does async_detect_ssl() which waits for some data to appear
+        // Have to send a request here because the server does async_detect_ssl() which waits for
+        // some data to appear
         expectedSuccess = client.send(
             http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
             yield,
@@ -339,12 +362,15 @@ TEST_F(ServerHttpTest, OnConnectCheck)
 TEST_F(ServerHttpTest, OnConnectCheckFailed)
 {
     auto const serverPort = tests::util::generateFreePort();
-    boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::make_address("0.0.0.0"), serverPort};
-    util::TagDecoratorFactory const tagDecoratorFactory{
-        ClioConfigDefinition{{"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
+    boost::asio::ip::tcp::endpoint const endpoint{
+        boost::asio::ip::make_address("0.0.0.0"), serverPort
     };
+    util::TagDecoratorFactory const tagDecoratorFactory{ClioConfigDefinition{
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+    }};
 
-    testing::StrictMock<testing::MockFunction<std::expected<void, Response>(Connection const&)>> onConnectCheck;
+    testing::StrictMock<testing::MockFunction<std::expected<void, Response>(Connection const&)>>
+        onConnectCheck;
 
     Server server{
         ctx_,
@@ -366,17 +392,21 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
 
     EXPECT_CALL(onConnectCheck, Call).WillOnce([](Connection const& connection) {
         EXPECT_EQ(connection.ip(), "127.0.0.1");
-        return std::unexpected{
-            Response{http::status::too_many_requests, boost::json::object{{"error", "some error"}}, connection}
-        };
+        return std::unexpected{Response{
+            http::status::too_many_requests,
+            boost::json::object{{"error", "some error"}},
+            connection
+        }};
     });
 
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        auto expectedSuccess =
-            client.connect("127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100});
+        auto expectedSuccess = client.connect(
+            "127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100}
+        );
         [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
-        // Have to send a request here because the server does async_detect_ssl() which waits for some data to appear
+        // Have to send a request here because the server does async_detect_ssl() which waits for
+        // some data to appear
         expectedSuccess = client.send(
             http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
             yield,
@@ -403,10 +433,12 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
 TEST_F(ServerHttpTest, OnDisconnectHook)
 {
     auto const serverPort = tests::util::generateFreePort();
-    boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::make_address("0.0.0.0"), serverPort};
-    util::TagDecoratorFactory const tagDecoratorFactory{
-        ClioConfigDefinition{{"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
+    boost::asio::ip::tcp::endpoint const endpoint{
+        boost::asio::ip::make_address("0.0.0.0"), serverPort
     };
+    util::TagDecoratorFactory const tagDecoratorFactory{ClioConfigDefinition{
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+    }};
 
     testing::StrictMock<testing::MockFunction<void(Connection const&)>> onDisconnectHookMock;
 
@@ -433,11 +465,13 @@ TEST_F(ServerHttpTest, OnDisconnectHook)
 
         EXPECT_CALL(onDisconnectHookMock, Call).WillOnce([&timer](auto&&) { timer.cancel(); });
 
-        auto expectedSuccess =
-            client.connect("127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100});
+        auto expectedSuccess = client.connect(
+            "127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100}
+        );
         [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
-        // Have to send a request here because the server does async_detect_ssl() which waits for some data to appear
+        // Have to send a request here because the server does async_detect_ssl() which waits for
+        // some data to appear
         expectedSuccess = client.send(
             http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
             yield,
@@ -464,11 +498,13 @@ TEST_F(ServerHttpTest, ClientIsDisconnectedIfServerStopped)
 {
     HttpAsyncClient client{ctx_};
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        auto expectedSuccess =
-            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        auto expectedSuccess = client.connect(
+            "127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100}
+        );
         [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
-        // Have to send a request here because the server does async_detect_ssl() which waits for some data to appear
+        // Have to send a request here because the server does async_detect_ssl() which waits for
+        // some data to appear
         expectedSuccess = client.send(
             http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
             yield,
@@ -499,8 +535,9 @@ TEST_P(ServerHttpTest, RequestResponse)
     Response const response{http::status::ok, "some response", Request{request}};
 
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        auto expectedSuccess =
-            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        auto expectedSuccess = client.connect(
+            "127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100}
+        );
         [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
@@ -508,7 +545,9 @@ TEST_P(ServerHttpTest, RequestResponse)
             EXPECT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message();
 
             auto const expectedResponse = client.receive(yield, std::chrono::milliseconds{100});
-            [&]() { ASSERT_TRUE(expectedResponse.has_value()) << expectedResponse.error().message(); }();
+            [&]() {
+                ASSERT_TRUE(expectedResponse.has_value()) << expectedResponse.error().message();
+            }();
             EXPECT_EQ(expectedResponse->result(), http::status::ok);
             EXPECT_EQ(expectedResponse->body(), response.message());
         }
@@ -522,15 +561,17 @@ TEST_P(ServerHttpTest, RequestResponse)
 
     EXPECT_CALL(handler, Call)
         .Times(3)
-        .WillRepeatedly([&, response = response](Request const& receivedRequest, auto&&, auto&&, auto&&) {
-            EXPECT_TRUE(receivedRequest.isHttp());
-            EXPECT_EQ(receivedRequest.method(), GetParam().expectedMethod());
-            EXPECT_EQ(receivedRequest.message(), request.body());
-            EXPECT_EQ(receivedRequest.target(), request.target());
-            EXPECT_EQ(receivedRequest.headerValue(headerName_), request.at(headerName_));
+        .WillRepeatedly(
+            [&, response = response](Request const& receivedRequest, auto&&, auto&&, auto&&) {
+                EXPECT_TRUE(receivedRequest.isHttp());
+                EXPECT_EQ(receivedRequest.method(), GetParam().expectedMethod());
+                EXPECT_EQ(receivedRequest.message(), request.body());
+                EXPECT_EQ(receivedRequest.target(), request.target());
+                EXPECT_EQ(receivedRequest.headerValue(headerName_), request.at(headerName_));
 
-            return response;
-        });
+                return response;
+            }
+        );
 
     server_->run();
 
@@ -540,7 +581,10 @@ TEST_P(ServerHttpTest, RequestResponse)
 INSTANTIATE_TEST_SUITE_P(
     ServerHttpTests,
     ServerHttpTest,
-    testing::Values(ServerHttpTestBundle{"GET", http::verb::get}, ServerHttpTestBundle{"POST", http::verb::post}),
+    testing::Values(
+        ServerHttpTestBundle{"GET", http::verb::get},
+        ServerHttpTestBundle{"POST", http::verb::post}
+    ),
     tests::util::kNAME_GENERATOR
 );
 
@@ -549,8 +593,9 @@ TEST_F(ServerTest, WsClientDisconnects)
     WebSocketAsyncClient client{ctx_};
 
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        auto expectedSuccess =
-            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        auto expectedSuccess = client.connect(
+            "127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100}
+        );
         [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         client.close();
@@ -571,8 +616,9 @@ TEST_F(ServerTest, WsRequestResponse)
     Response const response{http::status::ok, "some response", Request{requestMessage_, headers}};
 
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        auto expectedSuccess =
-            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        auto expectedSuccess = client.connect(
+            "127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100}
+        );
         [&]() { ASSERT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message(); }();
 
         for ([[maybe_unused]] auto i : std::ranges::iota_view{0, 3}) {
@@ -580,7 +626,9 @@ TEST_F(ServerTest, WsRequestResponse)
             EXPECT_TRUE(expectedSuccess.has_value()) << expectedSuccess.error().message();
 
             auto const expectedResponse = client.receive(yield, std::chrono::milliseconds{100});
-            [&]() { ASSERT_TRUE(expectedResponse.has_value()) << expectedResponse.error().message(); }();
+            [&]() {
+                ASSERT_TRUE(expectedResponse.has_value()) << expectedResponse.error().message();
+            }();
             EXPECT_EQ(expectedResponse.value(), response.message());
         }
 
@@ -591,14 +639,16 @@ TEST_F(ServerTest, WsRequestResponse)
 
     EXPECT_CALL(wsHandler_, Call)
         .Times(3)
-        .WillRepeatedly([&, response = response](Request const& receivedRequest, auto&&, auto&&, auto&&) {
-            EXPECT_FALSE(receivedRequest.isHttp());
-            EXPECT_EQ(receivedRequest.method(), Request::Method::Websocket);
-            EXPECT_EQ(receivedRequest.message(), requestMessage_);
-            EXPECT_EQ(receivedRequest.target(), std::nullopt);
+        .WillRepeatedly(
+            [&, response = response](Request const& receivedRequest, auto&&, auto&&, auto&&) {
+                EXPECT_FALSE(receivedRequest.isHttp());
+                EXPECT_EQ(receivedRequest.method(), Request::Method::Websocket);
+                EXPECT_EQ(receivedRequest.message(), requestMessage_);
+                EXPECT_EQ(receivedRequest.target(), std::nullopt);
 
-            return response;
-        });
+                return response;
+            }
+        );
 
     server_->run();
 
@@ -609,10 +659,14 @@ TEST_F(ServerTest, WsClientIsDisconnectedIfServerStopped)
 {
     WebSocketAsyncClient client{ctx_};
     util::spawn(ctx_, [&](boost::asio::yield_context yield) {
-        auto expectedSuccess =
-            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        auto expectedSuccess = client.connect(
+            "127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100}
+        );
         EXPECT_FALSE(expectedSuccess.has_value());
-        EXPECT_EQ(expectedSuccess.error().value(), static_cast<int>(boost::beast::websocket::error::upgrade_declined));
+        EXPECT_EQ(
+            expectedSuccess.error().value(),
+            static_cast<int>(boost::beast::websocket::error::upgrade_declined)
+        );
 
         ctx_.stop();
     });

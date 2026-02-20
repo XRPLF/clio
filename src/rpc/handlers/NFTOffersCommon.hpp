@@ -99,7 +99,9 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const kRPC_SPEC = RpcSpec{
-            {JS(nft_id), validation::Required{}, validation::CustomValidators::uint256HexStringValidator},
+            {JS(nft_id),
+             validation::Required{},
+             validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
             {JS(limit),

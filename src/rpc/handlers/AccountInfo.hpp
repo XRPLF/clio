@@ -42,7 +42,8 @@
 namespace rpc {
 
 /**
- * @brief The account_info command retrieves information about an account, its activity, and its XRP balance.
+ * @brief The account_info command retrieves information about an account, its activity, and its XRP
+ * balance.
  *
  * For more details see: https://xrpl.org/account_info.html
  */
@@ -116,7 +117,8 @@ public:
             {JS(strict), check::Deprecated{}}
         };
 
-        static auto const kRPC_SPEC = RpcSpec{kRPC_SPEC_V1, {{JS(signer_lists), validation::Type<bool>{}}}};
+        static auto const kRPC_SPEC =
+            RpcSpec{kRPC_SPEC_V1, {{JS(signer_lists), validation::Type<bool>{}}}};
 
         return apiVersion == 1 ? kRPC_SPEC_V1 : kRPC_SPEC;
     }

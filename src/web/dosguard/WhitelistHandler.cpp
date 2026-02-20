@@ -78,14 +78,20 @@ Whitelist::isWhiteListed(std::string_view ip) const
 }
 
 bool
-Whitelist::isInV4Subnet(boost::asio::ip::address const& addr, boost::asio::ip::network_v4 const& subnet)
+Whitelist::isInV4Subnet(
+    boost::asio::ip::address const& addr,
+    boost::asio::ip::network_v4 const& subnet
+)
 {
     auto const range = subnet.hosts();
     return range.find(addr.to_v4()) != range.end();
 }
 
 bool
-Whitelist::isInV6Subnet(boost::asio::ip::address const& addr, boost::asio::ip::network_v6 const& subnet)
+Whitelist::isInV6Subnet(
+    boost::asio::ip::address const& addr,
+    boost::asio::ip::network_v6 const& subnet
+)
 {
     auto const range = subnet.hosts();
     return range.find(addr.to_v6()) != range.end();

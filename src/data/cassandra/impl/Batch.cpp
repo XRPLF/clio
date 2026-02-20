@@ -44,7 +44,8 @@ namespace data::cassandra::impl {
  * UNLOGGED: For performance. Sends many separate updates in one network trip to be fast.
  * Use this for bulk-loading unrelated data, but know there's NO all-or-nothing guarantee.
  *
- * More info here: https://docs.datastax.com/en/developer/cpp-driver-dse/1.10/features/basics/batches/index.html
+ * More info here:
+ * https://docs.datastax.com/en/developer/cpp-driver-dse/1.10/features/basics/batches/index.html
  */
 Batch::Batch(std::vector<Statement> const& statements)
     : ManagedObject{cass_batch_new(CASS_BATCH_TYPE_UNLOGGED), kBATCH_DELETER}

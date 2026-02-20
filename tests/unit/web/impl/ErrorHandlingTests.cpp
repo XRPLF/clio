@@ -57,8 +57,9 @@ struct ErrorHandlingComposeErrorTestBundle {
     boost::json::object expectedResult;
 };
 
-struct ErrorHandlingComposeErrorTest : ErrorHandlingTests,
-                                       testing::WithParamInterface<ErrorHandlingComposeErrorTestBundle> {};
+struct ErrorHandlingComposeErrorTest
+    : ErrorHandlingTests,
+      testing::WithParamInterface<ErrorHandlingComposeErrorTestBundle> {};
 
 TEST_P(ErrorHandlingComposeErrorTest, composeError)
 {
@@ -132,14 +133,17 @@ struct ErrorHandlingSendErrorTestBundle {
 };
 
 struct ErrorHandlingSendErrorTest : ErrorHandlingTests,
-                                    testing::WithParamInterface<ErrorHandlingSendErrorTestBundle> {};
+                                    testing::WithParamInterface<ErrorHandlingSendErrorTestBundle> {
+};
 
 TEST_P(ErrorHandlingSendErrorTest, sendError)
 {
     connection_->upgraded = GetParam().connectionUpgraded;
     ErrorHelper const errorHelper{connection_};
 
-    EXPECT_CALL(*connection_, send(std::string{GetParam().expectedMessage}, GetParam().expectedStatus));
+    EXPECT_CALL(
+        *connection_, send(std::string{GetParam().expectedMessage}, GetParam().expectedStatus)
+    );
     errorHelper.sendError(GetParam().status);
 }
 
@@ -285,7 +289,10 @@ TEST_F(ErrorHandlingTests, sendJsonParsingError_NotUpgradedConnection)
     ErrorHelper const errorHelper{connection_};
     EXPECT_CALL(
         *connection_,
-        send(std::string{"Unable to parse JSON from the request"}, boost::beast::http::status::bad_request)
+        send(
+            std::string{"Unable to parse JSON from the request"},
+            boost::beast::http::status::bad_request
+        )
     );
     errorHelper.sendJsonParsingError();
 }

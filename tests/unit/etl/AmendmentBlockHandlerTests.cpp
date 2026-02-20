@@ -43,7 +43,9 @@ protected:
 TEST_F(AmendmentBlockHandlerTests, CallToNotifyAmendmentBlockedSetsStateAndRepeatedlyCallsAction)
 {
     static constexpr auto kMAX_ITERATIONS = 10uz;
-    etl::impl::AmendmentBlockHandler handler{ctx_, state_, std::chrono::nanoseconds{1}, actionMock_.AsStdFunction()};
+    etl::impl::AmendmentBlockHandler handler{
+        ctx_, state_, std::chrono::nanoseconds{1}, actionMock_.AsStdFunction()
+    };
     auto counter = 0uz;
     std::binary_semaphore stop{0};
 
@@ -66,5 +68,6 @@ TEST_F(DefaultAmendmentBlockActionTest, Call)
 {
     AmendmentBlockHandler::kDEFAULT_AMENDMENT_BLOCK_ACTION();
     auto const loggerString = getLoggerString();
-    EXPECT_TRUE(loggerString.starts_with("cri:ETL - Can't process new ledgers")) << "LoggerString " << loggerString;
+    EXPECT_TRUE(loggerString.starts_with("cri:ETL - Can't process new ledgers"))
+        << "LoggerString " << loggerString;
 }

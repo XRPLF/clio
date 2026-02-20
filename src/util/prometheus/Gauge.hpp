@@ -31,7 +31,8 @@
 namespace util::prometheus {
 
 /**
- * @brief A prometheus gauge metric implementation. It can be increased, decreased or set to a value.
+ * @brief A prometheus gauge metric implementation. It can be increased, decreased or set to a
+ * value.
  *
  * @tparam NumberType The type of the value of the gauge
  */

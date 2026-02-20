@@ -76,9 +76,9 @@ mockLedgerObject(
         ripple::Blob(8, 'a'),
         kRANGE_MAX - 4,
         ripple::uint256{tx},
-        createPriceDataSeries(
-            {createOraclePriceData(price, ripple::to_currency("USD"), ripple::to_currency("XRP"), scale)}
-        )
+        createPriceDataSeries({createOraclePriceData(
+            price, ripple::to_currency("USD"), ripple::to_currency("XRP"), scale
+        )})
     );
 
     auto const oracleIndex = ripple::keylet::oracle(getAccountIdWithString(account), docId).key;
@@ -103,8 +103,9 @@ struct GetAggregatePriceParamTestCaseBundle {
 };
 
 // parameterized test cases for parameters check
-struct GetAggregatePriceParameterTest : public RPCGetAggregatePriceHandlerTest,
-                                        public WithParamInterface<GetAggregatePriceParamTestCaseBundle> {};
+struct GetAggregatePriceParameterTest
+    : public RPCGetAggregatePriceHandlerTest,
+      public WithParamInterface<GetAggregatePriceParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -426,7 +427,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OverOraclesMax)
 
     for (auto i = 0; i < maxOracles + 1; ++i) {
         req.at("oracles").as_array().push_back(
-            json::object{{"account", "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD"}, {"oracle_document_id", 2}}
+            json::object{
+                {"account", "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD"}, {"oracle_document_id", 2}
+            }
         );
     }
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
@@ -639,9 +642,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewLedgerObjectHasNoPricePair)
             123,
             1,
             4321u,
-            createPriceDataSeries(
-                {createOraclePriceData(1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2)}
-            ),
+            createPriceDataSeries({createOraclePriceData(
+                1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2
+            )}),
             kINDEX,
             true,
             kTX2
@@ -841,7 +844,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _))
         .WillOnce(Return(createLedgerHeader(kLEDGER_HASH, kRANGE_MAX)));
 
-    // prepare 4 prices, when trim is 25, the lowest(documentId1) and highest(documentId3) price will be removed
+    // prepare 4 prices, when trim is 25, the lowest(documentId1) and highest(documentId3) price
+    // will be removed
     constexpr auto kDOCUMENT_ID1 = 1;
     constexpr auto kDOCUMENT_ID2 = 2;
     constexpr auto kDOCUMENT_ID3 = 3;
@@ -925,8 +929,10 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoOracleEntryFound)
         .WillOnce(Return(createLedgerHeader(kLEDGER_HASH, kRANGE_MAX)));
 
     constexpr auto kDOCUMENT_ID = 1;
-    auto const oracleIndex = ripple::keylet::oracle(getAccountIdWithString(kACCOUNT), kDOCUMENT_ID).key;
-    EXPECT_CALL(*backend_, doFetchLedgerObject(oracleIndex, kRANGE_MAX, _)).WillOnce(Return(std::nullopt));
+    auto const oracleIndex =
+        ripple::keylet::oracle(getAccountIdWithString(kACCOUNT), kDOCUMENT_ID).key;
+    EXPECT_CALL(*backend_, doFetchLedgerObject(oracleIndex, kRANGE_MAX, _))
+        .WillOnce(Return(std::nullopt));
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend_}};
     auto const req = json::parse(
@@ -1323,7 +1329,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
         .WillOnce(Return(createLedgerHeader(kLEDGER_HASH, kRANGE_MAX)));
 
     constexpr auto kDOCUMENT_ID = 1;
-    auto const oracleIndex = ripple::keylet::oracle(getAccountIdWithString(kACCOUNT), kDOCUMENT_ID).key;
+    auto const oracleIndex =
+        ripple::keylet::oracle(getAccountIdWithString(kACCOUNT), kDOCUMENT_ID).key;
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID, kTX1, 1e3, 2);  // 10
     // return a tx which contains NewFields
     EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256(kTX1), _))
@@ -1333,9 +1340,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
             123,
             1,
             4321u,
-            createPriceDataSeries(
-                {createOraclePriceData(1e3, ripple::to_currency("JPY"), ripple::to_currency("XRP"), 2)}
-            ),
+            createPriceDataSeries({createOraclePriceData(
+                1e3, ripple::to_currency("JPY"), ripple::to_currency("XRP"), 2
+            )}),
             ripple::to_string(oracleIndex),
             false,
             kTX1
@@ -1389,7 +1396,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
         .WillOnce(Return(createLedgerHeader(kLEDGER_HASH, kRANGE_MAX)));
 
     constexpr auto kDOCUMENT_ID = 1;
-    auto const oracleIndex = ripple::keylet::oracle(getAccountIdWithString(kACCOUNT), kDOCUMENT_ID).key;
+    auto const oracleIndex =
+        ripple::keylet::oracle(getAccountIdWithString(kACCOUNT), kDOCUMENT_ID).key;
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID, kTX1, 1e3, 2);  // 10
 
     EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256(kTX1), _))
@@ -1399,9 +1407,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
             123,
             1,
             4321u,
-            createPriceDataSeries(
-                {createOraclePriceData(1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2)}
-            ),
+            createPriceDataSeries({createOraclePriceData(
+                1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2
+            )}),
             ripple::to_string(oracleIndex),
             false,
             kTX2
@@ -1414,9 +1422,9 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
             123,
             1,
             4321u,
-            createPriceDataSeries(
-                {createOraclePriceData(1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2)}
-            ),
+            createPriceDataSeries({createOraclePriceData(
+                1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2
+            )}),
             ripple::to_string(oracleIndex),
             false,
             kTX2

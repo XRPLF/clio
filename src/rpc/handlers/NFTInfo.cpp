@@ -86,7 +86,11 @@ NFTInfoHandler::process(NFTInfoHandler::Input const& input, Context const& ctx) 
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTInfoHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    NFTInfoHandler::Output const& output
+)
 {
     // TODO: use JStrings when they become available
     jv = boost::json::object{

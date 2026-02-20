@@ -71,7 +71,9 @@ TEST_F(ConfigValueTest, defaultValueWithDescription)
 
 TEST_F(ConfigValueTest, invalidDefaultValue)
 {
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto const a = ConfigValue{ConfigType::String}.defaultValue(33); });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto const a = ConfigValue{ConfigType::String}.defaultValue(33);
+    });
 }
 
 TEST_F(ConfigValueTest, setValueWrongType)
@@ -133,7 +135,8 @@ TEST_F(ConfigValueConstraintTest, defaultValueWithConstraintCheckError)
     EXPECT_CLIO_ASSERT_FAIL({
         EXPECT_CALL(constraint, checkTypeImpl).WillOnce(testing::Return(std::nullopt));
         EXPECT_CALL(constraint, checkValueImpl).WillOnce(testing::Return(Error{"value error"}));
-        [[maybe_unused]] auto const cv = ConfigValue{ConfigType::Integer}.defaultValue(123).withConstraint(constraint);
+        [[maybe_unused]] auto const cv =
+            ConfigValue{ConfigType::Integer}.defaultValue(123).withConstraint(constraint);
     });
 }
 
@@ -154,10 +157,13 @@ TEST_F(ConstraintTest, SetValuesOnPortConstraint)
     EXPECT_TRUE(err.has_value());
     EXPECT_EQ(err->error, "Unknown_key Port does not satisfy the constraint bounds");
     EXPECT_TRUE(cvPort.setValue(33.33).has_value());
-    EXPECT_EQ(cvPort.setValue(33.33).value().error, "Unknown_key value does not match type integer");
+    EXPECT_EQ(
+        cvPort.setValue(33.33).value().error, "Unknown_key value does not match type integer"
+    );
     EXPECT_FALSE(cvPort.setValue(1).has_value());
 
-    auto cvPort2 = ConfigValue{ConfigType::String}.defaultValue("4444").withConstraint(gValidatePort);
+    auto cvPort2 =
+        ConfigValue{ConfigType::String}.defaultValue("4444").withConstraint(gValidatePort);
     auto const strPortError = cvPort2.setValue("100000");
     EXPECT_TRUE(strPortError.has_value());
     EXPECT_EQ(strPortError->error, "Unknown_key Port does not satisfy the constraint bounds");
@@ -170,7 +176,10 @@ TEST_F(ConstraintTest, OneOfConstraintOneValue)
     EXPECT_FALSE(databaseConstraint.checkConstraint("tracer").has_value());
 
     EXPECT_TRUE(databaseConstraint.checkConstraint(345).has_value());
-    EXPECT_EQ(databaseConstraint.checkConstraint(345)->error, R"(Key "database.type"'s value must be a string)");
+    EXPECT_EQ(
+        databaseConstraint.checkConstraint(345)->error,
+        R"(Key "database.type"'s value must be a string)"
+    );
 
     EXPECT_TRUE(databaseConstraint.checkConstraint("123.44").has_value());
     EXPECT_EQ(
@@ -228,12 +237,15 @@ TEST_F(ConstraintTest, positiveNumConstraint)
     EXPECT_EQ(numCons.checkConstraint(true)->error, fmt::format("Number must be of type integer"));
 
     EXPECT_TRUE(numCons.checkConstraint(8));
-    EXPECT_EQ(numCons.checkConstraint(8)->error, fmt::format("Number must be between {} and {}", 0, 5));
+    EXPECT_EQ(
+        numCons.checkConstraint(8)->error, fmt::format("Number must be between {} and {}", 0, 5)
+    );
 }
 
 TEST_F(ConstraintTest, SetValuesOnNumberConstraint)
 {
-    auto positiveNum = ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint16);
+    auto positiveNum =
+        ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint16);
     auto const err = positiveNum.setValue(-22, "key");
     EXPECT_TRUE(err.has_value());
     EXPECT_EQ(err->error, fmt::format("key Number must be between {} and {}", 1, 65535));
@@ -247,8 +259,12 @@ TEST_F(ConstraintTest, PositiveDoubleConstraint)
     EXPECT_FALSE(doubleCons.checkConstraint(5.54));
     EXPECT_FALSE(doubleCons.checkConstraint(3));
     EXPECT_TRUE(doubleCons.checkConstraint("-5"));
-    EXPECT_EQ(doubleCons.checkConstraint("-5")->error, "Double number must be of type int or double");
-    EXPECT_EQ(doubleCons.checkConstraint(-5.6)->error, "Double number must be greater than or equal to 0");
+    EXPECT_EQ(
+        doubleCons.checkConstraint("-5")->error, "Double number must be of type int or double"
+    );
+    EXPECT_EQ(
+        doubleCons.checkConstraint(-5.6)->error, "Double number must be greater than or equal to 0"
+    );
     EXPECT_FALSE(doubleCons.checkConstraint(12.1));
 }
 
@@ -257,7 +273,8 @@ struct ConstraintTestBundle {
     Constraint const& constraint;
 };
 
-struct ConstraintAssertTest : common::util::WithMockAssert, testing::WithParamInterface<ConstraintTestBundle> {};
+struct ConstraintAssertTest : common::util::WithMockAssert,
+                              testing::WithParamInterface<ConstraintTestBundle> {};
 
 INSTANTIATE_TEST_SUITE_P(
     EachConstraints,
@@ -283,24 +300,31 @@ TEST_P(ConstraintAssertTest, TestEachConstraint)
 {
     EXPECT_CLIO_ASSERT_FAIL({
         [[maybe_unused]] auto const a =
-            ConfigValue{ConfigType::Boolean}.defaultValue(true).withConstraint(GetParam().constraint);
+            ConfigValue{ConfigType::Boolean}.defaultValue(true).withConstraint(
+                GetParam().constraint
+            );
     });
 }
 
 TEST_F(ConstraintAssertTest, SetInvalidValueTypeStringAndBool)
 {
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto a = ConfigValue{ConfigType::String}.defaultValue(33).withConstraint(gValidateLoadMode);
+        [[maybe_unused]] auto a =
+            ConfigValue{ConfigType::String}.defaultValue(33).withConstraint(gValidateLoadMode);
     });
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto a = ConfigValue{ConfigType::Boolean}.defaultValue(-66); });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto a = ConfigValue{ConfigType::Boolean}.defaultValue(-66);
+    });
 }
 
 TEST_F(ConstraintAssertTest, OutOfBounceIntegerConstraint)
 {
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto a = ConfigValue{ConfigType::Integer}.defaultValue(999999).withConstraint(gValidateUint16);
+        [[maybe_unused]] auto a =
+            ConfigValue{ConfigType::Integer}.defaultValue(999999).withConstraint(gValidateUint16);
     });
     EXPECT_CLIO_ASSERT_FAIL({
-        [[maybe_unused]] auto a = ConfigValue{ConfigType::Integer}.defaultValue(-66).withConstraint(gValidateUint32);
+        [[maybe_unused]] auto a =
+            ConfigValue{ConfigType::Integer}.defaultValue(-66).withConstraint(gValidateUint32);
     });
 }

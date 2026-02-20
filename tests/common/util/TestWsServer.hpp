@@ -69,7 +69,9 @@ public:
     headers() const;
 
     void
-    setControlFrameCallback(std::function<void(boost::beast::websocket::frame_type, std::string_view)> callback);
+    setControlFrameCallback(
+        std::function<void(boost::beast::websocket::frame_type, std::string_view)> callback
+    );
 
     void
     resetControlFrameCallback();

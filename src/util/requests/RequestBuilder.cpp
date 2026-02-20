@@ -53,7 +53,8 @@ namespace http = beast::http;
 namespace asio = boost::asio;
 using tcp = asio::ip::tcp;
 
-RequestBuilder::RequestBuilder(std::string host, std::string port) : host_(std::move(host)), port_(std::move(port))
+RequestBuilder::RequestBuilder(std::string host, std::string port)
+    : host_(std::move(host)), port_(std::move(port))
 {
     request_.set(http::field::host, host_);
     request_.target("/");
@@ -164,7 +165,8 @@ RequestBuilder::doRequest(asio::yield_context yield, beast::http::verb method)
     if (result.has_value())
         return result;
 
-    LOG(log_.debug()) << "SSL request failed: " << result.error().message() << ". Falling back to plain request.";
+    LOG(log_.debug()) << "SSL request failed: " << result.error().message()
+                      << ". Falling back to plain request.";
     return doPlainRequest(yield, method);
 }
 
@@ -179,7 +181,11 @@ RequestBuilder::doRequest(asio::yield_context yield, beast::http::verb method)
  */
 template <typename StreamDataType>
 std::expected<std::string, RequestError>
-RequestBuilder::doRequestImpl(StreamDataType&& streamData, asio::yield_context yield, http::verb const method)
+RequestBuilder::doRequestImpl(
+    StreamDataType&& streamData,
+    asio::yield_context yield,
+    http::verb const method
+)
 {
     auto executor = asio::get_associated_executor(yield);
 

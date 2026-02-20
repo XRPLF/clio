@@ -79,7 +79,8 @@ struct Settings {
     bool enableLog = false;
 
     /** @brief Connect timeout specified in milliseconds */
-    std::chrono::milliseconds connectionTimeout = std::chrono::milliseconds{kDEFAULT_CONNECTION_TIMEOUT};
+    std::chrono::milliseconds connectionTimeout =
+        std::chrono::milliseconds{kDEFAULT_CONNECTION_TIMEOUT};
 
     /** @brief Request timeout specified in milliseconds */
     std::chrono::milliseconds requestTimeout = std::chrono::milliseconds{0};  // no timeout at all
@@ -106,25 +107,31 @@ struct Settings {
     Provider provider = kDEFAULT_PROVIDER;
 
     /** @brief Size of the IO queue */
-    std::optional<uint32_t> queueSizeIO = std::nullopt;  // NOLINT(readability-redundant-member-init)
+    std::optional<uint32_t> queueSizeIO =
+        std::nullopt;  // NOLINT(readability-redundant-member-init)
 
     /** @brief SSL certificate */
-    std::optional<std::string> certificate = std::nullopt;  // NOLINT(readability-redundant-member-init)
+    std::optional<std::string> certificate =
+        std::nullopt;  // NOLINT(readability-redundant-member-init)
 
     /** @brief Username/login */
-    std::optional<std::string> username = std::nullopt;  // NOLINT(readability-redundant-member-init)
+    std::optional<std::string> username =
+        std::nullopt;  // NOLINT(readability-redundant-member-init)
 
     /** @brief Password to match the `username` */
-    std::optional<std::string> password = std::nullopt;  // NOLINT(readability-redundant-member-init)
+    std::optional<std::string> password =
+        std::nullopt;  // NOLINT(readability-redundant-member-init)
 
     /**
-     * @brief Creates a new Settings object as a copy of the current one with overridden contact points.
+     * @brief Creates a new Settings object as a copy of the current one with overridden contact
+     * points.
      */
     Settings
     withContactPoints(std::string_view contactPoints)
     {
         auto tmp = *this;
-        tmp.connectionInfo = ContactPoints{.contactPoints = std::string{contactPoints}, .port = std::nullopt};
+        tmp.connectionInfo =
+            ContactPoints{.contactPoints = std::string{contactPoints}, .port = std::nullopt};
         return tmp;
     }
 

@@ -64,8 +64,9 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
-    auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+    );
 
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
@@ -91,15 +92,23 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
     Output response;
     auto const addToResponse = [&](ripple::SLE&& sle) {
         if (not typeFilter or
-            std::find(std::begin(typeFilter.value()), std::end(typeFilter.value()), sle.getType()) !=
-                std::end(typeFilter.value())) {
+            std::find(
+                std::begin(typeFilter.value()), std::end(typeFilter.value()), sle.getType()
+            ) != std::end(typeFilter.value())) {
             response.accountObjects.push_back(std::move(sle));
         }
         return true;
     };
 
     auto const expectedNext = traverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse, true
+        *sharedPtrBackend_,
+        *accountID,
+        lgrInfo.seq,
+        input.limit,
+        input.marker,
+        ctx.yield,
+        addToResponse,
+        true
     );
 
     if (!expectedNext.has_value())
@@ -119,7 +128,11 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountObjectsHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountObjectsHandler::Output const& output
+)
 {
     auto objects = boost::json::array{};
     std::ranges::transform(
@@ -160,8 +173,9 @@ tag_invoke(boost::json::value_to_tag<AccountObjectsHandler::Input>, boost::json:
     }
 
     if (jsonObject.contains(JS(type))) {
-        input.type =
-            util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(boost::json::value_to<std::string>(jv.at(JS(type))));
+        input.type = util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(
+            boost::json::value_to<std::string>(jv.at(JS(type)))
+        );
     }
 
     if (jsonObject.contains(JS(limit)))

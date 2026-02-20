@@ -66,23 +66,31 @@ public:
                 switch (*clioCode) {
                     case rpc::ClioError::RpcInvalidApiVersion:
                         connection_->send(
-                            std::string{rpc::getErrorInfo(*clioCode).error}, boost::beast::http::status::bad_request
+                            std::string{rpc::getErrorInfo(*clioCode).error},
+                            boost::beast::http::status::bad_request
                         );
                         break;
                     case rpc::ClioError::RpcCommandIsMissing:
                         connection_->send("Null method", boost::beast::http::status::bad_request);
                         break;
                     case rpc::ClioError::RpcCommandIsEmpty:
-                        connection_->send("method is empty", boost::beast::http::status::bad_request);
+                        connection_->send(
+                            "method is empty", boost::beast::http::status::bad_request
+                        );
                         break;
                     case rpc::ClioError::RpcCommandNotString:
-                        connection_->send("method is not string", boost::beast::http::status::bad_request);
+                        connection_->send(
+                            "method is not string", boost::beast::http::status::bad_request
+                        );
                         break;
                     case rpc::ClioError::RpcParamsUnparsable:
-                        connection_->send("params unparsable", boost::beast::http::status::bad_request);
+                        connection_->send(
+                            "params unparsable", boost::beast::http::status::bad_request
+                        );
                         break;
 
-                    // others are not applicable but we want a compilation error next time we add one
+                    // others are not applicable but we want a compilation error next time we add
+                    // one
                     case rpc::ClioError::RpcUnknownOption:
                     case rpc::ClioError::RpcMalformedCurrency:
                     case rpc::ClioError::RpcMalformedRequest:
@@ -101,7 +109,10 @@ public:
                         break;
                 }
             } else {
-                connection_->send(boost::json::serialize(composeError(err)), boost::beast::http::status::bad_request);
+                connection_->send(
+                    boost::json::serialize(composeError(err)),
+                    boost::beast::http::status::bad_request
+                );
             }
         }
     }
@@ -119,7 +130,8 @@ public:
     sendNotReadyError() const
     {
         connection_->send(
-            boost::json::serialize(composeError(rpc::RippledError::rpcNOT_READY)), boost::beast::http::status::ok
+            boost::json::serialize(composeError(rpc::RippledError::rpcNOT_READY)),
+            boost::beast::http::status::ok
         );
     }
 
@@ -128,7 +140,8 @@ public:
     {
         if (connection_->upgraded) {
             connection_->send(
-                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcTOO_BUSY)), boost::beast::http::status::ok
+                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcTOO_BUSY)),
+                boost::beast::http::status::ok
             );
         } else {
             connection_->send(
@@ -142,10 +155,13 @@ public:
     sendJsonParsingError() const
     {
         if (connection_->upgraded) {
-            connection_->send(boost::json::serialize(rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX)));
+            connection_->send(
+                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX))
+            );
         } else {
             connection_->send(
-                fmt::format("Unable to parse JSON from the request"), boost::beast::http::status::bad_request
+                fmt::format("Unable to parse JSON from the request"),
+                boost::beast::http::status::bad_request
             );
         }
     }

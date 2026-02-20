@@ -39,8 +39,8 @@
 namespace rpc {
 
 /**
- * @brief The account_currencies command retrieves a list of currencies that an account can send or receive,
- * based on its trust lines.
+ * @brief The account_currencies command retrieves a list of currencies that an account can send or
+ * receive, based on its trust lines.
  *
  * For more details see: https://xrpl.org/account_currencies.html
  */

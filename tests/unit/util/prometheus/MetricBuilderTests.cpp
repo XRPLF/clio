@@ -83,5 +83,7 @@ TEST_F(MetricBuilderAssertTest, build)
             EXPECT_EQ(metric->labelsString(), labelsString);
         }
     }
-    EXPECT_CLIO_ASSERT_FAIL({ builder(name, labelsString, MetricType::Summary, std::vector<std::int64_t>{}); });
+    EXPECT_CLIO_ASSERT_FAIL({
+        builder(name, labelsString, MetricType::Summary, std::vector<std::int64_t>{});
+    });
 }

@@ -46,9 +46,14 @@ public:
     onInitialData(model::LedgerData const& data);
 
     void
-    onInitialObjects(uint32_t seq, std::vector<model::Object> const& objs, [[maybe_unused]] std::string lastKey);
+    onInitialObjects(
+        uint32_t seq,
+        std::vector<model::Object> const& objs,
+        [[maybe_unused]] std::string lastKey
+    );
 
-    // We want cache updates through ETL if we are a potential writer but currently are not writing to DB
+    // We want cache updates through ETL if we are a potential writer but currently are not writing
+    // to DB
     static bool
     allowInReadonly()
     {

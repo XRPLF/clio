@@ -66,7 +66,12 @@ makeSource(
     );
 
     return std::make_unique<impl::SourceImpl<>>(
-        ip, wsPort, grpcPort, std::move(grpcSource), std::move(subscriptionSource), std::move(forwardingSource)
+        ip,
+        wsPort,
+        grpcPort,
+        std::move(grpcSource),
+        std::move(subscriptionSource),
+        std::move(forwardingSource)
     );
 }
 

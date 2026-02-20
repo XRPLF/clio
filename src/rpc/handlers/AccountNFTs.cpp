@@ -63,8 +63,9 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
-    auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+    );
 
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
@@ -76,20 +77,26 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
     response.ledgerIndex = lgrInfo.seq;
 
     // if a marker was passed, start at the page specified in marker. Else, start at the max page
-    auto const pageKey =
-        input.marker ? ripple::uint256{input.marker->c_str()} : ripple::keylet::nftpage_max(*accountID).key;
+    auto const pageKey = input.marker ? ripple::uint256{input.marker->c_str()}
+                                      : ripple::keylet::nftpage_max(*accountID).key;
     auto const blob = sharedPtrBackend_->fetchLedgerObject(pageKey, lgrInfo.seq, ctx.yield);
 
     if (!blob) {
         if (input.marker.has_value())
-            return Error{Status{RippledError::rpcINVALID_PARAMS, "Marker field does not match any valid Page ID"}};
+            return Error{Status{
+                RippledError::rpcINVALID_PARAMS, "Marker field does not match any valid Page ID"
+            }};
         return response;
     }
 
-    std::optional<ripple::SLE const> page{ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, pageKey}};
+    std::optional<ripple::SLE const> page{
+        ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, pageKey}
+    };
 
     if (page->getType() != ripple::ltNFTOKEN_PAGE)
-        return Error{Status{RippledError::rpcINVALID_PARAMS, "Marker matches Page ID from another Account"}};
+        return Error{
+            Status{RippledError::rpcINVALID_PARAMS, "Marker matches Page ID from another Account"}
+        };
 
     auto numPages = 0u;
 
@@ -120,8 +127,11 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
                 return response;
             }
 
-            auto const nextBlob = sharedPtrBackend_->fetchLedgerObject(nextKey.key, lgrInfo.seq, ctx.yield);
-            page.emplace(ripple::SLE{ripple::SerialIter{nextBlob->data(), nextBlob->size()}, nextKey.key});
+            auto const nextBlob =
+                sharedPtrBackend_->fetchLedgerObject(nextKey.key, lgrInfo.seq, ctx.yield);
+            page.emplace(
+                ripple::SLE{ripple::SerialIter{nextBlob->data(), nextBlob->size()}, nextKey.key}
+            );
         } else {
             page.reset();
         }
@@ -131,7 +141,11 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountNFTsHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountNFTsHandler::Output const& output
+)
 {
     jv = {
         {JS(ledger_hash), output.ledgerHash},

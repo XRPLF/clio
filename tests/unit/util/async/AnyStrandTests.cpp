@@ -92,7 +92,8 @@ TEST_F(AnyStrandTests, ExecuteWithoutTokenAndVoidThrowsException)
 TEST_F(AnyStrandTests, ExecuteWithStopTokenAndVoid)
 {
     auto mockOp = StoppableOperationType<std::any>{};
-    EXPECT_CALL(mockStrand, execute(An<std::function<std::any(AnyStopToken)>>(), _)).WillOnce(ReturnRef(mockOp));
+    EXPECT_CALL(mockStrand, execute(An<std::function<std::any(AnyStopToken)>>(), _))
+        .WillOnce(ReturnRef(mockOp));
 
     auto op = strand.execute([](auto) {});
     static_assert(std::is_same_v<decltype(op), AnyOperation<void>>);
@@ -112,7 +113,8 @@ TEST_F(AnyStrandTests, ExecuteWithStopTokenAndReturnValue)
 {
     auto mockOp = StoppableOperationType<std::any>{};
     EXPECT_CALL(mockOp, get()).WillOnce(Return(std::make_any<int>(42)));
-    EXPECT_CALL(mockStrand, execute(An<std::function<std::any(AnyStopToken)>>(), _)).WillOnce(ReturnRef(mockOp));
+    EXPECT_CALL(mockStrand, execute(An<std::function<std::any(AnyStopToken)>>(), _))
+        .WillOnce(ReturnRef(mockOp));
 
     auto op = strand.execute([](auto) { return 42; });
     static_assert(std::is_same_v<decltype(op), AnyOperation<int>>);
@@ -132,7 +134,8 @@ TEST_F(AnyStrandTests, ExecuteWithTimeoutAndStopTokenAndReturnValue)
 {
     auto mockOp = StoppableOperationType<std::any>{};
     EXPECT_CALL(mockOp, get()).WillOnce(Return(std::make_any<int>(42)));
-    EXPECT_CALL(mockStrand, execute(An<std::function<std::any(AnyStopToken)>>(), _)).WillOnce(ReturnRef(mockOp));
+    EXPECT_CALL(mockStrand, execute(An<std::function<std::any(AnyStopToken)>>(), _))
+        .WillOnce(ReturnRef(mockOp));
 
     auto op = strand.execute([](auto) { return 42; }, std::chrono::milliseconds{1});
     static_assert(std::is_same_v<decltype(op), AnyOperation<int>>);
@@ -146,7 +149,8 @@ TEST_F(AnyStrandTests, ExecuteWithTimeoutAndStopTokenAndReturnValueThrowsExcepti
         .WillOnce([](auto&&, auto) -> StoppableOperationType<std::any> const& { throw 0; });
 
     EXPECT_ANY_THROW(
-        [[maybe_unused]] auto unused = strand.execute([](auto) { return 42; }, std::chrono::milliseconds{1})
+        [[maybe_unused]] auto unused =
+            strand.execute([](auto) { return 42; }, std::chrono::milliseconds{1})
     );
 }
 
@@ -154,8 +158,12 @@ TEST_F(AnyStrandTests, RepeatingOperation)
 {
     auto mockRepeatingOp = RepeatingOperationType<std::any>{};
     EXPECT_CALL(mockRepeatingOp, wait());
-    EXPECT_CALL(mockStrand, executeRepeatedly(std::chrono::milliseconds{1}, A<std::function<std::any()>>()))
-        .WillOnce([&mockRepeatingOp] -> RepeatingOperationType<std::any> const& { return mockRepeatingOp; });
+    EXPECT_CALL(
+        mockStrand, executeRepeatedly(std::chrono::milliseconds{1}, A<std::function<std::any()>>())
+    )
+        .WillOnce([&mockRepeatingOp] -> RepeatingOperationType<std::any> const& {
+            return mockRepeatingOp;
+        });
 
     auto res = strand.executeRepeatedly(std::chrono::milliseconds{1}, [] -> void { throw 0; });
     static_assert(std::is_same_v<decltype(res), AnyOperation<void>>);

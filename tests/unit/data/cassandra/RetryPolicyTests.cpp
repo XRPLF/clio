@@ -35,9 +35,15 @@ struct BackendCassandraRetryPolicyTest : SyncAsioContextTest {
 
 TEST_F(BackendCassandraRetryPolicyTest, ShouldRetryAlwaysTrue)
 {
-    EXPECT_TRUE(retryPolicy.shouldRetry(CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}));
-    EXPECT_TRUE(retryPolicy.shouldRetry(CassandraError{"invalid data", CASS_ERROR_LIB_INVALID_DATA}));
-    EXPECT_TRUE(retryPolicy.shouldRetry(CassandraError{"invalid query", CASS_ERROR_SERVER_INVALID_QUERY}));
+    EXPECT_TRUE(
+        retryPolicy.shouldRetry(CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT})
+    );
+    EXPECT_TRUE(
+        retryPolicy.shouldRetry(CassandraError{"invalid data", CASS_ERROR_LIB_INVALID_DATA})
+    );
+    EXPECT_TRUE(
+        retryPolicy.shouldRetry(CassandraError{"invalid query", CASS_ERROR_SERVER_INVALID_QUERY})
+    );
 
     // this policy actually always returns true
     auto const err = CassandraError{"ok", CASS_OK};

@@ -69,7 +69,8 @@ namespace websocket = boost::beast::websocket;
 struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
     ConnectionHandlerTest(ProcessingPolicy policy, std::optional<size_t> maxParallelConnections)
         : tagFactory{util::config::ClioConfigDefinition{
-              {"log.tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
+              {"log.tag_style",
+               config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
           }}
         , connectionHandler{
               policy,
@@ -113,7 +114,8 @@ struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
     std::string const proxyToken = "some_proxy_token";
     web::ProxyIpResolver proxyIpResolver{{proxyIp}, {proxyToken}};
 
-    testing::StrictMock<testing::MockFunction<void(std::string const&, std::string const&)>> onIpChangeMock;
+    testing::StrictMock<testing::MockFunction<void(std::string const&, std::string const&)>>
+        onIpChangeMock;
     testing::StrictMock<testing::MockFunction<void(Connection const&)>> onDisconnectMock;
     util::TagDecoratorFactory tagFactory;
     ConnectionHandler connectionHandler;
@@ -121,16 +123,23 @@ struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
     util::TagDecoratorFactory tagDecoratorFactory{config::ClioConfigDefinition{
         {"log.tag_style", config::ConfigValue{config::ConfigType::String}.defaultValue("uint")}
     }};
-    StrictMockHttpConnectionPtr mockHttpConnection =
-        std::make_unique<StrictMockHttpConnection>(clientIp, boost::beast::flat_buffer{}, tagDecoratorFactory);
-    StrictMockWsConnectionPtr mockWsConnection =
-        std::make_unique<StrictMockWsConnection>(clientIp, boost::beast::flat_buffer{}, tagDecoratorFactory);
+    StrictMockHttpConnectionPtr mockHttpConnection = std::make_unique<StrictMockHttpConnection>(
+        clientIp,
+        boost::beast::flat_buffer{},
+        tagDecoratorFactory
+    );
+    StrictMockWsConnectionPtr mockWsConnection = std::make_unique<StrictMockWsConnection>(
+        clientIp,
+        boost::beast::flat_buffer{},
+        tagDecoratorFactory
+    );
 
     Request::HttpHeaders headers;
 };
 
 struct ConnectionHandlerSequentialProcessingTest : ConnectionHandlerTest {
-    ConnectionHandlerSequentialProcessingTest() : ConnectionHandlerTest(ProcessingPolicy::Sequential, std::nullopt)
+    ConnectionHandlerSequentialProcessingTest()
+        : ConnectionHandlerTest(ProcessingPolicy::Sequential, std::nullopt)
     {
     }
 };
@@ -138,10 +147,12 @@ struct ConnectionHandlerSequentialProcessingTest : ConnectionHandlerTest {
 TEST_F(ConnectionHandlerSequentialProcessingTest, ReceiveError)
 {
     EXPECT_CALL(*mockHttpConnection, wasUpgraded).WillOnce(Return(false));
-    EXPECT_CALL(*mockHttpConnection, receive).WillOnce(Return(makeError(http::error::end_of_stream)));
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
-    });
+    EXPECT_CALL(*mockHttpConnection, receive)
+        .WillOnce(Return(makeError(http::error::end_of_stream)));
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockHttpConnection), yield);
@@ -151,15 +162,19 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, ReceiveError)
 TEST_F(ConnectionHandlerSequentialProcessingTest, ReceiveError_CloseConnection)
 {
     EXPECT_CALL(*mockHttpConnection, wasUpgraded).WillOnce(Return(false));
-    EXPECT_CALL(*mockHttpConnection, receive).WillOnce(Return(makeError(boost::asio::error::timed_out)));
+    EXPECT_CALL(*mockHttpConnection, receive)
+        .WillOnce(Return(makeError(boost::asio::error::timed_out)));
     EXPECT_CALL(
         *mockHttpConnection,
-        setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT})
+        setTimeout(
+            std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT}
+        )
     );
     EXPECT_CALL(*mockHttpConnection, close);
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
-    });
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockHttpConnection), yield);
@@ -179,9 +194,10 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_NoHandler_Send)
             return {};
         });
 
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
-    });
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockHttpConnection), yield);
@@ -195,7 +211,9 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_BadTarget_Send)
 
     EXPECT_CALL(*mockHttpConnection, wasUpgraded).WillOnce(Return(false));
     EXPECT_CALL(*mockHttpConnection, receive)
-        .WillOnce(Return(makeRequest(http::request<http::string_body>{http::verb::get, target, 11, requestMessage})))
+        .WillOnce(Return(makeRequest(
+            http::request<http::string_body>{http::verb::get, target, 11, requestMessage}
+        )))
         .WillOnce(Return(makeError(http::error::end_of_stream)));
 
     EXPECT_CALL(*mockHttpConnection, send)
@@ -207,9 +225,10 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_BadTarget_Send)
             return {};
         });
 
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
-    });
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockHttpConnection), yield);
@@ -229,9 +248,10 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_BadMethod_Send)
             return {};
         });
 
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
-    });
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockHttpConnection), yield);
@@ -240,8 +260,12 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_BadMethod_Send)
 
 TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send)
 {
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         wsHandlerMock;
     connectionHandler.onWs(wsHandlerMock.AsStdFunction());
 
@@ -259,14 +283,17 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send)
     });
 
     EXPECT_CALL(*mockWsConnection, send)
-        .WillOnce([&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
-            EXPECT_EQ(response.message(), responseMessage);
-            return {};
-        });
+        .WillOnce(
+            [&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
+                EXPECT_EQ(response.message(), responseMessage);
+                return {};
+            }
+        );
 
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
-    });
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockWsConnection), yield);
@@ -275,8 +302,12 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send)
 
 TEST_F(ConnectionHandlerSequentialProcessingTest, SendSubscriptionMessage)
 {
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         wsHandlerMock;
     connectionHandler.onWs(wsHandlerMock.AsStdFunction());
 
@@ -288,7 +319,10 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SendSubscriptionMessage)
         .WillOnce(Return(makeError(websocket::error::closed)));
 
     EXPECT_CALL(wsHandlerMock, Call)
-        .WillOnce([&](Request const& request, auto&&, web::SubscriptionContextPtr subscriptionContext, auto&&) {
+        .WillOnce([&](Request const& request,
+                      auto&&,
+                      web::SubscriptionContextPtr subscriptionContext,
+                      auto&&) {
             EXPECT_NE(subscriptionContext, nullptr);
             subscriptionContext->send(std::make_shared<std::string>(subscriptionMessage));
             return Response(http::status::ok, "", request);
@@ -306,31 +340,44 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SendSubscriptionMessage)
             }
         );
 
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
-    });
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockWsConnection), yield);
     });
 }
 
-TEST_F(ConnectionHandlerSequentialProcessingTest, SubscriptionContextIsDisconnectedAfterProcessingFinished)
+TEST_F(
+    ConnectionHandlerSequentialProcessingTest,
+    SubscriptionContextIsDisconnectedAfterProcessingFinished
+)
 {
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         wsHandlerMock;
     connectionHandler.onWs(wsHandlerMock.AsStdFunction());
 
-    testing::StrictMock<testing::MockFunction<void(web::SubscriptionContextInterface*)>> onDisconnectHook;
+    testing::StrictMock<testing::MockFunction<void(web::SubscriptionContextInterface*)>>
+        onDisconnectHook;
 
     EXPECT_CALL(*mockWsConnection, wasUpgraded).WillOnce(Return(true));
-    testing::Expectation const expectationReceiveCalled = EXPECT_CALL(*mockWsConnection, receive)
-                                                              .WillOnce(Return(makeRequest("", headers)))
-                                                              .WillOnce(Return(makeError(websocket::error::closed)));
+    testing::Expectation const expectationReceiveCalled =
+        EXPECT_CALL(*mockWsConnection, receive)
+            .WillOnce(Return(makeRequest("", headers)))
+            .WillOnce(Return(makeError(websocket::error::closed)));
 
     EXPECT_CALL(wsHandlerMock, Call)
-        .WillOnce([&](Request const& request, auto&&, web::SubscriptionContextPtr subscriptionContext, auto&&) {
+        .WillOnce([&](Request const& request,
+                      auto&&,
+                      web::SubscriptionContextPtr subscriptionContext,
+                      auto&&) {
             EXPECT_NE(subscriptionContext, nullptr);
             subscriptionContext->onDisconnect(onDisconnectHook.AsStdFunction());
             return Response(http::status::ok, "", request);
@@ -340,9 +387,10 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SubscriptionContextIsDisconnec
 
     EXPECT_CALL(onDisconnectHook, Call).After(expectationReceiveCalled);
 
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
-    });
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockWsConnection), yield);
@@ -352,16 +400,21 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SubscriptionContextIsDisconnec
 TEST_F(ConnectionHandlerSequentialProcessingTest, SubscriptionContextIsNullForHttpConnection)
 {
     std::string const target = "/some/target";
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         postHandlerMock;
     connectionHandler.onPost(target, postHandlerMock.AsStdFunction());
 
     std::string const requestMessage = "some message";
     std::string const responseMessage = "some response";
 
-    auto const returnRequest =
-        Return(makeRequest(http::request<http::string_body>{http::verb::post, target, 11, requestMessage}));
+    auto const returnRequest = Return(
+        makeRequest(http::request<http::string_body>{http::verb::post, target, 11, requestMessage})
+    );
 
     EXPECT_CALL(*mockHttpConnection, wasUpgraded).WillOnce(Return(false));
     EXPECT_CALL(*mockHttpConnection, receive)
@@ -369,27 +422,35 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SubscriptionContextIsNullForHt
         .WillOnce(Return(makeError(http::error::partial_message)));
 
     EXPECT_CALL(postHandlerMock, Call)
-        .WillOnce([&](Request const& request, auto&&, web::SubscriptionContextPtr subscriptionContext, auto&&) {
+        .WillOnce([&](Request const& request,
+                      auto&&,
+                      web::SubscriptionContextPtr subscriptionContext,
+                      auto&&) {
             EXPECT_EQ(subscriptionContext, nullptr);
 
             return Response(http::status::ok, responseMessage, request);
         });
 
     EXPECT_CALL(*mockHttpConnection, send)
-        .WillOnce([&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
-            EXPECT_EQ(response.message(), responseMessage);
-            return {};
-        });
+        .WillOnce(
+            [&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
+                EXPECT_EQ(response.message(), responseMessage);
+                return {};
+            }
+        );
 
     EXPECT_CALL(
         *mockHttpConnection,
-        setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT})
+        setTimeout(
+            std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT}
+        )
     );
     EXPECT_CALL(*mockHttpConnection, close);
 
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
-    });
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockHttpConnection), yield);
@@ -399,16 +460,21 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SubscriptionContextIsNullForHt
 TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send_Loop)
 {
     std::string const target = "/some/target";
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         postHandlerMock;
     connectionHandler.onPost(target, postHandlerMock.AsStdFunction());
 
     std::string const requestMessage = "some message";
     std::string const responseMessage = "some response";
 
-    auto const returnRequest =
-        Return(makeRequest(http::request<http::string_body>{http::verb::post, target, 11, requestMessage}));
+    auto const returnRequest = Return(
+        makeRequest(http::request<http::string_body>{http::verb::post, target, 11, requestMessage})
+    );
 
     EXPECT_CALL(*mockHttpConnection, wasUpgraded).WillOnce(Return(false));
     EXPECT_CALL(*mockHttpConnection, receive)
@@ -417,27 +483,34 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send_Loop)
         .WillOnce(returnRequest)
         .WillOnce(Return(makeError(http::error::partial_message)));
 
-    EXPECT_CALL(postHandlerMock, Call).Times(3).WillRepeatedly([&](Request const& request, auto&&, auto&&, auto&&) {
-        EXPECT_EQ(request.message(), requestMessage);
-        return Response(http::status::ok, responseMessage, request);
-    });
+    EXPECT_CALL(postHandlerMock, Call)
+        .Times(3)
+        .WillRepeatedly([&](Request const& request, auto&&, auto&&, auto&&) {
+            EXPECT_EQ(request.message(), requestMessage);
+            return Response(http::status::ok, responseMessage, request);
+        });
 
     EXPECT_CALL(*mockHttpConnection, send)
         .Times(3)
-        .WillRepeatedly([&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
-            EXPECT_EQ(response.message(), responseMessage);
-            return {};
-        });
+        .WillRepeatedly(
+            [&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
+                EXPECT_EQ(response.message(), responseMessage);
+                return {};
+            }
+        );
 
     EXPECT_CALL(
         *mockHttpConnection,
-        setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT})
+        setTimeout(
+            std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT}
+        )
     );
     EXPECT_CALL(*mockHttpConnection, close);
 
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
-    });
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockHttpConnection), yield);
@@ -447,8 +520,12 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send_Loop)
 TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_SendError)
 {
     std::string const target = "/some/target";
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         getHandlerMock;
 
     std::string const requestMessage = "some message";
@@ -458,7 +535,9 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_SendError)
 
     EXPECT_CALL(*mockHttpConnection, wasUpgraded).WillOnce(Return(false));
     EXPECT_CALL(*mockHttpConnection, receive)
-        .WillOnce(Return(makeRequest(http::request<http::string_body>{http::verb::get, target, 11, requestMessage})));
+        .WillOnce(Return(makeRequest(
+            http::request<http::string_body>{http::verb::get, target, 11, requestMessage}
+        )));
 
     EXPECT_CALL(getHandlerMock, Call).WillOnce([&](Request const& request, auto&&, auto&&, auto&&) {
         EXPECT_EQ(request.message(), requestMessage);
@@ -470,9 +549,10 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_SendError)
         return makeError(http::error::end_of_stream);
     });
 
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
-    });
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockHttpConnection), yield);
@@ -482,8 +562,12 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_SendError)
 TEST_F(ConnectionHandlerSequentialProcessingTest, OnIpChangeHookCalledWhenSentFromProxy)
 {
     std::string const target = "/some/target";
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         getHandlerMock;
 
     std::string const requestMessage = "some message";
@@ -492,7 +576,9 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, OnIpChangeHookCalledWhenSentFr
     connectionHandler.onGet(target, getHandlerMock.AsStdFunction());
 
     StrictMockHttpConnectionPtr mockHttpConnectionFromProxy =
-        std::make_unique<StrictMockHttpConnection>(proxyIp, boost::beast::flat_buffer{}, tagDecoratorFactory);
+        std::make_unique<StrictMockHttpConnection>(
+            proxyIp, boost::beast::flat_buffer{}, tagDecoratorFactory
+        );
 
     auto request = http::request<http::string_body>{http::verb::get, target, 11, requestMessage};
     request.set(http::field::forwarded, fmt::format("for={}", clientIp));
@@ -507,10 +593,11 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, OnIpChangeHookCalledWhenSentFr
         return Response(http::status::ok, responseMessage, request);
     });
 
-    EXPECT_CALL(*mockHttpConnectionFromProxy, send).WillOnce([&responseMessage](Response response, auto&&) {
-        EXPECT_EQ(response.message(), responseMessage);
-        return makeError(http::error::end_of_stream);
-    });
+    EXPECT_CALL(*mockHttpConnectionFromProxy, send)
+        .WillOnce([&responseMessage](Response response, auto&&) {
+            EXPECT_EQ(response.message(), responseMessage);
+            return makeError(http::error::end_of_stream);
+        });
 
     EXPECT_CALL(onDisconnectMock, Call)
         .WillOnce([this, connectionPtr = mockHttpConnectionFromProxy.get()](Connection const& c) {
@@ -518,15 +605,19 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, OnIpChangeHookCalledWhenSentFr
             EXPECT_EQ(c.ip(), clientIp);
         });
 
-    runSpawn([this, c = std::move(mockHttpConnectionFromProxy)](boost::asio::yield_context yield) mutable {
-        connectionHandler.processConnection(std::move(c), yield);
-    });
+    runSpawn([this, c = std::move(mockHttpConnectionFromProxy)](
+                 boost::asio::yield_context yield
+             ) mutable { connectionHandler.processConnection(std::move(c), yield); });
 }
 
 TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
 {
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         wsHandlerMock;
     connectionHandler.onWs(wsHandlerMock.AsStdFunction());
 
@@ -535,22 +626,29 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
     bool connectionClosed = false;
 
     EXPECT_CALL(*mockWsConnection, wasUpgraded).Times(2).WillRepeatedly(Return(true));
-    EXPECT_CALL(*mockWsConnection, receive).Times(4).WillRepeatedly([&](auto&&) -> std::expected<Request, Error> {
-        if (connectionClosed) {
-            return makeError(websocket::error::closed);
-        }
-        return makeRequest(requestMessage, headers);
-    });
+    EXPECT_CALL(*mockWsConnection, receive)
+        .Times(4)
+        .WillRepeatedly([&](auto&&) -> std::expected<Request, Error> {
+            if (connectionClosed) {
+                return makeError(websocket::error::closed);
+            }
+            return makeRequest(requestMessage, headers);
+        });
 
-    EXPECT_CALL(wsHandlerMock, Call).Times(3).WillRepeatedly([&](Request const& request, auto&&, auto&&, auto&&) {
-        EXPECT_EQ(request.message(), requestMessage);
-        return Response(http::status::ok, responseMessage, request);
-    });
+    EXPECT_CALL(wsHandlerMock, Call)
+        .Times(3)
+        .WillRepeatedly([&](Request const& request, auto&&, auto&&, auto&&) {
+            EXPECT_EQ(request.message(), requestMessage);
+            return Response(http::status::ok, responseMessage, request);
+        });
 
     size_t numCalls = 0;
     EXPECT_CALL(
         *mockWsConnection,
-        send(testing::ResultOf([](Response const& r) { return r.message(); }, responseMessage), testing::_)
+        send(
+            testing::ResultOf([](Response const& r) { return r.message(); }, responseMessage),
+            testing::_
+        )
     )
         .Times(3)
         .WillRepeatedly([&](auto&&, auto&&) -> std::expected<void, web::ng::Error> {
@@ -573,13 +671,19 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
     );
 
     EXPECT_CALL(
-        *mockWsConnection, setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT})
+        *mockWsConnection,
+        setTimeout(
+            std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT}
+        )
     );
-    EXPECT_CALL(*mockWsConnection, close).WillOnce([&connectionClosed]() { connectionClosed = true; });
-
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
+    EXPECT_CALL(*mockWsConnection, close).WillOnce([&connectionClosed]() {
+        connectionClosed = true;
     });
+
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockWsConnection), yield);
@@ -588,8 +692,12 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
 
 TEST_F(ConnectionHandlerSequentialProcessingTest, ProcessCalledAfterStop)
 {
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         wsHandlerMock;
     connectionHandler.onWs(wsHandlerMock.AsStdFunction());
 
@@ -600,14 +708,18 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, ProcessCalledAfterStop)
         *mockWsConnection,
         send(
             testing::ResultOf(
-                [](Response const& r) { return r.message(); }, testing::HasSubstr("This Clio node is shutting down")
+                [](Response const& r) { return r.message(); },
+                testing::HasSubstr("This Clio node is shutting down")
             ),
             testing::_
         )
     );
 
     EXPECT_CALL(
-        *mockWsConnection, setTimeout(std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT})
+        *mockWsConnection,
+        setTimeout(
+            std::chrono::steady_clock::duration{ConnectionHandler::kCLOSE_CONNECTION_TIMEOUT}
+        )
     );
     EXPECT_CALL(*mockWsConnection, close);
 
@@ -639,11 +751,13 @@ struct ConnectionHandlerParallelProcessingTest : ConnectionHandlerTest {
 TEST_F(ConnectionHandlerParallelProcessingTest, ReceiveError)
 {
     EXPECT_CALL(*mockHttpConnection, wasUpgraded).WillOnce(Return(false));
-    EXPECT_CALL(*mockHttpConnection, receive).WillOnce(Return(makeError(http::error::end_of_stream)));
+    EXPECT_CALL(*mockHttpConnection, receive)
+        .WillOnce(Return(makeError(http::error::end_of_stream)));
 
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
-    });
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockHttpConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockHttpConnection), yield);
@@ -652,8 +766,12 @@ TEST_F(ConnectionHandlerParallelProcessingTest, ReceiveError)
 
 TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send)
 {
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         wsHandlerMock;
     connectionHandler.onWs(wsHandlerMock.AsStdFunction());
 
@@ -671,14 +789,17 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send)
     });
 
     EXPECT_CALL(*mockWsConnection, send)
-        .WillOnce([&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
-            EXPECT_EQ(response.message(), responseMessage);
-            return {};
-        });
+        .WillOnce(
+            [&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
+                EXPECT_EQ(response.message(), responseMessage);
+                return {};
+            }
+        );
 
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
-    });
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockWsConnection), yield);
@@ -687,13 +808,18 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send)
 
 TEST_F(ConnectionHandlerParallelProcessingTest, OnIpChangeHookCalledWhenSentFromProxy)
 {
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         wsHandlerMock;
     connectionHandler.onWs(wsHandlerMock.AsStdFunction());
 
-    StrictMockWsConnectionPtr mockWsConnectionFromProxy =
-        std::make_unique<StrictMockWsConnection>(proxyIp, boost::beast::flat_buffer{}, tagDecoratorFactory);
+    StrictMockWsConnectionPtr mockWsConnectionFromProxy = std::make_unique<StrictMockWsConnection>(
+        proxyIp, boost::beast::flat_buffer{}, tagDecoratorFactory
+    );
     headers.set(http::field::forwarded, fmt::format("for={}", clientIp));
 
     std::string const requestMessage = "some message";
@@ -712,10 +838,12 @@ TEST_F(ConnectionHandlerParallelProcessingTest, OnIpChangeHookCalledWhenSentFrom
     });
 
     EXPECT_CALL(*mockWsConnectionFromProxy, send)
-        .WillOnce([&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
-            EXPECT_EQ(response.message(), responseMessage);
-            return {};
-        });
+        .WillOnce(
+            [&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
+                EXPECT_EQ(response.message(), responseMessage);
+                return {};
+            }
+        );
 
     EXPECT_CALL(onDisconnectMock, Call)
         .WillOnce([this, connectionPtr = mockWsConnectionFromProxy.get()](Connection const& c) {
@@ -723,15 +851,20 @@ TEST_F(ConnectionHandlerParallelProcessingTest, OnIpChangeHookCalledWhenSentFrom
             EXPECT_EQ(c.ip(), clientIp);
         });
 
-    runSpawn([this, c = std::move(mockWsConnectionFromProxy)](boost::asio::yield_context yield) mutable {
+    runSpawn([this,
+              c = std::move(mockWsConnectionFromProxy)](boost::asio::yield_context yield) mutable {
         connectionHandler.processConnection(std::move(c), yield);
     });
 }
 
 TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop)
 {
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         wsHandlerMock;
     connectionHandler.onWs(wsHandlerMock.AsStdFunction());
 
@@ -746,21 +879,26 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop)
         .WillOnce(returnRequest)
         .WillOnce(Return(makeError(websocket::error::closed)));
 
-    EXPECT_CALL(wsHandlerMock, Call).Times(2).WillRepeatedly([&](Request const& request, auto&&, auto&&, auto&&) {
-        EXPECT_EQ(request.message(), requestMessage);
-        return Response(http::status::ok, responseMessage, request);
-    });
+    EXPECT_CALL(wsHandlerMock, Call)
+        .Times(2)
+        .WillRepeatedly([&](Request const& request, auto&&, auto&&, auto&&) {
+            EXPECT_EQ(request.message(), requestMessage);
+            return Response(http::status::ok, responseMessage, request);
+        });
 
     EXPECT_CALL(*mockWsConnection, send)
         .Times(2)
-        .WillRepeatedly([&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
-            EXPECT_EQ(response.message(), responseMessage);
-            return {};
-        });
+        .WillRepeatedly(
+            [&responseMessage](Response response, auto&&) -> std::expected<void, web::ng::Error> {
+                EXPECT_EQ(response.message(), responseMessage);
+                return {};
+            }
+        );
 
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
-    });
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockWsConnection), yield);
@@ -769,8 +907,12 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop)
 
 TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop_TooManyRequest)
 {
-    testing::StrictMock<testing::MockFunction<
-        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
         wsHandlerMock;
     connectionHandler.onWs(wsHandlerMock.AsStdFunction());
 
@@ -791,15 +933,22 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop_TooMany
 
     EXPECT_CALL(wsHandlerMock, Call)
         .Times(3)
-        .WillRepeatedly([&](Request const& request, auto&&, auto&&, boost::asio::yield_context yield) {
-            EXPECT_EQ(request.message(), requestMessage);
-            asyncSleep(yield, std::chrono::milliseconds{3});
-            return Response(http::status::ok, responseMessage, request);
-        });
+        .WillRepeatedly(
+            [&](Request const& request, auto&&, auto&&, boost::asio::yield_context yield) {
+                EXPECT_EQ(request.message(), requestMessage);
+                asyncSleep(yield, std::chrono::milliseconds{3});
+                return Response(http::status::ok, responseMessage, request);
+            }
+        );
 
     EXPECT_CALL(
         *mockWsConnection,
-        send(testing::ResultOf([](Response response) { return response.message(); }, responseMessage), testing::_)
+        send(
+            testing::ResultOf(
+                [](Response response) { return response.message(); }, responseMessage
+            ),
+            testing::_
+        )
     )
         .Times(3)
         .WillRepeatedly(Return(std::expected<void, web::ng::Error>{}));
@@ -808,7 +957,8 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop_TooMany
         *mockWsConnection,
         send(
             testing::ResultOf(
-                [](Response response) { return response.message(); }, "Too many requests for one connection"
+                [](Response response) { return response.message(); },
+                "Too many requests for one connection"
             ),
             testing::_
         )
@@ -816,9 +966,10 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop_TooMany
         .Times(2)
         .WillRepeatedly(Return(std::expected<void, web::ng::Error>{}));
 
-    EXPECT_CALL(onDisconnectMock, Call).WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
-        EXPECT_EQ(&c, connectionPtr);
-    });
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([connectionPtr = mockWsConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, connectionPtr);
+        });
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler.processConnection(std::move(mockWsConnection), yield);

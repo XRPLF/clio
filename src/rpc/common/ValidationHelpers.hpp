@@ -94,7 +94,8 @@ checkType(boost::json::value const& value)
     } else if constexpr (std::is_same_v<Expected, boost::json::object>) {
         if (not value.is_object())
             hasError = true;
-    } else if constexpr (std::is_convertible_v<Expected, uint64_t> or std::is_convertible_v<Expected, int64_t>) {
+    } else if constexpr (std::is_convertible_v<Expected, uint64_t> or
+                         std::is_convertible_v<Expected, int64_t>) {
         if (not value.is_int64() && not value.is_uint64())
             hasError = true;
         // if the type specified is unsigned, it should not be negative
@@ -110,9 +111,9 @@ checkType(boost::json::value const& value)
 /**
  * @brief Check that the type is the same as what was expected optionally clamping it into range.
  *
- * This is used to automatically clamp the value into the range available to the specified type. It is needed in
- * order to avoid Min, Max and other validators throw "not exact" error from Boost.Json library if the value does not
- * fit in the specified type.
+ * This is used to automatically clamp the value into the range available to the specified type. It
+ * is needed in order to avoid Min, Max and other validators throw "not exact" error from Boost.Json
+ * library if the value does not fit in the specified type.
  *
  * @tparam Expected The expected type that value should be convertible to
  * @param value The json value to check the type of

@@ -35,6 +35,9 @@ namespace util::prometheus {
  * @return nullopt if the request shouldn't be handled, respoce for Prometheus otherwise
  */
 std::optional<boost::beast::http::response<boost::beast::http::string_body>>
-handlePrometheusRequest(boost::beast::http::request<boost::beast::http::string_body> const& req, bool isAdmin);
+handlePrometheusRequest(
+    boost::beast::http::request<boost::beast::http::string_body> const& req,
+    bool isAdmin
+);
 
 }  // namespace util::prometheus

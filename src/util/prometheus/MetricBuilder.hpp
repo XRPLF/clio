@@ -38,7 +38,8 @@ struct MetricBuilderInterface {
      * @brief Create a metric
      *
      * @param name The name of the metric
-     * @param labelsString The labels of the metric in serialized format, e.g. {name="value",name2="value2"}
+     * @param labelsString The labels of the metric in serialized format, e.g.
+     * {name="value",name2="value2"}
      * @param type The type of the metric
      * @param buckets The buckets of the int based histogram. It is ignored for other metric types
      * @return The metric
@@ -55,13 +56,19 @@ struct MetricBuilderInterface {
      * @brief Create a metric double based  histogram
      *
      * @param name The name of the metric
-     * @param labelsString The labels of the metric in serialized format, e.g. {name="value",name2="value2"}
+     * @param labelsString The labels of the metric in serialized format, e.g.
+     * {name="value",name2="value2"}
      * @param type The type of the metric. Must be HISOTGRAM_DOUBLE
      * @param buckets The buckets of the histogram
      * @return Double based histogram
      */
     virtual std::unique_ptr<MetricBase>
-    operator()(std::string name, std::string labelsString, MetricType type, std::vector<double> const& buckets) = 0;
+    operator()(
+        std::string name,
+        std::string labelsString,
+        MetricType type,
+        std::vector<double> const& buckets
+    ) = 0;
 };
 
 /**
@@ -92,7 +99,12 @@ private:
     template <typename ValueType>
         requires std::same_as<ValueType, std::int64_t> || std::same_as<ValueType, double>
     std::unique_ptr<MetricBase>
-    makeHistogram(std::string name, std::string labelsString, MetricType type, std::vector<ValueType> const& buckets);
+    makeHistogram(
+        std::string name,
+        std::string labelsString,
+        MetricType type,
+        std::vector<ValueType> const& buckets
+    );
 };
 
 }  // namespace util::prometheus

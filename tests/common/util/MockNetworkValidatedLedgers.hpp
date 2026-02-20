@@ -58,4 +58,5 @@ struct MockNetworkValidatedLedgersPtrImpl {
 };
 
 using MockNetworkValidatedLedgersPtr = MockNetworkValidatedLedgersPtrImpl<testing::NiceMock>;
-using StrictMockNetworkValidatedLedgersPtr = MockNetworkValidatedLedgersPtrImpl<testing::StrictMock>;
+using StrictMockNetworkValidatedLedgersPtr =
+    MockNetworkValidatedLedgersPtrImpl<testing::StrictMock>;

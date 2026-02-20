@@ -50,7 +50,10 @@
 namespace rpc {
 
 DepositAuthorizedHandler::Result
-DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input const& input, Context const& ctx) const
+DepositAuthorizedHandler::process(
+    DepositAuthorizedHandler::Input const& input,
+    Context const& ctx
+) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "DepositAuthorized ledger range must be available");
@@ -66,14 +69,16 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input const& input, 
     auto const sourceAccountID = accountFromStringStrict(input.sourceAccount);
     auto const destinationAccountID = accountFromStringStrict(input.destinationAccount);
 
-    auto const srcAccountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*sourceAccountID).key, lgrInfo.seq, ctx.yield);
+    auto const srcAccountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::account(*sourceAccountID).key, lgrInfo.seq, ctx.yield
+    );
 
     if (!srcAccountLedgerObject)
         return Error{Status{RippledError::rpcSRC_ACT_NOT_FOUND, "source_accountNotFound"}};
 
     auto const dstKeylet = ripple::keylet::account(*destinationAccountID).key;
-    auto const dstAccountLedgerObject = sharedPtrBackend_->fetchLedgerObject(dstKeylet, lgrInfo.seq, ctx.yield);
+    auto const dstAccountLedgerObject =
+        sharedPtrBackend_->fetchLedgerObject(dstKeylet, lgrInfo.seq, ctx.yield);
 
     if (!dstAccountLedgerObject)
         return Error{Status{RippledError::rpcDST_ACT_NOT_FOUND, "destination_accountNotFound"}};
@@ -82,14 +87,17 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input const& input, 
 
     auto it = ripple::SerialIter{dstAccountLedgerObject->data(), dstAccountLedgerObject->size()};
     auto const sleDest = ripple::SLE{it, dstKeylet};
-    bool const reqAuth = sleDest.isFlag(ripple::lsfDepositAuth) && (sourceAccountID != destinationAccountID);
+    bool const reqAuth =
+        sleDest.isFlag(ripple::lsfDepositAuth) && (sourceAccountID != destinationAccountID);
     auto const& creds = input.credentials;
     bool const credentialsPresent = creds.has_value();
 
     ripple::STArray authCreds;
     if (credentialsPresent) {
         if (creds.value().empty()) {
-            return Error{Status{RippledError::rpcINVALID_PARAMS, "credential array has no elements."}};
+            return Error{
+                Status{RippledError::rpcINVALID_PARAMS, "credential array has no elements."}
+            };
         }
         if (creds.value().size() > ripple::maxCredentialsArraySize) {
             return Error{Status{RippledError::rpcINVALID_PARAMS, "credential array too long."}};
@@ -111,7 +119,8 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input const& input, 
         if (credentialsPresent) {
             auto const sortedAuthCreds = credentials::createAuthCredentials(authCreds);
             ASSERT(
-                sortedAuthCreds.size() == authCreds.size(), "should already be checked above that there is no duplicate"
+                sortedAuthCreds.size() == authCreds.size(),
+                "should already be checked above that there is no duplicate"
             );
 
             hashKey = ripple::keylet::depositPreauth(*destinationAccountID, sortedAuthCreds).key;
@@ -119,7 +128,8 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input const& input, 
             hashKey = ripple::keylet::depositPreauth(*destinationAccountID, *sourceAccountID).key;
         }
 
-        depositAuthorized = sharedPtrBackend_->fetchLedgerObject(hashKey, lgrInfo.seq, ctx.yield).has_value();
+        depositAuthorized =
+            sharedPtrBackend_->fetchLedgerObject(hashKey, lgrInfo.seq, ctx.yield).has_value();
     }
 
     response.sourceAccount = input.sourceAccount;
@@ -158,7 +168,11 @@ tag_invoke(boost::json::value_to_tag<DepositAuthorizedHandler::Input>, boost::js
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, DepositAuthorizedHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    DepositAuthorizedHandler::Output const& output
+)
 {
     jv = boost::json::object{
         {JS(deposit_authorized), output.depositAuthorized},

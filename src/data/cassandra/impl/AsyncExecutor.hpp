@@ -52,7 +52,8 @@ template <
     typename StatementType,
     typename HandleType = Handle,
     SomeRetryPolicy RetryPolicyType = ExponentialBackoffRetryPolicy>
-class AsyncExecutor : public std::enable_shared_from_this<AsyncExecutor<StatementType, HandleType, RetryPolicyType>> {
+class AsyncExecutor : public std::enable_shared_from_this<
+                          AsyncExecutor<StatementType, HandleType, RetryPolicyType>> {
     using FutureWithCallbackType = typename HandleType::FutureWithCallbackType;
     using CallbackType = std::function<void(typename HandleType::ResultOrErrorType)>;
     using RetryCallbackType = std::function<void()>;
@@ -92,7 +93,9 @@ public:
             }
         };
 
-        auto ptr = std::make_shared<EnableMakeShared>(ioc, std::move(data), std::move(onComplete), std::move(onRetry));
+        auto ptr = std::make_shared<EnableMakeShared>(
+            ioc, std::move(data), std::move(onComplete), std::move(onRetry)
+        );
         ptr->execute(handle);
     }
 
@@ -103,7 +106,10 @@ private:
         CallbackType&& onComplete,
         RetryCallbackType&& onRetry
     )
-        : data_{std::move(data)}, retryPolicy_{ioc}, onComplete_{std::move(onComplete)}, onRetry_{std::move(onRetry)}
+        : data_{std::move(data)}
+        , retryPolicy_{ioc}
+        , onComplete_{std::move(onComplete)}
+        , onRetry_{std::move(onRetry)}
     {
     }
 

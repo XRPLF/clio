@@ -117,7 +117,10 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
 }
 
 AccountMPTokenIssuancesHandler::Result
-AccountMPTokenIssuancesHandler::process(AccountMPTokenIssuancesHandler::Input const& input, Context const& ctx) const
+AccountMPTokenIssuancesHandler::process(
+    AccountMPTokenIssuancesHandler::Input const& input,
+    Context const& ctx
+) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountMPTokenIssuances' ledger range must be available");
@@ -130,8 +133,9 @@ AccountMPTokenIssuancesHandler::process(AccountMPTokenIssuancesHandler::Input co
 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
-    auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+    );
 
     if (not accountLedgerObject.has_value())
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
@@ -146,7 +150,13 @@ AccountMPTokenIssuancesHandler::process(AccountMPTokenIssuancesHandler::Input co
     };
 
     auto const expectedNext = traverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse
+        *sharedPtrBackend_,
+        *accountID,
+        lgrInfo.seq,
+        input.limit,
+        input.marker,
+        ctx.yield,
+        addToResponse
     );
 
     if (!expectedNext.has_value())
@@ -167,7 +177,10 @@ AccountMPTokenIssuancesHandler::process(AccountMPTokenIssuancesHandler::Input co
 }
 
 AccountMPTokenIssuancesHandler::Input
-tag_invoke(boost::json::value_to_tag<AccountMPTokenIssuancesHandler::Input>, boost::json::value const& jv)
+tag_invoke(
+    boost::json::value_to_tag<AccountMPTokenIssuancesHandler::Input>,
+    boost::json::value const& jv
+)
 {
     auto input = AccountMPTokenIssuancesHandler::Input{};
     auto const& jsonObject = jv.as_object();
@@ -193,7 +206,11 @@ tag_invoke(boost::json::value_to_tag<AccountMPTokenIssuancesHandler::Input>, boo
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountMPTokenIssuancesHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountMPTokenIssuancesHandler::Output const& output
+)
 {
     using boost::json::value_from;
 

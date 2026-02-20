@@ -222,7 +222,8 @@ private:
     getArrayIterator(std::string_view key) const
     {
         auto const fullKey = addBracketsForArrayKey(key);
-        auto const it = std::ranges::find_if(map_, [&fullKey](auto pair) { return pair.first == fullKey; });
+        auto const it =
+            std::ranges::find_if(map_, [&fullKey](auto pair) { return pair.first == fullKey; });
 
         ASSERT(it != map_.end(), "key {} does not exist in config", fullKey);
         ASSERT(std::holds_alternative<Array>(it->second), "Value of {} is not an array", fullKey);
@@ -251,8 +252,8 @@ private:
 /**
  * @brief Full Clio Configuration definition.
  *
- * Specifies which keys are valid in Clio Config and provides default values if user's do not specify one. Those
- * without default values must be present in the user's config file.
+ * Specifies which keys are valid in Clio Config and provides default values if user's do not
+ * specify one. Those without default values must be present in the user's config file.
  */
 ClioConfigDefinition&
 getClioConfig();

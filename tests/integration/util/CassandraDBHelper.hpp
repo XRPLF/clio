@@ -33,7 +33,11 @@
  * @return The result of the operation.
  */
 data::cassandra::ResultOrError
-writeTxFromCSVString(std::string const& space, std::string const& record, data::cassandra::Handle const& handler);
+writeTxFromCSVString(
+    std::string const& space,
+    std::string const& record,
+    data::cassandra::Handle const& handler
+);
 
 /**
  * @brief Write an object to the database from a CSV string.
@@ -44,7 +48,11 @@ writeTxFromCSVString(std::string const& space, std::string const& record, data::
  * @return The result of the operation.
  */
 data::cassandra::ResultOrError
-writeObjectFromCSVString(std::string const& space, std::string const& record, data::cassandra::Handle const& handler);
+writeObjectFromCSVString(
+    std::string const& space,
+    std::string const& record,
+    data::cassandra::Handle const& handler
+);
 
 /**
  * @brief Write a ledger to the database from a CSV string.
@@ -55,7 +63,11 @@ writeObjectFromCSVString(std::string const& space, std::string const& record, da
  * @return The result of the operation.
  */
 data::cassandra::ResultOrError
-writeLedgerFromCSVString(std::string const& space, std::string const& record, data::cassandra::Handle const& handler);
+writeLedgerFromCSVString(
+    std::string const& space,
+    std::string const& record,
+    data::cassandra::Handle const& handler
+);
 
 /**
  * @brief Write a range of ledgers to the database.

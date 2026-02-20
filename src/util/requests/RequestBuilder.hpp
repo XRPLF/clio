@@ -110,8 +110,9 @@ public:
     /**
      * @brief Perform a GET request with SSL asynchronously
      *
-     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple threads. But it is
-     * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
+     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple
+     * threads. But it is fine to call only get() or only post() of the same RequestBuilder from
+     * multiple threads.
      *
      * @param yield yield context
      * @return Expected response or error
@@ -122,8 +123,9 @@ public:
     /**
      * @brief Perform a GET request without SSL asynchronously
      *
-     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple threads. But it is
-     * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
+     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple
+     * threads. But it is fine to call only get() or only post() of the same RequestBuilder from
+     * multiple threads.
      *
      * @param yield yield context
      * @return Expected response or error
@@ -132,11 +134,12 @@ public:
     getPlain(boost::asio::yield_context yield);
 
     /**
-     * @brief Perform a GET request asynchronously. The SSL will be used first, if it fails, the plain connection will
-     * be used.
+     * @brief Perform a GET request asynchronously. The SSL will be used first, if it fails, the
+     * plain connection will be used.
      *
-     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple threads. But it is
-     * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
+     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple
+     * threads. But it is fine to call only get() or only post() of the same RequestBuilder from
+     * multiple threads.
      *
      * @param yield yield context
      * @return Expected response or error
@@ -147,8 +150,9 @@ public:
     /**
      * @brief Perform a POST request with SSL asynchronously
      *
-     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple threads. But it is
-     * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
+     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple
+     * threads. But it is fine to call only get() or only post() of the same RequestBuilder from
+     * multiple threads.
      *
      * @param yield yield context
      * @return Expected response or error
@@ -159,8 +163,9 @@ public:
     /**
      * @brief Perform a POST request without SSL asynchronously
      *
-     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple threads. But it is
-     * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
+     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple
+     * threads. But it is fine to call only get() or only post() of the same RequestBuilder from
+     * multiple threads.
      *
      * @param yield yield context
      * @return Expected response or error
@@ -169,11 +174,12 @@ public:
     postPlain(boost::asio::yield_context yield);
 
     /**
-     * @brief Perform a POST request asynchronously. The SSL will be used first, if it fails, the plain connection will
-     * be used.
+     * @brief Perform a POST request asynchronously. The SSL will be used first, if it fails, the
+     * plain connection will be used.
      *
-     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple threads. But it is
-     * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
+     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple
+     * threads. But it is fine to call only get() or only post() of the same RequestBuilder from
+     * multiple threads.
      *
      * @param yield yield context
      * @return Expected response or error
@@ -181,7 +187,9 @@ public:
     std::expected<std::string, RequestError>
     post(boost::asio::yield_context yield);
 
-    static constexpr std::chrono::milliseconds kDEFAULT_TIMEOUT{30000}; /**< Default timeout for requests */
+    static constexpr std::chrono::milliseconds kDEFAULT_TIMEOUT{
+        30000
+    }; /**< Default timeout for requests */
 
 private:
     std::expected<std::string, RequestError>
@@ -195,7 +203,11 @@ private:
 
     template <typename StreamDataType>
     std::expected<std::string, RequestError>
-    doRequestImpl(StreamDataType&& streamData, boost::asio::yield_context yield, boost::beast::http::verb method);
+    doRequestImpl(
+        StreamDataType&& streamData,
+        boost::asio::yield_context yield,
+        boost::beast::http::verb method
+    );
 };
 
 }  // namespace util::requests

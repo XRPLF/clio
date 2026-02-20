@@ -89,7 +89,10 @@ struct ClusterCommunicationServiceTest : util::prometheus::WithPrometheus, MockB
     }
 
     static bool
-    waitForSignal(std::binary_semaphore& sem, std::chrono::milliseconds timeout = std::chrono::milliseconds{1000})
+    waitForSignal(
+        std::binary_semaphore& sem,
+        std::chrono::milliseconds timeout = std::chrono::milliseconds{1000}
+    )
     {
         return sem.try_acquire_for(timeout);
     }
@@ -101,18 +104,24 @@ TEST_F(ClusterCommunicationServiceTest, BackendReadsAndWritesData)
     std::binary_semaphore fetchSemaphore{0};
     std::binary_semaphore writeSemaphore{0};
 
-    BackendInterface::ClioNodesDataFetchResult fetchResult{std::vector<std::pair<boost::uuids::uuid, std::string>>{
-        {otherUuid, nodeToJson(makeNode(otherUuid, ClioNode::DbRole::Writer))}
-    }};
+    BackendInterface::ClioNodesDataFetchResult fetchResult{
+        std::vector<std::pair<boost::uuids::uuid, std::string>>{
+            {otherUuid, nodeToJson(makeNode(otherUuid, ClioNode::DbRole::Writer))}
+        }
+    };
 
     ON_CALL(*backend_, fetchClioNodesData).WillByDefault(testing::Invoke([&](auto) {
         fetchSemaphore.release();
         return fetchResult;
     }));
 
-    ON_CALL(*backend_, writeNodeMessage).WillByDefault(testing::Invoke([&](auto, auto) { writeSemaphore.release(); }));
+    ON_CALL(*backend_, writeNodeMessage).WillByDefault(testing::Invoke([&](auto, auto) {
+        writeSemaphore.release();
+    }));
 
-    ClusterCommunicationService service{backend_, std::move(writerState), kSHORT_INTERVAL, kSHORT_INTERVAL};
+    ClusterCommunicationService service{
+        backend_, std::move(writerState), kSHORT_INTERVAL, kSHORT_INTERVAL
+    };
 
     service.run();
 
@@ -127,23 +136,33 @@ TEST_F(ClusterCommunicationServiceTest, MetricsGetsNewStateFromBackend)
     auto const otherUuid = makeUuid(0x02);
     std::binary_semaphore writerActionSemaphore{0};
 
-    BackendInterface::ClioNodesDataFetchResult fetchResult{std::vector<std::pair<boost::uuids::uuid, std::string>>{
-        {otherUuid, nodeToJson(makeNode(otherUuid, ClioNode::DbRole::Writer))}
-    }};
+    BackendInterface::ClioNodesDataFetchResult fetchResult{
+        std::vector<std::pair<boost::uuids::uuid, std::string>>{
+            {otherUuid, nodeToJson(makeNode(otherUuid, ClioNode::DbRole::Writer))}
+        }
+    };
 
-    ON_CALL(*backend_, fetchClioNodesData).WillByDefault(testing::Invoke([&](auto) { return fetchResult; }));
+    ON_CALL(*backend_, fetchClioNodesData).WillByDefault(testing::Invoke([&](auto) {
+        return fetchResult;
+    }));
 
     ON_CALL(writerStateRef, clone()).WillByDefault(testing::Invoke([&]() mutable {
         auto state = std::make_unique<NiceMockWriterState>();
-        ON_CALL(*state, startWriting()).WillByDefault(testing::Invoke([&]() { writerActionSemaphore.release(); }));
-        ON_CALL(*state, giveUpWriting()).WillByDefault(testing::Invoke([&]() { writerActionSemaphore.release(); }));
+        ON_CALL(*state, startWriting()).WillByDefault(testing::Invoke([&]() {
+            writerActionSemaphore.release();
+        }));
+        ON_CALL(*state, giveUpWriting()).WillByDefault(testing::Invoke([&]() {
+            writerActionSemaphore.release();
+        }));
         return state;
     }));
 
     auto& nodesInClusterMetric = PrometheusService::gaugeInt("cluster_nodes_total_number", {});
     auto isHealthyMetric = PrometheusService::boolMetric("cluster_communication_is_healthy", {});
 
-    ClusterCommunicationService service{backend_, std::move(writerState), kSHORT_INTERVAL, kSHORT_INTERVAL};
+    ClusterCommunicationService service{
+        backend_, std::move(writerState), kSHORT_INTERVAL, kSHORT_INTERVAL
+    };
 
     service.run();
 
@@ -162,9 +181,11 @@ TEST_F(ClusterCommunicationServiceTest, WriterDeciderCallsWriterStateMethodsAcco
     std::binary_semaphore fetchSemaphore{0};
     std::binary_semaphore writerActionSemaphore{0};
 
-    BackendInterface::ClioNodesDataFetchResult fetchResult{std::vector<std::pair<boost::uuids::uuid, std::string>>{
-        {smallerUuid, nodeToJson(makeNode(smallerUuid, ClioNode::DbRole::Writer))}
-    }};
+    BackendInterface::ClioNodesDataFetchResult fetchResult{
+        std::vector<std::pair<boost::uuids::uuid, std::string>>{
+            {smallerUuid, nodeToJson(makeNode(smallerUuid, ClioNode::DbRole::Writer))}
+        }
+    };
 
     ON_CALL(*backend_, fetchClioNodesData).WillByDefault(testing::Invoke([&](auto) {
         fetchSemaphore.release();
@@ -175,12 +196,18 @@ TEST_F(ClusterCommunicationServiceTest, WriterDeciderCallsWriterStateMethodsAcco
 
     ON_CALL(writerStateRef, clone()).WillByDefault(testing::Invoke([&]() mutable {
         auto state = std::make_unique<NiceMockWriterState>();
-        ON_CALL(*state, startWriting()).WillByDefault(testing::Invoke([&]() { writerActionSemaphore.release(); }));
-        ON_CALL(*state, giveUpWriting()).WillByDefault(testing::Invoke([&]() { writerActionSemaphore.release(); }));
+        ON_CALL(*state, startWriting()).WillByDefault(testing::Invoke([&]() {
+            writerActionSemaphore.release();
+        }));
+        ON_CALL(*state, giveUpWriting()).WillByDefault(testing::Invoke([&]() {
+            writerActionSemaphore.release();
+        }));
         return state;
     }));
 
-    ClusterCommunicationService service{backend_, std::move(writerState), kSHORT_INTERVAL, kSHORT_INTERVAL};
+    ClusterCommunicationService service{
+        backend_, std::move(writerState), kSHORT_INTERVAL, kSHORT_INTERVAL
+    };
 
     service.run();
 
@@ -195,7 +222,9 @@ TEST_F(ClusterCommunicationServiceTest, StopHaltsBackendOperations)
     std::atomic<int> backendOperationsCount{0};
     std::binary_semaphore fetchSemaphore{0};
 
-    BackendInterface::ClioNodesDataFetchResult fetchResult{std::vector<std::pair<boost::uuids::uuid, std::string>>{}};
+    BackendInterface::ClioNodesDataFetchResult fetchResult{
+        std::vector<std::pair<boost::uuids::uuid, std::string>>{}
+    };
 
     ON_CALL(*backend_, fetchClioNodesData).WillByDefault(testing::Invoke([&](auto) {
         backendOperationsCount++;
@@ -206,7 +235,9 @@ TEST_F(ClusterCommunicationServiceTest, StopHaltsBackendOperations)
         backendOperationsCount++;
     }));
 
-    ClusterCommunicationService service{backend_, std::move(writerState), kSHORT_INTERVAL, kSHORT_INTERVAL};
+    ClusterCommunicationService service{
+        backend_, std::move(writerState), kSHORT_INTERVAL, kSHORT_INTERVAL
+    };
 
     service.run();
     EXPECT_TRUE(waitForSignal(fetchSemaphore));

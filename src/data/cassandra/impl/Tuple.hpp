@@ -65,7 +65,9 @@ public:
         auto throwErrorIfNeeded = [idx](CassError rc, std::string_view label) {
             if (rc != CASS_OK) {
                 auto const tag = '[' + std::string{label} + ']';
-                throw std::logic_error(tag + " at idx " + to_string(idx) + ": " + cass_error_desc(rc));
+                throw std::logic_error(
+                    tag + " at idx " + to_string(idx) + ": " + cass_error_desc(rc)
+                );
             }
         };
 

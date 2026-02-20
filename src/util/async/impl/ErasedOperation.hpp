@@ -119,7 +119,8 @@ private:
                 ASSERT(false, "Called get() on an operation that does not support it");
                 std::unreachable();
             } else {
-                // Note: return type of the operation was already wrapped to std::any by AnyExecutionContext
+                // Note: return type of the operation was already wrapped to std::any by
+                // AnyExecutionContext
                 return operation.get();
             }
         }
@@ -127,9 +128,12 @@ private:
         void
         abort() override
         {
-            if constexpr (not SomeCancellableOperation<OpType> and not SomeStoppableOperation<OpType> and
-                          not SomeAbortable<OpType>) {
-                ASSERT(false, "Called abort() on an operation that can't be aborted, cancelled nor stopped");
+            if constexpr (not SomeCancellableOperation<OpType> and
+                          not SomeStoppableOperation<OpType> and not SomeAbortable<OpType>) {
+                ASSERT(
+                    false,
+                    "Called abort() on an operation that can't be aborted, cancelled nor stopped"
+                );
             } else {
                 if constexpr (SomeAbortable<OpType>) {
                     operation.abort();

@@ -51,9 +51,9 @@ OnConnectCheck::operator()(web::ng::Connection const& connection)
 {
     dosguard_.get().increment(connection.ip());
     if (not dosguard_.get().isOk(connection.ip())) {
-        return std::unexpected{
-            web::ng::Response{boost::beast::http::status::too_many_requests, "Too many requests", connection}
-        };
+        return std::unexpected{web::ng::Response{
+            boost::beast::http::status::too_many_requests, "Too many requests", connection
+        }};
     }
 
     return {};
@@ -80,7 +80,10 @@ DisconnectHook::operator()(web::ng::Connection const& connection)
     dosguard_.get().decrement(connection.ip());
 }
 
-MetricsHandler::MetricsHandler(std::shared_ptr<web::AdminVerificationStrategy> adminVerifier, rpc::WorkQueue& workQueue)
+MetricsHandler::MetricsHandler(
+    std::shared_ptr<web::AdminVerificationStrategy> adminVerifier,
+    rpc::WorkQueue& workQueue
+)
     : adminVerifier_{std::move(adminVerifier)}, workQueue_{std::ref(workQueue)}
 {
 }
@@ -120,7 +123,9 @@ MetricsHandler::operator()(
 
     if (!postSuccessful) {
         return web::ng::Response{
-            boost::beast::http::status::too_many_requests, rpc::makeError(rpc::RippledError::rpcTOO_BUSY), request
+            boost::beast::http::status::too_many_requests,
+            rpc::makeError(rpc::RippledError::rpcTOO_BUSY),
+            request
         };
     }
 
@@ -177,7 +182,9 @@ CacheStateHandler::operator()(
     if (cache_.get().isFull())
         return web::ng::Response{boost::beast::http::status::ok, kCACHE_CHECK_LOADED_HTML, request};
 
-    return web::ng::Response{boost::beast::http::status::service_unavailable, kCACHE_CHECK_NOT_LOADED_HTML, request};
+    return web::ng::Response{
+        boost::beast::http::status::service_unavailable, kCACHE_CHECK_NOT_LOADED_HTML, request
+    };
 }
 
 }  // namespace app

@@ -29,8 +29,8 @@
 namespace rpc {
 
 /**
- * @brief The random command provides a random number to be used as a source of entropy for random number generation by
- * clients.
+ * @brief The random command provides a random number to be used as a source of entropy for random
+ * number generation by clients.
  *
  * For more details see: https://xrpl.org/random.html
  */

@@ -70,7 +70,8 @@ struct MockLoadObserver : etl::InitialLoadObserverInterface {
 
 struct GrpcSourceTests : virtual public ::testing::Test, tests::util::WithMockXrpLedgerAPIService {
     GrpcSourceTests()
-        : WithMockXrpLedgerAPIService("localhost:0"), grpcSource_("localhost", std::to_string(getXRPLMockPort()))
+        : WithMockXrpLedgerAPIService("localhost:0")
+        , grpcSource_("localhost", std::to_string(getXRPLMockPort()))
     {
     }
 
@@ -170,7 +171,8 @@ TEST_F(GrpcSourceTests, BasicFetchLedger)
             return grpc::Status{};
         });
 
-    auto const [status, response] = grpcSource_.fetchLedger(sequence, getObjects, getObjectNeighbors);
+    auto const [status, response] =
+        grpcSource_.fetchLedger(sequence, getObjects, getObjectNeighbors);
     ASSERT_TRUE(status.ok());
     EXPECT_TRUE(response.validated());
     EXPECT_FALSE(response.is_unlimited());
@@ -219,10 +221,12 @@ TEST_F(GrpcSourceLoadInitialLedgerTests, ObserverCalledCorrectly)
 
     EXPECT_CALL(observer_, onInitialLoadGotMoreObjects)
         .Times(numMarkers_)
-        .WillRepeatedly([&](uint32_t, std::vector<Object> const& data, std::optional<std::string> lastKey) {
-            EXPECT_FALSE(lastKey.has_value());
-            EXPECT_EQ(data.size(), 1);
-        });
+        .WillRepeatedly(
+            [&](uint32_t, std::vector<Object> const& data, std::optional<std::string> lastKey) {
+                EXPECT_FALSE(lastKey.has_value());
+                EXPECT_EQ(data.size(), 1);
+            }
+        );
 
     auto const res = grpcSource_.loadInitialLedger(sequence_, numMarkers_, observer_);
 
@@ -277,17 +281,19 @@ TEST_F(GrpcSourceLoadInitialLedgerTests, DataTransferredAndObserverCalledCorrect
 
     EXPECT_CALL(observer_, onInitialLoadGotMoreObjects)
         .Times(numMarkers_ * batchesPerMarker)
-        .WillRepeatedly([&](uint32_t, std::vector<Object> const& data, std::optional<std::string> lastKey) {
-            EXPECT_LE(data.size(), batchSize);
+        .WillRepeatedly(
+            [&](uint32_t, std::vector<Object> const& data, std::optional<std::string> lastKey) {
+                EXPECT_LE(data.size(), batchSize);
 
-            if (lastKey.has_value()) {
-                ++totalWithLastKey;
-            } else {
-                ++totalWithoutLastKey;
+                if (lastKey.has_value()) {
+                    ++totalWithLastKey;
+                } else {
+                    ++totalWithoutLastKey;
+                }
+
+                total += data.size();
             }
-
-            total += data.size();
-        });
+        );
 
     auto const res = grpcSource_.loadInitialLedger(sequence_, numMarkers_, observer_);
 
@@ -370,8 +376,9 @@ TEST_F(GrpcSourceTests, DeadlineIsHandledCorrectly)
 
     std::binary_semaphore sem(0);
 
-    auto grpcSource =
-        std::make_unique<etl::impl::GrpcSource>("localhost", std::to_string(getXRPLMockPort()), kDEADLINE);
+    auto grpcSource = std::make_unique<etl::impl::GrpcSource>(
+        "localhost", std::to_string(getXRPLMockPort()), kDEADLINE
+    );
 
     // Note: this may not be called at all if gRPC cancels before it gets a chance to call the stub
     EXPECT_CALL(mockXrpLedgerAPIService, GetLedger)
@@ -379,12 +386,14 @@ TEST_F(GrpcSourceTests, DeadlineIsHandledCorrectly)
         .WillRepeatedly([&](grpc::ServerContext*,
                             org::xrpl::rpc::v1::GetLedgerRequest const*,
                             org::xrpl::rpc::v1::GetLedgerResponse*) {
-            // wait for main thread to discard us and fail the test if unsuccessful within expected timeframe
+            // wait for main thread to discard us and fail the test if unsuccessful within expected
+            // timeframe
             [&] { ASSERT_TRUE(sem.try_acquire_for(std::chrono::milliseconds{50})); }();
             return grpc::Status{};
         });
 
-    auto const [status, response] = grpcSource->fetchLedger(sequence, getObjects, getObjectNeighbors);
+    auto const [status, response] =
+        grpcSource->fetchLedger(sequence, getObjects, getObjectNeighbors);
     ASSERT_FALSE(status.ok());  // timed out after kDEADLINE
 
     sem.release();  // we don't need to hold GetLedger thread any longer

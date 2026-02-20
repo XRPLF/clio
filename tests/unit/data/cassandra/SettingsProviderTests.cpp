@@ -51,10 +51,14 @@ getParseSettingsConfig(boost::json::value val)
     auto config = ClioConfigDefinition{
         {"database.cassandra.threads",
          ConfigValue{ConfigType::Integer}.defaultValue(std::thread::hardware_concurrency())},
-        {"database.cassandra.contact_points", ConfigValue{ConfigType::String}.defaultValue("127.0.0.1")},
-        {"database.cassandra.max_write_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(10000)},
-        {"database.cassandra.max_read_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(100000)},
-        {"database.cassandra.core_connections_per_host", ConfigValue{ConfigType::Integer}.defaultValue(1)},
+        {"database.cassandra.contact_points",
+         ConfigValue{ConfigType::String}.defaultValue("127.0.0.1")},
+        {"database.cassandra.max_write_requests_outstanding",
+         ConfigValue{ConfigType::Integer}.defaultValue(10000)},
+        {"database.cassandra.max_read_requests_outstanding",
+         ConfigValue{ConfigType::Integer}.defaultValue(100000)},
+        {"database.cassandra.core_connections_per_host",
+         ConfigValue{ConfigType::Integer}.defaultValue(1)},
         {"database.cassandra.certificate", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
         {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
@@ -81,8 +85,9 @@ class SettingsProviderTest : virtual public ::testing::Test {};
 
 TEST_F(SettingsProviderTest, Defaults)
 {
-    auto const cfg =
-        getParseSettingsConfig(json::parse(R"JSON({"database.cassandra.contact_points": "127.0.0.1"})JSON"));
+    auto const cfg = getParseSettingsConfig(
+        json::parse(R"JSON({"database.cassandra.contact_points": "127.0.0.1"})JSON")
+    );
     SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
     auto const settings = provider.getSettings();
@@ -148,8 +153,9 @@ TEST_F(SettingsProviderTest, DriverOptionalOptionsSpecified)
 
 TEST_F(SettingsProviderTest, SecureBundleConfig)
 {
-    auto const cfg =
-        getParseSettingsConfig(json::parse(R"JSON({"database.cassandra.secure_connect_bundle": "bundleData"})JSON"));
+    auto const cfg = getParseSettingsConfig(
+        json::parse(R"JSON({"database.cassandra.secure_connect_bundle": "bundleData"})JSON")
+    );
     SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
     auto const settings = provider.getSettings();

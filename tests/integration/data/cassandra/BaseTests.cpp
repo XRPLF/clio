@@ -129,7 +129,8 @@ TEST_F(BackendCassandraBaseTest, ConnectionFailTimeout)
 {
     Settings settings;
     settings.connectionTimeout = std::chrono::milliseconds{30};
-    settings.connectionInfo = Settings::ContactPoints{.contactPoints = "127.0.0.2", .port = std::nullopt};
+    settings.connectionInfo =
+        Settings::ContactPoints{.contactPoints = "127.0.0.2", .port = std::nullopt};
 
     Handle const handle{settings};
     auto const f = handle.asyncConnect();
@@ -138,7 +139,9 @@ TEST_F(BackendCassandraBaseTest, ConnectionFailTimeout)
     ASSERT_FALSE(res);
 
     // scylla and cassandra produce different text
-    EXPECT_TRUE(res.error().message().starts_with("No hosts available: Underlying connection error:"));
+    EXPECT_TRUE(
+        res.error().message().starts_with("No hosts available: Underlying connection error:")
+    );
     EXPECT_EQ(res.error().code(), CASS_ERROR_LIB_NO_HOSTS_AVAILABLE);
 }
 
@@ -147,7 +150,8 @@ TEST_F(BackendCassandraBaseTest, FutureCallback)
     Handle const handle{TestGlobals::instance().backendHost};
     ASSERT_TRUE(handle.connect());
 
-    auto const statement = handle.prepare("SELECT keyspace_name FROM system_schema.keyspaces").bind();
+    auto const statement =
+        handle.prepare("SELECT keyspace_name FROM system_schema.keyspaces").bind();
 
     bool complete = false;
     auto const f = handle.asyncExecute(statement, [&complete](auto const res) {
@@ -168,7 +172,8 @@ TEST_F(BackendCassandraBaseTest, FutureCallbackSurviveMove)
     Handle const handle{TestGlobals::instance().backendHost};
     ASSERT_TRUE(handle.connect());
 
-    auto const statement = handle.prepare("SELECT keyspace_name FROM system_schema.keyspaces").bind();
+    auto const statement =
+        handle.prepare("SELECT keyspace_name FROM system_schema.keyspaces").bind();
 
     bool complete = false;
     std::vector<FutureWithCallback> futures;
@@ -446,7 +451,8 @@ TEST_F(BackendCassandraBaseTest, AlterTableMoveToNewTable)
 
     // now migrate data; tmp column will just get the sequence number + 1 stored
     std::vector<Statement> migrationStatements;
-    auto const migrationInsert = handle.prepare("INSERT INTO strings_v2 (hash, sequence, tmp) VALUES (?, ?, ?)");
+    auto const migrationInsert =
+        handle.prepare("INSERT INTO strings_v2 (hash, sequence, tmp) VALUES (?, ?, ?)");
 
     auto const res = handle.execute("SELECT hash, sequence FROM strings");
     ASSERT_TRUE(res);

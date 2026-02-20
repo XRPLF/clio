@@ -33,12 +33,13 @@
 
 namespace etl {
 
-// TODO: does the note make sense? lockfree queues provide the same blocking behaviour just without mutex, don't they?
+// TODO: does the note make sense? lockfree queues provide the same blocking behaviour just without
+// mutex, don't they?
 /**
  * @brief Generic thread-safe queue with a max capacity.
  *
- * @note (original note) We can't use a lockfree queue here, since we need the ability to wait for an element to be
- * added or removed from the queue. These waits are blocking calls.
+ * @note (original note) We can't use a lockfree queue here, since we need the ability to wait for
+ * an element to be added or removed from the queue. These waits are blocking calls.
  */
 template <typename T>
 class ThreadSafeQueue {
@@ -52,8 +53,8 @@ public:
     /**
      * @brief Create an instance of the queue.
      *
-     * @param maxSize maximum size of the queue. Calls that would cause the queue to exceed this size will block until
-     * free space is available.
+     * @param maxSize maximum size of the queue. Calls that would cause the queue to exceed this
+     * size will block until free space is available.
      */
     ThreadSafeQueue(uint32_t maxSize) : maxSize_(maxSize)
     {

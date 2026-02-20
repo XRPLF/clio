@@ -47,8 +47,8 @@ struct TableObjectsDesc {
 };
 
 /**
- * @brief The adapter for the objects table. This class is responsible for reading the objects from the
- * FullTableScanner and converting the blobs to the STObject.
+ * @brief The adapter for the objects table. This class is responsible for reading the objects from
+ * the FullTableScanner and converting the blobs to the STObject.
  */
 class ObjectsAdapter : public impl::FullTableScannerAdapterBase<TableObjectsDesc> {
 public:
@@ -60,8 +60,12 @@ public:
      * @param backend The backend to use
      * @param onStateRead The callback to call when a state is read
      */
-    explicit ObjectsAdapter(std::shared_ptr<CassandraMigrationBackend> backend, OnStateRead onStateRead)
-        : FullTableScannerAdapterBase<TableObjectsDesc>(backend), onStateRead_{std::move(onStateRead)}
+    explicit ObjectsAdapter(
+        std::shared_ptr<CassandraMigrationBackend> backend,
+        OnStateRead onStateRead
+    )
+        : FullTableScannerAdapterBase<TableObjectsDesc>(backend)
+        , onStateRead_{std::move(onStateRead)}
     {
     }
 

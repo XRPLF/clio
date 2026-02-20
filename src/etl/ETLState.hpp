@@ -35,13 +35,14 @@
 namespace etl {
 
 /**
- * @brief This class is responsible for fetching and storing the state of the ETL information, such as the network id
+ * @brief This class is responsible for fetching and storing the state of the ETL information, such
+ * as the network id
  */
 struct ETLState {
     /*
      * NOTE: Rippled NetworkID: Mainnet = 0; Testnet = 1; Devnet = 2
-     * However, if rippled is running on neither of these (ie. standalone mode) rippled will default to 0, but
-     * is not included in the stateOpt response. Must manually add it here.
+     * However, if rippled is running on neither of these (ie. standalone mode) rippled will default
+     * to 0, but is not included in the stateOpt response. Must manually add it here.
      */
     uint32_t networkID{0};
 
@@ -54,12 +55,15 @@ struct ETLState {
     static std::optional<ETLState>
     fetchETLStateFromSource(Forward& source) noexcept
     {
-        auto const serverInfoRippled = data::synchronous([&source](auto yield) -> std::optional<boost::json::object> {
-            if (auto result = source.forwardToRippled({{"command", "server_info"}}, std::nullopt, {}, yield)) {
-                return std::move(result).value();
-            }
-            return std::nullopt;
-        });
+        auto const serverInfoRippled =
+            data::synchronous([&source](auto yield) -> std::optional<boost::json::object> {
+                if (auto result = source.forwardToRippled(
+                        {{"command", "server_info"}}, std::nullopt, {}, yield
+                    )) {
+                    return std::move(result).value();
+                }
+                return std::nullopt;
+            });
 
         if (serverInfoRippled && not serverInfoRippled->contains(JS(error))) {
             return boost::json::value_to<ETLState>(boost::json::value(*serverInfoRippled));

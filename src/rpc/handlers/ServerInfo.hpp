@@ -204,7 +204,8 @@ public:
             return Error{Status{RippledError::rpcINTERNAL}};
 
         auto output = Output{};
-        auto const sinceEpoch = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
+        auto const sinceEpoch =
+            duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
         auto const age = static_cast<int32_t>(sinceEpoch) -
             static_cast<int32_t>(lgrInfo->closeTime.time_since_epoch().count()) -
             static_cast<int32_t>(kRIPPLE_EPOCH_START);
@@ -214,19 +215,22 @@ public:
         if (ctx.isAdmin) {
             output.info.adminSection = {
                 .counters = counters_.get().report(),
-                .backendCounters = input.backendCounters ? std::make_optional(backend_->stats()) : std::nullopt,
+                .backendCounters =
+                    input.backendCounters ? std::make_optional(backend_->stats()) : std::nullopt,
                 .subscriptions = subscriptions_->report(),
                 .etl = etl_->getInfo()
             };
         }
 
-        auto const serverInfoRippled =
-            balancer_->forwardToRippled({{"command", "server_info"}}, ctx.clientIp, ctx.isAdmin, ctx.yield);
+        auto const serverInfoRippled = balancer_->forwardToRippled(
+            {{"command", "server_info"}}, ctx.clientIp, ctx.isAdmin, ctx.yield
+        );
 
         if (serverInfoRippled && !serverInfoRippled->contains(JS(error))) {
             if (serverInfoRippled->contains(JS(result)) &&
                 serverInfoRippled->at(JS(result)).as_object().contains(JS(info))) {
-                output.info.rippledInfo = serverInfoRippled->at(JS(result)).as_object().at(JS(info)).as_object();
+                output.info.rippledInfo =
+                    serverInfoRippled->at(JS(result)).as_object().at(JS(info)).as_object();
             }
         }
 
@@ -298,7 +302,8 @@ private:
         if (info.adminSection) {
             jv.as_object()["etl"] = info.adminSection->etl;
             jv.as_object()[JS(counters)] = info.adminSection->counters;
-            jv.as_object()[JS(counters)].as_object()["subscriptions"] = info.adminSection->subscriptions;
+            jv.as_object()[JS(counters)].as_object()["subscriptions"] =
+                info.adminSection->subscriptions;
             if (info.adminSection->backendCounters.has_value()) {
                 jv.as_object()[kBACKEND_COUNTERS_KEY] = *info.adminSection->backendCounters;
             }
@@ -306,7 +311,11 @@ private:
     }
 
     friend void
-    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, ValidatedLedgerSection const& validated)
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        ValidatedLedgerSection const& validated
+    )
     {
         jv = {
             {JS(age), validated.age},
@@ -336,15 +345,16 @@ private:
     {
         auto input = BaseServerInfoHandler::Input{};
         auto const jsonObject = jv.as_object();
-        if (jsonObject.contains(kBACKEND_COUNTERS_KEY) && jsonObject.at(kBACKEND_COUNTERS_KEY).is_bool())
+        if (jsonObject.contains(kBACKEND_COUNTERS_KEY) &&
+            jsonObject.at(kBACKEND_COUNTERS_KEY).is_bool())
             input.backendCounters = jv.at(kBACKEND_COUNTERS_KEY).as_bool();
         return input;
     }
 };
 
 /**
- * @brief The server_info command asks the Clio server for a human-readable version of various information about the
- * Clio server being queried.
+ * @brief The server_info command asks the Clio server for a human-readable version of various
+ * information about the Clio server being queried.
  *
  * For more details see: https://xrpl.org/server_info-clio.html
  */

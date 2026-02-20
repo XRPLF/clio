@@ -33,19 +33,20 @@ namespace migration::impl {
  * @brief The migrator specification concept
  */
 template <typename T, typename Backend>
-concept MigratorSpec = requires(std::shared_ptr<Backend> const& backend, util::config::ObjectView const& cfg) {
-    // Check that 'kNAME' exists and is a string
-    { T::kNAME } -> std::convertible_to<std::string>;
+concept MigratorSpec =
+    requires(std::shared_ptr<Backend> const& backend, util::config::ObjectView const& cfg) {
+        // Check that 'kNAME' exists and is a string
+        { T::kNAME } -> std::convertible_to<std::string>;
 
-    // Check that 'kDESCRIPTION' exists and is a string
-    { T::kDESCRIPTION } -> std::convertible_to<std::string>;
+        // Check that 'kDESCRIPTION' exists and is a string
+        { T::kDESCRIPTION } -> std::convertible_to<std::string>;
 
-    // Check that the migrator specifies the backend type it supports
-    typename T::Backend;
+        // Check that the migrator specifies the backend type it supports
+        typename T::Backend;
 
-    // Check that 'runMigration' exists and is callable
-    { T::runMigration(backend, cfg) } -> std::same_as<void>;
-};
+        // Check that 'runMigration' exists and is callable
+        { T::runMigration(backend, cfg) } -> std::same_as<void>;
+    };
 
 /**
  * @brief used by variadic template to check all migrators are MigratorSpec

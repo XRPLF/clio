@@ -99,25 +99,29 @@ generateTestValuesForParametersTest()
         },
         {
             .testName = "LedgerHashInvalid",
-            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})JSON",
+            .testJson =
+                R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashMalformed",
         },
         {
             .testName = "LedgerHashNotString",
-            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})JSON",
+            .testJson =
+                R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashNotString",
         },
         {
             .testName = "LedgerIndexNotInt",
-            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})JSON",
+            .testJson =
+                R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledgerIndexMalformed",
         },
         {
             .testName = "LimitNotInt",
-            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": "x"})JSON",
+            .testJson =
+                R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
@@ -135,13 +139,15 @@ generateTestValuesForParametersTest()
         },
         {
             .testName = "MarkerNotString",
-            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 123})JSON",
+            .testJson =
+                R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "markerNotString",
         },
         {
             .testName = "MarkerInvalid",
-            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": "12;xxx"})JSON",
+            .testJson =
+                R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": "12;xxx"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Malformed cursor.",
         },
@@ -202,7 +208,8 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaStringIndex)
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _))
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -230,7 +237,8 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaIntIndex)
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _))
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -313,7 +321,8 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX1}}, kINDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
@@ -363,9 +372,11 @@ TEST_F(RPCAccountOffersHandlerTest, Limit)
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject(std::vector{20, ripple::uint256{kINDEX1}}, kINDEX1);
+    auto const ownerDir =
+        createOwnerDirLedgerObject(std::vector{20, ripple::uint256{kINDEX1}}, kINDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kLEDGER_SEQ, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -415,10 +426,12 @@ TEST_F(RPCAccountOffersHandlerTest, Marker)
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const startPage = 2;
-    auto const ownerDir = createOwnerDirLedgerObject(std::vector{20, ripple::uint256{kINDEX1}}, kINDEX1);
+    auto const ownerDir =
+        createOwnerDirLedgerObject(std::vector{20, ripple::uint256{kINDEX1}}, kINDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
     auto const hintIndex = ripple::keylet::page(ownerDirKk, startPage).key;
 
@@ -472,13 +485,15 @@ TEST_F(RPCAccountOffersHandlerTest, MarkerNotExists)
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const startPage = 2;
     auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
     auto const hintIndex = ripple::keylet::page(ownerDirKk, startPage).key;
 
-    ON_CALL(*backend_, doFetchLedgerObject(hintIndex, kLEDGER_SEQ, _)).WillByDefault(Return(std::nullopt));
+    ON_CALL(*backend_, doFetchLedgerObject(hintIndex, kLEDGER_SEQ, _))
+        .WillByDefault(Return(std::nullopt));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     static auto const kINPUT = json::parse(
@@ -511,7 +526,8 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = createOwnerDirLedgerObject(
         std::vector{AccountOffersHandler::kLIMIT_MIN + 1, ripple::uint256{kINDEX1}}, kINDEX1
@@ -568,7 +584,8 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = createOwnerDirLedgerObject(
         std::vector{AccountOffersHandler::kLIMIT_MAX + 1, ripple::uint256{kINDEX1}}, kINDEX1
@@ -634,10 +651,13 @@ TEST(RPCAccountOffersHandlerSpecTest, DeprecatedFields)
     auto const& warning = warnings[0].as_object();
     ASSERT_TRUE(warning.contains("id"));
     ASSERT_TRUE(warning.contains("message"));
-    EXPECT_EQ(warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::WarnRpcDeprecated));
+    EXPECT_EQ(
+        warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::WarnRpcDeprecated)
+    );
     for (auto const& field : {"ledger", "strict"}) {
         EXPECT_NE(
-            warning.at("message").as_string().find(fmt::format("Field '{}' is deprecated.", field)), std::string::npos
+            warning.at("message").as_string().find(fmt::format("Field '{}' is deprecated.", field)),
+            std::string::npos
         ) << warning;
     }
 }

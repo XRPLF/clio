@@ -37,7 +37,8 @@ terminationHandler()
 {
 #ifndef CLIO_WITHOUT_STACKTRACE
     try {
-        LOG(LogService::fatal()) << "Exit on terminate. Backtrace:\n" << boost::stacktrace::stacktrace();
+        LOG(LogService::fatal()) << "Exit on terminate. Backtrace:\n"
+                                 << boost::stacktrace::stacktrace();
     } catch (...) {
         LOG(LogService::fatal()) << "Exit on terminate. Can't get backtrace.";
     }

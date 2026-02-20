@@ -77,7 +77,8 @@ void
 Monitor::notifyWriteConflict(uint32_t seq)
 {
     LOG(log_.warn()) << "Loader notified Monitor about write conflict at " << seq;
-    nextSequence_ = seq + 1;  //  we already loaded the cache for seq just before we detected conflict
+    nextSequence_ =
+        seq + 1;  //  we already loaded the cache for seq just before we detected conflict
     LOG(log_.warn()) << "Resume monitoring from " << nextSequence_;
 }
 
@@ -87,13 +88,17 @@ Monitor::run(std::chrono::steady_clock::duration repeatInterval)
     ASSERT(not repeatedTask_.has_value(), "Monitor attempted to run more than once");
     {
         auto lck = updateData_.lock();
-        LOG(log_.debug()) << "Starting monitor with repeat interval: "
-                          << std::chrono::duration_cast<std::chrono::seconds>(repeatInterval).count()
-                          << "s and dbStalledReportDelay: "
-                          << std::chrono::duration_cast<std::chrono::seconds>(lck->dbStalledReportDelay).count() << "s";
+        LOG(
+            log_.debug()
+        ) << "Starting monitor with repeat interval: "
+          << std::chrono::duration_cast<std::chrono::seconds>(repeatInterval).count()
+          << "s and dbStalledReportDelay: "
+          << std::chrono::duration_cast<std::chrono::seconds>(lck->dbStalledReportDelay).count()
+          << "s";
     }
 
-    repeatedTask_ = strand_.executeRepeatedly(repeatInterval, std::bind_front(&Monitor::doWork, this));
+    repeatedTask_ =
+        strand_.executeRepeatedly(repeatInterval, std::bind_front(&Monitor::doWork, this));
     subscription_ = validatedLedgers_->subscribe(std::bind_front(&Monitor::onNextSequence, this));
 }
 
@@ -143,23 +148,27 @@ Monitor::doWork()
         }
 
         while (lck->lastSeenMaxSeqInDb >= nextSequence_) {
-            LOG(log_.trace()) << "Publishing from Monitor::doWork. nextSequence_ = " << nextSequence_
+            LOG(log_.trace()) << "Publishing from Monitor::doWork. nextSequence_ = "
+                              << nextSequence_
                               << ", lastSeenMaxSeqInDb_ = " << lck->lastSeenMaxSeqInDb;
             notificationChannel_(nextSequence_++);
             dbProgressedThisCycle = true;
         }
     } else {
-        LOG(log_.trace()) << "DB range is not available or empty. lastSeenMaxSeqInDb_ = " << lck->lastSeenMaxSeqInDb
-                          << ", nextSequence_ = " << nextSequence_;
+        LOG(log_.trace()) << "DB range is not available or empty. lastSeenMaxSeqInDb_ = "
+                          << lck->lastSeenMaxSeqInDb << ", nextSequence_ = " << nextSequence_;
     }
 
     if (dbProgressedThisCycle) {
         lck->lastDbCheckTime = std::chrono::steady_clock::now();
-    } else if (std::chrono::steady_clock::now() - lck->lastDbCheckTime > lck->dbStalledReportDelay) {
-        LOG(log_.info()) << "No DB update detected for "
-                         << std::chrono::duration_cast<std::chrono::seconds>(lck->dbStalledReportDelay).count()
-                         << " seconds. Firing dbStalledChannel. Last seen max seq in DB: " << lck->lastSeenMaxSeqInDb
-                         << ". Expecting next: " << nextSequence_;
+    } else if (std::chrono::steady_clock::now() - lck->lastDbCheckTime >
+               lck->dbStalledReportDelay) {
+        LOG(
+            log_.info()
+        ) << "No DB update detected for "
+          << std::chrono::duration_cast<std::chrono::seconds>(lck->dbStalledReportDelay).count()
+          << " seconds. Firing dbStalledChannel. Last seen max seq in DB: "
+          << lck->lastSeenMaxSeqInDb << ". Expecting next: " << nextSequence_;
         dbStalledChannel_();
         lck->lastDbCheckTime = std::chrono::steady_clock::now();
     }

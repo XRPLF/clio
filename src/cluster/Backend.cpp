@@ -113,7 +113,9 @@ Backend::doRead(boost::asio::yield_context yield)
 
         auto expectedNodeData = boost::json::try_value_to<ClioNode>(json);
         if (expectedNodeData.has_error()) {
-            return std::unexpected{fmt::format("Error converting json to ClioNode: {}", nodeDataStr)};
+            return std::unexpected{
+                fmt::format("Error converting json to ClioNode: {}", nodeDataStr)
+            };
         }
         *expectedNodeData->uuid = uuid;
         otherNodesData.push_back(std::move(expectedNodeData).value());

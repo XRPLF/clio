@@ -41,7 +41,11 @@ class CursorFromAccountProvider : public BaseCursorProvider {
     size_t pageSize_;
 
 public:
-    CursorFromAccountProvider(std::shared_ptr<BackendInterface> const& backend, size_t numCursors, size_t pageSize)
+    CursorFromAccountProvider(
+        std::shared_ptr<BackendInterface> const& backend,
+        size_t numCursors,
+        size_t pageSize
+    )
         : backend_{backend}, numCursors_{numCursors}, pageSize_{pageSize}
     {
     }

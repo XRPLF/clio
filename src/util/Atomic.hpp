@@ -70,7 +70,8 @@ public:
             value_.fetch_add(value);
 #else
             // Workaround for atomic float not being supported by the standard library
-            // compare_exchange_weak returns false if the value is not exchanged and updates the current value
+            // compare_exchange_weak returns false if the value is not exchanged and updates the
+            // current value
             auto current = value_.load();
             while (!value_.compare_exchange_weak(current, current + value)) {
             }

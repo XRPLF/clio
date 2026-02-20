@@ -47,7 +47,9 @@ struct NgErrorHandlingTests : public virtual ::testing::Test {
     makeRequest(bool isHttp, std::optional<std::string> body = std::nullopt)
     {
         if (isHttp)
-            return Request{http::request<http::string_body>{http::verb::post, "/", 11, body.value_or("")}};
+            return Request{
+                http::request<http::string_body>{http::verb::post, "/", 11, body.value_or("")}
+            };
         static Request::HttpHeaders const kHEADERS;
         return Request{body.value_or(""), kHEADERS};
     }
@@ -61,8 +63,9 @@ struct NgErrorHandlingMakeErrorTestBundle {
     boost::beast::http::status expectedStatus;
 };
 
-struct NgErrorHandlingMakeErrorTest : NgErrorHandlingTests,
-                                      testing::WithParamInterface<NgErrorHandlingMakeErrorTestBundle> {};
+struct NgErrorHandlingMakeErrorTest
+    : NgErrorHandlingTests,
+      testing::WithParamInterface<NgErrorHandlingMakeErrorTestBundle> {};
 
 TEST_P(NgErrorHandlingMakeErrorTest, MakeError)
 {
@@ -147,9 +150,9 @@ struct NgErrorHandlingMakeInternalErrorTestBundle {
     boost::json::object expectedResult;
 };
 
-struct NgErrorHandlingMakeInternalErrorTest : NgErrorHandlingTests,
-                                              testing::WithParamInterface<NgErrorHandlingMakeInternalErrorTestBundle> {
-};
+struct NgErrorHandlingMakeInternalErrorTest
+    : NgErrorHandlingTests,
+      testing::WithParamInterface<NgErrorHandlingMakeInternalErrorTestBundle> {};
 
 TEST_P(NgErrorHandlingMakeInternalErrorTest, ComposeError)
 {
@@ -307,8 +310,9 @@ struct NgErrorHandlingComposeErrorTestBundle {
     std::string expectedMessage;
 };
 
-struct NgErrorHandlingComposeErrorTest : NgErrorHandlingTests,
-                                         testing::WithParamInterface<NgErrorHandlingComposeErrorTestBundle> {};
+struct NgErrorHandlingComposeErrorTest
+    : NgErrorHandlingTests,
+      testing::WithParamInterface<NgErrorHandlingComposeErrorTestBundle> {};
 
 TEST_P(NgErrorHandlingComposeErrorTest, ComposeError)
 {

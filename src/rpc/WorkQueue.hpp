@@ -93,7 +93,11 @@ private:
                     return high;
                 return normal;
             }();
-            queue.push(TaskWithTimestamp{.task = std::move(task), .queuedAt = std::chrono::system_clock::now()});
+            queue.push(
+                TaskWithTimestamp{
+                    .task = std::move(task), .queuedAt = std::chrono::system_clock::now()
+                }
+            );
         }
 
         [[nodiscard]] bool
@@ -189,7 +193,8 @@ public:
     startProcessing();
 
     /**
-     * @brief Put the work queue into a stopping state. This will prevent new jobs from being queued.
+     * @brief Put the work queue into a stopping state. This will prevent new jobs from being
+     * queued.
      *
      * @param onQueueEmpty A callback to run when the last task in the queue is completed
      */
@@ -214,7 +219,8 @@ public:
     /**
      * @brief Submit a job to the work queue.
      *
-     * The job will be rejected if isWhiteListed is set to false and the current size of the queue reached capacity.
+     * The job will be rejected if isWhiteListed is set to false and the current size of the queue
+     * reached capacity.
      *
      * @param func The function object to queue as a job
      * @param isWhiteListed Whether the queue capacity applies to this job

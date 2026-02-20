@@ -106,7 +106,8 @@ WebHeader::WebHeader(http::field name, std::string value) : name(name), value(st
 {
 }
 
-WebHeader::WebHeader(std::string_view name, std::string value) : name(std::string{name}), value(std::move(value))
+WebHeader::WebHeader(std::string_view name, std::string value)
+    : name(std::string{name}), value(std::move(value))
 {
 }
 
@@ -134,7 +135,8 @@ HttpSyncClient::get(
 }
 
 bool
-HttpsSyncClient::verifyCertificate(bool /* preverified */, boost::asio::ssl::verify_context& /* ctx */)
+HttpsSyncClient::
+    verifyCertificate(bool /* preverified */, boost::asio::ssl::verify_context& /* ctx */)
 {
     return true;
 }
@@ -156,7 +158,9 @@ HttpsSyncClient::syncPost(std::string const& host, std::string const& port, std:
     if (!SSL_set_tlsext_host_name(stream.native_handle(), host.c_str()))
 #pragma GCC diagnostic pop
     {
-        boost::beast::error_code const ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
+        boost::beast::error_code const ec{
+            static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()
+        };
         throw boost::beast::system_error{ec};
     }
 
@@ -224,8 +228,13 @@ HttpAsyncClient::send(
     return {};
 }
 
-std::expected<boost::beast::http::response<boost::beast::http::string_body>, boost::system::error_code>
-HttpAsyncClient::receive(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout)
+std::expected<
+    boost::beast::http::response<boost::beast::http::string_body>,
+    boost::system::error_code>
+HttpAsyncClient::receive(
+    boost::asio::yield_context yield,
+    std::chrono::steady_clock::duration timeout
+)
 {
     boost::system::error_code error;
     http::response<http::string_body> response;

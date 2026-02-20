@@ -59,7 +59,9 @@ public:
         if (not state_.get().isCorruptionDetected) {
             state_.get().isCorruptionDetected = true;
 
-            LOG(log_.error()) << "Disabling the cache to avoid corrupting the DB further. Please investigate.";
+            LOG(
+                log_.error()
+            ) << "Disabling the cache to avoid corrupting the DB further. Please investigate.";
             cache_.get().setDisabled();
         }
     }

@@ -31,7 +31,8 @@ TEST_F(MigrationManagerFactoryTests, InvalidDBType)
 {
     MockLedgerCache cache{};
     util::config::ClioConfigDefinition const configDef{
-        {"database.type", util::config::ConfigValue{util::config::ConfigType::String}.defaultValue("invalid")}
+        {"database.type",
+         util::config::ConfigValue{util::config::ConfigType::String}.defaultValue("invalid")}
     };
     auto const ret = migration::impl::makeMigrationManager(configDef, cache);
     EXPECT_FALSE(ret);

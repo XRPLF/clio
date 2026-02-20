@@ -49,7 +49,8 @@
 namespace etl::impl {
 
 /**
- * @brief This class is used to subscribe to a source of ledger data and forward it to the subscription manager.
+ * @brief This class is used to subscribe to a source of ledger data and forward it to the
+ * subscription manager.
  * @note This class is safe to delete only if io_context is stopped.
  */
 class SubscriptionSource {
@@ -108,7 +109,8 @@ public:
      * @param subscriptions The subscription manager object
      * @param onConnect The onConnect hook. Called when the connection is established
      * @param onDisconnect The onDisconnect hook. Called when the connection is lost
-     * @param onLedgerClosed The onLedgerClosed hook. Called when the ledger is closed if the source is forwarding
+     * @param onLedgerClosed The onLedgerClosed hook. Called when the ledger is closed if the source
+     * is forwarding
      * @param wsTimeout A timeout for websocket operations. Defaults to 30 seconds
      * @param retryDelay The retry delay. Defaults to 1 second
      */
@@ -159,8 +161,8 @@ public:
     /**
      * @brief Set source forwarding
      *
-     * @note If forwarding is true the source will forward messages to the subscription manager. Forwarding is being
-     * reset on disconnect.
+     * @note If forwarding is true the source will forward messages to the subscription manager.
+     * Forwarding is being reset on disconnect.
      * @param isForwarding The new forwarding state
      */
     void
@@ -183,7 +185,8 @@ public:
     validatedRange() const;
 
     /**
-     * @brief Stop the source. The source will complete already scheduled operations but will not schedule new ones
+     * @brief Stop the source. The source will complete already scheduled operations but will not
+     * schedule new ones
      */
     void
     stop(boost::asio::yield_context yield);

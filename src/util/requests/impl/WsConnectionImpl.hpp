@@ -89,7 +89,9 @@ public:
     ) override
     {
         boost::beast::error_code errorCode;
-        auto operation = [&](auto&& token) { ws_.async_write(boost::asio::buffer(message), token); };
+        auto operation = [&](auto&& token) {
+            ws_.async_write(boost::asio::buffer(message), token);
+        };
         if (timeout) {
             errorCode = util::withTimeout(operation, yield, *timeout);
         } else {
@@ -122,8 +124,9 @@ public:
     }
 };
 
-using PlainWsConnection = WsConnectionImpl<boost::beast::websocket::stream<boost::beast::tcp_stream>>;
-using SslWsConnection =
-    WsConnectionImpl<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>>;
+using PlainWsConnection =
+    WsConnectionImpl<boost::beast::websocket::stream<boost::beast::tcp_stream>>;
+using SslWsConnection = WsConnectionImpl<
+    boost::beast::websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>>;
 
 }  // namespace util::requests::impl

@@ -79,7 +79,11 @@ handleWsRequest(
 )
 {
     if (not handler.has_value()) {
-        return Response{boost::beast::http::status::bad_request, "WebSocket is not supported by this server", request};
+        return Response{
+            boost::beast::http::status::bad_request,
+            "WebSocket is not supported by this server",
+            request
+        };
     }
     return handler->operator()(request, connectionMetadata, subscriptionContext, yield);
 }
@@ -135,8 +139,8 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
     }
     ++connectionsCounter_.get();
 
-    // Using coroutine group here to wait for stopConnection() to finish before exiting this function and destroying
-    // connection.
+    // Using coroutine group here to wait for stopConnection() to finish before exiting this
+    // function and destroying connection.
     util::CoroutineGroup stopTask{yield, 1};
     auto stopSignalConnection = onStop_.connect([&connectionRef, &stopTask, yield]() {
         stopTask.spawn(yield, [&connectionRef](boost::asio::yield_context innerYield) {
@@ -151,20 +155,25 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
         auto* ptr = dynamic_cast<impl::WsConnectionBase*>(connectionPtr.get());
         ASSERT(ptr != nullptr, "Casted not websocket connection");
         subscriptionContext = std::make_shared<SubscriptionContext>(
-            tagFactory_, *ptr, maxSubscriptionSendQueueSize_, yield, [this](Error const& e, Connection const& c) {
-                return handleError(e, c);
-            }
+            tagFactory_,
+            *ptr,
+            maxSubscriptionSendQueueSize_,
+            yield,
+            [this](Error const& e, Connection const& c) { return handleError(e, c); }
         );
-        LOG(log_.trace()) << connectionRef.tag() << "Created SubscriptionContext for the connection";
+        LOG(log_.trace()) << connectionRef.tag()
+                          << "Created SubscriptionContext for the connection";
     }
     SubscriptionContextPtr subscriptionContextInterfacePtr = subscriptionContext;
 
     switch (processingPolicy_) {
         case ProcessingPolicy::Sequential:
-            shouldCloseGracefully = sequentRequestResponseLoop(connectionRef, subscriptionContextInterfacePtr, yield);
+            shouldCloseGracefully =
+                sequentRequestResponseLoop(connectionRef, subscriptionContextInterfacePtr, yield);
             break;
         case ProcessingPolicy::Parallel:
-            shouldCloseGracefully = parallelRequestResponseLoop(connectionRef, subscriptionContextInterfacePtr, yield);
+            shouldCloseGracefully =
+                parallelRequestResponseLoop(connectionRef, subscriptionContextInterfacePtr, yield);
             break;
     }
 
@@ -185,7 +194,8 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
     onDisconnectHook_(connectionRef);
     LOG(log_.trace()) << connectionRef.tag() << "Processing finished";
 
-    // Wait for a stopConnection() to finish if there is any to not have dangling reference in stopConnection().
+    // Wait for a stopConnection() to finish if there is any to not have dangling reference in
+    // stopConnection().
     stopTask.asyncWait(yield);
 
     --connectionsCounter_.get();
@@ -247,8 +257,9 @@ ConnectionHandler::handleError(Error const& error, Connection const& connection)
     // Beast returns the error boost::beast::http::error::partial_message.
     // Therefore, if we see a short read here, it has occurred
     // after the message has been completed, so it is safe to ignore it.
-    if (error == boost::beast::http::error::end_of_stream || error == boost::asio::ssl::error::stream_truncated ||
-        error == boost::asio::error::eof || error == boost::beast::error::timeout)
+    if (error == boost::beast::http::error::end_of_stream ||
+        error == boost::asio::ssl::error::stream_truncated || error == boost::asio::error::eof ||
+        error == boost::beast::error::timeout)
         return false;
 
     // WebSocket connection was gracefully closed
@@ -269,12 +280,15 @@ ConnectionHandler::sequentRequestResponseLoop(
 )
 {
     // The loop here is infinite because:
-    // - For websocket connection is persistent so Clio will try to read and respond infinite unless client
+    // - For websocket connection is persistent so Clio will try to read and respond infinite unless
+    // client
     //   disconnected.
     // - When client disconnected connection.send() or connection.receive() will return an error.
-    // - For http it is still a loop to reuse the connection if keep alive is set. Otherwise client will disconnect and
+    // - For http it is still a loop to reuse the connection if keep alive is set. Otherwise client
+    // will disconnect and
     //   an error appears.
-    // - When server is shutting down it will cancel all operations on the connection so an error appears.
+    // - When server is shutting down it will cancel all operations on the connection so an error
+    // appears.
 
     LOG(log_.trace()) << connection.tag() << "Processing sequentially";
     while (true) {
@@ -284,7 +298,8 @@ ConnectionHandler::sequentRequestResponseLoop(
 
         resolveClientIp(connection, *expectedRequest);
 
-        auto maybeReturnValue = processRequest(connection, subscriptionContext, *expectedRequest, yield);
+        auto maybeReturnValue =
+            processRequest(connection, subscriptionContext, *expectedRequest, yield);
         if (maybeReturnValue.has_value())
             return maybeReturnValue.value();
     }
@@ -323,7 +338,9 @@ ConnectionHandler::parallelRequestResponseLoop(
                  &closeConnectionGracefully,
                  &connection,
                  &subscriptionContext,
-                 request = std::move(expectedRequest).value()](boost::asio::yield_context innerYield) mutable {
+                 request = std::move(expectedRequest).value()](
+                    boost::asio::yield_context innerYield
+                ) mutable {
                     auto maybeCloseConnectionGracefully =
                         processRequest(connection, subscriptionContext, request, innerYield);
                     if (maybeCloseConnectionGracefully.has_value()) {
@@ -335,7 +352,8 @@ ConnectionHandler::parallelRequestResponseLoop(
             ASSERT(spawnSuccess, "The coroutine was expected to be spawned");
             LOG(log_.trace()) << connection.tag() << "Spawned a coroutine to process request";
         } else {
-            LOG(log_.trace()) << connection.tag() << "Too many requests from one connection, rejecting the request";
+            LOG(log_.trace()) << connection.tag()
+                              << "Too many requests from one connection, rejecting the request";
             connection.send(
                 Response{
                     boost::beast::http::status::too_many_requests,
@@ -346,8 +364,8 @@ ConnectionHandler::parallelRequestResponseLoop(
             );
         }
     }
-    LOG(log_.trace()) << connection.tag()
-                      << "Waiting processing tasks to finish. Number of tasks: " << tasksGroup.size();
+    LOG(log_.trace()) << connection.tag() << "Waiting processing tasks to finish. Number of tasks: "
+                      << tasksGroup.size();
     tasksGroup.asyncWait(yield);
     LOG(log_.trace()) << connection.tag() << "Processing is done";
     return closeConnectionGracefully;
@@ -382,22 +400,32 @@ ConnectionHandler::handleRequest(
 {
     switch (request.method()) {
         case Request::Method::Get:
-            return handleHttpRequest(connectionMetadata, subscriptionContext, getHandlers_, request, yield);
+            return handleHttpRequest(
+                connectionMetadata, subscriptionContext, getHandlers_, request, yield
+            );
         case Request::Method::Post:
-            return handleHttpRequest(connectionMetadata, subscriptionContext, postHandlers_, request, yield);
+            return handleHttpRequest(
+                connectionMetadata, subscriptionContext, postHandlers_, request, yield
+            );
         case Request::Method::Websocket:
-            return handleWsRequest(connectionMetadata, subscriptionContext, wsHandler_, request, yield);
+            return handleWsRequest(
+                connectionMetadata, subscriptionContext, wsHandler_, request, yield
+            );
         default:
-            return Response{boost::beast::http::status::bad_request, "Unsupported http method", request};
+            return Response{
+                boost::beast::http::status::bad_request, "Unsupported http method", request
+            };
     }
 }
 
 void
 ConnectionHandler::resolveClientIp(Connection& connection, Request const& request) const
 {
-    if (auto resolvedClientIp = proxyIpResolver_.resolveClientIp(connection.ip(), request.httpHeaders());
+    if (auto resolvedClientIp =
+            proxyIpResolver_.resolveClientIp(connection.ip(), request.httpHeaders());
         resolvedClientIp != connection.ip()) {
-        LOG(log_.info()) << connection.tag() << "Detected a forwarded request from proxy. Proxy ip: " << connection.ip()
+        LOG(log_.info()) << connection.tag()
+                         << "Detected a forwarded request from proxy. Proxy ip: " << connection.ip()
                          << ". Resolved client ip: " << resolvedClientIp;
         onIpChangeHook_(connection.ip(), resolvedClientIp);
         connection.setIp(std::move(resolvedClientIp));

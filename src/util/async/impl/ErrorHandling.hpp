@@ -36,24 +36,31 @@ struct DefaultErrorHandler {
     [[nodiscard]] static auto
     wrap(auto&& fn) noexcept
     {
-        return
-            [fn = std::forward<decltype(fn)>(fn)]<typename... Args>(SomeOutcome auto& outcome, Args&&... args) mutable {
-                try {
-                    std::invoke(std::forward<decltype(fn)>(fn), outcome, std::forward<Args>(args)...);
-                } catch (std::exception const& e) {
-                    outcome.setValue(
-                        std::unexpected(ExecutionError{fmt::format("{}", std::this_thread::get_id()), e.what()})
-                    );
-                } catch (...) {
-                    outcome.setValue(
-                        std::unexpected(ExecutionError{fmt::format("{}", std::this_thread::get_id()), "unknown"})
-                    );
-                }
-            };
+        return [fn = std::forward<decltype(fn)>(fn)]<typename... Args>(
+                   SomeOutcome auto& outcome, Args&&... args
+               ) mutable {
+            try {
+                std::invoke(std::forward<decltype(fn)>(fn), outcome, std::forward<Args>(args)...);
+            } catch (std::exception const& e) {
+                outcome.setValue(
+                    std::unexpected(
+                        ExecutionError{fmt::format("{}", std::this_thread::get_id()), e.what()}
+                    )
+                );
+            } catch (...) {
+                outcome.setValue(
+                    std::unexpected(
+                        ExecutionError{fmt::format("{}", std::this_thread::get_id()), "unknown"}
+                    )
+                );
+            }
+        };
     }
 
     [[nodiscard]] static auto
-    catchAndAssert(auto&& fn) noexcept  // note this is a lie when used with MockAssert (use MockAssertNoThrow)
+    catchAndAssert(
+        auto&& fn
+    ) noexcept  // note this is a lie when used with MockAssert (use MockAssertNoThrow)
     {
         return [fn = std::forward<decltype(fn)>(fn)] mutable {
             try {

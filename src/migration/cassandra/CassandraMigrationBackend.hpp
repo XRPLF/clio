@@ -35,8 +35,8 @@
 namespace migration::cassandra {
 
 /**
- * @brief The backend for the migration. It is a subclass of the CassandraBackend and provides the migration specific
- * functionalities.
+ * @brief The backend for the migration. It is a subclass of the CassandraBackend and provides the
+ * migration specific functionalities.
  */
 class CassandraMigrationBackend : public data::cassandra::CassandraBackend {
     util::Logger log_{"Migration"};
@@ -81,22 +81,23 @@ public:
         LOG(log_.debug()) << "Travsering token range: " << start << " - " << end
                           << " ; table: " << TableDesc::kTABLE_NAME;
         // for each table we only have one prepared statement
-        static auto kSTATEMENT_PREPARED =
-            migrationSchema_.getPreparedFullScanStatement(handle_, TableDesc::kTABLE_NAME, TableDesc::kPARTITION_KEY);
+        static auto kSTATEMENT_PREPARED = migrationSchema_.getPreparedFullScanStatement(
+            handle_, TableDesc::kTABLE_NAME, TableDesc::kPARTITION_KEY
+        );
 
         auto const statement = kSTATEMENT_PREPARED.bind(start, end);
 
         auto const res = this->executor_.read(yield, statement);
         if (not res) {
-            LOG(log_.error()) << "Could not fetch data from table: " << TableDesc::kTABLE_NAME << " range: " << start
-                              << " - " << end << ";" << res.error();
+            LOG(log_.error()) << "Could not fetch data from table: " << TableDesc::kTABLE_NAME
+                              << " range: " << start << " - " << end << ";" << res.error();
             return;
         }
 
         auto const& results = res.value();
         if (not results.hasRows()) {
-            LOG(log_.debug()) << "No rows returned  - table: " << TableDesc::kTABLE_NAME << " range: " << start << " - "
-                              << end;
+            LOG(log_.debug()) << "No rows returned  - table: " << TableDesc::kTABLE_NAME
+                              << " range: " << start << " - " << end;
             return;
         }
 

@@ -63,8 +63,9 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
     auto const limit = input.limit.value_or(MPTHoldersHandler::kLIMIT_DEFAULT);
     auto const mptID = ripple::uint192{input.mptID.c_str()};
 
-    auto const issuanceLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::mptIssuance(mptID).key, lgrInfo.seq, ctx.yield);
+    auto const issuanceLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::mptIssuance(mptID).key, lgrInfo.seq, ctx.yield
+    );
     if (!issuanceLedgerObject)
         return Error{Status{RippledError::rpcOBJECT_NOT_FOUND, "objectNotFound"}};
 
@@ -72,7 +73,8 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
     if (input.marker)
         cursor = ripple::AccountID{input.marker->c_str()};
 
-    auto const dbResponse = sharedPtrBackend_->fetchMPTHolders(mptID, limit, cursor, lgrInfo.seq, ctx.yield);
+    auto const dbResponse =
+        sharedPtrBackend_->fetchMPTHolders(mptID, limit, cursor, lgrInfo.seq, ctx.yield);
     auto output = MPTHoldersHandler::Output{};
     output.mptID = to_string(mptID);
     output.limit = limit;
@@ -80,14 +82,20 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
 
     boost::json::array const mpts;
     for (auto const& mpt : dbResponse.mptokens) {
-        ripple::STLedgerEntry const sle{ripple::SerialIter{mpt.data(), mpt.size()}, keylet::mptIssuance(mptID).key};
+        ripple::STLedgerEntry const sle{
+            ripple::SerialIter{mpt.data(), mpt.size()}, keylet::mptIssuance(mptID).key
+        };
         boost::json::object mptJson;
 
         mptJson[JS(account)] = toBase58(sle[ripple::sfAccount]);
         mptJson[JS(flags)] = sle.getFlags();
-        mptJson["mpt_amount"] =
-            toBoostJson(ripple::STUInt64{ripple::sfMPTAmount, sle[ripple::sfMPTAmount]}.getJson(JsonOptions::none));
-        mptJson["mptoken_index"] = ripple::to_string(ripple::keylet::mptoken(mptID, sle[ripple::sfAccount]).key);
+        mptJson["mpt_amount"] = toBoostJson(
+            ripple::STUInt64{ripple::sfMPTAmount, sle[ripple::sfMPTAmount]}.getJson(
+                JsonOptions::none
+            )
+        );
+        mptJson["mptoken_index"] =
+            ripple::to_string(ripple::keylet::mptoken(mptID, sle[ripple::sfAccount]).key);
 
         output.mpts.push_back(mptJson);
     }
@@ -99,7 +107,11 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, MPTHoldersHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    MPTHoldersHandler::Output const& output
+)
 {
     jv = {
         {JS(mpt_issuance_id), output.mptID},

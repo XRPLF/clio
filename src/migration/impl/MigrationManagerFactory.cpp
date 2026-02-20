@@ -36,7 +36,10 @@
 namespace migration::impl {
 
 std::expected<std::shared_ptr<MigrationManagerInterface>, std::string>
-makeMigrationManager(util::config::ClioConfigDefinition const& config, data::LedgerCacheInterface& cache)
+makeMigrationManager(
+    util::config::ClioConfigDefinition const& config,
+    data::LedgerCacheInterface& cache
+)
 {
     static util::Logger const log{"Migration"};  // NOLINT(readability-identifier-naming)
     LOG(log.info()) << "Constructing MigrationManager";
@@ -52,7 +55,9 @@ makeMigrationManager(util::config::ClioConfigDefinition const& config, data::Led
     auto migrationCfg = config.getObject("migration");
 
     return std::make_shared<cassandra::CassandraMigrationManager>(
-        std::make_shared<cassandra::CassandraMigrationBackend>(data::cassandra::SettingsProvider{cfg}, cache),
+        std::make_shared<cassandra::CassandraMigrationBackend>(
+            data::cassandra::SettingsProvider{cfg}, cache
+        ),
         std::move(migrationCfg)
     );
 }

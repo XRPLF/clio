@@ -40,7 +40,8 @@ constexpr auto kFEED = R"JSON({"test": "test"})JSON";
 
 class NamedForwardFeedTest : public ForwardFeed {
 public:
-    NamedForwardFeedTest(util::async::AnyExecutionContext& executionCtx) : ForwardFeed(executionCtx, "test")
+    NamedForwardFeedTest(util::async::AnyExecutionContext& executionCtx)
+        : ForwardFeed(executionCtx, "test")
     {
     }
 };

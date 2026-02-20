@@ -113,7 +113,8 @@ WorkQueue::postCoro(TaskType func, bool isWhiteListed, Priority priority)
     }
 
     if (size() >= maxSize_ && !isWhiteListed) {
-        LOG(log_.warn()) << "Queue is full. rejecting job. current size = " << size() << "; max size = " << maxSize_;
+        LOG(log_.warn()) << "Queue is full. rejecting job. current size = " << size()
+                         << "; max size = " << maxSize_;
         return false;
     }
 
@@ -151,7 +152,9 @@ WorkQueue::stop()
 
     {
         auto onTasksComplete = onQueueEmpty_.lock();
-        ASSERT(onTasksComplete->operator bool(), "onTasksComplete must be set when stopping is true.");
+        ASSERT(
+            onTasksComplete->operator bool(), "onTasksComplete must be set when stopping is true."
+        );
         onTasksComplete->operator()();
     }
 }
@@ -164,7 +167,8 @@ WorkQueue::makeWorkQueue(util::config::ClioConfigDefinition const& config)
     auto const numThreads = config.get<uint32_t>("workers");
     auto const maxQueueSize = serverConfig.get<uint32_t>("max_queue_size");
 
-    LOG(log.info()) << "Number of workers = " << numThreads << ". Max queue size = " << maxQueueSize;
+    LOG(log.info()) << "Number of workers = " << numThreads
+                    << ". Max queue size = " << maxQueueSize;
     return WorkQueue{numThreads, maxQueueSize};
 }
 
@@ -202,7 +206,8 @@ WorkQueue::executeTask(boost::asio::yield_context yield)
     );
     auto const takenAt = std::chrono::system_clock::now();
     auto const waited =
-        std::chrono::duration_cast<std::chrono::microseconds>(takenAt - taskWithTimestamp->queuedAt).count();
+        std::chrono::duration_cast<std::chrono::microseconds>(takenAt - taskWithTimestamp->queuedAt)
+            .count();
 
     ++queued_.get();
     durationUs_.get() += waited;

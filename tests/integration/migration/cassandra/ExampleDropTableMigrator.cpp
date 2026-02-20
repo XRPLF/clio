@@ -24,7 +24,10 @@
 #include <memory>
 
 void
-ExampleDropTableMigrator::runMigration(std::shared_ptr<Backend> const& backend, util::config::ObjectView const&)
+ExampleDropTableMigrator::runMigration(
+    std::shared_ptr<Backend> const& backend,
+    util::config::ObjectView const&
+)
 {
     backend->dropDiffTable();
 }

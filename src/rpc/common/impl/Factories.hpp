@@ -39,7 +39,9 @@ namespace rpc::impl {
 
 using FieldSpecProcessor = std::function<MaybeError(boost::json::value&)>;
 
-static FieldSpecProcessor const kEMPTY_FIELD_PROCESSOR = [](boost::json::value&) -> MaybeError { return {}; };
+static FieldSpecProcessor const kEMPTY_FIELD_PROCESSOR = [](boost::json::value&) -> MaybeError {
+    return {};
+};
 
 template <SomeProcessor... Processors>
 [[nodiscard]] FieldSpecProcessor
@@ -48,8 +50,9 @@ makeFieldProcessor(std::string const& key, Processors&&... procs)
     return [key, ... proc = std::forward<Processors>(procs)](boost::json::value& j) -> MaybeError {
         std::optional<Status> firstFailure = std::nullopt;
 
-        // This expands in order of Requirements and stops evaluating after first failure which is stored in
-        // `firstFailure` and can be checked later on to see whether the verification failed as a whole or not.
+        // This expands in order of Requirements and stops evaluating after first failure which is
+        // stored in `firstFailure` and can be checked later on to see whether the verification
+        // failed as a whole or not.
         (
             [&j, &key, &firstFailure, req = &proc]() {
                 if (firstFailure)
@@ -77,13 +80,17 @@ makeFieldProcessor(std::string const& key, Processors&&... procs)
 
 using FieldChecker = std::function<check::Warnings(boost::json::value const&)>;
 
-static FieldChecker const kEMPTY_FIELD_CHECKER = [](boost::json::value const&) -> check::Warnings { return {}; };
+static FieldChecker const kEMPTY_FIELD_CHECKER = [](boost::json::value const&) -> check::Warnings {
+    return {};
+};
 
 template <SomeCheck... Checks>
 [[nodiscard]] FieldChecker
 makeFieldChecker(std::string const& key, Checks&&... checks)
 {
-    return [key, ... checks = std::forward<Checks>(checks)](boost::json::value const& j) -> check::Warnings {
+    return [key,
+            ... checks =
+                std::forward<Checks>(checks)](boost::json::value const& j) -> check::Warnings {
         check::Warnings warnings;
         // This expands in order of Checks and collects all warnings into a WarningsCollection
         (

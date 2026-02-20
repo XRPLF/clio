@@ -122,7 +122,8 @@ struct ValidSpec {
 
 // invalid spec does not compile:
 // struct DuplicatesSpec {
-//     using spec = etl::model::Spec<ripple::ttNFTOKEN_BURN, ripple::ttNFTOKEN_BURN, ripple::ttNFTOKEN_MINT>;
+//     using spec = etl::model::Spec<ripple::ttNFTOKEN_BURN, ripple::ttNFTOKEN_BURN,
+//     ripple::ttNFTOKEN_MINT>;
 // };
 
 static_assert(ContainsSpec<ValidSpec>);
@@ -131,7 +132,8 @@ static_assert(ContainsSpec<ValidSpec>);
 
 namespace {
 
-constinit auto const kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constinit auto const kLEDGER_HASH =
+    "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constinit auto const kSEQ = 30;
 
 struct MockExtLedgerData {
@@ -164,7 +166,12 @@ struct MockExtInitialObject {
 };
 
 struct MockExtInitialObjects {
-    MOCK_METHOD(void, onInitialObjects, (uint32_t, std::vector<etl::model::Object> const&, std::string), (const));
+    MOCK_METHOD(
+        void,
+        onInitialObjects,
+        (uint32_t, std::vector<etl::model::Object> const&, std::string),
+        (const)
+    );
 };
 
 struct MockExtNftBurn {
@@ -233,7 +240,12 @@ struct MockExtInitialObjectReadonly {
 };
 
 struct MockExtInitialObjectsReadonly {
-    MOCK_METHOD(void, onInitialObjects, (uint32_t, std::vector<etl::model::Object> const&, std::string), (const));
+    MOCK_METHOD(
+        void,
+        onInitialObjects,
+        (uint32_t, std::vector<etl::model::Object> const&, std::string),
+        (const)
+    );
 
     static bool
     allowInReadonly()
@@ -309,7 +321,9 @@ TEST_F(RegistryTest, FilteringOfTxWorksCorrectlyForTransaction)
     EXPECT_CALL(extOffer, onTransaction(testing::_, testing::_));          // 1 create offer
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto reg = Registry<MockExtTransactionNftBurn&, MockExtTransactionNftOffer&>(state_, extBurn, extOffer);
+    auto reg = Registry<MockExtTransactionNftBurn&, MockExtTransactionNftOffer&>(
+        state_, extBurn, extOffer
+    );
     reg.dispatch(
         etl::model::LedgerData{
             .transactions = std::move(transactions),
@@ -328,8 +342,10 @@ TEST_F(RegistryTest, InitialObjectsEmpty)
     auto extObj = MockExtInitialObject{};
     auto extObjs = MockExtInitialObjects{};
 
-    EXPECT_CALL(extObj, onInitialObject(testing::_, testing::_)).Times(0);       // 0 empty objects sent
-    EXPECT_CALL(extObjs, onInitialObjects(testing::_, testing::_, testing::_));  // 1 vector passed as is
+    EXPECT_CALL(extObj, onInitialObject(testing::_, testing::_)).Times(0);  // 0 empty objects sent
+    EXPECT_CALL(
+        extObjs, onInitialObjects(testing::_, testing::_, testing::_)
+    );  // 1 vector passed as is
 
     auto reg = Registry<MockExtInitialObject&, MockExtInitialObjects&>(state_, extObj, extObjs);
     reg.dispatchInitialObjects(kSEQ, {}, {});
@@ -340,11 +356,15 @@ TEST_F(RegistryTest, InitialObjectsDispatched)
     auto extObj = MockExtInitialObject{};
     auto extObjs = MockExtInitialObjects{};
 
-    EXPECT_CALL(extObj, onInitialObject(testing::_, testing::_)).Times(3);       // 3 objects sent
-    EXPECT_CALL(extObjs, onInitialObjects(testing::_, testing::_, testing::_));  // 1 vector passed as is
+    EXPECT_CALL(extObj, onInitialObject(testing::_, testing::_)).Times(3);  // 3 objects sent
+    EXPECT_CALL(
+        extObjs, onInitialObjects(testing::_, testing::_, testing::_)
+    );  // 1 vector passed as is
 
     auto reg = Registry<MockExtInitialObject&, MockExtInitialObjects&>(state_, extObj, extObjs);
-    reg.dispatchInitialObjects(kSEQ, {util::createObject(), util::createObject(), util::createObject()}, {});
+    reg.dispatchInitialObjects(
+        kSEQ, {util::createObject(), util::createObject(), util::createObject()}, {}
+    );
 }
 
 TEST_F(RegistryTest, ObjectsDispatched)
@@ -405,7 +425,9 @@ TEST_F(RegistryTest, InitialObjectsCorrectOrderOfHookCalls)
     EXPECT_CALL(extObj, onInitialObject).Times(3);
 
     auto reg = Registry<MockExtInitialObject&, MockExtInitialObjects&>(state_, extObj, extObjs);
-    reg.dispatchInitialObjects(kSEQ, {util::createObject(), util::createObject(), util::createObject()}, {});
+    reg.dispatchInitialObjects(
+        kSEQ, {util::createObject(), util::createObject(), util::createObject()}, {}
+    );
 }
 
 TEST_F(RegistryTest, InitialDataCorrectOrderOfHookCalls)
@@ -424,7 +446,9 @@ TEST_F(RegistryTest, InitialDataCorrectOrderOfHookCalls)
     EXPECT_CALL(extInitialTransaction, onInitialTransaction).Times(2);
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto reg = Registry<MockExtNftBurn&, MockExtInitialData&>(state_, extInitialTransaction, extInitialData);
+    auto reg = Registry<MockExtNftBurn&, MockExtInitialData&>(
+        state_, extInitialTransaction, extInitialData
+    );
     reg.dispatchInitialData(
         etl::model::LedgerData{
             .transactions = std::move(transactions),
@@ -622,7 +646,9 @@ TEST_F(RegistryTest, ReadonlyModeInitialObjectAllowed)
     EXPECT_CALL(extObj, onInitialObject(testing::_, testing::_)).Times(3);
 
     auto reg = Registry<MockExtInitialObjectReadonly&>(state_, extObj);
-    reg.dispatchInitialObjects(kSEQ, {util::createObject(), util::createObject(), util::createObject()}, {});
+    reg.dispatchInitialObjects(
+        kSEQ, {util::createObject(), util::createObject(), util::createObject()}, {}
+    );
 }
 
 TEST_F(RegistryTest, ReadonlyModeInitialObjectsAllowed)
@@ -633,7 +659,9 @@ TEST_F(RegistryTest, ReadonlyModeInitialObjectsAllowed)
     EXPECT_CALL(extObjs, onInitialObjects(testing::_, testing::_, testing::_));
 
     auto reg = Registry<MockExtInitialObjectsReadonly&>(state_, extObjs);
-    reg.dispatchInitialObjects(kSEQ, {util::createObject(), util::createObject(), util::createObject()}, {});
+    reg.dispatchInitialObjects(
+        kSEQ, {util::createObject(), util::createObject(), util::createObject()}, {}
+    );
 }
 
 TEST_F(RegistryTest, ReadonlyModeRegularExtensionsNotCalled)
@@ -647,7 +675,8 @@ TEST_F(RegistryTest, ReadonlyModeRegularExtensionsNotCalled)
 
     state_.isWriting = false;
 
-    EXPECT_CALL(extLedgerData, onLedgerData(testing::_)).Times(0);  // Should NOT be called in readonly mode
+    EXPECT_CALL(extLedgerData, onLedgerData(testing::_))
+        .Times(0);  // Should NOT be called in readonly mode
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto reg = Registry<MockExtLedgerData&>(state_, extLedgerData);
@@ -677,10 +706,12 @@ TEST_F(RegistryTest, MixedReadonlyAndRegularExtensions)
     state_.isWriting = false;
 
     EXPECT_CALL(extReadonly, onLedgerData(testing::_));
-    EXPECT_CALL(extRegular, onLedgerData(testing::_)).Times(0);  // Should NOT be called in readonly mode
+    EXPECT_CALL(extRegular, onLedgerData(testing::_))
+        .Times(0);  // Should NOT be called in readonly mode
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto reg = Registry<MockExtLedgerDataReadonly&, MockExtLedgerData&>(state_, extReadonly, extRegular);
+    auto reg =
+        Registry<MockExtLedgerDataReadonly&, MockExtLedgerData&>(state_, extReadonly, extRegular);
     reg.dispatch(
         etl::model::LedgerData{
             .transactions = {},
@@ -758,7 +789,12 @@ TEST_F(RegistryTest, ReadonlyModeExecutePluralHooksIfAllowedPaths)
     struct ExtWithBothHooksAndAllowReadonly {
         MOCK_METHOD(void, onLedgerData, (etl::model::LedgerData const&), (const));
         MOCK_METHOD(void, onInitialData, (etl::model::LedgerData const&), (const));
-        MOCK_METHOD(void, onInitialObjects, (uint32_t, std::vector<etl::model::Object> const&, std::string), (const));
+        MOCK_METHOD(
+            void,
+            onInitialObjects,
+            (uint32_t, std::vector<etl::model::Object> const&, std::string),
+            (const)
+        );
 
         static bool
         allowInReadonly()
@@ -819,7 +855,12 @@ TEST_F(RegistryTest, ReadonlyModeExecuteByOneHooksIfAllowedPaths)
         MOCK_METHOD(void, onObject, (uint32_t, etl::model::Object const&), (const));
         MOCK_METHOD(void, onInitialObject, (uint32_t, etl::model::Object const&), (const));
         MOCK_METHOD(void, onTransaction, (uint32_t, etl::model::Transaction const&), (const));
-        MOCK_METHOD(void, onInitialTransaction, (uint32_t, etl::model::Transaction const&), (const));
+        MOCK_METHOD(
+            void,
+            onInitialTransaction,
+            (uint32_t, etl::model::Transaction const&),
+            (const)
+        );
 
         static bool
         allowInReadonly()

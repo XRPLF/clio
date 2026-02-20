@@ -111,7 +111,8 @@ LoadBalancer::LoadBalancer(
           .retries = PrometheusService::counterInt(
               "forwarding_retries_counter",
               Labels(),
-              "The number of retries before a forwarded request was successful. Initial attempt excluded"
+              "The number of retries before a forwarded request was successful. Initial attempt "
+              "excluded"
           ),
           .cacheHit = PrometheusService::counterInt(
               "forwarding_cache_hit_counter",
@@ -147,7 +148,9 @@ LoadBalancer::LoadBalancer(
         LOG(log_.warn()) << log;
 
         if (!allowNoEtl) {
-            LOG(log_.error()) << "Set allow_no_etl as true in config to allow clio run without valid ETL sources.";
+            LOG(
+                log_.error()
+            ) << "Set allow_no_etl as true in config to allow clio run without valid ETL sources.";
             throw std::logic_error("ETL configuration error.");
         }
     };
@@ -185,7 +188,8 @@ LoadBalancer::LoadBalancer(
         } else if (etlState_ && etlState_->networkID != stateOpt->networkID) {
             checkOnETLFailure(
                 fmt::format(
-                    "ETL sources must be on the same network. Source network id = {} does not match others network id "
+                    "ETL sources must be on the same network. Source network id = {} does not "
+                    "match others network id "
                     "= {}",
                     stateOpt->networkID,
                     etlState_->networkID
@@ -200,7 +204,9 @@ LoadBalancer::LoadBalancer(
     }
 
     if (!etlState_)
-        checkOnETLFailure("Failed to fetch ETL state from any source. Please check the configuration and network");
+        checkOnETLFailure(
+            "Failed to fetch ETL state from any source. Please check the configuration and network"
+        );
 
     if (sources_.empty())
         checkOnETLFailure("No ETL sources configured. Please check the configuration");
@@ -227,7 +233,8 @@ LoadBalancer::loadInitialLedger(
 
             if (not res.has_value() and res.error() == InitialLedgerLoadError::Errored) {
                 LOG(log_.error()) << "Failed to download initial ledger."
-                                  << " Sequence = " << sequence << " source = " << source->toString();
+                                  << " Sequence = " << sequence
+                                  << " source = " << source->toString();
                 return false;  // should retry on error
             }
 
@@ -252,7 +259,8 @@ LoadBalancer::fetchLedger(
     GetLedgerResponseType response;
     execute(
         [&response, ledgerSequence, getObjects, getObjectNeighbors, log = log_](auto& source) {
-            auto [status, data] = source->fetchLedger(ledgerSequence, getObjects, getObjectNeighbors);
+            auto [status, data] =
+                source->fetchLedger(ledgerSequence, getObjects, getObjectNeighbors);
             response = std::move(data);
             if (status.ok() && response.validated()) {
                 LOG(log.info()) << "Successfully fetched ledger = " << ledgerSequence
@@ -260,8 +268,10 @@ LoadBalancer::fetchLedger(
                 return true;
             }
 
-            LOG(log.warn()) << "Could not fetch ledger " << ledgerSequence << ", Reply: " << response.DebugString()
-                            << ", error_code: " << status.error_code() << ", error_msg: " << status.error_message()
+            LOG(log.warn()) << "Could not fetch ledger " << ledgerSequence
+                            << ", Reply: " << response.DebugString()
+                            << ", error_code: " << status.error_code()
+                            << ", error_msg: " << status.error_message()
                             << ", source = " << source->toString();
             return false;
         },
@@ -301,8 +311,9 @@ LoadBalancer::forwardToRippled(
     std::optional<boost::json::object> response;
     rpc::ClioError error = rpc::ClioError::EtlConnectionError;
     while (numAttempts < sources_.size()) {
-        auto [res, duration] =
-            util::timed([&]() { return sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield); });
+        auto [res, duration] = util::timed([&]() {
+            return sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield);
+        });
         if (res) {
             forwardingCounters_.successDuration.get() += duration;
             response = std::move(res).value();
@@ -337,7 +348,11 @@ LoadBalancer::toJson() const
 
 template <typename Func>
 void
-LoadBalancer::execute(Func f, uint32_t ledgerSequence, std::chrono::steady_clock::duration retryAfter)
+LoadBalancer::execute(
+    Func f,
+    uint32_t ledgerSequence,
+    std::chrono::steady_clock::duration retryAfter
+)
 {
     ASSERT(not sources_.empty(), "ETL sources must be configured to execute functions.");
     size_t sourceIdx = randomGenerator_->uniform(0ul, sources_.size() - 1);
@@ -370,8 +385,11 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence, std::chrono::steady_clock
         sourceIdx = (sourceIdx + 1) % sources_.size();
         numAttempts++;
         if (numAttempts % sources_.size() == 0) {
-            LOG(log_.info()) << "Ledger sequence " << ledgerSequence
-                             << " is not yet available from any configured sources. Sleeping and trying again";
+            LOG(
+                log_.info()
+            ) << "Ledger sequence "
+              << ledgerSequence
+              << " is not yet available from any configured sources. Sleeping and trying again";
             std::this_thread::sleep_for(retryAfter);
         }
     }
@@ -392,7 +410,9 @@ LoadBalancer::stop(boost::asio::yield_context yield)
 {
     util::CoroutineGroup group{yield};
     std::ranges::for_each(sources_, [&group, yield](auto& source) {
-        group.spawn(yield, [&source](boost::asio::yield_context innerYield) { source->stop(innerYield); });
+        group.spawn(yield, [&source](boost::asio::yield_context innerYield) {
+            source->stop(innerYield);
+        });
     });
     group.asyncWait(yield);
 }

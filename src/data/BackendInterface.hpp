@@ -109,18 +109,23 @@ synchronous(FnType&& func)
     using R = typename boost::result_of<FnType(boost::asio::yield_context)>::type;
     if constexpr (!std::is_same_v<R, void>) {
         R res;
-        util::spawn(ctx, [_ = boost::asio::make_work_guard(ctx), &func, &res](auto yield) { res = func(yield); });
+        util::spawn(ctx, [_ = boost::asio::make_work_guard(ctx), &func, &res](auto yield) {
+            res = func(yield);
+        });
 
         ctx.run();
         return res;
     } else {
-        util::spawn(ctx, [_ = boost::asio::make_work_guard(ctx), &func](auto yield) { func(yield); });
+        util::spawn(ctx, [_ = boost::asio::make_work_guard(ctx), &func](auto yield) {
+            func(yield);
+        });
         ctx.run();
     }
 }
 
 /**
- * @brief Synchronously execute the given function object and retry until no DatabaseTimeout is thrown.
+ * @brief Synchronously execute the given function object and retry until no DatabaseTimeout is
+ * thrown.
  *
  * @tparam FnType The type of function object to execute
  * @param func The function object to execute
@@ -225,7 +230,8 @@ public:
     fetchLedgerRange() const;
 
     /**
-     * @brief Fetch the specified number of account root object indexes by page, the accounts need to exist for seq.
+     * @brief Fetch the specified number of account root object indexes by page, the accounts need
+     * to exist for seq.
      *
      * @param number The number of accounts to fetch
      * @param pageSize The maximum number of accounts per page
@@ -296,7 +302,10 @@ public:
      * @return A vector of TransactionAndMetadata matching the given hashes
      */
     virtual std::vector<TransactionAndMetadata>
-    fetchTransactions(std::vector<ripple::uint256> const& hashes, boost::asio::yield_context yield) const = 0;
+    fetchTransactions(
+        std::vector<ripple::uint256> const& hashes,
+        boost::asio::yield_context yield
+    ) const = 0;
 
     /**
      * @brief Fetches all transactions for a specific account.
@@ -325,7 +334,10 @@ public:
      * @return Results as a vector of TransactionAndMetadata
      */
     virtual std::vector<TransactionAndMetadata>
-    fetchAllTransactionsInLedger(std::uint32_t ledgerSequence, boost::asio::yield_context yield) const = 0;
+    fetchAllTransactionsInLedger(
+        std::uint32_t ledgerSequence,
+        boost::asio::yield_context yield
+    ) const = 0;
 
     /**
      * @brief Fetches all transaction hashes from a specific ledger.
@@ -335,7 +347,10 @@ public:
      * @return Hashes as ripple::uint256 in a vector
      */
     virtual std::vector<ripple::uint256>
-    fetchAllTransactionHashesInLedger(std::uint32_t ledgerSequence, boost::asio::yield_context yield) const = 0;
+    fetchAllTransactionHashesInLedger(
+        std::uint32_t ledgerSequence,
+        boost::asio::yield_context yield
+    ) const = 0;
 
     /**
      * @brief Fetches a specific NFT.
@@ -346,7 +361,11 @@ public:
      * @return NFT object on success; nullopt otherwise
      */
     virtual std::optional<NFT>
-    fetchNFT(ripple::uint256 const& tokenID, std::uint32_t ledgerSequence, boost::asio::yield_context yield) const = 0;
+    fetchNFT(
+        ripple::uint256 const& tokenID,
+        std::uint32_t ledgerSequence,
+        boost::asio::yield_context yield
+    ) const = 0;
 
     /**
      * @brief Fetches all transactions for a specific NFT.
@@ -376,7 +395,8 @@ public:
      * @param limit Paging limit.
      * @param cursorIn Optional cursor to allow us to pick up from where we last left off.
      * @param yield Currently executing coroutine.
-     * @return NFTs issued by this account, or this issuer/taxon combination if taxon is passed and an optional marker
+     * @return NFTs issued by this account, or this issuer/taxon combination if taxon is passed and
+     * an optional marker
      */
     virtual NFTsAndCursor
     fetchNFTsByIssuer(
@@ -410,8 +430,8 @@ public:
     /**
      * @brief Fetches a specific ledger object.
      *
-     * Currently the real fetch happens in doFetchLedgerObject and fetchLedgerObject attempts to fetch from Cache first
-     * and only calls out to the real DB if a cache miss occurred.
+     * Currently the real fetch happens in doFetchLedgerObject and fetchLedgerObject attempts to
+     * fetch from Cache first and only calls out to the real DB if a cache miss occurred.
      *
      * @param key The key of the object
      * @param sequence The ledger sequence to fetch for
@@ -419,7 +439,11 @@ public:
      * @return The object as a Blob on success; nullopt otherwise
      */
     std::optional<Blob>
-    fetchLedgerObject(ripple::uint256 const& key, std::uint32_t sequence, boost::asio::yield_context yield) const;
+    fetchLedgerObject(
+        ripple::uint256 const& key,
+        std::uint32_t sequence,
+        boost::asio::yield_context yield
+    ) const;
 
     /**
      * @brief Fetches a specific ledger object sequence.
@@ -432,13 +456,18 @@ public:
      * @return The sequence in unit32_t on success; nullopt otherwise
      */
     std::optional<std::uint32_t>
-    fetchLedgerObjectSeq(ripple::uint256 const& key, std::uint32_t sequence, boost::asio::yield_context yield) const;
+    fetchLedgerObjectSeq(
+        ripple::uint256 const& key,
+        std::uint32_t sequence,
+        boost::asio::yield_context yield
+    ) const;
 
     /**
      * @brief Fetches all ledger objects by their keys.
      *
-     * Currently the real fetch happens in doFetchLedgerObjects and fetchLedgerObjects attempts to fetch from Cache
-     * first and only calls out to the real DB for each of the keys that was not found in the cache.
+     * Currently the real fetch happens in doFetchLedgerObjects and fetchLedgerObjects attempts to
+     * fetch from Cache first and only calls out to the real DB for each of the keys that was not
+     * found in the cache.
      *
      * @param keys A vector with the keys of the objects to fetch
      * @param sequence The ledger sequence to fetch for
@@ -461,7 +490,11 @@ public:
      * @return The object as a Blob on success; nullopt otherwise
      */
     virtual std::optional<Blob>
-    doFetchLedgerObject(ripple::uint256 const& key, std::uint32_t sequence, boost::asio::yield_context yield) const = 0;
+    doFetchLedgerObject(
+        ripple::uint256 const& key,
+        std::uint32_t sequence,
+        boost::asio::yield_context yield
+    ) const = 0;
 
     /**
      * @brief The database-specific implementation for fetching a ledger object sequence.
@@ -531,13 +564,18 @@ public:
      * @return The successor on success; nullopt otherwise
      */
     std::optional<LedgerObject>
-    fetchSuccessorObject(ripple::uint256 key, std::uint32_t ledgerSequence, boost::asio::yield_context yield) const;
+    fetchSuccessorObject(
+        ripple::uint256 key,
+        std::uint32_t ledgerSequence,
+        boost::asio::yield_context yield
+    ) const;
 
     /**
      * @brief Fetches the successor key.
      *
-     * Thea real fetch happens in doFetchSuccessorKey. This function will attempt to lookup the successor in the cache
-     * first and only if it's not found in the cache will it fetch from the actual DB.
+     * Thea real fetch happens in doFetchSuccessorKey. This function will attempt to lookup the
+     * successor in the cache first and only if it's not found in the cache will it fetch from the
+     * actual DB.
      *
      * @param key The key to fetch for
      * @param ledgerSequence The ledger sequence to fetch for
@@ -545,7 +583,11 @@ public:
      * @return The successor key on success; nullopt otherwise
      */
     std::optional<ripple::uint256>
-    fetchSuccessorKey(ripple::uint256 key, std::uint32_t ledgerSequence, boost::asio::yield_context yield) const;
+    fetchSuccessorKey(
+        ripple::uint256 key,
+        std::uint32_t ledgerSequence,
+        boost::asio::yield_context yield
+    ) const;
 
     /**
      * @brief Database-specific implementation of fetching the successor key
@@ -556,7 +598,11 @@ public:
      * @return The successor on success; nullopt otherwise
      */
     virtual std::optional<ripple::uint256>
-    doFetchSuccessorKey(ripple::uint256 key, std::uint32_t ledgerSequence, boost::asio::yield_context yield) const = 0;
+    doFetchSuccessorKey(
+        ripple::uint256 key,
+        std::uint32_t ledgerSequence,
+        boost::asio::yield_context yield
+    ) const = 0;
 
     /**
      * @brief Fetches book offers.
@@ -583,7 +629,10 @@ public:
      * @return The status of the migrator if found; nullopt otherwise
      */
     virtual std::optional<std::string>
-    fetchMigratorStatus(std::string const& migratorName, boost::asio::yield_context yield) const = 0;
+    fetchMigratorStatus(
+        std::string const& migratorName,
+        boost::asio::yield_context yield
+    ) const = 0;
 
     /** @brief Return type for fetchClioNodesData() method */
     using ClioNodesDataFetchResult =
@@ -601,7 +650,8 @@ public:
     /**
      * @brief Synchronously fetches the ledger range from DB.
      *
-     * This function just wraps hardFetchLedgerRange(boost::asio::yield_context) using synchronous(FnType&&).
+     * This function just wraps hardFetchLedgerRange(boost::asio::yield_context) using
+     * synchronous(FnType&&).
      *
      * @return The ledger range if available; nullopt otherwise
      */

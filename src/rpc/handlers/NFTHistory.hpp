@@ -44,7 +44,8 @@
 namespace rpc {
 
 /**
- * @brief The nft_history command asks the Clio server for past transaction metadata for the NFT being queried.
+ * @brief The nft_history command asks the Clio server for past transaction metadata for the NFT
+ * being queried.
  *
  * For more details see: https://xrpl.org/nft_history.html#nft_history
  */
@@ -105,7 +106,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    NFTHistoryHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
+    NFTHistoryHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+        : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
@@ -119,7 +121,9 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const kRPC_SPEC = RpcSpec{
-            {JS(nft_id), validation::Required{}, validation::CustomValidators::uint256HexStringValidator},
+            {JS(nft_id),
+             validation::Required{},
+             validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
             {JS(ledger_index_min), validation::Type<int32_t>{}},
@@ -132,7 +136,8 @@ public:
              modifiers::Clamp<int32_t>{kLIMIT_MIN, kLIMIT_MAX}},
             {JS(marker),
              meta::WithCustomError{
-                 validation::Type<boost::json::object>{}, Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}
+                 validation::Type<boost::json::object>{},
+                 Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}
              },
              meta::Section{
                  {JS(ledger), validation::Required{}, validation::Type<uint32_t>{}},

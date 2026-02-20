@@ -45,10 +45,16 @@ struct AnyOperationTests : virtual Test {
     NaggyMock<RepeatingOperationType> mockRepeatingOp;
 
     AnyOperation<void> voidOp{impl::ErasedOperation(static_cast<OperationType&>(mockOp))};
-    AnyOperation<void> voidStoppableOp{impl::ErasedOperation(static_cast<StoppableOperationType&>(mockStoppableOp))};
+    AnyOperation<void> voidStoppableOp{
+        impl::ErasedOperation(static_cast<StoppableOperationType&>(mockStoppableOp))
+    };
     AnyOperation<int> intOp{impl::ErasedOperation(static_cast<OperationType&>(mockOp))};
-    AnyOperation<void> scheduledVoidOp{impl::ErasedOperation(static_cast<ScheduledOperationType&>(mockScheduledOp))};
-    AnyOperation<void> repeatingOp{impl::ErasedOperation(static_cast<RepeatingOperationType&>(mockRepeatingOp))};
+    AnyOperation<void> scheduledVoidOp{
+        impl::ErasedOperation(static_cast<ScheduledOperationType&>(mockScheduledOp))
+    };
+    AnyOperation<void> repeatingOp{
+        impl::ErasedOperation(static_cast<RepeatingOperationType&>(mockRepeatingOp))
+    };
 };
 
 TEST_F(AnyOperationTests, Move)

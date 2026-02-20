@@ -32,7 +32,10 @@
 
 namespace util {
 
-Coroutine::Coroutine(boost::asio::yield_context&& yield, std::shared_ptr<FamilyCancellationSignal> signal)
+Coroutine::Coroutine(
+    boost::asio::yield_context&& yield,
+    std::shared_ptr<FamilyCancellationSignal> signal
+)
     : yield_(std::move(yield))
     , cyield_(boost::asio::bind_cancellation_slot(cancellationSignal_.slot(), yield_[error_]))
     , familySignal_{std::move(signal)}

@@ -41,8 +41,8 @@ concept Hashable = requires(T a) {
 /**
  * @brief Class to manage a map of key and its associative signal.
  * @param Key The type of the key.
- * @param Session The type of the object that will be tracked, when the object is destroyed, the connection will be
- * removed lazily.
+ * @param Session The type of the object that will be tracked, when the object is destroyed, the
+ * connection will be removed lazily.
  * @param Args The types of the arguments that will be passed to the slot
  */
 template <Hashable Key, typename Session, typename... Args>
@@ -55,17 +55,23 @@ class TrackableSignalMap {
 
 public:
     /**
-     * @brief Connect a slot to the signal, the slot will be called when the signal is emitted and trackable is still
-     * alive.
+     * @brief Connect a slot to the signal, the slot will be called when the signal is emitted and
+     * trackable is still alive.
      *
-     * @param trackable Track this object's lifttime, if the object is destroyed, the connection will be removed lazily.
-     * When the slot is being called, the object is guaranteed to be alive.
+     * @param trackable Track this object's lifttime, if the object is destroyed, the connection
+     * will be removed lazily. When the slot is being called, the object is guaranteed to be alive.
      * @param key The key to the signal.
-     * @param slot The slot connecting to the signal, the slot will be called when the assocaiative signal is emitted.
-     * @return true if the connection is successfully added, false if the connection already exists for the key.
+     * @param slot The slot connecting to the signal, the slot will be called when the assocaiative
+     * signal is emitted.
+     * @return true if the connection is successfully added, false if the connection already exists
+     * for the key.
      */
     bool
-    connectTrackableSlot(ConnectionSharedPtr const& trackable, Key const& key, std::function<void(Args...)> slot)
+    connectTrackableSlot(
+        ConnectionSharedPtr const& trackable,
+        Key const& key,
+        std::function<void(Args...)> slot
+    )
     {
         auto map = signalsMap_.template lock<std::scoped_lock>();
         return map->operator[](key).connectTrackableSlot(trackable, slot);
@@ -76,7 +82,8 @@ public:
      *
      * @param trackablePtr The pointer to the object that is being tracked.
      * @param key The key to the signal.
-     * @return true if the connection is successfully removed, false if the connection does not exist.
+     * @return true if the connection is successfully removed, false if the connection does not
+     * exist.
      */
     bool
     disconnect(ConnectionPtr trackablePtr, Key const& key)

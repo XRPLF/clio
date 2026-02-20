@@ -96,11 +96,16 @@ TEST_F(LoggerTest, ManyDynamicLoggers)
 
         Logger const log{loggerName};
         log.info() << "Logger number " << i;
-        ASSERT_EQ(getLoggerString(), "inf:" + loggerName + " - Logger number " + std::to_string(i) + "\n");
+        ASSERT_EQ(
+            getLoggerString(), "inf:" + loggerName + " - Logger number " + std::to_string(i) + "\n"
+        );
 
         Logger const copy = log;
         copy.info() << "Copy of logger number " << i;
-        ASSERT_EQ(getLoggerString(), "inf:" + loggerName + " - Copy of logger number " + std::to_string(i) + "\n");
+        ASSERT_EQ(
+            getLoggerString(),
+            "inf:" + loggerName + " - Copy of logger number " + std::to_string(i) + "\n"
+        );
     }
 
     ASSERT_EQ(loggersNum(), initialLoggers);

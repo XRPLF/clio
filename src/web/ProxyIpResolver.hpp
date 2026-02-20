@@ -53,7 +53,10 @@ public:
      * @param proxyIps A set of trusted proxy IP addresses.
      * @param proxyTokens A set of trusted proxy tokens. The tokens will be hashed with SHA-256.
      */
-    ProxyIpResolver(std::unordered_set<std::string> proxyIps, std::unordered_set<std::string> proxyTokens);
+    ProxyIpResolver(
+        std::unordered_set<std::string> proxyIps,
+        std::unordered_set<std::string> proxyTokens
+    );
 
     /**
      * @brief Creates a ProxyIpResolver from a configuration.
@@ -73,8 +76,8 @@ public:
     /**
      * @brief Resolves the client's IP address from the connection IP and HTTP headers.
      *
-     * If the connection IP is in the trusted proxy list, or if a valid proxy token is provided in the headers,
-     * this method will attempt to extract the client's IP from the `Forwarded` header.
+     * If the connection IP is in the trusted proxy list, or if a valid proxy token is provided in
+     * the headers, this method will attempt to extract the client's IP from the `Forwarded` header.
      * Otherwise, it returns the connection IP.
      *
      * @param connectionIp The IP address of the direct connection.

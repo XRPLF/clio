@@ -97,11 +97,15 @@ public:
         using std::to_string;
         auto throwErrorIfNeeded = [idx](CassError rc, std::string_view label) {
             if (rc != CASS_OK)
-                throw std::logic_error(fmt::format("[{}] at idx {}: {}", label, idx, cass_error_desc(rc)));
+                throw std::logic_error(
+                    fmt::format("[{}] at idx {}: {}", label, idx, cass_error_desc(rc))
+                );
         };
 
         auto bindBytes = [this, idx](auto const* data, size_t size) {
-            return cass_statement_bind_bytes(*this, idx, static_cast<cass_byte_t const*>(data), size);
+            return cass_statement_bind_bytes(
+                *this, idx, static_cast<cass_byte_t const*>(data), size
+            );
         };
 
         using DecayedType = std::decay_t<Type>;
@@ -110,7 +114,8 @@ public:
         using UintByteTupleType = std::tuple<uint32_t, ripple::uint256>;
         using ByteVectorType = std::vector<ripple::uint256>;
 
-        if constexpr (std::is_same_v<DecayedType, ripple::uint256> || std::is_same_v<DecayedType, ripple::uint192>) {
+        if constexpr (std::is_same_v<DecayedType, ripple::uint256> ||
+                      std::is_same_v<DecayedType, ripple::uint192>) {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind ripple::base_uint");
         } else if constexpr (std::is_same_v<DecayedType, ripple::AccountID>) {
@@ -121,17 +126,20 @@ public:
             throwErrorIfNeeded(rc, "Bind vector<unsigned char>");
         } else if constexpr (std::is_convertible_v<DecayedType, std::string>) {
             // reinterpret_cast is needed here :'(
-            auto const rc = bindBytes(reinterpret_cast<unsigned char const*>(value.data()), value.size());
+            auto const rc =
+                bindBytes(reinterpret_cast<unsigned char const*>(value.data()), value.size());
             throwErrorIfNeeded(rc, "Bind string (as bytes)");
         } else if constexpr (std::is_convertible_v<DecayedType, Text>) {
-            auto const rc = cass_statement_bind_string_n(*this, idx, value.text.c_str(), value.text.size());
+            auto const rc =
+                cass_statement_bind_string_n(*this, idx, value.text.c_str(), value.text.size());
             throwErrorIfNeeded(rc, "Bind string (as TEXT)");
         } else if constexpr (std::is_same_v<DecayedType, UintTupleType> ||
                              std::is_same_v<DecayedType, UintByteTupleType>) {
             auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::forward<Type>(value)});
             throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32> or <uint32_t, ripple::uint256>");
         } else if constexpr (std::is_same_v<DecayedType, ByteVectorType>) {
-            auto const rc = cass_statement_bind_collection(*this, idx, Collection{std::forward<Type>(value)});
+            auto const rc =
+                cass_statement_bind_collection(*this, idx, Collection{std::forward<Type>(value)});
             throwErrorIfNeeded(rc, "Bind collection");
         } else if constexpr (std::is_same_v<DecayedType, bool>) {
             auto const rc = cass_statement_bind_bool(*this, idx, value ? cass_true : cass_false);

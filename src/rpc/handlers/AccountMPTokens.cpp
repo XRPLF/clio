@@ -74,7 +74,10 @@ AccountMPTokensHandler::addMPToken(std::vector<MPTokenResponse>& mpts, ripple::S
 }
 
 AccountMPTokensHandler::Result
-AccountMPTokensHandler::process(AccountMPTokensHandler::Input const& input, Context const& ctx) const
+AccountMPTokensHandler::process(
+    AccountMPTokensHandler::Input const& input,
+    Context const& ctx
+) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountMPTokens' ledger range must be available");
@@ -87,8 +90,9 @@ AccountMPTokensHandler::process(AccountMPTokensHandler::Input const& input, Cont
 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
-    auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+    );
 
     if (not accountLedgerObject.has_value())
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
@@ -103,7 +107,13 @@ AccountMPTokensHandler::process(AccountMPTokensHandler::Input const& input, Cont
     };
 
     auto const expectedNext = traverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse
+        *sharedPtrBackend_,
+        *accountID,
+        lgrInfo.seq,
+        input.limit,
+        input.marker,
+        ctx.yield,
+        addToResponse
     );
 
     if (!expectedNext.has_value())
@@ -150,7 +160,11 @@ tag_invoke(boost::json::value_to_tag<AccountMPTokensHandler::Input>, boost::json
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountMPTokensHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountMPTokensHandler::Output const& output
+)
 {
     auto obj = boost::json::object{
         {JS(account), output.account},
@@ -168,7 +182,11 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountMPTokensH
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountMPTokensHandler::MPTokenResponse const& mptoken)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountMPTokensHandler::MPTokenResponse const& mptoken
+)
 {
     auto obj = boost::json::object{
         {"mpt_id", mptoken.MPTokenID},

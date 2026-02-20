@@ -102,11 +102,17 @@ public:
         // This would be the first write to the table.
         // In this case, insert both min_sequence/max_sequence range into the table.
         if (not range_.has_value()) {
-            executor_.writeSync(schema_->insertLedgerRange, /* isLatestLedger =*/false, ledgerSequence_);
-            executor_.writeSync(schema_->insertLedgerRange, /* isLatestLedger =*/true, ledgerSequence_);
+            executor_.writeSync(
+                schema_->insertLedgerRange, /* isLatestLedger =*/false, ledgerSequence_
+            );
+            executor_.writeSync(
+                schema_->insertLedgerRange, /* isLatestLedger =*/true, ledgerSequence_
+            );
         }
 
-        if (not this->executeSyncUpdate(schema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1))) {
+        if (not this->executeSyncUpdate(
+                schema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1)
+            )) {
             log_.warn() << "Update failed for ledger " << ledgerSequence_;
             return false;
         }
@@ -131,7 +137,8 @@ public:
             nftIDs = fetchNFTIDsByTaxon(issuer, *taxon, limit, cursorIn, yield);
         } else {
             // Amazon Keyspaces Workflow for non-taxon queries
-            auto const startTaxon = cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0;
+            auto const startTaxon =
+                cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0;
             auto const startTokenID = cursorIn.value_or(ripple::uint256(0));
 
             Statement const firstQuery = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
@@ -163,10 +170,10 @@ public:
 
     /**
      * @brief (Unsupported in Keyspaces) Fetches account root object indexes by page.
-     * @note Loading the cache by enumerating all accounts is currently unsupported by the AWS Keyspaces backend.
-     * This function's logic relies on "PER PARTITION LIMIT 1", which Keyspaces does not support, and there is
-     * no efficient alternative. This is acceptable as the cache is primarily loaded via diffs. Calling this
-     * function will throw an exception.
+     * @note Loading the cache by enumerating all accounts is currently unsupported by the AWS
+     * Keyspaces backend. This function's logic relies on "PER PARTITION LIMIT 1", which Keyspaces
+     * does not support, and there is no efficient alternative. This is acceptable as the cache is
+     * primarily loaded via diffs. Calling this function will throw an exception.
      *
      * @param number The total number of accounts to fetch.
      * @param pageSize The maximum number of accounts per page.
@@ -220,7 +227,8 @@ private:
     {
         std::vector<ripple::uint256> nftIDs;
 
-        auto const startTaxon = cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0;
+        auto const startTaxon =
+            cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0;
         auto const startTokenID = cursorIn.value_or(ripple::uint256(0));
 
         Statement firstQuery = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
@@ -250,7 +258,8 @@ private:
     }
 
     /**
-     * @brief Takes a list of NFT IDs, fetches their full data, and assembles the final result with a cursor.
+     * @brief Takes a list of NFT IDs, fetches their full data, and assembles the final result with
+     * a cursor.
      */
     NFTsAndCursor
     populateNFTsAndCreateCursor(
@@ -273,17 +282,19 @@ private:
         std::vector<Statement> selectNFTStatements;
         selectNFTStatements.reserve(nftIDs.size());
         std::transform(
-            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTStatements), [&](auto const& nftID) {
-                return schema_->selectNFT.bind(nftID, ledgerSequence);
-            }
+            std::cbegin(nftIDs),
+            std::cend(nftIDs),
+            std::back_inserter(selectNFTStatements),
+            [&](auto const& nftID) { return schema_->selectNFT.bind(nftID, ledgerSequence); }
         );
 
         std::vector<Statement> selectNFTURIStatements;
         selectNFTURIStatements.reserve(nftIDs.size());
         std::transform(
-            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTURIStatements), [&](auto const& nftID) {
-                return schema_->selectNFTURI.bind(nftID, ledgerSequence);
-            }
+            std::cbegin(nftIDs),
+            std::cend(nftIDs),
+            std::back_inserter(selectNFTURIStatements),
+            [&](auto const& nftID) { return schema_->selectNFTURI.bind(nftID, ledgerSequence); }
         );
 
         auto const nftInfos = executor_.readEach(yield, selectNFTStatements);
@@ -295,7 +306,8 @@ private:
                 maybeRow.has_value()) {
                 auto [seq, owner, isBurned] = *maybeRow;
                 NFT nft(nftIDs[i], seq, owner, isBurned);
-                if (auto const maybeUri = nftUris[i].template get<ripple::Blob>(); maybeUri.has_value())
+                if (auto const maybeUri = nftUris[i].template get<ripple::Blob>();
+                    maybeUri.has_value())
                     nft.uri = *maybeUri;
                 ret.nfts.push_back(nft);
             }

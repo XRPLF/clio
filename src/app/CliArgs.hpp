@@ -79,7 +79,8 @@ public:
         /**
          * @brief Apply a function to the action.
          *
-         * @tparam Processors Action processors types. Must be callable with the action type and return int.
+         * @tparam Processors Action processors types. Must be callable with the action type and
+         * return int.
          * @param processors Action processors.
          * @return Exit code.
          */

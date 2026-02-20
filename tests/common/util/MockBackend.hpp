@@ -183,8 +183,14 @@ struct MockBackend : public BackendInterface {
         (const, override)
     );
 
-    using FetchClioNodeReturnType = std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>;
-    MOCK_METHOD(FetchClioNodeReturnType, fetchClioNodesData, (boost::asio::yield_context yield), (const, override));
+    using FetchClioNodeReturnType =
+        std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>;
+    MOCK_METHOD(
+        FetchClioNodeReturnType,
+        fetchClioNodesData,
+        (boost::asio::yield_context yield),
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::optional<data::LedgerRange>,
@@ -195,7 +201,12 @@ struct MockBackend : public BackendInterface {
 
     MOCK_METHOD(void, writeLedger, (ripple::LedgerHeader const&, std::string&&), (override));
 
-    MOCK_METHOD(void, writeLedgerObject, (std::string&&, std::uint32_t const, std::string&&), (override));
+    MOCK_METHOD(
+        void,
+        writeLedgerObject,
+        (std::string&&, std::uint32_t const, std::string&&),
+        (override)
+    );
 
     MOCK_METHOD(
         void,
@@ -212,9 +223,19 @@ struct MockBackend : public BackendInterface {
 
     MOCK_METHOD(void, writeNFTTransactions, (std::vector<NFTTransactionsData> const&), (override));
 
-    MOCK_METHOD(void, writeSuccessor, (std::string && key, std::uint32_t const, std::string&&), (override));
+    MOCK_METHOD(
+        void,
+        writeSuccessor,
+        (std::string && key, std::uint32_t const, std::string&&),
+        (override)
+    );
 
-    MOCK_METHOD(void, writeNodeMessage, (boost::uuids::uuid const& uuid, std::string message), (override));
+    MOCK_METHOD(
+        void,
+        writeNodeMessage,
+        (boost::uuids::uuid const& uuid, std::string message),
+        (override)
+    );
 
     MOCK_METHOD(void, startWrites, (), (const, override));
 
@@ -222,7 +243,12 @@ struct MockBackend : public BackendInterface {
 
     MOCK_METHOD(boost::json::object, stats, (), (const, override));
 
-    MOCK_METHOD(void, doWriteLedgerObject, (std::string&&, std::uint32_t const, std::string&&), (override));
+    MOCK_METHOD(
+        void,
+        doWriteLedgerObject,
+        (std::string&&, std::uint32_t const, std::string&&),
+        (override)
+    );
 
     MOCK_METHOD(void, waitForWritesToFinish, (), (override));
 

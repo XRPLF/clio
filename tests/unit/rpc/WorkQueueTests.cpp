@@ -69,7 +69,9 @@ TEST_F(WorkQueueTest, WhitelistedExecutionCountAddsUp)
     std::atomic_uint32_t executeCount = 0u;
 
     for (auto i = 0u; i < kTOTAL; ++i) {
-        queue.postCoro([&executeCount](auto /* yield */) { ++executeCount; }, /* isWhiteListed = */ true);
+        queue.postCoro(
+            [&executeCount](auto /* yield */) { ++executeCount; }, /* isWhiteListed = */ true
+        );
     }
 
     queue.stop();
@@ -115,7 +117,11 @@ TEST_F(WorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
 }
 
 struct WorkQueueDelayedStartTest : WithPrometheus {
-    WorkQueue queue{WorkQueue::kDONT_START_PROCESSING_TAG, /* numWorkers = */ 1, /* maxSize = */ 100};
+    WorkQueue queue{
+        WorkQueue::kDONT_START_PROCESSING_TAG,
+        /* numWorkers = */ 1,
+        /* maxSize = */ 100
+    };
 };
 
 TEST_F(WorkQueueDelayedStartTest, WaitTimeIncludesDelayBeforeStartProcessing)
@@ -140,7 +146,11 @@ TEST_F(WorkQueueDelayedStartTest, WaitTimeIncludesDelayBeforeStartProcessing)
 }
 
 struct WorkQueuePriorityTest : WithPrometheus {
-    WorkQueue queue{WorkQueue::kDONT_START_PROCESSING_TAG, /* numWorkers = */ 1, /* maxSize = */ 100};
+    WorkQueue queue{
+        WorkQueue::kDONT_START_PROCESSING_TAG,
+        /* numWorkers = */ 1,
+        /* maxSize = */ 100
+    };
 };
 
 TEST_F(WorkQueuePriorityTest, HighPriorityTasks)
@@ -197,10 +207,14 @@ struct WorkQueueStopTest : WorkQueueTest {
 TEST_F(WorkQueueStopTest, RejectsNewTasksWhenStopping)
 {
     EXPECT_CALL(taskMock, Call());
-    EXPECT_TRUE(queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, /* isWhiteListed = */ false));
+    EXPECT_TRUE(
+        queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, /* isWhiteListed = */ false)
+    );
 
     queue.requestStop();
-    EXPECT_FALSE(queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, /* isWhiteListed = */ false));
+    EXPECT_FALSE(
+        queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, /* isWhiteListed = */ false)
+    );
 
     queue.stop();
 }
@@ -208,7 +222,9 @@ TEST_F(WorkQueueStopTest, RejectsNewTasksWhenStopping)
 TEST_F(WorkQueueStopTest, CallsOnTasksCompleteWhenStoppingAndQueueIsEmpty)
 {
     EXPECT_CALL(taskMock, Call());
-    EXPECT_TRUE(queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, /* isWhiteListed = */ false));
+    EXPECT_TRUE(
+        queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, /* isWhiteListed = */ false)
+    );
 
     EXPECT_CALL(onTasksComplete, Call()).WillOnce([&]() { EXPECT_EQ(queue.size(), 0u); });
     queue.requestStop(onTasksComplete.AsStdFunction());
@@ -255,29 +271,35 @@ TEST_F(WorkQueueMockPrometheusTest, postCoroCounters)
         semaphore.release();
     });
 
-    // Note: the queue is not in the fixture because above expectations must be setup before startProcessing runs
+    // Note: the queue is not in the fixture because above expectations must be setup before
+    // startProcessing runs
     WorkQueue queue(/* numWorkers = */ 4, /* maxSize = */ 2);
-    auto const res = queue.postCoro([&](auto /* yield */) { semaphore.acquire(); }, /* isWhiteListed = */ false);
+    auto const res =
+        queue.postCoro([&](auto /* yield */) { semaphore.acquire(); }, /* isWhiteListed = */ false);
 
     ASSERT_TRUE(res);
     queue.stop();
 }
 
 // Note: not using EXPECT_CLIO_ASSERT_FAIL because exception is swallowed by the WQ context
-// TODO [https://github.com/XRPLF/clio/issues/2906]: Enable the test once we figure out a better way to do it without
-// using up >2 minutes of CI time
+// TODO [https://github.com/XRPLF/clio/issues/2906]: Enable the test once we figure out a better way
+// to do it without using up >2 minutes of CI time
 struct WorkQueueDeathTest : WorkQueueMockPrometheusTest, common::util::WithMockAssert {};
 TEST_F(WorkQueueDeathTest, DISABLED_ExecuteTaskAssertsWhenQueueIsEmpty)
 {
     [[maybe_unused]] auto& queuedMock = makeMock<CounterInt>("work_queue_queued_total_number", "");
-    [[maybe_unused]] auto& durationMock = makeMock<CounterInt>("work_queue_cumulative_tasks_duration_us", "");
+    [[maybe_unused]] auto& durationMock =
+        makeMock<CounterInt>("work_queue_cumulative_tasks_duration_us", "");
     auto& curSizeMock = makeMock<GaugeInt>("work_queue_current_size", "");
 
     EXPECT_CALL(curSizeMock, value()).WillRepeatedly(::testing::Return(1));  // lie about the size
     EXPECT_DEATH(
         {
-            WorkQueue queue(WorkQueue::kDONT_START_PROCESSING_TAG, /* numWorkers = */ 1, /* maxSize = */ 2);
-            queue.startProcessing();  // the actual queue is empty which will lead to assertion failure
+            WorkQueue queue(
+                WorkQueue::kDONT_START_PROCESSING_TAG, /* numWorkers = */ 1, /* maxSize = */ 2
+            );
+            queue.startProcessing();  // the actual queue is empty which will lead to assertion
+                                      // failure
         },
         ".*"
     );

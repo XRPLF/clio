@@ -30,7 +30,8 @@
 namespace util {
 
 template <typename T>
-concept SomeAtomic = std::same_as<std::remove_cvref_t<T>, std::atomic<std::remove_cvref_t<typename T::value_type>>>;
+concept SomeAtomic =
+    std::same_as<std::remove_cvref_t<T>, std::atomic<std::remove_cvref_t<typename T::value_type>>>;
 
 /**
  * @brief Concept defining types that can be observed for changes.
@@ -46,7 +47,8 @@ concept SomeAtomic = std::same_as<std::remove_cvref_t<T>, std::atomic<std::remov
  *       for value updates and only need copy construction for change detection.
  */
 template <typename T>
-concept Observable = std::equality_comparable<T> && std::copy_constructible<T> && std::move_constructible<T>;
+concept Observable =
+    std::equality_comparable<T> && std::copy_constructible<T> && std::move_constructible<T>;
 
 namespace impl {
 
@@ -56,7 +58,8 @@ namespace impl {
  * This class contains all the observer management and notification logic
  * that is shared between regular and atomic ObservableValue specializations.
  *
- * @tparam T The value type (for atomic specializations, this is the underlying type, not std::atomic<T>)
+ * @tparam T The value type (for atomic specializations, this is the underlying type, not
+ * std::atomic<T>)
  */
 template <Observable T>
 class ObservableValueBase {
@@ -117,14 +120,15 @@ class ObservableValue;
 /**
  * @brief An observable value container that notifies observers when the value changes.
  *
- * ObservableValue wraps a value of type T and provides a mechanism to observe changes to that value.
- * When the value is modified (and actually changes), all registered observers are notified.
+ * ObservableValue wraps a value of type T and provides a mechanism to observe changes to that
+ * value. When the value is modified (and actually changes), all registered observers are notified.
  *
  * @tparam T The type of value to observe. Must satisfy the Observable concept.
  *
  * @par Thread Safety
  * - Observer subscription/unsubscription (observe() and connection.disconnect()) are thread-safe
- * - Value modification operations (set(), operator=) are NOT thread-safe and require external synchronization
+ * - Value modification operations (set(), operator=) are NOT thread-safe and require external
+ * synchronization
  * - Observer callbacks are invoked synchronously on the same thread that triggered the value change
  * - If observers need to perform work on different threads, they must handle dispatch themselves
  *   (e.g., using an async execution context or message queue)
@@ -190,7 +194,8 @@ public:
      * @brief Constructs ObservableValue with initial value.
      * @param value Initial value (must be convertible to T)
      */
-    ObservableValue(std::convertible_to<T> auto&& value) : value_{std::forward<decltype(value)>(value)}
+    ObservableValue(std::convertible_to<T> auto&& value)
+        : value_{std::forward<decltype(value)>(value)}
     {
     }
 
@@ -327,7 +332,8 @@ public:
      * @brief Constructs ObservableValue with initial atomic value.
      * @param value Initial value (will be stored in the atomic)
      */
-    ObservableValue(std::convertible_to<T> auto&& value) : value_{std::forward<decltype(value)>(value)}
+    ObservableValue(std::convertible_to<T> auto&& value)
+        : value_{std::forward<decltype(value)>(value)}
     {
     }
 

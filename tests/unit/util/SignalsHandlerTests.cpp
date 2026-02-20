@@ -70,7 +70,10 @@ TEST_F(SignalsHandlerAssertTest, CantCreateTwoSignalsHandlers)
 {
     auto makeHandler = []() {
         return SignalsHandler{
-            ClioConfigDefinition{{"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(1.f)}}, []() {}
+            ClioConfigDefinition{
+                {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(1.f)}
+            },
+            []() {}
         };
     };
     auto const handler = makeHandler();
@@ -80,7 +83,9 @@ TEST_F(SignalsHandlerAssertTest, CantCreateTwoSignalsHandlers)
 struct SignalsHandlerTests : SignalsHandlerTestsBase {
 protected:
     SignalsHandler handler_{
-        ClioConfigDefinition{{"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(3.0)}},
+        ClioConfigDefinition{
+            {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(3.0)}
+        },
         forceExitHandler_.AsStdFunction()
     };
 };
@@ -109,7 +114,9 @@ TEST_F(SignalsHandlerTests, OneSignal)
 struct SignalsHandlerTimeoutTests : SignalsHandlerTestsBase {
 protected:
     SignalsHandler handler_{
-        ClioConfigDefinition{{"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(0.001)}},
+        ClioConfigDefinition{
+            {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(0.001)}
+        },
         forceExitHandler_.AsStdFunction()
     };
 };
@@ -161,8 +168,9 @@ struct SignalsHandlerPriorityTestsBundle {
     SignalsHandler::Priority anotherStopHandlerPriority;
 };
 
-struct SignalsHandlerPriorityTests : SignalsHandlerTests,
-                                     testing::WithParamInterface<SignalsHandlerPriorityTestsBundle> {};
+struct SignalsHandlerPriorityTests
+    : SignalsHandlerTests,
+      testing::WithParamInterface<SignalsHandlerPriorityTestsBundle> {};
 
 INSTANTIATE_TEST_SUITE_P(
     SignalsHandlerPriorityTestsGroup,
@@ -185,7 +193,9 @@ TEST_P(SignalsHandlerPriorityTests, Priority)
 {
     bool stopHandlerCalled = false;
 
-    handler_.subscribeToStop(anotherStopHandler_.AsStdFunction(), GetParam().anotherStopHandlerPriority);
+    handler_.subscribeToStop(
+        anotherStopHandler_.AsStdFunction(), GetParam().anotherStopHandlerPriority
+    );
     handler_.subscribeToStop(stopHandler_.AsStdFunction(), GetParam().stopHandlerPriority);
 
     EXPECT_CALL(stopHandler_, Call()).WillOnce([&] { stopHandlerCalled = true; });

@@ -45,7 +45,8 @@ public:
     /**
      * @brief Structure representing weight configuration for a command.
      *
-     * Contains the base weight and optional specialized weights for different ledger specifications.
+     * Contains the base weight and optional specialized weights for different ledger
+     * specifications.
      */
     struct Entry {
         size_t weight;

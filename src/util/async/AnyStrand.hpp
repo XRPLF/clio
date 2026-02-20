@@ -92,14 +92,18 @@ public:
         static_assert(not std::is_same_v<RetType, std::any>);
 
         return AnyOperation<RetType>(  //
-            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> std::any {
-                if constexpr (std::is_void_v<RetType>) {
-                    std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
-                    return {};
-                } else {
-                    return std::make_any<RetType>(std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken)));
+            pimpl_->execute(
+                [fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> std::any {
+                    if constexpr (std::is_void_v<RetType>) {
+                        std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
+                        return {};
+                    } else {
+                        return std::make_any<RetType>(
+                            std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken))
+                        );
+                    }
                 }
-            })
+            )
         );
     }
 
@@ -148,10 +152,12 @@ public:
 
         auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(interval);
         return AnyOperation<RetType>(  //
-            pimpl_->executeRepeatedly(millis, [fn = std::forward<decltype(fn)>(fn)] mutable -> std::any {
-                std::invoke(std::forward<decltype(fn)>(fn));
-                return {};
-            })
+            pimpl_->executeRepeatedly(
+                millis, [fn = std::forward<decltype(fn)>(fn)] mutable -> std::any {
+                    std::invoke(std::forward<decltype(fn)>(fn));
+                    return {};
+                }
+            )
         );
     }
 
@@ -193,7 +199,10 @@ private:
         }
 
         [[nodiscard]] impl::ErasedOperation
-        execute(std::function<std::any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout) override
+        execute(
+            std::function<std::any(AnyStopToken)> fn,
+            std::optional<std::chrono::milliseconds> timeout
+        ) override
         {
             return strand.execute(std::move(fn), timeout);
         }

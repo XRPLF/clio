@@ -41,7 +41,8 @@ template <typename StreamType>
 struct PlainStreamData {
     static constexpr bool kSSL_ENABLED = false;
 
-    explicit PlainStreamData(boost::asio::yield_context yield) : stream(boost::asio::get_associated_executor(yield))
+    explicit PlainStreamData(boost::asio::yield_context yield)
+        : stream(boost::asio::get_associated_executor(yield))
     {
     }
 
@@ -72,14 +73,15 @@ public:
 
 private:
     SslStreamData(boost::asio::ssl::context sslContext, boost::asio::yield_context yield)
-        : sslContext_(std::move(sslContext)), stream(boost::asio::get_associated_executor(yield), sslContext_)
+        : sslContext_(std::move(sslContext))
+        , stream(boost::asio::get_associated_executor(yield), sslContext_)
 
     {
     }
 };
 
 using SslTcpStreamData = SslStreamData<boost::asio::ssl::stream<boost::beast::tcp_stream>>;
-using SslWsStreamData =
-    SslStreamData<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>>;
+using SslWsStreamData = SslStreamData<
+    boost::beast::websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>>;
 
 }  // namespace util::requests::impl

@@ -45,9 +45,13 @@ public:
      * @tparam ProcessingStrategy A strategy that implements how processing of JSON is to be done
      * @param handler The handler to wrap. Required to fulfil the @ref rpc::SomeHandler concept.
      */
-    template <SomeHandler HandlerType, typename ProcessingStrategy = impl::DefaultProcessor<HandlerType>>
+    template <
+        SomeHandler HandlerType,
+        typename ProcessingStrategy = impl::DefaultProcessor<HandlerType>>
     /* implicit */ AnyHandler(HandlerType&& handler)
-        : pimpl_{std::make_unique<Model<HandlerType, ProcessingStrategy>>(std::forward<HandlerType>(handler))}
+        : pimpl_{std::make_unique<Model<HandlerType, ProcessingStrategy>>(
+              std::forward<HandlerType>(handler)
+          )}
     {
     }
 

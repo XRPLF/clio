@@ -81,7 +81,8 @@ static constexpr auto kAMM_ACCOUNT = "rLcS7XL6nxRAi7JcbJcn1Na179oF3vdfbh";
 static constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 static constexpr auto kNFT_ID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
 static constexpr auto kCURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
-static constexpr auto kVAULT_ID = "61B03A6F8CEBD3AF9D8F696C3D0A9A9F0493B34BF6B5D93CF0BC009E6BA75303";
+static constexpr auto kVAULT_ID =
+    "61B03A6F8CEBD3AF9D8F696C3D0A9A9F0493B34BF6B5D93CF0BC009E6BA75303";
 
 using AnyHandlerType = Types<
     AccountChannelsHandler,
@@ -125,9 +126,13 @@ struct AllHandlersAssertTest : common::util::WithMockAssert,
                                testing::WithParamInterface<std::string> {
     AllHandlersAssertTest() : handler_{initHandler()}
     {
-        ASSERT(mockAmendmentCenterPtr_.amendmentCenterMock != nullptr, "mockAmendmentCenterPtr is not initialized.");
         ASSERT(
-            mockSubscriptionManagerPtr_.subscriptionManagerMock != nullptr, "mockSubscriptionPtr is not initialized"
+            mockAmendmentCenterPtr_.amendmentCenterMock != nullptr,
+            "mockAmendmentCenterPtr is not initialized."
+        );
+        ASSERT(
+            mockSubscriptionManagerPtr_.subscriptionManagerMock != nullptr,
+            "mockSubscriptionPtr is not initialized"
         );
     }
 
@@ -142,12 +147,16 @@ private:
     HandlerType
     initHandler()
     {
-        if constexpr (std::is_same_v<HandlerType, AccountInfoHandler> || std::is_same_v<HandlerType, AMMInfoHandler> ||
-                      std::is_same_v<HandlerType, LedgerHandler> || std::is_same_v<HandlerType, BookOffersHandler> ||
+        if constexpr (std::is_same_v<HandlerType, AccountInfoHandler> ||
+                      std::is_same_v<HandlerType, AMMInfoHandler> ||
+                      std::is_same_v<HandlerType, LedgerHandler> ||
+                      std::is_same_v<HandlerType, BookOffersHandler> ||
                       std::is_same_v<HandlerType, FeatureHandler>) {
             return HandlerType{this->backend_, this->mockAmendmentCenterPtr_};
         } else if constexpr (std::is_same_v<HandlerType, SubscribeHandler>) {
-            return HandlerType{this->backend_, this->mockAmendmentCenterPtr_, this->mockSubscriptionManagerPtr_};
+            return HandlerType{
+                this->backend_, this->mockAmendmentCenterPtr_, this->mockSubscriptionManagerPtr_
+            };
         } else if constexpr (std::is_same_v<HandlerType, AccountTxHandler>) {
             return HandlerType{this->backend_, mockETLServicePtr_};
         } else if constexpr (std::is_same_v<HandlerType, TestServerInfoHandler>) {
@@ -255,9 +264,9 @@ createInput<SubscribeHandler>()
 {
     SubscribeHandler::Input input{};
 
-    input.books = std::vector<SubscribeHandler::OrderBook>{
-        SubscribeHandler::OrderBook{.book = ripple::Book{}, .taker = kACCOUNT, .snapshot = true, .both = true}
-    };
+    input.books = std::vector<SubscribeHandler::OrderBook>{SubscribeHandler::OrderBook{
+        .book = ripple::Book{}, .taker = kACCOUNT, .snapshot = true, .both = true
+    }};
     return input;
 }
 
@@ -284,7 +293,8 @@ TYPED_TEST(AllHandlersAssertTest, NoRangeAvailable)
             auto const context = Context{yield, this->session_};
 
             EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
-                { [[maybe_unused]] auto unused = handler.process(input, context); }, "Assertion .* failed at .*"
+                { [[maybe_unused]] auto unused = handler.process(input, context); },
+                "Assertion .* failed at .*"
             );
         },
         true

@@ -58,26 +58,34 @@ public:
 
 private:
     // counters for fetchLedgerObject(s) hit rate
-    std::reference_wrapper<util::prometheus::CounterInt> objectReqCounter_{PrometheusService::counterInt(
-        "ledger_cache_counter_total_number",
-        util::prometheus::Labels({{"type", "request"}, {"fetch", "ledger_objects"}}),
-        "LedgerCache statistics"
-    )};
-    std::reference_wrapper<util::prometheus::CounterInt> objectHitCounter_{PrometheusService::counterInt(
-        "ledger_cache_counter_total_number",
-        util::prometheus::Labels({{"type", "cache_hit"}, {"fetch", "ledger_objects"}})
-    )};
+    std::reference_wrapper<util::prometheus::CounterInt> objectReqCounter_{
+        PrometheusService::counterInt(
+            "ledger_cache_counter_total_number",
+            util::prometheus::Labels({{"type", "request"}, {"fetch", "ledger_objects"}}),
+            "LedgerCache statistics"
+        )
+    };
+    std::reference_wrapper<util::prometheus::CounterInt> objectHitCounter_{
+        PrometheusService::counterInt(
+            "ledger_cache_counter_total_number",
+            util::prometheus::Labels({{"type", "cache_hit"}, {"fetch", "ledger_objects"}})
+        )
+    };
 
     // counters for fetchSuccessorKey hit rate
-    std::reference_wrapper<util::prometheus::CounterInt> successorReqCounter_{PrometheusService::counterInt(
-        "ledger_cache_counter_total_number",
-        util::prometheus::Labels({{"type", "request"}, {"fetch", "successor_key"}}),
-        "ledgerCache"
-    )};
-    std::reference_wrapper<util::prometheus::CounterInt> successorHitCounter_{PrometheusService::counterInt(
-        "ledger_cache_counter_total_number",
-        util::prometheus::Labels({{"type", "cache_hit"}, {"fetch", "successor_key"}})
-    )};
+    std::reference_wrapper<util::prometheus::CounterInt> successorReqCounter_{
+        PrometheusService::counterInt(
+            "ledger_cache_counter_total_number",
+            util::prometheus::Labels({{"type", "request"}, {"fetch", "successor_key"}}),
+            "ledgerCache"
+        )
+    };
+    std::reference_wrapper<util::prometheus::CounterInt> successorHitCounter_{
+        PrometheusService::counterInt(
+            "ledger_cache_counter_total_number",
+            util::prometheus::Labels({{"type", "cache_hit"}, {"fetch", "successor_key"}})
+        )
+    };
 
     CacheMap map_;
     CacheMap deleted_;
@@ -96,7 +104,8 @@ private:
         "Whether ledger cache is disabled or not"
     )};
 
-    // temporary set to prevent background thread from writing already deleted data. not used when cache is full
+    // temporary set to prevent background thread from writing already deleted data. not used when
+    // cache is full
     std::unordered_set<ripple::uint256, ripple::hardened_hash<>> deletes_;
 
 public:

@@ -45,7 +45,11 @@ public:
     ) override
     {
         return std::make_unique<Monitor>(
-            std::move(ctx), std::move(backend), std::move(validatedLedgers), startSequence, dbStalledReportDelay
+            std::move(ctx),
+            std::move(backend),
+            std::move(validatedLedgers),
+            startSequence,
+            dbStalledReportDelay
         );
     }
 };

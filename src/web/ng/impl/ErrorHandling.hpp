@@ -49,7 +49,10 @@ public:
      * @param rawRequest The request that caused the error.
      * @param request The parsed request that caused the error.
      */
-    ErrorHelper(Request const& rawRequest, std::optional<boost::json::object> request = std::nullopt);
+    ErrorHelper(
+        Request const& rawRequest,
+        std::optional<boost::json::object> request = std::nullopt
+    );
 
     /**
      * @brief Make an error response from a status.

@@ -41,7 +41,8 @@ parseConfig(std::string_view configPath)
 
     auto const json = ConfigFileJson::makeConfigFileJson(configPath);
     if (!json.has_value()) {
-        std::cerr << "Error parsing json from config: " << configPath << "\n" << json.error().error << std::endl;
+        std::cerr << "Error parsing json from config: " << configPath << "\n"
+                  << json.error().error << std::endl;
         return false;
     }
     auto const errors = getClioConfig().parse(json.value());

@@ -91,20 +91,24 @@ TEST_P(WriterDeciderTest, WriterSelection)
     switch (params.expectedAction) {
         case ExpectedAction::StartWriting:
             EXPECT_CALL(*clonedState, startWriting());
-            EXPECT_CALL(writerStateRef, clone()).WillOnce(testing::Return(testing::ByMove(std::move(clonedState))));
+            EXPECT_CALL(writerStateRef, clone())
+                .WillOnce(testing::Return(testing::ByMove(std::move(clonedState))));
             break;
         case ExpectedAction::GiveUpWriting:
             EXPECT_CALL(*clonedState, giveUpWriting());
-            EXPECT_CALL(writerStateRef, clone()).WillOnce(testing::Return(testing::ByMove(std::move(clonedState))));
+            EXPECT_CALL(writerStateRef, clone())
+                .WillOnce(testing::Return(testing::ByMove(std::move(clonedState))));
             break;
         case ExpectedAction::SetFallback:
             EXPECT_CALL(*clonedState, setWriterDecidingFallback());
-            EXPECT_CALL(writerStateRef, clone()).WillOnce(testing::Return(testing::ByMove(std::move(clonedState))));
+            EXPECT_CALL(writerStateRef, clone())
+                .WillOnce(testing::Return(testing::ByMove(std::move(clonedState))));
             break;
         case ExpectedAction::NoAction:
             if (not params.useEmptyClusterData) {
                 // For all-ReadOnly case, we still clone but don't call any action
-                EXPECT_CALL(writerStateRef, clone()).WillOnce(testing::Return(testing::ByMove(std::move(clonedState))));
+                EXPECT_CALL(writerStateRef, clone())
+                    .WillOnce(testing::Return(testing::ByMove(std::move(clonedState))));
             }
             // For empty cluster data, clone is never called
             break;
@@ -114,7 +118,9 @@ TEST_P(WriterDeciderTest, WriterSelection)
     ClioNode::CUuid selfIdPtr;
 
     if (params.useEmptyClusterData) {
-        clusterData = std::make_shared<Backend::ClusterData>(std::unexpected(std::string("Communication failed")));
+        clusterData = std::make_shared<Backend::ClusterData>(
+            std::unexpected(std::string("Communication failed"))
+        );
         selfIdPtr = std::make_shared<boost::uuids::uuid>(selfUuid);
     } else {
         std::vector<ClioNode> nodes;
@@ -154,7 +160,9 @@ INSTANTIATE_TEST_SUITE_P(
             .testName = "NodesAreSortedByUUID",
             .selfUuidValue = 0x02,
             .nodes =
-                {{0x03, ClioNode::DbRole::Writer}, {0x02, ClioNode::DbRole::Writer}, {0x01, ClioNode::DbRole::Writer}},
+                {{0x03, ClioNode::DbRole::Writer},
+                 {0x02, ClioNode::DbRole::Writer},
+                 {0x01, ClioNode::DbRole::Writer}},
             .expectedAction = ExpectedAction::GiveUpWriting
         },
         WriterDeciderTestParams{
@@ -286,7 +294,8 @@ INSTANTIATE_TEST_SUITE_P(
         WriterDeciderTestParams{
             .testName = "AllNodesLoadingCacheNoActionTaken",
             .selfUuidValue = 0x01,
-            .nodes = {{0x01, ClioNode::DbRole::LoadingCache}, {0x02, ClioNode::DbRole::LoadingCache}},
+            .nodes =
+                {{0x01, ClioNode::DbRole::LoadingCache}, {0x02, ClioNode::DbRole::LoadingCache}},
             .expectedAction = ExpectedAction::NoAction
         },
         WriterDeciderTestParams{

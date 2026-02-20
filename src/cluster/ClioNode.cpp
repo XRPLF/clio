@@ -62,7 +62,9 @@ ClioNode::from(ClioNode::Uuid uuid, etl::WriterStateInterface const& writerState
 
         return writerState.isWriting() ? ClioNode::DbRole::Writer : ClioNode::DbRole::NotWriter;
     }();
-    return ClioNode{.uuid = std::move(uuid), .updateTime = std::chrono::system_clock::now(), .dbRole = dbRole};
+    return ClioNode{
+        .uuid = std::move(uuid), .updateTime = std::chrono::system_clock::now(), .dbRole = dbRole
+    };
 }
 
 void
@@ -78,7 +80,8 @@ ClioNode
 tag_invoke(boost::json::value_to_tag<ClioNode>, boost::json::value const& jv)
 {
     auto const& updateTimeStr = jv.as_object().at(JsonFields::kUPDATE_TIME).as_string();
-    auto const updateTime = util::systemTpFromUtcStr(std::string(updateTimeStr), ClioNode::kTIME_FORMAT);
+    auto const updateTime =
+        util::systemTpFromUtcStr(std::string(updateTimeStr), ClioNode::kTIME_FORMAT);
     if (!updateTime.has_value()) {
         throw std::runtime_error("Failed to parse update time");
     }
@@ -88,7 +91,8 @@ tag_invoke(boost::json::value_to_tag<ClioNode>, boost::json::value const& jv)
         throw std::runtime_error("Invalid db_role value");
 
     return ClioNode{
-        // Json data doesn't contain uuid so leaving it empty here. It will be filled outside of this parsing
+        // Json data doesn't contain uuid so leaving it empty here. It will be filled outside of
+        // this parsing
         .uuid = std::make_shared<boost::uuids::uuid>(),
         .updateTime = updateTime.value(),
         .dbRole = static_cast<ClioNode::DbRole>(dbRoleValue)

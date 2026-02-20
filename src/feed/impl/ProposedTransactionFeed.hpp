@@ -51,8 +51,8 @@ namespace feed::impl {
 class ProposedTransactionFeed {
     util::Logger logger_{"Subscriptions"};
 
-    std::unordered_set<SubscriberPtr>
-        notified_;  // Used by slots to prevent double notifications if tx contains multiple subscribed accounts
+    std::unordered_set<SubscriberPtr> notified_;  // Used by slots to prevent double notifications
+                                                  // if tx contains multiple subscribed accounts
     util::async::AnyStrand strand_;
     std::reference_wrapper<util::prometheus::GaugeInt> subAllCount_;
     std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_;
@@ -81,7 +81,8 @@ public:
     sub(SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Subscribe to the proposed transaction feed, only receive the feed when particular account is affected.
+     * @brief Subscribe to the proposed transaction feed, only receive the feed when particular
+     * account is affected.
      * @param subscriber
      * @param account The account to watch.
      */

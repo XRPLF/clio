@@ -190,7 +190,9 @@ struct LedgerCacheFileTestBase : ::testing::Test {
     static LedgerCacheFile::DataView
     toDataView(LedgerCacheFile::Data const& data)
     {
-        return LedgerCacheFile::DataView{.latestSeq = data.latestSeq, .map = data.map, .deleted = data.deleted};
+        return LedgerCacheFile::DataView{
+            .latestSeq = data.latestSeq, .map = data.map, .deleted = data.deleted
+        };
     }
 
     void
@@ -206,7 +208,9 @@ struct LedgerCacheFileTestBase : ::testing::Test {
                 file.seekp(offsets.headerOffset);
                 {
                     uint32_t invalidVersion = 999;
-                    file.write(reinterpret_cast<char const*>(&invalidVersion), sizeof(invalidVersion));
+                    file.write(
+                        reinterpret_cast<char const*>(&invalidVersion), sizeof(invalidVersion)
+                    );
                 }
                 break;
             case CorruptionType::CorruptedSeparator1:
@@ -280,7 +284,8 @@ struct LedgerCacheFileTestBase : ::testing::Test {
                 }
                 break;
             case CorruptionType::DeletedBlobDataCorrupted:
-                if (!offsets.deletedEntries.empty() && !dataView.deleted.begin()->second.blob.empty()) {
+                if (!offsets.deletedEntries.empty() &&
+                    !dataView.deleted.begin()->second.blob.empty()) {
                     file.seekp(offsets.deletedEntries[0].blobDataOffset);
                     char const corruptByte = static_cast<char>(0xFF);
                     file.write(&corruptByte, 1);
@@ -289,7 +294,8 @@ struct LedgerCacheFileTestBase : ::testing::Test {
             case CorruptionType::HeaderLatestSeqCorrupted:
                 file.seekp(offsets.headerOffset + sizeof(uint32_t));  // skip version
                 {
-                    uint32_t corruptSeq = 0;  // set to 0 to fail validation if minLatestSequence > 0
+                    uint32_t corruptSeq =
+                        0;  // set to 0 to fail validation if minLatestSequence > 0
                     file.write(reinterpret_cast<char const*>(&corruptSeq), sizeof(corruptSeq));
                 }
                 break;
@@ -319,32 +325,47 @@ struct LedgerCacheFileTestBase : ::testing::Test {
     }
 };
 
-std::vector<LedgerCacheFileTestBase::DataSizeParams> const LedgerCacheFileTestBase::kDATA_SIZE_PARAMS = {
+std::vector<
+    LedgerCacheFileTestBase::DataSizeParams> const LedgerCacheFileTestBase::kDATA_SIZE_PARAMS = {
     {.mapEntries = 0, .deletedEntries = 0, .blobSize = 0, .description = "empty"},
     {.mapEntries = 1, .deletedEntries = 0, .blobSize = 10, .description = "single_map_small_blob"},
-    {.mapEntries = 0, .deletedEntries = 1, .blobSize = 100, .description = "single_deleted_medium_blob"},
-    {.mapEntries = 5, .deletedEntries = 3, .blobSize = 1000, .description = "multiple_entries_large_blob"},
-    {.mapEntries = 10, .deletedEntries = 10, .blobSize = 50000, .description = "many_entries_huge_blob"}
+    {.mapEntries = 0,
+     .deletedEntries = 1,
+     .blobSize = 100,
+     .description = "single_deleted_medium_blob"},
+    {.mapEntries = 5,
+     .deletedEntries = 3,
+     .blobSize = 1000,
+     .description = "multiple_entries_large_blob"},
+    {.mapEntries = 10,
+     .deletedEntries = 10,
+     .blobSize = 50000,
+     .description = "many_entries_huge_blob"}
 };
 
-std::vector<LedgerCacheFileTestBase::CorruptionParams> const LedgerCacheFileTestBase::kCORRUPTION_PARAMS = {
-    {.type = CorruptionType::InvalidVersion, .description = "invalid_version"},
-    {.type = CorruptionType::CorruptedSeparator1, .description = "corrupted_separator1"},
-    {.type = CorruptionType::CorruptedSeparator2, .description = "corrupted_separator2"},
-    {.type = CorruptionType::CorruptedSeparator3, .description = "corrupted_separator3"},
-    {.type = CorruptionType::MapKeyCorrupted, .description = "map_key_corrupted"},
-    {.type = CorruptionType::MapSeqCorrupted, .description = "map_seq_corrupted"},
-    {.type = CorruptionType::MapBlobSizeCorrupted, .description = "map_blob_size_corrupted"},
-    {.type = CorruptionType::MapBlobDataCorrupted, .description = "map_blob_data_corrupted"},
-    {.type = CorruptionType::DeletedKeyCorrupted, .description = "deleted_key_corrupted"},
-    {.type = CorruptionType::DeletedSeqCorrupted, .description = "deleted_seq_corrupted"},
-    {.type = CorruptionType::DeletedBlobSizeCorrupted, .description = "deleted_blob_size_corrupted"},
-    {.type = CorruptionType::DeletedBlobDataCorrupted, .description = "deleted_blob_data_corrupted"},
-    {.type = CorruptionType::HeaderLatestSeqCorrupted, .description = "header_latest_seq_corrupted"}
+std::vector<LedgerCacheFileTestBase::CorruptionParams> const
+    LedgerCacheFileTestBase::kCORRUPTION_PARAMS = {
+        {.type = CorruptionType::InvalidVersion, .description = "invalid_version"},
+        {.type = CorruptionType::CorruptedSeparator1, .description = "corrupted_separator1"},
+        {.type = CorruptionType::CorruptedSeparator2, .description = "corrupted_separator2"},
+        {.type = CorruptionType::CorruptedSeparator3, .description = "corrupted_separator3"},
+        {.type = CorruptionType::MapKeyCorrupted, .description = "map_key_corrupted"},
+        {.type = CorruptionType::MapSeqCorrupted, .description = "map_seq_corrupted"},
+        {.type = CorruptionType::MapBlobSizeCorrupted, .description = "map_blob_size_corrupted"},
+        {.type = CorruptionType::MapBlobDataCorrupted, .description = "map_blob_data_corrupted"},
+        {.type = CorruptionType::DeletedKeyCorrupted, .description = "deleted_key_corrupted"},
+        {.type = CorruptionType::DeletedSeqCorrupted, .description = "deleted_seq_corrupted"},
+        {.type = CorruptionType::DeletedBlobSizeCorrupted,
+         .description = "deleted_blob_size_corrupted"},
+        {.type = CorruptionType::DeletedBlobDataCorrupted,
+         .description = "deleted_blob_data_corrupted"},
+        {.type = CorruptionType::HeaderLatestSeqCorrupted,
+         .description = "header_latest_seq_corrupted"}
 };
 
-struct LedgerCacheFileTest : LedgerCacheFileTestBase,
-                             ::testing::WithParamInterface<LedgerCacheFileTestBase::DataSizeParams> {
+struct LedgerCacheFileTest
+    : LedgerCacheFileTestBase,
+      ::testing::WithParamInterface<LedgerCacheFileTestBase::DataSizeParams> {
     static std::string
     roundTripParamName(::testing::TestParamInfo<DataSizeParams> const& info)
     {
@@ -364,7 +385,8 @@ TEST_P(LedgerCacheFileTest, WriteAndReadData)
     auto dataParams = GetParam();
     LedgerCacheFile cacheFile(tmpFile.path);
 
-    auto testData = createTestData(dataParams.mapEntries, dataParams.deletedEntries, dataParams.blobSize);
+    auto testData =
+        createTestData(dataParams.mapEntries, dataParams.deletedEntries, dataParams.blobSize);
     auto dataView = toDataView(testData);
 
     auto writeResult = cacheFile.write(dataView);
@@ -379,8 +401,9 @@ TEST_P(LedgerCacheFileTest, WriteAndReadData)
     verifyDataEquals(testData, readResult.value());
 }
 
-struct LedgerCacheFileCorruptionTest : LedgerCacheFileTestBase,
-                                       ::testing::WithParamInterface<LedgerCacheFileTestBase::CorruptionParams> {
+struct LedgerCacheFileCorruptionTest
+    : LedgerCacheFileTestBase,
+      ::testing::WithParamInterface<LedgerCacheFileTestBase::CorruptionParams> {
     static std::string
     corruptionParamName(::testing::TestParamInfo<CorruptionParams> const& info)
     {
@@ -585,9 +608,13 @@ TEST_F(LedgerCacheFileEdgeCaseTest, SequenceNumber)
     std::memset(key3.data(), 3, ripple::uint256::size());
 
     testData.map.emplace(key1, data::LedgerCache::CacheEntry{.seq = 0, .blob = {1}});
-    testData.map.emplace(key2, data::LedgerCache::CacheEntry{.seq = std::numeric_limits<uint32_t>::max(), .blob = {2}});
+    testData.map.emplace(
+        key2,
+        data::LedgerCache::CacheEntry{.seq = std::numeric_limits<uint32_t>::max(), .blob = {2}}
+    );
     testData.deleted.emplace(
-        key3, data::LedgerCache::CacheEntry{.seq = std::numeric_limits<uint32_t>::max() / 2, .blob = {3}}
+        key3,
+        data::LedgerCache::CacheEntry{.seq = std::numeric_limits<uint32_t>::max() / 2, .blob = {3}}
     );
 
     auto dataView = toDataView(testData);
@@ -714,7 +741,8 @@ TEST_P(LedgerCacheFileMinSequenceValidationTest, ValidateMinSequence)
     auto readResult = cacheFile.read(minLatestSeq);
 
     if (shouldSucceed) {
-        ASSERT_TRUE(readResult.has_value()) << "Expected read to succeed but got error: " << readResult.error();
+        ASSERT_TRUE(readResult.has_value())
+            << "Expected read to succeed but got error: " << readResult.error();
         EXPECT_EQ(readResult.value().latestSeq, latestSeq);
     } else {
         EXPECT_FALSE(readResult.has_value()) << "Expected read to fail but it succeeded";

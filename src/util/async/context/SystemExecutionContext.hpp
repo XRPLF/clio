@@ -26,8 +26,8 @@ namespace util::async {
 /**
  * @brief A execution context that runs tasks on a system thread pool of 1 thread.
  *
- * This is useful for timers and system tasks that need to be scheduled on a exececution context that otherwise would
- * not be able to support them (e.g. a synchronous execution context).
+ * This is useful for timers and system tasks that need to be scheduled on a exececution context
+ * that otherwise would not be able to support them (e.g. a synchronous execution context).
  */
 class SystemExecutionContext {
 public:

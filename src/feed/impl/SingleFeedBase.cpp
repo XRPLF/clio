@@ -32,7 +32,10 @@
 
 namespace feed::impl {
 
-SingleFeedBase::SingleFeedBase(util::async::AnyExecutionContext& executionCtx, std::string const& name)
+SingleFeedBase::SingleFeedBase(
+    util::async::AnyExecutionContext& executionCtx,
+    std::string const& name
+)
     : strand_(executionCtx.makeStrand()), subCount_(getSubscriptionsGaugeInt(name)), name_(name)
 {
 }
@@ -41,10 +44,12 @@ void
 SingleFeedBase::sub(SubscriberSharedPtr const& subscriber)
 {
     auto const weakPtr = std::weak_ptr(subscriber);
-    auto const added = signal_.connectTrackableSlot(subscriber, [weakPtr](std::shared_ptr<std::string> const& msg) {
-        if (auto connectionPtr = weakPtr.lock())
-            connectionPtr->send(msg);
-    });
+    auto const added = signal_.connectTrackableSlot(
+        subscriber, [weakPtr](std::shared_ptr<std::string> const& msg) {
+            if (auto connectionPtr = weakPtr.lock())
+                connectionPtr->send(msg);
+        }
+    );
 
     if (added) {
         LOG(logger_.info()) << subscriber->tag() << "Subscribed " << name_;

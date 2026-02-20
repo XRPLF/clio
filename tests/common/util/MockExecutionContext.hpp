@@ -63,7 +63,8 @@ struct MockExecutionContext {
     MOCK_METHOD(
         StoppableOperation<std::any> const&,
         execute,
-        (std::function<std::any(util::async::AnyStopToken)>, std::optional<std::chrono::milliseconds>),
+        (std::function<std::any(util::async::AnyStopToken)>,
+         std::optional<std::chrono::milliseconds>),
         ()
     );
     MOCK_METHOD(

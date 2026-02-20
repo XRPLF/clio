@@ -61,12 +61,18 @@ SettingsProvider::parseOptionalCertificate() const
         auto const path = std::filesystem::path(certPath.asString());
         std::ifstream fileStream(path.string(), std::ios::in);
         if (!fileStream) {
-            throw std::system_error(errno, std::generic_category(), "Opening certificate " + path.string());
+            throw std::system_error(
+                errno, std::generic_category(), "Opening certificate " + path.string()
+            );
         }
 
-        std::string contents(std::istreambuf_iterator<char>{fileStream}, std::istreambuf_iterator<char>{});
+        std::string contents(
+            std::istreambuf_iterator<char>{fileStream}, std::istreambuf_iterator<char>{}
+        );
         if (fileStream.bad()) {
-            throw std::system_error(errno, std::generic_category(), "Reading certificate " + path.string());
+            throw std::system_error(
+                errno, std::generic_category(), "Reading certificate " + path.string()
+            );
         }
 
         return contents;
@@ -82,7 +88,8 @@ SettingsProvider::parseSettings() const
 
     // all config values used in settings is under "database.cassandra" prefix
     if (config_.getValueView("secure_connect_bundle").hasValue()) {
-        auto const bundle = Settings::SecureConnectionBundle{(config_.get<std::string>("secure_connect_bundle"))};
+        auto const bundle =
+            Settings::SecureConnectionBundle{(config_.get<std::string>("secure_connect_bundle"))};
         settings.connectionInfo = bundle;
     } else {
         Settings::ContactPoints out;
@@ -101,12 +108,14 @@ SettingsProvider::parseSettings() const
 
     if (config_.getValueView("connect_timeout").hasValue()) {
         auto const connectTimeoutSecond = config_.get<uint32_t>("connect_timeout");
-        settings.connectionTimeout = std::chrono::milliseconds{connectTimeoutSecond * util::kMILLISECONDS_PER_SECOND};
+        settings.connectionTimeout =
+            std::chrono::milliseconds{connectTimeoutSecond * util::kMILLISECONDS_PER_SECOND};
     }
 
     if (config_.getValueView("request_timeout").hasValue()) {
         auto const requestTimeoutSecond = config_.get<uint32_t>("request_timeout");
-        settings.requestTimeout = std::chrono::milliseconds{requestTimeoutSecond * util::kMILLISECONDS_PER_SECOND};
+        settings.requestTimeout =
+            std::chrono::milliseconds{requestTimeoutSecond * util::kMILLISECONDS_PER_SECOND};
     }
 
     settings.certificate = parseOptionalCertificate();

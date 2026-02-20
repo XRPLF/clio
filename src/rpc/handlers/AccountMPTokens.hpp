@@ -44,7 +44,8 @@
 namespace rpc {
 
 /**
- * @brief The account_mptokens method returns information about the MPTokens the account currently holds.
+ * @brief The account_mptokens method returns information about the MPTokens the account currently
+ * holds.
  */
 class AccountMPTokensHandler {
     // dependencies
@@ -118,7 +119,8 @@ public:
             {JS(account),
              validation::Required{},
              meta::WithCustomError{
-                 validation::CustomValidators::accountValidator, Status(RippledError::rpcACT_MALFORMED)
+                 validation::CustomValidators::accountValidator,
+                 Status(RippledError::rpcACT_MALFORMED)
              }},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(limit),

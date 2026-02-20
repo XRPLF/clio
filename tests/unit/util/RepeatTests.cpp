@@ -41,13 +41,15 @@ struct RepeatTests : SyncAsioContextTest {
     void
     withRunningContext(std::function<void()> func)
     {
-        tests::common::util::callWithTimeout(std::chrono::seconds{1}, [this, func = std::move(func)]() {
-            auto workGuard = boost::asio::make_work_guard(ctx_);
-            std::thread thread{[this]() { ctx_.run(); }};
-            func();
-            workGuard.reset();
-            thread.join();
-        });
+        tests::common::util::callWithTimeout(
+            std::chrono::seconds{1}, [this, func = std::move(func)]() {
+                auto workGuard = boost::asio::make_work_guard(ctx_);
+                std::thread thread{[this]() { ctx_.run(); }};
+                func();
+                workGuard.reset();
+                thread.join();
+            }
+        );
     }
 };
 

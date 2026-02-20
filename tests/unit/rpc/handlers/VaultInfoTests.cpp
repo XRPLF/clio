@@ -75,7 +75,8 @@ struct VaultInfoParamTestCaseBundle {
     std::string expectedErrorMessage;
 };
 
-struct VaultInfoParameterTest : RPCVaultInfoHandlerTest, WithParamInterface<VaultInfoParamTestCaseBundle> {};
+struct VaultInfoParameterTest : RPCVaultInfoHandlerTest,
+                                WithParamInterface<VaultInfoParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -193,7 +194,9 @@ TEST_P(VaultInfoParameterTest, InvalidParams)
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(
             err.at("error_code").as_uint64(),
-            std::visit([](auto code) { return static_cast<uint32_t>(code); }, testBundle.expectedErrorCode)
+            std::visit(
+                [](auto code) { return static_cast<uint32_t>(code); }, testBundle.expectedErrorCode
+            )
         );
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -269,7 +272,15 @@ TEST_F(RPCVaultInfoHandlerTest, MissingIssuanceObject)
     uint64_t const ownerNode = 4;
 
     auto const vault = createVault(
-        kACCOUNT, kACCOUNT2, kSEQ, kASSET_CURRENCY, kASSET_ISSUER, mptSharesID, ownerNode, prevTxId, prevTxSeq
+        kACCOUNT,
+        kACCOUNT2,
+        kSEQ,
+        kASSET_CURRENCY,
+        kASSET_ISSUER,
+        mptSharesID,
+        ownerNode,
+        prevTxId,
+        prevTxSeq
     );
 
     auto const vaultKeylet = ripple::keylet::vault(ripple::uint256{kVAULT_ID}).key;
@@ -351,7 +362,15 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
 
     // Mock vault object
     auto const vault = createVault(
-        kACCOUNT, kACCOUNT2, kSEQ, kASSET_CURRENCY, kASSET_ISSUER, mptSharesID, ownerNode, prevTxId, prevTxSeq
+        kACCOUNT,
+        kACCOUNT2,
+        kSEQ,
+        kASSET_CURRENCY,
+        kASSET_ISSUER,
+        mptSharesID,
+        ownerNode,
+        prevTxId,
+        prevTxSeq
     );
 
     // Set up keylet based on vaultID
@@ -434,7 +453,15 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
 
     // Mock vault object
     auto const vault = createVault(
-        kACCOUNT, kACCOUNT2, kSEQ, kASSET_CURRENCY, kASSET_ISSUER, mptSharesID, ownerNode, prevTxId, prevTxSeq
+        kACCOUNT,
+        kACCOUNT2,
+        kSEQ,
+        kASSET_CURRENCY,
+        kASSET_ISSUER,
+        mptSharesID,
+        ownerNode,
+        prevTxId,
+        prevTxSeq
     );
 
     auto const issuance = createMptIssuanceObject(kACCOUNT, kSEQ, "metadata");

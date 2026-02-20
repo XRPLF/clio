@@ -48,7 +48,8 @@ class Metrics {
     util::prometheus::Bool isHealthy_ = PrometheusService::boolMetric(
         "cluster_communication_is_healthy",
         {},
-        "Whether cluster communication service is operating healthy (1 - healthy, 0 - we have a problem)"
+        "Whether cluster communication service is operating healthy (1 - healthy, 0 - we have a "
+        "problem)"
     );
 
 public:
@@ -67,7 +68,8 @@ public:
      * - Node count to reflect the current cluster size
      *
      * @param uuid The UUID of the node (unused in current implementation)
-     * @param clusterData Shared pointer to the current cluster data; may be empty if communication failed
+     * @param clusterData Shared pointer to the current cluster data; may be empty if communication
+     * failed
      */
     void
     onNewState(ClioNode::CUuid uuid, std::shared_ptr<Backend::ClusterData const> clusterData);

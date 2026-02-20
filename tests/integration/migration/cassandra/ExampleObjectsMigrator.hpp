@@ -29,8 +29,8 @@
 #include <memory>
 
 /**
- * @brief Example migrator for the objects table. In this example, we show how to traverse objects table.
- * We will count the number of account root in the objects table.
+ * @brief Example migrator for the objects table. In this example, we show how to traverse objects
+ * table. We will count the number of account root in the objects table.
  */
 struct ExampleObjectsMigrator {
     using Backend = CassandraMigrationTestBackend;

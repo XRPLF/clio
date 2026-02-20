@@ -75,7 +75,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    BookChangesHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
+    BookChangesHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+        : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 

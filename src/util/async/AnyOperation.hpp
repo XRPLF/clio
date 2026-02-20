@@ -32,8 +32,8 @@
 #include <utility>
 
 // TODO: In the future, perhaps cancel and requestStop should be combined into one.
-// Users of the library should not care whether the operation is cancellable or stoppable - users just want to cancel
-// it whatever that means internally.
+// Users of the library should not care whether the operation is cancellable or stoppable - users
+// just want to cancel it whatever that means internally.
 
 namespace util::async {
 
@@ -48,7 +48,8 @@ public:
      *
      * @param operation The operation to wrap
      */
-    /* implicit */ AnyOperation(impl::ErasedOperation&& operation) : operation_{std::move(operation)}
+    /* implicit */ AnyOperation(impl::ErasedOperation&& operation)
+        : operation_{std::move(operation)}
     {
     }
 
@@ -74,7 +75,8 @@ public:
     /**
      * @brief Abort the operation
      *
-     * Used to cancel the timer for scheduled operations and request the operation to be stopped as soon as possible
+     * Used to cancel the timer for scheduled operations and request the operation to be stopped as
+     * soon as possible
      */
     void
     abort()
@@ -102,15 +104,17 @@ public:
             }
 
         } catch (std::bad_any_cast const& e) {
-            return std::unexpected{ExecutionError(fmt::format("{}", std::this_thread::get_id()), "Bad any cast")};
+            return std::unexpected{
+                ExecutionError(fmt::format("{}", std::this_thread::get_id()), "Bad any cast")
+            };
         }
     }
 
     /**
      * @brief Force-invoke the operation
      * @note The action is scheduled on the underlying context/strand
-     * @warning The code of the user-provided action is expected to take care of thread-safety unless this operation is
-     * scheduled through a strand
+     * @warning The code of the user-provided action is expected to take care of thread-safety
+     * unless this operation is scheduled through a strand
      */
     void
     invoke()

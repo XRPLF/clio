@@ -53,8 +53,8 @@ using tcp = boost::asio::ip::tcp;
 /**
  * @brief Represents a HTTPS connection established by a client.
  *
- * It will handle the upgrade to secure websocket, pass the ownership of the socket to the upgrade session.
- * Otherwise, it will pass control to the base class.
+ * It will handle the upgrade to secure websocket, pass the ownership of the socket to the upgrade
+ * session. Otherwise, it will pass control to the base class.
  *
  * @tparam HandlerType The type of the server handler to use
  */
@@ -159,7 +159,9 @@ public:
     doClose()
     {
         boost::beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
-        stream_.async_shutdown(boost::beast::bind_front_handler(&SslHttpSession::onShutdown, this->shared_from_this()));
+        stream_.async_shutdown(
+            boost::beast::bind_front_handler(&SslHttpSession::onShutdown, this->shared_from_this())
+        );
     }
 
     /**

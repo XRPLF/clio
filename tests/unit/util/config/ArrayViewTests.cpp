@@ -153,7 +153,9 @@ struct ArrayViewAssertTest : common::util::WithMockAssert, ArrayViewTest {};
 TEST_F(ArrayViewAssertTest, AccessArrayOutOfBounce)
 {
     // dies because higher only has 1 object (trying to access 2nd element)
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = configData.getArray("higher").objectAt(1); });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto _ = configData.getArray("higher").objectAt(1);
+    });
 }
 
 TEST_F(ArrayViewAssertTest, AccessIndexOfWrongType)

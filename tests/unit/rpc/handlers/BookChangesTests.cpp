@@ -124,7 +124,8 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaIntSequence)
 {
     EXPECT_CALL(*backend_, fetchLedgerBySequence);
     // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence(kMAX_SEQ, _))
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(R"JSON({"ledger_index": 30})JSON");
     auto const handler = AnyHandler{BookChangesHandler{backend_}};
@@ -209,11 +210,13 @@ TEST_F(RPCBookChangesHandlerTest, NormalPath)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STObject const metaObj = createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 1, 3, 3, 1);
+    ripple::STObject const metaObj =
+        createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 1, 3, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
 
-    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kMAX_SEQ, _)).WillOnce(Return(transactions));
+    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kMAX_SEQ, _))
+        .WillOnce(Return(transactions));
 
     auto const handler = AnyHandler{BookChangesHandler{backend_}};
     runSpawn([&](auto yield) {
@@ -255,11 +258,13 @@ TEST_F(RPCBookChangesHandlerTest, NormalPathWithDomain)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STObject const metaObj = createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 1, 3, 3, 1, kDOMAIN);
+    ripple::STObject const metaObj =
+        createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 1, 3, 3, 1, kDOMAIN);
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
 
-    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kMAX_SEQ, _)).WillOnce(Return(transactions));
+    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kMAX_SEQ, _))
+        .WillOnce(Return(transactions));
 
     auto const handler = AnyHandler{BookChangesHandler{backend_}};
     runSpawn([&](auto yield) {

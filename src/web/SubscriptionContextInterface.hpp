@@ -33,8 +33,8 @@ namespace web {
 
 /**
  * @brief An interface to provide connection functionality for subscriptions.
- * @note Since subscription is only allowed for websocket connection, this interface is used only for websocket
- * connections.
+ * @note Since subscription is only allowed for websocket connection, this interface is used only
+ * for websocket connections.
  */
 class SubscriptionContextInterface : public util::Taggable {
 public:

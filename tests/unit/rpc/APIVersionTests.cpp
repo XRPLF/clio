@@ -112,7 +112,8 @@ TEST_F(RPCAPIVersionTest, GetsValuesFromConfigCorrectly)
         EXPECT_EQ(ver.value(), 2u);
     }
     {
-        auto ver = configuredParser.parse(json::parse(R"JSON({"api_version": 10})JSON").as_object());
+        auto ver =
+            configuredParser.parse(json::parse(R"JSON({"api_version": 10})JSON").as_object());
         EXPECT_TRUE(ver);
         EXPECT_EQ(ver.value(), 10u);
     }
@@ -127,7 +128,8 @@ TEST_F(RPCAPIVersionTest, GetsValuesFromConfigCorrectly)
         EXPECT_EQ(ver.value(), kDEFAULT_API_VERSION);
     }
     {
-        auto ver = configuredParser.parse(json::parse(R"JSON({"api_version": 11})JSON").as_object());
+        auto ver =
+            configuredParser.parse(json::parse(R"JSON({"api_version": 11})JSON").as_object());
         EXPECT_FALSE(ver);
     }
     {

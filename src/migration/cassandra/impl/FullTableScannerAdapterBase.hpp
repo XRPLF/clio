@@ -30,9 +30,9 @@
 namespace migration::cassandra::impl {
 
 /**
- * @brief The base class for the full table scanner adapter. It is responsible for reading the rows from the full table
- * scanner and call the callback when a row is read. With this base class, each table adapter can focus on the actual
- * row data converting.
+ * @brief The base class for the full table scanner adapter. It is responsible for reading the rows
+ * from the full table scanner and call the callback when a row is read. With this base class, each
+ * table adapter can focus on the actual row data converting.
  *
  * @tparam TableDesc The table description, it has to be a TableSpec.
  */
@@ -54,12 +54,14 @@ public:
      *
      * @param backend The backend
      */
-    FullTableScannerAdapterBase(std::shared_ptr<CassandraMigrationBackend> backend) : backend_(std::move(backend))
+    FullTableScannerAdapterBase(std::shared_ptr<CassandraMigrationBackend> backend)
+        : backend_(std::move(backend))
     {
     }
 
     /**
-     * @brief Read the row in the given token range from database, this is the adapt function for the FullTableScanner.
+     * @brief Read the row in the given token range from database, this is the adapt function for
+     * the FullTableScanner.
      *
      * @param range The token range to read
      * @param yield The yield context
@@ -73,8 +75,8 @@ public:
     }
 
     /**
-     * @brief Called when a row is read. The derived class should implement this function to convert the database blob
-     * to actual data type.
+     * @brief Called when a row is read. The derived class should implement this function to convert
+     * the database blob to actual data type.
      *
      * @param row The row read
      */

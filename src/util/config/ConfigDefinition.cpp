@@ -68,7 +68,8 @@ ClioConfigDefinition::getObject(std::string_view prefix, std::optional<std::size
         if (idx.has_value() && hasPrefix && std::holds_alternative<Array>(mapVal)) {
             ASSERT(std::get<Array>(mapVal).size() > idx.value(), "Index provided is out of scope");
 
-            // we want to support getObject("array") and getObject("array.[]"), so we check if "[]" exists
+            // we want to support getObject("array") and getObject("array.[]"), so we check if "[]"
+            // exists
             if (!prefix.contains("[]"))
                 return ObjectView{prefixWithDot + "[]", idx.value(), *this};
             return ObjectView{prefix, idx.value(), *this};
@@ -88,7 +89,8 @@ ClioConfigDefinition::getArray(std::string_view prefix) const
     for (auto const& [mapKey, mapVal] : map_) {
         if (mapKey.starts_with(key)) {
             ASSERT(
-                std::holds_alternative<Array>(mapVal), "Trying to retrieve Object or ConfigValue, instead of an Array "
+                std::holds_alternative<Array>(mapVal),
+                "Trying to retrieve Object or ConfigValue, instead of an Array "
             );
             return ArrayView{key, *this};
         }
@@ -106,7 +108,9 @@ ClioConfigDefinition::contains(std::string_view key) const
 bool
 ClioConfigDefinition::hasItemsWithPrefix(std::string_view key) const
 {
-    return std::ranges::any_of(map_, [&key](auto const& pair) { return pair.first.starts_with(key); });
+    return std::ranges::any_of(map_, [&key](auto const& pair) {
+        return pair.first.starts_with(key);
+    });
 }
 
 ValueView
@@ -124,7 +128,9 @@ std::chrono::milliseconds
 ClioConfigDefinition::toMilliseconds(float value)
 {
     ASSERT(value >= 0.0f, "Floating point value of seconds must be non-negative, got: {}", value);
-    return std::chrono::milliseconds{std::lroundf(value * static_cast<float>(util::kMILLISECONDS_PER_SECOND))};
+    return std::chrono::milliseconds{
+        std::lroundf(value * static_cast<float>(util::kMILLISECONDS_PER_SECOND))
+    };
 }
 
 ValueView
@@ -166,11 +172,12 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
             arrayPrefixesToKeysMap[prefix].push_back(key);
         }
 
-        // if key doesn't exist in user config, makes sure it is marked as ".optional()" or has ".defaultValue()"" in
-        // ClioConfigDefinition above
+        // if key doesn't exist in user config, makes sure it is marked as ".optional()" or has
+        // ".defaultValue()"" in ClioConfigDefinition above
         if (!config.containsKey(key)) {
             if (std::holds_alternative<ConfigValue>(value)) {
-                if (!(std::get<ConfigValue>(value).isOptional() || std::get<ConfigValue>(value).hasValue()))
+                if (!(std::get<ConfigValue>(value).isOptional() ||
+                      std::get<ConfigValue>(value).hasValue()))
                     listOfErrors.emplace_back(key, "key is required in user Config");
             }
             continue;
@@ -180,29 +187,31 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
             "Value must be of type ConfigValue or Array"
         );
         std::visit(
-            util::OverloadSet{// handle the case where the config value is a single element.
-                              // attempt to set the value from the configuration for the specified key.
-                              [&key, &config, &listOfErrors](ConfigValue& val) {
-                                  if (auto const maybeError = val.setValue(config.getValue(key), key);
-                                      maybeError.has_value()) {
-                                      listOfErrors.emplace_back(maybeError.value());
-                                  }
-                              },
-                              // handle the case where the config value is an array.
-                              // iterate over each provided value in the array and attempt to set it for the key.
-                              [&key, &config, &listOfErrors](Array& arr) {
-                                  for (auto const& val : config.getArray(key)) {
-                                      if (val.has_value()) {
-                                          if (auto const maybeError = arr.addValue(*val, key); maybeError.has_value()) {
-                                              listOfErrors.emplace_back(*maybeError);
-                                          }
-                                      } else {
-                                          if (auto const maybeError = arr.addNull(key); maybeError.has_value()) {
-                                              listOfErrors.emplace_back(*maybeError);
-                                          }
-                                      }
-                                  }
-                              }
+            util::OverloadSet{
+                // handle the case where the config value is a single element.
+                // attempt to set the value from the configuration for the specified key.
+                [&key, &config, &listOfErrors](ConfigValue& val) {
+                    if (auto const maybeError = val.setValue(config.getValue(key), key);
+                        maybeError.has_value()) {
+                        listOfErrors.emplace_back(maybeError.value());
+                    }
+                },
+                // handle the case where the config value is an array.
+                // iterate over each provided value in the array and attempt to set it for the key.
+                [&key, &config, &listOfErrors](Array& arr) {
+                    for (auto const& val : config.getArray(key)) {
+                        if (val.has_value()) {
+                            if (auto const maybeError = arr.addValue(*val, key);
+                                maybeError.has_value()) {
+                                listOfErrors.emplace_back(*maybeError);
+                            }
+                        } else {
+                            if (auto const maybeError = arr.addNull(key); maybeError.has_value()) {
+                                listOfErrors.emplace_back(*maybeError);
+                            }
+                        }
+                    }
+                }
             },
             value
         );
@@ -212,8 +221,8 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
         return listOfErrors;
 
     // The code above couldn't detect whether some fields in an array are missing.
-    // So to fix it for each array we determine it's size and add empty values if the field is optional
-    // or generate an error.
+    // So to fix it for each array we determine it's size and add empty values if the field is
+    // optional or generate an error.
     for (auto const& [_, keys] : arrayPrefixesToKeysMap) {
         size_t maxSize = 0;
         std::ranges::for_each(keys, [&](std::string_view key) {
@@ -254,13 +263,19 @@ getClioConfig()
 {
     static ClioConfigDefinition kCLIO_CONFIG{
         {{"database.type",
-          ConfigValue{ConfigType::String}.defaultValue("cassandra").withConstraint(gValidateCassandraName)},
-         {"database.cassandra.contact_points", ConfigValue{ConfigType::String}.defaultValue("localhost")},
+          ConfigValue{ConfigType::String}
+              .defaultValue("cassandra")
+              .withConstraint(gValidateCassandraName)},
+         {"database.cassandra.contact_points",
+          ConfigValue{ConfigType::String}.defaultValue("localhost")},
          {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
-         {"database.cassandra.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort).optional()},
+         {"database.cassandra.port",
+          ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort).optional()},
          {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue("clio")},
          {"database.cassandra.replication_factor",
-          ConfigValue{ConfigType::Integer}.defaultValue(3u).withConstraint(gValidateReplicationFactor)},
+          ConfigValue{ConfigType::Integer}.defaultValue(3u).withConstraint(
+              gValidateReplicationFactor
+          )},
          {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
          {"database.cassandra.max_write_requests_outstanding",
           ConfigValue{ConfigType::Integer}.defaultValue(10'000).withConstraint(gValidateUint32)},
@@ -269,7 +284,8 @@ getClioConfig()
          {"database.cassandra.threads",
           ConfigValue{ConfigType::Integer}
               .defaultValue(
-                  static_cast<uint32_t>(std::thread::hardware_concurrency()), "The number of available CPU cores."
+                  static_cast<uint32_t>(std::thread::hardware_concurrency()),
+                  "The number of available CPU cores."
               )
               .withConstraint(gValidateUint32)},
          {"database.cassandra.core_connections_per_host",
@@ -286,53 +302,79 @@ getClioConfig()
          {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
          {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
          {"database.cassandra.provider",
-          ConfigValue{ConfigType::String}.defaultValue("cassandra").withConstraint(gValidateProvider)},
+          ConfigValue{ConfigType::String}
+              .defaultValue("cassandra")
+              .withConstraint(gValidateProvider)},
 
          {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-         {"etl_sources.[].ip", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)}},
-         {"etl_sources.[].ws_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
-         {"etl_sources.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
+         {"etl_sources.[].ip",
+          Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)}},
+         {"etl_sources.[].ws_port",
+          Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
+         {"etl_sources.[].grpc_port",
+          Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
 
          {"forwarding.cache_timeout",
-          ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(gValidatePositiveDouble)},
+          ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(
+              gValidatePositiveDouble
+          )},
          {"forwarding.request_timeout",
-          ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(gValidatePositiveDouble)},
+          ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(
+              gValidatePositiveDouble
+          )},
 
          {"rpc.cache_timeout",
-          ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(gValidatePositiveDouble)},
+          ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(
+              gValidatePositiveDouble
+          )},
 
-         {"num_markers", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNumMarkers)},
+         {"num_markers",
+          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNumMarkers)},
 
          {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}.optional()}},
          {"dos_guard.max_fetches",
           ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(gValidateUint32)},
          {"dos_guard.max_connections",
           ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)},
-         {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)},
+         {"dos_guard.max_requests",
+          ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)},
          {"dos_guard.sweep_interval",
-          ConfigValue{ConfigType::Double}.defaultValue(1.0).withConstraint(gValidatePositiveDouble)},
+          ConfigValue{ConfigType::Double}.defaultValue(1.0).withConstraint(
+              gValidatePositiveDouble
+          )},
          {"dos_guard.__ng_default_weight",
-          ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateNonNegativeUint32)},
+          ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(
+              gValidateNonNegativeUint32
+          )},
          {"dos_guard.__ng_weights.[].method",
           Array{ConfigValue{ConfigType::String}.withConstraint(gRpcNameConstraint)}},
          {"dos_guard.__ng_weights.[].weight",
           Array{ConfigValue{ConfigType::Integer}.withConstraint(gValidateNonNegativeUint32)}},
          {"dos_guard.__ng_weights.[].weight_ledger_current",
-          Array{ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNonNegativeUint32)}},
+          Array{
+              ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNonNegativeUint32)
+          }},
          {"dos_guard.__ng_weights.[].weight_ledger_validated",
-          Array{ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNonNegativeUint32)}},
+          Array{
+              ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNonNegativeUint32)
+          }},
 
          {"workers",
           ConfigValue{ConfigType::Integer}
-              .defaultValue(std::thread::hardware_concurrency(), "The number of available CPU cores.")
+              .defaultValue(
+                  std::thread::hardware_concurrency(), "The number of available CPU cores."
+              )
               .withConstraint(gValidateUint32)},
          {"server.ip", ConfigValue{ConfigType::String}.withConstraint(gValidateIp)},
          {"server.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort)},
-         {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(1000).withConstraint(gValidateUint32)},
+         {"server.max_queue_size",
+          ConfigValue{ConfigType::Integer}.defaultValue(1000).withConstraint(gValidateUint32)},
          {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
          {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
          {"server.processing_policy",
-          ConfigValue{ConfigType::String}.defaultValue("parallel").withConstraint(gValidateProcessingPolicy)},
+          ConfigValue{ConfigType::String}
+              .defaultValue("parallel")
+              .withConstraint(gValidateProcessingPolicy)},
          {"server.parallel_requests_limit",
           ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint16)},
          {"server.ws_max_sending_queue_size",
@@ -344,21 +386,29 @@ getClioConfig()
          {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
          {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
 
-         {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint16)},
+         {"io_threads",
+          ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint16)},
 
-         {"subscription_workers", ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint32)},
+         {"subscription_workers",
+          ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(gValidateUint32)},
 
          {"graceful_period",
-          ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(gValidatePositiveDouble)},
+          ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(
+              gValidatePositiveDouble
+          )},
 
-         {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32).withConstraint(gValidateUint16)},
-         {"cache.num_markers", ConfigValue{ConfigType::Integer}.defaultValue(48).withConstraint(gValidateUint16)},
+         {"cache.num_diffs",
+          ConfigValue{ConfigType::Integer}.defaultValue(32).withConstraint(gValidateUint16)},
+         {"cache.num_markers",
+          ConfigValue{ConfigType::Integer}.defaultValue(48).withConstraint(gValidateUint16)},
          {"cache.num_cursors_from_diff",
           ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateNumCursors)},
          {"cache.num_cursors_from_account",
           ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateNumCursors)},
-         {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(gValidateUint16)},
-         {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(gValidateLoadMode)},
+         {"cache.page_fetch_size",
+          ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(gValidateUint16)},
+         {"cache.load",
+          ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(gValidateLoadMode)},
          {"cache.file.path", ConfigValue{ConfigType::String}.optional()},
          {"cache.file.max_sequence_age", ConfigValue{ConfigType::Integer}.defaultValue(5000)},
          {"cache.file.async_save", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
@@ -368,9 +418,13 @@ getClioConfig()
          {"log.channels.[].level",
           Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateLogLevelName)}},
 
-         {"log.level", ConfigValue{ConfigType::String}.defaultValue("info").withConstraint(gValidateLogLevelName)},
+         {"log.level",
+          ConfigValue{ConfigType::String}.defaultValue("info").withConstraint(
+              gValidateLogLevelName
+          )},
 
-         {"log.format", ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
+         {"log.format",
+          ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
 
          {"log.is_async", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
 
@@ -378,34 +432,47 @@ getClioConfig()
 
          {"log.directory", ConfigValue{ConfigType::String}.optional()},
 
-         {"log.rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateUint32)},
+         {"log.rotation_size",
+          ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateUint32)},
 
-         {"log.directory_max_files", ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(gValidateUint32)},
+         {"log.directory_max_files",
+          ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(gValidateUint32)},
 
-         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("none").withConstraint(gValidateLogTag)},
+         {"log.tag_style",
+          ConfigValue{ConfigType::String}.defaultValue("none").withConstraint(gValidateLogTag)},
 
-         {"extractor_threads", ConfigValue{ConfigType::Integer}.defaultValue(1u).withConstraint(gValidateUint32)},
+         {"extractor_threads",
+          ConfigValue{ConfigType::Integer}.defaultValue(1u).withConstraint(gValidateUint32)},
 
          {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
-         {"start_sequence", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
+         {"start_sequence",
+          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
 
-         {"finish_sequence", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
+         {"finish_sequence",
+          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateUint32)},
 
          {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
 
          {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
 
          {"api_version.default",
-          ConfigValue{ConfigType::Integer}.defaultValue(rpc::kAPI_VERSION_DEFAULT).withConstraint(gValidateApiVersion)},
+          ConfigValue{ConfigType::Integer}
+              .defaultValue(rpc::kAPI_VERSION_DEFAULT)
+              .withConstraint(gValidateApiVersion)},
          {"api_version.min",
-          ConfigValue{ConfigType::Integer}.defaultValue(rpc::kAPI_VERSION_MIN).withConstraint(gValidateApiVersion)},
+          ConfigValue{ConfigType::Integer}
+              .defaultValue(rpc::kAPI_VERSION_MIN)
+              .withConstraint(gValidateApiVersion)},
          {"api_version.max",
-          ConfigValue{ConfigType::Integer}.defaultValue(rpc::kAPI_VERSION_MAX).withConstraint(gValidateApiVersion)},
+          ConfigValue{ConfigType::Integer}
+              .defaultValue(rpc::kAPI_VERSION_MAX)
+              .withConstraint(gValidateApiVersion)},
 
          {"migration.full_scan_threads",
           ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint32)},
-         {"migration.full_scan_jobs", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint32)},
+         {"migration.full_scan_jobs",
+          ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint32)},
          {"migration.cursors_per_job",
           ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(gValidateUint32)}},
     };

@@ -46,7 +46,8 @@
 namespace rpc {
 
 /**
- * @brief The book_offers method retrieves a list of Offers between two currencies, also known as an order book.
+ * @brief The book_offers method retrieves a list of Offers between two currencies, also known as an
+ * order book.
  *
  * For more details see: https://xrpl.org/book_offers.html
  */
@@ -72,8 +73,8 @@ public:
     /**
      * @brief A struct to hold the input data for the command
      *
-     * @note The taker is not really used in both Clio and `rippled`, both of them return all the offers regardless of
-     * the funding status
+     * @note The taker is not really used in both Clio and `rippled`, both of them return all the
+     * offers regardless of the funding status
      */
     struct Input {
         std::optional<std::string> ledgerHash;
@@ -121,11 +122,13 @@ public:
                  {JS(currency),
                   validation::Required{},
                   meta::WithCustomError{
-                      validation::CustomValidators::currencyValidator, Status(RippledError::rpcDST_AMT_MALFORMED)
+                      validation::CustomValidators::currencyValidator,
+                      Status(RippledError::rpcDST_AMT_MALFORMED)
                   }},
                  {JS(issuer),
                   meta::WithCustomError{
-                      validation::CustomValidators::issuerValidator, Status(RippledError::rpcDST_ISR_MALFORMED)
+                      validation::CustomValidators::issuerValidator,
+                      Status(RippledError::rpcDST_ISR_MALFORMED)
                   }}
              }},
             {JS(taker_pays),
@@ -135,11 +138,13 @@ public:
                  {JS(currency),
                   validation::Required{},
                   meta::WithCustomError{
-                      validation::CustomValidators::currencyValidator, Status(RippledError::rpcSRC_CUR_MALFORMED)
+                      validation::CustomValidators::currencyValidator,
+                      Status(RippledError::rpcSRC_CUR_MALFORMED)
                   }},
                  {JS(issuer),
                   meta::WithCustomError{
-                      validation::CustomValidators::issuerValidator, Status(RippledError::rpcSRC_ISR_MALFORMED)
+                      validation::CustomValidators::issuerValidator,
+                      Status(RippledError::rpcSRC_ISR_MALFORMED)
                   }}
              }},
             // return INVALID_PARAMS if account format is wrong for "taker"
@@ -150,7 +155,8 @@ public:
              }},
             {JS(domain),
              meta::WithCustomError{
-                 validation::Type<std::string>{}, Status(RippledError::rpcDOMAIN_MALFORMED, "Unable to parse domain.")
+                 validation::Type<std::string>{},
+                 Status(RippledError::rpcDOMAIN_MALFORMED, "Unable to parse domain.")
              },
              meta::WithCustomError{
                  validation::CustomValidators::uint256HexStringValidator,

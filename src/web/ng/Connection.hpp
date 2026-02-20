@@ -116,9 +116,11 @@ protected:
 public:
     /**
      * @brief The default timeout for send, receive, and close operations.
-     * @note This value should be higher than forwarding timeout to not disconnect clients if rippled is slow.
+     * @note This value should be higher than forwarding timeout to not disconnect clients if
+     * rippled is slow.
      */
-    static constexpr std::chrono::steady_clock::duration kDEFAULT_TIMEOUT = std::chrono::seconds{11};
+    static constexpr std::chrono::steady_clock::duration kDEFAULT_TIMEOUT =
+        std::chrono::seconds{11};
 
     /**
      * @brief Construct a new Connection object
@@ -127,11 +129,15 @@ public:
      * @param buffer The buffer to use for reading and writing.
      * @param tagDecoratorFactory The factory for creating tag decorators.
      */
-    Connection(std::string ip, boost::beast::flat_buffer buffer, util::TagDecoratorFactory const& tagDecoratorFactory);
+    Connection(
+        std::string ip,
+        boost::beast::flat_buffer buffer,
+        util::TagDecoratorFactory const& tagDecoratorFactory
+    );
 
     /**
-     * @brief Get the timeout for send, receive, and close operations. For WebSocket connections, this is the ping
-     * interval.
+     * @brief Get the timeout for send, receive, and close operations. For WebSocket connections,
+     * this is the ping interval.
      *
      * @param newTimeout The new timeout to set.
      */

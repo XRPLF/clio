@@ -42,7 +42,10 @@ MetricBuilder::operator()(
     std::vector<std::int64_t> const& buckets
 )
 {
-    ASSERT(type != MetricType::HistogramDouble, "Wrong metric type. Probably wrong bucket type was used.");
+    ASSERT(
+        type != MetricType::HistogramDouble,
+        "Wrong metric type. Probably wrong bucket type was used."
+    );
     if (type == MetricType::HistogramInt) {
         return makeHistogram(std::move(name), std::move(labelsString), type, buckets);
     }
@@ -99,7 +102,9 @@ MetricBuilder::makeHistogram(
     switch (type) {
         case MetricType::HistogramInt: {
             if constexpr (std::same_as<ValueType, std::int64_t>) {
-                return std::make_unique<HistogramInt>(std::move(name), std::move(labelsString), buckets);
+                return std::make_unique<HistogramInt>(
+                    std::move(name), std::move(labelsString), buckets
+                );
             } else {
                 ASSERT(false, "Wrong bucket type for HISTOGRAM_INT.)");
                 break;
@@ -107,7 +112,9 @@ MetricBuilder::makeHistogram(
         }
         case MetricType::HistogramDouble:
             if constexpr (std::same_as<ValueType, double>) {
-                return std::make_unique<HistogramDouble>(std::move(name), std::move(labelsString), buckets);
+                return std::make_unique<HistogramDouble>(
+                    std::move(name), std::move(labelsString), buckets
+                );
             } else {
                 ASSERT(false, "Wrong bucket type for HISTOGRAM_DOUBLE.");
                 break;

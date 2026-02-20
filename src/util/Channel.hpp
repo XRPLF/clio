@@ -48,26 +48,33 @@ struct ChannelInstantiated;
  * @brief Specifies the producer concurrency model for a Channel.
  */
 enum class ProducerType {
-    Single, /**< Only one Sender can exist (non-copyable). Uses direct Guard ownership for zero overhead. */
-    Multi   /**< Multiple Senders can exist (copyable). Uses shared_ptr<Guard> for shared ownership. */
+    Single, /**< Only one Sender can exist (non-copyable). Uses direct Guard ownership for zero
+               overhead. */
+    Multi   /**< Multiple Senders can exist (copyable). Uses shared_ptr<Guard> for shared ownership.
+             */
 };
 
 /**
  * @brief Specifies the consumer concurrency model for a Channel.
  */
 enum class ConsumerType {
-    Single, /**< Only one Receiver can exist (non-copyable). Uses direct Guard ownership for zero overhead. */
-    Multi   /**< Multiple Receivers can exist (copyable). Uses shared_ptr<Guard> for shared ownership. */
+    Single, /**< Only one Receiver can exist (non-copyable). Uses direct Guard ownership for zero
+               overhead. */
+    Multi /**< Multiple Receivers can exist (copyable). Uses shared_ptr<Guard> for shared ownership.
+           */
 };
 
 /**
- * @brief Represents a go-like channel, a multi-producer (Sender) multi-consumer (Receiver) thread-safe data pipe.
- * @note Use INSTANTIATE_CHANNEL_FOR_CLANG macro when using this class. See docs at the bottom of the file for more
- * details.
+ * @brief Represents a go-like channel, a multi-producer (Sender) multi-consumer (Receiver)
+ * thread-safe data pipe.
+ * @note Use INSTANTIATE_CHANNEL_FOR_CLANG macro when using this class. See docs at the bottom of
+ * the file for more details.
  *
  * @tparam T The type of data the channel transfers
- * @tparam P ProducerType::Multi (default) for multi-producer or ProducerType::Single for single-producer
- * @tparam C ConsumerType::Multi (default) for multi-consumer or ConsumerType::Single for single-consumer
+ * @tparam P ProducerType::Multi (default) for multi-producer or ProducerType::Single for
+ * single-producer
+ * @tparam C ConsumerType::Multi (default) for multi-consumer or ConsumerType::Single for
+ * single-consumer
  */
 template <typename T, ProducerType P = ProducerType::Multi, ConsumerType C = ConsumerType::Multi>
 class Channel {
@@ -76,7 +83,8 @@ class Channel {
 
 private:
     class ControlBlock {
-        using InternalChannelType = boost::asio::experimental::concurrent_channel<void(boost::system::error_code, T)>;
+        using InternalChannelType =
+            boost::asio::experimental::concurrent_channel<void(boost::system::error_code, T)>;
         boost::asio::any_io_executor executor_;
         InternalChannelType ch_;
 
@@ -122,7 +130,8 @@ private:
     };
 
     /**
-     * @brief This is used to close the channel once either all Senders or all Receivers are destroyed
+     * @brief This is used to close the channel once either all Senders or all Receivers are
+     * destroyed
      */
     struct Guard {
         std::shared_ptr<ControlBlock> shared;
@@ -139,7 +148,8 @@ public:
      *
      * Sender is movable. For multi-producer channels, Sender is also copyable.
      * The channel remains open as long as at least one Sender exists.
-     * When all Sender instances are destroyed, the channel is closed and receivers will receive std::nullopt.
+     * When all Sender instances are destroyed, the channel is closed and receivers will receive
+     * std::nullopt.
      */
     class Sender {
         std::shared_ptr<ControlBlock> shared_;
@@ -215,7 +225,8 @@ public:
          *
          * @tparam D The type of data to send (must be convertible to T)
          * @param data The data to send
-         * @param fn Callback function invoked with true if successful, false if the channel is closed
+         * @param fn Callback function invoked with true if successful, false if the channel is
+         * closed
          */
         template <typename D>
         void
@@ -226,8 +237,10 @@ public:
             shared_->channel().async_send(
                 ecIn,
                 std::forward<D>(data),
-                [fn = std::forward<decltype(fn)>(fn), shared = shared_](boost::system::error_code ec) mutable {
-                    // Workaround: asio channels bug returns ec=0 on cancel, check isClosed() instead
+                [fn = std::forward<decltype(fn)>(fn),
+                 shared = shared_](boost::system::error_code ec) mutable {
+                    // Workaround: asio channels bug returns ec=0 on cancel, check isClosed()
+                    // instead
                     if (not ec and shared->isClosed()) {
                         fn(false);
                         return;
@@ -260,7 +273,8 @@ public:
      *
      * Receiver is movable. For multi-consumer channels, Receiver is also copyable.
      * Multiple receivers can consume from the same multi-consumer channel concurrently.
-     * When all Receiver instances are destroyed, the channel is closed and senders will fail to send.
+     * When all Receiver instances are destroyed, the channel is closed and senders will fail to
+     * send.
      */
     class Receiver {
         std::shared_ptr<ControlBlock> shared_;
@@ -306,7 +320,8 @@ public:
         /**
          * @brief Attempts to receive data from the channel without blocking.
          *
-         * @return std::optional containing the received value, or std::nullopt if the channel is empty or closed
+         * @return std::optional containing the received value, or std::nullopt if the channel is
+         * empty or closed
          */
         std::optional<T>
         tryReceive()
@@ -326,7 +341,8 @@ public:
          * Blocks the coroutine until data is available or the channel is closed.
          *
          * @param yield The Boost.Asio yield context for coroutine suspension
-         * @return std::optional containing the received value, or std::nullopt if the channel is closed
+         * @return std::optional containing the received value, or std::nullopt if the channel is
+         * closed
          */
         [[nodiscard]] std::optional<T>
         asyncReceive(boost::asio::yield_context yield)
@@ -345,21 +361,22 @@ public:
          *
          * The callback is invoked when data is available or the channel is closed.
          *
-         * @param fn Callback function invoked with std::optional containing the value, or std::nullopt if closed
+         * @param fn Callback function invoked with std::optional containing the value, or
+         * std::nullopt if closed
          */
         void
         asyncReceive(std::invocable<std::optional<std::remove_cvref_t<T>>> auto&& fn)
         {
-            shared_->channel().async_receive(
-                [fn = std::forward<decltype(fn)>(fn)](boost::system::error_code ec, T&& value) mutable {
-                    if (ec) {
-                        fn(std::optional<T>(std::nullopt));
-                        return;
-                    }
-
-                    fn(std::make_optional<T>(std::move(value)));
+            shared_->channel().async_receive([fn = std::forward<decltype(fn)>(fn)](
+                                                 boost::system::error_code ec, T&& value
+                                             ) mutable {
+                if (ec) {
+                    fn(std::optional<T>(std::nullopt));
+                    return;
                 }
-            );
+
+                fn(std::make_optional<T>(std::move(value)));
+            });
         }
 
         /**
@@ -392,7 +409,8 @@ public:
             "to one .cpp file. See documentation at the bottom of Channel.hpp for details."
         );
 #endif
-        auto shared = std::make_shared<ControlBlock>(std::forward<decltype(context)>(context), capacity);
+        auto shared =
+            std::make_shared<ControlBlock>(std::forward<decltype(context)>(context), capacity);
         auto sender = Sender{shared};
         auto receiver = Receiver{std::move(shared)};
 
@@ -442,14 +460,16 @@ template <typename T>
 struct ChannelInstantiated : std::false_type {};
 }  // namespace util::detail
 
-#define INSTANTIATE_CHANNEL_FOR_CLANG(T)                                                                       \
-    /* NOLINTNEXTLINE(cppcoreguidelines-virtual-class-destructor) */                                           \
-    template class boost::asio::detail::cancellation_handler<                                                  \
-        boost::asio::experimental::detail::channel_service<boost::asio::detail::posix_mutex>::                 \
-            op_cancellation<boost::asio::experimental::channel_traits<>, void(boost::system::error_code, T)>>; \
-    namespace util::detail {                                                                                   \
-    template <>                                                                                                \
-    struct ChannelInstantiated<T> : std::true_type {};                                                         \
+#define INSTANTIATE_CHANNEL_FOR_CLANG(T)                                                       \
+    /* NOLINTNEXTLINE(cppcoreguidelines-virtual-class-destructor) */                           \
+    template class boost::asio::detail::cancellation_handler<                                  \
+        boost::asio::experimental::detail::channel_service<boost::asio::detail::posix_mutex>:: \
+            op_cancellation<                                                                   \
+                boost::asio::experimental::channel_traits<>,                                   \
+                void(boost::system::error_code, T)>>;                                          \
+    namespace util::detail {                                                                   \
+    template <>                                                                                \
+    struct ChannelInstantiated<T> : std::true_type {};                                         \
     }
 
 #else

@@ -41,8 +41,9 @@ class SubscriptionContext : public SubscriptionContextInterface {
     boost::signals2::signal<void(SubscriptionContextInterface*)> onDisconnect_;
     /**
      * @brief The API version of the web stream client.
-     * This is used to track the api version of this connection, which mainly is used by subscription. It is different
-     * from the api version in Context, which is only used for the current request.
+     * This is used to track the api version of this connection, which mainly is used by
+     * subscription. It is different from the api version in Context, which is only used for the
+     * current request.
      */
     std::atomic_uint32_t apiSubVersion_ = 0;
 
@@ -53,7 +54,10 @@ public:
      * @param factory The tag decorator factory to use to init taggable.
      * @param connection The connection for which the context is created.
      */
-    SubscriptionContext(util::TagDecoratorFactory const& factory, std::shared_ptr<ConnectionBase> connection);
+    SubscriptionContext(
+        util::TagDecoratorFactory const& factory,
+        std::shared_ptr<ConnectionBase> connection
+    );
 
     /**
      * @brief Destroy the Subscription Context object

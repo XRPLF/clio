@@ -77,7 +77,8 @@ public:
      * @brief Sets the value current ConfigValue given by the User's defined value
      *
      * @param value The value to set
-     * @param key The Config key associated with the value. Optional to include; Used for debugging message to user.
+     * @param key The Config key associated with the value. Optional to include; Used for debugging
+     * message to user.
      * @return optional Error if user tries to set a value of wrong type or not within a constraint
      */
     [[nodiscard]] std::optional<Error>
@@ -92,7 +93,8 @@ public:
         if (cons_.has_value()) {
             auto constraintCheck = cons_->get().checkConstraint(value);
             if (constraintCheck.has_value()) {
-                constraintCheck->error = fmt::format("{} {}", key.value_or("Unknown_key"), constraintCheck->error);
+                constraintCheck->error =
+                    fmt::format("{} {}", key.value_or("Unknown_key"), constraintCheck->error);
                 return constraintCheck;
             }
         }
@@ -161,7 +163,8 @@ public:
     }
 
     /**
-     * @brief Sets the config value as optional, meaning the user doesn't have to provide the value in their config
+     * @brief Sets the config value as optional, meaning the user doesn't have to provide the value
+     * in their config
      *
      * @return Reference to this ConfigValue
      */

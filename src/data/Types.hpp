@@ -81,8 +81,16 @@ struct TransactionAndMetadata {
      * @param ledgerSequence The ledger sequence
      * @param date The date
      */
-    TransactionAndMetadata(Blob transaction, Blob metadata, std::uint32_t ledgerSequence, std::uint32_t date)
-        : transaction{std::move(transaction)}, metadata{std::move(metadata)}, ledgerSequence{ledgerSequence}, date{date}
+    TransactionAndMetadata(
+        Blob transaction,
+        Blob metadata,
+        std::uint32_t ledgerSequence,
+        std::uint32_t date
+    )
+        : transaction{std::move(transaction)}
+        , metadata{std::move(metadata)}
+        , ledgerSequence{ledgerSequence}
+        , date{date}
     {
     }
 
@@ -192,7 +200,11 @@ struct NFT {
         ripple::AccountID const& owner,
         Blob uri,
         bool isBurned)
-        : tokenID{tokenID}, ledgerSequence{ledgerSequence}, owner{owner}, uri{std::move(uri)}, isBurned{isBurned}
+        : tokenID{tokenID}
+        , ledgerSequence{ledgerSequence}
+        , owner{owner}
+        , uri{std::move(uri)}
+        , isBurned{isBurned}
     {
     }
 
@@ -204,7 +216,10 @@ struct NFT {
      * @param owner The owner
      * @param isBurned Whether the token is burned
      */
-    NFT(ripple::uint256 const& tokenID, std::uint32_t ledgerSequence, ripple::AccountID const& owner, bool isBurned)
+    NFT(ripple::uint256 const& tokenID,
+        std::uint32_t ledgerSequence,
+        ripple::AccountID const& owner,
+        bool isBurned)
         : NFT(tokenID, ledgerSequence, owner, {}, isBurned)
     {
     }
@@ -212,8 +227,8 @@ struct NFT {
     /**
      * @brief Check if the NFT is the same as another
      *
-     * Clearly two tokens are the same if they have the same ID, but this struct stores the state of a given
-     * token at a given ledger sequence, so we also need to compare with ledgerSequence.
+     * Clearly two tokens are the same if they have the same ID, but this struct stores the state of
+     * a given token at a given ledger sequence, so we also need to compare with ledgerSequence.
      *
      * @param other The other NFT
      * @return true if they are the same; false otherwise
@@ -293,7 +308,8 @@ struct AmendmentKey {
      * @brief Construct a new AmendmentKey
      * @param val Anything convertible to a string
      */
-    AmendmentKey(std::convertible_to<std::string> auto&& val) : name{std::forward<decltype(val)>(val)}
+    AmendmentKey(std::convertible_to<std::string> auto&& val)
+        : name{std::forward<decltype(val)>(val)}
     {
     }
 
@@ -315,8 +331,14 @@ struct AmendmentKey {
     operator<=>(AmendmentKey const& other) const = default;
 };
 
-constexpr ripple::uint256 kFIRST_KEY{"0000000000000000000000000000000000000000000000000000000000000000"};
-constexpr ripple::uint256 kLAST_KEY{"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"};
-constexpr ripple::uint256 kHI192{"0000000000000000000000000000000000000000000000001111111111111111"};
+constexpr ripple::uint256 kFIRST_KEY{
+    "0000000000000000000000000000000000000000000000000000000000000000"
+};
+constexpr ripple::uint256 kLAST_KEY{
+    "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+};
+constexpr ripple::uint256 kHI192{
+    "0000000000000000000000000000000000000000000000001111111111111111"
+};
 
 }  // namespace data

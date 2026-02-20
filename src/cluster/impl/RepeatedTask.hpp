@@ -92,7 +92,8 @@ public:
     void
     stop()
     {
-        if (auto expected = State::Running; not state_.compare_exchange_strong(expected, State::Stopped))
+        if (auto expected = State::Running;
+            not state_.compare_exchange_strong(expected, State::Stopped))
             return;  // Already stopped or not started
 
         std::binary_semaphore cancelSemaphore{0};

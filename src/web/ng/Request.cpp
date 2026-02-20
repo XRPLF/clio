@@ -49,7 +49,8 @@ getHeaderValue(HeadersType const& headers, HeaderNameType const& headerName)
 
 }  // namespace
 
-Request::Request(boost::beast::http::request<boost::beast::http::string_body> request) : data_{std::move(request)}
+Request::Request(boost::beast::http::request<boost::beast::http::string_body> request)
+    : data_{std::move(request)}
 {
 }
 
@@ -80,7 +81,8 @@ Request::isHttp() const
     return std::holds_alternative<HttpRequest>(data_);
 }
 
-std::optional<std::reference_wrapper<boost::beast::http::request<boost::beast::http::string_body> const>>
+std::optional<
+    std::reference_wrapper<boost::beast::http::request<boost::beast::http::string_body> const>>
 Request::asHttpRequest() const
 {
     if (not isHttp())

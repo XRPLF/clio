@@ -92,7 +92,11 @@ public:
      * @return A vector of bools representing enabled state for each of the given keys
      */
     [[nodiscard]] virtual std::vector<bool>
-    isEnabled(boost::asio::yield_context yield, std::vector<AmendmentKey> const& keys, uint32_t seq) const = 0;
+    isEnabled(
+        boost::asio::yield_context yield,
+        std::vector<AmendmentKey> const& keys,
+        uint32_t seq
+    ) const = 0;
 
     /**
      * @brief Get an amendment

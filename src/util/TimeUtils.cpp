@@ -51,7 +51,9 @@ systemTpToUtcStr(std::chrono::system_clock::time_point const& tp, std::string co
 [[nodiscard]] std::chrono::system_clock::time_point
 systemTpFromLedgerCloseTime(ripple::NetClock::time_point closeTime)
 {
-    return std::chrono::system_clock::time_point{closeTime.time_since_epoch() + ripple::epoch_offset};
+    return std::chrono::system_clock::time_point{
+        closeTime.time_since_epoch() + ripple::epoch_offset
+    };
 }
 
 }  // namespace util

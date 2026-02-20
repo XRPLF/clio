@@ -47,7 +47,8 @@ class Monitor : public MonitorInterface {
 
     std::atomic_uint32_t nextSequence_;
     std::optional<util::async::AnyOperation<void>> repeatedTask_;
-    std::optional<boost::signals2::scoped_connection> subscription_;  // network validated ledgers subscription
+    std::optional<boost::signals2::scoped_connection>
+        subscription_;  // network validated ledgers subscription
 
     NewSequenceSignalType notificationChannel_;
     DbStalledSignalType dbStalledChannel_;

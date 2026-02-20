@@ -50,7 +50,8 @@ bool
 checkExpired(ripple::SLE const& sleCred, ripple::LedgerHeader const& ledger);
 
 /**
- * @brief Creates authentication credential field (which is a set of pairs of AccountID and Credential ID)
+ * @brief Creates authentication credential field (which is a set of pairs of AccountID and
+ * Credential ID)
  *
  * @param in The array of Credential objects to check
  * @return Auth Credential array

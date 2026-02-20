@@ -87,14 +87,16 @@ TaskManager::run(std::size_t numExtractors)
 util::async::AnyOperation<void>
 TaskManager::spawnExtractor(TaskQueue& queue)
 {
-    // TODO https://github.com/XRPLF/clio/issues/2838: the approach should be changed to a reactive one instead
+    // TODO https://github.com/XRPLF/clio/issues/2838: the approach should be changed to a reactive
+    // one instead
     static constexpr auto kDELAY_BETWEEN_ATTEMPTS = std::chrono::milliseconds{10u};
     static constexpr auto kDELAY_BETWEEN_ENQUEUE_ATTEMPTS = std::chrono::milliseconds{1u};
 
     return ctx_.execute([this, &queue](auto stopRequested) {
         while (not stopRequested) {
             if (auto task = schedulers_->next(); task.has_value()) {
-                if (auto maybeBatch = extractor_.get().extractLedgerWithDiff(task->seq); maybeBatch.has_value()) {
+                if (auto maybeBatch = extractor_.get().extractLedgerWithDiff(task->seq);
+                    maybeBatch.has_value()) {
                     LOG(log_.debug()) << "Adding data after extracting diff";
                     while (not queue.enqueue(*maybeBatch)) {
                         // TODO (https://github.com/XRPLF/clio/issues/1852)
@@ -119,10 +121,12 @@ TaskManager::spawnLoader(TaskQueue& queue)
 {
     return ctx_.execute([this, &queue](auto stopRequested) {
         while (not stopRequested) {
-            // TODO (https://github.com/XRPLF/clio/issues/66): does not tell the loader whether it's out of order or not
+            // TODO (https://github.com/XRPLF/clio/issues/66): does not tell the loader whether it's
+            // out of order or not
             if (auto data = queue.dequeue(); data.has_value()) {
-                auto [expectedSuccess, nanos] =
-                    util::timed<std::chrono::nanoseconds>([&] { return loader_.get().load(*data); });
+                auto [expectedSuccess, nanos] = util::timed<std::chrono::nanoseconds>([&] {
+                    return loader_.get().load(*data);
+                });
 
                 auto const shouldExitOnError = [&] {
                     if (expectedSuccess.has_value())
@@ -149,16 +153,18 @@ TaskManager::spawnLoader(TaskQueue& queue)
                 auto const txnCount = data->transactions.size();
                 auto const objCount = data->objects.size();
 
-                LOG(log_.info()) << "Wrote ledger " << data->seq << " with header: " << util::toString(data->header)
-                                 << ". txns[" << txnCount << "]; objs[" << objCount << "]; in " << seconds
+                LOG(log_.info()) << "Wrote ledger " << data->seq
+                                 << " with header: " << util::toString(data->header) << ". txns["
+                                 << txnCount << "]; objs[" << objCount << "]; in " << seconds
                                  << " seconds;"
-                                 << " tps[" << txnCount / seconds << "], ops[" << objCount / seconds << "]";
+                                 << " tps[" << txnCount / seconds << "], ops[" << objCount / seconds
+                                 << "]";
 
                 monitor_.get().notifySequenceLoaded(data->seq);
             } else {
-                // TODO (https://github.com/XRPLF/clio/issues/1852) this is probably better done with a timeout (on
-                // coroutine) so that the thread itself is not blocked. for now this implies that the context
-                // (io_threads) needs at least 2 threads
+                // TODO (https://github.com/XRPLF/clio/issues/1852) this is probably better done
+                // with a timeout (on coroutine) so that the thread itself is not blocked. for now
+                // this implies that the context (io_threads) needs at least 2 threads
                 queue.awaitTask();
             }
         }

@@ -51,7 +51,9 @@ TEST_F(NetworkValidatedLedgersTests, WaitUntilValidatedByNetworkWithoutTimeout)
 TEST_F(NetworkValidatedLedgersTests, WaitUntilValidatedByNetworkWithTimeout)
 {
     static constexpr auto kTIMEOUT_MILLIS = 10u;
-    auto awaitable = ctx_.execute([this] { return ledgers_->waitUntilValidatedByNetwork(123u, kTIMEOUT_MILLIS); });
+    auto awaitable = ctx_.execute([this] {
+        return ledgers_->waitUntilValidatedByNetwork(123u, kTIMEOUT_MILLIS);
+    });
 
     ledgers_->push(122u);
 

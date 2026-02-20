@@ -102,13 +102,14 @@ struct Status {
      * @param code The error code
      * @param extraInfo The extra info
      */
-    Status(CombinedError code, boost::json::object&& extraInfo) : code(code), extraInfo(std::move(extraInfo)) {};
+    Status(CombinedError code, boost::json::object&& extraInfo)
+        : code(code), extraInfo(std::move(extraInfo)) {};
 
     /**
      * @brief Construct a new Status object with a custom message
      *
-     * @note HACK. Some rippled handlers explicitly specify errors. This means that we have to be able to duplicate this
-     * functionality.
+     * @note HACK. Some rippled handlers explicitly specify errors. This means that we have to be
+     * able to duplicate this functionality.
      *
      * @param message The message
      */

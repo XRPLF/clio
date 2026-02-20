@@ -65,8 +65,13 @@ SignalsHandler* SignalsHandlerStatic::installedHandler = nullptr;
 
 }  // namespace impl
 
-SignalsHandler::SignalsHandler(config::ClioConfigDefinition const& config, std::function<void()> forceExitHandler)
-    : gracefulPeriod_(util::config::ClioConfigDefinition::toMilliseconds(config.get<float>("graceful_period")))
+SignalsHandler::SignalsHandler(
+    config::ClioConfigDefinition const& config,
+    std::function<void()> forceExitHandler
+)
+    : gracefulPeriod_(
+          util::config::ClioConfigDefinition::toMilliseconds(config.get<float>("graceful_period"))
+      )
     , forceExitHandler_(std::move(forceExitHandler))
 {
     impl::SignalsHandlerStatic::registerHandler(*this);
@@ -84,7 +89,8 @@ SignalsHandler::~SignalsHandler()
     if (workerThread_.joinable())
         workerThread_.join();
 
-    impl::SignalsHandlerStatic::resetHandler();  // This is needed mostly for tests to reset static state
+    impl::SignalsHandlerStatic::resetHandler();  // This is needed mostly for tests to reset static
+                                                 // state
 }
 
 void
@@ -114,7 +120,9 @@ SignalsHandler::runStateMachine()
             case State::WaitingForSignal: {
                 {
                     std::unique_lock<std::mutex> lock(mutex_);
-                    cv_.wait(lock, [this]() { return signalReceived_ or state_ == State::NormalExit; });
+                    cv_.wait(lock, [this]() {
+                        return signalReceived_ or state_ == State::NormalExit;
+                    });
                 }
 
                 if (state_ == State::NormalExit)
@@ -123,7 +131,8 @@ SignalsHandler::runStateMachine()
                 LOG(
                     LogService::info()
                 ) << "Got stop signal. Stopping Clio. Graceful period is "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(gracefulPeriod_).count() << " milliseconds.";
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(gracefulPeriod_).count()
+                  << " milliseconds.";
 
                 state_ = State::GracefulShutdown;
                 signalReceived_ = false;

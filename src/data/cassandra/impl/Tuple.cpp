@@ -34,7 +34,8 @@ namespace data::cassandra::impl {
 {
 }
 
-/* implicit */ TupleIterator::TupleIterator(CassIterator* ptr) : ManagedObject{ptr, kTUPLE_ITERATOR_DELETER}
+/* implicit */ TupleIterator::TupleIterator(CassIterator* ptr)
+    : ManagedObject{ptr, kTUPLE_ITERATOR_DELETER}
 {
 }
 

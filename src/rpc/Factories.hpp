@@ -36,10 +36,11 @@
 
 /*
  * This file contains various classes necessary for executing RPC handlers.
- * Context gives the handlers access to various other parts of the application Status is used to report errors.
- * And lastly, there are various functions for making Contexts, Statuses and serializing Status to JSON.
- * This file is meant to contain any class or function that code outside of the rpc folder needs to use.
- * For helper functions or classes used within the rpc folder, use RPCHelpers.h.
+ * Context gives the handlers access to various other parts of the application Status is used to
+ * report errors. And lastly, there are various functions for making Contexts, Statuses and
+ * serializing Status to JSON. This file is meant to contain any class or function that code outside
+ * of the rpc folder needs to use. For helper functions or classes used within the rpc folder, use
+ * RPCHelpers.h.
  */
 namespace rpc {
 

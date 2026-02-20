@@ -46,7 +46,8 @@ namespace rpc {
 BookOffersHandler::Result
 BookOffersHandler::process(Input const& input, Context const& ctx) const
 {
-    auto bookMaybe = parseBook(input.paysCurrency, input.paysID, input.getsCurrency, input.getsID, input.domain);
+    auto bookMaybe =
+        parseBook(input.paysCurrency, input.paysID, input.getsCurrency, input.getsID, input.domain);
     if (!bookMaybe.has_value())
         return Error{bookMaybe.error()};
 
@@ -66,7 +67,8 @@ BookOffersHandler::process(Input const& input, Context const& ctx) const
     auto const bookKey = getBookBase(book);
 
     // TODO: Add performance metrics if needed in future
-    auto [offers, _] = sharedPtrBackend_->fetchBookOffers(bookKey, lgrInfo.seq, input.limit, ctx.yield);
+    auto [offers, _] =
+        sharedPtrBackend_->fetchBookOffers(bookKey, lgrInfo.seq, input.limit, ctx.yield);
 
     auto output = BookOffersHandler::Output{};
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
@@ -85,7 +87,11 @@ BookOffersHandler::process(Input const& input, Context const& ctx) const
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookOffersHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    BookOffersHandler::Output const& output
+)
 {
     jv = boost::json::object{
         {JS(ledger_hash), output.ledgerHash},
@@ -101,21 +107,25 @@ tag_invoke(boost::json::value_to_tag<BookOffersHandler::Input>, boost::json::val
     auto const& jsonObject = jv.as_object();
 
     ripple::to_currency(
-        input.getsCurrency, boost::json::value_to<std::string>(jv.at(JS(taker_gets)).as_object().at(JS(currency)))
+        input.getsCurrency,
+        boost::json::value_to<std::string>(jv.at(JS(taker_gets)).as_object().at(JS(currency)))
     );
     ripple::to_currency(
-        input.paysCurrency, boost::json::value_to<std::string>(jv.at(JS(taker_pays)).as_object().at(JS(currency)))
+        input.paysCurrency,
+        boost::json::value_to<std::string>(jv.at(JS(taker_pays)).as_object().at(JS(currency)))
     );
 
     if (jv.at(JS(taker_gets)).as_object().contains(JS(issuer))) {
         ripple::to_issuer(
-            input.getsID, boost::json::value_to<std::string>(jv.at(JS(taker_gets)).as_object().at(JS(issuer)))
+            input.getsID,
+            boost::json::value_to<std::string>(jv.at(JS(taker_gets)).as_object().at(JS(issuer)))
         );
     }
 
     if (jv.at(JS(taker_pays)).as_object().contains(JS(issuer))) {
         ripple::to_issuer(
-            input.paysID, boost::json::value_to<std::string>(jv.at(JS(taker_pays)).as_object().at(JS(issuer)))
+            input.paysID,
+            boost::json::value_to<std::string>(jv.at(JS(taker_pays)).as_object().at(JS(issuer)))
         );
     }
 

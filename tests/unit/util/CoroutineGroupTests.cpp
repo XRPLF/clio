@@ -151,7 +151,9 @@ TEST_F(CoroutineGroupTests, TooManyCoroutines)
         CoroutineGroup group{yield, 1};
 
         EXPECT_TRUE(group.spawn(yield, [this](boost::asio::yield_context innerYield) {
-            boost::asio::steady_timer timer{innerYield.get_executor(), std::chrono::milliseconds{1}};
+            boost::asio::steady_timer timer{
+                innerYield.get_executor(), std::chrono::milliseconds{1}
+            };
             timer.async_wait(innerYield);
             callback1_.Call();
         }));
@@ -185,7 +187,9 @@ TEST_F(CoroutineGroupTests, SpawnForeign)
         [&]() { ASSERT_FALSE(group.registerForeign(yield).has_value()); }();
 
         util::spawn(ctx_, [this, &onForeignComplete](boost::asio::yield_context innerYield) {
-            boost::asio::steady_timer timer{innerYield.get_executor(), std::chrono::milliseconds{2}};
+            boost::asio::steady_timer timer{
+                innerYield.get_executor(), std::chrono::milliseconds{2}
+            };
             timer.async_wait(innerYield);
             callback1_.Call();
             onForeignComplete->operator()();

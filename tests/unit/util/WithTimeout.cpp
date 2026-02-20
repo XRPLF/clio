@@ -45,7 +45,8 @@ TEST_F(WithTimeoutTests, CallsOperation)
 {
     EXPECT_CALL(operationMock, Call);
     runSpawn([&](boost::asio::yield_context yield) {
-        auto const error = util::withTimeout(operationMock.AsStdFunction(), yield, std::chrono::seconds{1});
+        auto const error =
+            util::withTimeout(operationMock.AsStdFunction(), yield, std::chrono::seconds{1});
         EXPECT_EQ(error, boost::system::error_code{});
     });
 }
@@ -58,7 +59,8 @@ TEST_F(WithTimeoutTests, TimesOut)
         timer.async_wait(cyield);
     });
     runSpawn([&](boost::asio::yield_context yield) {
-        auto error = util::withTimeout(operationMock.AsStdFunction(), yield, std::chrono::milliseconds{1});
+        auto error =
+            util::withTimeout(operationMock.AsStdFunction(), yield, std::chrono::milliseconds{1});
         EXPECT_EQ(error.value(), boost::system::errc::timed_out);
     });
 }
@@ -70,7 +72,8 @@ TEST_F(WithTimeoutTests, OperationFailed)
         socket.async_send(boost::asio::buffer("test"), cyield);
     });
     runSpawn([&](boost::asio::yield_context yield) {
-        auto error = util::withTimeout(operationMock.AsStdFunction(), yield, std::chrono::seconds{1});
+        auto error =
+            util::withTimeout(operationMock.AsStdFunction(), yield, std::chrono::seconds{1});
         EXPECT_EQ(error.value(), boost::system::errc::bad_file_descriptor);
     });
 }

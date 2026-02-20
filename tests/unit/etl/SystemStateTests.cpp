@@ -48,12 +48,14 @@ TEST_F(SystemStateTest, InitialValuesAreCorrect)
     EXPECT_FALSE(state.isWriterDecidingFallback);
 }
 
-struct SystemStateReadOnlyTest : util::prometheus::WithPrometheus, testing::WithParamInterface<bool> {};
+struct SystemStateReadOnlyTest : util::prometheus::WithPrometheus,
+                                 testing::WithParamInterface<bool> {};
 
 TEST_P(SystemStateReadOnlyTest, MakeSystemStateWithReadOnly)
 {
     auto const readOnlyValue = GetParam();
-    auto const configJson = boost::json::parse(fmt::format(R"JSON({{"read_only": {}}})JSON", readOnlyValue));
+    auto const configJson =
+        boost::json::parse(fmt::format(R"JSON({{"read_only": {}}})JSON", readOnlyValue));
 
     auto config = ClioConfigDefinition{{{"read_only", ConfigValue{ConfigType::Boolean}}}};
     auto const configFile = ConfigFileJson{configJson.as_object()};

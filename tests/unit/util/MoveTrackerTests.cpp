@@ -52,7 +52,9 @@ TEST(MoveTrackerTests, SupportReuse)
 TEST(MoveTrackerTests, SelfMove)
 {
     auto original = MoveMe();
-    [&](MoveMe& from) { original = std::move(from); }(original);  // avoids the compiler catching self-move
+    [&](MoveMe& from) {
+        original = std::move(from);
+    }(original);  // avoids the compiler catching self-move
 
     EXPECT_FALSE(original.wasMoved());
 }
@@ -63,7 +65,9 @@ TEST(MoveTrackerTests, SelfMoveAfterWasMoved)
     [[maybe_unused]] auto fake = std::move(original);
 
     // NOLINTNEXTLINE(bugprone-use-after-move)
-    [&](MoveMe& from) { original = std::move(from); }(original);  // avoids the compiler catching self-move
+    [&](MoveMe& from) {
+        original = std::move(from);
+    }(original);  // avoids the compiler catching self-move
 
     EXPECT_TRUE(original.wasMoved());  // NOLINT(bugprone-use-after-move)
 }

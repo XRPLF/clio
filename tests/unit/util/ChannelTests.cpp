@@ -95,7 +95,9 @@ public:
                 return ContextVariant(std::in_place_type_t<boost::asio::io_context>());
 
             if (type == ContextType::ThreadPool)
-                return ContextVariant(std::in_place_type_t<boost::asio::thread_pool>(), kDEFAULT_THREAD_POOL_SIZE);
+                return ContextVariant(
+                    std::in_place_type_t<boost::asio::thread_pool>(), kDEFAULT_THREAD_POOL_SIZE
+                );
 
             ASSERT(false, "Unknown new type of context");
             std::unreachable();
@@ -152,24 +154,29 @@ TEST_P(ChannelSpawnTest, MultipleSendersOneReceiver)
         auto [sender, receiver] = util::Channel<int>::create(executor, 10);
         util::Mutex<std::vector<int>> receivedValues;
 
-        util::spawn(executor, [&receiver, &receivedValues](boost::asio::yield_context yield) mutable {
-            while (true) {
-                auto value = receiver.asyncReceive(yield);
-                if (not value.has_value())
-                    break;
-                receivedValues.lock()->push_back(*value);
+        util::spawn(
+            executor, [&receiver, &receivedValues](boost::asio::yield_context yield) mutable {
+                while (true) {
+                    auto value = receiver.asyncReceive(yield);
+                    if (not value.has_value())
+                        break;
+                    receivedValues.lock()->push_back(*value);
+                }
             }
-        });
+        );
 
         {
             auto localSender = std::move(sender);
             for (auto senderId = 0uz; senderId < kNUM_SENDERS; ++senderId) {
-                util::spawn(executor, [senderCopy = localSender, senderId](boost::asio::yield_context yield) mutable {
-                    for (auto i = 0uz; i < kVALUES_PER_SENDER; ++i) {
-                        if (not senderCopy.asyncSend(generateValue(senderId, i), yield))
-                            break;
+                util::spawn(
+                    executor,
+                    [senderCopy = localSender, senderId](boost::asio::yield_context yield) mutable {
+                        for (auto i = 0uz; i < kVALUES_PER_SENDER; ++i) {
+                            if (not senderCopy.asyncSend(generateValue(senderId, i), yield))
+                                break;
+                        }
                     }
-                });
+                );
             }
         }
 
@@ -192,7 +199,8 @@ TEST_P(ChannelSpawnTest, MultipleSendersMultipleReceivers)
         for (auto receiverId = 0uz; receiverId < kNUM_RECEIVERS; ++receiverId) {
             util::spawn(
                 executor,
-                [&receiverRef = receivers[receiverId], &receivedValues](boost::asio::yield_context yield) mutable {
+                [&receiverRef = receivers[receiverId],
+                 &receivedValues](boost::asio::yield_context yield) mutable {
                     while (true) {
                         auto value = receiverRef.asyncReceive(yield);
                         if (not value.has_value())
@@ -206,13 +214,16 @@ TEST_P(ChannelSpawnTest, MultipleSendersMultipleReceivers)
         {
             auto localSender = std::move(sender);
             for (auto senderId = 0uz; senderId < kNUM_SENDERS; ++senderId) {
-                util::spawn(executor, [senderCopy = localSender, senderId](boost::asio::yield_context yield) mutable {
-                    for (auto i = 0uz; i < kVALUES_PER_SENDER; ++i) {
-                        auto const value = generateValue(senderId, i);
-                        if (not senderCopy.asyncSend(value, yield))
-                            break;
+                util::spawn(
+                    executor,
+                    [senderCopy = localSender, senderId](boost::asio::yield_context yield) mutable {
+                        for (auto i = 0uz; i < kVALUES_PER_SENDER; ++i) {
+                            auto const value = generateValue(senderId, i);
+                            if (not senderCopy.asyncSend(value, yield))
+                                break;
+                        }
                     }
-                });
+                );
             }
         }
 
@@ -230,29 +241,31 @@ TEST_P(ChannelSpawnTest, ChannelClosureScenarios)
     context_.withExecutor([this](auto& executor) {
         std::atomic_bool testCompleted{false};
 
-        util::spawn(executor, [&executor, &testCompleted](boost::asio::yield_context yield) mutable {
-            auto [sender, receiver] = util::Channel<int>::create(executor, 5);
+        util::spawn(
+            executor, [&executor, &testCompleted](boost::asio::yield_context yield) mutable {
+                auto [sender, receiver] = util::Channel<int>::create(executor, 5);
 
-            EXPECT_FALSE(receiver.isClosed());
+                EXPECT_FALSE(receiver.isClosed());
 
-            bool const success = sender.asyncSend(42, yield);
-            EXPECT_TRUE(success);
+                bool const success = sender.asyncSend(42, yield);
+                EXPECT_TRUE(success);
 
-            auto value = receiver.asyncReceive(yield);
-            EXPECT_TRUE(value.has_value());
-            EXPECT_EQ(*value, 42);
+                auto value = receiver.asyncReceive(yield);
+                EXPECT_TRUE(value.has_value());
+                EXPECT_EQ(*value, 42);
 
-            {
-                [[maybe_unused]] auto tempSender = std::move(sender);
+                {
+                    [[maybe_unused]] auto tempSender = std::move(sender);
+                }
+
+                EXPECT_TRUE(receiver.isClosed());
+
+                auto closedValue = receiver.asyncReceive(yield);
+                EXPECT_FALSE(closedValue.has_value());
+
+                testCompleted = true;
             }
-
-            EXPECT_TRUE(receiver.isClosed());
-
-            auto closedValue = receiver.asyncReceive(yield);
-            EXPECT_FALSE(closedValue.has_value());
-
-            testCompleted = true;
-        });
+        );
 
         context_.run();
         EXPECT_TRUE(testCompleted);
@@ -354,7 +367,8 @@ TEST_P(ChannelCallbackTest, MultipleSendersOneReceiver)
             if (receivedValues.lock()->size() >= kTOTAL_EXPECTED)
                 return;
 
-            receiver.asyncReceive([&receivedValues, self = std::forward<decltype(self)>(self)](auto value) {
+            receiver.asyncReceive([&receivedValues,
+                                   self = std::forward<decltype(self)>(self)](auto value) {
                 if (value.has_value()) {
                     receivedValues.lock()->push_back(*value);
                     self();
@@ -368,23 +382,30 @@ TEST_P(ChannelCallbackTest, MultipleSendersOneReceiver)
             auto localSender = std::move(sender);
             for (auto senderId = 0uz; senderId < kNUM_SENDERS; ++senderId) {
                 auto senderCopy = localSender;
-                boost::asio::post(executor, [senderCopy = std::move(senderCopy), senderId, &executor]() mutable {
-                    auto sendNext = [senderCopy = std::move(senderCopy),
-                                     senderId,
-                                     &executor](this auto&& self, std::size_t i) -> void {
-                        if (i >= kVALUES_PER_SENDER)
-                            return;
+                boost::asio::post(
+                    executor, [senderCopy = std::move(senderCopy), senderId, &executor]() mutable {
+                        auto sendNext = [senderCopy = std::move(senderCopy),
+                                         senderId,
+                                         &executor](this auto&& self, std::size_t i) -> void {
+                            if (i >= kVALUES_PER_SENDER)
+                                return;
 
-                        senderCopy.asyncSend(
-                            generateValue(senderId, i),
-                            [self = std::forward<decltype(self)>(self), &executor, i](bool success) mutable {
-                                if (success)
-                                    boost::asio::post(executor, [self = std::move(self), i]() mutable { self(i + 1); });
-                            }
-                        );
-                    };
-                    sendNext(0);
-                });
+                            senderCopy.asyncSend(
+                                generateValue(senderId, i),
+                                [self = std::forward<decltype(self)>(self),
+                                 &executor,
+                                 i](bool success) mutable {
+                                    if (success)
+                                        boost::asio::post(
+                                            executor,
+                                            [self = std::move(self), i]() mutable { self(i + 1); }
+                                        );
+                                }
+                            );
+                        };
+                        sendNext(0);
+                    }
+                );
             }
         }
 
@@ -407,7 +428,8 @@ TEST_P(ChannelCallbackTest, MultipleSendersMultipleReceivers)
         for (auto receiverId = 0uz; receiverId < kNUM_RECEIVERS; ++receiverId) {
             auto& receiverRef = receivers[receiverId];
             auto receiveNext = [&receiverRef, &receivedValues](this auto&& self) -> void {
-                receiverRef.asyncReceive([&receivedValues, self = std::forward<decltype(self)>(self)](auto value) {
+                receiverRef.asyncReceive([&receivedValues,
+                                          self = std::forward<decltype(self)>(self)](auto value) {
                     if (value.has_value()) {
                         receivedValues.lock()->push_back(*value);
                         self();
@@ -421,23 +443,30 @@ TEST_P(ChannelCallbackTest, MultipleSendersMultipleReceivers)
             auto localSender = std::move(sender);
             for (auto senderId = 0uz; senderId < kNUM_SENDERS; ++senderId) {
                 auto senderCopy = localSender;
-                boost::asio::post(executor, [senderCopy = std::move(senderCopy), senderId, &executor]() mutable {
-                    auto sendNext = [senderCopy = std::move(senderCopy),
-                                     senderId,
-                                     &executor](this auto&& self, std::size_t i) -> void {
-                        if (i >= kVALUES_PER_SENDER)
-                            return;
+                boost::asio::post(
+                    executor, [senderCopy = std::move(senderCopy), senderId, &executor]() mutable {
+                        auto sendNext = [senderCopy = std::move(senderCopy),
+                                         senderId,
+                                         &executor](this auto&& self, std::size_t i) -> void {
+                            if (i >= kVALUES_PER_SENDER)
+                                return;
 
-                        senderCopy.asyncSend(
-                            generateValue(senderId, i),
-                            [self = std::forward<decltype(self)>(self), &executor, i](bool success) mutable {
-                                if (success)
-                                    boost::asio::post(executor, [self = std::move(self), i]() mutable { self(i + 1); });
-                            }
-                        );
-                    };
-                    sendNext(0);
-                });
+                            senderCopy.asyncSend(
+                                generateValue(senderId, i),
+                                [self = std::forward<decltype(self)>(self),
+                                 &executor,
+                                 i](bool success) mutable {
+                                    if (success)
+                                        boost::asio::post(
+                                            executor,
+                                            [self = std::move(self), i]() mutable { self(i + 1); }
+                                        );
+                                }
+                            );
+                        };
+                        sendNext(0);
+                    }
+                );
             }
         }
 
@@ -460,26 +489,32 @@ TEST_P(ChannelCallbackTest, ChannelClosureScenarios)
 
         EXPECT_FALSE(receiverPtr->isClosed());
 
-        senderPtr->value().asyncSend(42, [&executor, receiverPtr, senderPtr, &testCompleted](bool success) {
-            EXPECT_TRUE(success);
+        senderPtr->value().asyncSend(
+            42, [&executor, receiverPtr, senderPtr, &testCompleted](bool success) {
+                EXPECT_TRUE(success);
 
-            receiverPtr->asyncReceive([&executor, receiverPtr, senderPtr, &testCompleted](auto value) {
-                EXPECT_TRUE(value.has_value());
-                EXPECT_EQ(*value, 42);
+                receiverPtr->asyncReceive(
+                    [&executor, receiverPtr, senderPtr, &testCompleted](auto value) {
+                        EXPECT_TRUE(value.has_value());
+                        EXPECT_EQ(*value, 42);
 
-                boost::asio::post(executor, [&executor, receiverPtr, senderPtr, &testCompleted]() {
-                    senderPtr->reset();
-                    EXPECT_TRUE(receiverPtr->isClosed());
+                        boost::asio::post(
+                            executor, [&executor, receiverPtr, senderPtr, &testCompleted]() {
+                                senderPtr->reset();
+                                EXPECT_TRUE(receiverPtr->isClosed());
 
-                    boost::asio::post(executor, [receiverPtr, &testCompleted]() {
-                        receiverPtr->asyncReceive([&testCompleted](auto closedValue) {
-                            EXPECT_FALSE(closedValue.has_value());
-                            testCompleted = true;
-                        });
-                    });
-                });
-            });
-        });
+                                boost::asio::post(executor, [receiverPtr, &testCompleted]() {
+                                    receiverPtr->asyncReceive([&testCompleted](auto closedValue) {
+                                        EXPECT_FALSE(closedValue.has_value());
+                                        testCompleted = true;
+                                    });
+                                });
+                            }
+                        );
+                    }
+                );
+            }
+        );
 
         context_.run();
         EXPECT_TRUE(testCompleted);
@@ -529,7 +564,8 @@ TEST_P(ChannelCallbackTest, TryMethodsWithClosedChannel)
         std::atomic_bool testCompleted{false};
         auto [sender, receiver] = util::Channel<int>::create(executor, 3);
         auto receiverPtr = std::make_shared<util::Channel<int>::Receiver>(std::move(receiver));
-        auto senderPtr = std::make_shared<std::optional<util::Channel<int>::Sender>>(std::move(sender));
+        auto senderPtr =
+            std::make_shared<std::optional<util::Channel<int>::Sender>>(std::move(sender));
 
         boost::asio::post(executor, [receiverPtr, senderPtr, &testCompleted]() {
             EXPECT_TRUE(senderPtr->value().trySend(100));
@@ -648,38 +684,43 @@ TEST(ChannelTest, ChannelPreservesOrderFIFO)
     bool testCompleted = false;
     std::vector<int> const valuesToSend = {42, 7, 99, 13, 5, 88, 21, 3, 67, 54};
 
-    util::spawn(executor, [&executor, &testCompleted, &valuesToSend](boost::asio::yield_context yield) mutable {
-        auto [sender, receiver] = util::Channel<int>::create(executor, 5);
-        std::vector<int> receivedValues;
+    util::spawn(
+        executor,
+        [&executor, &testCompleted, &valuesToSend](boost::asio::yield_context yield) mutable {
+            auto [sender, receiver] = util::Channel<int>::create(executor, 5);
+            std::vector<int> receivedValues;
 
-        // Spawn a receiver coroutine that collects all values
-        util::spawn(executor, [&receiver, &receivedValues](boost::asio::yield_context yield) mutable {
-            auto value = receiver.asyncReceive(yield);
-            while (value.has_value()) {
-                receivedValues.push_back(*value);
-                value = receiver.asyncReceive(yield);
+            // Spawn a receiver coroutine that collects all values
+            util::spawn(
+                executor, [&receiver, &receivedValues](boost::asio::yield_context yield) mutable {
+                    auto value = receiver.asyncReceive(yield);
+                    while (value.has_value()) {
+                        receivedValues.push_back(*value);
+                        value = receiver.asyncReceive(yield);
+                    }
+                }
+            );
+
+            // Send all values
+            for (int const value : valuesToSend) {
+                EXPECT_TRUE(sender.asyncSend(value, yield));
             }
-        });
 
-        // Send all values
-        for (int const value : valuesToSend) {
-            EXPECT_TRUE(sender.asyncSend(value, yield));
+            // Close sender to signal end of data
+            {
+                [[maybe_unused]] auto temp = std::move(sender);
+            }
+
+            // Give receiver time to process all values
+            boost::asio::steady_timer timer(executor, std::chrono::milliseconds{50});
+            timer.async_wait(yield);
+
+            // Verify received values match sent values in the same order
+            EXPECT_EQ(receivedValues, valuesToSend);
+
+            testCompleted = true;
         }
-
-        // Close sender to signal end of data
-        {
-            [[maybe_unused]] auto temp = std::move(sender);
-        }
-
-        // Give receiver time to process all values
-        boost::asio::steady_timer timer(executor, std::chrono::milliseconds{50});
-        timer.async_wait(yield);
-
-        // Verify received values match sent values in the same order
-        EXPECT_EQ(receivedValues, valuesToSend);
-
-        testCompleted = true;
-    });
+    );
 
     executor.run_for(kTEST_TIMEOUT);
     EXPECT_TRUE(testCompleted);
@@ -694,7 +735,9 @@ TEST(ChannelTest, AsyncReceiveWakesUpWhenSenderDestroyed)
 
     util::spawn(
         executor,
-        [&receiver, senderPtr = std::move(senderPtr), &testCompleted, &executor](boost::asio::yield_context) mutable {
+        [&receiver, senderPtr = std::move(senderPtr), &testCompleted, &executor](
+            boost::asio::yield_context
+        ) mutable {
             // Start receiving - this will block because no data is sent
             auto receiveTask = [&receiver, &testCompleted](boost::asio::yield_context yield) {
                 auto const value = receiver.asyncReceive(yield);
@@ -712,10 +755,10 @@ TEST(ChannelTest, AsyncReceiveWakesUpWhenSenderDestroyed)
     EXPECT_TRUE(testCompleted);
 }
 
-// This test verifies the workaround for a bug in boost::asio::experimental::concurrent_channel where close() does not
-// cancel pending async operations. Our Channel wrapper calls cancel() after close() to ensure pending operations are
-// unblocked.
-// See: https://github.com/chriskohlhoff/asio/issues/1575
+// This test verifies the workaround for a bug in boost::asio::experimental::concurrent_channel
+// where close() does not cancel pending async operations. Our Channel wrapper calls cancel() after
+// close() to ensure pending operations are unblocked. See:
+// https://github.com/chriskohlhoff/asio/issues/1575
 TEST(ChannelTest, PendingAsyncSendsAreCancelledOnClose)
 {
     boost::asio::thread_pool pool{4};
@@ -730,7 +773,10 @@ TEST(ChannelTest, PendingAsyncSendsAreCancelledOnClose)
     // Spawn multiple senders that will all block (no receiver is consuming)
     for (auto i = 0uz; i < kPENDING_NUM_SENDERS; ++i) {
         util::spawn(
-            pool, [senderCopy = sender, i, &completedSends, &semaphore](boost::asio::yield_context yield) mutable {
+            pool,
+            [senderCopy = sender, i, &completedSends, &semaphore](
+                boost::asio::yield_context yield
+            ) mutable {
                 semaphore.release(1);
                 EXPECT_FALSE(senderCopy.asyncSend(static_cast<int>(i), yield));
                 ++completedSends;

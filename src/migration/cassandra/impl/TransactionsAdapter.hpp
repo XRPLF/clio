@@ -41,14 +41,15 @@ namespace migration::cassandra::impl {
  */
 struct TableTransactionsDesc {
     // hash, date, ledger_seq, metadata, transaction
-    using Row = std::tuple<ripple::uint256, std::uint64_t, std::uint32_t, ripple::Blob, ripple::Blob>;
+    using Row =
+        std::tuple<ripple::uint256, std::uint64_t, std::uint32_t, ripple::Blob, ripple::Blob>;
     static constexpr char const* kPARTITION_KEY = "hash";
     static constexpr char const* kTABLE_NAME = "transactions";
 };
 
 /**
- * @brief The adapter for the transactions table. This class is responsible for reading the transactions from the
- * FullTableScanner and converting the blobs to the STTx and TxMeta.
+ * @brief The adapter for the transactions table. This class is responsible for reading the
+ * transactions from the FullTableScanner and converting the blobs to the STTx and TxMeta.
  */
 class TransactionsAdapter : public impl::FullTableScannerAdapterBase<TableTransactionsDesc> {
 public:
@@ -60,8 +61,12 @@ public:
      * @param backend The backend
      * @param onTxRead The callback to call when a transaction is read
      */
-    explicit TransactionsAdapter(std::shared_ptr<CassandraMigrationBackend> backend, OnTransactionRead onTxRead)
-        : FullTableScannerAdapterBase<TableTransactionsDesc>(backend), onTransactionRead_{std::move(onTxRead)}
+    explicit TransactionsAdapter(
+        std::shared_ptr<CassandraMigrationBackend> backend,
+        OnTransactionRead onTxRead
+    )
+        : FullTableScannerAdapterBase<TableTransactionsDesc>(backend)
+        , onTransactionRead_{std::move(onTxRead)}
     {
     }
 

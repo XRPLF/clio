@@ -257,7 +257,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash)
 TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex)
 {
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence)
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(
         fmt::format(
@@ -284,7 +285,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 31);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
+    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+        .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     auto const input = json::parse(
         fmt::format(
@@ -335,7 +337,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
 TEST_F(RPCNFTSellOffersHandlerTest, NoNFT)
 {
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
+    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+        .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::nullopt));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
@@ -450,7 +453,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, DefaultParameters)
 
     // return owner index containing 2 indexes
     auto const directory = ripple::keylet::nft_sells(ripple::uint256{kNFT_ID});
-    auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX2}}, kINDEX1);
+    auto const ownerDir =
+        createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX2}}, kINDEX1);
 
     ON_CALL(*backend_, doFetchLedgerObject(directory.key, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -500,7 +504,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
     }
     ripple::STObject const ownerDir = createOwnerDirLedgerObject(indexes, kINDEX1);
 
-    ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    ON_CALL(*backend_, doFetchLedgerObject)
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -550,7 +555,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
     auto const cursorSellOffer = createNftSellOffer(kNFT_ID, kACCOUNT);
 
     // first is nft offer object
-    auto const cursor = ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353"};
+    auto const cursor =
+        ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353"};
     auto const first = ripple::keylet::nftoffer(cursor);
     ON_CALL(*backend_, doFetchLedgerObject(first.key, testing::_, testing::_))
         .WillByDefault(Return(cursorSellOffer.getSerializer().peekData()));
@@ -613,7 +619,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
     auto const cursorSellOffer = createNftSellOffer(kNFT_ID, kACCOUNT);
 
     // first is nft offer object
-    auto const cursor = ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353"};
+    auto const cursor =
+        ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353"};
     auto const first = ripple::keylet::nftoffer(cursor);
     ON_CALL(*backend_, doFetchLedgerObject(first.key, testing::_, testing::_))
         .WillByDefault(Return(cursorSellOffer.getSerializer().peekData()));

@@ -49,7 +49,8 @@ using namespace etl::impl;
 namespace {
 
 constinit auto const kSEQ = 30;
-constinit auto const kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constinit auto const kLEDGER_HASH =
+    "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 
 struct MockScheduler : etl::SchedulerInterface {
     MOCK_METHOD(std::optional<Task>, next, (), (override));
@@ -63,7 +64,12 @@ struct MockExtractor : etl::ExtractorInterface {
 struct MockLoader : etl::LoaderInterface {
     using ExpectedType = std::expected<void, etl::LoaderError>;
     MOCK_METHOD(ExpectedType, load, (LedgerData const&), (override));
-    MOCK_METHOD(std::optional<ripple::LedgerHeader>, loadInitialLedger, (LedgerData const&), (override));
+    MOCK_METHOD(
+        std::optional<ripple::LedgerHeader>,
+        loadInitialLedger,
+        (LedgerData const&),
+        (override)
+    );
 };
 
 struct MockMonitor : etl::MonitorInterface {
@@ -98,7 +104,14 @@ protected:
     std::shared_ptr<MockLoaderType> mockLoaderPtr_ = std::make_shared<MockLoaderType>();
     std::shared_ptr<MockMonitorType> mockMonitorPtr_ = std::make_shared<MockMonitorType>();
 
-    TaskManager taskManager_{ctx_, mockSchedulerPtr_, *mockExtractorPtr_, *mockLoaderPtr_, *mockMonitorPtr_, kSEQ};
+    TaskManager taskManager_{
+        ctx_,
+        mockSchedulerPtr_,
+        *mockExtractorPtr_,
+        *mockLoaderPtr_,
+        *mockMonitorPtr_,
+        kSEQ
+    };
 };
 
 auto
@@ -253,7 +266,8 @@ TEST_F(TaskManagerTests, AmendmentBlockedHandling)
             return {};
         });
 
-    EXPECT_CALL(*mockMonitorPtr_, notifySequenceLoaded(testing::_)).Times(kAMENDMENT_BLOCKED_AFTER - 1);
+    EXPECT_CALL(*mockMonitorPtr_, notifySequenceLoaded(testing::_))
+        .Times(kAMENDMENT_BLOCKED_AFTER - 1);
     EXPECT_CALL(*mockMonitorPtr_, notifyWriteConflict(testing::_)).Times(0);
 
     taskManager_.run(kEXTRACTORS);

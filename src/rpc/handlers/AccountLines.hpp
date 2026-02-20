@@ -45,8 +45,8 @@
 namespace rpc {
 
 /**
- * @brief The account_lines method returns information about an account's trust lines, which contain balances in all
- * non-XRP currencies and assets.
+ * @brief The account_lines method returns information about an account's trust lines, which contain
+ * balances in all non-XRP currencies and assets.
  *
  * For more details see: https://xrpl.org/account_lines.html
  */
@@ -114,7 +114,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    AccountLinesHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
+    AccountLinesHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+        : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
@@ -131,11 +132,13 @@ public:
             {JS(account),
              validation::Required{},
              meta::WithCustomError{
-                 validation::CustomValidators::accountValidator, Status(RippledError::rpcACT_MALFORMED)
+                 validation::CustomValidators::accountValidator,
+                 Status(RippledError::rpcACT_MALFORMED)
              }},
             {JS(peer),
              meta::WithCustomError{
-                 validation::CustomValidators::accountValidator, Status(RippledError::rpcACT_MALFORMED)
+                 validation::CustomValidators::accountValidator,
+                 Status(RippledError::rpcACT_MALFORMED)
              }},
             {JS(ignore_default), validation::Type<bool>{}},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},

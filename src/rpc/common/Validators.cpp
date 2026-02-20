@@ -52,7 +52,9 @@ namespace rpc::validation {
 Required::verify(boost::json::value const& value, std::string_view key)
 {
     if (not value.is_object() or not value.as_object().contains(key))
-        return Error{Status{RippledError::rpcINVALID_PARAMS, "Required field '" + std::string{key} + "' missing"}};
+        return Error{Status{
+            RippledError::rpcINVALID_PARAMS, "Required field '" + std::string{key} + "' missing"
+        }};
 
     return {};
 }
@@ -68,7 +70,8 @@ TimeFormatValidator::verify(boost::json::value const& value, std::string_view ke
     if (not value.as_object().at(key).is_string())
         return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
-    auto const ret = util::systemTpFromUtcStr(value_to<std::string>(value.as_object().at(key)), format_);
+    auto const ret =
+        util::systemTpFromUtcStr(value_to<std::string>(value.as_object().at(key)), format_);
     if (!ret)
         return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
@@ -125,11 +128,16 @@ CustomValidator CustomValidators::ledgerIndexValidator =
 CustomValidator CustomValidators::ledgerTypeValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
-            return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', not string.", key)}};
+            return Error{Status{
+                RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', not string.", key)
+            }};
 
-        auto const type = util::LedgerTypes::getLedgerEntryTypeFromStr(boost::json::value_to<std::string>(value));
+        auto const type =
+            util::LedgerTypes::getLedgerEntryTypeFromStr(boost::json::value_to<std::string>(value));
         if (type == ripple::ltANY)
-            return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}'.", key)}};
+            return Error{
+                Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}'.", key)}
+            };
 
         return MaybeError{};
     }};
@@ -152,7 +160,8 @@ CustomValidator CustomValidators::accountBase58Validator =
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
 
-        auto const account = util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(value));
+        auto const account =
+            util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(value));
         if (!account || account->isZero())
             return Error{Status{ClioError::RpcMalformedAddress}};
 
@@ -177,12 +186,17 @@ CustomValidator CustomValidators::accountMarkerValidator =
 CustomValidator CustomValidators::accountTypeValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
-            return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', not string.", key)}};
+            return Error{Status{
+                RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', not string.", key)
+            }};
 
-        auto const type =
-            util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(boost::json::value_to<std::string>(value));
+        auto const type = util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(
+            boost::json::value_to<std::string>(value)
+        );
         if (type == ripple::ltANY)
-            return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}'.", key)}};
+            return Error{
+                Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}'.", key)}
+            };
 
         return MaybeError{};
     }};
@@ -212,12 +226,15 @@ CustomValidator CustomValidators::issuerValidator =
 
         // TODO: need to align with the error
         if (!ripple::to_issuer(issuer, boost::json::value_to<std::string>(value)))
-            return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer.", key)}};
+            return Error{Status{
+                RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer.", key)
+            }};
 
         if (issuer == ripple::noAccount()) {
-            return Error{
-                Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer account one.", key)}
-            };
+            return Error{Status{
+                RippledError::rpcINVALID_PARAMS,
+                fmt::format("Invalid field '{}', bad issuer account one.", key)
+            }};
         }
 
         return MaybeError{};
@@ -229,10 +246,17 @@ CustomValidator CustomValidators::subscribeStreamValidator =
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
 
         static std::unordered_set<std::string> const kVALID_STREAMS = {
-            "ledger", "transactions", "transactions_proposed", "book_changes", "manifests", "validations"
+            "ledger",
+            "transactions",
+            "transactions_proposed",
+            "book_changes",
+            "manifests",
+            "validations"
         };
 
-        static std::unordered_set<std::string> const kNOT_SUPPORT_STREAMS = {"peer_status", "consensus", "server"};
+        static std::unordered_set<std::string> const kNOT_SUPPORT_STREAMS = {
+            "peer_status", "consensus", "server"
+        };
         for (auto const& v : value.as_array()) {
             if (!v.is_string())
                 return Error{Status{RippledError::rpcINVALID_PARAMS, "streamNotString"}};
@@ -285,19 +309,26 @@ CustomValidator CustomValidators::currencyIssueValidator =
 CustomValidator CustomValidators::credentialTypeValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (not value.is_string())
-            return Error{Status{ClioError::RpcMalformedAuthorizedCredentials, std::string(key) + " NotString"}};
+            return Error{Status{
+                ClioError::RpcMalformedAuthorizedCredentials, std::string(key) + " NotString"
+            }};
 
         auto const& credTypeHex = ripple::strViewUnHex(value.as_string());
         if (!credTypeHex.has_value())
-            return Error{Status{ClioError::RpcMalformedAuthorizedCredentials, std::string(key) + " NotHexString"}};
+            return Error{Status{
+                ClioError::RpcMalformedAuthorizedCredentials, std::string(key) + " NotHexString"
+            }};
 
         if (credTypeHex->empty())
-            return Error{Status{ClioError::RpcMalformedAuthorizedCredentials, std::string(key) + " is empty"}};
+            return Error{
+                Status{ClioError::RpcMalformedAuthorizedCredentials, std::string(key) + " is empty"}
+            };
 
         if (credTypeHex->size() > ripple::maxCredentialTypeLength) {
-            return Error{
-                Status{ClioError::RpcMalformedAuthorizedCredentials, std::string(key) + " greater than max length"}
-            };
+            return Error{Status{
+                ClioError::RpcMalformedAuthorizedCredentials,
+                std::string(key) + " greater than max length"
+            }};
         }
 
         return MaybeError{};
@@ -320,7 +351,8 @@ CustomValidator CustomValidators::authorizeCredentialValidator =
             return Error{Status{
                 ClioError::RpcMalformedAuthorizedCredentials,
                 fmt::format(
-                    "Max {} number of credentials in authorized_credentials array", ripple::maxCredentialsArraySize
+                    "Max {} number of credentials in authorized_credentials array",
+                    ripple::maxCredentialsArraySize
                 )
             }};
         }
@@ -335,18 +367,22 @@ CustomValidator CustomValidators::authorizeCredentialValidator =
             auto const& obj = credObj.as_object();
 
             if (!obj.contains("issuer")) {
-                return Error{
-                    Status{ClioError::RpcMalformedAuthorizedCredentials, "Field 'Issuer' is required but missing."}
-                };
+                return Error{Status{
+                    ClioError::RpcMalformedAuthorizedCredentials,
+                    "Field 'Issuer' is required but missing."
+                }};
             }
 
             // don't want to change issuer error message to be about credentials
             if (!issuerValidator.verify(credObj, "issuer"))
-                return Error{Status{ClioError::RpcMalformedAuthorizedCredentials, "issuer NotString"}};
+                return Error{
+                    Status{ClioError::RpcMalformedAuthorizedCredentials, "issuer NotString"}
+                };
 
             if (!obj.contains("credential_type")) {
                 return Error{Status{
-                    ClioError::RpcMalformedAuthorizedCredentials, "Field 'CredentialType' is required but missing."
+                    ClioError::RpcMalformedAuthorizedCredentials,
+                    "Field 'CredentialType' is required but missing."
                 }};
             }
 

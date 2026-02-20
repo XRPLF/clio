@@ -41,16 +41,19 @@ using namespace data;
 
 constexpr auto kSEQ = 30u;
 
-struct AmendmentCenterTest : util::prometheus::WithPrometheus, MockBackendTest, SyncAsioContextTest {
+struct AmendmentCenterTest : util::prometheus::WithPrometheus,
+                             MockBackendTest,
+                             SyncAsioContextTest {
     AmendmentCenter amendmentCenter{backend_};
 };
 
-// This is a safety net test that will fail anytime we built Clio against a new libXRPL that added some Amendment that
-// we forgot to register in data::Amendments.
+// This is a safety net test that will fail anytime we built Clio against a new libXRPL that added
+// some Amendment that we forgot to register in data::Amendments.
 TEST_F(AmendmentCenterTest, AllAmendmentsFromLibXRPLAreSupported)
 {
     for (auto const& [name, _] : ripple::allAmendments()) {
-        EXPECT_TRUE(amendmentCenter.isSupported(name)) << "XRPL amendment not supported by Clio: " << name;
+        EXPECT_TRUE(amendmentCenter.isSupported(name))
+            << "XRPL amendment not supported by Clio: " << name;
     }
 
     ASSERT_EQ(amendmentCenter.getSupported().size(), ripple::allAmendments().size());
@@ -61,11 +64,17 @@ TEST_F(AmendmentCenterTest, Accessors)
 {
     {
         auto const am = amendmentCenter.getAmendment("DisallowIncoming");
-        EXPECT_EQ(am.feature, ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"));
+        EXPECT_EQ(
+            am.feature,
+            ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF")
+        );
     }
     {
         auto const am = amendmentCenter["DisallowIncoming"];
-        EXPECT_EQ(am.feature, ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"));
+        EXPECT_EQ(
+            am.feature,
+            ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF")
+        );
     }
 
     auto const a = amendmentCenter[Amendments::Flow];
@@ -94,7 +103,9 @@ TEST_F(AmendmentCenterTest, IsMultipleEnabled)
         .WillOnce(testing::Return(amendments.getSerializer().peekData()));
 
     runSpawn([this](auto yield) {
-        std::vector<data::AmendmentKey> const keys{"fixUniversalNumber", "unknown", "ImmediateOfferKilled"};
+        std::vector<data::AmendmentKey> const keys{
+            "fixUniversalNumber", "unknown", "ImmediateOfferKilled"
+        };
         auto const result = amendmentCenter.isEnabled(yield, keys, kSEQ);
 
         EXPECT_EQ(result.size(), keys.size());
@@ -120,7 +131,9 @@ TEST_F(AmendmentCenterTest, IsEnabledReturnsFalseWhenNoAmendments)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amendments().key, kSEQ, testing::_))
         .WillOnce(testing::Return(amendments.getSerializer().peekData()));
 
-    runSpawn([this](auto yield) { EXPECT_FALSE(amendmentCenter.isEnabled(yield, "irrelevant", kSEQ)); });
+    runSpawn([this](auto yield) {
+        EXPECT_FALSE(amendmentCenter.isEnabled(yield, "irrelevant", kSEQ));
+    });
 }
 
 TEST_F(AmendmentCenterTest, IsEnabledReturnsVectorOfFalseWhenAmendmentsLedgerObjectUnavailable)
@@ -166,7 +179,9 @@ struct AmendmentCenterAssertTest : common::util::WithMockAssert, AmendmentCenter
 
 TEST_F(AmendmentCenterAssertTest, GetInvalidAmendmentAsserts)
 {
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = amendmentCenter.getAmendment("invalidAmendmentKey"); });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto _ = amendmentCenter.getAmendment("invalidAmendmentKey");
+    });
     EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = amendmentCenter["invalidAmendmentKey"]; });
 }
 
@@ -188,8 +203,12 @@ TEST_F(AmendmentKeyTest, Convertible)
         ripple::uint256 const k1 = first;
         ripple::uint256 const k2 = second;
 
-        EXPECT_EQ(k1, ripple::uint256{"7E365F775657DC0EB960E6295A1F44B3F67479F54D5D12C5D87E6DB234F072E3"});
-        EXPECT_EQ(k2, ripple::uint256{"B4F33541E0E2FC2F7AA17D2D2E6A9B424809123485251D3413E91CC462309772"});
+        EXPECT_EQ(
+            k1, ripple::uint256{"7E365F775657DC0EB960E6295A1F44B3F67479F54D5D12C5D87E6DB234F072E3"}
+        );
+        EXPECT_EQ(
+            k2, ripple::uint256{"B4F33541E0E2FC2F7AA17D2D2E6A9B424809123485251D3413E91CC462309772"}
+        );
     });
 }
 

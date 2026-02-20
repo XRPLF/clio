@@ -103,8 +103,8 @@ public:
  * @brief Factory function for creating an admin verification strategy.
  *
  * @param password The optional password to check.
- * @return Admin verification strategy. If password is provided, it will be PasswordAdminVerificationStrategy.
- * Otherwise, it will be IPAdminVerificationStrategy.
+ * @return Admin verification strategy. If password is provided, it will be
+ * PasswordAdminVerificationStrategy. Otherwise, it will be IPAdminVerificationStrategy.
  */
 std::shared_ptr<AdminVerificationStrategy>
 makeAdminVerificationStrategy(std::optional<std::string> password);

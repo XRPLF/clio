@@ -62,7 +62,10 @@ public:
      * @param config The configuration object containing the cache file path setting
      * @param cache Reference to the ledger cache interface to be saved
      */
-    LedgerCacheSaver(util::config::ClioConfigDefinition const& config, LedgerCacheInterface const& cache);
+    LedgerCacheSaver(
+        util::config::ClioConfigDefinition const& config,
+        LedgerCacheInterface const& cache
+    );
 
     /**
      * @brief Destructor that ensures the saving thread is properly joined.

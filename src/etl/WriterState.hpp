@@ -117,7 +117,8 @@ public:
  */
 class WriterState : public WriterStateInterface {
 private:
-    std::shared_ptr<SystemState> systemState_; /**< @brief Shared system state for ETL coordination */
+    std::shared_ptr<SystemState>
+        systemState_; /**< @brief Shared system state for ETL coordination */
 
 public:
     /**

@@ -254,7 +254,8 @@ LedgerCache::getSuccessorHitRate() const
 {
     if (successorReqCounter_.get().value() == 0u)
         return 1;
-    return static_cast<float>(successorHitCounter_.get().value()) / successorReqCounter_.get().value();
+    return static_cast<float>(successorHitCounter_.get().value()) /
+        successorReqCounter_.get().value();
 }
 
 std::expected<void, std::string>
@@ -266,7 +267,9 @@ LedgerCache::saveToFile(std::string const& path) const
 
     impl::LedgerCacheFile file{path};
     std::shared_lock const lock{mtx_};
-    impl::LedgerCacheFile::DataView const data{.latestSeq = latestSeq_, .map = map_, .deleted = deleted_};
+    impl::LedgerCacheFile::DataView const data{
+        .latestSeq = latestSeq_, .map = map_, .deleted = deleted_
+    };
     return file.write(data);
 }
 

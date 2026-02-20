@@ -73,7 +73,8 @@ CoreExt::insertTransactions(model::LedgerData const& data)
         backend_->writeTransaction(
             auto{txn.key},
             data.seq,
-            data.header.closeTime.time_since_epoch().count(),  // This is why we can't use 'onTransaction'
+            data.header.closeTime.time_since_epoch()
+                .count(),  // This is why we can't use 'onTransaction'
             auto{txn.raw},
             auto{txn.metaRaw}
         );

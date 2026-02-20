@@ -58,8 +58,8 @@ struct SystemState {
     /**
      * @brief Whether the process is in strict read-only mode.
      *
-     * In strict read-only mode, the process will never attempt to become the ETL writer, and will only publish ledgers
-     * as they are written to the database.
+     * In strict read-only mode, the process will never attempt to become the ETL writer, and will
+     * only publish ledgers as they are written to the database.
      */
     util::prometheus::Bool isStrictReadonly = PrometheusService::boolMetric(
         "read_only",
@@ -84,7 +84,8 @@ struct SystemState {
     /**
      * @brief Commands for controlling the ETL writer state.
      *
-     * These commands are emitted via writeCommandSignal to coordinate writer state transitions across components.
+     * These commands are emitted via writeCommandSignal to coordinate writer state transitions
+     * across components.
      */
     enum class WriteCommand {
         StartWriting, /**< Request to attempt taking over as the ETL writer */
@@ -103,9 +104,9 @@ struct SystemState {
     /**
      * @brief Whether clio detected an amendment block.
      *
-     * Being amendment blocked means that Clio was compiled with libxrpl that does not yet support some field that
-     * arrived from rippled and therefore can't extract the ledger diff. When this happens, Clio can't proceed with ETL
-     * and should log this error and only handle RPC requests.
+     * Being amendment blocked means that Clio was compiled with libxrpl that does not yet support
+     * some field that arrived from rippled and therefore can't extract the ledger diff. When this
+     * happens, Clio can't proceed with ETL and should log this error and only handle RPC requests.
      */
     util::prometheus::Bool isAmendmentBlocked = PrometheusService::boolMetric(
         "etl_amendment_blocked",
@@ -116,8 +117,8 @@ struct SystemState {
     /**
      * @brief Whether clio detected a corruption that needs manual attention.
      *
-     * When corruption is detected, Clio should disable cache and stop the cache loading process in order to prevent
-     * further corruption.
+     * When corruption is detected, Clio should disable cache and stop the cache loading process in
+     * order to prevent further corruption.
      */
     util::prometheus::Bool isCorruptionDetected = PrometheusService::boolMetric(
         "etl_corruption_detected",

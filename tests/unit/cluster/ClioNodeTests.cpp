@@ -73,7 +73,9 @@ TEST_F(ClioNodeTest, Deserialization)
     boost::json::value const jsonValue = {{"update_time", updateTimeStr}, {"db_role", 1}};
 
     ClioNode node{
-        .uuid = std::make_shared<boost::uuids::uuid>(), .updateTime = {}, .dbRole = ClioNode::DbRole::ReadOnly
+        .uuid = std::make_shared<boost::uuids::uuid>(),
+        .updateTime = {},
+        .dbRole = ClioNode::DbRole::ReadOnly
     };
     ASSERT_NO_THROW(node = boost::json::value_to<ClioNode>(jsonValue));
 
@@ -110,7 +112,10 @@ INSTANTIATE_TEST_SUITE_P(
     ClioNodeDbRoleTest,
     testing::Values(
         ClioNodeDbRoleTestBundle{.testName = "ReadOnly", .role = ClioNode::DbRole::ReadOnly},
-        ClioNodeDbRoleTestBundle{.testName = "LoadingCache", .role = ClioNode::DbRole::LoadingCache},
+        ClioNodeDbRoleTestBundle{
+            .testName = "LoadingCache",
+            .role = ClioNode::DbRole::LoadingCache
+        },
         ClioNodeDbRoleTestBundle{.testName = "NotWriter", .role = ClioNode::DbRole::NotWriter},
         ClioNodeDbRoleTestBundle{.testName = "Writer", .role = ClioNode::DbRole::Writer},
         ClioNodeDbRoleTestBundle{.testName = "Fallback", .role = ClioNode::DbRole::Fallback}
@@ -162,7 +167,8 @@ struct ClioNodeFromTestBundle {
 };
 
 struct ClioNodeFromTest : ClioNodeTest, testing::WithParamInterface<ClioNodeFromTestBundle> {
-    std::shared_ptr<boost::uuids::uuid> uuid = std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()());
+    std::shared_ptr<boost::uuids::uuid> uuid =
+        std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()());
 
     MockWriterState writerState;
 };
@@ -223,7 +229,8 @@ TEST_P(ClioNodeFromTest, FromWriterState)
     if (not param.readOnly) {
         EXPECT_CALL(writerState, isFallback()).WillOnce(testing::Return(param.fallback));
         if (not param.fallback) {
-            EXPECT_CALL(writerState, isLoadingCache()).WillOnce(testing::Return(param.loadingCache));
+            EXPECT_CALL(writerState, isLoadingCache())
+                .WillOnce(testing::Return(param.loadingCache));
             if (not param.loadingCache) {
                 EXPECT_CALL(writerState, isWriting()).WillOnce(testing::Return(param.writing));
             }

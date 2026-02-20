@@ -72,7 +72,10 @@ struct MockSource : etl::SourceBase {
     MOCK_METHOD(
         ForwardToRippledReturnType,
         forwardToRippled,
-        (boost::json::object const&, std::optional<std::string> const&, std::string_view, boost::asio::yield_context),
+        (boost::json::object const&,
+         std::optional<std::string> const&,
+         std::string_view,
+         boost::asio::yield_context),
         (const, override)
     );
 };
@@ -138,7 +141,11 @@ public:
     }
 
     etl::InitialLedgerLoadResult
-    loadInitialLedger(uint32_t sequence, uint32_t maxLedger, etl::InitialLoadObserverInterface& observer) override
+    loadInitialLedger(
+        uint32_t sequence,
+        uint32_t maxLedger,
+        etl::InitialLoadObserverInterface& observer
+    ) override
     {
         return mock_->loadInitialLedger(sequence, maxLedger, observer);
     }
@@ -187,8 +194,12 @@ public:
                                etl::SourceBase::OnDisconnectHook onDisconnect,
                                etl::SourceBase::OnLedgerClosedHook onLedgerClosed
                            ) {
-                auto it = std::ranges::find_if(mockData_, [](auto const& d) { return not d.callbacks.has_value(); });
-                [&]() { ASSERT_NE(it, mockData_.end()) << "Make source called more than expected"; }();
+                auto it = std::ranges::find_if(mockData_, [](auto const& d) {
+                    return not d.callbacks.has_value();
+                });
+                [&]() {
+                    ASSERT_NE(it, mockData_.end()) << "Make source called more than expected";
+                }();
                 it->callbacks = MockSourceCallbacks{
                     .onDisconnect = std::move(onDisconnect),
                     .onConnect = std::move(onConnect),
@@ -204,7 +215,9 @@ public:
     {
         mockData_.clear();
         mockData_.reserve(numSources);
-        std::ranges::generate_n(std::back_inserter(mockData_), numSources, [] { return MockSourceData<MockType>{}; });
+        std::ranges::generate_n(std::back_inserter(mockData_), numSources, [] {
+            return MockSourceData<MockType>{};
+        });
     }
 
     template <typename... Args>

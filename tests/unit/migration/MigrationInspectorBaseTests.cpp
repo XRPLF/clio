@@ -32,12 +32,14 @@
 #include <string>
 #include <tuple>
 
-using TestMigratorRegister =
-    migration::impl::MigratorsRegister<data::BackendInterface, SimpleTestMigrator, SimpleTestMigrator2>;
+using TestMigratorRegister = migration::impl::
+    MigratorsRegister<data::BackendInterface, SimpleTestMigrator, SimpleTestMigrator2>;
 
-using TestCassandramigrationInspector = migration::impl::MigrationInspectorBase<TestMigratorRegister>;
+using TestCassandramigrationInspector =
+    migration::impl::MigrationInspectorBase<TestMigratorRegister>;
 
-struct MigrationInspectorBaseTest : public util::prometheus::WithMockPrometheus, public MockBackendTest {
+struct MigrationInspectorBaseTest : public util::prometheus::WithMockPrometheus,
+                                    public MockBackendTest {
     MigrationInspectorBaseTest()
     {
         migrationInspector_ = std::make_shared<TestCassandramigrationInspector>(backend_);
@@ -49,18 +51,21 @@ protected:
 
 TEST_F(MigrationInspectorBaseTest, AllStatus)
 {
-    EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
+    EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator", testing::_))
+        .WillOnce(testing::Return("Migrated"));
     EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
         .WillOnce(testing::Return("NotMigrated"));
     auto const status = migrationInspector_->allMigratorsStatusPairs();
     EXPECT_EQ(status.size(), 2);
     EXPECT_TRUE(
-        std::ranges::find(status, std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::Migrated)) !=
-        status.end()
+        std::ranges::find(
+            status, std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::Migrated)
+        ) != status.end()
     );
     EXPECT_TRUE(
-        std::ranges::find(status, std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)) !=
-        status.end()
+        std::ranges::find(
+            status, std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)
+        ) != status.end()
     );
 }
 
@@ -76,22 +81,29 @@ TEST_F(MigrationInspectorBaseTest, Description)
 {
     EXPECT_EQ(migrationInspector_->getMigratorDescriptionByName("unknown"), "No Description");
     EXPECT_EQ(
-        migrationInspector_->getMigratorDescriptionByName("SimpleTestMigrator"), "The migrator for version 0 -> 1"
+        migrationInspector_->getMigratorDescriptionByName("SimpleTestMigrator"),
+        "The migrator for version 0 -> 1"
     );
     EXPECT_EQ(
-        migrationInspector_->getMigratorDescriptionByName("SimpleTestMigrator2"), "The migrator for version 1 -> 2"
+        migrationInspector_->getMigratorDescriptionByName("SimpleTestMigrator2"),
+        "The migrator for version 1 -> 2"
     );
 }
 
 TEST_F(MigrationInspectorBaseTest, getMigratorStatusByName)
 {
-    EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
-    EXPECT_EQ(migrationInspector_->getMigratorStatusByName("SimpleTestMigrator"), migration::MigratorStatus::Migrated);
+    EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator", testing::_))
+        .WillOnce(testing::Return("Migrated"));
+    EXPECT_EQ(
+        migrationInspector_->getMigratorStatusByName("SimpleTestMigrator"),
+        migration::MigratorStatus::Migrated
+    );
 
     EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
         .WillOnce(testing::Return("NotMigrated"));
     EXPECT_EQ(
-        migrationInspector_->getMigratorStatusByName("SimpleTestMigrator2"), migration::MigratorStatus::NotMigrated
+        migrationInspector_->getMigratorStatusByName("SimpleTestMigrator2"),
+        migration::MigratorStatus::NotMigrated
     );
 }
 
@@ -106,7 +118,8 @@ TEST_F(MigrationInspectorBaseTest, oneMigratorBlockingClio)
 
 TEST_F(MigrationInspectorBaseTest, oneMigratorBlockingClioGetMigrated)
 {
-    EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
+    EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator", testing::_))
+        .WillOnce(testing::Return("Migrated"));
     EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator2", testing::_)).Times(0);
     EXPECT_FALSE(migrationInspector_->isBlockingClio());
 }
@@ -116,7 +129,10 @@ TEST_F(MigrationInspectorBaseTest, noMigratorBlockingClio)
     EXPECT_CALL(*backend_, fetchMigratorStatus).Times(0);
 
     auto const migrations = migration::impl::MigrationInspectorBase<
-        migration::impl::MigratorsRegister<data::BackendInterface, SimpleTestMigrator2, SimpleTestMigrator3>>(backend_);
+        migration::impl::
+            MigratorsRegister<data::BackendInterface, SimpleTestMigrator2, SimpleTestMigrator3>>(
+        backend_
+    );
     EXPECT_FALSE(migrations.isBlockingClio());
 }
 
@@ -124,7 +140,7 @@ TEST_F(MigrationInspectorBaseTest, isBlockingClioWhenNoMigrator)
 {
     EXPECT_CALL(*backend_, fetchMigratorStatus).Times(0);
 
-    auto const migrations =
-        migration::impl::MigrationInspectorBase<migration::impl::MigratorsRegister<data::BackendInterface>>(backend_);
+    auto const migrations = migration::impl::MigrationInspectorBase<
+        migration::impl::MigratorsRegister<data::BackendInterface>>(backend_);
     EXPECT_FALSE(migrations.isBlockingClio());
 }

@@ -25,8 +25,8 @@
 #include <memory>
 
 /**
- * @brief Example migrator for dropping the table. In this example, our migrator will drop the table. The table removal
- * is not reversible.
+ * @brief Example migrator for dropping the table. In this example, our migrator will drop the
+ * table. The table removal is not reversible.
  */
 struct ExampleDropTableMigrator {
     using Backend = CassandraMigrationTestBackend;

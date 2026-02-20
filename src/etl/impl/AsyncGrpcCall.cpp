@@ -138,14 +138,17 @@ AsyncGrpcCall::process(
     if (not data.empty())
         loader.onInitialLoadGotMoreObjects(request_.ledger().sequence(), data, predecessorKey_);
 
-    predecessorKey_ = lastKey_;  // but for ongoing onInitialObjects calls we need to pass along the key we left
-                                 // off at so that we can link the two lists correctly
+    predecessorKey_ = lastKey_;  // but for ongoing onInitialObjects calls we need to pass along the
+                                 // key we left off at so that we can link the two lists correctly
 
     return more ? CallStatus::More : CallStatus::Done;
 }
 
 void
-AsyncGrpcCall::call(std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub, grpc::CompletionQueue& cq)
+AsyncGrpcCall::call(
+    std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub,
+    grpc::CompletionQueue& cq
+)
 {
     context_ = std::make_unique<grpc::ClientContext>();
     auto rpc = stub->PrepareAsyncGetLedgerData(context_.get(), request_, &cq);
@@ -157,7 +160,8 @@ AsyncGrpcCall::call(std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stu
 std::string
 AsyncGrpcCall::getMarkerPrefix()
 {
-    return next_->marker().empty() ? std::string{} : ripple::strHex(std::string{next_->marker().data()[0]});
+    return next_->marker().empty() ? std::string{}
+                                   : ripple::strHex(std::string{next_->marker().data()[0]});
 }
 
 // this is used to generate edgeKeys - keys that were the last one in the onInitialObjects list

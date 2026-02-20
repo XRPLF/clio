@@ -29,10 +29,14 @@
 #include <memory>
 
 void
-ExampleLedgerMigrator::runMigration(std::shared_ptr<Backend> const& backend, util::config::ObjectView const&)
+ExampleLedgerMigrator::runMigration(
+    std::shared_ptr<Backend> const& backend,
+    util::config::ObjectView const&
+)
 {
-    auto const range =
-        data::synchronous([&](boost::asio::yield_context yield) { return backend->hardFetchLedgerRange(yield); });
+    auto const range = data::synchronous([&](boost::asio::yield_context yield) {
+        return backend->hardFetchLedgerRange(yield);
+    });
 
     if (!range.has_value())
         return;

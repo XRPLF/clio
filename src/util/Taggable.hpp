@@ -128,10 +128,11 @@ public:
     /**
      * @brief Create a new tag decorator with an optional parent.
      *
-     * If the `parent` is specified it will be streamed out as a chain when this decorator will decorate an ostream.
+     * If the `parent` is specified it will be streamed out as a chain when this decorator will
+     * decorate an ostream.
      *
-     * Note that if `parent` is specified it is your responsibility that the decorator referred to by `parent` outlives
-     * this decorator.
+     * Note that if `parent` is specified it is your responsibility that the decorator referred to
+     * by `parent` outlives this decorator.
      *
      * @param parent An optional parent tag decorator
      */
@@ -159,7 +160,8 @@ public:
 /**
  * @brief Specialization for a nop/null decorator.
  *
- * This generates a pass-through decorate member function which can be optimized away by the compiler.
+ * This generates a pass-through decorate member function which can be optimized away by the
+ * compiler.
  */
 template <>
 class TagDecorator<impl::NullTagGenerator> final : public BaseTagDecorator {
@@ -260,7 +262,8 @@ protected:
      *
      * @param tagFactory The factory to use
      */
-    explicit Taggable(util::TagDecoratorFactory const& tagFactory) : tagDecorator_{tagFactory.make()}
+    explicit Taggable(util::TagDecoratorFactory const& tagFactory)
+        : tagDecorator_{tagFactory.make()}
     {
     }
 

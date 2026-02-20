@@ -293,14 +293,18 @@ public:
     execute(std::vector<StatementType> const& statements) const;
 
     /**
-     * @brief Execute a batch of (bound or simple) statements asynchronously with a completion callback.
+     * @brief Execute a batch of (bound or simple) statements asynchronously with a completion
+     * callback.
      *
      * @param statements The statements to execute
      * @param cb The callback to execute when data is ready
      * @return A future that holds onto the callback provided
      */
     [[nodiscard]] FutureWithCallbackType
-    asyncExecute(std::vector<StatementType> const& statements, std::function<void(ResultOrErrorType)>&& cb) const;
+    asyncExecute(
+        std::vector<StatementType> const& statements,
+        std::function<void(ResultOrErrorType)>&& cb
+    ) const;
 
     /**
      * @brief Prepare a statement.
@@ -314,8 +318,8 @@ public:
 };
 
 /**
- * @brief Extracts the results into series of std::tuple<Types...> by creating a simple wrapper with an STL input
- * iterator inside.
+ * @brief Extracts the results into series of std::tuple<Types...> by creating a simple wrapper with
+ * an STL input iterator inside.
  *
  * You can call .begin() and .end() in order to iterate as usual.
  * This also means that you can use it in a range-based for or with some algorithms.

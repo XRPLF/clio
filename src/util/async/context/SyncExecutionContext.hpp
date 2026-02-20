@@ -95,10 +95,11 @@ struct SystemContextProvider {
 /**
  * @brief A synchronous execution context. Runs on the caller thread.
  *
- * This execution context runs the operations on the same thread that requested the operation to run.
- * Each operation must finish before the corresponding `execute` returns an operation object that can immediately be
- * queried for value or error as it's guaranteed to have completed. Timer-based operations are scheduled via
- * SystemExecutionContext, including those that are scheduled from within a strand.
+ * This execution context runs the operations on the same thread that requested the operation to
+ * run. Each operation must finish before the corresponding `execute` returns an operation object
+ * that can immediately be queried for value or error as it's guaranteed to have completed.
+ * Timer-based operations are scheduled via SystemExecutionContext, including those that are
+ * scheduled from within a strand.
  */
 using SyncExecutionContext = BasicExecutionContext<
     impl::SameThreadContext,

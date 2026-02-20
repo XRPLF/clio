@@ -106,7 +106,9 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderWithinAgeLimit)
     EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSEQ, _))
         .WillOnce(Return(std::vector<TransactionAndMetadata>{}));
 
-    EXPECT_CALL(*mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSEQ - 1, kSEQ), 0));
+    EXPECT_CALL(
+        *mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSEQ - 1, kSEQ), 0)
+    );
     EXPECT_CALL(*mockSubscriptionManagerPtr, pubBookChanges);
 
     backend_->setRange(kSEQ - 1, kSEQ);
@@ -149,16 +151,21 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderInRange)
         .WillOnce(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     TransactionAndMetadata t1;
-    t1.transaction =
-        createPaymentTransactionObject(kACCOUNT, kACCOUNT2, kAMOUNT, kFEE, kSEQ).getSerializer().peekData();
-    t1.metadata = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, kFINAL_BALANCE, kFINAL_BALANCE2)
-                      .getSerializer()
-                      .peekData();
+    t1.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, kAMOUNT, kFEE, kSEQ)
+                         .getSerializer()
+                         .peekData();
+    t1.metadata =
+        createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, kFINAL_BALANCE, kFINAL_BALANCE2)
+            .getSerializer()
+            .peekData();
     t1.ledgerSequence = kSEQ;
 
-    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger).WillOnce(Return(std::vector<TransactionAndMetadata>{t1}));
+    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger)
+        .WillOnce(Return(std::vector<TransactionAndMetadata>{t1}));
 
-    EXPECT_CALL(*mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSEQ - 1, kSEQ), 1));
+    EXPECT_CALL(
+        *mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSEQ - 1, kSEQ), 1)
+    );
     EXPECT_CALL(*mockSubscriptionManagerPtr, pubBookChanges);
     // mock 1 transaction
     EXPECT_CALL(*mockSubscriptionManagerPtr, pubTransaction);
@@ -179,7 +186,8 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderCloseTimeGreaterThanNow)
 
     auto dummyLedgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ, 0);
     auto const nowPlus10 = system_clock::now() + seconds(10);
-    auto const closeTime = duration_cast<seconds>(nowPlus10.time_since_epoch()).count() - kRIPPLE_EPOCH_START;
+    auto const closeTime =
+        duration_cast<seconds>(nowPlus10.time_since_epoch()).count() - kRIPPLE_EPOCH_START;
     dummyLedgerHeader.closeTime = ripple::NetClock::time_point{seconds{closeTime}};
 
     backend_->setRange(kSEQ - 1, kSEQ);
@@ -190,17 +198,21 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderCloseTimeGreaterThanNow)
         .WillOnce(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     TransactionAndMetadata t1;
-    t1.transaction =
-        createPaymentTransactionObject(kACCOUNT, kACCOUNT2, kAMOUNT, kFEE, kSEQ).getSerializer().peekData();
-    t1.metadata = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, kFINAL_BALANCE, kFINAL_BALANCE2)
-                      .getSerializer()
-                      .peekData();
+    t1.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, kAMOUNT, kFEE, kSEQ)
+                         .getSerializer()
+                         .peekData();
+    t1.metadata =
+        createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, kFINAL_BALANCE, kFINAL_BALANCE2)
+            .getSerializer()
+            .peekData();
     t1.ledgerSequence = kSEQ;
 
     EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSEQ, _))
         .WillOnce(Return(std::vector<TransactionAndMetadata>{t1}));
 
-    EXPECT_CALL(*mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSEQ - 1, kSEQ), 1));
+    EXPECT_CALL(
+        *mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSEQ - 1, kSEQ), 1)
+    );
     EXPECT_CALL(*mockSubscriptionManagerPtr, pubBookChanges);
     EXPECT_CALL(*mockSubscriptionManagerPtr, pubTransaction);
 
@@ -263,26 +275,32 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleTxInOrder)
 
     // t1 index > t2 index
     TransactionAndMetadata t1;
-    t1.transaction =
-        createPaymentTransactionObject(kACCOUNT, kACCOUNT2, kAMOUNT, kFEE, kSEQ).getSerializer().peekData();
-    t1.metadata = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, kFINAL_BALANCE, kFINAL_BALANCE2, 2)
-                      .getSerializer()
-                      .peekData();
+    t1.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, kAMOUNT, kFEE, kSEQ)
+                         .getSerializer()
+                         .peekData();
+    t1.metadata =
+        createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, kFINAL_BALANCE, kFINAL_BALANCE2, 2)
+            .getSerializer()
+            .peekData();
     t1.ledgerSequence = kSEQ;
     t1.date = 1;
     TransactionAndMetadata t2;
-    t2.transaction =
-        createPaymentTransactionObject(kACCOUNT, kACCOUNT2, kAMOUNT, kFEE, kSEQ).getSerializer().peekData();
-    t2.metadata = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, kFINAL_BALANCE, kFINAL_BALANCE2, 1)
-                      .getSerializer()
-                      .peekData();
+    t2.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, kAMOUNT, kFEE, kSEQ)
+                         .getSerializer()
+                         .peekData();
+    t2.metadata =
+        createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, kFINAL_BALANCE, kFINAL_BALANCE2, 1)
+            .getSerializer()
+            .peekData();
     t2.ledgerSequence = kSEQ;
     t2.date = 2;
 
     EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSEQ, _))
         .WillOnce(Return(std::vector<TransactionAndMetadata>{t1, t2}));
 
-    EXPECT_CALL(*mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSEQ - 1, kSEQ), 2));
+    EXPECT_CALL(
+        *mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", kSEQ - 1, kSEQ), 2)
+    );
     EXPECT_CALL(*mockSubscriptionManagerPtr, pubBookChanges);
 
     Sequence const s;
@@ -340,10 +358,22 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleLedgersInQuickSuccession)
         .WillOnce(Return(std::vector<TransactionAndMetadata>{}));
 
     Sequence const s;
-    EXPECT_CALL(*mockSubscriptionManagerPtr, pubLedger(ledgerHeaderMatcher(dummyLedgerHeader1), _, _, _)).InSequence(s);
-    EXPECT_CALL(*mockSubscriptionManagerPtr, pubBookChanges(ledgerHeaderMatcher(dummyLedgerHeader1), _)).InSequence(s);
-    EXPECT_CALL(*mockSubscriptionManagerPtr, pubLedger(ledgerHeaderMatcher(dummyLedgerHeader2), _, _, _)).InSequence(s);
-    EXPECT_CALL(*mockSubscriptionManagerPtr, pubBookChanges(ledgerHeaderMatcher(dummyLedgerHeader2), _)).InSequence(s);
+    EXPECT_CALL(
+        *mockSubscriptionManagerPtr, pubLedger(ledgerHeaderMatcher(dummyLedgerHeader1), _, _, _)
+    )
+        .InSequence(s);
+    EXPECT_CALL(
+        *mockSubscriptionManagerPtr, pubBookChanges(ledgerHeaderMatcher(dummyLedgerHeader1), _)
+    )
+        .InSequence(s);
+    EXPECT_CALL(
+        *mockSubscriptionManagerPtr, pubLedger(ledgerHeaderMatcher(dummyLedgerHeader2), _, _, _)
+    )
+        .InSequence(s);
+    EXPECT_CALL(
+        *mockSubscriptionManagerPtr, pubBookChanges(ledgerHeaderMatcher(dummyLedgerHeader2), _)
+    )
+        .InSequence(s);
 
     // Publish two ledgers in quick succession
     publisher.publish(dummyLedgerHeader1);

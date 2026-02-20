@@ -446,7 +446,12 @@ TEST_F(ObservableValueTest, ComplexTypeObservation)
     TestStruct const newValue{.value = 100, .name = "changed"};
     EXPECT_CALL(
         mockObserver,
-        Call(testing::AllOf(testing::Field(&TestStruct::value, 100), testing::Field(&TestStruct::name, "changed")))
+        Call(
+            testing::AllOf(
+                testing::Field(&TestStruct::value, 100),
+                testing::Field(&TestStruct::name, "changed")
+            )
+        )
     );
     obs = newValue;
 }
@@ -461,7 +466,12 @@ TEST_F(ObservableValueTest, ComplexTypeGuardModification)
 
     EXPECT_CALL(
         mockObserver,
-        Call(testing::AllOf(testing::Field(&TestStruct::value, 20), testing::Field(&TestStruct::name, "modified")))
+        Call(
+            testing::AllOf(
+                testing::Field(&TestStruct::value, 20),
+                testing::Field(&TestStruct::name, "modified")
+            )
+        )
     );
     {
         auto guard = obs.operator->();
@@ -536,12 +546,15 @@ TEST_F(ObservableValueTest, ManyObservers)
 {
     ObservableValue<int> obs{0};
 
-    std::vector<std::unique_ptr<testing::StrictMock<testing::MockFunction<void(int const&)>>>> mockObservers;
+    std::vector<std::unique_ptr<testing::StrictMock<testing::MockFunction<void(int const&)>>>>
+        mockObservers;
     std::vector<boost::signals2::connection> connections;
 
     constexpr int kNUM_OBSERVERS = 100;
     for (int i = 0; i < kNUM_OBSERVERS; ++i) {
-        mockObservers.push_back(std::make_unique<testing::StrictMock<testing::MockFunction<void(int const&)>>>());
+        mockObservers.push_back(
+            std::make_unique<testing::StrictMock<testing::MockFunction<void(int const&)>>>()
+        );
         connections.push_back(obs.observe(mockObservers.back()->AsStdFunction()));
     }
 
@@ -584,7 +597,8 @@ TEST_F(ObservableValueTest, EnhancedConceptRequirements)
         std::vector<int> data;
 
         ComplexObservable() = default;
-        ComplexObservable(std::string n, int v, std::vector<int> d) : name(std::move(n)), value(v), data(std::move(d))
+        ComplexObservable(std::string n, int v, std::vector<int> d)
+            : name(std::move(n)), value(v), data(std::move(d))
         {
         }
         ComplexObservable(ComplexObservable const& other) = default;
@@ -651,7 +665,8 @@ TEST_F(ObservableValueTest, ExceptionInObserver)
     testing::StrictMock<testing::MockFunction<void(int const&)>> goodMockObserver;
     auto goodConnection = obs.observe(goodMockObserver.AsStdFunction());
 
-    auto throwingConnection = obs.observe([](int const&) { throw std::runtime_error("Observer exception"); });
+    auto throwingConnection =
+        obs.observe([](int const&) { throw std::runtime_error("Observer exception"); });
 
     EXPECT_CALL(goodMockObserver, Call(42));
     EXPECT_THROW(obs = 42, std::runtime_error);
@@ -795,8 +810,10 @@ TEST_F(ObservableValueTest, MixedConnectionTypes)
     auto regularConn = obs.observe(mockObserver1.AsStdFunction());
 
     {
-        boost::signals2::scoped_connection const scoped1 = obs.observe(mockObserver2.AsStdFunction());
-        boost::signals2::scoped_connection const scoped2 = obs.observe(mockObserver3.AsStdFunction());
+        boost::signals2::scoped_connection const scoped1 =
+            obs.observe(mockObserver2.AsStdFunction());
+        boost::signals2::scoped_connection const scoped2 =
+            obs.observe(mockObserver3.AsStdFunction());
 
         EXPECT_CALL(mockObserver1, Call(1));
         EXPECT_CALL(mockObserver2, Call(1));

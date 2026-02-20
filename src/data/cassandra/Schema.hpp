@@ -43,9 +43,14 @@ namespace data::cassandra {
  * @return The qualified table name
  */
 template <SomeSettingsProvider SettingsProviderType>
-[[nodiscard]] std::string inline qualifiedTableName(SettingsProviderType const& provider, std::string_view name)
+[[nodiscard]] std::string inline qualifiedTableName(
+    SettingsProviderType const& provider,
+    std::string_view name
+)
 {
-    return fmt::format("{}.{}{}", provider.getKeyspace(), provider.getTablePrefix().value_or(""), name);
+    return fmt::format(
+        "{}.{}{}", provider.getKeyspace(), provider.getTablePrefix().value_or(""), name
+    );
 }
 
 /**
@@ -65,7 +70,8 @@ public:
      *
      * @param settingsProvider The settings provider
      */
-    explicit Schema(SettingsProviderType const& settingsProvider) : settingsProvider_{std::cref(settingsProvider)}
+    explicit Schema(SettingsProviderType const& settingsProvider)
+        : settingsProvider_{std::cref(settingsProvider)}
     {
     }
 

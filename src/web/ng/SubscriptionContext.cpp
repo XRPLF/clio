@@ -69,13 +69,18 @@ SubscriptionContext::send(std::shared_ptr<std::string> message)
         return;
     }
 
-    tasksGroup_.spawn(yield_, [this, message = std::move(message)](boost::asio::yield_context innerYield) mutable {
-        auto const expectedSuccess = connection_.get().sendShared(std::move(message), innerYield);
-        if (not expectedSuccess.has_value() and errorHandler_(expectedSuccess.error(), connection_)) {
-            connection_.get().close(innerYield);
-            gotError_ = true;
+    tasksGroup_.spawn(
+        yield_,
+        [this, message = std::move(message)](boost::asio::yield_context innerYield) mutable {
+            auto const expectedSuccess =
+                connection_.get().sendShared(std::move(message), innerYield);
+            if (not expectedSuccess.has_value() and
+                errorHandler_(expectedSuccess.error(), connection_)) {
+                connection_.get().close(innerYield);
+                gotError_ = true;
+            }
         }
-    });
+    );
 }
 
 void

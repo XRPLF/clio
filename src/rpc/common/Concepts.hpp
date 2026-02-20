@@ -100,7 +100,7 @@ concept SomeHandlerWithoutInput = SomeContextProcessWithoutInput<T>;
  * @brief Specifies what a Handler type must provide.
  */
 template <typename T>
-concept SomeHandler =
-    (SomeHandlerWithInput<T> or SomeHandlerWithoutInput<T>) and boost::json::has_value_from<typename T::Output>::value;
+concept SomeHandler = (SomeHandlerWithInput<T> or SomeHandlerWithoutInput<T>) and
+    boost::json::has_value_from<typename T::Output>::value;
 
 }  // namespace rpc

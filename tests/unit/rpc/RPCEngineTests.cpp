@@ -76,7 +76,8 @@ generateDefaultRPCEngineConfig()
 {
     return ClioConfigDefinition{
         {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
-        {"workers", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint16)},
+        {"workers",
+         ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint16)},
         {"rpc.cache_timeout",
          ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(gValidatePositiveDouble)},
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
@@ -85,7 +86,8 @@ generateDefaultRPCEngineConfig()
          ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(gValidateUint32)},
         {"dos_guard.max_connections",
          ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)},
-        {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)}
+        {"dos_guard.max_requests",
+         ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(gValidateUint32)}
     };
 }
 
@@ -117,7 +119,8 @@ struct RPCEngineFlowTestCaseBundle {
     std::optional<boost::json::object> response;
 };
 
-struct RPCEngineFlowParameterTest : public RPCEngineTest, WithParamInterface<RPCEngineFlowTestCaseBundle> {};
+struct RPCEngineFlowParameterTest : public RPCEngineTest,
+                                    WithParamInterface<RPCEngineFlowTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -211,9 +214,11 @@ TEST_P(RPCEngineFlowParameterTest, Test)
 
     if (testBundle.forwarded) {
         EXPECT_CALL(*mockLoadBalancerPtr_, forwardToRippled)
-            .WillOnce(
-                Return(std::expected<boost::json::object, rpc::ClioError>(json::parse(kFORWARD_REPLY).as_object()))
-            );
+            .WillOnce(Return(
+                std::expected<boost::json::object, rpc::ClioError>(
+                    json::parse(kFORWARD_REPLY).as_object()
+                )
+            ));
         EXPECT_CALL(*handlerProvider, contains).WillOnce(Return(true));
         EXPECT_CALL(*mockCountersPtr_, rpcForwarded(testBundle.method));
     }
@@ -273,7 +278,8 @@ TEST_F(RPCEngineTest, ThrowDatabaseError)
         cfg, backend_, mockLoadBalancerPtr_, dosGuard, queue, *mockCountersPtr_, handlerProvider
     );
     EXPECT_CALL(*backend_, isTooBusy).WillOnce(Return(false));
-    EXPECT_CALL(*handlerProvider, getHandler(method)).WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
+    EXPECT_CALL(*handlerProvider, getHandler(method))
+        .WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
     EXPECT_CALL(*mockCountersPtr_, rpcErrored(method)).WillOnce(Throw(data::DatabaseTimeout{}));
     EXPECT_CALL(*handlerProvider, contains(method)).WillOnce(Return(true));
     EXPECT_CALL(*mockCountersPtr_, onTooBusy());
@@ -304,7 +310,8 @@ TEST_F(RPCEngineTest, ThrowException)
         cfg, backend_, mockLoadBalancerPtr_, dosGuard, queue, *mockCountersPtr_, handlerProvider
     );
     EXPECT_CALL(*backend_, isTooBusy).WillOnce(Return(false));
-    EXPECT_CALL(*handlerProvider, getHandler(method)).WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
+    EXPECT_CALL(*handlerProvider, getHandler(method))
+        .WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
     EXPECT_CALL(*mockCountersPtr_, rpcErrored(method)).WillOnce(Throw(std::exception{}));
     EXPECT_CALL(*handlerProvider, contains(method)).WillOnce(Return(true));
     EXPECT_CALL(*mockCountersPtr_, onInternalError());
@@ -336,7 +343,8 @@ struct RPCEngineCacheTestCaseBundle {
     bool expectedCacheEnabled;
 };
 
-struct RPCEngineCacheParameterTest : public RPCEngineTest, WithParamInterface<RPCEngineCacheTestCaseBundle> {};
+struct RPCEngineCacheParameterTest : public RPCEngineTest,
+                                     WithParamInterface<RPCEngineCacheTestCaseBundle> {};
 
 static auto
 generateCacheTestValuesForParametersTest()
@@ -418,13 +426,20 @@ TEST_P(RPCEngineCacheParameterTest, Test)
     auto const admin = testParam.isAdmin;
     auto const method = testParam.method;
     std::shared_ptr<RPCEngine<MockCounters>> engine = RPCEngine<MockCounters>::makeRPCEngine(
-        cfgCache, backend_, mockLoadBalancerPtr_, dosGuard, queue, *mockCountersPtr_, handlerProvider
+        cfgCache,
+        backend_,
+        mockLoadBalancerPtr_,
+        dosGuard,
+        queue,
+        *mockCountersPtr_,
+        handlerProvider
     );
     int callTime = 2;
     EXPECT_CALL(*handlerProvider, isClioOnly).Times(callTime).WillRepeatedly(Return(false));
     if (testParam.expectedCacheEnabled) {
         EXPECT_CALL(*backend_, isTooBusy).WillOnce(Return(false));
-        EXPECT_CALL(*handlerProvider, getHandler).WillOnce(Return(AnyHandler{tests::common::HandlerFake{}}));
+        EXPECT_CALL(*handlerProvider, getHandler)
+            .WillOnce(Return(AnyHandler{tests::common::HandlerFake{}}));
 
     } else {
         EXPECT_CALL(*backend_, isTooBusy).Times(callTime).WillRepeatedly(Return(false));
@@ -449,7 +464,10 @@ TEST_P(RPCEngineCacheParameterTest, Test)
 
             auto const res = engine->buildResponse(ctx);
             ASSERT_TRUE(res.response.has_value());
-            EXPECT_EQ(res.response.value(), boost::json::parse(R"JSON({ "computed": "world_50"})JSON").as_object());
+            EXPECT_EQ(
+                res.response.value(),
+                boost::json::parse(R"JSON({ "computed": "world_50"})JSON").as_object()
+            );
         });
     }
 }
@@ -458,7 +476,8 @@ TEST_F(RPCEngineTest, NotCacheIfErrorHappen)
 {
     auto const cfgCache = ClioConfigDefinition{
         {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
-        {"workers", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint16)},
+        {"workers",
+         ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint16)},
         {"rpc.cache_timeout",
          ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(gValidatePositiveDouble)}
     };
@@ -466,7 +485,13 @@ TEST_F(RPCEngineTest, NotCacheIfErrorHappen)
     auto const notAdmin = false;
     auto const method = "server_info";
     std::shared_ptr<RPCEngine<MockCounters>> engine = RPCEngine<MockCounters>::makeRPCEngine(
-        cfgCache, backend_, mockLoadBalancerPtr_, dosGuard, queue, *mockCountersPtr_, handlerProvider
+        cfgCache,
+        backend_,
+        mockLoadBalancerPtr_,
+        dosGuard,
+        queue,
+        *mockCountersPtr_,
+        handlerProvider
     );
 
     int callTime = 2;

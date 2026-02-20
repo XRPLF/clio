@@ -101,9 +101,13 @@ public:
      * @param resolver The resolver to use for hostname resolution
      */
     template <SomeResolver HostnameResolverType = Resolver>
-    WhitelistHandler(util::config::ClioConfigDefinition const& config, HostnameResolverType&& resolver = {})
+    WhitelistHandler(
+        util::config::ClioConfigDefinition const& config,
+        HostnameResolverType&& resolver = {}
+    )
     {
-        std::unordered_set<std::string> const arr = getWhitelist(config, std::forward<HostnameResolverType>(resolver));
+        std::unordered_set<std::string> const arr =
+            getWhitelist(config, std::forward<HostnameResolverType>(resolver));
         for (auto const& net : arr)
             whitelist_.add(net);
     }
@@ -130,7 +134,9 @@ private:
         // resolve hostnames to ips
         std::unordered_set<std::string> ips;
 
-        for (auto it = whitelist.begin<util::config::ValueView>(); it != whitelist.end<util::config::ValueView>(); ++it)
+        for (auto it = whitelist.begin<util::config::ValueView>();
+             it != whitelist.end<util::config::ValueView>();
+             ++it)
             hostnames.insert((*it).asString());
 
         for (auto const& hostname : hostnames) {

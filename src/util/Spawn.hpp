@@ -30,13 +30,14 @@ namespace util {
 namespace impl {
 
 template <typename T>
-concept IsStrand = std::same_as<std::decay_t<T>, boost::asio::strand<typename std::decay_t<T>::inner_executor_type>>;
+concept IsStrand = std::
+    same_as<std::decay_t<T>, boost::asio::strand<typename std::decay_t<T>::inner_executor_type>>;
 
 /**
  * @brief A completion handler that restores `boost::asio::spawn`'s behaviour from Boost 1.83
  *
- * This is intended to be passed as the third argument to `boost::asio::spawn` so that exceptions are not ignored but
- * propagated to `io_context.run()` call site.
+ * This is intended to be passed as the third argument to `boost::asio::spawn` so that exceptions
+ * are not ignored but propagated to `io_context.run()` call site.
  */
 inline constexpr struct PropagatingCompletionHandler {
     /**
@@ -57,7 +58,8 @@ inline constexpr struct PropagatingCompletionHandler {
  * @brief Spawns a coroutine using `boost::asio::spawn`
  *
  * @note This uses kPROPAGATE_EXCEPTIONS to force asio to propagate exceptions through `io_context`
- * @note Since implicit strand was removed from boost::asio::spawn this helper function adds the strand back
+ * @note Since implicit strand was removed from boost::asio::spawn this helper function adds the
+ * strand back
  *
  * @tparam Ctx The type of the context/strand
  * @tparam F The type of the function to execute
@@ -70,7 +72,9 @@ void
 spawn(Ctx&& ctx, F&& func)
 {
     if constexpr (impl::IsStrand<Ctx>) {
-        boost::asio::spawn(std::forward<Ctx>(ctx), std::forward<F>(func), impl::kPROPAGATE_EXCEPTIONS);
+        boost::asio::spawn(
+            std::forward<Ctx>(ctx), std::forward<F>(func), impl::kPROPAGATE_EXCEPTIONS
+        );
     } else {
         boost::asio::spawn(
             boost::asio::make_strand(std::forward<Ctx>(ctx).get_executor()),

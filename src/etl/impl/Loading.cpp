@@ -69,17 +69,20 @@ Loader::load(model::LedgerData const& data)
         // Only a writer should attempt to commit to DB
         // This is also where conflicts with other writer nodes will be detected
         if (state_->isWriting) {
-            auto [success, duration] =
-                ::util::timed<std::chrono::milliseconds>([&]() { return backend_->finishWrites(data.seq); });
-            LOG(log_.info()) << "Finished writes to DB for " << data.seq << ": " << (success ? "YES" : "NO")
-                             << "; took " << duration << "ms";
+            auto [success, duration] = ::util::timed<std::chrono::milliseconds>([&]() {
+                return backend_->finishWrites(data.seq);
+            });
+            LOG(log_.info()) << "Finished writes to DB for " << data.seq << ": "
+                             << (success ? "YES" : "NO") << "; took " << duration << "ms";
 
             if (not success) {
                 // Write conflict detected - another node wrote to the database
                 // This triggers the fallback mechanism and stops this node from writing
                 state_->writeCommandSignal(SystemState::WriteCommand::StopWriting);
                 state_->isWriterDecidingFallback = true;
-                LOG(log_.warn()) << "Another node wrote a ledger into the DB - we have a write conflict";
+                LOG(
+                    log_.warn()
+                ) << "Another node wrote a ledger into the DB - we have a write conflict";
                 return std::unexpected(LoaderError::WriteConflict);
             }
         }
@@ -103,11 +106,14 @@ Loader::onInitialLoadGotMoreObjects(
     static auto kINITIAL_LOAD_START_TIME = std::chrono::steady_clock::now();
 
     try {
-        LOG(log_.trace()) << "On initial load: got more objects for seq " << seq << ". size = " << data.size();
+        LOG(log_.trace()) << "On initial load: got more objects for seq " << seq
+                          << ". size = " << data.size();
         registry_->dispatchInitialObjects(
             seq,
             data,
-            std::move(lastKey).value_or(std::string{})  // TODO: perhaps use optional all the way to extensions?
+            std::move(lastKey).value_or(
+                std::string{}
+            )  // TODO: perhaps use optional all the way to extensions?
         );
 
         initialLoadWrittenObjects_ += data.size();
@@ -116,13 +122,15 @@ Loader::onInitialLoadGotMoreObjects(
             auto elapsedSinceStart = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::steady_clock::now() - kINITIAL_LOAD_START_TIME
             );
-            auto elapsedSeconds = elapsedSinceStart.count() / static_cast<double>(util::kMILLISECONDS_PER_SECOND);
-            auto objectsPerSecond =
-                elapsedSeconds > 0.0 ? static_cast<double>(initialLoadWrittenObjects_) / elapsedSeconds : 0.0;
+            auto elapsedSeconds =
+                elapsedSinceStart.count() / static_cast<double>(util::kMILLISECONDS_PER_SECOND);
+            auto objectsPerSecond = elapsedSeconds > 0.0
+                ? static_cast<double>(initialLoadWrittenObjects_) / elapsedSeconds
+                : 0.0;
 
             LOG(log_.info()) << "Wrote " << initialLoadWrittenObjects_
-                             << " initial ledger objects so far with average rate of " << objectsPerSecond
-                             << " objects per second";
+                             << " initial ledger objects so far with average rate of "
+                             << objectsPerSecond << " objects per second";
         }
 
     } catch (std::runtime_error const& e) {
@@ -142,8 +150,11 @@ Loader::loadInitialLedger(model::LedgerData const& data)
 
         LOG(log_.debug()) << "Deserialized ledger header. " << ::util::toString(data.header);
 
-        auto seconds = ::util::timed<std::chrono::seconds>([this, &data]() { registry_->dispatchInitialData(data); });
-        LOG(log_.info()) << "Dispatching initial data and submitting all writes took " << seconds << " seconds.";
+        auto seconds = ::util::timed<std::chrono::seconds>([this, &data]() {
+            registry_->dispatchInitialData(data);
+        });
+        LOG(log_.info()) << "Dispatching initial data and submitting all writes took " << seconds
+                         << " seconds.";
 
         backend_->finishWrites(data.seq);
         LOG(log_.debug()) << "Loaded initial ledger";

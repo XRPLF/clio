@@ -61,7 +61,8 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
 
     if (input.ledgerIndexMin) {
         if (ctx.apiVersion > 1u &&
-            (input.ledgerIndexMin > range->maxSequence || input.ledgerIndexMin < range->minSequence)) {
+            (input.ledgerIndexMin > range->maxSequence ||
+             input.ledgerIndexMin < range->minSequence)) {
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMinOutOfRange"}};
         }
 
@@ -71,7 +72,8 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
 
     if (input.ledgerIndexMax) {
         if (ctx.apiVersion > 1u &&
-            (input.ledgerIndexMax > range->maxSequence || input.ledgerIndexMax < range->minSequence)) {
+            (input.ledgerIndexMax > range->maxSequence ||
+             input.ledgerIndexMax < range->minSequence)) {
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMaxOutOfRange"}};
         }
 
@@ -88,13 +90,19 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
 
     if (input.ledgerHash || input.ledgerIndex || input.usingValidatedLedger) {
         if (ctx.apiVersion > 1u && (input.ledgerIndexMax || input.ledgerIndexMin))
-            return Error{Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}};
+            return Error{
+                Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}
+            };
 
         if (!input.ledgerIndexMax && !input.ledgerIndexMin) {
             // mimic rippled, when both range and index specified, respect the range.
             // take ledger from ledgerHash or ledgerIndex only when range is not specified
             auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-                *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+                *sharedPtrBackend_,
+                ctx.yield,
+                input.ledgerHash,
+                input.ledgerIndex,
+                range->maxSequence
             );
 
             if (!expectedLgrInfo.has_value())
@@ -110,8 +118,8 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
     if (input.marker) {
         cursor = {input.marker->ledger, input.marker->seq};
     } else {
-        // if forward, start at minIndex - 1, because the SQL query is exclusive, we need to include the 0
-        // transaction index of minIndex
+        // if forward, start at minIndex - 1, because the SQL query is exclusive, we need to include
+        // the 0 transaction index of minIndex
         if (input.forward) {
             cursor = {minIndex - 1, std::numeric_limits<int32_t>::max()};
         } else {
@@ -122,10 +130,13 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
     auto const limit = input.limit.value_or(kLIMIT_DEFAULT);
     auto const accountID = accountFromStringStrict(input.account);
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
-        return sharedPtrBackend_->fetchAccountTransactions(*accountID, limit, input.forward, cursor, ctx.yield);
+        return sharedPtrBackend_->fetchAccountTransactions(
+            *accountID, limit, input.forward, cursor, ctx.yield
+        );
     });
 
-    LOG(log_.info()) << "db fetch took " << timeDiff << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
+    LOG(log_.info()) << "db fetch took " << timeDiff
+                     << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
 
     auto const [blobs, retCursor] = txnsAndCursor;
     Output response;
@@ -167,9 +178,12 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                     if (auto const& etlState = etl_->getETLState(); etlState.has_value())
                         networkID = etlState->networkID;
 
-                    auto const txnIdx =
-                        util::integralValueAs<uint16_t>(obj[JS(meta)].as_object().at("TransactionIndex"));
-                    if (auto const& ctid = rpc::encodeCTID(txnPlusMeta.ledgerSequence, txnIdx, networkID); ctid)
+                    auto const txnIdx = util::integralValueAs<uint16_t>(
+                        obj[JS(meta)].as_object().at("TransactionIndex")
+                    );
+                    if (auto const& ctid =
+                            rpc::encodeCTID(txnPlusMeta.ledgerSequence, txnIdx, networkID);
+                        ctid)
                         obj[txKey].as_object()[JS(ctid)] = ctid.value();
                 }
 
@@ -184,8 +198,9 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                         obj[JS(hash)] = obj[txKey].as_object()[JS(hash)];
                         obj[txKey].as_object().erase(JS(hash));
                     }
-                    if (auto const ledgerHeader =
-                            sharedPtrBackend_->fetchLedgerBySequence(txnPlusMeta.ledgerSequence, ctx.yield);
+                    if (auto const ledgerHeader = sharedPtrBackend_->fetchLedgerBySequence(
+                            txnPlusMeta.ledgerSequence, ctx.yield
+                        );
                         ledgerHeader) {
                         obj[JS(ledger_hash)] = ripple::strHex(ledgerHeader->hash);
                         obj[JS(close_time_iso)] = ripple::to_string_iso(ledgerHeader->closeTime);
@@ -212,7 +227,11 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountTxHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountTxHandler::Output const& output
+)
 {
     jv = {
         {JS(account), output.account},
@@ -230,7 +249,11 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountTxHandler
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountTxHandler::Marker const& marker)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountTxHandler::Marker const& marker
+)
 {
     jv = {
         {JS(ledger), marker.ledger},
@@ -278,13 +301,17 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
 
     if (jsonObject.contains(JS(marker))) {
         input.marker = AccountTxHandler::Marker{
-            .ledger = util::integralValueAs<uint32_t>(jsonObject.at(JS(marker)).as_object().at(JS(ledger))),
-            .seq = util::integralValueAs<uint32_t>(jsonObject.at(JS(marker)).as_object().at(JS(seq)))
+            .ledger = util::integralValueAs<uint32_t>(
+                jsonObject.at(JS(marker)).as_object().at(JS(ledger))
+            ),
+            .seq =
+                util::integralValueAs<uint32_t>(jsonObject.at(JS(marker)).as_object().at(JS(seq)))
         };
     }
 
     if (jsonObject.contains("tx_type"))
-        input.transactionTypeInLowercase = boost::json::value_to<std::string>(jsonObject.at("tx_type"));
+        input.transactionTypeInLowercase =
+            boost::json::value_to<std::string>(jsonObject.at("tx_type"));
 
     return input;
 }

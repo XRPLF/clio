@@ -41,7 +41,8 @@
 namespace rpc {
 
 /**
- * @brief The transaction_entry method retrieves information on a single transaction from a specific ledger version.
+ * @brief The transaction_entry method retrieves information on a single transaction from a specific
+ * ledger version.
  *
  * For more details see: https://xrpl.org/transaction_entry.html
  */
@@ -94,7 +95,9 @@ public:
     {
         static auto const kRPC_SPEC = RpcSpec{
             {JS(tx_hash),
-             meta::WithCustomError{validation::Required{}, Status(ClioError::RpcFieldNotFoundTransaction)},
+             meta::WithCustomError{
+                 validation::Required{}, Status(ClioError::RpcFieldNotFoundTransaction)
+             },
              validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},

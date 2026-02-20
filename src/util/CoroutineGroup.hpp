@@ -30,8 +30,8 @@
 namespace util {
 
 /**
- * @brief CoroutineGroup is a helper class to manage a group of coroutines. It allows to spawn multiple coroutines and
- * wait for all of them to finish.
+ * @brief CoroutineGroup is a helper class to manage a group of coroutines. It allows to spawn
+ * multiple coroutines and wait for all of them to finish.
  * @note This class is safe to use from multiple threads.
  */
 class CoroutineGroup {
@@ -44,10 +44,13 @@ public:
      * @brief Construct a new Coroutine Group object
      *
      * @param yield The yield context to use for the internal timer
-     * @param maxChildren The maximum number of coroutines that can be spawned at the same time. If not provided, there
-     * is no limit
+     * @param maxChildren The maximum number of coroutines that can be spawned at the same time. If
+     * not provided, there is no limit
      */
-    CoroutineGroup(boost::asio::yield_context yield, std::optional<size_t> maxChildren = std::nullopt);
+    CoroutineGroup(
+        boost::asio::yield_context yield,
+        std::optional<size_t> maxChildren = std::nullopt
+    );
 
     /**
      * @brief Destroy the Coroutine Group object
@@ -59,22 +62,23 @@ public:
     /**
      * @brief Spawn a new coroutine in the group
      *
-     * @param yield The yield context to use for the coroutine (it should be the same as the one used in the
-     * constructor)
+     * @param yield The yield context to use for the coroutine (it should be the same as the one
+     * used in the constructor)
      * @param fn The function to execute
-     * @return true If the coroutine was spawned successfully. false if the maximum number of coroutines has been
-     * reached
+     * @return true If the coroutine was spawned successfully. false if the maximum number of
+     * coroutines has been reached
      */
     bool
     spawn(boost::asio::yield_context yield, std::function<void(boost::asio::yield_context)> fn);
 
     /**
      * @brief Register a foreign coroutine this group should wait for.
-     * @note A foreign coroutine is still counted as a child one, i.e. calling this method increases the size of the
-     * group.
+     * @note A foreign coroutine is still counted as a child one, i.e. calling this method increases
+     * the size of the group.
      *
      * @param yield The yield context owning the coroutine group.
-     * @return A callback to call on foreign coroutine completes or std::nullopt if the group is already full.
+     * @return A callback to call on foreign coroutine completes or std::nullopt if the group is
+     * already full.
      */
     std::optional<std::function<void()>>
     registerForeign(boost::asio::yield_context yield);

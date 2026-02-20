@@ -36,7 +36,8 @@
 namespace migration {
 
 /**
- * @brief A factory function that creates migration inspector instance and initializes the migration table if needed.
+ * @brief A factory function that creates migration inspector instance and initializes the migration
+ * table if needed.
  *
  * @param config The config.
  * @param backend The backend instance. It should be initialized before calling this function.

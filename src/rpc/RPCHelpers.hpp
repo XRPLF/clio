@@ -164,8 +164,8 @@ toExpandedJson(
 );
 
 /**
- * @brief Convert a TransactionAndMetadata to JSON object containing tx and metadata data in hex format. According to
- * the apiVersion, the key is "tx_blob" and "meta" or "meta_blob".
+ * @brief Convert a TransactionAndMetadata to JSON object containing tx and metadata data in hex
+ * format. According to the apiVersion, the key is "tx_blob" and "meta" or "meta_blob".
  * @param txnPlusMeta The TransactionAndMetadata to convert.
  * @param apiVersion The api version
  * @return The JSON object containing tx and metadata data in hex format.
@@ -174,8 +174,8 @@ boost::json::object
 toJsonWithBinaryTx(data::TransactionAndMetadata const& txnPlusMeta, std::uint32_t apiVersion);
 
 /**
- * @brief Add "DeliverMax" which is the alias of "Amount" for "Payment" transaction to transaction json. Remove the
- * "Amount" field when version is greater than 1
+ * @brief Add "DeliverMax" which is the alias of "Amount" for "Payment" transaction to transaction
+ * json. Remove the "Amount" field when version is greater than 1
  * @param txJson The transaction json object
  * @param apiVersion The api version
  */
@@ -201,9 +201,9 @@ insertDeliveredAmount(
 
 /**
  * @brief Add "mpt_issuance_id" into various MPTToken transaction json.
- * @note We add "mpt_issuance_id" into the meta part of MPTokenIssuanceCreate only. The reason is because the
- * mpt_issuance_id is generated only after one submits MPTokenIssuanceCreate, so there’s no way to know what the id is.
- * (rippled)
+ * @note We add "mpt_issuance_id" into the meta part of MPTokenIssuanceCreate only. The reason is
+ * because the mpt_issuance_id is generated only after one submits MPTokenIssuanceCreate, so there’s
+ * no way to know what the id is. (rippled)
  *
  * @param txnJson The transaction Json object
  * @param txn The txn object
@@ -293,7 +293,10 @@ generatePubLedgerMessage(
  * @return The ledger info or an error status
  */
 std::expected<ripple::LedgerHeader, Status>
-ledgerHeaderFromRequest(std::shared_ptr<data::BackendInterface const> const& backend, web::Context const& ctx);
+ledgerHeaderFromRequest(
+    std::shared_ptr<data::BackendInterface const> const& backend,
+    web::Context const& ctx
+);
 
 /**
  * @brief Get ledger info from hash or sequence
@@ -462,8 +465,8 @@ fetchAndCheckAnyFlagsExists(
 /**
  * @brief Whether the trustline is deep frozen.
  *
- * For deep freeze, (unlike regular freeze) we do not care which account has the high/low deep freeze flag.
- * We only care about if the trustline is deep frozen or not.
+ * For deep freeze, (unlike regular freeze) we do not care which account has the high/low deep
+ * freeze flag. We only care about if the trustline is deep frozen or not.
  *
  * @param backend The backend to use
  * @param sequence The sequence
@@ -769,7 +772,11 @@ decodeCTID(T const ctid) noexcept
  */
 template <typename DurationType>
 void
-logDuration(boost::json::object const& request, util::BaseTagDecorator const& tag, DurationType const& dur)
+logDuration(
+    boost::json::object const& request,
+    util::BaseTagDecorator const& tag,
+    DurationType const& dur
+)
 {
     using boost::json::serialize;
 
@@ -779,7 +786,9 @@ logDuration(boost::json::object const& request, util::BaseTagDecorator const& ta
     auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
     auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
     auto const msg = fmt::format(
-        "Request processing duration = {} milliseconds. request = {}", millis, serialize(util::removeSecret(request))
+        "Request processing duration = {} milliseconds. request = {}",
+        millis,
+        serialize(util::removeSecret(request))
     );
 
     if (seconds > kDURATION_ERROR_THRESHOLD_SECONDS) {

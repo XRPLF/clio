@@ -64,13 +64,21 @@ getAccountKey(ripple::AccountID const& acc);
  * Create a simple ledgerHeader object with only hash and seq
  */
 [[nodiscard]] ripple::LedgerHeader
-createLedgerHeader(std::string_view ledgerHash, ripple::LedgerIndex seq, std::optional<uint32_t> age = std::nullopt);
+createLedgerHeader(
+    std::string_view ledgerHash,
+    ripple::LedgerIndex seq,
+    std::optional<uint32_t> age = std::nullopt
+);
 
 /*
  * Create a simple ledgerHeader object with hash, seq and unix timestamp
  */
 [[nodiscard]] ripple::LedgerHeader
-createLedgerHeaderWithUnixTime(std::string_view ledgerHash, ripple::LedgerIndex seq, uint64_t closeTimeUnixStamp);
+createLedgerHeaderWithUnixTime(
+    std::string_view ledgerHash,
+    ripple::LedgerIndex seq,
+    uint64_t closeTimeUnixStamp
+);
 
 /*
  * Create a Legacy (pre XRPFees amendment) FeeSetting ledger object
@@ -111,7 +119,12 @@ createLegacyFeeSettingBlob(
  * Create a FeeSetting ledger object and return its blob
  */
 ripple::Blob
-createFeeSettingBlob(ripple::STAmount base, ripple::STAmount reserveInc, ripple::STAmount reserveBase, uint32_t flag);
+createFeeSettingBlob(
+    ripple::STAmount base,
+    ripple::STAmount reserveInc,
+    ripple::STAmount reserveBase,
+    uint32_t flag
+);
 
 /*
  * Create a payment transaction object
@@ -432,7 +445,12 @@ createChainOwnedCreateAccountClaimId(
 );
 
 void
-ammAddVoteSlot(ripple::STObject& amm, ripple::AccountID const& accountId, uint16_t tradingFee, uint32_t voteWeight);
+ammAddVoteSlot(
+    ripple::STObject& amm,
+    ripple::AccountID const& accountId,
+    uint16_t tradingFee,
+    uint32_t voteWeight
+);
 
 void
 ammSetAuctionSlot(
@@ -445,7 +463,12 @@ ammSetAuctionSlot(
 );
 
 [[nodiscard]] ripple::STObject
-createDidObject(std::string_view accountId, std::string_view didDoc, std::string_view uri, std::string_view data);
+createDidObject(
+    std::string_view accountId,
+    std::string_view didDoc,
+    std::string_view uri,
+    std::string_view data
+);
 
 [[nodiscard]] ripple::Currency
 createLptCurrency(std::string_view assetCurrency, std::string_view asset2Currency);
@@ -567,7 +590,10 @@ createCredentialObject(
 );
 
 [[nodiscard]] ripple::STArray
-createAuthCredentialArray(std::vector<std::string_view> issuer, std::vector<std::string_view> credType);
+createAuthCredentialArray(
+    std::vector<std::string_view> issuer,
+    std::vector<std::string_view> credType
+);
 
 [[nodiscard]] ripple::STObject
 createVault(

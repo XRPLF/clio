@@ -87,14 +87,18 @@ public:
         static auto const kRPC_SPEC = RpcSpec{
             {JS(vault_id),
              meta::WithCustomError{
-                 validation::CustomValidators::uint256HexStringValidator, Status(ClioError::RpcMalformedRequest)
+                 validation::CustomValidators::uint256HexStringValidator,
+                 Status(ClioError::RpcMalformedRequest)
              }},
             {JS(owner),
              meta::WithCustomError{
                  validation::CustomValidators::accountBase58Validator,
                  Status(ClioError::RpcMalformedRequest, "OwnerNotHexString")
              }},
-            {JS(seq), meta::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::RpcMalformedRequest)}},
+            {JS(seq),
+             meta::WithCustomError{
+                 validation::Type<uint32_t>{}, Status(ClioError::RpcMalformedRequest)
+             }},
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
         };
 

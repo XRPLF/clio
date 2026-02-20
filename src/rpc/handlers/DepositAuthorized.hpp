@@ -41,8 +41,9 @@ namespace rpc {
 /**
  * @brief Handles the `deposit_authorized` command
  *
- * The deposit_authorized command indicates whether one account is authorized to send payments directly to
- * another. See Deposit Authorization for information on how to require authorization to deliver money to your account.
+ * The deposit_authorized command indicates whether one account is authorized to send payments
+ * directly to another. See Deposit Authorization for information on how to require authorization to
+ * deliver money to your account.
  *
  * For more details see: https://xrpl.org/deposit_authorized.html
  */
@@ -100,8 +101,12 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const kRPC_SPEC = RpcSpec{
-            {JS(source_account), validation::Required{}, validation::CustomValidators::accountValidator},
-            {JS(destination_account), validation::Required{}, validation::CustomValidators::accountValidator},
+            {JS(source_account),
+             validation::Required{},
+             validation::CustomValidators::accountValidator},
+            {JS(destination_account),
+             validation::Required{},
+             validation::CustomValidators::accountValidator},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
             {JS(credentials), validation::Type<boost::json::array>{}, validation::Hex256ItemType()}

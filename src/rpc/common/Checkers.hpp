@@ -43,7 +43,8 @@ struct Warning {
      * @param code The warning code
      * @param message The warning message
      */
-    Warning(WarningCode code, std::string message) : warningCode(code), extraMessage(std::move(message))
+    Warning(WarningCode code, std::string message)
+        : warningCode(code), extraMessage(std::move(message))
     {
     }
 
@@ -78,7 +79,9 @@ public:
     check(boost::json::value const& value, std::string_view key)
     {
         if (value.is_object() and value.as_object().contains(key))
-            return Warning{WarningCode::WarnRpcDeprecated, fmt::format("Field '{}' is deprecated.", key)};
+            return Warning{
+                WarningCode::WarnRpcDeprecated, fmt::format("Field '{}' is deprecated.", key)
+            };
         return std::nullopt;
     }
 };
@@ -117,7 +120,8 @@ public:
             auto const res = value_to<T>(value.as_object().at(key));
             if (value_ == res) {
                 return Warning{
-                    WarningCode::WarnRpcDeprecated, fmt::format("Value '{}' for field '{}' is deprecated", value_, key)
+                    WarningCode::WarnRpcDeprecated,
+                    fmt::format("Value '{}' for field '{}' is deprecated", value_, key)
                 };
             }
         }

@@ -69,17 +69,24 @@ TEST_F(MetricsTest, OnNewStateWithValidClusterData)
     Metrics metrics;
 
     ClioNode const node1{
-        .uuid = uuid1, .updateTime = std::chrono::system_clock::now(), .dbRole = ClioNode::DbRole::Writer
+        .uuid = uuid1,
+        .updateTime = std::chrono::system_clock::now(),
+        .dbRole = ClioNode::DbRole::Writer
     };
     ClioNode const node2{
-        .uuid = uuid2, .updateTime = std::chrono::system_clock::now(), .dbRole = ClioNode::DbRole::ReadOnly
+        .uuid = uuid2,
+        .updateTime = std::chrono::system_clock::now(),
+        .dbRole = ClioNode::DbRole::ReadOnly
     };
     ClioNode const node3{
-        .uuid = uuid3, .updateTime = std::chrono::system_clock::now(), .dbRole = ClioNode::DbRole::NotWriter
+        .uuid = uuid3,
+        .updateTime = std::chrono::system_clock::now(),
+        .dbRole = ClioNode::DbRole::NotWriter
     };
 
     std::vector<ClioNode> const nodes = {node1, node2, node3};
-    Backend::ClusterData const clusterData = std::expected<std::vector<ClioNode>, std::string>(nodes);
+    Backend::ClusterData const clusterData =
+        std::expected<std::vector<ClioNode>, std::string>(nodes);
     auto sharedClusterData = std::make_shared<Backend::ClusterData>(clusterData);
 
     EXPECT_CALL(isHealthyMock, set(1));
@@ -99,7 +106,8 @@ TEST_F(MetricsTest, OnNewStateWithEmptyClusterData)
     Metrics metrics;
 
     std::vector<ClioNode> const nodes = {};
-    Backend::ClusterData const clusterData = std::expected<std::vector<ClioNode>, std::string>(nodes);
+    Backend::ClusterData const clusterData =
+        std::expected<std::vector<ClioNode>, std::string>(nodes);
     auto sharedClusterData = std::make_shared<Backend::ClusterData>(clusterData);
 
     EXPECT_CALL(isHealthyMock, set(1));
@@ -139,11 +147,14 @@ TEST_F(MetricsTest, OnNewStateWithSingleNode)
     Metrics metrics;
 
     ClioNode const node1{
-        .uuid = uuid1, .updateTime = std::chrono::system_clock::now(), .dbRole = ClioNode::DbRole::Writer
+        .uuid = uuid1,
+        .updateTime = std::chrono::system_clock::now(),
+        .dbRole = ClioNode::DbRole::Writer
     };
 
     std::vector<ClioNode> const nodes = {node1};
-    Backend::ClusterData const clusterData = std::expected<std::vector<ClioNode>, std::string>(nodes);
+    Backend::ClusterData const clusterData =
+        std::expected<std::vector<ClioNode>, std::string>(nodes);
     auto sharedClusterData = std::make_shared<Backend::ClusterData>(clusterData);
 
     EXPECT_CALL(isHealthyMock, set(1));
@@ -172,14 +183,19 @@ TEST_F(MetricsTest, OnNewStateRecoveryFromFailure)
     metrics.onNewState(uuid1, sharedClusterData1);
 
     ClioNode const node1{
-        .uuid = uuid1, .updateTime = std::chrono::system_clock::now(), .dbRole = ClioNode::DbRole::Writer
+        .uuid = uuid1,
+        .updateTime = std::chrono::system_clock::now(),
+        .dbRole = ClioNode::DbRole::Writer
     };
     ClioNode const node2{
-        .uuid = uuid2, .updateTime = std::chrono::system_clock::now(), .dbRole = ClioNode::DbRole::ReadOnly
+        .uuid = uuid2,
+        .updateTime = std::chrono::system_clock::now(),
+        .dbRole = ClioNode::DbRole::ReadOnly
     };
 
     std::vector<ClioNode> const nodes = {node1, node2};
-    Backend::ClusterData const clusterData2 = std::expected<std::vector<ClioNode>, std::string>(nodes);
+    Backend::ClusterData const clusterData2 =
+        std::expected<std::vector<ClioNode>, std::string>(nodes);
     auto sharedClusterData2 = std::make_shared<Backend::ClusterData>(clusterData2);
 
     EXPECT_CALL(isHealthyMock, set(1));

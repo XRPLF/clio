@@ -267,8 +267,8 @@ public:
     }
 
     /**
-     * @brief Non-blocking  query execution used for writing data. Contrast with write, this method does not execute
-     * the statements in a batch.
+     * @brief Non-blocking  query execution used for writing data. Contrast with write, this method
+     * does not execute the statements in a batch.
      *
      * Retries forever with retry policy specified by @ref AsyncExecutor.
      *
@@ -278,7 +278,9 @@ public:
     void
     writeEach(std::vector<StatementType>&& statements)
     {
-        std::ranges::for_each(std::move(statements), [this](auto& statement) { this->write(std::move(statement)); });
+        std::ranges::for_each(std::move(statements), [this](auto& statement) {
+            this->write(std::move(statement));
+        });
     }
 
     /**
@@ -328,7 +330,9 @@ public:
                 future.emplace(handle_.get().asyncExecute(statements, [sself](auto&& res) mutable {
                     boost::asio::post(
                         boost::asio::get_associated_executor(*sself),
-                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); }
+                        [sself, res = std::forward<decltype(res)>(res)]() mutable {
+                            sself->complete(std::move(res));
+                        }
                     );
                 }));
             };
@@ -381,7 +385,9 @@ public:
                 future.emplace(handle_.get().asyncExecute(statement, [sself](auto&& res) mutable {
                     boost::asio::post(
                         boost::asio::get_associated_executor(*sself),
-                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); }
+                        [sself, res = std::forward<decltype(res)>(res)]() mutable {
+                            sself->complete(std::move(res));
+                        }
                     );
                 }));
             };
@@ -431,19 +437,23 @@ public:
         futures.reserve(numOutstanding);
         counters_->registerReadStarted(statements.size());
 
-        auto init = [this, &statements, &futures, &errorsCount, &numOutstanding]<typename Self>(Self& self) {
+        auto init = [this, &statements, &futures, &errorsCount, &numOutstanding]<typename Self>(
+                        Self& self
+                    ) {
             auto sself = std::make_shared<Self>(std::move(self));
-            auto executionHandler = [&errorsCount, &numOutstanding, sself](auto const& res) mutable {
-                if (not res)
-                    ++errorsCount;
+            auto executionHandler =
+                [&errorsCount, &numOutstanding, sself](auto const& res) mutable {
+                    if (not res)
+                        ++errorsCount;
 
-                // when all async operations complete unblock the result
-                if (--numOutstanding == 0) {
-                    boost::asio::post(boost::asio::get_associated_executor(*sself), [sself]() mutable {
-                        sself->complete();
-                    });
-                }
-            };
+                    // when all async operations complete unblock the result
+                    if (--numOutstanding == 0) {
+                        boost::asio::post(
+                            boost::asio::get_associated_executor(*sself),
+                            [sself]() mutable { sself->complete(); }
+                        );
+                    }
+                };
 
             std::transform(
                 std::cbegin(statements),
@@ -461,7 +471,9 @@ public:
         numReadRequestsOutstanding_ -= statements.size();
 
         if (errorsCount > 0) {
-            ASSERT(errorsCount <= statements.size(), "Errors number cannot exceed statements number");
+            ASSERT(
+                errorsCount <= statements.size(), "Errors number cannot exceed statements number"
+            );
             counters_->registerReadError(errorsCount);
             counters_->registerReadFinished(startTime, statements.size() - errorsCount);
             throw DatabaseTimeout{};
@@ -471,7 +483,8 @@ public:
         std::vector<ResultType> results;
         results.reserve(futures.size());
 
-        // it's safe to call blocking get on futures here as we already waited for the coroutine to resume above.
+        // it's safe to call blocking get on futures here as we already waited for the coroutine to
+        // resume above.
         std::transform(
             std::make_move_iterator(std::begin(futures)),
             std::make_move_iterator(std::end(futures)),

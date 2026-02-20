@@ -26,8 +26,9 @@
 #include <memory>
 
 /**
- * @brief Example migrator for the transactions table. In this example, we show how to traverse the transactions table
- * and migrate the data to index table. We create an index table for transaction hash to transaction type string.
+ * @brief Example migrator for the transactions table. In this example, we show how to traverse the
+ * transactions table and migrate the data to index table. We create an index table for transaction
+ * hash to transaction type string.
  */
 struct ExampleTransactionsMigrator {
     static constexpr char const* kNAME = "ExampleTransactionsMigrator";

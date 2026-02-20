@@ -34,12 +34,13 @@
 namespace etl {
 
 /**
- * @brief This datastructure is used to keep track of the sequence of the most recent ledger validated by the network.
+ * @brief This datastructure is used to keep track of the sequence of the most recent ledger
+ * validated by the network.
  *
- * There are two methods that will wait until certain conditions are met. This datastructure is able to be "stopped".
- * When the datastructure is stopped, any threads currently waiting are unblocked.
- * Any later calls to methods of this datastructure will not wait. Once the datastructure is stopped, the datastructure
- * remains stopped for the rest of its lifetime.
+ * There are two methods that will wait until certain conditions are met. This datastructure is able
+ * to be "stopped". When the datastructure is stopped, any threads currently waiting are unblocked.
+ * Any later calls to methods of this datastructure will not wait. Once the datastructure is
+ * stopped, the datastructure remains stopped for the rest of its lifetime.
  */
 class NetworkValidatedLedgers : public NetworkValidatedLedgersInterface {
     std::optional<uint32_t> latest_;  // currently known latest sequence validated by network
@@ -69,9 +70,11 @@ public:
     /**
      * @brief Get most recently validated sequence.
      *
-     * If no ledgers are known to have been validated, this function waits until the next ledger is validated
+     * If no ledgers are known to have been validated, this function waits until the next ledger is
+     * validated
      *
-     * @return Sequence of most recently validated ledger. empty optional if the datastructure has been stopped
+     * @return Sequence of most recently validated ledger. empty optional if the datastructure has
+     * been stopped
      */
     std::optional<uint32_t>
     getMostRecent() final;
@@ -80,9 +83,10 @@ public:
      * @brief Waits for the sequence to be validated by the network.
      *
      * @param sequence The sequence to wait for
-     * @param maxWaitMs Maximum time to wait for the sequence to be validated. If empty, wait indefinitely
-     * @return true if sequence was validated, false otherwise a return value of false means the datastructure has been
-     * stopped
+     * @param maxWaitMs Maximum time to wait for the sequence to be validated. If empty, wait
+     * indefinitely
+     * @return true if sequence was validated, false otherwise a return value of false means the
+     * datastructure has been stopped
      */
     bool
     waitUntilValidatedByNetwork(uint32_t sequence, std::optional<uint32_t> maxWaitMs = {}) final;

@@ -97,7 +97,8 @@ TEST_F(CacheLoaderSettingsTest, NumMarkersCorrectlyPropagatedThroughConfig)
 
 TEST_F(CacheLoaderSettingsTest, PageFetchSizeCorrectlyPropagatedThroughConfig)
 {
-    auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"page_fetch_size": 42}})JSON"));
+    auto const cfg =
+        getParseCacheConfig(json::parse(R"JSON({"cache": {"page_fetch_size": 42}})JSON"));
     auto const settings = makeCacheLoaderSettings(cfg);
 
     EXPECT_EQ(settings.cachePageFetchSize, 42);
@@ -142,7 +143,8 @@ TEST_F(CacheLoaderSettingsTest, NoLoadStyleCorrectlyPropagatedThroughConfig)
 TEST_F(CacheLoaderSettingsTest, CacheFilePathCorrectlyPropagatedThroughConfig)
 {
     static constexpr auto kCACHE_FILE_PATH = "/path/to/cache.dat";
-    auto const jsonStr = fmt::format(R"JSON({{"cache": {{"file": {{"path": "{}"}}}}}})JSON", kCACHE_FILE_PATH);
+    auto const jsonStr =
+        fmt::format(R"JSON({{"cache": {{"file": {{"path": "{}"}}}}}})JSON", kCACHE_FILE_PATH);
     auto const cfg = getParseCacheConfig(json::parse(jsonStr));
     auto const settings = makeCacheLoaderSettings(cfg);
 
@@ -161,8 +163,10 @@ TEST_F(CacheLoaderSettingsTest, CacheFilePathNotSetWhenAbsentFromConfig)
 TEST_F(CacheLoaderSettingsTest, MaxSequenceLagPropagatedThoughConfig)
 {
     auto const seq = 1234;
-    auto const jsonStr =
-        fmt::format(R"JSON({{"cache": {{"file": {{"path": "doesnt_matter", "max_sequence_age": {} }}}}}})JSON", seq);
+    auto const jsonStr = fmt::format(
+        R"JSON({{"cache": {{"file": {{"path": "doesnt_matter", "max_sequence_age": {} }}}}}})JSON",
+        seq
+    );
     auto const cfg = getParseCacheConfig(json::parse(jsonStr));
     auto const settings = makeCacheLoaderSettings(cfg);
 

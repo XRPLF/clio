@@ -48,11 +48,17 @@ using namespace data;
 
 namespace {
 
-constinit auto const kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constinit auto const kLEDGER_HASH =
+    "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constinit auto const kSEQ = 30;
 
 struct MockRegistry : etl::RegistryInterface {
-    MOCK_METHOD(void, dispatchInitialObjects, (uint32_t, std::vector<Object> const&, std::string), (override));
+    MOCK_METHOD(
+        void,
+        dispatchInitialObjects,
+        (uint32_t, std::vector<Object> const&, std::string),
+        (override)
+    );
     MOCK_METHOD(void, dispatchInitialData, (LedgerData const&), (override));
     MOCK_METHOD(void, dispatch, (LedgerData const&), (override));
 };
@@ -66,7 +72,9 @@ struct MockLoadObserver : etl::InitialLoadObserverInterface {
     );
 };
 
-struct LoadingTests : util::prometheus::WithPrometheus, MockBackendTest, MockAmendmentBlockHandlerTest {
+struct LoadingTests : util::prometheus::WithPrometheus,
+                      MockBackendTest,
+                      MockAmendmentBlockHandlerTest {
 protected:
     std::shared_ptr<MockRegistry> mockRegistryPtr_ = std::make_shared<MockRegistry>();
     std::shared_ptr<etl::SystemState> state_ = std::make_shared<etl::SystemState>();
@@ -96,13 +104,16 @@ TEST_F(LoadingTests, LoadInitialLedger)
 {
     auto const data = createTestData();
 
-    EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillOnce(testing::Return(std::nullopt));
+    EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_))
+        .WillOnce(testing::Return(std::nullopt));
     EXPECT_CALL(*backend_, doFinishWrites());
     EXPECT_CALL(*mockRegistryPtr_, dispatchInitialData(data));
 
     auto const res = loader_.loadInitialLedger(data);
     EXPECT_TRUE(res.has_value());
-    EXPECT_EQ(rpc::ledgerHeaderToBlob(res.value(), true), rpc::ledgerHeaderToBlob(data.header, true));
+    EXPECT_EQ(
+        rpc::ledgerHeaderToBlob(res.value(), true), rpc::ledgerHeaderToBlob(data.header, true)
+    );
 }
 
 TEST_F(LoadingTests, LoadSuccess)
@@ -166,7 +177,8 @@ TEST_F(LoadingTests, LoadInitialLedgerFailure)
 {
     auto const data = createTestData();
 
-    EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillOnce(testing::Return(std::nullopt));
+    EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_))
+        .WillOnce(testing::Return(std::nullopt));
     EXPECT_CALL(*backend_, doFinishWrites()).Times(0);
     EXPECT_CALL(*mockRegistryPtr_, dispatchInitialData(data)).WillOnce([](auto const&) {
         throw std::runtime_error("some error");
@@ -194,12 +206,14 @@ TEST_F(LoadingTests, LoadWriteConflictEmitsStopWritingSignal)
 {
     state_->isWriting = true;  // writer is active
     auto const data = createTestData();
-    testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>> mockSignalCallback;
+    testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>>
+        mockSignalCallback;
 
     auto connection = state_->writeCommandSignal.connect(mockSignalCallback.AsStdFunction());
 
     EXPECT_CALL(*mockRegistryPtr_, dispatch(data));
-    EXPECT_CALL(*backend_, doFinishWrites()).WillOnce(testing::Return(false));  // simulate write conflict
+    EXPECT_CALL(*backend_, doFinishWrites())
+        .WillOnce(testing::Return(false));  // simulate write conflict
     EXPECT_CALL(mockSignalCallback, Call(etl::SystemState::WriteCommand::StopWriting));
 
     EXPECT_FALSE(state_->isWriterDecidingFallback);
@@ -214,7 +228,8 @@ TEST_F(LoadingTests, LoadSuccessDoesNotEmitSignal)
 {
     state_->isWriting = true;  // writer is active
     auto const data = createTestData();
-    testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>> mockSignalCallback;
+    testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>>
+        mockSignalCallback;
 
     auto connection = state_->writeCommandSignal.connect(mockSignalCallback.AsStdFunction());
 
@@ -233,7 +248,8 @@ TEST_F(LoadingTests, LoadWhenNotWritingDoesNotCheckConflict)
 {
     state_->isWriting = false;  // not a writer
     auto const data = createTestData();
-    testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>> mockSignalCallback;
+    testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>>
+        mockSignalCallback;
 
     auto connection = state_->writeCommandSignal.connect(mockSignalCallback.AsStdFunction());
 

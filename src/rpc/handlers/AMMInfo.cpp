@@ -69,7 +69,9 @@ toIso8601(ripple::NetClock::time_point tp)
 
     return date::format(
         "%Y-%Om-%dT%H:%M:%OS%z",
-        date::sys_time<system_clock::duration>(system_clock::time_point{tp.time_since_epoch() + kRIPPLE_EPOCH_OFFSET})
+        date::sys_time<system_clock::duration>(
+            system_clock::time_point{tp.time_since_epoch() + kRIPPLE_EPOCH_OFFSET}
+        )
     );
 };
 
@@ -120,7 +122,8 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
         if (not accountLedgerObject)
             return Error{Status{RippledError::rpcACT_MALFORMED}};
         ripple::STLedgerEntry const sle{
-            ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key
+            ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()},
+            accountKeylet.key
         };
         if (not sle.isFieldPresent(ripple::sfAMMID))
             return Error{Status{RippledError::rpcACT_NOT_FOUND}};
@@ -130,27 +133,37 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
     auto issue1 = input.issue1;
     auto issue2 = input.issue2;
     auto ammKeylet = ammID != 0 ? keylet::amm(ammID) : keylet::amm(issue1, issue2);
-    auto const ammBlob = sharedPtrBackend_->fetchLedgerObject(ammKeylet.key, lgrInfo.seq, ctx.yield);
+    auto const ammBlob =
+        sharedPtrBackend_->fetchLedgerObject(ammKeylet.key, lgrInfo.seq, ctx.yield);
 
     if (not ammBlob)
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     auto const amm = SLE{SerialIter{ammBlob->data(), ammBlob->size()}, ammKeylet.key};
     auto const ammAccountID = amm.getAccountID(sfAccount);
-    auto const accBlob =
-        sharedPtrBackend_->fetchLedgerObject(keylet::account(ammAccountID).key, lgrInfo.seq, ctx.yield);
+    auto const accBlob = sharedPtrBackend_->fetchLedgerObject(
+        keylet::account(ammAccountID).key, lgrInfo.seq, ctx.yield
+    );
     if (not accBlob)
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     // If the issue1 and issue2 are not specified, we need to get them from the AMM.
-    // Otherwise we preserve the mapping of asset1 -> issue1 and asset2 -> issue2 as requested by the user.
+    // Otherwise we preserve the mapping of asset1 -> issue1 and asset2 -> issue2 as requested by
+    // the user.
     if (issue1 == ripple::noIssue() and issue2 == ripple::noIssue()) {
         issue1 = amm[sfAsset].get<Issue>();
         issue2 = amm[sfAsset2].get<Issue>();
     }
 
     auto const [asset1Balance, asset2Balance] = getAmmPoolHolds(
-        *sharedPtrBackend_, *amendmentCenter_, lgrInfo.seq, ammAccountID, issue1, issue2, false, ctx.yield
+        *sharedPtrBackend_,
+        *amendmentCenter_,
+        lgrInfo.seq,
+        ammAccountID,
+        issue1,
+        issue2,
+        false,
+        ctx.yield
     );
     auto const lptAMMBalance = input.accountID
         ? getAmmLpHolds(*sharedPtrBackend_, lgrInfo.seq, amm, *input.accountID, ctx.yield)
@@ -180,13 +193,15 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
         auto const& auctionSlot = amm.peekAtField(sfAuctionSlot).downcast<STObject>();
         if (auctionSlot.isFieldPresent(sfAccount)) {
             boost::json::object auction;
-            auto const timeSlot = ammAuctionTimeSlot(lgrInfo.parentCloseTime.time_since_epoch().count(), auctionSlot);
+            auto const timeSlot =
+                ammAuctionTimeSlot(lgrInfo.parentCloseTime.time_since_epoch().count(), auctionSlot);
 
             auction[JS(time_interval)] = timeSlot ? *timeSlot : AUCTION_SLOT_TIME_INTERVALS;
             auction[JS(price)] = toBoostJson(auctionSlot[sfPrice].getJson(JsonOptions::none));
             auction[JS(discounted_fee)] = auctionSlot[sfDiscountedFee];
             auction[JS(account)] = to_string(auctionSlot.getAccountID(sfAccount));
-            auction[JS(expiration)] = toIso8601(NetClock::time_point{NetClock::duration{auctionSlot[sfExpiration]}});
+            auction[JS(expiration)] =
+                toIso8601(NetClock::time_point{NetClock::duration{auctionSlot[sfExpiration]}});
 
             if (auctionSlot.isFieldPresent(sfAuthAccounts)) {
                 boost::json::array auth;
@@ -230,10 +245,12 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
 RpcSpecConstRef
 AMMInfoHandler::spec([[maybe_unused]] uint32_t apiVersion)
 {
-    static auto const kSTRING_ISSUE_VALIDATOR =
-        validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+    static auto const kSTRING_ISSUE_VALIDATOR = validation::CustomValidator{
+        [](boost::json::value const& value, std::string_view key) -> MaybeError {
             if (not value.is_string())
-                return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
+                return Error{
+                    Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}
+                };
 
             try {
                 ripple::issueFromJson(boost::json::value_to<std::string>(value));
@@ -242,42 +259,55 @@ AMMInfoHandler::spec([[maybe_unused]] uint32_t apiVersion)
             }
 
             return MaybeError{};
-        }};
+        }
+    };
 
     static auto const kRPC_SPEC = RpcSpec{
         {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
         {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
         {JS(asset),
          meta::WithCustomError{
-             validation::Type<std::string, boost::json::object>{}, Status(RippledError::rpcISSUE_MALFORMED)
+             validation::Type<std::string, boost::json::object>{},
+             Status(RippledError::rpcISSUE_MALFORMED)
          },
          meta::IfType<std::string>{kSTRING_ISSUE_VALIDATOR},
          meta::IfType<boost::json::object>{
              meta::WithCustomError{
-                 validation::CustomValidators::currencyIssueValidator, Status(RippledError::rpcISSUE_MALFORMED)
+                 validation::CustomValidators::currencyIssueValidator,
+                 Status(RippledError::rpcISSUE_MALFORMED)
              },
          }},
         {JS(asset2),
          meta::WithCustomError{
-             validation::Type<std::string, boost::json::object>{}, Status(RippledError::rpcISSUE_MALFORMED)
+             validation::Type<std::string, boost::json::object>{},
+             Status(RippledError::rpcISSUE_MALFORMED)
          },
          meta::IfType<std::string>{kSTRING_ISSUE_VALIDATOR},
          meta::IfType<boost::json::object>{
              meta::WithCustomError{
-                 validation::CustomValidators::currencyIssueValidator, Status(RippledError::rpcISSUE_MALFORMED)
+                 validation::CustomValidators::currencyIssueValidator,
+                 Status(RippledError::rpcISSUE_MALFORMED)
              },
          }},
         {JS(amm_account),
-         meta::WithCustomError{validation::CustomValidators::accountValidator, Status(RippledError::rpcACT_MALFORMED)}},
+         meta::WithCustomError{
+             validation::CustomValidators::accountValidator, Status(RippledError::rpcACT_MALFORMED)
+         }},
         {JS(account),
-         meta::WithCustomError{validation::CustomValidators::accountValidator, Status(RippledError::rpcACT_MALFORMED)}},
+         meta::WithCustomError{
+             validation::CustomValidators::accountValidator, Status(RippledError::rpcACT_MALFORMED)
+         }},
     };
 
     return kRPC_SPEC;
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AMMInfoHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AMMInfoHandler::Output const& output
+)
 {
     boost::json::object amm = {
         {JS(lp_token), output.lpToken},
@@ -329,10 +359,13 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
         input.issue2 = parseIssue(jsonObject.at(JS(asset2)).as_object());
 
     if (jsonObject.contains(JS(account)))
-        input.accountID = accountFromStringStrict(boost::json::value_to<std::string>(jsonObject.at(JS(account))));
+        input.accountID =
+            accountFromStringStrict(boost::json::value_to<std::string>(jsonObject.at(JS(account))));
 
     if (jsonObject.contains(JS(amm_account)))
-        input.ammAccount = accountFromStringStrict(boost::json::value_to<std::string>(jsonObject.at(JS(amm_account))));
+        input.ammAccount = accountFromStringStrict(
+            boost::json::value_to<std::string>(jsonObject.at(JS(amm_account)))
+        );
 
     return input;
 }

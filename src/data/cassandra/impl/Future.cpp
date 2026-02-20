@@ -76,8 +76,8 @@ void
 invokeHelper(CassFuture* ptr, void* cbPtr)
 {
     // Note: can't use Future{ptr}.get() because double free will occur :/
-    // Note2: we are moving/copying it locally as a workaround for an issue we are seeing from asio recently.
-    // stackoverflow.com/questions/77004137/boost-asio-async-compose-gets-stuck-under-load
+    // Note2: we are moving/copying it locally as a workaround for an issue we are seeing from asio
+    // recently. stackoverflow.com/questions/77004137/boost-asio-async-compose-gets-stuck-under-load
     auto* cb = static_cast<FutureWithCallback::FnType*>(cbPtr);
     auto local = std::make_unique<FutureWithCallback::FnType>(std::move(*cb));
     if (auto const rc = cass_future_error_code(ptr); rc) {

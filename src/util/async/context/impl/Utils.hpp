@@ -44,7 +44,11 @@ inline constexpr struct AssociatedExecutorExtractor {
 
 template <typename CtxType>
 [[nodiscard]] constexpr auto
-getTimeoutHandleIfNeeded(CtxType& ctx, SomeOptStdDuration auto timeout, SomeStopSource auto& stopSource)
+getTimeoutHandleIfNeeded(
+    CtxType& ctx,
+    SomeOptStdDuration auto timeout,
+    SomeStopSource auto& stopSource
+)
 {
     using TimerType = typename CtxType::Timer;
     std::optional<TimerType> timer;
@@ -62,7 +66,8 @@ template <SomeStopSource StopSourceType>
 outcomeForHandler(auto&& fn)
 {
     if constexpr (SomeHandlerWith<decltype(fn), typename StopSourceType::Token>) {
-        using FnRetType = std::decay_t<std::invoke_result_t<decltype(fn), typename StopSourceType::Token>>;
+        using FnRetType =
+            std::decay_t<std::invoke_result_t<decltype(fn), typename StopSourceType::Token>>;
         using RetType = std::expected<FnRetType, ExecutionError>;
 
         return StoppableOutcome<RetType, StopSourceType>();

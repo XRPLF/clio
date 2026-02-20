@@ -39,7 +39,8 @@
 namespace rpc {
 
 /**
- * @brief The mpt_holders command asks the Clio server for all holders of a particular MPTokenIssuance.
+ * @brief The mpt_holders command asks the Clio server for all holders of a particular
+ * MPTokenIssuance.
  */
 class MPTHoldersHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
@@ -79,7 +80,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    MPTHoldersHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
+    MPTHoldersHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+        : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
@@ -93,7 +95,9 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const kRPC_SPEC = RpcSpec{
-            {JS(mpt_issuance_id), validation::Required{}, validation::CustomValidators::uint192HexStringValidator},
+            {JS(mpt_issuance_id),
+             validation::Required{},
+             validation::CustomValidators::uint192HexStringValidator},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
             {JS(limit),

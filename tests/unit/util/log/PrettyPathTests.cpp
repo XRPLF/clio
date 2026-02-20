@@ -41,7 +41,8 @@ struct PrettyPathDepth : public common::util::WithMockAssert {
 TEST_F(PrettyPathDepth, Zero)
 {
     EXPECT_CLIO_ASSERT_FAIL_WITH_MESSAGE(
-        { [[maybe_unused]] auto unused = prettyPath(kTEST_PATH, 0); }, "maxDepth must be greater than 0"
+        { [[maybe_unused]] auto unused = prettyPath(kTEST_PATH, 0); },
+        "maxDepth must be greater than 0"
     );
 }
 

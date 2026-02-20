@@ -33,10 +33,18 @@ TEST(MigratiorStatus, ToString)
 
 TEST(MigratiorStatus, FromString)
 {
-    EXPECT_EQ(migration::MigratorStatus::fromString("Migrated"), migration::MigratorStatus::Migrated);
-    EXPECT_EQ(migration::MigratorStatus::fromString("NotMigrated"), migration::MigratorStatus::NotMigrated);
-    EXPECT_EQ(migration::MigratorStatus::fromString("NotKnown"), migration::MigratorStatus::NotKnown);
-    EXPECT_EQ(migration::MigratorStatus::fromString("Unknown"), migration::MigratorStatus::NotMigrated);
+    EXPECT_EQ(
+        migration::MigratorStatus::fromString("Migrated"), migration::MigratorStatus::Migrated
+    );
+    EXPECT_EQ(
+        migration::MigratorStatus::fromString("NotMigrated"), migration::MigratorStatus::NotMigrated
+    );
+    EXPECT_EQ(
+        migration::MigratorStatus::fromString("NotKnown"), migration::MigratorStatus::NotKnown
+    );
+    EXPECT_EQ(
+        migration::MigratorStatus::fromString("Unknown"), migration::MigratorStatus::NotMigrated
+    );
 }
 
 TEST(MigratiorStatus, Compare)

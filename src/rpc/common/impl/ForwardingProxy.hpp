@@ -76,13 +76,13 @@ public:
             return true;
 
         auto const checkAccountInfoForward = [&]() {
-            return ctx.method == "account_info" and request.contains("queue") and request.at("queue").is_bool() and
-                request.at("queue").as_bool();
+            return ctx.method == "account_info" and request.contains("queue") and
+                request.at("queue").is_bool() and request.at("queue").as_bool();
         };
 
         auto const checkLedgerForward = [&]() {
-            return ctx.method == "ledger" and request.contains("queue") and request.at("queue").is_bool() and
-                request.at("queue").as_bool();
+            return ctx.method == "ledger" and request.contains("queue") and
+                request.at("queue").is_bool() and request.at("queue").as_bool();
         };
 
         return static_cast<bool>(checkAccountInfoForward() or checkLedgerForward());
@@ -135,8 +135,8 @@ private:
     isForcedForward(web::Context const& ctx) const
     {
         static constexpr auto kFORCE_FORWARD = "force_forward";
-        return ctx.isAdmin and ctx.params.contains(kFORCE_FORWARD) and ctx.params.at(kFORCE_FORWARD).is_bool() and
-            ctx.params.at(kFORCE_FORWARD).as_bool();
+        return ctx.isAdmin and ctx.params.contains(kFORCE_FORWARD) and
+            ctx.params.at(kFORCE_FORWARD).is_bool() and ctx.params.at(kFORCE_FORWARD).as_bool();
     }
 };
 

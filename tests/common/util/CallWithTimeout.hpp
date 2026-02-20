@@ -25,7 +25,8 @@
 namespace tests::common::util {
 
 /**
- * @brief Run a function with a timeout. If the function does not complete within the timeout, the test will fail.
+ * @brief Run a function with a timeout. If the function does not complete within the timeout, the
+ * test will fail.
  *
  * @param timeout The timeout duration
  * @param function The function to run

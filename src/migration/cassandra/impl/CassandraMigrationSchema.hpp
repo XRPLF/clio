@@ -32,7 +32,8 @@
 namespace migration::cassandra::impl {
 
 /**
- * @brief The schema for the migration process. It contains the prepared statements only used for the migration process.
+ * @brief The schema for the migration process. It contains the prepared statements only used for
+ * the migration process.
  */
 class CassandraMigrationSchema {
     using SettingsProviderType = data::cassandra::SettingsProvider;
@@ -44,7 +45,8 @@ public:
      *
      * @param settings The settings provider of database
      */
-    explicit CassandraMigrationSchema(SettingsProviderType const& settings) : settingsProvider_{settings}
+    explicit CassandraMigrationSchema(SettingsProviderType const& settings)
+        : settingsProvider_{settings}
     {
     }
 
@@ -70,7 +72,9 @@ public:
               FROM {}
              WHERE TOKEN({}) >= ? AND TOKEN({}) <= ?
             )",
-                data::cassandra::qualifiedTableName<SettingsProviderType>(settingsProvider_.get(), tableName),
+                data::cassandra::qualifiedTableName<SettingsProviderType>(
+                    settingsProvider_.get(), tableName
+                ),
                 key,
                 key
             )
@@ -93,7 +97,9 @@ public:
                    (migrator_name, status)
             VALUES (?, ?)
             )",
-                data::cassandra::qualifiedTableName<SettingsProviderType>(settingsProvider_.get(), "migrator_status")
+                data::cassandra::qualifiedTableName<SettingsProviderType>(
+                    settingsProvider_.get(), "migrator_status"
+                )
             )
         );
         return kPREPARED;

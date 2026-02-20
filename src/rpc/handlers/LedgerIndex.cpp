@@ -80,12 +80,15 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input const& input, Context cons
 
     auto const view = std::ranges::iota_view{minIndex, maxIndex + 1};
 
-    auto const greaterEqLedgerIter = std::ranges::lower_bound(
-        view, ticks, [&](std::uint32_t ledgerIndex, std::int64_t) { return not earlierThan(ledgerIndex); }
-    );
+    auto const greaterEqLedgerIter =
+        std::ranges::lower_bound(view, ticks, [&](std::uint32_t ledgerIndex, std::int64_t) {
+            return not earlierThan(ledgerIndex);
+        });
 
     if (greaterEqLedgerIter != view.end())
-        return fillOutputByIndex(std::max(static_cast<std::uint32_t>(*greaterEqLedgerIter) - 1, minIndex));
+        return fillOutputByIndex(
+            std::max(static_cast<std::uint32_t>(*greaterEqLedgerIter) - 1, minIndex)
+        );
 
     return fillOutputByIndex(maxIndex);
 }
@@ -102,7 +105,11 @@ tag_invoke(boost::json::value_to_tag<LedgerIndexHandler::Input>, boost::json::va
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerIndexHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    LedgerIndexHandler::Output const& output
+)
 {
     jv = boost::json::object{
         {JS(ledger_index), output.ledgerIndex},

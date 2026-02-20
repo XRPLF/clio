@@ -44,8 +44,10 @@
 #include <vector>
 
 namespace {
-constinit auto const kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constinit auto const kLEDGER_HASH2 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
+constinit auto const kLEDGER_HASH =
+    "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constinit auto const kLEDGER_HASH2 =
+    "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
 constinit auto const kSEQ = 30;
 }  // namespace
 
@@ -59,7 +61,8 @@ TEST_F(ExtractionModelTests, LedgerDataCopyableAndEquatable)
              util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
              util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER)},
         .objects = {util::createObject(), util::createObject(), util::createObject()},
-        .successors = std::vector<etl::model::BookSuccessor>{{.firstBook = "first", .bookBase = "base"}},
+        .successors =
+            std::vector<etl::model::BookSuccessor>{{.firstBook = "first", .bookBase = "base"}},
         .edgeKeys = std::vector<std::string>{"key1", "key2"},
         .header = createLedgerHeader(kLEDGER_HASH, kSEQ, 1),
         .rawHeader = {1, 2, 3},
@@ -81,7 +84,8 @@ TEST_F(ExtractionModelTests, LedgerDataCopyableAndEquatable)
     }
     {
         auto third = second;
-        third.successors = std::vector<etl::model::BookSuccessor>{{.firstBook = "second", .bookBase = "base"}};
+        third.successors =
+            std::vector<etl::model::BookSuccessor>{{.firstBook = "second", .bookBase = "base"}};
         EXPECT_NE(first, third);
     }
     {
@@ -91,7 +95,9 @@ TEST_F(ExtractionModelTests, LedgerDataCopyableAndEquatable)
     }
     {
         auto third = second;
-        third.header = createLedgerHeader(kLEDGER_HASH2, kSEQ, 100);  // Using large age value to avoid flaky test
+        third.header = createLedgerHeader(
+            kLEDGER_HASH2, kSEQ, 100
+        );  // Using large age value to avoid flaky test
         EXPECT_NE(first, third);
     }
     {
@@ -245,7 +251,8 @@ TEST_F(ExtractionTests, OneObject)
     original.set_data(expected.dataRaw);
     original.set_key(expected.keyRaw);
     original.set_mod_type(
-        org::xrpl::rpc::v1::RawLedgerObject::ModificationType::RawLedgerObject_ModificationType_CREATED
+        org::xrpl::rpc::v1::RawLedgerObject::ModificationType::
+            RawLedgerObject_ModificationType_CREATED
     );
 
     auto res = extractObj(original);
@@ -267,7 +274,8 @@ TEST_F(ExtractionTests, OneObjectWithSuccessorAndPredecessor)
     original.set_predecessor(expected.predecessor);
     original.set_successor(expected.successor);
     original.set_mod_type(
-        org::xrpl::rpc::v1::RawLedgerObject::ModificationType::RawLedgerObject_ModificationType_CREATED
+        org::xrpl::rpc::v1::RawLedgerObject::ModificationType::
+            RawLedgerObject_ModificationType_CREATED
     );
 
     auto res = extractObj(original);
@@ -287,7 +295,8 @@ TEST_F(ExtractionTests, MultipleObjects)
     original.set_data(expected.dataRaw);
     original.set_key(expected.keyRaw);
     original.set_mod_type(
-        org::xrpl::rpc::v1::RawLedgerObject::ModificationType::RawLedgerObject_ModificationType_CREATED
+        org::xrpl::rpc::v1::RawLedgerObject::ModificationType::
+            RawLedgerObject_ModificationType_CREATED
     );
 
     auto list = org::xrpl::rpc::v1::RawLedgerObjects();
@@ -367,7 +376,8 @@ TEST_F(ExtractionAssertTest, InvalidModTypeAsserts)
 
     EXPECT_CLIO_ASSERT_FAIL({
         [[maybe_unused]] auto _ = extractModType(
-            PBModType::RawLedgerObject_ModificationType_RawLedgerObject_ModificationType_INT_MIN_SENTINEL_DO_NOT_USE_
+            PBModType::
+                RawLedgerObject_ModificationType_RawLedgerObject_ModificationType_INT_MIN_SENTINEL_DO_NOT_USE_
         );
     });
 }

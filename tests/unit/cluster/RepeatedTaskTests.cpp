@@ -49,12 +49,14 @@ struct RepeatedTaskTypedTest : RepeatedTaskTest {
     {
         callCount = 0;
 
-        EXPECT_CALL(mockFn, Call).Times(AtLeast(expectedCalls)).WillRepeatedly([this, expectedCalls](auto&&...) {
-            ++callCount;
-            if (callCount >= expectedCalls) {
-                semaphore.release();
-            }
-        });
+        EXPECT_CALL(mockFn, Call)
+            .Times(AtLeast(expectedCalls))
+            .WillRepeatedly([this, expectedCalls](auto&&...) {
+                ++callCount;
+                if (callCount >= expectedCalls) {
+                    semaphore.release();
+                }
+            });
     }
 };
 
@@ -199,19 +201,21 @@ TEST_F(RepeatedTaskTest, FunctionCanAccessYieldContext)
 
     RepeatedTask<boost::asio::io_context> task(std::chrono::milliseconds(1), ctx_);
 
-    EXPECT_CALL(mockFn, Call).Times(AtLeast(1)).WillRepeatedly([&](boost::asio::yield_context yield) {
-        if (yieldContextUsed)
-            return;
+    EXPECT_CALL(mockFn, Call)
+        .Times(AtLeast(1))
+        .WillRepeatedly([&](boost::asio::yield_context yield) {
+            if (yieldContextUsed)
+                return;
 
-        // Use the yield context to verify it's valid
-        boost::asio::steady_timer timer(yield.get_executor());
-        timer.expires_after(std::chrono::milliseconds(1));
-        boost::system::error_code ec;
-        timer.async_wait(yield[ec]);
-        EXPECT_FALSE(ec) << ec.message();
-        yieldContextUsed = true;
-        semaphore.release();
-    });
+            // Use the yield context to verify it's valid
+            boost::asio::steady_timer timer(yield.get_executor());
+            timer.expires_after(std::chrono::milliseconds(1));
+            boost::system::error_code ec;
+            timer.async_wait(yield[ec]);
+            EXPECT_FALSE(ec) << ec.message();
+            yieldContextUsed = true;
+            semaphore.release();
+        });
 
     task.run(mockFn.AsStdFunction());
 

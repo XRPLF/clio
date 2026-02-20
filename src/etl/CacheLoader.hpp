@@ -110,7 +110,9 @@ public:
         if (settings_.numCacheCursorsFromDiff != 0) {
             LOG(log_.info()) << "Loading cache with cursor from num_cursors_from_diff="
                              << settings_.numCacheCursorsFromDiff;
-            provider = std::make_shared<impl::CursorFromDiffProvider>(backend_, settings_.numCacheCursorsFromDiff);
+            provider = std::make_shared<impl::CursorFromDiffProvider>(
+                backend_, settings_.numCacheCursorsFromDiff
+            );
         } else if (settings_.numCacheCursorsFromAccount != 0) {
             LOG(log_.info()) << "Loading cache with cursor from num_cursors_from_account="
                              << settings_.numCacheCursorsFromAccount;
@@ -118,8 +120,11 @@ public:
                 backend_, settings_.numCacheCursorsFromAccount, settings_.cachePageFetchSize
             );
         } else {
-            LOG(log_.info()) << "Loading cache with cursor from num_diffs=" << settings_.numCacheDiffs;
-            provider = std::make_shared<impl::CursorFromFixDiffNumProvider>(backend_, settings_.numCacheDiffs);
+            LOG(log_.info()) << "Loading cache with cursor from num_diffs="
+                             << settings_.numCacheDiffs;
+            provider = std::make_shared<impl::CursorFromFixDiffNumProvider>(
+                backend_, settings_.numCacheDiffs
+            );
         }
 
         loader_ = std::make_unique<CacheLoaderType>(
@@ -169,7 +174,9 @@ private:
         auto const minLatestSequence =
             backend_->fetchLedgerRange()
                 .transform([this](data::LedgerRange const& range) {
-                    return std::max(range.maxSequence - settings_.cacheFileSettings->maxAge, range.minSequence);
+                    return std::max(
+                        range.maxSequence - settings_.cacheFileSettings->maxAge, range.minSequence
+                    );
                 })
                 .value_or(0);
 

@@ -30,7 +30,9 @@ TEST(SpawnTest, SpawnOnIoContext)
 {
     EXPECT_ANY_THROW([] {
         boost::asio::io_context io;
-        util::spawn(io, [](boost::asio::yield_context) { throw std::runtime_error("Test exception in coroutine"); });
+        util::spawn(io, [](boost::asio::yield_context) {
+            throw std::runtime_error("Test exception in coroutine");
+        });
 
         io.run();
     }());
@@ -41,7 +43,9 @@ TEST(SpawnTest, SpawnOnStrand)
     EXPECT_ANY_THROW([] {
         boost::asio::io_context io;
         auto str = boost::asio::make_strand(io);
-        util::spawn(str, [](boost::asio::yield_context) { throw std::runtime_error("Test exception in coroutine"); });
+        util::spawn(str, [](boost::asio::yield_context) {
+            throw std::runtime_error("Test exception in coroutine");
+        });
 
         io.run();
     }());

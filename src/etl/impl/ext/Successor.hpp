@@ -50,7 +50,11 @@ public:
     onInitialData(model::LedgerData const& data) const;
 
     void
-    onInitialObjects(uint32_t seq, [[maybe_unused]] std::vector<model::Object> const& objs, std::string lastKey) const;
+    onInitialObjects(
+        uint32_t seq,
+        [[maybe_unused]] std::vector<model::Object> const& objs,
+        std::string lastKey
+    ) const;
 
     void
     onLedgerData(model::LedgerData const& data) const;

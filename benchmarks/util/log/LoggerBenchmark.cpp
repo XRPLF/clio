@@ -62,8 +62,9 @@ uniqueLogDir()
 {
     auto const epochTime = std::chrono::high_resolution_clock::now().time_since_epoch();
     auto const tmpDir = std::filesystem::temp_directory_path();
-    std::string const dirName =
-        fmt::format("logs_{}", std::chrono::duration_cast<std::chrono::microseconds>(epochTime).count());
+    std::string const dirName = fmt::format(
+        "logs_{}", std::chrono::duration_cast<std::chrono::microseconds>(epochTime).count()
+    );
     return tmpDir / "clio_benchmark" / dirName;
 }
 
@@ -108,7 +109,8 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
                     channel, fileSink, spdlog::thread_pool(), spdlog::async_overflow_policy::block
                 );
                 spdlog::register_logger(logger);
-                Logger const threadLogger = BenchmarkLoggingInitializer::getLogger(std::move(logger));
+                Logger const threadLogger =
+                    BenchmarkLoggingInitializer::getLogger(std::move(logger));
 
                 barrier.arrive_and_wait();
 
@@ -124,13 +126,16 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
         spdlog::shutdown();
 
         auto const end = std::chrono::high_resolution_clock::now();
-        state.SetIterationTime(std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count());
+        state.SetIterationTime(
+            std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count()
+        );
 
         std::filesystem::remove_all(logDir);
     }
 
     auto const totalMessages = numThreads * messagesPerThread;
-    state.counters["TotalMessagesRate"] = benchmark::Counter(totalMessages, benchmark::Counter::kIsRate);
+    state.counters["TotalMessagesRate"] =
+        benchmark::Counter(totalMessages, benchmark::Counter::kIsRate);
     state.counters["Threads"] = numThreads;
     state.counters["MessagesPerThread"] = messagesPerThread;
 }

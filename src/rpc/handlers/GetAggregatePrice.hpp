@@ -121,18 +121,21 @@ public:
     {
         static constexpr auto kORACLES_MAX = 200;
 
-        static auto const kORACLES_VALIDATOR =
-            modifiers::CustomModifier{[](boost::json::value& value, std::string_view) -> MaybeError {
-                if (!value.is_array() or value.as_array().empty() or value.as_array().size() > kORACLES_MAX)
+        static auto const kORACLES_VALIDATOR = modifiers::CustomModifier{
+            [](boost::json::value& value, std::string_view) -> MaybeError {
+                if (!value.is_array() or value.as_array().empty() or
+                    value.as_array().size() > kORACLES_MAX)
                     return Error{Status{RippledError::rpcORACLE_MALFORMED}};
 
                 for (auto& oracle : value.as_array()) {
-                    if (!oracle.is_object() or !oracle.as_object().contains(JS(oracle_document_id)) or
+                    if (!oracle.is_object() or
+                        !oracle.as_object().contains(JS(oracle_document_id)) or
                         !oracle.as_object().contains(JS(account)))
                         return Error{Status{RippledError::rpcORACLE_MALFORMED}};
 
-                    auto maybeError =
-                        validation::Type<std::uint32_t, std::string>{}.verify(oracle, JS(oracle_document_id));
+                    auto maybeError = validation::Type<std::uint32_t, std::string>{}.verify(
+                        oracle, JS(oracle_document_id)
+                    );
                     if (!maybeError)
                         return maybeError;
 
@@ -140,30 +143,36 @@ public:
                     if (!maybeError)
                         return maybeError;
 
-                    maybeError =
-                        validation::CustomValidators::accountBase58Validator.verify(oracle.as_object(), JS(account));
+                    maybeError = validation::CustomValidators::accountBase58Validator.verify(
+                        oracle.as_object(), JS(account)
+                    );
                     if (!maybeError)
                         return Error{Status{RippledError::rpcINVALID_PARAMS}};
                 };
 
                 return MaybeError{};
-            }};
+            }
+        };
 
         static auto const kRPC_SPEC = RpcSpec{
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
-            // validate quoteAsset and base_asset in accordance to the currency code found in XRPL doc:
+            // validate quoteAsset and base_asset in accordance to the currency code found in XRPL
+            // doc:
             // https://xrpl.org/docs/references/protocol/data-types/currency-formats#currency-codes
-            // usually Clio returns rpcMALFORMED_CURRENCY , return InvalidParam here just to mimic rippled
+            // usually Clio returns rpcMALFORMED_CURRENCY , return InvalidParam here just to mimic
+            // rippled
             {JS(base_asset),
              validation::Required{},
              meta::WithCustomError{
-                 validation::CustomValidators::currencyValidator, Status(RippledError::rpcINVALID_PARAMS)
+                 validation::CustomValidators::currencyValidator,
+                 Status(RippledError::rpcINVALID_PARAMS)
              }},
             {JS(quote_asset),
              validation::Required{},
              meta::WithCustomError{
-                 validation::CustomValidators::currencyValidator, Status(RippledError::rpcINVALID_PARAMS)
+                 validation::CustomValidators::currencyValidator,
+                 Status(RippledError::rpcINVALID_PARAMS)
              }},
             {JS(oracles), validation::Required{}, kORACLES_VALIDATOR},
             // note: Unlike `rippled`, Clio only supports UInt as input, no string, no `null`, etc.
@@ -191,8 +200,8 @@ public:
 private:
     /**
      * @brief Calls callback on the oracle ledger entry
-     If the oracle entry does not contains the price pair, search up to three previous metadata objects. Stops early if
-     the callback returns true.
+     If the oracle entry does not contains the price pair, search up to three previous metadata
+     objects. Stops early if the callback returns true.
      */
     void
     tracebackOracleObject(

@@ -58,7 +58,8 @@ TEST_F(CursorFromAccountProviderTests, EnoughAccountRoots)
     auto const pageSize = 100;
     auto const provider = etl::impl::CursorFromAccountProvider{backend_, numCursors, pageSize};
 
-    ON_CALL(*backend_, fetchAccountRoots(numCursors, _, kSEQ, _)).WillByDefault(Return(kACCOUNT_ROOTS));
+    ON_CALL(*backend_, fetchAccountRoots(numCursors, _, kSEQ, _))
+        .WillByDefault(Return(kACCOUNT_ROOTS));
     EXPECT_CALL(*backend_, fetchAccountRoots(_, _, _, _)).Times(1);
 
     auto const cursors = provider.getCursors(kSEQ);

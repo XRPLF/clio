@@ -46,13 +46,14 @@ namespace etl {
  *   - void onInitialObjects(uint32_t, std::vector<etl::model::Object> const&, std::string)
  *   - void onInitialObject(uint32_t, etl::model::Object const&)
  *
- * When the registry dispatches (initial)data or objects, each of the above hooks will be called in order on each
- * registered extension.
- * This means that the order of execution is from left to right (hooks) and top to bottom (registered extensions).
+ * When the registry dispatches (initial)data or objects, each of the above hooks will be called in
+ * order on each registered extension. This means that the order of execution is from left to right
+ * (hooks) and top to bottom (registered extensions).
  *
- * If either `onTransaction` or `onInitialTransaction` are defined, the extension will have to additionally define a
- * Specification. The specification lists transaction types to filter from the incoming data such that `onTransaction`
- * and `onInitialTransaction` are only called for the transactions that are of interest for the given extension.
+ * If either `onTransaction` or `onInitialTransaction` are defined, the extension will have to
+ * additionally define a Specification. The specification lists transaction types to filter from the
+ * incoming data such that `onTransaction` and `onInitialTransaction` are only called for the
+ * transactions that are of interest for the given extension.
  *
  * The specification is setup like so:
  * @code{.cpp}
@@ -82,7 +83,11 @@ struct RegistryInterface {
      * @param lastKey The predcessor of the first object in data if known; an empty string otherwise
      */
     virtual void
-    dispatchInitialObjects(uint32_t seq, std::vector<model::Object> const& data, std::string lastKey) = 0;
+    dispatchInitialObjects(
+        uint32_t seq,
+        std::vector<model::Object> const& data,
+        std::string lastKey
+    ) = 0;
 
     /**
      * @brief Dispatch initial ledger data.

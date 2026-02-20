@@ -39,9 +39,10 @@
 #include <vector>
 
 /**
- * @brief Test backend for Cassandra migration. The class is mainly to provide an example of how to add the needed
- * backend for the migrator. It is used in integration tests to provide the backend for the example migrators. In
- * production, the backend code should be added to CassandraMigrationBackend directly.
+ * @brief Test backend for Cassandra migration. The class is mainly to provide an example of how to
+ * add the needed backend for the migrator. It is used in integration tests to provide the backend
+ * for the example migrators. In production, the backend code should be added to
+ * CassandraMigrationBackend directly.
  */
 class CassandraMigrationTestBackend : public migration::cassandra::CassandraMigrationBackend {
     data::cassandra::SettingsProvider settingsProvider_;
@@ -53,7 +54,10 @@ public:
      * @param settingsProvider The settings provider for the Cassandra backend
      * @param cache The ledger cache to use
      */
-    CassandraMigrationTestBackend(data::cassandra::SettingsProvider settingsProvider, data::LedgerCacheInterface& cache)
+    CassandraMigrationTestBackend(
+        data::cassandra::SettingsProvider settingsProvider,
+        data::LedgerCacheInterface& cache
+    )
         : migration::cassandra::CassandraMigrationBackend(settingsProvider, cache)
         , settingsProvider_(std::move(settingsProvider))
 
@@ -63,8 +67,8 @@ public:
     }
 
     /**
-     * @brief Write a transaction hash and its transaction type to the tx_index_example table. It's used by
-     * ExampleTransactionsMigrator.
+     * @brief Write a transaction hash and its transaction type to the tx_index_example table. It's
+     * used by ExampleTransactionsMigrator.
      *
      * @param hash The transaction hash
      * @param txType The transaction type
@@ -88,8 +92,8 @@ public:
     }
 
     /**
-     * @brief Fetch the transaction type via transaction hash from the tx_index_example table. It's used by
-     * ExampleTransactionsMigrator validation.
+     * @brief Fetch the transaction type via transaction hash from the tx_index_example table. It's
+     * used by ExampleTransactionsMigrator validation.
      *
      * @param hash The transaction hash
      * @param ctx The boost asio context
@@ -125,7 +129,8 @@ public:
     }
 
     /**
-     * @brief Fetch the transaction index table size. It's used by ExampleTransactionsMigrator validation.
+     * @brief Fetch the transaction index table size. It's used by ExampleTransactionsMigrator
+     * validation.
      *
      * @param ctx The boost asio context
      * @return The size of the transaction index table if found, otherwise std::nullopt
@@ -166,7 +171,8 @@ public:
     }
 
     /**
-     *@brief Write the ledger account hash to the ledger_example table. It's used by ExampleLedgerMigrator.
+     *@brief Write the ledger account hash to the ledger_example table. It's used by
+     * ExampleLedgerMigrator.
      *
      * @param sequence The ledger sequence
      * @param accountHash The account hash

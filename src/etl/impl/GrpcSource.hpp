@@ -45,8 +45,9 @@ class GrpcSource {
 
     static constexpr auto kKEEPALIVE_PING_INTERVAL_MS = 10000;
     static constexpr auto kKEEPALIVE_TIMEOUT_MS = 5000;
-    static constexpr auto kKEEPALIVE_PERMIT_WITHOUT_CALLS = true;  // Allow keepalive pings when no calls
-    static constexpr auto kMAX_PINGS_WITHOUT_DATA = 0;             // No limit
+    static constexpr auto kKEEPALIVE_PERMIT_WITHOUT_CALLS =
+        true;                                           // Allow keepalive pings when no calls
+    static constexpr auto kMAX_PINGS_WITHOUT_DATA = 0;  // No limit
     static constexpr auto kDEADLINE = std::chrono::seconds(30);
 
 public:
@@ -59,11 +60,12 @@ public:
     /**
      * @brief Fetch data for a specific ledger.
      *
-     * This function will continuously try to fetch data for the specified ledger until the fetch succeeds, the ledger
-     * is found in the database, or the server is shutting down.
+     * This function will continuously try to fetch data for the specified ledger until the fetch
+     * succeeds, the ledger is found in the database, or the server is shutting down.
      *
      * @param sequence Sequence of the ledger to fetch
-     * @param getObjects Whether to get the account state diff between this ledger and the prior one; defaults to true
+     * @param getObjects Whether to get the account state diff between this ledger and the prior
+     * one; defaults to true
      * @param getObjectNeighbors Whether to request object neighbors; defaults to false
      * @return A std::pair of the response status and the response itself
      */
@@ -79,7 +81,11 @@ public:
      * @return Downloaded data or an indication of error or cancellation
      */
     InitialLedgerLoadResult
-    loadInitialLedger(uint32_t sequence, uint32_t numMarkers, InitialLoadObserverInterface& observer);
+    loadInitialLedger(
+        uint32_t sequence,
+        uint32_t numMarkers,
+        InitialLoadObserverInterface& observer
+    );
 
     /**
      * @brief Stop any ongoing operations

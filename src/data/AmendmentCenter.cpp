@@ -57,10 +57,15 @@ supportedAmendments()
 }
 
 bool
-lookupAmendment(auto const& allAmendments, std::vector<ripple::uint256> const& ledgerAmendments, std::string_view name)
+lookupAmendment(
+    auto const& allAmendments,
+    std::vector<ripple::uint256> const& ledgerAmendments,
+    std::string_view name
+)
 {
     namespace rg = std::ranges;
-    if (auto const am = rg::find(allAmendments, name, &data::Amendment::name); am != rg::end(allAmendments))
+    if (auto const am = rg::find(allAmendments, name, &data::Amendment::name);
+        am != rg::end(allAmendments))
         return rg::find(ledgerAmendments, am->feature) != rg::end(ledgerAmendments);
     return false;
 }
@@ -70,9 +75,12 @@ lookupAmendment(auto const& allAmendments, std::vector<ripple::uint256> const& l
 namespace data {
 namespace impl {
 
-WritingAmendmentKey::WritingAmendmentKey(std::string amendmentName) : AmendmentKey{std::move(amendmentName)}
+WritingAmendmentKey::WritingAmendmentKey(std::string amendmentName)
+    : AmendmentKey{std::move(amendmentName)}
 {
-    ASSERT(not supportedAmendments().contains(name), "Attempt to register the same amendment twice");
+    ASSERT(
+        not supportedAmendments().contains(name), "Attempt to register the same amendment twice"
+    );
     supportedAmendments().insert(name);
 }
 
@@ -96,7 +104,8 @@ operator ripple::uint256() const
     return Amendment::getAmendmentId(name);
 }
 
-AmendmentCenter::AmendmentCenter(std::shared_ptr<data::BackendInterface> const& backend) : backend_{backend}
+AmendmentCenter::AmendmentCenter(std::shared_ptr<data::BackendInterface> const& backend)
+    : backend_{backend}
 {
     namespace rg = std::ranges;
     namespace vs = std::views;
@@ -108,7 +117,8 @@ AmendmentCenter::AmendmentCenter(std::shared_ptr<data::BackendInterface> const& 
                 .name = name,
                 .feature = Amendment::getAmendmentId(name),
                 .isSupportedByXRPL = support != ripple::AmendmentSupport::Unsupported,
-                .isSupportedByClio = rg::find(supportedAmendments(), name) != rg::end(supportedAmendments()),
+                .isSupportedByClio =
+                    rg::find(supportedAmendments(), name) != rg::end(supportedAmendments()),
                 .isRetired = support == ripple::AmendmentSupport::Retired
             };
         }),
@@ -144,19 +154,28 @@ AmendmentCenter::isEnabled(AmendmentKey const& key, uint32_t seq) const
 }
 
 bool
-AmendmentCenter::isEnabled(boost::asio::yield_context yield, AmendmentKey const& key, uint32_t seq) const
+AmendmentCenter::isEnabled(
+    boost::asio::yield_context yield,
+    AmendmentKey const& key,
+    uint32_t seq
+) const
 {
     try {
         if (auto const listAmendments = fetchAmendmentsList(yield, seq); listAmendments)
             return lookupAmendment(all_, *listAmendments, key);
     } catch (std::runtime_error const&) {
-        return false;  // Some old ledger does not contain Amendments ledger object so do best we can for now
+        return false;  // Some old ledger does not contain Amendments ledger object so do best we
+                       // can for now
     }
     return false;
 }
 
 std::vector<bool>
-AmendmentCenter::isEnabled(boost::asio::yield_context yield, std::vector<AmendmentKey> const& keys, uint32_t seq) const
+AmendmentCenter::isEnabled(
+    boost::asio::yield_context yield,
+    std::vector<AmendmentKey> const& keys,
+    uint32_t seq
+) const
 {
     namespace rg = std::ranges;
 
@@ -181,7 +200,11 @@ AmendmentCenter::isEnabled(boost::asio::yield_context yield, std::vector<Amendme
 Amendment const&
 AmendmentCenter::getAmendment(AmendmentKey const& key) const
 {
-    ASSERT(supported_.contains(key), "The amendment '{}' must be present in supported amendments list", key.name);
+    ASSERT(
+        supported_.contains(key),
+        "The amendment '{}' must be present in supported amendments list",
+        key.name
+    );
     return supported_.at(key);
 }
 
@@ -201,7 +224,8 @@ std::optional<std::vector<ripple::uint256>>
 AmendmentCenter::fetchAmendmentsList(boost::asio::yield_context yield, uint32_t seq) const
 {
     // the amendments should always be present on the ledger
-    auto const amendments = backend_->fetchLedgerObject(ripple::keylet::amendments().key, seq, yield);
+    auto const amendments =
+        backend_->fetchLedgerObject(ripple::keylet::amendments().key, seq, yield);
     if (not amendments.has_value())
         throw std::runtime_error("Amendments ledger object must be present in the database");
 

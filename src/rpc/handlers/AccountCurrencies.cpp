@@ -44,7 +44,10 @@
 
 namespace rpc {
 AccountCurrenciesHandler::Result
-AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input const& input, Context const& ctx) const
+AccountCurrenciesHandler::process(
+    AccountCurrenciesHandler::Input const& input,
+    Context const& ctx
+) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountCurrencies' ledger range must be available");
@@ -58,8 +61,9 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input const& input, 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
 
-    auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+    );
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
@@ -104,7 +108,11 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input const& input, 
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountCurrenciesHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountCurrenciesHandler::Output const& output
+)
 {
     using boost::json::value_from;
 

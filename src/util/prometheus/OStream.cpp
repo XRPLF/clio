@@ -31,7 +31,9 @@ OStream::OStream(bool const compressionEnabled) : compressionEnabled_(compressio
 {
     if (compressionEnabled_) {
         stream_.push(
-            boost::iostreams::gzip_compressor{boost::iostreams::gzip_params{boost::iostreams::gzip::best_compression}}
+            boost::iostreams::gzip_compressor{
+                boost::iostreams::gzip_params{boost::iostreams::gzip::best_compression}
+            }
         );
     }
     stream_.push(boost::iostreams::back_inserter(buffer_));

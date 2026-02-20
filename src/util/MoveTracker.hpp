@@ -31,7 +31,8 @@ class MoveTracker {
 
 protected:
     /**
-     * @brief The function to be used by clients in order to check whether the instance was moved from
+     * @brief The function to be used by clients in order to check whether the instance was moved
+     * from
      * @return true if moved from; false otherwise
      */
     [[nodiscard]] bool

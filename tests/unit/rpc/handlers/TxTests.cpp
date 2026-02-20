@@ -173,9 +173,12 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
 TEST_F(RPCTxTest, InvalidBinaryV1)
 {
     TransactionAndMetadata tx;
-    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata =
+        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+            .getSerializer()
+            .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
     EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
@@ -343,7 +346,8 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
     });
 }
 
-// when ledger range and ctid are provided, searched_all should not be present, because the seq is specified in ctid
+// when ledger range and ctid are provided, searched_all should not be present, because the seq is
+// specified in ctid
 TEST_F(RPCTxTest, CtidNotFoundSearchAllFalse)
 {
     backend_->setRange(1, 1000);
@@ -379,9 +383,12 @@ TEST_F(RPCTxTest, CtidNotFoundSearchAllFalse)
 TEST_F(RPCTxTest, DefaultParameter_API_v1)
 {
     TransactionAndMetadata tx;
-    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata =
+        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+            .getSerializer()
+            .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
@@ -412,8 +419,10 @@ TEST_F(RPCTxTest, DefaultParameter_API_v1)
 TEST_F(RPCTxTest, PaymentTx_API_v1)
 {
     TransactionAndMetadata tx;
-    tx.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 2, 3, 300).getSerializer().peekData();
-    tx.metadata = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 110, 30).getSerializer().peekData();
+    tx.transaction =
+        createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 2, 3, 300).getSerializer().peekData();
+    tx.metadata =
+        createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 110, 30).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
@@ -444,13 +453,16 @@ TEST_F(RPCTxTest, PaymentTx_API_v1)
 TEST_F(RPCTxTest, PaymentTx_API_v2)
 {
     TransactionAndMetadata tx;
-    tx.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 2, 3, 300).getSerializer().peekData();
-    tx.metadata = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 110, 30).getSerializer().peekData();
+    tx.transaction =
+        createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 2, 3, 300).getSerializer().peekData();
+    tx.metadata =
+        createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 110, 30).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
     EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(tx.ledgerSequence, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(tx.ledgerSequence, _))
+        .WillOnce(Return(std::nullopt));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -478,15 +490,19 @@ TEST_F(RPCTxTest, PaymentTx_API_v2)
 TEST_F(RPCTxTest, DefaultParameter_API_v2)
 {
     TransactionAndMetadata tx;
-    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata =
+        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+            .getSerializer()
+            .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
     EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, tx.ledgerSequence);
-    EXPECT_CALL(*backend_, fetchLedgerBySequence(tx.ledgerSequence, _)).WillOnce(Return(ledgerHeader));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence(tx.ledgerSequence, _))
+        .WillOnce(Return(ledgerHeader));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -524,9 +540,12 @@ TEST_F(RPCTxTest, ReturnBinary)
     })JSON";
 
     TransactionAndMetadata tx;
-    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata =
+        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+            .getSerializer()
+            .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
     EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
@@ -569,9 +588,12 @@ TEST_F(RPCTxTest, ReturnBinaryWithCTID)
     })JSON";
 
     TransactionAndMetadata tx;
-    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata =
+        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+            .getSerializer()
+            .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
     EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
@@ -686,7 +708,8 @@ TEST_F(RPCTxTest, MintNFT)
 
 TEST_F(RPCTxTest, NFTAcceptOffer)
 {
-    TransactionAndMetadata tx = createAcceptNftBuyerOfferTxWithMetadata(kACCOUNT, 1, 50, kNFT_ID, kINDEX);
+    TransactionAndMetadata tx =
+        createAcceptNftBuyerOfferTxWithMetadata(kACCOUNT, 1, 50, kNFT_ID, kINDEX);
 
     tx.date = 123456;
     tx.ledgerSequence = 100;
@@ -742,7 +765,8 @@ TEST_F(RPCTxTest, NFTCancelOffer)
 
         for (auto const& id : output.result->at("meta").at("nftoken_ids").as_array()) {
             auto const idStr = id.as_string();
-            auto const it = std::find(ids.begin(), ids.end(), idStr);  // NOLINT(modernize-use-ranges)
+            auto const it =
+                std::find(ids.begin(), ids.end(), idStr);  // NOLINT(modernize-use-ranges)
             ASSERT_NE(it, ids.end()) << "Unexpected NFT ID: " << idStr;
             ids.erase(it);
         }
@@ -753,7 +777,8 @@ TEST_F(RPCTxTest, NFTCancelOffer)
 
 TEST_F(RPCTxTest, NFTCreateOffer)
 {
-    TransactionAndMetadata tx = createCreateNftOfferTxWithMetadata(kACCOUNT, 1, 50, kNFT_ID, 123, kNFT_ID2);
+    TransactionAndMetadata tx =
+        createCreateNftOfferTxWithMetadata(kACCOUNT, 1, 50, kNFT_ID, 123, kNFT_ID2);
 
     tx.date = 123456;
     tx.ledgerSequence = 100;
@@ -922,9 +947,12 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
     })JSON";
 
     TransactionAndMetadata tx;
-    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata =
+        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+            .getSerializer()
+            .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
     EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
@@ -991,9 +1019,12 @@ TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvailable)
     })JSON";
 
     TransactionAndMetadata tx;
-    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata =
+        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+            .getSerializer()
+            .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
     EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
@@ -1066,18 +1097,24 @@ TEST_F(RPCTxTest, ViaCTID)
     );
 
     TransactionAndMetadata tx1;
-    tx1.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 1, 200, 300).getSerializer().peekData();
+    tx1.metadata =
+        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 1, 200, 300).getSerializer().peekData();
     tx1.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+            .getSerializer()
+            .peekData();
     tx1.date = 123456;
     tx1.ledgerSequence = kSEQ_FROM_CTID;
 
     TransactionAndMetadata tx2;
-    tx2.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 2, 3, 300).getSerializer().peekData();
-    tx2.metadata = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 110, 30).getSerializer().peekData();
+    tx2.transaction =
+        createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 2, 3, 300).getSerializer().peekData();
+    tx2.metadata =
+        createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 110, 30).getSerializer().peekData();
     tx2.ledgerSequence = kSEQ_FROM_CTID;
 
-    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSEQ_FROM_CTID, _)).WillOnce(Return(std::vector{tx1, tx2}));
+    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSEQ_FROM_CTID, _))
+        .WillOnce(Return(std::vector{tx1, tx2}));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -1103,18 +1140,24 @@ TEST_F(RPCTxTest, ViaCTID)
 TEST_F(RPCTxTest, ViaLowercaseCTID)
 {
     TransactionAndMetadata tx1;
-    tx1.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 1, 200, 300).getSerializer().peekData();
+    tx1.metadata =
+        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 1, 200, 300).getSerializer().peekData();
     tx1.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+            .getSerializer()
+            .peekData();
     tx1.date = 123456;
     tx1.ledgerSequence = kSEQ_FROM_CTID;
 
     TransactionAndMetadata tx2;
-    tx2.transaction = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 2, 3, 300).getSerializer().peekData();
-    tx2.metadata = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 110, 30).getSerializer().peekData();
+    tx2.transaction =
+        createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 2, 3, 300).getSerializer().peekData();
+    tx2.metadata =
+        createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 110, 30).getSerializer().peekData();
     tx2.ledgerSequence = kSEQ_FROM_CTID;
 
-    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSEQ_FROM_CTID, _)).WillOnce(Return(std::vector{tx1, tx2}));
+    EXPECT_CALL(*backend_, fetchAllTransactionsInLedger(kSEQ_FROM_CTID, _))
+        .WillOnce(Return(std::vector{tx1, tx2}));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);

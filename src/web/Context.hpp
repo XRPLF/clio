@@ -35,7 +35,8 @@
 namespace web {
 
 /**
- * @brief Context that is used by the Webserver to pass around information about an incoming request.
+ * @brief Context that is used by the Webserver to pass around information about an incoming
+ * request.
  */
 struct Context : util::Taggable {
     boost::asio::yield_context yield;

@@ -43,8 +43,9 @@ protected:
 /**
  * @brief Fixture with a "nice" ETLService mock.
  *
- * Use @see MockETLServiceTestNaggy during development to get unset call expectation warnings from the embedded mock.
- * Once the test is ready and you are happy you can switch to this fixture to mute the warnings.
+ * Use @see MockETLServiceTestNaggy during development to get unset call expectation warnings from
+ * the embedded mock. Once the test is ready and you are happy you can switch to this fixture to
+ * mute the warnings.
  */
 using MockETLServiceTest = MockETLServiceTestBase<::testing::NiceMock>;
 
@@ -73,7 +74,8 @@ protected:
  */
 struct MockLedgerFetcherTest : virtual public ::testing::Test {
 protected:
-    std::shared_ptr<MockLedgerFetcher> mockLedgerFetcherPtr_ = std::make_shared<MockLedgerFetcher>();
+    std::shared_ptr<MockLedgerFetcher> mockLedgerFetcherPtr_ =
+        std::make_shared<MockLedgerFetcher>();
 };
 
 /**

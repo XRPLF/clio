@@ -366,7 +366,8 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash)
 TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence)
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(
         fmt::format(
@@ -390,7 +391,8 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerStringIndex)
 TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence)
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(
         fmt::format(
@@ -417,7 +419,8 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 31);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
+    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+        .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     auto const input = json::parse(
         fmt::format(
@@ -468,7 +471,8 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIndex2)
 TEST_F(RPCAccountLinesHandlerTest, NonExistAccount)
 {
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
+    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+        .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // fetch account object return empty
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
@@ -505,7 +509,8 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
 
     // return owner index containing 2 indexes
     ripple::STObject const ownerDir =
@@ -517,8 +522,12 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
 
     // return two trust lines
     std::vector<Blob> bbs;
-    auto const line1 = createRippleStateLedgerObject("USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123);
-    auto const line2 = createRippleStateLedgerObject("USD", kACCOUNT, 10, kACCOUNT2, 100, kACCOUNT, 200, kTXN_ID, 123);
+    auto const line1 = createRippleStateLedgerObject(
+        "USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123
+    );
+    auto const line2 = createRippleStateLedgerObject(
+        "USD", kACCOUNT, 10, kACCOUNT2, 100, kACCOUNT, 200, kTXN_ID, 123
+    );
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(line2.getSerializer().peekData());
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -581,7 +590,8 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
 
     // return owner index
     std::vector<ripple::uint256> indexes;
@@ -590,8 +600,9 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
     auto repetitions = 50;
     while ((repetitions--) != 0) {
         indexes.emplace_back(kINDEX1);
-        auto const line =
-            createRippleStateLedgerObject("USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123);
+        auto const line = createRippleStateLedgerObject(
+            "USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123
+        );
         bbs.push_back(line.getSerializer().peekData());
     }
     ripple::STObject ownerDir = createOwnerDirLedgerObject(indexes, kINDEX1);
@@ -619,7 +630,10 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
         ASSERT_TRUE(output);
 
         EXPECT_EQ((*output.result).as_object().at("lines").as_array().size(), 20);
-        EXPECT_THAT(boost::json::value_to<std::string>((*output.result).as_object().at("marker")), EndsWith(",0"));
+        EXPECT_THAT(
+            boost::json::value_to<std::string>((*output.result).as_object().at("marker")),
+            EndsWith(",0")
+        );
     });
 
     runSpawn([this](auto yield) {
@@ -665,7 +679,8 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
 
     // return owner index
     std::vector<ripple::uint256> indexes;
@@ -675,8 +690,9 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
     auto repetitions = 10;
     while ((repetitions--) != 0) {
         indexes.emplace_back(kINDEX1);
-        auto const line =
-            createRippleStateLedgerObject("USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123);
+        auto const line = createRippleStateLedgerObject(
+            "USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123
+        );
         bbs.push_back(line.getSerializer().peekData());
     }
 
@@ -684,8 +700,9 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
     repetitions = 20;
     while ((repetitions--) != 0) {
         indexes.emplace_back(kINDEX1);
-        auto const line =
-            createRippleStateLedgerObject("USD", kACCOUNT3, 10, kACCOUNT, 100, kACCOUNT3, 200, kTXN_ID, 123);
+        auto const line = createRippleStateLedgerObject(
+            "USD", kACCOUNT3, 10, kACCOUNT, 100, kACCOUNT3, 200, kTXN_ID, 123
+        );
         bbs.push_back(line.getSerializer().peekData());
     }
 
@@ -728,7 +745,8 @@ TEST_F(RPCAccountLinesHandlerTest, EmptyChannel)
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
 
     // return owner index
     ripple::STObject const ownerDir = createOwnerDirLedgerObject({}, kINDEX1);
@@ -800,7 +818,8 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseFieldWithDeepFreeze)
     auto fake = Blob{'f', 'a', 'k', 'e'};
 
     // return a non empty account
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
 
     // return owner index
     ripple::STObject const ownerDir =
@@ -812,14 +831,18 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseFieldWithDeepFreeze)
 
     // return few trust lines
     std::vector<Blob> bbs;
-    auto line1 = createRippleStateLedgerObject("USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 0);
+    auto line1 = createRippleStateLedgerObject(
+        "USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 0
+    );
     line1.setFlag(ripple::lsfHighAuth);
     line1.setFlag(ripple::lsfHighNoRipple);
     line1.setFlag(ripple::lsfHighFreeze);
     line1.setFlag(ripple::lsfHighDeepFreeze);
     bbs.push_back(line1.getSerializer().peekData());
 
-    auto line2 = createRippleStateLedgerObject("USD", kACCOUNT2, 20, kACCOUNT, 200, kACCOUNT2, 400, kTXN_ID, 0);
+    auto line2 = createRippleStateLedgerObject(
+        "USD", kACCOUNT2, 20, kACCOUNT, 200, kACCOUNT2, 400, kTXN_ID, 0
+    );
     line2.setFlag(ripple::lsfLowAuth);
     line2.setFlag(ripple::lsfLowNoRipple);
     line2.setFlag(ripple::lsfLowFreeze);
@@ -888,7 +911,8 @@ TEST_F(RPCAccountLinesHandlerTest, FrozenTrustLineResponse)
     auto fake = Blob{'f', 'a', 'k', 'e'};
 
     // return a non empty account
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
 
     // return owner index
     ripple::STObject const ownerDir =
@@ -899,12 +923,16 @@ TEST_F(RPCAccountLinesHandlerTest, FrozenTrustLineResponse)
 
     // return few trust lines
     std::vector<Blob> bbs;
-    auto line1 = createRippleStateLedgerObject("USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 0);
+    auto line1 = createRippleStateLedgerObject(
+        "USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 0
+    );
     line1.setFlag(ripple::lsfHighAuth);
     line1.setFlag(ripple::lsfHighFreeze);
     bbs.push_back(line1.getSerializer().peekData());
 
-    auto line2 = createRippleStateLedgerObject("USD", kACCOUNT2, 20, kACCOUNT, 200, kACCOUNT2, 400, kTXN_ID, 0);
+    auto line2 = createRippleStateLedgerObject(
+        "USD", kACCOUNT2, 20, kACCOUNT, 200, kACCOUNT2, 400, kTXN_ID, 0
+    );
     line2.setFlag(ripple::lsfLowAuth);
     line2.setFlag(ripple::lsfLowFreeze);
     bbs.push_back(line2.getSerializer().peekData());
@@ -940,11 +968,14 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto fake = Blob{'f', 'a', 'k', 'e'};
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
-    auto line = createRippleStateLedgerObject("USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 0);
+    auto line = createRippleStateLedgerObject(
+        "USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 0
+    );
 
     // owner dir contains 10 indexes
     int objectsCount = 10;
@@ -1010,11 +1041,14 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto fake = Blob{'f', 'a', 'k', 'e'};
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
-    auto const line = createRippleStateLedgerObject("USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 0);
+    auto const line = createRippleStateLedgerObject(
+        "USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 0
+    );
     int objectsCount = kLIMIT;
     std::vector<ripple::uint256> indexes;
     while (objectsCount != 0) {
@@ -1067,7 +1101,8 @@ TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
 
     // return owner index containing 2 indexes
     ripple::STObject const ownerDir =
@@ -1079,8 +1114,12 @@ TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
 
     // return two trust lines
     std::vector<Blob> bbs;
-    auto const line1 = createRippleStateLedgerObject("USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123);
-    auto const line2 = createRippleStateLedgerObject("USD", kACCOUNT, 10, kACCOUNT2, 100, kACCOUNT, 200, kTXN_ID, 123);
+    auto const line1 = createRippleStateLedgerObject(
+        "USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123
+    );
+    auto const line2 = createRippleStateLedgerObject(
+        "USD", kACCOUNT, 10, kACCOUNT2, 100, kACCOUNT, 200, kTXN_ID, 123
+    );
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(line2.getSerializer().peekData());
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -1146,7 +1185,8 @@ TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
 
     // return owner index containing 2 indexes
     ripple::STObject const ownerDir =
@@ -1158,8 +1198,12 @@ TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
 
     // return two trust lines
     std::vector<Blob> bbs;
-    auto const line1 = createRippleStateLedgerObject("USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123);
-    auto const line2 = createRippleStateLedgerObject("USD", kACCOUNT, 10, kACCOUNT2, 100, kACCOUNT, 200, kTXN_ID, 123);
+    auto const line1 = createRippleStateLedgerObject(
+        "USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123
+    );
+    auto const line2 = createRippleStateLedgerObject(
+        "USD", kACCOUNT, 10, kACCOUNT2, 100, kACCOUNT, 200, kTXN_ID, 123
+    );
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(line2.getSerializer().peekData());
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -1235,10 +1279,13 @@ TEST(RPCAccountLinesHandlerSpecTest, DeprecatedFields)
     auto const& warning = warnings[0].as_object();
     ASSERT_TRUE(warning.contains("id"));
     ASSERT_TRUE(warning.contains("message"));
-    EXPECT_EQ(warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::WarnRpcDeprecated));
+    EXPECT_EQ(
+        warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::WarnRpcDeprecated)
+    );
     for (auto const& field : {"ledger", "peer_index"}) {
         EXPECT_NE(
-            warning.at("message").as_string().find(fmt::format("Field '{}' is deprecated.", field)), std::string::npos
+            warning.at("message").as_string().find(fmt::format("Field '{}' is deprecated.", field)),
+            std::string::npos
         ) << warning;
     }
 }

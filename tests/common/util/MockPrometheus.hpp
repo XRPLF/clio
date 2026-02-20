@@ -86,44 +86,83 @@ struct MockPrometheusImpl : PrometheusInterface {
     MockPrometheusImpl() : PrometheusInterface(true, true)
     {
         EXPECT_CALL(*this, boolMetric)
-            .WillRepeatedly([this](std::string name, Labels labels, std::optional<std::string>) -> Bool {
-                return Bool{getMetric<GaugeInt>(std::move(name), std::move(labels))};
-            });
+            .WillRepeatedly(
+                [this](std::string name, Labels labels, std::optional<std::string>) -> Bool {
+                    return Bool{getMetric<GaugeInt>(std::move(name), std::move(labels))};
+                }
+            );
         EXPECT_CALL(*this, counterInt)
-            .WillRepeatedly([this](std::string name, Labels labels, std::optional<std::string>) -> CounterInt& {
-                return getMetric<CounterInt>(std::move(name), std::move(labels));
-            });
+            .WillRepeatedly(
+                [this](std::string name, Labels labels, std::optional<std::string>) -> CounterInt& {
+                    return getMetric<CounterInt>(std::move(name), std::move(labels));
+                }
+            );
         EXPECT_CALL(*this, counterDouble)
-            .WillRepeatedly([this](std::string name, Labels labels, std::optional<std::string>) -> CounterDouble& {
-                return getMetric<CounterDouble>(std::move(name), std::move(labels));
-            });
+            .WillRepeatedly(
+                [this](
+                    std::string name, Labels labels, std::optional<std::string>
+                ) -> CounterDouble& {
+                    return getMetric<CounterDouble>(std::move(name), std::move(labels));
+                }
+            );
         EXPECT_CALL(*this, gaugeInt)
-            .WillRepeatedly([this](std::string name, Labels labels, std::optional<std::string>) -> GaugeInt& {
-                return getMetric<GaugeInt>(std::move(name), std::move(labels));
-            });
+            .WillRepeatedly(
+                [this](std::string name, Labels labels, std::optional<std::string>) -> GaugeInt& {
+                    return getMetric<GaugeInt>(std::move(name), std::move(labels));
+                }
+            );
         EXPECT_CALL(*this, gaugeDouble)
-            .WillRepeatedly([this](std::string name, Labels labels, std::optional<std::string>) -> GaugeDouble& {
-                return getMetric<GaugeDouble>(std::move(name), std::move(labels));
-            });
+            .WillRepeatedly(
+                [this](
+                    std::string name, Labels labels, std::optional<std::string>
+                ) -> GaugeDouble& {
+                    return getMetric<GaugeDouble>(std::move(name), std::move(labels));
+                }
+            );
         EXPECT_CALL(*this, histogramInt)
             .WillRepeatedly(
                 [this](
-                    std::string name, Labels labels, std::vector<std::int64_t> const&, std::optional<std::string>
-                ) -> HistogramInt& { return getMetric<HistogramInt>(std::move(name), std::move(labels)); }
+                    std::string name,
+                    Labels labels,
+                    std::vector<std::int64_t> const&,
+                    std::optional<std::string>
+                ) -> HistogramInt& {
+                    return getMetric<HistogramInt>(std::move(name), std::move(labels));
+                }
             );
         EXPECT_CALL(*this, histogramDouble)
             .WillRepeatedly(
                 [this](
-                    std::string name, Labels labels, std::vector<double> const&, std::optional<std::string>
-                ) -> HistogramDouble& { return getMetric<HistogramDouble>(std::move(name), std::move(labels)); }
+                    std::string name,
+                    Labels labels,
+                    std::vector<double> const&,
+                    std::optional<std::string>
+                ) -> HistogramDouble& {
+                    return getMetric<HistogramDouble>(std::move(name), std::move(labels));
+                }
             );
     }
 
     MOCK_METHOD(Bool, boolMetric, (std::string, Labels, std::optional<std::string>), (override));
-    MOCK_METHOD(CounterInt&, counterInt, (std::string, Labels, std::optional<std::string>), (override));
-    MOCK_METHOD(CounterDouble&, counterDouble, (std::string, Labels, std::optional<std::string>), (override));
+    MOCK_METHOD(
+        CounterInt&,
+        counterInt,
+        (std::string, Labels, std::optional<std::string>),
+        (override)
+    );
+    MOCK_METHOD(
+        CounterDouble&,
+        counterDouble,
+        (std::string, Labels, std::optional<std::string>),
+        (override)
+    );
     MOCK_METHOD(GaugeInt&, gaugeInt, (std::string, Labels, std::optional<std::string>), (override));
-    MOCK_METHOD(GaugeDouble&, gaugeDouble, (std::string, Labels, std::optional<std::string>), (override));
+    MOCK_METHOD(
+        GaugeDouble&,
+        gaugeDouble,
+        (std::string, Labels, std::optional<std::string>),
+        (override)
+    );
     MOCK_METHOD(
         HistogramInt&,
         histogramInt,
@@ -166,15 +205,19 @@ struct MockPrometheusImpl : PrometheusInterface {
         } else if constexpr (std::is_same_v<MetricType, CounterInt>) {
             auto& impl = counterUintImpls[key];
             metric = std::make_unique<MetricType>(name, labelsString, impl);
-        } else if constexpr (std::is_same_v<MetricType, GaugeDouble> || std::is_same_v<MetricType, CounterDouble>) {
+        } else if constexpr (std::is_same_v<MetricType, GaugeDouble> ||
+                             std::is_same_v<MetricType, CounterDouble>) {
             auto& impl = counterDoubleImpls[key];
             metric = std::make_unique<MetricType>(name, labelsString, impl);
         } else if constexpr (std::is_same_v<MetricType, HistogramInt>) {
             auto& impl = histogramIntImpls[key];
-            metric = std::make_unique<MetricType>(name, labelsString, std::vector<std::int64_t>{1}, impl);
+            metric = std::make_unique<MetricType>(
+                name, labelsString, std::vector<std::int64_t>{1}, impl
+            );
         } else if constexpr (std::is_same_v<MetricType, HistogramDouble>) {
             auto& impl = histogramDoubleImpls[key];
-            metric = std::make_unique<MetricType>(name, labelsString, std::vector<double>{1.}, impl);
+            metric =
+                std::make_unique<MetricType>(name, labelsString, std::vector<double>{1.}, impl);
         } else {
             throw std::runtime_error("Wrong metric type");
         }
@@ -188,9 +231,11 @@ struct MockPrometheusImpl : PrometheusInterface {
 
     std::unordered_map<std::string, ::testing::StrictMock<MockCounterImplInt>> counterIntImpls;
     std::unordered_map<std::string, ::testing::StrictMock<MockCounterImplUint>> counterUintImpls;
-    std::unordered_map<std::string, ::testing::StrictMock<MockCounterImplDouble>> counterDoubleImpls;
+    std::unordered_map<std::string, ::testing::StrictMock<MockCounterImplDouble>>
+        counterDoubleImpls;
     std::unordered_map<std::string, ::testing::StrictMock<MockHistogramImplInt>> histogramIntImpls;
-    std::unordered_map<std::string, ::testing::StrictMock<MockHistogramImplDouble>> histogramDoubleImpls;
+    std::unordered_map<std::string, ::testing::StrictMock<MockHistogramImplDouble>>
+        histogramDoubleImpls;
 };
 
 /**
@@ -212,8 +257,10 @@ struct WithMockPrometheus : virtual ::testing::Test {
             std::cerr << "\n";
         }
         config::ClioConfigDefinition const config{
-            {"prometheus.compress_reply", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)},
-            {"prometheus.enabled", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)}
+            {"prometheus.compress_reply",
+             config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)},
+            {"prometheus.enabled",
+             config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)}
         };
         PrometheusService::replaceInstance(nullptr);
     }
@@ -242,7 +289,8 @@ struct WithMockPrometheus : virtual ::testing::Test {
             return mockPrometheusPtr->counterIntImpls[key];
         } else if constexpr (std::is_same_v<MetricType, CounterInt>) {
             return mockPrometheusPtr->counterUintImpls[key];
-        } else if constexpr (std::is_same_v<MetricType, GaugeDouble> || std::is_same_v<MetricType, CounterDouble>) {
+        } else if constexpr (std::is_same_v<MetricType, GaugeDouble> ||
+                             std::is_same_v<MetricType, CounterDouble>) {
             return mockPrometheusPtr->counterDoubleImpls[key];
         } else if constexpr (std::is_same_v<MetricType, HistogramInt>) {
             return mockPrometheusPtr->histogramIntImpls[key];
@@ -264,8 +312,10 @@ struct WithPrometheusImpl : virtual ::testing::Test {
     WithPrometheusImpl()
     {
         config::ClioConfigDefinition const config{
-            {"prometheus.compress_reply", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(false)},
-            {"prometheus.enabled", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(IsEnabled)}
+            {"prometheus.compress_reply",
+             config::ConfigValue{config::ConfigType::Boolean}.defaultValue(false)},
+            {"prometheus.enabled",
+             config::ConfigValue{config::ConfigType::Boolean}.defaultValue(IsEnabled)}
         };
         PrometheusService::init(config);
     }

@@ -118,7 +118,8 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
                 std::move_iterator(txns.end()),
                 std::back_inserter(jsonTxs),
                 [&](auto obj) {
-                    boost::json::object entry = ctx.apiVersion < 2u ? expandTxJsonV1(obj) : expandTxJsonV2(obj);
+                    boost::json::object entry =
+                        ctx.apiVersion < 2u ? expandTxJsonV1(obj) : expandTxJsonV2(obj);
 
                     if (input.ownerFunds) {
                         // check the type of tx
@@ -149,7 +150,8 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
                 }
             );
         } else {
-            auto hashes = sharedPtrBackend_->fetchAllTransactionHashesInLedger(lgrInfo.seq, ctx.yield);
+            auto hashes =
+                sharedPtrBackend_->fetchAllTransactionHashesInLedger(lgrInfo.seq, ctx.yield);
             std::transform(
                 std::move_iterator(hashes.begin()),
                 std::move_iterator(hashes.end()),
@@ -172,7 +174,9 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
             if (input.binary) {
                 entry["object"] = ripple::strHex(obj.blob);
             } else if (!obj.blob.empty()) {
-                ripple::STLedgerEntry const sle{ripple::SerialIter{obj.blob.data(), obj.blob.size()}, obj.key};
+                ripple::STLedgerEntry const sle{
+                    ripple::SerialIter{obj.blob.data(), obj.blob.size()}, obj.key
+                };
                 entry["object"] = toJson(sle);
             } else {
                 entry["object"] = "";

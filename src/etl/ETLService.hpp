@@ -80,17 +80,19 @@
 namespace etl {
 
 /**
- * @brief This class is responsible for continuously extracting data from a p2p node, and writing that data to the
- * databases.
+ * @brief This class is responsible for continuously extracting data from a p2p node, and writing
+ * that data to the databases.
  *
- * Usually, multiple different processes share access to the same network accessible databases, in which case only one
- * such process is performing ETL and writing to the database. The other processes simply monitor the database for new
- * ledgers, and publish those ledgers to the various subscription streams. If a monitoring process determines that the
- * ETL writer has failed (no new ledgers written for some time), the process will attempt to become the ETL writer.
+ * Usually, multiple different processes share access to the same network accessible databases, in
+ * which case only one such process is performing ETL and writing to the database. The other
+ * processes simply monitor the database for new ledgers, and publish those ledgers to the various
+ * subscription streams. If a monitoring process determines that the ETL writer has failed (no new
+ * ledgers written for some time), the process will attempt to become the ETL writer.
  *
- * If there are multiple monitoring processes that try to become the ETL writer at the same time, one will win out, and
- * the others will fall back to monitoring/publishing. In this sense, this class dynamically transitions from monitoring
- * to writing and from writing to monitoring, based on the activity of other processes running on different machines.
+ * If there are multiple monitoring processes that try to become the ETL writer at the same time,
+ * one will win out, and the others will fall back to monitoring/publishing. In this sense, this
+ * class dynamically transitions from monitoring to writing and from writing to monitoring, based on
+ * the activity of other processes running on different machines.
  */
 class ETLService : public ETLServiceInterface {
     util::Logger log_{"ETL"};

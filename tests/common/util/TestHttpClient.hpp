@@ -93,7 +93,9 @@ public:
         std::chrono::steady_clock::duration timeout
     );
 
-    std::expected<boost::beast::http::response<boost::beast::http::string_body>, boost::system::error_code>
+    std::expected<
+        boost::beast::http::response<boost::beast::http::string_body>,
+        boost::system::error_code>
     receive(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout);
 
     void

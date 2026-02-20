@@ -58,34 +58,42 @@ SubscribeHandler::SubscribeHandler(
     std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
     std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions
 )
-    : sharedPtrBackend_(sharedPtrBackend), amendmentCenter_(amendmentCenter), subscriptions_(subscriptions)
+    : sharedPtrBackend_(sharedPtrBackend)
+    , amendmentCenter_(amendmentCenter)
+    , subscriptions_(subscriptions)
 {
 }
 
 RpcSpecConstRef
 SubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
 {
-    static auto const kBOOKS_VALIDATOR =
-        validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+    static auto const kBOOKS_VALIDATOR = validation::CustomValidator{
+        [](boost::json::value const& value, std::string_view key) -> MaybeError {
             if (!value.is_array())
-                return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
+                return Error{
+                    Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}
+                };
 
             for (auto const& book : value.as_array()) {
                 if (!book.is_object())
-                    return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "ItemNotObject"}};
+                    return Error{
+                        Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "ItemNotObject"}
+                    };
 
                 if (book.as_object().contains("both") && !book.as_object().at("both").is_bool())
                     return Error{Status{RippledError::rpcINVALID_PARAMS, "bothNotBool"}};
 
-                if (book.as_object().contains("snapshot") && !book.as_object().at("snapshot").is_bool())
+                if (book.as_object().contains("snapshot") &&
+                    !book.as_object().at("snapshot").is_bool())
                     return Error{Status{RippledError::rpcINVALID_PARAMS, "snapshotNotBool"}};
 
                 if (book.as_object().contains("taker")) {
-                    if (auto err = meta::WithCustomError(
-                                       validation::CustomValidators::accountValidator,
-                                       Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."}
-                        )
-                                       .verify(book.as_object(), "taker");
+                    if (auto err =
+                            meta::WithCustomError(
+                                validation::CustomValidators::accountValidator,
+                                Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."}
+                            )
+                                .verify(book.as_object(), "taker");
                         !err)
                         return err;
                 }
@@ -96,7 +104,8 @@ SubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
             }
 
             return MaybeError{};
-        }};
+        }
+    };
 
     static auto const kRPC_SPEC = RpcSpec{
         {JS(streams), validation::CustomValidators::subscribeStreamValidator},
@@ -210,15 +219,24 @@ SubscribeHandler::subscribeToBooks(
 
             auto const getOrderBook = [&](auto const& book, auto& snapshots) {
                 auto const bookBase = getBookBase(book);
-                auto const [offers, _] =
-                    sharedPtrBackend_->fetchBookOffers(bookBase, rng->maxSequence, kFETCH_LIMIT, yield);
+                auto const [offers, _] = sharedPtrBackend_->fetchBookOffers(
+                    bookBase, rng->maxSequence, kFETCH_LIMIT, yield
+                );
 
                 // the taker is not really used, same issue with
                 // https://github.com/XRPLF/xrpl-dev-portal/issues/1818
-                auto const takerID = internalBook.taker ? accountFromStringStrict(*(internalBook.taker)) : beast::zero;
+                auto const takerID = internalBook.taker
+                    ? accountFromStringStrict(*(internalBook.taker))
+                    : beast::zero;
 
                 auto const orderBook = postProcessOrderBook(
-                    offers, book, *takerID, *sharedPtrBackend_, *amendmentCenter_, rng->maxSequence, yield
+                    offers,
+                    book,
+                    *takerID,
+                    *sharedPtrBackend_,
+                    *amendmentCenter_,
+                    rng->maxSequence,
+                    yield
                 );
                 std::copy(orderBook.begin(), orderBook.end(), std::back_inserter(snapshots));
             };
@@ -245,7 +263,11 @@ SubscribeHandler::subscribeToBooks(
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, SubscribeHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    SubscribeHandler::Output const& output
+)
 {
     jv = output.ledger ? *(output.ledger) : boost::json::object();
 
@@ -275,7 +297,8 @@ tag_invoke(boost::json::value_to_tag<SubscribeHandler::Input>, boost::json::valu
             input.accounts->push_back(boost::json::value_to<std::string>(account));
     }
 
-    if (auto const& accountsProposed = jsonObject.find(JS(accounts_proposed)); accountsProposed != jsonObject.end()) {
+    if (auto const& accountsProposed = jsonObject.find(JS(accounts_proposed));
+        accountsProposed != jsonObject.end()) {
         input.accountsProposed = std::vector<std::string>();
         for (auto const& account : accountsProposed->value().as_array())
             input.accountsProposed->push_back(boost::json::value_to<std::string>(account));

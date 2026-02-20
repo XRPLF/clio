@@ -88,8 +88,9 @@ TEST_F(RPCLedgerIndexTest, EarlierThanMinLedger)
 {
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
     auto const req = json::parse(R"JSON({"date": "2024-06-25T12:23:05Z"})JSON");
-    auto const ledgerHeader =
-        createLedgerHeaderWithUnixTime(kLEDGER_HASH, kRANGE_MIN, 1719318190);  //"2024-06-25T12:23:10Z"
+    auto const ledgerHeader = createLedgerHeaderWithUnixTime(
+        kLEDGER_HASH, kRANGE_MIN, 1719318190
+    );  //"2024-06-25T12:23:10Z"
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MIN, _)).WillOnce(Return(ledgerHeader));
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
@@ -105,8 +106,9 @@ TEST_F(RPCLedgerIndexTest, ChangeTimeZone)
     setenv("TZ", "EST+5", 1);  // NOLINT(misc-include-cleaner)
     auto const handler = AnyHandler{LedgerIndexHandler{backend_}};
     auto const req = json::parse(R"JSON({"date": "2024-06-25T12:23:05Z"})JSON");
-    auto const ledgerHeader =
-        createLedgerHeaderWithUnixTime(kLEDGER_HASH, kRANGE_MIN, 1719318190);  //"2024-06-25T12:23:10Z"
+    auto const ledgerHeader = createLedgerHeaderWithUnixTime(
+        kLEDGER_HASH, kRANGE_MIN, 1719318190
+    );  //"2024-06-25T12:23:10Z"
     EXPECT_CALL(*backend_, fetchLedgerBySequence(kRANGE_MIN, _)).WillOnce(Return(ledgerHeader));
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
@@ -124,7 +126,8 @@ struct LedgerIndexTestsCaseBundle {
     std::string closeTimeIso;
 };
 
-class LedgerIndexTests : public RPCLedgerIndexTest, public WithParamInterface<LedgerIndexTestsCaseBundle> {
+class LedgerIndexTests : public RPCLedgerIndexTest,
+                         public WithParamInterface<LedgerIndexTestsCaseBundle> {
 public:
     static auto
     generateTestValuesForParametersTest()
@@ -171,10 +174,11 @@ TEST_P(LedgerIndexTests, SearchFromLedgerRange)
     auto const testBundle = GetParam();
     auto const jv = json::parse(testBundle.json).as_object();
 
-    // start from 1719318190 , which is the unix time for 2024-06-25T12:23:10Z to 2024-06-25T12:23:50Z with
-    // step 2
+    // start from 1719318190 , which is the unix time for 2024-06-25T12:23:10Z to
+    // 2024-06-25T12:23:50Z with step 2
     for (uint32_t i = kRANGE_MIN; i <= kRANGE_MAX; i++) {
-        auto const ledgerHeader = createLedgerHeaderWithUnixTime(kLEDGER_HASH, i, 1719318190 + (2 * (i - kRANGE_MIN)));
+        auto const ledgerHeader =
+            createLedgerHeaderWithUnixTime(kLEDGER_HASH, i, 1719318190 + (2 * (i - kRANGE_MIN)));
         auto const exactNumberOfCalls = i == kRANGE_MIN ? Exactly(3) : Exactly(2);
         EXPECT_CALL(*backend_, fetchLedgerBySequence(i, _))
             .Times(i == testBundle.expectedLedgerIndex ? exactNumberOfCalls : AtMost(1))

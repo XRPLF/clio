@@ -34,13 +34,19 @@
 
 namespace cluster {
 
-WriterDecider::WriterDecider(boost::asio::thread_pool& ctx, std::unique_ptr<etl::WriterStateInterface> writerState)
+WriterDecider::WriterDecider(
+    boost::asio::thread_pool& ctx,
+    std::unique_ptr<etl::WriterStateInterface> writerState
+)
     : ctx_(ctx), writerState_(std::move(writerState))
 {
 }
 
 void
-WriterDecider::onNewState(ClioNode::CUuid selfId, std::shared_ptr<Backend::ClusterData const> clusterData)
+WriterDecider::onNewState(
+    ClioNode::CUuid selfId,
+    std::shared_ptr<Backend::ClusterData const> clusterData
+)
 {
     if (not clusterData->has_value())
         return;
@@ -50,8 +56,9 @@ WriterDecider::onNewState(ClioNode::CUuid selfId, std::shared_ptr<Backend::Clust
         [writerState = writerState_->clone(),
          selfId = std::move(selfId),
          clusterData = clusterData->value()](auto&&) mutable {
-            auto const selfData =
-                std::ranges::find_if(clusterData, [&selfId](ClioNode const& node) { return node.uuid == selfId; });
+            auto const selfData = std::ranges::find_if(
+                clusterData, [&selfId](ClioNode const& node) { return node.uuid == selfId; }
+            );
             ASSERT(selfData != clusterData.end(), "Self data should always be in the cluster data");
 
             if (selfData->dbRole == ClioNode::DbRole::Fallback) {
@@ -78,7 +85,8 @@ WriterDecider::onNewState(ClioNode::CUuid selfId, std::shared_ptr<Backend::Clust
             });
 
             auto const it = std::ranges::find_if(clusterData, [](ClioNode const& node) {
-                return node.dbRole == ClioNode::DbRole::NotWriter or node.dbRole == ClioNode::DbRole::Writer;
+                return node.dbRole == ClioNode::DbRole::NotWriter or
+                    node.dbRole == ClioNode::DbRole::Writer;
             });
 
             if (it == clusterData.end()) {

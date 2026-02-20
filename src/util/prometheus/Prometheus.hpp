@@ -66,7 +66,11 @@ public:
      * @return The bool object
      */
     virtual Bool
-    boolMetric(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
+    boolMetric(
+        std::string name,
+        Labels labels,
+        std::optional<std::string> description = std::nullopt
+    ) = 0;
 
     /**
      * @brief Get an integer based counter metric. It will be created if it doesn't exist
@@ -77,7 +81,11 @@ public:
      * @return A reference to the counter object
      */
     virtual CounterInt&
-    counterInt(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
+    counterInt(
+        std::string name,
+        Labels labels,
+        std::optional<std::string> description = std::nullopt
+    ) = 0;
 
     /**
      * @brief Get a double based counter metric. It will be created if it doesn't exist
@@ -88,7 +96,11 @@ public:
      * @return A reference to the counter object
      */
     virtual CounterDouble&
-    counterDouble(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
+    counterDouble(
+        std::string name,
+        Labels labels,
+        std::optional<std::string> description = std::nullopt
+    ) = 0;
 
     /**
      * @brief Get an integer based gauge metric. It will be created if it doesn't exist
@@ -99,7 +111,11 @@ public:
      * @return A reference to the gauge object
      */
     virtual GaugeInt&
-    gaugeInt(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
+    gaugeInt(
+        std::string name,
+        Labels labels,
+        std::optional<std::string> description = std::nullopt
+    ) = 0;
 
     /**
      * @brief Get a double based gauge metric. It will be created if it doesn't exist
@@ -110,7 +126,11 @@ public:
      * @return A reference to the gauge object
      */
     virtual GaugeDouble&
-    gaugeDouble(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
+    gaugeDouble(
+        std::string name,
+        Labels labels,
+        std::optional<std::string> description = std::nullopt
+    ) = 0;
 
     /**
      * @brief Get an integer based histogram metric. It will be created if it doesn't exist
@@ -191,7 +211,11 @@ public:
     using PrometheusInterface::PrometheusInterface;
 
     Bool
-    boolMetric(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) override;
+    boolMetric(
+        std::string name,
+        Labels labels,
+        std::optional<std::string> description = std::nullopt
+    ) override;
 
     CounterInt&
     counterInt(std::string name, Labels labels, std::optional<std::string> description) override;
@@ -229,7 +253,12 @@ private:
     getMetricsFamily(std::string name, std::optional<std::string> description, MetricType type);
 
     MetricBase&
-    getMetric(std::string name, Labels labels, std::optional<std::string> description, MetricType type);
+    getMetric(
+        std::string name,
+        Labels labels,
+        std::optional<std::string> description,
+        MetricType type
+    );
 
     template <typename ValueType>
         requires std::same_as<ValueType, std::int64_t> || std::same_as<ValueType, double>
@@ -323,7 +352,11 @@ public:
      * @return A reference to the gauge object
      */
     static util::prometheus::GaugeInt&
-    gaugeInt(std::string name, util::prometheus::Labels labels, std::optional<std::string> description = std::nullopt);
+    gaugeInt(
+        std::string name,
+        util::prometheus::Labels labels,
+        std::optional<std::string> description = std::nullopt
+    );
 
     /**
      * @brief Get a double based gauge metric. It will be created if it doesn't exist

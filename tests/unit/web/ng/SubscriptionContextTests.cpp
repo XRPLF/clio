@@ -46,9 +46,14 @@ using namespace util::config;
 
 struct NgSubscriptionContextTests : SyncAsioContextTest {
     SubscriptionContext
-    makeSubscriptionContext(boost::asio::yield_context yield, std::optional<size_t> maxSendQueueSize = std::nullopt)
+    makeSubscriptionContext(
+        boost::asio::yield_context yield,
+        std::optional<size_t> maxSendQueueSize = std::nullopt
+    )
     {
-        return SubscriptionContext{tagFactory_, connection_, maxSendQueueSize, yield, errorHandler_.AsStdFunction()};
+        return SubscriptionContext{
+            tagFactory_, connection_, maxSendQueueSize, yield, errorHandler_.AsStdFunction()
+        };
     }
 
 protected:
@@ -56,7 +61,8 @@ protected:
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
     }};
     MockWsConnectionImpl connection_{"some ip", boost::beast::flat_buffer{}, tagFactory_};
-    testing::StrictMock<testing::MockFunction<bool(web::ng::Error const&, Connection const&)>> errorHandler_;
+    testing::StrictMock<testing::MockFunction<bool(web::ng::Error const&, Connection const&)>>
+        errorHandler_;
 };
 
 TEST_F(NgSubscriptionContextTests, Send)
@@ -67,7 +73,9 @@ TEST_F(NgSubscriptionContextTests, Send)
 
         EXPECT_CALL(connection_, sendShared)
             .WillOnce(
-                [&message](std::shared_ptr<std::string> sendingMessage, auto&&) -> std::expected<void, web::ng::Error> {
+                [&message](
+                    std::shared_ptr<std::string> sendingMessage, auto&&
+                ) -> std::expected<void, web::ng::Error> {
                     EXPECT_EQ(sendingMessage, message);
                     return {};
                 }
@@ -118,10 +126,13 @@ TEST_F(NgSubscriptionContextTests, SendFailed)
         auto subscriptionContext = makeSubscriptionContext(yield);
         auto const message = std::make_shared<std::string>("some message");
 
-        EXPECT_CALL(connection_, sendShared).WillOnce([&message](std::shared_ptr<std::string> sendingMessage, auto&&) {
-            EXPECT_EQ(sendingMessage, message);
-            return std::unexpected{boost::system::errc::make_error_code(boost::system::errc::not_supported)};
-        });
+        EXPECT_CALL(connection_, sendShared)
+            .WillOnce([&message](std::shared_ptr<std::string> sendingMessage, auto&&) {
+                EXPECT_EQ(sendingMessage, message);
+                return std::unexpected{
+                    boost::system::errc::make_error_code(boost::system::errc::not_supported)
+                };
+            });
         EXPECT_CALL(errorHandler_, Call).WillOnce(testing::Return(true));
         EXPECT_CALL(connection_, close);
         subscriptionContext.send(message);
@@ -138,9 +149,12 @@ TEST_F(NgSubscriptionContextTests, SendTooManySubscriptions)
         EXPECT_CALL(connection_, sendShared)
             .WillOnce(
                 [&message](
-                    std::shared_ptr<std::string> sendingMessage, boost::asio::yield_context innerYield
+                    std::shared_ptr<std::string> sendingMessage,
+                    boost::asio::yield_context innerYield
                 ) -> std::expected<void, web::ng::Error> {
-                    boost::asio::post(innerYield);  // simulate send is slow by switching to another coroutine
+                    boost::asio::post(
+                        innerYield
+                    );  // simulate send is slow by switching to another coroutine
                     EXPECT_EQ(sendingMessage, message);
                     return {};
                 }
@@ -166,7 +180,8 @@ TEST_F(NgSubscriptionContextTests, SendAfterDisconnect)
 
 TEST_F(NgSubscriptionContextTests, OnDisconnect)
 {
-    testing::StrictMock<testing::MockFunction<void(web::SubscriptionContextInterface*)>> onDisconnect;
+    testing::StrictMock<testing::MockFunction<void(web::SubscriptionContextInterface*)>>
+        onDisconnect;
 
     runSpawn([&](boost::asio::yield_context yield) {
         auto subscriptionContext = makeSubscriptionContext(yield);
@@ -186,7 +201,8 @@ TEST_F(NgSubscriptionContextTests, SetApiSubversion)
     });
 }
 
-struct NgSubscriptionContextAssertTests : common::util::WithMockAssertNoThrow, NgSubscriptionContextTests {};
+struct NgSubscriptionContextAssertTests : common::util::WithMockAssertNoThrow,
+                                          NgSubscriptionContextTests {};
 
 TEST_F(NgSubscriptionContextAssertTests, AssertFailsWhenNotDisconnected)
 {

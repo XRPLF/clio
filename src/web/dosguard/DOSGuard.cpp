@@ -71,7 +71,8 @@ DOSGuard::isOk(std::string const& ip) const noexcept
             auto const [transferredByte, requests] = it->second;
             if (transferredByte > maxFetches_ || requests > maxRequestCount_) {
                 LOG(log_.warn()) << "Dosguard: Client surpassed the rate limit. ip = " << ip
-                                 << " Transferred Byte: " << transferredByte << "; Requests: " << requests;
+                                 << " Transferred Byte: " << transferredByte
+                                 << "; Requests: " << requests;
                 return false;
             }
         }

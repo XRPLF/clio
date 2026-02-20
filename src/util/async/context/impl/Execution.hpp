@@ -39,10 +39,13 @@ struct SpawnDispatchStrategy {
         if constexpr (SomeStoppableOutcome<OutcomeType>) {
             util::spawn(
                 ctx.getExecutor(),
-                [outcome = std::forward<OutcomeType>(outcome), fn = std::forward<FnType>(fn)](auto yield) mutable {
+                [outcome = std::forward<OutcomeType>(outcome),
+                 fn = std::forward<FnType>(fn)](auto yield) mutable {
                     if constexpr (SomeStoppableOutcome<OutcomeType>) {
                         auto& stopSource = outcome.getStopSource();
-                        std::invoke(std::forward<decltype(fn)>(fn), outcome, stopSource, stopSource[yield]);
+                        std::invoke(
+                            std::forward<decltype(fn)>(fn), outcome, stopSource, stopSource[yield]
+                        );
                     } else {
                         std::invoke(std::forward<decltype(fn)>(fn), outcome);
                     }
@@ -51,7 +54,8 @@ struct SpawnDispatchStrategy {
         } else {
             boost::asio::post(
                 ctx.getExecutor(),
-                [outcome = std::forward<OutcomeType>(outcome), fn = std::forward<FnType>(fn)]() mutable {
+                [outcome = std::forward<OutcomeType>(outcome),
+                 fn = std::forward<FnType>(fn)]() mutable {
                     std::invoke(std::forward<decltype(fn)>(fn), outcome);
                 }
             );
@@ -78,10 +82,14 @@ struct PostDispatchStrategy {
         auto op = outcome.getOperation();
 
         boost::asio::post(
-            ctx.getExecutor(), [outcome = std::forward<OutcomeType>(outcome), fn = std::forward<FnType>(fn)]() mutable {
+            ctx.getExecutor(),
+            [outcome = std::forward<OutcomeType>(outcome),
+             fn = std::forward<FnType>(fn)]() mutable {
                 if constexpr (SomeStoppableOutcome<OutcomeType>) {
                     auto& stopSource = outcome.getStopSource();
-                    std::invoke(std::forward<decltype(fn)>(fn), outcome, stopSource, stopSource.getToken());
+                    std::invoke(
+                        std::forward<decltype(fn)>(fn), outcome, stopSource, stopSource.getToken()
+                    );
                 } else {
                     std::invoke(std::forward<decltype(fn)>(fn), outcome);
                 }

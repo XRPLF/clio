@@ -115,11 +115,13 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     if (input.marker) {
         cursor = uint256(input.marker->c_str());
 
-        // We have a start point. Use limit - 1 from the result and use the very last one for the resume.
+        // We have a start point. Use limit - 1 from the result and use the very last one for the
+        // resume.
         auto const sle = [this, &cursor, &lgrInfo, yield]() -> std::shared_ptr<SLE const> {
             auto const key = keylet::nftoffer(cursor).key;
 
-            if (auto const blob = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, yield); blob)
+            if (auto const blob = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, yield);
+                blob)
                 return std::make_shared<SLE const>(SerialIter{blob->data(), blob->size()}, key);
 
             return nullptr;
@@ -139,7 +141,14 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     }
 
     auto result = traverseOwnedNodes(
-        *sharedPtrBackend_, directory, cursor, startHint, lgrInfo.seq, reserve, yield, [&offers](ripple::SLE&& offer) {
+        *sharedPtrBackend_,
+        directory,
+        cursor,
+        startHint,
+        lgrInfo.seq,
+        reserve,
+        yield,
+        [&offers](ripple::SLE&& offer) {
             if (offer.getType() == ripple::ltNFTOKEN_OFFER) {
                 offers.push_back(std::move(offer));
                 return true;
@@ -164,7 +173,11 @@ NFTOffersHandlerBase::iterateOfferDirectory(
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTOffersHandlerBase::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    NFTOffersHandlerBase::Output const& output
+)
 {
     using boost::json::value_from;
 

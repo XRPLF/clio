@@ -41,7 +41,8 @@ using namespace util::prometheus;
 struct FeedBaseMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {
 protected:
     web::SubscriptionContextPtr sessionPtr_ = std::make_shared<MockSession>();
-    std::shared_ptr<SingleFeedBase> testFeedPtr_ = std::make_shared<SingleFeedBase>(ctx_, "testFeed");
+    std::shared_ptr<SingleFeedBase> testFeedPtr_ =
+        std::make_shared<SingleFeedBase>(ctx_, "testFeed");
     MockSession* mockSessionPtr_ = dynamic_cast<MockSession*>(sessionPtr_.get());
 };
 
@@ -71,7 +72,8 @@ TEST_F(FeedBaseMockPrometheusTest, AutoUnsub)
 
 class NamedSingleFeedTest : public SingleFeedBase {
 public:
-    NamedSingleFeedTest(util::async::AnyExecutionContext& executionCtx) : SingleFeedBase(executionCtx, "forTest")
+    NamedSingleFeedTest(util::async::AnyExecutionContext& executionCtx)
+        : SingleFeedBase(executionCtx, "forTest")
     {
     }
 };

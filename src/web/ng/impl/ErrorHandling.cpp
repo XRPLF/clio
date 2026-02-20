@@ -42,7 +42,11 @@ namespace web::ng::impl {
 namespace {
 
 boost::json::object
-composeErrorImpl(auto const& error, Request const& rawRequest, std::optional<boost::json::object> const& request)
+composeErrorImpl(
+    auto const& error,
+    Request const& rawRequest,
+    std::optional<boost::json::object> const& request
+)
 {
     auto e = rpc::makeError(error);
 
@@ -85,7 +89,9 @@ ErrorHelper::makeError(rpc::Status const& err) const
         switch (*clioCode) {
             case rpc::ClioError::RpcInvalidApiVersion:
                 return Response{
-                    http::status::bad_request, std::string{rpc::getErrorInfo(*clioCode).error}, rawRequest_
+                    http::status::bad_request,
+                    std::string{rpc::getErrorInfo(*clioCode).error},
+                    rawRequest_
                 };
             case rpc::ClioError::RpcCommandIsMissing:
                 return Response{http::status::bad_request, "Null method", rawRequest_};
@@ -109,7 +115,9 @@ ErrorHelper::makeError(rpc::Status const& err) const
             case rpc::ClioError::EtlRequestError:
             case rpc::ClioError::EtlRequestTimeout:
             case rpc::ClioError::EtlInvalidResponse:
-                ASSERT(false, "Unknown rpc error code {}", static_cast<int>(*clioCode));  // this should never happen
+                ASSERT(
+                    false, "Unknown rpc error code {}", static_cast<int>(*clioCode)
+                );  // this should never happen
                 break;
         }
     }
@@ -120,7 +128,11 @@ ErrorHelper::makeError(rpc::Status const& err) const
 Response
 ErrorHelper::makeInternalError() const
 {
-    return Response{http::status::internal_server_error, composeError(rpc::RippledError::rpcINTERNAL), rawRequest_};
+    return Response{
+        http::status::internal_server_error,
+        composeError(rpc::RippledError::rpcINTERNAL),
+        rawRequest_
+    };
 }
 
 Response
@@ -133,20 +145,32 @@ Response
 ErrorHelper::makeTooBusyError() const
 {
     if (not rawRequest_.get().isHttp()) {
-        return Response{http::status::too_many_requests, rpc::makeError(rpc::RippledError::rpcTOO_BUSY), rawRequest_};
+        return Response{
+            http::status::too_many_requests,
+            rpc::makeError(rpc::RippledError::rpcTOO_BUSY),
+            rawRequest_
+        };
     }
 
-    return Response{http::status::service_unavailable, rpc::makeError(rpc::RippledError::rpcTOO_BUSY), rawRequest_};
+    return Response{
+        http::status::service_unavailable,
+        rpc::makeError(rpc::RippledError::rpcTOO_BUSY),
+        rawRequest_
+    };
 }
 
 Response
 ErrorHelper::makeJsonParsingError() const
 {
     if (not rawRequest_.get().isHttp()) {
-        return Response{http::status::bad_request, rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX), rawRequest_};
+        return Response{
+            http::status::bad_request, rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX), rawRequest_
+        };
     }
 
-    return Response{http::status::bad_request, fmt::format("Unable to parse JSON from the request"), rawRequest_};
+    return Response{
+        http::status::bad_request, fmt::format("Unable to parse JSON from the request"), rawRequest_
+    };
 }
 
 boost::json::object

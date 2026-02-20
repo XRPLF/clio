@@ -239,7 +239,10 @@ Counters::onInternalError()
 }
 
 void
-Counters::recordLedgerRequest(boost::json::object const& params, std::uint32_t currentLedgerSequence)
+Counters::recordLedgerRequest(
+    boost::json::object const& params,
+    std::uint32_t currentLedgerSequence
+)
 {
     if (params.contains(JS(ledger_hash))) {
         ++ledgerHashRequestsCounter_.get();
@@ -267,7 +270,9 @@ Counters::recordLedgerRequest(boost::json::object const& params, std::uint32_t c
 std::chrono::seconds
 Counters::uptime() const
 {
-    return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - startupTime_);
+    return std::chrono::duration_cast<std::chrono::seconds>(
+        std::chrono::system_clock::now() - startupTime_
+    );
 }
 
 boost::json::object

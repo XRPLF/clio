@@ -188,7 +188,8 @@ TEST_F(BackendCountersTest, RegisterReadError)
     counters->registerReadFinished(startTime, kOPERATIONS_COMPLETED);
 
     auto expectedReport = emptyReport();
-    expectedReport["read_async_pending"] = kOPERATIONS_STARTED - kOPERATIONS_COMPLETED - kOPERATIONS_ERROR;
+    expectedReport["read_async_pending"] =
+        kOPERATIONS_STARTED - kOPERATIONS_COMPLETED - kOPERATIONS_ERROR;
     expectedReport["read_async_completed"] = kOPERATIONS_COMPLETED;
     expectedReport["read_async_error"] = kOPERATIONS_ERROR;
     EXPECT_EQ(counters->report(), expectedReport);
@@ -207,8 +208,10 @@ TEST_F(BackendCountersMockPrometheusTest, registerTooBusy)
 
 TEST_F(BackendCountersMockPrometheusTest, registerWriteSync)
 {
-    auto& counter = makeMock<CounterInt>("backend_operations_total_number", "{operation=\"write_sync\"}");
-    auto& histogram = makeMock<HistogramInt>("backend_duration_milliseconds_histogram", "{operation=\"write\"}");
+    auto& counter =
+        makeMock<CounterInt>("backend_operations_total_number", "{operation=\"write_sync\"}");
+    auto& histogram =
+        makeMock<HistogramInt>("backend_duration_milliseconds_histogram", "{operation=\"write\"}");
     EXPECT_CALL(counter, add(1));
     EXPECT_CALL(histogram, observe(testing::_));
     std::chrono::steady_clock::time_point const startTime{};
@@ -217,26 +220,31 @@ TEST_F(BackendCountersMockPrometheusTest, registerWriteSync)
 
 TEST_F(BackendCountersMockPrometheusTest, registerWriteSyncRetry)
 {
-    auto& counter = makeMock<CounterInt>("backend_operations_total_number", "{operation=\"write_sync_retry\"}");
+    auto& counter =
+        makeMock<CounterInt>("backend_operations_total_number", "{operation=\"write_sync_retry\"}");
     EXPECT_CALL(counter, add(1));
     counters->registerWriteSyncRetry();
 }
 
 TEST_F(BackendCountersMockPrometheusTest, registerWriteStarted)
 {
-    auto& counter =
-        makeMock<GaugeInt>("backend_operations_current_number", "{operation=\"write_async\",status=\"pending\"}");
+    auto& counter = makeMock<GaugeInt>(
+        "backend_operations_current_number", "{operation=\"write_async\",status=\"pending\"}"
+    );
     EXPECT_CALL(counter, add(1));
     counters->registerWriteStarted();
 }
 
 TEST_F(BackendCountersMockPrometheusTest, registerWriteFinished)
 {
-    auto& pendingCounter =
-        makeMock<GaugeInt>("backend_operations_current_number", "{operation=\"write_async\",status=\"pending\"}");
-    auto& completedCounter =
-        makeMock<CounterInt>("backend_operations_total_number", "{operation=\"write_async\",status=\"completed\"}");
-    auto& histogram = makeMock<HistogramInt>("backend_duration_milliseconds_histogram", "{operation=\"write\"}");
+    auto& pendingCounter = makeMock<GaugeInt>(
+        "backend_operations_current_number", "{operation=\"write_async\",status=\"pending\"}"
+    );
+    auto& completedCounter = makeMock<CounterInt>(
+        "backend_operations_total_number", "{operation=\"write_async\",status=\"completed\"}"
+    );
+    auto& histogram =
+        makeMock<HistogramInt>("backend_duration_milliseconds_histogram", "{operation=\"write\"}");
     EXPECT_CALL(pendingCounter, value()).WillOnce(testing::Return(1));
     EXPECT_CALL(pendingCounter, add(-1));
     EXPECT_CALL(completedCounter, add(1));
@@ -247,27 +255,32 @@ TEST_F(BackendCountersMockPrometheusTest, registerWriteFinished)
 
 TEST_F(BackendCountersMockPrometheusTest, registerWriteRetry)
 {
-    auto& counter =
-        makeMock<CounterInt>("backend_operations_total_number", "{operation=\"write_async\",status=\"retry\"}");
+    auto& counter = makeMock<CounterInt>(
+        "backend_operations_total_number", "{operation=\"write_async\",status=\"retry\"}"
+    );
     EXPECT_CALL(counter, add(1));
     counters->registerWriteRetry();
 }
 
 TEST_F(BackendCountersMockPrometheusTest, registerReadStarted)
 {
-    auto& counter =
-        makeMock<GaugeInt>("backend_operations_current_number", "{operation=\"read_async\",status=\"pending\"}");
+    auto& counter = makeMock<GaugeInt>(
+        "backend_operations_current_number", "{operation=\"read_async\",status=\"pending\"}"
+    );
     EXPECT_CALL(counter, add(1));
     counters->registerReadStarted();
 }
 
 TEST_F(BackendCountersMockPrometheusTest, registerReadFinished)
 {
-    auto& pendingCounter =
-        makeMock<GaugeInt>("backend_operations_current_number", "{operation=\"read_async\",status=\"pending\"}");
-    auto& completedCounter =
-        makeMock<CounterInt>("backend_operations_total_number", "{operation=\"read_async\",status=\"completed\"}");
-    auto& histogram = makeMock<HistogramInt>("backend_duration_milliseconds_histogram", "{operation=\"read\"}");
+    auto& pendingCounter = makeMock<GaugeInt>(
+        "backend_operations_current_number", "{operation=\"read_async\",status=\"pending\"}"
+    );
+    auto& completedCounter = makeMock<CounterInt>(
+        "backend_operations_total_number", "{operation=\"read_async\",status=\"completed\"}"
+    );
+    auto& histogram =
+        makeMock<HistogramInt>("backend_duration_milliseconds_histogram", "{operation=\"read\"}");
     EXPECT_CALL(pendingCounter, value()).WillOnce(testing::Return(2));
     EXPECT_CALL(pendingCounter, add(-2));
     EXPECT_CALL(completedCounter, add(2));
@@ -278,18 +291,21 @@ TEST_F(BackendCountersMockPrometheusTest, registerReadFinished)
 
 TEST_F(BackendCountersMockPrometheusTest, registerReadRetry)
 {
-    auto& counter =
-        makeMock<CounterInt>("backend_operations_total_number", "{operation=\"read_async\",status=\"retry\"}");
+    auto& counter = makeMock<CounterInt>(
+        "backend_operations_total_number", "{operation=\"read_async\",status=\"retry\"}"
+    );
     EXPECT_CALL(counter, add(1));
     counters->registerReadRetry();
 }
 
 TEST_F(BackendCountersMockPrometheusTest, registerReadError)
 {
-    auto& pendingCounter =
-        makeMock<GaugeInt>("backend_operations_current_number", "{operation=\"read_async\",status=\"pending\"}");
-    auto& errorCounter =
-        makeMock<CounterInt>("backend_operations_total_number", "{operation=\"read_async\",status=\"error\"}");
+    auto& pendingCounter = makeMock<GaugeInt>(
+        "backend_operations_current_number", "{operation=\"read_async\",status=\"pending\"}"
+    );
+    auto& errorCounter = makeMock<CounterInt>(
+        "backend_operations_total_number", "{operation=\"read_async\",status=\"error\"}"
+    );
     EXPECT_CALL(pendingCounter, value()).WillOnce(testing::Return(1));
     EXPECT_CALL(pendingCounter, add(-1));
     EXPECT_CALL(errorCounter, add(1));

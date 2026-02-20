@@ -152,7 +152,10 @@ public:
         auto last = subscriptionSource_->lastMessageTime();
         if (last.time_since_epoch().count() != 0) {
             res["last_msg_age_seconds"] = std::to_string(
-                std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - last).count()
+                std::chrono::duration_cast<std::chrono::seconds>(
+                    std::chrono::steady_clock::now() - last
+                )
+                    .count()
             );
         }
 
@@ -182,11 +185,12 @@ public:
     /**
      * @brief Fetch data for a specific ledger.
      *
-     * This function will continuously try to fetch data for the specified ledger until the fetch succeeds, the ledger
-     * is found in the database, or the server is shutting down.
+     * This function will continuously try to fetch data for the specified ledger until the fetch
+     * succeeds, the ledger is found in the database, or the server is shutting down.
      *
      * @param sequence Sequence of the ledger to fetch
-     * @param getObjects Whether to get the account state diff between this ledger and the prior one; defaults to true
+     * @param getObjects Whether to get the account state diff between this ledger and the prior
+     * one; defaults to true
      * @param getObjectNeighbors Whether to request object neighbors; defaults to false
      * @return A std::pair of the response status and the response itself
      */
@@ -205,7 +209,11 @@ public:
      * @return A std::pair of the data and a bool indicating whether the download was successful
      */
     InitialLedgerLoadResult
-    loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, InitialLoadObserverInterface& loader) final
+    loadInitialLedger(
+        uint32_t sequence,
+        std::uint32_t numMarkers,
+        InitialLoadObserverInterface& loader
+    ) final
     {
         return grpcSource_.loadInitialLedger(sequence, numMarkers, loader);
     }
@@ -227,7 +235,9 @@ public:
         boost::asio::yield_context yield
     ) const final
     {
-        return forwardingSource_.forwardToRippled(request, forwardToRippledClientIp, xUserValue, yield);
+        return forwardingSource_.forwardToRippled(
+            request, forwardToRippledClientIp, xUserValue, yield
+        );
     }
 };
 

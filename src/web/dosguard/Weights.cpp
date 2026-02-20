@@ -37,7 +37,8 @@
 namespace web::dosguard {
 
 Weights::Weights(size_t defaultWeight, std::unordered_map<std::string, Entry> weights)
-    : defaultWeight_(defaultWeight), weights_(std::move_iterator(weights.begin()), std::move_iterator(weights.end()))
+    : defaultWeight_(defaultWeight)
+    , weights_(std::move_iterator(weights.begin()), std::move_iterator(weights.end()))
 {
 }
 
@@ -66,8 +67,8 @@ Weights::requestWeight(boost::json::object const& request) const
         return defaultWeight_;
     }
 
-    std::string_view const cmd =
-        request.contains(JS(method)) ? request.at(JS(method)).as_string() : request.at(JS(command)).as_string();
+    std::string_view const cmd = request.contains(JS(method)) ? request.at(JS(method)).as_string()
+                                                              : request.at(JS(command)).as_string();
 
     auto it = weights_.find(cmd);
     if (it == weights_.end()) {

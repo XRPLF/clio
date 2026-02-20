@@ -80,8 +80,9 @@ AccountOffersHandler::process(AccountOffersHandler::Input const& input, Context 
 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
-    auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+    );
 
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
@@ -99,7 +100,13 @@ AccountOffersHandler::process(AccountOffersHandler::Input const& input, Context 
     };
 
     auto const expectedNext = traverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse
+        *sharedPtrBackend_,
+        *accountID,
+        lgrInfo.seq,
+        input.limit,
+        input.marker,
+        ctx.yield,
+        addToResponse
     );
 
     if (!expectedNext.has_value())
@@ -114,7 +121,11 @@ AccountOffersHandler::process(AccountOffersHandler::Input const& input, Context 
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountOffersHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountOffersHandler::Output const& output
+)
 {
     jv = {
         {JS(ledger_hash), output.ledgerHash},
@@ -129,7 +140,11 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountOffersHan
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountOffersHandler::Offer const& offer)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountOffersHandler::Offer const& offer
+)
 {
     jv = {
         {JS(seq), offer.seq},

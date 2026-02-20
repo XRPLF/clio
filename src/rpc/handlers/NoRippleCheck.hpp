@@ -46,8 +46,8 @@ namespace rpc {
 /**
  * @brief Handles the `noripple_check` command
  *
- * The noripple_check command provides a quick way to check the status of the Default Ripple field for an account
- * and the No Ripple flag of its trust lines, compared with the recommended settings.
+ * The noripple_check command provides a quick way to check the status of the Default Ripple field
+ * for an account and the No Ripple flag of its trust lines, compared with the recommended settings.
  *
  * For more details see: https://xrpl.org/noripple_check.html
  */
@@ -109,7 +109,8 @@ public:
             {JS(role),
              validation::Required{},
              meta::WithCustomError{
-                 validation::OneOf{"gateway", "user"}, Status{RippledError::rpcINVALID_PARAMS, "role field is invalid"}
+                 validation::OneOf{"gateway", "user"},
+                 Status{RippledError::rpcINVALID_PARAMS, "role field is invalid"}
              }},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},

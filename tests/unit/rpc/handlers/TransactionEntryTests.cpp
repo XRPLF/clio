@@ -72,7 +72,8 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
-        auto const output = handler.process(json::parse(R"JSON({"tx_hash": "123"})JSON"), Context{yield});
+        auto const output =
+            handler.process(json::parse(R"JSON({"tx_hash": "123"})JSON"), Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -111,7 +112,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
 TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
 {
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence)
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(
         fmt::format(
@@ -160,9 +162,12 @@ TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
 TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
 {
     TransactionAndMetadata tx;
-    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata =
+        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+            .getSerializer()
+            .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 10;
     ON_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillByDefault(Return(tx));
@@ -232,15 +237,19 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
     })JSON";
 
     TransactionAndMetadata tx;
-    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata =
+        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+            .getSerializer()
+            .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 30;
     ON_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*backend_, fetchTransaction).Times(1);
 
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(createLedgerHeader(kINDEX, tx.ledgerSequence)));
+    ON_CALL(*backend_, fetchLedgerBySequence)
+        .WillByDefault(Return(createLedgerHeader(kINDEX, tx.ledgerSequence)));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -304,13 +313,17 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
     })JSON";
 
     TransactionAndMetadata tx;
-    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata =
+        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+            .getSerializer()
+            .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 30;
     EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(createLedgerHeader(kINDEX, tx.ledgerSequence)));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence)
+        .WillOnce(Return(createLedgerHeader(kINDEX, tx.ledgerSequence)));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};

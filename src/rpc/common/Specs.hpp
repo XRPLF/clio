@@ -43,11 +43,15 @@ struct FieldSpec final {
      *
      * @tparam Processors The types of processors
      * @param key The key in a JSON object that the field validates
-     * @param processors The processors, each of them have to fulfil the @ref rpc::SomeProcessor concept
+     * @param processors The processors, each of them have to fulfil the @ref rpc::SomeProcessor
+     * concept
      */
     template <SomeProcessor... Processors>
     FieldSpec(std::string const& key, Processors&&... processors)
-        : processor_{impl::makeFieldProcessor<Processors...>(key, std::forward<Processors>(processors)...)}
+        : processor_{impl::makeFieldProcessor<Processors...>(
+              key,
+              std::forward<Processors>(processors)...
+          )}
         , checker_{impl::kEMPTY_FIELD_CHECKER}
     {
     }
@@ -111,7 +115,8 @@ struct RpcSpec final {
      * @param other The other spec to copy fields from
      * @param additionalFields The additional fields to add to the spec
      */
-    RpcSpec(RpcSpec const& other, std::initializer_list<FieldSpec> additionalFields) : fields_{other.fields_}
+    RpcSpec(RpcSpec const& other, std::initializer_list<FieldSpec> additionalFields)
+        : fields_{other.fields_}
     {
         for (auto& f : additionalFields)
             fields_.push_back(f);

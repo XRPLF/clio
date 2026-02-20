@@ -55,7 +55,11 @@ struct GrpcSourceMock {
     MOCK_METHOD(FetchLedgerReturnType, fetchLedger, (uint32_t, bool, bool));
 
     using LoadLedgerReturnType = etl::InitialLedgerLoadResult;
-    MOCK_METHOD(LoadLedgerReturnType, loadInitialLedger, (uint32_t, uint32_t, etl::InitialLoadObserverInterface&));
+    MOCK_METHOD(
+        LoadLedgerReturnType,
+        loadInitialLedger,
+        (uint32_t, uint32_t, etl::InitialLoadObserverInterface&)
+    );
 
     MOCK_METHOD(void, stop, (boost::asio::yield_context), ());
 };
@@ -71,14 +75,21 @@ struct SubscriptionSourceMock {
 };
 
 struct ForwardingSourceMock {
-    MOCK_METHOD(void, constructor, (std::string const&, std::string const&, std::chrono::steady_clock::duration));
+    MOCK_METHOD(
+        void,
+        constructor,
+        (std::string const&, std::string const&, std::chrono::steady_clock::duration)
+    );
 
     using ForwardToRippledReturnType = std::expected<boost::json::object, rpc::ClioError>;
     using ClientIpOpt = std::optional<std::string>;
     MOCK_METHOD(
         ForwardToRippledReturnType,
         forwardToRippled,
-        (boost::json::object const&, ClientIpOpt const&, std::string_view, boost::asio::yield_context),
+        (boost::json::object const&,
+         ClientIpOpt const&,
+         std::string_view,
+         boost::asio::yield_context),
         (const)
     );
 };
@@ -152,14 +163,17 @@ TEST_F(SourceImplTest, setForwarding)
 
 TEST_F(SourceImplTest, toJson)
 {
-    EXPECT_CALL(*subscriptionSourceMock_, validatedRange()).WillOnce(Return(std::string("some_validated_range")));
+    EXPECT_CALL(*subscriptionSourceMock_, validatedRange())
+        .WillOnce(Return(std::string("some_validated_range")));
     EXPECT_CALL(*subscriptionSourceMock_, isConnected()).WillOnce(Return(true));
     auto const lastMessageTime = std::chrono::steady_clock::now();
     EXPECT_CALL(*subscriptionSourceMock_, lastMessageTime()).WillOnce(Return(lastMessageTime));
 
     auto const json = source_.toJson();
 
-    EXPECT_EQ(boost::json::value_to<std::string>(json.at("validated_range")), "some_validated_range");
+    EXPECT_EQ(
+        boost::json::value_to<std::string>(json.at("validated_range")), "some_validated_range"
+    );
     EXPECT_EQ(boost::json::value_to<std::string>(json.at("is_connected")), "1");
     EXPECT_EQ(boost::json::value_to<std::string>(json.at("ip")), "some_ip");
     EXPECT_EQ(boost::json::value_to<std::string>(json.at("ws_port")), "some_ws_port");
@@ -170,12 +184,14 @@ TEST_F(SourceImplTest, toJson)
 
 TEST_F(SourceImplTest, toString)
 {
-    EXPECT_CALL(*subscriptionSourceMock_, validatedRange()).WillOnce(Return(std::string("some_validated_range")));
+    EXPECT_CALL(*subscriptionSourceMock_, validatedRange())
+        .WillOnce(Return(std::string("some_validated_range")));
 
     auto const str = source_.toString();
     EXPECT_EQ(
         str,
-        "{validated range: some_validated_range, ip: some_ip, web socket port: some_ws_port, grpc port: some_grpc_port}"
+        "{validated range: some_validated_range, ip: some_ip, web socket port: some_ws_port, grpc "
+        "port: some_grpc_port}"
     );
 }
 
@@ -218,7 +234,8 @@ TEST_F(SourceImplTest, loadInitialLedgerSuccessPath)
 
     auto observerMock = testing::StrictMock<InitialLoadObserverMock>();
 
-    EXPECT_CALL(grpcSourceMock_, loadInitialLedger(ledgerSeq, numMarkers, testing::_)).WillOnce(Return(response));
+    EXPECT_CALL(grpcSourceMock_, loadInitialLedger(ledgerSeq, numMarkers, testing::_))
+        .WillOnce(Return(response));
     auto const res = source_.loadInitialLedger(ledgerSeq, numMarkers, observerMock);
 
     EXPECT_TRUE(res.has_value());

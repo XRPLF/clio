@@ -41,7 +41,8 @@
 namespace util::requests {
 
 /**
- * @brief Interface for WebSocket connections. It is used to hide SSL and plain connections behind the same interface.
+ * @brief Interface for WebSocket connections. It is used to hide SSL and plain connections behind
+ * the same interface.
  *
  * @note WsConnection must not be destroyed while there are pending asynchronous operations on it.
  */
@@ -85,9 +86,14 @@ public:
      * @return Error if any
      */
     virtual std::optional<RequestError>
-    close(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = kDEFAULT_TIMEOUT) = 0;
+    close(
+        boost::asio::yield_context yield,
+        std::chrono::steady_clock::duration timeout = kDEFAULT_TIMEOUT
+    ) = 0;
 
-    static constexpr std::chrono::seconds kDEFAULT_TIMEOUT{5}; /**< Default timeout for connecting */
+    static constexpr std::chrono::seconds kDEFAULT_TIMEOUT{
+        5
+    }; /**< Default timeout for connecting */
 };
 using WsConnectionPtr = std::unique_ptr<WsConnection>;
 
@@ -184,7 +190,9 @@ public:
     std::expected<WsConnectionPtr, RequestError>
     connect(boost::asio::yield_context yield) const;
 
-    static constexpr std::chrono::seconds kDEFAULT_TIMEOUT{5}; /**< Default timeout for connecting */
+    static constexpr std::chrono::seconds kDEFAULT_TIMEOUT{
+        5
+    }; /**< Default timeout for connecting */
 
 private:
     template <typename StreamDataType>

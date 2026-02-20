@@ -198,7 +198,10 @@ public:
     }
 
     void
-    operator()(boost::beast::error_code /* ec */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
+    operator()(
+        boost::beast::error_code /* ec */,
+        std::shared_ptr<web::ConnectionBase> const& /* ws */
+    )
     {
     }
 };
@@ -212,7 +215,10 @@ public:
     }
 
     void
-    operator()(boost::beast::error_code /* ec */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
+    operator()(
+        boost::beast::error_code /* ec */,
+        std::shared_ptr<web::ConnectionBase> const& /* ws */
+    )
     {
     }
 };
@@ -526,7 +532,10 @@ public:
     }
 
     void
-    operator()(boost::beast::error_code /* ec */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
+    operator()(
+        boost::beast::error_code /* ec */,
+        std::shared_ptr<web::ConnectionBase> const& /* ws */
+    )
     {
     }
 };
@@ -562,13 +571,16 @@ getParseAdminServerConfig(boost::json::value val)
     return config;
 };
 
-class WebServerAdminTest : public WebServerTest, public ::testing::WithParamInterface<WebServerAdminTestParams> {};
+class WebServerAdminTest : public WebServerTest,
+                           public ::testing::WithParamInterface<WebServerAdminTestParams> {};
 
 TEST_P(WebServerAdminTest, WsAdminCheck)
 {
     auto cache = MockLedgerCache();
     auto e = std::make_shared<AdminCheckExecutor>();
-    ClioConfigDefinition const serverConfig{getParseAdminServerConfig(boost::json::parse(GetParam().config))};
+    ClioConfigDefinition const serverConfig{
+        getParseAdminServerConfig(boost::json::parse(GetParam().config))
+    };
     auto server = makeServerSync(serverConfig, ctx, dosGuardOverload, e, cache);
     WebSocketSyncClient wsClient;
     uint32_t const webServerPort = serverConfig.get<uint32_t>("server.port");
@@ -583,12 +595,15 @@ TEST_P(WebServerAdminTest, HttpAdminCheck)
 {
     auto cache = MockLedgerCache();
     auto const e = std::make_shared<AdminCheckExecutor>();
-    ClioConfigDefinition const serverConfig{getParseAdminServerConfig(boost::json::parse(GetParam().config))};
+    ClioConfigDefinition const serverConfig{
+        getParseAdminServerConfig(boost::json::parse(GetParam().config))
+    };
     auto server = makeServerSync(serverConfig, ctx, dosGuardOverload, e, cache);
     std::string const request = "Why hello";
     uint32_t const webServerPort = serverConfig.get<uint32_t>("server.port");
-    auto const [status, res] =
-        HttpSyncClient::post("localhost", std::to_string(webServerPort), request, GetParam().headers);
+    auto const [status, res] = HttpSyncClient::post(
+        "localhost", std::to_string(webServerPort), request, GetParam().headers
+    );
 
     EXPECT_EQ(res, fmt::format("{} {}", request, GetParam().expectedResponse));
     EXPECT_EQ(status, boost::beast::http::status::ok);
@@ -622,20 +637,32 @@ INSTANTIATE_TEST_CASE_P(
             .config = jsonServerConfigWithAdminPassword(tests::util::generateFreePort()),
             .headers = {WebHeader(
                 http::field::authorization,
-                fmt::format("{}{}", PasswordAdminVerificationStrategy::kPASSWORD_PREFIX, kSECRET_SHA256)
+                fmt::format(
+                    "{}{}",
+                    PasswordAdminVerificationStrategy::kPASSWORD_PREFIX,
+                    kSECRET_SHA256
+                )
             )},
             .expectedResponse = "admin"
         },
         WebServerAdminTestParams{
-            .config = jsonServerConfigWithBothAdminPasswordAndLocalAdminFalse(tests::util::generateFreePort()),
+            .config = jsonServerConfigWithBothAdminPasswordAndLocalAdminFalse(
+                tests::util::generateFreePort()
+            ),
             .headers = {WebHeader(http::field::authorization, kSECRET_SHA256)},
             .expectedResponse = "user"
         },
         WebServerAdminTestParams{
-            .config = jsonServerConfigWithBothAdminPasswordAndLocalAdminFalse(tests::util::generateFreePort()),
+            .config = jsonServerConfigWithBothAdminPasswordAndLocalAdminFalse(
+                tests::util::generateFreePort()
+            ),
             .headers = {WebHeader(
                 http::field::authorization,
-                fmt::format("{}{}", PasswordAdminVerificationStrategy::kPASSWORD_PREFIX, kSECRET_SHA256)
+                fmt::format(
+                    "{}{}",
+                    PasswordAdminVerificationStrategy::kPASSWORD_PREFIX,
+                    kSECRET_SHA256
+                )
             )},
             .expectedResponse = "admin"
         },
@@ -643,7 +670,11 @@ INSTANTIATE_TEST_CASE_P(
             .config = jsonServerConfigWithAdminPassword(tests::util::generateFreePort()),
             .headers = {WebHeader(
                 http::field::authentication_info,
-                fmt::format("{}{}", PasswordAdminVerificationStrategy::kPASSWORD_PREFIX, kSECRET_SHA256)
+                fmt::format(
+                    "{}{}",
+                    PasswordAdminVerificationStrategy::kPASSWORD_PREFIX,
+                    kSECRET_SHA256
+                )
             )},
             .expectedResponse = "user"
         },
@@ -677,12 +708,14 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminSet)
     );
 
     auto const e = std::make_shared<AdminCheckExecutor>();
-    ClioConfigDefinition const serverConfig{
-        getParseAdminServerConfig(boost::json::parse(jsonServerConfigWithBothAdminPasswordAndLocalAdmin))
-    };
+    ClioConfigDefinition const serverConfig{getParseAdminServerConfig(
+        boost::json::parse(jsonServerConfigWithBothAdminPasswordAndLocalAdmin)
+    )};
 
     MockLedgerCache cache;
-    EXPECT_THROW(web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache), std::logic_error);
+    EXPECT_THROW(
+        web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache), std::logic_error
+    );
 }
 
 TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
@@ -700,12 +733,14 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
     );
 
     auto const e = std::make_shared<AdminCheckExecutor>();
-    ClioConfigDefinition const serverConfig{
-        getParseAdminServerConfig(boost::json::parse(jsonServerConfigWithNoAdminPasswordAndLocalAdminFalse))
-    };
+    ClioConfigDefinition const serverConfig{getParseAdminServerConfig(
+        boost::json::parse(jsonServerConfigWithNoAdminPasswordAndLocalAdminFalse)
+    )};
 
     MockLedgerCache cache;
-    EXPECT_THROW(web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache), std::logic_error);
+    EXPECT_THROW(
+        web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache), std::logic_error
+    );
 }
 
 struct WebServerPrometheusTest : util::prometheus::WithPrometheus, WebServerTest {};
@@ -715,11 +750,12 @@ TEST_F(WebServerPrometheusTest, rejectedWithoutAdminPassword)
     auto cache = MockLedgerCache();
     auto const e = std::make_shared<EchoExecutor>();
     uint32_t const webServerPort = tests::util::generateFreePort();
-    ClioConfigDefinition const serverConfig{
-        getParseAdminServerConfig(boost::json::parse(jsonServerConfigWithAdminPassword(webServerPort)))
-    };
+    ClioConfigDefinition const serverConfig{getParseAdminServerConfig(
+        boost::json::parse(jsonServerConfigWithAdminPassword(webServerPort))
+    )};
     auto server = makeServerSync(serverConfig, ctx, dosGuard, e, cache);
-    auto const [status, res] = HttpSyncClient::get("localhost", std::to_string(webServerPort), "", "/metrics");
+    auto const [status, res] =
+        HttpSyncClient::get("localhost", std::to_string(webServerPort), "", "/metrics");
 
     EXPECT_EQ(res, "Only admin is allowed to collect metrics");
     EXPECT_EQ(status, boost::beast::http::status::unauthorized);
@@ -769,9 +805,9 @@ TEST_F(WebServerPrometheusTest, validResponse)
     auto& testCounter = PrometheusService::counterInt("test_counter", util::prometheus::Labels());
     ++testCounter;
     auto const e = std::make_shared<EchoExecutor>();
-    ClioConfigDefinition const serverConfig{
-        getParseAdminServerConfig(boost::json::parse(jsonServerConfigWithAdminPassword(webServerPort)))
-    };
+    ClioConfigDefinition const serverConfig{getParseAdminServerConfig(
+        boost::json::parse(jsonServerConfigWithAdminPassword(webServerPort))
+    )};
     auto server = makeServerSync(serverConfig, ctx, dosGuard, e, cache);
     auto const [status, res] = HttpSyncClient::get(
         "localhost",

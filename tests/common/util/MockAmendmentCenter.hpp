@@ -38,13 +38,23 @@
 struct MockAmendmentCenter : public data::AmendmentCenterInterface {
     MOCK_METHOD(bool, isSupported, (data::AmendmentKey const&), (const, override));
 
-    MOCK_METHOD((std::map<std::string, data::Amendment> const&), getSupported, (), (const, override));
+    MOCK_METHOD(
+        (std::map<std::string, data::Amendment> const&),
+        getSupported,
+        (),
+        (const, override)
+    );
 
     MOCK_METHOD(std::vector<data::Amendment> const&, getAll, (), (const, override));
 
     MOCK_METHOD(bool, isEnabled, (data::AmendmentKey const&, uint32_t), (const, override));
 
-    MOCK_METHOD(bool, isEnabled, (boost::asio::yield_context, data::AmendmentKey const&, uint32_t), (const, override));
+    MOCK_METHOD(
+        bool,
+        isEnabled,
+        (boost::asio::yield_context, data::AmendmentKey const&, uint32_t),
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::vector<bool>,
@@ -53,7 +63,12 @@ struct MockAmendmentCenter : public data::AmendmentCenterInterface {
         (const, override)
     );
 
-    MOCK_METHOD(data::Amendment const&, getAmendment, (data::AmendmentKey const&), (const, override));
+    MOCK_METHOD(
+        data::Amendment const&,
+        getAmendment,
+        (data::AmendmentKey const&),
+        (const, override)
+    );
 
     MOCK_METHOD(data::Amendment const&, indexOperator, (data::AmendmentKey const&), (const));
 

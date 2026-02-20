@@ -34,7 +34,8 @@ public:
      * @brief Construct a new MetricBase object
      *
      * @param name The name of the metric
-     * @param labelsString The labels of the metric in serialized format, e.g. {name="value",name2="value2"}
+     * @param labelsString The labels of the metric in serialized format, e.g.
+     * {name="value",name2="value2"}
      */
     MetricBase(std::string name, std::string labelsString);
 
@@ -83,7 +84,15 @@ private:
     std::string labelsString_;
 };
 
-enum class MetricType { CounterInt, CounterDouble, GaugeInt, GaugeDouble, HistogramInt, HistogramDouble, Summary };
+enum class MetricType {
+    CounterInt,
+    CounterDouble,
+    GaugeInt,
+    GaugeDouble,
+    HistogramInt,
+    HistogramDouble,
+    Summary
+};
 
 char const*
 toString(MetricType type);

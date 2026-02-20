@@ -66,10 +66,14 @@ ProductionAPIVersionParser::parse(boost::json::object const& request) const
         auto const version = util::integralValueAs<uint32_t>(request.at("api_version"));
 
         if (version > maxVersion_)
-            return Error{fmt::format("Requested API version is higher than maximum supported ({})", maxVersion_)};
+            return Error{fmt::format(
+                "Requested API version is higher than maximum supported ({})", maxVersion_
+            )};
 
         if (version < minVersion_)
-            return Error{fmt::format("Requested API version is lower than minimum supported ({})", minVersion_)};
+            return Error{fmt::format(
+                "Requested API version is lower than minimum supported ({})", minVersion_
+            )};
 
         return version;
     }

@@ -60,7 +60,10 @@ public:
     isUpgradeRequested(boost::asio::yield_context yield) = 0;
 
     virtual std::expected<ConnectionPtr, Error>
-    upgrade(util::TagDecoratorFactory const& tagDecoratorFactory, boost::asio::yield_context yield) = 0;
+    upgrade(
+        util::TagDecoratorFactory const& tagDecoratorFactory,
+        boost::asio::yield_context yield
+    ) = 0;
 
     virtual std::expected<void, Error>
     sendRaw(
@@ -129,8 +132,9 @@ public:
     {
         boost::system::error_code error;
         boost::beast::get_lowest_layer(stream_).expires_after(timeout_);
-        auto const bytesUsed =
-            stream_.async_handshake(boost::asio::ssl::stream_base::server, buffer_.cdata(), yield[error]);
+        auto const bytesUsed = stream_.async_handshake(
+            boost::asio::ssl::stream_base::server, buffer_.cdata(), yield[error]
+        );
         if (error)
             return std::unexpected{error};
 
@@ -185,8 +189,8 @@ public:
     void
     close(boost::asio::yield_context yield) override
     {
-        // This is needed because calling async_shutdown() multiple times may lead to hanging coroutines.
-        // See WsConnection for more details.
+        // This is needed because calling async_shutdown() multiple times may lead to hanging
+        // coroutines. See WsConnection for more details.
         if (closed_)
             return;
 
@@ -215,7 +219,10 @@ public:
     }
 
     std::expected<ConnectionPtr, Error>
-    upgrade(util::TagDecoratorFactory const& tagDecoratorFactory, boost::asio::yield_context yield) override
+    upgrade(
+        util::TagDecoratorFactory const& tagDecoratorFactory,
+        boost::asio::yield_context yield
+    ) override
     {
         ASSERT(request_.has_value(), "Request must be present to upgrade the connection");
 

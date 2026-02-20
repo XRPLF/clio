@@ -36,7 +36,10 @@
 
 namespace app {
 
-MigratorApplication::MigratorApplication(util::config::ClioConfigDefinition const& config, MigrateSubCmd command)
+MigratorApplication::MigratorApplication(
+    util::config::ClioConfigDefinition const& config,
+    MigrateSubCmd command
+)
     : cmd_(std::move(command))
 {
     PrometheusService::init(config);
@@ -44,7 +47,9 @@ MigratorApplication::MigratorApplication(util::config::ClioConfigDefinition cons
     auto expectedMigrationManager = migration::impl::makeMigrationManager(config, cache_);
 
     if (not expectedMigrationManager) {
-        throw std::runtime_error("Failed to create migration manager: " + expectedMigrationManager.error());
+        throw std::runtime_error(
+            "Failed to create migration manager: " + expectedMigrationManager.error()
+        );
     }
 
     migrationManager_ = std::move(expectedMigrationManager.value());
@@ -56,7 +61,9 @@ MigratorApplication::run()
     return std::visit(
         util::OverloadSet{
             [this](MigrateSubCmd::Status const&) { return printStatus(); },
-            [this](MigrateSubCmd::Migration const& cmdBundle) { return migrate(cmdBundle.migratorName); }
+            [this](MigrateSubCmd::Migration const& cmdBundle) {
+                return migrate(cmdBundle.migratorName);
+            }
         },
         cmd_.state
     );
@@ -73,8 +80,9 @@ MigratorApplication::printStatus()
     }
 
     for (auto const& [migrator, status] : allMigratorsStatusPairs) {
-        std::cout << "Migrator: " << migrator << " - " << migrationManager_->getMigratorDescriptionByName(migrator)
-                  << " - " << status.toString() << std::endl;
+        std::cout << "Migrator: " << migrator << " - "
+                  << migrationManager_->getMigratorDescriptionByName(migrator) << " - "
+                  << status.toString() << std::endl;
     }
     return EXIT_SUCCESS;
 }

@@ -53,7 +53,8 @@ getMPTokenAuthorize(ripple::TxMeta const& txMeta)
         if (node.getFName() == ripple::sfCreatedNode) {
             auto const& newMPT = node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>();
             return MPTHolderData{
-                .mptID = newMPT[ripple::sfMPTokenIssuanceID], .holder = newMPT.getAccountID(ripple::sfAccount)
+                .mptID = newMPT[ripple::sfMPTokenIssuanceID],
+                .holder = newMPT.getAccountID(ripple::sfAccount)
             };
         }
     }
@@ -63,7 +64,8 @@ getMPTokenAuthorize(ripple::TxMeta const& txMeta)
 std::optional<MPTHolderData>
 getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
-    if (txMeta.getResultTER() != ripple::tesSUCCESS || sttx.getTxnType() != ripple::TxType::ttMPTOKEN_AUTHORIZE)
+    if (txMeta.getResultTER() != ripple::tesSUCCESS ||
+        sttx.getTxnType() != ripple::TxType::ttMPTOKEN_AUTHORIZE)
         return {};
 
     return getMPTokenAuthorize(txMeta);
@@ -73,10 +75,14 @@ std::optional<MPTHolderData>
 getMPTHolderFromObj(std::string const& key, std::string const& blob)
 {
     // https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#2121-mptoken-ledger-identifier
-    ASSERT(key.size() == ripple::uint256::size(), "The size of the key is expected to fit uint256 exactly");
+    ASSERT(
+        key.size() == ripple::uint256::size(),
+        "The size of the key is expected to fit uint256 exactly"
+    );
 
-    ripple::STLedgerEntry const sle =
-        ripple::STLedgerEntry(ripple::SerialIter{blob.data(), blob.size()}, ripple::uint256::fromVoid(key.data()));
+    ripple::STLedgerEntry const sle = ripple::STLedgerEntry(
+        ripple::SerialIter{blob.data(), blob.size()}, ripple::uint256::fromVoid(key.data())
+    );
 
     if (sle.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltMPTOKEN)
         return {};

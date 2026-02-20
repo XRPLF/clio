@@ -78,7 +78,8 @@ TEST_F(ValueViewTest, DifferentIntegerTest)
 
 TEST_F(ValueViewTest, IntegerAsDoubleTypeValue)
 {
-    auto const cv = ConfigValue{ConfigType::Double}.defaultValue(432).withConstraint(gValidatePositiveDouble);
+    auto const cv =
+        ConfigValue{ConfigType::Double}.defaultValue(432).withConstraint(gValidatePositiveDouble);
     ValueView const vv{cv};
     auto const doubleVal = vv.asFloat();
     auto const floatVal = vv.asDouble();

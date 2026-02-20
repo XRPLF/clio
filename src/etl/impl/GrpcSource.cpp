@@ -65,7 +65,11 @@ resolve(std::string const& ip, std::string const& port)
 
 namespace etl::impl {
 
-GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::chrono::system_clock::duration deadline)
+GrpcSource::GrpcSource(
+    std::string const& ip,
+    std::string const& grpcPort,
+    std::chrono::system_clock::duration deadline
+)
     : log_(fmt::format("ETL_Grpc[{}:{}]", ip, grpcPort))
     , initialLoadShouldStop_(std::make_unique<std::atomic_bool>(false))
     , deadline_{deadline}
@@ -75,11 +79,16 @@ GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::
         chArgs.SetMaxReceiveMessageSize(-1);
         chArgs.SetInt(GRPC_ARG_KEEPALIVE_TIME_MS, kKEEPALIVE_PING_INTERVAL_MS);
         chArgs.SetInt(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, kKEEPALIVE_TIMEOUT_MS);
-        chArgs.SetInt(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, static_cast<int>(kKEEPALIVE_PERMIT_WITHOUT_CALLS));
+        chArgs.SetInt(
+            GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS,
+            static_cast<int>(kKEEPALIVE_PERMIT_WITHOUT_CALLS)
+        );
         chArgs.SetInt(GRPC_ARG_HTTP2_MAX_PINGS_WITHOUT_DATA, kMAX_PINGS_WITHOUT_DATA);
 
         stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
-            grpc::CreateCustomChannel(resolve(ip, grpcPort), grpc::InsecureChannelCredentials(), chArgs)
+            grpc::CreateCustomChannel(
+                resolve(ip, grpcPort), grpc::InsecureChannelCredentials(), chArgs
+            )
         );
 
         LOG(log_.debug()) << "Made stub for remote.";
@@ -98,7 +107,9 @@ GrpcSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighb
     org::xrpl::rpc::v1::GetLedgerRequest request;
     grpc::ClientContext context;
 
-    context.set_deadline(std::chrono::system_clock::now() + deadline_);  // Prevent indefinite blocking
+    context.set_deadline(
+        std::chrono::system_clock::now() + deadline_
+    );  // Prevent indefinite blocking
 
     request.mutable_ledger()->set_sequence(sequence);
     request.set_transactions(true);
@@ -110,7 +121,8 @@ GrpcSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighb
     grpc::Status const status = stub_->GetLedger(&context, request, &response);
 
     if (status.ok() and not response.is_unlimited()) {
-        log_.warn() << "is_unlimited is false. Make sure secure_gateway is set correctly on the ETL source. Status = "
+        log_.warn() << "is_unlimited is false. Make sure secure_gateway is set correctly on the "
+                       "ETL source. Status = "
                     << status.error_message();
     }
 

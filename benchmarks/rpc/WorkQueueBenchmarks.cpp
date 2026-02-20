@@ -51,12 +51,15 @@ auto const kCONFIG = ClioConfigDefinition{
     {"log.channels.[].channel", Array{ConfigValue{ConfigType::String}}},
     {"log.channels.[].level", Array{ConfigValue{ConfigType::String}}},
     {"log.level", ConfigValue{ConfigType::String}.defaultValue("info")},
-    {"log.format", ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
+    {"log.format",
+     ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
     {"log.is_async", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
     {"log.enable_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
     {"log.directory", ConfigValue{ConfigType::String}.optional()},
-    {"log.rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateUint32)},
-    {"log.directory_max_files", ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(gValidateUint32)},
+    {"log.rotation_size",
+     ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(gValidateUint32)},
+    {"log.directory_max_files",
+     ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(gValidateUint32)},
     {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
 };
 
@@ -124,9 +127,14 @@ benchmarkWorkQueue(benchmark::State& state)
         ASSERT(totalQueued <= itemsPerClient * clientThreads, "Queued more than requested");
 
         if (maxQueueSize == 0) {
-            ASSERT(totalQueued == itemsPerClient * clientThreads, "Queued exactly the expected amount");
+            ASSERT(
+                totalQueued == itemsPerClient * clientThreads, "Queued exactly the expected amount"
+            );
         } else {
-            ASSERT(totalQueued >= std::min(maxQueueSize, itemsPerClient * clientThreads), "Queued less than expected");
+            ASSERT(
+                totalQueued >= std::min(maxQueueSize, itemsPerClient * clientThreads),
+                "Queued less than expected"
+            );
         }
     }
 }

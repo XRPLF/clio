@@ -26,7 +26,8 @@
 namespace migration {
 
 /**
- * @brief The status of a migrator, it provides the helper functions to convert the status to string and vice versa
+ * @brief The status of a migrator, it provides the helper functions to convert the status to string
+ * and vice versa
  */
 class MigratorStatus {
 public:

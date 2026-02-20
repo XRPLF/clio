@@ -64,13 +64,14 @@ namespace etl::impl {
 /**
  * @brief Publishes ledgers in a synchronized fashion.
  *
- * If ETL is started far behind the network, ledgers will be written and published very rapidly. Monitoring processes
- * will publish ledgers as they are written. However, to publish a ledger, the monitoring process needs to read all of
- * the transactions for that ledger from the database. Reading the transactions from the database requires network
- * calls, which can be slow. It is imperative however that the monitoring processes keep up with the writer, else the
- * monitoring processes will not be able to detect if the writer failed. Therefore, publishing each ledger (which
- * includes reading all of the transactions from the database) is done from the application wide asio io_service, and a
- * strand is used to ensure ledgers are published in order.
+ * If ETL is started far behind the network, ledgers will be written and published very rapidly.
+ * Monitoring processes will publish ledgers as they are written. However, to publish a ledger, the
+ * monitoring process needs to read all of the transactions for that ledger from the database.
+ * Reading the transactions from the database requires network calls, which can be slow. It is
+ * imperative however that the monitoring processes keep up with the writer, else the monitoring
+ * processes will not be able to detect if the writer failed. Therefore, publishing each ledger
+ * (which includes reading all of the transactions from the database) is done from the application
+ * wide asio io_service, and a strand is used to ensure ledgers are published in order.
  */
 class LedgerPublisher : public LedgerPublisherInterface {
     util::Logger log_{"ETL"};
@@ -85,11 +86,12 @@ class LedgerPublisher : public LedgerPublisherInterface {
 
     util::Mutex<std::chrono::time_point<ripple::NetClock>, std::shared_mutex> lastCloseTime_;
 
-    std::reference_wrapper<util::prometheus::CounterInt> lastPublishSeconds_ = PrometheusService::counterInt(
-        "etl_last_publish_seconds",
-        {},
-        "Seconds since epoch of the last published ledger"
-    );
+    std::reference_wrapper<util::prometheus::CounterInt> lastPublishSeconds_ =
+        PrometheusService::counterInt(
+            "etl_last_publish_seconds",
+            {},
+            "Seconds since epoch of the last published ledger"
+        );
 
     util::Mutex<std::optional<uint32_t>, std::shared_mutex> lastPublishedSequence_;
 
@@ -111,8 +113,8 @@ public:
     }
 
     /**
-     * @brief Attempt to read the specified ledger from the database, and then publish that ledger to the ledgers
-     * stream.
+     * @brief Attempt to read the specified ledger from the database, and then publish that ledger
+     * to the ledgers stream.
      *
      * @param ledgerSequence the sequence of the ledger to publish
      * @param maxAttempts the number of times to attempt to read the ledger from the database
@@ -133,11 +135,14 @@ public:
 
             if (!range || range->maxSequence < ledgerSequence) {
                 ++numAttempts;
-                LOG(log_.debug()) << "Trying to publish. Could not find ledger with sequence = " << ledgerSequence;
+                LOG(log_.debug()) << "Trying to publish. Could not find ledger with sequence = "
+                                  << ledgerSequence;
 
-                // We try maxAttempts times to publish the ledger, waiting one second in between each attempt.
+                // We try maxAttempts times to publish the ledger, waiting one second in between
+                // each attempt.
                 if (maxAttempts && numAttempts >= maxAttempts) {
-                    LOG(log_.debug()) << "Failed to publish ledger after " << numAttempts << " attempts.";
+                    LOG(log_.debug())
+                        << "Failed to publish ledger after " << numAttempts << " attempts.";
                     return false;
                 }
                 std::this_thread::sleep_for(attemptsDelay);
@@ -148,7 +153,11 @@ public:
                 return backend_->fetchLedgerBySequence(ledgerSequence, yield);
             });
 
-            ASSERT(lgr.has_value(), "Ledger must exist in database. Ledger sequence = {}", ledgerSequence);
+            ASSERT(
+                lgr.has_value(),
+                "Ledger must exist in database. Ledger sequence = {}",
+                ledgerSequence
+            );
             publish(*lgr);
 
             return true;
@@ -159,7 +168,8 @@ public:
     /**
      * @brief Publish the passed ledger asynchronously.
      *
-     * All ledgers are published thru publishStrand_ which ensures that all publishes are performed in a serial fashion.
+     * All ledgers are published thru publishStrand_ which ensures that all publishes are performed
+     * in a serial fashion.
      *
      * @param lgrInfo the ledger to publish
      */
@@ -172,12 +182,14 @@ public:
             setLastClose(lgrInfo.closeTime);
             auto age = lastCloseAgeSeconds();
 
-            // if the ledger closed over MAX_LEDGER_AGE_SECONDS ago, assume we are still catching up and don't publish
+            // if the ledger closed over MAX_LEDGER_AGE_SECONDS ago, assume we are still catching up
+            // and don't publish
             static constexpr std::uint32_t kMAX_LEDGER_AGE_SECONDS = 600;
             if (age < kMAX_LEDGER_AGE_SECONDS) {
-                std::optional<ripple::Fees> fees = data::synchronousAndRetryOnTimeout([&](auto yield) {
-                    return backend_->fetchFees(lgrInfo.seq, yield);
-                });
+                std::optional<ripple::Fees> fees =
+                    data::synchronousAndRetryOnTimeout([&](auto yield) {
+                        return backend_->fetchFees(lgrInfo.seq, yield);
+                    });
                 ASSERT(fees.has_value(), "Fees must exist for ledger {}", lgrInfo.seq);
 
                 auto transactions = data::synchronousAndRetryOnTimeout([&](auto yield) {
@@ -187,7 +199,8 @@ public:
                 auto const ledgerRange = backend_->fetchLedgerRange();
                 ASSERT(ledgerRange.has_value(), "Ledger range must exist");
 
-                auto const range = fmt::format("{}-{}", ledgerRange->minSequence, ledgerRange->maxSequence);
+                auto const range =
+                    fmt::format("{}-{}", ledgerRange->minSequence, ledgerRange->maxSequence);
                 subscriptions_->pubLedger(lgrInfo, *fees, range, transactions.size());
 
                 // order with transaction index
@@ -222,7 +235,9 @@ public:
     std::uint32_t
     lastPublishAgeSeconds() const override
     {
-        return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - getLastPublish())
+        return std::chrono::duration_cast<std::chrono::seconds>(
+                   std::chrono::system_clock::now() - getLastPublish()
+        )
             .count();
     }
 
@@ -244,7 +259,9 @@ public:
     lastCloseAgeSeconds() const override
     {
         auto closeTime = lastCloseTime_.lock()->time_since_epoch().count();
-        auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())
+        auto now = std::chrono::duration_cast<std::chrono::seconds>(
+                       std::chrono::system_clock::now().time_since_epoch()
+        )
                        .count();
         if (now < (kRIPPLE_EPOCH_START + closeTime))
             return 0;
@@ -252,8 +269,8 @@ public:
     }
 
     /**
-     * @brief Get the sequence of the last schueduled ledger to publish, Be aware that the ledger may not have been
-     * published to network
+     * @brief Get the sequence of the last schueduled ledger to publish, Be aware that the ledger
+     * may not have been published to network
      */
     std::optional<uint32_t>
     getLastPublishedSequence() const
@@ -285,7 +302,8 @@ private:
     setLastPublishTime()
     {
         using namespace std::chrono;
-        auto const nowSeconds = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
+        auto const nowSeconds =
+            duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
         lastPublishSeconds_.get().set(nowSeconds);
     }
 

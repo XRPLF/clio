@@ -39,7 +39,9 @@ callWithTimeout(std::chrono::steady_clock::duration timeout, std::function<void(
         promise.set_value();
     });
     if (future.wait_for(timeout) == std::future_status::timeout) {
-        FAIL() << "Timeout " << std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count() << "ms exceeded";
+        FAIL() << "Timeout "
+               << std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count()
+               << "ms exceeded";
     }
     t.join();
 }

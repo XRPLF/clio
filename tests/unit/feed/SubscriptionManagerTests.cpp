@@ -64,7 +64,8 @@ using namespace feed::impl;
 using namespace data;
 
 template <class Execution>
-class SubscriptionManagerBaseTest : public util::prometheus::WithPrometheus, public MockBackendTest {
+class SubscriptionManagerBaseTest : public util::prometheus::WithPrometheus,
+                                    public MockBackendTest {
 protected:
     SubscriptionManagerBaseTest()
     {
@@ -115,8 +116,12 @@ TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtxSessionDieEarly)
     EXPECT_CALL(*sessionPtr_, send(testing::_)).Times(0);
     session_.reset();
 
-    subscriptionManagerPtr_->forwardManifest(json::parse(R"JSON({"manifest": "test"})JSON").get_object());
-    subscriptionManagerPtr_->forwardValidation(json::parse(R"JSON({"validation": "test"})JSON").get_object());
+    subscriptionManagerPtr_->forwardManifest(
+        json::parse(R"JSON({"manifest": "test"})JSON").get_object()
+    );
+    subscriptionManagerPtr_->forwardValidation(
+        json::parse(R"JSON({"validation": "test"})JSON").get_object()
+    );
 }
 
 TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
@@ -197,7 +202,9 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
     checkResult(subscriptionManagerPtr_->report(), 1);
 
     // count down when session disconnect
-    std::ranges::for_each(session2OnDisconnectSlots, [&session2](auto& slot) { slot(session2.get()); });
+    std::ranges::for_each(session2OnDisconnectSlots, [&session2](auto& slot) {
+        slot(session2.get());
+    });
     session2.reset();
     checkResult(subscriptionManagerPtr_->report(), 0);
 }
@@ -240,7 +247,8 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STObject const metaObj = createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 1, 3, 3, 1);
+    ripple::STObject const metaObj =
+        createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 1, 3, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
     static constexpr auto kBOOK_CHANGE_PUBLISH =
@@ -487,7 +495,9 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
         })JSON";
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kDUMMY_TRANSACTION))).Times(2);
     EXPECT_CALL(*sessionPtr_, send(sharedStringJsonEq(kORDERBOOK_PUBLISH))).Times(2);
-    subscriptionManagerPtr_->forwardProposedTransaction(json::parse(kDUMMY_TRANSACTION).get_object());
+    subscriptionManagerPtr_->forwardProposedTransaction(
+        json::parse(kDUMMY_TRANSACTION).get_object()
+    );
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();

@@ -50,13 +50,17 @@ ExampleTransactionsMigrator::runMigration(
     using HashSet = std::unordered_set<std::string>;
     util::Mutex<HashSet> hashSet;
     migration::cassandra::impl::TransactionsScanner scanner(
-        {.ctxThreadsNum = ctxFullScanThreads, .jobsNum = jobsFullScan, .cursorsPerJob = cursorPerJobsFullScan},
-        migration::cassandra::impl::TransactionsAdapter(backend, [&](ripple::STTx const& tx, ripple::TxMeta const&) {
-            hashSet.lock()->insert(ripple::to_string(tx.getTransactionID()));
-            auto const json = tx.getJson(ripple::JsonOptions::none);
-            auto const txType = json["TransactionType"].asString();
-            backend->writeTxIndexExample(uint256ToString(tx.getTransactionID()), txType);
-        })
+        {.ctxThreadsNum = ctxFullScanThreads,
+         .jobsNum = jobsFullScan,
+         .cursorsPerJob = cursorPerJobsFullScan},
+        migration::cassandra::impl::TransactionsAdapter(
+            backend, [&](ripple::STTx const& tx, ripple::TxMeta const&) {
+                hashSet.lock()->insert(ripple::to_string(tx.getTransactionID()));
+                auto const json = tx.getJson(ripple::JsonOptions::none);
+                auto const txType = json["TransactionType"].asString();
+                backend->writeTxIndexExample(uint256ToString(tx.getTransactionID()), txType);
+            }
+        )
     );
     scanner.wait();
     count = hashSet.lock()->size();

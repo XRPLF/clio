@@ -25,10 +25,10 @@
 #include <memory>
 
 /**
- * @brief Example migrator for the ledgers table. In this example, we show how to migrate the data from table without
- * full table scan. We create an index table called "ledger_example" which maintains the map of ledger
- * sequence to account hash. Because ledger sequence is the partition key of ledgers table, we can just fetch the data
- * via ledger sequence without full table scan.
+ * @brief Example migrator for the ledgers table. In this example, we show how to migrate the data
+ * from table without full table scan. We create an index table called "ledger_example" which
+ * maintains the map of ledger sequence to account hash. Because ledger sequence is the partition
+ * key of ledgers table, we can just fetch the data via ledger sequence without full table scan.
  */
 struct ExampleLedgerMigrator {
     static constexpr char const* kNAME = "ExampleLedgerMigrator";

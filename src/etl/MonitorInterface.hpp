@@ -30,8 +30,8 @@ namespace etl {
 
 /**
  * @brief An interface for the monitor service
- * An implementation of this service is responsible for periodically checking various datasources to detect newly
- * ingested ledgers.
+ * An implementation of this service is responsible for periodically checking various datasources to
+ * detect newly ingested ledgers.
  */
 class MonitorInterface {
 public:
@@ -65,7 +65,8 @@ public:
     subscribeToNewSequence(NewSequenceSignalType::slot_type const& subscriber) = 0;
 
     /**
-     * @brief Allows clients to get notified when no database update is detected for a configured period.
+     * @brief Allows clients to get notified when no database update is detected for a configured
+     * period.
      *
      * @param subscriber The slot to connect
      * @return A connection object that automatically disconnects the subscription once destroyed

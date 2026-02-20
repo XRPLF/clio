@@ -49,7 +49,8 @@
 namespace rpc {
 
 /**
- * @brief The account_tx method retrieves a list of transactions that involved the specified account.
+ * @brief The account_tx method retrieves a list of transactions that involved the specified
+ * account.
  *
  * For more details see: https://xrpl.org/account_tx.html
  */
@@ -155,7 +156,9 @@ public:
                 "tx_type",
                 validation::Type<std::string>{},
                 modifiers::ToLower{},
-                validation::OneOf<std::string>(typesKeysInLowercase.cbegin(), typesKeysInLowercase.cend()),
+                validation::OneOf<std::string>(
+                    typesKeysInLowercase.cbegin(), typesKeysInLowercase.cend()
+                ),
             },
         };
 

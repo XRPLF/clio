@@ -102,7 +102,10 @@ TEST_F(ObjectViewTest, GetObjectsInDifferentWays)
 
     // this returns the 1st object inside "low"
     ObjectView const sameObjFromConfigData = configData.getObject("higher.[].low", 0);
-    EXPECT_EQ(sameObjFromConfigData.getValueView("admin").asBool(), firstObj.getValueView("low.admin").asBool());
+    EXPECT_EQ(
+        sameObjFromConfigData.getValueView("admin").asBool(),
+        firstObj.getValueView("low.admin").asBool()
+    );
     EXPECT_FALSE(firstObj.containsKey("low"));
     EXPECT_TRUE(firstObj.containsKey("low.admin"));
 
@@ -141,7 +144,9 @@ TEST_F(ObjectViewAssertTest, KeyIsValueView)
 TEST_F(ObjectViewAssertTest, KeyisArrayView)
 {
     // dies because only 1 object in higher.[].low
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = configData.getObject("higher.[].low", 1); });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto _ = configData.getObject("higher.[].low", 1);
+    });
 }
 
 TEST_F(ObjectViewAssertTest, KeyisNotOptional)

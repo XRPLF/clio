@@ -50,7 +50,12 @@ struct MockWsConnectionImpl : web::ng::impl::WsConnectionBase {
 
     MOCK_METHOD(void, close, (boost::asio::yield_context), (override));
 
-    MOCK_METHOD(SendReturnType, sendShared, (std::shared_ptr<std::string>, boost::asio::yield_context), (override));
+    MOCK_METHOD(
+        SendReturnType,
+        sendShared,
+        (std::shared_ptr<std::string>, boost::asio::yield_context),
+        (override)
+    );
 };
 
 using MockWsConnection = testing::NiceMock<MockWsConnectionImpl>;

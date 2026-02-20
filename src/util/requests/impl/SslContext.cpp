@@ -57,9 +57,9 @@ constexpr std::array kCERT_FILE_PATHS{
     "/etc/pki/tls/cacert.pem",                            // OpenELEC
     "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",  // CentOS/RHEL 7
     "/etc/ssl/cert.pem",                                  // Alpine Linux
-    "/etc/ssl/certs",                                     // SLES10/SLES11, https://golang.org/issue/12139
-    "/etc/pki/tls/certs",                                 // Fedora/RHEL
-    "/system/etc/security/cacerts",                       // Android
+    "/etc/ssl/certs",                // SLES10/SLES11, https://golang.org/issue/12139
+    "/etc/pki/tls/certs",            // Fedora/RHEL
+    "/system/etc/security/cacerts",  // Android
 };
 
 std::expected<std::string, RequestError>
@@ -90,7 +90,9 @@ makeClientSslContext()
     if (not rootCertificate.has_value()) {
         return std::unexpected{rootCertificate.error()};
     }
-    context.add_certificate_authority(asio::buffer(rootCertificate->data(), rootCertificate->size()));
+    context.add_certificate_authority(
+        asio::buffer(rootCertificate->data(), rootCertificate->size())
+    );
     return context;
 }
 

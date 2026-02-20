@@ -52,8 +52,8 @@ namespace rpc {
 /**
  * @brief Handles the `gateway_balances` command
  *
- * The gateway_balances command calculates the total balances issued by a given account, optionally excluding amounts
- * held by operational addresses.
+ * The gateway_balances command calculates the total balances issued by a given account, optionally
+ * excluding amounts held by operational addresses.
  *
  * For more details see: https://xrpl.org/gateway_balances.html#gateway_balances
  */
@@ -116,17 +116,22 @@ public:
                         return Error{Status{errCode, std::string(key) + "NotStringOrArray"}};
 
                     // wallet needs to be an valid accountID or public key
-                    auto const wallets = value.is_array() ? value.as_array() : boost::json::array{value};
-                    auto const getAccountID = [](auto const& j) -> std::optional<ripple::AccountID> {
+                    auto const wallets =
+                        value.is_array() ? value.as_array() : boost::json::array{value};
+                    auto const getAccountID =
+                        [](auto const& j) -> std::optional<ripple::AccountID> {
                         if (j.is_string()) {
                             auto const pk = util::parseBase58Wrapper<ripple::PublicKey>(
-                                ripple::TokenType::AccountPublic, boost::json::value_to<std::string>(j)
+                                ripple::TokenType::AccountPublic,
+                                boost::json::value_to<std::string>(j)
                             );
 
                             if (pk)
                                 return ripple::calcAccountID(*pk);
 
-                            return util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(j));
+                            return util::parseBase58Wrapper<ripple::AccountID>(
+                                boost::json::value_to<std::string>(j)
+                            );
                         }
 
                         return {};
@@ -148,10 +153,12 @@ public:
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator}
         };
 
-        static auto const kSPEC_V1 =
-            RpcSpec{kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(ripple::rpcINVALID_HOTWALLET)}}};
-        static auto const kSPEC_V2 =
-            RpcSpec{kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(ripple::rpcINVALID_PARAMS)}}};
+        static auto const kSPEC_V1 = RpcSpec{
+            kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(ripple::rpcINVALID_HOTWALLET)}}
+        };
+        static auto const kSPEC_V2 = RpcSpec{
+            kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(ripple::rpcINVALID_PARAMS)}}
+        };
 
         return apiVersion == 1 ? kSPEC_V1 : kSPEC_V2;
     }

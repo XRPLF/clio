@@ -36,7 +36,8 @@ Handle::Handle(Settings clusterSettings) : cluster_{clusterSettings}
 {
 }
 
-Handle::Handle(std::string_view contactPoints) : Handle{Settings::defaultSettings().withContactPoints(contactPoints)}
+Handle::Handle(std::string_view contactPoints)
+    : Handle{Settings::defaultSettings().withContactPoints(contactPoints)}
 {
 }
 
@@ -85,7 +86,9 @@ Handle::FutureType
 Handle::asyncReconnect(std::string_view keyspace) const
 {
     if (auto rc = asyncDisconnect().await(); not rc)  // sync
-        throw std::logic_error("Reconnect to keyspace '" + std::string{keyspace} + "' failed: " + rc.error());
+        throw std::logic_error(
+            "Reconnect to keyspace '" + std::string{keyspace} + "' failed: " + rc.error()
+        );
     return asyncConnect(keyspace);
 }
 
@@ -123,7 +126,10 @@ Handle::asyncExecute(StatementType const& statement) const
 }
 
 Handle::FutureWithCallbackType
-Handle::asyncExecute(StatementType const& statement, std::function<void(ResultOrErrorType)>&& cb) const
+Handle::asyncExecute(
+    StatementType const& statement,
+    std::function<void(ResultOrErrorType)>&& cb
+) const
 {
     return Handle::FutureWithCallbackType{cass_session_execute(session_, statement), std::move(cb)};
 }
@@ -147,9 +153,14 @@ Handle::execute(std::vector<StatementType> const& statements) const
 }
 
 Handle::FutureWithCallbackType
-Handle::asyncExecute(std::vector<StatementType> const& statements, std::function<void(ResultOrErrorType)>&& cb) const
+Handle::asyncExecute(
+    std::vector<StatementType> const& statements,
+    std::function<void(ResultOrErrorType)>&& cb
+) const
 {
-    return Handle::FutureWithCallbackType{cass_session_execute_batch(session_, Batch{statements}), std::move(cb)};
+    return Handle::FutureWithCallbackType{
+        cass_session_execute_batch(session_, Batch{statements}), std::move(cb)
+    };
 }
 
 Handle::PreparedStatementType

@@ -59,7 +59,11 @@ private:
     std::optional<std::string> predecessorKey_;
 
 public:
-    AsyncGrpcCall(uint32_t seq, ripple::uint256 const& marker, std::optional<ripple::uint256> const& nextMarker);
+    AsyncGrpcCall(
+        uint32_t seq,
+        ripple::uint256 const& marker,
+        std::optional<ripple::uint256> const& nextMarker
+    );
 
     static std::vector<AsyncGrpcCall>
     makeAsyncCalls(uint32_t const sequence, uint32_t const numMarkers);
@@ -73,7 +77,10 @@ public:
     );
 
     void
-    call(std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub, grpc::CompletionQueue& cq);
+    call(
+        std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub,
+        grpc::CompletionQueue& cq
+    );
 
     std::string
     getMarkerPrefix();

@@ -28,15 +28,16 @@
 namespace migration {
 
 /**
- * @brief The interface for the migration inspector.The Clio server application will use this interface to inspect
- * the migration status.
+ * @brief The interface for the migration inspector.The Clio server application will use this
+ * interface to inspect the migration status.
  */
 struct MigrationInspectorInterface {
     virtual ~MigrationInspectorInterface() = default;
 
     /**
      * @brief Get the status of all the migrators
-     * @return A vector of tuple, the first element is the migrator's name, the second element is the status of the
+     * @return A vector of tuple, the first element is the migrator's name, the second element is
+     * the status of the
      */
     virtual std::vector<std::tuple<std::string, MigratorStatus>>
     allMigratorsStatusPairs() const = 0;

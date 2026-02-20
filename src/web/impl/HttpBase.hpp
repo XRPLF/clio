@@ -119,8 +119,8 @@ class HttpBase : public ConnectionBase {
             if (self.dead())
                 return;
 
-            // The lifetime of the message has to extend for the duration of the async operation so we use a shared_ptr
-            // to manage it.
+            // The lifetime of the message has to extend for the duration of the async operation so
+            // we use a shared_ptr to manage it.
             auto sp = std::make_shared<http::message<IsRequest, Body, Fields>>(std::move(msg));
 
             // Store a type-erased version of the shared pointer in the class to keep it alive.
@@ -130,7 +130,9 @@ class HttpBase : public ConnectionBase {
             http::async_write(
                 self.derived().stream(),
                 *sp,
-                boost::beast::bind_front_handler(&HttpBase::onWrite, self.derived().shared_from_this(), sp->need_eof())
+                boost::beast::bind_front_handler(
+                    &HttpBase::onWrite, self.derived().shared_from_this(), sp->need_eof()
+                )
             );
         }
     };
@@ -244,13 +246,19 @@ public:
 
         if (req_.method() == http::verb::get and req_.target() == "/cache_state") {
             if (cache_.get().isFull())
-                return sender_(httpResponse(http::status::ok, "text/html", kCACHE_CHECK_LOADED_HTML));
+                return sender_(
+                    httpResponse(http::status::ok, "text/html", kCACHE_CHECK_LOADED_HTML)
+                );
 
-            return sender_(httpResponse(http::status::service_unavailable, "text/html", kCACHE_CHECK_NOT_LOADED_HTML));
+            return sender_(httpResponse(
+                http::status::service_unavailable, "text/html", kCACHE_CHECK_NOT_LOADED_HTML
+            ));
         }
 
-        if (auto resolvedIp = proxyIpResolver_->resolveClientIp(clientIp_, req_); resolvedIp != clientIp_) {
-            LOG(log_.info()) << tag() << "Detected a forwarded request from proxy. Proxy ip: " << clientIp_
+        if (auto resolvedIp = proxyIpResolver_->resolveClientIp(clientIp_, req_);
+            resolvedIp != clientIp_) {
+            LOG(log_.info()) << tag()
+                             << "Detected a forwarded request from proxy. Proxy ip: " << clientIp_
                              << ". Resolved client ip: " << resolvedIp;
             dosGuard_.get().decrement(clientIp_);
             clientIp_ = std::move(resolvedIp);
@@ -269,14 +277,19 @@ public:
                 return derived().upgrade();
             }
 
-            return sender_(httpResponse(http::status::too_many_requests, "text/html", "Too many requests"));
+            return sender_(
+                httpResponse(http::status::too_many_requests, "text/html", "Too many requests")
+            );
         }
 
-        if (auto response = util::prometheus::handlePrometheusRequest(req_, isAdmin()); response.has_value())
+        if (auto response = util::prometheus::handlePrometheusRequest(req_, isAdmin());
+            response.has_value())
             return sender_(std::move(response.value()));
 
         if (req_.method() != http::verb::post) {
-            return sender_(httpResponse(http::status::bad_request, "text/html", "Expected a POST request"));
+            return sender_(
+                httpResponse(http::status::bad_request, "text/html", "Expected a POST request")
+            );
         }
 
         LOG(log_.info()) << tag() << "Received request from ip = " << clientIp_;
@@ -304,8 +317,8 @@ public:
 
     /**
      * @brief Send a response to the client
-     * The message length will be added to the DOSGuard, if the limit is reached, a warning will be added to the
-     * response
+     * The message length will be added to the DOSGuard, if the limit is reached, a warning will be
+     * added to the response
      */
     void
     send(std::string&& msg, http::status status = http::status::ok) override
@@ -314,9 +327,12 @@ public:
             auto jsonResponse = boost::json::parse(msg).as_object();
             jsonResponse["warning"] = "load";
             if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {
-                jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::WarnRpcRateLimit));
+                jsonResponse["warnings"].as_array().push_back(
+                    rpc::makeWarning(rpc::WarnRpcRateLimit)
+                );
             } else {
-                jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::WarnRpcRateLimit)};
+                jsonResponse["warnings"] =
+                    boost::json::array{rpc::makeWarning(rpc::WarnRpcRateLimit)};
             }
 
             // Reserialize when we need to include this warning

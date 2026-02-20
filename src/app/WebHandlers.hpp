@@ -68,8 +68,8 @@ public:
 };
 
 /**
- * @brief A function object that is called when the IP of a connection changes (usually if proxy detected).
- * This is used to update the DOS guard.
+ * @brief A function object that is called when the IP of a connection changes (usually if proxy
+ * detected). This is used to update the DOS guard.
  */
 class IpChangeHook {
     std::reference_wrapper<web::dosguard::DOSGuardInterface> dosguard_;
@@ -126,10 +126,14 @@ public:
     /**
      * @brief Construct a new MetricsHandler object
      *
-     * @param adminVerifier The AdminVerificationStrategy to use for verifying the connection for admin access.
+     * @param adminVerifier The AdminVerificationStrategy to use for verifying the connection for
+     * admin access.
      * @param workQueue The WorkQueue to use for handling the request.
      */
-    MetricsHandler(std::shared_ptr<web::AdminVerificationStrategy> adminVerifier, rpc::WorkQueue& workQueue);
+    MetricsHandler(
+        std::shared_ptr<web::AdminVerificationStrategy> adminVerifier,
+        rpc::WorkQueue& workQueue
+    );
 
     /**
      * @brief The call of the function object.
@@ -214,10 +218,14 @@ public:
     /**
      * @brief Construct a new RequestHandler object
      *
-     * @param adminVerifier The AdminVerificationStrategy to use for verifying the connection for admin access.
+     * @param adminVerifier The AdminVerificationStrategy to use for verifying the connection for
+     * admin access.
      * @param rpcHandler The RPC handler to use for handling the request.
      */
-    RequestHandler(std::shared_ptr<web::AdminVerificationStrategy> adminVerifier, RpcHandlerType& rpcHandler)
+    RequestHandler(
+        std::shared_ptr<web::AdminVerificationStrategy> adminVerifier,
+        RpcHandlerType& rpcHandler
+    )
         : adminVerifier_(std::move(adminVerifier)), rpcHandler_(rpcHandler)
     {
     }

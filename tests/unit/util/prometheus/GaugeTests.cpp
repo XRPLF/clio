@@ -36,7 +36,11 @@ struct AnyGaugeTests : ::testing::Test {
     };
 
     ::testing::StrictMock<MockGaugeImpl> mockGaugeImpl;
-    GaugeInt gauge{"test_gauge", R"(label1="value1",label2="value2")", static_cast<MockGaugeImpl&>(mockGaugeImpl)};
+    GaugeInt gauge{
+        "test_gauge",
+        R"(label1="value1",label2="value2")",
+        static_cast<MockGaugeImpl&>(mockGaugeImpl)
+    };
 };
 
 TEST_F(AnyGaugeTests, operatorAdd)

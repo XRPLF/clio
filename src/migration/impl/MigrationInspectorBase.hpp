@@ -31,8 +31,8 @@
 namespace migration::impl {
 
 /**
- * @brief The migration inspector implementation for Cassandra. It will report the migration status for Cassandra
- * database.
+ * @brief The migration inspector implementation for Cassandra. It will report the migration status
+ * for Cassandra database.
  *
  * @tparam SupportedMigrators The migrators register that contains all the migrators
  */
@@ -47,7 +47,9 @@ public:
      *
      * @param backend The backend of the Cassandra database
      */
-    explicit MigrationInspectorBase(std::shared_ptr<typename SupportedMigrators::BackendType> backend)
+    explicit MigrationInspectorBase(
+        std::shared_ptr<typename SupportedMigrators::BackendType> backend
+    )
         : migrators_{std::move(backend)}
     {
     }
@@ -55,8 +57,8 @@ public:
     /**
      * @brief Get the status of all the migrators
      *
-     * @return A vector of tuple, the first element is the migrator's name, the second element is the status of the
-     * migrator
+     * @return A vector of tuple, the first element is the migrator's name, the second element is
+     * the status of the migrator
      */
     std::vector<std::tuple<std::string, MigratorStatus>>
     allMigratorsStatusPairs() const override
@@ -109,8 +111,10 @@ public:
     isBlockingClio() const override
     {
         return std::ranges::any_of(migrators_.getMigratorNames(), [&](auto const& migrator) {
-            if (auto canBlock = migrators_.canMigratorBlockClio(migrator); canBlock.has_value() and *canBlock and
-                migrators_.getMigratorStatus(std::string(migrator)) == MigratorStatus::Status::NotMigrated) {
+            if (auto canBlock = migrators_.canMigratorBlockClio(migrator); canBlock.has_value() and
+                *canBlock and
+                migrators_.getMigratorStatus(std::string(migrator)) ==
+                    MigratorStatus::Status::NotMigrated) {
                 return true;
             }
             return false;

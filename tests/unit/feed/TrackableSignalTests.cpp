@@ -79,7 +79,8 @@ TEST_F(FeedTrackableSignalTests, AutoDisconnect)
 
 TEST_F(FeedTrackableSignalTests, MapConnect)
 {
-    feed::impl::TrackableSignalMap<std::string, web::SubscriptionContextInterface, std::string> signalMap;
+    feed::impl::TrackableSignalMap<std::string, web::SubscriptionContextInterface, std::string>
+        signalMap;
     std::string testString;
     auto const slot = [&](std::string const& s) { testString += s; };
     EXPECT_TRUE(signalMap.connectTrackableSlot(sessionPtr, "test", slot));
@@ -103,7 +104,8 @@ TEST_F(FeedTrackableSignalTests, MapConnect)
 
 TEST_F(FeedTrackableSignalTests, MapAutoDisconnect)
 {
-    feed::impl::TrackableSignalMap<std::string, web::SubscriptionContextInterface, std::string> signalMap;
+    feed::impl::TrackableSignalMap<std::string, web::SubscriptionContextInterface, std::string>
+        signalMap;
     std::string testString;
     auto const slot = [&](std::string const& s) { testString += s; };
     EXPECT_TRUE(signalMap.connectTrackableSlot(sessionPtr, "test", slot));

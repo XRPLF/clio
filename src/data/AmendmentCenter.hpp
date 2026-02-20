@@ -62,9 +62,9 @@ struct WritingAmendmentKey : AmendmentKey {
  */
 struct Amendments {
     // NOTE: if Clio wants to report it supports an Amendment it should be listed here.
-    // Whether an amendment is obsolete and/or supported by libxrpl is extracted directly from libxrpl.
-    // If an amendment is in the list below it just means Clio did whatever changes needed to support it.
-    // Most of the time it's going to be no changes at all.
+    // Whether an amendment is obsolete and/or supported by libxrpl is extracted directly from
+    // libxrpl. If an amendment is in the list below it just means Clio did whatever changes needed
+    // to support it. Most of the time it's going to be no changes at all.
 
     /** @cond */
     // NOLINTBEGIN(readability-identifier-naming)
@@ -256,7 +256,11 @@ public:
      * @return A vector of bools representing enabled state for each of the given keys
      */
     [[nodiscard]] std::vector<bool>
-    isEnabled(boost::asio::yield_context yield, std::vector<AmendmentKey> const& keys, uint32_t seq) const final;
+    isEnabled(
+        boost::asio::yield_context yield,
+        std::vector<AmendmentKey> const& keys,
+        uint32_t seq
+    ) const final;
 
     /**
      * @brief Get an amendment

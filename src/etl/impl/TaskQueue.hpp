@@ -45,12 +45,17 @@ struct ReverseOrderComparator {
 
 /**
  * @brief A wrapper for std::priority_queue that serialises operations using a mutex
- * @note This may be a candidate for future improvements if performance proves to be poor (e.g. use a lock free queue)
+ * @note This may be a candidate for future improvements if performance proves to be poor (e.g. use
+ * a lock free queue)
  */
 class TaskQueue {
     struct Data {
         std::uint32_t expectedSequence;
-        std::priority_queue<model::LedgerData, std::vector<model::LedgerData>, ReverseOrderComparator> forwardLoadQueue;
+        std::priority_queue<
+            model::LedgerData,
+            std::vector<model::LedgerData>,
+            ReverseOrderComparator>
+            forwardLoadQueue;
 
         Data(std::uint32_t seq) : expectedSequence(seq)
         {
@@ -66,18 +71,22 @@ class TaskQueue {
 
 public:
     struct Settings {
-        std::uint32_t startSeq = 0u;   // sequence to start from (for dequeue)
-        std::uint32_t increment = 1u;  // increment sequence by this value once dequeue was successful
+        std::uint32_t startSeq = 0u;  // sequence to start from (for dequeue)
+        std::uint32_t increment =
+            1u;  // increment sequence by this value once dequeue was successful
         std::optional<std::size_t> limit = std::nullopt;
     };
 
     /**
      * @brief Construct a new priority queue
-     * @param settings Settings for the queue, including starting sequence, increment value, and optional limit
+     * @param settings Settings for the queue, including starting sequence, increment value, and
+     * optional limit
      * @note If limit is not set, the queue will have no limit
      */
     explicit TaskQueue(Settings settings)
-        : limit_(settings.limit.value_or(0uz)), increment_(settings.increment), data_(settings.startSeq)
+        : limit_(settings.limit.value_or(0uz))
+        , increment_(settings.increment)
+        , data_(settings.startSeq)
     {
     }
 
@@ -119,7 +128,8 @@ public:
         auto lock = data_.lock();
         std::optional<model::LedgerData> out;
 
-        if (not lock->forwardLoadQueue.empty() && lock->forwardLoadQueue.top().seq == lock->expectedSequence) {
+        if (not lock->forwardLoadQueue.empty() &&
+            lock->forwardLoadQueue.top().seq == lock->expectedSequence) {
             out.emplace(lock->forwardLoadQueue.top());
             lock->forwardLoadQueue.pop();
             lock->expectedSequence += increment_;

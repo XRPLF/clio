@@ -54,7 +54,11 @@ public:
      * @param arrayIndex The index of the array object element to view
      * @param clioConfig Reference to the ClioConfigDefinition containing all the configuration data
      */
-    ObjectView(std::string_view prefix, std::size_t arrayIndex, ClioConfigDefinition const& clioConfig);
+    ObjectView(
+        std::string_view prefix,
+        std::size_t arrayIndex,
+        ClioConfigDefinition const& clioConfig
+    );
 
     /**
      * @brief Checks if prefix_.key (fullkey) exists in ClioConfigDefinition
@@ -103,8 +107,8 @@ public:
     }
 
     /**
-     * @brief Retrieves an ObjectView in ClioConfigDefinition with key that starts with prefix_.key. The view must be of
-     * type object
+     * @brief Retrieves an ObjectView in ClioConfigDefinition with key that starts with prefix_.key.
+     * The view must be of type object
      *
      * @param key The suffix of the key
      * @return An ObjectView representing the subset of configuration data
@@ -113,8 +117,8 @@ public:
     getObject(std::string_view key) const;
 
     /**
-     * @brief Retrieves an ArrayView in ClioConfigDefinition with key that starts with prefix_.key. The view must be of
-     * type object
+     * @brief Retrieves an ArrayView in ClioConfigDefinition with key that starts with prefix_.key.
+     * The view must be of type object
      *
      * @param key The suffix of the key
      * @return An ObjectView representing the subset of configuration data

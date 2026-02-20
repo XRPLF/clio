@@ -48,8 +48,9 @@ struct PrometheusCheckRequestTestsParams {
     bool expected;
 };
 
-struct PrometheusCheckRequestTests : WithPrometheus,
-                                     ::testing::WithParamInterface<PrometheusCheckRequestTestsParams> {};
+struct PrometheusCheckRequestTests
+    : WithPrometheus,
+      ::testing::WithParamInterface<PrometheusCheckRequestTestsParams> {};
 
 TEST_P(PrometheusCheckRequestTests, isPrometheusRequest)
 {
@@ -110,7 +111,8 @@ INSTANTIATE_TEST_CASE_P(
 struct PrometheusHandleRequestTestsBase {
     http::request<http::string_body> const req{http::verb::get, "/metrics", 11};
 };
-struct PrometheusHandleRequestTests : util::prometheus::WithPrometheus, PrometheusHandleRequestTestsBase {};
+struct PrometheusHandleRequestTests : util::prometheus::WithPrometheus,
+                                      PrometheusHandleRequestTestsBase {};
 
 TEST_F(PrometheusHandleRequestTests, emptyResponse)
 {
@@ -152,8 +154,12 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounter)
     ASSERT_TRUE(response.has_value());
     EXPECT_EQ(response->result(), http::status::ok);
     EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
-    auto const expectedBody =
-        fmt::format("# HELP {0} {1}\n# TYPE {0} counter\n{0}{2} 4\n\n", counterName, description, labels.serialize());
+    auto const expectedBody = fmt::format(
+        "# HELP {0} {1}\n# TYPE {0} counter\n{0}{2} 4\n\n",
+        counterName,
+        description,
+        labels.serialize()
+    );
     EXPECT_EQ(response->body(), expectedBody);
 }
 
@@ -171,8 +177,12 @@ TEST_F(PrometheusHandleRequestTests, responseWithGauge)
     ASSERT_TRUE(response.has_value());
     EXPECT_EQ(response->result(), http::status::ok);
     EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
-    auto const expectedBody =
-        fmt::format("# HELP {0} {1}\n# TYPE {0} gauge\n{0}{2} -2\n\n", gaugeName, description, labels.serialize());
+    auto const expectedBody = fmt::format(
+        "# HELP {0} {1}\n# TYPE {0} gauge\n{0}{2} -2\n\n",
+        gaugeName,
+        description,
+        labels.serialize()
+    );
     EXPECT_EQ(response->body(), expectedBody);
 }
 

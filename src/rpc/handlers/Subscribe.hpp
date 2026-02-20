@@ -65,7 +65,8 @@ public:
         // response of stream "ledger"
         // TODO: use better type than json, this type will be used in the stream as well
         std::optional<boost::json::object> ledger;
-        // books returns nothing by default, if snapshot is true and both is false, offers go to offers list
+        // books returns nothing by default, if snapshot is true and both is false, offers go to
+        // offers list
         // TODO: use better type than json
         std::optional<boost::json::array> offers;
         // if snapshot is true and both is true, reversed book' offers go to asks list
@@ -137,7 +138,10 @@ private:
     ) const;
 
     void
-    subscribeToAccounts(std::vector<std::string> const& accounts, feed::SubscriberSharedPtr const& session) const;
+    subscribeToAccounts(
+        std::vector<std::string> const& accounts,
+        feed::SubscriberSharedPtr const& session
+    ) const;
 
     void
     subscribeToAccountsProposed(

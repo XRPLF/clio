@@ -34,7 +34,10 @@
 
 namespace web {
 
-ProxyIpResolver::ProxyIpResolver(std::unordered_set<std::string> proxyIps, std::unordered_set<std::string> proxyTokens)
+ProxyIpResolver::ProxyIpResolver(
+    std::unordered_set<std::string> proxyIps,
+    std::unordered_set<std::string> proxyTokens
+)
     : proxyIps_(std::move(proxyIps))
 {
     proxyTokens_.reserve(proxyTokens.size());
@@ -56,7 +59,8 @@ ProxyIpResolver::fromConfig(util::config::ClioConfigDefinition const& config)
 
     std::unordered_set<std::string> tokens;
     auto const tokensFromConfig = config.getArray("server.proxy.tokens");
-    for (auto it = tokensFromConfig.begin<ValueView>(); it != tokensFromConfig.end<ValueView>(); ++it) {
+    for (auto it = tokensFromConfig.begin<ValueView>(); it != tokensFromConfig.end<ValueView>();
+         ++it) {
         tokens.insert((*it).asString());
     }
 

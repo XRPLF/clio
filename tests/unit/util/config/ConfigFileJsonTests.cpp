@@ -111,7 +111,8 @@ INSTANTIATE_TEST_CASE_P(
                 "bool": true,
                 "string": "some string"
             })JSON",
-            .validationMap = {{"int", 42}, {"double", 123.456}, {"bool", true}, {"string", "some string"}}
+            .validationMap =
+                {{"int", 42}, {"double", 123.456}, {"bool", true}, {"string", "some string"}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "nested",
@@ -192,7 +193,11 @@ INSTANTIATE_TEST_CASE_P(
                     {"nested.array.[]", boost::json::array{1, 2, 3}},
                 }
         },
-        ConfigFileJsonParseTestBundle{.testName = "empty", .configStr = R"JSON({})JSON", .validationMap = {}},
+        ConfigFileJsonParseTestBundle{
+            .testName = "empty",
+            .configStr = R"JSON({})JSON",
+            .validationMap = {}
+        },
         ConfigFileJsonParseTestBundle{
             .testName = "empty_nested",
             .configStr = R"JSON({
@@ -265,7 +270,8 @@ INSTANTIATE_TEST_CASE_P(
             })JSON",
             .validationMap =
                 {{"array.[].int", boost::json::array{42, 2, 4}},
-                 {"array.[].bool", boost::json::array{true, boost::json::value{}, boost::json::value{}}}}
+                 {"array.[].bool",
+                  boost::json::array{true, boost::json::value{}, boost::json::value{}}}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "full_object_is_in_the_middle_of_array",
@@ -278,7 +284,8 @@ INSTANTIATE_TEST_CASE_P(
             })JSON",
             .validationMap =
                 {{"array.[].int", boost::json::array{42, 2, 4}},
-                 {"array.[].bool", boost::json::array{boost::json::value{}, true, boost::json::value{}}}}
+                 {"array.[].bool",
+                  boost::json::array{boost::json::value{}, true, boost::json::value{}}}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "no_full_object",
@@ -291,7 +298,8 @@ INSTANTIATE_TEST_CASE_P(
             })JSON",
             .validationMap =
                 {{"array.[].int", boost::json::array{42, 2, boost::json::value{}}},
-                 {"array.[].bool", boost::json::array{boost::json::value{}, boost::json::value{}, true}}}
+                 {"array.[].bool",
+                  boost::json::array{boost::json::value{}, boost::json::value{}, true}}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "array_with_nexted_objects",
@@ -303,7 +311,8 @@ INSTANTIATE_TEST_CASE_P(
             })JSON",
             .validationMap =
                 {{"array.[].object.int", boost::json::array{42, boost::json::value{}}},
-                 {"array.[].object.string", boost::json::array{boost::json::value{}, "some string"}}}
+                 {"array.[].object.string",
+                  boost::json::array{boost::json::value{}, "some string"}}}
         }
     ),
     tests::util::kNAME_GENERATOR

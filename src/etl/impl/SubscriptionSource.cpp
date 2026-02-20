@@ -159,44 +159,52 @@ SubscriptionSource::stop(boost::asio::yield_context yield)
 void
 SubscriptionSource::subscribe()
 {
-    util::spawn(strand_, [this, _ = boost::asio::make_work_guard(strand_)](boost::asio::yield_context yield) {
-        if (auto connection = wsConnectionBuilder_.connect(yield); connection) {
-            wsConnection_ = std::move(connection).value();
-        } else {
-            handleError(connection.error(), yield);
-            return;
-        }
-
-        auto const& subscribeCommand = getSubscribeCommandJson();
-
-        if (auto const writeErrorOpt = wsConnection_->write(subscribeCommand, yield, wsTimeout_); writeErrorOpt) {
-            handleError(writeErrorOpt.value(), yield);
-            return;
-        }
-
-        isConnected_ = true;
-        LOG(log_.info()) << "Connected";
-        onConnect_();
-
-        retry_.reset();
-
-        while (!stop_) {
-            auto const message = wsConnection_->read(yield, wsTimeout_);
-            if (not message) {
-                handleError(message.error(), yield);
+    util::spawn(
+        strand_,
+        [this, _ = boost::asio::make_work_guard(strand_)](boost::asio::yield_context yield) {
+            if (auto connection = wsConnectionBuilder_.connect(yield); connection) {
+                wsConnection_ = std::move(connection).value();
+            } else {
+                handleError(connection.error(), yield);
                 return;
             }
 
-            if (auto const handleErrorOpt = handleMessage(message.value()); handleErrorOpt) {
-                handleError(handleErrorOpt.value(), yield);
+            auto const& subscribeCommand = getSubscribeCommandJson();
+
+            if (auto const writeErrorOpt =
+                    wsConnection_->write(subscribeCommand, yield, wsTimeout_);
+                writeErrorOpt) {
+                handleError(writeErrorOpt.value(), yield);
                 return;
             }
+
+            isConnected_ = true;
+            LOG(log_.info()) << "Connected";
+            onConnect_();
+
+            retry_.reset();
+
+            while (!stop_) {
+                auto const message = wsConnection_->read(yield, wsTimeout_);
+                if (not message) {
+                    handleError(message.error(), yield);
+                    return;
+                }
+
+                if (auto const handleErrorOpt = handleMessage(message.value()); handleErrorOpt) {
+                    handleError(handleErrorOpt.value(), yield);
+                    return;
+                }
+            }
+            // Close the connection
+            handleError(
+                util::requests::RequestError{
+                    "Subscription source stopped", boost::asio::error::operation_aborted
+                },
+                yield
+            );
         }
-        // Close the connection
-        handleError(
-            util::requests::RequestError{"Subscription source stopped", boost::asio::error::operation_aborted}, yield
-        );
-    });
+    );
 }
 
 std::optional<util::requests::RequestError>
@@ -219,19 +227,23 @@ SubscriptionSource::handleMessage(std::string const& message)
                 ledgerIndex = util::integralValueAs<uint32_t>(result.at(JS(ledger_index)));
 
             if (result.contains(JS(validated_ledgers))) {
-                auto validatedLedgers = boost::json::value_to<std::string>(result.at(JS(validated_ledgers)));
+                auto validatedLedgers =
+                    boost::json::value_to<std::string>(result.at(JS(validated_ledgers)));
                 setValidatedRange(std::move(validatedLedgers));
             }
-            LOG(log_.debug()) << "Received a message on ledger subscription stream. Message: " << object;
+            LOG(log_.debug()) << "Received a message on ledger subscription stream. Message: "
+                              << object;
 
         } else if (object.contains(JS(type)) && object.at(JS(type)) == kJS_LEDGER_CLOSED) {
-            LOG(log_.debug()) << "Received a message of type 'ledgerClosed' on ledger subscription stream. Message: "
+            LOG(log_.debug()) << "Received a message of type 'ledgerClosed' on ledger subscription "
+                                 "stream. Message: "
                               << object;
             if (object.contains(JS(ledger_index))) {
                 ledgerIndex = util::integralValueAs<uint32_t>(object.at(JS(ledger_index)));
             }
             if (object.contains(JS(validated_ledgers))) {
-                auto validatedLedgers = boost::json::value_to<std::string>(object.at(JS(validated_ledgers)));
+                auto validatedLedgers =
+                    boost::json::value_to<std::string>(object.at(JS(validated_ledgers)));
                 setValidatedRange(std::move(validatedLedgers));
             }
             if (isForwarding_)
@@ -239,17 +251,18 @@ SubscriptionSource::handleMessage(std::string const& message)
 
         } else {
             if (isForwarding_) {
-                // Clio as rippled's proposed_transactions subscriber, will receive two jsons for each transaction
-                // 1 - Proposed transaction
-                // 2 - Validated transaction
-                // Only forward proposed transaction, validated transactions are sent by Clio itself
+                // Clio as rippled's proposed_transactions subscriber, will receive two jsons for
+                // each transaction 1 - Proposed transaction 2 - Validated transaction Only forward
+                // proposed transaction, validated transactions are sent by Clio itself
                 if (object.contains(JS(transaction)) and !object.contains(JS(meta))) {
                     LOG(log_.debug()) << "Forwarding proposed transaction: " << object;
                     subscriptions_->forwardProposedTransaction(object);
-                } else if (object.contains(JS(type)) && object.at(JS(type)) == kJS_VALIDATION_RECEIVED) {
+                } else if (object.contains(JS(type)) &&
+                           object.at(JS(type)) == kJS_VALIDATION_RECEIVED) {
                     LOG(log_.debug()) << "Forwarding validation: " << object;
                     subscriptions_->forwardValidation(object);
-                } else if (object.contains(JS(type)) && object.at(JS(type)) == kJS_MANIFEST_RECEIVED) {
+                } else if (object.contains(JS(type)) &&
+                           object.at(JS(type)) == kJS_MANIFEST_RECEIVED) {
                     LOG(log_.debug()) << "Forwarding manifest: " << object;
                     subscriptions_->forwardManifest(object);
                 }
@@ -269,7 +282,10 @@ SubscriptionSource::handleMessage(std::string const& message)
 }
 
 void
-SubscriptionSource::handleError(util::requests::RequestError const& error, boost::asio::yield_context yield)
+SubscriptionSource::handleError(
+    util::requests::RequestError const& error,
+    boost::asio::yield_context yield
+)
 {
     isConnected_ = false;
     bool const wasForwarding = isForwarding_.exchange(false);
@@ -309,7 +325,10 @@ void
 SubscriptionSource::setLastMessageTime()
 {
     lastMessageTimeSecondsSinceEpoch_.get().set(
-        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()
+        std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::system_clock::now().time_since_epoch()
+        )
+            .count()
     );
     auto lock = lastMessageTime_.lock();
     lock.get() = std::chrono::steady_clock::now();

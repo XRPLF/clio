@@ -33,17 +33,24 @@
 namespace util {
 
 CoroutineGroup::CoroutineGroup(boost::asio::yield_context yield, std::optional<size_t> maxChildren)
-    : timer_{yield.get_executor(), boost::asio::steady_timer::duration::max()}, maxChildren_{maxChildren}
+    : timer_{yield.get_executor(), boost::asio::steady_timer::duration::max()}
+    , maxChildren_{maxChildren}
 {
 }
 
 CoroutineGroup::~CoroutineGroup()
 {
-    ASSERT(childrenCounter_ == 0, "CoroutineGroup is destroyed without waiting for child coroutines to finish");
+    ASSERT(
+        childrenCounter_ == 0,
+        "CoroutineGroup is destroyed without waiting for child coroutines to finish"
+    );
 }
 
 bool
-CoroutineGroup::spawn(boost::asio::yield_context yield, std::function<void(boost::asio::yield_context)> fn)
+CoroutineGroup::spawn(
+    boost::asio::yield_context yield,
+    std::function<void(boost::asio::yield_context)> fn
+)
 {
     if (isFull())
         return false;
@@ -63,8 +70,8 @@ CoroutineGroup::registerForeign(boost::asio::yield_context yield)
         return std::nullopt;
 
     ++childrenCounter_;
-    // It is important to spawn onCoroutineCompleted() to the same coroutine as will be calling asyncWait().
-    // timer_ here is not thread safe, so without spawn there could be a data race.
+    // It is important to spawn onCoroutineCompleted() to the same coroutine as will be calling
+    // asyncWait(). timer_ here is not thread safe, so without spawn there could be a data race.
     return [this, yield]() { util::spawn(yield, [this](auto&&) { onCoroutineCompleted(); }); };
 }
 
@@ -93,7 +100,10 @@ CoroutineGroup::isFull() const
 void
 CoroutineGroup::onCoroutineCompleted()
 {
-    ASSERT(childrenCounter_ != 0, "onCoroutineCompleted() called more times than the number of child coroutines");
+    ASSERT(
+        childrenCounter_ != 0,
+        "onCoroutineCompleted() called more times than the number of child coroutines"
+    );
 
     --childrenCounter_;
     if (childrenCounter_ == 0)

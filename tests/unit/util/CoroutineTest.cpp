@@ -39,7 +39,10 @@ protected:
     testing::StrictMock<testing::MockFunction<void(Coroutine&)>> fnMock_;
 
     static void
-    asyncOperation(Coroutine::cancellable_yield_context_type yield, std::chrono::steady_clock::duration duration)
+    asyncOperation(
+        Coroutine::cancellable_yield_context_type yield,
+        std::chrono::steady_clock::duration duration
+    )
     {
         boost::asio::steady_timer timer(yield.get().get_executor(), duration);
         timer.async_wait(yield);
@@ -70,7 +73,9 @@ TEST_F(CoroutineTest, SpawnChildDoesNothingWhenTheCoroutineIsCancelled)
 
 TEST_F(CoroutineTest, ErrorReturnsDefaultWhenNoError)
 {
-    runCoroutine([](Coroutine& coroutine) { EXPECT_EQ(coroutine.error(), boost::system::error_code{}); });
+    runCoroutine([](Coroutine& coroutine) {
+        EXPECT_EQ(coroutine.error(), boost::system::error_code{});
+    });
 }
 
 TEST_F(CoroutineTest, ErrorReturnsDefaultAfterSuccessfulOperation)
@@ -117,8 +122,9 @@ TEST_F(CoroutineTest, CancelAllCancelsParent)
             EXPECT_TRUE(childCoroutine.isCancelled());
         });
 
-        auto const duration =
-            util::timed([&coroutine]() { asyncOperation(coroutine.yieldContext(), std::chrono::seconds{5}); });
+        auto const duration = util::timed([&coroutine]() {
+            asyncOperation(coroutine.yieldContext(), std::chrono::seconds{5});
+        });
         EXPECT_TRUE(coroutine.isCancelled());
         EXPECT_LT(duration, 1000);
     });
@@ -135,8 +141,9 @@ TEST_F(CoroutineTest, CancelAllCalledMultipleTimes)
             EXPECT_TRUE(childCoroutine.isCancelled());
         });
 
-        auto const duration =
-            util::timed([&coroutine]() { asyncOperation(coroutine.yieldContext(), std::chrono::seconds{5}); });
+        auto const duration = util::timed([&coroutine]() {
+            asyncOperation(coroutine.yieldContext(), std::chrono::seconds{5});
+        });
         EXPECT_TRUE(coroutine.isCancelled());
         EXPECT_LT(duration, 1000);
     });

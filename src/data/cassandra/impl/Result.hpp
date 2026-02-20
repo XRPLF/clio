@@ -139,7 +139,9 @@ struct Result : public ManagedObject<CassResult const> {
         std::size_t idx = 0;
         auto advanceId = [&idx]() { return idx++; };
 
-        return std::make_optional<std::tuple<RowTypes...>>({extractColumn<RowTypes>(row, advanceId())...});
+        return std::make_optional<std::tuple<RowTypes...>>(
+            {extractColumn<RowTypes>(row, advanceId())...}
+        );
     }
 
     template <typename RowType>

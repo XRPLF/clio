@@ -51,7 +51,8 @@ namespace web {
  */
 template <SomeServerHandler HandlerType>
 class SslWsSession : public impl::WsBase<SslWsSession, HandlerType> {
-    using StreamType = boost::beast::websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>;
+    using StreamType =
+        boost::beast::websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>;
     StreamType ws_;
 
 public:
@@ -165,7 +166,9 @@ public:
 
         boost::asio::dispatch(
             https_.get_executor(),
-            boost::beast::bind_front_handler(&SslWsUpgrader<HandlerType>::doUpgrade, shared_from_this())
+            boost::beast::bind_front_handler(
+                &SslWsUpgrader<HandlerType>::doUpgrade, shared_from_this()
+            )
         );
     }
 

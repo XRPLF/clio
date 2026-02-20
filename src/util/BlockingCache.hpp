@@ -70,7 +70,8 @@ public:
      * @brief Construct a cache with an initial value
      * @param initialValue The value to initialize the cache with
      */
-    explicit BlockingCache(ValueType initialValue) : state_{State::HasValue}, value_(std::move(initialValue))
+    explicit BlockingCache(ValueType initialValue)
+        : state_{State::HasValue}, value_(std::move(initialValue))
     {
     }
 
@@ -212,11 +213,15 @@ private:
         boost::system::error_code errorCode;
 
         boost::signals2::scoped_connection const slot =
-            updateFinished_.connect([yield, sharedContext](std::expected<ValueType, ErrorType> value) {
-                util::spawn(yield, [sharedContext = std::move(sharedContext), value = std::move(value)](auto&&) {
-                    sharedContext->result = std::move(value);
-                    sharedContext->timer.cancel();
-                });
+            updateFinished_.connect([yield,
+                                     sharedContext](std::expected<ValueType, ErrorType> value) {
+                util::spawn(
+                    yield,
+                    [sharedContext = std::move(sharedContext), value = std::move(value)](auto&&) {
+                        sharedContext->result = std::move(value);
+                        sharedContext->timer.cancel();
+                    }
+                );
             });
 
         if (state_ == State::Updating) {

@@ -41,8 +41,8 @@ namespace rpc {
 
 /**
  * @brief Handles the `unsubscribe` command which is used to disconnect a subscriber from a feed.
- * The unsubscribe command tells the server to stop sending messages for a particular subscription or set of
- * subscriptions.
+ * The unsubscribe command tells the server to stop sending messages for a particular subscription
+ * or set of subscriptions.
  *
  * For more details see: https://xrpl.org/unsubscribe.html
  */
@@ -100,10 +100,16 @@ public:
 
 private:
     void
-    unsubscribeFromStreams(std::vector<std::string> const& streams, feed::SubscriberSharedPtr const& session) const;
+    unsubscribeFromStreams(
+        std::vector<std::string> const& streams,
+        feed::SubscriberSharedPtr const& session
+    ) const;
 
     void
-    unsubscribeFromAccounts(std::vector<std::string> accounts, feed::SubscriberSharedPtr const& session) const;
+    unsubscribeFromAccounts(
+        std::vector<std::string> accounts,
+        feed::SubscriberSharedPtr const& session
+    ) const;
 
     void
     unsubscribeFromProposedAccounts(
@@ -112,7 +118,10 @@ private:
     ) const;
 
     void
-    unsubscribeFromBooks(std::vector<OrderBook> const& books, feed::SubscriberSharedPtr const& session) const;
+    unsubscribeFromBooks(
+        std::vector<OrderBook> const& books,
+        feed::SubscriberSharedPtr const& session
+    ) const;
 
     /**
      * @brief Convert a JSON object to an Input

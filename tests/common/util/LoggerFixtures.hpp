@@ -37,8 +37,8 @@ public:
     ~LoggerFixture() override;
 
     /**
-     * @brief Sets up spdlog loggers for each channel. Should be called once before using any loggers.
-     * Simulates the `util::LogService::init(config)` call
+     * @brief Sets up spdlog loggers for each channel. Should be called once before using any
+     * loggers. Simulates the `util::LogService::init(config)` call
      */
     static void
     init();

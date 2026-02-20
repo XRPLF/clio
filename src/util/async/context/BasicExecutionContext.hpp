@@ -47,7 +47,8 @@
 /**
  * @brief This namespace implements an async framework built on top of execution contexts
  *
- * There are multiple execution contexts available, each with its own set of features and trade-offs.
+ * There are multiple execution contexts available, each with its own set of features and
+ * trade-offs.
  *
  * @see util::async::CoroExecutionContext
  * @see util::async::PoolExecutionContext
@@ -120,8 +121,8 @@ struct AsioPoolContext {
  *
  * This execution context is used as the base for all specialized execution contexts.
  * Return values are handled by capturing them and returning them packaged as std::expected.
- * Exceptions may or may not be caught and handled depending on the error strategy. The default behavior is to catch and
- * package them as the error channel of std::expected.
+ * Exceptions may or may not be caught and handled depending on the error strategy. The default
+ * behavior is to catch and package them as the error channel of std::expected.
  */
 template <
     typename ContextType,
@@ -138,7 +139,8 @@ class BasicExecutionContext : public ExecutionContextTag {
 
 public:
     /** @brief Whether operations on this execution context are noexcept */
-    static constexpr bool kIS_NOEXCEPT = noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; })) and
+    static constexpr bool kIS_NOEXCEPT =
+        noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; })) and
         noexcept(ErrorHandlerType::catchAndAssert([] { throw 0; }));
 
     using ContextHolderType = ContextType;
@@ -158,8 +160,12 @@ public:
     template <typename T>
     using Operation = Operation<ValueType<T>>;
 
-    using Strand = impl::
-        BasicStrand<BasicExecutionContext, StopSourceType, DispatcherType, TimerContextProvider, ErrorHandlerType>;
+    using Strand = impl::BasicStrand<
+        BasicExecutionContext,
+        StopSourceType,
+        DispatcherType,
+        TimerContextProvider,
+        ErrorHandlerType>;
 
     using Timer = typename ContextHolderType::Timer;
 
@@ -205,7 +211,9 @@ public:
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
     ) noexcept(kIS_NOEXCEPT)
     {
-        if constexpr (not std::is_same_v<decltype(TimerContextProvider::getContext(*this)), decltype(*this)>) {
+        if constexpr (not std::is_same_v<
+                          decltype(TimerContextProvider::getContext(*this)),
+                          decltype(*this)>) {
             return TimerContextProvider::getContext(*this).scheduleAfter(
                 delay, std::forward<decltype(fn)>(fn), timeout
             );
@@ -220,7 +228,9 @@ public:
                             if constexpr (std::is_void_v<FnRetType>) {
                                 std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
                             } else {
-                                return std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
+                                return std::invoke(
+                                    std::forward<decltype(fn)>(fn), std::move(stopToken)
+                                );
                             }
                         },
                         timeout
@@ -234,7 +244,8 @@ public:
      * @brief Schedule an operation on the execution context
      *
      * @param delay The delay after which the operation should be executed
-     * @param fn The block of code to execute with stop token as the first arg and cancellation flag as the second arg
+     * @param fn The block of code to execute with stop token as the first arg and cancellation flag
+     * as the second arg
      * @param timeout The optional timeout duration after which the operation will be cancelled
      * @return A scheduled stoppable operation that can be used to wait for the result
      */
@@ -245,7 +256,9 @@ public:
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
     ) noexcept(kIS_NOEXCEPT)
     {
-        if constexpr (not std::is_same_v<decltype(TimerContextProvider::getContext(*this)), decltype(*this)>) {
+        if constexpr (not std::is_same_v<
+                          decltype(TimerContextProvider::getContext(*this)),
+                          decltype(*this)>) {
             return TimerContextProvider::getContext(*this).scheduleAfter(
                 delay, std::forward<decltype(fn)>(fn), timeout
             );
@@ -257,11 +270,17 @@ public:
                 [this, timeout, fn = std::forward<decltype(fn)>(fn)](auto ec) mutable {
                     return this->execute(
                         [fn = std::forward<decltype(fn)>(fn),
-                         isAborted = (ec == boost::asio::error::operation_aborted)](auto stopToken) mutable {
+                         isAborted = (ec == boost::asio::error::operation_aborted)](
+                            auto stopToken
+                        ) mutable {
                             if constexpr (std::is_void_v<FnRetType>) {
-                                std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken), isAborted);
+                                std::invoke(
+                                    std::forward<decltype(fn)>(fn), std::move(stopToken), isAborted
+                                );
                             } else {
-                                return std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken), isAborted);
+                                return std::invoke(
+                                    std::forward<decltype(fn)>(fn), std::move(stopToken), isAborted
+                                );
                             }
                         },
                         timeout
@@ -280,12 +299,21 @@ public:
      * @return A repeating stoppable operation that can be used to wait for its cancellation
      */
     [[nodiscard]] auto
-    executeRepeatedly(SomeStdDuration auto interval, SomeHandlerWithoutStopToken auto&& fn) noexcept(kIS_NOEXCEPT)
+    executeRepeatedly(
+        SomeStdDuration auto interval,
+        SomeHandlerWithoutStopToken auto&& fn
+    ) noexcept(kIS_NOEXCEPT)
     {
-        if constexpr (not std::is_same_v<decltype(TimerContextProvider::getContext(*this)), decltype(*this)>) {
-            return TimerContextProvider::getContext(*this).executeRepeatedly(interval, std::forward<decltype(fn)>(fn));
+        if constexpr (not std::is_same_v<
+                          decltype(TimerContextProvider::getContext(*this)),
+                          decltype(*this)>) {
+            return TimerContextProvider::getContext(*this).executeRepeatedly(
+                interval, std::forward<decltype(fn)>(fn)
+            );
         } else {
-            return RepeatedOperation(impl::extractAssociatedExecutor(*this), interval, std::forward<decltype(fn)>(fn));
+            return RepeatedOperation(
+                impl::extractAssociatedExecutor(*this), interval, std::forward<decltype(fn)>(fn)
+            );
         }
     }
 
@@ -308,15 +336,18 @@ public:
             ErrorHandlerType::wrap([this, timeout, fn = std::forward<decltype(fn)>(fn)](
                                        auto& outcome, auto& stopSource, auto stopToken
                                    ) mutable {
-                [[maybe_unused]] auto timeoutHandler =
-                    impl::getTimeoutHandleIfNeeded(TimerContextProvider::getContext(*this), timeout, stopSource);
+                [[maybe_unused]] auto timeoutHandler = impl::getTimeoutHandleIfNeeded(
+                    TimerContextProvider::getContext(*this), timeout, stopSource
+                );
 
                 using FnRetType = std::decay_t<std::invoke_result_t<decltype(fn), StopToken>>;
                 if constexpr (std::is_void_v<FnRetType>) {
                     std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
                     outcome.setValue();
                 } else {
-                    outcome.setValue(std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken)));
+                    outcome.setValue(
+                        std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken))
+                    );
                 }
             })
         );
@@ -330,7 +361,9 @@ public:
      * @return A stoppable operation that can be used to wait for the result
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout) noexcept(kIS_NOEXCEPT)
+    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout) noexcept(
+        kIS_NOEXCEPT
+    )
     {
         return execute(
             std::forward<decltype(fn)>(fn),
@@ -341,7 +374,8 @@ public:
     /**
      * @brief Schedule an operation on the execution context
      *
-     * @param fn The block of code to execute. Signature is `Type()` where `Type` is the return type.
+     * @param fn The block of code to execute. Signature is `Type()` where `Type` is the return
+     * type.
      * @return A unstoppable operation that can be used to wait for the result
      */
     [[nodiscard]] auto
@@ -423,20 +457,22 @@ public:
  *
  * This execution context uses `asio::spawn` to create a coroutine per executed operation.
  * The stop token that is sent to the lambda to execute is YieldContextStopSource::Token
- * and is special in the way that each time your code checks `token.isStopRequested()` the coroutine will
- * be suspended and other work such as timers and/or other operations in the queue will get a chance to run.
- * This makes it possible to have 1 thread in the execution context and still be able to execute operations AND timers
- * at the same time.
+ * and is special in the way that each time your code checks `token.isStopRequested()` the coroutine
+ * will be suspended and other work such as timers and/or other operations in the queue will get a
+ * chance to run. This makes it possible to have 1 thread in the execution context and still be able
+ * to execute operations AND timers at the same time.
  */
-using CoroExecutionContext =
-    BasicExecutionContext<impl::AsioPoolContext, impl::YieldContextStopSource, impl::SpawnDispatchStrategy>;
+using CoroExecutionContext = BasicExecutionContext<
+    impl::AsioPoolContext,
+    impl::YieldContextStopSource,
+    impl::SpawnDispatchStrategy>;
 
 /**
  * @brief A asio::thread_pool-based execution context.
  *
  * This execution context uses `asio::post` to dispatch operations to the thread pool.
- * Please note that this execution context can't handle timers and operations at the same time iff you have exactly 1
- * thread in the thread pool.
+ * Please note that this execution context can't handle timers and operations at the same time iff
+ * you have exactly 1 thread in the thread pool.
  */
 using PoolExecutionContext =
     BasicExecutionContext<impl::AsioPoolContext, impl::BasicStopSource, impl::PostDispatchStrategy>;

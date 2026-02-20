@@ -61,8 +61,10 @@ constexpr auto kMIN_SEQ = 10;
 constexpr auto kMAX_SEQ = 30;
 constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-constexpr auto kPAYS20_USD_GETS10_XRP_BOOK_DIR = "43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000";
-constexpr auto kPAYS20_XRP_GETS10_USD_BOOK_DIR = "7B1767D41DBCE79D9585CF9D0262A5FEC45E5206FF524F8B55071AFD498D0000";
+constexpr auto kPAYS20_USD_GETS10_XRP_BOOK_DIR =
+    "43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000";
+constexpr auto kPAYS20_XRP_GETS10_USD_BOOK_DIR =
+    "7B1767D41DBCE79D9585CF9D0262A5FEC45E5206FF524F8B55071AFD498D0000";
 constexpr auto kINDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
 constexpr auto kINDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
@@ -454,7 +456,8 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "dstIsrMalformed",
-            .expectedErrorMessage = "Unneeded field 'taker_gets.issuer' for XRP currency specification."
+            .expectedErrorMessage =
+                "Unneeded field 'taker_gets.issuer' for XRP currency specification."
         },
         SubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysXRPHasIssuer",
@@ -473,7 +476,8 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "srcIsrMalformed",
-            .expectedErrorMessage = "Unneeded field 'taker_pays.issuer' for XRP currency specification."
+            .expectedErrorMessage =
+                "Unneeded field 'taker_pays.issuer' for XRP currency specification."
         },
         SubscribeParamTestCaseBundle{
             .testName = "BooksItemBadMartket",
@@ -582,8 +586,9 @@ TEST_P(SubscribeParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
+        auto const handler = AnyHandler{
+            SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}
+        };
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -596,8 +601,9 @@ TEST_P(SubscribeParameterTest, InvalidParams)
 TEST_F(RPCSubscribeHandlerTest, EmptyResponse)
 {
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
+        auto const handler = AnyHandler{
+            SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}
+        };
         EXPECT_CALL(*mockSession_, setApiSubversion(0));
         auto const output = handler.process(json::parse(R"JSON({})JSON"), Context{yield, session_});
         ASSERT_TRUE(output);
@@ -614,8 +620,9 @@ TEST_F(RPCSubscribeHandlerTest, StreamsWithoutLedger)
         })JSON"
     );
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
+        auto const handler = AnyHandler{
+            SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}
+        };
         EXPECT_CALL(*mockSubscriptionManagerPtr_, subTransactions);
         EXPECT_CALL(*mockSubscriptionManagerPtr_, subValidation);
         EXPECT_CALL(*mockSubscriptionManagerPtr_, subManifest);
@@ -648,8 +655,9 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
         })JSON"
     );
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
+        auto const handler = AnyHandler{
+            SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}
+        };
 
         EXPECT_CALL(*mockSubscriptionManagerPtr_, subLedger)
             .WillOnce(testing::Return(boost::json::parse(kEXPECTED_OUTPUT).as_object()));
@@ -674,11 +682,17 @@ TEST_F(RPCSubscribeHandlerTest, Accounts)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
+        auto const handler = AnyHandler{
+            SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}
+        };
 
-        EXPECT_CALL(*mockSubscriptionManagerPtr_, subAccount(getAccountIdWithString(kACCOUNT), session_));
-        EXPECT_CALL(*mockSubscriptionManagerPtr_, subAccount(getAccountIdWithString(kACCOUNT2), session_)).Times(2);
+        EXPECT_CALL(
+            *mockSubscriptionManagerPtr_, subAccount(getAccountIdWithString(kACCOUNT), session_)
+        );
+        EXPECT_CALL(
+            *mockSubscriptionManagerPtr_, subAccount(getAccountIdWithString(kACCOUNT2), session_)
+        )
+            .Times(2);
         EXPECT_CALL(*mockSession_, setApiSubversion(0));
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
@@ -699,11 +713,18 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
+        auto const handler = AnyHandler{
+            SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}
+        };
 
-        EXPECT_CALL(*mockSubscriptionManagerPtr_, subProposedAccount(getAccountIdWithString(kACCOUNT), session_));
-        EXPECT_CALL(*mockSubscriptionManagerPtr_, subProposedAccount(getAccountIdWithString(kACCOUNT2), session_))
+        EXPECT_CALL(
+            *mockSubscriptionManagerPtr_,
+            subProposedAccount(getAccountIdWithString(kACCOUNT), session_)
+        );
+        EXPECT_CALL(
+            *mockSubscriptionManagerPtr_,
+            subProposedAccount(getAccountIdWithString(kACCOUNT2), session_)
+        )
             .Times(2);
         EXPECT_CALL(*mockSession_, setApiSubversion(0));
         auto const output = handler.process(input, Context{yield, session_});
@@ -733,8 +754,9 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
+        auto const handler = AnyHandler{
+            SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}
+        };
         EXPECT_CALL(*mockSubscriptionManagerPtr_, subBook);
         EXPECT_CALL(*mockSession_, setApiSubversion(0));
         auto const output = handler.process(input, Context{yield, session_});
@@ -765,8 +787,9 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
         )
     );
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
+        auto const handler = AnyHandler{
+            SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}
+        };
         EXPECT_CALL(*mockSubscriptionManagerPtr_, subBook).Times(2);
         EXPECT_CALL(*mockSession_, setApiSubversion(0));
         auto const output = handler.process(input, Context{yield, session_});
@@ -802,19 +825,34 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     auto const issuer = getAccountIdWithString(kACCOUNT);
 
     auto const getsXRPPaysUSDBook = getBookBase(
-        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount(), std::nullopt)
+        rpc::parseBook(
+            ripple::to_currency("USD"),
+            issuer,
+            ripple::xrpCurrency(),
+            ripple::xrpAccount(),
+            std::nullopt
+        )
             .value()
     );
 
     auto const reversedBook = getBookBase(
-        rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer, std::nullopt)
+        rpc::parseBook(
+            ripple::xrpCurrency(),
+            ripple::xrpAccount(),
+            ripple::to_currency("USD"),
+            issuer,
+            std::nullopt
+        )
             .value()
     );
 
     ON_CALL(*backend_, doFetchSuccessorKey(getsXRPPaysUSDBook, kMAX_SEQ, _))
         .WillByDefault(Return(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}));
 
-    ON_CALL(*backend_, doFetchSuccessorKey(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _))
+    ON_CALL(
+        *backend_,
+        doFetchSuccessorKey(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _)
+    )
         .WillByDefault(Return(std::nullopt));
 
     ON_CALL(*backend_, doFetchSuccessorKey(reversedBook, kMAX_SEQ, _))
@@ -826,25 +864,50 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(8);
 
     auto const indexes = std::vector<ripple::uint256>(10, ripple::uint256{kINDEX2});
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _))
-        .WillByDefault(Return(createOwnerDirLedgerObject(indexes, kINDEX1).getSerializer().peekData()));
+    ON_CALL(
+        *backend_,
+        doFetchLedgerObject(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _)
+    )
+        .WillByDefault(
+            Return(createOwnerDirLedgerObject(indexes, kINDEX1).getSerializer().peekData())
+        );
 
     // for reverse
     auto const indexes2 = std::vector<ripple::uint256>(10, ripple::uint256{kINDEX1});
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, kMAX_SEQ, _))
-        .WillByDefault(Return(createOwnerDirLedgerObject(indexes2, kINDEX2).getSerializer().peekData()));
+    ON_CALL(
+        *backend_,
+        doFetchLedgerObject(ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, kMAX_SEQ, _)
+    )
+        .WillByDefault(
+            Return(createOwnerDirLedgerObject(indexes2, kINDEX2).getSerializer().peekData())
+        );
 
     // offer owner account root
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kACCOUNT2)).key, kMAX_SEQ, _))
-        .WillByDefault(Return(createAccountRootObject(kACCOUNT2, 0, 2, 200, 2, kINDEX1, 2).getSerializer().peekData()));
+    ON_CALL(
+        *backend_,
+        doFetchLedgerObject(
+            ripple::keylet::account(getAccountIdWithString(kACCOUNT2)).key, kMAX_SEQ, _
+        )
+    )
+        .WillByDefault(Return(
+            createAccountRootObject(kACCOUNT2, 0, 2, 200, 2, kINDEX1, 2).getSerializer().peekData()
+        ));
 
     // issuer account root
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key, kMAX_SEQ, _))
-        .WillByDefault(Return(createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2).getSerializer().peekData()));
+    ON_CALL(
+        *backend_,
+        doFetchLedgerObject(
+            ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key, kMAX_SEQ, _
+        )
+    )
+        .WillByDefault(Return(
+            createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2).getSerializer().peekData()
+        ));
 
     // fee
     auto feeBlob = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kMAX_SEQ, _)).WillByDefault(Return(feeBlob));
+    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kMAX_SEQ, _))
+        .WillByDefault(Return(feeBlob));
 
     auto const gets10XRPPays20USDOffer = createOfferLedgerObject(
         kACCOUNT2,
@@ -930,17 +993,22 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         kACCOUNT
     );
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
+        auto const handler = AnyHandler{
+            SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}
+        };
         EXPECT_CALL(*mockSubscriptionManagerPtr_, subBook).Times(2);
         EXPECT_CALL(*mockSession_, setApiSubversion(0));
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("bids").as_array().size(), 10);
         EXPECT_EQ(output.result->as_object().at("asks").as_array().size(), 10);
-        EXPECT_EQ(output.result->as_object().at("bids").as_array()[0].as_object(), json::parse(kEXPECTED_OFFER));
         EXPECT_EQ(
-            output.result->as_object().at("asks").as_array()[0].as_object(), json::parse(kEXPECTED_REVERSED_OFFER)
+            output.result->as_object().at("bids").as_array()[0].as_object(),
+            json::parse(kEXPECTED_OFFER)
+        );
+        EXPECT_EQ(
+            output.result->as_object().at("asks").as_array()[0].as_object(),
+            json::parse(kEXPECTED_REVERSED_OFFER)
         );
     });
 }
@@ -971,19 +1039,34 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     auto const issuer = getAccountIdWithString(kACCOUNT);
 
     auto const getsXRPPaysUSDBook = getBookBase(
-        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount(), std::nullopt)
+        rpc::parseBook(
+            ripple::to_currency("USD"),
+            issuer,
+            ripple::xrpCurrency(),
+            ripple::xrpAccount(),
+            std::nullopt
+        )
             .value()
     );
 
     auto const reversedBook = getBookBase(
-        rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer, std::nullopt)
+        rpc::parseBook(
+            ripple::xrpCurrency(),
+            ripple::xrpAccount(),
+            ripple::to_currency("USD"),
+            issuer,
+            std::nullopt
+        )
             .value()
     );
 
     ON_CALL(*backend_, doFetchSuccessorKey(getsXRPPaysUSDBook, kMAX_SEQ, _))
         .WillByDefault(Return(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}));
 
-    ON_CALL(*backend_, doFetchSuccessorKey(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _))
+    ON_CALL(
+        *backend_,
+        doFetchSuccessorKey(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _)
+    )
         .WillByDefault(Return(std::nullopt));
 
     ON_CALL(*backend_, doFetchSuccessorKey(reversedBook, kMAX_SEQ, _))
@@ -994,25 +1077,50 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(5);
 
     auto const indexes = std::vector<ripple::uint256>(10, ripple::uint256{kINDEX2});
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _))
-        .WillByDefault(Return(createOwnerDirLedgerObject(indexes, kINDEX1).getSerializer().peekData()));
+    ON_CALL(
+        *backend_,
+        doFetchLedgerObject(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _)
+    )
+        .WillByDefault(
+            Return(createOwnerDirLedgerObject(indexes, kINDEX1).getSerializer().peekData())
+        );
 
     // for reverse
     auto const indexes2 = std::vector<ripple::uint256>(10, ripple::uint256{kINDEX1});
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, kMAX_SEQ, _))
-        .WillByDefault(Return(createOwnerDirLedgerObject(indexes2, kINDEX2).getSerializer().peekData()));
+    ON_CALL(
+        *backend_,
+        doFetchLedgerObject(ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, kMAX_SEQ, _)
+    )
+        .WillByDefault(
+            Return(createOwnerDirLedgerObject(indexes2, kINDEX2).getSerializer().peekData())
+        );
 
     // offer owner account root
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kACCOUNT2)).key, kMAX_SEQ, _))
-        .WillByDefault(Return(createAccountRootObject(kACCOUNT2, 0, 2, 200, 2, kINDEX1, 2).getSerializer().peekData()));
+    ON_CALL(
+        *backend_,
+        doFetchLedgerObject(
+            ripple::keylet::account(getAccountIdWithString(kACCOUNT2)).key, kMAX_SEQ, _
+        )
+    )
+        .WillByDefault(Return(
+            createAccountRootObject(kACCOUNT2, 0, 2, 200, 2, kINDEX1, 2).getSerializer().peekData()
+        ));
 
     // issuer account root
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key, kMAX_SEQ, _))
-        .WillByDefault(Return(createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2).getSerializer().peekData()));
+    ON_CALL(
+        *backend_,
+        doFetchLedgerObject(
+            ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key, kMAX_SEQ, _
+        )
+    )
+        .WillByDefault(Return(
+            createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2).getSerializer().peekData()
+        ));
 
     // fee
     auto feeBlob = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kMAX_SEQ, _)).WillByDefault(Return(feeBlob));
+    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kMAX_SEQ, _))
+        .WillByDefault(Return(feeBlob));
 
     auto const gets10XRPPays20USDOffer = createOfferLedgerObject(
         kACCOUNT2,
@@ -1074,14 +1182,18 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     );
 
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
+        auto const handler = AnyHandler{
+            SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}
+        };
         EXPECT_CALL(*mockSubscriptionManagerPtr_, subBook);
         EXPECT_CALL(*mockSession_, setApiSubversion(0));
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("offers").as_array().size(), 10);
-        EXPECT_EQ(output.result->as_object().at("offers").as_array()[0].as_object(), json::parse(kEXPECTED_OFFER));
+        EXPECT_EQ(
+            output.result->as_object().at("offers").as_array()[0].as_object(),
+            json::parse(kEXPECTED_OFFER)
+        );
     });
 }
 
@@ -1094,12 +1206,14 @@ TEST_F(RPCSubscribeHandlerTest, APIVersion)
     );
     auto const apiVersion = 2;
     runSpawn([&, this](auto yield) {
-        auto const handler =
-            AnyHandler{SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}};
+        auto const handler = AnyHandler{
+            SubscribeHandler{backend_, mockAmendmentCenterPtr_, mockSubscriptionManagerPtr_}
+        };
         EXPECT_CALL(*mockSubscriptionManagerPtr_, subProposedTransactions);
         EXPECT_CALL(*mockSession_, setApiSubversion(apiVersion));
-        auto const output =
-            handler.process(input, Context{.yield = yield, .session = session_, .apiVersion = apiVersion});
+        auto const output = handler.process(
+            input, Context{.yield = yield, .session = session_, .apiVersion = apiVersion}
+        );
         ASSERT_TRUE(output);
         // EXPECT_EQ(session_->apiSubVersion, apiVersion);
     });
@@ -1127,6 +1241,7 @@ TEST(RPCSubscribeHandlerSpecTest, DeprecatedFields)
     EXPECT_EQ(obj.at("id").as_int64(), static_cast<int64_t>(WarningCode::WarnRpcDeprecated));
     auto const& message = obj.at("message").as_string();
     for (auto const& field : {"user", "password", "rt_accounts"}) {
-        EXPECT_NE(message.find(fmt::format("Field '{}' is deprecated", field)), std::string::npos) << message;
+        EXPECT_NE(message.find(fmt::format("Field '{}' is deprecated", field)), std::string::npos)
+            << message;
     }
 }

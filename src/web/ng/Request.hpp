@@ -68,7 +68,8 @@ public:
 
     /**
      * @brief Method of the request.
-     * @note Websocket is not a real method, it is used to distinguish WebSocket requests from HTTP requests.
+     * @note Websocket is not a real method, it is used to distinguish WebSocket requests from HTTP
+     * requests.
      */
     enum class Method { Get, Post, Websocket, Unsupported };
 
@@ -93,11 +94,13 @@ public:
      *
      * @return The HTTP request or std::nullopt if the request is a WebSocket request.
      */
-    std::optional<std::reference_wrapper<boost::beast::http::request<boost::beast::http::string_body> const>>
+    std::optional<
+        std::reference_wrapper<boost::beast::http::request<boost::beast::http::string_body> const>>
     asHttpRequest() const;
 
     /**
-     * @brief Get the body (in case of an HTTP request) or the message (in case of a WebSocket request).
+     * @brief Get the body (in case of an HTTP request) or the message (in case of a WebSocket
+     * request).
      *
      * @return The message of the request.
      */
@@ -141,8 +144,8 @@ public:
 private:
     /**
      * @brief Get the HTTP request.
-     * @note This function assumes that the request is an HTTP request. So if data_ is not an HTTP request,
-     * the behavior is undefined.
+     * @note This function assumes that the request is an HTTP request. So if data_ is not an HTTP
+     * request, the behavior is undefined.
      *
      * @return The HTTP request.
      */

@@ -270,7 +270,9 @@ TEST_F(RPCBaseTest, MinValidatorAfterType)
         {"amount3", Type<std::int32_t>{}, Min{std::numeric_limits<int32_t>::min()}},
     };
 
-    auto bigInput = json::parse(R"JSON({ "amount": 9999999999, "amount2": 9999999999, "amount3": -9999999999 })JSON");
+    auto bigInput = json::parse(
+        R"JSON({ "amount": 9999999999, "amount2": 9999999999, "amount3": -9999999999 })JSON"
+    );
     ASSERT_TRUE(spec.process(bigInput));  // type check clamps to type's max/min value
 }
 
@@ -298,7 +300,9 @@ TEST_F(RPCBaseTest, MaxValidatorAfterType)
         {"amount3", Type<std::int32_t>{}, Max{std::numeric_limits<int32_t>::min()}},
     };
 
-    auto bigInput = json::parse(R"JSON({ "amount": 9999999999, "amount2": 9999999999, "amount3": -9999999999 })JSON");
+    auto bigInput = json::parse(
+        R"JSON({ "amount": 9999999999, "amount2": 9999999999, "amount3": -9999999999 })JSON"
+    );
     ASSERT_TRUE(spec.process(bigInput));  // type check clamps to type's min/max value
 }
 
@@ -386,8 +390,9 @@ TEST_F(RPCBaseTest, IfTypeValidator)
     auto passingInput = json::parse(R"JSON({ "mix": {"limit": 42, "limit2": 22} })JSON");
     ASSERT_TRUE(spec.process(passingInput));
     // if string pass
-    passingInput =
-        json::parse(R"JSON({ "mix": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC" })JSON");
+    passingInput = json::parse(
+        R"JSON({ "mix": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC" })JSON"
+    );
     ASSERT_TRUE(spec.process(passingInput));
 
     // if json object fail at first requirement
@@ -414,9 +419,13 @@ TEST_F(RPCBaseTest, WithCustomError)
     auto const spec = RpcSpec{
         {"transaction",
          WithCustomError{
-             CustomValidators::uint256HexStringValidator, rpc::Status{ripple::rpcBAD_FEATURE, "MyCustomError"}
+             CustomValidators::uint256HexStringValidator,
+             rpc::Status{ripple::rpcBAD_FEATURE, "MyCustomError"}
          }},
-        {"other", WithCustomError{Type<std::string>{}, rpc::Status{ripple::rpcALREADY_MULTISIG, "MyCustomError2"}}}
+        {"other",
+         WithCustomError{
+             Type<std::string>{}, rpc::Status{ripple::rpcALREADY_MULTISIG, "MyCustomError2"}
+         }}
     };
 
     auto passingInput = json::parse(
@@ -424,8 +433,9 @@ TEST_F(RPCBaseTest, WithCustomError)
     );
     ASSERT_TRUE(spec.process(passingInput));
 
-    auto failingInput =
-        json::parse(R"JSON({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515B"})JSON");
+    auto failingInput = json::parse(
+        R"JSON({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515B"})JSON"
+    );
     auto err = spec.process(failingInput);
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "MyCustomError");
@@ -476,9 +486,10 @@ TEST_F(RPCBaseTest, TimeFormatValidator)
 
 TEST_F(RPCBaseTest, CustomValidator)
 {
-    auto customFormatCheck = CustomValidator{[](json::value const& value, std::string_view /* key */) -> MaybeError {
-        return value.as_string().size() == 34 ? MaybeError{} : Error{rpc::Status{"Uh oh"}};
-    }};
+    auto customFormatCheck =
+        CustomValidator{[](json::value const& value, std::string_view /* key */) -> MaybeError {
+            return value.as_string().size() == 34 ? MaybeError{} : Error{rpc::Status{"Uh oh"}};
+        }};
 
     auto spec = RpcSpec{
         {"taker", customFormatCheck},
@@ -544,18 +555,21 @@ TEST_F(RPCBaseTest, AccountValidator)
     failingInput = json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp" })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
-    failingInput =
-        json::parse(R"JSON({ "account": "02000000000000000000000000000000000000000000000000000000000000000" })JSON");
+    failingInput = json::parse(
+        R"JSON({ "account": "02000000000000000000000000000000000000000000000000000000000000000" })JSON"
+    );
     ASSERT_FALSE(spec.process(failingInput));
 
     failingInput = json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp?" })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
-    auto passingInput = json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" })JSON");
+    auto passingInput =
+        json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" })JSON");
     ASSERT_TRUE(spec.process(passingInput));
 
-    passingInput =
-        json::parse(R"JSON({ "account": "020000000000000000000000000000000000000000000000000000000000000000" })JSON");
+    passingInput = json::parse(
+        R"JSON({ "account": "020000000000000000000000000000000000000000000000000000000000000000" })JSON"
+    );
     ASSERT_TRUE(spec.process(passingInput));
 }
 
@@ -570,14 +584,16 @@ TEST_F(RPCBaseTest, AccountBase58Validator)
     failingInput = json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp" })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
-    failingInput =
-        json::parse(R"JSON({ "account": "020000000000000000000000000000000000000000000000000000000000000000" })JSON");
+    failingInput = json::parse(
+        R"JSON({ "account": "020000000000000000000000000000000000000000000000000000000000000000" })JSON"
+    );
     ASSERT_FALSE(spec.process(failingInput));
 
     failingInput = json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp?" })JSON");
     ASSERT_FALSE(spec.process(failingInput));
 
-    auto passingInput = json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" })JSON");
+    auto passingInput =
+        json::parse(R"JSON({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" })JSON");
     ASSERT_TRUE(spec.process(passingInput));
 }
 
@@ -602,7 +618,8 @@ TEST_F(RPCBaseTest, AccountMarkerValidator)
 TEST_F(RPCBaseTest, Uint160HexStringValidator)
 {
     auto const spec = RpcSpec{{"marker", CustomValidators::uint160HexStringValidator}};
-    auto passingInput = json::parse(R"JSON({ "marker": "F609A18102218C75767209946A77523CBD97E225"})JSON");
+    auto passingInput =
+        json::parse(R"JSON({ "marker": "F609A18102218C75767209946A77523CBD97E225"})JSON");
     ASSERT_TRUE(spec.process(passingInput));
 
     auto failingInput = json::parse(R"JSON({ "marker": 160})JSON");
@@ -610,7 +627,8 @@ TEST_F(RPCBaseTest, Uint160HexStringValidator)
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "markerNotString");
 
-    failingInput = json::parse(R"JSON({ "marker": "F609A18102218C75767209946A77523CBD97E2253515BC"})JSON");
+    failingInput =
+        json::parse(R"JSON({ "marker": "F609A18102218C75767209946A77523CBD97E2253515BC"})JSON");
     err = spec.process(failingInput);
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "markerMalformed");
@@ -619,8 +637,9 @@ TEST_F(RPCBaseTest, Uint160HexStringValidator)
 TEST_F(RPCBaseTest, Uint192HexStringValidator)
 {
     auto const spec = RpcSpec{{"mpt_issuance_id", CustomValidators::uint192HexStringValidator}};
-    auto passingInput =
-        json::parse(R"JSON({ "mpt_issuance_id": "0000012F27A9DE73EAA1E8831FA253E19030A17E2D038198"})JSON");
+    auto passingInput = json::parse(
+        R"JSON({ "mpt_issuance_id": "0000012F27A9DE73EAA1E8831FA253E19030A17E2D038198"})JSON"
+    );
     ASSERT_TRUE(spec.process(passingInput));
 
     auto failingInput = json::parse(R"JSON({ "mpt_issuance_id": 192})JSON");
@@ -628,8 +647,9 @@ TEST_F(RPCBaseTest, Uint192HexStringValidator)
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "mpt_issuance_idNotString");
 
-    failingInput =
-        json::parse(R"JSON({ "mpt_issuance_id": "0000012F27A9DE73EAA1E8831FA253E19030A17E2D038198983515BC"})JSON");
+    failingInput = json::parse(
+        R"JSON({ "mpt_issuance_id": "0000012F27A9DE73EAA1E8831FA253E19030A17E2D038198983515BC"})JSON"
+    );
     err = spec.process(failingInput);
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "mpt_issuance_idMalformed");
@@ -638,8 +658,9 @@ TEST_F(RPCBaseTest, Uint192HexStringValidator)
 TEST_F(RPCBaseTest, Uint256HexStringValidator)
 {
     auto const spec = RpcSpec{{"transaction", CustomValidators::uint256HexStringValidator}};
-    auto passingInput =
-        json::parse(R"JSON({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"})JSON");
+    auto passingInput = json::parse(
+        R"JSON({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"})JSON"
+    );
     ASSERT_TRUE(spec.process(passingInput));
 
     auto failingInput = json::parse(R"JSON({ "transaction": 256})JSON");
@@ -647,8 +668,9 @@ TEST_F(RPCBaseTest, Uint256HexStringValidator)
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "transactionNotString");
 
-    failingInput =
-        json::parse(R"JSON({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC"})JSON");
+    failingInput = json::parse(
+        R"JSON({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC"})JSON"
+    );
     err = spec.process(failingInput);
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "transactionMalformed");
@@ -660,10 +682,12 @@ TEST_F(RPCBaseTest, CurrencyValidator)
     auto passingInput = json::parse(R"JSON({ "currency": "GBP"})JSON");
     ASSERT_TRUE(spec.process(passingInput));
 
-    passingInput = json::parse(R"JSON({ "currency": "0158415500000000C1F76FF6ECB0BAC600000000"})JSON");
+    passingInput =
+        json::parse(R"JSON({ "currency": "0158415500000000C1F76FF6ECB0BAC600000000"})JSON");
     ASSERT_TRUE(spec.process(passingInput));
 
-    passingInput = json::parse(R"JSON({ "currency": "0158415500000000c1f76ff6ecb0bac600000000"})JSON");
+    passingInput =
+        json::parse(R"JSON({ "currency": "0158415500000000c1f76ff6ecb0bac600000000"})JSON");
     ASSERT_TRUE(spec.process(passingInput));
 
     for (auto const& currency : {"[]<", ">()", "{}|", "?!@", "#$%", "^&*"}) {
@@ -693,7 +717,8 @@ TEST_F(RPCBaseTest, IssuerValidator)
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "issuerNotString");
 
-    failingInput = json::parse(fmt::format(R"JSON({{ "issuer": "{}"}})JSON", toBase58(ripple::noAccount())));
+    failingInput =
+        json::parse(fmt::format(R"JSON({{ "issuer": "{}"}})JSON", toBase58(ripple::noAccount())));
     err = spec.process(failingInput);
     ASSERT_FALSE(err);
 }
@@ -818,7 +843,8 @@ TEST_F(RPCBaseTest, ToNumberModifier)
 
 TEST_F(RPCBaseTest, CustomModifier)
 {
-    testing::StrictMock<testing::MockFunction<MaybeError(json::value & value, std::string_view)>> mockModifier;
+    testing::StrictMock<testing::MockFunction<MaybeError(json::value & value, std::string_view)>>
+        mockModifier;
     auto const customModifier = CustomModifier{mockModifier.AsStdFunction()};
     auto const spec = RpcSpec{
         {"str", customModifier},

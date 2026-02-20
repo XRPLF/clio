@@ -107,14 +107,21 @@ getParseLoadBalancerConfig(boost::json::value val)
 {
     ClioConfigDefinition config{
         {{"forwarding.cache_timeout",
-          ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(gValidatePositiveDouble)},
+          ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(
+              gValidatePositiveDouble
+          )},
          {"forwarding.request_timeout",
-          ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(gValidatePositiveDouble)},
+          ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(
+              gValidatePositiveDouble
+          )},
          {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-         {"etl_sources.[].ip", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)}},
-         {"etl_sources.[].ws_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
+         {"etl_sources.[].ip",
+          Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)}},
+         {"etl_sources.[].ws_port",
+          Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidatePort)}},
          {"etl_sources.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional()}},
-         {"num_markers", ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNumMarkers)}}
+         {"num_markers",
+          ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNumMarkers)}}
     };
 
     auto const errors = config.parse(ConfigFileJson{val.as_object()});
@@ -156,7 +163,9 @@ struct LoadBalancerConstructorTests : util::prometheus::WithPrometheus, MockBack
             subscriptionManager_,
             std::move(randomGenerator),
             networkManager_,
-            [this](auto&&... args) -> SourcePtr { return sourceFactory_(std::forward<decltype(args)>(args)...); }
+            [this](auto&&... args) -> SourcePtr {
+                return sourceFactory_(std::forward<decltype(args)>(args)...);
+            }
         );
     }
 
@@ -172,9 +181,11 @@ protected:
 TEST_F(LoadBalancerConstructorTests, construct)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
-    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
+        .WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(0), run);
-    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(boost::json::object{}));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
+        .WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(1), run);
     makeLoadBalancer();
 }
@@ -182,7 +193,8 @@ TEST_F(LoadBalancerConstructorTests, construct)
 TEST_F(LoadBalancerConstructorTests, forwardingTimeoutPassedToSourceFactory)
 {
     auto const forwardingTimeout = 10;
-    configJson_.as_object()["forwarding"] = boost::json::object{{"cache_timeout", float{forwardingTimeout}}};
+    configJson_.as_object()["forwarding"] =
+        boost::json::object{{"cache_timeout", float{forwardingTimeout}}};
     EXPECT_CALL(
         sourceFactory_,
         makeSource(
@@ -197,9 +209,11 @@ TEST_F(LoadBalancerConstructorTests, forwardingTimeoutPassedToSourceFactory)
         )
     )
         .Times(2);
-    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
+        .WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(0), run);
-    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(boost::json::object{}));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
+        .WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(1), run);
     makeLoadBalancer();
 }
@@ -227,7 +241,8 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesReturnError)
 TEST_F(LoadBalancerConstructorTests, fetchETLState_Source1Fails0OK)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
-    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
+        .WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
         .WillOnce(Return(std::unexpected{rpc::ClioError::EtlConnectionError}));
     EXPECT_CALL(sourceFactory_.sourceAt(0), run);
@@ -240,7 +255,8 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_Source0Fails1OK)
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
         .WillOnce(Return(std::unexpected{rpc::ClioError::EtlConnectionError}));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(boost::json::object{}));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
+        .WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(0), run);
     EXPECT_CALL(sourceFactory_.sourceAt(1), run);
     makeLoadBalancer();
@@ -248,19 +264,24 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_Source0Fails1OK)
 
 TEST_F(LoadBalancerConstructorTests, fetchETLState_DifferentNetworkID)
 {
-    auto const source1Json = boost::json::parse(R"JSON({"result": {"info": {"network_id": 0}}})JSON");
-    auto const source2Json = boost::json::parse(R"JSON({"result": {"info": {"network_id": 1}}})JSON");
+    auto const source1Json =
+        boost::json::parse(R"JSON({"result": {"info": {"network_id": 0}}})JSON");
+    auto const source2Json =
+        boost::json::parse(R"JSON({"result": {"info": {"network_id": 1}}})JSON");
 
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
-    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(source1Json.as_object()));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(source2Json.as_object()));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
+        .WillOnce(Return(source1Json.as_object()));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
+        .WillOnce(Return(source2Json.as_object()));
     EXPECT_THROW({ makeLoadBalancer(); }, std::logic_error);
 }
 
 TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesFailButAllowNoEtlIsTrue)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
-    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
+        .WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(0), run);
     EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
         .WillOnce(Return(std::unexpected{rpc::ClioError::EtlConnectionError}));
@@ -272,12 +293,16 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesFailButAllowNoEtlIs
 
 TEST_F(LoadBalancerConstructorTests, fetchETLState_DifferentNetworkIDButAllowNoEtlIsTrue)
 {
-    auto const source1Json = boost::json::parse(R"JSON({"result": {"info": {"network_id": 0}}})JSON");
-    auto const source2Json = boost::json::parse(R"JSON({"result": {"info": {"network_id": 1}}})JSON");
+    auto const source1Json =
+        boost::json::parse(R"JSON({"result": {"info": {"network_id": 0}}})JSON");
+    auto const source2Json =
+        boost::json::parse(R"JSON({"result": {"info": {"network_id": 1}}})JSON");
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
-    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(source1Json.as_object()));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
+        .WillOnce(Return(source1Json.as_object()));
     EXPECT_CALL(sourceFactory_.sourceAt(0), run);
-    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(source2Json.as_object()));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
+        .WillOnce(Return(source2Json.as_object()));
     EXPECT_CALL(sourceFactory_.sourceAt(1), run);
 
     configJson_.as_object()["allow_no_etl"] = true;
@@ -288,9 +313,11 @@ struct LoadBalancerOnConnectHookTests : LoadBalancerConstructorTests {
     LoadBalancerOnConnectHookTests()
     {
         EXPECT_CALL(sourceFactory_, makeSource).Times(2);
-        EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
+        EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
+            .WillOnce(Return(boost::json::object{}));
         EXPECT_CALL(sourceFactory_.sourceAt(0), run);
-        EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(boost::json::object{}));
+        EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
+            .WillOnce(Return(boost::json::object{}));
         EXPECT_CALL(sourceFactory_.sourceAt(1), run);
         loadBalancer_ = makeLoadBalancer();
     }
@@ -424,11 +451,14 @@ struct LoadBalancer3SourcesTests : LoadBalancerConstructorTests {
         configJson_ = boost::json::parse(kTHREE_SOURCES_LEDGER_RESPONSE);
 
         EXPECT_CALL(sourceFactory_, makeSource).Times(3);
-        EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
+        EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
+            .WillOnce(Return(boost::json::object{}));
         EXPECT_CALL(sourceFactory_.sourceAt(0), run);
-        EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(boost::json::object{}));
+        EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
+            .WillOnce(Return(boost::json::object{}));
         EXPECT_CALL(sourceFactory_.sourceAt(1), run);
-        EXPECT_CALL(sourceFactory_.sourceAt(2), forwardToRippled).WillOnce(Return(boost::json::object{}));
+        EXPECT_CALL(sourceFactory_.sourceAt(2), forwardToRippled)
+            .WillOnce(Return(boost::json::object{}));
         EXPECT_CALL(sourceFactory_.sourceAt(2), run);
         loadBalancer_ = makeLoadBalancer();
     }
@@ -470,7 +500,10 @@ TEST_F(LoadBalancerLoadInitialLedgerTests, load)
     EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, testing::_))
         .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.value());
+    EXPECT_EQ(
+        loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}),
+        response_.value()
+    );
 }
 
 TEST_F(LoadBalancerLoadInitialLedgerTests, load_source0DoesntHaveLedger)
@@ -480,17 +513,27 @@ TEST_F(LoadBalancerLoadInitialLedgerTests, load_source0DoesntHaveLedger)
     EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, testing::_))
         .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.value());
+    EXPECT_EQ(
+        loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}),
+        response_.value()
+    );
 }
 
 TEST_F(LoadBalancerLoadInitialLedgerTests, load_bothSourcesDontHaveLedger)
 {
-    EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).Times(2).WillRepeatedly(Return(false));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(false)).WillOnce(Return(true));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_))
+        .Times(2)
+        .WillRepeatedly(Return(false));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_))
+        .WillOnce(Return(false))
+        .WillOnce(Return(true));
     EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, testing::_))
         .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.value());
+    EXPECT_EQ(
+        loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}),
+        response_.value()
+    );
 }
 
 TEST_F(LoadBalancerLoadInitialLedgerTests, load_source0ReturnsStatusFalse)
@@ -502,7 +545,10 @@ TEST_F(LoadBalancerLoadInitialLedgerTests, load_source0ReturnsStatusFalse)
     EXPECT_CALL(sourceFactory_.sourceAt(1), loadInitialLedger(sequence_, numMarkers_, testing::_))
         .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.value());
+    EXPECT_EQ(
+        loadBalancer_->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}),
+        response_.value()
+    );
 }
 
 struct LoadBalancerLoadInitialLedgerCustomNumMarkersTests : LoadBalancerConstructorTests {
@@ -518,9 +564,11 @@ TEST_F(LoadBalancerLoadInitialLedgerCustomNumMarkersTests, loadInitialLedger)
     configJson_.as_object()["num_markers"] = numMarkers_;
 
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
-    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
+        .WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(0), run);
-    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(boost::json::object{}));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
+        .WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(1), run);
     auto loadBalancer = makeLoadBalancer();
 
@@ -528,7 +576,10 @@ TEST_F(LoadBalancerLoadInitialLedgerCustomNumMarkersTests, loadInitialLedger)
     EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, testing::_))
         .WillOnce(Return(response_));
 
-    EXPECT_EQ(loadBalancer->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}), response_.value());
+    EXPECT_EQ(
+        loadBalancer->loadInitialLedger(sequence_, observer_, std::chrono::milliseconds{1}),
+        response_.value()
+    );
 }
 
 struct LoadBalancerFetchLegerTests : LoadBalancerOnConnectHookTests {
@@ -548,10 +599,14 @@ protected:
 TEST_F(LoadBalancerFetchLegerTests, fetch)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), fetchLedger(sequence_, getObjects_, getObjectNeighbors_))
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0), fetchLedger(sequence_, getObjects_, getObjectNeighbors_)
+    )
         .WillOnce(Return(response_));
 
-    EXPECT_TRUE(loadBalancer_->fetchLedger(sequence_, getObjects_, getObjectNeighbors_).has_value());
+    EXPECT_TRUE(
+        loadBalancer_->fetchLedger(sequence_, getObjects_, getObjectNeighbors_).has_value()
+    );
 }
 
 TEST_F(LoadBalancerFetchLegerTests, fetch_Source0ReturnsBadStatus)
@@ -560,14 +615,20 @@ TEST_F(LoadBalancerFetchLegerTests, fetch_Source0ReturnsBadStatus)
     source0Response.first = grpc::Status::CANCELLED;
 
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), fetchLedger(sequence_, getObjects_, getObjectNeighbors_))
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0), fetchLedger(sequence_, getObjects_, getObjectNeighbors_)
+    )
         .WillOnce(Return(source0Response));
 
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), fetchLedger(sequence_, getObjects_, getObjectNeighbors_))
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(1), fetchLedger(sequence_, getObjects_, getObjectNeighbors_)
+    )
         .WillOnce(Return(response_));
 
-    EXPECT_TRUE(loadBalancer_->fetchLedger(sequence_, getObjects_, getObjectNeighbors_).has_value());
+    EXPECT_TRUE(
+        loadBalancer_->fetchLedger(sequence_, getObjects_, getObjectNeighbors_).has_value()
+    );
 }
 
 TEST_F(LoadBalancerFetchLegerTests, fetch_Source0ReturnsNotValidated)
@@ -576,14 +637,20 @@ TEST_F(LoadBalancerFetchLegerTests, fetch_Source0ReturnsNotValidated)
     source0Response.second.set_validated(false);
 
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), fetchLedger(sequence_, getObjects_, getObjectNeighbors_))
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0), fetchLedger(sequence_, getObjects_, getObjectNeighbors_)
+    )
         .WillOnce(Return(source0Response));
 
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), fetchLedger(sequence_, getObjects_, getObjectNeighbors_))
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(1), fetchLedger(sequence_, getObjects_, getObjectNeighbors_)
+    )
         .WillOnce(Return(response_));
 
-    EXPECT_TRUE(loadBalancer_->fetchLedger(sequence_, getObjects_, getObjectNeighbors_).has_value());
+    EXPECT_TRUE(
+        loadBalancer_->fetchLedger(sequence_, getObjects_, getObjectNeighbors_).has_value()
+    );
 }
 
 TEST_F(LoadBalancerFetchLegerTests, fetch_bothSourcesFail)
@@ -591,25 +658,36 @@ TEST_F(LoadBalancerFetchLegerTests, fetch_bothSourcesFail)
     auto badResponse = response_;
     badResponse.second.set_validated(false);
 
-    EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).Times(2).WillRepeatedly(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), fetchLedger(sequence_, getObjects_, getObjectNeighbors_))
+    EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_))
+        .Times(2)
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0), fetchLedger(sequence_, getObjects_, getObjectNeighbors_)
+    )
         .WillOnce(Return(badResponse))
         .WillOnce(Return(response_));
 
     EXPECT_CALL(sourceFactory_.sourceAt(1), hasLedger(sequence_)).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), fetchLedger(sequence_, getObjects_, getObjectNeighbors_))
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(1), fetchLedger(sequence_, getObjects_, getObjectNeighbors_)
+    )
         .WillOnce(Return(badResponse));
 
-    EXPECT_TRUE(loadBalancer_->fetchLedger(sequence_, getObjects_, getObjectNeighbors_, std::chrono::milliseconds{1})
-                    .has_value());
+    EXPECT_TRUE(
+        loadBalancer_
+            ->fetchLedger(sequence_, getObjects_, getObjectNeighbors_, std::chrono::milliseconds{1})
+            .has_value()
+    );
 }
 
 struct LoadBalancerForwardToRippledTests : LoadBalancerConstructorTests, SyncAsioContextTest {
     LoadBalancerForwardToRippledTests()
     {
-        EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
+        EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
+            .WillOnce(Return(boost::json::object{}));
         EXPECT_CALL(sourceFactory_.sourceAt(0), run);
-        EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(boost::json::object{}));
+        EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
+            .WillOnce(Return(boost::json::object{}));
         EXPECT_CALL(sourceFactory_.sourceAt(1), run);
     }
 
@@ -625,7 +703,9 @@ TEST_F(LoadBalancerForwardToRippledTests, forward)
     auto loadBalancer = makeLoadBalancer();
     EXPECT_CALL(
         sourceFactory_.sourceAt(0),
-        forwardToRippled(request_, clientIP_, LoadBalancer::kADMIN_FORWARDING_X_USER_VALUE, testing::_)
+        forwardToRippled(
+            request_, clientIP_, LoadBalancer::kADMIN_FORWARDING_X_USER_VALUE, testing::_
+        )
     )
         .WillOnce(Return(response_));
 
@@ -640,7 +720,9 @@ TEST_F(LoadBalancerForwardToRippledTests, forwardWithXUserHeader)
     auto loadBalancer = makeLoadBalancer();
     EXPECT_CALL(
         sourceFactory_.sourceAt(0),
-        forwardToRippled(request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_)
+        forwardToRippled(
+            request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_
+        )
     )
         .WillOnce(Return(response_));
 
@@ -655,12 +737,16 @@ TEST_F(LoadBalancerForwardToRippledTests, source0Fails)
     auto loadBalancer = makeLoadBalancer();
     EXPECT_CALL(
         sourceFactory_.sourceAt(0),
-        forwardToRippled(request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_)
+        forwardToRippled(
+            request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_
+        )
     )
         .WillOnce(Return(std::unexpected{rpc::ClioError::EtlConnectionError}));
     EXPECT_CALL(
         sourceFactory_.sourceAt(1),
-        forwardToRippled(request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_)
+        forwardToRippled(
+            request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_
+        )
     )
         .WillOnce(Return(response_));
 
@@ -669,7 +755,8 @@ TEST_F(LoadBalancerForwardToRippledTests, source0Fails)
     });
 }
 
-struct LoadBalancerForwardToRippledPrometheusTests : LoadBalancerForwardToRippledTests, WithMockPrometheus {};
+struct LoadBalancerForwardToRippledPrometheusTests : LoadBalancerForwardToRippledTests,
+                                                     WithMockPrometheus {};
 
 TEST_F(LoadBalancerForwardToRippledPrometheusTests, forwardingCacheEnabled)
 {
@@ -690,7 +777,9 @@ TEST_F(LoadBalancerForwardToRippledPrometheusTests, forwardingCacheEnabled)
 
     EXPECT_CALL(
         sourceFactory_.sourceAt(0),
-        forwardToRippled(request, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_)
+        forwardToRippled(
+            request, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_
+        )
     )
         .WillOnce(Return(response_));
 
@@ -711,7 +800,8 @@ TEST_F(LoadBalancerForwardToRippledPrometheusTests, source0Fails)
     auto& retriesCounter = makeMock<CounterInt>("forwarding_retries_counter", "");
     auto& successDurationCounter =
         makeMock<CounterInt>("forwarding_duration_milliseconds_counter", "{status=\"success\"}");
-    auto& failDurationCounter = makeMock<CounterInt>("forwarding_duration_milliseconds_counter", "{status=\"fail\"}");
+    auto& failDurationCounter =
+        makeMock<CounterInt>("forwarding_duration_milliseconds_counter", "{status=\"fail\"}");
 
     EXPECT_CALL(cacheMissCounter, add(1));
     EXPECT_CALL(retriesCounter, add(1));
@@ -720,12 +810,16 @@ TEST_F(LoadBalancerForwardToRippledPrometheusTests, source0Fails)
 
     EXPECT_CALL(
         sourceFactory_.sourceAt(0),
-        forwardToRippled(request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_)
+        forwardToRippled(
+            request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_
+        )
     )
         .WillOnce(Return(std::unexpected{rpc::ClioError::EtlConnectionError}));
     EXPECT_CALL(
         sourceFactory_.sourceAt(1),
-        forwardToRippled(request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_)
+        forwardToRippled(
+            request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_
+        )
     )
         .WillOnce(Return(response_));
 
@@ -789,12 +883,16 @@ TEST_P(LoadBalancerForwardToRippledErrorTests, bothSourcesFail)
     auto loadBalancer = makeLoadBalancer();
     EXPECT_CALL(
         sourceFactory_.sourceAt(0),
-        forwardToRippled(request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_)
+        forwardToRippled(
+            request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_
+        )
     )
         .WillOnce(Return(std::unexpected{GetParam().firstSourceError}));
     EXPECT_CALL(
         sourceFactory_.sourceAt(1),
-        forwardToRippled(request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_)
+        forwardToRippled(
+            request_, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_
+        )
     )
         .WillOnce(Return(std::unexpected{GetParam().secondSourceError}));
 
@@ -815,7 +913,9 @@ TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheEnabled)
 
     EXPECT_CALL(
         sourceFactory_.sourceAt(0),
-        forwardToRippled(request, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_)
+        forwardToRippled(
+            request, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_
+        )
     )
         .WillOnce(Return(response_));
 
@@ -844,12 +944,16 @@ TEST_F(LoadBalancerForwardToRippledTests, onLedgerClosedHookInvalidatesCache)
 
     EXPECT_CALL(
         sourceFactory_.sourceAt(0),
-        forwardToRippled(request, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_)
+        forwardToRippled(
+            request, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_
+        )
     )
         .WillOnce(Return(response_));
     EXPECT_CALL(
         sourceFactory_.sourceAt(1),
-        forwardToRippled(request, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_)
+        forwardToRippled(
+            request, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_
+        )
     )
         .WillOnce(Return(boost::json::object{}));
 
@@ -857,7 +961,9 @@ TEST_F(LoadBalancerForwardToRippledTests, onLedgerClosedHookInvalidatesCache)
         EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), response_);
         EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), response_);
         sourceFactory_.callbacksAt(0).onLedgerClosed();
-        EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), boost::json::object{});
+        EXPECT_EQ(
+            loadBalancer->forwardToRippled(request, clientIP_, false, yield), boost::json::object{}
+        );
     });
 }
 
@@ -880,10 +986,13 @@ struct LoadBalancerToJsonTests : LoadBalancerOnConnectHookTests {};
 
 TEST_F(LoadBalancerToJsonTests, toJson)
 {
-    EXPECT_CALL(sourceFactory_.sourceAt(0), toJson).WillOnce(Return(boost::json::object{{"source1", "value1"}}));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), toJson).WillOnce(Return(boost::json::object{{"source2", "value2"}}));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), toJson)
+        .WillOnce(Return(boost::json::object{{"source1", "value1"}}));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), toJson)
+        .WillOnce(Return(boost::json::object{{"source2", "value2"}}));
 
-    auto const expectedJson =
-        boost::json::array({boost::json::object{{"source1", "value1"}}, boost::json::object{{"source2", "value2"}}});
+    auto const expectedJson = boost::json::array(
+        {boost::json::object{{"source1", "value1"}}, boost::json::object{{"source2", "value2"}}}
+    );
     EXPECT_EQ(loadBalancer_->toJson(), expectedJson);
 }

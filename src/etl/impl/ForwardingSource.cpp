@@ -52,7 +52,8 @@ ForwardingSource::ForwardingSource(
 {
     connectionBuilder_.setConnectionTimeout(connTimeout)
         .addHeader(
-            {boost::beast::http::field::user_agent, fmt::format("{} websocket-client-coro", BOOST_BEAST_VERSION_STRING)}
+            {boost::beast::http::field::user_agent,
+             fmt::format("{} websocket-client-coro", BOOST_BEAST_VERSION_STRING)}
         );
 }
 
@@ -103,7 +104,8 @@ ForwardingSource::forwardToRippled(
         if (not parsedResponse.is_object())
             throw std::runtime_error("response is not an object");
     } catch (std::exception const& e) {
-        LOG(log_.debug()) << "Error parsing response from rippled: " << e.what() << ". Response: " << *response;
+        LOG(log_.debug()) << "Error parsing response from rippled: " << e.what()
+                          << ". Response: " << *response;
         return std::unexpected{rpc::ClioError::EtlInvalidResponse};
     }
 

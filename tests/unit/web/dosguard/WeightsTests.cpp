@@ -46,10 +46,16 @@ class WeightsTest : public ::testing::TestWithParam<TestParams> {
 protected:
     size_t const defaultWeight_{10};
     std::unordered_map<std::string, Weights::Entry> weightsMap_{
-        {"only_weight", {.weight = 20, .weightLedgerCurrent = std::nullopt, .weightLedgerValidated = std::nullopt}},
-        {"with_current_weight", {.weight = 30, .weightLedgerCurrent = 35, .weightLedgerValidated = std::nullopt}},
-        {"with_validated_weight", {.weight = 40, .weightLedgerCurrent = std::nullopt, .weightLedgerValidated = 45}},
-        {"with_both_weights", {.weight = 50, .weightLedgerCurrent = 55, .weightLedgerValidated = 60}},
+        {"only_weight",
+         {.weight = 20,
+          .weightLedgerCurrent = std::nullopt,
+          .weightLedgerValidated = std::nullopt}},
+        {"with_current_weight",
+         {.weight = 30, .weightLedgerCurrent = 35, .weightLedgerValidated = std::nullopt}},
+        {"with_validated_weight",
+         {.weight = 40, .weightLedgerCurrent = std::nullopt, .weightLedgerValidated = 45}},
+        {"with_both_weights",
+         {.weight = 50, .weightLedgerCurrent = 55, .weightLedgerValidated = 60}},
     };
     Weights weights_{defaultWeight_, weightsMap_};
 };
@@ -66,8 +72,16 @@ INSTANTIATE_TEST_SUITE_P(
     WeightsTest,
     ::testing::Values(
         TestParams{.testName = "EmptyObject", .requestJson = "{}", .expectedWeight = 10},
-        TestParams{.testName = "NonStringMethod", .requestJson = R"JSON({"method": 123})JSON", .expectedWeight = 10},
-        TestParams{.testName = "NonStringCommand", .requestJson = R"JSON({"command": 123})JSON", .expectedWeight = 10},
+        TestParams{
+            .testName = "NonStringMethod",
+            .requestJson = R"JSON({"method": 123})JSON",
+            .expectedWeight = 10
+        },
+        TestParams{
+            .testName = "NonStringCommand",
+            .requestJson = R"JSON({"command": 123})JSON",
+            .expectedWeight = 10
+        },
 
         TestParams{
             .testName = "UnknownMethodName",
@@ -119,12 +133,14 @@ INSTANTIATE_TEST_SUITE_P(
         },
         TestParams{
             .testName = "WithCurrentWeight_CurrentLedgerIndex",
-            .requestJson = R"JSON({"method": "with_current_weight", "ledger_index": "current"})JSON",
+            .requestJson =
+                R"JSON({"method": "with_current_weight", "ledger_index": "current"})JSON",
             .expectedWeight = 35
         },
         TestParams{
             .testName = "WithCurrentWeight_ValidatedLedgerIndex",
-            .requestJson = R"JSON({"method": "with_current_weight", "ledger_index": "validated"})JSON",
+            .requestJson =
+                R"JSON({"method": "with_current_weight", "ledger_index": "validated"})JSON",
             .expectedWeight = 30
         },
 
@@ -136,12 +152,14 @@ INSTANTIATE_TEST_SUITE_P(
         },
         TestParams{
             .testName = "WithValidatedWeight_CurrentLedgerIndex",
-            .requestJson = R"JSON({"method": "with_validated_weight", "ledger_index": "current"})JSON",
+            .requestJson =
+                R"JSON({"method": "with_validated_weight", "ledger_index": "current"})JSON",
             .expectedWeight = 40
         },
         TestParams{
             .testName = "WithValidatedWeight_ValidatedLedgerIndex",
-            .requestJson = R"JSON({"method": "with_validated_weight", "ledger_index": "validated"})JSON",
+            .requestJson =
+                R"JSON({"method": "with_validated_weight", "ledger_index": "validated"})JSON",
             .expectedWeight = 45
         },
 
@@ -158,7 +176,8 @@ INSTANTIATE_TEST_SUITE_P(
         },
         TestParams{
             .testName = "WithBothWeights_ValidatedLedgerIndex",
-            .requestJson = R"JSON({"method": "with_both_weights", "ledger_index": "validated"})JSON",
+            .requestJson =
+                R"JSON({"method": "with_both_weights", "ledger_index": "validated"})JSON",
             .expectedWeight = 60
         },
 
@@ -175,24 +194,28 @@ INSTANTIATE_TEST_SUITE_P(
         },
         TestParams{
             .testName = "UsingCommand_ValidatedLedgerIndex",
-            .requestJson = R"JSON({"command": "with_both_weights", "ledger_index": "validated"})JSON",
+            .requestJson =
+                R"JSON({"command": "with_both_weights", "ledger_index": "validated"})JSON",
             .expectedWeight = 60
         },
 
         // With Params Array
         TestParams{
             .testName = "WithParamsArray_CurrentLedgerIndex",
-            .requestJson = R"JSON({"method": "with_both_weights", "params": [{"ledger_index": "current"}]})JSON",
+            .requestJson =
+                R"JSON({"method": "with_both_weights", "params": [{"ledger_index": "current"}]})JSON",
             .expectedWeight = 55
         },
         TestParams{
             .testName = "WithParamsArray_ValidatedLedgerIndex",
-            .requestJson = R"JSON({"method": "with_both_weights", "params": [{"ledger_index": "validated"}]})JSON",
+            .requestJson =
+                R"JSON({"method": "with_both_weights", "params": [{"ledger_index": "validated"}]})JSON",
             .expectedWeight = 60
         },
         TestParams{
             .testName = "WithParamsArray_WithCommand",
-            .requestJson = R"JSON({"command": "with_both_weights", "params": [{"ledger_index": "current"}]})JSON",
+            .requestJson =
+                R"JSON({"command": "with_both_weights", "params": [{"ledger_index": "current"}]})JSON",
             .expectedWeight = 55
         }
     ),
@@ -209,9 +232,13 @@ TEST(WeightsMakeTest, CreateFromConfig)
         {"dos_guard.__ng_weights.[].weight",
          util::config::Array{util::config::ConfigValue{util::config::ConfigType::Integer}}},
         {"dos_guard.__ng_weights.[].weight_ledger_current",
-         util::config::Array{util::config::ConfigValue{util::config::ConfigType::Integer}.optional()}},
+         util::config::Array{
+             util::config::ConfigValue{util::config::ConfigType::Integer}.optional()
+         }},
         {"dos_guard.__ng_weights.[].weight_ledger_validated",
-         util::config::Array{util::config::ConfigValue{util::config::ConfigType::Integer}.optional()}}
+         util::config::Array{
+             util::config::ConfigValue{util::config::ConfigType::Integer}.optional()
+         }}
     };
     std::string const configStr = R"JSON(
         {
@@ -251,27 +278,33 @@ TEST(WeightsMakeTest, CreateFromConfig)
     request = boost::json::parse(R"JSON({"method": "method1"})JSON").as_object();
     EXPECT_EQ(weights.requestWeight(request), 25);
 
-    request = boost::json::parse(R"JSON({"method": "method1", "ledger_index": "current"})JSON").as_object();
+    request = boost::json::parse(R"JSON({"method": "method1", "ledger_index": "current"})JSON")
+                  .as_object();
     EXPECT_EQ(weights.requestWeight(request), 30);
 
-    request = boost::json::parse(R"JSON({"method": "method1", "ledger_index": "validated"})JSON").as_object();
+    request = boost::json::parse(R"JSON({"method": "method1", "ledger_index": "validated"})JSON")
+                  .as_object();
     EXPECT_EQ(weights.requestWeight(request), 25);
 
     request = boost::json::parse(R"JSON({"method": "method2"})JSON").as_object();
     EXPECT_EQ(weights.requestWeight(request), 35);
 
-    request = boost::json::parse(R"JSON({"method": "method2", "ledger_index": "current"})JSON").as_object();
+    request = boost::json::parse(R"JSON({"method": "method2", "ledger_index": "current"})JSON")
+                  .as_object();
     EXPECT_EQ(weights.requestWeight(request), 35);
 
-    request = boost::json::parse(R"JSON({"method": "method2", "ledger_index": "validated"})JSON").as_object();
+    request = boost::json::parse(R"JSON({"method": "method2", "ledger_index": "validated"})JSON")
+                  .as_object();
     EXPECT_EQ(weights.requestWeight(request), 40);
 
     request = boost::json::parse(R"JSON({"method": "method3"})JSON").as_object();
     EXPECT_EQ(weights.requestWeight(request), 45);
 
-    request = boost::json::parse(R"JSON({"method": "method3", "ledger_index": "current"})JSON").as_object();
+    request = boost::json::parse(R"JSON({"method": "method3", "ledger_index": "current"})JSON")
+                  .as_object();
     EXPECT_EQ(weights.requestWeight(request), 50);
 
-    request = boost::json::parse(R"JSON({"method": "method3", "ledger_index": "validated"})JSON").as_object();
+    request = boost::json::parse(R"JSON({"method": "method3", "ledger_index": "validated"})JSON")
+                  .as_object();
     EXPECT_EQ(weights.requestWeight(request), 55);
 }

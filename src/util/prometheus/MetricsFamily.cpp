@@ -35,7 +35,8 @@
 
 namespace util::prometheus {
 
-std::unique_ptr<MetricBuilderInterface> MetricsFamily::defaultMetricBuilder = std::make_unique<MetricBuilder>();
+std::unique_ptr<MetricBuilderInterface> MetricsFamily::defaultMetricBuilder =
+    std::make_unique<MetricBuilder>();
 
 MetricsFamily::MetricsFamily(
     std::string name,
@@ -43,7 +44,10 @@ MetricsFamily::MetricsFamily(
     MetricType type,
     MetricBuilderInterface& metricBuilder
 )
-    : name_(std::move(name)), description_(std::move(description)), type_(type), metricBuilder_(metricBuilder)
+    : name_(std::move(name))
+    , description_(std::move(description))
+    , type_(type)
+    , metricBuilder_(metricBuilder)
 {
 }
 

@@ -49,10 +49,24 @@ getAmmPoolHolds(
 )
 {
     auto const assetInBalance = accountHolds(
-        backend, amendmentCenter, sequence, ammAccountID, issue1.currency, issue1.account, freezeHandling, yield
+        backend,
+        amendmentCenter,
+        sequence,
+        ammAccountID,
+        issue1.currency,
+        issue1.account,
+        freezeHandling,
+        yield
     );
     auto const assetOutBalance = accountHolds(
-        backend, amendmentCenter, sequence, ammAccountID, issue2.currency, issue2.account, freezeHandling, yield
+        backend,
+        amendmentCenter,
+        sequence,
+        ammAccountID,
+        issue2.currency,
+        issue2.account,
+        freezeHandling,
+        yield
     );
     return std::make_pair(assetInBalance, assetOutBalance);
 }
@@ -70,7 +84,8 @@ getAmmLpHolds(
 {
     auto const lptCurrency = ammLPTCurrency(cur1, cur2);
 
-    // not using accountHolds because we don't need to check if the associated tokens of the LP are frozen
+    // not using accountHolds because we don't need to check if the associated tokens of the LP are
+    // frozen
     return ammAccountHolds(backend, sequence, lpAccount, lptCurrency, ammAccount, true, yield);
 }
 

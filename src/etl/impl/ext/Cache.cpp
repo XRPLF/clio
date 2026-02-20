@@ -31,7 +31,8 @@
 
 namespace etl::impl {
 
-CacheExt::CacheExt(std::shared_ptr<CacheUpdaterInterface> cacheUpdater) : cacheUpdater_(std::move(cacheUpdater))
+CacheExt::CacheExt(std::shared_ptr<CacheUpdaterInterface> cacheUpdater)
+    : cacheUpdater_(std::move(cacheUpdater))
 {
 }
 
@@ -51,7 +52,11 @@ CacheExt::onInitialData(model::LedgerData const& data)
 }
 
 void
-CacheExt::onInitialObjects(uint32_t seq, std::vector<model::Object> const& objs, [[maybe_unused]] std::string lastKey)
+CacheExt::onInitialObjects(
+    uint32_t seq,
+    std::vector<model::Object> const& objs,
+    [[maybe_unused]] std::string lastKey
+)
 {
     LOG(log_.trace()) << "got initial objects cnt = " << objs.size();
     cacheUpdater_->update(seq, objs);

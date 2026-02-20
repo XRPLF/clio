@@ -28,7 +28,10 @@
 
 namespace web::ng {
 
-ConnectionMetadata::ConnectionMetadata(std::string ip, util::TagDecoratorFactory const& tagDecoratorFactory)
+ConnectionMetadata::ConnectionMetadata(
+    std::string ip,
+    util::TagDecoratorFactory const& tagDecoratorFactory
+)
     : util::Taggable(tagDecoratorFactory), ip_{std::move(ip)}
 {
 }

@@ -126,9 +126,9 @@ public:
     /**
      * @brief Sets the full flag to true.
      *
-     * This is used when cache loaded in its entirety at startup of the application. This can be either loaded from DB,
-     * populated together with initial ledger download (on first run) or downloaded from a peer node (specified in
-     * config).
+     * This is used when cache loaded in its entirety at startup of the application. This can be
+     * either loaded from DB, populated together with initial ledger download (on first run) or
+     * downloaded from a peer node (specified in config).
      */
     virtual void
     setFull() = 0;
@@ -152,13 +152,15 @@ public:
     size() const = 0;
 
     /**
-     * @return A number representing the success rate of hitting an object in the cache versus missing it.
+     * @return A number representing the success rate of hitting an object in the cache versus
+     * missing it.
      */
     virtual float
     getObjectHitRate() const = 0;
 
     /**
-     * @return A number representing the success rate of hitting a successor in the cache versus missing it.
+     * @return A number representing the success rate of hitting a successor in the cache versus
+     * missing it.
      */
     virtual float
     getSuccessorHitRate() const = 0;

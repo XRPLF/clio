@@ -41,7 +41,8 @@ public:
     operator<=>(Label const& rhs) const = default;
 
     /**
-     * @brief Serialize the label to a string in Prometheus format (e.g. name="value"). The value is escaped
+     * @brief Serialize the label to a string in Prometheus format (e.g. name="value"). The value is
+     * escaped
      *
      * @return The serialized label
      */
@@ -68,7 +69,8 @@ public:
     explicit Labels(std::vector<Label> labels);
 
     /**
-     * @brief Serialize the labels to a string in Prometheus format (e.g. {"name1="value1",name2="value2"})
+     * @brief Serialize the labels to a string in Prometheus format (e.g.
+     * {"name1="value1",name2="value2"})
      *
      * @return The serialized labels
      */

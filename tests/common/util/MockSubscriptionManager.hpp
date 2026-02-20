@@ -65,15 +65,35 @@ struct MockSubscriptionManager : feed::SubscriptionManagerInterface {
 
     MOCK_METHOD(void, unsubTransactions, (feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, pubTransaction, (data::TransactionAndMetadata const&, ripple::LedgerHeader const&), (override));
+    MOCK_METHOD(
+        void,
+        pubTransaction,
+        (data::TransactionAndMetadata const&, ripple::LedgerHeader const&),
+        (override)
+    );
 
-    MOCK_METHOD(void, subAccount, (ripple::AccountID const&, feed::SubscriberSharedPtr const&), (override));
+    MOCK_METHOD(
+        void,
+        subAccount,
+        (ripple::AccountID const&, feed::SubscriberSharedPtr const&),
+        (override)
+    );
 
-    MOCK_METHOD(void, unsubAccount, (ripple::AccountID const&, feed::SubscriberSharedPtr const&), (override));
+    MOCK_METHOD(
+        void,
+        unsubAccount,
+        (ripple::AccountID const&, feed::SubscriberSharedPtr const&),
+        (override)
+    );
 
     MOCK_METHOD(void, subBook, (ripple::Book const&, feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, unsubBook, (ripple::Book const&, feed::SubscriberSharedPtr const&), (override));
+    MOCK_METHOD(
+        void,
+        unsubBook,
+        (ripple::Book const&, feed::SubscriberSharedPtr const&),
+        (override)
+    );
 
     MOCK_METHOD(void, subBookChanges, (feed::SubscriberSharedPtr const&), (override));
 
@@ -93,9 +113,19 @@ struct MockSubscriptionManager : feed::SubscriptionManagerInterface {
 
     MOCK_METHOD(void, forwardValidation, (boost::json::object const&), (override));
 
-    MOCK_METHOD(void, subProposedAccount, (ripple::AccountID const&, feed::SubscriberSharedPtr const&), (override));
+    MOCK_METHOD(
+        void,
+        subProposedAccount,
+        (ripple::AccountID const&, feed::SubscriberSharedPtr const&),
+        (override)
+    );
 
-    MOCK_METHOD(void, unsubProposedAccount, (ripple::AccountID const&, feed::SubscriberSharedPtr const&), (override));
+    MOCK_METHOD(
+        void,
+        unsubProposedAccount,
+        (ripple::AccountID const&, feed::SubscriberSharedPtr const&),
+        (override)
+    );
 
     MOCK_METHOD(void, subProposedTransactions, (feed::SubscriberSharedPtr const&), (override));
 
@@ -128,4 +158,5 @@ struct MockSubscriptionManagerSharedPtrImpl {
 };
 
 using MockSubscriptionManagerSharedPtr = MockSubscriptionManagerSharedPtrImpl<>;
-using StrictMockSubscriptionManagerSharedPtr = MockSubscriptionManagerSharedPtrImpl<testing::StrictMock>;
+using StrictMockSubscriptionManagerSharedPtr =
+    MockSubscriptionManagerSharedPtrImpl<testing::StrictMock>;

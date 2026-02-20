@@ -92,7 +92,9 @@ LedgerCacheFile::write(DataView dataView)
     }
 
     Header const header{
-        .latestSeq = dataView.latestSeq, .mapSize = dataView.map.size(), .deletedSize = dataView.deleted.size()
+        .latestSeq = dataView.latestSeq,
+        .mapSize = dataView.map.size(),
+        .deletedSize = dataView.deleted.size()
     };
     file.write(header);
     file.write(kSEPARATOR);
@@ -123,7 +125,9 @@ LedgerCacheFile::write(DataView dataView)
     try {
         std::filesystem::rename(newFilePath, path_);
     } catch (std::exception const& e) {
-        return std::unexpected{fmt::format("Error moving cache file from {} to {}: {}", newFilePath, path_, e.what())};
+        return std::unexpected{
+            fmt::format("Error moving cache file from {} to {}: {}", newFilePath, path_, e.what())
+        };
     }
 
     return {};
@@ -145,12 +149,14 @@ LedgerCacheFile::read(uint32_t minLatestSequence)
             return std::unexpected{"Error reading cache header"};
         }
         if (header.version != kVERSION) {
-            return std::unexpected{
-                fmt::format("Cache has wrong version: expected {} found {}", kVERSION, header.version)
-            };
+            return std::unexpected{fmt::format(
+                "Cache has wrong version: expected {} found {}", kVERSION, header.version
+            )};
         }
         if (header.latestSeq < minLatestSequence) {
-            return std::unexpected{fmt::format("Latest sequence ({}) in the cache file is too low.", header.latestSeq)};
+            return std::unexpected{
+                fmt::format("Latest sequence ({}) in the cache file is too low.", header.latestSeq)
+            };
         }
         result.latestSeq = header.latestSeq;
 
@@ -158,7 +164,8 @@ LedgerCacheFile::read(uint32_t minLatestSequence)
         if (not file.readRaw(separator.data(), separator.size())) {
             return std::unexpected{"Error reading cache header"};
         }
-        if (auto verificationResult = verifySeparator(separator); not verificationResult.has_value()) {
+        if (auto verificationResult = verifySeparator(separator);
+            not verificationResult.has_value()) {
             return std::unexpected{std::move(verificationResult).error()};
         }
 
@@ -167,15 +174,16 @@ LedgerCacheFile::read(uint32_t minLatestSequence)
             if (not cacheEntryExpected.has_value()) {
                 return std::unexpected{std::move(cacheEntryExpected).error()};
             }
-            // Using insert with hint here to decrease insert operation complexity to the amortized constant instead of
-            // logN
+            // Using insert with hint here to decrease insert operation complexity to the amortized
+            // constant instead of logN
             result.map.insert(result.map.end(), std::move(cacheEntryExpected).value());
         }
 
         if (not file.readRaw(separator.data(), separator.size())) {
             return std::unexpected{"Error reading separator"};
         }
-        if (auto verificationResult = verifySeparator(separator); not verificationResult.has_value()) {
+        if (auto verificationResult = verifySeparator(separator);
+            not verificationResult.has_value()) {
             return std::unexpected{std::move(verificationResult).error()};
         }
 
@@ -190,13 +198,16 @@ LedgerCacheFile::read(uint32_t minLatestSequence)
         if (not file.readRaw(separator.data(), separator.size())) {
             return std::unexpected{"Error reading separator"};
         }
-        if (auto verificationResult = verifySeparator(separator); not verificationResult.has_value()) {
+        if (auto verificationResult = verifySeparator(separator);
+            not verificationResult.has_value()) {
             return std::unexpected{std::move(verificationResult).error()};
         }
 
         auto const dataHash = file.hash();
         ripple::uint256 hashFromFile{};
-        if (not file.readRaw(reinterpret_cast<char*>(hashFromFile.data()), decltype(hashFromFile)::bytes)) {
+        if (not file.readRaw(
+                reinterpret_cast<char*>(hashFromFile.data()), decltype(hashFromFile)::bytes
+            )) {
             return std::unexpected{"Error reading hash"};
         }
 

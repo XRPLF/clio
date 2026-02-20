@@ -90,7 +90,10 @@ public:
      * @param strategy The retry strategy to use
      * @param strand The strand to use for async operations
      */
-    Retry(RetryStrategyPtr strategy, boost::asio::strand<boost::asio::io_context::executor_type> strand);
+    Retry(
+        RetryStrategyPtr strategy,
+        boost::asio::strand<boost::asio::io_context::executor_type> strand
+    );
 
     /**
      * @brief Destroy the Retry object
@@ -110,15 +113,15 @@ public:
         *canceled_ = false;
         timer_.expires_after(strategy_->getDelay());
         strategy_->increaseDelay();
-        timer_.async_wait(
-            [this, canceled = canceled_, func = std::forward<Fn>(func)](boost::system::error_code const& ec) {
-                if (ec == boost::asio::error::operation_aborted or *canceled) {
-                    return;
-                }
-                ++attemptNumber_;
-                func();
+        timer_.async_wait([this,
+                           canceled = canceled_,
+                           func = std::forward<Fn>(func)](boost::system::error_code const& ec) {
+            if (ec == boost::asio::error::operation_aborted or *canceled) {
+                return;
             }
-        );
+            ++attemptNumber_;
+            func();
+        });
     }
 
     /**
@@ -159,7 +162,10 @@ public:
      * @param delay The initial delay value
      * @param maxDelay The maximum delay value
      */
-    ExponentialBackoffStrategy(std::chrono::steady_clock::duration delay, std::chrono::steady_clock::duration maxDelay);
+    ExponentialBackoffStrategy(
+        std::chrono::steady_clock::duration delay,
+        std::chrono::steady_clock::duration maxDelay
+    );
 
 private:
     std::chrono::steady_clock::duration

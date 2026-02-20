@@ -78,7 +78,10 @@ TestWsConnection::send(std::string const& message, boost::asio::yield_context yi
 }
 
 void
-TestWsConnection::sendPing(boost::beast::websocket::ping_data const& data, boost::asio::yield_context yield)
+TestWsConnection::sendPing(
+    boost::beast::websocket::ping_data const& data,
+    boost::asio::yield_context yield
+)
 {
     boost::beast::error_code errorCode;
     ws_.async_ping(data, yield[errorCode]);

@@ -44,7 +44,8 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), k
     using std::to_string;
 
     cass_cluster_set_token_aware_routing(*this, cass_true);
-    if (auto const rc = cass_cluster_set_protocol_version(*this, CASS_PROTOCOL_VERSION_V4); rc != CASS_OK) {
+    if (auto const rc = cass_cluster_set_protocol_version(*this, CASS_PROTOCOL_VERSION_V4);
+        rc != CASS_OK) {
         throw std::runtime_error(
             fmt::format("Error setting cassandra protocol version to v4: {}", cass_error_desc(rc))
         );
@@ -52,7 +53,11 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), k
 
     if (auto const rc = cass_cluster_set_num_threads_io(*this, settings.threads); rc != CASS_OK) {
         throw std::runtime_error(
-            fmt::format("Error setting cassandra io threads to {}: {}", settings.threads, cass_error_desc(rc))
+            fmt::format(
+                "Error setting cassandra io threads to {}: {}",
+                settings.threads,
+                cass_error_desc(rc)
+            )
         );
     }
 
@@ -62,24 +67,36 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), k
 
     // TODO: AWS keyspace reads should be local_one to save cost
     if (settings.provider == cassandra::impl::Provider::Keyspace) {
-        if (auto const rc = cass_cluster_set_consistency(*this, CASS_CONSISTENCY_LOCAL_QUORUM); rc != CASS_OK) {
-            throw std::runtime_error(fmt::format("Error setting keyspace consistency: {}", cass_error_desc(rc)));
+        if (auto const rc = cass_cluster_set_consistency(*this, CASS_CONSISTENCY_LOCAL_QUORUM);
+            rc != CASS_OK) {
+            throw std::runtime_error(
+                fmt::format("Error setting keyspace consistency: {}", cass_error_desc(rc))
+            );
         }
     } else {
-        if (auto const rc = cass_cluster_set_consistency(*this, CASS_CONSISTENCY_QUORUM); rc != CASS_OK) {
-            throw std::runtime_error(fmt::format("Error setting cassandra consistency: {}", cass_error_desc(rc)));
+        if (auto const rc = cass_cluster_set_consistency(*this, CASS_CONSISTENCY_QUORUM);
+            rc != CASS_OK) {
+            throw std::runtime_error(
+                fmt::format("Error setting cassandra consistency: {}", cass_error_desc(rc))
+            );
         }
     }
 
-    if (auto const rc = cass_cluster_set_core_connections_per_host(*this, settings.coreConnectionsPerHost);
+    if (auto const rc =
+            cass_cluster_set_core_connections_per_host(*this, settings.coreConnectionsPerHost);
         rc != CASS_OK) {
-        throw std::runtime_error(fmt::format("Could not set core connections per host: {}", cass_error_desc(rc)));
+        throw std::runtime_error(
+            fmt::format("Could not set core connections per host: {}", cass_error_desc(rc))
+        );
     }
 
-    auto const queueSize =
-        settings.queueSizeIO.value_or(settings.maxWriteRequestsOutstanding + settings.maxReadRequestsOutstanding);
+    auto const queueSize = settings.queueSizeIO.value_or(
+        settings.maxWriteRequestsOutstanding + settings.maxReadRequestsOutstanding
+    );
     if (auto const rc = cass_cluster_set_queue_size_io(*this, queueSize); rc != CASS_OK) {
-        throw std::runtime_error(fmt::format("Could not set queue size for IO per host: {}", cass_error_desc(rc)));
+        throw std::runtime_error(
+            fmt::format("Could not set queue size for IO per host: {}", cass_error_desc(rc))
+        );
     }
 
     setupConnection(settings);
@@ -111,7 +128,9 @@ Cluster::setupContactPoints(Settings::ContactPoints const& points)
     auto throwErrorIfNeeded = [](CassError rc, std::string const& label, std::string const& value) {
         if (rc != CASS_OK) {
             throw std::runtime_error(
-                fmt::format("Cassandra: Error setting {} [{}]: {}", label, value, cass_error_desc(rc))
+                fmt::format(
+                    "Cassandra: Error setting {} [{}]: {}", label, value, cass_error_desc(rc)
+                )
             );
         }
     };
@@ -132,8 +151,12 @@ void
 Cluster::setupSecureBundle(Settings::SecureConnectionBundle const& bundle)
 {
     LOG(log_.debug()) << "Attempt connection using secure bundle";
-    if (auto const rc = cass_cluster_set_cloud_secure_connection_bundle(*this, bundle.bundle.data()); rc != CASS_OK) {
-        throw std::runtime_error("Failed to connect using secure connection bundle " + bundle.bundle);
+    if (auto const rc =
+            cass_cluster_set_cloud_secure_connection_bundle(*this, bundle.bundle.data());
+        rc != CASS_OK) {
+        throw std::runtime_error(
+            "Failed to connect using secure connection bundle " + bundle.bundle
+        );
     }
 }
 
@@ -155,7 +178,9 @@ Cluster::setupCredentials(Settings const& settings)
         return;
 
     LOG(log_.debug()) << "Set credentials; username: " << settings.username.value();
-    cass_cluster_set_credentials(*this, settings.username.value().c_str(), settings.password.value().c_str());
+    cass_cluster_set_credentials(
+        *this, settings.username.value().c_str(), settings.password.value().c_str()
+    );
 }
 
 }  // namespace data::cassandra::impl

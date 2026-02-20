@@ -56,14 +56,15 @@ struct LedgerCacheSaverTest : virtual testing::Test {
 
         ConfigFileJson jsonFile{boost::json::object{}};
         if (cacheFilePathHasValue) {
-            auto const jsonObject = boost::json::parse(
-                                        fmt::format(
-                                            R"JSON({{"cache": {{"file": {{"path": "{}", "async_save": {} }} }} }})JSON",
-                                            kFILE_PATH,
-                                            asyncSave
-                                        )
-            )
-                                        .as_object();
+            auto const jsonObject =
+                boost::json::parse(
+                    fmt::format(
+                        R"JSON({{"cache": {{"file": {{"path": "{}", "async_save": {} }} }} }})JSON",
+                        kFILE_PATH,
+                        asyncSave
+                    )
+                )
+                    .as_object();
             jsonFile = ConfigFileJson{jsonObject};
         }
         auto const errors = config.parse(jsonFile);
@@ -77,7 +78,8 @@ TEST_F(LedgerCacheSaverTest, SaveSuccessfully)
     auto const config = generateConfig(/* cacheFilePathHasValue = */ true, /* asyncSave = */ true);
     LedgerCacheSaver saver{config, cache};
 
-    EXPECT_CALL(cache, saveToFile(kFILE_PATH)).WillOnce(testing::Return(std::expected<void, std::string>{}));
+    EXPECT_CALL(cache, saveToFile(kFILE_PATH))
+        .WillOnce(testing::Return(std::expected<void, std::string>{}));
 
     saver.save();
     saver.waitToFinish();
@@ -89,7 +91,9 @@ TEST_F(LedgerCacheSaverTest, SaveWithError)
     LedgerCacheSaver saver{config, cache};
 
     EXPECT_CALL(cache, saveToFile(kFILE_PATH))
-        .WillOnce(testing::Return(std::expected<void, std::string>(std::unexpected("Failed to save"))));
+        .WillOnce(
+            testing::Return(std::expected<void, std::string>(std::unexpected("Failed to save")))
+        );
 
     saver.save();
     saver.waitToFinish();

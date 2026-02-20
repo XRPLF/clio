@@ -40,7 +40,10 @@
 namespace rpc {
 
 TransactionEntryHandler::Result
-TransactionEntryHandler::process(TransactionEntryHandler::Input const& input, Context const& ctx) const
+TransactionEntryHandler::process(
+    TransactionEntryHandler::Input const& input,
+    Context const& ctx
+) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "TransactionEntry's ledger range must be available");
@@ -56,7 +59,8 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input const& input, Co
     output.apiVersion = ctx.apiVersion;
 
     output.ledgerHeader = expectedLgrInfo.value();
-    auto const dbRet = sharedPtrBackend_->fetchTransaction(ripple::uint256{input.txHash.c_str()}, ctx.yield);
+    auto const dbRet =
+        sharedPtrBackend_->fetchTransaction(ripple::uint256{input.txHash.c_str()}, ctx.yield);
     // Note: transaction_entry is meant to only search a specified ledger for
     // the specified transaction. tx searches the entire range of history. For
     // rippled, having two separate commands made sense, as tx would use SQLite
@@ -67,7 +71,9 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input const& input, Co
     // ledger; we simulate that here by returning not found if the transaction
     // is in a different ledger than the one specified.
     if (!dbRet || dbRet->ledgerSequence != output.ledgerHeader->seq)
-        return Error{Status{RippledError::rpcTXN_NOT_FOUND, "transactionNotFound", "Transaction not found."}};
+        return Error{
+            Status{RippledError::rpcTXN_NOT_FOUND, "transactionNotFound", "Transaction not found."}
+        };
 
     auto [txn, meta] = toExpandedJson(*dbRet, ctx.apiVersion);
 
@@ -78,7 +84,11 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input const& input, Co
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TransactionEntryHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    TransactionEntryHandler::Output const& output
+)
 {
     auto const metaKey = output.apiVersion > 1u ? JS(meta) : JS(metadata);
     jv = {

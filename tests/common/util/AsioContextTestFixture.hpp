@@ -43,7 +43,9 @@
 struct AsyncAsioContextTest : virtual public ::testing::Test {
     AsyncAsioContextTest()
     {
-        work_.emplace(boost::asio::make_work_guard(ctx_));  // make sure ctx does not stop on its own
+        work_.emplace(
+            boost::asio::make_work_guard(ctx_)
+        );  // make sure ctx does not stop on its own
         runner_.emplace([&] { ctx_.run(); });
     }
 
@@ -88,10 +90,12 @@ struct SyncAsioContextTest : virtual public ::testing::Test {
         if (allowMockLeak)
             testing::Mock::AllowLeak(&call);
 
-        util::Coroutine::spawnNew(ctx_, [&, _ = boost::asio::make_work_guard(ctx_)](util::Coroutine& coroutine) {
-            f(coroutine);
-            call.Call();
-        });
+        util::Coroutine::spawnNew(
+            ctx_, [&, _ = boost::asio::make_work_guard(ctx_)](util::Coroutine& coroutine) {
+                f(coroutine);
+                call.Call();
+            }
+        );
         EXPECT_CALL(call, Call());
         runContext();
     }

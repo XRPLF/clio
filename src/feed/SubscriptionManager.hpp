@@ -57,7 +57,8 @@
 namespace feed {
 
 /**
- * @brief A subscription manager is responsible for managing the subscriptions and publishing the feeds
+ * @brief A subscription manager is responsible for managing the subscriptions and publishing the
+ * feeds
  */
 class SubscriptionManager : public SubscriptionManagerInterface {
     std::shared_ptr<data::BackendInterface const> backend_;
@@ -122,7 +123,8 @@ public:
     }
 
     /**
-     * @brief Destructor of the SubscriptionManager object. It will block until all running jobs finished.
+     * @brief Destructor of the SubscriptionManager object. It will block until all running jobs
+     * finished.
      */
     ~SubscriptionManager() override
     {
@@ -179,12 +181,16 @@ public:
     unsubProposedTransactions(SubscriberSharedPtr const& subscriber) final;
 
     /**
-     * @brief Subscribe to the proposed transactions feed, only receive the feed when particular account is affected.
+     * @brief Subscribe to the proposed transactions feed, only receive the feed when particular
+     * account is affected.
      * @param account The account to watch.
      * @param subscriber
      */
     void
-    subProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
+    subProposedAccount(
+        ripple::AccountID const& account,
+        SubscriberSharedPtr const& subscriber
+    ) final;
 
     /**
      * @brief Unsubscribe to the proposed transactions feed for particular account.
@@ -192,7 +198,10 @@ public:
      * @param subscriber
      */
     void
-    unsubProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
+    unsubProposedAccount(
+        ripple::AccountID const& account,
+        SubscriberSharedPtr const& subscriber
+    ) final;
 
     /**
      * @brief Forward the proposed transactions feed.
@@ -289,7 +298,8 @@ public:
     unsubTransactions(SubscriberSharedPtr const& subscriber) final;
 
     /**
-     * @brief Subscribe to the transactions feed, only receive the feed when particular account is affected.
+     * @brief Subscribe to the transactions feed, only receive the feed when particular account is
+     * affected.
      * @param account The account to watch.
      * @param subscriber
      */
@@ -305,7 +315,8 @@ public:
     unsubAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
 
     /**
-     * @brief Subscribe to the transactions feed, only receive feed when particular order book is affected.
+     * @brief Subscribe to the transactions feed, only receive feed when particular order book is
+     * affected.
      * @param book The book to watch.
      * @param subscriber
      */
@@ -326,7 +337,10 @@ public:
      * @param lgrInfo The ledger header.
      */
     void
-    pubTransaction(data::TransactionAndMetadata const& txMeta, ripple::LedgerHeader const& lgrInfo) final;
+    pubTransaction(
+        data::TransactionAndMetadata const& txMeta,
+        ripple::LedgerHeader const& lgrInfo
+    ) final;
 
     /**
      * @brief Get the number of subscribers.

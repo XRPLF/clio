@@ -38,10 +38,12 @@
 namespace cluster {
 
 /**
- * @brief Service to post and read messages to/from the cluster. It uses a backend to communicate with the cluster.
+ * @brief Service to post and read messages to/from the cluster. It uses a backend to communicate
+ * with the cluster.
  */
 class ClusterCommunicationService : public ClusterCommunicationServiceTag {
-    // TODO: Use util::async::CoroExecutionContext after https://github.com/XRPLF/clio/issues/1973 is implemented
+    // TODO: Use util::async::CoroExecutionContext after https://github.com/XRPLF/clio/issues/1973
+    // is implemented
     boost::asio::thread_pool ctx_{1};
     Backend backend_;
     Metrics metrics_;

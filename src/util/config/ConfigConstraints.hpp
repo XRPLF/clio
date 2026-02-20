@@ -113,7 +113,8 @@ public:
 
 protected:
     /**
-     * @brief Creates an error message for all constraints that must satisfy certain hard-coded values.
+     * @brief Creates an error message for all constraints that must satisfy certain hard-coded
+     * values.
      *
      * @tparam arrSize, the size of the array of hardcoded values
      * @param key The key to the value
@@ -123,7 +124,11 @@ protected:
      */
     template <std::size_t ArrSize>
     constexpr std::string
-    makeErrorMsg(std::string_view key, Value const& value, std::array<std::string_view, ArrSize> arr) const
+    makeErrorMsg(
+        std::string_view key,
+        Value const& value,
+        std::array<std::string_view, ArrSize> arr
+    ) const
     {
         // Extract the value from the variant
         auto const valueStr = std::visit([](auto const& v) { return fmt::format("{}", v); }, value);
@@ -212,7 +217,9 @@ private:
     void
     print(std::ostream& stream) const override
     {
-        stream << fmt::format("The minimum value is `{}`. The maximum value is `{}`.", kPORT_MIN, kPORT_MAX);
+        stream << fmt::format(
+            "The minimum value is `{}`. The maximum value is `{}`.", kPORT_MIN, kPORT_MAX
+        );
     }
 
     static constexpr uint32_t kPORT_MIN = 1;
@@ -258,7 +265,8 @@ private:
 };
 
 /**
- * @brief A constraint class to ensure the provided value is one of the specified values in an array.
+ * @brief A constraint class to ensure the provided value is one of the specified values in an
+ * array.
  *
  * @tparam arrSize The size of the array containing the valid values for the constraint
  */
@@ -266,12 +274,14 @@ template <std::size_t ArrSize>
 class OneOf final : public Constraint {
 public:
     /**
-     * @brief Constructs a constraint where the value must be one of the values in the provided array.
+     * @brief Constructs a constraint where the value must be one of the values in the provided
+     * array.
      *
      * @param key The key of the ConfigValue that has this constraint
      * @param arr The value that has this constraint must be of the values in arr
      */
-    constexpr OneOf(std::string_view key, std::array<std::string_view, ArrSize> arr) : key_{key}, arr_{arr}
+    constexpr OneOf(std::string_view key, std::array<std::string_view, ArrSize> arr)
+        : key_{key}, arr_{arr}
     {
     }
 
@@ -302,7 +312,9 @@ private:
     checkValueImpl(Value const& val) const override
     {
         namespace rg = std::ranges;
-        auto const check = [&val](std::string_view name) { return std::get<std::string>(val) == name; };
+        auto const check = [&val](std::string_view name) {
+            return std::get<std::string>(val) == name;
+        };
         if (rg::any_of(arr_, check))
             return std::nullopt;
 
@@ -480,16 +492,34 @@ static constinit OneOf gValidateProvider{"database.cassandra.provider", kPROVIDE
 static constinit PositiveDouble gValidatePositiveDouble{};
 
 static constinit NumberValueConstraint<uint16_t> gValidateNumMarkers{1, 256};
-static constinit NumberValueConstraint<uint16_t> gValidateNumCursors{0, std::numeric_limits<uint16_t>::max()};
+static constinit NumberValueConstraint<uint16_t> gValidateNumCursors{
+    0,
+    std::numeric_limits<uint16_t>::max()
+};
 
 // replication factor can be 0
-static constinit NumberValueConstraint<uint16_t> gValidateReplicationFactor{0, std::numeric_limits<uint16_t>::max()};
+static constinit NumberValueConstraint<uint16_t> gValidateReplicationFactor{
+    0,
+    std::numeric_limits<uint16_t>::max()
+};
 
-static constinit NumberValueConstraint<uint16_t> gValidateUint16{1, std::numeric_limits<uint16_t>::max()};
+static constinit NumberValueConstraint<uint16_t> gValidateUint16{
+    1,
+    std::numeric_limits<uint16_t>::max()
+};
 
-static constinit NumberValueConstraint<uint32_t> gValidateUint32{1, std::numeric_limits<uint32_t>::max()};
-static constinit NumberValueConstraint<uint32_t> gValidateNonNegativeUint32{0, std::numeric_limits<uint32_t>::max()};
-static constinit NumberValueConstraint<uint32_t> gValidateApiVersion{rpc::kAPI_VERSION_MIN, rpc::kAPI_VERSION_MAX};
+static constinit NumberValueConstraint<uint32_t> gValidateUint32{
+    1,
+    std::numeric_limits<uint32_t>::max()
+};
+static constinit NumberValueConstraint<uint32_t> gValidateNonNegativeUint32{
+    0,
+    std::numeric_limits<uint32_t>::max()
+};
+static constinit NumberValueConstraint<uint32_t> gValidateApiVersion{
+    rpc::kAPI_VERSION_MIN,
+    rpc::kAPI_VERSION_MAX
+};
 
 static constinit RpcNameConstraint gRpcNameConstraint{};
 }  // namespace util::config

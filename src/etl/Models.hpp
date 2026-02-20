@@ -43,8 +43,8 @@ namespace etl::model {
 /**
  * @brief A specification for the Registry.
  *
- * This specification simply defines the transaction types that are to be filtered out from the incoming transactions by
- * the Registry for its `onTransaction` and `onInitialTransaction` hooks.
+ * This specification simply defines the transaction types that are to be filtered out from the
+ * incoming transactions by the Registry for its `onTransaction` and `onInitialTransaction` hooks.
  * It's a compilation error to list the same transaction type more than once.
  */
 template <ripple::TxType... Types>

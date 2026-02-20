@@ -104,25 +104,29 @@ generateTestValuesForParametersTest()
         },
         {
             .testName = "LedgerHashInvalid",
-            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})JSON",
+            .testJson =
+                R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashMalformed",
         },
         {
             .testName = "LedgerHashNotString",
-            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})JSON",
+            .testJson =
+                R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledger_hashNotString",
         },
         {
             .testName = "LedgerIndexNotInt",
-            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})JSON",
+            .testJson =
+                R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "ledgerIndexMalformed",
         },
         {
             .testName = "LimitNotInt",
-            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": "x"})JSON",
+            .testJson =
+                R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": "x"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "Invalid parameters.",
         },
@@ -140,13 +144,15 @@ generateTestValuesForParametersTest()
         },
         {
             .testName = "MarkerNotString",
-            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 123})JSON",
+            .testJson =
+                R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 123})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "markerNotString",
         },
         {
             .testName = "MarkerInvalid",
-            .testJson = R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": "12;xxx"})JSON",
+            .testJson =
+                R"JSON({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": "12;xxx"})JSON",
             .expectedError = "invalidParams",
             .expectedErrorMessage = "markerMalformed",
         },
@@ -207,7 +213,8 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaStringIndex)
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _))
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -235,7 +242,8 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
 
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _))
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -361,8 +369,9 @@ TEST_F(RPCAccountNFTsHandlerTest, Limit)
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
 
     auto const firstPage = ripple::keylet::nftpage_max(accountID).key;
-    auto const pageObject =
-        createNftTokenPage(std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, firstPage);
+    auto const pageObject = createNftTokenPage(
+        std::vector{std::make_pair<std::string, std::string>(kTOKEN_ID, "www.ok.com")}, firstPage
+    );
     ON_CALL(*backend_, doFetchLedgerObject(firstPage, 30, _))
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1 + kLIMIT);
@@ -449,7 +458,9 @@ TEST_F(RPCAccountNFTsHandlerTest, InvalidMarker)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Marker field does not match any valid Page ID");
+        EXPECT_EQ(
+            err.at("error_message").as_string(), "Marker field does not match any valid Page ID"
+        );
     });
 }
 
@@ -514,7 +525,9 @@ TEST_F(RPCAccountNFTsHandlerTest, invalidPage)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Marker matches Page ID from another Account");
+        EXPECT_EQ(
+            err.at("error_message").as_string(), "Marker matches Page ID from another Account"
+        );
     });
 }
 

@@ -57,11 +57,13 @@ RequestError::errorCode() const
     return errorCode_;
 }
 
-HttpHeader::HttpHeader(boost::beast::http::field name, std::string value) : name(name), value(std::move(value))
+HttpHeader::HttpHeader(boost::beast::http::field name, std::string value)
+    : name(name), value(std::move(value))
 {
 }
 
-HttpHeader::HttpHeader(std::string name, std::string value) : name(std::move(name)), value(std::move(value))
+HttpHeader::HttpHeader(std::string name, std::string value)
+    : name(std::move(name)), value(std::move(value))
 {
 }
 

@@ -40,9 +40,11 @@ struct MockAsyncRPCEngine {
     {
         boost::asio::io_context ioc;
 
-        util::spawn(ioc, [handler = std::forward<Fn>(func), _ = make_work_guard(ioc)](auto yield) mutable {
-            handler(yield);
-        });
+        util::spawn(
+            ioc, [handler = std::forward<Fn>(func), _ = make_work_guard(ioc)](auto yield) mutable {
+                handler(yield);
+            }
+        );
 
         ioc.run();
         return true;
@@ -50,7 +52,11 @@ struct MockAsyncRPCEngine {
 
     MOCK_METHOD(void, notifyComplete, (std::string const&, std::chrono::microseconds const&), ());
     void
-    notifyComplete(web::Context const& ctx, std::chrono::microseconds const& duration, bool isForwarded)
+    notifyComplete(
+        web::Context const& ctx,
+        std::chrono::microseconds const& duration,
+        bool isForwarded
+    )
     {
         notifyComplete(ctx.method, duration);
         if (not isForwarded)
@@ -70,10 +76,19 @@ struct MockAsyncRPCEngine {
 };
 
 struct MockRPCEngine {
-    MOCK_METHOD(bool, post, (std::function<void(boost::asio::yield_context)>&&, std::string const&), ());
+    MOCK_METHOD(
+        bool,
+        post,
+        (std::function<void(boost::asio::yield_context)>&&, std::string const&),
+        ()
+    );
     MOCK_METHOD(void, notifyComplete, (std::string const&, std::chrono::microseconds const&), ());
     void
-    notifyComplete(web::Context const& ctx, std::chrono::microseconds const& duration, bool isForwarded)
+    notifyComplete(
+        web::Context const& ctx,
+        std::chrono::microseconds const& duration,
+        bool isForwarded
+    )
     {
         notifyComplete(ctx.method, duration);
         if (not isForwarded)

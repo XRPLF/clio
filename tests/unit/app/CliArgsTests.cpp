@@ -66,7 +66,8 @@ TEST_F(CliArgsTests, Parse_NoArgs)
 
 TEST_F(CliArgsTests, Parse_NgWebServer)
 {
-    for (auto& argv : {std::array{"clio_server", "-w"}, std::array{"clio_server", "--ng-web-server"}}) {
+    for (auto& argv :
+         {std::array{"clio_server", "-w"}, std::array{"clio_server", "--ng-web-server"}}) {
         auto const action = CliArgs::parse(argv.size(), const_cast<char const**>(argv.data()));
 
         int const returnCode = 123;
@@ -96,7 +97,9 @@ TEST_F(CliArgsTests, Parse_VersionHelp)
           std::array{"clio_server", "-h"}}) {
         auto const action = CliArgs::parse(argv.size(), const_cast<char const**>(argv.data()));
 
-        EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) { return exit.exitCode; });
+        EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) {
+            return exit.exitCode;
+        });
         EXPECT_EQ(
             action.apply(
                 onRunMock.AsStdFunction(),
@@ -112,7 +115,9 @@ TEST_F(CliArgsTests, Parse_VersionHelp)
 TEST_F(CliArgsTests, Parse_Config)
 {
     std::string_view configPath = "some_config_path";
-    std::array argv{"clio_server", "--conf", configPath.data()};  // NOLINT(bugprone-suspicious-stringview-data-usage)
+    std::array argv{
+        "clio_server", "--conf", configPath.data()
+    };  // NOLINT(bugprone-suspicious-stringview-data-usage)
     auto const action = CliArgs::parse(argv.size(), argv.data());
 
     int const returnCode = 123;
@@ -134,14 +139,17 @@ TEST_F(CliArgsTests, Parse_Config)
 TEST_F(CliArgsTests, Parse_VerifyConfig)
 {
     std::string_view configPath = "some_config_path";
-    std::array argv{"clio_server", configPath.data(), "--verify"};  // NOLINT(bugprone-suspicious-stringview-data-usage)
+    std::array argv{
+        "clio_server", configPath.data(), "--verify"
+    };  // NOLINT(bugprone-suspicious-stringview-data-usage)
     auto const action = CliArgs::parse(argv.size(), argv.data());
 
     int const returnCode = 123;
-    EXPECT_CALL(onVerifyMock, Call).WillOnce([&configPath](CliArgs::Action::VerifyConfig const& verify) {
-        EXPECT_EQ(verify.configPath, configPath);
-        return returnCode;
-    });
+    EXPECT_CALL(onVerifyMock, Call)
+        .WillOnce([&configPath](CliArgs::Action::VerifyConfig const& verify) {
+            EXPECT_EQ(verify.configPath, configPath);
+            return returnCode;
+        });
     EXPECT_EQ(
         action.apply(
             onRunMock.AsStdFunction(),
@@ -158,7 +166,9 @@ TEST_F(CliArgsTests, Parse_ConfigDescriptionInvalidPath)
     using namespace util::config;
     std::array argv{"clio_server", "--config-description", ""};
     auto const action = CliArgs::parse(argv.size(), argv.data());
-    EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) { return exit.exitCode; });
+    EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) {
+        return exit.exitCode;
+    });
 
     EXPECT_EQ(
         action.apply(
@@ -179,7 +189,9 @@ TEST_F(CliArgsTestsWithTmpFile, Parse_ConfigDescription)
 {
     std::array argv{"clio_server", "--config-description", tmpFile.path.c_str()};
     auto const action = CliArgs::parse(argv.size(), argv.data());
-    EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) { return exit.exitCode; });
+    EXPECT_CALL(onExitMock, Call).WillOnce([](CliArgs::Action::Exit const& exit) {
+        return exit.exitCode;
+    });
 
     // user provide config markdown file name as well
     ASSERT_TRUE(std::filesystem::exists(tmpFile.path));
@@ -214,8 +226,10 @@ TEST_F(CliArgsTestsWithTmpFile, Parse_ConfigDescriptionFileContent)
     auto const fileContent = buffer.str();
     EXPECT_TRUE(fileContent.find("# Clio Config Description") != std::string::npos);
     EXPECT_TRUE(
-        fileContent.find("This document provides a list of all available Clio configuration properties in detail.") !=
-        std::string::npos
+        fileContent.find(
+            "This document provides a list of all available Clio configuration properties in "
+            "detail."
+        ) != std::string::npos
     );
     EXPECT_TRUE(fileContent.find("## Configuration Details") != std::string::npos);
 

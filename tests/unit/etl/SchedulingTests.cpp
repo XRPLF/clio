@@ -59,7 +59,9 @@ protected:
 TEST_F(ForwardSchedulerTests, ExhaustsSchedulerIfMostRecentLedgerIsNewerThanRequestedSequence)
 {
     auto scheduler = impl::ForwardScheduler(*networkValidatedLedgers_, 0u, 10u);
-    EXPECT_CALL(*networkValidatedLedgers_, getMostRecent()).Times(11).WillRepeatedly(testing::Return(11u));
+    EXPECT_CALL(*networkValidatedLedgers_, getMostRecent())
+        .Times(11)
+        .WillRepeatedly(testing::Return(11u));
 
     for (auto i = 0u; i < 10u; ++i) {
         auto maybeTask = scheduler.next();
@@ -75,7 +77,9 @@ TEST_F(ForwardSchedulerTests, ExhaustsSchedulerIfMostRecentLedgerIsNewerThanRequ
 TEST_F(ForwardSchedulerTests, ReturnsNulloptIfMostRecentLedgerIsOlderThanRequestedSequence)
 {
     auto scheduler = impl::ForwardScheduler(*networkValidatedLedgers_, 0u, 10u);
-    EXPECT_CALL(*networkValidatedLedgers_, getMostRecent()).Times(10).WillRepeatedly(testing::Return(4u));
+    EXPECT_CALL(*networkValidatedLedgers_, getMostRecent())
+        .Times(10)
+        .WillRepeatedly(testing::Return(4u));
 
     for (auto i = 0u; i < 5u; ++i) {
         auto const maybeTask = scheduler.next();
@@ -165,8 +169,9 @@ TEST(SchedulerChainTests, ExhaustsFirstSchedulerBeforeUsingSecond)
     testing::MockFunction<std::optional<Task>()> downToZeroGen;
     EXPECT_CALL(downToZeroGen, Call()).Times(11).WillRepeatedly(testing::ByRef(generateSecond));
 
-    auto scheduler =
-        impl::makeScheduler(FakeScheduler(upToTenGen.AsStdFunction()), FakeScheduler(downToZeroGen.AsStdFunction()));
+    auto scheduler = impl::makeScheduler(
+        FakeScheduler(upToTenGen.AsStdFunction()), FakeScheduler(downToZeroGen.AsStdFunction())
+    );
 
     for (auto i = 0u; i < 10u; ++i) {
         auto const maybeTask = scheduler->next();

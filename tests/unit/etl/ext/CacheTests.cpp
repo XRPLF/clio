@@ -37,7 +37,8 @@ using namespace data;
 
 namespace {
 constinit auto const kSEQ = 123u;
-constinit auto const kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constinit auto const kLEDGER_HASH =
+    "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constinit auto const kUNUSED_LAST_KEY = "unused";
 
 auto
@@ -61,7 +62,8 @@ createTestData()
 struct CacheExtTests : util::prometheus::WithPrometheus {
 protected:
     MockLedgerCache cache_;
-    std::shared_ptr<etl::impl::CacheUpdater> updater_ = std::make_shared<etl::impl::CacheUpdater>(cache_);
+    std::shared_ptr<etl::impl::CacheUpdater> updater_ =
+        std::make_shared<etl::impl::CacheUpdater>(cache_);
     etl::impl::CacheExt ext_{updater_};
 };
 

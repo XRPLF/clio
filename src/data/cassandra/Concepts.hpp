@@ -78,12 +78,13 @@ concept SomeExecutionStrategy = requires(
  * @brief The requirements of a retry policy.
  */
 template <typename T>
-concept SomeRetryPolicy = requires(T a, boost::asio::io_context ioc, CassandraError err, uint32_t attempt) {
-    { T(ioc) };
-    { a.shouldRetry(err) } -> std::same_as<bool>;
-    {
-        a.retry([]() {})
-    } -> std::same_as<void>;
-};
+concept SomeRetryPolicy =
+    requires(T a, boost::asio::io_context ioc, CassandraError err, uint32_t attempt) {
+        { T(ioc) };
+        { a.shouldRetry(err) } -> std::same_as<bool>;
+        {
+            a.retry([]() {})
+        } -> std::same_as<void>;
+    };
 
 }  // namespace data::cassandra

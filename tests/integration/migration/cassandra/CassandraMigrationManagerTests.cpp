@@ -67,28 +67,33 @@ using CassandraSupportedTestMigrators = migration::impl::MigratorsRegister<
     ExampleDropTableMigrator>;
 
 // Define the test migration manager
-using CassandraMigrationTestManager = migration::impl::MigrationManagerBase<CassandraSupportedTestMigrators>;
+using CassandraMigrationTestManager =
+    migration::impl::MigrationManagerBase<CassandraSupportedTestMigrators>;
 
 namespace {
-std::pair<std::shared_ptr<migration::MigrationManagerInterface>, std::shared_ptr<CassandraMigrationTestBackend>>
+std::pair<
+    std::shared_ptr<migration::MigrationManagerInterface>,
+    std::shared_ptr<CassandraMigrationTestBackend>>
 makeMigrationTestManagerAndBackend(ClioConfigDefinition const& config)
 {
     auto const cfg = config.getObject("database.cassandra");
 
     auto cache = data::LedgerCache{};
-    auto const backendPtr =
-        std::make_shared<CassandraMigrationTestBackend>(data::cassandra::SettingsProvider{cfg}, cache);
+    auto const backendPtr = std::make_shared<CassandraMigrationTestBackend>(
+        data::cassandra::SettingsProvider{cfg}, cache
+    );
 
     return std::make_pair(
-        std::make_shared<CassandraMigrationTestManager>(backendPtr, config.getObject("migration")), backendPtr
+        std::make_shared<CassandraMigrationTestManager>(backendPtr, config.getObject("migration")),
+        backendPtr
     );
 }
 }  // namespace
 
 class MigrationCassandraSimpleTest : public WithPrometheus {
     // This function is used to prepare the database before running the tests
-    // It is called in the SetUp function. Different tests can override this function to prepare the database
-    // differently
+    // It is called in the SetUp function. Different tests can override this function to prepare the
+    // database differently
     virtual void
     setupDatabase()
     {
@@ -104,11 +109,14 @@ protected:
          {"database.cassandra.keyspace",
           ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendKeyspace)},
          {"database.cassandra.provider", ConfigValue{ConfigType::String}.defaultValue(kCASSANDRA)},
-         {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
-         {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
+         {"database.cassandra.replication_factor",
+          ConfigValue{ConfigType::Integer}.defaultValue(1)},
+         {"database.cassandra.replication_factor",
+          ConfigValue{ConfigType::Integer}.defaultValue(1)},
          {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.defaultValue(2)},
          {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
-         {"database.cassandra.port", ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort).optional()},
+         {"database.cassandra.port",
+          ConfigValue{ConfigType::Integer}.withConstraint(gValidatePort).optional()},
          {"database.cassandra.replication_factor",
           ConfigValue{ConfigType::Integer}.defaultValue(3u).withConstraint(gValidateUint16)},
          {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
@@ -135,7 +143,8 @@ protected:
          {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
          {"migration.full_scan_threads",
           ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(gValidateUint32)},
-         {"migration.full_scan_jobs", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint32)},
+         {"migration.full_scan_jobs",
+          ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(gValidateUint32)},
          {"migration.cursors_per_job",
           ConfigValue{ConfigType::Integer}.defaultValue(100).withConstraint(gValidateUint32)}}
     };
@@ -207,8 +216,8 @@ TEST_F(MigrationCassandraManagerCleanDBTest, MigratorStatus)
     EXPECT_EQ(status, MigratorStatus::NotKnown);
 }
 
-// The test suite for testing migration process for ExampleTransactionsMigrator. In this test suite, the transactions
-// are written to the database before running the migration
+// The test suite for testing migration process for ExampleTransactionsMigrator. In this test suite,
+// the transactions are written to the database before running the migration
 class MigrationCassandraManagerTxTableTest : public MigrationCassandraSimpleTest {
     void
     setupDatabase() override
@@ -225,14 +234,18 @@ class MigrationCassandraManagerTxTableTest : public MigrationCassandraSimpleTest
 TEST_F(MigrationCassandraManagerTxTableTest, MigrateExampleTransactionsMigrator)
 {
     constexpr auto kTRANSACTIONS_MIGRATOR_NAME = "ExampleTransactionsMigrator";
-    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kTRANSACTIONS_MIGRATOR_NAME), MigratorStatus::NotMigrated);
+    EXPECT_EQ(
+        testMigrationManager_->getMigratorStatusByName(kTRANSACTIONS_MIGRATOR_NAME),
+        MigratorStatus::NotMigrated
+    );
 
     ExampleTransactionsMigrator::count = 0;
     testMigrationManager_->runMigration(kTRANSACTIONS_MIGRATOR_NAME);
     EXPECT_EQ(ExampleTransactionsMigrator::count, gTransactionsRawData.size());
 
-    auto const newTableSize =
-        data::synchronous([&](auto ctx) { return testMigrationBackend_->fetchTxIndexTableSize(ctx); });
+    auto const newTableSize = data::synchronous([&](auto ctx) {
+        return testMigrationBackend_->fetchTxIndexTableSize(ctx);
+    });
 
     EXPECT_TRUE(newTableSize.has_value());
     EXPECT_EQ(newTableSize, gTransactionsRawData.size());
@@ -244,23 +257,32 @@ TEST_F(MigrationCassandraManagerTxTableTest, MigrateExampleTransactionsMigrator)
         });
     };
 
-    auto txType = getTxType(ripple::uint256("CEECF7E516F8A53C5D32A357B737ED54D3186FDD510B1973D908AD8D93AD8E00"));
+    auto txType = getTxType(
+        ripple::uint256("CEECF7E516F8A53C5D32A357B737ED54D3186FDD510B1973D908AD8D93AD8E00")
+    );
     EXPECT_TRUE(txType.has_value());
     EXPECT_EQ(txType.value(), "OracleSet");
 
-    txType = getTxType(ripple::uint256("35DBFB1A88DE17EBD2BCE37F6E1FD6D3B9887C92B7933ED2FCF2A84E9138B7CA"));
+    txType = getTxType(
+        ripple::uint256("35DBFB1A88DE17EBD2BCE37F6E1FD6D3B9887C92B7933ED2FCF2A84E9138B7CA")
+    );
     EXPECT_TRUE(txType.has_value());
     EXPECT_EQ(txType.value(), "Payment");
 
-    txType = getTxType(ripple::uint256("FCACE9D00625FA3BCC5316078324EA153EC8551243AC1701D496CC1CA2B8A474"));
+    txType = getTxType(
+        ripple::uint256("FCACE9D00625FA3BCC5316078324EA153EC8551243AC1701D496CC1CA2B8A474")
+    );
     EXPECT_TRUE(txType.has_value());
     EXPECT_EQ(txType.value(), "AMMCreate");
 
-    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kTRANSACTIONS_MIGRATOR_NAME), MigratorStatus::Migrated);
+    EXPECT_EQ(
+        testMigrationManager_->getMigratorStatusByName(kTRANSACTIONS_MIGRATOR_NAME),
+        MigratorStatus::Migrated
+    );
 }
 
-// The test suite for testing migration process for ExampleObjectsMigrator. In this test suite, the objects are written
-// to the database before running the migration
+// The test suite for testing migration process for ExampleObjectsMigrator. In this test suite, the
+// objects are written to the database before running the migration
 class MigrationCassandraManagerObjectsTableTest : public MigrationCassandraSimpleTest {
     void
     setupDatabase() override
@@ -276,18 +298,24 @@ class MigrationCassandraManagerObjectsTableTest : public MigrationCassandraSimpl
 TEST_F(MigrationCassandraManagerObjectsTableTest, MigrateExampleObjectsMigrator)
 {
     constexpr auto kOBJECTS_MIGRATOR_NAME = "ExampleObjectsMigrator";
-    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kOBJECTS_MIGRATOR_NAME), MigratorStatus::NotMigrated);
+    EXPECT_EQ(
+        testMigrationManager_->getMigratorStatusByName(kOBJECTS_MIGRATOR_NAME),
+        MigratorStatus::NotMigrated
+    );
 
     testMigrationManager_->runMigration(kOBJECTS_MIGRATOR_NAME);
 
     EXPECT_EQ(ExampleObjectsMigrator::count, gObjectsRawData.size());
     EXPECT_EQ(ExampleObjectsMigrator::accountCount, 37);
 
-    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kOBJECTS_MIGRATOR_NAME), MigratorStatus::Migrated);
+    EXPECT_EQ(
+        testMigrationManager_->getMigratorStatusByName(kOBJECTS_MIGRATOR_NAME),
+        MigratorStatus::Migrated
+    );
 }
 
-// The test suite for testing migration process for ExampleLedgerMigrator. In this test suite, the ledger headers are
-// written to ledgers table before running the migration
+// The test suite for testing migration process for ExampleLedgerMigrator. In this test suite, the
+// ledger headers are written to ledgers table before running the migration
 class MigrationCassandraManagerLedgerTableTest : public MigrationCassandraSimpleTest {
     void
     setupDatabase() override
@@ -304,13 +332,20 @@ class MigrationCassandraManagerLedgerTableTest : public MigrationCassandraSimple
 TEST_F(MigrationCassandraManagerLedgerTableTest, MigrateExampleLedgerMigrator)
 {
     constexpr auto kHEADER_MIGRATOR_NAME = "ExampleLedgerMigrator";
-    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kHEADER_MIGRATOR_NAME), MigratorStatus::NotMigrated);
+    EXPECT_EQ(
+        testMigrationManager_->getMigratorStatusByName(kHEADER_MIGRATOR_NAME),
+        MigratorStatus::NotMigrated
+    );
 
     testMigrationManager_->runMigration(kHEADER_MIGRATOR_NAME);
-    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kHEADER_MIGRATOR_NAME), MigratorStatus::Migrated);
+    EXPECT_EQ(
+        testMigrationManager_->getMigratorStatusByName(kHEADER_MIGRATOR_NAME),
+        MigratorStatus::Migrated
+    );
 
-    auto const newTableSize =
-        data::synchronous([&](auto ctx) { return testMigrationBackend_->fetchLedgerTableSize(ctx); });
+    auto const newTableSize = data::synchronous([&](auto ctx) {
+        return testMigrationBackend_->fetchLedgerTableSize(ctx);
+    });
     EXPECT_EQ(newTableSize, gLedgerHeaderRawData.size());
 
     auto const getAccountHash = [this](std::uint32_t seq) {
@@ -320,13 +355,16 @@ TEST_F(MigrationCassandraManagerLedgerTableTest, MigrateExampleLedgerMigrator)
     };
 
     EXPECT_EQ(
-        getAccountHash(5619393), ripple::uint256("D1DE0F83A6858DF52811E31FE97B8449A4DD55A7D9E0023FE5DC2B335E4C49E8")
+        getAccountHash(5619393),
+        ripple::uint256("D1DE0F83A6858DF52811E31FE97B8449A4DD55A7D9E0023FE5DC2B335E4C49E8")
     );
     EXPECT_EQ(
-        getAccountHash(5619394), ripple::uint256("3FEF485204772F03842AA8757B4631E8F146E17AD9762E0552540A517DD38A24")
+        getAccountHash(5619394),
+        ripple::uint256("3FEF485204772F03842AA8757B4631E8F146E17AD9762E0552540A517DD38A24")
     );
     EXPECT_EQ(
-        getAccountHash(5619395), ripple::uint256("D0A61C158AD8941868666AD51C4662EEAAA2A141BF0F4435BC22B9BC6783AF65")
+        getAccountHash(5619395),
+        ripple::uint256("D0A61C158AD8941868666AD51C4662EEAAA2A141BF0F4435BC22B9BC6783AF65")
     );
 }
 
@@ -336,14 +374,20 @@ class MigrationCassandraManagerDropTableTest : public MigrationCassandraSimpleTe
 TEST_F(MigrationCassandraManagerDropTableTest, MigrateDropTableMigrator)
 {
     constexpr auto kDROP_TABLE_MIGRATOR_NAME = "ExampleDropTableMigrator";
-    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kDROP_TABLE_MIGRATOR_NAME), MigratorStatus::NotMigrated);
+    EXPECT_EQ(
+        testMigrationManager_->getMigratorStatusByName(kDROP_TABLE_MIGRATOR_NAME),
+        MigratorStatus::NotMigrated
+    );
 
     auto const beforeDropSize =
         data::synchronous([&](auto ctx) { return testMigrationBackend_->fetchDiffTableSize(ctx); });
     EXPECT_EQ(beforeDropSize, 0);
 
     testMigrationManager_->runMigration(kDROP_TABLE_MIGRATOR_NAME);
-    EXPECT_EQ(testMigrationManager_->getMigratorStatusByName(kDROP_TABLE_MIGRATOR_NAME), MigratorStatus::Migrated);
+    EXPECT_EQ(
+        testMigrationManager_->getMigratorStatusByName(kDROP_TABLE_MIGRATOR_NAME),
+        MigratorStatus::Migrated
+    );
 
     auto const newTableSize =
         data::synchronous([&](auto ctx) { return testMigrationBackend_->fetchDiffTableSize(ctx); });

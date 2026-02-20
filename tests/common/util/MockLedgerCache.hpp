@@ -33,7 +33,12 @@
 #include <vector>
 
 struct MockLedgerCache : data::LedgerCacheInterface {
-    MOCK_METHOD(void, updateImp, (std::vector<data::LedgerObject> const& a, uint32_t b, bool c), ());
+    MOCK_METHOD(
+        void,
+        updateImp,
+        (std::vector<data::LedgerObject> const& a, uint32_t b, bool c),
+        ()
+    );
 
     void
     update(std::vector<data::LedgerObject> const& a, uint32_t b, bool c = false) override
@@ -41,11 +46,21 @@ struct MockLedgerCache : data::LedgerCacheInterface {
         updateImp(a, b, c);
     }
 
-    MOCK_METHOD(std::optional<data::Blob>, get, (ripple::uint256 const& a, uint32_t b), (const, override));
+    MOCK_METHOD(
+        std::optional<data::Blob>,
+        get,
+        (ripple::uint256 const& a, uint32_t b),
+        (const, override)
+    );
 
     MOCK_METHOD(void, update, (std::vector<etl::model::Object> const&, uint32_t), (override));
 
-    MOCK_METHOD(std::optional<data::Blob>, getDeleted, (ripple::uint256 const&, uint32_t), (const, override));
+    MOCK_METHOD(
+        std::optional<data::Blob>,
+        getDeleted,
+        (ripple::uint256 const&, uint32_t),
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::optional<data::LedgerObject>,

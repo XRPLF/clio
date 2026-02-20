@@ -242,7 +242,9 @@ TEST_F(FeedTransactionTest, SubTransactionV1)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
+    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+                          .getSerializer()
+                          .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1)));
@@ -264,7 +266,9 @@ TEST_F(FeedTransactionTest, SubTransactionForProposedTx)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
+    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+                          .getSerializer()
+                          .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1)));
@@ -285,7 +289,9 @@ TEST_F(FeedTransactionTest, SubTransactionV2)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
+    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+                          .getSerializer()
+                          .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2)));
@@ -311,7 +317,9 @@ TEST_F(FeedTransactionTest, SubAccountV1)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
+    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+                          .getSerializer()
+                          .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1)));
@@ -337,7 +345,9 @@ TEST_F(FeedTransactionTest, SubForProposedAccount)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
+    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+                          .getSerializer()
+                          .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1)));
@@ -360,7 +370,9 @@ TEST_F(FeedTransactionTest, SubAccountV2)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
+    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+                          .getSerializer()
+                          .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2)));
@@ -387,7 +399,9 @@ TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
+    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+                          .getSerializer()
+                          .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).Times(2).WillRepeatedly(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(2);
@@ -689,7 +703,9 @@ TEST_F(FeedTransactionTest, TransactionContainsBothAccountsSubed)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
+    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+                          .getSerializer()
+                          .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(1);
@@ -726,7 +742,9 @@ TEST_F(FeedTransactionTest, SubAccountRepeatWithDifferentVersion)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
+    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+                          .getSerializer()
+                          .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(1);
@@ -760,7 +778,9 @@ TEST_F(FeedTransactionTest, SubTransactionRepeatWithDifferentVersion)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
+    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+                          .getSerializer()
+                          .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V2))).Times(1);
@@ -841,7 +861,8 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kCURRENCY, kISSUER, 1, 3);
+    ripple::STObject const obj =
+        createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kCURRENCY, kISSUER, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     ripple::STArray const metaArray{0};
@@ -907,8 +928,14 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRANSACTION_FOR_OWNER_FUND))).Times(1);
-    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_));
-    ON_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
+    EXPECT_CALL(
+        *mockAmendmentCenterPtr_,
+        isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_)
+    );
+    ON_CALL(
+        *mockAmendmentCenterPtr_,
+        isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_)
+    )
         .WillByDefault(testing::Return(false));
     testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
 }
@@ -976,7 +1003,8 @@ TEST_F(FeedTransactionTest, PubTransactionOfferCreationFrozenLine)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kCURRENCY, kISSUER, 1, 3);
+    ripple::STObject const obj =
+        createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kCURRENCY, kISSUER, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     ripple::STArray const metaArray{0};
@@ -1016,7 +1044,8 @@ TEST_F(FeedTransactionTest, SubTransactionOfferCreationGlobalFrozen)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kCURRENCY, kISSUER, 1, 3);
+    ripple::STObject const obj =
+        createCreateOfferTransactionObject(kACCOUNT1, 1, 32, kCURRENCY, kISSUER, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     ripple::STArray const metaArray{0};
@@ -1066,7 +1095,9 @@ TEST_F(FeedTransactionTest, SubBothProposedAndValidatedAccount)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
+    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+                          .getSerializer()
+                          .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1))).Times(1);
@@ -1093,7 +1124,9 @@ TEST_F(FeedTransactionTest, SubBothProposedAndValidated)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
+    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+                          .getSerializer()
+                          .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).Times(2).WillRepeatedly(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1))).Times(2);
@@ -1115,7 +1148,9 @@ TEST_F(FeedTransactionTest, SubProposedDisconnect)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
+    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+                          .getSerializer()
+                          .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1))).Times(1);
@@ -1138,7 +1173,9 @@ TEST_F(FeedTransactionTest, SubProposedAccountDisconnect)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22).getSerializer().peekData();
+    trans1.metadata = createPaymentTransactionMetaObject(kACCOUNT1, kACCOUNT2, 110, 30, 22)
+                          .getSerializer()
+                          .peekData();
 
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRAN_V1))).Times(1);
@@ -1148,8 +1185,8 @@ TEST_F(FeedTransactionTest, SubProposedAccountDisconnect)
     testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
 }
 
-// This test exercises `accountHold` for amendment fixFrozenLPTokenTransfer, so that the output shows "owner_funds: 0"
-// if the currency in the amm pool is frozen
+// This test exercises `accountHold` for amendment fixFrozenLPTokenTransfer, so that the output
+// shows "owner_funds: 0" if the currency in the amm pool is frozen
 TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
 {
     EXPECT_CALL(*mockSessionPtr, onDisconnect);
@@ -1187,7 +1224,8 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
     // create an amm account because in `accountHolds` checks for the ammID
     auto const ammAccount = getAccountIdWithString(kAMM_ACCOUNT);
     auto const kk = ripple::keylet::account(ammAccount).key;
-    ripple::STObject const ammAccountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 1, 10, 2, kTXN_ID, 3, 0, ammID);
+    ripple::STObject const ammAccountRoot =
+        createAccountRootObject(kAMM_ACCOUNT, 0, 1, 10, 2, kTXN_ID, 3, 0, ammID);
     EXPECT_CALL(*backend_, doFetchLedgerObject(kk, testing::_, testing::_))
         .Times(2)
         .WillRepeatedly(testing::Return(ammAccountRoot.getSerializer().peekData()));
@@ -1230,18 +1268,28 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFundFrozenLPToken)
     EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1));
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kTRANSACTION_FOR_OWNER_FUND))).Times(1);
 
-    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_))
+    EXPECT_CALL(
+        *mockAmendmentCenterPtr_,
+        isEnabled(testing::_, Amendments::fixFrozenLPTokenTransfer, testing::_)
+    )
         .WillOnce(testing::Return(true));
 
-    auto const ammObj =
-        createAmmObject(kAMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), kCURRENCY, kISSUER);
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_))
+    auto const ammObj = createAmmObject(
+        kAMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), kCURRENCY, kISSUER
+    );
+    EXPECT_CALL(
+        *backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_)
+    )
         .WillOnce(testing::Return(ammObj.getSerializer().peekData()));
 
     // create the issuer account that enacted global freeze
     auto const issuerAccount = getAccountIdWithString(kISSUER);
-    ripple::STObject const issuerAccountRoot = createAccountRootObject(kISSUER, 4194304, 1, 10, 2, kTXN_ID, 3);
-    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(issuerAccount).key, testing::_, testing::_))
+    ripple::STObject const issuerAccountRoot =
+        createAccountRootObject(kISSUER, 4194304, 1, 10, 2, kTXN_ID, 3);
+    EXPECT_CALL(
+        *backend_,
+        doFetchLedgerObject(ripple::keylet::account(issuerAccount).key, testing::_, testing::_)
+    )
         .WillOnce(testing::Return(issuerAccountRoot.getSerializer().peekData()));
 
     testFeedPtr->pub(trans1, ledgerHeader, backend_, mockAmendmentCenterPtr_, kNETWORK_ID);
@@ -1385,7 +1433,8 @@ protected:
 TEST_F(TransactionFeedMockPrometheusTest, subUnsub)
 {
     auto& counterTx = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"tx\"}");
-    auto& counterAccount = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"account\"}");
+    auto& counterAccount =
+        makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"account\"}");
     auto& counterBook = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"book\"}");
 
     EXPECT_CALL(counterTx, add(1));
@@ -1414,7 +1463,8 @@ TEST_F(TransactionFeedMockPrometheusTest, subUnsub)
 TEST_F(TransactionFeedMockPrometheusTest, AutoDisconnect)
 {
     auto& counterTx = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"tx\"}");
-    auto& counterAccount = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"account\"}");
+    auto& counterAccount =
+        makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"account\"}");
     auto& counterBook = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"book\"}");
 
     EXPECT_CALL(counterTx, add(1));
@@ -1426,9 +1476,11 @@ TEST_F(TransactionFeedMockPrometheusTest, AutoDisconnect)
 
     std::vector<web::SubscriptionContextInterface::OnDisconnectSlot> onDisconnectSlots;
 
-    EXPECT_CALL(*mockSessionPtr_, onDisconnect).Times(3).WillRepeatedly([&onDisconnectSlots](auto const& slot) {
-        onDisconnectSlots.push_back(slot);
-    });
+    EXPECT_CALL(*mockSessionPtr_, onDisconnect)
+        .Times(3)
+        .WillRepeatedly([&onDisconnectSlots](auto const& slot) {
+            onDisconnectSlots.push_back(slot);
+        });
     testFeedPtr_->sub(sessionPtr_);
 
     auto const account = getAccountIdWithString(kACCOUNT1);

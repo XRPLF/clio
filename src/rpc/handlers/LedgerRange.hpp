@@ -32,7 +32,8 @@
 namespace rpc {
 
 /**
- * @brief The ledger_range command returns the index number of the earliest and latest ledgers that the server has.
+ * @brief The ledger_range command returns the index number of the earliest and latest ledgers that
+ * the server has.
  *
  * Not documented in the official rippled API docs.
  */
@@ -54,7 +55,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    LedgerRangeHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
+    LedgerRangeHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+        : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 

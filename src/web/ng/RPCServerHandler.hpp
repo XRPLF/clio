@@ -136,7 +136,8 @@ public:
              &response,
              &onTaskComplete = onTaskComplete.value(),
              &connectionMetadata,
-             subscriptionContext = std::move(subscriptionContext)](boost::asio::yield_context innerYield) mutable {
+             subscriptionContext =
+                 std::move(subscriptionContext)](boost::asio::yield_context innerYield) mutable {
                 try {
                     boost::system::error_code ec;
                     auto parsedRequest = boost::json::parse(request.message(), ec);
@@ -144,10 +145,11 @@ public:
                         rpcEngine_->notifyBadSyntax();
                         response = impl::ErrorHelper{request}.makeJsonParsingError();
                         if (ec.failed()) {
-                            LOG(log_.warn())
-                                << "Error parsing JSON: " << ec.message() << ". For request: " << request.message();
+                            LOG(log_.warn()) << "Error parsing JSON: " << ec.message()
+                                             << ". For request: " << request.message();
                         } else {
-                            LOG(log_.warn()) << "Received not a JSON object. For request: " << request.message();
+                            LOG(log_.warn())
+                                << "Received not a JSON object. For request: " << request.message();
                         }
                     } else {
                         auto parsedObject = std::move(parsedRequest).as_object();
@@ -155,10 +157,13 @@ public:
                         if (not dosguard_.get().request(connectionMetadata.ip(), parsedObject)) {
                             response = makeSlowDownResponse(request, parsedObject);
                         } else {
-                            LOG(perfLog_.debug()) << connectionMetadata.tag() << "Adding to work queue";
+                            LOG(perfLog_.debug())
+                                << connectionMetadata.tag() << "Adding to work queue";
 
-                            if (not connectionMetadata.wasUpgraded() and shouldReplaceParams(parsedObject))
-                                parsedObject[JS(params)] = boost::json::array({boost::json::object{}});
+                            if (not connectionMetadata.wasUpgraded() and
+                                shouldReplaceParams(parsedObject))
+                                parsedObject[JS(params)] =
+                                    boost::json::array({boost::json::object{}});
 
                             response = handleRequest(
                                 innerYield,
@@ -170,7 +175,8 @@ public:
                         }
                     }
                 } catch (std::exception const& ex) {
-                    LOG(perfLog_.error()) << connectionMetadata.tag() << "Caught exception: " << ex.what();
+                    LOG(perfLog_.error())
+                        << connectionMetadata.tag() << "Caught exception: " << ex.what();
                     rpcEngine_->notifyInternalError();
                     response = impl::ErrorHelper{request}.makeInternalError();
                 }
@@ -209,7 +215,8 @@ private:
         SubscriptionContextPtr subscriptionContext
     )
     {
-        LOG(log_.info()) << connectionMetadata.tag() << (connectionMetadata.wasUpgraded() ? "ws" : "http")
+        LOG(log_.info()) << connectionMetadata.tag()
+                         << (connectionMetadata.wasUpgraded() ? "ws" : "http")
                          << " received request from work queue: " << util::removeSecret(request)
                          << " ip = " << connectionMetadata.ip();
 
@@ -223,7 +230,10 @@ private:
 
             auto const context = [&] {
                 if (connectionMetadata.wasUpgraded()) {
-                    ASSERT(subscriptionContext != nullptr, "Subscription context must exist for a WS connection");
+                    ASSERT(
+                        subscriptionContext != nullptr,
+                        "Subscription context must exist for a WS connection"
+                    );
                     return rpc::makeWsContext(
                         yield,
                         request,
@@ -248,16 +258,20 @@ private:
 
             if (!context) {
                 auto const err = context.error();
-                LOG(perfLog_.warn()) << connectionMetadata.tag() << "Could not create Web context: " << err;
-                LOG(log_.warn()) << connectionMetadata.tag() << "Could not create Web context: " << err;
+                LOG(perfLog_.warn())
+                    << connectionMetadata.tag() << "Could not create Web context: " << err;
+                LOG(log_.warn()) << connectionMetadata.tag()
+                                 << "Could not create Web context: " << err;
 
                 // we count all those as BadSyntax - as the WS path would.
-                // Although over HTTP these will yield a 400 status with a plain text response (for most).
+                // Although over HTTP these will yield a 400 status with a plain text response (for
+                // most).
                 rpcEngine_->notifyBadSyntax();
                 return impl::ErrorHelper(rawRequest, std::move(request)).makeError(err);
             }
 
-            auto [result, timeDiff] = util::timed([&]() { return rpcEngine_->buildResponse(*context); });
+            auto [result, timeDiff] =
+                util::timed([&]() { return rpcEngine_->buildResponse(*context); });
 
             auto us = std::chrono::duration<int, std::milli>(timeDiff);
             rpc::logDuration(request, context->tag(), us);
@@ -266,26 +280,29 @@ private:
 
             if (!result.response.has_value()) {
                 // note: error statuses are counted/notified in buildResponse itself
-                response = impl::ErrorHelper(rawRequest, request).composeError(result.response.error());
+                response =
+                    impl::ErrorHelper(rawRequest, request).composeError(result.response.error());
                 auto const responseStr = boost::json::serialize(response);
 
                 LOG(perfLog_.debug()) << context->tag() << "Encountered error: " << responseStr;
                 LOG(log_.debug()) << context->tag() << "Encountered error: " << responseStr;
             } else {
                 auto& json = result.response.value();
-                auto const isForwarded =
-                    json.contains("forwarded") && json.at("forwarded").is_bool() && json.at("forwarded").as_bool();
+                auto const isForwarded = json.contains("forwarded") &&
+                    json.at("forwarded").is_bool() && json.at("forwarded").as_bool();
 
-                // This can still technically be an error. Clio counts forwarded requests as successful.
+                // This can still technically be an error. Clio counts forwarded requests
+                // as successful.
                 rpcEngine_->notifyComplete(*context, us, isForwarded);
 
                 if (isForwarded)
                     json.erase("forwarded");
 
                 // if the result is forwarded - just use it as is
-                // if forwarded request has error, for http, error should be in "result"; for ws, error should
-                // be at top
-                if (isForwarded && (json.contains(JS(result)) || connectionMetadata.wasUpgraded())) {
+                // if forwarded request has error, for http, error should be in "result"; for ws,
+                // error should be at top
+                if (isForwarded &&
+                    (json.contains(JS(result)) || connectionMetadata.wasUpgraded())) {
                     for (auto const& [k, v] : json)
                         response.insert_or_assign(k, v);
                 } else {
@@ -311,7 +328,8 @@ private:
 
                     response[JS(type)] = JS(response);
                 } else {
-                    if (response.contains(JS(result)) && !response[JS(result)].as_object().contains(JS(error)))
+                    if (response.contains(JS(result)) &&
+                        !response[JS(result)].as_object().contains(JS(error)))
                         response[JS(result)].as_object()[JS(status)] = JS(success);
                 }
             }
@@ -380,13 +398,15 @@ private:
         auto const paramsIsNull = hasParams and req.at(JS(params)).is_null();
         auto const arrayIsEmpty = paramsIsArray and req.at(JS(params)).as_array().empty();
         auto const arrayIsNotEmpty = paramsIsArray and not req.at(JS(params)).as_array().empty();
-        auto const firstArgIsNull = arrayIsNotEmpty and req.at(JS(params)).as_array().at(0).is_null();
-        auto const firstArgIsEmptyString = arrayIsNotEmpty and req.at(JS(params)).as_array().at(0).is_string() and
+        auto const firstArgIsNull =
+            arrayIsNotEmpty and req.at(JS(params)).as_array().at(0).is_null();
+        auto const firstArgIsEmptyString = arrayIsNotEmpty and
+            req.at(JS(params)).as_array().at(0).is_string() and
             req.at(JS(params)).as_array().at(0).as_string().empty();
 
         // Note: all this compatibility dance is to match `rippled` as close as possible
-        return not hasParams or paramsIsEmptyString or paramsIsNull or paramsIsEmptyObject or arrayIsEmpty or
-            firstArgIsEmptyString or firstArgIsNull;
+        return not hasParams or paramsIsEmptyString or paramsIsNull or paramsIsEmptyObject or
+            arrayIsEmpty or firstArgIsEmptyString or firstArgIsNull;
     }
 };
 

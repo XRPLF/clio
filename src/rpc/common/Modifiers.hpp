@@ -99,7 +99,8 @@ struct ToLower final {
         if (not value.as_object().at(key).is_string())
             return {};  // ignore for non-string types
 
-        value.as_object()[key] = util::toLower(boost::json::value_to<std::string>(value.as_object().at(key)));
+        value.as_object()[key] =
+            util::toLower(boost::json::value_to<std::string>(value.as_object().at(key)));
         return {};
     }
 };
@@ -163,7 +164,8 @@ public:
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the tested value from the outer object
-     * @return Any compatible user-provided error if modify/verify failed; otherwise no error is returned
+     * @return Any compatible user-provided error if modify/verify failed; otherwise no error is
+     * returned
      */
     [[nodiscard]] MaybeError
     modify(boost::json::value& value, std::string_view key) const

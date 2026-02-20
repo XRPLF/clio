@@ -70,7 +70,11 @@ public:
         std::size_t const cachePageFetchSize,
         std::vector<CursorPair> const& cursors
     )
-        : ctx_{ctx}, backend_{backend}, cache_{std::ref(cache)}, queue_{cursors.size()}, remaining_{cursors.size()}
+        : ctx_{ctx}
+        , backend_{backend}
+        , cache_{std::ref(cache)}
+        , queue_{cursors.size()}
+        , remaining_{cursors.size()}
     {
         std::ranges::for_each(cursors, [this](auto const& cursor) { queue_.push(cursor); });
         load(seq, numCacheMarkers, cachePageFetchSize);
@@ -123,19 +127,25 @@ private:
                 LOG(log_.debug()) << "Starting a cursor: " << ripple::strHex(start);
 
                 while (not token.isStopRequested() and not cache_.get().isDisabled()) {
-                    auto res = data::retryOnTimeout([this, seq, cachePageFetchSize, &start, token]() {
-                        return backend_->fetchLedgerPage(start, seq, cachePageFetchSize, false, token);
-                    });
+                    auto res =
+                        data::retryOnTimeout([this, seq, cachePageFetchSize, &start, token]() {
+                            return backend_->fetchLedgerPage(
+                                start, seq, cachePageFetchSize, false, token
+                            );
+                        });
 
                     cache_.get().update(res.objects, seq, true);
 
                     if (not res.cursor or res.cursor > end) {
                         if (--remaining_ <= 0) {
                             auto endTime = std::chrono::steady_clock::now();
-                            auto duration = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime_);
+                            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+                                endTime - startTime_
+                            );
 
-                            LOG(log_.info()) << "Finished loading cache. Cache size = " << cache_.get().size()
-                                             << ". Took " << duration.count() << " seconds";
+                            LOG(log_.info())
+                                << "Finished loading cache. Cache size = " << cache_.get().size()
+                                << ". Took " << duration.count() << " seconds";
 
                             cache_.get().setFull();
                         } else {

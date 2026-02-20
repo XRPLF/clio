@@ -37,7 +37,12 @@ namespace {
 
 template <typename ErrorCodeType>
 void
-check(boost::json::object const& j, std::string_view error, ErrorCodeType errorCode, std::string_view errorMessage)
+check(
+    boost::json::object const& j,
+    std::string_view error,
+    ErrorCodeType errorCode,
+    std::string_view errorMessage
+)
 {
     EXPECT_TRUE(j.contains("error"));
     EXPECT_TRUE(j.contains("error_code"));
@@ -96,7 +101,9 @@ TEST(RPCErrorsTest, SuccessToJSON)
 TEST(RPCErrorsTest, RippledErrorToJSON)
 {
     auto const status = Status{RippledError::rpcINVALID_PARAMS};
-    check(makeError(status), "invalidParams", RippledError::rpcINVALID_PARAMS, "Invalid parameters.");
+    check(
+        makeError(status), "invalidParams", RippledError::rpcINVALID_PARAMS, "Invalid parameters."
+    );
 }
 
 TEST(RPCErrorsTest, RippledErrorFromStringToJSON)
@@ -120,7 +127,12 @@ TEST(RPCErrorsTest, RippledErrorToJSONCustomStrCodeAndMessage)
 TEST(RPCErrorsTest, ClioErrorToJSON)
 {
     auto const status = Status{ClioError::RpcMalformedCurrency};
-    check(makeError(status), "malformedCurrency", ClioError::RpcMalformedCurrency, "Malformed currency.");
+    check(
+        makeError(status),
+        "malformedCurrency",
+        ClioError::RpcMalformedCurrency,
+        "Malformed currency."
+    );
 }
 
 TEST(RPCErrorsTest, ClioErrorToJSONCustomMessage)
@@ -156,11 +168,20 @@ INSTANTIATE_TEST_SUITE_P(
         WarningCodeTestBundle{
             "Clio",
             WarningCode::WarnRpcClio,
-            "This is a clio server. clio only serves validated data. If you want to talk to rippled, include "
+            "This is a clio server. clio only serves validated data. If you want to talk to "
+            "rippled, include "
             "'ledger_index':'current' in your request"
         },
-        WarningCodeTestBundle{"Outdated", WarningCode::WarnRpcOutdated, "This server may be out of date"},
-        WarningCodeTestBundle{"RateLimit", WarningCode::WarnRpcRateLimit, "You are about to be rate limited"},
+        WarningCodeTestBundle{
+            "Outdated",
+            WarningCode::WarnRpcOutdated,
+            "This server may be out of date"
+        },
+        WarningCodeTestBundle{
+            "RateLimit",
+            WarningCode::WarnRpcRateLimit,
+            "You are about to be rate limited"
+        },
         WarningCodeTestBundle{
             "Deprecated",
             WarningCode::WarnRpcDeprecated,
@@ -227,7 +248,8 @@ INSTANTIATE_TEST_SUITE_P(
         StatusStreamTestBundle{
             .testName = "StatusWithClioError",
             .status = Status{ClioError::RpcParamsUnparsable},
-            .expectedOutput = "Code: 6004, Message: Params must be an array holding exactly one object."
+            .expectedOutput =
+                "Code: 6004, Message: Params must be an array holding exactly one object."
         },
         StatusStreamTestBundle{
             .testName = "StatusWithCodeAndExtraInfo",
@@ -251,8 +273,14 @@ INSTANTIATE_TEST_SUITE_P(
         },
         StatusStreamTestBundle{
             .testName = "StatusWithCodeErrorMessage",
-            .status = Status{ClioError::EtlInvalidResponse, "invalidResponse", "Rippled returned an invalid response."},
-            .expectedOutput = "Code: 7003, Error: invalidResponse, Message: Rippled returned an invalid response."
+            .status =
+                Status{
+                    ClioError::EtlInvalidResponse,
+                    "invalidResponse",
+                    "Rippled returned an invalid response."
+                },
+            .expectedOutput =
+                "Code: 7003, Error: invalidResponse, Message: Rippled returned an invalid response."
         }
     ),
     tests::util::kNAME_GENERATOR

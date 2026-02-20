@@ -67,7 +67,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    LedgerIndexHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
+    LedgerIndexHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
+        : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
@@ -81,7 +82,9 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const kRPC_SPEC = RpcSpec{
-            {JS(date), validation::Type<std::string>{}, validation::TimeFormatValidator{kDATE_FORMAT}},
+            {JS(date),
+             validation::Type<std::string>{},
+             validation::TimeFormatValidator{kDATE_FORMAT}},
         };
         return kRPC_SPEC;
     }

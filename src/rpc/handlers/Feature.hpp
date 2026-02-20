@@ -71,7 +71,8 @@ public:
         std::string ledgerHash;
         uint32_t ledgerIndex{};
 
-        // when set to true, output will be inlined in `result` instead of wrapping as `features` inside of `result`.
+        // when set to true, output will be inlined in `result` instead of wrapping as `features`
+        // inside of `result`.
         bool inlineResult = false;
 
         // validated should be sent via framework
@@ -111,7 +112,10 @@ public:
      * @return The result of the operation
      */
     Result
-    process(Input const& input, Context const& ctx) const;  // NOLINT(readability-convert-member-functions-to-static)
+    process(
+        Input const& input,
+        Context const& ctx
+    ) const;  // NOLINT(readability-convert-member-functions-to-static)
 
 private:
     /**

@@ -45,8 +45,8 @@
 namespace rpc {
 
 /**
- * @brief The account_mptoken_issuances method returns information about all MPTokenIssuance objects the account has
- * created.
+ * @brief The account_mptoken_issuances method returns information about all MPTokenIssuance objects
+ * the account has created.
  */
 class AccountMPTokenIssuancesHandler {
     // dependencies
@@ -141,7 +141,8 @@ public:
             {JS(account),
              validation::Required{},
              meta::WithCustomError{
-                 validation::CustomValidators::accountValidator, Status(RippledError::rpcACT_MALFORMED)
+                 validation::CustomValidators::accountValidator,
+                 Status(RippledError::rpcACT_MALFORMED)
              }},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(limit),
@@ -200,7 +201,11 @@ private:
      * @param issuance The MPTokenIssuance response to convert
      */
     friend void
-    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, MPTokenIssuanceResponse const& issuance);
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        MPTokenIssuanceResponse const& issuance
+    );
 };
 
 }  // namespace rpc

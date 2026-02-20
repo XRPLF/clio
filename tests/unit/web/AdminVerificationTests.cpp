@@ -55,7 +55,8 @@ TEST_F(IPAdminVerificationStrategyTest, IsAdminOnlyForIP_127_0_0_1)
 class PasswordAdminVerificationStrategyTest : public virtual ::testing::Test {
 protected:
     std::string const password_ = "secret";
-    std::string const passwordHash_ = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
+    std::string const passwordHash_ =
+        "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
 
     web::PasswordAdminVerificationStrategy strat_{password_};
 
@@ -93,7 +94,8 @@ struct MakeAdminVerificationStrategyTestParams {
     bool expectPasswordStrategy;
 };
 
-class MakeAdminVerificationStrategyTest : public testing::TestWithParam<MakeAdminVerificationStrategyTestParams> {};
+class MakeAdminVerificationStrategyTest
+    : public testing::TestWithParam<MakeAdminVerificationStrategyTestParams> {};
 
 TEST_P(MakeAdminVerificationStrategyTest, ChoosesStrategyCorrectly)
 {

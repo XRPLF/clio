@@ -60,7 +60,10 @@ std::optional<Error>
 Array::addNull(std::optional<std::string_view> key)
 {
     if (not itemPattern_.isOptional() and not itemPattern_.hasValue()) {
-        return Error{key.value_or("Unknown_key"), "value for the array (or object field inside array) is required"};
+        return Error{
+            key.value_or("Unknown_key"),
+            "value for the array (or object field inside array) is required"
+        };
     }
 
     elements_.push_back(itemPattern_);

@@ -84,7 +84,8 @@ TEST_F(ForwardingSourceOperationsTests, XUserHeader)
         auto headers = connection.headers();
         ASSERT_FALSE(headers.empty());
         auto it = std::ranges::find_if(headers, [](auto const& header) {
-            return std::holds_alternative<std::string>(header.name) && std::get<std::string>(header.name) == "X-User";
+            return std::holds_alternative<std::string>(header.name) &&
+                std::get<std::string>(header.name) == "X-User";
         });
         ASSERT_FALSE(it == headers.end());
         EXPECT_EQ(std::get<std::string>(it->name), "X-User");
@@ -93,8 +94,9 @@ TEST_F(ForwardingSourceOperationsTests, XUserHeader)
     });
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto result =
-            forwardingSource_.forwardToRippled(boost::json::parse(message_).as_object(), {}, xUserValue, yield);
+        auto result = forwardingSource_.forwardToRippled(
+            boost::json::parse(message_).as_object(), {}, xUserValue, yield
+        );
         ASSERT_FALSE(result);
         EXPECT_EQ(result.error(), rpc::ClioError::EtlRequestError);
     });
@@ -108,7 +110,9 @@ TEST_F(ForwardingSourceOperationsTests, ReadFailed)
     });
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto result = forwardingSource_.forwardToRippled(boost::json::parse(message_).as_object(), {}, {}, yield);
+        auto result = forwardingSource_.forwardToRippled(
+            boost::json::parse(message_).as_object(), {}, {}, yield
+        );
         ASSERT_FALSE(result);
         EXPECT_EQ(result.error(), rpc::ClioError::EtlRequestError);
     });
@@ -122,7 +126,9 @@ TEST_F(ForwardingSourceOperationsTests, ReadTimeout)
     });
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto result = forwardingSource_.forwardToRippled(boost::json::parse(message_).as_object(), {}, {}, yield);
+        auto result = forwardingSource_.forwardToRippled(
+            boost::json::parse(message_).as_object(), {}, {}, yield
+        );
         ASSERT_FALSE(result);
         EXPECT_EQ(result.error(), rpc::ClioError::EtlRequestTimeout);
     });
@@ -135,7 +141,8 @@ TEST_F(ForwardingSourceOperationsTests, ParseFailed)
 
         auto receivedMessage = connection.receive(yield);
         [&]() { ASSERT_TRUE(receivedMessage); }();
-        EXPECT_EQ(boost::json::parse(*receivedMessage), boost::json::parse(message_)) << *receivedMessage;
+        EXPECT_EQ(boost::json::parse(*receivedMessage), boost::json::parse(message_))
+            << *receivedMessage;
 
         auto sendError = connection.send("invalid_json", yield);
         [&]() { ASSERT_FALSE(sendError) << *sendError; }();
@@ -144,7 +151,9 @@ TEST_F(ForwardingSourceOperationsTests, ParseFailed)
     });
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto result = forwardingSource_.forwardToRippled(boost::json::parse(message_).as_object(), {}, {}, yield);
+        auto result = forwardingSource_.forwardToRippled(
+            boost::json::parse(message_).as_object(), {}, {}, yield
+        );
         ASSERT_FALSE(result);
         EXPECT_EQ(result.error(), rpc::ClioError::EtlInvalidResponse);
     });
@@ -157,7 +166,8 @@ TEST_F(ForwardingSourceOperationsTests, GotNotAnObject)
 
         auto receivedMessage = connection.receive(yield);
         [&]() { ASSERT_TRUE(receivedMessage); }();
-        EXPECT_EQ(boost::json::parse(*receivedMessage), boost::json::parse(message_)) << *receivedMessage;
+        EXPECT_EQ(boost::json::parse(*receivedMessage), boost::json::parse(message_))
+            << *receivedMessage;
 
         auto sendError = connection.send(R"(["some_value"])", yield);
 
@@ -167,7 +177,9 @@ TEST_F(ForwardingSourceOperationsTests, GotNotAnObject)
     });
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto result = forwardingSource_.forwardToRippled(boost::json::parse(message_).as_object(), {}, {}, yield);
+        auto result = forwardingSource_.forwardToRippled(
+            boost::json::parse(message_).as_object(), {}, {}, yield
+        );
         ASSERT_FALSE(result);
         EXPECT_EQ(result.error(), rpc::ClioError::EtlInvalidResponse);
     });
@@ -180,15 +192,17 @@ TEST_F(ForwardingSourceOperationsTests, Success)
 
         auto receivedMessage = connection.receive(yield);
         [&]() { ASSERT_TRUE(receivedMessage); }();
-        EXPECT_EQ(boost::json::parse(*receivedMessage), boost::json::parse(message_)) << *receivedMessage;
+        EXPECT_EQ(boost::json::parse(*receivedMessage), boost::json::parse(message_))
+            << *receivedMessage;
 
         auto sendError = connection.send(boost::json::serialize(reply_), yield);
         [&]() { ASSERT_FALSE(sendError) << *sendError; }();
     });
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto result =
-            forwardingSource_.forwardToRippled(boost::json::parse(message_).as_object(), "some_ip", {}, yield);
+        auto result = forwardingSource_.forwardToRippled(
+            boost::json::parse(message_).as_object(), "some_ip", {}, yield
+        );
         [&]() { ASSERT_TRUE(result); }();
         auto expectedReply = reply_;
         expectedReply["forwarded"] = true;

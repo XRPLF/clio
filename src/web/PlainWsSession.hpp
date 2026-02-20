@@ -99,7 +99,8 @@ public:
 };
 
 /**
- * @brief The websocket upgrader class, upgrade from an HTTP session to a non-secure websocket session.
+ * @brief The websocket upgrader class, upgrade from an HTTP session to a non-secure websocket
+ * session.
  *
  * Pass the socket to the session class after upgrade.
  */
@@ -161,7 +162,9 @@ public:
     {
         boost::asio::dispatch(
             http_.get_executor(),
-            boost::beast::bind_front_handler(&WsUpgrader<HandlerType>::doUpgrade, shared_from_this())
+            boost::beast::bind_front_handler(
+                &WsUpgrader<HandlerType>::doUpgrade, shared_from_this()
+            )
         );
     }
 

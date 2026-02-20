@@ -54,7 +54,10 @@ NetworkValidatedLedgers::getMostRecent()
 }
 
 bool
-NetworkValidatedLedgers::waitUntilValidatedByNetwork(uint32_t sequence, std::optional<uint32_t> maxWaitMs)
+NetworkValidatedLedgers::waitUntilValidatedByNetwork(
+    uint32_t sequence,
+    std::optional<uint32_t> maxWaitMs
+)
 {
     std::unique_lock lck(mtx_);
     auto pred = [sequence, this]() -> bool { return (latest_ && sequence <= *latest_); };

@@ -34,7 +34,8 @@ namespace web::ng::impl {
 template <typename T>
 class SendingQueue {
 public:
-    using Sender = std::function<void(T const&, boost::asio::basic_yield_context<boost::asio::any_io_executor>)>;
+    using Sender = std::function<
+        void(T const&, boost::asio::basic_yield_context<boost::asio::any_io_executor>)>;
 
 private:
     std::queue<T> queue_;

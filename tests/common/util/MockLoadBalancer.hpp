@@ -59,7 +59,10 @@ struct MockLoadBalancer : etl::LoadBalancerInterface {
     MOCK_METHOD(
         ForwardToRippledReturnType,
         forwardToRippled,
-        (boost::json::object const&, std::optional<std::string> const&, bool, boost::asio::yield_context),
+        (boost::json::object const&,
+         std::optional<std::string> const&,
+         bool,
+         boost::asio::yield_context),
         (override)
     );
     MOCK_METHOD(void, stop, (boost::asio::yield_context), ());

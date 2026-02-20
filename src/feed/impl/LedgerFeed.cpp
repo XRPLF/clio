@@ -82,7 +82,8 @@ LedgerFeed::sub(
     auto const fees = backend->fetchFees(lgrInfo->seq, yield);
     ASSERT(fees.has_value(), "Fees must be valid");
 
-    auto const range = std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);
+    auto const range =
+        std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);
 
     auto pubMsg = makeLedgerPubMessage(*lgrInfo, *fees, range, 0, networkID);
     pubMsg.erase("txn_count");
@@ -100,6 +101,10 @@ LedgerFeed::pub(
     uint32_t const networkID
 )
 {
-    SingleFeedBase::pub(boost::json::serialize(makeLedgerPubMessage(lgrInfo, fees, ledgerRange, txnCount, networkID)));
+    SingleFeedBase::pub(
+        boost::json::serialize(
+            makeLedgerPubMessage(lgrInfo, fees, ledgerRange, txnCount, networkID)
+        )
+    );
 }
 }  // namespace feed::impl

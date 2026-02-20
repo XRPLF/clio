@@ -175,7 +175,10 @@ public:
             ASSERT(type() == ConfigType::String, "Value type is not a string");
             return asString();
         } else if constexpr (std::is_floating_point_v<T>) {
-            ASSERT(type() == ConfigType::Double || type() == ConfigType::Integer, "Value type is not a floating point");
+            ASSERT(
+                type() == ConfigType::Double || type() == ConfigType::Integer,
+                "Value type is not a floating point"
+            );
             return asDouble();
         }
 

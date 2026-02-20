@@ -88,7 +88,8 @@ std::expected<ConfigFileJson, Error>
 ConfigFileJson::makeConfigFileJson(std::filesystem::path const& configFilePath)
 {
     try {
-        if (auto const in = std::ifstream(configFilePath.string(), std::ios::in | std::ios::binary); in) {
+        if (auto const in = std::ifstream(configFilePath.string(), std::ios::in | std::ios::binary);
+            in) {
             std::stringstream contents;
             contents << in.rdbuf();
             auto const opts = boost::json::parse_options{.allow_comments = true};
@@ -101,7 +102,9 @@ ConfigFileJson::makeConfigFileJson(std::filesystem::path const& configFilePath)
 
     } catch (std::exception const& e) {
         return std::unexpected<Error>(Error{fmt::format(
-            "An error occurred while processing configuration file '{}': {}", configFilePath.string(), e.what()
+            "An error occurred while processing configuration file '{}': {}",
+            configFilePath.string(),
+            e.what()
         )});
     }
 }
@@ -177,12 +180,17 @@ ConfigFileJson::flattenJson(boost::json::object const& jsonRootObject)
         tasks.pop();
 
         for (auto const& [key, value] : task.object) {
-            auto fullKey =
-                task.prefix.empty() ? std::string(key) : fmt::format("{}.{}", task.prefix, std::string_view{key});
+            auto fullKey = task.prefix.empty()
+                ? std::string(key)
+                : fmt::format("{}.{}", task.prefix, std::string_view{key});
 
             if (value.is_object()) {
                 tasks.push(
-                    Task{.object = value.as_object(), .prefix = std::move(fullKey), .arrayIndex = task.arrayIndex}
+                    Task{
+                        .object = value.as_object(),
+                        .prefix = std::move(fullKey),
+                        .arrayIndex = task.arrayIndex
+                    }
                 );
             } else if (value.is_array()) {
                 fullKey += ".[]";
@@ -190,14 +198,23 @@ ConfigFileJson::flattenJson(boost::json::object const& jsonRootObject)
 
                 if (std::ranges::all_of(array, [](auto const& v) { return v.is_primitive(); })) {
                     jsonObject_[fullKey] = array;
-                } else if (std::ranges::all_of(array, [](auto const& v) { return v.is_object(); })) {
+                } else if (std::ranges::all_of(array, [](auto const& v) {
+                               return v.is_object();
+                           })) {
                     for (size_t i = 0; i < array.size(); ++i) {
-                        tasks.push(Task{.object = array.at(i).as_object(), .prefix = fullKey, .arrayIndex = i});
+                        tasks.push(
+                            Task{
+                                .object = array.at(i).as_object(),
+                                .prefix = fullKey,
+                                .arrayIndex = i
+                            }
+                        );
                     }
                 } else {
                     ASSERT(
                         false,
-                        "Arrays containing both values and objects are not supported. Please check the array {}",
+                        "Arrays containing both values and objects are not supported. Please check "
+                        "the array {}",
                         fullKey
                     );
                 }

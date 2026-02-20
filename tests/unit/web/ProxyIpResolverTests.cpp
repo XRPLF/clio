@@ -205,7 +205,8 @@ INSTANTIATE_TEST_SUITE_P(
             .testName = "ForwardedHeaderIsIncorrect",
             .proxyIps = {"5.6.7.8"},
             .proxyTokens = {},
-            .headers = {{std::string(http::to_string(http::field::forwarded)), "for=\";some_other_text"}},
+            .headers =
+                {{std::string(http::to_string(http::field::forwarded)), "for=\";some_other_text"}},
             .connectionIp = "5.6.7.8",
             .expectedIp = "5.6.7.8"
         }

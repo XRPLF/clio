@@ -37,7 +37,8 @@ struct ETLStateTest : public virtual ::testing::Test {
 
 TEST_F(ETLStateTest, Error)
 {
-    EXPECT_CALL(source, forwardToRippled).WillOnce(Return(std::unexpected{rpc::ClioError::EtlInvalidResponse}));
+    EXPECT_CALL(source, forwardToRippled)
+        .WillOnce(Return(std::unexpected{rpc::ClioError::EtlInvalidResponse}));
     auto const state = etl::ETLState::fetchETLStateFromSource(source);
     EXPECT_FALSE(state);
 }

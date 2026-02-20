@@ -58,7 +58,9 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
     using namespace data;
 
     if (!input.account && !input.ident)
-        return Error{Status{RippledError::rpcINVALID_PARAMS, ripple::RPC::missing_field_message(JS(account))}};
+        return Error{
+            Status{RippledError::rpcINVALID_PARAMS, ripple::RPC::missing_field_message(JS(account))}
+        };
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountInfo's ledger range must be available");
@@ -73,13 +75,15 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
     auto const accountStr = input.account.value_or(input.ident.value_or(""));
     auto const accountID = accountFromStringStrict(accountStr);
     auto const accountKeylet = ripple::keylet::account(*accountID);
-    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject =
+        sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
 
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     ripple::STLedgerEntry const sle{
-        ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key
+        ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()},
+        accountKeylet.key
     };
 
     if (!accountKeylet.check(sle))
@@ -112,7 +116,8 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
 
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
-        auto const signers = sharedPtrBackend_->fetchLedgerObject(signersKey.key, lgrInfo.seq, ctx.yield);
+        auto const signers =
+            sharedPtrBackend_->fetchLedgerObject(signersKey.key, lgrInfo.seq, ctx.yield);
         out.signerLists = std::vector<ripple::STLedgerEntry>();
 
         if (signers) {
@@ -131,7 +136,11 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountInfoHandler::Output const& output
+)
 {
     jv = boost::json::object{
         {JS(account_data), toJson(output.accountData)},
@@ -153,12 +162,13 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
     }};
 
     if (output.isDisallowIncomingEnabled) {
-        std::vector<std::pair<std::string_view, ripple::LedgerSpecificFlags>> const disallowIncomingFlags = {
-            {"disallowIncomingNFTokenOffer", ripple::lsfDisallowIncomingNFTokenOffer},
-            {"disallowIncomingCheck", ripple::lsfDisallowIncomingCheck},
-            {"disallowIncomingPayChan", ripple::lsfDisallowIncomingPayChan},
-            {"disallowIncomingTrustline", ripple::lsfDisallowIncomingTrustline},
-        };
+        std::vector<std::pair<std::string_view, ripple::LedgerSpecificFlags>> const
+            disallowIncomingFlags = {
+                {"disallowIncomingNFTokenOffer", ripple::lsfDisallowIncomingNFTokenOffer},
+                {"disallowIncomingCheck", ripple::lsfDisallowIncomingCheck},
+                {"disallowIncomingPayChan", ripple::lsfDisallowIncomingPayChan},
+                {"disallowIncomingTrustline", ripple::lsfDisallowIncomingTrustline},
+            };
         lsFlags.insert(lsFlags.end(), disallowIncomingFlags.begin(), disallowIncomingFlags.end());
     }
 

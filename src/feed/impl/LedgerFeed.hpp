@@ -40,9 +40,9 @@ namespace feed::impl {
 /**
  * @brief Feed that publishes the ledger info.
  *  Example : {'type': 'ledgerClosed', 'ledger_index': 2647935, 'ledger_hash':
- * '5D022718CD782A82EE10D2147FD90B5F42F26A7E937C870B4FE3CF1086C916AE', 'ledger_time': 756395681, 'fee_base': 10,
- * 'reserve_base': 10000000, 'reserve_inc': 2000000, 'validated_ledgers': '2619127-2647935', 'txn_count': 0,
- * 'network_id': 1}
+ * '5D022718CD782A82EE10D2147FD90B5F42F26A7E937C870B4FE3CF1086C916AE', 'ledger_time': 756395681,
+ * 'fee_base': 10, 'reserve_base': 10000000, 'reserve_inc': 2000000, 'validated_ledgers':
+ * '2619127-2647935', 'txn_count': 0, 'network_id': 1}
  */
 class LedgerFeed : public SingleFeedBase {
 public:
@@ -50,7 +50,8 @@ public:
      * @brief Construct a new Ledger Feed object
      * @param executionCtx The actual publish will be called in the strand of this.
      */
-    LedgerFeed(util::async::AnyExecutionContext& executionCtx) : SingleFeedBase(executionCtx, "ledger")
+    LedgerFeed(util::async::AnyExecutionContext& executionCtx)
+        : SingleFeedBase(executionCtx, "ledger")
     {
     }
 

@@ -246,7 +246,9 @@ TEST_F(FeedProposedTransactionTest, AutoDisconnect)
     testFeedPtr->sub(account1, sessionPtr2);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 3);
 
-    std::ranges::for_each(session2OnDisconnectSlots, [&sessionPtr2](auto& slot) { slot(sessionPtr2.get()); });
+    std::ranges::for_each(session2OnDisconnectSlots, [&sessionPtr2](auto& slot) {
+        slot(sessionPtr2.get());
+    });
     sessionPtr2.reset();
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 1);
@@ -260,14 +262,17 @@ TEST_F(FeedProposedTransactionTest, AutoDisconnect)
 struct ProposedTransactionFeedMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {
 protected:
     web::SubscriptionContextPtr sessionPtr_ = std::make_shared<MockSession>();
-    std::shared_ptr<ProposedTransactionFeed> testFeedPtr_ = std::make_shared<ProposedTransactionFeed>(ctx_);
+    std::shared_ptr<ProposedTransactionFeed> testFeedPtr_ =
+        std::make_shared<ProposedTransactionFeed>(ctx_);
     MockSession* mockSessionPtr_ = dynamic_cast<MockSession*>(sessionPtr_.get());
 };
 
 TEST_F(ProposedTransactionFeedMockPrometheusTest, subUnsub)
 {
-    auto& counterTx = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"tx_proposed\"}");
-    auto& counterAccount = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"account_proposed\"}");
+    auto& counterTx =
+        makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"tx_proposed\"}");
+    auto& counterAccount =
+        makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"account_proposed\"}");
 
     EXPECT_CALL(counterTx, add(1));
     EXPECT_CALL(counterTx, add(-1));
@@ -286,8 +291,10 @@ TEST_F(ProposedTransactionFeedMockPrometheusTest, subUnsub)
 
 TEST_F(ProposedTransactionFeedMockPrometheusTest, AutoDisconnect)
 {
-    auto& counterTx = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"tx_proposed\"}");
-    auto& counterAccount = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"account_proposed\"}");
+    auto& counterTx =
+        makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"tx_proposed\"}");
+    auto& counterAccount =
+        makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"account_proposed\"}");
 
     std::vector<web::SubscriptionContextInterface::OnDisconnectSlot> sessionOnDisconnectSlots;
 
@@ -307,6 +314,8 @@ TEST_F(ProposedTransactionFeedMockPrometheusTest, AutoDisconnect)
     });
     testFeedPtr_->sub(account, sessionPtr_);
 
-    std::ranges::for_each(sessionOnDisconnectSlots, [this](auto& slot) { slot(sessionPtr_.get()); });
+    std::ranges::for_each(sessionOnDisconnectSlots, [this](auto& slot) {
+        slot(sessionPtr_.get());
+    });
     sessionPtr_.reset();
 }

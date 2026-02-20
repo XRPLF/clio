@@ -59,8 +59,9 @@ void
 SubscriptionManager::subProposedTransactions(SubscriberSharedPtr const& subscriber)
 {
     proposedTransactionFeed_.sub(subscriber);
-    // proposed_transactions subscribers not only receive the transaction json when it is proposed, but also the
-    // transaction json when it is validated. So the subscriber also subscribes to the transaction feed.
+    // proposed_transactions subscribers not only receive the transaction json when it is proposed,
+    // but also the transaction json when it is validated. So the subscriber also subscribes to the
+    // transaction feed.
     transactionFeed_.subProposed(subscriber);
 }
 
@@ -72,16 +73,23 @@ SubscriptionManager::unsubProposedTransactions(SubscriberSharedPtr const& subscr
 }
 
 void
-SubscriptionManager::subProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
+SubscriptionManager::subProposedAccount(
+    ripple::AccountID const& account,
+    SubscriberSharedPtr const& subscriber
+)
 {
     proposedTransactionFeed_.sub(account, subscriber);
-    // Same as proposed_transactions subscribers, proposed_account subscribers also subscribe to the transaction feed to
-    // receive validated transaction feed. TransactionFeed class will filter out the sessions that have been sent to.
+    // Same as proposed_transactions subscribers, proposed_account subscribers also subscribe to the
+    // transaction feed to receive validated transaction feed. TransactionFeed class will filter out
+    // the sessions that have been sent to.
     transactionFeed_.subProposed(account, subscriber);
 }
 
 void
-SubscriptionManager::unsubProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
+SubscriptionManager::unsubProposedAccount(
+    ripple::AccountID const& account,
+    SubscriberSharedPtr const& subscriber
+)
 {
     proposedTransactionFeed_.unsub(account, subscriber);
     transactionFeed_.unsubProposed(account, subscriber);
@@ -94,7 +102,10 @@ SubscriptionManager::forwardProposedTransaction(boost::json::object const& recei
 }
 
 boost::json::object
-SubscriptionManager::subLedger(boost::asio::yield_context yield, SubscriberSharedPtr const& subscriber)
+SubscriptionManager::subLedger(
+    boost::asio::yield_context yield,
+    SubscriberSharedPtr const& subscriber
+)
 {
     return ledgerFeed_.sub(yield, backend_, subscriber, networkID_);
 }
@@ -165,13 +176,19 @@ SubscriptionManager::unsubTransactions(SubscriberSharedPtr const& subscriber)
 }
 
 void
-SubscriptionManager::subAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
+SubscriptionManager::subAccount(
+    ripple::AccountID const& account,
+    SubscriberSharedPtr const& subscriber
+)
 {
     transactionFeed_.sub(account, subscriber);
 }
 
 void
-SubscriptionManager::unsubAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
+SubscriptionManager::unsubAccount(
+    ripple::AccountID const& account,
+    SubscriberSharedPtr const& subscriber
+)
 {
     transactionFeed_.unsub(account, subscriber);
 }
@@ -189,7 +206,10 @@ SubscriptionManager::unsubBook(ripple::Book const& book, SubscriberSharedPtr con
 }
 
 void
-SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& txMeta, ripple::LedgerHeader const& lgrInfo)
+SubscriptionManager::pubTransaction(
+    data::TransactionAndMetadata const& txMeta,
+    ripple::LedgerHeader const& lgrInfo
+)
 {
     transactionFeed_.pub(txMeta, lgrInfo, backend_, amendmentCenter_, networkID_);
 }

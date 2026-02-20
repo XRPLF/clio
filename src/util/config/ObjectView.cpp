@@ -39,7 +39,11 @@ ObjectView::ObjectView(std::string_view prefix, ClioConfigDefinition const& clio
 {
 }
 
-ObjectView::ObjectView(std::string_view prefix, std::size_t arrayIndex, ClioConfigDefinition const& clioConfig)
+ObjectView::ObjectView(
+    std::string_view prefix,
+    std::size_t arrayIndex,
+    ClioConfigDefinition const& clioConfig
+)
     : prefix_{prefix}, arrayIndex_{arrayIndex}, clioConfig_{clioConfig}
 {
 }
@@ -81,7 +85,9 @@ ObjectView::getArray(std::string_view key) const
     if (!fullKey.contains(".[]"))
         fullKey += ".[]";
 
-    ASSERT(clioConfig_.get().hasItemsWithPrefix(fullKey), "Key {} does not exist in object", fullKey);
+    ASSERT(
+        clioConfig_.get().hasItemsWithPrefix(fullKey), "Key {} does not exist in object", fullKey
+    );
     return clioConfig_.get().getArray(fullKey);
 }
 
@@ -94,7 +100,9 @@ ObjectView::getFullKey(std::string_view key) const
 bool
 ObjectView::startsWithKey(std::string_view key) const
 {
-    return std::ranges::any_of(clioConfig_.get(), [&key](auto const& pair) { return pair.first.starts_with(key); });
+    return std::ranges::any_of(clioConfig_.get(), [&key](auto const& pair) {
+        return pair.first.starts_with(key);
+    });
 }
 
 }  // namespace util::config

@@ -39,11 +39,13 @@ void
 ProposedTransactionFeed::sub(SubscriberSharedPtr const& subscriber)
 {
     auto const weakPtr = std::weak_ptr(subscriber);
-    auto const added = signal_.connectTrackableSlot(subscriber, [weakPtr](std::shared_ptr<std::string> const& msg) {
-        if (auto connectionPtr = weakPtr.lock()) {
-            connectionPtr->send(msg);
+    auto const added = signal_.connectTrackableSlot(
+        subscriber, [weakPtr](std::shared_ptr<std::string> const& msg) {
+            if (auto connectionPtr = weakPtr.lock()) {
+                connectionPtr->send(msg);
+            }
         }
-    });
+    );
 
     if (added) {
         LOG(logger_.info()) << subscriber->tag() << "Subscribed tx_proposed";
@@ -53,7 +55,10 @@ ProposedTransactionFeed::sub(SubscriberSharedPtr const& subscriber)
 }
 
 void
-ProposedTransactionFeed::sub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
+ProposedTransactionFeed::sub(
+    ripple::AccountID const& account,
+    SubscriberSharedPtr const& subscriber
+)
 {
     auto const weakPtr = std::weak_ptr(subscriber);
     auto const added = accountSignal_.connectTrackableSlot(
@@ -71,7 +76,9 @@ ProposedTransactionFeed::sub(ripple::AccountID const& account, SubscriberSharedP
     if (added) {
         LOG(logger_.info()) << subscriber->tag() << "Subscribed accounts_proposed " << account;
         ++subAccountCount_.get();
-        subscriber->onDisconnect([this, account](SubscriberPtr connection) { unsubInternal(account, connection); });
+        subscriber->onDisconnect([this, account](SubscriberPtr connection) {
+            unsubInternal(account, connection);
+        });
     }
 }
 
@@ -82,7 +89,10 @@ ProposedTransactionFeed::unsub(SubscriberSharedPtr const& subscriber)
 }
 
 void
-ProposedTransactionFeed::unsub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
+ProposedTransactionFeed::unsub(
+    ripple::AccountID const& account,
+    SubscriberSharedPtr const& subscriber
+)
 {
     unsubInternal(account, subscriber.get());
 }
@@ -94,20 +104,23 @@ ProposedTransactionFeed::pub(boost::json::object const& receivedTxJson)
 
     auto const transaction = receivedTxJson.at("transaction").as_object();
     auto const accounts = rpc::getAccountsFromTransaction(transaction);
-    auto affectedAccounts = std::unordered_set<ripple::AccountID>(accounts.cbegin(), accounts.cend());
+    auto affectedAccounts =
+        std::unordered_set<ripple::AccountID>(accounts.cbegin(), accounts.cend());
 
-    [[maybe_unused]] auto task =
-        strand_.execute([this, pubMsg = std::move(pubMsg), affectedAccounts = std::move(affectedAccounts)]() {
+    [[maybe_unused]] auto task = strand_.execute(
+        [this, pubMsg = std::move(pubMsg), affectedAccounts = std::move(affectedAccounts)]() {
             notified_.clear();
             signal_.emit(pubMsg);
-            // Prevent the same connection from receiving the same message twice if it is subscribed to multiple
-            // accounts However, if the same connection subscribe both stream and account, it will still receive the
-            // message twice. notified_ can be cleared before signal_ emit to improve this, but let's keep it as is for
-            // now, since rippled acts like this.
+            // Prevent the same connection from receiving the same message twice if it is subscribed
+            // to multiple accounts However, if the same connection subscribe both stream and
+            // account, it will still receive the message twice. notified_ can be cleared before
+            // signal_ emit to improve this, but let's keep it as is for now, since rippled acts
+            // like this.
             notified_.clear();
             for (auto const& account : affectedAccounts)
                 accountSignal_.emit(account, pubMsg);
-        });
+        }
+    );
 }
 
 std::uint64_t

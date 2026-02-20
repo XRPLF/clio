@@ -99,9 +99,13 @@ struct BasicScheduledOperation : util::MoveTracker {
     typename CtxType::Timer timer;
 
     BasicScheduledOperation(auto& executor, auto delay, auto&& fn)
-        : timer(executor, delay, [state = state, fn = std::forward<decltype(fn)>(fn)](auto ec) mutable {
-            state->emplace(fn(ec));
-        })
+        : timer(
+              executor,
+              delay,
+              [state = state, fn = std::forward<decltype(fn)>(fn)](auto ec) mutable {
+                  state->emplace(fn(ec));
+              }
+          )
     {
     }
 
@@ -220,8 +224,9 @@ using ScheduledOperation = impl::BasicScheduledOperation<CtxType, OpType>;
 /**
  * @brief The `future` side of async operations that automatically repeat until aborted
  *
- * @note The current implementation requires the user provided function to return void and to take no arguments. There
- * is also no mechanism to request the repeating task to stop from inside of the user provided block of code.
+ * @note The current implementation requires the user provided function to return void and to take
+ * no arguments. There is also no mechanism to request the repeating task to stop from inside of the
+ * user provided block of code.
  *
  * @tparam CtxType The type of the execution context
  */
@@ -241,7 +246,8 @@ public:
      */
     template <std::invocable FnType>
     RepeatingOperation(auto& executor, std::chrono::steady_clock::duration interval, FnType&& fn)
-        : repeat_(executor), action_([fn = std::forward<FnType>(fn), &executor] { boost::asio::post(executor, fn); })
+        : repeat_(executor)
+        , action_([fn = std::forward<FnType>(fn), &executor] { boost::asio::post(executor, fn); })
     {
         repeat_.start(interval, action_);
     }
@@ -273,8 +279,8 @@ public:
     /**
      * @brief Force-invoke the operation
      * @note The action is scheduled on the underlying context/strand
-     * @warning The code of the user-provided action is expected to take care of thread-safety unless this operation is
-     * scheduled through a strand
+     * @warning The code of the user-provided action is expected to take care of thread-safety
+     * unless this operation is scheduled through a strand
      */
     void
     invoke()

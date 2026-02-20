@@ -48,7 +48,8 @@ public:
     Array(ConfigValue arg);
 
     /**
-     * @brief Extract array prefix from a key, For example for a key foo.[].bar the method will return foo.[]
+     * @brief Extract array prefix from a key, For example for a key foo.[].bar the method will
+     * return foo.[]
      * @note Provided key must contain '.[]'
      * @warning Be careful with string_view! Returned value is valid only while the key is valid
      *
@@ -70,7 +71,8 @@ public:
 
     /**
      * @brief Add null value to the array
-     * @note The error will be returned if item pattern of the array is neither optional nor has a default value
+     * @note The error will be returned if item pattern of the array is neither optional nor has a
+     * default value
      *
      * @param key An optional key which will be used for error message only (if any)
      * @return An error if any or nullopt if the operation succeeded
