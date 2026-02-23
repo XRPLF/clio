@@ -93,9 +93,10 @@ protected:
     wsFail(boost::beast::error_code ec, char const* what)
     {
         // Don't log if the WebSocket stream was gracefully closed at both endpoints
-        if (ec != boost::beast::websocket::error::closed)
+        if (ec != boost::beast::websocket::error::closed) {
             LOG(log_.error()) << tag() << ": " << what << ": " << ec.message() << ": "
                               << ec.value();
+        }
 
         if (!ec_ && ec != boost::asio::error::operation_aborted) {
             ec_ = ec;

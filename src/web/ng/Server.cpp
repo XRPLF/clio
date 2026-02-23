@@ -138,10 +138,11 @@ makeConnection(
 {
     impl::UpgradableConnectionPtr connection;
     if (sslDetectionResult.isSsl) {
-        if (not sslContext.has_value())
+        if (not sslContext.has_value()) {
             return std::unexpected{
                 "Error creating a connection: SSL is not supported by this server"
             };
+        }
 
         auto sslConnection = std::make_unique<impl::SslHttpConnection>(
             std::move(sslDetectionResult.socket),
@@ -152,10 +153,11 @@ makeConnection(
         );
         sslConnection->setTimeout(std::chrono::seconds{10});
         auto const expectedSuccess = sslConnection->sslHandshake(yield);
-        if (not expectedSuccess.has_value())
+        if (not expectedSuccess.has_value()) {
             return std::unexpected{
                 fmt::format("SSL handshake error: {}", expectedSuccess.error().message())
             };
+        }
 
         connection = std::move(sslConnection);
     } else {

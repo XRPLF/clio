@@ -57,10 +57,11 @@ makeServerSslContext(util::config::ClioConfigDefinition const& config)
     bool const configHasCertFile = config.getValueView("ssl_cert_file").hasValue();
     bool const configHasKeyFile = config.getValueView("ssl_key_file").hasValue();
 
-    if (configHasCertFile != configHasKeyFile)
+    if (configHasCertFile != configHasKeyFile) {
         return std::unexpected{
             "Config entries 'ssl_cert_file' and 'ssl_key_file' must be set or unset together."
         };
+    }
 
     if (not configHasCertFile)
         return std::nullopt;

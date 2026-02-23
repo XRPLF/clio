@@ -223,10 +223,11 @@ makeError(Status const& status)
     auto res = visit(
         util::OverloadSet{
             [&status, &wrapOptional](RippledError err) {
-                if (err == ripple::rpcUNKNOWN)
+                if (err == ripple::rpcUNKNOWN) {
                     return boost::json::object{
                         {"error", status.message}, {"type", "response"}, {"status", "error"}
                     };
+                }
 
                 return makeError(err, wrapOptional(status.error), wrapOptional(status.message));
             },

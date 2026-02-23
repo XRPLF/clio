@@ -173,10 +173,11 @@ public:
         // send entire vector path
         {
             auto const expand = [&](auto&& p) {
-                if constexpr (requires { p.onInitialObjects(seq, data, lastKey); })
+                if constexpr (requires { p.onInitialObjects(seq, data, lastKey); }) {
                     executeIfAllowed(p, [seq, &data, &lastKey](auto& p) {
                         p.onInitialObjects(seq, data, lastKey);
                     });
+                }
             };
 
             std::apply([&expand](auto&&... xs) { (expand(xs), ...); }, store_);
@@ -212,10 +213,11 @@ public:
         {
             auto const expand = [&]<typename P>(P&& p, model::Transaction const& tx) {
                 if constexpr (requires { p.onInitialTransaction(data.seq, tx); }) {
-                    if (std::decay_t<P>::spec::wants(tx.type))
+                    if (std::decay_t<P>::spec::wants(tx.type)) {
                         executeIfAllowed(p, [&data, &tx](auto& p) {
                             p.onInitialTransaction(data.seq, tx);
                         });
+                    }
                 }
             };
 

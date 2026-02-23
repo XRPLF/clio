@@ -161,9 +161,10 @@ public:
                                 << connectionMetadata.tag() << "Adding to work queue";
 
                             if (not connectionMetadata.wasUpgraded() and
-                                shouldReplaceParams(parsedObject))
+                                shouldReplaceParams(parsedObject)) {
                                 parsedObject[JS(params)] =
                                     boost::json::array({boost::json::object{}});
+                            }
 
                             response = handleRequest(
                                 innerYield,

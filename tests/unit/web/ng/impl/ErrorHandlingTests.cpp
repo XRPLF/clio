@@ -46,10 +46,11 @@ struct NgErrorHandlingTests : public virtual ::testing::Test {
     static Request
     makeRequest(bool isHttp, std::optional<std::string> body = std::nullopt)
     {
-        if (isHttp)
+        if (isHttp) {
             return Request{
                 http::request<http::string_body>{http::verb::post, "/", 11, body.value_or("")}
             };
+        }
         static Request::HttpHeaders const kHEADERS;
         return Request{body.value_or(""), kHEADERS};
     }

@@ -104,10 +104,11 @@ CliArgs::parse(int argc, char const* argv[])
 
     if (parsed.contains("migrate")) {
         auto const opt = parsed["migrate"].as<std::string>();
-        if (opt == "status")
+        if (opt == "status") {
             return Action{Action::Migrate{
                 .configPath = std::move(configPath), .subCmd = MigrateSubCmd::status()
             }};
+        }
         return Action{Action::Migrate{
             .configPath = std::move(configPath), .subCmd = MigrateSubCmd::migration(opt)
         }};

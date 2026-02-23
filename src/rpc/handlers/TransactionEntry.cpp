@@ -70,10 +70,11 @@ TransactionEntryHandler::process(
     // the API for transaction_entry says the method only searches the specified
     // ledger; we simulate that here by returning not found if the transaction
     // is in a different ledger than the one specified.
-    if (!dbRet || dbRet->ledgerSequence != output.ledgerHeader->seq)
+    if (!dbRet || dbRet->ledgerSequence != output.ledgerHeader->seq) {
         return Error{
             Status{RippledError::rpcTXN_NOT_FOUND, "transactionNotFound", "Transaction not found."}
         };
+    }
 
     auto [txn, meta] = toExpandedJson(*dbRet, ctx.apiVersion);
 

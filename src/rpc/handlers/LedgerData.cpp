@@ -230,10 +230,11 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
             input.ledgerIndex = *expectedLedgerIndex;
     }
 
-    if (jsonObject.contains(JS(type)))
+    if (jsonObject.contains(JS(type))) {
         input.type = util::LedgerTypes::getLedgerEntryTypeFromStr(
             boost::json::value_to<std::string>(jv.at(JS(type)))
         );
+    }
 
     return input;
 }

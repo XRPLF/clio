@@ -153,10 +153,11 @@ fetchCredentialArray(
         if (credentials::checkExpired(sleCred, info))
             return Error{Status{RippledError::rpcBAD_CREDENTIALS, "credentials are expired"}};
 
-        if (sleCred.getAccountID(ripple::sfSubject) != srcAcc)
+        if (sleCred.getAccountID(ripple::sfSubject) != srcAcc) {
             return Error{Status{
                 RippledError::rpcBAD_CREDENTIALS, "credentials don't belong to the root account"
             }};
+        }
 
         auto credential = ripple::STObject::makeInnerObject(ripple::sfCredential);
         credential.setAccountID(ripple::sfIssuer, sleCred.getAccountID(ripple::sfIssuer));

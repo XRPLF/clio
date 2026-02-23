@@ -77,10 +77,11 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input const& input, Context const&
 
     if (input.ledgerHash || input.ledgerIndex) {
         // rippled does not have this check
-        if (input.ledgerIndexMax || input.ledgerIndexMin)
+        if (input.ledgerIndexMax || input.ledgerIndexMin) {
             return Error{
                 Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}
             };
+        }
 
         auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
             *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence

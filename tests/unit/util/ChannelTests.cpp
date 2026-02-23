@@ -94,10 +94,11 @@ public:
             if (type == ContextType::IOContext)
                 return ContextVariant(std::in_place_type_t<boost::asio::io_context>());
 
-            if (type == ContextType::ThreadPool)
+            if (type == ContextType::ThreadPool) {
                 return ContextVariant(
                     std::in_place_type_t<boost::asio::thread_pool>(), kDEFAULT_THREAD_POOL_SIZE
                 );
+            }
 
             ASSERT(false, "Unknown new type of context");
             std::unreachable();
@@ -395,11 +396,12 @@ TEST_P(ChannelCallbackTest, MultipleSendersOneReceiver)
                                 [self = std::forward<decltype(self)>(self),
                                  &executor,
                                  i](bool success) mutable {
-                                    if (success)
+                                    if (success) {
                                         boost::asio::post(
                                             executor,
                                             [self = std::move(self), i]() mutable { self(i + 1); }
                                         );
+                                    }
                                 }
                             );
                         };
@@ -456,11 +458,12 @@ TEST_P(ChannelCallbackTest, MultipleSendersMultipleReceivers)
                                 [self = std::forward<decltype(self)>(self),
                                  &executor,
                                  i](bool success) mutable {
-                                    if (success)
+                                    if (success) {
                                         boost::asio::post(
                                             executor,
                                             [self = std::move(self), i]() mutable { self(i + 1); }
                                         );
+                                    }
                                 }
                             );
                         };

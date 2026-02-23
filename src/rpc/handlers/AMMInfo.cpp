@@ -247,10 +247,11 @@ AMMInfoHandler::spec([[maybe_unused]] uint32_t apiVersion)
 {
     static auto const kSTRING_ISSUE_VALIDATOR = validation::CustomValidator{
         [](boost::json::value const& value, std::string_view key) -> MaybeError {
-            if (not value.is_string())
+            if (not value.is_string()) {
                 return Error{
                     Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}
                 };
+            }
 
             try {
                 ripple::issueFromJson(boost::json::value_to<std::string>(value));
@@ -358,14 +359,16 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
     if (jsonObject.contains(JS(asset2)))
         input.issue2 = parseIssue(jsonObject.at(JS(asset2)).as_object());
 
-    if (jsonObject.contains(JS(account)))
+    if (jsonObject.contains(JS(account))) {
         input.accountID =
             accountFromStringStrict(boost::json::value_to<std::string>(jsonObject.at(JS(account))));
+    }
 
-    if (jsonObject.contains(JS(amm_account)))
+    if (jsonObject.contains(JS(amm_account))) {
         input.ammAccount = accountFromStringStrict(
             boost::json::value_to<std::string>(jsonObject.at(JS(amm_account)))
         );
+    }
 
     return input;
 }

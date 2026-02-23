@@ -51,9 +51,9 @@ getClioVersionString()
 std::string const&
 getClioFullVersionString()
 {
-    static std::string const value =
+    static std::string const kVALUE =
         "clio-" + getClioVersionString();  // NOLINT(readability-identifier-naming)
-    return value;
+    return kVALUE;
 }
 
 std::string const&

@@ -245,10 +245,11 @@ public:
             return sender_(httpResponse(http::status::ok, "text/html", kHEALTH_CHECK_HTML));
 
         if (req_.method() == http::verb::get and req_.target() == "/cache_state") {
-            if (cache_.get().isFull())
+            if (cache_.get().isFull()) {
                 return sender_(
                     httpResponse(http::status::ok, "text/html", kCACHE_CHECK_LOADED_HTML)
                 );
+            }
 
             return sender_(httpResponse(
                 http::status::service_unavailable, "text/html", kCACHE_CHECK_NOT_LOADED_HTML

@@ -302,7 +302,7 @@ TEST_F(RPCCountersMockPrometheusRecotdLedgerRequestTest, validatedDefaultLedger)
 {
     EXPECT_CALL(ageLedgersHistogramMock, observe(0));
 
-    boost::json::object params;
+    boost::json::object const params;
     counters.recordLedgerRequest(params, 1000);
 }
 

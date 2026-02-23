@@ -694,10 +694,11 @@ traverseOwnedNodes(
         auto const [nextNFTPage, nftsCount] = cursorMaybe.value();
 
         // if limit reach , we return the next page and max as marker
-        if (nftsCount >= limit)
+        if (nftsCount >= limit) {
             return AccountCursor{
                 .index = nextNFTPage, .hint = std::numeric_limits<uint32_t>::max()
             };
+        }
 
         // adjust limit ,continue traversing owned nodes
         limit -= nftsCount;
@@ -772,10 +773,11 @@ traverseOwnedNodes(
         for (;;) {
             auto const ownerDir = backend.fetchLedgerObject(currentIndex.key, sequence, yield);
 
-            if (!ownerDir)
+            if (!ownerDir) {
                 return std::unexpected{
                     Status(ripple::rpcINVALID_PARAMS, "Owner directory not found.")
                 };
+            }
 
             ripple::SerialIter ownedDirIt{ownerDir->data(), ownerDir->size()};
             ripple::SLE const ownedDirSle{ownedDirIt, currentIndex.key};
@@ -1428,25 +1430,29 @@ parseBook(
 std::expected<ripple::Book, Status>
 parseBook(boost::json::object const& request)
 {
-    if (!request.contains("taker_pays"))
+    if (!request.contains("taker_pays")) {
         return std::unexpected{
             Status{RippledError::rpcINVALID_PARAMS, "Missing field 'taker_pays'"}
         };
+    }
 
-    if (!request.contains("taker_gets"))
+    if (!request.contains("taker_gets")) {
         return std::unexpected{
             Status{RippledError::rpcINVALID_PARAMS, "Missing field 'taker_gets'"}
         };
+    }
 
-    if (!request.at("taker_pays").is_object())
+    if (!request.at("taker_pays").is_object()) {
         return std::unexpected{
             Status{RippledError::rpcINVALID_PARAMS, "Field 'taker_pays' is not an object"}
         };
+    }
 
-    if (!request.at("taker_gets").is_object())
+    if (!request.at("taker_gets").is_object()) {
         return std::unexpected{
             Status{RippledError::rpcINVALID_PARAMS, "Field 'taker_gets' is not an object"}
         };
+    }
 
     auto takerPays = request.at("taker_pays").as_object();
     if (!takerPays.contains("currency"))
@@ -1482,10 +1488,11 @@ parseBook(boost::json::object const& request)
 
     ripple::AccountID payIssuer;
     if (takerPays.contains("issuer")) {
-        if (!takerPays.at("issuer").is_string())
+        if (!takerPays.at("issuer").is_string()) {
             return std::unexpected{
                 Status{RippledError::rpcINVALID_PARAMS, "takerPaysIssuerNotString"}
             };
+        }
 
         if (!ripple::to_issuer(
                 payIssuer, boost::json::value_to<std::string>(takerPays.at("issuer"))
@@ -1512,18 +1519,20 @@ parseBook(boost::json::object const& request)
         }};
     }
 
-    if ((!isXRP(payCurrency)) && (!takerPays.contains("issuer")))
+    if ((!isXRP(payCurrency)) && (!takerPays.contains("issuer"))) {
         return std::unexpected{
             Status{RippledError::rpcSRC_ISR_MALFORMED, "Missing non-XRP issuer."}
         };
+    }
 
     ripple::AccountID getIssuer;
 
     if (takerGets.contains("issuer")) {
-        if (!takerGets["issuer"].is_string())
+        if (!takerGets["issuer"].is_string()) {
             return std::unexpected{
                 Status{RippledError::rpcINVALID_PARAMS, "taker_gets.issuer should be string"}
             };
+        }
 
         if (!ripple::to_issuer(
                 getIssuer, boost::json::value_to<std::string>(takerGets.at("issuer"))

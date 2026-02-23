@@ -57,10 +57,11 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
 {
     using namespace data;
 
-    if (!input.account && !input.ident)
+    if (!input.account && !input.ident) {
         return Error{
             Status{RippledError::rpcINVALID_PARAMS, ripple::RPC::missing_field_message(JS(account))}
         };
+    }
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountInfo's ledger range must be available");

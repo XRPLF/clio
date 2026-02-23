@@ -96,10 +96,11 @@ public:
     {
         using std::to_string;
         auto throwErrorIfNeeded = [idx](CassError rc, std::string_view label) {
-            if (rc != CASS_OK)
+            if (rc != CASS_OK) {
                 throw std::logic_error(
                     fmt::format("[{}] at idx {}: {}", label, idx, cass_error_desc(rc))
                 );
+            }
         };
 
         auto bindBytes = [this, idx](auto const* data, size_t size) {

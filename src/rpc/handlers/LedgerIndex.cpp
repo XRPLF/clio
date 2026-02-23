@@ -85,10 +85,11 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input const& input, Context cons
             return not earlierThan(ledgerIndex);
         });
 
-    if (greaterEqLedgerIter != view.end())
+    if (greaterEqLedgerIter != view.end()) {
         return fillOutputByIndex(
             std::max(static_cast<std::uint32_t>(*greaterEqLedgerIter) - 1, minIndex)
         );
+    }
 
     return fillOutputByIndex(maxIndex);
 }

@@ -243,9 +243,10 @@ public:
         output.ledgerIndex = dbResponse->ledgerSequence;
 
         // fetch ledger hash
-        if (ctx.apiVersion > 1u)
+        if (ctx.apiVersion > 1u) {
             output.ledgerHeader =
                 sharedPtrBackend_->fetchLedgerBySequence(dbResponse->ledgerSequence, ctx.yield);
+        }
 
         return output;
     }

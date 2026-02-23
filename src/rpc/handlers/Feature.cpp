@@ -70,9 +70,10 @@ FeatureHandler::process(FeatureHandler::Input const& input, Context const& ctx) 
     auto const& all = amendmentCenter_->getAll();
 
     auto searchPredicate = [search = input.feature](auto const& feature) {
-        if (search)
+        if (search) {
             return ripple::to_string(feature.feature) == search.value() or
                 feature.name == search.value();
+        }
         return true;
     };
 

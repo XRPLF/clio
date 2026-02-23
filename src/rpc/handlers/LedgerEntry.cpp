@@ -133,10 +133,11 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
             );
 
             auto const authCreds = credentials::createAuthCredentials(authorizedCredentials);
-            if (authCreds.size() != authorizedCredentials.size())
+            if (authCreds.size() != authorizedCredentials.size()) {
                 return Error{Status{
                     ClioError::RpcMalformedAuthorizedCredentials, "duplicates in credentials."
                 }};
+            }
 
             key = ripple::keylet::depositPreauth(owner.value(), authCreds).key;
         }
@@ -295,10 +296,11 @@ std::expected<ripple::uint256, Status>
 LedgerEntryHandler::composeKeyFromDirectory(boost::json::object const& directory) noexcept
 {
     // can not specify both dir_root and owner.
-    if (directory.contains(JS(dir_root)) && directory.contains(JS(owner)))
+    if (directory.contains(JS(dir_root)) && directory.contains(JS(owner))) {
         return std::unexpected{
             Status{RippledError::rpcINVALID_PARAMS, "mayNotSpecifyBothDirRootAndOwner"}
         };
+    }
 
     // at least one should available
     if (!(directory.contains(JS(dir_root)) || directory.contains(JS(owner))))

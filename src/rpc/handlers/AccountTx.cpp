@@ -89,10 +89,11 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
     }
 
     if (input.ledgerHash || input.ledgerIndex || input.usingValidatedLedger) {
-        if (ctx.apiVersion > 1u && (input.ledgerIndexMax || input.ledgerIndexMin))
+        if (ctx.apiVersion > 1u && (input.ledgerIndexMax || input.ledgerIndexMin)) {
             return Error{
                 Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}
             };
+        }
 
         if (!input.ledgerIndexMax && !input.ledgerIndexMin) {
             // mimic rippled, when both range and index specified, respect the range.
@@ -309,9 +310,10 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
         };
     }
 
-    if (jsonObject.contains("tx_type"))
+    if (jsonObject.contains("tx_type")) {
         input.transactionTypeInLowercase =
             boost::json::value_to<std::string>(jsonObject.at("tx_type"));
+    }
 
     return input;
 }

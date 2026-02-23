@@ -124,10 +124,11 @@ public:
     [[nodiscard]] static MaybeError
     verify(boost::json::value const& value, std::string_view key)
     {
-        if (value.is_object() and value.as_object().contains(key))
+        if (value.is_object() and value.as_object().contains(key)) {
             return Error{Status{
                 RippledError::rpcNOT_SUPPORTED, "Not supported field '" + std::string{key} + '\''
             }};
+        }
 
         return {};
     }
@@ -419,10 +420,11 @@ public:
             return {};  // ignore. field does not exist, let 'required' fail instead
 
         auto const res = value_to<Type>(value.as_object().at(key));
-        if (std::find(std::begin(options_), std::end(options_), res) == std::end(options_))
+        if (std::find(std::begin(options_), std::end(options_), res) == std::end(options_)) {
             return Error{
                 Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}'.", key)}
             };
+        }
 
         return {};
     }

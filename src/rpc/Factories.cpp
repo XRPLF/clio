@@ -62,10 +62,11 @@ makeWsContext(
         commandValue = request.at("command");
     }
 
-    if (!commandValue.is_string())
+    if (!commandValue.is_string()) {
         return Error{
             {ClioError::RpcCommandIsMissing, "Method/Command is not specified or is not a string."}
         };
+    }
 
     auto const apiVersion = apiVersionParser.get().parse(request);
     if (!apiVersion)
@@ -99,11 +100,12 @@ makeHttpContext(
 
     auto const command = boost::json::value_to<std::string>(request.at("method"));
 
-    if (command == "subscribe" || command == "unsubscribe")
+    if (command == "subscribe" || command == "unsubscribe") {
         return Error{
             {RippledError::rpcBAD_SYNTAX,
              "Subscribe and unsubscribe are only allowed for websocket."}
         };
+    }
 
     if (!request.at("params").is_array())
         return Error{{ClioError::RpcParamsUnparsable, "Missing params array."}};

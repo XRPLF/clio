@@ -78,10 +78,11 @@ makeAdminVerificationStrategy(util::config::ClioConfigDefinition const& config)
     auto adminPassword = config.maybeValue<std::string>("server.admin_password");
     auto const localAdmin = config.maybeValue<bool>("server.local_admin");
 
-    if (adminPassword.has_value() and localAdmin.has_value() and *localAdmin)
+    if (adminPassword.has_value() and localAdmin.has_value() and *localAdmin) {
         return std::unexpected{
             "Admin config error: 'local_admin' and admin_password can not be set together."
         };
+    }
 
     if (localAdmin.has_value() and !*localAdmin and !adminPassword.has_value()) {
         return std::unexpected{

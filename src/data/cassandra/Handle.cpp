@@ -85,10 +85,11 @@ Handle::disconnect() const
 Handle::FutureType
 Handle::asyncReconnect(std::string_view keyspace) const
 {
-    if (auto rc = asyncDisconnect().await(); not rc)  // sync
+    if (auto rc = asyncDisconnect().await(); not rc) {  // sync
         throw std::logic_error(
             "Reconnect to keyspace '" + std::string{keyspace} + "' failed: " + rc.error()
         );
+    }
     return asyncConnect(keyspace);
 }
 

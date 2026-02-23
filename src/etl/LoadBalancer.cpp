@@ -203,10 +203,11 @@ LoadBalancer::LoadBalancer(
         LOG(log_.info()) << "Added etl source - " << sources_.back()->toString();
     }
 
-    if (!etlState_)
+    if (!etlState_) {
         checkOnETLFailure(
             "Failed to fetch ETL state from any source. Please check the configuration and network"
         );
+    }
 
     if (sources_.empty())
         checkOnETLFailure("No ETL sources configured. Please check the configuration");

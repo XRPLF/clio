@@ -78,10 +78,11 @@ public:
     [[nodiscard]] static std::optional<Warning>
     check(boost::json::value const& value, std::string_view key)
     {
-        if (value.is_object() and value.as_object().contains(key))
+        if (value.is_object() and value.as_object().contains(key)) {
             return Warning{
                 WarningCode::WarnRpcDeprecated, fmt::format("Field '{}' is deprecated.", key)
             };
+        }
         return std::nullopt;
     }
 };

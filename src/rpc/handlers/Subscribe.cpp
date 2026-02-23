@@ -69,16 +69,18 @@ SubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
 {
     static auto const kBOOKS_VALIDATOR = validation::CustomValidator{
         [](boost::json::value const& value, std::string_view key) -> MaybeError {
-            if (!value.is_array())
+            if (!value.is_array()) {
                 return Error{
                     Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}
                 };
+            }
 
             for (auto const& book : value.as_array()) {
-                if (!book.is_object())
+                if (!book.is_object()) {
                     return Error{
                         Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "ItemNotObject"}
                     };
+                }
 
                 if (book.as_object().contains("both") && !book.as_object().at("both").is_bool())
                     return Error{Status{RippledError::rpcINVALID_PARAMS, "bothNotBool"}};

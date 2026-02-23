@@ -82,10 +82,11 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
     auto const blob = sharedPtrBackend_->fetchLedgerObject(pageKey, lgrInfo.seq, ctx.yield);
 
     if (!blob) {
-        if (input.marker.has_value())
+        if (input.marker.has_value()) {
             return Error{Status{
                 RippledError::rpcINVALID_PARAMS, "Marker field does not match any valid Page ID"
             }};
+        }
         return response;
     }
 
@@ -93,10 +94,11 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
         ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, pageKey}
     };
 
-    if (page->getType() != ripple::ltNFTOKEN_PAGE)
+    if (page->getType() != ripple::ltNFTOKEN_PAGE) {
         return Error{
             Status{RippledError::rpcINVALID_PARAMS, "Marker matches Page ID from another Account"}
         };
+    }
 
     auto numPages = 0u;
 
