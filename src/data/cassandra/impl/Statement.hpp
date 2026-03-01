@@ -115,8 +115,10 @@ public:
         using UintByteTupleType = std::tuple<uint32_t, ripple::uint256>;
         using ByteVectorType = std::vector<ripple::uint256>;
 
-        if constexpr (std::is_same_v<DecayedType, ripple::uint256> ||
-                      std::is_same_v<DecayedType, ripple::uint192>) {
+        if constexpr (
+            std::is_same_v<DecayedType, ripple::uint256> ||
+            std::is_same_v<DecayedType, ripple::uint192>
+        ) {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind ripple::base_uint");
         } else if constexpr (std::is_same_v<DecayedType, ripple::AccountID>) {
@@ -134,8 +136,10 @@ public:
             auto const rc =
                 cass_statement_bind_string_n(*this, idx, value.text.c_str(), value.text.size());
             throwErrorIfNeeded(rc, "Bind string (as TEXT)");
-        } else if constexpr (std::is_same_v<DecayedType, UintTupleType> ||
-                             std::is_same_v<DecayedType, UintByteTupleType>) {
+        } else if constexpr (
+            std::is_same_v<DecayedType, UintTupleType> ||
+            std::is_same_v<DecayedType, UintByteTupleType>
+        ) {
             auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::forward<Type>(value)});
             throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32> or <uint32_t, ripple::uint256>");
         } else if constexpr (std::is_same_v<DecayedType, ByteVectorType>) {

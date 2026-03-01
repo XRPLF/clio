@@ -205,8 +205,9 @@ struct MockPrometheusImpl : PrometheusInterface {
         } else if constexpr (std::is_same_v<MetricType, CounterInt>) {
             auto& impl = counterUintImpls[key];
             metric = std::make_unique<MetricType>(name, labelsString, impl);
-        } else if constexpr (std::is_same_v<MetricType, GaugeDouble> ||
-                             std::is_same_v<MetricType, CounterDouble>) {
+        } else if constexpr (
+            std::is_same_v<MetricType, GaugeDouble> || std::is_same_v<MetricType, CounterDouble>
+        ) {
             auto& impl = counterDoubleImpls[key];
             metric = std::make_unique<MetricType>(name, labelsString, impl);
         } else if constexpr (std::is_same_v<MetricType, HistogramInt>) {
@@ -289,8 +290,9 @@ struct WithMockPrometheus : virtual ::testing::Test {
             return mockPrometheusPtr->counterIntImpls[key];
         } else if constexpr (std::is_same_v<MetricType, CounterInt>) {
             return mockPrometheusPtr->counterUintImpls[key];
-        } else if constexpr (std::is_same_v<MetricType, GaugeDouble> ||
-                             std::is_same_v<MetricType, CounterDouble>) {
+        } else if constexpr (
+            std::is_same_v<MetricType, GaugeDouble> || std::is_same_v<MetricType, CounterDouble>
+        ) {
             return mockPrometheusPtr->counterDoubleImpls[key];
         } else if constexpr (std::is_same_v<MetricType, HistogramInt>) {
             return mockPrometheusPtr->histogramIntImpls[key];

@@ -49,7 +49,8 @@ struct RPCWorkQueueTestBase : public virtual ::testing::Test {
 
     RPCWorkQueueTestBase(uint32_t workers, uint32_t maxQueueSize)
         : cfg{
-              {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(maxQueueSize)},
+              {"server.max_queue_size",
+               ConfigValue{ConfigType::Integer}.defaultValue(maxQueueSize)},
               {"workers", ConfigValue{ConfigType::Integer}.defaultValue(workers)},
           }
         , queue{WorkQueue::makeWorkQueue(cfg)}

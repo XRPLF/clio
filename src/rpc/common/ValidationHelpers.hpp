@@ -94,8 +94,9 @@ checkType(boost::json::value const& value)
     } else if constexpr (std::is_same_v<Expected, boost::json::object>) {
         if (not value.is_object())
             hasError = true;
-    } else if constexpr (std::is_convertible_v<Expected, uint64_t> or
-                         std::is_convertible_v<Expected, int64_t>) {
+    } else if constexpr (
+        std::is_convertible_v<Expected, uint64_t> or std::is_convertible_v<Expected, int64_t>
+    ) {
         if (not value.is_int64() && not value.is_uint64())
             hasError = true;
         // if the type specified is unsigned, it should not be negative

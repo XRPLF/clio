@@ -257,12 +257,14 @@ SubscriptionSource::handleMessage(std::string const& message)
                 if (object.contains(JS(transaction)) and !object.contains(JS(meta))) {
                     LOG(log_.debug()) << "Forwarding proposed transaction: " << object;
                     subscriptions_->forwardProposedTransaction(object);
-                } else if (object.contains(JS(type)) &&
-                           object.at(JS(type)) == kJS_VALIDATION_RECEIVED) {
+                } else if (
+                    object.contains(JS(type)) && object.at(JS(type)) == kJS_VALIDATION_RECEIVED
+                ) {
                     LOG(log_.debug()) << "Forwarding validation: " << object;
                     subscriptions_->forwardValidation(object);
-                } else if (object.contains(JS(type)) &&
-                           object.at(JS(type)) == kJS_MANIFEST_RECEIVED) {
+                } else if (
+                    object.contains(JS(type)) && object.at(JS(type)) == kJS_MANIFEST_RECEIVED
+                ) {
                     LOG(log_.debug()) << "Forwarding manifest: " << object;
                     subscriptions_->forwardManifest(object);
                 }

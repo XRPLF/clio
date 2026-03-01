@@ -92,10 +92,12 @@ struct ConnectionHandlerTest : prometheus::WithPrometheus, SyncAsioContextTest {
             return std::unexpected{http::make_error_code(error)};
         } else if constexpr (std::same_as<BoostErrorType, websocket::error>) {
             return std::unexpected{websocket::make_error_code(error)};
-        } else if constexpr (std::same_as<BoostErrorType, boost::asio::error::basic_errors> ||
-                             std::same_as<BoostErrorType, boost::asio::error::misc_errors> ||
-                             std::same_as<BoostErrorType, boost::asio::error::addrinfo_errors> ||
-                             std::same_as<BoostErrorType, boost::asio::error::netdb_errors>) {
+        } else if constexpr (
+            std::same_as<BoostErrorType, boost::asio::error::basic_errors> ||
+            std::same_as<BoostErrorType, boost::asio::error::misc_errors> ||
+            std::same_as<BoostErrorType, boost::asio::error::addrinfo_errors> ||
+            std::same_as<BoostErrorType, boost::asio::error::netdb_errors>
+        ) {
             return std::unexpected{boost::asio::error::make_error_code(error)};
         } else {
             static_assert(util::Unsupported<BoostErrorType>, "Wrong error type");

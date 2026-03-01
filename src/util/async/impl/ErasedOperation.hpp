@@ -128,8 +128,10 @@ private:
         void
         abort() override
         {
-            if constexpr (not SomeCancellableOperation<OpType> and
-                          not SomeStoppableOperation<OpType> and not SomeAbortable<OpType>) {
+            if constexpr (
+                not SomeCancellableOperation<OpType> and not SomeStoppableOperation<OpType> and
+                not SomeAbortable<OpType>
+            ) {
                 ASSERT(
                     false,
                     "Called abort() on an operation that can't be aborted, cancelled nor stopped"

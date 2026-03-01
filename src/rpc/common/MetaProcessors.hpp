@@ -124,8 +124,7 @@ public:
                           if (auto const res = req->verify(j, key); not res)
                               firstFailure = res.error();
                       }(),
-                      ...
-                  );
+                      ...);
 
                   if (firstFailure)
                       return Error{firstFailure.value()};

@@ -147,11 +147,13 @@ private:
     HandlerType
     initHandler()
     {
-        if constexpr (std::is_same_v<HandlerType, AccountInfoHandler> ||
-                      std::is_same_v<HandlerType, AMMInfoHandler> ||
-                      std::is_same_v<HandlerType, LedgerHandler> ||
-                      std::is_same_v<HandlerType, BookOffersHandler> ||
-                      std::is_same_v<HandlerType, FeatureHandler>) {
+        if constexpr (
+            std::is_same_v<HandlerType, AccountInfoHandler> ||
+            std::is_same_v<HandlerType, AMMInfoHandler> ||
+            std::is_same_v<HandlerType, LedgerHandler> ||
+            std::is_same_v<HandlerType, BookOffersHandler> ||
+            std::is_same_v<HandlerType, FeatureHandler>
+        ) {
             return HandlerType{this->backend_, this->mockAmendmentCenterPtr_};
         } else if constexpr (std::is_same_v<HandlerType, SubscribeHandler>) {
             return HandlerType{
