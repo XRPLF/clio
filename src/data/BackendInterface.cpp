@@ -424,6 +424,7 @@ void
 BackendInterface::updateRangeImpl(uint32_t newMax)
 {
     if (!range_.has_value()) {
+        LOG(log_.info()) << "====================== Init backend range: " << newMax;
         range_ = {.minSequence = newMax, .maxSequence = newMax};
     } else {
         range_->maxSequence = newMax;

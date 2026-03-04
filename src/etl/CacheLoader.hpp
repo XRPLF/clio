@@ -103,6 +103,15 @@ public:
         }
 
         if (loadCacheFromFile()) {
+            // Cache file may contain outdated data, so fetch whatever left up to seq from DB
+            while (cache_.get().latestLedgerSequence() < seq) {
+                auto seqToLoad = cache_.get().latestLedgerSequence();
+                auto const diff = data::synchronousAndRetryOnTimeout([this, seqToLoad](auto yield) {
+                    return backend_->fetchLedgerDiff(seqToLoad, yield);
+                });
+                cache_.get().update(diff, seqToLoad);
+            }
+            cache_.get().setFull();
             return;
         }
 
@@ -191,7 +200,7 @@ private:
 
         LOG(log_.info()) << "Loaded cache from file in " << duration_ms
                          << " ms. Latest sequence: " << cache_.get().latestLedgerSequence();
-        backend_->forceUpdateRange(cache_.get().latestLedgerSequence());
+        // backend_->forceUpdateRange(cache_.get().latestLedgerSequence());
         return true;
     }
 };

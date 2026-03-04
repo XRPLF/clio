@@ -56,6 +56,8 @@ WriterDecider::onNewState(
         [writerState = writerState_->clone(),
          selfId = std::move(selfId),
          clusterData = clusterData->value()](auto&&) mutable {
+            // TODO: the logic here should be that we try to take a node with full cache, if there
+            // is no such node, choose the one with started ETL
             auto const selfData = std::ranges::find_if(
                 clusterData, [&selfId](ClioNode const& node) { return node.uuid == selfId; }
             );
