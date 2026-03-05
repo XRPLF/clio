@@ -91,6 +91,12 @@ TEST_F(ClusterBackendTest, SubscribeToNewState)
     EXPECT_CALL(writerStateRef, isReadOnly)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(true));
+    EXPECT_CALL(writerStateRef, isEtlStarted)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isCacheFull)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
         .WillRepeatedly([this](
@@ -127,6 +133,12 @@ TEST_F(ClusterBackendTest, Stop)
     EXPECT_CALL(writerStateRef, isReadOnly)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(true));
+    EXPECT_CALL(writerStateRef, isEtlStarted)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isCacheFull)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
 
     clusterBackend.run();
     std::this_thread::sleep_for(std::chrono::milliseconds{20});
@@ -156,6 +168,12 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataThrowsException)
     EXPECT_CALL(writerStateRef, isReadOnly)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(true));
+    EXPECT_CALL(writerStateRef, isEtlStarted)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isCacheFull)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(
@@ -184,8 +202,10 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsDataWithOtherNodes)
 
     auto const otherUuid = boost::uuids::random_generator{}();
     auto const otherNodeJson = R"JSON({
-        "db_role": 3,
-        "update_time": "2025-01-15T10:30:00Z"
+        "db_role": 2,
+        "update_time": "2025-01-15T10:30:00Z",
+        "etl_started": false,
+        "cache_is_full": false
     })JSON";
 
     EXPECT_CALL(*backend_, fetchClioNodesData)
@@ -206,7 +226,10 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsDataWithOtherNodes)
     EXPECT_CALL(writerStateRef, isFallback)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(false));
-    EXPECT_CALL(writerStateRef, isLoadingCache)
+    EXPECT_CALL(writerStateRef, isEtlStarted)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isCacheFull)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(false));
     EXPECT_CALL(writerStateRef, isWriting)
@@ -257,7 +280,9 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsOnlySelfData)
 
     auto const selfNodeJson = R"JSON({
         "db_role": 1,
-        "update_time": "2025-01-16T10:30:00Z"
+        "update_time": "2025-01-16T10:30:00Z",
+        "etl_started": false,
+        "cache_is_full": false
     })JSON";
 
     EXPECT_CALL(*backend_, fetchClioNodesData).Times(testing::AtLeast(1)).WillRepeatedly([&]() {
@@ -271,6 +296,12 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsOnlySelfData)
     EXPECT_CALL(writerStateRef, isReadOnly)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(true));
+    EXPECT_CALL(writerStateRef, isEtlStarted)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isCacheFull)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
         .WillRepeatedly([this](
@@ -320,6 +351,12 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsInvalidJson)
     EXPECT_CALL(writerStateRef, isReadOnly)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(true));
+    EXPECT_CALL(writerStateRef, isEtlStarted)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isCacheFull)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
         .WillRepeatedly([this, invalidJson](
@@ -368,6 +405,12 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsValidJsonButCannotConvertToC
     EXPECT_CALL(writerStateRef, isReadOnly)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(true));
+    EXPECT_CALL(writerStateRef, isEtlStarted)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isCacheFull)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
     EXPECT_CALL(callbackMock, Call)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(
@@ -406,7 +449,10 @@ TEST_F(ClusterBackendTest, WriteNodeMessageWritesSelfDataWithRecentTimestampAndD
     EXPECT_CALL(writerStateRef, isFallback)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(false));
-    EXPECT_CALL(writerStateRef, isLoadingCache)
+    EXPECT_CALL(writerStateRef, isEtlStarted)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isCacheFull)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(false));
     EXPECT_CALL(writerStateRef, isWriting)

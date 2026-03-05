@@ -89,9 +89,19 @@ public:
     virtual void
     setWriterDecidingFallback() = 0;
 
+    /**
+     * @brief Whether the ETL monitor has started and the node is ready to become a writer.
+     *
+     * @return true if ETL has started the monitor loop, false otherwise.
+     */
     [[nodiscard]] virtual bool
     isEtlStarted() const = 0;
 
+    /**
+     * @brief Whether the ledger cache is fully loaded.
+     *
+     * @return true if the cache is full, false otherwise.
+     */
     [[nodiscard]] virtual bool
     isCacheFull() const = 0;
 
@@ -123,8 +133,10 @@ private:
 
 public:
     /**
-     * @brief Construct a WriterState with the given system state.
+     * @brief Construct a WriterState with the given system state and cache.
+     *
      * @param state Shared pointer to the system state for coordination
+     * @param cache The ledger cache used to report cache fullness
      */
     WriterState(std::shared_ptr<SystemState> state, data::LedgerCacheInterface const& cache);
 
@@ -173,9 +185,11 @@ public:
     bool
     isFallback() const override;
 
+    /** @copydoc WriterStateInterface::isEtlStarted */
     bool
     isEtlStarted() const override;
 
+    /** @copydoc WriterStateInterface::isCacheFull */
     bool
     isCacheFull() const override;
 

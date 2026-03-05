@@ -37,11 +37,6 @@ namespace etl {
  * @brief Represents the state of the ETL subsystem.
  */
 struct SystemState {
-    SystemState()
-    {
-        isLoadingCache = true;
-    }
-
     /**
      * @brief Factory method to create a SystemState instance.
      *

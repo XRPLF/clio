@@ -39,10 +39,17 @@ using namespace cluster;
 
 enum class ExpectedAction { StartWriting, GiveUpWriting, NoAction, SetFallback };
 
+struct NodeParams {
+    uint8_t uuidValue;
+    ClioNode::DbRole role;
+    bool etlStarted = true;
+    bool cacheIsFull = true;
+};
+
 struct WriterDeciderTestParams {
     std::string testName;
     uint8_t selfUuidValue;
-    std::vector<std::pair<uint8_t, ClioNode::DbRole>> nodes;
+    std::vector<NodeParams> nodes;
     ExpectedAction expectedAction;
     bool useEmptyClusterData = false;
 };
@@ -59,12 +66,14 @@ struct WriterDeciderTest : testing::TestWithParam<WriterDeciderTestParams> {
     MockWriterState& writerStateRef = *writerState;
 
     static ClioNode
-    makeNode(boost::uuids::uuid const& uuid, ClioNode::DbRole role)
+    makeNode(boost::uuids::uuid const& uuid, ClioNode::DbRole role, bool etlStarted, bool cacheIsFull)
     {
         return ClioNode{
             .uuid = std::make_shared<boost::uuids::uuid>(uuid),
             .updateTime = std::chrono::system_clock::now(),
-            .dbRole = role
+            .dbRole = role,
+            .etlStarted = etlStarted,
+            .cacheIsFull = cacheIsFull
         };
     }
 
@@ -125,9 +134,11 @@ TEST_P(WriterDeciderTest, WriterSelection)
     } else {
         std::vector<ClioNode> nodes;
         nodes.reserve(params.nodes.size());
-        for (auto const& [uuidValue, role] : params.nodes) {
-            auto node = makeNode(makeUuid(uuidValue), role);
-            if (uuidValue == params.selfUuidValue) {
+        for (auto const& nodeParam : params.nodes) {
+            auto node = makeNode(
+                makeUuid(nodeParam.uuidValue), nodeParam.role, nodeParam.etlStarted, nodeParam.cacheIsFull
+            );
+            if (nodeParam.uuidValue == params.selfUuidValue) {
                 selfIdPtr = node.uuid;  // Use the same shared_ptr as in the node
             }
             nodes.push_back(std::move(node));
@@ -276,47 +287,60 @@ INSTANTIATE_TEST_SUITE_P(
                  {0x04, ClioNode::DbRole::Writer}},
             .expectedAction = ExpectedAction::SetFallback
         },
+        // Tests for etlStarted / cacheIsFull election logic
         WriterDeciderTestParams{
-            .testName = "SelfIsLoadingCacheOtherIsWriter",
-            .selfUuidValue = 0x01,
-            .nodes = {{0x01, ClioNode::DbRole::LoadingCache}, {0x02, ClioNode::DbRole::Writer}},
-            .expectedAction = ExpectedAction::GiveUpWriting
-        },
-        WriterDeciderTestParams{
-            .testName = "OtherNodeIsLoadingCacheSkipToNextWriter",
+            .testName = "EtlNotStartedNodeSkipped_CacheFullNodeSelected",
             .selfUuidValue = 0x02,
             .nodes =
-                {{0x01, ClioNode::DbRole::LoadingCache},
-                 {0x02, ClioNode::DbRole::Writer},
-                 {0x03, ClioNode::DbRole::NotWriter}},
+                {{.uuidValue = 0x01, .role = ClioNode::DbRole::Writer, .etlStarted = false, .cacheIsFull = true},
+                 {.uuidValue = 0x02, .role = ClioNode::DbRole::Writer, .etlStarted = true, .cacheIsFull = true},
+                 {.uuidValue = 0x03, .role = ClioNode::DbRole::NotWriter, .etlStarted = true, .cacheIsFull = true}},
             .expectedAction = ExpectedAction::StartWriting
         },
         WriterDeciderTestParams{
-            .testName = "AllNodesLoadingCacheNoActionTaken",
+            .testName = "AllNodesEtlNotStarted_GiveUpWriting",
             .selfUuidValue = 0x01,
             .nodes =
-                {{0x01, ClioNode::DbRole::LoadingCache}, {0x02, ClioNode::DbRole::LoadingCache}},
-            .expectedAction = ExpectedAction::NoAction
+                {{.uuidValue = 0x01, .role = ClioNode::DbRole::Writer, .etlStarted = false, .cacheIsFull = false},
+                 {.uuidValue = 0x02, .role = ClioNode::DbRole::Writer, .etlStarted = false, .cacheIsFull = false}},
+            .expectedAction = ExpectedAction::GiveUpWriting
         },
         WriterDeciderTestParams{
-            .testName = "MixedWithLoadingCacheReadOnlyFirstNonReadOnlyNonLoadingCacheSelected",
-            .selfUuidValue = 0x03,
+            .testName = "CacheNotFullFallsBackToEtlStartedSelection_SelfSelected",
+            .selfUuidValue = 0x01,
             .nodes =
-                {{0x01, ClioNode::DbRole::ReadOnly},
-                 {0x02, ClioNode::DbRole::LoadingCache},
-                 {0x03, ClioNode::DbRole::Writer},
-                 {0x04, ClioNode::DbRole::NotWriter}},
+                {{.uuidValue = 0x01, .role = ClioNode::DbRole::Writer, .etlStarted = true, .cacheIsFull = false},
+                 {.uuidValue = 0x02, .role = ClioNode::DbRole::Writer, .etlStarted = true, .cacheIsFull = false}},
             .expectedAction = ExpectedAction::StartWriting
         },
         WriterDeciderTestParams{
-            .testName = "LoadingCacheBeforeWriterSkipsLoadingCache",
+            .testName = "CacheFullNodePreferredOverCacheNotFullNode",
+            .selfUuidValue = 0x02,
+            .nodes =
+                {{.uuidValue = 0x01, .role = ClioNode::DbRole::Writer, .etlStarted = true, .cacheIsFull = false},
+                 {.uuidValue = 0x02, .role = ClioNode::DbRole::Writer, .etlStarted = true, .cacheIsFull = true},
+                 {.uuidValue = 0x03, .role = ClioNode::DbRole::NotWriter, .etlStarted = true, .cacheIsFull = false}},
+            .expectedAction = ExpectedAction::StartWriting
+        },
+        WriterDeciderTestParams{
+            .testName = "CacheFullNodePreferredEvenIfHigherUuid",
             .selfUuidValue = 0x04,
             .nodes =
-                {{0x01, ClioNode::DbRole::LoadingCache},
-                 {0x02, ClioNode::DbRole::LoadingCache},
-                 {0x03, ClioNode::DbRole::Writer},
-                 {0x04, ClioNode::DbRole::NotWriter}},
+                {{.uuidValue = 0x01, .role = ClioNode::DbRole::Writer, .etlStarted = true, .cacheIsFull = false},
+                 {.uuidValue = 0x02, .role = ClioNode::DbRole::Writer, .etlStarted = true, .cacheIsFull = false},
+                 {.uuidValue = 0x03, .role = ClioNode::DbRole::Writer, .etlStarted = true, .cacheIsFull = true},
+                 {.uuidValue = 0x04, .role = ClioNode::DbRole::NotWriter, .etlStarted = true, .cacheIsFull = true}},
             .expectedAction = ExpectedAction::GiveUpWriting
+        },
+        WriterDeciderTestParams{
+            .testName = "MixedWithReadOnly_EtlNotStartedNodeSkipped",
+            .selfUuidValue = 0x03,
+            .nodes =
+                {{.uuidValue = 0x01, .role = ClioNode::DbRole::ReadOnly},
+                 {.uuidValue = 0x02, .role = ClioNode::DbRole::Writer, .etlStarted = false, .cacheIsFull = false},
+                 {.uuidValue = 0x03, .role = ClioNode::DbRole::Writer, .etlStarted = true, .cacheIsFull = true},
+                 {.uuidValue = 0x04, .role = ClioNode::DbRole::NotWriter, .etlStarted = true, .cacheIsFull = true}},
+            .expectedAction = ExpectedAction::StartWriting
         }
     ),
     [](testing::TestParamInfo<WriterDeciderTestParams> const& info) { return info.param.testName; }

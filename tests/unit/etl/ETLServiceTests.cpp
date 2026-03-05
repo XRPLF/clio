@@ -325,7 +325,7 @@ TEST_F(ETLServiceTests, RunWithEmptyDatabase)
     auto mockTaskManager = std::make_unique<testing::NiceMock<MockTaskManager>>();
     auto& mockTaskManagerRef = *mockTaskManager;
     auto ledgerData = createTestData(kSEQ);
-    EXPECT_TRUE(systemState_->isLoadingCache);
+    EXPECT_FALSE(systemState_->etlStarted);
 
     testing::Sequence const s;
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
@@ -343,12 +343,12 @@ TEST_F(ETLServiceTests, RunWithEmptyDatabase)
     EXPECT_CALL(mockTaskManagerRef, run);
     EXPECT_CALL(*taskManagerProvider_, make(testing::_, testing::_, kSEQ + 1, testing::_))
         .WillOnce([&](auto&&...) {
-            EXPECT_FALSE(systemState_->isLoadingCache);
+            EXPECT_TRUE(systemState_->etlStarted);
             return std::unique_ptr<etl::TaskManagerInterface>(mockTaskManager.release());
         });
     EXPECT_CALL(*monitorProvider_, make(testing::_, testing::_, testing::_, kSEQ + 1, testing::_))
         .WillOnce([this](auto, auto, auto, auto, auto) {
-            EXPECT_TRUE(systemState_->isLoadingCache);
+            EXPECT_FALSE(systemState_->etlStarted);
             return std::make_unique<testing::NiceMock<MockMonitor>>();
         });
 
@@ -357,13 +357,13 @@ TEST_F(ETLServiceTests, RunWithEmptyDatabase)
 
 TEST_F(ETLServiceTests, RunWithPopulatedDatabase)
 {
-    EXPECT_TRUE(systemState_->isLoadingCache);
+    EXPECT_FALSE(systemState_->etlStarted);
     backend_->cache().update({}, kSEQ, false);
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
         .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
     EXPECT_CALL(*monitorProvider_, make(testing::_, testing::_, testing::_, kSEQ + 1, testing::_))
         .WillOnce([this](auto, auto, auto, auto, auto) {
-            EXPECT_TRUE(systemState_->isLoadingCache);
+            EXPECT_FALSE(systemState_->etlStarted);
             return std::make_unique<testing::NiceMock<MockMonitor>>();
         });
     EXPECT_CALL(*ledgers_, getMostRecent()).WillRepeatedly(testing::Return(kSEQ));
@@ -374,14 +374,14 @@ TEST_F(ETLServiceTests, RunWithPopulatedDatabase)
 
 TEST_F(ETLServiceTests, SyncCacheWithDbBeforeStartingMonitor)
 {
-    EXPECT_TRUE(systemState_->isLoadingCache);
+    EXPECT_FALSE(systemState_->etlStarted);
     backend_->cache().update({}, kSEQ - 2, false);
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
         .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
 
     EXPECT_CALL(*monitorProvider_, make(testing::_, testing::_, testing::_, kSEQ + 1, testing::_))
         .WillOnce([this](auto, auto, auto, auto, auto) {
-            EXPECT_TRUE(systemState_->isLoadingCache);
+            EXPECT_FALSE(systemState_->etlStarted);
             return std::make_unique<testing::NiceMock<MockMonitor>>();
         });
     EXPECT_CALL(*ledgers_, getMostRecent()).WillRepeatedly(testing::Return(kSEQ));

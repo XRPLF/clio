@@ -42,7 +42,7 @@ TEST_F(SystemStateTest, InitialValuesAreCorrect)
 
     EXPECT_FALSE(state.isStrictReadonly);
     EXPECT_FALSE(state.isWriting);
-    EXPECT_TRUE(state.isLoadingCache);
+    EXPECT_FALSE(state.etlStarted);
     EXPECT_FALSE(state.isAmendmentBlocked);
     EXPECT_FALSE(state.isCorruptionDetected);
     EXPECT_FALSE(state.isWriterDecidingFallback);
@@ -66,7 +66,7 @@ TEST_P(SystemStateReadOnlyTest, MakeSystemStateWithReadOnly)
 
     EXPECT_EQ(state->isStrictReadonly, readOnlyValue);
     EXPECT_FALSE(state->isWriting);
-    EXPECT_TRUE(state->isLoadingCache);
+    EXPECT_FALSE(state->etlStarted);
     EXPECT_FALSE(state->isAmendmentBlocked);
     EXPECT_FALSE(state->isCorruptionDetected);
     EXPECT_FALSE(state->isWriterDecidingFallback);
