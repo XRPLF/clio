@@ -52,14 +52,7 @@ struct ClioNode {
      * from the cluster communication mechanism to the slower but more reliable
      * database-based conflict detection mechanism.
      */
-    enum class DbRole {
-        ReadOnly = 0,
-        LoadingCache = 1,
-        NotWriter = 2,
-        Writer = 3,
-        Fallback = 4,
-        MAX = 4
-    };
+    enum class DbRole { ReadOnly = 0, NotWriter = 1, Writer = 2, Fallback = 3, MAX = 3 };
 
     using Uuid = std::shared_ptr<boost::uuids::uuid>;
     using CUuid = std::shared_ptr<boost::uuids::uuid const>;
@@ -68,6 +61,8 @@ struct ClioNode {
     std::chrono::system_clock::time_point
         updateTime;  ///< The time the data about the node was last updated.
     DbRole dbRole;   ///< The database role of the node
+    bool etlStarted;
+    bool cacheIsFull;
 
     /**
      * @brief Create a ClioNode from writer state.

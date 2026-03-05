@@ -19,8 +19,10 @@
 
 #pragma once
 
+#include "data/LedgerCacheInterface.hpp"
 #include "etl/SystemState.hpp"
 
+#include <functional>
 #include <memory>
 
 namespace etl {
@@ -87,13 +89,11 @@ public:
     virtual void
     setWriterDecidingFallback() = 0;
 
-    /**
-     * @brief Whether clio is still loading cache after startup.
-     *
-     * @return true if clio is still loading cache, false otherwise.
-     */
     [[nodiscard]] virtual bool
-    isLoadingCache() const = 0;
+    isEtlStarted() const = 0;
+
+    [[nodiscard]] virtual bool
+    isCacheFull() const = 0;
 
     /**
      * @brief Create a clone of this writer state.
@@ -119,13 +119,14 @@ class WriterState : public WriterStateInterface {
 private:
     std::shared_ptr<SystemState>
         systemState_; /**< @brief Shared system state for ETL coordination */
+    std::reference_wrapper<data::LedgerCacheInterface const> cache_;
 
 public:
     /**
      * @brief Construct a WriterState with the given system state.
      * @param state Shared pointer to the system state for coordination
      */
-    WriterState(std::shared_ptr<SystemState> state);
+    WriterState(std::shared_ptr<SystemState> state, data::LedgerCacheInterface const& cache);
 
     bool
     isReadOnly() const override;
@@ -172,13 +173,11 @@ public:
     bool
     isFallback() const override;
 
-    /**
-     * @brief Whether clio is still loading cache after startup.
-     *
-     * @return true if clio is still loading cache, false otherwise.
-     */
     bool
-    isLoadingCache() const override;
+    isEtlStarted() const override;
+
+    bool
+    isCacheFull() const override;
 
     /**
      * @brief Create a clone of this writer state.

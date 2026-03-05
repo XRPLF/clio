@@ -126,7 +126,7 @@ ClioApplication::run(bool const useNgWebServer)
     auto systemState = etl::SystemState::makeSystemState(config_);
 
     cluster::ClusterCommunicationService clusterCommunicationService{
-        backend, std::make_unique<etl::WriterState>(systemState)
+        backend, std::make_unique<etl::WriterState>(systemState, cache)
     };
     clusterCommunicationService.run();
 

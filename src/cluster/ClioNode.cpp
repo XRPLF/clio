@@ -42,6 +42,8 @@ namespace {
 struct JsonFields {
     static constexpr std::string_view const kUPDATE_TIME = "update_time";
     static constexpr std::string_view const kDB_ROLE = "db_role";
+    static constexpr std::string_view const kETL_STARTED = "etl_started";
+    static constexpr std::string_view const kCACHE_IS_FULL = "cache_is_full";
 };
 
 }  // namespace
@@ -56,14 +58,15 @@ ClioNode::from(ClioNode::Uuid uuid, etl::WriterStateInterface const& writerState
         if (writerState.isFallback()) {
             return ClioNode::DbRole::Fallback;
         }
-        if (writerState.isLoadingCache()) {
-            return ClioNode::DbRole::LoadingCache;
-        }
 
         return writerState.isWriting() ? ClioNode::DbRole::Writer : ClioNode::DbRole::NotWriter;
     }();
     return ClioNode{
-        .uuid = std::move(uuid), .updateTime = std::chrono::system_clock::now(), .dbRole = dbRole
+        .uuid = std::move(uuid),
+        .updateTime = std::chrono::system_clock::now(),
+        .dbRole = dbRole,
+        .etlStarted = writerState.isEtlStarted(),
+        .cacheIsFull = writerState.isCacheFull()
     };
 }
 
@@ -72,7 +75,9 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, ClioNode const& 
 {
     jv = {
         {JsonFields::kUPDATE_TIME, util::systemTpToUtcStr(node.updateTime, ClioNode::kTIME_FORMAT)},
-        {JsonFields::kDB_ROLE, static_cast<int64_t>(node.dbRole)}
+        {JsonFields::kDB_ROLE, static_cast<int64_t>(node.dbRole)},
+        {JsonFields::kETL_STARTED, node.etlStarted},
+        {JsonFields::kCACHE_IS_FULL, node.cacheIsFull}
     };
 }
 
@@ -90,12 +95,17 @@ tag_invoke(boost::json::value_to_tag<ClioNode>, boost::json::value const& jv)
     if (dbRoleValue > static_cast<int64_t>(ClioNode::DbRole::MAX))
         throw std::runtime_error("Invalid db_role value");
 
+    auto const etlStarted = jv.as_object().at(JsonFields::kETL_STARTED).as_bool();
+    auto const cacheIsFull = jv.as_object().at(JsonFields::kCACHE_IS_FULL).as_bool();
+
     return ClioNode{
         // Json data doesn't contain uuid so leaving it empty here. It will be filled outside of
         // this parsing
         .uuid = std::make_shared<boost::uuids::uuid>(),
         .updateTime = updateTime.value(),
-        .dbRole = static_cast<ClioNode::DbRole>(dbRoleValue)
+        .dbRole = static_cast<ClioNode::DbRole>(dbRoleValue),
+        .etlStarted = etlStarted,
+        .cacheIsFull = cacheIsFull
     };
 }
 
