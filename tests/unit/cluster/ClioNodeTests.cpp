@@ -114,6 +114,22 @@ TEST_F(ClioNodeTest, DeserializationMissingTime)
     EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
 }
 
+TEST_F(ClioNodeTest, DeserializationMissingEtlStarted)
+{
+    boost::json::value const jsonValue = {
+        {"update_time", updateTimeStr}, {"db_role", 1}, {"cache_is_full", false}
+    };
+    EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
+}
+
+TEST_F(ClioNodeTest, DeserializationMissingCacheIsFull)
+{
+    boost::json::value const jsonValue = {
+        {"update_time", updateTimeStr}, {"db_role", 1}, {"etl_started", true}
+    };
+    EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
+}
+
 struct ClioNodeDbRoleTestBundle {
     std::string testName;
     ClioNode::DbRole role;
