@@ -209,7 +209,7 @@ TEST_P(ParametrizedCacheLoaderTest, LoadCacheWithDifferentSettings)
         .WillRepeatedly(Return(std::vector<Blob>(keysSize - 1, Blob{'s'})));
 
     EXPECT_CALL(cache, isDisabled).WillRepeatedly(Return(false));
-    EXPECT_CALL(cache, updateImp).Times(loops);
+    EXPECT_CALL(cache, updateImpl).Times(loops);
     EXPECT_CALL(cache, setFull).Times(1);
 
     async::CoroExecutionContext ctx{settings.numThreads};
@@ -244,7 +244,7 @@ TEST_P(ParametrizedCacheLoaderTest, AutomaticallyCancelledAndAwaitedInDestructor
         .WillRepeatedly(Return(std::vector<Blob>(keysSize - 1, Blob{'s'})));
 
     EXPECT_CALL(cache, isDisabled).WillRepeatedly(Return(false));
-    EXPECT_CALL(cache, updateImp).Times(AtMost(loops));
+    EXPECT_CALL(cache, updateImpl).Times(AtMost(loops));
     EXPECT_CALL(cache, setFull).Times(AtMost(1));
 
     async::CoroExecutionContext ctx{settings.numThreads};
@@ -279,7 +279,7 @@ TEST_P(ParametrizedCacheLoaderTest, CacheDisabledLeadsToCancellation)
         .WillRepeatedly(Return(std::vector<Blob>(keysSize - 1, Blob{'s'})));
 
     EXPECT_CALL(cache, isDisabled).WillOnce(Return(false)).WillRepeatedly(Return(true));
-    EXPECT_CALL(cache, updateImp).Times(AtMost(1));
+    EXPECT_CALL(cache, updateImpl).Times(AtMost(1));
     EXPECT_CALL(cache, setFull).Times(0);
 
     async::CoroExecutionContext ctx{settings.numThreads};
@@ -320,7 +320,7 @@ TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
         .WillRepeatedly(Return(std::vector<Blob>{keysSize - 1, Blob{'s'}}));
 
     EXPECT_CALL(cache, isDisabled).WillRepeatedly(Return(false));
-    EXPECT_CALL(cache, updateImp).Times(loops);
+    EXPECT_CALL(cache, updateImpl).Times(loops);
     EXPECT_CALL(cache, isFull).WillOnce(Return(false)).WillRepeatedly(Return(true));
     EXPECT_CALL(cache, setFull).Times(1);
 
@@ -346,7 +346,7 @@ TEST_F(CacheLoaderTest, AsyncCacheLoaderCanBeStopped)
         .WillRepeatedly(Return(std::vector<Blob>{keysSize - 1, Blob{'s'}}));
 
     EXPECT_CALL(cache, isDisabled).WillRepeatedly(Return(false));
-    EXPECT_CALL(cache, updateImp).Times(AtMost(loops));
+    EXPECT_CALL(cache, updateImpl).Times(AtMost(loops));
     EXPECT_CALL(cache, isFull).WillRepeatedly(Return(false));
     EXPECT_CALL(cache, setFull).Times(AtMost(1));
 
@@ -360,7 +360,7 @@ TEST_F(CacheLoaderTest, DisabledCacheLoaderDoesNotLoadCache)
     auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "none"}})JSON"));
     CacheLoader loader{cfg, backend_, cache};
 
-    EXPECT_CALL(cache, updateImp).Times(0);
+    EXPECT_CALL(cache, updateImpl).Times(0);
     EXPECT_CALL(cache, isFull).WillRepeatedly(Return(false));
     EXPECT_CALL(cache, setDisabled).Times(1);
 
@@ -372,7 +372,7 @@ TEST_F(CacheLoaderTest, DisabledCacheLoaderCanCallStopAndWait)
     auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "none"}})JSON"));
     CacheLoader loader{cfg, backend_, cache};
 
-    EXPECT_CALL(cache, updateImp).Times(0);
+    EXPECT_CALL(cache, updateImpl).Times(0);
     EXPECT_CALL(cache, isFull).WillRepeatedly(Return(false));
     EXPECT_CALL(cache, setDisabled).Times(1);
 
@@ -410,11 +410,12 @@ TEST_F(CacheLoaderFromFileTest, Success)
     EXPECT_CALL(cache, loadFromFile(filePath, kSEQ - maxSequenceLag))
         .WillOnce(Return(std::expected<void, std::string>{}));
     EXPECT_CALL(cache, latestLedgerSequence).WillOnce(Return(kLOADED_SEQ));
+    EXPECT_CALL(cache, setFull);
 
     loader.load(kSEQ);
 
     std::optional<LedgerRange> const expectedLedgerRange =
-        LedgerRange{.minSequence = kSEQ - 20, .maxSequence = kLOADED_SEQ};
+        LedgerRange{.minSequence = kSEQ - 20, .maxSequence = kSEQ};
     EXPECT_EQ(backend_->fetchLedgerRange(), expectedLedgerRange);
 }
 
@@ -437,7 +438,7 @@ TEST_F(CacheLoaderFromFileTest, FailureBackToNormalLoad)
         .WillRepeatedly(Return(std::vector<Blob>{keysSize - 1, Blob{'s'}}));
 
     EXPECT_CALL(cache, isDisabled).WillRepeatedly(Return(false));
-    EXPECT_CALL(cache, updateImp).Times(loops);
+    EXPECT_CALL(cache, updateImpl).Times(loops);
     EXPECT_CALL(cache, isFull).WillOnce(Return(false)).WillRepeatedly(Return(true));
     EXPECT_CALL(cache, setFull).Times(1);
 
@@ -465,6 +466,32 @@ TEST_F(CacheLoaderFromFileTest, MaxSequenceLagCalculation)
     EXPECT_CALL(cache, loadFromFile(filePath, kSEQ - maxSequenceLag))
         .WillOnce(Return(std::expected<void, std::string>{}));
     EXPECT_CALL(cache, latestLedgerSequence).WillOnce(Return(kLOADED_SEQ));
+
+    loader.load(kSEQ);
+}
+
+TEST_F(CacheLoaderFromFileTest, FileSequenceBehindBackendFetchesMissingLedgersFromDB)
+{
+    constexpr uint32_t kFILE_SEQ = kSEQ - 2;
+    auto const diffs = diffProvider.getLatestDiff();
+
+    EXPECT_CALL(cache, isFull).WillOnce(Return(false));
+    EXPECT_CALL(cache, loadFromFile(filePath, kSEQ - maxSequenceLag))
+        .WillOnce(Return(std::expected<void, std::string>{}));
+
+    // latestLedgerSequence is called twice per loop iteration (condition + seqToLoad)
+    // plus once for the final exit check
+    EXPECT_CALL(cache, latestLedgerSequence)
+        .WillOnce(Return(kFILE_SEQ))      // iteration 1: condition (true)
+        .WillOnce(Return(kFILE_SEQ))      // iteration 1: seqToLoad
+        .WillOnce(Return(kFILE_SEQ + 1))  // iteration 2: condition (true)
+        .WillOnce(Return(kFILE_SEQ + 1))  // iteration 2: seqToLoad
+        .WillOnce(Return(kSEQ));          // exit condition (false)
+
+    EXPECT_CALL(*backend_, fetchLedgerDiff(kFILE_SEQ, _)).WillOnce(Return(diffs));
+    EXPECT_CALL(*backend_, fetchLedgerDiff(kFILE_SEQ + 1, _)).WillOnce(Return(diffs));
+    EXPECT_CALL(cache, updateImpl).Times(2);
+    EXPECT_CALL(cache, setFull).Times(1);
 
     loader.load(kSEQ);
 }

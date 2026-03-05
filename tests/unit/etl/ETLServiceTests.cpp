@@ -336,11 +336,10 @@ TEST_F(ETLServiceTests, RunWithEmptyDatabase)
     EXPECT_CALL(*balancer_, loadInitialLedger(kSEQ, testing::_, testing::_))
         .WillOnce(testing::Return(std::vector<std::string>{}));
     EXPECT_CALL(*loader_, loadInitialLedger).WillOnce(testing::Return(ripple::LedgerHeader{}));
-    // In syncCacheWithDb()
-    EXPECT_CALL(*backend_, hardFetchLedgerRange).Times(2).InSequence(s).WillRepeatedly([this]() {
-        backend_->cache().update({}, kSEQ, false);
-        return data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ};
-    });
+    EXPECT_CALL(*backend_, hardFetchLedgerRange)
+        .Times(1)
+        .InSequence(s)
+        .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
     EXPECT_CALL(mockTaskManagerRef, run);
     EXPECT_CALL(*taskManagerProvider_, make(testing::_, testing::_, kSEQ + 1, testing::_))
         .WillOnce([&](auto&&...) {
@@ -379,13 +378,6 @@ TEST_F(ETLServiceTests, SyncCacheWithDbBeforeStartingMonitor)
     backend_->cache().update({}, kSEQ - 2, false);
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
         .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
-
-    EXPECT_CALL(*backend_, fetchLedgerDiff(kSEQ - 1, testing::_));
-    EXPECT_CALL(*cacheUpdater_, update(kSEQ - 1, std::vector<data::LedgerObject>()))
-        .WillOnce([this](auto const seq, auto&&...) { backend_->cache().update({}, seq, false); });
-    EXPECT_CALL(*backend_, fetchLedgerDiff(kSEQ, testing::_));
-    EXPECT_CALL(*cacheUpdater_, update(kSEQ, std::vector<data::LedgerObject>()))
-        .WillOnce([this](auto const seq, auto&&...) { backend_->cache().update({}, seq, false); });
 
     EXPECT_CALL(*monitorProvider_, make(testing::_, testing::_, testing::_, kSEQ + 1, testing::_))
         .WillOnce([this](auto, auto, auto, auto, auto) {
@@ -433,7 +425,6 @@ TEST_F(ETLServiceTests, HandlesWriteConflictInMonitorSubscription)
     // Set cache to be in sync with DB to avoid syncCacheWithDb loop
     backend_->cache().update({}, kSEQ, false);
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
-        .Times(2)
         .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
     EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
     EXPECT_CALL(*cacheLoader_, load(kSEQ));
@@ -470,7 +461,6 @@ TEST_F(ETLServiceTests, NormalFlowInMonitorSubscription)
     // Set cache to be in sync with DB to avoid syncCacheWithDb loop
     backend_->cache().update({}, kSEQ, false);
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
-        .Times(2)
         .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
     EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
     EXPECT_CALL(*cacheLoader_, load(kSEQ));
@@ -565,7 +555,6 @@ TEST_F(ETLServiceTests, GiveUpWriterAfterWriteConflict)
     // Set cache to be in sync with DB to avoid syncCacheWithDb loop
     backend_->cache().update({}, kSEQ, false);
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
-        .Times(2)
         .WillRepeatedly(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
     EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
     EXPECT_CALL(*cacheLoader_, load(kSEQ));
@@ -782,13 +771,8 @@ TEST_F(ETLServiceTests, OnlyCacheUpdatesWhenBackendIsCurrent)
     EXPECT_CALL(mockMonitorRef, subscribeToDbStalled);
     EXPECT_CALL(mockMonitorRef, run);
 
-    // Set backend range to be at kSEQ + 1 (already current)
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
-        .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}))
-        .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}))
-        .WillRepeatedly(
-            testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ + 1})
-        );
+        .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
     EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
     EXPECT_CALL(*cacheLoader_, load(kSEQ));
 
@@ -831,13 +815,8 @@ TEST_F(ETLServiceTests, NoUpdatesWhenBothCacheAndBackendAreCurrent)
     EXPECT_CALL(mockMonitorRef, subscribeToDbStalled);
     EXPECT_CALL(mockMonitorRef, run);
 
-    // Set backend range to be at kSEQ + 1 (already current)
     EXPECT_CALL(*backend_, hardFetchLedgerRange)
-        .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}))
-        .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}))
-        .WillRepeatedly(
-            testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ + 1})
-        );
+        .WillOnce(testing::Return(data::LedgerRange{.minSequence = 1, .maxSequence = kSEQ}));
     EXPECT_CALL(*ledgers_, getMostRecent()).WillOnce(testing::Return(kSEQ));
     EXPECT_CALL(*cacheLoader_, load(kSEQ));
 
