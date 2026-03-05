@@ -161,9 +161,8 @@ Monitor::doWork()
 
     if (dbProgressedThisCycle) {
         lck->lastDbCheckTime = std::chrono::steady_clock::now();
-    } else if (
-        std::chrono::steady_clock::now() - lck->lastDbCheckTime > lck->dbStalledReportDelay
-    ) {
+    } else if (std::chrono::steady_clock::now() - lck->lastDbCheckTime >
+               lck->dbStalledReportDelay) {
         LOG(
             log_.info()
         ) << "No DB update detected for "

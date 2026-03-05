@@ -65,7 +65,9 @@ struct ClusterCommunicationServiceTest : util::prometheus::WithPrometheus, MockB
         return ClioNode{
             .uuid = std::make_shared<boost::uuids::uuid>(uuid),
             .updateTime = std::chrono::system_clock::now(),
-            .dbRole = role
+            .dbRole = role,
+            .etlStarted = true,
+            .cacheIsFull = true,
         };
     }
 

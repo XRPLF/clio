@@ -79,7 +79,10 @@ TEST_F(ClioNodeTest, Serialization)
 TEST_F(ClioNodeTest, Deserialization)
 {
     boost::json::value const jsonValue = {
-        {"update_time", updateTimeStr}, {"db_role", 1}, {"etl_started", true}, {"cache_is_full", false}
+        {"update_time", updateTimeStr},
+        {"db_role", 1},
+        {"etl_started", true},
+        {"cache_is_full", false}
     };
 
     ClioNode node{
@@ -179,7 +182,10 @@ TEST_P(ClioNodeDbRoleTest, Deserialization)
 TEST_F(ClioNodeDbRoleTest, DeserializationInvalidDbRole)
 {
     boost::json::value const jsonValue = {
-        {"update_time", updateTimeStr}, {"db_role", 10}, {"etl_started", false}, {"cache_is_full", false}
+        {"update_time", updateTimeStr},
+        {"db_role", 10},
+        {"etl_started", false},
+        {"cache_is_full", false}
     };
     EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
 }
