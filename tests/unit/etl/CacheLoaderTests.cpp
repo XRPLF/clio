@@ -479,17 +479,17 @@ TEST_F(CacheLoaderFromFileTest, FileSequenceBehindBackendFetchesMissingLedgersFr
     EXPECT_CALL(cache, loadFromFile(filePath, kSEQ - maxSequenceLag))
         .WillOnce(Return(std::expected<void, std::string>{}));
 
-    // latestLedgerSequence is called twice per loop iteration (condition + seqToLoad)
+    // latestLedgerSequence is called twice per loop iteration (condition + seqToLoad + 1)
     // plus once for the final exit check
     EXPECT_CALL(cache, latestLedgerSequence)
         .WillOnce(Return(kFILE_SEQ))      // iteration 1: condition (true)
-        .WillOnce(Return(kFILE_SEQ))      // iteration 1: seqToLoad
+        .WillOnce(Return(kFILE_SEQ))      // iteration 1: seqToLoad + 1 = kFILE_SEQ + 1
         .WillOnce(Return(kFILE_SEQ + 1))  // iteration 2: condition (true)
-        .WillOnce(Return(kFILE_SEQ + 1))  // iteration 2: seqToLoad
+        .WillOnce(Return(kFILE_SEQ + 1))  // iteration 2: seqToLoad + 1 = kFILE_SEQ + 2
         .WillOnce(Return(kSEQ));          // exit condition (false)
 
-    EXPECT_CALL(*backend_, fetchLedgerDiff(kFILE_SEQ, _)).WillOnce(Return(diffs));
     EXPECT_CALL(*backend_, fetchLedgerDiff(kFILE_SEQ + 1, _)).WillOnce(Return(diffs));
+    EXPECT_CALL(*backend_, fetchLedgerDiff(kFILE_SEQ + 2, _)).WillOnce(Return(diffs));
     EXPECT_CALL(cache, updateImpl).Times(2);
     EXPECT_CALL(cache, setFull).Times(1);
 

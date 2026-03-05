@@ -105,11 +105,14 @@ public:
         if (loadCacheFromFile()) {
             // Cache file may contain outdated data, so fetch whatever left up to seq from DB
             while (cache_.get().latestLedgerSequence() < seq) {
-                auto seqToLoad = cache_.get().latestLedgerSequence();
+                auto seqToLoad = cache_.get().latestLedgerSequence() + 1;
+                LOG(log_.info()) << "Fetching ledger " << seqToLoad
+                                 << "from DB after loading cache from file";
                 auto const diff = data::synchronousAndRetryOnTimeout([this, seqToLoad](auto yield) {
                     return backend_->fetchLedgerDiff(seqToLoad, yield);
                 });
                 cache_.get().update(diff, seqToLoad);
+                LOG(log_.info()) << "Updated cache to " << seqToLoad;
             }
             cache_.get().setFull();
             return;
