@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "cluster/ClioNode.hpp"
+#include "util/MockLedgerCacheLoadingState.hpp"
 #include "util/MockWriterState.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/TimeUtils.hpp"
@@ -53,7 +54,8 @@ TEST_F(ClioNodeTest, Serialization)
         .updateTime = updateTime,
         .dbRole = ClioNode::DbRole::Writer,
         .etlStarted = true,
-        .cacheIsFull = false
+        .cacheIsFull = false,
+        .cacheIsCurrentlyLoading = true
     };
 
     boost::json::value jsonValue;
@@ -74,6 +76,9 @@ TEST_F(ClioNodeTest, Serialization)
 
     EXPECT_TRUE(obj.contains("cache_is_full"));
     EXPECT_EQ(obj.at("cache_is_full").as_bool(), node.cacheIsFull);
+
+    EXPECT_TRUE(obj.contains("cache_is_currently_loading"));
+    EXPECT_EQ(obj.at("cache_is_currently_loading").as_bool(), node.cacheIsCurrentlyLoading);
 }
 
 TEST_F(ClioNodeTest, Deserialization)
@@ -82,7 +87,8 @@ TEST_F(ClioNodeTest, Deserialization)
         {"update_time", updateTimeStr},
         {"db_role", 1},
         {"etl_started", true},
-        {"cache_is_full", false}
+        {"cache_is_full", false},
+        {"cache_is_currently_loading", true}
     };
 
     ClioNode node{
@@ -90,7 +96,8 @@ TEST_F(ClioNodeTest, Deserialization)
         .updateTime = {},
         .dbRole = ClioNode::DbRole::ReadOnly,
         .etlStarted = false,
-        .cacheIsFull = false
+        .cacheIsFull = false,
+        .cacheIsCurrentlyLoading = false
     };
     ASSERT_NO_THROW(node = boost::json::value_to<ClioNode>(jsonValue));
 
@@ -100,6 +107,7 @@ TEST_F(ClioNodeTest, Deserialization)
     EXPECT_EQ(node.dbRole, ClioNode::DbRole::NotWriter);
     EXPECT_TRUE(node.etlStarted);
     EXPECT_FALSE(node.cacheIsFull);
+    EXPECT_TRUE(node.cacheIsCurrentlyLoading);
 }
 
 TEST_F(ClioNodeTest, DeserializationInvalidTime)
@@ -120,7 +128,10 @@ TEST_F(ClioNodeTest, DeserializationMissingTime)
 TEST_F(ClioNodeTest, DeserializationMissingEtlStarted)
 {
     boost::json::value const jsonValue = {
-        {"update_time", updateTimeStr}, {"db_role", 1}, {"cache_is_full", false}
+        {"update_time", updateTimeStr},
+        {"db_role", 1},
+        {"cache_is_full", false},
+        {"cache_is_currently_loading", false}
     };
     EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
 }
@@ -128,7 +139,44 @@ TEST_F(ClioNodeTest, DeserializationMissingEtlStarted)
 TEST_F(ClioNodeTest, DeserializationMissingCacheIsFull)
 {
     boost::json::value const jsonValue = {
-        {"update_time", updateTimeStr}, {"db_role", 1}, {"etl_started", true}
+        {"update_time", updateTimeStr},
+        {"db_role", 1},
+        {"etl_started", true},
+        {"cache_is_currently_loading", false}
+    };
+    EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
+}
+
+TEST_F(ClioNodeTest, DeserializationMissingCacheIsCurrentlyLoading)
+{
+    boost::json::value const jsonValue = {
+        {"update_time", updateTimeStr},
+        {"db_role", 1},
+        {"etl_started", true},
+        {"cache_is_full", false}
+    };
+    EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
+}
+
+TEST_F(ClioNodeTest, DeserializationMissingDbRole)
+{
+    boost::json::value const jsonValue = {
+        {"update_time", updateTimeStr},
+        {"etl_started", false},
+        {"cache_is_full", false},
+        {"cache_is_currently_loading", false}
+    };
+    EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
+}
+
+TEST_F(ClioNodeTest, DeserializationInvalidDbRole)
+{
+    boost::json::value const jsonValue = {
+        {"update_time", updateTimeStr},
+        {"db_role", 10},
+        {"etl_started", false},
+        {"cache_is_full", false},
+        {"cache_is_currently_loading", false}
     };
     EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
 }
@@ -160,7 +208,8 @@ TEST_P(ClioNodeDbRoleTest, Serialization)
         .updateTime = updateTime,
         .dbRole = param.role,
         .etlStarted = false,
-        .cacheIsFull = false
+        .cacheIsFull = false,
+        .cacheIsCurrentlyLoading = false
     };
     auto const jsonValue = boost::json::value_from(node);
     EXPECT_EQ(jsonValue.as_object().at("db_role").as_int64(), static_cast<int64_t>(param.role));
@@ -173,29 +222,11 @@ TEST_P(ClioNodeDbRoleTest, Deserialization)
         {"update_time", updateTimeStr},
         {"db_role", static_cast<int64_t>(param.role)},
         {"etl_started", false},
-        {"cache_is_full", false}
+        {"cache_is_full", false},
+        {"cache_is_currently_loading", false}
     };
     auto const node = boost::json::value_to<ClioNode>(jsonValue);
     EXPECT_EQ(node.dbRole, param.role);
-}
-
-TEST_F(ClioNodeDbRoleTest, DeserializationInvalidDbRole)
-{
-    boost::json::value const jsonValue = {
-        {"update_time", updateTimeStr},
-        {"db_role", 10},
-        {"etl_started", false},
-        {"cache_is_full", false}
-    };
-    EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
-}
-
-TEST_F(ClioNodeDbRoleTest, DeserializationMissingDbRole)
-{
-    boost::json::value const jsonValue = {
-        {"update_time", updateTimeStr}, {"etl_started", false}, {"cache_is_full", false}
-    };
-    EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
 }
 
 struct ClioNodeFromTestBundle {
@@ -205,6 +236,7 @@ struct ClioNodeFromTestBundle {
     bool writing;
     bool etlStarted;
     bool cacheIsFull;
+    bool cacheIsCurrentlyLoading;
     ClioNode::DbRole expectedRole;
 };
 
@@ -213,6 +245,7 @@ struct ClioNodeFromTest : ClioNodeTest, testing::WithParamInterface<ClioNodeFrom
         std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator()());
 
     MockWriterState writerState;
+    MockLedgerCacheLoadingState cacheLoadingState;
 };
 
 INSTANTIATE_TEST_SUITE_P(
@@ -226,6 +259,7 @@ INSTANTIATE_TEST_SUITE_P(
             .writing = false,
             .etlStarted = false,
             .cacheIsFull = false,
+            .cacheIsCurrentlyLoading = false,
             .expectedRole = ClioNode::DbRole::ReadOnly
         },
         ClioNodeFromTestBundle{
@@ -235,6 +269,7 @@ INSTANTIATE_TEST_SUITE_P(
             .writing = false,
             .etlStarted = false,
             .cacheIsFull = false,
+            .cacheIsCurrentlyLoading = false,
             .expectedRole = ClioNode::DbRole::Fallback
         },
         ClioNodeFromTestBundle{
@@ -244,6 +279,7 @@ INSTANTIATE_TEST_SUITE_P(
             .writing = false,
             .etlStarted = true,
             .cacheIsFull = false,
+            .cacheIsCurrentlyLoading = false,
             .expectedRole = ClioNode::DbRole::NotWriter
         },
         ClioNodeFromTestBundle{
@@ -253,6 +289,7 @@ INSTANTIATE_TEST_SUITE_P(
             .writing = true,
             .etlStarted = true,
             .cacheIsFull = true,
+            .cacheIsCurrentlyLoading = true,
             .expectedRole = ClioNode::DbRole::Writer
         }
     ),
@@ -272,15 +309,18 @@ TEST_P(ClioNodeFromTest, FromWriterState)
     }
     EXPECT_CALL(writerState, isEtlStarted()).WillOnce(testing::Return(param.etlStarted));
     EXPECT_CALL(writerState, isCacheFull()).WillOnce(testing::Return(param.cacheIsFull));
+    EXPECT_CALL(cacheLoadingState, isCurrentlyLoading())
+        .WillOnce(testing::Return(param.cacheIsCurrentlyLoading));
 
     auto const beforeTime = std::chrono::system_clock::now();
-    auto const node = ClioNode::from(uuid, writerState);
+    auto const node = ClioNode::from(uuid, writerState, cacheLoadingState);
     auto const afterTime = std::chrono::system_clock::now();
 
     EXPECT_EQ(node.uuid, uuid);
     EXPECT_EQ(node.dbRole, param.expectedRole);
     EXPECT_EQ(node.etlStarted, param.etlStarted);
     EXPECT_EQ(node.cacheIsFull, param.cacheIsFull);
+    EXPECT_EQ(node.cacheIsCurrentlyLoading, param.cacheIsCurrentlyLoading);
     EXPECT_GE(node.updateTime, beforeTime);
     EXPECT_LE(node.updateTime, afterTime);
 }

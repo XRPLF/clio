@@ -61,6 +61,7 @@ public:
      *
      * @param backend The backend to use for communication.
      * @param writerState The state showing whether clio is writing to the database.
+     * @param cacheLoadingState State controlling cache loading permission for this node.
      * @param readInterval The interval to read messages from the cluster.
      * @param writeInterval The interval to write messages to the cluster.
      */
@@ -93,11 +94,30 @@ public:
     void
     stop();
 
+    /**
+     * @brief Result of ClusterCommunicationService::make().
+     *
+     * The @c cacheLoadingState is a clone whose allowLoading() is connected to the state owned by
+     * the service, so the caller can pass it to the cache loader.
+     */
     struct MakeResult {
-        std::unique_ptr<ClusterCommunicationService> service;
-        std::unique_ptr<data::LedgerCacheLoadingStateInterface const> cacheLoadingState;
+        std::unique_ptr<ClusterCommunicationService> service;          ///< The constructed service
+        std::unique_ptr<data::LedgerCacheLoadingStateInterface const>  ///
+            cacheLoadingState;  ///< Clone of cache loading state for use by the cache loader
     };
 
+    /**
+     * @brief Factory method: construct the service and return a cache loading state for the caller.
+     *
+     * Reads the @c cache.limit_load_in_cluster config flag: if true, loading is immediately
+     * allowed (single-node mode); if false, the cluster will gate permission via @ref
+     * CacheLoadingDecider (to be implemented).
+     *
+     * @param config The application configuration
+     * @param backend The data backend
+     * @param state The shared ETL system state
+     * @return A MakeResult containing the service and a cache loading state clone
+     */
     static MakeResult
     make(
         util::config::ClioConfigDefinition const& config,

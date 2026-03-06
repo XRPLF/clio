@@ -61,8 +61,8 @@ class CacheLoader : public CacheLoaderInterface {
     std::reference_wrapper<data::LedgerCacheInterface> cache_;
 
     CacheLoaderSettings settings_;
-    ExecutionContextType ctx_;
     std::unique_ptr<data::LedgerCacheLoadingStateInterface const> cacheLoadingState_;
+    ExecutionContextType ctx_;
     std::unique_ptr<CacheLoaderType> loader_;
 
 public:
@@ -72,6 +72,7 @@ public:
      * @param config The configuration to use
      * @param backend The backend to use
      * @param cache The cache to load into
+     * @param cacheLoadingState State controlling whether loading from backend is currently allowed
      */
     CacheLoader(
         util::config::ClioConfigDefinition const& config,

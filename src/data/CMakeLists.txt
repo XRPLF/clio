@@ -6,6 +6,7 @@ target_sources(
         BackendCounters.cpp
         BackendInterface.cpp
         LedgerCache.cpp
+        LedgerCacheLoadingState.cpp
         LedgerCacheSaver.cpp
         LedgerHeaderCache.cpp
         cassandra/impl/Future.cpp

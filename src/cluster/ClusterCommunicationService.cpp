@@ -83,7 +83,7 @@ ClusterCommunicationService::make(
 {
     auto const& cache = backend->cache();
     auto cacheLoadingState = std::make_unique<data::LedgerCacheLoadingState>(cache);
-    if (config.get<bool>("cache.limit_load_in_cluster")) {
+    if (not config.get<bool>("cache.limit_load_in_cluster")) {
         cacheLoadingState->allowLoading();
     }
     auto cacheLoadingStateClone = cacheLoadingState->clone();

@@ -24,6 +24,7 @@
 #include "etl/impl/CacheLoader.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockLedgerCache.hpp"
+#include "util/MockLedgerCacheLoadingState.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
 #include "util/config/ConfigDefinition.hpp"
@@ -38,8 +39,10 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace json = boost::json;
@@ -81,7 +84,10 @@ constexpr auto kSEQ = 30;
 
 struct CacheLoaderTest : util::prometheus::WithPrometheus, MockBackendTest {
     DiffProvider diffProvider;
-    MockLedgerCache cache;
+    testing::StrictMock<MockLedgerCache> cache;
+    std::unique_ptr<MockLedgerCacheLoadingState> cacheLoadingState =
+        std::make_unique<MockLedgerCacheLoadingState>();
+    MockLedgerCacheLoadingState& cacheLoadingStateRef = *cacheLoadingState;
 };
 
 using Settings = etl::CacheLoaderSettings;
@@ -304,7 +310,7 @@ TEST_P(ParametrizedCacheLoaderTest, CacheDisabledLeadsToCancellation)
 TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
 {
     auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "sync"}})JSON"));
-    CacheLoader<> loader{cfg, backend_, cache};
+    CacheLoader<> loader{cfg, backend_, cache, std::move(cacheLoadingState)};
 
     auto const diffs = diffProvider.getLatestDiff();
     auto const loops = diffs.size() + 1;
@@ -324,6 +330,7 @@ TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
     EXPECT_CALL(cache, isFull).WillOnce(Return(false)).WillRepeatedly(Return(true));
     EXPECT_CALL(cache, setFull).Times(1);
     EXPECT_CALL(cache, startLoading).Times(1);
+    EXPECT_CALL(cacheLoadingStateRef, waitForLoadingAllowed());
 
     loader.load(kSEQ);
 }
@@ -331,7 +338,7 @@ TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
 TEST_F(CacheLoaderTest, AsyncCacheLoaderCanBeStopped)
 {
     auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "async"}})JSON"));
-    CacheLoader loader{cfg, backend_, cache};
+    CacheLoader<> loader{cfg, backend_, cache, std::move(cacheLoadingState)};
 
     auto const diffs = diffProvider.getLatestDiff();
     auto const loops = diffs.size() + 1;
@@ -351,6 +358,7 @@ TEST_F(CacheLoaderTest, AsyncCacheLoaderCanBeStopped)
     EXPECT_CALL(cache, isFull).WillRepeatedly(Return(false));
     EXPECT_CALL(cache, setFull).Times(AtMost(1));
     EXPECT_CALL(cache, startLoading).Times(1);
+    EXPECT_CALL(cacheLoadingStateRef, waitForLoadingAllowed()).Times(1);
 
     loader.load(kSEQ);
     loader.stop();
@@ -360,7 +368,7 @@ TEST_F(CacheLoaderTest, AsyncCacheLoaderCanBeStopped)
 TEST_F(CacheLoaderTest, DisabledCacheLoaderDoesNotLoadCache)
 {
     auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "none"}})JSON"));
-    CacheLoader loader{cfg, backend_, cache};
+    CacheLoader<> loader{cfg, backend_, cache, std::move(cacheLoadingState)};
 
     EXPECT_CALL(cache, updateImpl).Times(0);
     EXPECT_CALL(cache, isFull).WillRepeatedly(Return(false));
@@ -372,7 +380,7 @@ TEST_F(CacheLoaderTest, DisabledCacheLoaderDoesNotLoadCache)
 TEST_F(CacheLoaderTest, DisabledCacheLoaderCanCallStopAndWait)
 {
     auto const cfg = getParseCacheConfig(json::parse(R"JSON({"cache": {"load": "none"}})JSON"));
-    CacheLoader loader{cfg, backend_, cache};
+    CacheLoader<> loader{cfg, backend_, cache, std::move(cacheLoadingState)};
 
     EXPECT_CALL(cache, updateImpl).Times(0);
     EXPECT_CALL(cache, isFull).WillRepeatedly(Return(false));
@@ -401,7 +409,7 @@ struct CacheLoaderFromFileTest : CacheLoaderTest {
             )
         )
     );
-    CacheLoader<> loader{cfg, backend_, cache};
+    CacheLoader<> loader{cfg, backend_, cache, std::move(cacheLoadingState)};
 };
 
 TEST_F(CacheLoaderFromFileTest, Success)
@@ -430,6 +438,7 @@ TEST_F(CacheLoaderFromFileTest, FailureBackToNormalLoad)
     EXPECT_CALL(cache, loadFromFile(filePath, kSEQ - maxSequenceLag))
         .WillOnce(Return(std::expected<void, std::string>(std::unexpected("File not found"))));
 
+    EXPECT_CALL(cacheLoadingStateRef, waitForLoadingAllowed()).Times(1);
     EXPECT_CALL(*backend_, fetchLedgerDiff(_, _)).Times(32).WillRepeatedly(Return(diffs));
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(keysSize * loops).WillRepeatedly([this]() {
         return diffProvider.nextKey(keysSize);
@@ -453,7 +462,9 @@ TEST_F(CacheLoaderFromFileTest, DontLoadWhenCacheIsDisabled)
     auto const disabledCacheCfg = getParseCacheConfig(
         json::parse(R"JSON({"cache": {"load": "none", "file": {"path": "/tmp/cache.bin"}}})JSON")
     );
-    CacheLoader loaderWithCacheDisabled{disabledCacheCfg, backend_, cache};
+    CacheLoader<> loaderWithCacheDisabled{
+        disabledCacheCfg, backend_, cache, std::make_unique<MockLedgerCacheLoadingState>()
+    };
 
     EXPECT_CALL(cache, isFull).WillOnce(Return(false));
     EXPECT_CALL(cache, setDisabled);
@@ -469,6 +480,7 @@ TEST_F(CacheLoaderFromFileTest, MaxSequenceLagCalculation)
     EXPECT_CALL(cache, loadFromFile(filePath, kSEQ - maxSequenceLag))
         .WillOnce(Return(std::expected<void, std::string>{}));
     EXPECT_CALL(cache, latestLedgerSequence).WillOnce(Return(kLOADED_SEQ));
+    EXPECT_CALL(cache, setFull).Times(1);
 
     loader.load(kSEQ);
 }
@@ -509,6 +521,7 @@ TEST_F(CacheLoaderFromFileTest, MaxSequenceLagClampedToMinOfLedgerRange)
     EXPECT_CALL(cache, loadFromFile(filePath, minSeq))
         .WillOnce(Return(std::expected<void, std::string>{}));
     EXPECT_CALL(cache, latestLedgerSequence).WillOnce(Return(minSeq + 1));
+    EXPECT_CALL(cache, setFull).Times(1);
 
     loader.load(currentSeq);
 }

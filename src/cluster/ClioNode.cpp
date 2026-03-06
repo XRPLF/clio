@@ -46,7 +46,7 @@ struct JsonFields {
     static constexpr std::string_view const kETL_STARTED = "etl_started";
     static constexpr std::string_view const kCACHE_IS_FULL = "cache_is_full";
     static constexpr std::string_view const kCACHE_IS_CURRENTLY_LOADING =
-        "Cache_is_currenly_loading";
+        "cache_is_currently_loading";
 };
 
 }  // namespace
