@@ -125,10 +125,9 @@ ClioApplication::run(bool const useNgWebServer)
 
     auto systemState = etl::SystemState::makeSystemState(config_);
 
-    cluster::ClusterCommunicationService clusterCommunicationService{
-        backend, std::make_unique<etl::WriterState>(systemState, cache)
-    };
-    clusterCommunicationService.run();
+    auto [clusterCommunicationService, cacheLoadingState] =
+        cluster::ClusterCommunicationService::make(config_, backend, systemState);
+    clusterCommunicationService->run();
 
     auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
 
@@ -160,7 +159,14 @@ ClioApplication::run(bool const useNgWebServer)
     // ETL is responsible for writing and publishing to streams. In read-only mode, ETL only
     // publishes
     auto etl = etl::ETLService::makeETLService(
-        config_, std::move(systemState), ctx, backend, subscriptions, balancer, ledgers
+        config_,
+        std::move(systemState),
+        std::move(cacheLoadingState),
+        ctx,
+        backend,
+        subscriptions,
+        balancer,
+        ledgers
     );
 
     auto workQueue = rpc::WorkQueue::makeWorkQueue(config_);
@@ -218,7 +224,7 @@ ClioApplication::run(bool const useNgWebServer)
                 *subscriptions,
                 *backend,
                 cacheSaver,
-                clusterCommunicationService,
+                *clusterCommunicationService,
                 ioc
             )
         );
@@ -245,7 +251,7 @@ ClioApplication::run(bool const useNgWebServer)
             *subscriptions,
             *backend,
             cacheSaver,
-            clusterCommunicationService,
+            *clusterCommunicationService,
             ioc
         )
     );

@@ -24,7 +24,10 @@
 #include "cluster/Metrics.hpp"
 #include "cluster/WriterDecider.hpp"
 #include "data/BackendInterface.hpp"
+#include "data/LedgerCacheLoadingState.hpp"
+#include "etl/SystemState.hpp"
 #include "etl/WriterState.hpp"
+#include "util/config/ConfigDefinition.hpp"
 
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/spawn.hpp>
@@ -64,6 +67,7 @@ public:
     ClusterCommunicationService(
         std::shared_ptr<data::BackendInterface> backend,
         std::unique_ptr<etl::WriterStateInterface> writerState,
+        std::unique_ptr<data::LedgerCacheLoadingStateInterface> cacheLoadingState,
         std::chrono::steady_clock::duration readInterval = kDEFAULT_READ_INTERVAL,
         std::chrono::steady_clock::duration writeInterval = kDEFAULT_WRITE_INTERVAL
     );
@@ -88,6 +92,18 @@ public:
      */
     void
     stop();
+
+    struct MakeResult {
+        std::unique_ptr<ClusterCommunicationService> service;
+        std::unique_ptr<data::LedgerCacheLoadingStateInterface const> cacheLoadingState;
+    };
+
+    static MakeResult
+    make(
+        util::config::ClioConfigDefinition const& config,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<etl::SystemState> state
+    );
 };
 
 }  // namespace cluster

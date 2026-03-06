@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/LedgerCacheInterface.hpp"
+#include "data/LedgerCacheLoadingState.hpp"
 #include "data/Types.hpp"
 #include "etl/CacheLoaderInterface.hpp"
 #include "etl/CacheLoaderSettings.hpp"
@@ -61,6 +62,7 @@ class CacheLoader : public CacheLoaderInterface {
 
     CacheLoaderSettings settings_;
     ExecutionContextType ctx_;
+    std::unique_ptr<data::LedgerCacheLoadingStateInterface const> cacheLoadingState_;
     std::unique_ptr<CacheLoaderType> loader_;
 
 public:
@@ -74,11 +76,13 @@ public:
     CacheLoader(
         util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface> backend,
-        data::LedgerCacheInterface& cache
+        data::LedgerCacheInterface& cache,
+        std::unique_ptr<data::LedgerCacheLoadingStateInterface const> cacheLoadingState
     )
         : backend_{std::move(backend)}
         , cache_{cache}
         , settings_{makeCacheLoaderSettings(config)}
+        , cacheLoadingState_(std::move(cacheLoadingState))
         , ctx_{settings_.numThreads}
     {
     }
@@ -108,6 +112,7 @@ public:
             cache_.get().setFull();
             return;
         }
+        cacheLoadingState_->waitForLoadingAllowed();
         cache_.get().startLoading();
 
         std::shared_ptr<impl::BaseCursorProvider> provider;
@@ -202,7 +207,7 @@ private:
     updateCacheToSeq(uint32_t const seq)
     {
         while (cache_.get().latestLedgerSequence() < seq) {
-            auto seqToLoad = cache_.get().latestLedgerSequence() + 1;
+            auto const seqToLoad = cache_.get().latestLedgerSequence() + 1;
             LOG(log_.info()) << "Fetching ledger " << seqToLoad
                              << "from DB after loading cache from file";
             auto const diff = data::synchronousAndRetryOnTimeout([this, seqToLoad](auto yield) {

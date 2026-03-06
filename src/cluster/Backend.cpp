@@ -21,6 +21,7 @@
 
 #include "cluster/ClioNode.hpp"
 #include "data/BackendInterface.hpp"
+#include "data/LedgerCacheLoadingState.hpp"
 #include "etl/WriterState.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -45,11 +46,13 @@ Backend::Backend(
     boost::asio::thread_pool& ctx,
     std::shared_ptr<data::BackendInterface> backend,
     std::unique_ptr<etl::WriterStateInterface const> writerState,
+    std::unique_ptr<data::LedgerCacheLoadingStateInterface const> cacheLoadingState,
     std::chrono::steady_clock::duration readInterval,
     std::chrono::steady_clock::duration writeInterval
 )
     : backend_(std::move(backend))
     , writerState_(std::move(writerState))
+    , cacheLoadingState_(std::move(cacheLoadingState))
     , readerTask_(readInterval, ctx)
     , writerTask_(writeInterval, ctx)
     , selfUuid_(std::make_shared<boost::uuids::uuid>(boost::uuids::random_generator{}()))
@@ -120,14 +123,14 @@ Backend::doRead(boost::asio::yield_context yield)
         *expectedNodeData->uuid = uuid;
         otherNodesData.push_back(std::move(expectedNodeData).value());
     }
-    otherNodesData.push_back(ClioNode::from(selfUuid_, *writerState_));
+    otherNodesData.push_back(ClioNode::from(selfUuid_, *writerState_, *cacheLoadingState_));
     return otherNodesData;
 }
 
 void
 Backend::doWrite()
 {
-    auto const selfData = ClioNode::from(selfUuid_, *writerState_);
+    auto const selfData = ClioNode::from(selfUuid_, *writerState_, *cacheLoadingState_);
     boost::json::value jsonValue{};
     boost::json::value_from(selfData, jsonValue);
     backend_->writeNodeMessage(*selfData.uuid, boost::json::serialize(jsonValue.as_object()));

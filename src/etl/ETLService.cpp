@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/LedgerCacheInterface.hpp"
+#include "data/LedgerCacheLoadingState.hpp"
 #include "data/Types.hpp"
 #include "etl/CacheLoader.hpp"
 #include "etl/CacheLoaderInterface.hpp"
@@ -79,6 +80,7 @@ std::shared_ptr<ETLServiceInterface>
 ETLService::makeETLService(
     util::config::ClioConfigDefinition const& config,
     std::shared_ptr<SystemState> state,
+    std::unique_ptr<data::LedgerCacheLoadingStateInterface const> cacheLoadingState,
     util::async::AnyExecutionContext ctx,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
@@ -91,7 +93,9 @@ ETLService::makeETLService(
     auto fetcher = std::make_shared<impl::LedgerFetcher>(backend, balancer);
     auto extractor = std::make_shared<impl::Extractor>(fetcher);
     auto publisher = std::make_shared<impl::LedgerPublisher>(ctx, backend, subscriptions, *state);
-    auto cacheLoader = std::make_shared<CacheLoader<>>(config, backend, backend->cache());
+    auto cacheLoader = std::make_shared<CacheLoader<>>(
+        config, backend, backend->cache(), std::move(cacheLoadingState)
+    );
     auto cacheUpdater = std::make_shared<impl::CacheUpdater>(backend->cache());
     auto amendmentBlockHandler = std::make_shared<impl::AmendmentBlockHandler>(ctx, *state);
     auto monitorProvider = std::make_shared<impl::MonitorProvider>();

@@ -407,6 +407,7 @@ getClioConfig()
           ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(gValidateNumCursors)},
          {"cache.page_fetch_size",
           ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(gValidateUint16)},
+         {"cache.limit_load_in_cluster", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
          {"cache.load",
           ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(gValidateLoadMode)},
          {"cache.file.path", ConfigValue{ConfigType::String}.optional()},

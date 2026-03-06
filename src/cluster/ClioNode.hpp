@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/LedgerCacheLoadingState.hpp"
 #include "etl/WriterState.hpp"
 
 #include <boost/json/conversion.hpp>
@@ -63,6 +64,7 @@ struct ClioNode {
     DbRole dbRole;     ///< The database role of the node
     bool etlStarted;   ///< Whether the ETL monitor has started on this node
     bool cacheIsFull;  ///< Whether the ledger cache is fully loaded on this node
+    bool cacheIsCurrentlyLoading;
 
     /**
      * @brief Create a ClioNode from writer state.
@@ -72,7 +74,7 @@ struct ClioNode {
      * @return A ClioNode with the current time and role derived from writerState
      */
     static ClioNode
-    from(Uuid uuid, etl::WriterStateInterface const& writerState);
+    from(Uuid uuid, etl::WriterStateInterface const& writerState, data::LedgerCacheLoadingStateInterface const& cacheLoadingState);
 };
 
 void

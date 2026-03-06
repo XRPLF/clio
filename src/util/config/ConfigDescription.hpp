@@ -326,6 +326,9 @@ This document provides a list of all available Clio configuration properties in 
                     "`cache.num_diffs`."},
         KV{.key = "cache.page_fetch_size",
            .value = "The number of ledger objects to fetch concurrently per marker."},
+        KV{.key = "cache.limit_load_in_cluster",
+           .value = "If enabled only one clio node in a cluster (sharing the same database) will "
+                    "load cache at a time"},
         KV{.key = "cache.load", .value = "The strategy used for Cache loading."},
         KV{.key = "cache.file.path",
            .value = "The path to a file where cache will be saved to on shutdown and loaded from "

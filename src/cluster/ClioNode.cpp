@@ -19,6 +19,7 @@
 
 #include "cluster/ClioNode.hpp"
 
+#include "data/LedgerCacheLoadingState.hpp"
 #include "etl/WriterState.hpp"
 #include "util/TimeUtils.hpp"
 
@@ -44,12 +45,18 @@ struct JsonFields {
     static constexpr std::string_view const kDB_ROLE = "db_role";
     static constexpr std::string_view const kETL_STARTED = "etl_started";
     static constexpr std::string_view const kCACHE_IS_FULL = "cache_is_full";
+    static constexpr std::string_view const kCACHE_IS_CURRENTLY_LOADING =
+        "Cache_is_currenly_loading";
 };
 
 }  // namespace
 
 ClioNode
-ClioNode::from(ClioNode::Uuid uuid, etl::WriterStateInterface const& writerState)
+ClioNode::from(
+    ClioNode::Uuid uuid,
+    etl::WriterStateInterface const& writerState,
+    data::LedgerCacheLoadingStateInterface const& cacheLoadingState
+)
 {
     auto const dbRole = [&writerState]() {
         if (writerState.isReadOnly()) {
@@ -66,7 +73,8 @@ ClioNode::from(ClioNode::Uuid uuid, etl::WriterStateInterface const& writerState
         .updateTime = std::chrono::system_clock::now(),
         .dbRole = dbRole,
         .etlStarted = writerState.isEtlStarted(),
-        .cacheIsFull = writerState.isCacheFull()
+        .cacheIsFull = writerState.isCacheFull(),
+        .cacheIsCurrentlyLoading = cacheLoadingState.isCurrentlyLoading()
     };
 }
 
@@ -77,7 +85,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, ClioNode const& 
         {JsonFields::kUPDATE_TIME, util::systemTpToUtcStr(node.updateTime, ClioNode::kTIME_FORMAT)},
         {JsonFields::kDB_ROLE, static_cast<int64_t>(node.dbRole)},
         {JsonFields::kETL_STARTED, node.etlStarted},
-        {JsonFields::kCACHE_IS_FULL, node.cacheIsFull}
+        {JsonFields::kCACHE_IS_FULL, node.cacheIsFull},
+        {JsonFields::kCACHE_IS_CURRENTLY_LOADING, node.cacheIsCurrentlyLoading}
     };
 }
 
@@ -97,6 +106,8 @@ tag_invoke(boost::json::value_to_tag<ClioNode>, boost::json::value const& jv)
 
     auto const etlStarted = jv.as_object().at(JsonFields::kETL_STARTED).as_bool();
     auto const cacheIsFull = jv.as_object().at(JsonFields::kCACHE_IS_FULL).as_bool();
+    auto const cacheIsCurrentlyLoading =
+        jv.as_object().at(JsonFields::kCACHE_IS_CURRENTLY_LOADING).as_bool();
 
     return ClioNode{
         // Json data doesn't contain uuid so leaving it empty here. It will be filled outside of
@@ -105,7 +116,8 @@ tag_invoke(boost::json::value_to_tag<ClioNode>, boost::json::value const& jv)
         .updateTime = updateTime.value(),
         .dbRole = static_cast<ClioNode::DbRole>(dbRoleValue),
         .etlStarted = etlStarted,
-        .cacheIsFull = cacheIsFull
+        .cacheIsFull = cacheIsFull,
+        .cacheIsCurrentlyLoading = cacheIsCurrentlyLoading
     };
 }
 

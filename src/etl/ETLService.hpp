@@ -20,6 +20,7 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "data/LedgerCacheLoadingState.hpp"
 #include "data/Types.hpp"
 #include "etl/CacheLoaderInterface.hpp"
 #include "etl/CacheUpdaterInterface.hpp"
@@ -145,6 +146,7 @@ public:
     makeETLService(
         util::config::ClioConfigDefinition const& config,
         std::shared_ptr<SystemState> state,
+        std::unique_ptr<data::LedgerCacheLoadingStateInterface const> cacheLoadingState,
         util::async::AnyExecutionContext ctx,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
