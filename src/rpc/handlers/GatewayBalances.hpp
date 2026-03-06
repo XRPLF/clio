@@ -95,8 +95,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    GatewayBalancesHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    GatewayBalancesHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
+        : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
     }
 

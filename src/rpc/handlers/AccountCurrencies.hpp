@@ -77,8 +77,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    AccountCurrenciesHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    AccountCurrenciesHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
+        : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
     }
 

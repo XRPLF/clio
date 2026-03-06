@@ -84,14 +84,14 @@ public:
     /**
      * @brief Construct a new FeatureHandler object
      *
-     * @param backend The backend to use
+     * @param sharedPtrBackend The backend to use
      * @param amendmentCenter The amendment center to use
      */
     FeatureHandler(
-        std::shared_ptr<BackendInterface> const& backend,
+        std::shared_ptr<BackendInterface> sharedPtrBackend,
         std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter
     )
-        : sharedPtrBackend_(backend), amendmentCenter_(amendmentCenter)
+        : sharedPtrBackend_(std::move(sharedPtrBackend)), amendmentCenter_(amendmentCenter)
     {
     }
 

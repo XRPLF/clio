@@ -107,10 +107,10 @@ public:
      * @param etl The ETL service to use
      */
     TxHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend,
+        std::shared_ptr<BackendInterface> sharedPtrBackend,
         std::shared_ptr<etl::ETLServiceInterface const> const& etl
     )
-        : sharedPtrBackend_(sharedPtrBackend), etl_(etl)
+        : sharedPtrBackend_(std::move(sharedPtrBackend)), etl_(etl)
     {
     }
 

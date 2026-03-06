@@ -42,8 +42,8 @@ class CursorFromDiffProvider : public BaseCursorProvider {
     size_t numCursors_;
 
 public:
-    CursorFromDiffProvider(std::shared_ptr<BackendInterface> const& backend, size_t numCursors)
-        : backend_{backend}, numCursors_{numCursors}
+    CursorFromDiffProvider(std::shared_ptr<BackendInterface> backend, size_t numCursors)
+        : backend_{std::move(backend)}, numCursors_{numCursors}
     {
     }
 

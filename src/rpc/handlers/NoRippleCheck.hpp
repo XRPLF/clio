@@ -90,8 +90,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    NoRippleCheckHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    NoRippleCheckHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
+        : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
     }
 

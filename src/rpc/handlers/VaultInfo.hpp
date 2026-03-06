@@ -52,7 +52,7 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    VaultInfoHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend);
+    VaultInfoHandler(std::shared_ptr<BackendInterface> sharedPtrBackend);
 
     /**
      * @brief A struct to hold the input data for the command

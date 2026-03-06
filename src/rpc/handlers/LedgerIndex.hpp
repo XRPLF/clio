@@ -67,8 +67,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    LedgerIndexHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    LedgerIndexHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
+        : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
     }
 

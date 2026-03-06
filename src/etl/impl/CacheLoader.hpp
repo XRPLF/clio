@@ -63,7 +63,7 @@ public:
     template <typename CtxType>
     CacheLoaderImpl(
         CtxType& ctx,
-        std::shared_ptr<BackendInterface> const& backend,
+        std::shared_ptr<BackendInterface> backend,
         CacheType& cache,
         uint32_t const seq,
         std::size_t const numCacheMarkers,
@@ -71,7 +71,7 @@ public:
         std::vector<CursorPair> const& cursors
     )
         : ctx_{ctx}
-        , backend_{backend}
+        , backend_{std::move(backend)}
         , cache_{std::ref(cache)}
         , queue_{cursors.size()}
         , remaining_{cursors.size()}

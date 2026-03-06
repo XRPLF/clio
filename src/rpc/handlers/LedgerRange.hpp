@@ -55,8 +55,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    LedgerRangeHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    LedgerRangeHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
+        : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
     }
 

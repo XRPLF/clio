@@ -49,16 +49,17 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace rpc {
 
 SubscribeHandler::SubscribeHandler(
-    std::shared_ptr<BackendInterface> const& sharedPtrBackend,
+    std::shared_ptr<BackendInterface> sharedPtrBackend,
     std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
     std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions
 )
-    : sharedPtrBackend_(sharedPtrBackend)
+    : sharedPtrBackend_(std::move(sharedPtrBackend))
     , amendmentCenter_(amendmentCenter)
     , subscriptions_(subscriptions)
 {

@@ -87,14 +87,14 @@ public:
      */
     RPCEngine(
         util::config::ClioConfigDefinition const& config,
-        std::shared_ptr<BackendInterface> const& backend,
+        std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<etl::LoadBalancerInterface> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
         CountersType& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider
     )
-        : backend_{backend}
+        : backend_{std::move(backend)}
         , dosGuard_{std::cref(dosGuard)}
         , workQueue_{std::ref(workQueue)}
         , counters_{std::ref(counters)}

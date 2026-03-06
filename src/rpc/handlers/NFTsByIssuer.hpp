@@ -81,8 +81,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    NFTsByIssuerHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    NFTsByIssuerHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
+        : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
     }
 

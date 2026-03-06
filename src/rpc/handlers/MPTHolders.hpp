@@ -80,8 +80,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    MPTHoldersHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    MPTHoldersHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
+        : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
     }
 

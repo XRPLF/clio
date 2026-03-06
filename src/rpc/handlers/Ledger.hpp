@@ -95,10 +95,11 @@ public:
      * @param amendmentCenter The amendmentCenter to use
      */
     LedgerHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend,
+        std::shared_ptr<BackendInterface> sharedPtrBackend,
         std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter
     )
-        : sharedPtrBackend_(sharedPtrBackend), amendmentCenter_(std::move(amendmentCenter))
+        : sharedPtrBackend_(std::move(sharedPtrBackend))
+        , amendmentCenter_(std::move(amendmentCenter))
     {
     }
 

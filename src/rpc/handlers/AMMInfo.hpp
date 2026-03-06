@@ -87,10 +87,10 @@ public:
      * @param amendmentCenter The amendmentCenter to use
      */
     AMMInfoHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend,
+        std::shared_ptr<BackendInterface> sharedPtrBackend,
         std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter
     )
-        : sharedPtrBackend_(sharedPtrBackend), amendmentCenter_{amendmentCenter}
+        : sharedPtrBackend_(std::move(sharedPtrBackend)), amendmentCenter_{amendmentCenter}
     {
     }
 

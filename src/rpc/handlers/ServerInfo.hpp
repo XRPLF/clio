@@ -152,16 +152,16 @@ public:
      * @param counters The counters to use
      */
     BaseServerInfoHandler(
-        std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions,
-        std::shared_ptr<etl::LoadBalancerInterface> const& balancer,
-        std::shared_ptr<etl::ETLServiceInterface const> const& etl,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+        std::shared_ptr<etl::LoadBalancerInterface> balancer,
+        std::shared_ptr<etl::ETLServiceInterface const> etl,
         CountersType const& counters
     )
-        : backend_(backend)
-        , subscriptions_(subscriptions)
-        , balancer_(balancer)
-        , etl_(etl)
+        : backend_(std::move(backend))
+        , subscriptions_(std::move(subscriptions))
+        , balancer_(std::move(balancer))
+        , etl_(std::move(etl))
         , counters_(std::cref(counters))
     {
     }

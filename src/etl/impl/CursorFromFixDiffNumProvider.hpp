@@ -45,8 +45,8 @@ class CursorFromFixDiffNumProvider : public BaseCursorProvider {
     size_t numDiffs_;
 
 public:
-    CursorFromFixDiffNumProvider(std::shared_ptr<BackendInterface> const& backend, size_t numDiffs)
-        : backend_{backend}, numDiffs_{numDiffs}
+    CursorFromFixDiffNumProvider(std::shared_ptr<BackendInterface> backend, size_t numDiffs)
+        : backend_{std::move(backend)}, numDiffs_{numDiffs}
     {
     }
 
