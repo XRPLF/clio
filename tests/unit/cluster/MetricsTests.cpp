@@ -73,21 +73,24 @@ TEST_F(MetricsTest, OnNewStateWithValidClusterData)
         .updateTime = std::chrono::system_clock::now(),
         .dbRole = ClioNode::DbRole::Writer,
         .etlStarted = true,
-        .cacheIsFull = true
+        .cacheIsFull = true,
+        .cacheIsCurrentlyLoading = false
     };
     ClioNode const node2{
         .uuid = uuid2,
         .updateTime = std::chrono::system_clock::now(),
         .dbRole = ClioNode::DbRole::ReadOnly,
         .etlStarted = true,
-        .cacheIsFull = true
+        .cacheIsFull = true,
+        .cacheIsCurrentlyLoading = false
     };
     ClioNode const node3{
         .uuid = uuid3,
         .updateTime = std::chrono::system_clock::now(),
         .dbRole = ClioNode::DbRole::NotWriter,
         .etlStarted = true,
-        .cacheIsFull = false
+        .cacheIsFull = false,
+        .cacheIsCurrentlyLoading = false
     };
 
     std::vector<ClioNode> const nodes = {node1, node2, node3};
@@ -157,7 +160,8 @@ TEST_F(MetricsTest, OnNewStateWithSingleNode)
         .updateTime = std::chrono::system_clock::now(),
         .dbRole = ClioNode::DbRole::Writer,
         .etlStarted = true,
-        .cacheIsFull = false
+        .cacheIsFull = false,
+        .cacheIsCurrentlyLoading = false
     };
 
     std::vector<ClioNode> const nodes = {node1};
@@ -195,14 +199,16 @@ TEST_F(MetricsTest, OnNewStateRecoveryFromFailure)
         .updateTime = std::chrono::system_clock::now(),
         .dbRole = ClioNode::DbRole::Writer,
         .etlStarted = true,
-        .cacheIsFull = true
+        .cacheIsFull = true,
+        .cacheIsCurrentlyLoading = false
     };
     ClioNode const node2{
         .uuid = uuid2,
         .updateTime = std::chrono::system_clock::now(),
         .dbRole = ClioNode::DbRole::ReadOnly,
         .etlStarted = true,
-        .cacheIsFull = false
+        .cacheIsFull = false,
+        .cacheIsCurrentlyLoading = false
     };
 
     std::vector<ClioNode> const nodes = {node1, node2};

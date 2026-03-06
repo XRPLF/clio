@@ -44,6 +44,7 @@ struct NodeParams {
     ClioNode::DbRole role;
     bool etlStarted = true;
     bool cacheIsFull = true;
+    bool cacheIsCurrentlyLoading = false;
 };
 
 struct WriterDeciderTestParams {
@@ -78,7 +79,8 @@ struct WriterDeciderTest : testing::TestWithParam<WriterDeciderTestParams> {
             .updateTime = std::chrono::system_clock::now(),
             .dbRole = role,
             .etlStarted = etlStarted,
-            .cacheIsFull = cacheIsFull
+            .cacheIsFull = cacheIsFull,
+            .cacheIsCurrentlyLoading = false
         };
     }
 
