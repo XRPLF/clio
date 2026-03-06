@@ -433,6 +433,14 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The minimum value is `1`. The maximum value is `65535`.
 - **Description**: The number of ledger objects to fetch concurrently per marker.
 
+### cache.limit_load_in_cluster
+
+- **Required**: True
+- **Type**: boolean
+- **Default value**: `False`
+- **Constraints**: None
+- **Description**: If enabled only one clio node in a cluster (sharing the same database) will load cache at a time
+
 ### cache.load
 
 - **Required**: True
