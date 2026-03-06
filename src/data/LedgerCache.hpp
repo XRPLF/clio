@@ -171,7 +171,7 @@ public:
     void
     startLoading() override;
 
-    bool
+    [[nodiscard]] bool
     isCurrentlyLoading() const override;
 };
 

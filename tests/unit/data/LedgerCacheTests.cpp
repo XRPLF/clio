@@ -41,8 +41,24 @@ TEST_F(LedgerCacheTest, defaultState)
 {
     EXPECT_FALSE(cache.isDisabled());
     EXPECT_FALSE(cache.isFull());
+    EXPECT_FALSE(cache.isCurrentlyLoading());
     EXPECT_EQ(cache.size(), 0u);
     EXPECT_EQ(cache.latestLedgerSequence(), 0u);
+}
+
+TEST_F(LedgerCacheTest, startLoadingSetsIsCurrentlyLoading)
+{
+    EXPECT_FALSE(cache.isCurrentlyLoading());
+    cache.startLoading();
+    EXPECT_TRUE(cache.isCurrentlyLoading());
+}
+
+TEST_F(LedgerCacheTest, setFullResetsIsCurrentlyLoading)
+{
+    cache.startLoading();
+    ASSERT_TRUE(cache.isCurrentlyLoading());
+    cache.setFull();
+    EXPECT_FALSE(cache.isCurrentlyLoading());
 }
 
 struct LedgerCachePrometheusMetricTest : util::prometheus::WithMockPrometheus {
@@ -64,13 +80,26 @@ TEST_F(LedgerCachePrometheusMetricTest, setFull)
 {
     auto& fullMock = makeMock<util::prometheus::Bool>("ledger_cache_full", {});
     auto& disabledMock = makeMock<util::prometheus::Bool>("ledger_cache_disabled", {});
+    auto& loadingMock = makeMock<util::prometheus::Bool>("ledger_cache_is_currently_loading", {});
 
     EXPECT_CALL(disabledMock, value()).WillOnce(testing::Return(0));
     EXPECT_CALL(fullMock, set(1));
+    EXPECT_CALL(loadingMock, set(0));
     cache.setFull();
 
     EXPECT_CALL(fullMock, value()).WillOnce(testing::Return(1));
     EXPECT_TRUE(cache.isFull());
+}
+
+TEST_F(LedgerCachePrometheusMetricTest, startLoading)
+{
+    auto& loadingMock = makeMock<util::prometheus::Bool>("ledger_cache_is_currently_loading", {});
+
+    EXPECT_CALL(loadingMock, set(1));
+    cache.startLoading();
+
+    EXPECT_CALL(loadingMock, value()).WillOnce(testing::Return(1));
+    EXPECT_TRUE(cache.isCurrentlyLoading());
 }
 
 struct LedgerCacheSaveLoadTest : LedgerCacheTest {

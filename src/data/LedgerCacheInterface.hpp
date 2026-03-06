@@ -194,8 +194,20 @@ public:
     [[nodiscard]] virtual std::expected<void, std::string>
     loadFromFile(std::string const& path, uint32_t minLatestSequence) = 0;
 
-    virtual void startLoading() = 0;
-    [[nodiscard]] virtual bool isCurrentlyLoading() const = 0;
+    /**
+     * @brief Mark the cache as currently loading from the backend.
+     * @note Should be called before initiating a backend-based cache load. The flag is
+     *       automatically cleared when setFull() is called.
+     */
+    virtual void
+    startLoading() = 0;
+
+    /**
+     * @brief Check whether the cache is currently being loaded from the backend.
+     * @return true if startLoading() has been called and setFull() has not yet been called
+     */
+    [[nodiscard]] virtual bool
+    isCurrentlyLoading() const = 0;
 };
 
 }  // namespace data

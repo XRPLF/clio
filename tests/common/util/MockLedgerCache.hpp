@@ -104,4 +104,8 @@ struct MockLedgerCache : data::LedgerCacheInterface {
         (std::string const& path, uint32_t minLatestSequence),
         (override)
     );
+
+    MOCK_METHOD(void, startLoading, (), (override));
+
+    MOCK_METHOD(bool, isCurrentlyLoading, (), (const, override));
 };

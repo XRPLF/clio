@@ -323,6 +323,7 @@ TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
     EXPECT_CALL(cache, updateImpl).Times(loops);
     EXPECT_CALL(cache, isFull).WillOnce(Return(false)).WillRepeatedly(Return(true));
     EXPECT_CALL(cache, setFull).Times(1);
+    EXPECT_CALL(cache, startLoading).Times(1);
 
     loader.load(kSEQ);
 }
@@ -349,6 +350,7 @@ TEST_F(CacheLoaderTest, AsyncCacheLoaderCanBeStopped)
     EXPECT_CALL(cache, updateImpl).Times(AtMost(loops));
     EXPECT_CALL(cache, isFull).WillRepeatedly(Return(false));
     EXPECT_CALL(cache, setFull).Times(AtMost(1));
+    EXPECT_CALL(cache, startLoading).Times(1);
 
     loader.load(kSEQ);
     loader.stop();
@@ -441,6 +443,7 @@ TEST_F(CacheLoaderFromFileTest, FailureBackToNormalLoad)
     EXPECT_CALL(cache, updateImpl).Times(loops);
     EXPECT_CALL(cache, isFull).WillOnce(Return(false)).WillRepeatedly(Return(true));
     EXPECT_CALL(cache, setFull).Times(1);
+    EXPECT_CALL(cache, startLoading).Times(1);
 
     loader.load(kSEQ);
 }
