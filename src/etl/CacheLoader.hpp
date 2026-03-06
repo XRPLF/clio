@@ -201,7 +201,7 @@ private:
     updateCacheToSeq(uint32_t const seq)
     {
         while (cache_.get().latestLedgerSequence() < seq) {
-            auto seqToLoad = cache_.get().latestLedgerSequence() + 1;
+            auto const seqToLoad = cache_.get().latestLedgerSequence() + 1;
             LOG(log_.info()) << "Fetching ledger " << seqToLoad
                              << "from DB after loading cache from file";
             auto const diff = data::synchronousAndRetryOnTimeout([this, seqToLoad](auto yield) {
