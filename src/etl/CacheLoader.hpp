@@ -194,7 +194,6 @@ private:
 
         LOG(log_.info()) << "Loaded cache from file in " << duration_ms
                          << " ms. Latest sequence: " << cache_.get().latestLedgerSequence();
-        // backend_->forceUpdateRange(cache_.get().latestLedgerSequence());
         return true;
     }
 
