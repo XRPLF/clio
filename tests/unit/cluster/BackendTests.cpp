@@ -21,8 +21,8 @@
 #include "cluster/ClioNode.hpp"
 #include "data/BackendInterface.hpp"
 #include "util/MockBackendTestFixture.hpp"
-#include "util/MockPrometheus.hpp"
 #include "util/MockLedgerCacheLoadingState.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/MockWriterState.hpp"
 
 #include <boost/asio/thread_pool.hpp>

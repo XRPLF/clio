@@ -112,8 +112,8 @@ public:
      * @brief Factory method: construct the service and return a cache loading state for the caller.
      *
      * Reads the @c cache.limit_load_in_cluster config flag: if true, loading is immediately
-     * allowed (single-node mode); if false, the cluster will gate permission via @ref
-     * CacheLoadingDecider (to be implemented).
+     * allowed (single-node mode); if false, the cluster will gate permission via
+     * CacheLoaderDecider.
      *
      * @param config The application configuration
      * @param backend The data backend

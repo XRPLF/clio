@@ -135,6 +135,7 @@ public:
      *
      * @param config The configuration to use
      * @param state The system state tracking object
+     * @param cacheLoadingState State controlling whether this node is allowed to load the cache
      * @param ctx Execution context for asynchronous operations
      * @param backend BackendInterface implementation
      * @param subscriptions Subscription manager

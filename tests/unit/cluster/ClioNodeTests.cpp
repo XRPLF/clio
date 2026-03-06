@@ -181,7 +181,6 @@ TEST_F(ClioNodeTest, DeserializationInvalidDbRole)
     EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
 }
 
-
 struct ClioNodeDbRoleTestBundle {
     std::string testName;
     ClioNode::DbRole role;

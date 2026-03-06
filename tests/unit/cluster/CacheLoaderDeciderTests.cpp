@@ -124,7 +124,9 @@ TEST_P(CacheLoaderDeciderTest, CacheLoaderSelection)
         nodes.reserve(params.nodes.size());
         for (auto const& nodeParam : params.nodes) {
             auto node = makeNode(
-                makeUuid(nodeParam.uuidValue), nodeParam.cacheIsFull, nodeParam.cacheIsCurrentlyLoading
+                makeUuid(nodeParam.uuidValue),
+                nodeParam.cacheIsFull,
+                nodeParam.cacheIsCurrentlyLoading
             );
             if (nodeParam.uuidValue == params.selfUuidValue) {
                 selfIdPtr = node.uuid;
@@ -146,19 +148,25 @@ INSTANTIATE_TEST_SUITE_P(
         CacheLoaderDeciderTestParams{
             .testName = "SelfCacheIsFullNoAction",
             .selfUuidValue = 0x01,
-            .nodes = {{.uuidValue = 0x01, .cacheIsFull = true}, {.uuidValue = 0x02, .cacheIsFull = false}},
+            .nodes =
+                {{.uuidValue = 0x01, .cacheIsFull = true},
+                 {.uuidValue = 0x02, .cacheIsFull = false}},
             .expectedAction = CacheLoaderExpectedAction::NoAction
         },
         CacheLoaderDeciderTestParams{
             .testName = "SelfIsFirstNotFullByUuid_AllowLoading",
             .selfUuidValue = 0x01,
-            .nodes = {{.uuidValue = 0x01, .cacheIsFull = false}, {.uuidValue = 0x02, .cacheIsFull = false}},
+            .nodes =
+                {{.uuidValue = 0x01, .cacheIsFull = false},
+                 {.uuidValue = 0x02, .cacheIsFull = false}},
             .expectedAction = CacheLoaderExpectedAction::AllowLoading
         },
         CacheLoaderDeciderTestParams{
             .testName = "OtherNodeIsFirstNotFullByUuid_NoAction",
             .selfUuidValue = 0x02,
-            .nodes = {{.uuidValue = 0x01, .cacheIsFull = false}, {.uuidValue = 0x02, .cacheIsFull = false}},
+            .nodes =
+                {{.uuidValue = 0x01, .cacheIsFull = false},
+                 {.uuidValue = 0x02, .cacheIsFull = false}},
             .expectedAction = CacheLoaderExpectedAction::NoAction
         },
         CacheLoaderDeciderTestParams{
@@ -209,5 +217,7 @@ INSTANTIATE_TEST_SUITE_P(
             .useEmptyClusterData = true
         }
     ),
-    [](testing::TestParamInfo<CacheLoaderDeciderTestParams> const& info) { return info.param.testName; }
+    [](testing::TestParamInfo<CacheLoaderDeciderTestParams> const& info) {
+        return info.param.testName;
+    }
 );

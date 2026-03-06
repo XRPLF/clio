@@ -107,7 +107,7 @@ private:
         PrometheusService::boolMetric(
             "ledger_cache_is_currently_loading",
             util::prometheus::Labels{},
-            "Whether ledger cache is currenly loading or not"
+            "Whether ledger cache is currently loading or not"
         )
 
     };

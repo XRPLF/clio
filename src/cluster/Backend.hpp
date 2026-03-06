@@ -80,6 +80,7 @@ public:
      * @param ctx The execution context for asynchronous operations
      * @param backend Interface to the backend database
      * @param writerState State indicating whether this node is writing to the database
+     * @param cacheLoadingState State controlling whether this node is allowed to load the cache
      * @param readInterval How often to read cluster state from the backend
      * @param writeInterval How often to write this node's state to the backend
      */
