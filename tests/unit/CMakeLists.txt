@@ -254,21 +254,15 @@ if(coverage)
     set(GCOVR_ADDITIONAL_ARGS --exclude-throw-branches -s)
 
     setup_target_for_coverage_gcovr(
-        NAME
-        coverage_report
-        FORMAT
-        ${CODE_COVERAGE_FORMAT}
-        EXECUTABLE
-        clio_tests
-        EXECUTABLE_ARGS
-        --gtest_brief=1
-        ${TESTS_ADDITIONAL_ARGS}
+        NAME coverage_report
+        FORMAT ${CODE_COVERAGE_FORMAT}
+        EXECUTABLE clio_tests
+        EXECUTABLE_ARGS --gtest_brief=1 ${TESTS_ADDITIONAL_ARGS}
         EXCLUDE
-        "tests"
-        "src/data/cassandra"
-        "src/data/CassandraBackend.hpp"
-        "src/data/BackendFactory.*"
-        DEPENDENCIES
-        clio_tests
+            "tests"
+            "src/data/cassandra"
+            "src/data/CassandraBackend.hpp"
+            "src/data/BackendFactory.*"
+        DEPENDENCIES clio_tests
     )
 endif()
