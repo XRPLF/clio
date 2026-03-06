@@ -44,6 +44,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 
 namespace rpc {
 
@@ -71,7 +72,7 @@ validate(VaultInfoHandler::Input const& input)
 }  // namespace
 
 VaultInfoHandler::VaultInfoHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
-    : sharedPtrBackend_{sharedPtrBackend}
+    : sharedPtrBackend_{std::move(sharedPtrBackend)}
 {
 }
 
