@@ -87,7 +87,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input const& input, Context const&
             *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
         );
 
-        if (!expectedLgrInfo.has_value())
+        if (not expectedLgrInfo.has_value())
             return Error{expectedLgrInfo.error()};
 
         maxIndex = minIndex = expectedLgrInfo.value().seq;

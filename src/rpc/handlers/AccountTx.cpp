@@ -106,7 +106,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                 range->maxSequence
             );
 
-            if (!expectedLgrInfo.has_value())
+            if (not expectedLgrInfo.has_value())
                 return Error{expectedLgrInfo.error()};
 
             maxIndex = minIndex = expectedLgrInfo.value().seq;
