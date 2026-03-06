@@ -193,6 +193,9 @@ public:
      */
     [[nodiscard]] virtual std::expected<void, std::string>
     loadFromFile(std::string const& path, uint32_t minLatestSequence) = 0;
+
+    virtual void startLoading() = 0;
+    [[nodiscard]] virtual bool isCurrentlyLoading() const = 0;
 };
 
 }  // namespace data

@@ -103,6 +103,14 @@ private:
         util::prometheus::Labels{},
         "Whether ledger cache is disabled or not"
     )};
+    util::prometheus::Bool isCurrentlyLoading_{
+        PrometheusService::boolMetric(
+            "ledger_cache_is_currently_loading",
+            util::prometheus::Labels{},
+            "Whether ledger cache is currenly loading or not"
+        )
+
+    };
 
     // temporary set to prevent background thread from writing already deleted data. not used when
     // cache is full
@@ -159,6 +167,12 @@ public:
 
     std::expected<void, std::string>
     loadFromFile(std::string const& path, uint32_t minLatestSequence) override;
+
+    void
+    startLoading() override;
+
+    bool
+    isCurrentlyLoading() const override;
 };
 
 }  // namespace data

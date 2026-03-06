@@ -108,6 +108,7 @@ public:
             cache_.get().setFull();
             return;
         }
+        cache_.get().startLoading();
 
         std::shared_ptr<impl::BaseCursorProvider> provider;
         if (settings_.numCacheCursorsFromDiff != 0) {
