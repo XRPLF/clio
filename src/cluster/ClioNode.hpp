@@ -59,10 +59,10 @@ struct ClioNode {
 
     Uuid uuid;  ///< The UUID of the node.
     std::chrono::system_clock::time_point
-        updateTime;  ///< The time the data about the node was last updated.
-    DbRole dbRole;    ///< The database role of the node
-    bool etlStarted;  ///< Whether the ETL monitor has started on this node
-    bool cacheIsFull; ///< Whether the ledger cache is fully loaded on this node
+        updateTime;    ///< The time the data about the node was last updated.
+    DbRole dbRole;     ///< The database role of the node
+    bool etlStarted;   ///< Whether the ETL monitor has started on this node
+    bool cacheIsFull;  ///< Whether the ledger cache is fully loaded on this node
 
     /**
      * @brief Create a ClioNode from writer state.
