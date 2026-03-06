@@ -1,21 +1,27 @@
 add_library(clio_data)
-target_sources(clio_data
-               PRIVATE AmendmentCenter.cpp
-                       BackendCounters.cpp
-                       BackendInterface.cpp
-                       LedgerCache.cpp
-                       LedgerCacheSaver.cpp
-                       LedgerHeaderCache.cpp
-                       cassandra/impl/Future.cpp
-                       cassandra/impl/Cluster.cpp
-                       cassandra/impl/Batch.cpp
-                       cassandra/impl/Result.cpp
-                       cassandra/impl/Tuple.cpp
-                       cassandra/impl/SslContext.cpp
-                       cassandra/Handle.cpp
-                       cassandra/SettingsProvider.cpp
-                       impl/InputFile.cpp
-                       impl/LedgerCacheFile.cpp
-                       impl/OutputFile.cpp)
+target_sources(
+    clio_data
+    PRIVATE
+        AmendmentCenter.cpp
+        BackendCounters.cpp
+        BackendInterface.cpp
+        LedgerCache.cpp
+        LedgerCacheSaver.cpp
+        LedgerHeaderCache.cpp
+        cassandra/impl/Future.cpp
+        cassandra/impl/Cluster.cpp
+        cassandra/impl/Batch.cpp
+        cassandra/impl/Result.cpp
+        cassandra/impl/Tuple.cpp
+        cassandra/impl/SslContext.cpp
+        cassandra/Handle.cpp
+        cassandra/SettingsProvider.cpp
+        impl/InputFile.cpp
+        impl/LedgerCacheFile.cpp
+        impl/OutputFile.cpp
+)
 
-target_link_libraries(clio_data PUBLIC cassandra-cpp-driver::cassandra-cpp-driver clio_util)
+target_link_libraries(
+    clio_data
+    PUBLIC cassandra-cpp-driver::cassandra-cpp-driver clio_util
+)

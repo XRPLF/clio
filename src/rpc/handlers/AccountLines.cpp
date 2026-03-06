@@ -190,7 +190,7 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
         addToResponse
     );
 
-    if (!expectedNext.has_value())
+    if (not expectedNext.has_value())
         return Error{expectedNext.error()};
 
     auto const nextMarker = expectedNext.value();

@@ -111,7 +111,7 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
         true
     );
 
-    if (!expectedNext.has_value())
+    if (not expectedNext.has_value())
         return Error{expectedNext.error()};
 
     response.ledgerHash = ripple::strHex(lgrInfo.hash);

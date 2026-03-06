@@ -100,11 +100,10 @@ repos:
         args: [--style=file]
         types: [c++]
 
-  - repo: https://github.com/cheshirekow/cmake-format-precommit
-    rev: e2c2116d86a80e72e7146a06e68b7c228afc6319 # frozen: v0.6.13
+  - repo: https://github.com/BlankSpruce/gersemi
+    rev: 0.26.0
     hooks:
-      - id: cmake-format
-        additional_dependencies: [PyYAML]
+      - id: gersemi
 
   - repo: local
     hooks:
