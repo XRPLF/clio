@@ -48,6 +48,7 @@ ClusterCommunicationService::ClusterCommunicationService(
           writeInterval
       )
     , writerDecider_(ctx_, std::move(writerState))
+    , cacheLoaderDecider_(ctx_, std::move(cacheLoadingState))
 {
 }
 
@@ -59,6 +60,9 @@ ClusterCommunicationService::run()
     });
     backend_.subscribeToNewState([this](auto&&... args) {
         writerDecider_.onNewState(std::forward<decltype(args)>(args)...);
+    });
+    backend_.subscribeToNewState([this](auto&&... args) {
+        cacheLoaderDecider_.onNewState(std::forward<decltype(args)>(args)...);
     });
     backend_.run();
 }

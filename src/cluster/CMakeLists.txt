@@ -4,6 +4,7 @@ target_sources(
     clio_cluster
     PRIVATE
         Backend.cpp
+        CacheLoaderDecider.cpp
         ClioNode.cpp
         ClusterCommunicationService.cpp
         Metrics.cpp

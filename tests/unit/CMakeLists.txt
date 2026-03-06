@@ -24,6 +24,7 @@ target_sources(
         data/impl/OutputFileTests.cpp
         # Cluster
         cluster/BackendTests.cpp
+        cluster/CacheLoaderDeciderTests.cpp
         cluster/ClioNodeTests.cpp
         cluster/ClusterCommunicationServiceTests.cpp
         cluster/MetricsTests.cpp

@@ -20,6 +20,7 @@
 #pragma once
 
 #include "cluster/Backend.hpp"
+#include "cluster/CacheLoaderDecider.hpp"
 #include "cluster/Concepts.hpp"
 #include "cluster/Metrics.hpp"
 #include "cluster/WriterDecider.hpp"
@@ -51,6 +52,7 @@ class ClusterCommunicationService : public ClusterCommunicationServiceTag {
     Backend backend_;
     Metrics metrics_;
     WriterDecider writerDecider_;
+    CacheLoaderDecider cacheLoaderDecider_;
 
 public:
     static constexpr std::chrono::milliseconds kDEFAULT_READ_INTERVAL{1000};
