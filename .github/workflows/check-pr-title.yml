@@ -5,26 +5,6 @@ on:
     types: [opened, edited, reopened, synchronize]
     branches: [develop]
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
   check_title:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: ytanikin/pr-conventional-commits@fda730cb152c05a849d6d84325e50c6182d9d1e9 # 1.5.1
-        with:
-          task_types: '["build","feat","fix","docs","test","ci","style","refactor","perf","chore"]'
-          add_label: false
-          custom_labels: '{"build":"build", "feat":"enhancement", "fix":"bug", "docs":"documentation", "test":"testability", "ci":"ci", "style":"refactoring", "refactor":"refactoring", "perf":"performance", "chore":"tooling"}'
-
-      - name: Check if message starts with upper-case letter
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: |
-          if [[ ! "${PR_TITLE}" =~ ^[a-z]+:\ [\[A-Z] ]]; then
-            echo "Error: PR title must start with an upper-case letter."
-            exit 1
-          fi
+    uses: XRPLF/actions/.github/workflows/check-pr-title.yml@943eb8277e8f4b010fde0c826ce4154c36c39509
