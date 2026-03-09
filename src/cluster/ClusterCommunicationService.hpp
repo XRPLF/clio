@@ -103,8 +103,8 @@ public:
      * the service, so the caller can pass it to the cache loader.
      */
     struct MakeResult {
-        std::unique_ptr<ClusterCommunicationService> service;          ///< The constructed service
-        std::unique_ptr<data::LedgerCacheLoadingStateInterface const>  ///
+        std::unique_ptr<ClusterCommunicationService> service;  ///< The constructed service
+        std::unique_ptr<data::LedgerCacheLoadingStateInterface const>
             cacheLoadingState;  ///< Clone of cache loading state for use by the cache loader
     };
 
