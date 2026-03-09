@@ -72,9 +72,10 @@ CacheLoaderDecider::onNewState(
                 }
             );
 
-            if (std::ranges::any_of(notFullNodes, [](ClioNode const& node) {
-                    return node.cacheIsCurrentlyLoading;
-                })) {
+            auto const someNodeIsLoadingCache = std::ranges::any_of(
+                notFullNodes, [](ClioNode const& node) { return node.cacheIsCurrentlyLoading; }
+            );
+            if (someNodeIsLoadingCache) {
                 return;
             }
 
