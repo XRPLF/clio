@@ -34,14 +34,14 @@ runs:
   steps:
     - name: Login to DockerHub
       if: ${{ inputs.push_image == 'true' && inputs.dockerhub_repo != '' }}
-      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+      uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
       with:
         username: ${{ env.DOCKERHUB_USER }}
         password: ${{ env.DOCKERHUB_PW }}
 
     - name: Login to GitHub Container Registry
       if: ${{ inputs.push_image == 'true' }}
-      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+      uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
