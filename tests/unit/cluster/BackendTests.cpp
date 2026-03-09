@@ -397,9 +397,10 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsValidJsonButCannotConvertToC
     clusterBackend.subscribeToNewState(callbackMock.AsStdFunction());
 
     auto const otherUuid = boost::uuids::random_generator{}();
-    // Valid JSON but missing required field 'db_role'
+    // Valid JSON but db_role has wrong type (string instead of integer)
     auto const validJsonMissingField = R"JSON({
-        "update_time": "2025-01-16T10:30:00Z"
+        "update_time": "2025-01-16T10:30:00Z",
+        "db_role": "writer"
     })JSON";
 
     EXPECT_CALL(*backend_, fetchClioNodesData)

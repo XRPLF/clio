@@ -133,7 +133,9 @@ TEST_F(ClioNodeTest, DeserializationMissingEtlStarted)
         {"cache_is_full", false},
         {"cache_is_currently_loading", false}
     };
-    EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
+    ClioNode node{};
+    ASSERT_NO_THROW(node = boost::json::value_to<ClioNode>(jsonValue));
+    EXPECT_TRUE(node.etlStarted);  // defaults to true
 }
 
 TEST_F(ClioNodeTest, DeserializationMissingCacheIsFull)
@@ -144,7 +146,9 @@ TEST_F(ClioNodeTest, DeserializationMissingCacheIsFull)
         {"etl_started", true},
         {"cache_is_currently_loading", false}
     };
-    EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
+    ClioNode node{};
+    ASSERT_NO_THROW(node = boost::json::value_to<ClioNode>(jsonValue));
+    EXPECT_TRUE(node.cacheIsFull);  // defaults to true
 }
 
 TEST_F(ClioNodeTest, DeserializationMissingCacheIsCurrentlyLoading)
@@ -155,7 +159,9 @@ TEST_F(ClioNodeTest, DeserializationMissingCacheIsCurrentlyLoading)
         {"etl_started", true},
         {"cache_is_full", false}
     };
-    EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
+    ClioNode node{};
+    ASSERT_NO_THROW(node = boost::json::value_to<ClioNode>(jsonValue));
+    EXPECT_FALSE(node.cacheIsCurrentlyLoading);  // defaults to false
 }
 
 TEST_F(ClioNodeTest, DeserializationMissingDbRole)
@@ -166,7 +172,23 @@ TEST_F(ClioNodeTest, DeserializationMissingDbRole)
         {"cache_is_full", false},
         {"cache_is_currently_loading", false}
     };
-    EXPECT_THROW(boost::json::value_to<ClioNode>(jsonValue), std::runtime_error);
+    ClioNode node{};
+    ASSERT_NO_THROW(node = boost::json::value_to<ClioNode>(jsonValue));
+    EXPECT_EQ(node.dbRole, ClioNode::DbRole::Fallback);  // defaults to Fallback
+}
+
+TEST_F(ClioNodeTest, DeserializationOldNodeFormat)
+{
+    // Old nodes (pre cluster-coordination release) only write update_time.
+    // Parsing must succeed with safe backward-compatible defaults.
+    boost::json::value const jsonValue = {{"update_time", updateTimeStr}};
+    ClioNode node{};
+    ASSERT_NO_THROW(node = boost::json::value_to<ClioNode>(jsonValue));
+    EXPECT_EQ(node.updateTime, updateTime);
+    EXPECT_EQ(node.dbRole, ClioNode::DbRole::Fallback);
+    EXPECT_TRUE(node.etlStarted);
+    EXPECT_TRUE(node.cacheIsFull);
+    EXPECT_FALSE(node.cacheIsCurrentlyLoading);
 }
 
 TEST_F(ClioNodeTest, DeserializationInvalidDbRole)

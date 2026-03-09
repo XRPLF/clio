@@ -113,7 +113,10 @@ public:
             cache_.get().setFull();
             return;
         }
+
+        LOG(log_.info()) << "Waiting for ledger cache loading to become allowed";
         cacheLoadingState_->waitForLoadingAllowed();
+        LOG(log_.info()) << "Ledger cache loading is now allowed. Start loading...";
         cache_.get().startLoading();
 
         std::shared_ptr<impl::BaseCursorProvider> provider;
