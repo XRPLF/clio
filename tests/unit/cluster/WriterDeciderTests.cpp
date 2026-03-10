@@ -37,7 +37,16 @@
 
 using namespace cluster;
 
-enum class ExpectedAction { StartWriting, GiveUpWriting, NoAction, SetFallback };
+namespace {
+
+enum class ExpectedAction {
+    StartWriting,
+    GiveUpWriting,
+    NoAction,
+    SetFallback,
+    SetFallbackRecoveryTrue,        // contagion: clone receives setFallbackRecovery(true)
+    GiveUpAndClearFallbackRecovery  // recovery complete: giveUpWriting + setFallbackRecovery(false)
+};
 
 struct NodeParams {
     uint8_t uuidValue;
@@ -54,6 +63,8 @@ struct WriterDeciderTestParams {
     ExpectedAction expectedAction;
     bool useEmptyClusterData = false;
 };
+
+}  // namespace
 
 struct WriterDeciderTest : testing::TestWithParam<WriterDeciderTestParams> {
     ~WriterDeciderTest() override
@@ -99,7 +110,7 @@ TEST_P(WriterDeciderTest, WriterSelection)
 
     auto const selfUuid = makeUuid(params.selfUuidValue);
 
-    WriterDecider decider{ctx, std::move(writerState)};
+    WriterDecider decider{ctx, std::move(writerState), std::chrono::milliseconds{0}};
 
     auto clonedState = std::make_unique<MockWriterState>();
 
@@ -117,6 +128,18 @@ TEST_P(WriterDeciderTest, WriterSelection)
             break;
         case ExpectedAction::SetFallback:
             EXPECT_CALL(*clonedState, setWriterDecidingFallback());
+            EXPECT_CALL(*clonedState, setFallbackRecovery(true));
+            EXPECT_CALL(writerStateRef, clone())
+                .WillOnce(testing::Return(testing::ByMove(std::move(clonedState))));
+            break;
+        case ExpectedAction::SetFallbackRecoveryTrue:
+            EXPECT_CALL(*clonedState, setFallbackRecovery(true));
+            EXPECT_CALL(writerStateRef, clone())
+                .WillOnce(testing::Return(testing::ByMove(std::move(clonedState))));
+            break;
+        case ExpectedAction::GiveUpAndClearFallbackRecovery:
+            EXPECT_CALL(*clonedState, giveUpWriting());
+            EXPECT_CALL(*clonedState, setFallbackRecovery(false));
             EXPECT_CALL(writerStateRef, clone())
                 .WillOnce(testing::Return(testing::ByMove(std::move(clonedState))));
             break;
@@ -401,6 +424,67 @@ INSTANTIATE_TEST_SUITE_P(
                   .role = ClioNode::DbRole::NotWriter,
                   .etlStarted = true,
                   .cacheIsFull = true}},
+            .expectedAction = ExpectedAction::StartWriting
+        },
+        WriterDeciderTestParams{
+            .testName = "SelfIsFallbackOtherIsFallbackRecovery_ContagionApplied",
+            .selfUuidValue = 0x01,
+            .nodes =
+                {{0x01, ClioNode::DbRole::Fallback}, {0x02, ClioNode::DbRole::FallbackRecovery}},
+            .expectedAction = ExpectedAction::SetFallbackRecoveryTrue
+        },
+        WriterDeciderTestParams{
+            .testName = "SelfIsFallbackAllOthersFallbackRecovery_ContagionApplied",
+            .selfUuidValue = 0x01,
+            .nodes =
+                {{0x01, ClioNode::DbRole::Fallback},
+                 {0x02, ClioNode::DbRole::FallbackRecovery},
+                 {0x03, ClioNode::DbRole::FallbackRecovery}},
+            .expectedAction = ExpectedAction::SetFallbackRecoveryTrue
+        },
+        WriterDeciderTestParams{
+            .testName = "SelfIsFallbackNoFallbackRecoveryInCluster_NoAction",
+            .selfUuidValue = 0x01,
+            .nodes = {{0x01, ClioNode::DbRole::Fallback}, {0x02, ClioNode::DbRole::Fallback}},
+            .expectedAction = ExpectedAction::NoAction
+        },
+        WriterDeciderTestParams{
+            .testName = "SelfIsFallbackRecoveryNoFallbackNodes_ExitsRecovery",
+            .selfUuidValue = 0x01,
+            .nodes =
+                {{0x01, ClioNode::DbRole::FallbackRecovery},
+                 {0x02, ClioNode::DbRole::FallbackRecovery}},
+            .expectedAction = ExpectedAction::GiveUpAndClearFallbackRecovery
+        },
+        WriterDeciderTestParams{
+            .testName = "SelfIsFallbackRecoverySomePeersStillFallback_Waits",
+            .selfUuidValue = 0x01,
+            .nodes =
+                {{0x01, ClioNode::DbRole::FallbackRecovery}, {0x02, ClioNode::DbRole::Fallback}},
+            .expectedAction = ExpectedAction::NoAction
+        },
+        WriterDeciderTestParams{
+            .testName = "SelfIsFallbackRecoveryAllPeersElectionMode_ExitsRecovery",
+            .selfUuidValue = 0x01,
+            .nodes =
+                {{0x01, ClioNode::DbRole::FallbackRecovery},
+                 {0x02, ClioNode::DbRole::NotWriter},
+                 {0x03, ClioNode::DbRole::Writer}},
+            .expectedAction = ExpectedAction::GiveUpAndClearFallbackRecovery
+        },
+        WriterDeciderTestParams{
+            .testName = "SelfIsFallbackRecoveryMixedFallbackAndRecovery_Waits",
+            .selfUuidValue = 0x01,
+            .nodes =
+                {{0x01, ClioNode::DbRole::FallbackRecovery},
+                 {0x02, ClioNode::DbRole::FallbackRecovery},
+                 {0x03, ClioNode::DbRole::Fallback}},
+            .expectedAction = ExpectedAction::NoAction
+        },
+        WriterDeciderTestParams{
+            .testName = "ElectionModeSeesOnlyFallbackRecovery_NoFallbackSwitch",
+            .selfUuidValue = 0x01,
+            .nodes = {{0x01, ClioNode::DbRole::Writer}, {0x02, ClioNode::DbRole::FallbackRecovery}},
             .expectedAction = ExpectedAction::StartWriting
         }
     ),

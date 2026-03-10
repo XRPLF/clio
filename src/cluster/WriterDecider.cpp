@@ -40,16 +40,15 @@ namespace cluster {
 
 namespace {
 
-constexpr std::chrono::seconds kRECOVERY_TIME = std::chrono::seconds{3600};
-
 void
 startFallbackRecoveryTimer(
     WriterDecider::FallbackRecoveryTimerType fallbackRecoveryTimer,
-    std::unique_ptr<etl::WriterStateInterface> writerState
+    std::unique_ptr<etl::WriterStateInterface> writerState,
+    std::chrono::steady_clock::duration recoveryTime
 )
 {
     auto timer = fallbackRecoveryTimer->lock();
-    timer->expires_after(kRECOVERY_TIME);
+    timer->expires_after(recoveryTime);
     timer->async_wait([writerState = std::move(writerState)](boost::system::error_code ec) {
         if (ec == boost::asio::error::operation_aborted) {
             return;
@@ -63,7 +62,8 @@ startFallbackRecoveryTimer(
 
 WriterDecider::WriterDecider(
     boost::asio::thread_pool& ctx,
-    std::unique_ptr<etl::WriterStateInterface> writerState
+    std::unique_ptr<etl::WriterStateInterface> writerState,
+    std::chrono::steady_clock::duration recoveryTime
 )
     : ctx_(ctx)
     , writerState_(std::move(writerState))
@@ -72,6 +72,7 @@ WriterDecider::WriterDecider(
               boost::asio::steady_timer(ctx.get_executor())
           )
       )
+    , recoveryTime_(recoveryTime)
 {
 }
 
@@ -89,6 +90,7 @@ WriterDecider::onNewState(
         [writerState = writerState_->clone(),
          selfId = std::move(selfId),
          fallbackRecoveryTimer = fallbackRecoveryTimer_,
+         recoveryTime = recoveryTime_,
          clusterData = clusterData->value()](auto&&) mutable {
             auto const selfData = std::ranges::find_if(
                 clusterData, [&selfId](ClioNode const& node) { return node.uuid == selfId; }
@@ -133,7 +135,7 @@ WriterDecider::onNewState(
             if (clusterInFallbackState) {
                 writerState->setWriterDecidingFallback();
                 startFallbackRecoveryTimer(
-                    std::move(fallbackRecoveryTimer), std::move(writerState)
+                    std::move(fallbackRecoveryTimer), std::move(writerState), recoveryTime
                 );
                 return;
             }

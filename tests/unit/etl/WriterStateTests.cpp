@@ -171,3 +171,72 @@ TEST_F(WriterStateTest, ClonedInstanceSharesSystemState)
     EXPECT_TRUE(writerState.isFallback());
     EXPECT_TRUE(cloned->isFallback());
 }
+
+TEST_F(WriterStateTest, IsFallbackRecoveryReturnsFalseByDefault)
+{
+    EXPECT_FALSE(writerState.isFallbackRecovery());
+}
+
+TEST_F(WriterStateTest, SetFallbackRecoveryTrueSetsFlag)
+{
+    writerState.setFallbackRecovery(true);
+    EXPECT_TRUE(writerState.isFallbackRecovery());
+}
+
+TEST_F(WriterStateTest, SetFallbackRecoveryTrueClearsFallbackFlag)
+{
+    systemState->isWriterDecidingFallback = true;
+    EXPECT_TRUE(writerState.isFallback());
+
+    writerState.setFallbackRecovery(true);
+
+    EXPECT_FALSE(writerState.isFallback());
+    EXPECT_TRUE(writerState.isFallbackRecovery());
+}
+
+TEST_F(WriterStateTest, SetFallbackRecoveryFalseClearsFlag)
+{
+    writerState.setFallbackRecovery(true);
+    ASSERT_TRUE(writerState.isFallbackRecovery());
+
+    writerState.setFallbackRecovery(false);
+    EXPECT_FALSE(writerState.isFallbackRecovery());
+}
+
+TEST_F(WriterStateTest, SetFallbackRecoveryFalseDoesNotAffectFallbackFlag)
+{
+    systemState->isWriterDecidingFallback = true;
+
+    writerState.setFallbackRecovery(false);
+
+    EXPECT_TRUE(writerState.isFallback());
+}
+
+TEST_F(WriterStateTest, SetWriterDecidingFallbackClearsFallbackRecovery)
+{
+    writerState.setFallbackRecovery(true);
+    ASSERT_TRUE(writerState.isFallbackRecovery());
+
+    writerState.setWriterDecidingFallback();
+
+    EXPECT_FALSE(writerState.isFallbackRecovery());
+    EXPECT_TRUE(writerState.isFallback());
+}
+
+TEST_F(WriterStateTest, ClonedInstanceSharesFallbackRecovery)
+{
+    // prometheus::Bool holds a reference_wrapper to the underlying gauge,
+    // so clone and original share the same metric value.
+    auto cloned = writerState.clone();
+
+    EXPECT_FALSE(writerState.isFallbackRecovery());
+    EXPECT_FALSE(cloned->isFallbackRecovery());
+
+    systemState->isWriterDecidingFallback = true;  // precondition for setFallbackRecovery(true)
+    cloned->setFallbackRecovery(true);
+
+    EXPECT_TRUE(writerState.isFallbackRecovery());
+    EXPECT_TRUE(cloned->isFallbackRecovery());
+    // setFallbackRecovery(true) also clears the fallback flag on shared SystemState
+    EXPECT_FALSE(writerState.isFallback());
+}

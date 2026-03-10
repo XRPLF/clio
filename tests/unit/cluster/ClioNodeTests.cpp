@@ -217,7 +217,8 @@ INSTANTIATE_TEST_SUITE_P(
         ClioNodeDbRoleTestBundle{.testName = "ReadOnly", .role = ClioNode::DbRole::ReadOnly},
         ClioNodeDbRoleTestBundle{.testName = "NotWriter", .role = ClioNode::DbRole::NotWriter},
         ClioNodeDbRoleTestBundle{.testName = "Writer", .role = ClioNode::DbRole::Writer},
-        ClioNodeDbRoleTestBundle{.testName = "Fallback", .role = ClioNode::DbRole::Fallback}
+        ClioNodeDbRoleTestBundle{.testName = "Fallback", .role = ClioNode::DbRole::Fallback},
+        ClioNodeDbRoleTestBundle{.testName = "FallbackRecovery", .role = ClioNode::DbRole::FallbackRecovery}
     ),
     tests::util::kNAME_GENERATOR
 );
@@ -255,6 +256,7 @@ struct ClioNodeFromTestBundle {
     std::string testName;
     bool readOnly;
     bool fallback;
+    bool fallbackRecovery;
     bool writing;
     bool etlStarted;
     bool cacheIsFull;
@@ -278,6 +280,7 @@ INSTANTIATE_TEST_SUITE_P(
             .testName = "ReadOnly",
             .readOnly = true,
             .fallback = false,
+            .fallbackRecovery = false,
             .writing = false,
             .etlStarted = false,
             .cacheIsFull = false,
@@ -288,6 +291,7 @@ INSTANTIATE_TEST_SUITE_P(
             .testName = "Fallback",
             .readOnly = false,
             .fallback = true,
+            .fallbackRecovery = false,
             .writing = false,
             .etlStarted = false,
             .cacheIsFull = false,
@@ -298,6 +302,7 @@ INSTANTIATE_TEST_SUITE_P(
             .testName = "NotWriter",
             .readOnly = false,
             .fallback = false,
+            .fallbackRecovery = false,
             .writing = false,
             .etlStarted = true,
             .cacheIsFull = false,
@@ -308,11 +313,23 @@ INSTANTIATE_TEST_SUITE_P(
             .testName = "Writer",
             .readOnly = false,
             .fallback = false,
+            .fallbackRecovery = false,
             .writing = true,
             .etlStarted = true,
             .cacheIsFull = true,
             .cacheIsCurrentlyLoading = true,
             .expectedRole = ClioNode::DbRole::Writer
+        },
+        ClioNodeFromTestBundle{
+            .testName = "FallbackRecovery",
+            .readOnly = false,
+            .fallback = false,
+            .fallbackRecovery = true,
+            .writing = false,
+            .etlStarted = false,
+            .cacheIsFull = false,
+            .cacheIsCurrentlyLoading = false,
+            .expectedRole = ClioNode::DbRole::FallbackRecovery
         }
     ),
     tests::util::kNAME_GENERATOR
@@ -326,7 +343,11 @@ TEST_P(ClioNodeFromTest, FromWriterState)
     if (not param.readOnly) {
         EXPECT_CALL(writerState, isFallback()).WillOnce(testing::Return(param.fallback));
         if (not param.fallback) {
-            EXPECT_CALL(writerState, isWriting()).WillOnce(testing::Return(param.writing));
+            EXPECT_CALL(writerState, isFallbackRecovery())
+                .WillOnce(testing::Return(param.fallbackRecovery));
+            if (not param.fallbackRecovery) {
+                EXPECT_CALL(writerState, isWriting()).WillOnce(testing::Return(param.writing));
+            }
         }
     }
     EXPECT_CALL(writerState, isEtlStarted()).WillOnce(testing::Return(param.etlStarted));

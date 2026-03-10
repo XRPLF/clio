@@ -27,6 +27,7 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
 
+#include <chrono>
 #include <memory>
 
 namespace cluster {
@@ -35,25 +36,75 @@ namespace cluster {
  * @brief Decides which node in the cluster should be the writer based on cluster state.
  *
  * This class monitors cluster state changes and determines whether the current node
- * should act as the writer to the database. The decision is made by:
- * 1. Sorting all nodes by UUID for deterministic ordering
- * 2. Selecting the first node that is allowed to write (not ReadOnly)
- * 3. Activating writing on this node if it's the current node, otherwise deactivating
+ * should act as the writer to the database.
  *
- * This ensures only one node in the cluster actively writes to the database at a time.
+ * ## Election (normal operation)
+ *
+ * All non-ReadOnly nodes are sorted by UUID.  The first node with @c etlStarted and
+ * @c cacheIsFull is elected writer.  If no fully-ready node exists, the first node
+ * with @c etlStarted is chosen.  All others give up writing.
+ *
+ * ## Fallback mode
+ *
+ * Fallback is the slower but more reliable mechanism based on database write-conflict
+ * detection (a node waits ~10 s of DB silence before writing).  The cluster enters
+ * fallback whenever any non-ReadOnly node publishes @c DbRole::Fallback — for example
+ * during a rolling upgrade when an old node without cluster-coordination support is
+ * present.
+ *
+ * ## Fallback recovery
+ *
+ * To avoid the cluster staying in fallback indefinitely, a recovery timer is started
+ * when this node enters fallback.  After the timer fires the node enters
+ * @c DbRole::FallbackRecovery and coordinates with peers to return to election mode.
+ * If any peer is already in @c FallbackRecovery, the node joins immediately (contagion
+ * rule), cancelling its own pending timer.
+ *
+ * ## State machine for @ref onNewState
+ *
+ * @code
+ *
+ *                        sees any Fallback node
+ *   [election mode]  ──────────────────────────────►  [Fallback]
+ *   (NotWriter /                                           │
+ *    Writer)                                        recovery timer fires
+ *       ▲                                           (1 hour)
+ *       │                                           OR sees FallbackRecovery
+ *       │                                           node (contagion rule)
+ *       │                                                  │
+ *       │                                                  ▼
+ *       │         no Fallback nodes visible       [FallbackRecovery]
+ *       └─────────────────────────────────────────────────
+ *
+ * @endcode
+ *
+ * Nodes in FallbackRecovery continue the fallback write-race so there is no write
+ * availability gap during the coordination phase.
  */
 class WriterDecider {
 public:
+    /** @brief Shared, mutex-protected timer used for the fallback recovery delay. */
     using FallbackRecoveryTimerType = std::shared_ptr<util::Mutex<boost::asio::steady_timer>>;
 
+    static constexpr std::chrono::seconds kRECOVERY_TIME = std::chrono::seconds{3600};
+
 private:
-    /** @brief Thread pool for spawning asynchronous tasks */
+    /** @brief Thread pool for spawning asynchronous tasks. */
     boost::asio::thread_pool& ctx_;
 
-    /** @brief Interface for controlling the writer state of this node */
+    /** @brief Interface for controlling the writer state of this node. */
     std::unique_ptr<etl::WriterStateInterface> writerState_;
 
+    /**
+     * @brief Timer that fires after a delay to initiate fallback recovery.
+     *
+     * Started when this node first enters @c DbRole::Fallback.  Cancelled when the node
+     * transitions to @c DbRole::FallbackRecovery (either via the timer firing or via the
+     * contagion rule).  Shared with spawned task closures so they can cancel it safely.
+     */
     FallbackRecoveryTimerType fallbackRecoveryTimer_;
+
+    std::chrono::steady_clock::duration recoveryTime_;
 
 public:
     /**
@@ -64,21 +115,32 @@ public:
      */
     WriterDecider(
         boost::asio::thread_pool& ctx,
-        std::unique_ptr<etl::WriterStateInterface> writerState
+        std::unique_ptr<etl::WriterStateInterface> writerState,
+        std::chrono::steady_clock::duration recoveryTime = kRECOVERY_TIME
     );
 
     /**
      * @brief Handles cluster state changes and decides whether this node should be the writer.
      *
-     * This method is called when cluster state changes. It asynchronously:
-     * - Sorts all nodes by UUID to establish a deterministic order
-     * - Identifies the first node allowed to write (not ReadOnly)
-     * - Activates writing if this node is selected, otherwise deactivates writing
-     * - Logs a warning if no nodes in the cluster are allowed to write
+     * Spawns an asynchronous task that applies the state machine described in the class
+     * documentation.  Decisions are based on the @p clusterData snapshot:
+     *
+     * - If @p clusterData has no value (communication failure), no action is taken.
+     * - If self is @c ReadOnly, writing is given up unconditionally.
+     * - If self is @c Fallback and a @c FallbackRecovery node is visible, the contagion
+     *   rule applies: this node also enters @c FallbackRecovery and the recovery timer
+     *   is cancelled.
+     * - If self is @c FallbackRecovery and no @c Fallback nodes are visible, the
+     *   recovery coordination is complete: writing is given up and the fallback recovery
+     *   flag is cleared so the node enters election mode on the next cycle.
+     * - If self is in election mode and any @c Fallback node is visible, this node
+     *   switches to @c Fallback and the recovery timer is started.
+     * - Otherwise, election proceeds: nodes are sorted by UUID and the first fully-ready
+     *   (@c etlStarted && @c cacheIsFull) non-ReadOnly node is elected writer.
      *
      * @param selfId The UUID of the current node
-     * @param clusterData Shared pointer to current cluster data; may be empty if communication
-     * failed
+     * @param clusterData Shared pointer to current cluster data; may be empty if
+     *   communication failed
      */
     void
     onNewState(ClioNode::CUuid selfId, std::shared_ptr<Backend::ClusterData const> clusterData);

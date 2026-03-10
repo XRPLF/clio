@@ -234,6 +234,9 @@ TEST_F(ClusterBackendTest, FetchClioNodesDataReturnsDataWithOtherNodes)
     EXPECT_CALL(writerStateRef, isFallback)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isFallbackRecovery)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
     EXPECT_CALL(writerStateRef, isEtlStarted)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(false));
@@ -461,6 +464,9 @@ TEST_F(ClusterBackendTest, WriteNodeMessageWritesSelfDataWithRecentTimestampAndD
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(false));
     EXPECT_CALL(writerStateRef, isFallback)
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(writerStateRef, isFallbackRecovery)
         .Times(testing::AtLeast(1))
         .WillRepeatedly(testing::Return(false));
     EXPECT_CALL(writerStateRef, isEtlStarted)
