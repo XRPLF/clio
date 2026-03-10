@@ -69,12 +69,28 @@ void
 WriterState::setWriterDecidingFallback()
 {
     systemState_->isWriterDecidingFallback = true;
+    isFallbackRecovery_ = false;
 }
 
 bool
 WriterState::isFallback() const
 {
     return systemState_->isWriterDecidingFallback;
+}
+
+bool
+WriterState::isFallbackRecovery() const
+{
+    return isFallbackRecovery_;
+}
+
+void
+WriterState::setFallbackRecovery(bool newValue)
+{
+    if (newValue) {
+        systemState_->isWriterDecidingFallback = false;
+    }
+    isFallbackRecovery_ = newValue;
 }
 
 bool

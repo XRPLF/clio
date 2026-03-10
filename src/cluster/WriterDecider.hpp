@@ -22,7 +22,9 @@
 #include "cluster/Backend.hpp"
 #include "cluster/ClioNode.hpp"
 #include "etl/WriterState.hpp"
+#include "util/Mutex.hpp"
 
+#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
 
 #include <memory>
@@ -41,11 +43,17 @@ namespace cluster {
  * This ensures only one node in the cluster actively writes to the database at a time.
  */
 class WriterDecider {
+public:
+    using FallbackRecoveryTimerType = std::shared_ptr<util::Mutex<boost::asio::steady_timer>>;
+
+private:
     /** @brief Thread pool for spawning asynchronous tasks */
     boost::asio::thread_pool& ctx_;
 
     /** @brief Interface for controlling the writer state of this node */
     std::unique_ptr<etl::WriterStateInterface> writerState_;
+
+    FallbackRecoveryTimerType fallbackRecoveryTimer_;
 
 public:
     /**

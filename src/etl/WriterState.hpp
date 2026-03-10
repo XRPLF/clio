@@ -21,6 +21,9 @@
 
 #include "data/LedgerCacheInterface.hpp"
 #include "etl/SystemState.hpp"
+#include "util/prometheus/Bool.hpp"
+#include "util/prometheus/Label.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <functional>
 #include <memory>
@@ -78,6 +81,12 @@ public:
     [[nodiscard]] virtual bool
     isFallback() const = 0;
 
+    [[nodiscard]] virtual bool
+    isFallbackRecovery() const = 0;
+
+    virtual void
+    setFallbackRecovery(bool newValue) = 0;
+
     /**
      * @brief Switch the cluster to the fallback writer decision mechanism.
      *
@@ -130,6 +139,12 @@ private:
     std::shared_ptr<SystemState>
         systemState_; /**< @brief Shared system state for ETL coordination */
     std::reference_wrapper<data::LedgerCacheInterface const> cache_;
+
+    util::prometheus::Bool isFallbackRecovery_ = PrometheusService::boolMetric(
+        "etl_writing_deciding_fallback_recovery",
+        util::prometheus::Labels{},
+        "Whether clio is the recovery from fallback of writer decision mechanism"
+    );
 
 public:
     /**
@@ -185,6 +200,11 @@ public:
     bool
     isFallback() const override;
 
+    bool
+    isFallbackRecovery() const override;
+
+    void
+    setFallbackRecovery(bool newValue) override;
     /** @copydoc WriterStateInterface::isEtlStarted */
     bool
     isEtlStarted() const override;

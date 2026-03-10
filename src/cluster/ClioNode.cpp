@@ -66,6 +66,10 @@ ClioNode::from(
             return ClioNode::DbRole::Fallback;
         }
 
+        if (writerState.isFallbackRecovery()) {
+            return ClioNode::DbRole::FallbackRecovery;
+        }
+
         return writerState.isWriting() ? ClioNode::DbRole::Writer : ClioNode::DbRole::NotWriter;
     }();
     return ClioNode{
