@@ -19,6 +19,8 @@
 
 #include "data/LedgerCacheLoadingState.hpp"
 
+#include "data/LedgerCacheInterface.hpp"
+
 #include <memory>
 
 namespace data {

@@ -30,7 +30,6 @@
 #include "etl/LoadBalancer.hpp"
 #include "etl/NetworkValidatedLedgers.hpp"
 #include "etl/SystemState.hpp"
-#include "etl/WriterState.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "migration/MigrationInspectorFactory.hpp"
 #include "rpc/Counters.hpp"

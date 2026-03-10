@@ -309,7 +309,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(ClusterCommunicationServiceMakeTest, LoadingAllowedMatchesConfig)
 {
     auto const& param = GetParam();
-    util::config::ClioConfigDefinition config{
+    util::config::ClioConfigDefinition const config{
         {{"cache.limit_load_in_cluster",
           util::config::ConfigValue{util::config::ConfigType::Boolean}.defaultValue(
               param.limitLoadInCluster
