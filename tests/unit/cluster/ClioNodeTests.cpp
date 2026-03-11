@@ -218,7 +218,10 @@ INSTANTIATE_TEST_SUITE_P(
         ClioNodeDbRoleTestBundle{.testName = "NotWriter", .role = ClioNode::DbRole::NotWriter},
         ClioNodeDbRoleTestBundle{.testName = "Writer", .role = ClioNode::DbRole::Writer},
         ClioNodeDbRoleTestBundle{.testName = "Fallback", .role = ClioNode::DbRole::Fallback},
-        ClioNodeDbRoleTestBundle{.testName = "FallbackRecovery", .role = ClioNode::DbRole::FallbackRecovery}
+        ClioNodeDbRoleTestBundle{
+            .testName = "FallbackRecovery",
+            .role = ClioNode::DbRole::FallbackRecovery
+        }
     ),
     tests::util::kNAME_GENERATOR
 );

@@ -46,7 +46,10 @@ class FallbackRecoveryTimer {
         bool isRunning = false;
         std::chrono::steady_clock::duration recoveryTime;
 
-        Impl(boost::asio::any_io_executor const& executor, std::chrono::steady_clock::duration recoveryTime)
+        Impl(
+            boost::asio::any_io_executor const& executor,
+            std::chrono::steady_clock::duration recoveryTime
+        )
             : timer(executor), recoveryTime(recoveryTime)
         {
         }
@@ -61,7 +64,10 @@ public:
      * @param ctx          Thread pool whose executor the timer is posted to.
      * @param recoveryTime Duration to wait before the timer fires.
      */
-    FallbackRecoveryTimer(boost::asio::thread_pool& ctx, std::chrono::steady_clock::duration recoveryTime);
+    FallbackRecoveryTimer(
+        boost::asio::thread_pool& ctx,
+        std::chrono::steady_clock::duration recoveryTime
+    );
 
     /**
      * @brief Returns @c true if an @c async_wait is currently pending.
@@ -86,12 +92,12 @@ public:
         auto locked = impl_->lock();
         locked->isRunning = true;
         locked->timer.expires_after(locked->recoveryTime);
-        locked->timer.async_wait(
-            [impl = impl_, cb = std::forward<Callback>(callback)](boost::system::error_code ec) mutable {
-                impl->lock()->isRunning = false;
-                cb(ec);
-            }
-        );
+        locked->timer.async_wait([impl = impl_, cb = std::forward<Callback>(callback)](
+                                     boost::system::error_code ec
+                                 ) mutable {
+            impl->lock()->isRunning = false;
+            cb(ec);
+        });
     }
 
     /**
