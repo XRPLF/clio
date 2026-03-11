@@ -21,14 +21,13 @@
 
 #include "cluster/Backend.hpp"
 #include "cluster/ClioNode.hpp"
+#include "cluster/impl/FallbackRecoveryTimer.hpp"
 #include "etl/WriterState.hpp"
-#include "util/Mutex.hpp"
 
-#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
 
 #include <chrono>
-#include <memory>
+#include <memory>  // shared_ptr for ClusterData and WriterStateInterface
 
 namespace cluster {
 
@@ -83,9 +82,6 @@ namespace cluster {
  */
 class WriterDecider {
 public:
-    /** @brief Shared, mutex-protected timer used for the fallback recovery delay. */
-    using FallbackRecoveryTimerType = std::shared_ptr<util::Mutex<boost::asio::steady_timer>>;
-
     static constexpr std::chrono::seconds kRECOVERY_TIME = std::chrono::seconds{3600};
 
 private:
@@ -98,20 +94,22 @@ private:
     /**
      * @brief Timer that fires after a delay to initiate fallback recovery.
      *
-     * Started when this node first enters @c DbRole::Fallback.  Cancelled when the node
-     * transitions to @c DbRole::FallbackRecovery (either via the timer firing or via the
-     * contagion rule).  Shared with spawned task closures so they can cancel it safely.
+     * Started when this node enters @c DbRole::Fallback (either via election-mode
+     * transition or via an externally triggered fallback).  Cancelled when the node
+     * transitions to @c DbRole::FallbackRecovery (timer fired or contagion rule).
+     * Copied into spawned task closures by value — all copies share the same
+     * underlying mutex-protected state.
      */
-    FallbackRecoveryTimerType fallbackRecoveryTimer_;
-
-    std::chrono::steady_clock::duration recoveryTime_;
+    impl::FallbackRecoveryTimer fallbackRecoveryTimer_;
 
 public:
     /**
      * @brief Constructs a WriterDecider.
      *
-     * @param ctx Thread pool for executing asynchronous operations
-     * @param writerState Writer state interface for controlling write operations
+     * @param ctx          Thread pool for executing asynchronous operations
+     * @param writerState  Writer state interface for controlling write operations
+     * @param recoveryTime How long to wait in Fallback before attempting recovery
+     *                     (defaults to @ref kRECOVERY_TIME; pass a short duration in tests)
      */
     WriterDecider(
         boost::asio::thread_pool& ctx,
@@ -130,6 +128,8 @@ public:
      * - If self is @c Fallback and a @c FallbackRecovery node is visible, the contagion
      *   rule applies: this node also enters @c FallbackRecovery and the recovery timer
      *   is cancelled.
+     * - If self is @c Fallback and the recovery timer is not running, it is started
+     *   (handles the case where fallback was triggered externally, e.g. by Monitor).
      * - If self is @c FallbackRecovery and no @c Fallback nodes are visible, the
      *   recovery coordination is complete: writing is given up and the fallback recovery
      *   flag is cleared so the node enters election mode on the next cycle.

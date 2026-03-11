@@ -21,13 +21,12 @@
 
 #include "cluster/Backend.hpp"
 #include "cluster/ClioNode.hpp"
+#include "cluster/impl/FallbackRecoveryTimer.hpp"
 #include "etl/WriterState.hpp"
 #include "util/Assert.hpp"
-#include "util/Mutex.hpp"
 #include "util/Spawn.hpp"
 
 #include <boost/asio/error.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
 
 #include <algorithm>
@@ -42,19 +41,16 @@ namespace {
 
 void
 startFallbackRecoveryTimer(
-    WriterDecider::FallbackRecoveryTimerType fallbackRecoveryTimer,
-    std::unique_ptr<etl::WriterStateInterface> writerState,
-    std::chrono::steady_clock::duration recoveryTime
+    impl::FallbackRecoveryTimer& fallbackRecoveryTimer,
+    std::unique_ptr<etl::WriterStateInterface> writerState
 )
 {
-    auto timer = fallbackRecoveryTimer->lock();
-    timer->expires_after(recoveryTime);
-    timer->async_wait([writerState = std::move(writerState)](boost::system::error_code ec) {
-        if (ec == boost::asio::error::operation_aborted) {
+    fallbackRecoveryTimer.start([ws =
+                                     std::move(writerState)](boost::system::error_code ec) mutable {
+        if (ec == boost::asio::error::operation_aborted)
             return;
-        }
         ASSERT(!ec, "Unexpected error {}: {}", ec.value(), ec.to_string());
-        writerState->setFallbackRecovery(true);
+        ws->setFallbackRecovery(true);
     });
 }
 
@@ -65,14 +61,7 @@ WriterDecider::WriterDecider(
     std::unique_ptr<etl::WriterStateInterface> writerState,
     std::chrono::steady_clock::duration recoveryTime
 )
-    : ctx_(ctx)
-    , writerState_(std::move(writerState))
-    , fallbackRecoveryTimer_(
-          std::make_shared<util::Mutex<boost::asio::steady_timer>>(
-              boost::asio::steady_timer(ctx.get_executor())
-          )
-      )
-    , recoveryTime_(recoveryTime)
+    : ctx_(ctx), writerState_(std::move(writerState)), fallbackRecoveryTimer_(ctx, recoveryTime)
 {
 }
 
@@ -90,7 +79,6 @@ WriterDecider::onNewState(
         [writerState = writerState_->clone(),
          selfId = std::move(selfId),
          fallbackRecoveryTimer = fallbackRecoveryTimer_,
-         recoveryTime = recoveryTime_,
          clusterData = clusterData->value()](auto&&) mutable {
             auto const selfData = std::ranges::find_if(
                 clusterData, [&selfId](ClioNode const& node) { return node.uuid == selfId; }
@@ -109,7 +97,9 @@ WriterDecider::onNewState(
                     });
                 if (clusterInFallbackRecoveryState) {
                     writerState->setFallbackRecovery(true);
-                    fallbackRecoveryTimer->lock()->cancel();
+                    fallbackRecoveryTimer.cancel();
+                } else if (not fallbackRecoveryTimer.isRunning()) {
+                    startFallbackRecoveryTimer(fallbackRecoveryTimer, std::move(writerState));
                 }
                 return;
             }
@@ -134,9 +124,7 @@ WriterDecider::onNewState(
                 });
             if (clusterInFallbackState) {
                 writerState->setWriterDecidingFallback();
-                startFallbackRecoveryTimer(
-                    std::move(fallbackRecoveryTimer), std::move(writerState), recoveryTime
-                );
+                startFallbackRecoveryTimer(fallbackRecoveryTimer, std::move(writerState));
                 return;
             }
 

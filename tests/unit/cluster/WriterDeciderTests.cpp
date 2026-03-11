@@ -284,10 +284,10 @@ INSTANTIATE_TEST_SUITE_P(
             .expectedAction = ExpectedAction::StartWriting
         },
         WriterDeciderTestParams{
-            .testName = "SelfIsFallbackNoActionTaken",
+            .testName = "SelfIsFallbackNoContagionStartsRecoveryTimer",
             .selfUuidValue = 0x01,
             .nodes = {{0x01, ClioNode::DbRole::Fallback}, {0x02, ClioNode::DbRole::Writer}},
-            .expectedAction = ExpectedAction::NoAction
+            .expectedAction = ExpectedAction::SetFallbackRecoveryTrue
         },
         WriterDeciderTestParams{
             .testName = "OtherNodeIsFallbackSetsFallbackMode",
@@ -443,10 +443,10 @@ INSTANTIATE_TEST_SUITE_P(
             .expectedAction = ExpectedAction::SetFallbackRecoveryTrue
         },
         WriterDeciderTestParams{
-            .testName = "SelfIsFallbackNoFallbackRecoveryInCluster_NoAction",
+            .testName = "SelfIsFallbackNoFallbackRecoveryInCluster_StartsRecoveryTimer",
             .selfUuidValue = 0x01,
             .nodes = {{0x01, ClioNode::DbRole::Fallback}, {0x02, ClioNode::DbRole::Fallback}},
-            .expectedAction = ExpectedAction::NoAction
+            .expectedAction = ExpectedAction::SetFallbackRecoveryTrue
         },
         WriterDeciderTestParams{
             .testName = "SelfIsFallbackRecoveryNoFallbackNodes_ExitsRecovery",

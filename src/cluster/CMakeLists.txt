@@ -9,6 +9,7 @@ target_sources(
         ClusterCommunicationService.cpp
         Metrics.cpp
         WriterDecider.cpp
+        impl/FallbackRecoveryTimer.cpp
 )
 
 target_link_libraries(clio_cluster PRIVATE clio_util clio_data)

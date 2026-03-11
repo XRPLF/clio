@@ -27,6 +27,7 @@ target_sources(
         cluster/CacheLoaderDeciderTests.cpp
         cluster/ClioNodeTests.cpp
         cluster/ClusterCommunicationServiceTests.cpp
+        cluster/FallbackRecoveryTimerTests.cpp
         cluster/MetricsTests.cpp
         cluster/RepeatedTaskTests.cpp
         cluster/WriterDeciderTests.cpp
