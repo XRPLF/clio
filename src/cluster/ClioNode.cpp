@@ -109,7 +109,7 @@ tag_invoke(boost::json::value_to_tag<ClioNode>, boost::json::value const& jv)
     auto dbRole = ClioNode::DbRole::Fallback;
     if (auto const* v = obj.if_contains(JsonFields::kDB_ROLE)) {
         auto const dbRoleValue = v->as_int64();
-        if (dbRoleValue > static_cast<int64_t>(ClioNode::DbRole::MAX))
+        if (dbRoleValue > static_cast<int64_t>(ClioNode::DbRole::Max))
             throw std::runtime_error("Invalid db_role value");
         dbRole = static_cast<ClioNode::DbRole>(dbRoleValue);
     }

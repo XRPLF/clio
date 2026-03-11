@@ -45,13 +45,13 @@ protected:
 
 TEST_F(FallbackRecoveryTimerTest, NotRunningByDefault)
 {
-    FallbackRecoveryTimer timer{ctx_, std::chrono::seconds{3600}};
+    FallbackRecoveryTimer timer{ctx_, std::chrono::hours{1}};
     EXPECT_FALSE(timer.isRunning());
 }
 
 TEST_F(FallbackRecoveryTimerTest, IsRunningAfterStart)
 {
-    FallbackRecoveryTimer timer{ctx_, std::chrono::seconds{3600}};
+    FallbackRecoveryTimer timer{ctx_, std::chrono::hours{1}};
     timer.start([](boost::system::error_code) {});
     EXPECT_TRUE(timer.isRunning());
     timer.cancel();
@@ -59,7 +59,7 @@ TEST_F(FallbackRecoveryTimerTest, IsRunningAfterStart)
 
 TEST_F(FallbackRecoveryTimerTest, NotRunningAfterCancel)
 {
-    FallbackRecoveryTimer timer{ctx_, std::chrono::seconds{3600}};
+    FallbackRecoveryTimer timer{ctx_, std::chrono::hours{1}};
     timer.start([](boost::system::error_code) {});
     timer.cancel();
     EXPECT_FALSE(timer.isRunning());
@@ -101,7 +101,7 @@ TEST_F(FallbackRecoveryTimerTest, CallbackReceivesOperationAbortedOnCancel)
     std::binary_semaphore sem{0};
     boost::system::error_code capturedEc{};
 
-    FallbackRecoveryTimer timer{ctx_, std::chrono::seconds{3600}};
+    FallbackRecoveryTimer timer{ctx_, std::chrono::hours{1}};
     timer.start([&](boost::system::error_code ec) {
         capturedEc = ec;
         sem.release();
@@ -115,9 +115,9 @@ TEST_F(FallbackRecoveryTimerTest, CallbackReceivesOperationAbortedOnCancel)
 
 TEST_F(FallbackRecoveryTimerTest, CancelOnNonRunningTimerIsNoOp)
 {
-    FallbackRecoveryTimer timer{ctx_, std::chrono::seconds{3600}};
-    // Should not crash
-    timer.cancel();
+    FallbackRecoveryTimer timer{ctx_, std::chrono::hours{1}};
+    EXPECT_FALSE(timer.isRunning());
+    EXPECT_NO_FATAL_FAILURE({ timer.cancel(); });
     EXPECT_FALSE(timer.isRunning());
 }
 

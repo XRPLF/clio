@@ -45,13 +45,14 @@ startFallbackRecoveryTimer(
     std::unique_ptr<etl::WriterStateInterface> writerState
 )
 {
-    fallbackRecoveryTimer.start([ws =
-                                     std::move(writerState)](boost::system::error_code ec) mutable {
-        if (ec == boost::asio::error::operation_aborted)
-            return;
-        ASSERT(!ec, "Unexpected error {}: {}", ec.value(), ec.to_string());
-        ws->setFallbackRecovery(true);
-    });
+    fallbackRecoveryTimer.start(  //
+        [ws = std::move(writerState)](boost::system::error_code ec) mutable {
+            if (ec == boost::asio::error::operation_aborted)
+                return;
+            ASSERT(!ec, "Unexpected error {}: {}", ec.value(), ec.to_string());
+            ws->setFallbackRecovery(true);
+        }
+    );
 }
 
 }  // namespace
@@ -129,7 +130,6 @@ WriterDecider::onNewState(
             }
 
             // We are not ReadOnly and there is no Fallback in the cluster
-            // Election mode
             std::ranges::sort(clusterData, [](ClioNode const& lhs, ClioNode const& rhs) {
                 return *lhs.uuid < *rhs.uuid;
             });

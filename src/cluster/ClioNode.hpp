@@ -62,7 +62,7 @@ struct ClioNode {
         Writer = 2,
         Fallback = 3,
         FallbackRecovery = 4,
-        MAX = 4
+        Max = 4
     };
 
     using Uuid = std::shared_ptr<boost::uuids::uuid>;
