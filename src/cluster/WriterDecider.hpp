@@ -59,7 +59,7 @@ namespace cluster {
  * If any peer is already in @c FallbackRecovery, the node joins immediately (contagion
  * rule), cancelling its own pending timer.
  *
- * ## State machine for @ref onNewState
+ * ## State machine for `onNewState`
  *
  * @code
  *
@@ -109,7 +109,7 @@ public:
      * @param ctx          Thread pool for executing asynchronous operations
      * @param writerState  Writer state interface for controlling write operations
      * @param recoveryTime How long to wait in Fallback before attempting recovery
-     *                     (defaults to @ref kRECOVERY_TIME; pass a short duration in tests)
+     *                     (defaults to `kRECOVERY_TIME`; pass a short duration in tests)
      */
     WriterDecider(
         boost::asio::thread_pool& ctx,
