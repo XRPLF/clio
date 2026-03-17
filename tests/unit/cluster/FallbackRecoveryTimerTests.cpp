@@ -21,8 +21,6 @@
 
 #include <boost/asio/error.hpp>
 #include <boost/asio/thread_pool.hpp>
-#include <boost/system/error_code.hpp>
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <atomic>
@@ -45,7 +43,7 @@ protected:
 
 TEST_F(FallbackRecoveryTimerTest, NotRunningByDefault)
 {
-    FallbackRecoveryTimer timer{ctx_, std::chrono::hours{1}};
+    FallbackRecoveryTimer const timer{ctx_, std::chrono::hours{1}};
     EXPECT_FALSE(timer.isRunning());
 }
 
