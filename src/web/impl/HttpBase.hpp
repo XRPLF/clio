@@ -241,6 +241,16 @@ public:
         if (ec)
             return httpFail(ec, "read");
 
+        if (auto resolvedIp = proxyIpResolver_->resolveClientIp(clientIp_, req_);
+            resolvedIp != clientIp_) {
+            LOG(log_.info()) << tag()
+                             << "Detected a forwarded request from proxy. Proxy ip: " << clientIp_
+                             << ". Resolved client ip: " << resolvedIp;
+            dosGuard_.get().decrement(clientIp_);
+            clientIp_ = std::move(resolvedIp);
+            dosGuard_.get().increment(clientIp_);
+        }
+
         if (req_.method() == http::verb::get and req_.target() == "/health")
             return sender_(httpResponse(http::status::ok, "text/html", kHEALTH_CHECK_HTML));
 
@@ -254,16 +264,6 @@ public:
             return sender_(httpResponse(
                 http::status::service_unavailable, "text/html", kCACHE_CHECK_NOT_LOADED_HTML
             ));
-        }
-
-        if (auto resolvedIp = proxyIpResolver_->resolveClientIp(clientIp_, req_);
-            resolvedIp != clientIp_) {
-            LOG(log_.info()) << tag()
-                             << "Detected a forwarded request from proxy. Proxy ip: " << clientIp_
-                             << ". Resolved client ip: " << resolvedIp;
-            dosGuard_.get().decrement(clientIp_);
-            clientIp_ = std::move(resolvedIp);
-            dosGuard_.get().increment(clientIp_);
         }
 
         // Update isAdmin property of the connection
