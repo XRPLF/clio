@@ -36,6 +36,7 @@
 #include <spdlog/formatter.h>
 #include <spdlog/logger.h>
 #include <spdlog/pattern_formatter.h>
+#include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
@@ -203,12 +204,20 @@ spdlog::sink_ptr
 LogService::createFileSink(FileLoggingParams const& params, std::string const& format)
 {
     std::filesystem::path const dirPath(params.logDir);
-    // the below are taken from user in MB, but spdlog needs it to be in bytes
-    auto const rotationSize = mbToBytes(params.rotationSizeMB);
+    std::shared_ptr<spdlog::sinks::sink> fileSink;
 
-    auto fileSink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-        (dirPath / "clio.log").string(), rotationSize, params.dirMaxFiles
-    );
+    if (params.rotation.has_value()) {
+        // rotation sizes are taken from user in MB, but spdlog needs bytes
+        auto const rotationSize = mbToBytes(params.rotation->sizeMB);
+        fileSink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+            (dirPath / "clio.log").string(), rotationSize, params.rotation->maxFiles
+        );
+    } else {
+        fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
+            (dirPath / "clio.log").string(), /*truncate=*/false
+        );
+    }
+
     fileSink->set_level(spdlog::level::trace);
     fileSink->set_formatter(std::make_unique<spdlog::pattern_formatter>(format));
 
@@ -355,10 +364,17 @@ LogService::getSinks(config::ClioConfigDefinition const& config)
             }
         }
 
+        std::optional<RotationParams> rotation = std::nullopt;
+        if (config.get<bool>("log.rotate")) {
+            rotation = RotationParams{
+                .sizeMB = config.get<uint32_t>("log.rotation_size"),
+                .maxFiles = config.get<uint32_t>("log.directory_max_files"),
+            };
+        }
+
         FileLoggingParams const params{
             .logDir = logDir.value(),
-            .rotationSizeMB = config.get<uint32_t>("log.rotation_size"),
-            .dirMaxFiles = config.get<uint32_t>("log.directory_max_files"),
+            .rotation = rotation,
         };
         allSinks.push_back(createFileSink(params, format));
     }

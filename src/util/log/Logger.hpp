@@ -47,6 +47,7 @@ class sink;  // NOLINT(readability-identifier-naming)
 struct BenchmarkLoggingInitializer;
 class LoggerFixture;
 struct LogServiceInitTests;
+struct LogFileRotationTests;
 
 namespace util {
 
@@ -248,6 +249,7 @@ class LogServiceState {
 protected:
     friend struct ::LogServiceInitTests;
     friend class ::LoggerFixture;
+    friend struct ::LogFileRotationTests;
     friend class Logger;
     friend class ::util::impl::OnAssert;
 
@@ -405,13 +407,16 @@ private:
      */
     [[nodiscard]] static std::
         expected<std::vector<std::shared_ptr<spdlog::sinks::sink>>, std::string>
-        getSinks(config::ClioConfigDefinition const& config);
+   tSinks(config::ClioConfigDefinition const& config);
+
+    struct RotationParams {
+        uint32_t sizeMB;
+        uint32_t maxFiles;
+    };
 
     struct FileLoggingParams {
         std::string logDir;
-
-        uint32_t rotationSizeMB;
-        uint32_t dirMaxFiles;
+        std::optional<RotationParams> rotation;  ///< nullopt when rotation is disabled
     };
 
     friend struct ::BenchmarkLoggingInitializer;
