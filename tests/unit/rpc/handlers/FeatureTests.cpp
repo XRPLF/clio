@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/AmendmentCenter.hpp"
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
@@ -402,6 +383,102 @@ TEST_F(RPCFeatureHandlerTest, BadFeaturePath)
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "badFeature");
         EXPECT_EQ(err.at("error_message").as_string(), "Feature unknown or invalid.");
+    });
+}
+
+TEST_F(RPCFeatureHandlerTest, DeletedLibXRPLAmendmentQueryByNameReturnsSupportedFalse)
+{
+    auto const ownerPaysFeeKey =
+        ripple::to_string(data::Amendment::getAmendmentId(Amendments::OwnerPaysFee));
+    auto const all = std::vector<data::Amendment>{{
+        .name = Amendments::OwnerPaysFee,
+        .feature = data::Amendment::getAmendmentId(Amendments::OwnerPaysFee),
+        .isSupportedByXRPL = false,
+        .isSupportedByClio = true,
+        .isRetired = true,
+    }};
+    auto const keys = std::vector<data::AmendmentKey>{Amendments::OwnerPaysFee};
+    auto const enabled = std::vector<bool>{false};
+
+    EXPECT_CALL(*mockAmendmentCenterPtr_, getAll).WillOnce(testing::ReturnRef(all));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, keys, kSEQ))
+        .WillOnce(testing::Return(enabled));
+
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
+
+    auto const expectedOutput = fmt::format(
+        R"JSON({{
+            "{}": {{
+                "name": "OwnerPaysFee",
+                "enabled": false,
+                "supported": false
+            }},
+            "ledger_hash": "{}",
+            "ledger_index": {},
+            "validated": true
+        }})JSON",
+        ownerPaysFeeKey,
+        kLEDGER_HASH,
+        kSEQ
+    );
+
+    runSpawn([this, &expectedOutput](auto yield) {
+        auto const handler = AnyHandler{FeatureHandler{backend_, mockAmendmentCenterPtr_}};
+        auto const output = handler.process(
+            boost::json::parse(R"JSON({"feature": "OwnerPaysFee"})JSON"), Context{yield}
+        );
+
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, boost::json::parse(expectedOutput));
+    });
+}
+
+TEST_F(RPCFeatureHandlerTest, DeletedLibXRPLAmendmentQueryByHashReturnsSupportedFalse)
+{
+    auto const ownerPaysFeeKey =
+        ripple::to_string(data::Amendment::getAmendmentId(Amendments::OwnerPaysFee));
+    auto const all = std::vector<data::Amendment>{{
+        .name = Amendments::OwnerPaysFee,
+        .feature = data::Amendment::getAmendmentId(Amendments::OwnerPaysFee),
+        .isSupportedByXRPL = false,
+        .isSupportedByClio = true,
+        .isRetired = true,
+    }};
+    auto const keys = std::vector<data::AmendmentKey>{Amendments::OwnerPaysFee};
+    auto const enabled = std::vector<bool>{true};
+
+    EXPECT_CALL(*mockAmendmentCenterPtr_, getAll).WillOnce(testing::ReturnRef(all));
+    EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(testing::_, keys, kSEQ))
+        .WillOnce(testing::Return(enabled));
+
+    auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kSEQ);
+    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
+
+    auto const expectedOutput = fmt::format(
+        R"JSON({{
+            "{}": {{
+                "name": "OwnerPaysFee",
+                "enabled": true,
+                "supported": false
+            }},
+            "ledger_hash": "{}",
+            "ledger_index": {},
+            "validated": true
+        }})JSON",
+        ownerPaysFeeKey,
+        kLEDGER_HASH,
+        kSEQ
+    );
+
+    runSpawn([this, &ownerPaysFeeKey, &expectedOutput](auto yield) {
+        auto const handler = AnyHandler{FeatureHandler{backend_, mockAmendmentCenterPtr_}};
+        auto const req =
+            boost::json::parse(fmt::format(R"JSON({{"feature": "{}"}})JSON", ownerPaysFeeKey));
+        auto const output = handler.process(req, Context{yield});
+
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, boost::json::parse(expectedOutput));
     });
 }
 

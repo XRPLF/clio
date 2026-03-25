@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "feed/impl/TransactionFeed.hpp"
 
 #include "data/AmendmentCenterInterface.hpp"
@@ -56,7 +37,9 @@
 namespace feed::impl {
 
 void
-TransactionFeed::TransactionSlot::operator()(AllVersionTransactionsType const& allVersionMsgs) const
+TransactionFeed::TransactionSlot::operator()(
+    std::shared_ptr<AllVersionsMsgsType> const& allVersionMsgs
+) const
 {
     if (auto connection = subscriptionContextWeakPtr.lock(); connection) {
         // Check if this connection already sent
@@ -66,10 +49,10 @@ TransactionFeed::TransactionSlot::operator()(AllVersionTransactionsType const& a
         feed.get().notified_.insert(connection.get());
 
         if (connection->apiSubversion() < 2u) {
-            connection->send(allVersionMsgs[0]);
+            connection->send(std::shared_ptr<std::string>(allVersionMsgs, &allVersionMsgs->v1));
             return;
         }
-        connection->send(allVersionMsgs[1]);
+        connection->send(std::shared_ptr<std::string>(allVersionMsgs, &allVersionMsgs->v2));
     }
 }
 
@@ -282,10 +265,9 @@ TransactionFeed::pub(
         return pubObj;
     };
 
-    AllVersionTransactionsType allVersionsMsgs{
-        std::make_shared<std::string>(boost::json::serialize(genJsonByVersion(1u))),
-        std::make_shared<std::string>(boost::json::serialize(genJsonByVersion(2u)))
-    };
+    auto allVersionsMsgs = std::make_shared<AllVersionsMsgsType>(
+        boost::json::serialize(genJsonByVersion(1u)), boost::json::serialize(genJsonByVersion(2u))
+    );
 
     auto const affectedAccountsFlat = meta->getAffectedAccounts();
     auto affectedAccounts = std::unordered_set<ripple::AccountID>(
