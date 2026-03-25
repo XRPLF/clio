@@ -14,7 +14,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
-#include <xrpl/basics/strHex.h>
 
 #include <optional>
 #include <string>
