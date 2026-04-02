@@ -28,6 +28,7 @@ constexpr auto kRANGE_MIN = 10;
 constexpr auto kRANGE_MAX = 30;
 constexpr auto kSEQ = 30;
 constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr auto kAPI_VERSION = 2;
 
 }  // namespace
 
@@ -154,7 +155,8 @@ TEST_P(RPCFeatureHandlerParamTest, InvalidParams)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{FeatureHandler{backend_, mockAmendmentCenterPtr_}};
         auto const req = boost::json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
+        auto const output =
+            handler.process(req, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());

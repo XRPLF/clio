@@ -36,6 +36,7 @@ constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF2
 constexpr auto kINDEX1 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 constexpr auto kINDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 constexpr auto kTXN_ID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F0DD";
+constexpr auto kAPI_VERSION = 2;
 
 }  // namespace
 
@@ -365,7 +366,7 @@ TEST_F(RPCLedgerDataHandlerTest, Version2)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend_}};
         auto const req = json::parse(R"JSON({"limit": 10})JSON");
-        auto output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
+        auto output = handler.process(req, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().contains("ledger"));
 

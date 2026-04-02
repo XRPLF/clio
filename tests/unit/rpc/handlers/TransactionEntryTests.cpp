@@ -27,6 +27,7 @@ constexpr auto kTXN_ID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76
 constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr auto kCURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
+constexpr auto kAPI_VERSION = 2;
 
 }  // namespace
 
@@ -318,7 +319,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
                 tx.ledgerSequence
             )
         );
-        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
+        auto const output =
+            handler.process(req, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(kOUTPUT), *output.result);
     });

@@ -35,6 +35,7 @@ constexpr auto kSEQ = 30;
 constexpr auto kASSET_CURRENCY = "XRP";
 constexpr auto kASSET_ISSUER = "rrrrrrrrrrrrrrrrrrrrrhoLvTp";
 constexpr auto kVAULT_ID = "61B03A6F8CEBD3AF9D8F696C3D0A9A9F0493B34BF6B5D93CF0BC009E6BA75303";
+constexpr auto kAPI_VERSION = 2;
 
 }  // namespace
 
@@ -168,7 +169,8 @@ TEST_P(VaultInfoParameterTest, InvalidParams)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{VaultInfoHandler{backend_}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
+        auto const output =
+            handler.process(req, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -202,7 +204,8 @@ TEST_F(RPCVaultInfoHandlerTest, InputHasOwnerButNotFoundResultsInError)
     // Run the handler
     auto const handler = AnyHandler{VaultInfoHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
+        auto const output =
+            handler.process(kINPUT, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
@@ -232,7 +235,8 @@ TEST_F(RPCVaultInfoHandlerTest, VaultIDFailsVaultDeserializationReturnsEntryNotF
 
     auto const handler = AnyHandler{VaultInfoHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
+        auto const output =
+            handler.process(kINPUT, Context{.yield = yield, .apiVersion = kAPI_VERSION});
 
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
@@ -283,7 +287,8 @@ TEST_F(RPCVaultInfoHandlerTest, MissingIssuanceObject)
 
     auto const handler = AnyHandler{VaultInfoHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
+        auto const output =
+            handler.process(kINPUT, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
@@ -377,7 +382,8 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
     // Run the handler
     auto const handler = AnyHandler{VaultInfoHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
+        auto const output =
+            handler.process(kINPUT, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUTPUT));
     });
@@ -476,7 +482,8 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
     // Run the handler
     auto const handler = AnyHandler{VaultInfoHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
+        auto const output =
+            handler.process(kINPUT, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUTPUT));
     });

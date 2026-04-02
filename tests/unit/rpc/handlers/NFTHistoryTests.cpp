@@ -32,6 +32,7 @@ constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr auto kNFT_ID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
+constexpr auto kAPI_VERSION = 2;
 
 }  // namespace
 
@@ -588,7 +589,8 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
                 kMAX_SEQ - 1
             )
         );
-        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2u});
+        auto const output =
+            handler.process(kINPUT, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), boost::json::parse(kOUTPUT));
     });
@@ -783,7 +785,8 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV2)
                 -1
             )
         );
-        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2u});
+        auto const output =
+            handler.process(kINPUT, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
         EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ);

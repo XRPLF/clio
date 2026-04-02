@@ -38,6 +38,7 @@ constexpr auto kCURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
 
 constexpr auto kRANGE_MIN = 10;
 constexpr auto kRANGE_MAX = 30;
+constexpr auto kAPI_VERSION = 2;
 
 }  // namespace
 
@@ -474,7 +475,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinaryV2)
                 "transactions": true
             })JSON"
         );
-        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
+        auto const output =
+            handler.process(req, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUT));
     });
@@ -663,7 +665,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
                 "transactions": true
             })JSON"
         );
-        auto output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
+        auto output = handler.process(req, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_TRUE(output);
         // remove human readable time, it is slightly different cross the platform
         EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
@@ -702,7 +704,7 @@ TEST_F(RPCLedgerHandlerTest, TwoRequestInARowTransactionsExpandNotBinaryV2)
                 "transactions": true
             })JSON"
         );
-        auto output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
+        auto output = handler.process(req, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_TRUE(output);
 
         auto const req2 = json::parse(
@@ -716,7 +718,7 @@ TEST_F(RPCLedgerHandlerTest, TwoRequestInARowTransactionsExpandNotBinaryV2)
                 kRANGE_MAX - 1
             )
         );
-        auto output2 = handler.process(req2, Context{.yield = yield, .apiVersion = 2u});
+        auto output2 = handler.process(req2, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_TRUE(output2);
         EXPECT_NE(
             output.result->at("ledger").at("transactions").as_array()[0].at("close_time_iso"),
