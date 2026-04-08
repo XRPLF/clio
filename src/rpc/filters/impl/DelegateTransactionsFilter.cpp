@@ -35,7 +35,10 @@
 
 namespace rpc {
 
-DelegateTransactionFilter::DelegateTransactionFilter(rpc::DelegateFilter filter, ripple::AccountID queriedAccount)
+DelegateTransactionFilter::DelegateTransactionFilter(
+    rpc::DelegateFilter filter,
+    ripple::AccountID queriedAccount
+)
     : delegateFilter_(std::move(filter)), queriedAccount_(queriedAccount)
 {
     if (delegateFilter_.counterParty)
@@ -62,7 +65,7 @@ DelegateTransactionFilter::check(data::TransactionAndMetadata const& txnPlusMeta
 
     // Filter by "Delegator" ie. User wants to find the Owner.
     // This implies the user must be the Delegatee that acted on someone's behalf.
-    if (delegateFilter_.delegateType == rpc::DelegateFilter::Role::Delegator) {
+    if (delegateFilter_.delegateType == rpc::DelegateFilter::Role::Authorizer) {
         if (*txDelegate == queriedAccount_) {
             if (!counterparty_ || *counterparty_ == txAccount)
                 return {.shouldInclude = true, .relevantAccount = txAccount};
@@ -71,7 +74,7 @@ DelegateTransactionFilter::check(data::TransactionAndMetadata const& txnPlusMeta
 
     // Filter by "Delegatee" ie. User wants to find the Signer who acted on behalf of the user.
     // This implies the user must be the delegator.
-    else if (delegateFilter_.delegateType == rpc::DelegateFilter::Role::Delegatee) {
+    else if (delegateFilter_.delegateType == rpc::DelegateFilter::Role::Actor) {
         if (txAccount == queriedAccount_) {
             if (!counterparty_ || *counterparty_ == *txDelegate)
                 return {.shouldInclude = true, .relevantAccount = txDelegate};

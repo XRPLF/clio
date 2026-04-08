@@ -1662,9 +1662,9 @@ parseDelegateType(boost::json::value const& delegateType)
     auto const& type = delegateType.as_string();
 
     if (type == "delegator")
-        return DelegateFilter::Role::Delegator;
+        return DelegateFilter::Role::Authorizer;
     if (type == "delegatee")
-        return DelegateFilter::Role::Delegatee;
+        return DelegateFilter::Role::Actor;
 
     return {};
 }

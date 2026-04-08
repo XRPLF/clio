@@ -60,11 +60,15 @@ protected:
 
 TEST_F(DelegateTransactionFilterTest, ReturnsFalseIfNoDelegateField)
 {
-    DelegateFilter filterParams{.delegateType = DelegateFilter::Role::Delegator, .counterParty = std::nullopt};
+    DelegateFilter filterParams{
+        .delegateType = DelegateFilter::Role::Authorizer, .counterParty = std::nullopt
+    };
     DelegateTransactionFilter filter(filterParams, kACCOUNT_OWNER);
 
     // Create standard tx (no delegate field) using standard TestObject helper
-    auto obj = createPaymentTransactionObject(to_string(kACCOUNT_OWNER), to_string(kACCOUNT_DESTINATION), 100, 10, 1);
+    auto obj = createPaymentTransactionObject(
+        to_string(kACCOUNT_OWNER), to_string(kACCOUNT_DESTINATION), 100, 10, 1
+    );
 
     STTx tx(std::move(obj));
     Serializer s;
@@ -79,8 +83,11 @@ TEST_F(DelegateTransactionFilterTest, ReturnsFalseIfNoDelegateField)
 
 TEST_F(DelegateTransactionFilterTest, RoleDelegator_MatchesWhenUserIsSigner)
 {
-    // I am Account B (Signer). I want to see transactions where I acted as delegator (signed for someone).
-    DelegateFilter filterParams{.delegateType = DelegateFilter::Role::Delegator, .counterParty = std::nullopt};
+    // I am Account B (Signer). I want to see transactions where I acted as delegator (signed for
+    // someone).
+    DelegateFilter filterParams{
+        .delegateType = DelegateFilter::Role::Authorizer, .counterParty = std::nullopt
+    };
     DelegateTransactionFilter filter(filterParams, kACCOUNT_DELEGATOR);
 
     // Tx: Owner/delegator=A, Signer/delegatee=B
@@ -95,7 +102,9 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegator_MatchesWhenUserIsSigner)
 TEST_F(DelegateTransactionFilterTest, RoleDelegator_FailsWhenUserIsNotSigner)
 {
     // I am Account C. I query for Delegator work.
-    DelegateFilter filterParams{.delegateType = DelegateFilter::Role::Delegator, .counterParty = std::nullopt};
+    DelegateFilter filterParams{
+        .delegateType = DelegateFilter::Role::Authorizer, .counterParty = std::nullopt
+    };
     DelegateTransactionFilter filter(filterParams, kACCOUNT_DESTINATION);
 
     // Tx: Owner/delegator=A, Signer/delegatee=B (C is not involved)
@@ -109,7 +118,7 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegator_WithCounterparty_Match)
 {
     // I am Account B (Signer). I want to see work I did specifically for Account A.
     DelegateFilter filterParams{
-        .delegateType = DelegateFilter::Role::Delegator, .counterParty = to_string(kACCOUNT_OWNER)
+        .delegateType = DelegateFilter::Role::Authorizer, .counterParty = to_string(kACCOUNT_OWNER)
     };
     DelegateTransactionFilter filter(filterParams, kACCOUNT_DELEGATOR);
 
@@ -125,7 +134,8 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegator_WithCounterparty_Mismatch)
 {
     // I am Account B (Signer). I want to see work I did for Account C.
     DelegateFilter filterParams{
-        .delegateType = DelegateFilter::Role::Delegator, .counterParty = to_string(kACCOUNT_DESTINATION)
+        .delegateType = DelegateFilter::Role::Authorizer,
+        .counterParty = to_string(kACCOUNT_DESTINATION)
     };
     DelegateTransactionFilter filter(filterParams, kACCOUNT_DELEGATOR);
 
@@ -139,7 +149,9 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegator_WithCounterparty_Mismatch)
 TEST_F(DelegateTransactionFilterTest, RoleDelegatee_MatchesWhenUserIsOwner)
 {
     // I am Account A (Owner). I want to see who signed for me.
-    DelegateFilter filterParams{.delegateType = DelegateFilter::Role::Delegatee, .counterParty = std::nullopt};
+    DelegateFilter filterParams{
+        .delegateType = DelegateFilter::Role::Actor, .counterParty = std::nullopt
+    };
     DelegateTransactionFilter filter(filterParams, kACCOUNT_OWNER);
 
     // Tx: Owner/delegator=A, Signer/delegatee=B
@@ -154,7 +166,9 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegatee_MatchesWhenUserIsOwner)
 TEST_F(DelegateTransactionFilterTest, RoleDelegatee_FailsWhenUserIsNotOwner)
 {
     // I am Account C. I query for Delegatee work.
-    DelegateFilter filterParams{.delegateType = DelegateFilter::Role::Delegatee, .counterParty = std::nullopt};
+    DelegateFilter filterParams{
+        .delegateType = DelegateFilter::Role::Actor, .counterParty = std::nullopt
+    };
     DelegateTransactionFilter filter(filterParams, kACCOUNT_DESTINATION);
 
     // Tx: Owner/delegator=A, Signer/delegatee=B (C is not involved)
@@ -168,7 +182,7 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegatee_WithCounterparty_Match)
 {
     // I am Account A (Owner). I want to see work signed specifically by B.
     DelegateFilter filterParams{
-        .delegateType = DelegateFilter::Role::Delegatee, .counterParty = to_string(kACCOUNT_DELEGATOR)
+        .delegateType = DelegateFilter::Role::Actor, .counterParty = to_string(kACCOUNT_DELEGATOR)
     };
     DelegateTransactionFilter filter(filterParams, kACCOUNT_OWNER);
 
@@ -184,7 +198,7 @@ TEST_F(DelegateTransactionFilterTest, RoleDelegatee_WithCounterparty_Mismatch)
 {
     // I am Account A (Owner). I want to see work signed by C.
     DelegateFilter filterParams{
-        .delegateType = DelegateFilter::Role::Delegatee, .counterParty = to_string(kACCOUNT_DESTINATION)
+        .delegateType = DelegateFilter::Role::Actor, .counterParty = to_string(kACCOUNT_DESTINATION)
     };
     DelegateTransactionFilter filter(filterParams, kACCOUNT_OWNER);
 

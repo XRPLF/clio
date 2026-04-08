@@ -37,7 +37,8 @@ public:
     /**
      * @brief Construct a new delegate transaction filter
      * @param filter The filter parameters from the JSON request (role, counterparty string)
-     * @param queriedAccount The account currently being queried in account_tx (input from account_tx handler)
+     * @param queriedAccount The account currently being queried in account_tx (input from
+     * account_tx handler)
      */
     DelegateTransactionFilter(rpc::DelegateFilter filter, ripple::AccountID queriedAccount);
 

@@ -207,7 +207,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
 
                 if (relevantAccount) {
                     if (input.delegateFilter->delegateType ==
-                        rpc::DelegateFilter::Role::Delegator) {
+                        rpc::DelegateFilter::Role::Authorizer) {
                         obj["delegator"] = ripple::to_string(*relevantAccount);
                     } else {
                         obj["delegatee"] = ripple::to_string(*relevantAccount);

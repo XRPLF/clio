@@ -618,11 +618,11 @@ TEST_F(RPCHelpersTest, ParseDelegateType)
 {
     auto result = parseDelegateType(boost::json::value("delegator"));
     EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(*result, DelegateFilter::Role::Delegator);
+    EXPECT_EQ(*result, DelegateFilter::Role::Authorizer);
 
     result = parseDelegateType(boost::json::value("delegatee"));
     EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(*result, DelegateFilter::Role::Delegatee);
+    EXPECT_EQ(*result, DelegateFilter::Role::Actor);
 
     // invalid types
     result = parseDelegateType(boost::json::value("invalid_type"));
@@ -646,7 +646,7 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Success)
 
         auto const result = parseDelegateFilter(json);
         ASSERT_TRUE(result.has_value());
-        EXPECT_EQ(result->delegateType, DelegateFilter::Role::Delegator);
+        EXPECT_EQ(result->delegateType, DelegateFilter::Role::Authorizer);
         EXPECT_FALSE(result->counterParty.has_value());
     }
 
@@ -660,7 +660,7 @@ TEST_F(RPCHelpersTest, ParseDelegateFilter_Success)
 
         auto const result = parseDelegateFilter(json);
         ASSERT_TRUE(result.has_value());
-        EXPECT_EQ(result->delegateType, DelegateFilter::Role::Delegatee);
+        EXPECT_EQ(result->delegateType, DelegateFilter::Role::Actor);
         ASSERT_TRUE(result->counterParty.has_value());
         EXPECT_EQ(*result->counterParty, "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun");
     }
