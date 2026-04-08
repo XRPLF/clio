@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "util/LoggerBuffer.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/config/Array.hpp"
@@ -69,7 +50,8 @@ protected:
 
         {"log.level", ConfigValue{ConfigType::String}.defaultValue("info")},
 
-        {"log.format", ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
+        {"log.format",
+         ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
         {"log.is_async", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
         {"log.enable_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
@@ -77,7 +59,9 @@ protected:
         {"log.directory", ConfigValue{ConfigType::String}.optional()},
 
         {"log.rotation_size",
-         ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(config::gValidateUint32)},
+         ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(
+             config::gValidateUint32
+         )},
 
         {"log.directory_max_files",
          ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(config::gValidateUint32)},
@@ -94,8 +78,9 @@ protected:
 
 TEST_F(LogServiceInitTests, DefaultLogLevel)
 {
-    auto const parsingErrors =
-        config_.parse(ConfigFileJson{boost::json::object{{"log", boost::json::object{{"level", "warn"}}}}});
+    auto const parsingErrors = config_.parse(
+        ConfigFileJson{boost::json::object{{"log", boost::json::object{{"level", "warn"}}}}}
+    );
     ASSERT_FALSE(parsingErrors.has_value());
 
     EXPECT_TRUE(LogService::init(config_));
@@ -137,7 +122,8 @@ TEST_F(LogServiceInitTests, ChannelLogLevel)
         }
     )JSON";
 
-    auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::parse(configStr).as_object()});
+    auto const parsingErrors =
+        config_.parse(ConfigFileJson{boost::json::parse(configStr).as_object()});
     ASSERT_FALSE(parsingErrors.has_value());
 
     EXPECT_TRUE(LogService::init(config_));
@@ -169,8 +155,11 @@ TEST_F(LogServiceInitTests, ChannelLogLevel)
 TEST_F(LogServiceInitTests, InitReturnsErrorIfCouldNotCreateLogDirectory)
 {
     // "/proc" directory is read only on any unix OS
-    auto const parsingErrors =
-        config_.parse(ConfigFileJson{boost::json::object{{"log", boost::json::object{{"directory", "/proc/logs"}}}}});
+    auto const parsingErrors = config_.parse(
+        ConfigFileJson{
+            boost::json::object{{"log", boost::json::object{{"directory", "/proc/logs"}}}}
+        }
+    );
     ASSERT_FALSE(parsingErrors.has_value());
 
     auto const result = LogService::init(config_);
@@ -198,7 +187,9 @@ TEST_F(LogServiceInitTests, InitReturnsErrorIfProvidedInvalidChannel)
 
     auto const result = LogService::init(config_);
     EXPECT_FALSE(result);
-    EXPECT_EQ(result.error(), "Can't override settings for log channel SomeChannel: invalid channel");
+    EXPECT_EQ(
+        result.error(), "Can't override settings for log channel SomeChannel: invalid channel"
+    );
 }
 
 TEST_F(LogServiceInitTests, LogSizeAndHourRotationCannotBeZero)
@@ -216,12 +207,15 @@ TEST_F(LogServiceInitTests, LogSizeAndHourRotationCannotBeZero)
         keys[1]
     );
 
-    auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::parse(jsonStr).as_object()});
+    auto const parsingErrors =
+        config_.parse(ConfigFileJson{boost::json::parse(jsonStr).as_object()});
     ASSERT_EQ(parsingErrors->size(), 2);
     for (std::size_t i = 0; i < parsingErrors->size(); ++i) {
         EXPECT_EQ(
             (*parsingErrors)[i].error,
-            fmt::format("{} Number must be between 1 and {}", keys[i], std::numeric_limits<uint32_t>::max())
+            fmt::format(
+                "{} Number must be between 1 and {}", keys[i], std::numeric_limits<uint32_t>::max()
+            )
         );
     }
 }

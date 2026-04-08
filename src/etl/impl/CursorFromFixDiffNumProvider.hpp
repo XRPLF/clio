@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/BackendInterface.hpp"
@@ -45,8 +26,8 @@ class CursorFromFixDiffNumProvider : public BaseCursorProvider {
     size_t numDiffs_;
 
 public:
-    CursorFromFixDiffNumProvider(std::shared_ptr<BackendInterface> const& backend, size_t numDiffs)
-        : backend_{backend}, numDiffs_{numDiffs}
+    CursorFromFixDiffNumProvider(std::shared_ptr<BackendInterface> backend, size_t numDiffs)
+        : backend_{std::move(backend)}, numDiffs_{numDiffs}
     {
     }
 
@@ -58,7 +39,9 @@ public:
 
         auto diffs = std::vector<data::LedgerObject>{};
 
-        auto const append = [](auto&& a, auto&& b) { a.insert(std::end(a), std::begin(b), std::end(b)); };
+        auto const append = [](auto&& a, auto&& b) {
+            a.insert(std::end(a), std::begin(b), std::end(b));
+        };
         auto const fetchDiff = [this, seq](uint32_t offset) {
             return data::synchronousAndRetryOnTimeout([this, seq, offset](auto yield) {
                 return backend_->fetchLedgerDiff(seq - offset, yield);

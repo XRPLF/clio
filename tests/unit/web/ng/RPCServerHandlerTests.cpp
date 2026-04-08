@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/Errors.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AsioContextTestFixture.hpp"
@@ -63,7 +44,9 @@ using namespace util::config;
 
 namespace http = boost::beast::http;
 
-struct NgRpcServerHandlerTest : util::prometheus::WithPrometheus, MockBackendTestStrict, SyncAsioContextTest {
+struct NgRpcServerHandlerTest : util::prometheus::WithPrometheus,
+                                MockBackendTestStrict,
+                                SyncAsioContextTest {
     ClioConfigDefinition config{ClioConfigDefinition{
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
         {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(1)},
@@ -74,9 +57,11 @@ struct NgRpcServerHandlerTest : util::prometheus::WithPrometheus, MockBackendTes
 protected:
     std::shared_ptr<testing::StrictMock<MockRPCEngine>> rpcEngine_ =
         std::make_shared<testing::StrictMock<MockRPCEngine>>();
-    std::shared_ptr<StrictMock<MockETLService>> etl_ = std::make_shared<StrictMock<MockETLService>>();
+    std::shared_ptr<StrictMock<MockETLService>> etl_ =
+        std::make_shared<StrictMock<MockETLService>>();
     DOSGuardStrictMock dosguard_;
-    RPCServerHandler<MockRPCEngine> rpcServerHandler_{config, backend_, rpcEngine_, etl_, dosguard_};
+    RPCServerHandler<MockRPCEngine>
+        rpcServerHandler_{config, backend_, rpcEngine_, etl_, dosguard_};
 
     util::TagDecoratorFactory tagFactory_{config};
     std::string const ip_ = "some ip";
@@ -157,7 +142,9 @@ TEST_F(NgRpcServerHandlerTest, PostToRpcEngineFailed)
         EXPECT_CALL(*rpcEngine_, notifyTooBusy());
         auto response = rpcServerHandler_(request, connectionMetadata_, nullptr, yield);
 
-        EXPECT_EQ(std::move(response).intoHttpResponse().result(), http::status::service_unavailable);
+        EXPECT_EQ(
+            std::move(response).intoHttpResponse().result(), http::status::service_unavailable
+        );
     });
 }
 
@@ -175,7 +162,10 @@ TEST_F(NgRpcServerHandlerTest, CoroutineSleepsUntilRpcEngineFinishes)
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             util::spawn(
-                ctx_, [this, &rpcEngineDone, fn = std::forward<decltype(fn)>(fn)](boost::asio::yield_context yield) {
+                ctx_,
+                [this,
+                 &rpcEngineDone,
+                 fn = std::forward<decltype(fn)>(fn)](boost::asio::yield_context yield) {
                     EXPECT_CALL(*rpcEngine_, notifyBadSyntax);
                     fn(yield);
                     rpcEngineDone.Call();
@@ -215,7 +205,8 @@ TEST_F(NgRpcServerHandlerTest, DosguardRejectedParsedRequest)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(false));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object()))
+            .WillOnce(Return(false));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             fn(yield);
             return true;
@@ -238,7 +229,8 @@ TEST_F(NgRpcServerHandlerTest, DosguardAddsLoadWarning)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(false));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object()))
+            .WillOnce(Return(false));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             fn(yield);
             return true;
@@ -253,7 +245,10 @@ TEST_F(NgRpcServerHandlerTest, DosguardAddsLoadWarning)
         EXPECT_EQ(responseJson.at("error_code").as_int64(), rpc::RippledError::rpcSLOW_DOWN);
 
         EXPECT_EQ(responseJson.at("warning").as_string(), "load");
-        EXPECT_EQ(responseJson.at("warnings").as_array().at(0).as_object().at("id").as_int64(), rpc::WarnRpcRateLimit);
+        EXPECT_EQ(
+            responseJson.at("warnings").as_array().at(0).as_object().at("id").as_int64(),
+            rpc::WarnRpcRateLimit
+        );
     });
 }
 
@@ -280,7 +275,8 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_NoRangeFromBackend)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object()))
+            .WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
             EXPECT_CALL(connectionMetadata_, wasUpgraded).WillOnce(Return(not request.isHttp()));
@@ -306,10 +302,12 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_ContextCreationFailed)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object()))
+            .WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
-            EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
+            EXPECT_CALL(connectionMetadata_, wasUpgraded)
+                .WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, notifyBadSyntax);
             fn(yield);
             return true;
@@ -330,10 +328,12 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_BuildResponseFailed)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object()))
+            .WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
-            EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
+            EXPECT_CALL(connectionMetadata_, wasUpgraded)
+                .WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
                 .WillOnce(Return(rpc::Result{rpc::Status{rpc::ClioError::RpcUnknownOption}}));
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
@@ -349,7 +349,10 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_BuildResponseFailed)
         EXPECT_EQ(jsonResponse.at("result").at("error").as_string(), "unknownOption");
 
         ASSERT_EQ(jsonResponse.at("warnings").as_array().size(), 1);
-        EXPECT_EQ(jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(), rpc::WarnRpcClio);
+        EXPECT_EQ(
+            jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(),
+            rpc::WarnRpcClio
+        );
     });
 }
 
@@ -361,10 +364,12 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_BuildResponseThrewAnException)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object()))
+            .WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
-            EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
+            EXPECT_CALL(connectionMetadata_, wasUpgraded)
+                .WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse).WillOnce([](auto&&) -> rpc::Result {
                 throw std::runtime_error("some error");
             });
@@ -387,12 +392,17 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object()))
+            .WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
+        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics);
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
-            EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
+            EXPECT_CALL(connectionMetadata_, wasUpgraded)
+                .WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
-                .WillOnce(Return(rpc::Result{rpc::ReturnType{boost::json::object{{"some key", "some value"}}}}));
+                .WillOnce(Return(
+                    rpc::Result{rpc::ReturnType{boost::json::object{{"some key", "some value"}}}}
+                ));
             EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
             fn(yield);
@@ -408,7 +418,10 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest)
         EXPECT_EQ(jsonResponse.at("result").at("status").as_string(), "success");
 
         ASSERT_EQ(jsonResponse.at("warnings").as_array().size(), 1) << jsonResponse;
-        EXPECT_EQ(jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(), rpc::WarnRpcClio);
+        EXPECT_EQ(
+            jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(),
+            rpc::WarnRpcClio
+        );
     });
 }
 
@@ -420,12 +433,17 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_OutdatedWarning)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object()))
+            .WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
+        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics);
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
-            EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
+            EXPECT_CALL(connectionMetadata_, wasUpgraded)
+                .WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
-                .WillOnce(Return(rpc::Result{rpc::ReturnType{boost::json::object{{"some key", "some value"}}}}));
+                .WillOnce(Return(
+                    rpc::Result{rpc::ReturnType{boost::json::object{{"some key", "some value"}}}}
+                ));
             EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(61));
             fn(yield);
@@ -440,9 +458,9 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_OutdatedWarning)
 
         std::unordered_set<int64_t> warningCodes;
         std::ranges::transform(
-            jsonResponse.at("warnings").as_array(), std::inserter(warningCodes, warningCodes.end()), [](auto const& w) {
-                return w.as_object().at("id").as_int64();
-            }
+            jsonResponse.at("warnings").as_array(),
+            std::inserter(warningCodes, warningCodes.end()),
+            [](auto const& w) { return w.as_object().at("id").as_int64(); }
         );
 
         EXPECT_EQ(warningCodes.size(), 2);
@@ -459,14 +477,17 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_Forwarded)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object()))
+            .WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
-            EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
+            EXPECT_CALL(connectionMetadata_, wasUpgraded)
+                .WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
                 .WillOnce(Return(
                     rpc::Result{rpc::ReturnType{boost::json::object{
-                        {"result", boost::json::object{{"some key", "some value"}}}, {"forwarded", true}
+                        {"result", boost::json::object{{"some key", "some value"}}},
+                        {"forwarded", true}
                     }}}
                 ));
             EXPECT_CALL(*rpcEngine_, notifyComplete);
@@ -485,7 +506,10 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_Forwarded)
         EXPECT_EQ(jsonResponse.at("forwarded").as_bool(), true);
 
         ASSERT_EQ(jsonResponse.at("warnings").as_array().size(), 1) << jsonResponse;
-        EXPECT_EQ(jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(), rpc::WarnRpcClio);
+        EXPECT_EQ(
+            jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(),
+            rpc::WarnRpcClio
+        );
     });
 }
 
@@ -497,15 +521,18 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_HasError)
         auto const request = makeHttpRequest(requestStr);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object()))
+            .WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
+        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics);
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
-            EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
+            EXPECT_CALL(connectionMetadata_, wasUpgraded)
+                .WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
                 .WillOnce(Return(
-                    rpc::Result{
-                        rpc::ReturnType{boost::json::object{{"some key", "some value"}, {"error", "some error"}}}
-                    }
+                    rpc::Result{rpc::ReturnType{
+                        boost::json::object{{"some key", "some value"}, {"error", "some error"}}
+                    }}
                 ));
             EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
@@ -522,7 +549,10 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_HasError)
         EXPECT_EQ(jsonResponse.at("result").at("error").as_string(), "some error");
 
         ASSERT_EQ(jsonResponse.at("warnings").as_array().size(), 1) << jsonResponse;
-        EXPECT_EQ(jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(), rpc::WarnRpcClio);
+        EXPECT_EQ(
+            jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(),
+            rpc::WarnRpcClio
+        );
     });
 }
 
@@ -531,7 +561,12 @@ struct NgRpcServerHandlerWsTest : NgRpcServerHandlerTest {
         using web::SubscriptionContextInterface::SubscriptionContextInterface;
 
         MOCK_METHOD(void, send, (std::shared_ptr<std::string>), (override));
-        MOCK_METHOD(void, onDisconnect, (web::SubscriptionContextInterface::OnDisconnectSlot const&), (override));
+        MOCK_METHOD(
+            void,
+            onDisconnect,
+            (web::SubscriptionContextInterface::OnDisconnectSlot const&),
+            (override)
+        );
         MOCK_METHOD(void, setApiSubversion, (uint32_t), (override));
         MOCK_METHOD(uint32_t, apiSubversion, (), (const, override));
     };
@@ -547,22 +582,29 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest)
     backend_->setRange(0, 1);
     runSpawn([&](boost::asio::yield_context yield) {
         Request::HttpHeaders const headers;
-        std::string const requestStr = R"JSON({"method": "some_method", "id": 1234, "api_version": 1})JSON";
+        std::string const requestStr =
+            R"JSON({"method": "some_method", "id": 1234, "api_version": 1})JSON";
         auto const request = Request(requestStr, headers);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object()))
+            .WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
+        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics);
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
-            EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
+            EXPECT_CALL(connectionMetadata_, wasUpgraded)
+                .WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
-                .WillOnce(Return(rpc::Result{rpc::ReturnType{boost::json::object{{"some key", "some value"}}}}));
+                .WillOnce(Return(
+                    rpc::Result{rpc::ReturnType{boost::json::object{{"some key", "some value"}}}}
+                ));
             EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
             fn(yield);
             return true;
         });
-        auto const response = rpcServerHandler_(request, connectionMetadata_, subscriptionContext_, yield);
+        auto const response =
+            rpcServerHandler_(request, connectionMetadata_, subscriptionContext_, yield);
 
         auto const jsonResponse = boost::json::parse(response.message()).as_object();
         EXPECT_EQ(jsonResponse.at("result").at("some key").as_string(), "some value");
@@ -573,7 +615,10 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest)
         EXPECT_EQ(jsonResponse.at("api_version").as_int64(), 1);
 
         ASSERT_EQ(jsonResponse.at("warnings").as_array().size(), 1) << jsonResponse;
-        EXPECT_EQ(jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(), rpc::WarnRpcClio);
+        EXPECT_EQ(
+            jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(),
+            rpc::WarnRpcClio
+        );
     });
 }
 
@@ -582,26 +627,31 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest_HasError)
     backend_->setRange(0, 1);
     runSpawn([&](boost::asio::yield_context yield) {
         Request::HttpHeaders const headers;
-        std::string const requestStr = R"JSON({"method": "some_method", "id": 1234, "api_version": 1})JSON";
+        std::string const requestStr =
+            R"JSON({"method": "some_method", "id": 1234, "api_version": 1})JSON";
         auto const request = Request(requestStr, headers);
 
         EXPECT_CALL(dosguard_, isOk(ip_)).WillOnce(Return(true));
-        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object())).WillOnce(Return(true));
+        EXPECT_CALL(dosguard_, request(ip_, boost::json::parse(requestStr).as_object()))
+            .WillOnce(Return(true));
         EXPECT_CALL(dosguard_, add(ip_, testing::_)).WillOnce(Return(true));
+        EXPECT_CALL(*rpcEngine_, recordLedgerMetrics);
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
-            EXPECT_CALL(connectionMetadata_, wasUpgraded).WillRepeatedly(Return(not request.isHttp()));
+            EXPECT_CALL(connectionMetadata_, wasUpgraded)
+                .WillRepeatedly(Return(not request.isHttp()));
             EXPECT_CALL(*rpcEngine_, buildResponse)
                 .WillOnce(Return(
-                    rpc::Result{
-                        rpc::ReturnType{boost::json::object{{"some key", "some value"}, {"error", "some error"}}}
-                    }
+                    rpc::Result{rpc::ReturnType{
+                        boost::json::object{{"some key", "some value"}, {"error", "some error"}}
+                    }}
                 ));
             EXPECT_CALL(*rpcEngine_, notifyComplete);
             EXPECT_CALL(*etl_, lastCloseAgeSeconds).WillOnce(Return(1));
             fn(yield);
             return true;
         });
-        auto const response = rpcServerHandler_(request, connectionMetadata_, subscriptionContext_, yield);
+        auto const response =
+            rpcServerHandler_(request, connectionMetadata_, subscriptionContext_, yield);
 
         auto const jsonResponse = boost::json::parse(response.message()).as_object();
         EXPECT_EQ(jsonResponse.at("result").at("some key").as_string(), "some value");
@@ -612,6 +662,9 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest_HasError)
         EXPECT_EQ(jsonResponse.at("api_version").as_int64(), 1);
 
         ASSERT_EQ(jsonResponse.at("warnings").as_array().size(), 1) << jsonResponse;
-        EXPECT_EQ(jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(), rpc::WarnRpcClio);
+        EXPECT_EQ(
+            jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(),
+            rpc::WarnRpcClio
+        );
     });
 }

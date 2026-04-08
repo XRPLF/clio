@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "feed/SubscriptionManagerInterface.hpp"
@@ -41,8 +22,8 @@ namespace rpc {
 
 /**
  * @brief Handles the `unsubscribe` command which is used to disconnect a subscriber from a feed.
- * The unsubscribe command tells the server to stop sending messages for a particular subscription or set of
- * subscriptions.
+ * The unsubscribe command tells the server to stop sending messages for a particular subscription
+ * or set of subscriptions.
  *
  * For more details see: https://xrpl.org/unsubscribe.html
  */
@@ -100,10 +81,16 @@ public:
 
 private:
     void
-    unsubscribeFromStreams(std::vector<std::string> const& streams, feed::SubscriberSharedPtr const& session) const;
+    unsubscribeFromStreams(
+        std::vector<std::string> const& streams,
+        feed::SubscriberSharedPtr const& session
+    ) const;
 
     void
-    unsubscribeFromAccounts(std::vector<std::string> accounts, feed::SubscriberSharedPtr const& session) const;
+    unsubscribeFromAccounts(
+        std::vector<std::string> accounts,
+        feed::SubscriberSharedPtr const& session
+    ) const;
 
     void
     unsubscribeFromProposedAccounts(
@@ -112,7 +99,10 @@ private:
     ) const;
 
     void
-    unsubscribeFromBooks(std::vector<OrderBook> const& books, feed::SubscriberSharedPtr const& session) const;
+    unsubscribeFromBooks(
+        std::vector<OrderBook> const& books,
+        feed::SubscriberSharedPtr const& session
+    ) const;
 
     /**
      * @brief Convert a JSON object to an Input

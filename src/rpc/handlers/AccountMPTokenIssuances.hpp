@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2025, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/BackendInterface.hpp"
@@ -45,8 +26,8 @@
 namespace rpc {
 
 /**
- * @brief The account_mptoken_issuances method returns information about all MPTokenIssuance objects the account has
- * created.
+ * @brief The account_mptoken_issuances method returns information about all MPTokenIssuance objects
+ * the account has created.
  */
 class AccountMPTokenIssuancesHandler {
     // dependencies
@@ -61,6 +42,7 @@ public:
      * @brief A struct to hold data for one MPTokenIssuance response.
      */
     struct MPTokenIssuanceResponse {
+        std::string MPTokenIssuanceID;
         std::string issuer;
         uint32_t sequence{};
 
@@ -80,6 +62,15 @@ public:
         std::optional<bool> mptCanTrade;
         std::optional<bool> mptCanTransfer;
         std::optional<bool> mptCanClawback;
+
+        std::optional<bool> mptCanMutateCanLock;
+        std::optional<bool> mptCanMutateRequireAuth;
+        std::optional<bool> mptCanMutateCanEscrow;
+        std::optional<bool> mptCanMutateCanTrade;
+        std::optional<bool> mptCanMutateCanTransfer;
+        std::optional<bool> mptCanMutateCanClawback;
+        std::optional<bool> mptCanMutateMetadata;
+        std::optional<bool> mptCanMutateTransferFee;
     };
 
     /**
@@ -131,7 +122,8 @@ public:
             {JS(account),
              validation::Required{},
              meta::WithCustomError{
-                 validation::CustomValidators::accountValidator, Status(RippledError::rpcACT_MALFORMED)
+                 validation::CustomValidators::accountValidator,
+                 Status(RippledError::rpcACT_MALFORMED)
              }},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(limit),
@@ -190,7 +182,11 @@ private:
      * @param issuance The MPTokenIssuance response to convert
      */
     friend void
-    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, MPTokenIssuanceResponse const& issuance);
+    tag_invoke(
+        boost::json::value_from_tag,
+        boost::json::value& jv,
+        MPTokenIssuanceResponse const& issuance
+    );
 };
 
 }  // namespace rpc

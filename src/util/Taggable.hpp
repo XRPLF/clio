@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/Assert.hpp"
@@ -128,10 +109,11 @@ public:
     /**
      * @brief Create a new tag decorator with an optional parent.
      *
-     * If the `parent` is specified it will be streamed out as a chain when this decorator will decorate an ostream.
+     * If the `parent` is specified it will be streamed out as a chain when this decorator will
+     * decorate an ostream.
      *
-     * Note that if `parent` is specified it is your responsibility that the decorator referred to by `parent` outlives
-     * this decorator.
+     * Note that if `parent` is specified it is your responsibility that the decorator referred to
+     * by `parent` outlives this decorator.
      *
      * @param parent An optional parent tag decorator
      */
@@ -159,7 +141,8 @@ public:
 /**
  * @brief Specialization for a nop/null decorator.
  *
- * This generates a pass-through decorate member function which can be optimized away by the compiler.
+ * This generates a pass-through decorate member function which can be optimized away by the
+ * compiler.
  */
 template <>
 class TagDecorator<impl::NullTagGenerator> final : public BaseTagDecorator {
@@ -260,7 +243,8 @@ protected:
      *
      * @param tagFactory The factory to use
      */
-    explicit Taggable(util::TagDecoratorFactory const& tagFactory) : tagDecorator_{tagFactory.make()}
+    explicit Taggable(util::TagDecoratorFactory const& tagFactory)
+        : tagDecorator_{tagFactory.make()}
     {
     }
 

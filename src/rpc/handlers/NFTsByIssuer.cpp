@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/NFTsByIssuer.hpp"
 
 #include "rpc/Errors.hpp"
@@ -55,7 +36,7 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
     auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
-    if (!expectedLgrInfo.has_value())
+    if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = expectedLgrInfo.value();
@@ -63,18 +44,20 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
     auto const limit = input.limit.value_or(NFTsByIssuerHandler::kLIMIT_DEFAULT);
 
     auto const issuer = accountFromStringStrict(input.issuer);
-    auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*issuer).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::account(*issuer).key, lgrInfo.seq, ctx.yield
+    );
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
+        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     std::optional<uint256> cursor;
     if (input.marker)
         cursor = uint256{input.marker->c_str()};
 
-    auto const dbResponse =
-        sharedPtrBackend_->fetchNFTsByIssuer(*issuer, input.nftTaxon, lgrInfo.seq, limit, cursor, ctx.yield);
+    auto const dbResponse = sharedPtrBackend_->fetchNFTsByIssuer(
+        *issuer, input.nftTaxon, lgrInfo.seq, limit, cursor, ctx.yield
+    );
 
     auto output = NFTsByIssuerHandler::Output{};
 
@@ -108,7 +91,11 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTsByIssuerHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    NFTsByIssuerHandler::Output const& output
+)
 {
     jv = {
         {JS(issuer), output.issuer},

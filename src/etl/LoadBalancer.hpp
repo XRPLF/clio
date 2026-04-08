@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/BackendInterface.hpp"
@@ -70,9 +51,10 @@ concept SomeLoadBalancer = std::derived_from<T, LoadBalancerTag>;
 /**
  * @brief This class is used to manage connections to transaction processing processes.
  *
- * This class spawns a listener for each etl source, which listens to messages on the ledgers stream (to keep track of
- * which ledgers have been validated by the network, and the range of ledgers each etl source has). This class also
- * allows requests for ledger data to be load balanced across all possible ETL sources.
+ * This class spawns a listener for each etl source, which listens to messages on the ledgers stream
+ * (to keep track of which ledgers have been validated by the network, and the range of ledgers each
+ * etl source has). This class also allows requests for ledger data to be load balanced across all
+ * possible ETL sources.
  */
 class LoadBalancer : public LoadBalancerInterface, LoadBalancerTag {
 public:
@@ -84,7 +66,8 @@ private:
     static constexpr std::uint32_t kDEFAULT_DOWNLOAD_RANGES = 16;
 
     util::Logger log_{"ETL"};
-    // Forwarding cache must be destroyed after sources because sources have a callback to invalidate cache
+    // Forwarding cache must be destroyed after sources because sources have a callback to
+    // invalidate cache
     std::optional<util::ResponseExpirationCache> forwardingCache_;
     std::optional<std::string> forwardingXUserValue_;
 
@@ -92,8 +75,8 @@ private:
 
     std::vector<SourcePtr> sources_;
     std::optional<ETLState> etlState_;
-    std::uint32_t downloadRanges_ =
-        kDEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading initial ledger */
+    std::uint32_t downloadRanges_ = kDEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when
+                                                                 downloading initial ledger */
 
     struct ForwardingCounters {
         std::reference_wrapper<util::prometheus::CounterInt> successDuration;
@@ -104,7 +87,8 @@ private:
     } forwardingCounters_;
 
     // Using mutex instead of atomic_bool because choosing a new source to
-    // forward messages should be done with a mutual exclusion otherwise there will be a race condition
+    // forward messages should be done with a mutual exclusion otherwise there will be a race
+    // condition
     util::Mutex<bool> hasForwardingSource_{false};
 
 public:
@@ -164,12 +148,14 @@ public:
 
     /**
      * @brief Load the initial ledger, writing data to the queue.
-     * @note This function will retry indefinitely until the ledger is downloaded or the download is cancelled.
+     * @note This function will retry indefinitely until the ledger is downloaded or the download is
+     * cancelled.
      *
      * @param sequence Sequence of ledger to download
      * @param observer The observer to notify of progress
      * @param retryAfter Time to wait between retries (2 seconds by default)
-     * @return A std::expected with ledger edge keys on success, or InitialLedgerLoadError on failure
+     * @return A std::expected with ledger edge keys on success, or InitialLedgerLoadError on
+     * failure
      */
     InitialLedgerLoadResult
     loadInitialLedger(
@@ -181,8 +167,8 @@ public:
     /**
      * @brief Fetch data for a specific ledger.
      *
-     * This function will continuously try to fetch data for the specified ledger until the fetch succeeds, the ledger
-     * is found in the database, or the server is shutting down.
+     * This function will continuously try to fetch data for the specified ledger until the fetch
+     * succeeds, the ledger is found in the database, or the server is shutting down.
      *
      * @param ledgerSequence Sequence of the ledger to fetch
      * @param getObjects Whether to get the account state diff between this ledger and the prior one
@@ -245,17 +231,23 @@ private:
      * @brief Execute a function on a randomly selected source.
      *
      * @note f is a function that takes an Source as an argument and returns a bool.
-     * Attempt to execute f for one randomly chosen Source that has the specified ledger. If f returns false, another
-     * randomly chosen Source is used. The process repeats until f returns true.
+     * Attempt to execute f for one randomly chosen Source that has the specified ledger. If f
+     * returns false, another randomly chosen Source is used. The process repeats until f returns
+     * true.
      *
-     * @param f Function to execute. This function takes the ETL source as an argument, and returns a bool
+     * @param f Function to execute. This function takes the ETL source as an argument, and returns
+     * a bool
      * @param ledgerSequence f is executed for each Source that has this ledger
      * @param retryAfter Time to wait between retries (2 seconds by default)
      * server is shutting down
      */
     template <typename Func>
     void
-    execute(Func f, uint32_t ledgerSequence, std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2});
+    execute(
+        Func f,
+        uint32_t ledgerSequence,
+        std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2}
+    );
 
     /**
      * @brief Choose a new source to forward requests

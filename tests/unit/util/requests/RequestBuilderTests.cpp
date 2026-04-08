@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "util/AsioContextTestFixture.hpp"
 #include "util/AssignRandomPort.hpp"
 #include "util/TestHttpServer.hpp"
@@ -55,7 +36,8 @@ struct RequestBuilderTestBase : SyncAsioContextTest {
     RequestBuilder builder{"localhost", server.port()};
 };
 
-struct RequestBuilderTest : RequestBuilderTestBase, testing::WithParamInterface<RequestBuilderTestBundle> {};
+struct RequestBuilderTest : RequestBuilderTestBase,
+                            testing::WithParamInterface<RequestBuilderTestBundle> {};
 
 INSTANTIATE_TEST_CASE_P(
     RequestBuilderTest,
@@ -92,7 +74,9 @@ TEST_P(RequestBuilderTest, SimpleRequest)
     builder.setTarget(GetParam().target);
 
     server.handleRequest(
-        [&replyBody](http::request<http::string_body> request) -> std::optional<http::response<http::string_body>> {
+        [&replyBody](
+            http::request<http::string_body> request
+        ) -> std::optional<http::response<http::string_body>> {
             [&]() {
                 EXPECT_TRUE(request.target() == GetParam().target);
                 EXPECT_TRUE(request.method() == GetParam().method);
@@ -131,7 +115,9 @@ TEST_F(RequestBuilderTest, Timeout)
 {
     builder.setTimeout(std::chrono::milliseconds{10});
     server.handleRequest(
-        [](http::request<http::string_body> request) -> std::optional<http::response<http::string_body>> {
+        [](
+            http::request<http::string_body> request
+        ) -> std::optional<http::response<http::string_body>> {
             [&]() {
                 ASSERT_TRUE(request.target() == "/");
                 ASSERT_TRUE(request.method() == http::verb::get);
@@ -153,7 +139,9 @@ TEST_F(RequestBuilderTest, RequestWithBody)
     builder.addData(requestBody);
 
     server.handleRequest(
-        [&](http::request<http::string_body> request) -> std::optional<http::response<http::string_body>> {
+        [&](
+            http::request<http::string_body> request
+        ) -> std::optional<http::response<http::string_body>> {
             [&]() {
                 EXPECT_EQ(request.target(), "/");
                 EXPECT_EQ(request.method(), http::verb::get);
@@ -177,7 +165,8 @@ TEST_F(RequestBuilderTest, ResolveError)
     runSpawn([this](asio::yield_context yield) {
         auto const response = builder.getPlain(yield);
         ASSERT_FALSE(response);
-        EXPECT_TRUE(response.error().message().starts_with("Resolve error")) << response.error().message();
+        EXPECT_TRUE(response.error().message().starts_with("Resolve error"))
+            << response.error().message();
     });
 }
 
@@ -188,7 +177,8 @@ TEST_F(RequestBuilderTest, ConnectionError)
     runSpawn([this](asio::yield_context yield) {
         auto const response = builder.getPlain(yield);
         ASSERT_FALSE(response);
-        EXPECT_TRUE(response.error().message().starts_with("Connection error")) << response.error().message();
+        EXPECT_TRUE(response.error().message().starts_with("Connection error"))
+            << response.error().message();
     });
 }
 
@@ -201,7 +191,8 @@ TEST_F(RequestBuilderTest, ResponseStatusIsNotOk)
     runSpawn([this](asio::yield_context yield) {
         auto const response = builder.getPlain(yield);
         ASSERT_FALSE(response);
-        EXPECT_TRUE(response.error().message().starts_with("Response status is not OK")) << response.error().message();
+        EXPECT_TRUE(response.error().message().starts_with("Response status is not OK"))
+            << response.error().message();
     });
 }
 
@@ -210,7 +201,8 @@ struct RequestBuilderSslTestBundle {
     boost::beast::http::verb method;
 };
 
-struct RequestBuilderSslTest : RequestBuilderTestBase, testing::WithParamInterface<RequestBuilderSslTestBundle> {};
+struct RequestBuilderSslTest : RequestBuilderTestBase,
+                               testing::WithParamInterface<RequestBuilderSslTestBundle> {};
 
 INSTANTIATE_TEST_CASE_P(
     RequestBuilderSslTest,
@@ -234,7 +226,9 @@ TEST_P(RequestBuilderSslTest, TrySslUsePlain)
     );
 
     server.handleRequest(
-        [&](http::request<http::string_body> request) -> std::optional<http::response<http::string_body>> {
+        [&](
+            http::request<http::string_body> request
+        ) -> std::optional<http::response<http::string_body>> {
             [&]() {
                 EXPECT_EQ(request.target(), "/");
                 EXPECT_EQ(request.method(), GetParam().method);

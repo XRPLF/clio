@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/MPTHolders.hpp"
 
 #include "rpc/Errors.hpp"
@@ -56,15 +37,16 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
     auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
-    if (!expectedLgrInfo.has_value())
+    if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const limit = input.limit.value_or(MPTHoldersHandler::kLIMIT_DEFAULT);
     auto const mptID = ripple::uint192{input.mptID.c_str()};
 
-    auto const issuanceLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::mptIssuance(mptID).key, lgrInfo.seq, ctx.yield);
+    auto const issuanceLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::mptIssuance(mptID).key, lgrInfo.seq, ctx.yield
+    );
     if (!issuanceLedgerObject)
         return Error{Status{RippledError::rpcOBJECT_NOT_FOUND, "objectNotFound"}};
 
@@ -72,7 +54,8 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
     if (input.marker)
         cursor = ripple::AccountID{input.marker->c_str()};
 
-    auto const dbResponse = sharedPtrBackend_->fetchMPTHolders(mptID, limit, cursor, lgrInfo.seq, ctx.yield);
+    auto const dbResponse =
+        sharedPtrBackend_->fetchMPTHolders(mptID, limit, cursor, lgrInfo.seq, ctx.yield);
     auto output = MPTHoldersHandler::Output{};
     output.mptID = to_string(mptID);
     output.limit = limit;
@@ -80,14 +63,20 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
 
     boost::json::array const mpts;
     for (auto const& mpt : dbResponse.mptokens) {
-        ripple::STLedgerEntry const sle{ripple::SerialIter{mpt.data(), mpt.size()}, keylet::mptIssuance(mptID).key};
+        ripple::STLedgerEntry const sle{
+            ripple::SerialIter{mpt.data(), mpt.size()}, keylet::mptIssuance(mptID).key
+        };
         boost::json::object mptJson;
 
         mptJson[JS(account)] = toBase58(sle[ripple::sfAccount]);
         mptJson[JS(flags)] = sle.getFlags();
-        mptJson["mpt_amount"] =
-            toBoostJson(ripple::STUInt64{ripple::sfMPTAmount, sle[ripple::sfMPTAmount]}.getJson(JsonOptions::none));
-        mptJson["mptoken_index"] = ripple::to_string(ripple::keylet::mptoken(mptID, sle[ripple::sfAccount]).key);
+        mptJson["mpt_amount"] = toBoostJson(
+            ripple::STUInt64{ripple::sfMPTAmount, sle[ripple::sfMPTAmount]}.getJson(
+                JsonOptions::none
+            )
+        );
+        mptJson["mptoken_index"] =
+            ripple::to_string(ripple::keylet::mptoken(mptID, sle[ripple::sfAccount]).key);
 
         output.mpts.push_back(mptJson);
     }
@@ -99,7 +88,11 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input const& input, Context const&
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, MPTHoldersHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    MPTHoldersHandler::Output const& output
+)
 {
     jv = {
         {JS(mpt_issuance_id), output.mptID},

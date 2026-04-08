@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/cassandra/Error.hpp"
 #include "data/cassandra/FakesAndMocks.hpp"
 #include "data/cassandra/impl/AsyncExecutor.hpp"
@@ -52,12 +33,18 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnSuccess)
 {
     auto handle = MockHandle{};
 
-    ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
+    ON_CALL(
+        handle,
+        asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>())
+    )
         .WillByDefault([this](auto const&, auto&& cb) {
             boost::asio::post(ctx_, [cb = std::forward<decltype(cb)>(cb)]() { cb({}); });
             return FakeFutureWithCallback{};
         });
-    EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
+    EXPECT_CALL(
+        handle,
+        asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>())
+    )
         .Times(AtLeast(1));
 
     auto work = std::make_optional(boost::asio::make_work_guard(ctx_));
@@ -83,7 +70,10 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMa
     auto handle = MockHandle{};
 
     // emulate successful execution after some attempts
-    ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
+    ON_CALL(
+        handle,
+        asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>())
+    )
         .WillByDefault([&callCount](auto const&, auto&& cb) {
             ++callCount;
             if (callCount >= 3) {
@@ -94,7 +84,10 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMa
 
             return FakeFutureWithCallback{};
         });
-    EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
+    EXPECT_CALL(
+        handle,
+        asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>())
+    )
         .Times(3);
 
     auto work = std::make_optional(boost::asio::make_work_guard(ctx_));
@@ -126,7 +119,10 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOt
     auto thread = std::thread{[&threadedCtx] { threadedCtx.run(); }};
 
     // emulate successful execution after some attempts
-    ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
+    ON_CALL(
+        handle,
+        asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>())
+    )
         .WillByDefault([&callCount](auto const&, auto&& cb) {
             ++callCount;
             if (callCount >= 3) {
@@ -137,7 +133,10 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOt
 
             return FakeFutureWithCallback{};
         });
-    EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
+    EXPECT_CALL(
+        handle,
+        asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>())
+    )
         .Times(3);
 
     auto work2 = std::make_optional(boost::asio::make_work_guard(ctx_));
@@ -168,12 +167,18 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnFailureAfterRetryCou
 
     // FakeRetryPolicy returns false for shouldRetry in which case we should
     // still call onComplete giving it whatever error we have raised internally.
-    ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
+    ON_CALL(
+        handle,
+        asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>())
+    )
         .WillByDefault([](auto const&, auto&& cb) {
             cb({CassandraError{"not a timeout", CASS_ERROR_LIB_INTERNAL_ERROR}});
             return FakeFutureWithCallback{};
         });
-    EXPECT_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
+    EXPECT_CALL(
+        handle,
+        asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>())
+    )
         .Times(1);
 
     auto work = std::make_optional(boost::asio::make_work_guard(ctx_));

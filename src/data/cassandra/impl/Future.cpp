@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/cassandra/impl/Future.hpp"
 
 #include "data/cassandra/Error.hpp"
@@ -76,8 +57,8 @@ void
 invokeHelper(CassFuture* ptr, void* cbPtr)
 {
     // Note: can't use Future{ptr}.get() because double free will occur :/
-    // Note2: we are moving/copying it locally as a workaround for an issue we are seeing from asio recently.
-    // stackoverflow.com/questions/77004137/boost-asio-async-compose-gets-stuck-under-load
+    // Note2: we are moving/copying it locally as a workaround for an issue we are seeing from asio
+    // recently. stackoverflow.com/questions/77004137/boost-asio-async-compose-gets-stuck-under-load
     auto* cb = static_cast<FutureWithCallback::FnType*>(cbPtr);
     auto local = std::make_unique<FutureWithCallback::FnType>(std::move(*cb));
     if (auto const rc = cass_future_error_code(ptr); rc) {

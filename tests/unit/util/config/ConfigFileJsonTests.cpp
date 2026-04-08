@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "util/MockAssert.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/OverloadSet.hpp"
@@ -111,7 +92,8 @@ INSTANTIATE_TEST_CASE_P(
                 "bool": true,
                 "string": "some string"
             })JSON",
-            .validationMap = {{"int", 42}, {"double", 123.456}, {"bool", true}, {"string", "some string"}}
+            .validationMap =
+                {{"int", 42}, {"double", 123.456}, {"bool", true}, {"string", "some string"}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "nested",
@@ -192,7 +174,11 @@ INSTANTIATE_TEST_CASE_P(
                     {"nested.array.[]", boost::json::array{1, 2, 3}},
                 }
         },
-        ConfigFileJsonParseTestBundle{.testName = "empty", .configStr = R"JSON({})JSON", .validationMap = {}},
+        ConfigFileJsonParseTestBundle{
+            .testName = "empty",
+            .configStr = R"JSON({})JSON",
+            .validationMap = {}
+        },
         ConfigFileJsonParseTestBundle{
             .testName = "empty_nested",
             .configStr = R"JSON({
@@ -265,7 +251,8 @@ INSTANTIATE_TEST_CASE_P(
             })JSON",
             .validationMap =
                 {{"array.[].int", boost::json::array{42, 2, 4}},
-                 {"array.[].bool", boost::json::array{true, boost::json::value{}, boost::json::value{}}}}
+                 {"array.[].bool",
+                  boost::json::array{true, boost::json::value{}, boost::json::value{}}}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "full_object_is_in_the_middle_of_array",
@@ -278,7 +265,8 @@ INSTANTIATE_TEST_CASE_P(
             })JSON",
             .validationMap =
                 {{"array.[].int", boost::json::array{42, 2, 4}},
-                 {"array.[].bool", boost::json::array{boost::json::value{}, true, boost::json::value{}}}}
+                 {"array.[].bool",
+                  boost::json::array{boost::json::value{}, true, boost::json::value{}}}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "no_full_object",
@@ -291,7 +279,8 @@ INSTANTIATE_TEST_CASE_P(
             })JSON",
             .validationMap =
                 {{"array.[].int", boost::json::array{42, 2, boost::json::value{}}},
-                 {"array.[].bool", boost::json::array{boost::json::value{}, boost::json::value{}, true}}}
+                 {"array.[].bool",
+                  boost::json::array{boost::json::value{}, boost::json::value{}, true}}}
         },
         ConfigFileJsonParseTestBundle{
             .testName = "array_with_nexted_objects",
@@ -303,7 +292,8 @@ INSTANTIATE_TEST_CASE_P(
             })JSON",
             .validationMap =
                 {{"array.[].object.int", boost::json::array{42, boost::json::value{}}},
-                 {"array.[].object.string", boost::json::array{boost::json::value{}, "some string"}}}
+                 {"array.[].object.string",
+                  boost::json::array{boost::json::value{}, "some string"}}}
         }
     ),
     tests::util::kNAME_GENERATOR

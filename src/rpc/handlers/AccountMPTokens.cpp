@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2025, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/AccountMPTokens.hpp"
 
 #include "rpc/Errors.hpp"
@@ -54,6 +35,7 @@ AccountMPTokensHandler::addMPToken(std::vector<MPTokenResponse>& mpts, ripple::S
     MPTokenResponse token{};
     auto const flags = sle.getFieldU32(ripple::sfFlags);
 
+    token.MPTokenID = ripple::strHex(sle.key());
     token.account = ripple::to_string(sle.getAccountID(ripple::sfAccount));
     token.MPTokenIssuanceID = ripple::strHex(sle.getFieldH192(ripple::sfMPTokenIssuanceID));
     token.MPTAmount = sle.getFieldU64(ripple::sfMPTAmount);
@@ -73,7 +55,10 @@ AccountMPTokensHandler::addMPToken(std::vector<MPTokenResponse>& mpts, ripple::S
 }
 
 AccountMPTokensHandler::Result
-AccountMPTokensHandler::process(AccountMPTokensHandler::Input const& input, Context const& ctx) const
+AccountMPTokensHandler::process(
+    AccountMPTokensHandler::Input const& input,
+    Context const& ctx
+) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountMPTokens' ledger range must be available");
@@ -81,13 +66,14 @@ AccountMPTokensHandler::process(AccountMPTokensHandler::Input const& input, Cont
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (!expectedLgrInfo.has_value())
+    if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
-    auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+    );
 
     if (not accountLedgerObject.has_value())
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
@@ -102,10 +88,16 @@ AccountMPTokensHandler::process(AccountMPTokensHandler::Input const& input, Cont
     };
 
     auto const expectedNext = traverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse
+        *sharedPtrBackend_,
+        *accountID,
+        lgrInfo.seq,
+        input.limit,
+        input.marker,
+        ctx.yield,
+        addToResponse
     );
 
-    if (!expectedNext.has_value())
+    if (not expectedNext.has_value())
         return Error{expectedNext.error()};
 
     auto const& nextMarker = expectedNext.value();
@@ -149,7 +141,11 @@ tag_invoke(boost::json::value_to_tag<AccountMPTokensHandler::Input>, boost::json
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountMPTokensHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountMPTokensHandler::Output const& output
+)
 {
     auto obj = boost::json::object{
         {JS(account), output.account},
@@ -167,9 +163,14 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountMPTokensH
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountMPTokensHandler::MPTokenResponse const& mptoken)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountMPTokensHandler::MPTokenResponse const& mptoken
+)
 {
     auto obj = boost::json::object{
+        {"mpt_id", mptoken.MPTokenID},
         {JS(account), mptoken.account},
         {JS(mpt_issuance_id), mptoken.MPTokenIssuanceID},
         {JS(mpt_amount), mptoken.MPTAmount},

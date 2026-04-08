@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/Assert.hpp"
@@ -40,8 +21,12 @@ concept SomeHistogramImpl = requires(T t) {
     typename std::remove_cvref_t<T>::ValueType;
     requires SomeNumberType<typename std::remove_cvref_t<T>::ValueType>;
     { t.observe(typename std::remove_cvref_t<T>::ValueType{1}) } -> std::same_as<void>;
-    { t.setBuckets(std::vector<typename std::remove_cvref_t<T>::ValueType>{}) } -> std::same_as<void>;
-    { t.serializeValue(std::string{}, std::string{}, std::declval<OStream&>()) } -> std::same_as<void>;
+    {
+        t.setBuckets(std::vector<typename std::remove_cvref_t<T>::ValueType>{})
+    } -> std::same_as<void>;
+    {
+        t.serializeValue(std::string{}, std::string{}, std::declval<OStream&>())
+    } -> std::same_as<void>;
 };
 
 template <SomeNumberType NumberType>
@@ -75,9 +60,10 @@ public:
     {
         auto data = data_->template lock<std::scoped_lock>();
         auto const bucket = std::lower_bound(
-            data->buckets.begin(), data->buckets.end(), value, [](Bucket const& bucket, ValueType const& value) {
-                return bucket.upperBound < value;
-            }
+            data->buckets.begin(),
+            data->buckets.end(),
+            value,
+            [](Bucket const& bucket, ValueType const& value) { return bucket.upperBound < value; }
         );
         if (bucket != data->buckets.end()) {
             ++bucket->count;
@@ -105,8 +91,8 @@ public:
 
         for (auto const& bucket : data->buckets) {
             cumulativeCount += bucket.count;
-            stream << name << "_bucket" << labelsString << "le=\"" << bucket.upperBound << "\"} " << cumulativeCount
-                   << '\n';
+            stream << name << "_bucket" << labelsString << "le=\"" << bucket.upperBound << "\"} "
+                   << cumulativeCount << '\n';
         }
         cumulativeCount += data->lastBucket.count;
         stream << name << "_bucket" << labelsString << "le=\"+Inf\"} " << cumulativeCount << '\n';

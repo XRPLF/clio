@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/SingleFeedBase.hpp"
 #include "util/MockPrometheus.hpp"
@@ -41,7 +22,8 @@ using namespace util::prometheus;
 struct FeedBaseMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {
 protected:
     web::SubscriptionContextPtr sessionPtr_ = std::make_shared<MockSession>();
-    std::shared_ptr<SingleFeedBase> testFeedPtr_ = std::make_shared<SingleFeedBase>(ctx_, "testFeed");
+    std::shared_ptr<SingleFeedBase> testFeedPtr_ =
+        std::make_shared<SingleFeedBase>(ctx_, "testFeed");
     MockSession* mockSessionPtr_ = dynamic_cast<MockSession*>(sessionPtr_.get());
 };
 
@@ -71,7 +53,8 @@ TEST_F(FeedBaseMockPrometheusTest, AutoUnsub)
 
 class NamedSingleFeedTest : public SingleFeedBase {
 public:
-    NamedSingleFeedTest(util::async::AnyExecutionContext& executionCtx) : SingleFeedBase(executionCtx, "forTest")
+    NamedSingleFeedTest(util::async::AnyExecutionContext& executionCtx)
+        : SingleFeedBase(executionCtx, "forTest")
     {
     }
 };

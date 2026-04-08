@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "etl/ETLHelpers.hpp"
@@ -58,13 +39,14 @@ struct TokenRange {
  * @brief The concept for an adapter.
  */
 template <typename T>
-concept CanReadByTokenRange = requires(T obj, TokenRange const& range, boost::asio::yield_context yield) {
-    { obj.readByTokenRange(range, yield) } -> std::same_as<void>;
-};
+concept CanReadByTokenRange =
+    requires(T obj, TokenRange const& range, boost::asio::yield_context yield) {
+        { obj.readByTokenRange(range, yield) } -> std::same_as<void>;
+    };
 
 /**
- * @brief The full table scanner. It will split the full table scan into multiple ranges and read the data in given
- * executor.
+ * @brief The full table scanner. It will split the full table scan into multiple ranges and read
+ * the data in given executor.
  *
  * @tparam TableAdapter The table adapter type
  */
@@ -96,7 +78,8 @@ class FullTableScanner {
 
             for (std::int64_t i = 0; i < numRanges; ++i) {
                 int64_t const start = minValue + (i * rangeSize);
-                int64_t const end = (i == numRanges - 1) ? maxValue : start + static_cast<int64_t>(rangeSize) - 1;
+                int64_t const end =
+                    (i == numRanges - 1) ? maxValue : start + static_cast<int64_t>(rangeSize) - 1;
                 ranges.emplace_back(start, end);
             }
 
@@ -141,13 +124,14 @@ public:
      */
     struct FullTableScannerSettings {
         std::uint32_t ctxThreadsNum; /**< number of threads used in the execution context */
-        std::uint32_t jobsNum;       /**< number of coroutines to run, it is the number of concurrent database reads */
+        std::uint32_t jobsNum; /**< number of coroutines to run, it is the number of concurrent
+                                  database reads */
         std::uint32_t cursorsPerJob; /**< number of cursors per coroutine */
     };
 
     /**
-     * @brief Construct a new Full Table Scanner object, it will run in a sync or async context according to the
-     * parameter. The scan process will immediately start.
+     * @brief Construct a new Full Table Scanner object, it will run in a sync or async context
+     * according to the parameter. The scan process will immediately start.
      *
      * @tparam ExecutionContextType The execution context type
      * @param settings The full table scanner settings
@@ -161,7 +145,10 @@ public:
         , reader_{std::move(reader)}
     {
         ASSERT(settings.jobsNum > 0, "jobsNum for full table scanner must be greater than 0");
-        ASSERT(settings.cursorsPerJob > 0, "cursorsPerJob for full table scanner must be greater than 0");
+        ASSERT(
+            settings.cursorsPerJob > 0,
+            "cursorsPerJob for full table scanner must be greater than 0"
+        );
 
         auto const cursors = TokenRangesProvider{cursorsNum_}.getRanges();
         std::ranges::for_each(cursors, [this](auto const& cursor) { queue_.push(cursor); });

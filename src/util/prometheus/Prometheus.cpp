@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "util/prometheus/Prometheus.hpp"
 
 #include "util/Assert.hpp"
@@ -64,16 +45,22 @@ PrometheusImpl::boolMetric(std::string name, Labels labels, std::optional<std::s
 CounterInt&
 PrometheusImpl::counterInt(std::string name, Labels labels, std::optional<std::string> description)
 {
-    MetricBase& metricBase =
-        getMetric(std::move(name), std::move(labels), std::move(description), MetricType::CounterInt);
+    MetricBase& metricBase = getMetric(
+        std::move(name), std::move(labels), std::move(description), MetricType::CounterInt
+    );
     return convertBaseTo<CounterInt>(metricBase);
 }
 
 CounterDouble&
-PrometheusImpl::counterDouble(std::string name, Labels labels, std::optional<std::string> description)
+PrometheusImpl::counterDouble(
+    std::string name,
+    Labels labels,
+    std::optional<std::string> description
+)
 {
-    MetricBase& metricBase =
-        getMetric(std::move(name), std::move(labels), std::move(description), MetricType::CounterDouble);
+    MetricBase& metricBase = getMetric(
+        std::move(name), std::move(labels), std::move(description), MetricType::CounterDouble
+    );
     return convertBaseTo<CounterDouble>(metricBase);
 }
 
@@ -88,8 +75,9 @@ PrometheusImpl::gaugeInt(std::string name, Labels labels, std::optional<std::str
 GaugeDouble&
 PrometheusImpl::gaugeDouble(std::string name, Labels labels, std::optional<std::string> description)
 {
-    MetricBase& metricBase =
-        getMetric(std::move(name), std::move(labels), std::move(description), MetricType::GaugeDouble);
+    MetricBase& metricBase = getMetric(
+        std::move(name), std::move(labels), std::move(description), MetricType::GaugeDouble
+    );
     return convertBaseTo<GaugeDouble>(metricBase);
 }
 
@@ -101,8 +89,13 @@ PrometheusImpl::histogramInt(
     std::optional<std::string> description
 )
 {
-    MetricBase& metricBase =
-        getMetric(std::move(name), std::move(labels), std::move(description), MetricType::HistogramInt, buckets);
+    MetricBase& metricBase = getMetric(
+        std::move(name),
+        std::move(labels),
+        std::move(description),
+        MetricType::HistogramInt,
+        buckets
+    );
     return convertBaseTo<HistogramInt>(metricBase);
 }
 
@@ -114,8 +107,13 @@ PrometheusImpl::histogramDouble(
     std::optional<std::string> description
 )
 {
-    MetricBase& metricBase =
-        getMetric(std::move(name), std::move(labels), std::move(description), MetricType::HistogramDouble, buckets);
+    MetricBase& metricBase = getMetric(
+        std::move(name),
+        std::move(labels),
+        std::move(description),
+        MetricType::HistogramDouble,
+        buckets
+    );
     return convertBaseTo<HistogramDouble>(metricBase);
 }
 
@@ -134,12 +132,21 @@ PrometheusImpl::collectMetrics()
 }
 
 MetricsFamily&
-PrometheusImpl::getMetricsFamily(std::string name, std::optional<std::string> description, MetricType type)
+PrometheusImpl::getMetricsFamily(
+    std::string name,
+    std::optional<std::string> description,
+    MetricType type
+)
 {
     auto it = metrics_.find(name);
     if (it == metrics_.end()) {
         auto nameCopy = name;
-        it = metrics_.emplace(std::move(nameCopy), MetricsFamily(std::move(name), std::move(description), type)).first;
+        it = metrics_
+                 .emplace(
+                     std::move(nameCopy),
+                     MetricsFamily(std::move(name), std::move(description), type)
+                 )
+                 .first;
     } else if (it->second.type() != type) {
         throw std::runtime_error("Metrics of different type can't have the same name: " + name);
     }
@@ -191,13 +198,21 @@ PrometheusService::isInitialised()
 }
 
 util::prometheus::Bool
-PrometheusService::boolMetric(std::string name, util::prometheus::Labels labels, std::optional<std::string> description)
+PrometheusService::boolMetric(
+    std::string name,
+    util::prometheus::Labels labels,
+    std::optional<std::string> description
+)
 {
     return instance().boolMetric(std::move(name), std::move(labels), std::move(description));
 }
 
 util::prometheus::CounterInt&
-PrometheusService::counterInt(std::string name, util::prometheus::Labels labels, std::optional<std::string> description)
+PrometheusService::counterInt(
+    std::string name,
+    util::prometheus::Labels labels,
+    std::optional<std::string> description
+)
 {
     return instance().counterInt(std::move(name), std::move(labels), std::move(description));
 }
@@ -213,7 +228,11 @@ PrometheusService::counterDouble(
 }
 
 util::prometheus::GaugeInt&
-PrometheusService::gaugeInt(std::string name, util::prometheus::Labels labels, std::optional<std::string> description)
+PrometheusService::gaugeInt(
+    std::string name,
+    util::prometheus::Labels labels,
+    std::optional<std::string> description
+)
 {
     return instance().gaugeInt(std::move(name), std::move(labels), std::move(description));
 }
@@ -236,7 +255,9 @@ PrometheusService::histogramInt(
     std::optional<std::string> description
 )
 {
-    return instance().histogramInt(std::move(name), std::move(labels), buckets, std::move(description));
+    return instance().histogramInt(
+        std::move(name), std::move(labels), buckets, std::move(description)
+    );
 }
 
 util::prometheus::HistogramDouble&
@@ -247,7 +268,9 @@ PrometheusService::histogramDouble(
     std::optional<std::string> description
 )
 {
-    return instance().histogramDouble(std::move(name), std::move(labels), buckets, std::move(description));
+    return instance().histogramDouble(
+        std::move(name), std::move(labels), buckets, std::move(description)
+    );
 }
 
 std::string

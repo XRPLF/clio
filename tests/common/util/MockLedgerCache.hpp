@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2025, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/LedgerCacheInterface.hpp"
@@ -33,19 +14,34 @@
 #include <vector>
 
 struct MockLedgerCache : data::LedgerCacheInterface {
-    MOCK_METHOD(void, updateImp, (std::vector<data::LedgerObject> const& a, uint32_t b, bool c), ());
+    MOCK_METHOD(
+        void,
+        updateImpl,
+        (std::vector<data::LedgerObject> const& a, uint32_t b, bool c),
+        ()
+    );
 
     void
     update(std::vector<data::LedgerObject> const& a, uint32_t b, bool c = false) override
     {
-        updateImp(a, b, c);
+        updateImpl(a, b, c);
     }
 
-    MOCK_METHOD(std::optional<data::Blob>, get, (ripple::uint256 const& a, uint32_t b), (const, override));
+    MOCK_METHOD(
+        std::optional<data::Blob>,
+        get,
+        (ripple::uint256 const& a, uint32_t b),
+        (const, override)
+    );
 
     MOCK_METHOD(void, update, (std::vector<etl::model::Object> const&, uint32_t), (override));
 
-    MOCK_METHOD(std::optional<data::Blob>, getDeleted, (ripple::uint256 const&, uint32_t), (const, override));
+    MOCK_METHOD(
+        std::optional<data::Blob>,
+        getDeleted,
+        (ripple::uint256 const&, uint32_t),
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::optional<data::LedgerObject>,
@@ -89,4 +85,8 @@ struct MockLedgerCache : data::LedgerCacheInterface {
         (std::string const& path, uint32_t minLatestSequence),
         (override)
     );
+
+    MOCK_METHOD(void, startLoading, (), (override));
+
+    MOCK_METHOD(bool, isCurrentlyLoading, (), (const, override));
 };

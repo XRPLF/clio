@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/common/AnyHandler.hpp"
@@ -46,6 +27,7 @@ constexpr auto kTXN_ID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76
 constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr auto kCURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
+constexpr auto kAPI_VERSION = 2;
 
 }  // namespace
 
@@ -72,7 +54,8 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
 {
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
-        auto const output = handler.process(json::parse(R"JSON({"tx_hash": "123"})JSON"), Context{yield});
+        auto const output =
+            handler.process(json::parse(R"JSON({"tx_hash": "123"})JSON"), Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -111,7 +94,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
 TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
 {
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence)
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(
         fmt::format(
@@ -160,9 +144,12 @@ TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
 TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
 {
     TransactionAndMetadata tx;
-    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata =
+        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+            .getSerializer()
+            .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 10;
     ON_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillByDefault(Return(tx));
@@ -232,15 +219,19 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
     })JSON";
 
     TransactionAndMetadata tx;
-    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata =
+        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+            .getSerializer()
+            .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 30;
     ON_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillByDefault(Return(tx));
     EXPECT_CALL(*backend_, fetchTransaction).Times(1);
 
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(createLedgerHeader(kINDEX, tx.ledgerSequence)));
+    ON_CALL(*backend_, fetchLedgerBySequence)
+        .WillByDefault(Return(createLedgerHeader(kINDEX, tx.ledgerSequence)));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -304,13 +295,17 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
     })JSON";
 
     TransactionAndMetadata tx;
-    tx.metadata = createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.metadata =
+        createMetaDataForCreateOffer(kCURRENCY, kACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
-        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300).getSerializer().peekData();
+        createCreateOfferTransactionObject(kACCOUNT, 2, 100, kCURRENCY, kACCOUNT2, 200, 300)
+            .getSerializer()
+            .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 30;
     EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
-    EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(createLedgerHeader(kINDEX, tx.ledgerSequence)));
+    EXPECT_CALL(*backend_, fetchLedgerBySequence)
+        .WillOnce(Return(createLedgerHeader(kINDEX, tx.ledgerSequence)));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend_}};
@@ -324,7 +319,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
                 tx.ledgerSequence
             )
         );
-        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
+        auto const output =
+            handler.process(req, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(kOUTPUT), *output.result);
     });

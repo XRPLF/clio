@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/cassandra/Types.hpp"
@@ -96,12 +77,17 @@ public:
     {
         using std::to_string;
         auto throwErrorIfNeeded = [idx](CassError rc, std::string_view label) {
-            if (rc != CASS_OK)
-                throw std::logic_error(fmt::format("[{}] at idx {}: {}", label, idx, cass_error_desc(rc)));
+            if (rc != CASS_OK) {
+                throw std::logic_error(
+                    fmt::format("[{}] at idx {}: {}", label, idx, cass_error_desc(rc))
+                );
+            }
         };
 
         auto bindBytes = [this, idx](auto const* data, size_t size) {
-            return cass_statement_bind_bytes(*this, idx, static_cast<cass_byte_t const*>(data), size);
+            return cass_statement_bind_bytes(
+                *this, idx, static_cast<cass_byte_t const*>(data), size
+            );
         };
 
         using DecayedType = std::decay_t<Type>;
@@ -110,7 +96,10 @@ public:
         using UintByteTupleType = std::tuple<uint32_t, ripple::uint256>;
         using ByteVectorType = std::vector<ripple::uint256>;
 
-        if constexpr (std::is_same_v<DecayedType, ripple::uint256> || std::is_same_v<DecayedType, ripple::uint192>) {
+        if constexpr (
+            std::is_same_v<DecayedType, ripple::uint256> ||
+            std::is_same_v<DecayedType, ripple::uint192>
+        ) {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind ripple::base_uint");
         } else if constexpr (std::is_same_v<DecayedType, ripple::AccountID>) {
@@ -121,17 +110,22 @@ public:
             throwErrorIfNeeded(rc, "Bind vector<unsigned char>");
         } else if constexpr (std::is_convertible_v<DecayedType, std::string>) {
             // reinterpret_cast is needed here :'(
-            auto const rc = bindBytes(reinterpret_cast<unsigned char const*>(value.data()), value.size());
+            auto const rc =
+                bindBytes(reinterpret_cast<unsigned char const*>(value.data()), value.size());
             throwErrorIfNeeded(rc, "Bind string (as bytes)");
         } else if constexpr (std::is_convertible_v<DecayedType, Text>) {
-            auto const rc = cass_statement_bind_string_n(*this, idx, value.text.c_str(), value.text.size());
+            auto const rc =
+                cass_statement_bind_string_n(*this, idx, value.text.c_str(), value.text.size());
             throwErrorIfNeeded(rc, "Bind string (as TEXT)");
-        } else if constexpr (std::is_same_v<DecayedType, UintTupleType> ||
-                             std::is_same_v<DecayedType, UintByteTupleType>) {
+        } else if constexpr (
+            std::is_same_v<DecayedType, UintTupleType> ||
+            std::is_same_v<DecayedType, UintByteTupleType>
+        ) {
             auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::forward<Type>(value)});
             throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32> or <uint32_t, ripple::uint256>");
         } else if constexpr (std::is_same_v<DecayedType, ByteVectorType>) {
-            auto const rc = cass_statement_bind_collection(*this, idx, Collection{std::forward<Type>(value)});
+            auto const rc =
+                cass_statement_bind_collection(*this, idx, Collection{std::forward<Type>(value)});
             throwErrorIfNeeded(rc, "Bind collection");
         } else if constexpr (std::is_same_v<DecayedType, bool>) {
             auto const rc = cass_statement_bind_bool(*this, idx, value ? cass_true : cass_false);

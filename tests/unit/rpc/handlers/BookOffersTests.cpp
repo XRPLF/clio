@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/AmendmentCenter.hpp"
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
@@ -60,9 +41,11 @@ constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF2
 constexpr auto kINDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
 constexpr auto kINDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
-constexpr auto kPAYS20_USD_GETS10_XRP_BOOK_DIR = "43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000";
+constexpr auto kPAYS20_USD_GETS10_XRP_BOOK_DIR =
+    "43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000";
 
-constexpr auto kPAYS20_XRP_GETS10_USD_BOOK_DIR = "7B1767D41DBCE79D9585CF9D0262A5FEC45E5206FF524F8B55071AFD498D0000";
+constexpr auto kPAYS20_XRP_GETS10_USD_BOOK_DIR =
+    "7B1767D41DBCE79D9585CF9D0262A5FEC45E5206FF524F8B55071AFD498D0000";
 
 constexpr auto kTRANSFER_RATE_X2 = 2000000000;
 
@@ -92,7 +75,8 @@ protected:
     StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr_;
 };
 
-struct RPCBookOffersParameterTest : RPCBookOffersHandlerTest, WithParamInterface<ParameterTestBundle> {};
+struct RPCBookOffersParameterTest : RPCBookOffersHandlerTest,
+                                    WithParamInterface<ParameterTestBundle> {};
 
 TEST_P(RPCBookOffersParameterTest, CheckError)
 {
@@ -439,7 +423,8 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "srcIsrMalformed",
-            .expectedErrorMessage = "Unneeded field 'taker_pays.issuer' for XRP currency specification."
+            .expectedErrorMessage =
+                "Unneeded field 'taker_pays.issuer' for XRP currency specification."
         },
         ParameterTestBundle{
             .testName = "PaysCurrencyWithXRPIssuer",
@@ -481,7 +466,8 @@ generateParameterBookOffersTestBundles()
                 }
             })JSON",
             .expectedError = "dstIsrMalformed",
-            .expectedErrorMessage = "Unneeded field 'taker_gets.issuer' for XRP currency specification."
+            .expectedErrorMessage =
+                "Unneeded field 'taker_gets.issuer' for XRP currency specification."
         },
         ParameterTestBundle{
             .testName = "BadMarket",
@@ -623,15 +609,33 @@ generateNormalPathBookOffersTestBundles()
     );
 
     auto const getsXRPPaysUSDBook = getBookBase(
-        rpc::parseBook(ripple::to_currency("USD"), account, ripple::xrpCurrency(), ripple::xrpAccount(), std::nullopt)
+        rpc::parseBook(
+            ripple::to_currency("USD"),
+            account,
+            ripple::xrpCurrency(),
+            ripple::xrpAccount(),
+            std::nullopt
+        )
             .value()
     );
     auto const getsXRPPaysUSDBookWithDomain = getBookBase(
-        rpc::parseBook(ripple::to_currency("USD"), account, ripple::xrpCurrency(), ripple::xrpAccount(), kDOMAIN)
+        rpc::parseBook(
+            ripple::to_currency("USD"),
+            account,
+            ripple::xrpCurrency(),
+            ripple::xrpAccount(),
+            kDOMAIN
+        )
             .value()
     );
     auto const getsUSDPaysXRPBook = getBookBase(
-        rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), account, std::nullopt)
+        rpc::parseBook(
+            ripple::xrpCurrency(),
+            ripple::xrpAccount(),
+            ripple::to_currency("USD"),
+            account,
+            std::nullopt
+        )
             .value()
     );
 
@@ -678,11 +682,13 @@ generateNormalPathBookOffersTestBundles()
 
     auto const feeLedgerObject = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
-    auto const trustline30Balance =
-        createRippleStateLedgerObject("USD", kACCOUNT, -30, kACCOUNT2, 1000, kACCOUNT, 2000, kINDEX1, 2, 0);
+    auto const trustline30Balance = createRippleStateLedgerObject(
+        "USD", kACCOUNT, -30, kACCOUNT2, 1000, kACCOUNT, 2000, kINDEX1, 2, 0
+    );
 
-    auto const trustline8Balance =
-        createRippleStateLedgerObject("USD", kACCOUNT, -8, kACCOUNT2, 1000, kACCOUNT, 2000, kINDEX1, 2, 0);
+    auto const trustline8Balance = createRippleStateLedgerObject(
+        "USD", kACCOUNT, -8, kACCOUNT2, 1000, kACCOUNT, 2000, kINDEX1, 2, 0
+    );
 
     return std::vector<BookOffersNormalTestBundle>{
         BookOffersNormalTestBundle{
@@ -692,19 +698,26 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<ripple::uint256, std::optional<ripple::uint256>>{
                     {getsXRPPaysUSDBook, ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}},
-                    {ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, std::optional<ripple::uint256>{}}
+                    {ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR},
+                     std::optional<ripple::uint256>{}}
                 },
             .mockedLedgerObjects =
                 std::map<ripple::uint256, ripple::Blob>{
                     // book dir object
                     {ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR},
-                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
+                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1)
+                         .getSerializer()
+                         .peekData()},
                     // pays issuer account object
                     {ripple::keylet::account(account).key,
-                     createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2).getSerializer().peekData()},
+                     createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2)
+                         .getSerializer()
+                         .peekData()},
                     // owner account object
                     {ripple::keylet::account(account2).key,
-                     createAccountRootObject(kACCOUNT2, 0, 2, 200, 2, kINDEX1, 2).getSerializer().peekData()},
+                     createAccountRootObject(kACCOUNT2, 0, 2, 200, 2, kINDEX1, 2)
+                         .getSerializer()
+                         .peekData()},
                     // fee settings: base ->3 inc->2, account2 has 2 objects ,total
                     // reserve ->7
                     // owner_funds should be 193
@@ -752,19 +765,26 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<ripple::uint256, std::optional<ripple::uint256>>{
                     {getsXRPPaysUSDBook, ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}},
-                    {ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, std::optional<ripple::uint256>{}}
+                    {ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR},
+                     std::optional<ripple::uint256>{}}
                 },
             .mockedLedgerObjects =
                 std::map<ripple::uint256, ripple::Blob>{
                     // book dir object
                     {ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR},
-                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
+                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1)
+                         .getSerializer()
+                         .peekData()},
                     // pays issuer account object
                     {ripple::keylet::account(account).key,
-                     createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2).getSerializer().peekData()},
+                     createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2)
+                         .getSerializer()
+                         .peekData()},
                     // owner account object, hold
                     {ripple::keylet::account(account2).key,
-                     createAccountRootObject(kACCOUNT2, 0, 2, 5 + 7, 2, kINDEX1, 2).getSerializer().peekData()},
+                     createAccountRootObject(kACCOUNT2, 0, 2, 5 + 7, 2, kINDEX1, 2)
+                         .getSerializer()
+                         .peekData()},
                     // fee settings: base ->3 inc->2, account2 has 2 objects
                     // ,total
                     // reserve ->7
@@ -818,16 +838,21 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<ripple::uint256, std::optional<ripple::uint256>>{
                     {getsXRPPaysUSDBook, ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}},
-                    {ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, std::optional<ripple::uint256>{}}
+                    {ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR},
+                     std::optional<ripple::uint256>{}}
                 },
             .mockedLedgerObjects =
                 std::map<ripple::uint256, ripple::Blob>{
                     // book dir object
                     {ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR},
-                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
+                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1)
+                         .getSerializer()
+                         .peekData()},
                     // pays issuer account object
                     {ripple::keylet::account(account).key,
-                     createAccountRootObject(kACCOUNT, ripple::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2)
+                     createAccountRootObject(
+                         kACCOUNT, ripple::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2
+                     )
                          .getSerializer()
                          .peekData()}
                 },
@@ -878,17 +903,23 @@ generateNormalPathBookOffersTestBundles()
             // prepare offer dir index
             .mockedSuccessors =
                 std::map<ripple::uint256, std::optional<ripple::uint256>>{
-                    {getsXRPPaysUSDBookWithDomain, ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}},
-                    {ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, std::optional<ripple::uint256>{}}
+                    {getsXRPPaysUSDBookWithDomain,
+                     ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}},
+                    {ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR},
+                     std::optional<ripple::uint256>{}}
                 },
             .mockedLedgerObjects =
                 std::map<ripple::uint256, ripple::Blob>{
                     // book dir object
                     {ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR},
-                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
+                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1)
+                         .getSerializer()
+                         .peekData()},
                     // pays issuer account object
                     {ripple::keylet::account(account).key,
-                     createAccountRootObject(kACCOUNT, ripple::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2)
+                     createAccountRootObject(
+                         kACCOUNT, ripple::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2
+                     )
                          .getSerializer()
                          .peekData()}
                 },
@@ -941,13 +972,16 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<ripple::uint256, std::optional<ripple::uint256>>{
                     {getsUSDPaysXRPBook, ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}},
-                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, std::optional<ripple::uint256>{}}
+                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
+                     std::optional<ripple::uint256>{}}
                 },
             .mockedLedgerObjects =
                 std::map<ripple::uint256, ripple::Blob>{
                     // book dir object
                     {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
-                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
+                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1)
+                         .getSerializer()
+                         .peekData()},
                     // gets issuer account object
                     {ripple::keylet::account(account).key,
                      createAccountRootObject(
@@ -1005,13 +1039,16 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<ripple::uint256, std::optional<ripple::uint256>>{
                     {getsUSDPaysXRPBook, ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}},
-                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, std::optional<ripple::uint256>{}}
+                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
+                     std::optional<ripple::uint256>{}}
                 },
             .mockedLedgerObjects =
                 std::map<ripple::uint256, ripple::Blob>{
                     // book dir object
                     {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
-                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
+                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1)
+                         .getSerializer()
+                         .peekData()},
                     // gets issuer account object, rate is 1/2
                     {ripple::keylet::account(account).key,
                      createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2)
@@ -1071,13 +1108,16 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<ripple::uint256, std::optional<ripple::uint256>>{
                     {getsUSDPaysXRPBook, ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}},
-                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, std::optional<ripple::uint256>{}}
+                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
+                     std::optional<ripple::uint256>{}}
                 },
             .mockedLedgerObjects =
                 std::map<ripple::uint256, ripple::Blob>{
                     // book dir object
                     {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
-                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}}, kINDEX1)
+                     createOwnerDirLedgerObject(
+                         {ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}}, kINDEX1
+                     )
                          .getSerializer()
                          .peekData()},
                     // gets issuer account object
@@ -1168,13 +1208,16 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<ripple::uint256, std::optional<ripple::uint256>>{
                     {getsUSDPaysXRPBook, ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}},
-                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, std::optional<ripple::uint256>{}}
+                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
+                     std::optional<ripple::uint256>{}}
                 },
             .mockedLedgerObjects =
                 std::map<ripple::uint256, ripple::Blob>{
                     // book dir object
                     {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
-                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
+                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1)
+                         .getSerializer()
+                         .peekData()},
                     // gets issuer account object, rate is 1/2
                     {ripple::keylet::account(account).key,
                      createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2)
@@ -1224,13 +1267,16 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<ripple::uint256, std::optional<ripple::uint256>>{
                     {getsUSDPaysXRPBook, ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}},
-                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, std::optional<ripple::uint256>{}}
+                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
+                     std::optional<ripple::uint256>{}}
                 },
             .mockedLedgerObjects =
                 std::map<ripple::uint256, ripple::Blob>{
                     // book dir object
                     {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
-                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
+                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1)
+                         .getSerializer()
+                         .peekData()},
                     // gets issuer account object, rate is 1/2
                     {ripple::keylet::account(account).key,
                      createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2)
@@ -1289,17 +1335,27 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<ripple::uint256, std::optional<ripple::uint256>>{
                     {getsUSDPaysXRPBook, ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}},
-                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, std::optional<ripple::uint256>{}}
+                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
+                     std::optional<ripple::uint256>{}}
                 },
             .mockedLedgerObjects =
                 std::map<ripple::uint256, ripple::Blob>{
                     // book dir object
                     {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
-                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
+                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1)
+                         .getSerializer()
+                         .peekData()},
                     // gets issuer account object, is deep frozen so unfunded
                     {ripple::keylet::account(account).key,
                      createAccountRootObject(
-                         kACCOUNT, ripple::lsfLowDeepFreeze, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2
+                         kACCOUNT,
+                         ripple::lsfLowDeepFreeze,
+                         2,
+                         200,
+                         2,
+                         kINDEX1,
+                         2,
+                         kTRANSFER_RATE_X2
                      )
                          .getSerializer()
                          .peekData()},
@@ -1353,17 +1409,27 @@ generateNormalPathBookOffersTestBundles()
             .mockedSuccessors =
                 std::map<ripple::uint256, std::optional<ripple::uint256>>{
                     {getsUSDPaysXRPBook, ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}},
-                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, std::optional<ripple::uint256>{}}
+                    {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
+                     std::optional<ripple::uint256>{}}
                 },
             .mockedLedgerObjects =
                 std::map<ripple::uint256, ripple::Blob>{
                     // book dir object
                     {ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR},
-                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1).getSerializer().peekData()},
+                     createOwnerDirLedgerObject({ripple::uint256{kINDEX2}}, kINDEX1)
+                         .getSerializer()
+                         .peekData()},
                     // gets issuer account object, is deep frozen so unfunded
                     {ripple::keylet::account(account).key,
                      createAccountRootObject(
-                         kACCOUNT, ripple::lsfLowDeepFreeze, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2
+                         kACCOUNT,
+                         ripple::lsfLowDeepFreeze,
+                         2,
+                         200,
+                         2,
+                         kINDEX1,
+                         2,
+                         kTRANSFER_RATE_X2
                      )
                          .getSerializer()
                          .peekData()},
@@ -1428,7 +1494,8 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
 {
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence(30, _))
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -1459,7 +1526,8 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
 {
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence(30, _))
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -1533,7 +1601,13 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(1);
 
     auto const getsXRPPaysUSDBook = getBookBase(
-        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount(), std::nullopt)
+        rpc::parseBook(
+            ripple::to_currency("USD"),
+            issuer,
+            ripple::xrpCurrency(),
+            ripple::xrpAccount(),
+            std::nullopt
+        )
             .value()
     );
     ON_CALL(*backend_, doFetchSuccessorKey(getsXRPPaysUSDBook, seq, _))
@@ -1542,18 +1616,29 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(5);
     auto const indexes = std::vector<ripple::uint256>(10, ripple::uint256{kINDEX2});
 
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, seq, _))
-        .WillByDefault(Return(createOwnerDirLedgerObject(indexes, kINDEX1).getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kACCOUNT2)).key, seq, _))
-        .WillByDefault(Return(createAccountRootObject(kACCOUNT2, 0, 2, 200, 2, kINDEX1, 2).getSerializer().peekData()));
+    ON_CALL(
+        *backend_, doFetchLedgerObject(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, seq, _)
+    )
+        .WillByDefault(
+            Return(createOwnerDirLedgerObject(indexes, kINDEX1).getSerializer().peekData())
+        );
+    ON_CALL(
+        *backend_,
+        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kACCOUNT2)).key, seq, _)
+    )
+        .WillByDefault(Return(
+            createAccountRootObject(kACCOUNT2, 0, 2, 200, 2, kINDEX1, 2).getSerializer().peekData()
+        ));
 
     ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, seq, _))
         .WillByDefault(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(issuer).key, seq, _))
-        .WillByDefault(Return(
-            createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2).getSerializer().peekData()
-        ));
+        .WillByDefault(
+            Return(createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2)
+                       .getSerializer()
+                       .peekData())
+        );
 
     auto const gets10XRPPays20USDOffer = createOfferLedgerObject(
         kACCOUNT2,
@@ -1607,27 +1692,45 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(1);
 
     auto const getsXRPPaysUSDBook = getBookBase(
-        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount(), std::nullopt)
+        rpc::parseBook(
+            ripple::to_currency("USD"),
+            issuer,
+            ripple::xrpCurrency(),
+            ripple::xrpAccount(),
+            std::nullopt
+        )
             .value()
     );
     ON_CALL(*backend_, doFetchSuccessorKey(getsXRPPaysUSDBook, seq, _))
         .WillByDefault(Return(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(5);
-    auto const indexes = std::vector<ripple::uint256>(BookOffersHandler::kLIMIT_MAX + 1, ripple::uint256{kINDEX2});
+    auto const indexes =
+        std::vector<ripple::uint256>(BookOffersHandler::kLIMIT_MAX + 1, ripple::uint256{kINDEX2});
 
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, seq, _))
-        .WillByDefault(Return(createOwnerDirLedgerObject(indexes, kINDEX1).getSerializer().peekData()));
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kACCOUNT2)).key, seq, _))
-        .WillByDefault(Return(createAccountRootObject(kACCOUNT2, 0, 2, 200, 2, kINDEX1, 2).getSerializer().peekData()));
+    ON_CALL(
+        *backend_, doFetchLedgerObject(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, seq, _)
+    )
+        .WillByDefault(
+            Return(createOwnerDirLedgerObject(indexes, kINDEX1).getSerializer().peekData())
+        );
+    ON_CALL(
+        *backend_,
+        doFetchLedgerObject(ripple::keylet::account(getAccountIdWithString(kACCOUNT2)).key, seq, _)
+    )
+        .WillByDefault(Return(
+            createAccountRootObject(kACCOUNT2, 0, 2, 200, 2, kINDEX1, 2).getSerializer().peekData()
+        ));
 
     ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, seq, _))
         .WillByDefault(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::account(issuer).key, seq, _))
-        .WillByDefault(Return(
-            createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2).getSerializer().peekData()
-        ));
+        .WillByDefault(
+            Return(createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2, kTRANSFER_RATE_X2)
+                       .getSerializer()
+                       .peekData())
+        );
 
     auto const gets10XRPPays20USDOffer = createOfferLedgerObject(
         kACCOUNT2,
@@ -1640,7 +1743,9 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
         kPAYS20_USD_GETS10_XRP_BOOK_DIR
     );
 
-    std::vector<Blob> const bbs(BookOffersHandler::kLIMIT_MAX + 1, gets10XRPPays20USDOffer.getSerializer().peekData());
+    std::vector<Blob> const bbs(
+        BookOffersHandler::kLIMIT_MAX + 1, gets10XRPPays20USDOffer.getSerializer().peekData()
+    );
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*backend_, doFetchLedgerObjects).Times(1);
 
@@ -1664,6 +1769,9 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(kINPUT, Context{.yield = yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result.value().as_object().at("offers").as_array().size(), BookOffersHandler::kLIMIT_MAX);
+        EXPECT_EQ(
+            output.result.value().as_object().at("offers").as_array().size(),
+            BookOffersHandler::kLIMIT_MAX
+        );
     });
 }

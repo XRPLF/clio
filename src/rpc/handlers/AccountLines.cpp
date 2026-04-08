@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/AccountLines.hpp"
 
 #include "rpc/Errors.hpp"
@@ -82,12 +63,18 @@ AccountLinesHandler::addLine(
         balance.negate();
 
     bool const lineAuth = (flags & (viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth)) != 0u;
-    bool const lineAuthPeer = (flags & (not viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth)) != 0u;
-    bool const lineNoRipple = (flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
-    bool const lineNoRipplePeer = (flags & (not viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
-    bool const lineFreeze = (flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
-    bool const lineFreezePeer = (flags & (not viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
-    bool const lineDeepFreeze = (flags & (viewLowest ? ripple::lsfLowDeepFreeze : ripple::lsfHighDeepFreeze)) != 0u;
+    bool const lineAuthPeer =
+        (flags & (not viewLowest ? ripple::lsfLowAuth : ripple::lsfHighAuth)) != 0u;
+    bool const lineNoRipple =
+        (flags & (viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
+    bool const lineNoRipplePeer =
+        (flags & (not viewLowest ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
+    bool const lineFreeze =
+        (flags & (viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
+    bool const lineFreezePeer =
+        (flags & (not viewLowest ? ripple::lsfLowFreeze : ripple::lsfHighFreeze)) != 0u;
+    bool const lineDeepFreeze =
+        (flags & (viewLowest ? ripple::lsfLowDeepFreeze : ripple::lsfHighDeepFreeze)) != 0u;
     bool const lineDeepFreezePeer =
         (flags & (not viewLowest ? ripple::lsfLowDeepFreeze : ripple::lsfHighDeepFreeze)) != 0u;
 
@@ -140,18 +127,20 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (!expectedLgrInfo.has_value())
+    if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
-    auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+    );
 
     if (not accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
+        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
-    auto const peerAccountID = input.peer ? accountFromStringStrict(*(input.peer)) : std::optional<ripple::AccountID>{};
+    auto const peerAccountID =
+        input.peer ? accountFromStringStrict(*(input.peer)) : std::optional<ripple::AccountID>{};
 
     Output response;
     response.lines.reserve(input.limit);
@@ -173,10 +162,16 @@ AccountLinesHandler::process(AccountLinesHandler::Input const& input, Context co
     };
 
     auto const expectedNext = traverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse
+        *sharedPtrBackend_,
+        *accountID,
+        lgrInfo.seq,
+        input.limit,
+        input.marker,
+        ctx.yield,
+        addToResponse
     );
 
-    if (!expectedNext.has_value())
+    if (not expectedNext.has_value())
         return Error{expectedNext.error()};
 
     auto const nextMarker = expectedNext.value();
@@ -225,7 +220,11 @@ tag_invoke(boost::json::value_to_tag<AccountLinesHandler::Input>, boost::json::v
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountLinesHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountLinesHandler::Output const& output
+)
 {
     using boost::json::value_from;
 

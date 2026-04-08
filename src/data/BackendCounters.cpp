@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/BackendCounters.hpp"
 
 #include "util/Assert.hpp"
@@ -41,7 +22,10 @@ std::vector<std::int64_t> const kHISTOGRAM_BUCKETS{1, 2, 5, 10, 20, 50, 100, 200
 std::int64_t
 durationInMillisecondsSince(std::chrono::steady_clock::time_point const startTime)
 {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+               std::chrono::steady_clock::now() - startTime
+    )
+        .count();
 }
 
 }  // namespace
@@ -144,7 +128,10 @@ BackendCounters::registerReadStarted(std::uint64_t const count)
 }
 
 void
-BackendCounters::registerReadFinished(std::chrono::steady_clock::time_point const startTime, std::uint64_t const count)
+BackendCounters::registerReadFinished(
+    std::chrono::steady_clock::time_point const startTime,
+    std::uint64_t const count
+)
 {
     asyncReadCounters_.registerFinished(count);
     auto const duration = durationInMillisecondsSince(startTime);
@@ -238,7 +225,8 @@ void
 BackendCounters::AsyncOperationCounters::registerError(std::uint64_t count)
 {
     ASSERT(
-        pendingCounter_.get().value() >= static_cast<std::int64_t>(count), "Error operations can't be more than pending"
+        pendingCounter_.get().value() >= static_cast<std::int64_t>(count),
+        "Error operations can't be more than pending"
     );
     pendingCounter_.get() -= count;
     errorCounter_.get() += count;

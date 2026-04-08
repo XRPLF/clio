@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/BackendInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
@@ -82,20 +63,25 @@ parseAuthorizeCredentials(boost::json::array const& jv)
             jo.at(JS(issuer)).is_string(),
             "issuer must be string, should already be checked in AuthorizeCredentialValidator"
         );
-        auto const issuer =
-            ripple::parseBase58<ripple::AccountID>(static_cast<std::string>(jo.at(JS(issuer)).as_string()));
+        auto const issuer = ripple::parseBase58<ripple::AccountID>(
+            static_cast<std::string>(jo.at(JS(issuer)).as_string())
+        );
         ASSERT(
-            issuer.has_value(), "issuer must be present, should already be checked in AuthorizeCredentialValidator."
+            issuer.has_value(),
+            "issuer must be present, should already be checked in AuthorizeCredentialValidator."
         );
 
         ASSERT(
             jo.at(JS(credential_type)).is_string(),
-            "credential_type must be string, should already be checked in AuthorizeCredentialValidator"
+            "credential_type must be string, should already be checked in "
+            "AuthorizeCredentialValidator"
         );
-        auto const credentialType = ripple::strUnHex(static_cast<std::string>(jo.at(JS(credential_type)).as_string()));
+        auto const credentialType =
+            ripple::strUnHex(static_cast<std::string>(jo.at(JS(credential_type)).as_string()));
         ASSERT(
             credentialType.has_value(),
-            "credential_type must be present, should already be checked in AuthorizeCredentialValidator."
+            "credential_type must be present, should already be checked in "
+            "AuthorizeCredentialValidator."
         );
 
         auto credential = ripple::STObject::makeInnerObject(ripple::sfCredential);
@@ -119,7 +105,9 @@ fetchCredentialArray(
     ripple::STArray authCreds;
     std::unordered_set<std::string_view> elems;
     for (auto const& elem : credID.value()) {
-        ASSERT(elem.is_string(), "should already be checked in validators.hpp that elem is a string.");
+        ASSERT(
+            elem.is_string(), "should already be checked in validators.hpp that elem is a string."
+        );
 
         if (elems.contains(elem.as_string()))
             return Error{Status{RippledError::rpcBAD_CREDENTIALS, "duplicates in credentials."}};
@@ -146,12 +134,17 @@ fetchCredentialArray(
         if (credentials::checkExpired(sleCred, info))
             return Error{Status{RippledError::rpcBAD_CREDENTIALS, "credentials are expired"}};
 
-        if (sleCred.getAccountID(ripple::sfSubject) != srcAcc)
-            return Error{Status{RippledError::rpcBAD_CREDENTIALS, "credentials don't belong to the root account"}};
+        if (sleCred.getAccountID(ripple::sfSubject) != srcAcc) {
+            return Error{Status{
+                RippledError::rpcBAD_CREDENTIALS, "credentials don't belong to the root account"
+            }};
+        }
 
         auto credential = ripple::STObject::makeInnerObject(ripple::sfCredential);
         credential.setAccountID(ripple::sfIssuer, sleCred.getAccountID(ripple::sfIssuer));
-        credential.setFieldVL(ripple::sfCredentialType, sleCred.getFieldVL(ripple::sfCredentialType));
+        credential.setFieldVL(
+            ripple::sfCredentialType, sleCred.getFieldVL(ripple::sfCredentialType)
+        );
         authCreds.push_back(std::move(credential));
     }
 

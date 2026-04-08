@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/NFTOffersCommon.hpp"
 
 #include "rpc/Errors.hpp"
@@ -97,7 +78,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
         *sharedPtrBackend_, yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (!expectedLgrInfo.has_value())
+    if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = expectedLgrInfo.value();
@@ -115,11 +96,13 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     if (input.marker) {
         cursor = uint256(input.marker->c_str());
 
-        // We have a start point. Use limit - 1 from the result and use the very last one for the resume.
+        // We have a start point. Use limit - 1 from the result and use the very last one for the
+        // resume.
         auto const sle = [this, &cursor, &lgrInfo, yield]() -> std::shared_ptr<SLE const> {
             auto const key = keylet::nftoffer(cursor).key;
 
-            if (auto const blob = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, yield); blob)
+            if (auto const blob = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, yield);
+                blob)
                 return std::make_shared<SLE const>(SerialIter{blob->data(), blob->size()}, key);
 
             return nullptr;
@@ -139,7 +122,14 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     }
 
     auto result = traverseOwnedNodes(
-        *sharedPtrBackend_, directory, cursor, startHint, lgrInfo.seq, reserve, yield, [&offers](ripple::SLE&& offer) {
+        *sharedPtrBackend_,
+        directory,
+        cursor,
+        startHint,
+        lgrInfo.seq,
+        reserve,
+        yield,
+        [&offers](ripple::SLE&& offer) {
             if (offer.getType() == ripple::ltNFTOKEN_OFFER) {
                 offers.push_back(std::move(offer));
                 return true;
@@ -164,7 +154,11 @@ NFTOffersHandlerBase::iterateOfferDirectory(
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTOffersHandlerBase::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    NFTOffersHandlerBase::Output const& output
+)
 {
     using boost::json::value_from;
 

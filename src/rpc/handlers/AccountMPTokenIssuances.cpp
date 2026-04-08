@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2025, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/AccountMPTokenIssuances.hpp"
 
 #include "rpc/Errors.hpp"
@@ -56,6 +37,7 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
 {
     MPTokenIssuanceResponse issuance;
 
+    issuance.MPTokenIssuanceID = ripple::strHex(sle.key());
     issuance.issuer = ripple::to_string(account);
     issuance.sequence = sle.getFieldU32(ripple::sfSequence);
     auto const flags = sle.getFieldU32(ripple::sfFlags);
@@ -72,6 +54,24 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
     setFlag(issuance.mptCanTrade, ripple::lsfMPTCanTrade);
     setFlag(issuance.mptCanTransfer, ripple::lsfMPTCanTransfer);
     setFlag(issuance.mptCanClawback, ripple::lsfMPTCanClawback);
+
+    if (sle.isFieldPresent(ripple::sfMutableFlags)) {
+        auto const mutableFlags = sle.getFieldU32(ripple::sfMutableFlags);
+
+        auto const setMutableFlag = [&](std::optional<bool>& field, std::uint32_t mask) {
+            if ((mutableFlags & mask) != 0u)
+                field = true;
+        };
+
+        setMutableFlag(issuance.mptCanMutateCanLock, ripple::lsmfMPTCanMutateCanLock);
+        setMutableFlag(issuance.mptCanMutateRequireAuth, ripple::lsmfMPTCanMutateRequireAuth);
+        setMutableFlag(issuance.mptCanMutateCanEscrow, ripple::lsmfMPTCanMutateCanEscrow);
+        setMutableFlag(issuance.mptCanMutateCanTrade, ripple::lsmfMPTCanMutateCanTrade);
+        setMutableFlag(issuance.mptCanMutateCanTransfer, ripple::lsmfMPTCanMutateCanTransfer);
+        setMutableFlag(issuance.mptCanMutateCanClawback, ripple::lsmfMPTCanMutateCanClawback);
+        setMutableFlag(issuance.mptCanMutateMetadata, ripple::lsmfMPTCanMutateMetadata);
+        setMutableFlag(issuance.mptCanMutateTransferFee, ripple::lsmfMPTCanMutateTransferFee);
+    }
 
     if (sle.isFieldPresent(ripple::sfTransferFee))
         issuance.transferFee = sle.getFieldU16(ripple::sfTransferFee);
@@ -98,7 +98,10 @@ AccountMPTokenIssuancesHandler::addMPTokenIssuance(
 }
 
 AccountMPTokenIssuancesHandler::Result
-AccountMPTokenIssuancesHandler::process(AccountMPTokenIssuancesHandler::Input const& input, Context const& ctx) const
+AccountMPTokenIssuancesHandler::process(
+    AccountMPTokenIssuancesHandler::Input const& input,
+    Context const& ctx
+) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountMPTokenIssuances' ledger range must be available");
@@ -106,13 +109,14 @@ AccountMPTokenIssuancesHandler::process(AccountMPTokenIssuancesHandler::Input co
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (!expectedLgrInfo.has_value())
+    if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
-    auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+    );
 
     if (not accountLedgerObject.has_value())
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
@@ -127,10 +131,16 @@ AccountMPTokenIssuancesHandler::process(AccountMPTokenIssuancesHandler::Input co
     };
 
     auto const expectedNext = traverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse
+        *sharedPtrBackend_,
+        *accountID,
+        lgrInfo.seq,
+        input.limit,
+        input.marker,
+        ctx.yield,
+        addToResponse
     );
 
-    if (!expectedNext.has_value())
+    if (not expectedNext.has_value())
         return Error{expectedNext.error()};
 
     auto const nextMarker = expectedNext.value();
@@ -148,7 +158,10 @@ AccountMPTokenIssuancesHandler::process(AccountMPTokenIssuancesHandler::Input co
 }
 
 AccountMPTokenIssuancesHandler::Input
-tag_invoke(boost::json::value_to_tag<AccountMPTokenIssuancesHandler::Input>, boost::json::value const& jv)
+tag_invoke(
+    boost::json::value_to_tag<AccountMPTokenIssuancesHandler::Input>,
+    boost::json::value const& jv
+)
 {
     auto input = AccountMPTokenIssuancesHandler::Input{};
     auto const& jsonObject = jv.as_object();
@@ -174,7 +187,11 @@ tag_invoke(boost::json::value_to_tag<AccountMPTokenIssuancesHandler::Input>, boo
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountMPTokenIssuancesHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountMPTokenIssuancesHandler::Output const& output
+)
 {
     using boost::json::value_from;
 
@@ -201,6 +218,7 @@ tag_invoke(
 )
 {
     auto obj = boost::json::object{
+        {JS(mpt_issuance_id), issuance.MPTokenIssuanceID},
         {JS(issuer), issuance.issuer},
         {JS(sequence), issuance.sequence},
     };
@@ -226,6 +244,15 @@ tag_invoke(
     setIfPresent("mpt_can_trade", issuance.mptCanTrade);
     setIfPresent("mpt_can_transfer", issuance.mptCanTransfer);
     setIfPresent("mpt_can_clawback", issuance.mptCanClawback);
+
+    setIfPresent("mpt_can_mutate_can_lock", issuance.mptCanMutateCanLock);
+    setIfPresent("mpt_can_mutate_require_auth", issuance.mptCanMutateRequireAuth);
+    setIfPresent("mpt_can_mutate_can_escrow", issuance.mptCanMutateCanEscrow);
+    setIfPresent("mpt_can_mutate_can_trade", issuance.mptCanMutateCanTrade);
+    setIfPresent("mpt_can_mutate_can_transfer", issuance.mptCanMutateCanTransfer);
+    setIfPresent("mpt_can_mutate_can_clawback", issuance.mptCanMutateCanClawback);
+    setIfPresent("mpt_can_mutate_metadata", issuance.mptCanMutateMetadata);
+    setIfPresent("mpt_can_mutate_transfer_fee", issuance.mptCanMutateTransferFee);
 
     jv = std::move(obj);
 }

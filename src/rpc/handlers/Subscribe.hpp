@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/AmendmentCenterInterface.hpp"
@@ -65,7 +46,8 @@ public:
         // response of stream "ledger"
         // TODO: use better type than json, this type will be used in the stream as well
         std::optional<boost::json::object> ledger;
-        // books returns nothing by default, if snapshot is true and both is false, offers go to offers list
+        // books returns nothing by default, if snapshot is true and both is false, offers go to
+        // offers list
         // TODO: use better type than json
         std::optional<boost::json::array> offers;
         // if snapshot is true and both is true, reversed book' offers go to asks list
@@ -104,7 +86,7 @@ public:
      * @param subscriptions The subscription manager to use
      */
     SubscribeHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend,
+        std::shared_ptr<BackendInterface> sharedPtrBackend,
         std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
         std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions
     );
@@ -137,7 +119,10 @@ private:
     ) const;
 
     void
-    subscribeToAccounts(std::vector<std::string> const& accounts, feed::SubscriberSharedPtr const& session) const;
+    subscribeToAccounts(
+        std::vector<std::string> const& accounts,
+        feed::SubscriberSharedPtr const& session
+    ) const;
 
     void
     subscribeToAccountsProposed(

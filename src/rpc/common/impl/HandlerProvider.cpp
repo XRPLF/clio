@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/common/impl/HandlerProvider.hpp"
 
 #include "data/AmendmentCenterInterface.hpp"
@@ -88,8 +69,9 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"account_info", {.handler = AccountInfoHandler{backend, amendmentCenter}}},
           {"account_lines", {.handler = AccountLinesHandler{backend}}},
           {"account_mptoken_issuances",
-           {.handler = AccountMPTokenIssuancesHandler{backend}, .isClioOnly = true}},              // clio only
-          {"account_mptokens", {.handler = AccountMPTokensHandler{backend}, .isClioOnly = true}},  // clio only
+           {.handler = AccountMPTokenIssuancesHandler{backend}, .isClioOnly = true}},  // clio only
+          {"account_mptokens",
+           {.handler = AccountMPTokensHandler{backend}, .isClioOnly = true}},  // clio only
           {"account_nfts", {.handler = AccountNFTsHandler{backend}}},
           {"account_objects", {.handler = AccountObjectsHandler{backend}}},
           {"account_offers", {.handler = AccountOffersHandler{backend}}},
@@ -104,21 +86,27 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"ledger", {.handler = LedgerHandler{backend, amendmentCenter}}},
           {"ledger_data", {.handler = LedgerDataHandler{backend}}},
           {"ledger_entry", {.handler = LedgerEntryHandler{backend}}},
-          {"ledger_index", {.handler = LedgerIndexHandler{backend}, .isClioOnly = true}},  // clio only
+          {"ledger_index",
+           {.handler = LedgerIndexHandler{backend}, .isClioOnly = true}},  // clio only
           {"ledger_range", {.handler = LedgerRangeHandler{backend}}},
-          {"mpt_holders", {.handler = MPTHoldersHandler{backend}, .isClioOnly = true}},       // clio only
-          {"nfts_by_issuer", {.handler = NFTsByIssuerHandler{backend}, .isClioOnly = true}},  // clio only
-          {"nft_history", {.handler = NFTHistoryHandler{backend}, .isClioOnly = true}},       // clio only
+          {"mpt_holders",
+           {.handler = MPTHoldersHandler{backend}, .isClioOnly = true}},  // clio only
+          {"nfts_by_issuer",
+           {.handler = NFTsByIssuerHandler{backend}, .isClioOnly = true}},  // clio only
+          {"nft_history",
+           {.handler = NFTHistoryHandler{backend}, .isClioOnly = true}},  // clio only
           {"nft_buy_offers", {.handler = NFTBuyOffersHandler{backend}}},
           {"nft_info", {.handler = NFTInfoHandler{backend}, .isClioOnly = true}},  // clio only
           {"nft_sell_offers", {.handler = NFTSellOffersHandler{backend}}},
           {"noripple_check", {.handler = NoRippleCheckHandler{backend}}},
           {"ping", {.handler = PingHandler{}}},
           {"random", {.handler = RandomHandler{}}},
-          {"server_info", {.handler = ServerInfoHandler{backend, subscriptionManager, balancer, etl, counters}}},
+          {"server_info",
+           {.handler = ServerInfoHandler{backend, subscriptionManager, balancer, etl, counters}}},
           {"transaction_entry", {.handler = TransactionEntryHandler{backend}}},
           {"tx", {.handler = TxHandler{backend, etl}}},
-          {"subscribe", {.handler = SubscribeHandler{backend, amendmentCenter, subscriptionManager}}},
+          {"subscribe",
+           {.handler = SubscribeHandler{backend, amendmentCenter, subscriptionManager}}},
           {"unsubscribe", {.handler = UnsubscribeHandler{subscriptionManager}}},
           {"vault_info", {.handler = VaultInfoHandler{backend}}},
           {"version", {.handler = VersionHandler{config}}},

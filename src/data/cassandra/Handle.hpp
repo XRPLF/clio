@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/cassandra/Error.hpp"
@@ -293,14 +274,18 @@ public:
     execute(std::vector<StatementType> const& statements) const;
 
     /**
-     * @brief Execute a batch of (bound or simple) statements asynchronously with a completion callback.
+     * @brief Execute a batch of (bound or simple) statements asynchronously with a completion
+     * callback.
      *
      * @param statements The statements to execute
      * @param cb The callback to execute when data is ready
      * @return A future that holds onto the callback provided
      */
     [[nodiscard]] FutureWithCallbackType
-    asyncExecute(std::vector<StatementType> const& statements, std::function<void(ResultOrErrorType)>&& cb) const;
+    asyncExecute(
+        std::vector<StatementType> const& statements,
+        std::function<void(ResultOrErrorType)>&& cb
+    ) const;
 
     /**
      * @brief Prepare a statement.
@@ -314,8 +299,8 @@ public:
 };
 
 /**
- * @brief Extracts the results into series of std::tuple<Types...> by creating a simple wrapper with an STL input
- * iterator inside.
+ * @brief Extracts the results into series of std::tuple<Types...> by creating a simple wrapper with
+ * an STL input iterator inside.
  *
  * You can call .begin() and .end() in order to iterate as usual.
  * This also means that you can use it in a range-based for or with some algorithms.

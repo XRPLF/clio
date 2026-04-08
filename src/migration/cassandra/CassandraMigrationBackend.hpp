@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/CassandraBackend.hpp"
@@ -35,8 +16,8 @@
 namespace migration::cassandra {
 
 /**
- * @brief The backend for the migration. It is a subclass of the CassandraBackend and provides the migration specific
- * functionalities.
+ * @brief The backend for the migration. It is a subclass of the CassandraBackend and provides the
+ * migration specific functionalities.
  */
 class CassandraMigrationBackend : public data::cassandra::CassandraBackend {
     util::Logger log_{"Migration"};
@@ -81,22 +62,23 @@ public:
         LOG(log_.debug()) << "Travsering token range: " << start << " - " << end
                           << " ; table: " << TableDesc::kTABLE_NAME;
         // for each table we only have one prepared statement
-        static auto kSTATEMENT_PREPARED =
-            migrationSchema_.getPreparedFullScanStatement(handle_, TableDesc::kTABLE_NAME, TableDesc::kPARTITION_KEY);
+        static auto kSTATEMENT_PREPARED = migrationSchema_.getPreparedFullScanStatement(
+            handle_, TableDesc::kTABLE_NAME, TableDesc::kPARTITION_KEY
+        );
 
         auto const statement = kSTATEMENT_PREPARED.bind(start, end);
 
         auto const res = this->executor_.read(yield, statement);
         if (not res) {
-            LOG(log_.error()) << "Could not fetch data from table: " << TableDesc::kTABLE_NAME << " range: " << start
-                              << " - " << end << ";" << res.error();
+            LOG(log_.error()) << "Could not fetch data from table: " << TableDesc::kTABLE_NAME
+                              << " range: " << start << " - " << end << ";" << res.error();
             return;
         }
 
         auto const& results = res.value();
         if (not results.hasRows()) {
-            LOG(log_.debug()) << "No rows returned  - table: " << TableDesc::kTABLE_NAME << " range: " << start << " - "
-                              << end;
+            LOG(log_.debug()) << "No rows returned  - table: " << TableDesc::kTABLE_NAME
+                              << " range: " << start << " - " << end;
             return;
         }
 

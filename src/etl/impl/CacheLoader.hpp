@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/BackendInterface.hpp"
@@ -63,14 +44,18 @@ public:
     template <typename CtxType>
     CacheLoaderImpl(
         CtxType& ctx,
-        std::shared_ptr<BackendInterface> const& backend,
+        std::shared_ptr<BackendInterface> backend,
         CacheType& cache,
         uint32_t const seq,
         std::size_t const numCacheMarkers,
         std::size_t const cachePageFetchSize,
         std::vector<CursorPair> const& cursors
     )
-        : ctx_{ctx}, backend_{backend}, cache_{std::ref(cache)}, queue_{cursors.size()}, remaining_{cursors.size()}
+        : ctx_{ctx}
+        , backend_{std::move(backend)}
+        , cache_{std::ref(cache)}
+        , queue_{cursors.size()}
+        , remaining_{cursors.size()}
     {
         std::ranges::for_each(cursors, [this](auto const& cursor) { queue_.push(cursor); });
         load(seq, numCacheMarkers, cachePageFetchSize);
@@ -123,19 +108,25 @@ private:
                 LOG(log_.debug()) << "Starting a cursor: " << ripple::strHex(start);
 
                 while (not token.isStopRequested() and not cache_.get().isDisabled()) {
-                    auto res = data::retryOnTimeout([this, seq, cachePageFetchSize, &start, token]() {
-                        return backend_->fetchLedgerPage(start, seq, cachePageFetchSize, false, token);
-                    });
+                    auto res =
+                        data::retryOnTimeout([this, seq, cachePageFetchSize, &start, token]() {
+                            return backend_->fetchLedgerPage(
+                                start, seq, cachePageFetchSize, false, token
+                            );
+                        });
 
                     cache_.get().update(res.objects, seq, true);
 
                     if (not res.cursor or res.cursor > end) {
                         if (--remaining_ <= 0) {
                             auto endTime = std::chrono::steady_clock::now();
-                            auto duration = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime_);
+                            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+                                endTime - startTime_
+                            );
 
-                            LOG(log_.info()) << "Finished loading cache. Cache size = " << cache_.get().size()
-                                             << ". Took " << duration.count() << " seconds";
+                            LOG(log_.info())
+                                << "Finished loading cache. Cache size = " << cache_.get().size()
+                                << ". Took " << duration.count() << " seconds";
 
                             cache_.get().setFull();
                         } else {

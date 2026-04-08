@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2025, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "web/dosguard/Weights.hpp"
 
 #include "rpc/JS.hpp"
@@ -37,7 +18,8 @@
 namespace web::dosguard {
 
 Weights::Weights(size_t defaultWeight, std::unordered_map<std::string, Entry> weights)
-    : defaultWeight_(defaultWeight), weights_(std::move_iterator(weights.begin()), std::move_iterator(weights.end()))
+    : defaultWeight_(defaultWeight)
+    , weights_(std::move_iterator(weights.begin()), std::move_iterator(weights.end()))
 {
 }
 
@@ -66,8 +48,8 @@ Weights::requestWeight(boost::json::object const& request) const
         return defaultWeight_;
     }
 
-    std::string_view const cmd =
-        request.contains(JS(method)) ? request.at(JS(method)).as_string() : request.at(JS(command)).as_string();
+    std::string_view const cmd = request.contains(JS(method)) ? request.at(JS(method)).as_string()
+                                                              : request.at(JS(command)).as_string();
 
     auto it = weights_.find(cmd);
     if (it == weights_.end()) {

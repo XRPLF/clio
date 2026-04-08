@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/Assert.hpp"
@@ -38,7 +19,8 @@ namespace util {
 
 /**
  * @brief A class to repeat some action at a regular interval
- * @note io_context must be stopped before the Repeat object is destroyed. Otherwise it is undefined behavior
+ * @note io_context must be stopped before the Repeat object is destroyed. Otherwise it is undefined
+ * behavior
  */
 class Repeat {
     struct Control {
@@ -57,7 +39,8 @@ class Repeat {
 public:
     /**
      * @brief Construct a new Repeat object
-     * @note The `ctx` parameter is `auto` so that this util supports `strand` and `thread_pool` as well as `io_context`
+     * @note The `ctx` parameter is `auto` so that this util supports `strand` and `thread_pool` as
+     * well as `io_context`
      *
      * @param ctx The io_context-like object to use
      */
@@ -74,7 +57,8 @@ public:
 
     /**
      * @brief Stop repeating
-     * @note This method will block to ensure the repeating is actually stopped. But blocking time should be very short.
+     * @note This method will block to ensure the repeating is actually stopped. But blocking time
+     * should be very short.
      */
     void
     stop();
@@ -99,27 +83,35 @@ public:
 private:
     template <std::invocable Action>
     static void
-    startImpl(std::shared_ptr<Control> control, std::chrono::steady_clock::duration interval, Action&& action)
+    startImpl(
+        std::shared_ptr<Control> control,
+        std::chrono::steady_clock::duration interval,
+        Action&& action
+    )
     {
-        boost::asio::post(control->strand, [control, interval, action = std::forward<Action>(action)]() mutable {
-            if (control->stopping) {
-                control->semaphore.release();
-                return;
-            }
-
-            control->timer.expires_after(interval);
-            control->timer.async_wait(
-                [control, interval, action = std::forward<Action>(action)](auto const& ec) mutable {
-                    if (ec or control->stopping) {
-                        control->semaphore.release();
-                        return;
-                    }
-                    action();
-
-                    startImpl(std::move(control), interval, std::forward<Action>(action));
+        boost::asio::post(
+            control->strand, [control, interval, action = std::forward<Action>(action)]() mutable {
+                if (control->stopping) {
+                    control->semaphore.release();
+                    return;
                 }
-            );
-        });
+
+                control->timer.expires_after(interval);
+                control->timer.async_wait(
+                    [control,
+                     interval,
+                     action = std::forward<Action>(action)](auto const& ec) mutable {
+                        if (ec or control->stopping) {
+                            control->semaphore.release();
+                            return;
+                        }
+                        action();
+
+                        startImpl(std::move(control), interval, std::forward<Action>(action));
+                    }
+                );
+            }
+        );
     }
 };
 

@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "util/requests/WsConnection.hpp"
 
 #include "util/log/Logger.hpp"
@@ -66,7 +47,11 @@ WsConnectionBuilder::addHeader(HttpHeader header)
 WsConnectionBuilder&
 WsConnectionBuilder::addHeaders(std::vector<HttpHeader> headers)
 {
-    headers_.insert(headers_.end(), std::make_move_iterator(headers.begin()), std::make_move_iterator(headers.end()));
+    headers_.insert(
+        headers_.end(),
+        std::make_move_iterator(headers.begin()),
+        std::make_move_iterator(headers.end())
+    );
     return *this;
 }
 
@@ -103,7 +88,9 @@ WsConnectionBuilder::sslConnect(asio::yield_context yield) const
     if (!SSL_set_tlsext_host_name(streamData->stream.next_layer().native_handle(), host_.c_str())) {
 #pragma GCC diagnostic pop
         beast::error_code errorCode;
-        errorCode.assign(static_cast<int>(::ERR_get_error()), beast::net::error::get_ssl_category());
+        errorCode.assign(
+            static_cast<int>(::ERR_get_error()), beast::net::error::get_ssl_category()
+        );
         return std::unexpected{RequestError{"SSL setup failed", errorCode}};
     }
     return connectImpl(std::move(streamData).value(), yield);
@@ -162,7 +149,8 @@ WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_contex
             return std::unexpected{RequestError{"SSL handshake error", errorCode}};
     }
 
-    // Turn off the timeout on the tcp_stream, because the websocket stream has its own timeout system
+    // Turn off the timeout on the tcp_stream, because the websocket stream has its own timeout
+    // system
     beast::get_lowest_layer(ws).expires_never();
 
     auto wsTimeout = websocket::stream_base::timeout::suggested(beast::role_type::client);

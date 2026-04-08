@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/AccountObjects.hpp"
 
 #include "rpc/Errors.hpp"
@@ -59,16 +40,17 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (!expectedLgrInfo.has_value())
+    if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
-    auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+    );
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
+        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     auto typeFilter = std::optional<std::vector<ripple::LedgerEntryType>>{};
 
@@ -91,18 +73,26 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
     Output response;
     auto const addToResponse = [&](ripple::SLE&& sle) {
         if (not typeFilter or
-            std::find(std::begin(typeFilter.value()), std::end(typeFilter.value()), sle.getType()) !=
-                std::end(typeFilter.value())) {
+            std::find(
+                std::begin(typeFilter.value()), std::end(typeFilter.value()), sle.getType()
+            ) != std::end(typeFilter.value())) {
             response.accountObjects.push_back(std::move(sle));
         }
         return true;
     };
 
     auto const expectedNext = traverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse, true
+        *sharedPtrBackend_,
+        *accountID,
+        lgrInfo.seq,
+        input.limit,
+        input.marker,
+        ctx.yield,
+        addToResponse,
+        true
     );
 
-    if (!expectedNext.has_value())
+    if (not expectedNext.has_value())
         return Error{expectedNext.error()};
 
     response.ledgerHash = ripple::strHex(lgrInfo.hash);
@@ -119,7 +109,11 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountObjectsHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountObjectsHandler::Output const& output
+)
 {
     auto objects = boost::json::array{};
     std::ranges::transform(
@@ -160,8 +154,9 @@ tag_invoke(boost::json::value_to_tag<AccountObjectsHandler::Input>, boost::json:
     }
 
     if (jsonObject.contains(JS(type))) {
-        input.type =
-            util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(boost::json::value_to<std::string>(jv.at(JS(type))));
+        input.type = util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(
+            boost::json::value_to<std::string>(jv.at(JS(type)))
+        );
     }
 
     if (jsonObject.contains(JS(limit)))

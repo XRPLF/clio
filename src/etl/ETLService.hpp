@@ -1,25 +1,7 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2025, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "data/LedgerCacheLoadingState.hpp"
 #include "data/Types.hpp"
 #include "etl/CacheLoaderInterface.hpp"
 #include "etl/CacheUpdaterInterface.hpp"
@@ -52,6 +34,7 @@
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/async/AnyExecutionContext.hpp"
 #include "util/async/AnyOperation.hpp"
+#include "util/async/AnyStrand.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/log/Logger.hpp"
 
@@ -69,27 +52,29 @@
 #include <xrpl/protocol/TxFormats.h>
 #include <xrpl/protocol/TxMeta.h>
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>
-#include <string>
 
 namespace etl {
 
 /**
- * @brief This class is responsible for continuously extracting data from a p2p node, and writing that data to the
- * databases.
+ * @brief This class is responsible for continuously extracting data from a p2p node, and writing
+ * that data to the databases.
  *
- * Usually, multiple different processes share access to the same network accessible databases, in which case only one
- * such process is performing ETL and writing to the database. The other processes simply monitor the database for new
- * ledgers, and publish those ledgers to the various subscription streams. If a monitoring process determines that the
- * ETL writer has failed (no new ledgers written for some time), the process will attempt to become the ETL writer.
+ * Usually, multiple different processes share access to the same network accessible databases, in
+ * which case only one such process is performing ETL and writing to the database. The other
+ * processes simply monitor the database for new ledgers, and publish those ledgers to the various
+ * subscription streams. If a monitoring process determines that the ETL writer has failed (no new
+ * ledgers written for some time), the process will attempt to become the ETL writer.
  *
- * If there are multiple monitoring processes that try to become the ETL writer at the same time, one will win out, and
- * the others will fall back to monitoring/publishing. In this sense, this class dynamically transitions from monitoring
- * to writing and from writing to monitoring, based on the activity of other processes running on different machines.
+ * If there are multiple monitoring processes that try to become the ETL writer at the same time,
+ * one will win out, and the others will fall back to monitoring/publishing. In this sense, this
+ * class dynamically transitions from monitoring to writing and from writing to monitoring, based on
+ * the activity of other processes running on different machines.
  */
 class ETLService : public ETLServiceInterface {
     util::Logger log_{"ETL"};
@@ -117,6 +102,9 @@ class ETLService : public ETLServiceInterface {
 
     boost::signals2::scoped_connection monitorNewSeqSubscription_;
     boost::signals2::scoped_connection monitorDbStalledSubscription_;
+    boost::signals2::scoped_connection systemStateWriteCommandSubscription_;
+    util::async::AnyStrand writeCommandStrand_;
+    std::atomic<size_t> runningWriteCommandHandlers_{0};
 
     std::optional<util::async::AnyOperation<void>> mainLoop_;
 
@@ -127,6 +115,8 @@ public:
      * Creates and runs the ETL service.
      *
      * @param config The configuration to use
+     * @param state The system state tracking object
+     * @param cacheLoadingState State controlling whether this node is allowed to load the cache
      * @param ctx Execution context for asynchronous operations
      * @param backend BackendInterface implementation
      * @param subscriptions Subscription manager
@@ -137,6 +127,8 @@ public:
     static std::shared_ptr<ETLServiceInterface>
     makeETLService(
         util::config::ClioConfigDefinition const& config,
+        std::shared_ptr<SystemState> state,
+        std::unique_ptr<data::LedgerCacheLoadingStateInterface const> cacheLoadingState,
         util::async::AnyExecutionContext ctx,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
@@ -160,7 +152,7 @@ public:
      * @param initialLoadObserver The observer for initial data loading
      * @param taskManagerProvider The provider of the task manager instance
      * @param monitorProvider The provider of the monitor instance
-     * @param state System state tracking object
+     * @param state The system state tracking object
      */
     ETLService(
         util::async::AnyExecutionContext ctx,
@@ -205,6 +197,12 @@ public:
 private:
     std::optional<data::LedgerRange>
     loadInitialLedgerIfNeeded();
+
+    [[nodiscard]] uint32_t
+    syncCacheWithDb();
+
+    void
+    updateCache(uint32_t seq);
 
     void
     startMonitor(uint32_t seq);

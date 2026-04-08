@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "util/MockAssert.hpp"
 #include "util/Taggable.hpp"
 #include "util/build/Build.hpp"
@@ -72,7 +53,9 @@ protected:
 
 TEST_F(ResponseTest, intoHttpResponse)
 {
-    Request const request{http::request<http::string_body>{http::verb::post, "/", httpVersion_, "some message"}};
+    Request const request{
+        http::request<http::string_body>{http::verb::post, "/", httpVersion_, "some message"}
+    };
     std::string const responseMessage = "response message";
 
     Response response{responseStatus_, responseMessage, request};
@@ -87,12 +70,17 @@ TEST_F(ResponseTest, intoHttpResponse)
     EXPECT_EQ(httpResponse[http::field::content_type], "text/html");
 
     ASSERT_GT(httpResponse.count(http::field::content_type), 0);
-    EXPECT_EQ(httpResponse[http::field::server], fmt::format("clio-server-{}", util::build::getClioVersionString()));
+    EXPECT_EQ(
+        httpResponse[http::field::server],
+        fmt::format("clio-server-{}", util::build::getClioVersionString())
+    );
 }
 
 TEST_F(ResponseTest, intoHttpResponseJson)
 {
-    Request const request{http::request<http::string_body>{http::verb::post, "/", httpVersion_, "some message"}};
+    Request const request{
+        http::request<http::string_body>{http::verb::post, "/", httpVersion_, "some message"}
+    };
     boost::json::object const responseMessage{{"key", "value"}};
 
     Response response{responseStatus_, responseMessage, request};
@@ -107,7 +95,10 @@ TEST_F(ResponseTest, intoHttpResponseJson)
     EXPECT_EQ(httpResponse[http::field::content_type], "application/json");
 
     ASSERT_GT(httpResponse.count(http::field::content_type), 0);
-    EXPECT_EQ(httpResponse[http::field::server], fmt::format("clio-server-{}", util::build::getClioVersionString()));
+    EXPECT_EQ(
+        httpResponse[http::field::server],
+        fmt::format("clio-server-{}", util::build::getClioVersionString())
+    );
 }
 
 TEST_F(ResponseTest, asConstBuffer)
@@ -138,10 +129,12 @@ TEST_F(ResponseTest, asConstBufferJson)
 
 TEST_F(ResponseTest, createFromStringAndConnection)
 {
-    util::TagDecoratorFactory const tagDecoratorFactory{
-        ClioConfigDefinition{{"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
+    util::TagDecoratorFactory const tagDecoratorFactory{ClioConfigDefinition{
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+    }};
+    StrictMockConnection const connection{
+        "some ip", boost::beast::flat_buffer{}, tagDecoratorFactory
     };
-    StrictMockConnection const connection{"some ip", boost::beast::flat_buffer{}, tagDecoratorFactory};
     std::string const responseMessage = "response message";
 
     EXPECT_CALL(connection, wasUpgraded()).WillOnce(testing::Return(false));
@@ -157,10 +150,12 @@ TEST_F(ResponseTest, createFromStringAndConnection)
 
 TEST_F(ResponseTest, createFromJsonAndConnection)
 {
-    util::TagDecoratorFactory const tagDecoratorFactory{
-        ClioConfigDefinition{{"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
+    util::TagDecoratorFactory const tagDecoratorFactory{ClioConfigDefinition{
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+    }};
+    StrictMockConnection const connection{
+        "some ip", boost::beast::flat_buffer{}, tagDecoratorFactory
     };
-    StrictMockConnection const connection{"some ip", boost::beast::flat_buffer{}, tagDecoratorFactory};
     boost::json::object const responseMessage{{"key", "value"}};
 
     EXPECT_CALL(connection, wasUpgraded()).WillOnce(testing::Return(false));
@@ -176,7 +171,9 @@ TEST_F(ResponseTest, createFromJsonAndConnection)
 
 TEST_F(ResponseTest, setMessageString_HttpResponse)
 {
-    Request const request{http::request<http::string_body>{http::verb::post, "/", httpVersion_, "some request"}};
+    Request const request{
+        http::request<http::string_body>{http::verb::post, "/", httpVersion_, "some request"}
+    };
     Response response{boost::beast::http::status::ok, "message", request};
 
     std::string const newMessage = "new message";
@@ -202,7 +199,9 @@ TEST_F(ResponseTest, setMessageString_WsResponse)
 
 TEST_F(ResponseTest, setMessageJson_HttpResponse)
 {
-    Request const request{http::request<http::string_body>{http::verb::post, "/", httpVersion_, "some request"}};
+    Request const request{
+        http::request<http::string_body>{http::verb::post, "/", httpVersion_, "some request"}
+    };
     Response response{boost::beast::http::status::ok, "message", request};
 
     boost::json::object const newMessage{{"key", "value"}};

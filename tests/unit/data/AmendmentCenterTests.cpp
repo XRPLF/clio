@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/AmendmentCenter.hpp"
 #include "data/Types.hpp"
 #include "util/AsioContextTestFixture.hpp"
@@ -32,8 +13,8 @@
 #include <xrpl/protocol/Indexes.h>
 
 #include <algorithm>
+#include <functional>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -41,31 +22,41 @@ using namespace data;
 
 constexpr auto kSEQ = 30u;
 
-struct AmendmentCenterTest : util::prometheus::WithPrometheus, MockBackendTest, SyncAsioContextTest {
+struct AmendmentCenterTest : util::prometheus::WithPrometheus,
+                             MockBackendTest,
+                             SyncAsioContextTest {
     AmendmentCenter amendmentCenter{backend_};
 };
 
-// This is a safety net test that will fail anytime we built Clio against a new libXRPL that added some Amendment that
-// we forgot to register in data::Amendments.
+// This is a safety net test that will fail anytime we built Clio against a new libXRPL that added
+// some Amendment that we forgot to register in data::Amendments.
 TEST_F(AmendmentCenterTest, AllAmendmentsFromLibXRPLAreSupported)
 {
     for (auto const& [name, _] : ripple::allAmendments()) {
-        EXPECT_TRUE(amendmentCenter.isSupported(name)) << "XRPL amendment not supported by Clio: " << name;
+        EXPECT_TRUE(amendmentCenter.isSupported(name))
+            << "XRPL amendment not supported by Clio: " << name;
     }
 
-    ASSERT_EQ(amendmentCenter.getSupported().size(), ripple::allAmendments().size());
-    ASSERT_EQ(amendmentCenter.getAll().size(), ripple::allAmendments().size());
+    // We support at least all the amendments currently exposed by libXRPL
+    ASSERT_GE(amendmentCenter.getSupported().size(), ripple::allAmendments().size());
+    ASSERT_GE(amendmentCenter.getAll().size(), ripple::allAmendments().size());
 }
 
 TEST_F(AmendmentCenterTest, Accessors)
 {
     {
         auto const am = amendmentCenter.getAmendment("DisallowIncoming");
-        EXPECT_EQ(am.feature, ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"));
+        EXPECT_EQ(
+            am.feature,
+            ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF")
+        );
     }
     {
         auto const am = amendmentCenter["DisallowIncoming"];
-        EXPECT_EQ(am.feature, ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"));
+        EXPECT_EQ(
+            am.feature,
+            ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF")
+        );
     }
 
     auto const a = amendmentCenter[Amendments::Flow];
@@ -94,7 +85,9 @@ TEST_F(AmendmentCenterTest, IsMultipleEnabled)
         .WillOnce(testing::Return(amendments.getSerializer().peekData()));
 
     runSpawn([this](auto yield) {
-        std::vector<data::AmendmentKey> const keys{"fixUniversalNumber", "unknown", "ImmediateOfferKilled"};
+        std::vector<data::AmendmentKey> const keys{
+            "fixUniversalNumber", "unknown", "ImmediateOfferKilled"
+        };
         auto const result = amendmentCenter.isEnabled(yield, keys, kSEQ);
 
         EXPECT_EQ(result.size(), keys.size());
@@ -104,16 +97,13 @@ TEST_F(AmendmentCenterTest, IsMultipleEnabled)
     });
 }
 
-TEST_F(AmendmentCenterTest, IsEnabledThrowsWhenUnavailable)
+TEST_F(AmendmentCenterTest, IsEnabledReturnsFalseWhenAmendmentsLedgerObjectUnavailable)
 {
     EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amendments().key, kSEQ, testing::_))
         .WillOnce(testing::Return(std::nullopt));
 
     runSpawn([this](auto yield) {
-        EXPECT_THROW(
-            { [[maybe_unused]] auto const result = amendmentCenter.isEnabled(yield, "irrelevant", kSEQ); },
-            std::runtime_error
-        );
+        EXPECT_NO_THROW(EXPECT_FALSE(amendmentCenter.isEnabled(yield, "irrelevant", kSEQ)));
     });
 }
 
@@ -123,7 +113,24 @@ TEST_F(AmendmentCenterTest, IsEnabledReturnsFalseWhenNoAmendments)
     EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amendments().key, kSEQ, testing::_))
         .WillOnce(testing::Return(amendments.getSerializer().peekData()));
 
-    runSpawn([this](auto yield) { EXPECT_FALSE(amendmentCenter.isEnabled(yield, "irrelevant", kSEQ)); });
+    runSpawn([this](auto yield) {
+        EXPECT_FALSE(amendmentCenter.isEnabled(yield, "irrelevant", kSEQ));
+    });
+}
+
+TEST_F(AmendmentCenterTest, IsEnabledReturnsVectorOfFalseWhenAmendmentsLedgerObjectUnavailable)
+{
+    EXPECT_CALL(*backend_, doFetchLedgerObject(ripple::keylet::amendments().key, kSEQ, testing::_))
+        .WillOnce(testing::Return(std::nullopt));
+
+    runSpawn([this](auto yield) {
+        std::vector<data::AmendmentKey> const keys{"fixUniversalNumber", "ImmediateOfferKilled"};
+        std::vector<bool> vec;
+        EXPECT_NO_THROW(vec = amendmentCenter.isEnabled(yield, keys, kSEQ));
+
+        EXPECT_EQ(vec.size(), keys.size());
+        EXPECT_TRUE(std::ranges::all_of(vec, std::logical_not<>{}));
+    });
 }
 
 TEST_F(AmendmentCenterTest, IsEnabledReturnsVectorOfFalseWhenNoAmendments)
@@ -141,6 +148,32 @@ TEST_F(AmendmentCenterTest, IsEnabledReturnsVectorOfFalseWhenNoAmendments)
     });
 }
 
+TEST_F(AmendmentCenterTest, DeletedLibXRPLAmendmentIsNotKnownToLibXRPL)
+{
+    // OwnerPaysFee was removed from libXRPL in 2.6.0; confirm it's not present upstream
+    EXPECT_FALSE(ripple::allAmendments().contains(std::string{Amendments::OwnerPaysFee}));
+}
+
+TEST_F(AmendmentCenterTest, DeletedLibXRPLAmendmentIsPresentInGetAllWithCorrectFlags)
+{
+    auto const& all = amendmentCenter.getAll();
+    auto const it = std::ranges::find(all, std::string{Amendments::OwnerPaysFee}, &Amendment::name);
+
+    ASSERT_NE(
+        it, all.end()
+    ) << "OwnerPaysFee must be present in getAll() even after libXRPL deleted it";
+    EXPECT_FALSE(it->isSupportedByXRPL);
+    EXPECT_TRUE(it->isSupportedByClio);
+    EXPECT_TRUE(it->isRetired);
+}
+
+TEST_F(AmendmentCenterTest, DeletedLibXRPLAmendmentIsSupportedByClio)
+{
+    // Clio still registers OwnerPaysFee so isSupported() and getSupported() must include it
+    EXPECT_TRUE(amendmentCenter.isSupported(Amendments::OwnerPaysFee));
+    EXPECT_TRUE(amendmentCenter.getSupported().contains(std::string{Amendments::OwnerPaysFee}));
+}
+
 TEST(AmendmentTest, GenerateAmendmentId)
 {
     // https://xrpl.org/known-amendments.html#disallowincoming refer to the published id
@@ -154,7 +187,9 @@ struct AmendmentCenterAssertTest : common::util::WithMockAssert, AmendmentCenter
 
 TEST_F(AmendmentCenterAssertTest, GetInvalidAmendmentAsserts)
 {
-    EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = amendmentCenter.getAmendment("invalidAmendmentKey"); });
+    EXPECT_CLIO_ASSERT_FAIL({
+        [[maybe_unused]] auto _ = amendmentCenter.getAmendment("invalidAmendmentKey");
+    });
     EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto _ = amendmentCenter["invalidAmendmentKey"]; });
 }
 
@@ -176,8 +211,12 @@ TEST_F(AmendmentKeyTest, Convertible)
         ripple::uint256 const k1 = first;
         ripple::uint256 const k2 = second;
 
-        EXPECT_EQ(k1, ripple::uint256{"7E365F775657DC0EB960E6295A1F44B3F67479F54D5D12C5D87E6DB234F072E3"});
-        EXPECT_EQ(k2, ripple::uint256{"B4F33541E0E2FC2F7AA17D2D2E6A9B424809123485251D3413E91CC462309772"});
+        EXPECT_EQ(
+            k1, ripple::uint256{"7E365F775657DC0EB960E6295A1F44B3F67479F54D5D12C5D87E6DB234F072E3"}
+        );
+        EXPECT_EQ(
+            k2, ripple::uint256{"B4F33541E0E2FC2F7AA17D2D2E6A9B424809123485251D3413E91CC462309772"}
+        );
     });
 }
 

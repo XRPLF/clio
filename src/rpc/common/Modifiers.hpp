@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "rpc/Errors.hpp"
@@ -99,7 +80,8 @@ struct ToLower final {
         if (not value.as_object().at(key).is_string())
             return {};  // ignore for non-string types
 
-        value.as_object()[key] = util::toLower(boost::json::value_to<std::string>(value.as_object().at(key)));
+        value.as_object()[key] =
+            util::toLower(boost::json::value_to<std::string>(value.as_object().at(key)));
         return {};
     }
 };
@@ -163,7 +145,8 @@ public:
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the tested value from the outer object
-     * @return Any compatible user-provided error if modify/verify failed; otherwise no error is returned
+     * @return Any compatible user-provided error if modify/verify failed; otherwise no error is
+     * returned
      */
     [[nodiscard]] MaybeError
     modify(boost::json::value& value, std::string_view key) const

@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/Types.hpp"
@@ -64,13 +45,21 @@ getAccountKey(ripple::AccountID const& acc);
  * Create a simple ledgerHeader object with only hash and seq
  */
 [[nodiscard]] ripple::LedgerHeader
-createLedgerHeader(std::string_view ledgerHash, ripple::LedgerIndex seq, std::optional<uint32_t> age = std::nullopt);
+createLedgerHeader(
+    std::string_view ledgerHash,
+    ripple::LedgerIndex seq,
+    std::optional<uint32_t> age = std::nullopt
+);
 
 /*
  * Create a simple ledgerHeader object with hash, seq and unix timestamp
  */
 [[nodiscard]] ripple::LedgerHeader
-createLedgerHeaderWithUnixTime(std::string_view ledgerHash, ripple::LedgerIndex seq, uint64_t closeTimeUnixStamp);
+createLedgerHeaderWithUnixTime(
+    std::string_view ledgerHash,
+    ripple::LedgerIndex seq,
+    uint64_t closeTimeUnixStamp
+);
 
 /*
  * Create a Legacy (pre XRPFees amendment) FeeSetting ledger object
@@ -111,7 +100,12 @@ createLegacyFeeSettingBlob(
  * Create a FeeSetting ledger object and return its blob
  */
 ripple::Blob
-createFeeSettingBlob(ripple::STAmount base, ripple::STAmount reserveInc, ripple::STAmount reserveBase, uint32_t flag);
+createFeeSettingBlob(
+    ripple::STAmount base,
+    ripple::STAmount reserveInc,
+    ripple::STAmount reserveBase,
+    uint32_t flag
+);
 
 /*
  * Create a payment transaction object
@@ -432,7 +426,12 @@ createChainOwnedCreateAccountClaimId(
 );
 
 void
-ammAddVoteSlot(ripple::STObject& amm, ripple::AccountID const& accountId, uint16_t tradingFee, uint32_t voteWeight);
+ammAddVoteSlot(
+    ripple::STObject& amm,
+    ripple::AccountID const& accountId,
+    uint16_t tradingFee,
+    uint32_t voteWeight
+);
 
 void
 ammSetAuctionSlot(
@@ -445,7 +444,12 @@ ammSetAuctionSlot(
 );
 
 [[nodiscard]] ripple::STObject
-createDidObject(std::string_view accountId, std::string_view didDoc, std::string_view uri, std::string_view data);
+createDidObject(
+    std::string_view accountId,
+    std::string_view didDoc,
+    std::string_view uri,
+    std::string_view data
+);
 
 [[nodiscard]] ripple::Currency
 createLptCurrency(std::string_view assetCurrency, std::string_view asset2Currency);
@@ -461,7 +465,8 @@ createMptIssuanceObject(
     std::optional<std::uint8_t> assetScale = std::nullopt,
     std::optional<std::uint64_t> maxAmount = std::nullopt,
     std::optional<std::uint64_t> lockedAmount = std::nullopt,
-    std::optional<std::string_view> domainId = std::nullopt
+    std::optional<std::string_view> domainId = std::nullopt,
+    std::optional<std::uint32_t> mutableFlags = std::nullopt
 );
 
 [[nodiscard]] ripple::STObject
@@ -566,7 +571,10 @@ createCredentialObject(
 );
 
 [[nodiscard]] ripple::STArray
-createAuthCredentialArray(std::vector<std::string_view> issuer, std::vector<std::string_view> credType);
+createAuthCredentialArray(
+    std::vector<std::string_view> issuer,
+    std::vector<std::string_view> credType
+);
 
 [[nodiscard]] ripple::STObject
 createVault(
@@ -583,3 +591,26 @@ createVault(
 
 [[nodiscard]] ripple::Blob
 createDelegateBlob(std::string_view owner, std::string_view delegate);
+
+[[nodiscard]] ripple::STObject
+createLoanBroker(
+    std::string_view owner,
+    std::string_view account,
+    ripple::LedgerIndex seq,
+    ripple::uint256 vaultID,
+    uint32_t loanSequence,
+    ripple::uint256 previousTxId,
+    uint32_t previousTxSeq
+);
+
+[[nodiscard]] ripple::STObject
+createLoan(
+    std::string_view borrower,
+    ripple::uint256 loanBrokerID,
+    uint32_t loanSequence,
+    uint32_t startDate,
+    uint32_t paymentInterval,
+    int64_t periodicPaymentValue,
+    ripple::uint256 previousTxId,
+    uint32_t previousTxSeq
+);

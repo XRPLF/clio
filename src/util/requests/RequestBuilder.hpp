@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/log/Logger.hpp"
@@ -110,8 +91,9 @@ public:
     /**
      * @brief Perform a GET request with SSL asynchronously
      *
-     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple threads. But it is
-     * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
+     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple
+     * threads. But it is fine to call only get() or only post() of the same RequestBuilder from
+     * multiple threads.
      *
      * @param yield yield context
      * @return Expected response or error
@@ -122,8 +104,9 @@ public:
     /**
      * @brief Perform a GET request without SSL asynchronously
      *
-     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple threads. But it is
-     * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
+     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple
+     * threads. But it is fine to call only get() or only post() of the same RequestBuilder from
+     * multiple threads.
      *
      * @param yield yield context
      * @return Expected response or error
@@ -132,11 +115,12 @@ public:
     getPlain(boost::asio::yield_context yield);
 
     /**
-     * @brief Perform a GET request asynchronously. The SSL will be used first, if it fails, the plain connection will
-     * be used.
+     * @brief Perform a GET request asynchronously. The SSL will be used first, if it fails, the
+     * plain connection will be used.
      *
-     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple threads. But it is
-     * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
+     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple
+     * threads. But it is fine to call only get() or only post() of the same RequestBuilder from
+     * multiple threads.
      *
      * @param yield yield context
      * @return Expected response or error
@@ -147,8 +131,9 @@ public:
     /**
      * @brief Perform a POST request with SSL asynchronously
      *
-     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple threads. But it is
-     * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
+     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple
+     * threads. But it is fine to call only get() or only post() of the same RequestBuilder from
+     * multiple threads.
      *
      * @param yield yield context
      * @return Expected response or error
@@ -159,8 +144,9 @@ public:
     /**
      * @brief Perform a POST request without SSL asynchronously
      *
-     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple threads. But it is
-     * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
+     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple
+     * threads. But it is fine to call only get() or only post() of the same RequestBuilder from
+     * multiple threads.
      *
      * @param yield yield context
      * @return Expected response or error
@@ -169,11 +155,12 @@ public:
     postPlain(boost::asio::yield_context yield);
 
     /**
-     * @brief Perform a POST request asynchronously. The SSL will be used first, if it fails, the plain connection will
-     * be used.
+     * @brief Perform a POST request asynchronously. The SSL will be used first, if it fails, the
+     * plain connection will be used.
      *
-     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple threads. But it is
-     * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
+     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple
+     * threads. But it is fine to call only get() or only post() of the same RequestBuilder from
+     * multiple threads.
      *
      * @param yield yield context
      * @return Expected response or error
@@ -181,7 +168,9 @@ public:
     std::expected<std::string, RequestError>
     post(boost::asio::yield_context yield);
 
-    static constexpr std::chrono::milliseconds kDEFAULT_TIMEOUT{30000}; /**< Default timeout for requests */
+    static constexpr std::chrono::milliseconds kDEFAULT_TIMEOUT{
+        30000
+    }; /**< Default timeout for requests */
 
 private:
     std::expected<std::string, RequestError>
@@ -195,7 +184,11 @@ private:
 
     template <typename StreamDataType>
     std::expected<std::string, RequestError>
-    doRequestImpl(StreamDataType&& streamData, boost::asio::yield_context yield, boost::beast::http::verb method);
+    doRequestImpl(
+        StreamDataType&& streamData,
+        boost::asio::yield_context yield,
+        boost::beast::http::verb method
+    );
 };
 
 }  // namespace util::requests

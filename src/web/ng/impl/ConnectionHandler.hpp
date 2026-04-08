@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/StopHelper.hpp"
@@ -54,7 +35,8 @@ class ConnectionHandler {
 public:
     using OnDisconnectHook = std::function<void(Connection const&)>;
     using OnIpChangeHook = std::function<void(std::string const&, std::string const&)>;
-    using TargetToHandlerMap = std::unordered_map<std::string, MessageHandler, util::StringHash, std::equal_to<>>;
+    using TargetToHandlerMap =
+        std::unordered_map<std::string, MessageHandler, util::StringHash, std::equal_to<>>;
 
 private:
     util::Logger log_{"WebServer"};
@@ -79,7 +61,10 @@ private:
     std::unique_ptr<std::atomic_bool> stopping_ = std::make_unique<std::atomic_bool>(false);
 
     std::reference_wrapper<util::prometheus::GaugeInt> connectionsCounter_ =
-        PrometheusService::gaugeInt("connections_total_number", util::prometheus::Labels{{{"status", "connected"}}});
+        PrometheusService::gaugeInt(
+            "connections_total_number",
+            util::prometheus::Labels{{{"status", "connected"}}}
+        );
 
     util::StopHelper stopHelper_;
 

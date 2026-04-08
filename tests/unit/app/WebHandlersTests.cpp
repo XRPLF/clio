@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "app/WebHandlers.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/WorkQueue.hpp"
@@ -57,16 +38,17 @@ using namespace util::config;
 
 struct WebHandlersTest : virtual public ::testing::Test {
     DOSGuardStrictMock dosGuardMock;
-    util::TagDecoratorFactory const tagFactory{
-        ClioConfigDefinition{{"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}}
-    };
+    util::TagDecoratorFactory const tagFactory{ClioConfigDefinition{
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+    }};
     std::string const ip = "some ip";
     StrictMockConnection connectionMock{ip, boost::beast::flat_buffer{}, tagFactory};
 
     struct AdminVerificationStrategyMock : web::AdminVerificationStrategy {
         MOCK_METHOD(bool, isAdmin, (RequestHeader const&, std::string_view), (const, override));
     };
-    using AdminVerificationStrategyStrictMockPtr = std::shared_ptr<testing::StrictMock<AdminVerificationStrategyMock>>;
+    using AdminVerificationStrategyStrictMockPtr =
+        std::shared_ptr<testing::StrictMock<AdminVerificationStrategyMock>>;
 };
 
 struct OnConnectCheckTests : WebHandlersTest {
@@ -118,7 +100,9 @@ TEST_F(DisconnectHookTests, CallsDecrement)
     disconnectHook(connectionMock);
 }
 
-struct MetricsHandlerTests : util::prometheus::WithPrometheus, SyncAsioContextTest, WebHandlersTest {
+struct MetricsHandlerTests : util::prometheus::WithPrometheus,
+                             SyncAsioContextTest,
+                             WebHandlersTest {
     AdminVerificationStrategyStrictMockPtr adminVerifier{
         std::make_shared<testing::StrictMock<AdminVerificationStrategyMock>>()
     };

@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/GetAggregatePrice.hpp"
 
 #include "rpc/Errors.hpp"
@@ -59,7 +40,10 @@
 namespace rpc {
 
 GetAggregatePriceHandler::Result
-GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input const& input, Context const& ctx) const
+GetAggregatePriceHandler::process(
+    GetAggregatePriceHandler::Input const& input,
+    Context const& ctx
+) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "GetAggregatePrice's ledger range must be available");
@@ -68,7 +52,7 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input const& input, 
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (!expectedLgrInfo.has_value())
+    if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = expectedLgrInfo.value();
@@ -83,7 +67,8 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input const& input, 
     for (auto const& oracle : input.oracles) {
         auto const oracleIndex = ripple::keylet::oracle(oracle.account, oracle.documentId).key;
 
-        auto const oracleObject = sharedPtrBackend_->fetchLedgerObject(oracleIndex, lgrInfo.seq, ctx.yield);
+        auto const oracleObject =
+            sharedPtrBackend_->fetchLedgerObject(oracleIndex, lgrInfo.seq, ctx.yield);
         if (not oracleObject)
             continue;
 
@@ -98,20 +83,24 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input const& input, 
                     series.begin(),
                     series.end(),
                     [&](ripple::STObject const& o) -> bool {
-                        return o.getFieldCurrency(ripple::sfBaseAsset).getText() == input.baseAsset and
-                            o.getFieldCurrency(ripple::sfQuoteAsset).getText() == input.quoteAsset and
+                        return o.getFieldCurrency(ripple::sfBaseAsset).getText() ==
+                            input.baseAsset and
+                            o.getFieldCurrency(ripple::sfQuoteAsset).getText() ==
+                            input.quoteAsset and
                             o.isFieldPresent(ripple::sfAssetPrice);
                     }
                 );
                 iter != series.end()) {
                 auto const price = iter->getFieldU64(ripple::sfAssetPrice);
                 // Asset price is after scale, so we need to get the negative of the scale
-                auto const scale =
-                    iter->isFieldPresent(ripple::sfScale) ? -static_cast<int>(iter->getFieldU8(ripple::sfScale)) : 0;
+                auto const scale = iter->isFieldPresent(ripple::sfScale)
+                    ? -static_cast<int>(iter->getFieldU8(ripple::sfScale))
+                    : 0;
 
                 timestampPricesBiMap.insert(
                     TimestampPricesBiMap::value_type(
-                        node.getFieldU32(ripple::sfLastUpdateTime), ripple::STAmount{ripple::noIssue(), price, scale}
+                        node.getFieldU32(ripple::sfLastUpdateTime),
+                        ripple::STAmount{ripple::noIssue(), price, scale}
                     )
                 );
                 return true;
@@ -135,9 +124,11 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input const& input, 
 
     if (input.timeThreshold) {
         auto const oldestTime = timestampPricesBiMap.left.rbegin()->first;
-        auto const upperBound = latestTime > *input.timeThreshold ? (latestTime - *input.timeThreshold) : oldestTime;
+        auto const upperBound =
+            latestTime > *input.timeThreshold ? (latestTime - *input.timeThreshold) : oldestTime;
         if (upperBound > oldestTime) {
-            // Note : upperBound must not be greater than the latestTime, so timestampPricesBiMap can not be empty
+            // Note : upperBound must not be greater than the latestTime, so timestampPricesBiMap
+            // can not be empty
             timestampPricesBiMap.left.erase(
                 timestampPricesBiMap.left.upper_bound(upperBound), timestampPricesBiMap.left.end()
             );
@@ -162,7 +153,8 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input const& input, 
         return {.avg = avg, .sd = sd, .size = size};
     };
 
-    out.extireStats = getStats(timestampPricesBiMap.right.begin(), timestampPricesBiMap.right.end());
+    out.extireStats =
+        getStats(timestampPricesBiMap.right.begin(), timestampPricesBiMap.right.end());
 
     auto const itAdvance = [&](auto it, int distance) {
         std::advance(it, distance);
@@ -246,8 +238,9 @@ GetAggregatePriceHandler::tracebackOracleObject(
             if (isNew and history == 1)
                 return;
 
-            optOracleObject = isNew ? dynamic_cast<ripple::STObject const&>(node.peekAtField(ripple::sfNewFields))
-                                    : dynamic_cast<ripple::STObject const&>(node.peekAtField(ripple::sfFinalFields));
+            optOracleObject = isNew
+                ? dynamic_cast<ripple::STObject const&>(node.peekAtField(ripple::sfNewFields))
+                : dynamic_cast<ripple::STObject const&>(node.peekAtField(ripple::sfFinalFields));
 
             break;
         }
@@ -272,7 +265,9 @@ tag_invoke(boost::json::value_to_tag<GetAggregatePriceHandler::Input>, boost::js
     for (auto const& oracle : jsonObject.at(JS(oracles)).as_array()) {
         input.oracles.push_back(
             GetAggregatePriceHandler::Oracle{
-                .documentId = boost::json::value_to<std::uint64_t>(oracle.as_object().at(JS(oracle_document_id))),
+                .documentId = boost::json::value_to<std::uint64_t>(
+                    oracle.as_object().at(JS(oracle_document_id))
+                ),
                 .account = *util::parseBase58Wrapper<ripple::AccountID>(
                     boost::json::value_to<std::string>(oracle.as_object().at(JS(account)))
                 )
@@ -292,7 +287,11 @@ tag_invoke(boost::json::value_to_tag<GetAggregatePriceHandler::Input>, boost::js
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GetAggregatePriceHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    GetAggregatePriceHandler::Output const& output
+)
 {
     jv = boost::json::object{
         {JS(ledger_hash), output.ledgerHash},

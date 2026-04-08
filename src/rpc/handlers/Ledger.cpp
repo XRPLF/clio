@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/Ledger.hpp"
 
 #include "data/Types.hpp"
@@ -58,7 +39,7 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (!expectedLgrInfo.has_value())
+    if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = expectedLgrInfo.value();
@@ -118,7 +99,8 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
                 std::move_iterator(txns.end()),
                 std::back_inserter(jsonTxs),
                 [&](auto obj) {
-                    boost::json::object entry = ctx.apiVersion < 2u ? expandTxJsonV1(obj) : expandTxJsonV2(obj);
+                    boost::json::object entry =
+                        ctx.apiVersion < 2u ? expandTxJsonV1(obj) : expandTxJsonV2(obj);
 
                     if (input.ownerFunds) {
                         // check the type of tx
@@ -149,7 +131,8 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
                 }
             );
         } else {
-            auto hashes = sharedPtrBackend_->fetchAllTransactionHashesInLedger(lgrInfo.seq, ctx.yield);
+            auto hashes =
+                sharedPtrBackend_->fetchAllTransactionHashesInLedger(lgrInfo.seq, ctx.yield);
             std::transform(
                 std::move_iterator(hashes.begin()),
                 std::move_iterator(hashes.end()),
@@ -172,7 +155,9 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
             if (input.binary) {
                 entry["object"] = ripple::strHex(obj.blob);
             } else if (!obj.blob.empty()) {
-                ripple::STLedgerEntry const sle{ripple::SerialIter{obj.blob.data(), obj.blob.size()}, obj.key};
+                ripple::STLedgerEntry const sle{
+                    ripple::SerialIter{obj.blob.data(), obj.blob.size()}, obj.key
+                };
                 entry["object"] = toJson(sle);
             } else {
                 entry["object"] = "";

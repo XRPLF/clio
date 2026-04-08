@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/BackendInterface.hpp"
@@ -70,14 +51,19 @@ public:
         uint32_t date = 0u;
         std::string hash = {};  // NOLINT(readability-redundant-member-init)
         uint32_t ledgerIndex = 0u;
-        std::optional<boost::json::object> meta = std::nullopt;  // NOLINT(readability-redundant-member-init)
-        std::optional<boost::json::object> tx = std::nullopt;    // NOLINT(readability-redundant-member-init)
-        std::optional<std::string> metaStr = std::nullopt;       // NOLINT(readability-redundant-member-init)
-        std::optional<std::string> txStr = std::nullopt;         // NOLINT(readability-redundant-member-init)
+        std::optional<boost::json::object> meta =
+            std::nullopt;  // NOLINT(readability-redundant-member-init)
+        std::optional<boost::json::object> tx =
+            std::nullopt;  // NOLINT(readability-redundant-member-init)
+        std::optional<std::string> metaStr =
+            std::nullopt;  // NOLINT(readability-redundant-member-init)
+        std::optional<std::string> txStr =
+            std::nullopt;  // NOLINT(readability-redundant-member-init)
         std::optional<std::string> ctid =
             std::nullopt;  // NOLINT(readability-redundant-member-init) ctid when binary=true
         std::optional<ripple::LedgerHeader> ledgerHeader =
-            std::nullopt;  // NOLINT(readability-redundant-member-init) ledger hash when apiVersion >= 2
+            std::nullopt;  // NOLINT(readability-redundant-member-init) ledger hash when apiVersion
+                           // >= 2
         uint32_t apiVersion = 0u;
         bool validated = true;
     };
@@ -102,10 +88,10 @@ public:
      * @param etl The ETL service to use
      */
     TxHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend,
+        std::shared_ptr<BackendInterface> sharedPtrBackend,
         std::shared_ptr<etl::ETLServiceInterface const> const& etl
     )
-        : sharedPtrBackend_(sharedPtrBackend), etl_(etl)
+        : sharedPtrBackend_(std::move(sharedPtrBackend)), etl_(etl)
     {
     }
 
@@ -125,7 +111,8 @@ public:
             {JS(ctid), validation::Type<std::string>{}},
         };
 
-        static auto const kRPC_SPEC = RpcSpec{kRPC_SPEC_FOR_V1, {{JS(binary), validation::Type<bool>{}}}};
+        static auto const kRPC_SPEC =
+            RpcSpec{kRPC_SPEC_FOR_V1, {{JS(binary), validation::Type<bool>{}}}};
 
         return apiVersion == 1 ? kRPC_SPEC_FOR_V1 : kRPC_SPEC;
     }
@@ -174,14 +161,18 @@ public:
                 return Error{Status{
                     RippledError::rpcWRONG_NETWORK,
                     fmt::format(
-                        "Wrong network. You should submit this request to a node running on NetworkID: {}", netId
+                        "Wrong network. You should submit this request to a node running on "
+                        "NetworkID: {}",
+                        netId
                     )
                 }};
             }
 
             dbResponse = fetchTxViaCtid(lgrSeq, txnIdx, ctx.yield);
         } else {
-            dbResponse = sharedPtrBackend_->fetchTransaction(ripple::uint256{input.transaction->c_str()}, ctx.yield);
+            dbResponse = sharedPtrBackend_->fetchTransaction(
+                ripple::uint256{input.transaction->c_str()}, ctx.yield
+            );
         }
 
         auto output = TxHandler::Output{.apiVersion = ctx.apiVersion};
@@ -192,8 +183,8 @@ public:
                 auto const range = sharedPtrBackend_->fetchLedgerRange();
                 ASSERT(range.has_value(), "Tx's ledger range must be available");
 
-                auto const searchedAll =
-                    range->maxSequence >= *input.maxLedger && range->minSequence <= *input.minLedger;
+                auto const searchedAll = range->maxSequence >= *input.maxLedger &&
+                    range->minSequence <= *input.minLedger;
                 boost::json::object extra;
                 extra["searched_all"] = searchedAll;
 
@@ -203,7 +194,8 @@ public:
             return Error{Status{RippledError::rpcTXN_NOT_FOUND}};
         }
 
-        auto const [txn, meta] = toExpandedJson(*dbResponse, ctx.apiVersion, NFTokenjson::ENABLE, currentNetId);
+        auto const [txn, meta] =
+            toExpandedJson(*dbResponse, ctx.apiVersion, NFTokenjson::ENABLE, currentNetId);
 
         if (!input.binary) {
             output.tx = txn;
@@ -222,7 +214,9 @@ public:
         if (txnIdx <= 0xFFFFU && dbResponse->ledgerSequence < 0x0FFF'FFFFUL && currentNetId &&
             *currentNetId <= 0xFFFFU) {
             output.ctid = rpc::encodeCTID(
-                dbResponse->ledgerSequence, static_cast<uint16_t>(txnIdx), static_cast<uint16_t>(*currentNetId)
+                dbResponse->ledgerSequence,
+                static_cast<uint16_t>(txnIdx),
+                static_cast<uint16_t>(*currentNetId)
             );
         }
 
@@ -230,8 +224,10 @@ public:
         output.ledgerIndex = dbResponse->ledgerSequence;
 
         // fetch ledger hash
-        if (ctx.apiVersion > 1u)
-            output.ledgerHeader = sharedPtrBackend_->fetchLedgerBySequence(dbResponse->ledgerSequence, ctx.yield);
+        if (ctx.apiVersion > 1u) {
+            output.ledgerHeader =
+                sharedPtrBackend_->fetchLedgerBySequence(dbResponse->ledgerSequence, ctx.yield);
+        }
 
         return output;
     }

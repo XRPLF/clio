@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include <boost/beast/http/field.hpp>
@@ -68,7 +49,8 @@ public:
 
     /**
      * @brief Method of the request.
-     * @note Websocket is not a real method, it is used to distinguish WebSocket requests from HTTP requests.
+     * @note Websocket is not a real method, it is used to distinguish WebSocket requests from HTTP
+     * requests.
      */
     enum class Method { Get, Post, Websocket, Unsupported };
 
@@ -93,11 +75,13 @@ public:
      *
      * @return The HTTP request or std::nullopt if the request is a WebSocket request.
      */
-    std::optional<std::reference_wrapper<boost::beast::http::request<boost::beast::http::string_body> const>>
+    std::optional<
+        std::reference_wrapper<boost::beast::http::request<boost::beast::http::string_body> const>>
     asHttpRequest() const;
 
     /**
-     * @brief Get the body (in case of an HTTP request) or the message (in case of a WebSocket request).
+     * @brief Get the body (in case of an HTTP request) or the message (in case of a WebSocket
+     * request).
      *
      * @return The message of the request.
      */
@@ -141,8 +125,8 @@ public:
 private:
     /**
      * @brief Get the HTTP request.
-     * @note This function assumes that the request is an HTTP request. So if data_ is not an HTTP request,
-     * the behavior is undefined.
+     * @note This function assumes that the request is an HTTP request. So if data_ is not an HTTP
+     * request, the behavior is undefined.
      *
      * @return The HTTP request.
      */

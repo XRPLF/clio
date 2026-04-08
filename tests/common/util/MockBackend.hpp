@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/BackendInterface.hpp"
@@ -183,8 +164,14 @@ struct MockBackend : public BackendInterface {
         (const, override)
     );
 
-    using FetchClioNodeReturnType = std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>;
-    MOCK_METHOD(FetchClioNodeReturnType, fetchClioNodesData, (boost::asio::yield_context yield), (const, override));
+    using FetchClioNodeReturnType =
+        std::expected<std::vector<std::pair<boost::uuids::uuid, std::string>>, std::string>;
+    MOCK_METHOD(
+        FetchClioNodeReturnType,
+        fetchClioNodesData,
+        (boost::asio::yield_context yield),
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::optional<data::LedgerRange>,
@@ -195,7 +182,12 @@ struct MockBackend : public BackendInterface {
 
     MOCK_METHOD(void, writeLedger, (ripple::LedgerHeader const&, std::string&&), (override));
 
-    MOCK_METHOD(void, writeLedgerObject, (std::string&&, std::uint32_t const, std::string&&), (override));
+    MOCK_METHOD(
+        void,
+        writeLedgerObject,
+        (std::string&&, std::uint32_t const, std::string&&),
+        (override)
+    );
 
     MOCK_METHOD(
         void,
@@ -212,9 +204,19 @@ struct MockBackend : public BackendInterface {
 
     MOCK_METHOD(void, writeNFTTransactions, (std::vector<NFTTransactionsData> const&), (override));
 
-    MOCK_METHOD(void, writeSuccessor, (std::string && key, std::uint32_t const, std::string&&), (override));
+    MOCK_METHOD(
+        void,
+        writeSuccessor,
+        (std::string && key, std::uint32_t const, std::string&&),
+        (override)
+    );
 
-    MOCK_METHOD(void, writeNodeMessage, (boost::uuids::uuid const& uuid, std::string message), (override));
+    MOCK_METHOD(
+        void,
+        writeNodeMessage,
+        (boost::uuids::uuid const& uuid, std::string message),
+        (override)
+    );
 
     MOCK_METHOD(void, startWrites, (), (const, override));
 
@@ -222,7 +224,12 @@ struct MockBackend : public BackendInterface {
 
     MOCK_METHOD(boost::json::object, stats, (), (const, override));
 
-    MOCK_METHOD(void, doWriteLedgerObject, (std::string&&, std::uint32_t const, std::string&&), (override));
+    MOCK_METHOD(
+        void,
+        doWriteLedgerObject,
+        (std::string&&, std::uint32_t const, std::string&&),
+        (override)
+    );
 
     MOCK_METHOD(void, waitForWritesToFinish, (), (override));
 

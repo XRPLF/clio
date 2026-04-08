@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "etl/NetworkValidatedLedgersInterface.hpp"
@@ -49,7 +30,8 @@
 namespace etl::impl {
 
 /**
- * @brief This class is used to subscribe to a source of ledger data and forward it to the subscription manager.
+ * @brief This class is used to subscribe to a source of ledger data and forward it to the
+ * subscription manager.
  * @note This class is safe to delete only if io_context is stopped.
  */
 class SubscriptionSource {
@@ -108,7 +90,8 @@ public:
      * @param subscriptions The subscription manager object
      * @param onConnect The onConnect hook. Called when the connection is established
      * @param onDisconnect The onDisconnect hook. Called when the connection is lost
-     * @param onLedgerClosed The onLedgerClosed hook. Called when the ledger is closed if the source is forwarding
+     * @param onLedgerClosed The onLedgerClosed hook. Called when the ledger is closed if the source
+     * is forwarding
      * @param wsTimeout A timeout for websocket operations. Defaults to 30 seconds
      * @param retryDelay The retry delay. Defaults to 1 second
      */
@@ -159,8 +142,8 @@ public:
     /**
      * @brief Set source forwarding
      *
-     * @note If forwarding is true the source will forward messages to the subscription manager. Forwarding is being
-     * reset on disconnect.
+     * @note If forwarding is true the source will forward messages to the subscription manager.
+     * Forwarding is being reset on disconnect.
      * @param isForwarding The new forwarding state
      */
     void
@@ -183,7 +166,8 @@ public:
     validatedRange() const;
 
     /**
-     * @brief Stop the source. The source will complete already scheduled operations but will not schedule new ones
+     * @brief Stop the source. The source will complete already scheduled operations but will not
+     * schedule new ones
      */
     void
     stop(boost::asio::yield_context yield);

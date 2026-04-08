@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/BackendInterface.hpp"
@@ -27,7 +8,6 @@
 #include "rpc/common/HandlerProvider.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/impl/ForwardingProxy.hpp"
-#include "util/OverloadSet.hpp"
 #include "util/ResponseExpirationCache.hpp"
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
@@ -41,6 +21,7 @@
 #include <xrpl/protocol/ErrorCodes.h>
 
 #include <chrono>
+#include <cstdint>
 #include <exception>
 #include <functional>
 #include <memory>
@@ -87,14 +68,14 @@ public:
      */
     RPCEngine(
         util::config::ClioConfigDefinition const& config,
-        std::shared_ptr<BackendInterface> const& backend,
+        std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<etl::LoadBalancerInterface> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
         CountersType& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider
     )
-        : backend_{backend}
+        : backend_{std::move(backend)}
         , dosGuard_{std::cref(dosGuard)}
         , workQueue_{std::ref(workQueue)}
         , counters_{std::ref(counters)}
@@ -137,7 +118,9 @@ public:
         std::shared_ptr<HandlerProvider const> const& handlerProvider
     )
     {
-        return std::make_shared<RPCEngine>(config, backend, balancer, dosGuard, workQueue, counters, handlerProvider);
+        return std::make_shared<RPCEngine>(
+            config, backend, balancer, dosGuard, workQueue, counters, handlerProvider
+        );
     }
 
     /**
@@ -220,24 +203,48 @@ public:
     bool
     post(FnType&& func, std::string const& ip)
     {
-        return workQueue_.get().postCoro(std::forward<FnType>(func), dosGuard_.get().isWhiteListed(ip));
+        return workQueue_.get().postCoro(
+            std::forward<FnType>(func), dosGuard_.get().isWhiteListed(ip)
+        );
     }
 
     /**
-     * @brief Notify the system that specified method was executed.
+     * @brief Notify the system that specified method was executed and record ledger metrics.
      *
-     * @param method
+     * @param context The web context containing method, params, and ledger information
      * @param duration The time it took to execute the method specified in microseconds
+     * @param isForwarded Whether the request was forwarded to rippled or not
      */
     void
-    notifyComplete(std::string const& method, std::chrono::microseconds const& duration)
+    notifyComplete(
+        web::Context const& context,
+        std::chrono::microseconds const& duration,
+        bool isForwarded
+    )
     {
-        if (validHandler(method))
-            counters_.get().rpcComplete(method, duration);
+        if (validHandler(context.method)) {
+            counters_.get().rpcComplete(context.method, duration);
+            if (not isForwarded) {
+                counters_.get().recordLedgerRequest(context.params, context.range.maxSequence);
+            }
+        }
     }
 
     /**
-     * @brief Notify the system that specified method failed to execute due to a recoverable user error.
+     * @brief Record ledger request metrics.
+     *
+     * @param params The request parameters containing ledger information
+     * @param currentLedgerSequence The current ledger sequence
+     */
+    void
+    recordLedgerMetrics(boost::json::object const& params, std::uint32_t currentLedgerSequence)
+    {
+        counters_.get().recordLedgerRequest(params, currentLedgerSequence);
+    }
+
+    /**
+     * @brief Notify the system that specified method failed to execute due to a recoverable user
+     * error.
      *
      * Used for errors based on user input, not actual failures of the db or clio itself.
      *
@@ -295,7 +302,8 @@ public:
     }
 
     /**
-     * @brief Notify the system that the incoming request specified an unknown/unsupported method/command.
+     * @brief Notify the system that the incoming request specified an unknown/unsupported
+     * method/command.
      */
     void
     notifyUnknownCommand()

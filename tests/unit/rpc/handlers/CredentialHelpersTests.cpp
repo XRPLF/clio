@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/CredentialHelpers.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
@@ -75,10 +56,12 @@ TEST(CreateAuthCredentialsTest, UniqueCredentials)
     auto const cred1Type = cred1.getFieldVL(ripple::sfCredentialType);
     auto const cred2Type = cred2.getFieldVL(ripple::sfCredentialType);
 
-    auto const expectedCred1 =
-        std::make_pair(cred1.getAccountID(ripple::sfIssuer), ripple::Slice{cred1Type.data(), cred1Type.size()});
-    auto const expectedCred2 =
-        std::make_pair(cred2.getAccountID(ripple::sfIssuer), ripple::Slice{cred2Type.data(), cred2Type.size()});
+    auto const expectedCred1 = std::make_pair(
+        cred1.getAccountID(ripple::sfIssuer), ripple::Slice{cred1Type.data(), cred1Type.size()}
+    );
+    auto const expectedCred2 = std::make_pair(
+        cred2.getAccountID(ripple::sfIssuer), ripple::Slice{cred2Type.data(), cred2Type.size()}
+    );
 
     EXPECT_TRUE(result.count(expectedCred1));
     EXPECT_TRUE(result.count(expectedCred2));
@@ -100,10 +83,12 @@ TEST(ParseAuthorizeCredentialsTest, ValidCredentialsArray)
     ASSERT_TRUE(cred.isFieldPresent(ripple::sfIssuer));
     ASSERT_TRUE(cred.isFieldPresent(ripple::sfCredentialType));
 
-    auto const expectedIssuer =
-        *ripple::parseBase58<ripple::AccountID>(static_cast<std::string>(credential1[JS(issuer)].as_string()));
+    auto const expectedIssuer = *ripple::parseBase58<ripple::AccountID>(
+        static_cast<std::string>(credential1[JS(issuer)].as_string())
+    );
     auto const expectedCredentialType =
-        ripple::strUnHex(static_cast<std::string>(credential1[JS(credential_type)].as_string())).value();
+        ripple::strUnHex(static_cast<std::string>(credential1[JS(credential_type)].as_string()))
+            .value();
 
     EXPECT_EQ(cred.getAccountID(ripple::sfIssuer), expectedIssuer);
     EXPECT_EQ(cred.getFieldVL(ripple::sfCredentialType), expectedCredentialType);
@@ -135,9 +120,11 @@ TEST_F(CredentialHelperTest, GetValidCredentialArray)
     backend_->setRange(10, 30);
 
     auto ledgerHeader = createLedgerHeader(kINDEX1, 30);
-    auto const credLedgerObject = createCredentialObject(kACCOUNT, kACCOUNT2, kCREDENTIAL_TYPE, true);
+    auto const credLedgerObject =
+        createCredentialObject(kACCOUNT, kACCOUNT2, kCREDENTIAL_TYPE, true);
 
-    ON_CALL(*backend_, doFetchLedgerObject(_, _, _)).WillByDefault(Return(credLedgerObject.getSerializer().peekData()));
+    ON_CALL(*backend_, doFetchLedgerObject(_, _, _))
+        .WillByDefault(Return(credLedgerObject.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
     boost::json::array credentialsArray = {kCREDENTIAL_ID};
@@ -146,7 +133,8 @@ TEST_F(CredentialHelperTest, GetValidCredentialArray)
     ripple::STObject credential(ripple::sfCredential);
     credential.setAccountID(ripple::sfIssuer, getAccountIdWithString(kACCOUNT2));
     credential.setFieldVL(
-        ripple::sfCredentialType, ripple::Blob{std::begin(kCREDENTIAL_TYPE), std::end(kCREDENTIAL_TYPE)}
+        ripple::sfCredentialType,
+        ripple::Blob{std::begin(kCREDENTIAL_TYPE), std::end(kCREDENTIAL_TYPE)}
     );
     expectedAuthCreds.push_back(std::move(credential));
 

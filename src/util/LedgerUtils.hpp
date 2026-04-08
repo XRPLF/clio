@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "rpc/JS.hpp"
@@ -98,22 +79,50 @@ class LedgerTypes {
     using LedgerTypeAttributeList = LedgerTypeAttribute[];
 
     static constexpr LedgerTypeAttributeList const kLEDGER_TYPES{
-        LedgerTypeAttribute::accountOwnedLedgerType(JS(AccountRoot), JS(account), ripple::ltACCOUNT_ROOT),
+        LedgerTypeAttribute::accountOwnedLedgerType(
+            JS(AccountRoot),
+            JS(account),
+            ripple::ltACCOUNT_ROOT
+        ),
         LedgerTypeAttribute::chainLedgerType(JS(Amendments), JS(amendments), ripple::ltAMENDMENTS),
         LedgerTypeAttribute::deletionBlockerLedgerType(JS(Check), JS(check), ripple::ltCHECK),
-        LedgerTypeAttribute::accountOwnedLedgerType(JS(DepositPreauth), JS(deposit_preauth), ripple::ltDEPOSIT_PREAUTH),
+        LedgerTypeAttribute::accountOwnedLedgerType(
+            JS(DepositPreauth),
+            JS(deposit_preauth),
+            ripple::ltDEPOSIT_PREAUTH
+        ),
         // dir node belongs to account, but can not be filtered from account_objects
         LedgerTypeAttribute::chainLedgerType(JS(DirectoryNode), JS(directory), ripple::ltDIR_NODE),
         LedgerTypeAttribute::deletionBlockerLedgerType(JS(Escrow), JS(escrow), ripple::ltESCROW),
         LedgerTypeAttribute::chainLedgerType(JS(FeeSettings), JS(fee), ripple::ltFEE_SETTINGS),
         LedgerTypeAttribute::chainLedgerType(JS(LedgerHashes), JS(hashes), ripple::ltLEDGER_HASHES),
         LedgerTypeAttribute::accountOwnedLedgerType(JS(Offer), JS(offer), ripple::ltOFFER),
-        LedgerTypeAttribute::deletionBlockerLedgerType(JS(PayChannel), JS(payment_channel), ripple::ltPAYCHAN),
-        LedgerTypeAttribute::accountOwnedLedgerType(JS(SignerList), JS(signer_list), ripple::ltSIGNER_LIST),
-        LedgerTypeAttribute::deletionBlockerLedgerType(JS(RippleState), JS(state), ripple::ltRIPPLE_STATE),
+        LedgerTypeAttribute::deletionBlockerLedgerType(
+            JS(PayChannel),
+            JS(payment_channel),
+            ripple::ltPAYCHAN
+        ),
+        LedgerTypeAttribute::accountOwnedLedgerType(
+            JS(SignerList),
+            JS(signer_list),
+            ripple::ltSIGNER_LIST
+        ),
+        LedgerTypeAttribute::deletionBlockerLedgerType(
+            JS(RippleState),
+            JS(state),
+            ripple::ltRIPPLE_STATE
+        ),
         LedgerTypeAttribute::accountOwnedLedgerType(JS(Ticket), JS(ticket), ripple::ltTICKET),
-        LedgerTypeAttribute::accountOwnedLedgerType(JS(NFTokenOffer), JS(nft_offer), ripple::ltNFTOKEN_OFFER),
-        LedgerTypeAttribute::deletionBlockerLedgerType(JS(NFTokenPage), JS(nft_page), ripple::ltNFTOKEN_PAGE),
+        LedgerTypeAttribute::accountOwnedLedgerType(
+            JS(NFTokenOffer),
+            JS(nft_offer),
+            ripple::ltNFTOKEN_OFFER
+        ),
+        LedgerTypeAttribute::deletionBlockerLedgerType(
+            JS(NFTokenPage),
+            JS(nft_page),
+            ripple::ltNFTOKEN_PAGE
+        ),
         LedgerTypeAttribute::accountOwnedLedgerType(JS(AMM), JS(amm), ripple::ltAMM),
         LedgerTypeAttribute::deletionBlockerLedgerType(JS(Bridge), JS(bridge), ripple::ltBRIDGE),
         LedgerTypeAttribute::deletionBlockerLedgerType(
@@ -128,7 +137,11 @@ class LedgerTypes {
         ),
         LedgerTypeAttribute::accountOwnedLedgerType(JS(DID), JS(did), ripple::ltDID),
         LedgerTypeAttribute::accountOwnedLedgerType(JS(Oracle), JS(oracle), ripple::ltORACLE),
-        LedgerTypeAttribute::accountOwnedLedgerType(JS(Credential), JS(credential), ripple::ltCREDENTIAL),
+        LedgerTypeAttribute::accountOwnedLedgerType(
+            JS(Credential),
+            JS(credential),
+            ripple::ltCREDENTIAL
+        ),
         LedgerTypeAttribute::accountOwnedLedgerType(JS(Vault), JS(vault), ripple::ltVAULT),
         LedgerTypeAttribute::chainLedgerType(JS(NegativeUNL), JS(nunl), ripple::ltNEGATIVE_UNL),
         LedgerTypeAttribute::deletionBlockerLedgerType(
@@ -154,7 +167,9 @@ public:
     getLedgerEntryTypeStrList()
     {
         std::array<char const*, std::size(kLEDGER_TYPES)> res{};
-        std::ranges::transform(kLEDGER_TYPES, std::begin(res), [](auto const& item) { return item.rpcName_; });
+        std::ranges::transform(kLEDGER_TYPES, std::begin(res), [](auto const& item) {
+            return item.rpcName_;
+        });
         return res;
     }
 
@@ -186,7 +201,8 @@ public:
     /**
      * @brief Returns the ripple::LedgerEntryType from the given string.
      *
-     * @param entryName The name or canonical name (case-insensitive) of the ledger entry type for all categories
+     * @param entryName The name or canonical name (case-insensitive) of the ledger entry type for
+     * all categories
      * @return The ripple::LedgerEntryType of the given string, returns ltANY if not found.
      */
     static ripple::LedgerEntryType
@@ -195,8 +211,8 @@ public:
     /**
      * @brief Returns the ripple::LedgerEntryType from the given string.
      *
-     * @param entryName The name or canonical name (case-insensitive) of the ledger entry type for account owned
-     * category
+     * @param entryName The name or canonical name (case-insensitive) of the ledger entry type for
+     * account owned category
      * @return The ripple::LedgerEntryType of the given string, returns ltANY if not found.
      */
     static ripple::LedgerEntryType

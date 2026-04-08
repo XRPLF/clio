@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/common/AnyHandler.hpp"
@@ -326,7 +307,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash)
 TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence)
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(
         fmt::format(
@@ -350,7 +332,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerStringIndex)
 TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerBySequence)
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(
         fmt::format(
@@ -377,7 +360,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 31);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
+    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+        .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     auto const input = json::parse(
         fmt::format(
@@ -428,7 +412,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIndex2)
 TEST_F(RPCAccountChannelsHandlerTest, NonExistAccount)
 {
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
+    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+        .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // fetch account object return empty
     ON_CALL(*backend_, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
@@ -449,7 +434,7 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistAccount)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
-        EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "Account not found.");
     });
 }
 
@@ -495,7 +480,8 @@ TEST_F(RPCAccountChannelsHandlerTest, DefaultParameterTest)
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
 
     // return owner index containing 2 indexes
     ripple::STObject const ownerDir =
@@ -507,7 +493,8 @@ TEST_F(RPCAccountChannelsHandlerTest, DefaultParameterTest)
 
     // return two payment channel objects
     std::vector<Blob> bbs;
-    ripple::STObject const channel1 = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+    ripple::STObject const channel1 =
+        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
     bbs.push_back(channel1.getSerializer().peekData());
     bbs.push_back(channel1.getSerializer().peekData());
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -541,7 +528,8 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
 
     // return owner index
     std::vector<ripple::uint256> indexes;
@@ -579,7 +567,10 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
         ASSERT_TRUE(output);
 
         EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), 20);
-        EXPECT_THAT(boost::json::value_to<std::string>((*output.result).as_object().at("marker")), EndsWith(",0"));
+        EXPECT_THAT(
+            boost::json::value_to<std::string>((*output.result).as_object().at("marker")),
+            EndsWith(",0")
+        );
     });
 
     runSpawn([this](auto yield) {
@@ -625,7 +616,8 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
 
     // return owner index
     std::vector<ripple::uint256> indexes;
@@ -688,7 +680,8 @@ TEST_F(RPCAccountChannelsHandlerTest, EmptyChannel)
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
 
     // return owner index
     ripple::STObject const ownerDir = createOwnerDirLedgerObject({}, kINDEX1);
@@ -762,7 +755,8 @@ TEST_F(RPCAccountChannelsHandlerTest, OptionalResponseField)
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
 
     // return owner index
     ripple::STObject const ownerDir =
@@ -774,7 +768,8 @@ TEST_F(RPCAccountChannelsHandlerTest, OptionalResponseField)
 
     // return two payment channel objects
     std::vector<Blob> bbs;
-    ripple::STObject channel1 = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+    ripple::STObject channel1 =
+        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
     channel1.setFieldU32(ripple::sfExpiration, 100);
     channel1.setFieldU32(ripple::sfCancelAfter, 200);
     channel1.setFieldU32(ripple::sfSourceTag, 300);
@@ -813,11 +808,13 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto fake = Blob{'f', 'a', 'k', 'e'};
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
-    ripple::STObject const channel1 = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+    ripple::STObject const channel1 =
+        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
     // owner dir contains 10 indexes
     int objectsCount = 10;
     std::vector<ripple::uint256> indexes;
@@ -882,11 +879,13 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerInput)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto fake = Blob{'f', 'a', 'k', 'e'};
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
-    ripple::STObject const channel1 = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+    ripple::STObject const channel1 =
+        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
     int objectsCount = kLIMIT;
     std::vector<ripple::uint256> indexes;
     while (objectsCount != 0) {
@@ -939,7 +938,8 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitLessThanMin)
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
 
     // return owner index containing 2 indexes
     ripple::STObject const ownerDir =
@@ -951,7 +951,8 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitLessThanMin)
 
     // return two payment channel objects
     std::vector<Blob> bbs;
-    ripple::STObject const channel1 = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+    ripple::STObject const channel1 =
+        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
     bbs.push_back(channel1.getSerializer().peekData());
     bbs.push_back(channel1.getSerializer().peekData());
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -972,7 +973,9 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitLessThanMin)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), 2);
-        EXPECT_EQ((*output.result).as_object().at("limit").as_uint64(), AccountChannelsHandler::kLIMIT_MIN);
+        EXPECT_EQ(
+            (*output.result).as_object().at("limit").as_uint64(), AccountChannelsHandler::kLIMIT_MIN
+        );
     });
 }
 
@@ -987,7 +990,8 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitMoreThanMax)
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend_, doFetchLedgerObject(accountKk, testing::_, testing::_))
+        .WillByDefault(Return(fake));
 
     // return owner index containing 2 indexes
     ripple::STObject const ownerDir =
@@ -999,7 +1003,8 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitMoreThanMax)
 
     // return two payment channel objects
     std::vector<Blob> bbs;
-    ripple::STObject const channel1 = createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
+    ripple::STObject const channel1 =
+        createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
     bbs.push_back(channel1.getSerializer().peekData());
     bbs.push_back(channel1.getSerializer().peekData());
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -1020,6 +1025,8 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitMoreThanMax)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), 2);
-        EXPECT_EQ((*output.result).as_object().at("limit").as_uint64(), AccountChannelsHandler::kLIMIT_MAX);
+        EXPECT_EQ(
+            (*output.result).as_object().at("limit").as_uint64(), AccountChannelsHandler::kLIMIT_MAX
+        );
     });
 }

@@ -1,21 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
 #include "util/MockPrometheus.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/config/ConfigDefinition.hpp"
@@ -48,8 +30,9 @@ struct PrometheusCheckRequestTestsParams {
     bool expected;
 };
 
-struct PrometheusCheckRequestTests : WithPrometheus,
-                                     ::testing::WithParamInterface<PrometheusCheckRequestTestsParams> {};
+struct PrometheusCheckRequestTests
+    : WithPrometheus,
+      ::testing::WithParamInterface<PrometheusCheckRequestTestsParams> {};
 
 TEST_P(PrometheusCheckRequestTests, isPrometheusRequest)
 {
@@ -110,7 +93,8 @@ INSTANTIATE_TEST_CASE_P(
 struct PrometheusHandleRequestTestsBase {
     http::request<http::string_body> const req{http::verb::get, "/metrics", 11};
 };
-struct PrometheusHandleRequestTests : util::prometheus::WithPrometheus, PrometheusHandleRequestTestsBase {};
+struct PrometheusHandleRequestTests : util::prometheus::WithPrometheus,
+                                      PrometheusHandleRequestTestsBase {};
 
 TEST_F(PrometheusHandleRequestTests, emptyResponse)
 {
@@ -152,8 +136,12 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounter)
     ASSERT_TRUE(response.has_value());
     EXPECT_EQ(response->result(), http::status::ok);
     EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
-    auto const expectedBody =
-        fmt::format("# HELP {0} {1}\n# TYPE {0} counter\n{0}{2} 4\n\n", counterName, description, labels.serialize());
+    auto const expectedBody = fmt::format(
+        "# HELP {0} {1}\n# TYPE {0} counter\n{0}{2} 4\n\n",
+        counterName,
+        description,
+        labels.serialize()
+    );
     EXPECT_EQ(response->body(), expectedBody);
 }
 
@@ -171,8 +159,12 @@ TEST_F(PrometheusHandleRequestTests, responseWithGauge)
     ASSERT_TRUE(response.has_value());
     EXPECT_EQ(response->result(), http::status::ok);
     EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
-    auto const expectedBody =
-        fmt::format("# HELP {0} {1}\n# TYPE {0} gauge\n{0}{2} -2\n\n", gaugeName, description, labels.serialize());
+    auto const expectedBody = fmt::format(
+        "# HELP {0} {1}\n# TYPE {0} gauge\n{0}{2} -2\n\n",
+        gaugeName,
+        description,
+        labels.serialize()
+    );
     EXPECT_EQ(response->body(), expectedBody);
 }
 

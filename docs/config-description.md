@@ -433,6 +433,14 @@ This document provides a list of all available Clio configuration properties in 
 - **Constraints**: The minimum value is `1`. The maximum value is `65535`.
 - **Description**: The number of ledger objects to fetch concurrently per marker.
 
+### cache.limit_load_in_cluster
+
+- **Required**: True
+- **Type**: boolean
+- **Default value**: `False`
+- **Constraints**: None
+- **Description**: If enabled only one clio node in a cluster (sharing the same database) will load cache at a time
+
 ### cache.load
 
 - **Required**: True
@@ -456,6 +464,14 @@ This document provides a list of all available Clio configuration properties in 
 - **Default value**: `5000`
 - **Constraints**: None
 - **Description**: Max allowed difference between the latest sequence in DB and in cache file. If the cache file is too old (contains too low latest sequence) Clio will reject using it.
+
+### cache.file.async_save
+
+- **Required**: True
+- **Type**: boolean
+- **Default value**: `False`
+- **Constraints**: None
+- **Description**: When false, Clio waits for cache saving to finish before shutting down. When true, cache saving runs in parallel with other shutdown operations.
 
 ### log.channels.[].channel
 

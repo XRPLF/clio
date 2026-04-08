@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "util/requests/RequestBuilder.hpp"
 
 #include "util/log/Logger.hpp"
@@ -53,7 +34,8 @@ namespace http = beast::http;
 namespace asio = boost::asio;
 using tcp = asio::ip::tcp;
 
-RequestBuilder::RequestBuilder(std::string host, std::string port) : host_(std::move(host)), port_(std::move(port))
+RequestBuilder::RequestBuilder(std::string host, std::string port)
+    : host_(std::move(host)), port_(std::move(port))
 {
     request_.set(http::field::host, host_);
     request_.target("/");
@@ -164,7 +146,8 @@ RequestBuilder::doRequest(asio::yield_context yield, beast::http::verb method)
     if (result.has_value())
         return result;
 
-    LOG(log_.debug()) << "SSL request failed: " << result.error().message() << ". Falling back to plain request.";
+    LOG(log_.debug()) << "SSL request failed: " << result.error().message()
+                      << ". Falling back to plain request.";
     return doPlainRequest(yield, method);
 }
 
@@ -179,7 +162,11 @@ RequestBuilder::doRequest(asio::yield_context yield, beast::http::verb method)
  */
 template <typename StreamDataType>
 std::expected<std::string, RequestError>
-RequestBuilder::doRequestImpl(StreamDataType&& streamData, asio::yield_context yield, http::verb const method)
+RequestBuilder::doRequestImpl(
+    StreamDataType&& streamData,
+    asio::yield_context yield,
+    http::verb const method
+)
 {
     auto executor = asio::get_associated_executor(yield);
 

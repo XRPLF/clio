@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 /** @file */
 #pragma once
 
@@ -122,14 +103,18 @@ private:
             // if either FF or PF are missing we can't compute
             // but generally these are cancelled rather than crossed
             // so skipping them is consistent
-            if (!node.isFieldPresent(ripple::sfFinalFields) || !node.isFieldPresent(ripple::sfPreviousFields))
+            if (!node.isFieldPresent(ripple::sfFinalFields) ||
+                !node.isFieldPresent(ripple::sfPreviousFields))
                 return;
 
-            auto const& finalFields = node.peekAtField(ripple::sfFinalFields).downcast<ripple::STObject>();
-            auto const& previousFields = node.peekAtField(ripple::sfPreviousFields).downcast<ripple::STObject>();
+            auto const& finalFields =
+                node.peekAtField(ripple::sfFinalFields).downcast<ripple::STObject>();
+            auto const& previousFields =
+                node.peekAtField(ripple::sfPreviousFields).downcast<ripple::STObject>();
 
             // defensive case that should never be hit
-            if (!finalFields.isFieldPresent(ripple::sfTakerGets) || !finalFields.isFieldPresent(ripple::sfTakerPays) ||
+            if (!finalFields.isFieldPresent(ripple::sfTakerGets) ||
+                !finalFields.isFieldPresent(ripple::sfTakerPays) ||
                 !previousFields.isFieldPresent(ripple::sfTakerGets) ||
                 !previousFields.isFieldPresent(ripple::sfTakerPays))
                 return;
@@ -141,10 +126,10 @@ private:
 
             // compute the difference in gets and pays actually
             // affected onto the offer
-            auto const deltaGets =
-                finalFields.getFieldAmount(ripple::sfTakerGets) - previousFields.getFieldAmount(ripple::sfTakerGets);
-            auto const deltaPays =
-                finalFields.getFieldAmount(ripple::sfTakerPays) - previousFields.getFieldAmount(ripple::sfTakerPays);
+            auto const deltaGets = finalFields.getFieldAmount(ripple::sfTakerGets) -
+                previousFields.getFieldAmount(ripple::sfTakerGets);
+            auto const deltaPays = finalFields.getFieldAmount(ripple::sfTakerPays) -
+                previousFields.getFieldAmount(ripple::sfTakerPays);
 
             transformAndStore(deltaGets, deltaPays, finalFields[~ripple::sfDomainID]);
         }
@@ -278,6 +263,9 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const
  * @return The book changes
  */
 [[nodiscard]] boost::json::object
-computeBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions);
+computeBookChanges(
+    ripple::LedgerHeader const& lgrInfo,
+    std::vector<data::TransactionAndMetadata> const& transactions
+);
 
 }  // namespace rpc

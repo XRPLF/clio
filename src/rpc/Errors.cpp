@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/Errors.hpp"
 
 #include "rpc/JS.hpp"
@@ -82,7 +63,8 @@ getWarningInfo(WarningCode code)
     static constexpr WarningInfo kINFOS[]{
         {WarnUnknown, "Unknown warning"},
         {WarnRpcClio,
-         "This is a clio server. clio only serves validated data. If you want to talk to rippled, include "
+         "This is a clio server. clio only serves validated data. If you want to talk to rippled, "
+         "include "
          "'ledger_index':'current' in your request"},
         {WarnRpcOutdated, "This server may be out of date"},
         {WarnRpcRateLimit, "You are about to be rate limited"},
@@ -112,11 +94,21 @@ ClioErrorInfo const&
 getErrorInfo(ClioError code)
 {
     static constexpr ClioErrorInfo kINFOS[]{
-        {.code = ClioError::RpcMalformedCurrency, .error = "malformedCurrency", .message = "Malformed currency."},
-        {.code = ClioError::RpcMalformedRequest, .error = "malformedRequest", .message = "Malformed request."},
-        {.code = ClioError::RpcMalformedOwner, .error = "malformedOwner", .message = "Malformed owner."},
-        {.code = ClioError::RpcMalformedAddress, .error = "malformedAddress", .message = "Malformed address."},
-        {.code = ClioError::RpcUnknownOption, .error = "unknownOption", .message = "Unknown option."},
+        {.code = ClioError::RpcMalformedCurrency,
+         .error = "malformedCurrency",
+         .message = "Malformed currency."},
+        {.code = ClioError::RpcMalformedRequest,
+         .error = "malformedRequest",
+         .message = "Malformed request."},
+        {.code = ClioError::RpcMalformedOwner,
+         .error = "malformedOwner",
+         .message = "Malformed owner."},
+        {.code = ClioError::RpcMalformedAddress,
+         .error = "malformedAddress",
+         .message = "Malformed address."},
+        {.code = ClioError::RpcUnknownOption,
+         .error = "unknownOption",
+         .message = "Unknown option."},
         {.code = ClioError::RpcFieldNotFoundTransaction,
          .error = "fieldNotFoundTransaction",
          .message = "Missing field."},
@@ -126,21 +118,32 @@ getErrorInfo(ClioError code)
         {.code = ClioError::RpcMalformedAuthorizedCredentials,
          .error = "malformedAuthorizedCredentials",
          .message = "Malformed authorized credentials."},
-        {.code = ClioError::RpcEntryNotFound, .error = "entryNotFound", .message = "Entry Not Found."},
         // special system errors
-        {.code = ClioError::RpcInvalidApiVersion, .error = JS(invalid_API_version), .message = "Invalid API version."},
+        {.code = ClioError::RpcInvalidApiVersion,
+         .error = JS(invalid_API_version),
+         .message = "Invalid API version."},
         {.code = ClioError::RpcCommandIsMissing,
          .error = JS(missingCommand),
          .message = "Method is not specified or is not a string."},
-        {.code = ClioError::RpcCommandNotString, .error = "commandNotString", .message = "Method is not a string."},
-        {.code = ClioError::RpcCommandIsEmpty, .error = "emptyCommand", .message = "Method is an empty string."},
+        {.code = ClioError::RpcCommandNotString,
+         .error = "commandNotString",
+         .message = "Method is not a string."},
+        {.code = ClioError::RpcCommandIsEmpty,
+         .error = "emptyCommand",
+         .message = "Method is an empty string."},
         {.code = ClioError::RpcParamsUnparsable,
          .error = "paramsUnparsable",
          .message = "Params must be an array holding exactly one object."},
         // etl related errors
-        {.code = ClioError::EtlConnectionError, .error = "connectionError", .message = "Couldn't connect to rippled."},
-        {.code = ClioError::EtlRequestError, .error = "requestError", .message = "Error sending request to rippled."},
-        {.code = ClioError::EtlRequestTimeout, .error = "timeout", .message = "Request to rippled timed out."},
+        {.code = ClioError::EtlConnectionError,
+         .error = "connectionError",
+         .message = "Couldn't connect to rippled."},
+        {.code = ClioError::EtlRequestError,
+         .error = "requestError",
+         .message = "Error sending request to rippled."},
+        {.code = ClioError::EtlRequestTimeout,
+         .error = "timeout",
+         .message = "Request to rippled timed out."},
         {.code = ClioError::EtlInvalidResponse,
          .error = "invalidResponse",
          .message = "Rippled returned an invalid response."}
@@ -154,7 +157,11 @@ getErrorInfo(ClioError code)
 }
 
 boost::json::object
-makeError(RippledError err, std::optional<std::string_view> customError, std::optional<std::string_view> customMessage)
+makeError(
+    RippledError err,
+    std::optional<std::string_view> customError,
+    std::optional<std::string_view> customMessage
+)
 {
     boost::json::object json;
     auto const& info = ripple::RPC::get_error_info(err);
@@ -169,7 +176,11 @@ makeError(RippledError err, std::optional<std::string_view> customError, std::op
 }
 
 boost::json::object
-makeError(ClioError err, std::optional<std::string_view> customError, std::optional<std::string_view> customMessage)
+makeError(
+    ClioError err,
+    std::optional<std::string_view> customError,
+    std::optional<std::string_view> customMessage
+)
 {
     boost::json::object json;
     auto const& info = getErrorInfo(err);
@@ -186,13 +197,18 @@ makeError(ClioError err, std::optional<std::string_view> customError, std::optio
 boost::json::object
 makeError(Status const& status)
 {
-    auto wrapOptional = [](string_view const& str) { return str.empty() ? nullopt : make_optional(str); };
+    auto wrapOptional = [](string_view const& str) {
+        return str.empty() ? nullopt : make_optional(str);
+    };
 
     auto res = visit(
         util::OverloadSet{
             [&status, &wrapOptional](RippledError err) {
-                if (err == ripple::rpcUNKNOWN)
-                    return boost::json::object{{"error", status.message}, {"type", "response"}, {"status", "error"}};
+                if (err == ripple::rpcUNKNOWN) {
+                    return boost::json::object{
+                        {"error", status.message}, {"type", "response"}, {"status", "error"}
+                    };
+                }
 
                 return makeError(err, wrapOptional(status.error), wrapOptional(status.message));
             },

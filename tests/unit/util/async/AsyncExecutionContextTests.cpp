@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "util/MockAssert.hpp"
 #include "util/Profiler.hpp"
 #include "util/async/Operation.hpp"
@@ -54,7 +35,8 @@ struct ExecutionContextTests : common::util::WithMockAssertNoThrow {
 template <typename T>
 using AsyncExecutionContextTests = ExecutionContextTests<T>;
 
-using ExecutionContextTypes = Types<CoroExecutionContext, PoolExecutionContext, SyncExecutionContext>;
+using ExecutionContextTypes =
+    Types<CoroExecutionContext, PoolExecutionContext, SyncExecutionContext>;
 using AsyncExecutionContextTypes = Types<CoroExecutionContext, PoolExecutionContext>;
 
 TYPED_TEST_CASE(ExecutionContextTests, ExecutionContextTypes);
@@ -116,12 +98,13 @@ TYPED_TEST(ExecutionContextTests, executeWithTimeout)
 
 TYPED_TEST(ExecutionContextTests, timer)
 {
-    auto res =
-        this->ctx.scheduleAfter(std::chrono::milliseconds(1), []([[maybe_unused]] auto stopRequested, auto cancelled) {
+    auto res = this->ctx.scheduleAfter(
+        std::chrono::milliseconds(1), []([[maybe_unused]] auto stopRequested, auto cancelled) {
             if (not cancelled)
                 return 42;
             return 0;
-        });
+        }
+    );
 
     EXPECT_EQ(res.get().value(), 42);
 }
@@ -145,7 +128,8 @@ TYPED_TEST(ExecutionContextTests, timerCancel)
     std::binary_semaphore sem{0};
 
     auto res = this->ctx.scheduleAfter(
-        std::chrono::milliseconds(10), [&value, &sem]([[maybe_unused]] auto stopRequested, auto cancelled) {
+        std::chrono::milliseconds(10),
+        [&value, &sem]([[maybe_unused]] auto stopRequested, auto cancelled) {
             if (cancelled)
                 value = 42;
 
@@ -164,7 +148,8 @@ TYPED_TEST(ExecutionContextTests, timerAutoCancels)
     std::binary_semaphore sem{0};
     {
         auto res = this->ctx.scheduleAfter(
-            std::chrono::milliseconds(1), [&value, &sem]([[maybe_unused]] auto stopRequested, auto cancelled) {
+            std::chrono::milliseconds(1),
+            [&value, &sem]([[maybe_unused]] auto stopRequested, auto cancelled) {
                 if (cancelled)
                     value = 42;
 
@@ -179,12 +164,13 @@ TYPED_TEST(ExecutionContextTests, timerAutoCancels)
 
 TYPED_TEST(ExecutionContextTests, timerStdException)
 {
-    auto res =
-        this->ctx.scheduleAfter(std::chrono::milliseconds(1), []([[maybe_unused]] auto stopRequested, auto cancelled) {
+    auto res = this->ctx.scheduleAfter(
+        std::chrono::milliseconds(1), []([[maybe_unused]] auto stopRequested, auto cancelled) {
             if (not cancelled)
                 throw std::runtime_error("test");
             return 0;
-        });
+        }
+    );
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("test"));
@@ -193,12 +179,13 @@ TYPED_TEST(ExecutionContextTests, timerStdException)
 
 TYPED_TEST(ExecutionContextTests, timerUnknownException)
 {
-    auto res =
-        this->ctx.scheduleAfter(std::chrono::milliseconds(1), []([[maybe_unused]] auto stopRequested, auto cancelled) {
+    auto res = this->ctx.scheduleAfter(
+        std::chrono::milliseconds(1), []([[maybe_unused]] auto stopRequested, auto cancelled) {
             if (not cancelled)
                 throw 0;
             return 0;
-        });
+        }
+    );
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("unknown"));
@@ -209,17 +196,21 @@ TYPED_TEST(ExecutionContextTests, repeatingOperation)
 {
     auto const repeatDelay = std::chrono::milliseconds{1};
     auto const timeout = std::chrono::milliseconds{15};
-    auto callCount = 0uz;
+    std::atomic_size_t callCount = 0uz;
 
     auto res = this->ctx.executeRepeatedly(repeatDelay, [&] { ++callCount; });
-    auto timeSpent = util::timed([timeout] { std::this_thread::sleep_for(timeout); });  // calculate actual time spent
+    auto timeSpent = util::timed([timeout] {
+        std::this_thread::sleep_for(timeout);
+    });  // calculate actual time spent
 
     res.abort();  // outside of the above stopwatch because it blocks and can take arbitrary time
     auto const expectedPureCalls = timeout.count() / repeatDelay.count();
     auto const expectedActualCount = timeSpent / repeatDelay.count();
 
     EXPECT_GE(callCount, expectedPureCalls / 2u);  // expect at least half of the scheduled calls
-    EXPECT_LE(callCount, expectedActualCount);     // never should be called more times than possible before timeout
+    EXPECT_LE(
+        callCount, expectedActualCount
+    );  // never should be called more times than possible before timeout
 }
 
 TYPED_TEST(ExecutionContextTests, repeatingOperationForceInvoke)
@@ -327,14 +318,18 @@ TYPED_TEST(ExecutionContextTests, strandedRepeatingOperation)
     auto callCount = 0uz;
 
     auto res = strand.executeRepeatedly(repeatDelay, [&] { ++callCount; });
-    auto timeSpent = util::timed([timeout] { std::this_thread::sleep_for(timeout); });  // calculate actual time spent
+    auto timeSpent = util::timed([timeout] {
+        std::this_thread::sleep_for(timeout);
+    });  // calculate actual time spent
 
     res.abort();  // outside of the above stopwatch because it blocks and can take arbitrary time
     auto const expectedPureCalls = timeout.count() / repeatDelay.count();
     auto const expectedActualCount = timeSpent / repeatDelay.count();
 
     EXPECT_GE(callCount, expectedPureCalls / 2u);  // expect at least half of the scheduled calls
-    EXPECT_LE(callCount, expectedActualCount);     // never should be called more times than possible before timeout
+    EXPECT_LE(
+        callCount, expectedActualCount
+    );  // never should be called more times than possible before timeout
 }
 
 TYPED_TEST(ExecutionContextTests, strandedRepeatingOperationForceInvoke)
@@ -412,7 +407,9 @@ TYPED_TEST(AsyncExecutionContextTests, repeatingOperationAutoAborts)
 
     {
         auto res = this->ctx.executeRepeatedly(repeatDelay, [&] { ++callCount; });
-        timeSpentMs = util::timed([timeout] { std::this_thread::sleep_for(timeout); });  // calculate actual time spent
+        timeSpentMs = util::timed([timeout] {
+            std::this_thread::sleep_for(timeout);
+        });  // calculate actual time spent
     }  // res goes out of scope and automatically aborts the repeating operation
 
     // double the delay so that if abort did not happen we will fail below expectations
@@ -422,7 +419,9 @@ TYPED_TEST(AsyncExecutionContextTests, repeatingOperationAutoAborts)
     auto const expectedActualCount = timeSpentMs / repeatDelay.count();
 
     EXPECT_GE(callCount, expectedPureCalls / 2u);  // expect at least half of the scheduled calls
-    EXPECT_LE(callCount, expectedActualCount);     // never should be called more times than possible before timeout
+    EXPECT_LE(
+        callCount, expectedActualCount
+    );  // never should be called more times than possible before timeout
 }
 
 using NoErrorHandlerSyncExecutionContext = BasicExecutionContext<
@@ -448,7 +447,9 @@ TEST(NoErrorHandlerSyncExecutionContextTests, executeStdExceptionInStrand)
 {
     auto ctx = NoErrorHandlerSyncExecutionContext{};
     auto strand = ctx.makeStrand();
-    EXPECT_THROW(strand.execute([] { throw std::runtime_error("test"); }).wait(), std::runtime_error);
+    EXPECT_THROW(
+        strand.execute([] { throw std::runtime_error("test"); }).wait(), std::runtime_error
+    );
 }
 
 TEST(NoErrorHandlerSyncExecutionContextTests, executeUnknownExceptionInStrand)

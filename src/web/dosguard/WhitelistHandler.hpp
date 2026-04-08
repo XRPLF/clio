@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/config/ArrayView.hpp"
@@ -101,9 +82,13 @@ public:
      * @param resolver The resolver to use for hostname resolution
      */
     template <SomeResolver HostnameResolverType = Resolver>
-    WhitelistHandler(util::config::ClioConfigDefinition const& config, HostnameResolverType&& resolver = {})
+    WhitelistHandler(
+        util::config::ClioConfigDefinition const& config,
+        HostnameResolverType&& resolver = {}
+    )
     {
-        std::unordered_set<std::string> const arr = getWhitelist(config, std::forward<HostnameResolverType>(resolver));
+        std::unordered_set<std::string> const arr =
+            getWhitelist(config, std::forward<HostnameResolverType>(resolver));
         for (auto const& net : arr)
             whitelist_.add(net);
     }
@@ -130,7 +115,9 @@ private:
         // resolve hostnames to ips
         std::unordered_set<std::string> ips;
 
-        for (auto it = whitelist.begin<util::config::ValueView>(); it != whitelist.end<util::config::ValueView>(); ++it)
+        for (auto it = whitelist.begin<util::config::ValueView>();
+             it != whitelist.end<util::config::ValueView>();
+             ++it)
             hostnames.insert((*it).asString());
 
         for (auto const& hostname : hostnames) {

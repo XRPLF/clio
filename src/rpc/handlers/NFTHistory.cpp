@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/NFTHistory.hpp"
 
 #include "data/Types.hpp"
@@ -77,14 +58,17 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input const& input, Context const&
 
     if (input.ledgerHash || input.ledgerIndex) {
         // rippled does not have this check
-        if (input.ledgerIndexMax || input.ledgerIndexMin)
-            return Error{Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}};
+        if (input.ledgerIndexMax || input.ledgerIndexMin) {
+            return Error{
+                Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}
+            };
+        }
 
         auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
             *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
         );
 
-        if (!expectedLgrInfo.has_value())
+        if (not expectedLgrInfo.has_value())
             return Error{expectedLgrInfo.error()};
 
         maxIndex = minIndex = expectedLgrInfo.value().seq;
@@ -107,9 +91,12 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input const& input, Context const&
     auto const tokenID = ripple::uint256{input.nftID.c_str()};
 
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
-        return sharedPtrBackend_->fetchNFTTransactions(tokenID, limit, input.forward, cursor, ctx.yield);
+        return sharedPtrBackend_->fetchNFTTransactions(
+            tokenID, limit, input.forward, cursor, ctx.yield
+        );
     });
-    LOG(log_.info()) << "db fetch took " << timeDiff << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
+    LOG(log_.info()) << "db fetch took " << timeDiff
+                     << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
 
     Output response;
     auto const [blobs, retCursor] = txnsAndCursor;
@@ -144,8 +131,9 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input const& input, Context const&
                     obj[JS(hash)] = obj[txKey].at(JS(hash));
                     obj[txKey].as_object().erase(JS(hash));
                 }
-                if (auto const lgrInfo =
-                        sharedPtrBackend_->fetchLedgerBySequence(txnPlusMeta.ledgerSequence, ctx.yield);
+                if (auto const lgrInfo = sharedPtrBackend_->fetchLedgerBySequence(
+                        txnPlusMeta.ledgerSequence, ctx.yield
+                    );
                     lgrInfo) {
                     obj[JS(close_time_iso)] = ripple::to_string_iso(lgrInfo->closeTime);
                     obj[JS(ledger_hash)] = ripple::strHex(lgrInfo->hash);
@@ -170,7 +158,11 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input const& input, Context const&
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTHistoryHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    NFTHistoryHandler::Output const& output
+)
 {
     jv = {
         {JS(nft_id), output.nftID},
@@ -188,7 +180,11 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTHistoryHandle
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTHistoryHandler::Marker const& marker)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    NFTHistoryHandler::Marker const& marker
+)
 {
     jv = {
         {JS(ledger), marker.ledger},
@@ -232,8 +228,11 @@ tag_invoke(boost::json::value_to_tag<NFTHistoryHandler::Input>, boost::json::val
 
     if (jsonObject.contains(JS(marker))) {
         input.marker = NFTHistoryHandler::Marker{
-            .ledger = util::integralValueAs<uint32_t>(jsonObject.at(JS(marker)).as_object().at(JS(ledger))),
-            .seq = util::integralValueAs<uint32_t>(jsonObject.at(JS(marker)).as_object().at(JS(seq)))
+            .ledger = util::integralValueAs<uint32_t>(
+                jsonObject.at(JS(marker)).as_object().at(JS(ledger))
+            ),
+            .seq =
+                util::integralValueAs<uint32_t>(jsonObject.at(JS(marker)).as_object().at(JS(seq)))
         };
     }
 

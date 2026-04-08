@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 /** @file */
 #pragma once
 
@@ -83,8 +64,15 @@ struct NFTTransactionsData {
      * @param meta The transaction metadata
      * @param txHash The transaction hash
      */
-    NFTTransactionsData(ripple::uint256 const& tokenID, ripple::TxMeta const& meta, ripple::uint256 const& txHash)
-        : tokenID(tokenID), ledgerSequence(meta.getLgrSeq()), transactionIndex(meta.getIndex()), txHash(txHash)
+    NFTTransactionsData(
+        ripple::uint256 const& tokenID,
+        ripple::TxMeta const& meta,
+        ripple::uint256 const& txHash
+    )
+        : tokenID(tokenID)
+        , ledgerSequence(meta.getLgrSeq())
+        , transactionIndex(meta.getIndex())
+        , txHash(txHash)
     {
     }
 };
@@ -94,11 +82,13 @@ struct NFTTransactionsData {
  *
  * Gets written to nf_tokens table and the like.
  *
- * The transaction index is only stored because we want to store only the final state of an NFT per ledger.
- * Since we pull this from transactions we keep track of which tx index created this so we can de-duplicate, as it is
- * possible for one ledger to have multiple txs that change the state of the same NFT.
+ * The transaction index is only stored because we want to store only the final state of an NFT per
+ * ledger. Since we pull this from transactions we keep track of which tx index created this so we
+ * can de-duplicate, as it is possible for one ledger to have multiple txs that change the state of
+ * the same NFT.
  *
- * We only set the uri if this is a mint tx, or if we are loading initial state from NFTokenPage objects.
+ * We only set the uri if this is a mint tx, or if we are loading initial state from NFTokenPage
+ * objects.
  */
 struct NFTsData {
     ripple::uint256 tokenID;
@@ -113,8 +103,9 @@ struct NFTsData {
      * @brief Construct a new NFTsData object
      *
      * @note This constructor is used when parsing an NFTokenMint tx
-     * Unfortunately because of the extreme edge case of being able to re-mint an NFT with the same ID, we must
-     * explicitly record a null URI. For this reason, we _always_ write this field as a result of this tx.
+     * Unfortunately because of the extreme edge case of being able to re-mint an NFT with the same
+     * ID, we must explicitly record a null URI. For this reason, we _always_ write this field as a
+     * result of this tx.
      *
      * @param tokenID The token ID
      * @param owner The owner
@@ -127,7 +118,11 @@ struct NFTsData {
         ripple::Blob const& uri,
         ripple::TxMeta const& meta
     )
-        : tokenID(tokenID), ledgerSequence(meta.getLgrSeq()), transactionIndex(meta.getIndex()), owner(owner), uri(uri)
+        : tokenID(tokenID)
+        , ledgerSequence(meta.getLgrSeq())
+        , transactionIndex(meta.getIndex())
+        , owner(owner)
+        , uri(uri)
     {
     }
 
@@ -141,7 +136,12 @@ struct NFTsData {
      * @param meta The transaction metadata
      * @param isBurned Whether the NFT is burned
      */
-    NFTsData(ripple::uint256 const& tokenID, ripple::AccountID const& owner, ripple::TxMeta const& meta, bool isBurned)
+    NFTsData(
+        ripple::uint256 const& tokenID,
+        ripple::AccountID const& owner,
+        ripple::TxMeta const& meta,
+        bool isBurned
+    )
         : tokenID(tokenID)
         , ledgerSequence(meta.getLgrSeq())
         , transactionIndex(meta.getIndex())
@@ -154,8 +154,9 @@ struct NFTsData {
      * @brief Construct a new NFTsData object
      *
      * @note This constructor is used when parsing an NFTokenPage directly from ledger state.
-     * Unfortunately because of the extreme edge case of being able to re-mint an NFT with the same ID, we must
-     * explicitly record a null URI. For this reason, we _always_ write this field as a result of this tx.
+     * Unfortunately because of the extreme edge case of being able to re-mint an NFT with the same
+     * ID, we must explicitly record a null URI. For this reason, we _always_ write this field as a
+     * result of this tx.
      *
      * @param tokenID The token ID
      * @param ledgerSequence The ledger sequence

@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/async/AnyOperation.hpp"
@@ -92,14 +73,18 @@ public:
         static_assert(not std::is_same_v<RetType, std::any>);
 
         return AnyOperation<RetType>(  //
-            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> std::any {
-                if constexpr (std::is_void_v<RetType>) {
-                    std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
-                    return {};
-                } else {
-                    return std::make_any<RetType>(std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken)));
+            pimpl_->execute(
+                [fn = std::forward<decltype(fn)>(fn)](auto stopToken) mutable -> std::any {
+                    if constexpr (std::is_void_v<RetType>) {
+                        std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
+                        return {};
+                    } else {
+                        return std::make_any<RetType>(
+                            std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken))
+                        );
+                    }
                 }
-            })
+            )
         );
     }
 
@@ -148,10 +133,12 @@ public:
 
         auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(interval);
         return AnyOperation<RetType>(  //
-            pimpl_->executeRepeatedly(millis, [fn = std::forward<decltype(fn)>(fn)] mutable -> std::any {
-                std::invoke(std::forward<decltype(fn)>(fn));
-                return {};
-            })
+            pimpl_->executeRepeatedly(
+                millis, [fn = std::forward<decltype(fn)>(fn)] mutable -> std::any {
+                    std::invoke(std::forward<decltype(fn)>(fn));
+                    return {};
+                }
+            )
         );
     }
 
@@ -193,7 +180,10 @@ private:
         }
 
         [[nodiscard]] impl::ErasedOperation
-        execute(std::function<std::any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout) override
+        execute(
+            std::function<std::any(AnyStopToken)> fn,
+            std::optional<std::chrono::milliseconds> timeout
+        ) override
         {
             return strand.execute(std::move(fn), timeout);
         }

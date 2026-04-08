@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "rpc/Errors.hpp"
@@ -66,23 +47,31 @@ public:
                 switch (*clioCode) {
                     case rpc::ClioError::RpcInvalidApiVersion:
                         connection_->send(
-                            std::string{rpc::getErrorInfo(*clioCode).error}, boost::beast::http::status::bad_request
+                            std::string{rpc::getErrorInfo(*clioCode).error},
+                            boost::beast::http::status::bad_request
                         );
                         break;
                     case rpc::ClioError::RpcCommandIsMissing:
                         connection_->send("Null method", boost::beast::http::status::bad_request);
                         break;
                     case rpc::ClioError::RpcCommandIsEmpty:
-                        connection_->send("method is empty", boost::beast::http::status::bad_request);
+                        connection_->send(
+                            "method is empty", boost::beast::http::status::bad_request
+                        );
                         break;
                     case rpc::ClioError::RpcCommandNotString:
-                        connection_->send("method is not string", boost::beast::http::status::bad_request);
+                        connection_->send(
+                            "method is not string", boost::beast::http::status::bad_request
+                        );
                         break;
                     case rpc::ClioError::RpcParamsUnparsable:
-                        connection_->send("params unparsable", boost::beast::http::status::bad_request);
+                        connection_->send(
+                            "params unparsable", boost::beast::http::status::bad_request
+                        );
                         break;
 
-                    // others are not applicable but we want a compilation error next time we add one
+                    // others are not applicable but we want a compilation error next time we add
+                    // one
                     case rpc::ClioError::RpcUnknownOption:
                     case rpc::ClioError::RpcMalformedCurrency:
                     case rpc::ClioError::RpcMalformedRequest:
@@ -91,7 +80,6 @@ public:
                     case rpc::ClioError::RpcFieldNotFoundTransaction:
                     case rpc::ClioError::RpcMalformedOracleDocumentId:
                     case rpc::ClioError::RpcMalformedAuthorizedCredentials:
-                    case rpc::ClioError::RpcEntryNotFound:
                     case rpc::ClioError::EtlConnectionError:
                     case rpc::ClioError::EtlRequestError:
                     case rpc::ClioError::EtlRequestTimeout:
@@ -102,7 +90,10 @@ public:
                         break;
                 }
             } else {
-                connection_->send(boost::json::serialize(composeError(err)), boost::beast::http::status::bad_request);
+                connection_->send(
+                    boost::json::serialize(composeError(err)),
+                    boost::beast::http::status::bad_request
+                );
             }
         }
     }
@@ -120,7 +111,8 @@ public:
     sendNotReadyError() const
     {
         connection_->send(
-            boost::json::serialize(composeError(rpc::RippledError::rpcNOT_READY)), boost::beast::http::status::ok
+            boost::json::serialize(composeError(rpc::RippledError::rpcNOT_READY)),
+            boost::beast::http::status::ok
         );
     }
 
@@ -129,7 +121,8 @@ public:
     {
         if (connection_->upgraded) {
             connection_->send(
-                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcTOO_BUSY)), boost::beast::http::status::ok
+                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcTOO_BUSY)),
+                boost::beast::http::status::ok
             );
         } else {
             connection_->send(
@@ -143,10 +136,13 @@ public:
     sendJsonParsingError() const
     {
         if (connection_->upgraded) {
-            connection_->send(boost::json::serialize(rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX)));
+            connection_->send(
+                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX))
+            );
         } else {
             connection_->send(
-                fmt::format("Unable to parse JSON from the request"), boost::beast::http::status::bad_request
+                fmt::format("Unable to parse JSON from the request"),
+                boost::beast::http::status::bad_request
             );
         }
     }

@@ -1,31 +1,14 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "rpc/WorkQueue.hpp"
 #include "util/prometheus/Counter.hpp"
+#include "util/prometheus/Histogram.hpp"
 
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
 
 #include <chrono>
+#include <cstdint>
 #include <functional>
 #include <mutex>
 #include <string>
@@ -65,6 +48,9 @@ class Counters {
     CounterType badSyntaxCounter_;
     CounterType unknownCommandCounter_;
     CounterType internalErrorCounter_;
+
+    std::reference_wrapper<util::prometheus::HistogramInt> ledgerAgeLedgersHistogram_;
+    CounterType ledgerHashRequestsCounter_;
 
     std::reference_wrapper<Reportable const> workQueue_;
     std::chrono::time_point<std::chrono::system_clock> startupTime_;
@@ -149,6 +135,15 @@ public:
     /** @brief Increments the global internal error counter. */
     void
     onInternalError();
+
+    /**
+     * @brief Records ledger request metrics based on the ledger parameter in the request.
+     *
+     * @param params The request parameters containing ledger information
+     * @param currentLedgerSequence The current ledger sequence number
+     */
+    void
+    recordLedgerRequest(boost::json::object const& params, std::uint32_t currentLedgerSequence);
 
     /** @return Uptime of this instance in seconds. */
     std::chrono::seconds

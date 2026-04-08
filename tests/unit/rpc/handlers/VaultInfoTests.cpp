@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2025, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/Errors.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
@@ -54,6 +35,7 @@ constexpr auto kSEQ = 30;
 constexpr auto kASSET_CURRENCY = "XRP";
 constexpr auto kASSET_ISSUER = "rrrrrrrrrrrrrrrrrrrrrhoLvTp";
 constexpr auto kVAULT_ID = "61B03A6F8CEBD3AF9D8F696C3D0A9A9F0493B34BF6B5D93CF0BC009E6BA75303";
+constexpr auto kAPI_VERSION = 2;
 
 }  // namespace
 
@@ -71,10 +53,12 @@ struct VaultInfoParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
+    CombinedError expectedErrorCode;
     std::string expectedErrorMessage;
 };
 
-struct VaultInfoParameterTest : RPCVaultInfoHandlerTest, WithParamInterface<VaultInfoParamTestCaseBundle> {};
+struct VaultInfoParameterTest : RPCVaultInfoHandlerTest,
+                                WithParamInterface<VaultInfoParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -86,6 +70,7 @@ generateTestValuesForParametersTest()
                 "idk": "idk"
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
@@ -94,6 +79,7 @@ generateTestValuesForParametersTest()
                 "seq": 4
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
@@ -102,6 +88,7 @@ generateTestValuesForParametersTest()
                 "owner": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
@@ -111,6 +98,7 @@ generateTestValuesForParametersTest()
                 "seq": "asdf"
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
@@ -120,6 +108,7 @@ generateTestValuesForParametersTest()
                 "seq": 3
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "OwnerNotHexString"
         },
         VaultInfoParamTestCaseBundle{
@@ -129,6 +118,7 @@ generateTestValuesForParametersTest()
                 "seq": 3
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "OwnerNotHexString"
         },
         VaultInfoParamTestCaseBundle{
@@ -137,6 +127,7 @@ generateTestValuesForParametersTest()
                 "vault_id": 3
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
@@ -145,6 +136,7 @@ generateTestValuesForParametersTest()
                 "vault_id": "idk"
             })JSON",
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "Malformed request."
         },
         VaultInfoParamTestCaseBundle{
@@ -158,6 +150,7 @@ generateTestValuesForParametersTest()
                 kACCOUNT
             ),
             .expectedError = "malformedRequest",
+            .expectedErrorCode = ClioError::RpcMalformedRequest,
             .expectedErrorMessage = "Malformed request."
         }
     };
@@ -176,11 +169,18 @@ TEST_P(VaultInfoParameterTest, InvalidParams)
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{VaultInfoHandler{backend_}};
         auto const req = json::parse(testBundle.testJson);
-        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
+        auto const output =
+            handler.process(req, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
+        EXPECT_EQ(
+            err.at("error_code").as_uint64(),
+            std::visit(
+                [](auto code) { return static_cast<uint32_t>(code); }, testBundle.expectedErrorCode
+            )
+        );
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
 }
@@ -204,10 +204,13 @@ TEST_F(RPCVaultInfoHandlerTest, InputHasOwnerButNotFoundResultsInError)
     // Run the handler
     auto const handler = AnyHandler{VaultInfoHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
+        auto const output =
+            handler.process(kINPUT, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
+        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::RippledError::rpcENTRY_NOT_FOUND);
+        EXPECT_EQ(err.at("error_message").as_string(), "Entry not found.");
     });
 }
 
@@ -232,11 +235,14 @@ TEST_F(RPCVaultInfoHandlerTest, VaultIDFailsVaultDeserializationReturnsEntryNotF
 
     auto const handler = AnyHandler{VaultInfoHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
+        auto const output =
+            handler.process(kINPUT, Context{.yield = yield, .apiVersion = kAPI_VERSION});
 
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
+        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::RippledError::rpcENTRY_NOT_FOUND);
+        EXPECT_EQ(err.at("error_message").as_string(), "vault object not found.");
     });
 }
 
@@ -251,7 +257,15 @@ TEST_F(RPCVaultInfoHandlerTest, MissingIssuanceObject)
     uint64_t const ownerNode = 4;
 
     auto const vault = createVault(
-        kACCOUNT, kACCOUNT2, kSEQ, kASSET_CURRENCY, kASSET_ISSUER, mptSharesID, ownerNode, prevTxId, prevTxSeq
+        kACCOUNT,
+        kACCOUNT2,
+        kSEQ,
+        kASSET_CURRENCY,
+        kASSET_ISSUER,
+        mptSharesID,
+        ownerNode,
+        prevTxId,
+        prevTxSeq
     );
 
     auto const vaultKeylet = ripple::keylet::vault(ripple::uint256{kVAULT_ID}).key;
@@ -273,10 +287,13 @@ TEST_F(RPCVaultInfoHandlerTest, MissingIssuanceObject)
 
     auto const handler = AnyHandler{VaultInfoHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
+        auto const output =
+            handler.process(kINPUT, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
+        EXPECT_EQ(err.at("error_code").as_uint64(), rpc::RippledError::rpcENTRY_NOT_FOUND);
+        EXPECT_EQ(err.at("error_message").as_string(), "issuance object not found.");
     });
 }
 
@@ -295,7 +312,7 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
                 "AssetsTotal": "300",
                 "Flags": 0,
                 "LedgerEntryType": "Vault",
-                "LossUnrealized": "0",
+                "LossUnrealized": "1",
                 "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "OwnerNode": "4",
                 "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000002",
@@ -331,7 +348,15 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
 
     // Mock vault object
     auto const vault = createVault(
-        kACCOUNT, kACCOUNT2, kSEQ, kASSET_CURRENCY, kASSET_ISSUER, mptSharesID, ownerNode, prevTxId, prevTxSeq
+        kACCOUNT,
+        kACCOUNT2,
+        kSEQ,
+        kASSET_CURRENCY,
+        kASSET_ISSUER,
+        mptSharesID,
+        ownerNode,
+        prevTxId,
+        prevTxSeq
     );
 
     // Set up keylet based on vaultID
@@ -357,7 +382,8 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
     // Run the handler
     auto const handler = AnyHandler{VaultInfoHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
+        auto const output =
+            handler.process(kINPUT, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUTPUT));
     });
@@ -378,7 +404,7 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
                 "AssetsTotal": "300",
                 "Flags": 0,
                 "LedgerEntryType": "Vault",
-                "LossUnrealized": "0",
+                "LossUnrealized": "1",
                 "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "OwnerNode": "4",
                 "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000002",
@@ -414,7 +440,15 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
 
     // Mock vault object
     auto const vault = createVault(
-        kACCOUNT, kACCOUNT2, kSEQ, kASSET_CURRENCY, kASSET_ISSUER, mptSharesID, ownerNode, prevTxId, prevTxSeq
+        kACCOUNT,
+        kACCOUNT2,
+        kSEQ,
+        kASSET_CURRENCY,
+        kASSET_ISSUER,
+        mptSharesID,
+        ownerNode,
+        prevTxId,
+        prevTxSeq
     );
 
     auto const issuance = createMptIssuanceObject(kACCOUNT, kSEQ, "metadata");
@@ -448,7 +482,8 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
     // Run the handler
     auto const handler = AnyHandler{VaultInfoHandler{backend_}};
     runSpawn([&](auto yield) {
-        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2});
+        auto const output =
+            handler.process(kINPUT, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(kEXPECTED_OUTPUT));
     });

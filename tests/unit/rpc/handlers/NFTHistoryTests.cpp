@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/common/AnyHandler.hpp"
@@ -51,6 +32,7 @@ constexpr auto kACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr auto kACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr auto kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr auto kNFT_ID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
+constexpr auto kAPI_VERSION = 2;
 
 }  // namespace
 
@@ -273,7 +255,8 @@ genTransactions(uint32_t seq1, uint32_t seq2)
     ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = seq1;
-    ripple::STObject const metaObj = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 22, 23);
+    ripple::STObject const metaObj =
+        createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 22, 23);
     trans1.metadata = metaObj.getSerializer().peekData();
     trans1.date = 1;
     transactions.push_back(trans1);
@@ -282,7 +265,8 @@ genTransactions(uint32_t seq1, uint32_t seq2)
     ripple::STObject const obj2 = createPaymentTransactionObject(kACCOUNT, kACCOUNT2, 1, 1, 32);
     trans2.transaction = obj.getSerializer().peekData();
     trans2.ledgerSequence = seq2;
-    ripple::STObject const metaObj2 = createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 22, 23);
+    ripple::STObject const metaObj2 =
+        createPaymentTransactionMetaObject(kACCOUNT, kACCOUNT2, 22, 23);
     trans2.metadata = metaObj2.getSerializer().peekData();
     trans2.date = 2;
     transactions.push_back(trans2);
@@ -292,7 +276,8 @@ genTransactions(uint32_t seq1, uint32_t seq2)
 TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardTrue)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -326,7 +311,10 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardTrue)
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
         EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ + 1);
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ - 1);
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(
+            output.result->at("marker").as_object(),
+            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+        );
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output.result->as_object().contains("limit"));
     });
@@ -430,7 +418,8 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV1)
     })JSON";
 
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -567,7 +556,8 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
     })JSON";
 
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     EXPECT_CALL(
         *backend_,
         fetchNFTTransactions(
@@ -599,7 +589,8 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
                 kMAX_SEQ - 1
             )
         );
-        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2u});
+        auto const output =
+            handler.process(kINPUT, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result.value(), boost::json::parse(kOUTPUT));
     });
@@ -608,12 +599,17 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
 TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
         fetchNFTTransactions(
-            testing::_, testing::_, true, testing::Optional(testing::Eq(TransactionsCursor{kMIN_SEQ, 0})), testing::_
+            testing::_,
+            testing::_,
+            true,
+            testing::Optional(testing::Eq(TransactionsCursor{kMIN_SEQ, 0})),
+            testing::_
         )
     )
         .Times(1);
@@ -638,7 +634,10 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
         EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ);
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ);
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(
+            output.result->at("marker").as_object(),
+            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+        );
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output.result->as_object().contains("limit"));
     });
@@ -647,7 +646,8 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
 TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -681,7 +681,10 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
         EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ);
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ);
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(
+            output.result->at("marker").as_object(),
+            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+        );
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_FALSE(output.result->as_object().contains("limit"));
     });
@@ -690,7 +693,8 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
 TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV1)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -724,7 +728,10 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV1)
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
         EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ);
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ);
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(
+            output.result->at("marker").as_object(),
+            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+        );
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_EQ(
             output.result->at("transactions").as_array()[0].as_object().at("meta").as_string(),
@@ -738,7 +745,9 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV1)
             "144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451"
             "243869B38667CBD89DF3"
         );
-        EXPECT_EQ(output.result->at("transactions").as_array()[0].as_object().at("date").as_uint64(), 1);
+        EXPECT_EQ(
+            output.result->at("transactions").as_array()[0].as_object().at("date").as_uint64(), 1
+        );
 
         EXPECT_FALSE(output.result->as_object().contains("limit"));
     });
@@ -747,7 +756,8 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV1)
 TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV2)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     EXPECT_CALL(
         *backend_,
         fetchNFTTransactions(
@@ -775,12 +785,16 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV2)
                 -1
             )
         );
-        auto const output = handler.process(kINPUT, Context{.yield = yield, .apiVersion = 2u});
+        auto const output =
+            handler.process(kINPUT, Context{.yield = yield, .apiVersion = kAPI_VERSION});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
         EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ);
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ);
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(
+            output.result->at("marker").as_object(),
+            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+        );
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_EQ(
             output.result->at("transactions").as_array()[0].as_object().at("meta_blob").as_string(),
@@ -794,7 +808,9 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV2)
             "144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451"
             "243869B38667CBD89DF3"
         );
-        EXPECT_EQ(output.result->at("transactions").as_array()[0].as_object().at("date").as_uint64(), 1);
+        EXPECT_EQ(
+            output.result->at("transactions").as_array()[0].as_object().at("date").as_uint64(), 1
+        );
 
         EXPECT_FALSE(output.result->as_object().contains("limit"));
     });
@@ -803,12 +819,17 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV2)
 TEST_F(RPCNFTHistoryHandlerTest, LimitAndMarker)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
         fetchNFTTransactions(
-            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
+            testing::_,
+            testing::_,
+            false,
+            testing::Optional(testing::Eq(TransactionsCursor{10, 11})),
+            testing::_
         )
     )
         .Times(1);
@@ -836,7 +857,10 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitAndMarker)
         EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ);
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ);
         EXPECT_EQ(output.result->at("limit").as_uint64(), 2);
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(
+            output.result->at("marker").as_object(),
+            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+        );
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
     });
 }
@@ -845,7 +869,8 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerIndex)
 {
     // adjust the order for forward->false
     auto const transactions = genTransactions(kMAX_SEQ - 1, kMIN_SEQ + 1);
-    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -940,7 +965,8 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
 {
     // adjust the order for forward->false
     auto const transactions = genTransactions(kMAX_SEQ - 1, kMIN_SEQ + 1);
-    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -956,7 +982,8 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kMAX_SEQ - 1);
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _)).WillByDefault(Return(ledgerHeader));
+    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+        .WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend_}};
@@ -984,7 +1011,8 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
 TEST_F(RPCNFTHistoryHandlerTest, TxLessThanMinSeq)
 {
     auto const transactions = genTransactions(kMAX_SEQ - 1, kMIN_SEQ + 1);
-    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -1027,7 +1055,8 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLessThanMinSeq)
 TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
 {
     auto const transactions = genTransactions(kMAX_SEQ - 1, kMIN_SEQ + 1);
-    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -1063,14 +1092,18 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ - 2);
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 1);
         EXPECT_FALSE(output.result->as_object().contains("limit"));
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(
+            output.result->at("marker").as_object(),
+            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+        );
     });
 }
 
 TEST_F(RPCNFTHistoryHandlerTest, LimitMoreThanMax)
 {
     auto const transactions = genTransactions(kMIN_SEQ + 1, kMAX_SEQ - 1);
-    auto const transCursor = TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
+    auto const transCursor =
+        TransactionsAndCursor{.txns = transactions, .cursor = TransactionsCursor{12, 34}};
     ON_CALL(*backend_, fetchNFTTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
         *backend_,
@@ -1106,8 +1139,13 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitMoreThanMax)
         EXPECT_EQ(output.result->at("nft_id").as_string(), kNFT_ID);
         EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), kMIN_SEQ + 1);
         EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), kMAX_SEQ - 1);
-        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"JSON({"ledger": 12, "seq": 34})JSON"));
+        EXPECT_EQ(
+            output.result->at("marker").as_object(),
+            json::parse(R"JSON({"ledger": 12, "seq": 34})JSON")
+        );
         EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
-        EXPECT_EQ(output.result->as_object().at("limit").as_uint64(), NFTHistoryHandler::kLIMIT_MAX);
+        EXPECT_EQ(
+            output.result->as_object().at("limit").as_uint64(), NFTHistoryHandler::kLIMIT_MAX
+        );
     });
 }

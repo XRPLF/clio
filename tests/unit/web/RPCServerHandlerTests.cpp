@@ -1,21 +1,3 @@
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/Errors.hpp"
 #include "rpc/common/APIVersion.hpp"
 #include "rpc/common/Types.hpp"
@@ -70,8 +52,10 @@ struct MockWsBase : public web::ConnectionBase {
     }
 
     void
-    // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
-    send(std::string&& msg, boost::beast::http::status status = boost::beast::http::status::ok) override
+    send(
+        std::string&& msg,  // NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+        boost::beast::http::status status = boost::beast::http::status::ok
+    ) override
     {
         message += msg;
         lastStatus = status;
@@ -89,24 +73,35 @@ struct MockWsBase : public web::ConnectionBase {
         return {};
     }
 
-    MockWsBase(util::TagDecoratorFactory const& factory) : web::ConnectionBase(factory, "localhost.fake.ip")
+    MockWsBase(util::TagDecoratorFactory const& factory)
+        : web::ConnectionBase(factory, "localhost.fake.ip")
     {
     }
 };
 
-struct WebRPCServerHandlerTest : util::prometheus::WithPrometheus, MockBackendTest, SyncAsioContextTest {
+struct WebRPCServerHandlerTest : util::prometheus::WithPrometheus,
+                                 MockBackendTest,
+                                 SyncAsioContextTest {
     util::config::ClioConfigDefinition cfg{
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
-        {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(rpc::kAPI_VERSION_DEFAULT)},
+        {"api_version.default",
+         ConfigValue{ConfigType::Integer}.defaultValue(rpc::kAPI_VERSION_DEFAULT)},
         {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(rpc::kAPI_VERSION_MIN)},
         {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(rpc::kAPI_VERSION_MAX)}
     };
     std::shared_ptr<MockAsyncRPCEngine> rpcEngine = std::make_shared<MockAsyncRPCEngine>();
     std::shared_ptr<MockETLService> etl = std::make_shared<MockETLService>();
     DOSGuardStrictMock dosguard;
-    std::shared_ptr<util::TagDecoratorFactory> tagFactory = std::make_shared<util::TagDecoratorFactory>(cfg);
+    std::shared_ptr<util::TagDecoratorFactory> tagFactory =
+        std::make_shared<util::TagDecoratorFactory>(cfg);
     std::shared_ptr<RPCServerHandler<MockAsyncRPCEngine>> handler =
-        std::make_shared<RPCServerHandler<MockAsyncRPCEngine>>(cfg, backend_, rpcEngine, etl, dosguard);
+        std::make_shared<RPCServerHandler<MockAsyncRPCEngine>>(
+            cfg,
+            backend_,
+            rpcEngine,
+            etl,
+            dosguard
+        );
     std::shared_ptr<MockWsBase> session = std::make_shared<MockWsBase>(*tagFactory);
 };
 
@@ -167,7 +162,8 @@ TEST_F(WebRPCServerHandlerTest, HTTPRejectedByDosguardAfterParsing)
     })JSON";
 
     EXPECT_CALL(dosguard, isOk(session->clientIp())).WillOnce(testing::Return(true));
-    EXPECT_CALL(dosguard, request(session->clientIp(), testing::_)).WillOnce(testing::Return(false));
+    EXPECT_CALL(dosguard, request(session->clientIp(), testing::_))
+        .WillOnce(testing::Return(false));
 
     (*handler)(kREQUEST, session);
     EXPECT_EQ(session->slowDownCallsCounter, 1);
@@ -403,7 +399,8 @@ TEST_F(WebRPCServerHandlerTest, WsForwardedErrorPath)
         "type": "response",
         "forwarded": true
     })JSON";
-    // WS error responses, unlike their successful counterpart, contain everything on top level without "result"
+    // WS error responses, unlike their successful counterpart, contain everything on top level
+    // without "result"
     static constexpr auto kRESPONSE = R"JSON({
         "error": "error",
         "error_code": 123,
@@ -473,12 +470,18 @@ TEST_F(WebRPCServerHandlerTest, HTTPErrorPath)
     })JSON";
 
     EXPECT_CALL(dosguard, isOk(session->clientIp())).WillOnce(testing::Return(true));
-    EXPECT_CALL(dosguard, request(session->clientIp(), boost::json::parse(kREQUEST_JSON).as_object()))
+    EXPECT_CALL(
+        dosguard, request(session->clientIp(), boost::json::parse(kREQUEST_JSON).as_object())
+    )
         .WillOnce(testing::Return(true));
 
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(
-            testing::Return(rpc::Result{rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}})
+            testing::Return(
+                rpc::Result{
+                    rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}
+                }
+            )
         );
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
@@ -522,12 +525,18 @@ TEST_F(WebRPCServerHandlerTest, WsErrorPath)
     })JSON";
 
     EXPECT_CALL(dosguard, isOk(session->clientIp())).WillOnce(testing::Return(true));
-    EXPECT_CALL(dosguard, request(session->clientIp(), boost::json::parse(kREQUEST_JSON).as_object()))
+    EXPECT_CALL(
+        dosguard, request(session->clientIp(), boost::json::parse(kREQUEST_JSON).as_object())
+    )
         .WillOnce(testing::Return(true));
 
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(
-            testing::Return(rpc::Result{rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}})
+            testing::Return(
+                rpc::Result{
+                    rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}
+                }
+            )
         );
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
@@ -781,11 +790,15 @@ TEST_F(WebRPCServerHandlerTest, HTTPInternalError)
     })JSON";
 
     EXPECT_CALL(dosguard, isOk(session->clientIp())).WillOnce(testing::Return(true));
-    EXPECT_CALL(dosguard, request(session->clientIp(), boost::json::parse(kREQUEST_JSON).as_object()))
+    EXPECT_CALL(
+        dosguard, request(session->clientIp(), boost::json::parse(kREQUEST_JSON).as_object())
+    )
         .WillOnce(testing::Return(true));
 
     EXPECT_CALL(*rpcEngine, notifyInternalError).Times(1);
-    EXPECT_CALL(*rpcEngine, buildResponse(testing::_)).Times(1).WillOnce(testing::Throw(std::runtime_error("MyError")));
+    EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
+        .Times(1)
+        .WillOnce(testing::Throw(std::runtime_error("MyError")));
 
     (*handler)(kREQUEST_JSON, session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(kRESPONSE));
@@ -816,11 +829,15 @@ TEST_F(WebRPCServerHandlerTest, WsInternalError)
     })JSON";
 
     EXPECT_CALL(dosguard, isOk(session->clientIp())).WillOnce(testing::Return(true));
-    EXPECT_CALL(dosguard, request(session->clientIp(), boost::json::parse(kREQUEST_JSON).as_object()))
+    EXPECT_CALL(
+        dosguard, request(session->clientIp(), boost::json::parse(kREQUEST_JSON).as_object())
+    )
         .WillOnce(testing::Return(true));
 
     EXPECT_CALL(*rpcEngine, notifyInternalError).Times(1);
-    EXPECT_CALL(*rpcEngine, buildResponse(testing::_)).Times(1).WillOnce(testing::Throw(std::runtime_error("MyError")));
+    EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
+        .Times(1)
+        .WillOnce(testing::Throw(std::runtime_error("MyError")));
 
     (*handler)(kREQUEST_JSON, session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(kRESPONSE));
@@ -914,7 +931,9 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
     session->upgraded = true;
 
     auto localRpcEngine = std::make_shared<MockRPCEngine>();
-    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(cfg, backend_, localRpcEngine, etl, dosguard);
+    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(
+        cfg, backend_, localRpcEngine, etl, dosguard
+    );
     static constexpr auto kREQUEST = R"JSON({
         "command": "server_info",
         "id": 99
@@ -945,7 +964,9 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
 TEST_F(WebRPCServerHandlerTest, HTTPTooBusy)
 {
     auto localRpcEngine = std::make_shared<MockRPCEngine>();
-    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(cfg, backend_, localRpcEngine, etl, dosguard);
+    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine>>(
+        cfg, backend_, localRpcEngine, etl, dosguard
+    );
     static constexpr auto kREQUEST = R"JSON({
         "method": "server_info",
         "params": [{}]
@@ -1015,9 +1036,9 @@ struct InvalidAPIVersionTestBundle {
 };
 
 // parameterized test cases for parameters check
-struct WebRPCServerHandlerInvalidAPIVersionParamTest : public WebRPCServerHandlerTest,
-                                                       public testing::WithParamInterface<InvalidAPIVersionTestBundle> {
-};
+struct WebRPCServerHandlerInvalidAPIVersionParamTest
+    : public WebRPCServerHandlerTest,
+      public testing::WithParamInterface<InvalidAPIVersionTestBundle> {};
 
 auto
 generateInvalidVersions()
@@ -1025,11 +1046,14 @@ generateInvalidVersions()
     return std::vector<InvalidAPIVersionTestBundle>{
         {.testName = "v0",
          .version = "0",
-         .wsMessage = fmt::format("Requested API version is lower than minimum supported ({})", rpc::kAPI_VERSION_MIN)},
+         .wsMessage = fmt::format(
+             "Requested API version is lower than minimum supported ({})", rpc::kAPI_VERSION_MIN
+         )},
         {.testName = "v4",
          .version = "4",
-         .wsMessage =
-             fmt::format("Requested API version is higher than maximum supported ({})", rpc::kAPI_VERSION_MAX)},
+         .wsMessage = fmt::format(
+             "Requested API version is higher than maximum supported ({})", rpc::kAPI_VERSION_MAX
+         )},
         {.testName = "null", .version = "null", .wsMessage = "API version must be an integer"},
         {.testName = "str", .version = "\"bogus\"", .wsMessage = "API version must be an integer"},
         {.testName = "bool", .version = "false", .wsMessage = "API version must be an integer"},
@@ -1097,7 +1121,10 @@ TEST_P(WebRPCServerHandlerInvalidAPIVersionParamTest, WSInvalidAPIVersion)
     EXPECT_EQ(response.at("error").as_string(), "invalid_API_version");
 
     EXPECT_TRUE(response.as_object().contains("error_code"));
-    EXPECT_EQ(response.at("error_code").as_int64(), static_cast<int64_t>(rpc::ClioError::RpcInvalidApiVersion));
+    EXPECT_EQ(
+        response.at("error_code").as_int64(),
+        static_cast<int64_t>(rpc::ClioError::RpcInvalidApiVersion)
+    );
 
     EXPECT_TRUE(response.as_object().contains("error_message"));
     EXPECT_EQ(response.at("error_message").as_string(), GetParam().wsMessage);

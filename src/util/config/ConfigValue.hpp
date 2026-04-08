@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/Assert.hpp"
@@ -77,7 +58,8 @@ public:
      * @brief Sets the value current ConfigValue given by the User's defined value
      *
      * @param value The value to set
-     * @param key The Config key associated with the value. Optional to include; Used for debugging message to user.
+     * @param key The Config key associated with the value. Optional to include; Used for debugging
+     * message to user.
      * @return optional Error if user tries to set a value of wrong type or not within a constraint
      */
     [[nodiscard]] std::optional<Error>
@@ -92,7 +74,8 @@ public:
         if (cons_.has_value()) {
             auto constraintCheck = cons_->get().checkConstraint(value);
             if (constraintCheck.has_value()) {
-                constraintCheck->error = fmt::format("{} {}", key.value_or("Unknown_key"), constraintCheck->error);
+                constraintCheck->error =
+                    fmt::format("{} {}", key.value_or("Unknown_key"), constraintCheck->error);
                 return constraintCheck;
             }
         }
@@ -161,7 +144,8 @@ public:
     }
 
     /**
-     * @brief Sets the config value as optional, meaning the user doesn't have to provide the value in their config
+     * @brief Sets the config value as optional, meaning the user doesn't have to provide the value
+     * in their config
      *
      * @return Reference to this ConfigValue
      */

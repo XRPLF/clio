@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/LedgerCache.hpp"
 
 #include "data/Types.hpp"
@@ -224,6 +205,7 @@ LedgerCache::setFull()
         return;
 
     full_ = true;
+    isCurrentlyLoading_ = false;
     std::scoped_lock const lck{mtx_};
     deletes_.clear();
 }
@@ -254,7 +236,8 @@ LedgerCache::getSuccessorHitRate() const
 {
     if (successorReqCounter_.get().value() == 0u)
         return 1;
-    return static_cast<float>(successorHitCounter_.get().value()) / successorReqCounter_.get().value();
+    return static_cast<float>(successorHitCounter_.get().value()) /
+        successorReqCounter_.get().value();
 }
 
 std::expected<void, std::string>
@@ -266,7 +249,9 @@ LedgerCache::saveToFile(std::string const& path) const
 
     impl::LedgerCacheFile file{path};
     std::shared_lock const lock{mtx_};
-    impl::LedgerCacheFile::DataView const data{.latestSeq = latestSeq_, .map = map_, .deleted = deleted_};
+    impl::LedgerCacheFile::DataView const data{
+        .latestSeq = latestSeq_, .map = map_, .deleted = deleted_
+    };
     return file.write(data);
 }
 
@@ -285,6 +270,18 @@ LedgerCache::loadFromFile(std::string const& path, uint32_t minLatestSequence)
     deleted_ = std::move(deleted);
     full_ = true;
     return {};
+}
+
+void
+LedgerCache::startLoading()
+{
+    isCurrentlyLoading_ = true;
+}
+
+bool
+LedgerCache::isCurrentlyLoading() const
+{
+    return isCurrentlyLoading_;
 }
 
 }  // namespace data

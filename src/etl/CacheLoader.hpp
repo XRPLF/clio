@@ -1,26 +1,8 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/BackendInterface.hpp"
 #include "data/LedgerCacheInterface.hpp"
+#include "data/LedgerCacheLoadingState.hpp"
 #include "data/Types.hpp"
 #include "etl/CacheLoaderInterface.hpp"
 #include "etl/CacheLoaderSettings.hpp"
@@ -60,6 +42,7 @@ class CacheLoader : public CacheLoaderInterface {
     std::reference_wrapper<data::LedgerCacheInterface> cache_;
 
     CacheLoaderSettings settings_;
+    std::unique_ptr<data::LedgerCacheLoadingStateInterface const> cacheLoadingState_;
     ExecutionContextType ctx_;
     std::unique_ptr<CacheLoaderType> loader_;
 
@@ -70,15 +53,18 @@ public:
      * @param config The configuration to use
      * @param backend The backend to use
      * @param cache The cache to load into
+     * @param cacheLoadingState State controlling whether loading from backend is currently allowed
      */
     CacheLoader(
         util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface> backend,
-        data::LedgerCacheInterface& cache
+        data::LedgerCacheInterface& cache,
+        std::unique_ptr<data::LedgerCacheLoadingStateInterface const> cacheLoadingState
     )
         : backend_{std::move(backend)}
         , cache_{cache}
         , settings_{makeCacheLoaderSettings(config)}
+        , cacheLoadingState_(std::move(cacheLoadingState))
         , ctx_{settings_.numThreads}
     {
     }
@@ -103,14 +89,24 @@ public:
         }
 
         if (loadCacheFromFile()) {
+            // Cache file may contain outdated data, so fetch whatever left up to seq from DB
+            updateCacheToSeq(seq);
+            cache_.get().setFull();
             return;
         }
+
+        LOG(log_.info()) << "Waiting for ledger cache loading to become allowed";
+        cacheLoadingState_->waitForLoadingAllowed();
+        LOG(log_.info()) << "Ledger cache loading is now allowed. Start loading...";
+        cache_.get().startLoading();
 
         std::shared_ptr<impl::BaseCursorProvider> provider;
         if (settings_.numCacheCursorsFromDiff != 0) {
             LOG(log_.info()) << "Loading cache with cursor from num_cursors_from_diff="
                              << settings_.numCacheCursorsFromDiff;
-            provider = std::make_shared<impl::CursorFromDiffProvider>(backend_, settings_.numCacheCursorsFromDiff);
+            provider = std::make_shared<impl::CursorFromDiffProvider>(
+                backend_, settings_.numCacheCursorsFromDiff
+            );
         } else if (settings_.numCacheCursorsFromAccount != 0) {
             LOG(log_.info()) << "Loading cache with cursor from num_cursors_from_account="
                              << settings_.numCacheCursorsFromAccount;
@@ -118,8 +114,11 @@ public:
                 backend_, settings_.numCacheCursorsFromAccount, settings_.cachePageFetchSize
             );
         } else {
-            LOG(log_.info()) << "Loading cache with cursor from num_diffs=" << settings_.numCacheDiffs;
-            provider = std::make_shared<impl::CursorFromFixDiffNumProvider>(backend_, settings_.numCacheDiffs);
+            LOG(log_.info()) << "Loading cache with cursor from num_diffs="
+                             << settings_.numCacheDiffs;
+            provider = std::make_shared<impl::CursorFromFixDiffNumProvider>(
+                backend_, settings_.numCacheDiffs
+            );
         }
 
         loader_ = std::make_unique<CacheLoaderType>(
@@ -169,7 +168,9 @@ private:
         auto const minLatestSequence =
             backend_->fetchLedgerRange()
                 .transform([this](data::LedgerRange const& range) {
-                    return std::max(range.maxSequence - settings_.cacheFileSettings->maxAge, range.minSequence);
+                    return std::max(
+                        range.maxSequence - settings_.cacheFileSettings->maxAge, range.minSequence
+                    );
                 })
                 .value_or(0);
 
@@ -184,8 +185,22 @@ private:
 
         LOG(log_.info()) << "Loaded cache from file in " << duration_ms
                          << " ms. Latest sequence: " << cache_.get().latestLedgerSequence();
-        backend_->forceUpdateRange(cache_.get().latestLedgerSequence());
         return true;
+    }
+
+    void
+    updateCacheToSeq(uint32_t const seq)
+    {
+        while (cache_.get().latestLedgerSequence() < seq) {
+            auto const seqToLoad = cache_.get().latestLedgerSequence() + 1;
+            LOG(log_.info()) << "Fetching ledger " << seqToLoad
+                             << "from DB after loading cache from file";
+            auto const diff = data::synchronousAndRetryOnTimeout([this, seqToLoad](auto yield) {
+                return backend_->fetchLedgerDiff(seqToLoad, yield);
+            });
+            cache_.get().update(diff, seqToLoad);
+            LOG(log_.info()) << "Updated cache to " << seqToLoad;
+        }
     }
 };
 

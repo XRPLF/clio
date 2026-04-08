@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/async/Error.hpp"
@@ -32,8 +13,8 @@
 #include <utility>
 
 // TODO: In the future, perhaps cancel and requestStop should be combined into one.
-// Users of the library should not care whether the operation is cancellable or stoppable - users just want to cancel
-// it whatever that means internally.
+// Users of the library should not care whether the operation is cancellable or stoppable - users
+// just want to cancel it whatever that means internally.
 
 namespace util::async {
 
@@ -48,7 +29,8 @@ public:
      *
      * @param operation The operation to wrap
      */
-    /* implicit */ AnyOperation(impl::ErasedOperation&& operation) : operation_{std::move(operation)}
+    /* implicit */ AnyOperation(impl::ErasedOperation&& operation)
+        : operation_{std::move(operation)}
     {
     }
 
@@ -74,7 +56,8 @@ public:
     /**
      * @brief Abort the operation
      *
-     * Used to cancel the timer for scheduled operations and request the operation to be stopped as soon as possible
+     * Used to cancel the timer for scheduled operations and request the operation to be stopped as
+     * soon as possible
      */
     void
     abort()
@@ -102,15 +85,17 @@ public:
             }
 
         } catch (std::bad_any_cast const& e) {
-            return std::unexpected{ExecutionError(fmt::format("{}", std::this_thread::get_id()), "Bad any cast")};
+            return std::unexpected{
+                ExecutionError(fmt::format("{}", std::this_thread::get_id()), "Bad any cast")
+            };
         }
     }
 
     /**
      * @brief Force-invoke the operation
      * @note The action is scheduled on the underlying context/strand
-     * @warning The code of the user-provided action is expected to take care of thread-safety unless this operation is
-     * scheduled through a strand
+     * @warning The code of the user-provided action is expected to take care of thread-safety
+     * unless this operation is scheduled through a strand
      */
     void
     invoke()

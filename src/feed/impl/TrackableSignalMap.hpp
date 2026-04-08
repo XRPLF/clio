@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "feed/impl/TrackableSignal.hpp"
@@ -41,8 +22,8 @@ concept Hashable = requires(T a) {
 /**
  * @brief Class to manage a map of key and its associative signal.
  * @param Key The type of the key.
- * @param Session The type of the object that will be tracked, when the object is destroyed, the connection will be
- * removed lazily.
+ * @param Session The type of the object that will be tracked, when the object is destroyed, the
+ * connection will be removed lazily.
  * @param Args The types of the arguments that will be passed to the slot
  */
 template <Hashable Key, typename Session, typename... Args>
@@ -55,17 +36,23 @@ class TrackableSignalMap {
 
 public:
     /**
-     * @brief Connect a slot to the signal, the slot will be called when the signal is emitted and trackable is still
-     * alive.
+     * @brief Connect a slot to the signal, the slot will be called when the signal is emitted and
+     * trackable is still alive.
      *
-     * @param trackable Track this object's lifttime, if the object is destroyed, the connection will be removed lazily.
-     * When the slot is being called, the object is guaranteed to be alive.
+     * @param trackable Track this object's lifttime, if the object is destroyed, the connection
+     * will be removed lazily. When the slot is being called, the object is guaranteed to be alive.
      * @param key The key to the signal.
-     * @param slot The slot connecting to the signal, the slot will be called when the assocaiative signal is emitted.
-     * @return true if the connection is successfully added, false if the connection already exists for the key.
+     * @param slot The slot connecting to the signal, the slot will be called when the assocaiative
+     * signal is emitted.
+     * @return true if the connection is successfully added, false if the connection already exists
+     * for the key.
      */
     bool
-    connectTrackableSlot(ConnectionSharedPtr const& trackable, Key const& key, std::function<void(Args...)> slot)
+    connectTrackableSlot(
+        ConnectionSharedPtr const& trackable,
+        Key const& key,
+        std::function<void(Args...)> slot
+    )
     {
         auto map = signalsMap_.template lock<std::scoped_lock>();
         return map->operator[](key).connectTrackableSlot(trackable, slot);
@@ -76,7 +63,8 @@ public:
      *
      * @param trackablePtr The pointer to the object that is being tracked.
      * @param key The key to the signal.
-     * @return true if the connection is successfully removed, false if the connection does not exist.
+     * @return true if the connection is successfully removed, false if the connection does not
+     * exist.
      */
     bool
     disconnect(ConnectionPtr trackablePtr, Key const& key)

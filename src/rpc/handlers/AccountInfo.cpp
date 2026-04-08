@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/AccountInfo.hpp"
 
 #include "data/AmendmentCenter.hpp"
@@ -34,6 +15,7 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <xrpl/basics/strHex.h>
+#include <xrpl/ledger/View.h>
 #include <xrpl/protocol/ErrorCodes.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
@@ -56,8 +38,11 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
 {
     using namespace data;
 
-    if (!input.account && !input.ident)
-        return Error{Status{RippledError::rpcINVALID_PARAMS, ripple::RPC::missing_field_message(JS(account))}};
+    if (!input.account && !input.ident) {
+        return Error{
+            Status{RippledError::rpcINVALID_PARAMS, ripple::RPC::missing_field_message(JS(account))}
+        };
+    }
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountInfo's ledger range must be available");
@@ -65,20 +50,22 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (!expectedLgrInfo.has_value())
+    if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountStr = input.account.value_or(input.ident.value_or(""));
     auto const accountID = accountFromStringStrict(accountStr);
     auto const accountKeylet = ripple::keylet::account(*accountID);
-    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject =
+        sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
 
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     ripple::STLedgerEntry const sle{
-        ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key
+        ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()},
+        accountKeylet.key
     };
 
     if (!accountKeylet.check(sle))
@@ -111,7 +98,8 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
 
         // This code will need to be revisited if in the future we
         // support multiple SignerLists on one account.
-        auto const signers = sharedPtrBackend_->fetchLedgerObject(signersKey.key, lgrInfo.seq, ctx.yield);
+        auto const signers =
+            sharedPtrBackend_->fetchLedgerObject(signersKey.key, lgrInfo.seq, ctx.yield);
         out.signerLists = std::vector<ripple::STLedgerEntry>();
 
         if (signers) {
@@ -130,7 +118,11 @@ AccountInfoHandler::process(AccountInfoHandler::Input const& input, Context cons
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    AccountInfoHandler::Output const& output
+)
 {
     jv = boost::json::object{
         {JS(account_data), toJson(output.accountData)},
@@ -152,12 +144,13 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
     }};
 
     if (output.isDisallowIncomingEnabled) {
-        std::vector<std::pair<std::string_view, ripple::LedgerSpecificFlags>> const disallowIncomingFlags = {
-            {"disallowIncomingNFTokenOffer", ripple::lsfDisallowIncomingNFTokenOffer},
-            {"disallowIncomingCheck", ripple::lsfDisallowIncomingCheck},
-            {"disallowIncomingPayChan", ripple::lsfDisallowIncomingPayChan},
-            {"disallowIncomingTrustline", ripple::lsfDisallowIncomingTrustline},
-        };
+        std::vector<std::pair<std::string_view, ripple::LedgerSpecificFlags>> const
+            disallowIncomingFlags = {
+                {"disallowIncomingNFTokenOffer", ripple::lsfDisallowIncomingNFTokenOffer},
+                {"disallowIncomingCheck", ripple::lsfDisallowIncomingCheck},
+                {"disallowIncomingPayChan", ripple::lsfDisallowIncomingPayChan},
+                {"disallowIncomingTrustline", ripple::lsfDisallowIncomingTrustline},
+            };
         lsFlags.insert(lsFlags.end(), disallowIncomingFlags.begin(), disallowIncomingFlags.end());
     }
 
@@ -172,6 +165,21 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
         acctFlags[lsf.first] = output.accountData.isFlag(lsf.second);
 
     jv.as_object()[JS(account_flags)] = std::move(acctFlags);
+
+    auto const pseudoFields = ripple::getPseudoAccountFields();
+    for (auto const& pseudoField : pseudoFields) {
+        if (output.accountData.isFieldPresent(*pseudoField)) {
+            std::string_view name = pseudoField->fieldName;
+            if (name.ends_with("ID")) {
+                // Remove the ID suffix from the field name.
+                name = name.substr(0, name.size() - 2);
+                ASSERT(!name.empty(), "Field name is empty after stripping 'ID'");
+            }
+            // ValidPseudoAccounts invariant guarantees that only one field can be set
+            jv.as_object()[JS(pseudo_account)].as_object()[JS(type)] = name;
+            break;
+        }
+    }
 
     if (output.signerLists) {
         auto signers = boost::json::array();

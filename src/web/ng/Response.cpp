@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "web/ng/Response.hpp"
 
 #include "util/Assert.hpp"
@@ -67,7 +48,9 @@ struct MessageData {
 http::response<http::string_body>
 prepareResponse(http::response<http::string_body> response, bool keepAlive)
 {
-    response.set(http::field::server, fmt::format("clio-server-{}", util::build::getClioVersionString()));
+    response.set(
+        http::field::server, fmt::format("clio-server-{}", util::build::getClioVersionString())
+    );
     response.keep_alive(keepAlive);
     response.prepare_payload();
     return response;
@@ -91,7 +74,9 @@ makeData(http::status status, MessageType message, Request const& request)
         return std::move(messageData).body;
 
     auto const& httpRequest = request.asHttpRequest()->get();
-    return makeHttpData(std::move(messageData), status, httpRequest.version(), httpRequest.keep_alive());
+    return makeHttpData(
+        std::move(messageData), status, httpRequest.version(), httpRequest.keep_alive()
+    );
 }
 
 template <typename MessageType>
@@ -113,22 +98,37 @@ Response::Response(boost::beast::http::status status, std::string message, Reque
 {
 }
 
-Response::Response(boost::beast::http::status status, boost::json::object const& message, Request const& request)
+Response::Response(
+    boost::beast::http::status status,
+    boost::json::object const& message,
+    Request const& request
+)
     : data{makeData(status, message, request)}
 {
 }
 
-Response::Response(boost::beast::http::status status, boost::json::object const& message, Connection const& connection)
+Response::Response(
+    boost::beast::http::status status,
+    boost::json::object const& message,
+    Connection const& connection
+)
     : data{makeData(status, message, connection)}
 {
 }
 
-Response::Response(boost::beast::http::status status, std::string message, Connection const& connection)
+Response::Response(
+    boost::beast::http::status status,
+    std::string message,
+    Connection const& connection
+)
     : data{makeData(status, std::move(message), connection)}
 {
 }
 
-Response::Response(boost::beast::http::response<boost::beast::http::string_body> response, Request const& request)
+Response::Response(
+    boost::beast::http::response<boost::beast::http::string_body> response,
+    Request const& request
+)
 {
     ASSERT(request.isHttp(), "Request must be HTTP to construct response from HTTP response");
     data = prepareResponse(std::move(response), request.asHttpRequest()->get().keep_alive());
@@ -139,7 +139,9 @@ Response::message() const
 {
     return std::visit(
         util::OverloadSet{
-            [](http::response<http::string_body> const& response) -> std::string const& { return response.body(); },
+            [](http::response<http::string_body> const& response) -> std::string const& {
+                return response.body();
+            },
             [](std::string const& message) -> std::string const& {
                 return message;  // NOLINT(bugprone-return-const-ref-from-parameter)
             },
@@ -158,7 +160,10 @@ Response::setMessage(std::string newMessage)
     MessageData messageData{std::move(newMessage)};
     auto const& oldHttpResponse = std::get<http::response<http::string_body>>(data);
     data = makeHttpData(
-        std::move(messageData), oldHttpResponse.result(), oldHttpResponse.version(), oldHttpResponse.keep_alive()
+        std::move(messageData),
+        oldHttpResponse.result(),
+        oldHttpResponse.version(),
+        oldHttpResponse.keep_alive()
     );
 }
 
@@ -172,14 +177,20 @@ Response::setMessage(boost::json::object const& newMessage)
     }
     auto const& oldHttpResponse = std::get<http::response<http::string_body>>(data);
     data = makeHttpData(
-        std::move(messageData), oldHttpResponse.result(), oldHttpResponse.version(), oldHttpResponse.keep_alive()
+        std::move(messageData),
+        oldHttpResponse.result(),
+        oldHttpResponse.version(),
+        oldHttpResponse.keep_alive()
     );
 }
 
 http::response<http::string_body>
 Response::intoHttpResponse() &&
 {
-    ASSERT(std::holds_alternative<http::response<http::string_body>>(data), "Response must contain HTTP data");
+    ASSERT(
+        std::holds_alternative<http::response<http::string_body>>(data),
+        "Response must contain HTTP data"
+    );
 
     return std::move(std::get<http::response<http::string_body>>(data));
 }

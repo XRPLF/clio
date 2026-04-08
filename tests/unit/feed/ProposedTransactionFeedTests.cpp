@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/ProposedTransactionFeed.hpp"
 #include "util/MockPrometheus.hpp"
@@ -52,6 +33,23 @@ constexpr auto kDUMMY_TRANSACTION =
             "TransactionType": "Payment",
             "TxnSignature": "30450221009BD0D563B24E50B26A42F30455AD21C3D5CD4D80174C41F7B54969FFC08DE94C02201FC35320B56D56D1E34D1D281D48AC68CBEDDD6EE9DFA639CCB08BB251453A87",
             "hash": "F44393295DB860C6860769C16F5B23887762F09F87A8D1174E0FCFF9E7247F07"
+        }
+    })JSON";
+
+// Expected v2 format: "transaction" renamed to "tx_json", "hash" moved to top level
+constexpr auto kDUMMY_TRANSACTION_V2 =
+    R"JSON({
+        "hash": "F44393295DB860C6860769C16F5B23887762F09F87A8D1174E0FCFF9E7247F07",
+        "tx_json": {
+            "Account": "rh1HPuRVsYYvThxG2Bs1MfjmrVC73S16Fb",
+            "Amount": "40000000",
+            "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+            "Fee": "20",
+            "Flags": 2147483648,
+            "Sequence": 13767283,
+            "SigningPubKey": "036F3CFFE1EA77C1EEC5DCCA38C83E62E3AC068F8A16369620AF1D609BA5A620B2",
+            "TransactionType": "Payment",
+            "TxnSignature": "30450221009BD0D563B24E50B26A42F30455AD21C3D5CD4D80174C41F7B54969FFC08DE94C02201FC35320B56D56D1E34D1D281D48AC68CBEDDD6EE9DFA639CCB08BB251453A87"
         }
     })JSON";
 
@@ -246,7 +244,9 @@ TEST_F(FeedProposedTransactionTest, AutoDisconnect)
     testFeedPtr->sub(account1, sessionPtr2);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 3);
 
-    std::ranges::for_each(session2OnDisconnectSlots, [&sessionPtr2](auto& slot) { slot(sessionPtr2.get()); });
+    std::ranges::for_each(session2OnDisconnectSlots, [&sessionPtr2](auto& slot) {
+        slot(sessionPtr2.get());
+    });
     sessionPtr2.reset();
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 1);
@@ -257,17 +257,94 @@ TEST_F(FeedProposedTransactionTest, AutoDisconnect)
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 0);
 }
 
+TEST_F(FeedProposedTransactionTest, ProposedTransactionV2)
+{
+    EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2u));
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(sessionPtr);
+
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kDUMMY_TRANSACTION_V2)));
+    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+
+    testFeedPtr->unsub(sessionPtr);
+    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+}
+
+TEST_F(FeedProposedTransactionTest, AccountProposedTransactionV2)
+{
+    auto const account = getAccountIdWithString(kACCOUNT1);
+
+    EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2u));
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    testFeedPtr->sub(account, sessionPtr);
+
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kDUMMY_TRANSACTION_V2)));
+    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+
+    testFeedPtr->unsub(account, sessionPtr);
+    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+}
+
+TEST_F(FeedProposedTransactionTest, MixedVersionSubscribers)
+{
+    auto sessionV2Ptr = std::make_shared<MockSession>();
+    auto* mockSessionV2Ptr = dynamic_cast<MockSession*>(sessionV2Ptr.get());
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
+    EXPECT_CALL(*mockSessionV2Ptr, onDisconnect);
+    testFeedPtr->sub(sessionPtr);
+    testFeedPtr->sub(sessionV2Ptr);
+
+    EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(1u));
+    EXPECT_CALL(*mockSessionV2Ptr, apiSubversion).WillOnce(testing::Return(2u));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kDUMMY_TRANSACTION)));
+    EXPECT_CALL(*mockSessionV2Ptr, send(sharedStringJsonEq(kDUMMY_TRANSACTION_V2)));
+    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+}
+
+TEST_F(FeedProposedTransactionTest, AccountProposedTransactionDuplicateV2)
+{
+    auto const account = getAccountIdWithString(kACCOUNT1);
+    auto const account2 = getAccountIdWithString(kACCOUNT2);
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect).Times(2);
+    testFeedPtr->sub(account, sessionPtr);
+    testFeedPtr->sub(account2, sessionPtr);
+
+    // Both accounts are affected; v2 subscriber should receive the message only once (dedup)
+    EXPECT_CALL(*mockSessionPtr, apiSubversion).WillOnce(testing::Return(2u));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kDUMMY_TRANSACTION_V2)));
+    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+}
+
+TEST_F(FeedProposedTransactionTest, SubStreamAndAccountV2)
+{
+    auto const account = getAccountIdWithString(kACCOUNT1);
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect).Times(2);
+    testFeedPtr->sub(account, sessionPtr);
+    testFeedPtr->sub(sessionPtr);
+
+    // Subscribed to both stream and account: receives message twice (matches v1 behaviour)
+    EXPECT_CALL(*mockSessionPtr, apiSubversion).WillRepeatedly(testing::Return(2u));
+    EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kDUMMY_TRANSACTION_V2))).Times(2);
+    testFeedPtr->pub(json::parse(kDUMMY_TRANSACTION).get_object());
+}
+
 struct ProposedTransactionFeedMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {
 protected:
     web::SubscriptionContextPtr sessionPtr_ = std::make_shared<MockSession>();
-    std::shared_ptr<ProposedTransactionFeed> testFeedPtr_ = std::make_shared<ProposedTransactionFeed>(ctx_);
+    std::shared_ptr<ProposedTransactionFeed> testFeedPtr_ =
+        std::make_shared<ProposedTransactionFeed>(ctx_);
     MockSession* mockSessionPtr_ = dynamic_cast<MockSession*>(sessionPtr_.get());
 };
 
 TEST_F(ProposedTransactionFeedMockPrometheusTest, subUnsub)
 {
-    auto& counterTx = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"tx_proposed\"}");
-    auto& counterAccount = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"account_proposed\"}");
+    auto& counterTx =
+        makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"tx_proposed\"}");
+    auto& counterAccount =
+        makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"account_proposed\"}");
 
     EXPECT_CALL(counterTx, add(1));
     EXPECT_CALL(counterTx, add(-1));
@@ -286,8 +363,10 @@ TEST_F(ProposedTransactionFeedMockPrometheusTest, subUnsub)
 
 TEST_F(ProposedTransactionFeedMockPrometheusTest, AutoDisconnect)
 {
-    auto& counterTx = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"tx_proposed\"}");
-    auto& counterAccount = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"account_proposed\"}");
+    auto& counterTx =
+        makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"tx_proposed\"}");
+    auto& counterAccount =
+        makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"account_proposed\"}");
 
     std::vector<web::SubscriptionContextInterface::OnDisconnectSlot> sessionOnDisconnectSlots;
 
@@ -307,6 +386,8 @@ TEST_F(ProposedTransactionFeedMockPrometheusTest, AutoDisconnect)
     });
     testFeedPtr_->sub(account, sessionPtr_);
 
-    std::ranges::for_each(sessionOnDisconnectSlots, [this](auto& slot) { slot(sessionPtr_.get()); });
+    std::ranges::for_each(sessionOnDisconnectSlots, [this](auto& slot) {
+        slot(sessionPtr_.get());
+    });
     sessionPtr_.reset();
 }

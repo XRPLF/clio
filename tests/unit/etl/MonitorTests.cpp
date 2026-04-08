@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2025, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/Types.hpp"
 #include "etl/impl/AmendmentBlockHandler.hpp"
 #include "etl/impl/Monitor.hpp"
@@ -51,7 +32,8 @@ protected:
     testing::StrictMock<testing::MockFunction<void(uint32_t)>> actionMock_;
     testing::StrictMock<testing::MockFunction<void()>> dbStalledMock_;
 
-    etl::impl::Monitor monitor_ = etl::impl::Monitor(ctx_, backend_, ledgers_, kSTART_SEQ, kNO_NEW_LEDGER_REPORT_DELAY);
+    etl::impl::Monitor monitor_ =
+        etl::impl::Monitor(ctx_, backend_, ledgers_, kSTART_SEQ, kNO_NEW_LEDGER_REPORT_DELAY);
 };
 
 TEST_F(MonitorTests, ConsumesAndNotifiesForAllOutstandingSequencesAtOnce)
@@ -125,7 +107,7 @@ TEST_F(MonitorTests, NotifiesWhenForcedByLedgerLoaded)
     EXPECT_CALL(actionMock_, Call).WillOnce([&] { unblock.release(); });
 
     auto subscription = monitor_.subscribeToNewSequence(actionMock_.AsStdFunction());
-    monitor_.run(std::chrono::seconds{10});     // expected to be force-invoked sooner than in 10 sec
+    monitor_.run(std::chrono::seconds{10});  // expected to be force-invoked sooner than in 10 sec
     monitor_.notifySequenceLoaded(kSTART_SEQ);  // notify about newly committed ledger
     unblock.acquire();
 }
@@ -143,8 +125,10 @@ TEST_F(MonitorTests, ResumesMonitoringFromNextSequenceAfterWriteConflict)
 
     {
         testing::InSequence const seq;  // second call will produce conflict
-        EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillOnce(testing::Return(rangeBeforeConflict));
-        EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillRepeatedly(testing::Return(rangeAfterConflict));
+        EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_))
+            .WillOnce(testing::Return(rangeBeforeConflict));
+        EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_))
+            .WillRepeatedly(testing::Return(rangeAfterConflict));
     }
 
     EXPECT_CALL(actionMock_, Call(kEXPECTED_NEXT_SEQ)).WillOnce([&](uint32_t seq) {
@@ -163,7 +147,8 @@ TEST_F(MonitorTests, DbStalledChannelTriggeredWhenTimeoutExceeded)
     std::binary_semaphore unblock(0);
 
     EXPECT_CALL(*ledgers_, subscribe(testing::_));
-    EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillRepeatedly(testing::Return(std::nullopt));
+    EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_))
+        .WillRepeatedly(testing::Return(std::nullopt));
     EXPECT_CALL(dbStalledMock_, Call()).WillOnce([&]() { unblock.release(); });
 
     auto subscription = monitor_.subscribeToDbStalled(dbStalledMock_.AsStdFunction());

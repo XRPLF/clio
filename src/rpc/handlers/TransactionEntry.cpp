@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/TransactionEntry.hpp"
 
 #include "rpc/Errors.hpp"
@@ -40,7 +21,10 @@
 namespace rpc {
 
 TransactionEntryHandler::Result
-TransactionEntryHandler::process(TransactionEntryHandler::Input const& input, Context const& ctx) const
+TransactionEntryHandler::process(
+    TransactionEntryHandler::Input const& input,
+    Context const& ctx
+) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "TransactionEntry's ledger range must be available");
@@ -49,14 +33,15 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input const& input, Co
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (!expectedLgrInfo.has_value())
+    if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
     auto output = TransactionEntryHandler::Output{};
     output.apiVersion = ctx.apiVersion;
 
     output.ledgerHeader = expectedLgrInfo.value();
-    auto const dbRet = sharedPtrBackend_->fetchTransaction(ripple::uint256{input.txHash.c_str()}, ctx.yield);
+    auto const dbRet =
+        sharedPtrBackend_->fetchTransaction(ripple::uint256{input.txHash.c_str()}, ctx.yield);
     // Note: transaction_entry is meant to only search a specified ledger for
     // the specified transaction. tx searches the entire range of history. For
     // rippled, having two separate commands made sense, as tx would use SQLite
@@ -66,8 +51,11 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input const& input, Co
     // the API for transaction_entry says the method only searches the specified
     // ledger; we simulate that here by returning not found if the transaction
     // is in a different ledger than the one specified.
-    if (!dbRet || dbRet->ledgerSequence != output.ledgerHeader->seq)
-        return Error{Status{RippledError::rpcTXN_NOT_FOUND, "transactionNotFound", "Transaction not found."}};
+    if (!dbRet || dbRet->ledgerSequence != output.ledgerHeader->seq) {
+        return Error{
+            Status{RippledError::rpcTXN_NOT_FOUND, "transactionNotFound", "Transaction not found."}
+        };
+    }
 
     auto [txn, meta] = toExpandedJson(*dbRet, ctx.apiVersion);
 
@@ -78,7 +66,11 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input const& input, Co
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TransactionEntryHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    TransactionEntryHandler::Output const& output
+)
 {
     auto const metaKey = output.apiVersion > 1u ? JS(meta) : JS(metadata);
     jv = {

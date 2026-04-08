@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2025, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "etl/impl/ext/Successor.hpp"
 
 #include "data/BackendInterface.hpp"
@@ -41,7 +22,10 @@
 
 namespace etl::impl {
 
-SuccessorExt::SuccessorExt(std::shared_ptr<BackendInterface> backend, data::LedgerCacheInterface& cache)
+SuccessorExt::SuccessorExt(
+    std::shared_ptr<BackendInterface> backend,
+    data::LedgerCacheInterface& cache
+)
     : backend_(std::move(backend)), cache_(cache)
 {
 }
@@ -110,7 +94,10 @@ SuccessorExt::writeIncludedSuccessor(uint32_t seq, model::BookSuccessor const& s
 void
 SuccessorExt::writeIncludedSuccessor(uint32_t seq, model::Object const& obj) const
 {
-    ASSERT(obj.type != model::Object::ModType::Modified, "Attempt to write successor for a modified object");
+    ASSERT(
+        obj.type != model::Object::ModType::Modified,
+        "Attempt to write successor for a modified object"
+    );
 
     // TODO: perhaps make these optionals inside of obj and move value_or here
     auto pred = obj.predecessor;
@@ -127,10 +114,12 @@ SuccessorExt::writeIncludedSuccessor(uint32_t seq, model::Object const& obj) con
 void
 SuccessorExt::updateSuccessorFromCache(uint32_t seq, model::Object const& obj) const
 {
-    auto const lb =
-        cache_.get().getPredecessor(obj.key, seq).value_or(data::LedgerObject{.key = data::kFIRST_KEY, .blob = {}});
-    auto const ub =
-        cache_.get().getSuccessor(obj.key, seq).value_or(data::LedgerObject{.key = data::kLAST_KEY, .blob = {}});
+    auto const lb = cache_.get()
+                        .getPredecessor(obj.key, seq)
+                        .value_or(data::LedgerObject{.key = data::kFIRST_KEY, .blob = {}});
+    auto const ub = cache_.get()
+                        .getSuccessor(obj.key, seq)
+                        .value_or(data::LedgerObject{.key = data::kLAST_KEY, .blob = {}});
 
     auto checkBookBase = false;
     auto const isDeleted = obj.data.empty();
@@ -176,7 +165,9 @@ SuccessorExt::updateBookSuccessor(
 ) const
 {
     if (maybeSuccessor.has_value()) {
-        backend_->writeSuccessor(uint256ToString(bookBase), seq, uint256ToString(maybeSuccessor->key));
+        backend_->writeSuccessor(
+            uint256ToString(bookBase), seq, uint256ToString(maybeSuccessor->key)
+        );
     } else {
         backend_->writeSuccessor(uint256ToString(bookBase), seq, uint256ToString(data::kLAST_KEY));
     }
@@ -196,7 +187,9 @@ SuccessorExt::writeSuccessors(uint32_t seq) const
             // make sure the base is not an actual object
             if (not cache_.get().get(base, seq)) {
                 auto succ = cache_.get().getSuccessor(base, seq);
-                ASSERT(succ.has_value(), "Book base {} must have a successor", ripple::strHex(base));
+                ASSERT(
+                    succ.has_value(), "Book base {} must have a successor", ripple::strHex(base)
+                );
 
                 if (succ->key == cur->key)
                     backend_->writeSuccessor(uint256ToString(base), seq, uint256ToString(cur->key));

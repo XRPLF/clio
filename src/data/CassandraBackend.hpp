@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/LedgerHeaderCache.hpp"
@@ -102,10 +83,14 @@ public:
         this->waitForWritesToFinish();
 
         if (!range_) {
-            executor_.writeSync(schema_->updateLedgerRange, ledgerSequence_, false, ledgerSequence_);
+            executor_.writeSync(
+                schema_->updateLedgerRange, ledgerSequence_, false, ledgerSequence_
+            );
         }
 
-        if (not this->executeSyncUpdate(schema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1))) {
+        if (not this->executeSyncUpdate(
+                schema_->updateLedgerRange.bind(ledgerSequence_, true, ledgerSequence_ - 1)
+            )) {
             LOG(log_.warn()) << "Update failed for ledger " << ledgerSequence_;
             return false;
         }
@@ -139,7 +124,8 @@ public:
             r.bindAt(
                 1,
                 std::make_tuple(
-                    cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0,
+                    cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn))
+                                         : 0,
                     cursorIn.value_or(ripple::uint256(0))
                 )
             );
@@ -170,9 +156,10 @@ public:
         selectNFTStatements.reserve(nftIDs.size());
 
         std::transform(
-            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTStatements), [&](auto const& nftID) {
-                return schema_->selectNFT.bind(nftID, ledgerSequence);
-            }
+            std::cbegin(nftIDs),
+            std::cend(nftIDs),
+            std::back_inserter(selectNFTStatements),
+            [&](auto const& nftID) { return schema_->selectNFT.bind(nftID, ledgerSequence); }
         );
 
         auto const nftInfos = executor_.readEach(yield, selectNFTStatements);
@@ -181,9 +168,10 @@ public:
         selectNFTURIStatements.reserve(nftIDs.size());
 
         std::transform(
-            std::cbegin(nftIDs), std::cend(nftIDs), std::back_inserter(selectNFTURIStatements), [&](auto const& nftID) {
-                return schema_->selectNFTURI.bind(nftID, ledgerSequence);
-            }
+            std::cbegin(nftIDs),
+            std::cend(nftIDs),
+            std::back_inserter(selectNFTURIStatements),
+            [&](auto const& nftID) { return schema_->selectNFTURI.bind(nftID, ledgerSequence); }
         );
 
         auto const nftUris = executor_.readEach(yield, selectNFTURIStatements);
@@ -193,7 +181,8 @@ public:
                 maybeRow.has_value()) {
                 auto [seq, owner, isBurned] = *maybeRow;
                 NFT nft(nftIDs[i], seq, owner, isBurned);
-                if (auto const maybeUri = nftUris[i].template get<ripple::Blob>(); maybeUri.has_value())
+                if (auto const maybeUri = nftUris[i].template get<ripple::Blob>();
+                    maybeUri.has_value())
                     nft.uri = *maybeUri;
                 ret.nfts.push_back(nft);
             }
@@ -213,8 +202,9 @@ public:
         std::optional<ripple::AccountID> lastItem;
 
         while (liveAccounts.size() < number) {
-            Statement const statement = lastItem ? schema_->selectAccountFromToken.bind(*lastItem, Limit{pageSize})
-                                                 : schema_->selectAccountFromBeginning.bind(Limit{pageSize});
+            Statement const statement = lastItem
+                ? schema_->selectAccountFromToken.bind(*lastItem, Limit{pageSize})
+                : schema_->selectAccountFromBeginning.bind(Limit{pageSize});
 
             auto const res = executor_.read(yield, statement);
             if (res) {

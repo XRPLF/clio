@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "util/log/Logger.hpp"
 
 #include "util/Assert.hpp"
@@ -176,7 +157,9 @@ createConsoleSinks(bool logToConsole, std::string const& format)
         auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         consoleSink->set_level(spdlog::level::trace);
         consoleSink->set_formatter(
-            std::make_unique<NonCriticalFormatter>(std::make_unique<spdlog::pattern_formatter>(format))
+            std::make_unique<NonCriticalFormatter>(
+                std::make_unique<spdlog::pattern_formatter>(format)
+            )
         );
         sinks.push_back(std::move(consoleSink));
     }
@@ -218,7 +201,8 @@ LogService::createFileSink(FileLoggingParams const& params, std::string const& f
  *
  * @param config The configuration object containing log settings.
  * @param defaultSeverity The default severity level to use if not overridden.
- * @return A map of channel names to their minimum severity levels, or an error message if parsing fails.
+ * @return A map of channel names to their minimum severity levels, or an error message if parsing
+ * fails.
  */
 static std::expected<std::unordered_map<std::string_view, Severity>, std::string>
 getMinSeverity(config::ClioConfigDefinition const& config, Severity defaultSeverity)
@@ -229,11 +213,15 @@ getMinSeverity(config::ClioConfigDefinition const& config, Severity defaultSever
 
     auto const overrides = config.getArray("log.channels");
 
-    for (auto it = overrides.begin<util::config::ObjectView>(); it != overrides.end<util::config::ObjectView>(); ++it) {
+    for (auto it = overrides.begin<util::config::ObjectView>();
+         it != overrides.end<util::config::ObjectView>();
+         ++it) {
         auto const& channelConfig = *it;
         auto const name = channelConfig.get<std::string>("channel");
         if (not std::ranges::contains(Logger::kCHANNELS, name)) {
-            return std::unexpected{fmt::format("Can't override settings for log channel {}: invalid channel", name)};
+            return std::unexpected{
+                fmt::format("Can't override settings for log channel {}: invalid channel", name)
+            };
         }
 
         minSeverity[name] = getSeverityLevel(channelConfig.get<std::string>("level"));
@@ -243,7 +231,11 @@ getMinSeverity(config::ClioConfigDefinition const& config, Severity defaultSever
 }
 
 void
-LogServiceState::init(bool isAsync, Severity defaultSeverity, std::vector<spdlog::sink_ptr> const& sinks)
+LogServiceState::init(
+    bool isAsync,
+    Severity defaultSeverity,
+    std::vector<spdlog::sink_ptr> const& sinks
+)
 {
     if (initialized_) {
         throw std::logic_error("LogServiceState is already initialized");
@@ -269,6 +261,12 @@ bool
 LogServiceState::initialized()
 {
     return initialized_;
+}
+
+bool
+LogServiceState::hasSinks()
+{
+    return not sinks_.empty();
 }
 
 void
@@ -302,7 +300,11 @@ LogServiceState::registerLogger(std::string_view channel, std::optional<Severity
     std::shared_ptr<spdlog::logger> logger;
     if (isAsync_) {
         logger = std::make_shared<spdlog::async_logger>(
-            channelStr, sinks_.begin(), sinks_.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block
+            channelStr,
+            sinks_.begin(),
+            sinks_.end(),
+            spdlog::thread_pool(),
+            spdlog::async_overflow_policy::block
         );
     } else {
         logger = std::make_shared<spdlog::logger>(channelStr, sinks_.begin(), sinks_.end());
@@ -321,15 +323,16 @@ LogService::getSinks(config::ClioConfigDefinition const& config)
 {
     std::string const format = config.get<std::string>("log.format");
 
-    std::vector<spdlog::sink_ptr> allSinks = createConsoleSinks(config.get<bool>("log.enable_console"), format);
+    std::vector<spdlog::sink_ptr> allSinks =
+        createConsoleSinks(config.get<bool>("log.enable_console"), format);
 
     if (auto const logDir = config.maybeValue<std::string>("log.directory"); logDir.has_value()) {
         std::filesystem::path const dirPath{logDir.value()};
         if (not std::filesystem::exists(dirPath)) {
             if (std::error_code error; not std::filesystem::create_directories(dirPath, error)) {
-                return std::unexpected{
-                    fmt::format("Couldn't create logs directory '{}': {}", dirPath.string(), error.message())
-                };
+                return std::unexpected{fmt::format(
+                    "Couldn't create logs directory '{}': {}", dirPath.string(), error.message()
+                )};
             }
         }
 
@@ -381,7 +384,8 @@ void
 LogService::shutdown()
 {
     if (initialized_ && isAsync_) {
-        // We run in async mode in production, so we need to make sure all logs are flushed before shutting down
+        // We run in async mode in production, so we need to make sure all logs are flushed before
+        // shutting down
         spdlog::shutdown();
     }
 }
@@ -448,7 +452,11 @@ Logger::~Logger()
     }
 }
 
-Logger::Pump::Pump(std::shared_ptr<spdlog::logger> logger, Severity sev, SourceLocationType const& loc)
+Logger::Pump::Pump(
+    std::shared_ptr<spdlog::logger> logger,
+    Severity sev,
+    SourceLocationType const& loc
+)
     : logger_(std::move(logger))
     , severity_(sev)
     , sourceLocation_(loc)

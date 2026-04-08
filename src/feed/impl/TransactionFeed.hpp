@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/AmendmentCenterInterface.hpp"
@@ -38,7 +19,6 @@
 #include <xrpl/protocol/Book.h>
 #include <xrpl/protocol/LedgerHeader.h>
 
-#include <array>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -49,7 +29,10 @@ namespace feed::impl {
 
 class TransactionFeed {
     // Hold two versions of transaction messages
-    using AllVersionTransactionsType = std::array<std::shared_ptr<std::string>, 2>;
+    struct AllVersionsMsgsType {
+        std::string v1;
+        std::string v2;
+    };
 
     struct TransactionSlot {
         std::reference_wrapper<TransactionFeed> feed;
@@ -61,7 +44,7 @@ class TransactionFeed {
         }
 
         void
-        operator()(AllVersionTransactionsType const& allVersionMsgs) const;
+        operator()(std::shared_ptr<AllVersionsMsgsType> const& allVersionMsgs) const;
     };
 
     util::Logger logger_{"Subscriptions"};
@@ -71,16 +54,19 @@ class TransactionFeed {
     std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_;
     std::reference_wrapper<util::prometheus::GaugeInt> subBookCount_;
 
-    TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&> accountSignal_;
-    TrackableSignalMap<ripple::Book, Subscriber, AllVersionTransactionsType const&> bookSignal_;
-    TrackableSignal<Subscriber, AllVersionTransactionsType const&> signal_;
+    TrackableSignalMap<ripple::AccountID, Subscriber, std::shared_ptr<AllVersionsMsgsType> const&>
+        accountSignal_;
+    TrackableSignalMap<ripple::Book, Subscriber, std::shared_ptr<AllVersionsMsgsType> const&>
+        bookSignal_;
+    TrackableSignal<Subscriber, std::shared_ptr<AllVersionsMsgsType> const&> signal_;
 
     // Signals for proposed tx subscribers
-    TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&> accountProposedSignal_;
-    TrackableSignal<Subscriber, AllVersionTransactionsType const&> txProposedSignal_;
+    TrackableSignalMap<ripple::AccountID, Subscriber, std::shared_ptr<AllVersionsMsgsType> const&>
+        accountProposedSignal_;
+    TrackableSignal<Subscriber, std::shared_ptr<AllVersionsMsgsType> const&> txProposedSignal_;
 
-    std::unordered_set<SubscriberPtr>
-        notified_;  // Used by slots to prevent double notifications if tx contains multiple subscribed accounts
+    std::unordered_set<SubscriberPtr> notified_;  // Used by slots to prevent double notifications
+                                                  // if tx contains multiple subscribed accounts
 
 public:
     /**
@@ -108,7 +94,8 @@ public:
     sub(SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Subscribe to the transaction feed, only receive the feed when particular account is affected.
+     * @brief Subscribe to the transaction feed, only receive the feed when particular account is
+     * affected.
      * @param subscriber
      * @param account The account to watch.
      */
@@ -116,7 +103,8 @@ public:
     sub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Subscribe to the transaction feed, only receive the feed when particular order book is affected.
+     * @brief Subscribe to the transaction feed, only receive the feed when particular order book is
+     * affected.
      * @param subscriber
      * @param book The order book to watch.
      */
@@ -131,8 +119,8 @@ public:
     subProposed(SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Subscribe to the transaction feed for proposed account, only receive the feed when particular account is
-     * affected.
+     * @brief Subscribe to the transaction feed for proposed account, only receive the feed when
+     * particular account is affected.
      * @param subscriber
      * @param account The account to watch.
      */

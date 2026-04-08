@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "rpc/common/Checkers.hpp"
@@ -43,11 +24,14 @@ struct FieldSpec final {
      *
      * @tparam Processors The types of processors
      * @param key The key in a JSON object that the field validates
-     * @param processors The processors, each of them have to fulfil the @ref rpc::SomeProcessor concept
+     * @param processors The processors, each of them have to fulfil the @ref rpc::SomeProcessor
+     * concept
      */
     template <SomeProcessor... Processors>
     FieldSpec(std::string const& key, Processors&&... processors)
-        : processor_{impl::makeFieldProcessor<Processors...>(key, std::forward<Processors>(processors)...)}
+        : processor_{
+              impl::makeFieldProcessor<Processors...>(key, std::forward<Processors>(processors)...)
+          }
         , checker_{impl::kEMPTY_FIELD_CHECKER}
     {
     }
@@ -111,7 +95,8 @@ struct RpcSpec final {
      * @param other The other spec to copy fields from
      * @param additionalFields The additional fields to add to the spec
      */
-    RpcSpec(RpcSpec const& other, std::initializer_list<FieldSpec> additionalFields) : fields_{other.fields_}
+    RpcSpec(RpcSpec const& other, std::initializer_list<FieldSpec> additionalFields)
+        : fields_{other.fields_}
     {
         for (auto& f : additionalFields)
             fields_.push_back(f);

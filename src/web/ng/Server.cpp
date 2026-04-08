@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "web/ng/Server.hpp"
 
 #include "util/Assert.hpp"
@@ -121,7 +102,9 @@ detectSsl(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield)
     if (errorCode)
         return std::unexpected{fmt::format("Detector failed (detect): {}", errorCode.message())};
 
-    return SslDetectionResult{.socket = tcpStream.release_socket(), .isSsl = isSsl, .buffer = std::move(buffer)};
+    return SslDetectionResult{
+        .socket = tcpStream.release_socket(), .isSsl = isSsl, .buffer = std::move(buffer)
+    };
 }
 
 std::expected<impl::UpgradableConnectionPtr, std::optional<std::string>>
@@ -136,8 +119,11 @@ makeConnection(
 {
     impl::UpgradableConnectionPtr connection;
     if (sslDetectionResult.isSsl) {
-        if (not sslContext.has_value())
-            return std::unexpected{"Error creating a connection: SSL is not supported by this server"};
+        if (not sslContext.has_value()) {
+            return std::unexpected{
+                "Error creating a connection: SSL is not supported by this server"
+            };
+        }
 
         auto sslConnection = std::make_unique<impl::SslHttpConnection>(
             std::move(sslDetectionResult.socket),
@@ -148,8 +134,11 @@ makeConnection(
         );
         sslConnection->setTimeout(std::chrono::seconds{10});
         auto const expectedSuccess = sslConnection->sslHandshake(yield);
-        if (not expectedSuccess.has_value())
-            return std::unexpected{fmt::format("SSL handshake error: {}", expectedSuccess.error().message())};
+        if (not expectedSuccess.has_value()) {
+            return std::unexpected{
+                fmt::format("SSL handshake error: {}", expectedSuccess.error().message())
+            };
+        }
 
         connection = std::move(sslConnection);
     } else {
@@ -179,9 +168,9 @@ tryUpgradeConnection(
 {
     auto const expectedIsUpgrade = connection->isUpgradeRequested(yield);
     if (not expectedIsUpgrade.has_value()) {
-        return std::unexpected{
-            fmt::format("Error checking whether upgrade requested: {}", expectedIsUpgrade.error().message())
-        };
+        return std::unexpected{fmt::format(
+            "Error checking whether upgrade requested: {}", expectedIsUpgrade.error().message()
+        )};
     }
 
     if (*expectedIsUpgrade) {
@@ -249,28 +238,31 @@ Server::run()
         return std::move(acceptor).error();
 
     running_ = true;
-    util::spawn(ctx_.get(), [this, acceptor = std::move(acceptor).value()](boost::asio::yield_context yield) mutable {
-        while (true) {
-            boost::beast::error_code errorCode;
-            boost::asio::ip::tcp::socket socket{ctx_.get().get_executor()};
+    util::spawn(
+        ctx_.get(),
+        [this, acceptor = std::move(acceptor).value()](boost::asio::yield_context yield) mutable {
+            while (true) {
+                boost::beast::error_code errorCode;
+                boost::asio::ip::tcp::socket socket{ctx_.get().get_executor()};
 
-            acceptor.async_accept(socket, yield[errorCode]);
-            LOG(log_.trace()) << "Accepted a new connection";
-            if (errorCode) {
-                LOG(log_.debug()) << "Error accepting a connection: " << errorCode.what();
-                continue;
+                acceptor.async_accept(socket, yield[errorCode]);
+                LOG(log_.trace()) << "Accepted a new connection";
+                if (errorCode) {
+                    LOG(log_.debug()) << "Error accepting a connection: " << errorCode.what();
+                    continue;
+                }
+
+                // Note: This was desigen to use `boost::asio::detached`
+                boost::asio::spawn(
+                    ctx_.get(),
+                    [this, socket = std::move(socket)](boost::asio::yield_context yield) mutable {
+                        handleConnection(std::move(socket), yield);
+                    },
+                    boost::asio::detached
+                );
             }
-
-            // Note: This was desigen to use `boost::asio::detached`
-            boost::asio::spawn(
-                ctx_.get(),
-                [this, socket = std::move(socket)](boost::asio::yield_context yield) mutable {
-                    handleConnection(std::move(socket), yield);
-                },
-                boost::asio::detached
-            );
         }
-    });
+    );
     return std::nullopt;
 }
 
@@ -315,20 +307,26 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
     LOG(log_.trace()) << connectionExpected.value()->tag() << "Connection created";
 
     if (connectionHandler_.isStopping()) {
-        util::spawn(ctx_.get(), [connection = std::move(connectionExpected).value()](boost::asio::yield_context yield) {
-            web::ng::impl::ConnectionHandler::stopConnection(*connection, yield);
-        });
+        util::spawn(
+            ctx_.get(),
+            [connection = std::move(connectionExpected).value()](boost::asio::yield_context yield) {
+                web::ng::impl::ConnectionHandler::stopConnection(*connection, yield);
+            }
+        );
         return;
     }
 
-    auto connection = tryUpgradeConnection(std::move(connectionExpected).value(), tagDecoratorFactory_, yield);
+    auto connection =
+        tryUpgradeConnection(std::move(connectionExpected).value(), tagDecoratorFactory_, yield);
     if (not connection.has_value()) {
         LOG(log_.info()) << connection.error();
         return;
     }
 
     util::spawn(
-        ctx_.get(), [this, connection = std::move(connection).value()](boost::asio::yield_context yield) mutable {
+        ctx_.get(),
+        [this,
+         connection = std::move(connection).value()](boost::asio::yield_context yield) mutable {
             connectionHandler_.processConnection(std::move(connection), yield);
         }
     );
@@ -362,7 +360,9 @@ makeServer(
     } else if (processingStrategyStr == "parallel") {
         parallelRequestLimit = serverConfig.maybeValue<size_t>("parallel_requests_limit");
     } else {
-        return std::unexpected{fmt::format("Invalid 'server.processing_strategy': {}", processingStrategyStr)};
+        return std::unexpected{
+            fmt::format("Invalid 'server.processing_strategy': {}", processingStrategyStr)
+        };
     }
 
     auto const maxSubscriptionSendQueueSize = serverConfig.get<size_t>("ws_max_sending_queue_size");

@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/OverloadSet.hpp"
@@ -134,7 +115,9 @@ public:
     setTimeout(std::chrono::steady_clock::duration newTimeout) override
     {
         boost::beast::websocket::stream_base::timeout wsTimeout =
-            boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server);
+            boost::beast::websocket::stream_base::timeout::suggested(
+                boost::beast::role_type::server
+            );
         wsTimeout.idle_timeout = newTimeout;
         wsTimeout.handshake_timeout = newTimeout;
         stream_.set_option(wsTimeout);
@@ -166,8 +149,9 @@ public:
         if (closed_)
             return;
 
-        // This should be set before the async_close(). Otherwise there is a possibility to have multiple coroutines
-        // waiting on async_close(), but only one will be woken up after the actual close happened, others will hang.
+        // This should be set before the async_close(). Otherwise there is a possibility to have
+        // multiple coroutines waiting on async_close(), but only one will be woken up after the
+        // actual close happened, others will hang.
         closed_ = true;
 
         boost::system::error_code error;  // unused
@@ -182,9 +166,13 @@ private:
         boost::beast::get_lowest_layer(stream_).expires_never();
         setTimeout(kDEFAULT_TIMEOUT);
         stream_.set_option(
-            boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::response_type& res) {
-                res.set(boost::beast::http::field::server, util::build::getClioFullVersionString());
-            })
+            boost::beast::websocket::stream_base::decorator(
+                [](boost::beast::websocket::response_type& res) {
+                    res.set(
+                        boost::beast::http::field::server, util::build::getClioFullVersionString()
+                    );
+                }
+            )
         );
     }
 };
@@ -204,7 +192,11 @@ makeWsConnection(
 )
 {
     auto connection = std::make_unique<WsConnection<StreamType>>(
-        std::forward<StreamType>(stream), std::move(ip), std::move(buffer), std::move(request), tagDecoratorFactory
+        std::forward<StreamType>(stream),
+        std::move(ip),
+        std::move(buffer),
+        std::move(request),
+        tagDecoratorFactory
     );
     auto const expectedSuccess = connection->performHandshake(yield);
     if (not expectedSuccess.has_value())

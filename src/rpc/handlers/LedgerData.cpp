@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/LedgerData.hpp"
 
 #include "data/Types.hpp"
@@ -69,7 +50,7 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (!expectedLgrInfo.has_value())
+    if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = expectedLgrInfo.value();
@@ -80,7 +61,8 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
     if ((!input.marker) && (!input.diffMarker)) {
         output.header = toJson(lgrInfo, input.binary, ctx.apiVersion);
     } else {
-        if (input.marker && !sharedPtrBackend_->fetchLedgerObject(*(input.marker), lgrInfo.seq, ctx.yield))
+        if (input.marker &&
+            !sharedPtrBackend_->fetchLedgerObject(*(input.marker), lgrInfo.seq, ctx.yield))
             return Error{Status{RippledError::rpcINVALID_PARAMS, "markerDoesNotExist"}};
     }
 
@@ -113,9 +95,13 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
     } else {
         // limit's limitation is different based on binary or json
         // framework can not handler the check right now, adjust the value here
-        auto const limit =
-            std::min(input.limit, input.binary ? LedgerDataHandler::kLIMIT_BINARY : LedgerDataHandler::kLIMIT_JSON);
-        auto page = sharedPtrBackend_->fetchLedgerPage(input.marker, lgrInfo.seq, limit, input.outOfOrder, ctx.yield);
+        auto const limit = std::min(
+            input.limit,
+            input.binary ? LedgerDataHandler::kLIMIT_BINARY : LedgerDataHandler::kLIMIT_JSON
+        );
+        auto page = sharedPtrBackend_->fetchLedgerPage(
+            input.marker, lgrInfo.seq, limit, input.outOfOrder, ctx.yield
+        );
         results = std::move(page.objects);
 
         if (page.cursor) {
@@ -127,7 +113,8 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
 
     auto const end = std::chrono::system_clock::now();
     LOG(log_.debug()) << "Number of results = " << results.size() << " fetched in "
-                      << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds";
+                      << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+                      << " microseconds";
 
     output.states.reserve(results.size());
 
@@ -152,13 +139,18 @@ LedgerDataHandler::process(Input const& input, Context const& ctx) const
 
     auto const end2 = std::chrono::system_clock::now();
     LOG(log_.debug()) << "Number of results = " << results.size() << " serialized in "
-                      << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end).count() << " microseconds";
+                      << std::chrono::duration_cast<std::chrono::microseconds>(end2 - end).count()
+                      << " microseconds";
 
     return output;
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerDataHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    LedgerDataHandler::Output const& output
+)
 {
     auto obj = boost::json::object{
         {JS(ledger_hash), output.ledgerHash},
@@ -190,7 +182,8 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
 
     if (jsonObject.contains(JS(binary))) {
         input.binary = jsonObject.at(JS(binary)).as_bool();
-        input.limit = input.binary ? LedgerDataHandler::kLIMIT_BINARY : LedgerDataHandler::kLIMIT_JSON;
+        input.limit =
+            input.binary ? LedgerDataHandler::kLIMIT_BINARY : LedgerDataHandler::kLIMIT_JSON;
     }
 
     if (jsonObject.contains(JS(limit)))
@@ -201,7 +194,9 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
 
     if (jsonObject.contains(JS(marker))) {
         if (jsonObject.at(JS(marker)).is_string()) {
-            input.marker = ripple::uint256{boost::json::value_to<std::string>(jsonObject.at(JS(marker))).data()};
+            input.marker = ripple::uint256{
+                boost::json::value_to<std::string>(jsonObject.at(JS(marker))).data()
+            };
         } else {
             input.diffMarker = util::integralValueAs<uint32_t>(jsonObject.at(JS(marker)));
         }
@@ -216,8 +211,11 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
             input.ledgerIndex = *expectedLedgerIndex;
     }
 
-    if (jsonObject.contains(JS(type)))
-        input.type = util::LedgerTypes::getLedgerEntryTypeFromStr(boost::json::value_to<std::string>(jv.at(JS(type))));
+    if (jsonObject.contains(JS(type))) {
+        input.type = util::LedgerTypes::getLedgerEntryTypeFromStr(
+            boost::json::value_to<std::string>(jv.at(JS(type)))
+        );
+    }
 
     return input;
 }

@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "util/config/Array.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigFileJson.hpp"
@@ -44,7 +25,8 @@ inline static ClioConfigDefinition
 getParseWhitelistHandlerConfig(boost::json::value val)
 {
     ConfigFileJson const jsonVal{val.as_object()};
-    auto config = ClioConfigDefinition{{"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}}}};
+    auto config =
+        ClioConfigDefinition{{"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}}}};
     auto const errors = config.parse(jsonVal);
     [&]() { ASSERT_FALSE(errors.has_value()); }();
     return config;
@@ -73,9 +55,13 @@ TEST_F(WhitelistHandlerTest, TestWhiteListIPV4)
 
     EXPECT_CALL(mockResolver, resolve(testing::_))
         .Times(3)
-        .WillRepeatedly([](auto hostname) -> std::vector<std::string> { return {std::string{hostname}}; });
+        .WillRepeatedly([](auto hostname) -> std::vector<std::string> {
+            return {std::string{hostname}};
+        });
 
-    ClioConfigDefinition const cfg{getParseWhitelistHandlerConfig(boost::json::parse(kJSON_DATA_IP_V4))};
+    ClioConfigDefinition const cfg{
+        getParseWhitelistHandlerConfig(boost::json::parse(kJSON_DATA_IP_V4))
+    };
     WhitelistHandler const whitelistHandler{cfg, mockResolver};
 
     EXPECT_TRUE(whitelistHandler.isWhiteListed("192.168.1.10"));
@@ -97,7 +83,9 @@ TEST_F(WhitelistHandlerTest, TestWhiteListResolvesHostname)
         }
     )JSON";
 
-    ClioConfigDefinition const cfg{getParseWhitelistHandlerConfig(boost::json::parse(kJSON_DATA_IP_V4))};
+    ClioConfigDefinition const cfg{
+        getParseWhitelistHandlerConfig(boost::json::parse(kJSON_DATA_IP_V4))
+    };
     WhitelistHandler const whitelistHandler{cfg};
 
     EXPECT_TRUE(whitelistHandler.isWhiteListed("127.0.0.1"));
@@ -119,7 +107,9 @@ TEST_F(WhitelistHandlerTest, TestWhiteListIPV6)
         }
     )JSON";
 
-    ClioConfigDefinition const cfg{getParseWhitelistHandlerConfig(boost::json::parse(kJSON_DATA_IP_V6))};
+    ClioConfigDefinition const cfg{
+        getParseWhitelistHandlerConfig(boost::json::parse(kJSON_DATA_IP_V6))
+    };
     WhitelistHandler const whitelistHandler{cfg};
 
     EXPECT_TRUE(whitelistHandler.isWhiteListed("2002:1dd8:85a7:0000:0000:8a6e:0000:1111"));

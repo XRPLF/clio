@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/Mutex.hpp"
@@ -25,20 +6,19 @@
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
 
-#include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/asio/steady_timer.hpp>
-#include <boost/asio/strand.hpp>
 #include <boost/asio/thread_pool.hpp>
-#include <boost/json.hpp>
 #include <boost/json/object.hpp>
 
 #include <atomic>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <limits>
+#include <optional>
 #include <queue>
+#include <utility>
 
 namespace rpc {
 
@@ -62,7 +42,13 @@ struct Reportable {
  */
 class WorkQueue : public Reportable {
     using TaskType = std::function<void(boost::asio::yield_context)>;
-    using QueueType = std::queue<TaskType>;
+
+    struct TaskWithTimestamp {
+        TaskType task;
+        std::chrono::system_clock::time_point queuedAt;
+    };
+
+    using QueueType = std::queue<TaskWithTimestamp>;
 
 public:
     /**
@@ -74,27 +60,51 @@ public:
     };
 
 private:
-    struct DispatcherState {
+    struct QueueState {
         QueueType high;
         QueueType normal;
 
-        bool isIdle = false;
+        size_t highPriorityCounter = 0;
 
         void
-        push(Priority priority, auto&& task)
+        push(Priority priority, TaskType&& task)
         {
             auto& queue = [this, priority] -> QueueType& {
                 if (priority == Priority::High)
                     return high;
                 return normal;
             }();
-            queue.push(std::forward<decltype(task)>(task));
+            queue.push(
+                TaskWithTimestamp{
+                    .task = std::move(task), .queuedAt = std::chrono::system_clock::now()
+                }
+            );
         }
 
         [[nodiscard]] bool
         empty() const
         {
             return high.empty() and normal.empty();
+        }
+
+        [[nodiscard]] std::optional<TaskWithTimestamp>
+        popNext()
+        {
+            if (not high.empty() and (highPriorityCounter < kTAKE_HIGH_PRIO or normal.empty())) {
+                auto taskWithTimestamp = std::move(high.front());
+                high.pop();
+                ++highPriorityCounter;
+                return taskWithTimestamp;
+            }
+
+            if (not normal.empty()) {
+                auto taskWithTimestamp = std::move(normal.front());
+                normal.pop();
+                highPriorityCounter = 0;
+                return taskWithTimestamp;
+            }
+
+            return std::nullopt;
         }
     };
 
@@ -110,14 +120,26 @@ private:
 
     util::Logger log_{"RPC"};
     boost::asio::thread_pool ioc_;
-    boost::asio::strand<boost::asio::thread_pool::executor_type> strand_;
-    bool hasDispatcher_ = false;
 
     std::atomic_bool stopping_;
+    std::atomic_bool processingStarted_{false};
 
-    util::Mutex<std::function<void()>> onQueueEmpty_;
-    util::Mutex<DispatcherState> dispatcherState_;
-    boost::asio::steady_timer waitTimer_;
+    class OneTimeCallable {
+        std::function<void()> func_;
+        bool called_{false};
+
+    public:
+        void
+        setCallable(std::function<void()> func);
+
+        void
+        operator()();
+
+        explicit
+        operator bool() const;
+    };
+    util::Mutex<OneTimeCallable> onQueueEmpty_;
+    util::Mutex<QueueState> queueState_;
 
 public:
     struct DontStartProcessingTag {};
@@ -152,7 +174,8 @@ public:
     startProcessing();
 
     /**
-     * @brief Put the work queue into a stopping state. This will prevent new jobs from being queued.
+     * @brief Put the work queue into a stopping state. This will prevent new jobs from being
+     * queued.
      *
      * @param onQueueEmpty A callback to run when the last task in the queue is completed
      */
@@ -177,7 +200,8 @@ public:
     /**
      * @brief Submit a job to the work queue.
      *
-     * The job will be rejected if isWhiteListed is set to false and the current size of the queue reached capacity.
+     * The job will be rejected if isWhiteListed is set to false and the current size of the queue
+     * reached capacity.
      *
      * @param func The function object to queue as a job
      * @param isWhiteListed Whether the queue capacity applies to this job
@@ -211,7 +235,7 @@ public:
 
 private:
     void
-    dispatcherLoop(boost::asio::yield_context yield);
+    executeTask(boost::asio::yield_context yield);
 };
 
 }  // namespace rpc

@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/NoRippleCheck.hpp"
 
 #include "rpc/Errors.hpp"
@@ -65,7 +46,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (!expectedLgrInfo.has_value())
+    if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = expectedLgrInfo.value();
@@ -74,13 +55,14 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
     auto const accountObj = sharedPtrBackend_->fetchLedgerObject(keylet, lgrInfo.seq, ctx.yield);
 
     if (!accountObj)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
+        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     auto it = ripple::SerialIter{accountObj->data(), accountObj->size()};
     auto sle = ripple::SLE{it, keylet};
     auto accountSeq = sle.getFieldU32(ripple::sfSequence);
     bool const bDefaultRipple = (sle.getFieldU32(ripple::sfFlags) & ripple::lsfDefaultRipple) != 0u;
-    auto const fees = input.transactions ? sharedPtrBackend_->fetchFees(lgrInfo.seq, ctx.yield) : std::nullopt;
+    auto const fees =
+        input.transactions ? sharedPtrBackend_->fetchFees(lgrInfo.seq, ctx.yield) : std::nullopt;
 
     auto output = NoRippleCheckHandler::Output();
 
@@ -98,7 +80,8 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
 
     if (bDefaultRipple && !input.roleGateway) {
         output.problems.emplace_back(
-            "You appear to have set your default ripple flag even though you are not a gateway. This is not "
+            "You appear to have set your default ripple flag even though you are not a gateway. "
+            "This is not "
             "recommended unless you are experimenting"
         );
     } else if (input.roleGateway && !bDefaultRipple) {
@@ -124,10 +107,12 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
         [&](ripple::SLE const ownedItem) {
             // don't push to result if limit is reached
             if (limit != 0 && ownedItem.getType() == ripple::ltRIPPLE_STATE) {
-                bool const bLow = accountID == ownedItem.getFieldAmount(ripple::sfLowLimit).getIssuer();
+                bool const bLow =
+                    accountID == ownedItem.getFieldAmount(ripple::sfLowLimit).getIssuer();
 
-                bool const bNoRipple = (ownedItem.getFieldU32(ripple::sfFlags) &
-                                        (bLow ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
+                bool const bNoRipple =
+                    (ownedItem.getFieldU32(ripple::sfFlags) &
+                     (bLow ? ripple::lsfLowNoRipple : ripple::lsfHighNoRipple)) != 0u;
 
                 std::string problem;
                 bool needFix = false;
@@ -142,25 +127,29 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
                     --limit;
 
                     ripple::AccountID const peer =
-                        ownedItem.getFieldAmount(bLow ? ripple::sfHighLimit : ripple::sfLowLimit).getIssuer();
+                        ownedItem.getFieldAmount(bLow ? ripple::sfHighLimit : ripple::sfLowLimit)
+                            .getIssuer();
                     ripple::STAmount const peerLimit =
                         ownedItem.getFieldAmount(bLow ? ripple::sfHighLimit : ripple::sfLowLimit);
 
                     problem += fmt::format(
-                        "{} line to {}", to_string(peerLimit.getCurrency()), to_string(peerLimit.getIssuer())
+                        "{} line to {}",
+                        to_string(peerLimit.getCurrency()),
+                        to_string(peerLimit.getIssuer())
                     );
                     output.problems.emplace_back(problem);
 
                     if (input.transactions) {
-                        ripple::STAmount limitAmount(
-                            ownedItem.getFieldAmount(bLow ? ripple::sfLowLimit : ripple::sfHighLimit)
-                        );
+                        ripple::STAmount limitAmount(ownedItem.getFieldAmount(
+                            bLow ? ripple::sfLowLimit : ripple::sfHighLimit
+                        ));
                         limitAmount.setIssuer(peer);
 
                         auto tx = getBaseTx(*accountID, accountSeq++);
 
                         tx[JS(TransactionType)] = "TrustSet";
-                        tx[JS(LimitAmount)] = toBoostJson(limitAmount.getJson(ripple::JsonOptions::none));
+                        tx[JS(LimitAmount)] =
+                            toBoostJson(limitAmount.getJson(ripple::JsonOptions::none));
                         tx[JS(Flags)] = bNoRipple ? ripple::tfClearNoRipple : ripple::tfSetNoRipple;
 
                         output.transactions->push_back(tx);
@@ -206,7 +195,11 @@ tag_invoke(boost::json::value_to_tag<NoRippleCheckHandler::Input>, boost::json::
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NoRippleCheckHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    NoRippleCheckHandler::Output const& output
+)
 {
     using boost::json::value_from;
 

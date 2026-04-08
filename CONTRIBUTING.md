@@ -133,7 +133,7 @@ This is a non-exhaustive list of recommended style guidelines. These are not alw
 
 Code must conform to `clang-format`, unless the result is unreasonably difficult to read or maintain.
 In most cases the `pre-commit` hook takes care of formatting and fixes any issues automatically.
-To manually format your code, run `pre-commit run clang-format --files <your changed files>` for C++ files, and `pre-commit run cmake-format --files <your changed files>` for CMake files.
+To manually format your code, run `pre-commit run clang-format --files <your changed files>` for C++ files, and `pre-commit run gersemi --files <your changed files>` for CMake files.
 
 ### Documentation
 

@@ -21,10 +21,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Create build directory
-      shell: bash
-      run: mkdir -p "${{ inputs.build_dir }}"
-
     - name: Run conan
       shell: bash
       env:

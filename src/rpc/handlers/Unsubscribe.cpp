@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/Unsubscribe.hpp"
 
 #include "feed/SubscriptionManagerInterface.hpp"
@@ -44,7 +25,9 @@
 
 namespace rpc {
 
-UnsubscribeHandler::UnsubscribeHandler(std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions)
+UnsubscribeHandler::UnsubscribeHandler(
+    std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions
+)
     : subscriptions_(subscriptions)
 {
 }
@@ -52,14 +35,20 @@ UnsubscribeHandler::UnsubscribeHandler(std::shared_ptr<feed::SubscriptionManager
 RpcSpecConstRef
 UnsubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
 {
-    static auto const kBOOKS_VALIDATOR =
-        validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
-            if (!value.is_array())
-                return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
+    static auto const kBOOKS_VALIDATOR = validation::CustomValidator{
+        [](boost::json::value const& value, std::string_view key) -> MaybeError {
+            if (!value.is_array()) {
+                return Error{
+                    Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}
+                };
+            }
 
             for (auto const& book : value.as_array()) {
-                if (!book.is_object())
-                    return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "ItemNotObject"}};
+                if (!book.is_object()) {
+                    return Error{
+                        Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "ItemNotObject"}
+                    };
+                }
 
                 if (book.as_object().contains("both") && !book.as_object().at("both").is_bool())
                     return Error{Status{RippledError::rpcINVALID_PARAMS, "bothNotBool"}};
@@ -70,7 +59,8 @@ UnsubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
             }
 
             return MaybeError{};
-        }};
+        }
+    };
 
     static auto const kRPC_SPEC = RpcSpec{
         {JS(streams), validation::CustomValidators::subscribeStreamValidator},
@@ -181,7 +171,8 @@ tag_invoke(boost::json::value_to_tag<UnsubscribeHandler::Input>, boost::json::va
         for (auto const& account : accounts->value().as_array())
             input.accounts->push_back(boost::json::value_to<std::string>(account));
     }
-    if (auto const& accountsProposed = jsonObject.find(JS(accounts_proposed)); accountsProposed != jsonObject.end()) {
+    if (auto const& accountsProposed = jsonObject.find(JS(accounts_proposed));
+        accountsProposed != jsonObject.end()) {
         input.accountsProposed = std::vector<std::string>();
         for (auto const& account : accountsProposed->value().as_array())
             input.accountsProposed->push_back(boost::json::value_to<std::string>(account));

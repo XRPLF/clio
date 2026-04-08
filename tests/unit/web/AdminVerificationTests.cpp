@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "util/NameGenerator.hpp"
 #include "util/config/ConfigDefinition.hpp"
 #include "util/config/ConfigFileJson.hpp"
@@ -55,7 +36,8 @@ TEST_F(IPAdminVerificationStrategyTest, IsAdminOnlyForIP_127_0_0_1)
 class PasswordAdminVerificationStrategyTest : public virtual ::testing::Test {
 protected:
     std::string const password_ = "secret";
-    std::string const passwordHash_ = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
+    std::string const passwordHash_ =
+        "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
 
     web::PasswordAdminVerificationStrategy strat_{password_};
 
@@ -93,7 +75,8 @@ struct MakeAdminVerificationStrategyTestParams {
     bool expectPasswordStrategy;
 };
 
-class MakeAdminVerificationStrategyTest : public testing::TestWithParam<MakeAdminVerificationStrategyTestParams> {};
+class MakeAdminVerificationStrategyTest
+    : public testing::TestWithParam<MakeAdminVerificationStrategyTestParams> {};
 
 TEST_P(MakeAdminVerificationStrategyTest, ChoosesStrategyCorrectly)
 {

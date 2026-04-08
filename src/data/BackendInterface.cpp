@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/BackendInterface.hpp"
 
 #include "data/Types.hpp"
@@ -128,7 +109,8 @@ BackendInterface::fetchLedgerObjects(
             misses.push_back(keys[i]);
         }
     }
-    LOG(log_.trace()) << "Cache hits = " << keys.size() - misses.size() << " - cache misses = " << misses.size();
+    LOG(log_.trace()) << "Cache hits = " << keys.size() - misses.size()
+                      << " - cache misses = " << misses.size();
 
     if (!misses.empty()) {
         auto objs = doFetchLedgerObjects(misses, sequence, yield);
@@ -192,7 +174,9 @@ BackendInterface::fetchBookOffers(
     ripple::uint256 const bookEnd = ripple::getQualityNext(book);
     ripple::uint256 uTipIndex = book;
     std::vector<ripple::uint256> keys;
-    auto getMillis = [](auto diff) { return std::chrono::duration_cast<std::chrono::milliseconds>(diff).count(); };
+    auto getMillis = [](auto diff) {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(diff).count();
+    };
     auto begin = std::chrono::system_clock::now();
     std::uint32_t numSucc = 0;
     std::uint32_t numPages = 0;
@@ -233,20 +217,23 @@ BackendInterface::fetchBookOffers(
     auto mid = std::chrono::system_clock::now();
     auto objs = fetchLedgerObjects(keys, ledgerSequence, yield);
     for (size_t i = 0; i < keys.size() && i < limit; ++i) {
-        LOG(log_.trace()) << "Key = " << ripple::strHex(keys[i]) << " blob = " << ripple::strHex(objs[i])
+        LOG(log_.trace()) << "Key = " << ripple::strHex(keys[i])
+                          << " blob = " << ripple::strHex(objs[i])
                           << " ledgerSequence = " << ledgerSequence;
         ASSERT(!objs[i].empty(), "Ledger object can't be empty");
         page.offers.push_back({keys[i], objs[i]});
     }
     auto end = std::chrono::system_clock::now();
     LOG(log_.debug()) << "Fetching " << std::to_string(keys.size()) << " offers took "
-                      << std::to_string(getMillis(mid - begin)) << " milliseconds. Fetching next dir took "
-                      << std::to_string(succMillis) << " milliseconds. Fetched next dir " << std::to_string(numSucc)
-                      << " times"
-                      << " Fetching next page of dir took " << std::to_string(pageMillis) << " milliseconds"
-                      << ". num pages = " << std::to_string(numPages) << ". Fetching all objects took "
-                      << std::to_string(getMillis(end - mid))
-                      << " milliseconds. total time = " << std::to_string(getMillis(end - begin)) << " milliseconds"
+                      << std::to_string(getMillis(mid - begin))
+                      << " milliseconds. Fetching next dir took " << std::to_string(succMillis)
+                      << " milliseconds. Fetched next dir " << std::to_string(numSucc) << " times"
+                      << " Fetching next page of dir took " << std::to_string(pageMillis)
+                      << " milliseconds"
+                      << ". num pages = " << std::to_string(numPages)
+                      << ". Fetching all objects took " << std::to_string(getMillis(end - mid))
+                      << " milliseconds. total time = " << std::to_string(getMillis(end - begin))
+                      << " milliseconds"
                       << " book = " << ripple::strHex(book);
 
     return page;
@@ -273,7 +260,8 @@ BackendInterface::updateRange(uint32_t newMax)
     if (range_.has_value() and newMax < range_->maxSequence) {
         ASSERT(
             false,
-            "Range shouldn't exist yet or newMax should be at least range->maxSequence. newMax = {}, "
+            "Range shouldn't exist yet or newMax should be at least range->maxSequence. newMax = "
+            "{}, "
             "range->maxSequence = {}",
             newMax,
             range_->maxSequence
@@ -339,8 +327,8 @@ BackendInterface::fetchLedgerPage(
         if (!objects[i].empty()) {
             page.objects.push_back({keys[i], std::move(objects[i])});
         } else if (!outOfOrder) {
-            LOG(log_.error()) << "Deleted or non-existent object in successor table. key = " << ripple::strHex(keys[i])
-                              << " - seq = " << ledgerSequence;
+            LOG(log_.error()) << "Deleted or non-existent object in successor table. key = "
+                              << ripple::strHex(keys[i]) << " - seq = " << ledgerSequence;
             std::stringstream msg;
             for (size_t j = 0; j < objects.size(); ++j) {
                 msg << " - " << ripple::strHex(keys[j]);

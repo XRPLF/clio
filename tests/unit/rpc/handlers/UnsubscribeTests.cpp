@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/Errors.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/AnyHandler.hpp"
@@ -419,7 +400,8 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "dstIsrMalformed",
-            .expectedErrorMessage = "Unneeded field 'taker_gets.issuer' for XRP currency specification."
+            .expectedErrorMessage =
+                "Unneeded field 'taker_gets.issuer' for XRP currency specification."
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemTakerPaysXRPHasIssuer",
@@ -438,7 +420,8 @@ generateTestValuesForParametersTest()
                 ]
             })JSON",
             .expectedError = "srcIsrMalformed",
-            .expectedErrorMessage = "Unneeded field 'taker_pays.issuer' for XRP currency specification."
+            .expectedErrorMessage =
+                "Unneeded field 'taker_pays.issuer' for XRP currency specification."
         },
         UnsubscribeParamTestCaseBundle{
             .testName = "BooksItemBadMartket",
@@ -563,8 +546,15 @@ TEST_F(RPCUnsubscribeTest, Accounts)
         )
     );
 
-    EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubAccount(rpc::accountFromStringStrict(kACCOUNT).value(), _)).Times(1);
-    EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubAccount(rpc::accountFromStringStrict(kACCOUNT2).value(), _))
+    EXPECT_CALL(
+        *mockSubscriptionManagerPtr_,
+        unsubAccount(rpc::accountFromStringStrict(kACCOUNT).value(), _)
+    )
+        .Times(1);
+    EXPECT_CALL(
+        *mockSubscriptionManagerPtr_,
+        unsubAccount(rpc::accountFromStringStrict(kACCOUNT2).value(), _)
+    )
         .Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -587,9 +577,15 @@ TEST_F(RPCUnsubscribeTest, AccountsProposed)
         )
     );
 
-    EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubProposedAccount(rpc::accountFromStringStrict(kACCOUNT).value(), _))
+    EXPECT_CALL(
+        *mockSubscriptionManagerPtr_,
+        unsubProposedAccount(rpc::accountFromStringStrict(kACCOUNT).value(), _)
+    )
         .Times(1);
-    EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubProposedAccount(rpc::accountFromStringStrict(kACCOUNT2).value(), _))
+    EXPECT_CALL(
+        *mockSubscriptionManagerPtr_,
+        unsubProposedAccount(rpc::accountFromStringStrict(kACCOUNT2).value(), _)
+    )
         .Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -622,7 +618,8 @@ TEST_F(RPCUnsubscribeTest, Books)
         )
     );
 
-    auto const parsedBookMaybe = rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
+    auto const parsedBookMaybe =
+        rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
     auto const book = parsedBookMaybe.value();
 
     EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubBook(book, _)).Times(1);
@@ -657,7 +654,8 @@ TEST_F(RPCUnsubscribeTest, SingleBooks)
         )
     );
 
-    auto const parsedBookMaybe = rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
+    auto const parsedBookMaybe =
+        rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
     auto const book = parsedBookMaybe.value();
 
     EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubBook(book, _)).Times(1);
@@ -688,10 +686,13 @@ TEST(RPCUnsubscribeSpecTest, DeprecatedFields)
     auto const& warning = warnings[0].as_object();
     ASSERT_TRUE(warning.contains("id"));
     ASSERT_TRUE(warning.contains("message"));
-    EXPECT_EQ(warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::WarnRpcDeprecated));
+    EXPECT_EQ(
+        warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::WarnRpcDeprecated)
+    );
     for (auto const& field : {"url", "rt_accounts", "rt_accounts"}) {
         EXPECT_NE(
-            warning.at("message").as_string().find(fmt::format("Field '{}' is deprecated.", field)), std::string::npos
+            warning.at("message").as_string().find(fmt::format("Field '{}' is deprecated.", field)),
+            std::string::npos
         ) << warning;
     }
 }

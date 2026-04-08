@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2025, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/Types.hpp"
@@ -126,9 +107,9 @@ public:
     /**
      * @brief Sets the full flag to true.
      *
-     * This is used when cache loaded in its entirety at startup of the application. This can be either loaded from DB,
-     * populated together with initial ledger download (on first run) or downloaded from a peer node (specified in
-     * config).
+     * This is used when cache loaded in its entirety at startup of the application. This can be
+     * either loaded from DB, populated together with initial ledger download (on first run) or
+     * downloaded from a peer node (specified in config).
      */
     virtual void
     setFull() = 0;
@@ -152,13 +133,15 @@ public:
     size() const = 0;
 
     /**
-     * @return A number representing the success rate of hitting an object in the cache versus missing it.
+     * @return A number representing the success rate of hitting an object in the cache versus
+     * missing it.
      */
     virtual float
     getObjectHitRate() const = 0;
 
     /**
-     * @return A number representing the success rate of hitting a successor in the cache versus missing it.
+     * @return A number representing the success rate of hitting a successor in the cache versus
+     * missing it.
      */
     virtual float
     getSuccessorHitRate() const = 0;
@@ -191,6 +174,21 @@ public:
      */
     [[nodiscard]] virtual std::expected<void, std::string>
     loadFromFile(std::string const& path, uint32_t minLatestSequence) = 0;
+
+    /**
+     * @brief Mark the cache as currently loading from the backend.
+     * @note Should be called before initiating a backend-based cache load. The flag is
+     *       automatically cleared when setFull() is called.
+     */
+    virtual void
+    startLoading() = 0;
+
+    /**
+     * @brief Check whether the cache is currently being loaded from the backend.
+     * @return true if startLoading() has been called and setFull() has not yet been called
+     */
+    [[nodiscard]] virtual bool
+    isCurrentlyLoading() const = 0;
 };
 
 }  // namespace data

@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/common/impl/ForwardingProxy.hpp"
@@ -57,10 +38,16 @@ protected:
     std::shared_ptr<MockHandlerProvider> handlerProvider_ = std::make_shared<MockHandlerProvider>();
     MockCounters counters_;
 
-    ClioConfigDefinition const config_{{"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("none")}};
+    ClioConfigDefinition const config_{
+        {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("none")}
+    };
     util::TagDecoratorFactory tagFactory_{config_};
 
-    rpc::impl::ForwardingProxy<MockCounters, MockHandlerProvider> proxy_{loadBalancer_, counters_, handlerProvider_};
+    rpc::impl::ForwardingProxy<MockCounters, MockHandlerProvider> proxy_{
+        loadBalancer_,
+        counters_,
+        handlerProvider_
+    };
 };
 
 struct ShouldForwardParamTestCaseBundle {
@@ -279,7 +266,8 @@ TEST_P(ShouldForwardParameterTest, Test)
     auto const method = testBundle.method;
     auto const params = json::parse(testBundle.testJson);
 
-    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(testBundle.mockedIsClioOnly));
+    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_))
+        .WillByDefault(Return(testBundle.mockedIsClioOnly));
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(testBundle.called);
 
     runSpawn([&](auto yield) {
@@ -310,7 +298,10 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
     auto const forwarded = json::parse(R"JSON({"test": true, "command": "submit"})JSON");
 
     EXPECT_CALL(
-        *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(kCLIENT_IP), true, _)
+        *rawBalancerPtr,
+        forwardToRippled(
+            forwarded.as_object(), std::make_optional<std::string>(kCLIENT_IP), true, _
+        )
     )
         .WillOnce(Return(json::object{}));
 
@@ -347,7 +338,10 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
     auto const forwarded = json::parse(R"JSON({"test": true, "command": "submit"})JSON");
 
     EXPECT_CALL(
-        *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(kCLIENT_IP), true, _)
+        *rawBalancerPtr,
+        forwardToRippled(
+            forwarded.as_object(), std::make_optional<std::string>(kCLIENT_IP), true, _
+        )
     )
         .WillOnce(Return(std::unexpected{rpc::ClioError::EtlInvalidResponse}));
 

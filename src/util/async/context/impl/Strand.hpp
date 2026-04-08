@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/async/Concepts.hpp"
@@ -51,8 +32,8 @@ public:
     using ContextHolderType = typename ParentContextType::ContextHolderType::Strand;
     using ExecutorType = typename ContextHolderType::Executor;
     using StopToken = typename StopSourceType::Token;
-    using Timer =
-        typename ParentContextType::ContextHolderType::Timer;  // timers are associated with the parent context
+    using Timer = typename ParentContextType::ContextHolderType::Timer;  // timers are associated
+                                                                         // with the parent context
     using RepeatedOperation = RepeatingOperation<BasicStrand>;
 
     BasicStrand(ParentContextType& parent, auto&& strand)
@@ -86,14 +67,18 @@ public:
                     std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken));
                     outcome.setValue();
                 } else {
-                    outcome.setValue(std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken)));
+                    outcome.setValue(
+                        std::invoke(std::forward<decltype(fn)>(fn), std::move(stopToken))
+                    );
                 }
             })
         );
     }
 
     [[nodiscard]] auto
-    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout) noexcept(kIS_NOEXCEPT)
+    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout) noexcept(
+        kIS_NOEXCEPT
+    )
     {
         return execute(
             std::forward<decltype(fn)>(fn),
@@ -120,12 +105,21 @@ public:
     }
 
     [[nodiscard]] auto
-    executeRepeatedly(SomeStdDuration auto interval, SomeHandlerWithoutStopToken auto&& fn) noexcept(kIS_NOEXCEPT)
+    executeRepeatedly(
+        SomeStdDuration auto interval,
+        SomeHandlerWithoutStopToken auto&& fn
+    ) noexcept(kIS_NOEXCEPT)
     {
-        if constexpr (not std::is_same_v<decltype(TimerContextProvider::getContext(*this)), decltype(*this)>) {
-            return TimerContextProvider::getContext(*this).executeRepeatedly(interval, std::forward<decltype(fn)>(fn));
+        if constexpr (not std::is_same_v<
+                          decltype(TimerContextProvider::getContext(*this)),
+                          decltype(*this)>) {
+            return TimerContextProvider::getContext(*this).executeRepeatedly(
+                interval, std::forward<decltype(fn)>(fn)
+            );
         } else {
-            return RepeatedOperation(impl::extractAssociatedExecutor(*this), interval, std::forward<decltype(fn)>(fn));
+            return RepeatedOperation(
+                impl::extractAssociatedExecutor(*this), interval, std::forward<decltype(fn)>(fn)
+            );
         }
     }
 

@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/Feature.hpp"
 
 #include "data/Types.hpp"
@@ -63,32 +44,38 @@ FeatureHandler::process(FeatureHandler::Input const& input, Context const& ctx) 
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (!expectedLgrInfo.has_value())
+    if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const& all = amendmentCenter_->getAll();
 
     auto searchPredicate = [search = input.feature](auto const& feature) {
-        if (search)
-            return ripple::to_string(feature.feature) == search.value() or feature.name == search.value();
+        if (search) {
+            return ripple::to_string(feature.feature) == search.value() or
+                feature.name == search.value();
+        }
         return true;
     };
 
     std::vector<Output::Feature> filtered;
-    rg::transform(all | vs::filter(searchPredicate), std::back_inserter(filtered), [&](auto const& feature) {
-        return Output::Feature{
-            .name = feature.name,
-            .key = ripple::to_string(feature.feature),
-            .supported = feature.isSupportedByClio,
-        };
-    });
+    rg::transform(
+        all | vs::filter(searchPredicate), std::back_inserter(filtered), [&](auto const& feature) {
+            return Output::Feature{
+                .name = feature.name,
+                .key = ripple::to_string(feature.feature),
+                .supported = feature.isSupportedByClio and feature.isSupportedByXRPL,
+            };
+        }
+    );
 
     if (filtered.empty())
         return Error{Status{RippledError::rpcBAD_FEATURE}};
 
     std::vector<data::AmendmentKey> names;
-    rg::transform(filtered, std::back_inserter(names), [](auto const& feature) { return feature.name; });
+    rg::transform(filtered, std::back_inserter(names), [](auto const& feature) {
+        return feature.name;
+    });
 
     std::map<std::string, Output::Feature> features;
     rg::transform(
@@ -117,7 +104,10 @@ FeatureHandler::spec([[maybe_unused]] uint32_t apiVersion)
         {JS(vetoed),
          meta::WithCustomError{
              validation::NotSupported{},
-             Status(RippledError::rpcNO_PERMISSION, "The admin portion of feature API is not available through Clio.")
+             Status(
+                 RippledError::rpcNO_PERMISSION,
+                 "The admin portion of feature API is not available through Clio."
+             )
          }},
         {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
         {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator},
@@ -126,7 +116,11 @@ FeatureHandler::spec([[maybe_unused]] uint32_t apiVersion)
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, FeatureHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    FeatureHandler::Output const& output
+)
 {
     using boost::json::value_from;
 
@@ -145,7 +139,11 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, FeatureHandler::
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, FeatureHandler::Output::Feature const& feature)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    FeatureHandler::Output::Feature const& feature
+)
 {
     using boost::json::value_from;
 

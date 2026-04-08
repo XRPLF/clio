@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2025, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/Spawn.hpp"
@@ -65,8 +46,8 @@ public:
      * @brief Type alias for a yield_context that is bound to a cancellation slot.
      * This allows asynchronous operations initiated with this context to be cancelled.
      */
-    using cancellable_yield_context_type =
-        boost::asio::cancellation_slot_binder<boost::asio::yield_context, boost::asio::cancellation_slot>;
+    using cancellable_yield_context_type = boost::asio::
+        cancellation_slot_binder<boost::asio::yield_context, boost::asio::cancellation_slot>;
 
 private:
     boost::asio::yield_context yield_;
@@ -75,18 +56,21 @@ private:
     cancellable_yield_context_type cyield_;
     std::atomic_bool isCancelled_{false};
 
-    using FamilyCancellationSignal = boost::signals2::signal<void(boost::asio::cancellation_type_t)>;
+    using FamilyCancellationSignal =
+        boost::signals2::signal<void(boost::asio::cancellation_type_t)>;
     std::shared_ptr<FamilyCancellationSignal> familySignal_;
     boost::signals2::connection connection_;
 
     /**
      * @brief Private constructor to create a Coroutine instance.
      * @param yield The Boost.Asio yield_context for this coroutine.
-     * @param signal A shared signal used for propagating cancellation requests among related coroutines.
+     * @param signal A shared signal used for propagating cancellation requests among related
+     * coroutines.
      */
     explicit Coroutine(
         boost::asio::yield_context&& yield,
-        std::shared_ptr<FamilyCancellationSignal> signal = std::make_shared<FamilyCancellationSignal>()
+        std::shared_ptr<FamilyCancellationSignal> signal =
+            std::make_shared<FamilyCancellationSignal>()
     );
 
 public:
@@ -107,10 +91,12 @@ public:
 
     /**
      * @brief Spawns a new top-level coroutine.
-     * @tparam ExecutionContext The type of the I/O execution context (e.g., boost::asio::io_context).
+     * @tparam ExecutionContext The type of the I/O execution context (e.g.,
+     * boost::asio::io_context).
      * @tparam Fn The type of the invocable function that represents the coroutine body.
      * @param ioContext The I/O execution context on which to spawn the coroutine.
-     * @param fn The function to be executed as the coroutine. It will receive a Coroutine& argument.
+     * @param fn The function to be executed as the coroutine. It will receive a Coroutine&
+     * argument.
      */
     template <typename ExecutionContext, CoroutineFunction Fn>
     static void
@@ -126,7 +112,8 @@ public:
      * @brief Spawns a child coroutine from this coroutine.
      * The child coroutine shares the same cancellation signal.
      * @tparam Fn The type of the invocable function that represents the child coroutine body.
-     * @param fn The function to be executed as the child coroutine. It will receive a Coroutine& argument.
+     * @param fn The function to be executed as the child coroutine. It will receive a Coroutine&
+     * argument.
      */
     template <CoroutineFunction Fn>
     void
@@ -135,10 +122,13 @@ public:
         if (isCancelled_)
             return;
 
-        util::spawn(yield_, [signal = familySignal_, fn = std::move(fn)](boost::asio::yield_context yield) mutable {
-            Coroutine coroutine(std::move(yield), std::move(signal));
-            fn(coroutine);
-        });
+        util::spawn(
+            yield_,
+            [signal = familySignal_, fn = std::move(fn)](boost::asio::yield_context yield) mutable {
+                Coroutine coroutine(std::move(yield), std::move(signal));
+                fn(coroutine);
+            }
+        );
     }
 
     /**
@@ -154,7 +144,9 @@ public:
      *                         Defaults to boost::asio::cancellation_type::terminal.
      */
     void
-    cancelAll(boost::asio::cancellation_type_t cancellationType = boost::asio::cancellation_type::terminal);
+    cancelAll(
+        boost::asio::cancellation_type_t cancellationType = boost::asio::cancellation_type::terminal
+    );
 
     /**
      * @brief Checks if this coroutine has been cancelled.

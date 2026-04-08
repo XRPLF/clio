@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/Taggable.hpp"
@@ -116,9 +97,11 @@ protected:
 public:
     /**
      * @brief The default timeout for send, receive, and close operations.
-     * @note This value should be higher than forwarding timeout to not disconnect clients if rippled is slow.
+     * @note This value should be higher than forwarding timeout to not disconnect clients if
+     * rippled is slow.
      */
-    static constexpr std::chrono::steady_clock::duration kDEFAULT_TIMEOUT = std::chrono::seconds{11};
+    static constexpr std::chrono::steady_clock::duration kDEFAULT_TIMEOUT =
+        std::chrono::seconds{11};
 
     /**
      * @brief Construct a new Connection object
@@ -127,11 +110,15 @@ public:
      * @param buffer The buffer to use for reading and writing.
      * @param tagDecoratorFactory The factory for creating tag decorators.
      */
-    Connection(std::string ip, boost::beast::flat_buffer buffer, util::TagDecoratorFactory const& tagDecoratorFactory);
+    Connection(
+        std::string ip,
+        boost::beast::flat_buffer buffer,
+        util::TagDecoratorFactory const& tagDecoratorFactory
+    );
 
     /**
-     * @brief Get the timeout for send, receive, and close operations. For WebSocket connections, this is the ping
-     * interval.
+     * @brief Get the timeout for send, receive, and close operations. For WebSocket connections,
+     * this is the ping interval.
      *
      * @param newTimeout The new timeout to set.
      */

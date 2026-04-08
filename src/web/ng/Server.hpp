@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/Taggable.hpp"
@@ -48,8 +29,9 @@ namespace web::ng {
 class Server : public ServerTag {
 public:
     /**
-     * @brief Check to perform for each new client connection. The check takes client ip as input and returns a Response
-     * if the check failed. Response will be sent to the client and the connection will be closed.
+     * @brief Check to perform for each new client connection. The check takes client ip as input
+     * and returns a Response if the check failed. Response will be sent to the client and the
+     * connection will be closed.
      */
     using OnConnectCheck = std::function<std::expected<void, Response>(Connection const&)>;
 
@@ -93,8 +75,8 @@ public:
      * @param endpoint The endpoint to listen on.
      * @param sslContext The SSL context to use (optional).
      * @param processingPolicy The requests processing policy (parallel or sequential).
-     * @param parallelRequestLimit The limit of requests for one connection that can be processed in parallel. Only used
-     * if processingPolicy is parallel.
+     * @param parallelRequestLimit The limit of requests for one connection that can be processed in
+     * parallel. Only used if processingPolicy is parallel.
      * @param tagDecoratorFactory The tag decorator factory.
      * @param proxyIpResolver The client ip resolver if a request was forwarded by a proxy
      * @param maxSubscriptionSendQueueSize The maximum size of the subscription send queue.
@@ -118,7 +100,8 @@ public:
     Server(Server const&) = delete;
 
     /**
-     * @brief Move constructor is deleted because connectionHandler_ contains references to some fields of the Server.
+     * @brief Move constructor is deleted because connectionHandler_ contains references to some
+     * fields of the Server.
      */
     Server(Server&&) = delete;
 
@@ -160,8 +143,10 @@ public:
     run();
 
     /**
-     * @brief Stop the server. This method will asynchronously sleep unless all the users are disconnected.
-     * @note Stopping the server cause graceful shutdown of all connections. And rejecting new connections.
+     * @brief Stop the server. This method will asynchronously sleep unless all the users are
+     * disconnected.
+     * @note Stopping the server cause graceful shutdown of all connections. And rejecting new
+     * connections.
      *
      * @param yield The coroutine context.
      */

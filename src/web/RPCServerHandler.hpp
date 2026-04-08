@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/BackendInterface.hpp"
@@ -125,9 +106,9 @@ public:
             }
 
             if (!rpcEngine_->post(
-                    [this, request = std::move(req), connection](boost::asio::yield_context yield) mutable {
-                        handleRequest(yield, std::move(request), connection);
-                    },
+                    [this, request = std::move(req), connection](
+                        boost::asio::yield_context yield
+                    ) mutable { handleRequest(yield, std::move(request), connection); },
                     connection->clientIp()
                 )) {
                 rpcEngine_->notifyTooBusy();
@@ -141,7 +122,8 @@ public:
         } catch (std::invalid_argument const& ex) {
             // thrown when json parses something that is not an object at top level
             rpcEngine_->notifyBadSyntax();
-            LOG(log_.warn()) << "Invalid argument error: " << ex.what() << ". For request: " << request;
+            LOG(log_.warn()) << "Invalid argument error: " << ex.what()
+                             << ". For request: " << request;
             web::impl::ErrorHelper(connection).sendJsonParsingError();
         } catch (std::exception const& ex) {
             LOG(perfLog_.error()) << connection->tag() << "Caught exception: " << ex.what();
@@ -198,18 +180,21 @@ private:
 
             if (!context) {
                 auto const err = context.error();
-                LOG(perfLog_.warn()) << connection->tag() << "Could not create Web context: " << err;
+                LOG(perfLog_.warn())
+                    << connection->tag() << "Could not create Web context: " << err;
                 LOG(log_.warn()) << connection->tag() << "Could not create Web context: " << err;
 
                 // we count all those as BadSyntax - as the WS path would.
-                // Although over HTTP these will yield a 400 status with a plain text response (for most).
+                // Although over HTTP these will yield a 400 status with a plain text response (for
+                // most).
                 rpcEngine_->notifyBadSyntax();
                 web::impl::ErrorHelper(connection, std::move(request)).sendError(err);
 
                 return;
             }
 
-            auto [result, timeDiff] = util::timed([&]() { return rpcEngine_->buildResponse(*context); });
+            auto [result, timeDiff] =
+                util::timed([&]() { return rpcEngine_->buildResponse(*context); });
 
             auto const us = std::chrono::duration<int, std::milli>(timeDiff);
             rpc::logDuration(request, context->tag(), us);
@@ -218,25 +203,27 @@ private:
 
             if (!result.response.has_value()) {
                 // note: error statuses are counted/notified in buildResponse itself
-                response = web::impl::ErrorHelper(connection, request).composeError(result.response.error());
+                response = web::impl::ErrorHelper(connection, request)
+                               .composeError(result.response.error());
                 auto const responseStr = boost::json::serialize(response);
 
                 LOG(perfLog_.debug()) << context->tag() << "Encountered error: " << responseStr;
                 LOG(log_.debug()) << context->tag() << "Encountered error: " << responseStr;
             } else {
-                // This can still technically be an error. Clio counts forwarded requests as successful.
-                rpcEngine_->notifyComplete(context->method, us);
-
                 auto& json = result.response.value();
-                auto const isForwarded =
-                    json.contains("forwarded") && json.at("forwarded").is_bool() && json.at("forwarded").as_bool();
+                auto const isForwarded = json.contains("forwarded") &&
+                    json.at("forwarded").is_bool() && json.at("forwarded").as_bool();
+
+                // This can still technically be an error. Clio counts forwarded requests
+                // as successful.
+                rpcEngine_->notifyComplete(*context, us, isForwarded);
 
                 if (isForwarded)
                     json.erase("forwarded");
 
                 // if the result is forwarded - just use it as is
-                // if forwarded request has error, for http, error should be in "result"; for ws, error should
-                // be at top
+                // if forwarded request has error, for http, error should be in "result"; for ws,
+                // error should be at top
                 if (isForwarded && (json.contains(JS(result)) || connection->upgraded)) {
                     for (auto const& [k, v] : json)
                         response.insert_or_assign(k, v);
@@ -263,7 +250,8 @@ private:
 
                     response[JS(type)] = JS(response);
                 } else {
-                    if (response.contains(JS(result)) && !response[JS(result)].as_object().contains(JS(error)))
+                    if (response.contains(JS(result)) &&
+                        !response[JS(result)].as_object().contains(JS(error)))
                         response[JS(result)].as_object()[JS(status)] = JS(success);
                 }
             }
@@ -301,13 +289,15 @@ private:
         auto const paramsIsNull = hasParams and req.at(JS(params)).is_null();
         auto const arrayIsEmpty = paramsIsArray and req.at(JS(params)).as_array().empty();
         auto const arrayIsNotEmpty = paramsIsArray and not req.at(JS(params)).as_array().empty();
-        auto const firstArgIsNull = arrayIsNotEmpty and req.at(JS(params)).as_array().at(0).is_null();
-        auto const firstArgIsEmptyString = arrayIsNotEmpty and req.at(JS(params)).as_array().at(0).is_string() and
+        auto const firstArgIsNull =
+            arrayIsNotEmpty and req.at(JS(params)).as_array().at(0).is_null();
+        auto const firstArgIsEmptyString = arrayIsNotEmpty and
+            req.at(JS(params)).as_array().at(0).is_string() and
             req.at(JS(params)).as_array().at(0).as_string().empty();
 
         // Note: all this compatibility dance is to match `rippled` as close as possible
-        return not hasParams or paramsIsEmptyString or paramsIsNull or paramsIsEmptyObject or arrayIsEmpty or
-            firstArgIsEmptyString or firstArgIsNull;
+        return not hasParams or paramsIsEmptyString or paramsIsNull or paramsIsEmptyObject or
+            arrayIsEmpty or firstArgIsEmptyString or firstArgIsNull;
     }
 };
 

@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/LedgerCacheInterface.hpp"
@@ -58,8 +39,8 @@
 /**
  * @brief This namespace implements the web server and related components.
  *
- * The web server is leveraging the power of `boost::asio` with it's coroutine support thru `boost::asio::yield_context`
- * and `boost::asio::spawn`.
+ * The web server is leveraging the power of `boost::asio` with it's coroutine support thru
+ * `boost::asio::yield_context` and `boost::asio::spawn`.
  *
  * Majority of the code is based on examples that came with boost.
  */
@@ -68,8 +49,8 @@ namespace web {
 /**
  * @brief The Detector class to detect if the connection is a ssl or not.
  *
- * If it is an SSL connection, the Detector will pass the ownership of the socket to SslSessionType, otherwise to
- * PlainSessionType.
+ * If it is an SSL connection, the Detector will pass the ownership of the socket to SslSessionType,
+ * otherwise to PlainSessionType.
  *
  * @tparam PlainSessionType The plain session type
  * @tparam SslSessionType The SSL session type
@@ -79,8 +60,10 @@ template <
     template <typename> class PlainSessionType,
     template <typename> class SslSessionType,
     SomeServerHandler HandlerType>
-class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, SslSessionType, HandlerType>> {
-    using std::enable_shared_from_this<Detector<PlainSessionType, SslSessionType, HandlerType>>::shared_from_this;
+class Detector
+    : public std::enable_shared_from_this<Detector<PlainSessionType, SslSessionType, HandlerType>> {
+    using std::enable_shared_from_this<
+        Detector<PlainSessionType, SslSessionType, HandlerType>>::shared_from_this;
 
     util::Logger log_{"WebServer"};
     boost::beast::tcp_stream stream_;
@@ -151,7 +134,11 @@ public:
     run()
     {
         boost::beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
-        async_detect_ssl(stream_, buffer_, boost::beast::bind_front_handler(&Detector::onDetect, shared_from_this()));
+        async_detect_ssl(
+            stream_,
+            buffer_,
+            boost::beast::bind_front_handler(&Detector::onDetect, shared_from_this())
+        );
     }
 
     /**
@@ -213,7 +200,8 @@ public:
 /**
  * @brief The WebServer class. It creates server socket and start listening on it.
  *
- * Once there is client connection, it will accept it and pass the socket to Detector to detect ssl or plain.
+ * Once there is client connection, it will accept it and pass the socket to Detector to detect ssl
+ * or plain.
  *
  * @tparam PlainSessionType The plain session to handle non-ssl connection.
  * @tparam SslSessionType The SSL session to handle SSL connection.
@@ -223,9 +211,11 @@ template <
     template <typename> class PlainSessionType,
     template <typename> class SslSessionType,
     SomeServerHandler HandlerType>
-class Server : public ServerTag,
-               public std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>> {
-    using std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>>::shared_from_this;
+class Server
+    : public ServerTag,
+      public std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>> {
+    using std::enable_shared_from_this<
+        Server<PlainSessionType, SslSessionType, HandlerType>>::shared_from_this;
 
     util::Logger log_{"WebServer"};
     std::reference_wrapper<boost::asio::io_context> ioc_;
@@ -290,17 +280,27 @@ public:
 
         acceptor_.bind(endpoint, ec);
         if (ec) {
-            LOG(log_.error()) << "Failed to bind to endpoint: " << endpoint << ". message: " << ec.message();
+            LOG(log_.error()) << "Failed to bind to endpoint: " << endpoint
+                              << ". message: " << ec.message();
             throw std::runtime_error(
-                fmt::format("Failed to bind to endpoint: {}:{}", endpoint.address().to_string(), endpoint.port())
+                fmt::format(
+                    "Failed to bind to endpoint: {}:{}",
+                    endpoint.address().to_string(),
+                    endpoint.port()
+                )
             );
         }
 
         acceptor_.listen(boost::asio::socket_base::max_listen_connections, ec);
         if (ec) {
-            LOG(log_.error()) << "Failed to listen at endpoint: " << endpoint << ". message: " << ec.message();
+            LOG(log_.error()) << "Failed to listen at endpoint: " << endpoint
+                              << ". message: " << ec.message();
             throw std::runtime_error(
-                fmt::format("Failed to listen at endpoint: {}:{}", endpoint.address().to_string(), endpoint.port())
+                fmt::format(
+                    "Failed to listen at endpoint: {}:{}",
+                    endpoint.address().to_string(),
+                    endpoint.port()
+                )
             );
         }
     }
@@ -337,8 +337,9 @@ private:
         }
 
         if (!ec) {
-            auto ctxRef =
-                ctx_ ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_.value()} : std::nullopt;
+            auto ctxRef = ctx_
+                ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_.value()}
+                : std::nullopt;
 
             std::make_shared<Detector<PlainSessionType, SslSessionType, HandlerType>>(
                 std::move(socket),
@@ -401,8 +402,8 @@ makeHttpServer(
         throw std::logic_error{expectedAdminVerification.error()};
     }
 
-    // If the transactions number is 200 per ledger, A client which subscribes everything will send 400+ feeds for
-    // each ledger. we allow user delay 3 ledgers by default
+    // If the transactions number is 200 per ledger, A client which subscribes everything will send
+    // 400+ feeds for each ledger. we allow user delay 3 ledgers by default
     auto const maxWsSendingQueueSize = serverConfig.get<uint32_t>("ws_max_sending_queue_size");
 
     auto proxyIpResolver = ProxyIpResolver::fromConfig(config);

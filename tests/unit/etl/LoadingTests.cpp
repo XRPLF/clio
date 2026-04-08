@@ -1,24 +1,6 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2025, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/Types.hpp"
 #include "etl/InitialLoadObserverInterface.hpp"
+#include "etl/LoaderInterface.hpp"
 #include "etl/Models.hpp"
 #include "etl/RegistryInterface.hpp"
 #include "etl/SystemState.hpp"
@@ -47,11 +29,17 @@ using namespace data;
 
 namespace {
 
-constinit auto const kLEDGER_HASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constinit auto const kLEDGER_HASH =
+    "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constinit auto const kSEQ = 30;
 
 struct MockRegistry : etl::RegistryInterface {
-    MOCK_METHOD(void, dispatchInitialObjects, (uint32_t, std::vector<Object> const&, std::string), (override));
+    MOCK_METHOD(
+        void,
+        dispatchInitialObjects,
+        (uint32_t, std::vector<Object> const&, std::string),
+        (override)
+    );
     MOCK_METHOD(void, dispatchInitialData, (LedgerData const&), (override));
     MOCK_METHOD(void, dispatch, (LedgerData const&), (override));
 };
@@ -65,7 +53,9 @@ struct MockLoadObserver : etl::InitialLoadObserverInterface {
     );
 };
 
-struct LoadingTests : util::prometheus::WithPrometheus, MockBackendTest, MockAmendmentBlockHandlerTest {
+struct LoadingTests : util::prometheus::WithPrometheus,
+                      MockBackendTest,
+                      MockAmendmentBlockHandlerTest {
 protected:
     std::shared_ptr<MockRegistry> mockRegistryPtr_ = std::make_shared<MockRegistry>();
     std::shared_ptr<etl::SystemState> state_ = std::make_shared<etl::SystemState>();
@@ -95,13 +85,16 @@ TEST_F(LoadingTests, LoadInitialLedger)
 {
     auto const data = createTestData();
 
-    EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillOnce(testing::Return(std::nullopt));
+    EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_))
+        .WillOnce(testing::Return(std::nullopt));
     EXPECT_CALL(*backend_, doFinishWrites());
     EXPECT_CALL(*mockRegistryPtr_, dispatchInitialData(data));
 
     auto const res = loader_.loadInitialLedger(data);
     EXPECT_TRUE(res.has_value());
-    EXPECT_EQ(rpc::ledgerHeaderToBlob(res.value(), true), rpc::ledgerHeaderToBlob(data.header, true));
+    EXPECT_EQ(
+        rpc::ledgerHeaderToBlob(res.value(), true), rpc::ledgerHeaderToBlob(data.header, true)
+    );
 }
 
 TEST_F(LoadingTests, LoadSuccess)
@@ -165,7 +158,8 @@ TEST_F(LoadingTests, LoadInitialLedgerFailure)
 {
     auto const data = createTestData();
 
-    EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillOnce(testing::Return(std::nullopt));
+    EXPECT_CALL(*backend_, hardFetchLedgerRange(testing::_))
+        .WillOnce(testing::Return(std::nullopt));
     EXPECT_CALL(*backend_, doFinishWrites()).Times(0);
     EXPECT_CALL(*mockRegistryPtr_, dispatchInitialData(data)).WillOnce([](auto const&) {
         throw std::runtime_error("some error");
@@ -187,4 +181,64 @@ TEST_F(LoadingAssertTest, LoadInitialLedgerHasDataInDB)
     ON_CALL(*backend_, hardFetchLedgerRange(testing::_)).WillByDefault(testing::Return(range));
 
     EXPECT_CLIO_ASSERT_FAIL({ [[maybe_unused]] auto unused = loader_.loadInitialLedger(data); });
+}
+
+TEST_F(LoadingTests, LoadWriteConflictEmitsStopWritingSignal)
+{
+    state_->isWriting = true;  // writer is active
+    auto const data = createTestData();
+    testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>>
+        mockSignalCallback;
+
+    auto connection = state_->writeCommandSignal.connect(mockSignalCallback.AsStdFunction());
+
+    EXPECT_CALL(*mockRegistryPtr_, dispatch(data));
+    EXPECT_CALL(*backend_, doFinishWrites())
+        .WillOnce(testing::Return(false));  // simulate write conflict
+    EXPECT_CALL(mockSignalCallback, Call(etl::SystemState::WriteCommand::StopWriting));
+
+    EXPECT_FALSE(state_->isWriterDecidingFallback);
+
+    auto result = loader_.load(data);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), etl::LoaderError::WriteConflict);
+    EXPECT_TRUE(state_->isWriterDecidingFallback);
+}
+
+TEST_F(LoadingTests, LoadSuccessDoesNotEmitSignal)
+{
+    state_->isWriting = true;  // writer is active
+    auto const data = createTestData();
+    testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>>
+        mockSignalCallback;
+
+    auto connection = state_->writeCommandSignal.connect(mockSignalCallback.AsStdFunction());
+
+    EXPECT_CALL(*mockRegistryPtr_, dispatch(data));
+    EXPECT_CALL(*backend_, doFinishWrites()).WillOnce(testing::Return(true));  // success
+    // No signal should be emitted on success
+
+    EXPECT_FALSE(state_->isWriterDecidingFallback);
+
+    auto result = loader_.load(data);
+    EXPECT_TRUE(result.has_value());
+    EXPECT_FALSE(state_->isWriterDecidingFallback);
+}
+
+TEST_F(LoadingTests, LoadWhenNotWritingDoesNotCheckConflict)
+{
+    state_->isWriting = false;  // not a writer
+    auto const data = createTestData();
+    testing::StrictMock<testing::MockFunction<void(etl::SystemState::WriteCommand)>>
+        mockSignalCallback;
+
+    auto connection = state_->writeCommandSignal.connect(mockSignalCallback.AsStdFunction());
+
+    EXPECT_CALL(*mockRegistryPtr_, dispatch(data));
+    // doFinishWrites should not be called when not writing
+    EXPECT_CALL(*backend_, doFinishWrites()).Times(0);
+    // No signal should be emitted
+
+    auto result = loader_.load(data);
+    EXPECT_TRUE(result.has_value());
 }

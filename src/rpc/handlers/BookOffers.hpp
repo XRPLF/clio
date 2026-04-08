@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/AmendmentCenterInterface.hpp"
@@ -46,7 +27,8 @@
 namespace rpc {
 
 /**
- * @brief The book_offers method retrieves a list of Offers between two currencies, also known as an order book.
+ * @brief The book_offers method retrieves a list of Offers between two currencies, also known as an
+ * order book.
  *
  * For more details see: https://xrpl.org/book_offers.html
  */
@@ -72,8 +54,8 @@ public:
     /**
      * @brief A struct to hold the input data for the command
      *
-     * @note The taker is not really used in both Clio and `rippled`, both of them return all the offers regardless of
-     * the funding status
+     * @note The taker is not really used in both Clio and `rippled`, both of them return all the
+     * offers regardless of the funding status
      */
     struct Input {
         std::optional<std::string> ledgerHash;
@@ -97,10 +79,10 @@ public:
      * @param amendmentCenter The amendmentCenter to use
      */
     BookOffersHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend,
+        std::shared_ptr<BackendInterface> sharedPtrBackend,
         std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter
     )
-        : sharedPtrBackend_(sharedPtrBackend), amendmentCenter_{amendmentCenter}
+        : sharedPtrBackend_(std::move(sharedPtrBackend)), amendmentCenter_{amendmentCenter}
     {
     }
 
@@ -121,11 +103,13 @@ public:
                  {JS(currency),
                   validation::Required{},
                   meta::WithCustomError{
-                      validation::CustomValidators::currencyValidator, Status(RippledError::rpcDST_AMT_MALFORMED)
+                      validation::CustomValidators::currencyValidator,
+                      Status(RippledError::rpcDST_AMT_MALFORMED)
                   }},
                  {JS(issuer),
                   meta::WithCustomError{
-                      validation::CustomValidators::issuerValidator, Status(RippledError::rpcDST_ISR_MALFORMED)
+                      validation::CustomValidators::issuerValidator,
+                      Status(RippledError::rpcDST_ISR_MALFORMED)
                   }}
              }},
             {JS(taker_pays),
@@ -135,11 +119,13 @@ public:
                  {JS(currency),
                   validation::Required{},
                   meta::WithCustomError{
-                      validation::CustomValidators::currencyValidator, Status(RippledError::rpcSRC_CUR_MALFORMED)
+                      validation::CustomValidators::currencyValidator,
+                      Status(RippledError::rpcSRC_CUR_MALFORMED)
                   }},
                  {JS(issuer),
                   meta::WithCustomError{
-                      validation::CustomValidators::issuerValidator, Status(RippledError::rpcSRC_ISR_MALFORMED)
+                      validation::CustomValidators::issuerValidator,
+                      Status(RippledError::rpcSRC_ISR_MALFORMED)
                   }}
              }},
             // return INVALID_PARAMS if account format is wrong for "taker"
@@ -150,7 +136,8 @@ public:
              }},
             {JS(domain),
              meta::WithCustomError{
-                 validation::Type<std::string>{}, Status(RippledError::rpcDOMAIN_MALFORMED, "Unable to parse domain.")
+                 validation::Type<std::string>{},
+                 Status(RippledError::rpcDOMAIN_MALFORMED, "Unable to parse domain.")
              },
              meta::WithCustomError{
                  validation::CustomValidators::uint256HexStringValidator,

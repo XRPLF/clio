@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "data/cassandra/Handle.hpp"
 
 #include "data/cassandra/Types.hpp"
@@ -36,7 +17,8 @@ Handle::Handle(Settings clusterSettings) : cluster_{clusterSettings}
 {
 }
 
-Handle::Handle(std::string_view contactPoints) : Handle{Settings::defaultSettings().withContactPoints(contactPoints)}
+Handle::Handle(std::string_view contactPoints)
+    : Handle{Settings::defaultSettings().withContactPoints(contactPoints)}
 {
 }
 
@@ -84,8 +66,11 @@ Handle::disconnect() const
 Handle::FutureType
 Handle::asyncReconnect(std::string_view keyspace) const
 {
-    if (auto rc = asyncDisconnect().await(); not rc)  // sync
-        throw std::logic_error("Reconnect to keyspace '" + std::string{keyspace} + "' failed: " + rc.error());
+    if (auto rc = asyncDisconnect().await(); not rc) {  // sync
+        throw std::logic_error(
+            "Reconnect to keyspace '" + std::string{keyspace} + "' failed: " + rc.error()
+        );
+    }
     return asyncConnect(keyspace);
 }
 
@@ -123,7 +108,10 @@ Handle::asyncExecute(StatementType const& statement) const
 }
 
 Handle::FutureWithCallbackType
-Handle::asyncExecute(StatementType const& statement, std::function<void(ResultOrErrorType)>&& cb) const
+Handle::asyncExecute(
+    StatementType const& statement,
+    std::function<void(ResultOrErrorType)>&& cb
+) const
 {
     return Handle::FutureWithCallbackType{cass_session_execute(session_, statement), std::move(cb)};
 }
@@ -147,9 +135,14 @@ Handle::execute(std::vector<StatementType> const& statements) const
 }
 
 Handle::FutureWithCallbackType
-Handle::asyncExecute(std::vector<StatementType> const& statements, std::function<void(ResultOrErrorType)>&& cb) const
+Handle::asyncExecute(
+    std::vector<StatementType> const& statements,
+    std::function<void(ResultOrErrorType)>&& cb
+) const
 {
-    return Handle::FutureWithCallbackType{cass_session_execute_batch(session_, Batch{statements}), std::move(cb)};
+    return Handle::FutureWithCallbackType{
+        cass_session_execute_batch(session_, Batch{statements}), std::move(cb)
+    };
 }
 
 Handle::PreparedStatementType

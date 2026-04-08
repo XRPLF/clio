@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/TestHttpClient.hpp"
@@ -41,7 +22,11 @@ class WebSocketSyncClient {
 
 public:
     void
-    connect(std::string const& host, std::string const& port, std::vector<WebHeader> additionalHeaders = {});
+    connect(
+        std::string const& host,
+        std::string const& port,
+        std::vector<WebHeader> additionalHeaders = {}
+    );
 
     void
     disconnect();
@@ -66,7 +51,11 @@ public:
     );
 
     std::expected<void, boost::system::error_code>
-    send(boost::asio::yield_context yield, std::string_view message, std::chrono::steady_clock::duration timeout);
+    send(
+        boost::asio::yield_context yield,
+        std::string_view message,
+        std::chrono::steady_clock::duration timeout
+    );
 
     std::expected<std::string, boost::system::error_code>
     receive(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout);
@@ -80,7 +69,9 @@ public:
 
 class WebServerSslSyncClient {
     boost::asio::io_context ioc_;
-    std::optional<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>> ws_;
+    std::optional<
+        boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>>
+        ws_;
 
 public:
     void

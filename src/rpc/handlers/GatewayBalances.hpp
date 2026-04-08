@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/BackendInterface.hpp"
@@ -52,8 +33,8 @@ namespace rpc {
 /**
  * @brief Handles the `gateway_balances` command
  *
- * The gateway_balances command calculates the total balances issued by a given account, optionally excluding amounts
- * held by operational addresses.
+ * The gateway_balances command calculates the total balances issued by a given account, optionally
+ * excluding amounts held by operational addresses.
  *
  * For more details see: https://xrpl.org/gateway_balances.html#gateway_balances
  */
@@ -95,8 +76,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    GatewayBalancesHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    GatewayBalancesHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
+        : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
     }
 
@@ -116,17 +97,22 @@ public:
                         return Error{Status{errCode, std::string(key) + "NotStringOrArray"}};
 
                     // wallet needs to be an valid accountID or public key
-                    auto const wallets = value.is_array() ? value.as_array() : boost::json::array{value};
-                    auto const getAccountID = [](auto const& j) -> std::optional<ripple::AccountID> {
+                    auto const wallets =
+                        value.is_array() ? value.as_array() : boost::json::array{value};
+                    auto const getAccountID =
+                        [](auto const& j) -> std::optional<ripple::AccountID> {
                         if (j.is_string()) {
                             auto const pk = util::parseBase58Wrapper<ripple::PublicKey>(
-                                ripple::TokenType::AccountPublic, boost::json::value_to<std::string>(j)
+                                ripple::TokenType::AccountPublic,
+                                boost::json::value_to<std::string>(j)
                             );
 
                             if (pk)
                                 return ripple::calcAccountID(*pk);
 
-                            return util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(j));
+                            return util::parseBase58Wrapper<ripple::AccountID>(
+                                boost::json::value_to<std::string>(j)
+                            );
                         }
 
                         return {};
@@ -148,10 +134,12 @@ public:
             {JS(ledger_index), validation::CustomValidators::ledgerIndexValidator}
         };
 
-        static auto const kSPEC_V1 =
-            RpcSpec{kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(ripple::rpcINVALID_HOTWALLET)}}};
-        static auto const kSPEC_V2 =
-            RpcSpec{kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(ripple::rpcINVALID_PARAMS)}}};
+        static auto const kSPEC_V1 = RpcSpec{
+            kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(ripple::rpcINVALID_HOTWALLET)}}
+        };
+        static auto const kSPEC_V2 = RpcSpec{
+            kSPEC_COMMON, {{JS(hotwallet), getHotWalletValidator(ripple::rpcINVALID_PARAMS)}}
+        };
 
         return apiVersion == 1 ? kSPEC_V1 : kSPEC_V2;
     }

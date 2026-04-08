@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "data/BackendInterface.hpp"
@@ -40,8 +21,8 @@
 namespace rpc {
 
 /**
- * @brief The account_channels method returns information about an account's Payment Channels. This includes only
- * channels where the specified account is the channel's source, not the destination.
+ * @brief The account_channels method returns information about an account's Payment Channels. This
+ * includes only channels where the specified account is the channel's source, not the destination.
  * All information retrieved is relative to a particular version of the ledger.
  *
  * For more details see: https://xrpl.org/account_channels.html
@@ -108,8 +89,8 @@ public:
      *
      * @param sharedPtrBackend The backend to use
      */
-    AccountChannelsHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    AccountChannelsHandler(std::shared_ptr<BackendInterface> sharedPtrBackend)
+        : sharedPtrBackend_(std::move(sharedPtrBackend))
     {
     }
 
@@ -124,7 +105,9 @@ public:
     {
         static auto const kRPC_SPEC = RpcSpec{
             {JS(account), validation::Required{}, validation::CustomValidators::accountValidator},
-            {JS(destination_account), validation::Type<std::string>{}, validation::CustomValidators::accountValidator},
+            {JS(destination_account),
+             validation::Type<std::string>{},
+             validation::CustomValidators::accountValidator},
             {JS(ledger_hash), validation::CustomValidators::uint256HexStringValidator},
             {JS(limit),
              validation::Type<uint32_t>{},

@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "rpc/handlers/GatewayBalances.hpp"
 
 #include "rpc/Errors.hpp"
@@ -56,7 +37,10 @@
 namespace rpc {
 
 GatewayBalancesHandler::Result
-GatewayBalancesHandler::process(GatewayBalancesHandler::Input const& input, Context const& ctx) const
+GatewayBalancesHandler::process(
+    GatewayBalancesHandler::Input const& input,
+    Context const& ctx
+) const
 {
     // check ledger
     auto const range = sharedPtrBackend_->fetchLedgerRange();
@@ -66,17 +50,18 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input const& input, Cont
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (!expectedLgrInfo.has_value())
+    if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
     // check account
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
-    auto const accountLedgerObject =
-        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
+    auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
+        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+    );
 
     if (!accountLedgerObject)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
+        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     auto output = GatewayBalancesHandler::Output{};
 
@@ -96,7 +81,9 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input const& input, Cont
                     // Very large sums of STAmount are approximations
                     // anyway.
                     lockedBalance = ripple::STAmount(
-                        lockedBalance.issue(), ripple::STAmount::cMaxValue, ripple::STAmount::cMaxOffset
+                        lockedBalance.issue(),
+                        ripple::STAmount::cMaxValue,
+                        ripple::STAmount::cMaxOffset
                     );
                 }
             }
@@ -147,7 +134,9 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input const& input, Cont
                     try {
                         bal -= balance;
                     } catch (std::runtime_error const& e) {
-                        bal = ripple::STAmount(bal.issue(), ripple::STAmount::cMaxValue, ripple::STAmount::cMaxOffset);
+                        bal = ripple::STAmount(
+                            bal.issue(), ripple::STAmount::cMaxValue, ripple::STAmount::cMaxOffset
+                        );
                     }
                 }
             }
@@ -178,7 +167,11 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input const& input, Cont
 }
 
 void
-tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GatewayBalancesHandler::Output const& output)
+tag_invoke(
+    boost::json::value_from_tag,
+    boost::json::value& jv,
+    GatewayBalancesHandler::Output const& output
+)
 {
     boost::json::object obj;
     if (!output.sums.empty()) {
@@ -189,25 +182,26 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GatewayBalancesH
         obj[JS(obligations)] = std::move(obligations);
     }
 
-    auto const toJson = [](std::map<ripple::AccountID, std::vector<ripple::STAmount>> const& balances) {
-        boost::json::object balancesObj;
+    auto const toJson =
+        [](std::map<ripple::AccountID, std::vector<ripple::STAmount>> const& balances) {
+            boost::json::object balancesObj;
 
-        if (not balances.empty()) {
-            for (auto const& [accId, accBalances] : balances) {
-                boost::json::array arr;
-                for (auto const& balance : accBalances) {
-                    boost::json::object entry;
-                    entry[JS(currency)] = ripple::to_string(balance.issue().currency);
-                    entry[JS(value)] = balance.getText();
-                    arr.push_back(std::move(entry));
+            if (not balances.empty()) {
+                for (auto const& [accId, accBalances] : balances) {
+                    boost::json::array arr;
+                    for (auto const& balance : accBalances) {
+                        boost::json::object entry;
+                        entry[JS(currency)] = ripple::to_string(balance.issue().currency);
+                        entry[JS(value)] = balance.getText();
+                        arr.push_back(std::move(entry));
+                    }
+
+                    balancesObj[ripple::to_string(accId)] = std::move(arr);
                 }
-
-                balancesObj[ripple::to_string(accId)] = std::move(arr);
             }
-        }
 
-        return balancesObj;
-    };
+            return balancesObj;
+        };
 
     if (auto balances = toJson(output.hotBalances); !balances.empty())
         obj[JS(balances)] = balances;
@@ -257,7 +251,9 @@ tag_invoke(boost::json::value_to_tag<GatewayBalancesHandler::Input>, boost::json
 
     if (jsonObject.contains(JS(hotwallet))) {
         if (jsonObject.at(JS(hotwallet)).is_string()) {
-            input.hotWallets.insert(*accountFromStringStrict(boost::json::value_to<std::string>(jv.at(JS(hotwallet)))));
+            input.hotWallets.insert(
+                *accountFromStringStrict(boost::json::value_to<std::string>(jv.at(JS(hotwallet))))
+            );
         } else {
             auto const& hotWallets = jv.at(JS(hotwallet)).as_array();
             std::ranges::transform(

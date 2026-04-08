@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "app/ClioApplication.hpp"
 
 #include "app/Stopper.hpp"
@@ -29,6 +10,7 @@
 #include "etl/ETLService.hpp"
 #include "etl/LoadBalancer.hpp"
 #include "etl/NetworkValidatedLedgers.hpp"
+#include "etl/SystemState.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "migration/MigrationInspectorFactory.hpp"
 #include "rpc/Counters.hpp"
@@ -91,6 +73,7 @@ ClioApplication::ClioApplication(util::config::ClioConfigDefinition const& confi
 {
     LOG(util::LogService::info()) << "Clio version: " << util::build::getClioFullVersionString();
     signalsHandler_.subscribeToStop([this]() { appStopper_.stop(); });
+    appStopper_.setOnComplete([this]() { signalsHandler_.notifyGracefulShutdownComplete(); });
 }
 
 int
@@ -120,8 +103,11 @@ ClioApplication::run(bool const useNgWebServer)
     // Interface to the database
     auto backend = data::makeBackend(config_, cache);
 
-    cluster::ClusterCommunicationService clusterCommunicationService{backend};
-    clusterCommunicationService.run();
+    auto systemState = etl::SystemState::makeSystemState(config_);
+
+    auto [clusterCommunicationService, cacheLoadingState] =
+        cluster::ClusterCommunicationService::make(config_, backend, systemState);
+    clusterCommunicationService->run();
 
     auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
 
@@ -129,14 +115,15 @@ ClioApplication::run(bool const useNgWebServer)
         auto const migrationInspector = migration::makeMigrationInspector(config_, backend);
         // Check if any migration is blocking Clio server starting.
         if (migrationInspector->isBlockingClio() and backend->hardFetchLedgerRangeNoThrow()) {
-            LOG(util::LogService::error())
-                << "Existing Migration is blocking Clio, Please complete the database migration first.";
+            LOG(util::LogService::error()) << "Existing Migration is blocking Clio, Please "
+                                              "complete the database migration first.";
             return EXIT_FAILURE;
         }
     }
 
     // Manages clients subscribed to streams
-    auto subscriptions = feed::SubscriptionManager::makeSubscriptionManager(config_, backend, amendmentCenter);
+    auto subscriptions =
+        feed::SubscriptionManager::makeSubscriptionManager(config_, backend, amendmentCenter);
 
     // Tracks which ledgers have been validated by the network
     auto ledgers = etl::NetworkValidatedLedgers::makeValidatedLedgers();
@@ -149,8 +136,18 @@ ClioApplication::run(bool const useNgWebServer)
         config_, ioc, backend, subscriptions, std::make_unique<util::MTRandomGenerator>(), ledgers
     );
 
-    // ETL is responsible for writing and publishing to streams. In read-only mode, ETL only publishes
-    auto etl = etl::ETLService::makeETLService(config_, ctx, backend, subscriptions, balancer, ledgers);
+    // ETL is responsible for writing and publishing to streams. In read-only mode, ETL only
+    // publishes
+    auto etl = etl::ETLService::makeETLService(
+        config_,
+        std::move(systemState),
+        std::move(cacheLoadingState),
+        ctx,
+        backend,
+        subscriptions,
+        balancer,
+        ledgers
+    );
 
     auto workQueue = rpc::WorkQueue::makeWorkQueue(config_);
     auto counters = rpc::Counters::makeCounters(workQueue);
@@ -160,15 +157,19 @@ ClioApplication::run(bool const useNgWebServer)
     );
 
     using RPCEngineType = rpc::RPCEngine<rpc::Counters>;
-    auto const rpcEngine =
-        RPCEngineType::makeRPCEngine(config_, backend, balancer, dosGuard, workQueue, counters, handlerProvider);
+    auto const rpcEngine = RPCEngineType::makeRPCEngine(
+        config_, backend, balancer, dosGuard, workQueue, counters, handlerProvider
+    );
 
     if (useNgWebServer or config_.get<bool>("server.__ng_web_server")) {
-        web::ng::RPCServerHandler<RPCEngineType> handler{config_, backend, rpcEngine, etl, dosGuard};
+        web::ng::RPCServerHandler<RPCEngineType> handler{
+            config_, backend, rpcEngine, etl, dosGuard
+        };
 
         auto expectedAdminVerifier = web::makeAdminVerificationStrategy(config_);
         if (not expectedAdminVerifier.has_value()) {
-            LOG(util::LogService::error()) << "Error creating admin verifier: " << expectedAdminVerifier.error();
+            LOG(util::LogService::error())
+                << "Error creating admin verifier: " << expectedAdminVerifier.error();
             return EXIT_FAILURE;
         }
         auto const adminVerifier = std::move(expectedAdminVerifier).value();
@@ -196,7 +197,16 @@ ClioApplication::run(bool const useNgWebServer)
         }
 
         appStopper_.setOnStop(
-            Stopper::makeOnStopCallback(httpServer.value(), *balancer, *etl, *subscriptions, *backend, cacheSaver, ioc)
+            Stopper::makeOnStopCallback(
+                httpServer.value(),
+                *balancer,
+                *etl,
+                *subscriptions,
+                *backend,
+                cacheSaver,
+                *clusterCommunicationService,
+                ioc
+            )
         );
 
         // Blocks until stopped.
@@ -208,11 +218,22 @@ ClioApplication::run(bool const useNgWebServer)
     }
 
     // Init the web server
-    auto handler = std::make_shared<web::RPCServerHandler<RPCEngineType>>(config_, backend, rpcEngine, etl, dosGuard);
+    auto handler = std::make_shared<web::RPCServerHandler<RPCEngineType>>(
+        config_, backend, rpcEngine, etl, dosGuard
+    );
 
     auto const httpServer = web::makeHttpServer(config_, ioc, dosGuard, handler, cache);
     appStopper_.setOnStop(
-        Stopper::makeOnStopCallback(*httpServer, *balancer, *etl, *subscriptions, *backend, cacheSaver, ioc)
+        Stopper::makeOnStopCallback(
+            *httpServer,
+            *balancer,
+            *etl,
+            *subscriptions,
+            *backend,
+            cacheSaver,
+            *clusterCommunicationService,
+            ioc
+        )
     );
 
     // Blocks until stopped.

@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #pragma once
 
 #include "util/SourceLocation.hpp"
@@ -59,7 +40,8 @@ class ClioConfigDefinition;
 }  // namespace config
 
 /**
- * @brief Skips evaluation of expensive argument lists if the given logger is disabled for the required severity level.
+ * @brief Skips evaluation of expensive argument lists if the given logger is disabled for the
+ * required severity level.
  *
  * Note: Currently this introduces potential shadowing (unlikely).
  */
@@ -121,7 +103,8 @@ class Logger {
         operator=(Pump&&) = delete;
 
         /**
-         * @brief Perfectly forwards any incoming data into the underlying stream if data should be logged.
+         * @brief Perfectly forwards any incoming data into the underlying stream if data should be
+         * logged.
          *
          * @tparam T Type of data to pump
          * @param data The data to pump
@@ -257,7 +240,11 @@ protected:
      * @param sinks Vector of spdlog sinks to use for output
      */
     static void
-    init(bool isAsync, Severity defaultSeverity, std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks);
+    init(
+        bool isAsync,
+        Severity defaultSeverity,
+        std::vector<std::shared_ptr<spdlog::sinks::sink>> const& sinks
+    );
 
     /**
      * @brief Whether the LogService is initialized or not
@@ -266,6 +253,15 @@ protected:
      */
     [[nodiscard]] static bool
     initialized();
+
+    /**
+     * @brief Whether the LogService has any sink. If there is no sink, logger will not log messages
+     * anywhere.
+     *
+     * @return true if the LogService has at least one sink
+     */
+    [[nodiscard]] static bool
+    hasSinks();
 
     /**
      * @brief Reset the logging service to uninitialized state.
@@ -295,10 +291,11 @@ protected:
     registerLogger(std::string_view channel, std::optional<Severity> severity = std::nullopt);
 
 protected:
-    static bool isAsync_;                                             // NOLINT(readability-identifier-naming)
-    static Severity defaultSeverity_;                                 // NOLINT(readability-identifier-naming)
-    static std::vector<std::shared_ptr<spdlog::sinks::sink>> sinks_;  // NOLINT(readability-identifier-naming)
-    static bool initialized_;                                         // NOLINT(readability-identifier-naming)
+    static bool isAsync_;              // NOLINT(readability-identifier-naming)
+    static Severity defaultSeverity_;  // NOLINT(readability-identifier-naming)
+    static std::vector<std::shared_ptr<spdlog::sinks::sink>>
+        sinks_;                // NOLINT(readability-identifier-naming)
+    static bool initialized_;  // NOLINT(readability-identifier-naming)
 };
 
 /**
@@ -387,8 +384,9 @@ private:
      * @param config The configuration to parse sinks from
      * @return A vector of sinks on success, error message on failure
      */
-    [[nodiscard]] static std::expected<std::vector<std::shared_ptr<spdlog::sinks::sink>>, std::string>
-    getSinks(config::ClioConfigDefinition const& config);
+    [[nodiscard]] static std::
+        expected<std::vector<std::shared_ptr<spdlog::sinks::sink>>, std::string>
+        getSinks(config::ClioConfigDefinition const& config);
 
     struct FileLoggingParams {
         std::string logDir;

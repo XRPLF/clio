@@ -1,22 +1,3 @@
-//------------------------------------------------------------------------------
-/*
-    This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2025, the clio developers.
-
-    Permission to use, copy, modify, and distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
-
-    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
-    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-//==============================================================================
-
 #include "etl/Models.hpp"
 #include "etl/SchedulerInterface.hpp"
 #include "etl/impl/Loading.hpp"
@@ -59,7 +40,9 @@ protected:
 TEST_F(ForwardSchedulerTests, ExhaustsSchedulerIfMostRecentLedgerIsNewerThanRequestedSequence)
 {
     auto scheduler = impl::ForwardScheduler(*networkValidatedLedgers_, 0u, 10u);
-    EXPECT_CALL(*networkValidatedLedgers_, getMostRecent()).Times(11).WillRepeatedly(testing::Return(11u));
+    EXPECT_CALL(*networkValidatedLedgers_, getMostRecent())
+        .Times(11)
+        .WillRepeatedly(testing::Return(11u));
 
     for (auto i = 0u; i < 10u; ++i) {
         auto maybeTask = scheduler.next();
@@ -75,7 +58,9 @@ TEST_F(ForwardSchedulerTests, ExhaustsSchedulerIfMostRecentLedgerIsNewerThanRequ
 TEST_F(ForwardSchedulerTests, ReturnsNulloptIfMostRecentLedgerIsOlderThanRequestedSequence)
 {
     auto scheduler = impl::ForwardScheduler(*networkValidatedLedgers_, 0u, 10u);
-    EXPECT_CALL(*networkValidatedLedgers_, getMostRecent()).Times(10).WillRepeatedly(testing::Return(4u));
+    EXPECT_CALL(*networkValidatedLedgers_, getMostRecent())
+        .Times(10)
+        .WillRepeatedly(testing::Return(4u));
 
     for (auto i = 0u; i < 5u; ++i) {
         auto const maybeTask = scheduler.next();
@@ -165,8 +150,9 @@ TEST(SchedulerChainTests, ExhaustsFirstSchedulerBeforeUsingSecond)
     testing::MockFunction<std::optional<Task>()> downToZeroGen;
     EXPECT_CALL(downToZeroGen, Call()).Times(11).WillRepeatedly(testing::ByRef(generateSecond));
 
-    auto scheduler =
-        impl::makeScheduler(FakeScheduler(upToTenGen.AsStdFunction()), FakeScheduler(downToZeroGen.AsStdFunction()));
+    auto scheduler = impl::makeScheduler(
+        FakeScheduler(upToTenGen.AsStdFunction()), FakeScheduler(downToZeroGen.AsStdFunction())
+    );
 
     for (auto i = 0u; i < 10u; ++i) {
         auto const maybeTask = scheduler->next();
