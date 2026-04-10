@@ -160,8 +160,8 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaHash)
 {
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLEDGER_HASH}, _))
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -190,7 +190,7 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaStringIndex)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -219,7 +219,7 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaIntIndex)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(kSEQ, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -301,12 +301,12 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
+    auto const ownerDir = createOwnerDirLedgerObject({xrpl::uint256{kINDEX1}}, kINDEX1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kLEDGER_SEQ, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -316,13 +316,13 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
         kACCOUNT,
         10,
         20,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
+        xrpl::to_string(xrpl::to_currency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
         kACCOUNT2,
-        toBase58(ripple::xrpAccount()),
+        toBase58(xrpl::xrpAccount()),
         kINDEX1
     );
-    offer.setFieldU32(ripple::sfExpiration, 123);
+    offer.setFieldU32(xrpl::sfExpiration, 123);
     bbs.push_back(offer.getSerializer().peekData());
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -352,13 +352,13 @@ TEST_F(RPCAccountOffersHandlerTest, Limit)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir =
-        createOwnerDirLedgerObject(std::vector{20, ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
+        createOwnerDirLedgerObject(std::vector{20, xrpl::uint256{kINDEX1}}, kINDEX1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kLEDGER_SEQ, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -369,10 +369,10 @@ TEST_F(RPCAccountOffersHandlerTest, Limit)
             kACCOUNT,
             10,
             20,
-            ripple::to_string(ripple::to_currency("USD")),
-            ripple::to_string(ripple::xrpCurrency()),
+            xrpl::to_string(xrpl::to_currency("USD")),
+            xrpl::to_string(xrpl::xrpCurrency()),
             kACCOUNT2,
-            toBase58(ripple::xrpAccount()),
+            toBase58(xrpl::xrpAccount()),
             kINDEX1
         );
         bbs.push_back(offer.getSerializer().peekData());
@@ -406,15 +406,15 @@ TEST_F(RPCAccountOffersHandlerTest, Marker)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const startPage = 2;
     auto const ownerDir =
-        createOwnerDirLedgerObject(std::vector{20, ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
-    auto const hintIndex = ripple::keylet::page(ownerDirKk, startPage).key;
+        createOwnerDirLedgerObject(std::vector{20, xrpl::uint256{kINDEX1}}, kINDEX1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
+    auto const hintIndex = xrpl::keylet::page(ownerDirKk, startPage).key;
 
     ON_CALL(*backend_, doFetchLedgerObject(hintIndex, kLEDGER_SEQ, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -426,10 +426,10 @@ TEST_F(RPCAccountOffersHandlerTest, Marker)
             kACCOUNT,
             10,
             20,
-            ripple::to_string(ripple::to_currency("USD")),
-            ripple::to_string(ripple::xrpCurrency()),
+            xrpl::to_string(xrpl::to_currency("USD")),
+            xrpl::to_string(xrpl::xrpCurrency()),
             kACCOUNT2,
-            toBase58(ripple::xrpAccount()),
+            toBase58(xrpl::xrpAccount()),
             kINDEX1
         );
         bbs.push_back(offer.getSerializer().peekData());
@@ -465,13 +465,13 @@ TEST_F(RPCAccountOffersHandlerTest, MarkerNotExists)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const startPage = 2;
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
-    auto const hintIndex = ripple::keylet::page(ownerDirKk, startPage).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
+    auto const hintIndex = xrpl::keylet::page(ownerDirKk, startPage).key;
 
     ON_CALL(*backend_, doFetchLedgerObject(hintIndex, kLEDGER_SEQ, _))
         .WillByDefault(Return(std::nullopt));
@@ -506,14 +506,14 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = createOwnerDirLedgerObject(
-        std::vector{AccountOffersHandler::kLIMIT_MIN + 1, ripple::uint256{kINDEX1}}, kINDEX1
+        std::vector{AccountOffersHandler::kLIMIT_MIN + 1, xrpl::uint256{kINDEX1}}, kINDEX1
     );
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kLEDGER_SEQ, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -523,13 +523,13 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
         kACCOUNT,
         10,
         20,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
+        xrpl::to_string(xrpl::to_currency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
         kACCOUNT2,
-        toBase58(ripple::xrpAccount()),
+        toBase58(xrpl::xrpAccount()),
         kINDEX1
     );
-    offer.setFieldU32(ripple::sfExpiration, 123);
+    offer.setFieldU32(xrpl::sfExpiration, 123);
 
     bbs.reserve(AccountOffersHandler::kLIMIT_MIN + 1);
     for (auto i = 0; i < AccountOffersHandler::kLIMIT_MIN + 1; i++)
@@ -564,15 +564,15 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, kLEDGER_SEQ, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = createOwnerDirLedgerObject(
-        std::vector{AccountOffersHandler::kLIMIT_MAX + 1, ripple::uint256{kINDEX1}}, kINDEX1
+        std::vector{AccountOffersHandler::kLIMIT_MAX + 1, xrpl::uint256{kINDEX1}}, kINDEX1
     );
 
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, kLEDGER_SEQ, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -582,13 +582,13 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
         kACCOUNT,
         10,
         20,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
+        xrpl::to_string(xrpl::to_currency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
         kACCOUNT2,
-        toBase58(ripple::xrpAccount()),
+        toBase58(xrpl::xrpAccount()),
         kINDEX1
     );
-    offer.setFieldU32(ripple::sfExpiration, 123);
+    offer.setFieldU32(xrpl::sfExpiration, 123);
     bbs.reserve(AccountOffersHandler::kLIMIT_MAX + 1);
     for (auto i = 0; i < AccountOffersHandler::kLIMIT_MAX + 1; i++)
         bbs.push_back(offer.getSerializer().peekData());

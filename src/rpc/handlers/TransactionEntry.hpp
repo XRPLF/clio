@@ -35,7 +35,7 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::optional<ripple::LedgerHeader> ledgerHeader;
+        std::optional<xrpl::LedgerHeader> ledgerHeader;
         // TODO: use a better type for this
         boost::json::object metadata;
         boost::json::object tx;

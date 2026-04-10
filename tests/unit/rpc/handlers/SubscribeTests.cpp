@@ -807,57 +807,46 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
 
     auto const getsXRPPaysUSDBook = getBookBase(
         rpc::parseBook(
-            ripple::to_currency("USD"),
-            issuer,
-            ripple::xrpCurrency(),
-            ripple::xrpAccount(),
-            std::nullopt
+            xrpl::to_currency("USD"), issuer, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt
         )
             .value()
     );
 
     auto const reversedBook = getBookBase(
         rpc::parseBook(
-            ripple::xrpCurrency(),
-            ripple::xrpAccount(),
-            ripple::to_currency("USD"),
-            issuer,
-            std::nullopt
+            xrpl::xrpCurrency(), xrpl::xrpAccount(), xrpl::to_currency("USD"), issuer, std::nullopt
         )
             .value()
     );
 
     ON_CALL(*backend_, doFetchSuccessorKey(getsXRPPaysUSDBook, kMAX_SEQ, _))
-        .WillByDefault(Return(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}));
+        .WillByDefault(Return(xrpl::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}));
 
     ON_CALL(
-        *backend_,
-        doFetchSuccessorKey(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _)
+        *backend_, doFetchSuccessorKey(xrpl::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _)
     )
         .WillByDefault(Return(std::nullopt));
 
     ON_CALL(*backend_, doFetchSuccessorKey(reversedBook, kMAX_SEQ, _))
-        .WillByDefault(Return(ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}));
+        .WillByDefault(Return(xrpl::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}));
 
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(4);
 
     // 2 book dirs + 2 issuer global freeze + 2 transferRate + 1 owner root + 1 fee
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(8);
 
-    auto const indexes = std::vector<ripple::uint256>(10, ripple::uint256{kINDEX2});
+    auto const indexes = std::vector<xrpl::uint256>(10, xrpl::uint256{kINDEX2});
     ON_CALL(
-        *backend_,
-        doFetchLedgerObject(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _)
+        *backend_, doFetchLedgerObject(xrpl::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _)
     )
         .WillByDefault(
             Return(createOwnerDirLedgerObject(indexes, kINDEX1).getSerializer().peekData())
         );
 
     // for reverse
-    auto const indexes2 = std::vector<ripple::uint256>(10, ripple::uint256{kINDEX1});
+    auto const indexes2 = std::vector<xrpl::uint256>(10, xrpl::uint256{kINDEX1});
     ON_CALL(
-        *backend_,
-        doFetchLedgerObject(ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, kMAX_SEQ, _)
+        *backend_, doFetchLedgerObject(xrpl::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, kMAX_SEQ, _)
     )
         .WillByDefault(
             Return(createOwnerDirLedgerObject(indexes2, kINDEX2).getSerializer().peekData())
@@ -867,7 +856,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     ON_CALL(
         *backend_,
         doFetchLedgerObject(
-            ripple::keylet::account(getAccountIdWithString(kACCOUNT2)).key, kMAX_SEQ, _
+            xrpl::keylet::account(getAccountIdWithString(kACCOUNT2)).key, kMAX_SEQ, _
         )
     )
         .WillByDefault(Return(
@@ -878,7 +867,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     ON_CALL(
         *backend_,
         doFetchLedgerObject(
-            ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key, kMAX_SEQ, _
+            xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key, kMAX_SEQ, _
         )
     )
         .WillByDefault(Return(
@@ -887,16 +876,16 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
 
     // fee
     auto feeBlob = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kMAX_SEQ, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kMAX_SEQ, _))
         .WillByDefault(Return(feeBlob));
 
     auto const gets10XRPPays20USDOffer = createOfferLedgerObject(
         kACCOUNT2,
         10,
         20,
-        ripple::to_string(ripple::xrpCurrency()),
-        ripple::to_string(ripple::to_currency("USD")),
-        toBase58(ripple::xrpAccount()),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        xrpl::to_string(xrpl::to_currency("USD")),
+        toBase58(xrpl::xrpAccount()),
         kACCOUNT,
         kPAYS20_USD_GETS10_XRP_BOOK_DIR
     );
@@ -907,10 +896,10 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         kACCOUNT,
         10,
         20,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
+        xrpl::to_string(xrpl::to_currency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
         kACCOUNT,
-        toBase58(ripple::xrpAccount()),
+        toBase58(xrpl::xrpAccount()),
         kPAYS20_XRP_GETS10_USD_BOOK_DIR
     );
 
@@ -1021,56 +1010,45 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
 
     auto const getsXRPPaysUSDBook = getBookBase(
         rpc::parseBook(
-            ripple::to_currency("USD"),
-            issuer,
-            ripple::xrpCurrency(),
-            ripple::xrpAccount(),
-            std::nullopt
+            xrpl::to_currency("USD"), issuer, xrpl::xrpCurrency(), xrpl::xrpAccount(), std::nullopt
         )
             .value()
     );
 
     auto const reversedBook = getBookBase(
         rpc::parseBook(
-            ripple::xrpCurrency(),
-            ripple::xrpAccount(),
-            ripple::to_currency("USD"),
-            issuer,
-            std::nullopt
+            xrpl::xrpCurrency(), xrpl::xrpAccount(), xrpl::to_currency("USD"), issuer, std::nullopt
         )
             .value()
     );
 
     ON_CALL(*backend_, doFetchSuccessorKey(getsXRPPaysUSDBook, kMAX_SEQ, _))
-        .WillByDefault(Return(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}));
+        .WillByDefault(Return(xrpl::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}));
 
     ON_CALL(
-        *backend_,
-        doFetchSuccessorKey(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _)
+        *backend_, doFetchSuccessorKey(xrpl::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _)
     )
         .WillByDefault(Return(std::nullopt));
 
     ON_CALL(*backend_, doFetchSuccessorKey(reversedBook, kMAX_SEQ, _))
-        .WillByDefault(Return(ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}));
+        .WillByDefault(Return(xrpl::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}));
 
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(2);
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(5);
 
-    auto const indexes = std::vector<ripple::uint256>(10, ripple::uint256{kINDEX2});
+    auto const indexes = std::vector<xrpl::uint256>(10, xrpl::uint256{kINDEX2});
     ON_CALL(
-        *backend_,
-        doFetchLedgerObject(ripple::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _)
+        *backend_, doFetchLedgerObject(xrpl::uint256{kPAYS20_USD_GETS10_XRP_BOOK_DIR}, kMAX_SEQ, _)
     )
         .WillByDefault(
             Return(createOwnerDirLedgerObject(indexes, kINDEX1).getSerializer().peekData())
         );
 
     // for reverse
-    auto const indexes2 = std::vector<ripple::uint256>(10, ripple::uint256{kINDEX1});
+    auto const indexes2 = std::vector<xrpl::uint256>(10, xrpl::uint256{kINDEX1});
     ON_CALL(
-        *backend_,
-        doFetchLedgerObject(ripple::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, kMAX_SEQ, _)
+        *backend_, doFetchLedgerObject(xrpl::uint256{kPAYS20_XRP_GETS10_USD_BOOK_DIR}, kMAX_SEQ, _)
     )
         .WillByDefault(
             Return(createOwnerDirLedgerObject(indexes2, kINDEX2).getSerializer().peekData())
@@ -1080,7 +1058,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     ON_CALL(
         *backend_,
         doFetchLedgerObject(
-            ripple::keylet::account(getAccountIdWithString(kACCOUNT2)).key, kMAX_SEQ, _
+            xrpl::keylet::account(getAccountIdWithString(kACCOUNT2)).key, kMAX_SEQ, _
         )
     )
         .WillByDefault(Return(
@@ -1091,7 +1069,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     ON_CALL(
         *backend_,
         doFetchLedgerObject(
-            ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key, kMAX_SEQ, _
+            xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key, kMAX_SEQ, _
         )
     )
         .WillByDefault(Return(
@@ -1100,16 +1078,16 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
 
     // fee
     auto feeBlob = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kMAX_SEQ, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kMAX_SEQ, _))
         .WillByDefault(Return(feeBlob));
 
     auto const gets10XRPPays20USDOffer = createOfferLedgerObject(
         kACCOUNT2,
         10,
         20,
-        ripple::to_string(ripple::xrpCurrency()),
-        ripple::to_string(ripple::to_currency("USD")),
-        toBase58(ripple::xrpAccount()),
+        xrpl::to_string(xrpl::xrpCurrency()),
+        xrpl::to_string(xrpl::to_currency("USD")),
+        toBase58(xrpl::xrpAccount()),
         kACCOUNT,
         kPAYS20_USD_GETS10_XRP_BOOK_DIR
     );
@@ -1120,10 +1098,10 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         kACCOUNT,
         10,
         20,
-        ripple::to_string(ripple::to_currency("USD")),
-        ripple::to_string(ripple::xrpCurrency()),
+        xrpl::to_string(xrpl::to_currency("USD")),
+        xrpl::to_string(xrpl::xrpCurrency()),
         kACCOUNT,
-        toBase58(ripple::xrpAccount()),
+        toBase58(xrpl::xrpAccount()),
         kPAYS20_XRP_GETS10_USD_BOOK_DIR
     );
 

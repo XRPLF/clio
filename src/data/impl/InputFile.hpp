@@ -32,7 +32,7 @@ public:
     bool
     readRaw(char* data, size_t size);
 
-    ripple::uint256
+    xrpl::uint256
     hash() const;
 };
 }  // namespace data::impl

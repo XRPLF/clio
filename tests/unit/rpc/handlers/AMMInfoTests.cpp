@@ -267,14 +267,14 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAmmBlobNotFound)
 {
     auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, 30);
     auto const accountKey = getAccountKey(kAMM_ACCOUNT);
-    auto const ammId = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammId);
+    auto const ammId = xrpl::uint256{kAMM_ID};
+    auto const ammKeylet = xrpl::keylet::amm(ammId);
 
     auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
     auto ammObj = createAmmObject(
-        kAMM_ACCOUNT2, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", kAMM_ACCOUNT2
+        kAMM_ACCOUNT2, "XRP", xrpl::toBase58(xrpl::xrpAccount()), "JPY", kAMM_ACCOUNT2
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ripple::uint256{kAMM_ID});
+    accountRoot.setFieldH256(xrpl::sfAMMID, xrpl::uint256{kAMM_ID});
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend_, doFetchLedgerObject(accountKey, testing::_, testing::_))
@@ -307,14 +307,14 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAccBlobNotFound)
     auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, 30);
     auto const accountKey = getAccountKey(kAMM_ACCOUNT);
     auto const account2Key = getAccountKey(kAMM_ACCOUNT2);
-    auto const ammId = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammId);
+    auto const ammId = xrpl::uint256{kAMM_ID};
+    auto const ammKeylet = xrpl::keylet::amm(ammId);
 
     auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
     auto const ammObj = createAmmObject(
-        kAMM_ACCOUNT2, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", kAMM_ACCOUNT2
+        kAMM_ACCOUNT2, "XRP", xrpl::toBase58(xrpl::xrpAccount()), "JPY", kAMM_ACCOUNT2
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammId);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammId);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend_, doFetchLedgerObject(accountKey, testing::_, testing::_))
@@ -349,22 +349,21 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
     auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
     auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
     auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
-    auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+    auto const ammKey = xrpl::uint256{kAMM_ID};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::fees().key;
+    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::to_currency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
     auto ammObj = createAmmObject(
         kAMM_ACCOUNT,
         "XRP",
-        ripple::toBase58(ripple::xrpAccount()),
+        xrpl::toBase58(xrpl::xrpAccount()),
         "JPY",
         kAMM_ACCOUNT2,
         kLP_ISSUE_CURRENCY
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
@@ -432,25 +431,24 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
     auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
     auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
     auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
-    auto const issue2LineKey =
-        ripple::keylet::line(account2, account1, ripple::to_currency("JPY")).key;
+    auto const ammKey = xrpl::uint256{kAMM_ID};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::fees().key;
+    auto const issue2LineKey = xrpl::keylet::line(account2, account1, xrpl::to_currency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const account2Root = createAccountRootObject(kAMM_ACCOUNT2, 0, 2, 300, 2, kINDEX1, 2);
     auto const ammObj = createAmmObject(
         kAMM_ACCOUNT2,
         "XRP",
-        ripple::toBase58(ripple::xrpAccount()),
+        xrpl::toBase58(xrpl::xrpAccount()),
         "JPY",
         kAMM_ACCOUNT,
         kLP_ISSUE_CURRENCY
     );
     auto const lptCurrency = createLptCurrency("XRP", "JPY");
-    auto const accountHoldsKeylet = ripple::keylet::line(account2, account2, lptCurrency);
+    auto const accountHoldsKeylet = xrpl::keylet::line(account2, account2, lptCurrency);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     auto const trustline = createRippleStateLedgerObject(
         kLP_ISSUE_CURRENCY, kAMM_ACCOUNT, 12, kAMM_ACCOUNT2, 1000, kAMM_ACCOUNT, 2000, kINDEX1, 2
@@ -525,11 +523,10 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
     auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
     auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
     auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
-    auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+    auto const ammKey = xrpl::uint256{kAMM_ID};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::fees().key;
+    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::to_currency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
     auto ammObj = createAmmObject(
@@ -537,10 +534,10 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
         "JPY",
         kAMM_ACCOUNT2,
         "XRP",
-        ripple::toBase58(ripple::xrpAccount()),
+        xrpl::toBase58(xrpl::xrpAccount()),
         kLP_ISSUE_CURRENCY
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
@@ -608,17 +605,16 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
     auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
     auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
     auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
-    auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+    auto const ammKey = xrpl::uint256{kAMM_ID};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::fees().key;
+    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::to_currency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
     auto ammObj = createAmmObject(
         kAMM_ACCOUNT, "USD", kAMM_ACCOUNT, "JPY", kAMM_ACCOUNT2, kLP_ISSUE_CURRENCY
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
@@ -693,19 +689,17 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
     auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
     auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
     auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
-    auto const issue1LineKey =
-        ripple::keylet::line(account1, account1, ripple::to_currency("USD")).key;
-    auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+    auto const ammKey = xrpl::uint256{kAMM_ID};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::fees().key;
+    auto const issue1LineKey = xrpl::keylet::line(account1, account1, xrpl::to_currency("USD")).key;
+    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::to_currency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
     auto ammObj = createAmmObject(
         kAMM_ACCOUNT, "USD", kAMM_ACCOUNT, "JPY", kAMM_ACCOUNT2, kLP_ISSUE_CURRENCY
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     // note: frozen flag will not be used for trustline1 because issuer == account
@@ -719,7 +713,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
         2000,
         kINDEX1,
         2,
-        ripple::lsfGlobalFreeze
+        xrpl::lsfGlobalFreeze
     );
     auto const trustline2BalanceFrozen = createRippleStateLedgerObject(
         "JPY",
@@ -731,7 +725,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
         2000,
         kINDEX1,
         2,
-        ripple::lsfGlobalFreeze
+        xrpl::lsfGlobalFreeze
     );
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
@@ -808,21 +802,19 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
     auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
     auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
     auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
-    auto const issue1LineKey =
-        ripple::keylet::line(account1, account1, ripple::to_currency("USD")).key;
-    auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+    auto const ammKey = xrpl::uint256{kAMM_ID};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::fees().key;
+    auto const issue1LineKey = xrpl::keylet::line(account1, account1, xrpl::to_currency("USD")).key;
+    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::to_currency("JPY")).key;
 
     // asset1 will be frozen because flag set here
     auto accountRoot =
-        createAccountRootObject(kAMM_ACCOUNT, ripple::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2);
+        createAccountRootObject(kAMM_ACCOUNT, xrpl::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2);
     auto ammObj = createAmmObject(
         kAMM_ACCOUNT, "USD", kAMM_ACCOUNT, "JPY", kAMM_ACCOUNT2, kLP_ISSUE_CURRENCY
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     // note: frozen flag will not be used for trustline1 because issuer == account
@@ -836,7 +828,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
         2000,
         kINDEX1,
         2,
-        ripple::lsfGlobalFreeze
+        xrpl::lsfGlobalFreeze
     );
     auto const trustline2BalanceFrozen = createRippleStateLedgerObject(
         "JPY",
@@ -848,7 +840,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
         2000,
         kINDEX1,
         2,
-        ripple::lsfGlobalFreeze
+        xrpl::lsfGlobalFreeze
     );
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
@@ -925,22 +917,21 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
     auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
     auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
     auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
-    auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+    auto const ammKey = xrpl::uint256{kAMM_ID};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::fees().key;
+    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::to_currency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
     auto ammObj = createAmmObject(
         kAMM_ACCOUNT,
         "XRP",
-        ripple::toBase58(ripple::xrpAccount()),
+        xrpl::toBase58(xrpl::xrpAccount()),
         "JPY",
         kAMM_ACCOUNT2,
         kLP_ISSUE_CURRENCY
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     auto const trustlineBalance = createRippleStateLedgerObject(
         "JPY", kAMM_ACCOUNT2, -8, kAMM_ACCOUNT, 1000, kAMM_ACCOUNT2, 2000, kINDEX2, 2, 0
@@ -1011,24 +1002,23 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
     auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
     auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
     auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
-    auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+    auto const ammKey = xrpl::uint256{kAMM_ID};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::fees().key;
+    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::to_currency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
     auto ammObj = createAmmObject(
         kAMM_ACCOUNT,
         "XRP",
-        ripple::toBase58(ripple::xrpAccount()),
+        xrpl::toBase58(xrpl::xrpAccount()),
         "JPY",
         kAMM_ACCOUNT2,
         kLP_ISSUE_CURRENCY
     );
     ammAddVoteSlot(ammObj, account1, 2, 4);
     ammAddVoteSlot(ammObj, account2, 4, 2);
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     auto const trustlineBalance = createRippleStateLedgerObject(
         "JPY", kAMM_ACCOUNT2, -8, kAMM_ACCOUNT, 1000, kAMM_ACCOUNT2, 2000, kINDEX2, 2, 0
@@ -1113,17 +1103,16 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
     auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
     auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
     auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
-    auto const ammKey = ripple::uint256{kAMM_ID};
-    auto const ammKeylet = ripple::keylet::amm(ammKey);
-    auto const feesKey = ripple::keylet::fees().key;
-    auto const issue2LineKey =
-        ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+    auto const ammKey = xrpl::uint256{kAMM_ID};
+    auto const ammKeylet = xrpl::keylet::amm(ammKey);
+    auto const feesKey = xrpl::keylet::fees().key;
+    auto const issue2LineKey = xrpl::keylet::line(account1, account2, xrpl::to_currency("JPY")).key;
 
     auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
     auto ammObj = createAmmObject(
         kAMM_ACCOUNT,
         "XRP",
-        ripple::toBase58(ripple::xrpAccount()),
+        xrpl::toBase58(xrpl::xrpAccount()),
         "JPY",
         kAMM_ACCOUNT2,
         kLP_ISSUE_CURRENCY
@@ -1131,13 +1120,13 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
     ammSetAuctionSlot(
         ammObj,
         account2,
-        ripple::amountFromString(ripple::xrpIssue(), "100"),
+        xrpl::amountFromString(xrpl::xrpIssue(), "100"),
         2,
         25 * 3600,
         {account1, account2}
     );
 
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKey);
     auto const feesObj = createLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     auto const trustlineBalance = createRippleStateLedgerObject(
         "JPY", kAMM_ACCOUNT2, -8, kAMM_ACCOUNT, 1000, kAMM_ACCOUNT2, 2000, kINDEX2, 2, 0
@@ -1226,24 +1215,24 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
     auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
     auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
-    auto const issue1 = ripple::Issue(ripple::to_currency("JPY"), account1);
-    auto const issue2 = ripple::Issue(ripple::to_currency("USD"), account2);
-    auto const ammKeylet = ripple::keylet::amm(issue1, issue2);
+    auto const issue1 = xrpl::Issue(xrpl::to_currency("JPY"), account1);
+    auto const issue2 = xrpl::Issue(xrpl::to_currency("USD"), account2);
+    auto const ammKeylet = xrpl::keylet::amm(issue1, issue2);
 
     auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
     auto ammObj = createAmmObject(
         kAMM_ACCOUNT, "JPY", kAMM_ACCOUNT, "USD", kAMM_ACCOUNT2, kLP_ISSUE_CURRENCY
     );
-    auto const auctionIssue = ripple::Issue{ripple::Currency{kLP_ISSUE_CURRENCY}, account1};
+    auto const auctionIssue = xrpl::Issue{xrpl::Currency{kLP_ISSUE_CURRENCY}, account1};
     ammSetAuctionSlot(
         ammObj,
         account2,
-        ripple::amountFromString(auctionIssue, "100"),
+        xrpl::amountFromString(auctionIssue, "100"),
         2,
         25 * 3600,
         {account1, account2}
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKeylet.key);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKeylet.key);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend_, doFetchLedgerObject(getAccountKey(account1), testing::_, testing::_))
@@ -1346,25 +1335,25 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
     auto const lgrInfo = createLedgerHeader(kLEDGER_HASH, kSEQ);
     auto const account1 = getAccountIdWithString(kAMM_ACCOUNT);
     auto const account2 = getAccountIdWithString(kAMM_ACCOUNT2);
-    auto const issue1 = ripple::Issue(ripple::to_currency("USD"), account1);
-    auto const issue2 = ripple::Issue(ripple::to_currency("JPY"), account2);
-    auto const ammKeylet = ripple::keylet::amm(issue1, issue2);
+    auto const issue1 = xrpl::Issue(xrpl::to_currency("USD"), account1);
+    auto const issue2 = xrpl::Issue(xrpl::to_currency("JPY"), account2);
+    auto const ammKeylet = xrpl::keylet::amm(issue1, issue2);
 
     // Note: order in the AMM object is different from the input
     auto ammObj = createAmmObject(
         kAMM_ACCOUNT, "JPY", kAMM_ACCOUNT, "USD", kAMM_ACCOUNT2, kLP_ISSUE_CURRENCY
     );
     auto accountRoot = createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
-    auto const auctionIssue = ripple::Issue{ripple::Currency{kLP_ISSUE_CURRENCY}, account1};
+    auto const auctionIssue = xrpl::Issue{xrpl::Currency{kLP_ISSUE_CURRENCY}, account1};
     ammSetAuctionSlot(
         ammObj,
         account2,
-        ripple::amountFromString(auctionIssue, "100"),
+        xrpl::amountFromString(auctionIssue, "100"),
         2,
         25 * 3600,
         {account1, account2}
     );
-    accountRoot.setFieldH256(ripple::sfAMMID, ammKeylet.key);
+    accountRoot.setFieldH256(xrpl::sfAMMID, ammKeylet.key);
 
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend_, doFetchLedgerObject(getAccountKey(account1), testing::_, testing::_))

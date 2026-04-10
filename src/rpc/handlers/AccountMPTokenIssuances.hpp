@@ -152,8 +152,8 @@ private:
     static void
     addMPTokenIssuance(
         std::vector<MPTokenIssuanceResponse>& issuances,
-        ripple::SLE const& sle,
-        ripple::AccountID const& account
+        xrpl::SLE const& sle,
+        xrpl::AccountID const& account
     );
 
 private:

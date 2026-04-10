@@ -43,7 +43,7 @@
 namespace {
 
 std::string
-toIso8601(ripple::NetClock::time_point tp)
+toIso8601(xrpl::NetClock::time_point tp)
 {
     using namespace std::chrono;
     static constexpr auto kRIPPLE_EPOCH_OFFSET = seconds{kRIPPLE_EPOCH_START};
@@ -63,15 +63,15 @@ namespace rpc {
 AMMInfoHandler::Result
 AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) const
 {
-    using namespace ripple;
+    using namespace xrpl;
 
     auto const hasInvalidParams = [&input] {
         // no asset/asset2 can be specified if amm account is specified
         if (input.ammAccount)
-            return input.issue1 != ripple::noIssue() || input.issue2 != ripple::noIssue();
+            return input.issue1 != xrpl::noIssue() || input.issue2 != xrpl::noIssue();
 
         // both assets must be specified when amm account is not specified
-        return input.issue1 == ripple::noIssue() || input.issue2 == ripple::noIssue();
+        return input.issue1 == xrpl::noIssue() || input.issue2 == xrpl::noIssue();
     }();
 
     if (hasInvalidParams)
@@ -95,20 +95,20 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
             return Error{Status{RippledError::rpcACT_NOT_FOUND}};
     }
 
-    ripple::uint256 ammID;
+    xrpl::uint256 ammID;
     if (input.ammAccount) {
         auto const accountKeylet = keylet::account(*input.ammAccount);
         auto const accountLedgerObject =
             sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
         if (not accountLedgerObject)
             return Error{Status{RippledError::rpcACT_MALFORMED}};
-        ripple::STLedgerEntry const sle{
-            ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()},
+        xrpl::STLedgerEntry const sle{
+            xrpl::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()},
             accountKeylet.key
         };
-        if (not sle.isFieldPresent(ripple::sfAMMID))
+        if (not sle.isFieldPresent(xrpl::sfAMMID))
             return Error{Status{RippledError::rpcACT_NOT_FOUND}};
-        ammID = sle.getFieldH256(ripple::sfAMMID);
+        ammID = sle.getFieldH256(xrpl::sfAMMID);
     }
 
     auto issue1 = input.issue1;
@@ -131,7 +131,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
     // If the issue1 and issue2 are not specified, we need to get them from the AMM.
     // Otherwise we preserve the mapping of asset1 -> issue1 and asset2 -> issue2 as requested by
     // the user.
-    if (issue1 == ripple::noIssue() and issue2 == ripple::noIssue()) {
+    if (issue1 == xrpl::noIssue() and issue2 == xrpl::noIssue()) {
         issue1 = amm[sfAsset].get<Issue>();
         issue2 = amm[sfAsset2].get<Issue>();
     }
@@ -152,7 +152,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input const& input, Context const& ctx) 
 
     Output response;
     response.ledgerIndex = lgrInfo.seq;
-    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.amount1 = toBoostJson(asset1Balance.getJson(JsonOptions::none));
     response.amount2 = toBoostJson(asset2Balance.getJson(JsonOptions::none));
     response.lpToken = toBoostJson(lptAMMBalance.getJson(JsonOptions::none));
@@ -235,7 +235,7 @@ AMMInfoHandler::spec([[maybe_unused]] uint32_t apiVersion)
             }
 
             try {
-                ripple::issueFromJson(boost::json::value_to<std::string>(value));
+                xrpl::issueFromJson(boost::json::value_to<std::string>(value));
             } catch (std::runtime_error const&) {
                 return Error{Status{RippledError::rpcISSUE_MALFORMED}};
             }

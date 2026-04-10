@@ -28,14 +28,14 @@ namespace rpc {
  * @param yield The coroutine context
  * @return The balances of the amm asset pair
  */
-std::pair<ripple::STAmount, ripple::STAmount>
+std::pair<xrpl::STAmount, xrpl::STAmount>
 getAmmPoolHolds(
     BackendInterface const& backend,
     data::AmendmentCenterInterface const& amendmentCenter,
     std::uint32_t sequence,
-    ripple::AccountID const& ammAccountID,
-    ripple::Issue const& issue1,
-    ripple::Issue const& issue2,
+    xrpl::AccountID const& ammAccountID,
+    xrpl::Issue const& issue1,
+    xrpl::Issue const& issue2,
     bool freezeHandling,
     boost::asio::yield_context yield
 );
@@ -52,14 +52,14 @@ getAmmPoolHolds(
  * @param yield The coroutine context
  * @return The lp token balance
  */
-ripple::STAmount
+xrpl::STAmount
 getAmmLpHolds(
     BackendInterface const& backend,
     std::uint32_t sequence,
-    ripple::Currency const& cur1,
-    ripple::Currency const& cur2,
-    ripple::AccountID const& ammAccount,
-    ripple::AccountID const& lpAccount,
+    xrpl::Currency const& cur1,
+    xrpl::Currency const& cur2,
+    xrpl::AccountID const& ammAccount,
+    xrpl::AccountID const& lpAccount,
     boost::asio::yield_context yield
 );
 
@@ -73,12 +73,12 @@ getAmmLpHolds(
  * @param yield The coroutine context
  * @return The lp token balance
  */
-ripple::STAmount
+xrpl::STAmount
 getAmmLpHolds(
     BackendInterface const& backend,
     std::uint32_t sequence,
-    ripple::SLE const& ammSle,
-    ripple::AccountID const& lpAccount,
+    xrpl::SLE const& ammSle,
+    xrpl::AccountID const& lpAccount,
     boost::asio::yield_context yield
 );
 

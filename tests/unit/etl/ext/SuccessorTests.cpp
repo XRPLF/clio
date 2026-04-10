@@ -37,9 +37,9 @@ auto
 createTestData(std::vector<etl::model::Object> objects)
 {
     auto transactions = std::vector{
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_BURN),
-        util::createTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_BURN),
+        util::createTransaction(xrpl::TxType::ttNFTOKEN_CREATE_OFFER),
     };
 
     auto const header = createLedgerHeader(kLEDGER_HASH, kSEQ);
@@ -55,7 +55,7 @@ createTestData(std::vector<etl::model::Object> objects)
 }
 
 [[maybe_unused]] auto
-createInitialTestData(std::vector<ripple::uint256> edgeKeys)
+createInitialTestData(std::vector<xrpl::uint256> edgeKeys)
 {
     // initial data expects objects to be empty as well as non-empty edgeKeys
     ASSERT(not edgeKeys.empty(), "Initial data requires edgeKeys");
@@ -422,12 +422,12 @@ TEST_F(SuccessorExtTests, OnInitialDataWithSuccessorsButNotBookDirAndNoSuccessor
     using namespace etl::model;
 
     auto const firstKey =
-        ripple::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960C");
+        xrpl::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960C");
     auto const secondKey =
-        ripple::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960E");
+        xrpl::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960E");
     auto const data = createInitialTestData({firstKey, secondKey});
 
-    auto successorChain = std::queue<ripple::uint256>();
+    auto successorChain = std::queue<xrpl::uint256>();
     successorChain.push(firstKey);
     successorChain.push(secondKey);
 
@@ -456,7 +456,7 @@ TEST_F(SuccessorExtTests, OnInitialDataWithSuccessorsButNotBookDirAndNoSuccessor
     );
 
     for (auto const& key : data.edgeKeys.value()) {
-        EXPECT_CALL(cache_, getSuccessor(*ripple::uint256::fromVoidChecked(key), kSEQ))
+        EXPECT_CALL(cache_, getSuccessor(*xrpl::uint256::fromVoidChecked(key), kSEQ))
             .InSequence(inSeq)
             .WillOnce(testing::Return(std::nullopt));
     }
@@ -469,12 +469,12 @@ TEST_F(SuccessorExtTests, OnInitialDataWithSuccessorsButNotBookDirAndSuccessorsF
     using namespace etl::model;
 
     auto const firstKey =
-        ripple::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960C");
+        xrpl::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960C");
     auto const secondKey =
-        ripple::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960E");
+        xrpl::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960E");
     auto const data = createInitialTestData({firstKey, secondKey});
 
-    auto successorChain = std::queue<ripple::uint256>();
+    auto successorChain = std::queue<xrpl::uint256>();
     successorChain.push(firstKey);
     successorChain.push(secondKey);
 
@@ -503,7 +503,7 @@ TEST_F(SuccessorExtTests, OnInitialDataWithSuccessorsButNotBookDirAndSuccessorsF
     );
 
     for (auto const& key : data.edgeKeys.value()) {
-        EXPECT_CALL(cache_, getSuccessor(*ripple::uint256::fromVoidChecked(key), kSEQ))
+        EXPECT_CALL(cache_, getSuccessor(*xrpl::uint256::fromVoidChecked(key), kSEQ))
             .InSequence(inSeq)
             .WillOnce(testing::Return(data::LedgerObject{.key = firstKey, .blob = {}}));
         EXPECT_CALL(*backend_, writeSuccessor(auto{key}, kSEQ, uint256ToString(firstKey)));
@@ -517,12 +517,12 @@ TEST_F(SuccessorExtTests, OnInitialDataWithSuccessorsAndBookDirAndSuccessorsForE
     using namespace etl::model;
 
     auto const firstKey =
-        ripple::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960C");
+        xrpl::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960C");
     auto const secondKey =
-        ripple::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960E");
+        xrpl::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960E");
     auto const data = createInitialTestData({firstKey, secondKey});
 
-    auto successorChain = std::queue<ripple::uint256>();
+    auto successorChain = std::queue<xrpl::uint256>();
     successorChain.push(firstKey);
     successorChain.push(secondKey);
 
@@ -563,7 +563,7 @@ TEST_F(SuccessorExtTests, OnInitialDataWithSuccessorsAndBookDirAndSuccessorsForE
     );  // Called once because firstKey returned repeatedly above
 
     for (auto const& key : data.edgeKeys.value()) {
-        EXPECT_CALL(cache_, getSuccessor(*ripple::uint256::fromVoidChecked(key), kSEQ))
+        EXPECT_CALL(cache_, getSuccessor(*xrpl::uint256::fromVoidChecked(key), kSEQ))
             .InSequence(inSeq)
             .WillOnce(testing::Return(data::LedgerObject{.key = firstKey, .blob = {'1'}}));
         EXPECT_CALL(*backend_, writeSuccessor(auto{key}, kSEQ, uint256ToString(firstKey)))
@@ -608,7 +608,7 @@ TEST_F(SuccessorExtTests, OnInitialObjectsWithNonEmptyLastKey)
     using namespace etl::model;
 
     auto const lastKey = uint256ToString(
-        ripple::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960D")
+        xrpl::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960D")
     );
     auto const data = std::vector{
         util::createObject(
@@ -731,9 +731,9 @@ TEST_F(SuccessorExtAssertTests, OnInitialDataIsFullWithEdgeKeysButHasObjects)
     using namespace etl::model;
 
     auto const firstKey =
-        ripple::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960C");
+        xrpl::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960C");
     auto const secondKey =
-        ripple::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960E");
+        xrpl::uint256("B00AA769C00726371689ED66A7CF57C2502F1BF4BDFF2ACADF67A2A7B5E8960E");
     auto data = createInitialTestData({firstKey, secondKey});
     data.objects = {util::createObject()};
 

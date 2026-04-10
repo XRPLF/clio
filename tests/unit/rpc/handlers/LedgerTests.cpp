@@ -232,7 +232,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
 TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
 {
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLEDGER_HASH}, _))
         .WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
@@ -331,7 +331,7 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerHash)
 {
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, kRANGE_MAX);
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kINDEX1}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kINDEX1}, _))
         .WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
@@ -735,7 +735,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
 
     EXPECT_CALL(*backend_, fetchAllTransactionHashesInLedger).Times(1);
     ON_CALL(*backend_, fetchAllTransactionHashesInLedger(kRANGE_MAX, _))
-        .WillByDefault(Return(std::vector{ripple::uint256{kINDEX1}, ripple::uint256{kINDEX2}}));
+        .WillByDefault(Return(std::vector{xrpl::uint256{kINDEX1}, xrpl::uint256{kINDEX2}}));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend_, mockAmendmentCenterPtr_}};
@@ -787,12 +787,12 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
     EXPECT_CALL(*backend_, fetchLedgerDiff).Times(1);
 
     los.push_back(
-        LedgerObject{.key = ripple::uint256{kINDEX2}, .blob = Blob{}}
+        LedgerObject{.key = xrpl::uint256{kINDEX2}, .blob = Blob{}}
     );  // NOLINT(modernize-use-emplace)
     los.push_back(
         LedgerObject{
-            .key = ripple::uint256{kINDEX1},
-            .blob = createAccountRootObject(kACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, kINDEX1, 3)
+            .key = xrpl::uint256{kINDEX1},
+            .blob = createAccountRootObject(kACCOUNT, xrpl::lsfGlobalFreeze, 1, 10, 2, kINDEX1, 3)
                         .getSerializer()
                         .peekData()
         }
@@ -836,12 +836,12 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
     EXPECT_CALL(*backend_, fetchLedgerDiff).Times(1);
 
     los.push_back(
-        LedgerObject{.key = ripple::uint256{kINDEX2}, .blob = Blob{}}
+        LedgerObject{.key = xrpl::uint256{kINDEX2}, .blob = Blob{}}
     );  // NOLINT(modernize-use-emplace)
     los.push_back(
         LedgerObject{
-            .key = ripple::uint256{kINDEX1},
-            .blob = createAccountRootObject(kACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, kINDEX1, 3)
+            .key = xrpl::uint256{kINDEX1},
+            .blob = createAccountRootObject(kACCOUNT, xrpl::lsfGlobalFreeze, 1, 10, 2, kINDEX1, 3)
                         .getSerializer()
                         .peekData()
         }
@@ -1022,7 +1022,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
     ON_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillByDefault(Return(ledgerHeader));
 
     // account doFetchLedgerObject
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key;
     auto const accountObject =
         createAccountRootObject(
             kACCOUNT, 0, kRANGE_MAX, 200 /*balance*/, 2 /*owner object*/, kINDEX1, kRANGE_MAX - 1, 0
@@ -1034,7 +1034,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
 
     // fee object 2*2+3->7 ; balance 200 - 7 -> 193
     auto feeBlob = createLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kRANGE_MAX, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kRANGE_MAX, _))
         .WillByDefault(Return(feeBlob));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -1097,7 +1097,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
     ON_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillByDefault(Return(ledgerHeader));
 
     // account doFetchLedgerObject
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key;
     auto const accountObject =
         createAccountRootObject(
             kACCOUNT, 0, kRANGE_MAX, 200 /*balance*/, 2 /*owner object*/, kINDEX1, kRANGE_MAX - 1, 0
@@ -1109,7 +1109,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
 
     // fee object 2*2+3->7 ; balance 200 - 7 -> 193
     auto feeBlob = createLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kRANGE_MAX, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kRANGE_MAX, _))
         .WillByDefault(Return(feeBlob));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -1211,7 +1211,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
     ON_CALL(*backend_, fetchLedgerBySequence(kRANGE_MAX, _)).WillByDefault(Return(ledgerHeader));
 
     // account doFetchLedgerObject
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key;
     auto const accountObject =
         createAccountRootObject(
             kACCOUNT, 0, kRANGE_MAX, 6 /*balance*/, 2 /*owner object*/, kINDEX1, kRANGE_MAX - 1, 0
@@ -1223,7 +1223,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
 
     // fee object 2*2+3->7 ; balance 6 - 7 -> -1
     auto feeBlob = createLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::keylet::fees().key, kRANGE_MAX, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::keylet::fees().key, kRANGE_MAX, _))
         .WillByDefault(Return(feeBlob));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -1269,10 +1269,10 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
     auto const line = createRippleStateLedgerObject(
         kCURRENCY, kACCOUNT2, 50 /*balance*/, kACCOUNT, 10, kACCOUNT2, 20, kINDEX1, 123
     );
-    auto lineKey = ripple::keylet::line(
+    auto lineKey = xrpl::keylet::line(
                        getAccountIdWithString(kACCOUNT),
                        getAccountIdWithString(kACCOUNT2),
-                       ripple::to_currency(std::string(kCURRENCY))
+                       xrpl::to_currency(std::string(kCURRENCY))
     )
                        .key;
     ON_CALL(*backend_, doFetchLedgerObject(lineKey, kRANGE_MAX, _))
@@ -1335,12 +1335,12 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
         20,
         kINDEX1,
         123,
-        ripple::lsfLowFreeze | ripple::lsfHighFreeze
+        xrpl::lsfLowFreeze | xrpl::lsfHighFreeze
     );
-    auto lineKey = ripple::keylet::line(
+    auto lineKey = xrpl::keylet::line(
                        getAccountIdWithString(kACCOUNT),
                        getAccountIdWithString(kACCOUNT2),
-                       ripple::to_currency(std::string(kCURRENCY))
+                       xrpl::to_currency(std::string(kCURRENCY))
     )
                        .key;
     ON_CALL(*backend_, doFetchLedgerObject(lineKey, kRANGE_MAX, _))

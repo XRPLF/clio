@@ -23,7 +23,7 @@
 #include <optional>
 #include <string>
 
-using namespace ripple;
+using namespace xrpl;
 
 namespace rpc {
 
@@ -45,7 +45,7 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
 
     auto const issuer = accountFromStringStrict(input.issuer);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*issuer).key, lgrInfo.seq, ctx.yield
+        xrpl::keylet::account(*issuer).key, lgrInfo.seq, ctx.yield
     );
 
     if (!accountLedgerObject)

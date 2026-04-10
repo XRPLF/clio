@@ -14,16 +14,16 @@ class ClioConan(ConanFile):
     requires = [
         "cassandra-cpp-driver/2.17.0",
         "fmt/12.1.0",
-        "grpc/1.50.1",
+        "grpc/1.78.1",
         "libbacktrace/cci.20210118",
-        "openssl/1.1.1w",
-        "protobuf/3.21.12",
+        "protobuf/6.33.5",
         "spdlog/1.17.0",
-        "xrpl/3.1.0",
+        "xrpl/3.2.0-b0@peter/confidentialmpts",
         "zlib/1.3.1",
     ]
 
     default_options = {
+        "boost/*:without_coroutine": False,
         "cassandra-cpp-driver/*:shared": False,
         "date/*:header_only": True,
         "grpc/*:secure": True,
@@ -42,9 +42,10 @@ class ClioConan(ConanFile):
     exports_sources = ("CMakeLists.txt", "cmake/*", "src/*")
 
     def requirements(self):
-        self.requires("boost/1.83.0", force=True)
+        self.requires("boost/1.90.0", force=True)
         self.requires("gtest/1.17.0")
         self.requires("benchmark/1.9.4")
+        self.requires("openssl/3.6.1", force=True)
 
     def configure(self):
         if self.settings.compiler == "apple-clang":

@@ -171,7 +171,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
 {
     // return empty ledgerHeader
     EXPECT_CALL(*backend_, fetchLedgerBySequence(30, _))
-        .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillOnce(Return(std::optional<xrpl::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -219,8 +219,8 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
 TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
 {
     // return empty ledgerHeader
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
-        .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLEDGER_HASH}, _))
+        .WillOnce(Return(std::optional<xrpl::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -302,11 +302,11 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
+    auto const accountKk = xrpl::keylet::account(account).key;
     auto const accountRoot = createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
-    auto signersKey = ripple::keylet::signers(account).key;
+    auto signersKey = xrpl::keylet::signers(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(signersKey, 30, _))
         .WillByDefault(Return(createLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::DisallowIncoming, _))
@@ -404,11 +404,11 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
+    auto const accountKk = xrpl::keylet::account(account).key;
     auto const accountRoot = createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
-    auto signersKey = ripple::keylet::signers(account).key;
+    auto signersKey = xrpl::keylet::signers(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(signersKey, 30, _))
         .WillByDefault(
             Return(createSignerLists({{kACCOUNT1, 1}, {kACCOUNT2, 1}}).getSerializer().peekData())
@@ -506,11 +506,11 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
+    auto const accountKk = xrpl::keylet::account(account).key;
     auto const accountRoot = createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
-    auto signersKey = ripple::keylet::signers(account).key;
+    auto signersKey = xrpl::keylet::signers(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(signersKey, 30, _))
         .WillByDefault(
             Return(createSignerLists({{kACCOUNT1, 1}, {kACCOUNT2, 1}}).getSerializer().peekData())
@@ -580,12 +580,12 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
+    auto const accountKk = xrpl::keylet::account(account).key;
     auto const accountRoot = createAccountRootObject(
         kACCOUNT,
-        ripple::lsfDefaultRipple | ripple::lsfGlobalFreeze | ripple::lsfRequireDestTag |
-            ripple::lsfRequireAuth | ripple::lsfDepositAuth | ripple::lsfDisableMaster |
-            ripple::lsfDisallowXRP | ripple::lsfNoFreeze | ripple::lsfPasswordSpent,
+        xrpl::lsfDefaultRipple | xrpl::lsfGlobalFreeze | xrpl::lsfRequireDestTag |
+            xrpl::lsfRequireAuth | xrpl::lsfDepositAuth | xrpl::lsfDisableMaster |
+            xrpl::lsfDisallowXRP | xrpl::lsfNoFreeze | xrpl::lsfPasswordSpent,
         2,
         200,
         2,
@@ -624,7 +624,7 @@ TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
+    auto const accountKk = xrpl::keylet::account(account).key;
     auto const accountRoot = createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
@@ -658,7 +658,7 @@ TEST_F(RPCAccountInfoHandlerTest, EmptySignerLists)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
+    auto const accountKk = xrpl::keylet::account(account).key;
     auto const accountRoot = createAccountRootObject(kACCOUNT, 0, 2, 200, 2, kINDEX1, 2);
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
@@ -669,7 +669,7 @@ TEST_F(RPCAccountInfoHandlerTest, EmptySignerLists)
     EXPECT_CALL(*mockAmendmentCenterPtr_, isEnabled(_, Amendments::TokenEscrow, _))
         .WillOnce(Return(false));
 
-    auto signersKey = ripple::keylet::signers(account).key;
+    auto signersKey = xrpl::keylet::signers(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(signersKey, 30, _))
         .WillByDefault(Return(std::optional<Blob>{}));
 
@@ -745,14 +745,14 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
+    auto const accountKk = xrpl::keylet::account(account).key;
     auto const accountRoot = createAccountRootObject(
         kACCOUNT,
-        ripple::lsfDefaultRipple | ripple::lsfGlobalFreeze | ripple::lsfRequireDestTag |
-            ripple::lsfRequireAuth | ripple::lsfDepositAuth | ripple::lsfDisableMaster |
-            ripple::lsfDisallowXRP | ripple::lsfNoFreeze | ripple::lsfPasswordSpent |
-            ripple::lsfDisallowIncomingNFTokenOffer | ripple::lsfDisallowIncomingCheck |
-            ripple::lsfDisallowIncomingPayChan | ripple::lsfDisallowIncomingTrustline,
+        xrpl::lsfDefaultRipple | xrpl::lsfGlobalFreeze | xrpl::lsfRequireDestTag |
+            xrpl::lsfRequireAuth | xrpl::lsfDepositAuth | xrpl::lsfDisableMaster |
+            xrpl::lsfDisallowXRP | xrpl::lsfNoFreeze | xrpl::lsfPasswordSpent |
+            xrpl::lsfDisallowIncomingNFTokenOffer | xrpl::lsfDisallowIncomingCheck |
+            xrpl::lsfDisallowIncomingPayChan | xrpl::lsfDisallowIncomingTrustline,
         2,
         200,
         2,
@@ -828,13 +828,13 @@ TEST_F(RPCAccountInfoHandlerTest, AmendmentsEnabled)
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
+    auto const accountKk = xrpl::keylet::account(account).key;
     auto const accountRoot = createAccountRootObject(
         kACCOUNT,
-        ripple::lsfDefaultRipple | ripple::lsfGlobalFreeze | ripple::lsfRequireDestTag |
-            ripple::lsfRequireAuth | ripple::lsfDepositAuth | ripple::lsfDisableMaster |
-            ripple::lsfDisallowXRP | ripple::lsfNoFreeze | ripple::lsfPasswordSpent |
-            ripple::lsfAllowTrustLineClawback | ripple::lsfAllowTrustLineLocking,
+        xrpl::lsfDefaultRipple | xrpl::lsfGlobalFreeze | xrpl::lsfRequireDestTag |
+            xrpl::lsfRequireAuth | xrpl::lsfDepositAuth | xrpl::lsfDisableMaster |
+            xrpl::lsfDisallowXRP | xrpl::lsfNoFreeze | xrpl::lsfPasswordSpent |
+            xrpl::lsfAllowTrustLineClawback | xrpl::lsfAllowTrustLineLocking,
         2,
         200,
         2,

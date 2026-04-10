@@ -132,7 +132,7 @@ createTxAndMetaBlobs(
     std::string txnStr = kDEFAULT_TXN_HEX
 );
 
-[[maybe_unused, nodiscard]] std::pair<ripple::STTx, ripple::TxMeta>
+[[maybe_unused, nodiscard]] std::pair<xrpl::STTx, xrpl::TxMeta>
 createTxAndMeta(
     std::string hashStr = kDEFAULT_HASH,
     std::string metaStr = kDEFAULT_TXN_META,
@@ -141,7 +141,7 @@ createTxAndMeta(
 
 [[maybe_unused, nodiscard]] etl::model::Transaction
 createTransaction(
-    ripple::TxType type,
+    xrpl::TxType type,
     std::string hashStr = kDEFAULT_HASH,
     std::string metaStr = kDEFAULT_TXN_META,
     std::string txnStr = kDEFAULT_TXN_HEX

@@ -80,17 +80,17 @@ checkIsU32Numeric(std::string_view sv)
 
 CustomValidator CustomValidators::uint160HexStringValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
-        return makeHexStringValidator<ripple::uint160>(value, key);
+        return makeHexStringValidator<xrpl::uint160>(value, key);
     }};
 
 CustomValidator CustomValidators::uint192HexStringValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
-        return makeHexStringValidator<ripple::uint192>(value, key);
+        return makeHexStringValidator<xrpl::uint192>(value, key);
     }};
 
 CustomValidator CustomValidators::uint256HexStringValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
-        return makeHexStringValidator<ripple::uint256>(value, key);
+        return makeHexStringValidator<xrpl::uint256>(value, key);
     }};
 
 CustomValidator CustomValidators::ledgerIndexValidator =
@@ -117,7 +117,7 @@ CustomValidator CustomValidators::ledgerTypeValidator =
 
         auto const type =
             util::LedgerTypes::getLedgerEntryTypeFromStr(boost::json::value_to<std::string>(value));
-        if (type == ripple::ltANY) {
+        if (type == xrpl::ltANY) {
             return Error{
                 Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}'.", key)}
             };
@@ -145,7 +145,7 @@ CustomValidator CustomValidators::accountBase58Validator =
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
 
         auto const account =
-            util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(value));
+            util::parseBase58Wrapper<xrpl::AccountID>(boost::json::value_to<std::string>(value));
         if (!account || account->isZero())
             return Error{Status{ClioError::RpcMalformedAddress}};
 
@@ -178,7 +178,7 @@ CustomValidator CustomValidators::accountTypeValidator =
         auto const type = util::LedgerTypes::getAccountOwnedLedgerTypeFromStr(
             boost::json::value_to<std::string>(value)
         );
-        if (type == ripple::ltANY) {
+        if (type == xrpl::ltANY) {
             return Error{
                 Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}'.", key)}
             };
@@ -196,8 +196,8 @@ CustomValidator CustomValidators::currencyValidator =
         if (currencyStr.empty())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "IsEmpty"}};
 
-        ripple::Currency currency;
-        if (!ripple::to_currency(currency, currencyStr))
+        xrpl::Currency currency;
+        if (!xrpl::to_currency(currency, currencyStr))
             return Error{Status{ClioError::RpcMalformedCurrency, "malformedCurrency"}};
 
         return MaybeError{};
@@ -208,16 +208,16 @@ CustomValidator CustomValidators::issuerValidator =
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
 
-        ripple::AccountID issuer;
+        xrpl::AccountID issuer;
 
         // TODO: need to align with the error
-        if (!ripple::to_issuer(issuer, boost::json::value_to<std::string>(value))) {
+        if (!xrpl::to_issuer(issuer, boost::json::value_to<std::string>(value))) {
             return Error{Status{
                 RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer.", key)
             }};
         }
 
-        if (issuer == ripple::noAccount()) {
+        if (issuer == xrpl::noAccount()) {
             return Error{Status{
                 RippledError::rpcINVALID_PARAMS,
                 fmt::format("Invalid field '{}', bad issuer account one.", key)
@@ -301,7 +301,7 @@ CustomValidator CustomValidators::credentialTypeValidator =
             }};
         }
 
-        auto const& credTypeHex = ripple::strViewUnHex(value.as_string());
+        auto const& credTypeHex = xrpl::strViewUnHex(value.as_string());
         if (!credTypeHex.has_value()) {
             return Error{Status{
                 ClioError::RpcMalformedAuthorizedCredentials, std::string(key) + " NotHexString"
@@ -314,7 +314,7 @@ CustomValidator CustomValidators::credentialTypeValidator =
             };
         }
 
-        if (credTypeHex->size() > ripple::maxCredentialTypeLength) {
+        if (credTypeHex->size() > xrpl::maxCredentialTypeLength) {
             return Error{Status{
                 ClioError::RpcMalformedAuthorizedCredentials,
                 std::string(key) + " greater than max length"
@@ -337,12 +337,12 @@ CustomValidator CustomValidators::authorizeCredentialValidator =
             }};
         }
 
-        if (authCred.size() > ripple::maxCredentialsArraySize) {
+        if (authCred.size() > xrpl::maxCredentialsArraySize) {
             return Error{Status{
                 ClioError::RpcMalformedAuthorizedCredentials,
                 fmt::format(
                     "Max {} number of credentials in authorized_credentials array",
-                    ripple::maxCredentialsArraySize
+                    xrpl::maxCredentialsArraySize
                 )
             }};
         }

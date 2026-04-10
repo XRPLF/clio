@@ -39,9 +39,9 @@ public:
      * @brief A struct to hold the statistics
      */
     struct Stats {
-        ripple::STAmount avg{};  // NOLINT(readability-redundant-member-init)
+        xrpl::STAmount avg{};  // NOLINT(readability-redundant-member-init)
         // standard deviation
-        ripple::Number sd{};  // NOLINT(readability-redundant-member-init)
+        xrpl::Number sd{};  // NOLINT(readability-redundant-member-init)
         uint32_t size{0};
     };
 
@@ -63,7 +63,7 @@ public:
      */
     struct Oracle {
         std::uint32_t documentId{0};
-        ripple::AccountID account;
+        xrpl::AccountID account;
     };
 
     /**
@@ -187,8 +187,8 @@ private:
     void
     tracebackOracleObject(
         boost::asio::yield_context yield,
-        ripple::STObject const& oracleObject,
-        std::function<bool(ripple::STObject const&)> const& callback
+        xrpl::STObject const& oracleObject,
+        std::function<bool(xrpl::STObject const&)> const& callback
     ) const;
 
     /**

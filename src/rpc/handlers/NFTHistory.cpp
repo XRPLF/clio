@@ -88,7 +88,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input const& input, Context const&
     }
 
     auto const limit = input.limit.value_or(kLIMIT_DEFAULT);
-    auto const tokenID = ripple::uint256{input.nftID.c_str()};
+    auto const tokenID = xrpl::uint256{input.nftID.c_str()};
 
     auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
         return sharedPtrBackend_->fetchNFTTransactions(
@@ -135,8 +135,8 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input const& input, Context const&
                         txnPlusMeta.ledgerSequence, ctx.yield
                     );
                     lgrInfo) {
-                    obj[JS(close_time_iso)] = ripple::to_string_iso(lgrInfo->closeTime);
-                    obj[JS(ledger_hash)] = ripple::strHex(lgrInfo->hash);
+                    obj[JS(close_time_iso)] = xrpl::to_string_iso(lgrInfo->closeTime);
+                    obj[JS(ledger_hash)] = xrpl::strHex(lgrInfo->hash);
                 }
             }
         } else {
@@ -150,7 +150,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input const& input, Context const&
     }
 
     response.limit = input.limit;
-    response.nftID = ripple::to_string(tokenID);
+    response.nftID = xrpl::to_string(tokenID);
     response.ledgerIndexMin = minIndex;
     response.ledgerIndexMax = maxIndex;
 

@@ -401,11 +401,11 @@ TEST_F(RPCBaseTest, WithCustomError)
         {"transaction",
          WithCustomError{
              CustomValidators::uint256HexStringValidator,
-             rpc::Status{ripple::rpcBAD_FEATURE, "MyCustomError"}
+             rpc::Status{xrpl::rpcBAD_FEATURE, "MyCustomError"}
          }},
         {"other",
          WithCustomError{
-             Type<std::string>{}, rpc::Status{ripple::rpcALREADY_MULTISIG, "MyCustomError2"}
+             Type<std::string>{}, rpc::Status{xrpl::rpcALREADY_MULTISIG, "MyCustomError2"}
          }}
     };
 
@@ -420,13 +420,13 @@ TEST_F(RPCBaseTest, WithCustomError)
     auto err = spec.process(failingInput);
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "MyCustomError");
-    ASSERT_EQ(err.error(), ripple::rpcBAD_FEATURE);
+    ASSERT_EQ(err.error(), xrpl::rpcBAD_FEATURE);
 
     failingInput = json::parse(R"JSON({ "other": 1})JSON");
     err = spec.process(failingInput);
     ASSERT_FALSE(err);
     ASSERT_EQ(err.error().message, "MyCustomError2");
-    ASSERT_EQ(err.error(), ripple::rpcALREADY_MULTISIG);
+    ASSERT_EQ(err.error(), xrpl::rpcALREADY_MULTISIG);
 }
 
 TEST_F(RPCBaseTest, TimeFormatValidator)
@@ -448,7 +448,7 @@ TEST_F(RPCBaseTest, TimeFormatValidator)
     auto failingInput = json::parse(R"JSON({ "date": "2023-01-01-00:00:00" })JSON");
     auto err = spec.process(failingInput);
     EXPECT_FALSE(err);
-    EXPECT_EQ(err.error(), ripple::rpcINVALID_PARAMS);
+    EXPECT_EQ(err.error(), xrpl::rpcINVALID_PARAMS);
 
     failingInput = json::parse(R"JSON({ "date": "01-01-2024T00:00:00" })JSON");
     EXPECT_FALSE(spec.process(failingInput));
@@ -462,7 +462,7 @@ TEST_F(RPCBaseTest, TimeFormatValidator)
     failingInput = json::parse(R"JSON({ "date": 1 })JSON");
     err = spec.process(failingInput);
     EXPECT_FALSE(err);
-    EXPECT_EQ(err.error(), ripple::rpcINVALID_PARAMS);
+    EXPECT_EQ(err.error(), xrpl::rpcINVALID_PARAMS);
 }
 
 TEST_F(RPCBaseTest, CustomValidator)
@@ -699,7 +699,7 @@ TEST_F(RPCBaseTest, IssuerValidator)
     ASSERT_EQ(err.error().message, "issuerNotString");
 
     failingInput =
-        json::parse(fmt::format(R"JSON({{ "issuer": "{}"}})JSON", toBase58(ripple::noAccount())));
+        json::parse(fmt::format(R"JSON({{ "issuer": "{}"}})JSON", toBase58(xrpl::noAccount())));
     err = spec.process(failingInput);
     ASSERT_FALSE(err);
 }

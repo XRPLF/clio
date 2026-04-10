@@ -61,7 +61,7 @@ public:
             std::nullopt;  // NOLINT(readability-redundant-member-init)
         std::optional<std::string> ctid =
             std::nullopt;  // NOLINT(readability-redundant-member-init) ctid when binary=true
-        std::optional<ripple::LedgerHeader> ledgerHeader =
+        std::optional<xrpl::LedgerHeader> ledgerHeader =
             std::nullopt;  // NOLINT(readability-redundant-member-init) ledger hash when apiVersion
                            // >= 2
         uint32_t apiVersion = 0u;
@@ -171,7 +171,7 @@ public:
             dbResponse = fetchTxViaCtid(lgrSeq, txnIdx, ctx.yield);
         } else {
             dbResponse = sharedPtrBackend_->fetchTransaction(
-                ripple::uint256{input.transaction->c_str()}, ctx.yield
+                xrpl::uint256{input.transaction->c_str()}, ctx.yield
             );
         }
 
@@ -201,8 +201,8 @@ public:
             output.tx = txn;
             output.meta = meta;
         } else {
-            output.txStr = ripple::strHex(dbResponse->transaction);
-            output.metaStr = ripple::strHex(dbResponse->metadata);
+            output.txStr = xrpl::strHex(dbResponse->transaction);
+            output.metaStr = xrpl::strHex(dbResponse->metadata);
 
             // input.transaction might be not available, get hash via tx object
             if (txn.contains(JS(hash)))
@@ -296,8 +296,8 @@ private:
             obj[JS(ledger_index)] = output.ledgerIndex;
 
             if (output.ledgerHeader) {
-                obj[JS(ledger_hash)] = ripple::strHex(output.ledgerHeader->hash);
-                obj[JS(close_time_iso)] = ripple::to_string_iso(output.ledgerHeader->closeTime);
+                obj[JS(ledger_hash)] = xrpl::strHex(output.ledgerHeader->hash);
+                obj[JS(close_time_iso)] = xrpl::to_string_iso(output.ledgerHeader->closeTime);
             }
             return obj;
         };

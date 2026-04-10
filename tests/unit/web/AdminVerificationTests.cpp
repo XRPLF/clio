@@ -65,7 +65,7 @@ TEST_F(PasswordAdminVerificationStrategyTest, IsAdminReturnsTrueOnlyForValidPass
     EXPECT_FALSE(strat_.isAdmin(makeRequest("a"), "127.0.0.1"));
 
     // Wrong header
-    EXPECT_FALSE(strat_.isAdmin(makeRequest(passwordHash_, http::field::authentication_info), ""));
+    EXPECT_FALSE(strat_.isAdmin(makeRequest(passwordHash_, http::field::www_authenticate), ""));
 }
 
 struct MakeAdminVerificationStrategyTestParams {

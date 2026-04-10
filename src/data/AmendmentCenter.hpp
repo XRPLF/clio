@@ -134,12 +134,17 @@ struct Amendments {
     REGISTER(fixIncludeKeyletFields);
     REGISTER(fixTokenEscrowV1);
     REGISTER(LendingProtocol);
+    REGISTER(ConfidentialTransfer);
+    REGISTER(PermissionDelegationV1_1);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);
     REGISTER(NonFungibleTokensV1);
     REGISTER(fixNFTokenDirV1);
     REGISTER(fixNFTokenNegOffer);
+    REGISTER(fixExpiredNFTokenOfferRemoval);
+    REGISTER(fixPermissionedDomainInvariant);
+    REGISTER(fixSecurity3_1_3);
 
     // Retired amendments
     REGISTER(OwnerPaysFee);  // Removed in xrpl 2.6.0 (https://github.com/XRPLF/rippled/pull/5435)
@@ -262,7 +267,7 @@ public:
     operator[](AmendmentKey const& key) const final;
 
 private:
-    [[nodiscard]] std::optional<std::vector<ripple::uint256>>
+    [[nodiscard]] std::optional<std::vector<xrpl::uint256>>
     fetchAmendmentsList(boost::asio::yield_context yield, uint32_t seq) const;
 };
 

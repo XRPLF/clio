@@ -210,7 +210,7 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaStringSequence)
 TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaHash)
 {
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLEDGER_HASH}, _))
         .WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
@@ -238,7 +238,7 @@ TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
         .WillByDefault(Return(createLedgerHeader(kLEDGER_HASH, kRANGE_MAX)));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
@@ -286,7 +286,7 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
     std::vector<Blob> bbs;
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(limitLine + limitTicket);
     ON_CALL(*backend_, doFetchSuccessorKey(_, kRANGE_MAX, _))
-        .WillByDefault(Return(ripple::uint256{kINDEX2}));
+        .WillByDefault(Return(xrpl::uint256{kINDEX2}));
 
     while ((limitLine--) != 0) {
         auto const line = createRippleStateLedgerObject(
@@ -347,7 +347,7 @@ TEST_F(RPCLedgerDataHandlerTest, Version2)
     std::vector<Blob> bbs;
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(limitLine + limitTicket);
     ON_CALL(*backend_, doFetchSuccessorKey(_, kRANGE_MAX, _))
-        .WillByDefault(Return(ripple::uint256{kINDEX2}));
+        .WillByDefault(Return(xrpl::uint256{kINDEX2}));
 
     while ((limitLine--) != 0) {
         auto const line = createRippleStateLedgerObject(
@@ -404,7 +404,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
     std::vector<Blob> bbs;
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(limitLine + limitTicket);
     ON_CALL(*backend_, doFetchSuccessorKey(_, kRANGE_MAX, _))
-        .WillByDefault(Return(ripple::uint256{kINDEX2}));
+        .WillByDefault(Return(xrpl::uint256{kINDEX2}));
 
     while ((limitLine--) != 0) {
         auto const line = createRippleStateLedgerObject(
@@ -469,7 +469,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterAMM)
     std::vector<Blob> bbs;
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(limitLine + 1);
     ON_CALL(*backend_, doFetchSuccessorKey(_, kRANGE_MAX, _))
-        .WillByDefault(Return(ripple::uint256{kINDEX2}));
+        .WillByDefault(Return(xrpl::uint256{kINDEX2}));
 
     while ((limitLine--) != 0) {
         auto const line = createRippleStateLedgerObject(
@@ -479,7 +479,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterAMM)
     }
 
     auto const amm =
-        createAmmObject(kACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", kACCOUNT2);
+        createAmmObject(kACCOUNT, "XRP", xrpl::toBase58(xrpl::xrpAccount()), "JPY", kACCOUNT2);
     bbs.push_back(amm.getSerializer().peekData());
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -533,8 +533,8 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
     std::vector<Blob> bbs;
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(2);
     ON_CALL(*backend_, doFetchSuccessorKey(kFIRST_KEY, kRANGE_MAX, _))
-        .WillByDefault(Return(ripple::uint256{kINDEX2}));
-    ON_CALL(*backend_, doFetchSuccessorKey(ripple::uint256{kINDEX2}, kRANGE_MAX, _))
+        .WillByDefault(Return(xrpl::uint256{kINDEX2}));
+    ON_CALL(*backend_, doFetchSuccessorKey(xrpl::uint256{kINDEX2}, kRANGE_MAX, _))
         .WillByDefault(Return(std::nullopt));
 
     auto const line = createRippleStateLedgerObject(
@@ -567,7 +567,7 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
         .WillByDefault(Return(createLedgerHeader(kLEDGER_HASH, kRANGE_MAX)));
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
-    ON_CALL(*backend_, doFetchLedgerObject(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
+    ON_CALL(*backend_, doFetchLedgerObject(xrpl::uint256{kINDEX1}, kRANGE_MAX, _))
         .WillByDefault(Return(createRippleStateLedgerObject(
                                   "USD", kACCOUNT2, 10, kACCOUNT, 100, kACCOUNT2, 200, kTXN_ID, 123
         )
@@ -577,10 +577,10 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
     auto limit = 10;
     std::vector<Blob> bbs;
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(limit);
-    ON_CALL(*backend_, doFetchSuccessorKey(ripple::uint256{kINDEX1}, kRANGE_MAX, _))
-        .WillByDefault(Return(ripple::uint256{kINDEX2}));
-    ON_CALL(*backend_, doFetchSuccessorKey(ripple::uint256{kINDEX2}, kRANGE_MAX, _))
-        .WillByDefault(Return(ripple::uint256{kINDEX2}));
+    ON_CALL(*backend_, doFetchSuccessorKey(xrpl::uint256{kINDEX1}, kRANGE_MAX, _))
+        .WillByDefault(Return(xrpl::uint256{kINDEX2}));
+    ON_CALL(*backend_, doFetchSuccessorKey(xrpl::uint256{kINDEX2}, kRANGE_MAX, _))
+        .WillByDefault(Return(xrpl::uint256{kINDEX2}));
 
     while ((limit--) != 0) {
         auto const line = createRippleStateLedgerObject(
@@ -631,7 +631,7 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
         );
         bbs.push_back(line.getSerializer().peekData());
         los.emplace_back(
-            LedgerObject{.key = ripple::uint256{kINDEX2}, .blob = Blob{}}
+            LedgerObject{.key = xrpl::uint256{kINDEX2}, .blob = Blob{}}
         );  // NOLINT(modernize-use-emplace)
     }
     ON_CALL(*backend_, fetchLedgerDiff(kRANGE_MAX, _)).WillByDefault(Return(los));
@@ -672,7 +672,7 @@ TEST_F(RPCLedgerDataHandlerTest, Binary)
 
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(limit);
     ON_CALL(*backend_, doFetchSuccessorKey(_, kRANGE_MAX, _))
-        .WillByDefault(Return(ripple::uint256{kINDEX2}));
+        .WillByDefault(Return(xrpl::uint256{kINDEX2}));
 
     while ((limit--) != 0) {
         auto const line = createRippleStateLedgerObject(
@@ -714,7 +714,7 @@ TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
 
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(LedgerDataHandler::kLIMIT_BINARY);
     ON_CALL(*backend_, doFetchSuccessorKey(_, kRANGE_MAX, _))
-        .WillByDefault(Return(ripple::uint256{kINDEX2}));
+        .WillByDefault(Return(xrpl::uint256{kINDEX2}));
 
     while ((limit--) != 0u) {
         auto const line = createRippleStateLedgerObject(
@@ -762,7 +762,7 @@ TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
 
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(LedgerDataHandler::kLIMIT_JSON);
     ON_CALL(*backend_, doFetchSuccessorKey(_, kRANGE_MAX, _))
-        .WillByDefault(Return(ripple::uint256{kINDEX2}));
+        .WillByDefault(Return(xrpl::uint256{kINDEX2}));
 
     while ((limit--) != 0u) {
         auto const line = createRippleStateLedgerObject(
@@ -806,7 +806,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPTIssuance)
     std::vector<Blob> bbs;
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(1);
     ON_CALL(*backend_, doFetchSuccessorKey(_, kRANGE_MAX, _))
-        .WillByDefault(Return(ripple::uint256{kINDEX2}));
+        .WillByDefault(Return(xrpl::uint256{kINDEX2}));
 
     auto const issuance = createMptIssuanceObject(kACCOUNT, 2, "metadata");
     bbs.push_back(issuance.getSerializer().peekData());
@@ -835,7 +835,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPTIssuance)
         // make sure mptID is synethetically parsed if object is mptIssuance
         EXPECT_EQ(
             objects.front().at("mpt_issuance_id").as_string(),
-            ripple::to_string(ripple::makeMptID(2, getAccountIdWithString(kACCOUNT)))
+            xrpl::to_string(xrpl::makeMptID(2, getAccountIdWithString(kACCOUNT)))
         );
     });
 }
@@ -849,10 +849,10 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPToken)
     std::vector<Blob> bbs;
     EXPECT_CALL(*backend_, doFetchSuccessorKey).Times(1);
     ON_CALL(*backend_, doFetchSuccessorKey(_, kRANGE_MAX, _))
-        .WillByDefault(Return(ripple::uint256{kINDEX2}));
+        .WillByDefault(Return(xrpl::uint256{kINDEX2}));
 
     auto const mptoken =
-        createMpTokenObject(kACCOUNT, ripple::makeMptID(2, getAccountIdWithString(kACCOUNT)));
+        createMpTokenObject(kACCOUNT, xrpl::makeMptID(2, getAccountIdWithString(kACCOUNT)));
     bbs.push_back(mptoken.getSerializer().peekData());
 
     ON_CALL(*backend_, doFetchLedgerObjects).WillByDefault(Return(bbs));

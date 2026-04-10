@@ -58,14 +58,14 @@ public:
     }
 
     void
-    append(ripple::uint256 const& value) const
+    append(xrpl::uint256 const& value) const
     {
         auto const rc = cass_collection_append_bytes(
             *this,
             static_cast<cass_byte_t const*>(static_cast<unsigned char const*>(value.data())),
-            ripple::uint256::size()
+            xrpl::uint256::size()
         );
-        throwErrorIfNeeded(rc, "Bind ripple::uint256");
+        throwErrorIfNeeded(rc, "Bind xrpl::uint256");
     }
 };
 }  // namespace data::cassandra::impl

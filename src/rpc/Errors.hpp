@@ -51,7 +51,7 @@ struct ClioErrorInfo {
 };
 
 /** @brief Clio uses compatible Rippled error codes for most RPC errors. */
-using RippledError = ripple::error_code_i;
+using RippledError = xrpl::error_code_i;
 
 /**
  * @brief Clio operates on a combination of Rippled and Custom Clio error codes.
@@ -94,7 +94,7 @@ struct Status {
      *
      * @param message The message
      */
-    explicit Status(std::string message) : code(ripple::rpcUNKNOWN), message(std::move(message))
+    explicit Status(std::string message) : code(xrpl::rpcUNKNOWN), message(std::move(message))
     {
     }
 

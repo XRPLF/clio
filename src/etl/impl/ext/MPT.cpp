@@ -31,7 +31,7 @@ MPTExt::onLedgerData(model::LedgerData const& data)
 void
 MPTExt::onInitialObject(uint32_t, model::Object const& obj)
 {
-    LOG(log_.trace()) << "got initial object with key: " << ripple::strHex(obj.key);
+    LOG(log_.trace()) << "got initial object with key: " << xrpl::strHex(obj.key);
     if (auto const mptHolder = getMPTHolderFromObj(obj.keyRaw, obj.dataRaw); mptHolder.has_value())
         backend_->writeMPTHolders({*mptHolder});
 }

@@ -77,7 +77,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaIntSequence)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(30, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -104,7 +104,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaStringSequence)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend_, fetchLedgerBySequence(12, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -130,8 +130,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
 {
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // return empty ledgerHeader
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLEDGER_HASH}, _))
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
 
     static auto const kINPUT = json::parse(
         fmt::format(
@@ -174,14 +174,14 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend_, fetchLedgerBySequence(30, _)).WillByDefault(Return(ledgerHeader));
     // return valid account
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = createOwnerDirLedgerObject(
-        {ripple::uint256{kINDEX1}, ripple::uint256{kINDEX2}, ripple::uint256{kINDEX2}}, kINDEX1
+        {xrpl::uint256{kINDEX1}, xrpl::uint256{kINDEX2}, xrpl::uint256{kINDEX2}}, kINDEX1
     );
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -229,15 +229,15 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
     // return valid ledgerHeader
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLEDGER_HASH}, _))
         .WillByDefault(Return(ledgerHeader));
     // return valid account
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
+    auto const ownerDir = createOwnerDirLedgerObject({xrpl::uint256{kINDEX1}}, kINDEX1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, 30, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -274,12 +274,12 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend_, fetchLedgerBySequence(ledgerSeq, _)).WillByDefault(Return(ledgerHeader));
     // return valid account
-    auto const accountKk = ripple::keylet::account(getAccountIdWithString(kACCOUNT)).key;
+    auto const accountKk = xrpl::keylet::account(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, ledgerSeq, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const ownerDir = createOwnerDirLedgerObject({ripple::uint256{kINDEX1}}, kINDEX1);
-    auto const ownerDirKk = ripple::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
+    auto const ownerDir = createOwnerDirLedgerObject({xrpl::uint256{kINDEX1}}, kINDEX1);
+    auto const ownerDirKk = xrpl::keylet::ownerDir(getAccountIdWithString(kACCOUNT)).key;
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, ledgerSeq, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);

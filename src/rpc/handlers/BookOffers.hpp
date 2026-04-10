@@ -61,12 +61,12 @@ public:
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         uint32_t limit = kLIMIT_DEFAULT;
-        std::optional<ripple::AccountID> taker;
-        ripple::Currency paysCurrency;
-        ripple::Currency getsCurrency;
+        std::optional<xrpl::AccountID> taker;
+        xrpl::Currency paysCurrency;
+        xrpl::Currency getsCurrency;
         // accountID will be filled by input converter, if no issuer is given, will use XRP issuer
-        ripple::AccountID paysID = ripple::xrpAccount();
-        ripple::AccountID getsID = ripple::xrpAccount();
+        xrpl::AccountID paysID = xrpl::xrpAccount();
+        xrpl::AccountID getsID = xrpl::xrpAccount();
         std::optional<std::string> domain;
     };
 

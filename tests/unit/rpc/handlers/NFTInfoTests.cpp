@@ -141,8 +141,8 @@ TEST_F(RPCNFTInfoHandlerTest, NFTIDNotString)
 TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash)
 {
     // mock fetchLedgerByHash return empty
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLEDGER_HASH}, _))
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
 
     auto const input = json::parse(
@@ -171,7 +171,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
     // mock fetchLedgerBySequence return empty
     ON_CALL(*backend_, fetchLedgerBySequence)
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(
         fmt::format(
@@ -196,7 +196,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
     // mock fetchLedgerBySequence return empty
     ON_CALL(*backend_, fetchLedgerBySequence)
-        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillByDefault(Return(std::optional<xrpl::LedgerHeader>{}));
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(
         fmt::format(
@@ -223,7 +223,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 31);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLEDGER_HASH}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     auto const input = json::parse(
@@ -275,12 +275,12 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIndex2)
 TEST_F(RPCNFTInfoHandlerTest, NonExistNFT)
 {
     auto ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
-    ON_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+    ON_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLEDGER_HASH}, _))
         .WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend_, fetchLedgerByHash).Times(1);
     // fetch nft return empty
     ON_CALL(*backend_, fetchNFT).WillByDefault(Return(std::optional<NFT>{}));
-    EXPECT_CALL(*backend_, fetchNFT(ripple::uint256{kNFT_ID}, 30, _)).Times(1);
+    EXPECT_CALL(*backend_, fetchNFT(xrpl::uint256{kNFT_ID}, 30, _)).Times(1);
     auto const input = json::parse(
         fmt::format(
             R"JSON({{
@@ -325,7 +325,7 @@ TEST_F(RPCNFTInfoHandlerTest, DefaultParameters)
     // fetch nft return something
     auto const nft = std::make_optional<NFT>(createNft(kNFT_ID, kACCOUNT, ledgerHeader.seq));
     ON_CALL(*backend_, fetchNFT).WillByDefault(Return(nft));
-    EXPECT_CALL(*backend_, fetchNFT(ripple::uint256{kNFT_ID}, 30, _)).Times(1);
+    EXPECT_CALL(*backend_, fetchNFT(xrpl::uint256{kNFT_ID}, 30, _)).Times(1);
 
     auto const input = json::parse(
         fmt::format(
@@ -366,10 +366,10 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
 
     // fetch nft return something
     auto const nft = std::make_optional<NFT>(
-        createNft(kNFT_ID, kACCOUNT, ledgerHeader.seq, ripple::Blob{'u', 'r', 'i'}, true)
+        createNft(kNFT_ID, kACCOUNT, ledgerHeader.seq, xrpl::Blob{'u', 'r', 'i'}, true)
     );
     ON_CALL(*backend_, fetchNFT).WillByDefault(Return(nft));
-    EXPECT_CALL(*backend_, fetchNFT(ripple::uint256{kNFT_ID}, 30, _)).Times(1);
+    EXPECT_CALL(*backend_, fetchNFT(xrpl::uint256{kNFT_ID}, 30, _)).Times(1);
 
     auto const input = json::parse(
         fmt::format(
@@ -410,9 +410,9 @@ TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
 
     // fetch nft return something
     auto const nft =
-        std::make_optional<NFT>(createNft(kNFT_ID, kACCOUNT, ledgerHeader.seq, ripple::Blob{}));
+        std::make_optional<NFT>(createNft(kNFT_ID, kACCOUNT, ledgerHeader.seq, xrpl::Blob{}));
     ON_CALL(*backend_, fetchNFT).WillByDefault(Return(nft));
-    EXPECT_CALL(*backend_, fetchNFT(ripple::uint256{kNFT_ID}, 30, _)).Times(1);
+    EXPECT_CALL(*backend_, fetchNFT(xrpl::uint256{kNFT_ID}, 30, _)).Times(1);
 
     auto const input = json::parse(
         fmt::format(
@@ -454,7 +454,7 @@ TEST_F(RPCNFTInfoHandlerTest, NFTWithExtraFieldsSet)
     // fetch nft return something
     auto const nft = std::make_optional<NFT>(createNft(kNFT_ID2, kACCOUNT, ledgerHeader.seq));
     ON_CALL(*backend_, fetchNFT).WillByDefault(Return(nft));
-    EXPECT_CALL(*backend_, fetchNFT(ripple::uint256{kNFT_ID2}, 30, _)).Times(1);
+    EXPECT_CALL(*backend_, fetchNFT(xrpl::uint256{kNFT_ID2}, 30, _)).Times(1);
 
     auto const input = json::parse(
         fmt::format(

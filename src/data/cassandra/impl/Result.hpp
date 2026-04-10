@@ -43,18 +43,18 @@ extractColumn(CassRow const* row, std::size_t idx)
     using UintTupleType = std::tuple<uint32_t, uint32_t>;
     using UCharVectorType = std::vector<unsigned char>;
 
-    if constexpr (std::is_same_v<DecayedType, ripple::uint256>) {
+    if constexpr (std::is_same_v<DecayedType, xrpl::uint256>) {
         cass_byte_t const* buf = nullptr;
         std::size_t bufSize = 0;
         auto const rc = cass_value_get_bytes(cass_row_get_column(row, idx), &buf, &bufSize);
-        throwErrorIfNeeded(rc, "Extract ripple::uint256");
-        output = ripple::uint256::fromVoid(buf);
-    } else if constexpr (std::is_same_v<DecayedType, ripple::AccountID>) {
+        throwErrorIfNeeded(rc, "Extract xrpl::uint256");
+        output = xrpl::uint256::fromVoid(buf);
+    } else if constexpr (std::is_same_v<DecayedType, xrpl::AccountID>) {
         cass_byte_t const* buf = nullptr;
         std::size_t bufSize = 0;
         auto const rc = cass_value_get_bytes(cass_row_get_column(row, idx), &buf, &bufSize);
-        throwErrorIfNeeded(rc, "Extract ripple::AccountID");
-        output = ripple::AccountID::fromVoid(buf);
+        throwErrorIfNeeded(rc, "Extract xrpl::AccountID");
+        output = xrpl::AccountID::fromVoid(buf);
     } else if constexpr (std::is_same_v<DecayedType, UCharVectorType>) {
         cass_byte_t const* buf = nullptr;
         std::size_t bufSize = 0;

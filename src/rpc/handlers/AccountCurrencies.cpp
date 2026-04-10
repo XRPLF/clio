@@ -43,17 +43,17 @@ AccountCurrenciesHandler::process(
     auto const accountID = accountFromStringStrict(input.account);
 
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+        xrpl::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
     );
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     Output response;
-    auto const addToResponse = [&](ripple::SLE const sle) {
-        if (sle.getType() == ripple::ltRIPPLE_STATE) {
-            auto balance = sle.getFieldAmount(ripple::sfBalance);
-            auto const lowLimit = sle.getFieldAmount(ripple::sfLowLimit);
-            auto const highLimit = sle.getFieldAmount(ripple::sfHighLimit);
+    auto const addToResponse = [&](xrpl::SLE const sle) {
+        if (sle.getType() == xrpl::ltRIPPLE_STATE) {
+            auto balance = sle.getFieldAmount(xrpl::sfBalance);
+            auto const lowLimit = sle.getFieldAmount(xrpl::sfLowLimit);
+            auto const highLimit = sle.getFieldAmount(xrpl::sfHighLimit);
             bool const viewLowest = (lowLimit.getIssuer() == accountID);
             auto const lineLimit = viewLowest ? lowLimit : highLimit;
             auto const lineLimitPeer = !viewLowest ? lowLimit : highLimit;
@@ -62,10 +62,10 @@ AccountCurrenciesHandler::process(
                 balance.negate();
 
             if (balance < lineLimit)
-                response.receiveCurrencies.insert(ripple::to_string(balance.getCurrency()));
+                response.receiveCurrencies.insert(xrpl::to_string(balance.getCurrency()));
 
             if ((-balance) < lineLimitPeer)
-                response.sendCurrencies.insert(ripple::to_string(balance.getCurrency()));
+                response.sendCurrencies.insert(xrpl::to_string(balance.getCurrency()));
         }
 
         return true;
@@ -82,7 +82,7 @@ AccountCurrenciesHandler::process(
         addToResponse
     );
 
-    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
     return response;

@@ -34,7 +34,7 @@ operator<<(std::ostream& stream, Status const& status)
                 if (!status.message.empty()) {
                     stream << ", Message: " << status.message;
                 } else {
-                    stream << ", Message: " << ripple::RPC::get_error_info(err).message;
+                    stream << ", Message: " << xrpl::RPC::get_error_info(err).message;
                 }
             },
             [&stream, &status](ClioError err) {
@@ -164,7 +164,7 @@ makeError(
 )
 {
     boost::json::object json;
-    auto const& info = ripple::RPC::get_error_info(err);
+    auto const& info = xrpl::RPC::get_error_info(err);
 
     json["error"] = customError.value_or(info.token.c_str()).data();
     json["error_code"] = static_cast<uint32_t>(err);
@@ -204,7 +204,7 @@ makeError(Status const& status)
     auto res = visit(
         util::OverloadSet{
             [&status, &wrapOptional](RippledError err) {
-                if (err == ripple::rpcUNKNOWN) {
+                if (err == xrpl::rpcUNKNOWN) {
                     return boost::json::object{
                         {"error", status.message}, {"type", "response"}, {"status", "error"}
                     };

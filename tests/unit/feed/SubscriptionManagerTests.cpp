@@ -151,7 +151,7 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
     subscriptionManagerPtr_->subProposedAccount(account, session1);
     subscriptionManagerPtr_->subProposedAccount(account, session2);
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
+    xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
     subscriptionManagerPtr_->subBook(book, session1);
     subscriptionManagerPtr_->subBook(book, session2);
     EXPECT_EQ(subscriptionManagerPtr_->report(), json::parse(kREPORT_RETURN));
@@ -225,11 +225,10 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 32);
     auto transactions = std::vector<TransactionAndMetadata>{};
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
+    xrpl::STObject const obj = createPaymentTransactionObject(kACCOUNT1, kACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STObject const metaObj =
-        createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 1, 3, 3, 1);
+    xrpl::STObject const metaObj = createMetaDataForBookChange(kCURRENCY, kISSUER, 22, 1, 3, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
     static constexpr auto kBOOK_CHANGE_PUBLISH =
@@ -296,7 +295,7 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
 
     // test publish
     auto const ledgerHeader2 = createLedgerHeader(kLEDGER_HASH, 31);
-    auto fee2 = ripple::Fees();
+    auto fee2 = xrpl::Fees();
     fee2.reserve = 10;
     static constexpr auto kLEDGER_PUB =
         R"JSON({
@@ -323,7 +322,7 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
 {
     auto const issue1 = getIssue(kCURRENCY, kISSUER);
     auto const account = getAccountIdWithString(kISSUER);
-    ripple::Book const book{ripple::xrpIssue(), issue1, std::nullopt};
+    xrpl::Book const book{xrpl::xrpIssue(), issue1, std::nullopt};
     EXPECT_CALL(*sessionPtr_, onDisconnect).Times(3);
     subscriptionManagerPtr_->subBook(book, session_);
     subscriptionManagerPtr_->subTransactions(session_);

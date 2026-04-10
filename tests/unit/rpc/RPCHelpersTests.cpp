@@ -88,7 +88,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidIndexNotHex)
 
         });
         EXPECT_FALSE(ret.has_value());
-        EXPECT_EQ(ret.error(), ripple::rpcINVALID_PARAMS);
+        EXPECT_EQ(ret.error(), xrpl::rpcINVALID_PARAMS);
         EXPECT_EQ(ret.error().message, "Malformed cursor.");
     });
     ctx_.run();
@@ -102,7 +102,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidPageNotInt)
 
         });
         EXPECT_FALSE(ret.has_value());
-        EXPECT_EQ(ret.error(), ripple::rpcINVALID_PARAMS);
+        EXPECT_EQ(ret.error(), xrpl::rpcINVALID_PARAMS);
         EXPECT_EQ(ret.error().message, "Malformed cursor.");
     });
     ctx_.run();
@@ -112,18 +112,18 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidPageNotInt)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
 {
     auto account = getAccountIdWithString(kACCOUNT);
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
     // return owner index
-    ripple::STObject const ownerDir =
-        createOwnerDirLedgerObject({ripple::uint256{kINDEX1}, ripple::uint256{kINDEX2}}, kINDEX1);
+    xrpl::STObject const ownerDir =
+        createOwnerDirLedgerObject({xrpl::uint256{kINDEX1}, xrpl::uint256{kINDEX2}}, kINDEX1);
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
 
     // return two payment channel objects
     std::vector<Blob> bbs;
-    ripple::STObject const channel1 =
+    xrpl::STObject const channel1 =
         createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
     bbs.push_back(channel1.getSerializer().peekData());
     bbs.push_back(channel1.getSerializer().peekData());
@@ -146,15 +146,15 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
 {
     auto account = getAccountIdWithString(kACCOUNT);
-    auto owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto owneDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
     std::vector<Blob> bbs;
 
     int objectsCount = 11;
-    ripple::STObject const channel1 =
+    xrpl::STObject const channel1 =
         createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
-    std::vector<ripple::uint256> indexes;
+    std::vector<xrpl::uint256> indexes;
     while (objectsCount != 0) {
         // return owner index
         indexes.emplace_back(kINDEX1);
@@ -162,8 +162,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
         objectsCount--;
     }
 
-    ripple::STObject ownerDir = createOwnerDirLedgerObject(indexes, kINDEX1);
-    ownerDir.setFieldU64(ripple::sfIndexNext, 99);
+    xrpl::STObject ownerDir = createOwnerDirLedgerObject(indexes, kINDEX1);
+    ownerDir.setFieldU64(xrpl::sfIndexNext, 99);
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
 
@@ -184,19 +184,19 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
 {
     auto account = getAccountIdWithString(kACCOUNT);
-    auto ownerDirKk = ripple::keylet::ownerDir(account).key;
+    auto ownerDirKk = xrpl::keylet::ownerDir(account).key;
     static constexpr auto kNEXT_PAGE = 99;
     static constexpr auto kLIMIT = 15;
-    auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), kNEXT_PAGE).key;
+    auto ownerDir2Kk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), kNEXT_PAGE).key;
 
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
 
     std::vector<Blob> bbs;
 
     int objectsCount = 10;
-    ripple::STObject const channel1 =
+    xrpl::STObject const channel1 =
         createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
-    std::vector<ripple::uint256> indexes;
+    std::vector<xrpl::uint256> indexes;
     while (objectsCount != 0) {
         // return owner index
         indexes.emplace_back(kINDEX1);
@@ -208,14 +208,14 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
         objectsCount--;
     }
 
-    ripple::STObject ownerDir = createOwnerDirLedgerObject(indexes, kINDEX1);
-    ownerDir.setFieldU64(ripple::sfIndexNext, kNEXT_PAGE);
+    xrpl::STObject ownerDir = createOwnerDirLedgerObject(indexes, kINDEX1);
+    ownerDir.setFieldU64(xrpl::sfIndexNext, kNEXT_PAGE);
     // first page 's next page is 99
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    ripple::STObject ownerDir2 = createOwnerDirLedgerObject(indexes, kINDEX1);
+    xrpl::STObject ownerDir2 = createOwnerDirLedgerObject(indexes, kINDEX1);
     // second page's next page is 0
-    ownerDir2.setFieldU64(ripple::sfIndexNext, 0);
+    ownerDir2.setFieldU64(xrpl::sfIndexNext, 0);
     ON_CALL(*backend_, doFetchLedgerObject(ownerDir2Kk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir2.getSerializer().peekData()));
 
@@ -237,7 +237,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
 {
     auto account = getAccountIdWithString(kACCOUNT);
-    auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), 99).key;
+    auto ownerDir2Kk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), 99).key;
     static constexpr auto kLIMIT = 8;
     static constexpr auto kPAGE_NUM = 99;
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(2);
@@ -245,9 +245,9 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
     std::vector<Blob> bbs;
 
     int objectsCount = 10;
-    ripple::STObject const channel1 =
+    xrpl::STObject const channel1 =
         createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
-    std::vector<ripple::uint256> indexes;
+    std::vector<xrpl::uint256> indexes;
     while (objectsCount != 0) {
         // return owner index
         indexes.emplace_back(kINDEX1);
@@ -259,8 +259,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
         objectsCount--;
     }
 
-    ripple::STObject ownerDir = createOwnerDirLedgerObject(indexes, kINDEX1);
-    ownerDir.setFieldU64(ripple::sfIndexNext, 0);
+    xrpl::STObject ownerDir = createOwnerDirLedgerObject(indexes, kINDEX1);
+    ownerDir.setFieldU64(xrpl::sfIndexNext, 0);
     // return ownerdir when search by marker
     ON_CALL(*backend_, doFetchLedgerObject(ownerDir2Kk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -291,22 +291,22 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
 TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
 {
     auto account = getAccountIdWithString(kACCOUNT);
-    auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), 99).key;
+    auto ownerDir2Kk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), 99).key;
     static constexpr auto kLIMIT = 8;
     static constexpr auto kPAGE_NUM = 99;
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(1);
 
     int objectsCount = 10;
-    ripple::STObject const channel1 =
+    xrpl::STObject const channel1 =
         createPaymentChannelLedgerObject(kACCOUNT, kACCOUNT2, 100, 10, 32, kTXN_ID, 28);
-    std::vector<ripple::uint256> indexes;
+    std::vector<xrpl::uint256> indexes;
     while (objectsCount != 0) {
         // return owner index
         indexes.emplace_back(kINDEX1);
         objectsCount--;
     }
-    ripple::STObject ownerDir = createOwnerDirLedgerObject(indexes, kINDEX1);
-    ownerDir.setFieldU64(ripple::sfIndexNext, 0);
+    xrpl::STObject ownerDir = createOwnerDirLedgerObject(indexes, kINDEX1);
+    ownerDir.setFieldU64(xrpl::sfIndexNext, 0);
     // return ownerdir when search by marker
     ON_CALL(*backend_, doFetchLedgerObject(ownerDir2Kk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -323,7 +323,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
             [&](auto) { count++; }
         );
         EXPECT_FALSE(ret.has_value());
-        EXPECT_EQ(ret.error(), ripple::rpcINVALID_PARAMS);
+        EXPECT_EQ(ret.error(), xrpl::rpcINVALID_PARAMS);
         EXPECT_EQ(ret.error().message, "Invalid marker.");
     });
     ctx_.run();
@@ -531,7 +531,7 @@ TEST_F(RPCHelpersTest, ParseIssue)
     EXPECT_TRUE(issue.account == getAccountIdWithString(kACCOUNT2));
 
     issue = parseIssue(boost::json::parse(R"JSON({"currency": "XRP"})JSON").as_object());
-    EXPECT_TRUE(ripple::isXRP(issue.currency));
+    EXPECT_TRUE(xrpl::isXRP(issue.currency));
 
     EXPECT_THROW(
         parseIssue(boost::json::parse(R"JSON({"currency": 2})JSON").as_object()), std::runtime_error
@@ -560,7 +560,7 @@ TEST_F(RPCHelpersTest, ParseIssue)
 TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_BlobDoesNotExist)
 {
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const issuerKey = ripple::keylet::account(account);
+    auto const issuerKey = xrpl::keylet::account(account);
 
     // returns empty blob
     ON_CALL(*backend_, doFetchLedgerObject(issuerKey.key, kLEDGER_SEQ_OBJECT, _))
@@ -569,7 +569,7 @@ TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_BlobDoesNotExist)
     runSpawn([&](boost::asio::yield_context yield) {
         // return false: blob doesn't exist
         EXPECT_FALSE(fetchAndCheckAnyFlagsExists(
-            *backend_, kLEDGER_SEQ_OBJECT, issuerKey, {ripple::lsfHighDeepFreeze}, yield
+            *backend_, kLEDGER_SEQ_OBJECT, issuerKey, {xrpl::lsfHighDeepFreeze}, yield
         ));
     });
 }
@@ -577,11 +577,11 @@ TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_BlobDoesNotExist)
 TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_AccountWithCorrectFlag)
 {
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const issuerKey = ripple::keylet::account(account);
+    auto const issuerKey = xrpl::keylet::account(account);
 
     // create account with highDeepFreeze Flag
     auto const accountObject =
-        createAccountRootObject(kACCOUNT, ripple::lsfHighDeepFreeze, 1, 10, 2, kTXN_ID, 3);
+        createAccountRootObject(kACCOUNT, xrpl::lsfHighDeepFreeze, 1, 10, 2, kTXN_ID, 3);
 
     ON_CALL(*backend_, doFetchLedgerObject(issuerKey.key, kLEDGER_SEQ_OBJECT, _))
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
@@ -589,7 +589,7 @@ TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_AccountWithCorrectFlag)
     runSpawn([&](boost::asio::yield_context yield) {
         // returns true: accountObject has the highDeepFreeze flag
         EXPECT_TRUE(fetchAndCheckAnyFlagsExists(
-            *backend_, kLEDGER_SEQ_OBJECT, issuerKey, {ripple::lsfHighDeepFreeze}, yield
+            *backend_, kLEDGER_SEQ_OBJECT, issuerKey, {xrpl::lsfHighDeepFreeze}, yield
         ));
     });
 }
@@ -597,11 +597,11 @@ TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_AccountWithCorrectFlag)
 TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_TrustLineIsFrozenAndCheckFreezeFlag)
 {
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const issuerKey = ripple::keylet::account(account);
+    auto const issuerKey = xrpl::keylet::account(account);
 
     // create account with lowDeepFreeze Flag
     auto const accountObject =
-        createAccountRootObject(kACCOUNT, ripple::lsfLowDeepFreeze, 1, 10, 2, kTXN_ID, 3);
+        createAccountRootObject(kACCOUNT, xrpl::lsfLowDeepFreeze, 1, 10, 2, kTXN_ID, 3);
 
     ON_CALL(*backend_, doFetchLedgerObject(issuerKey.key, kLEDGER_SEQ_OBJECT, _))
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
@@ -609,7 +609,7 @@ TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_TrustLineIsFrozenAndCheckFreez
     runSpawn([&](boost::asio::yield_context yield) {
         // returns false: accountObject has the lowDeepFreeze flag
         EXPECT_FALSE(fetchAndCheckAnyFlagsExists(
-            *backend_, kLEDGER_SEQ_OBJECT, issuerKey, {ripple::lsfHighDeepFreeze}, yield
+            *backend_, kLEDGER_SEQ_OBJECT, issuerKey, {xrpl::lsfHighDeepFreeze}, yield
         ));
     });
 }
@@ -617,10 +617,10 @@ TEST_F(RPCHelpersTest, FetchAndCheckAnyFlagExists_TrustLineIsFrozenAndCheckFreez
 TEST_F(RPCHelpersTest, isGlobalFrozen_AccountIsGlobalFrozen)
 {
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const issuerKey = ripple::keylet::account(account);
+    auto const issuerKey = xrpl::keylet::account(account);
 
     auto const accountObject =
-        createAccountRootObject(kACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, kTXN_ID, 3);
+        createAccountRootObject(kACCOUNT, xrpl::lsfGlobalFreeze, 1, 10, 2, kTXN_ID, 3);
 
     ON_CALL(*backend_, doFetchLedgerObject(issuerKey.key, kLEDGER_SEQ_OBJECT, _))
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
@@ -637,10 +637,9 @@ TEST_F(RPCHelpersTest, isDeepFrozen_TrustLineIsDeepFrozen)
     auto const account2 = getAccountIdWithString(kACCOUNT2);
 
     // create a trustline between account and account2 and is deep frozen
-    auto const trustLineKey =
-        ripple::keylet::line(account, account2, ripple::Currency{kCURRENCY}).key;
+    auto const trustLineKey = xrpl::keylet::line(account, account2, xrpl::Currency{kCURRENCY}).key;
     auto const trustlineDeepFrozen = createRippleStateLedgerObject(
-        "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, ripple::lsfLowDeepFreeze
+        "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, xrpl::lsfLowDeepFreeze
     );
 
     ON_CALL(*backend_, doFetchLedgerObject(trustLineKey, kLEDGER_SEQ_OBJECT, _))
@@ -648,7 +647,7 @@ TEST_F(RPCHelpersTest, isDeepFrozen_TrustLineIsDeepFrozen)
 
     runSpawn([&](boost::asio::yield_context yield) {
         EXPECT_TRUE(isDeepFrozen(
-            *backend_, kLEDGER_SEQ_OBJECT, account, ripple::Currency{kCURRENCY}, account2, yield
+            *backend_, kLEDGER_SEQ_OBJECT, account, xrpl::Currency{kCURRENCY}, account2, yield
         ));
     });
 }
@@ -659,10 +658,9 @@ TEST_F(RPCHelpersTest, isDeepFrozen_TrustLineIsNotDeepFrozen)
     auto const account2 = getAccountIdWithString(kACCOUNT2);
 
     // create a trustline between account and account2 that is frozen (NOT DeepFrozen)
-    auto const trustLineKey =
-        ripple::keylet::line(account, account2, ripple::Currency{kCURRENCY}).key;
+    auto const trustLineKey = xrpl::keylet::line(account, account2, xrpl::Currency{kCURRENCY}).key;
     auto const trustlineFrozen = createRippleStateLedgerObject(
-        "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, ripple::lsfLowFreeze
+        "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, xrpl::lsfLowFreeze
     );
 
     ON_CALL(*backend_, doFetchLedgerObject(trustLineKey, kLEDGER_SEQ_OBJECT, _))
@@ -670,7 +668,7 @@ TEST_F(RPCHelpersTest, isDeepFrozen_TrustLineIsNotDeepFrozen)
 
     runSpawn([&](boost::asio::yield_context yield) {
         EXPECT_FALSE(isDeepFrozen(
-            *backend_, kLEDGER_SEQ_OBJECT, account, ripple::Currency{kCURRENCY}, account2, yield
+            *backend_, kLEDGER_SEQ_OBJECT, account, xrpl::Currency{kCURRENCY}, account2, yield
         ));
     });
 }
@@ -680,10 +678,9 @@ TEST_F(RPCHelpersTest, isDeepFrozen_IssuerAndAccountIsSameWillNotBeDeepFrozen)
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const issuer = getAccountIdWithString(kACCOUNT2);
 
-    auto const trustLineKey =
-        ripple::keylet::line(account, issuer, ripple::Currency{kCURRENCY}).key;
+    auto const trustLineKey = xrpl::keylet::line(account, issuer, xrpl::Currency{kCURRENCY}).key;
     auto const trustlineDeepFrozen = createRippleStateLedgerObject(
-        "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, ripple::lsfLowDeepFreeze
+        "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, xrpl::lsfLowDeepFreeze
     );
 
     ON_CALL(*backend_, doFetchLedgerObject(trustLineKey, kLEDGER_SEQ_OBJECT, _))
@@ -692,7 +689,7 @@ TEST_F(RPCHelpersTest, isDeepFrozen_IssuerAndAccountIsSameWillNotBeDeepFrozen)
     runSpawn([&](boost::asio::yield_context yield) {
         // both accounts are same so trustline is not deep frozen
         EXPECT_FALSE(isDeepFrozen(
-            *backend_, kLEDGER_SEQ_OBJECT, account, ripple::Currency{kCURRENCY}, account, yield
+            *backend_, kLEDGER_SEQ_OBJECT, account, xrpl::Currency{kCURRENCY}, account, yield
         ));
     });
 }
@@ -703,15 +700,15 @@ TEST_F(RPCHelpersTest, isFrozen_IssuerAccountIsGlobalFrozen)
     auto const issuer = getAccountIdWithString(kACCOUNT2);
 
     auto const accountObject =
-        createAccountRootObject(kACCOUNT2, ripple::lsfGlobalFreeze, 1, 10, 2, kTXN_ID, 3);
-    auto const issuerKey = ripple::keylet::account(issuer).key;
+        createAccountRootObject(kACCOUNT2, xrpl::lsfGlobalFreeze, 1, 10, 2, kTXN_ID, 3);
+    auto const issuerKey = xrpl::keylet::account(issuer).key;
 
     ON_CALL(*backend_, doFetchLedgerObject(issuerKey, kLEDGER_SEQ_OBJECT, _))
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
 
     runSpawn([&](boost::asio::yield_context yield) {
         EXPECT_TRUE(isFrozen(
-            *backend_, kLEDGER_SEQ_OBJECT, account, ripple::Currency{kCURRENCY}, issuer, yield
+            *backend_, kLEDGER_SEQ_OBJECT, account, xrpl::Currency{kCURRENCY}, issuer, yield
         ));
     });
 }
@@ -721,10 +718,9 @@ TEST_F(RPCHelpersTest, isFrozen_IssuerAndAccountIsSameWillNotBeFrozen)
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const issuer = getAccountIdWithString(kACCOUNT2);
 
-    auto const trustLineKey =
-        ripple::keylet::line(account, issuer, ripple::Currency{kCURRENCY}).key;
+    auto const trustLineKey = xrpl::keylet::line(account, issuer, xrpl::Currency{kCURRENCY}).key;
     auto const trustlineDeepFrozen = createRippleStateLedgerObject(
-        "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, ripple::lsfHighFreeze
+        "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, xrpl::lsfHighFreeze
     );
 
     ON_CALL(*backend_, doFetchLedgerObject(trustLineKey, kLEDGER_SEQ_OBJECT, _))
@@ -732,7 +728,7 @@ TEST_F(RPCHelpersTest, isFrozen_IssuerAndAccountIsSameWillNotBeFrozen)
 
     runSpawn([&](boost::asio::yield_context yield) {
         EXPECT_FALSE(isFrozen(
-            *backend_, kLEDGER_SEQ_OBJECT, account, ripple::Currency{kCURRENCY}, account, yield
+            *backend_, kLEDGER_SEQ_OBJECT, account, xrpl::Currency{kCURRENCY}, account, yield
         ));
     });
 }
@@ -741,13 +737,13 @@ TEST_F(RPCHelpersTest, isFrozen_IssuerTrustLineIsFrozen)
 {
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const issuer = getAccountIdWithString(kACCOUNT2);
-    ripple::Currency const currency{kCURRENCY};
+    xrpl::Currency const currency{kCURRENCY};
 
-    auto const trustLineKey = ripple::keylet::line(account, issuer, currency).key;
+    auto const trustLineKey = xrpl::keylet::line(account, issuer, currency).key;
 
     // issuer is higher than account, so the correct flag to set is High freeze
     auto const trustlineFrozen = createRippleStateLedgerObject(
-        "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, ripple::lsfHighFreeze
+        "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, xrpl::lsfHighFreeze
     );
 
     ON_CALL(*backend_, doFetchLedgerObject(trustLineKey, kLEDGER_SEQ_OBJECT, _))
@@ -762,13 +758,13 @@ TEST_F(RPCHelpersTest, isFrozen_IssuerWithLowFreezeIsNotFrozen)
 {
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const issuer = getAccountIdWithString(kACCOUNT2);
-    ripple::Currency const currency{kCURRENCY};
+    xrpl::Currency const currency{kCURRENCY};
 
-    auto const trustLineKey = ripple::keylet::line(account, issuer, currency).key;
+    auto const trustLineKey = xrpl::keylet::line(account, issuer, currency).key;
 
     // issuer is higher than account, but the flag set here is low freeze
     auto const trustlineFrozen = createRippleStateLedgerObject(
-        "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, ripple::lsfLowFreeze
+        "USD", kACCOUNT, 8, kACCOUNT, 1000, kACCOUNT2, 2000, kINDEX1, 2, xrpl::lsfLowFreeze
     );
 
     ON_CALL(*backend_, doFetchLedgerObject(trustLineKey, kLEDGER_SEQ_OBJECT, _))
@@ -783,9 +779,9 @@ TEST_F(RPCHelpersTest, AccountHolds_TrustLineNotfrozen)
 {
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const issuer = getAccountIdWithString(kACCOUNT2);
-    ripple::Currency const currency{kCURRENCY};
+    xrpl::Currency const currency{kCURRENCY};
 
-    auto const trustLineKey = ripple::keylet::line(account, issuer, currency).key;
+    auto const trustLineKey = xrpl::keylet::line(account, issuer, currency).key;
     auto const trustLine = createRippleStateLedgerObject(
         kCURRENCY, kACCOUNT2, 500, kACCOUNT, 1000, kACCOUNT2, 1000, kTXN_ID, 1, 0
     );
@@ -805,7 +801,7 @@ TEST_F(RPCHelpersTest, AccountHolds_TrustLineNotfrozen)
             yield
         );
         // Check issuer has a balance of 500
-        EXPECT_EQ(result, ripple::STAmount(getIssue(kCURRENCY, kACCOUNT2), 500));
+        EXPECT_EQ(result, xrpl::STAmount(getIssue(kCURRENCY, kACCOUNT2), 500));
     });
 }
 
@@ -813,9 +809,9 @@ TEST_F(RPCHelpersTest, AccountHolds_NoTrustLine)
 {
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const issuer = getAccountIdWithString(kACCOUNT2);
-    ripple::Currency const currency{kCURRENCY};
+    xrpl::Currency const currency{kCURRENCY};
 
-    auto const key = ripple::keylet::line(account, issuer, currency).key;
+    auto const key = xrpl::keylet::line(account, issuer, currency).key;
 
     // return no trustline found
     EXPECT_CALL(*backend_, doFetchLedgerObject(key, kLEDGER_SEQ_OBJECT, _))
@@ -833,7 +829,7 @@ TEST_F(RPCHelpersTest, AccountHolds_NoTrustLine)
             yield
         );
         // balance is 0 as trustline is frozen
-        EXPECT_EQ(result, ripple::STAmount(getIssue(kCURRENCY, kACCOUNT2), 0));
+        EXPECT_EQ(result, xrpl::STAmount(getIssue(kCURRENCY, kACCOUNT2), 0));
     });
 }
 
@@ -841,22 +837,13 @@ TEST_F(RPCHelpersTest, AccountHolds_TrustLineButFrozen)
 {
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const issuer = getAccountIdWithString(kACCOUNT2);
-    ripple::Currency const currency{kCURRENCY};
+    xrpl::Currency const currency{kCURRENCY};
 
     // balance of 500, but trustline is frozen
-    auto const trustLineKey = ripple::keylet::line(account, issuer, currency).key;
+    auto const trustLineKey = xrpl::keylet::line(account, issuer, currency).key;
 
     auto const trustLine = createRippleStateLedgerObject(
-        kCURRENCY,
-        kACCOUNT2,
-        500,
-        kACCOUNT,
-        1000,
-        kACCOUNT2,
-        1000,
-        kTXN_ID,
-        1,
-        ripple::lsfHighFreeze
+        kCURRENCY, kACCOUNT2, 500, kACCOUNT, 1000, kACCOUNT2, 1000, kTXN_ID, 1, xrpl::lsfHighFreeze
     );
 
     ON_CALL(*backend_, doFetchLedgerObject(trustLineKey, kLEDGER_SEQ_OBJECT, _))
@@ -873,7 +860,7 @@ TEST_F(RPCHelpersTest, AccountHolds_TrustLineButFrozen)
             true,
             yield
         );
-        EXPECT_EQ(result, ripple::STAmount(getIssue(kCURRENCY, kACCOUNT2), 0));
+        EXPECT_EQ(result, xrpl::STAmount(getIssue(kCURRENCY, kACCOUNT2), 0));
     });
 }
 
@@ -886,15 +873,15 @@ TEST_F(RPCHelpersTest, AccountHoldsFixLPTAmendmentDisabled)
         kLPTOKEN_CURRENCY, kAMM_ACCOUNT, 100, kACCOUNT, 100, kAMM_ACCOUNT, 100, kTXN_ID, 3
     );
     auto const lptRippleStateKk =
-        ripple::keylet::line(ammAccount, account, ripple::to_currency(kLPTOKEN_CURRENCY)).key;
+        xrpl::keylet::line(ammAccount, account, xrpl::to_currency(kLPTOKEN_CURRENCY)).key;
 
     // trustline fetched twice. once in accountHolds and once in isFrozen
     EXPECT_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_))
         .Times(2)
         .WillRepeatedly(Return(lptRippleState.getSerializer().peekData()));
 
-    auto const ammID = ripple::uint256{kAMM_ID};
-    auto const ammAccountKk = ripple::keylet::account(ammAccount).key;
+    auto const ammID = xrpl::uint256{kAMM_ID};
+    auto const ammAccountKk = xrpl::keylet::account(ammAccount).key;
     auto const ammAccountRoot =
         createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2, 0, ammID);
 
@@ -913,7 +900,7 @@ TEST_F(RPCHelpersTest, AccountHoldsFixLPTAmendmentDisabled)
             *mockAmendmentCenterPtr_,
             0,
             account,
-            ripple::to_currency(kLPTOKEN_CURRENCY),
+            xrpl::to_currency(kLPTOKEN_CURRENCY),
             ammAccount,
             true,
             yield
@@ -932,7 +919,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenNotAMMAccount)
         "USD", kACCOUNT2, 100, kACCOUNT, 100, kACCOUNT2, 100, kTXN_ID, 3
     );
     auto const usdRippleStateKk =
-        ripple::keylet::line(account2, account, ripple::to_currency("USD")).key;
+        xrpl::keylet::line(account2, account, xrpl::to_currency("USD")).key;
 
     // trustline fetched twice. once in accountHolds and once in isFrozen
     EXPECT_CALL(*backend_, doFetchLedgerObject(usdRippleStateKk, testing::_, testing::_))
@@ -945,7 +932,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenNotAMMAccount)
     )
         .WillOnce(Return(true));
 
-    auto const account2Kk = ripple::keylet::account(account2).key;
+    auto const account2Kk = xrpl::keylet::account(account2).key;
     auto const account2Root = createAccountRootObject(kACCOUNT2, 0, 2, 200, 2, kINDEX1, 2, 0);
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(account2Kk, testing::_, testing::_))
@@ -958,7 +945,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenNotAMMAccount)
             *mockAmendmentCenterPtr_,
             0,
             account,
-            ripple::to_currency("USD"),
+            xrpl::to_currency("USD"),
             account2,
             true,
             yield
@@ -978,7 +965,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset1Frozen)
         kLPTOKEN_CURRENCY, kAMM_ACCOUNT, 100, kACCOUNT, 100, kAMM_ACCOUNT, 100, kTXN_ID, 3
     );
     auto const lptRippleStateKk =
-        ripple::keylet::line(ammAccount, account, ripple::to_currency(kLPTOKEN_CURRENCY)).key;
+        xrpl::keylet::line(ammAccount, account, xrpl::to_currency(kLPTOKEN_CURRENCY)).key;
 
     // trustline fetched twice. once in accountHolds and once in isFrozen
     EXPECT_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_))
@@ -991,8 +978,8 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset1Frozen)
     )
         .WillOnce(Return(true));
 
-    auto const ammID = ripple::uint256{kAMM_ID};
-    auto const ammAccountKk = ripple::keylet::account(ammAccount).key;
+    auto const ammID = xrpl::uint256{kAMM_ID};
+    auto const ammAccountKk = xrpl::keylet::account(ammAccount).key;
     auto const ammAccountRoot =
         createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2, 0, ammID);
 
@@ -1001,18 +988,17 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset1Frozen)
         .Times(2)
         .WillRepeatedly(Return(ammAccountRoot.getSerializer().peekData()));
 
-    auto const amm = createAmmObject(
-        kAMM_ACCOUNT, "USD", kISSUER, "XRP", ripple::toBase58(ripple::xrpAccount())
-    );
+    auto const amm =
+        createAmmObject(kAMM_ACCOUNT, "USD", kISSUER, "XRP", xrpl::toBase58(xrpl::xrpAccount()));
     EXPECT_CALL(
-        *backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_)
+        *backend_, doFetchLedgerObject(xrpl::keylet::amm(ammID).key, testing::_, testing::_)
     )
         .Times(1)
         .WillOnce(Return(amm.getSerializer().peekData()));
 
-    auto const issuerKk = ripple::keylet::account(issuer).key;
+    auto const issuerKk = xrpl::keylet::account(issuer).key;
     auto const issuerAccountRoot =
-        createAccountRootObject(kISSUER, ripple::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2, 0);
+        createAccountRootObject(kISSUER, xrpl::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2, 0);
     EXPECT_CALL(*backend_, doFetchLedgerObject(issuerKk, testing::_, testing::_))
         .WillOnce(Return(issuerAccountRoot.getSerializer().peekData()));
 
@@ -1022,7 +1008,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset1Frozen)
             *mockAmendmentCenterPtr_,
             0,
             account,
-            ripple::to_currency(kLPTOKEN_CURRENCY),
+            xrpl::to_currency(kLPTOKEN_CURRENCY),
             ammAccount,
             true,
             yield
@@ -1042,7 +1028,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset2Frozen)
         kLPTOKEN_CURRENCY, kAMM_ACCOUNT, 100, kACCOUNT, 100, kAMM_ACCOUNT, 100, kTXN_ID, 3
     );
     auto const lptRippleStateKk =
-        ripple::keylet::line(ammAccount, account, ripple::to_currency(kLPTOKEN_CURRENCY)).key;
+        xrpl::keylet::line(ammAccount, account, xrpl::to_currency(kLPTOKEN_CURRENCY)).key;
 
     // trustline fetched twice. once in accountHolds and once in isFrozen
     EXPECT_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_)).Times(2);
@@ -1055,8 +1041,8 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset2Frozen)
     )
         .WillOnce(testing::Return(true));
 
-    auto const ammID = ripple::uint256{kAMM_ID};
-    auto const ammAccountKk = ripple::keylet::account(ammAccount).key;
+    auto const ammID = xrpl::uint256{kAMM_ID};
+    auto const ammAccountKk = xrpl::keylet::account(ammAccount).key;
     auto const ammAccountRoot =
         createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2, 0, ammID);
 
@@ -1065,17 +1051,16 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset2Frozen)
         .Times(2)
         .WillRepeatedly(Return(ammAccountRoot.getSerializer().peekData()));
 
-    auto const amm = createAmmObject(
-        kAMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "USD", kISSUER
-    );
+    auto const amm =
+        createAmmObject(kAMM_ACCOUNT, "XRP", xrpl::toBase58(xrpl::xrpAccount()), "USD", kISSUER);
     EXPECT_CALL(
-        *backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_)
+        *backend_, doFetchLedgerObject(xrpl::keylet::amm(ammID).key, testing::_, testing::_)
     )
         .WillOnce(Return(amm.getSerializer().peekData()));
 
-    auto const issuerKk = ripple::keylet::account(issuer).key;
+    auto const issuerKk = xrpl::keylet::account(issuer).key;
     auto const issuerAccountRoot =
-        createAccountRootObject(kISSUER, ripple::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2, 0);
+        createAccountRootObject(kISSUER, xrpl::lsfGlobalFreeze, 2, 200, 2, kINDEX1, 2, 0);
     EXPECT_CALL(*backend_, doFetchLedgerObject(issuerKk, testing::_, testing::_))
         .WillOnce(Return(issuerAccountRoot.getSerializer().peekData()));
 
@@ -1085,7 +1070,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenAsset2Frozen)
             *mockAmendmentCenterPtr_,
             0,
             account,
-            ripple::to_currency(kLPTOKEN_CURRENCY),
+            xrpl::to_currency(kLPTOKEN_CURRENCY),
             ammAccount,
             true,
             yield
@@ -1105,7 +1090,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenUnfrozen)
         kLPTOKEN_CURRENCY, kAMM_ACCOUNT, 100, kACCOUNT, 100, kAMM_ACCOUNT, 100, kTXN_ID, 3
     );
     auto const lptRippleStateKk =
-        ripple::keylet::line(ammAccount, account, ripple::to_currency(kLPTOKEN_CURRENCY)).key;
+        xrpl::keylet::line(ammAccount, account, xrpl::to_currency(kLPTOKEN_CURRENCY)).key;
 
     // trustline fetched twice. once in accountHolds and once in isFrozen
     EXPECT_CALL(*backend_, doFetchLedgerObject(lptRippleStateKk, testing::_, testing::_))
@@ -1118,8 +1103,8 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenUnfrozen)
     )
         .WillOnce(Return(true));
 
-    auto const ammID = ripple::uint256{kAMM_ID};
-    auto const ammAccountKk = ripple::keylet::account(ammAccount).key;
+    auto const ammID = xrpl::uint256{kAMM_ID};
+    auto const ammAccountKk = xrpl::keylet::account(ammAccount).key;
     auto const ammAccountRoot =
         createAccountRootObject(kAMM_ACCOUNT, 0, 2, 200, 2, kINDEX1, 2, 0, ammID);
 
@@ -1128,23 +1113,21 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenUnfrozen)
         .Times(2)
         .WillRepeatedly(Return(ammAccountRoot.getSerializer().peekData()));
 
-    auto const amm = createAmmObject(
-        kAMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "USD", kISSUER
-    );
+    auto const amm =
+        createAmmObject(kAMM_ACCOUNT, "XRP", xrpl::toBase58(xrpl::xrpAccount()), "USD", kISSUER);
     EXPECT_CALL(
-        *backend_, doFetchLedgerObject(ripple::keylet::amm(ammID).key, testing::_, testing::_)
+        *backend_, doFetchLedgerObject(xrpl::keylet::amm(ammID).key, testing::_, testing::_)
     )
         .WillOnce(Return(amm.getSerializer().peekData()));
 
-    auto const issuerKk = ripple::keylet::account(issuer).key;
+    auto const issuerKk = xrpl::keylet::account(issuer).key;
     auto const issuerAccountRoot = createAccountRootObject(kISSUER, 0, 2, 200, 2, kINDEX1, 2, 0);
     EXPECT_CALL(*backend_, doFetchLedgerObject(issuerKk, testing::_, testing::_))
         .WillOnce(Return(issuerAccountRoot.getSerializer().peekData()));
 
     auto const usdRippleState =
         createRippleStateLedgerObject("USD", kISSUER, 100, kACCOUNT, 100, kISSUER, 100, kTXN_ID, 3);
-    auto const usdRippleStateKk =
-        ripple::keylet::line(issuer, account, ripple::to_currency("USD")).key;
+    auto const usdRippleStateKk = xrpl::keylet::line(issuer, account, xrpl::to_currency("USD")).key;
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(usdRippleStateKk, testing::_, testing::_))
         .WillOnce(Return(usdRippleState.getSerializer().peekData()));
@@ -1155,7 +1138,7 @@ TEST_F(RPCHelpersTest, AccountHoldsLPTokenUnfrozen)
             *mockAmendmentCenterPtr_,
             0,
             account,
-            ripple::to_currency(kLPTOKEN_CURRENCY),
+            xrpl::to_currency(kLPTOKEN_CURRENCY),
             ammAccount,
             true,
             yield

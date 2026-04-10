@@ -623,7 +623,7 @@ TEST_F(RPCUnsubscribeTest, Books)
     auto const book = parsedBookMaybe.value();
 
     EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubBook(book, _)).Times(1);
-    EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubBook(ripple::reversed(book), _)).Times(1);
+    EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubBook(xrpl::reversed(book), _)).Times(1);
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{UnsubscribeHandler{mockSubscriptionManagerPtr_}};

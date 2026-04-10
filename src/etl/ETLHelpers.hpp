@@ -130,7 +130,7 @@ public:
  * @param numMarkers Total markers to partition for
  * @return The markers
  */
-std::vector<ripple::uint256>
+std::vector<xrpl::uint256>
 getMarkers(size_t numMarkers);
 
 }  // namespace etl

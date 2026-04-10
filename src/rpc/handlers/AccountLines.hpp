@@ -150,9 +150,9 @@ private:
     static void
     addLine(
         std::vector<LineResponse>& lines,
-        ripple::SLE const& lineSle,
-        ripple::AccountID const& account,
-        std::optional<ripple::AccountID> const& peerAccount
+        xrpl::SLE const& lineSle,
+        xrpl::AccountID const& account,
+        std::optional<xrpl::AccountID> const& peerAccount
     );
 
 private:

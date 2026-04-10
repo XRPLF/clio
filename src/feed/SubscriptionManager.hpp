@@ -143,7 +143,7 @@ public:
      */
     void
     pubBookChanges(
-        ripple::LedgerHeader const& lgrInfo,
+        xrpl::LedgerHeader const& lgrInfo,
         std::vector<data::TransactionAndMetadata> const& transactions
     ) final;
 
@@ -168,10 +168,7 @@ public:
      * @param subscriber
      */
     void
-    subProposedAccount(
-        ripple::AccountID const& account,
-        SubscriberSharedPtr const& subscriber
-    ) final;
+    subProposedAccount(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Unsubscribe to the proposed transactions feed for particular account.
@@ -180,7 +177,7 @@ public:
      */
     void
     unsubProposedAccount(
-        ripple::AccountID const& account,
+        xrpl::AccountID const& account,
         SubscriberSharedPtr const& subscriber
     ) final;
 
@@ -216,8 +213,8 @@ public:
      */
     void
     pubLedger(
-        ripple::LedgerHeader const& lgrInfo,
-        ripple::Fees const& fees,
+        xrpl::LedgerHeader const& lgrInfo,
+        xrpl::Fees const& fees,
         std::string const& ledgerRange,
         std::uint32_t txnCount
     ) final;
@@ -285,7 +282,7 @@ public:
      * @param subscriber
      */
     void
-    subAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
+    subAccount(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Unsubscribe to the transactions feed for particular account.
@@ -293,7 +290,7 @@ public:
      * @param subscriber The subscriber to unsubscribe
      */
     void
-    unsubAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
+    unsubAccount(xrpl::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Subscribe to the transactions feed, only receive feed when particular order book is
@@ -302,7 +299,7 @@ public:
      * @param subscriber
      */
     void
-    subBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber) final;
+    subBook(xrpl::Book const& book, SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Unsubscribe to the transactions feed for particular order book.
@@ -310,7 +307,7 @@ public:
      * @param subscriber
      */
     void
-    unsubBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber) final;
+    unsubBook(xrpl::Book const& book, SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Forward the transactions feed.
@@ -320,7 +317,7 @@ public:
     void
     pubTransaction(
         data::TransactionAndMetadata const& txMeta,
-        ripple::LedgerHeader const& lgrInfo
+        xrpl::LedgerHeader const& lgrInfo
     ) final;
 
     /**

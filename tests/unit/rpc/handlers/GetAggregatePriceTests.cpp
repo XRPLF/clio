@@ -53,16 +53,16 @@ mockLedgerObject(
         "70726F7669646572",
         64u,
         time,
-        ripple::Blob(8, 'a'),
-        ripple::Blob(8, 'a'),
+        xrpl::Blob(8, 'a'),
+        xrpl::Blob(8, 'a'),
         kRANGE_MAX - 4,
-        ripple::uint256{tx},
+        xrpl::uint256{tx},
         createPriceDataSeries({createOraclePriceData(
-            price, ripple::to_currency("USD"), ripple::to_currency("XRP"), scale
+            price, xrpl::to_currency("USD"), xrpl::to_currency("XRP"), scale
         )})
     );
 
-    auto const oracleIndex = ripple::keylet::oracle(getAccountIdWithString(account), docId).key;
+    auto const oracleIndex = xrpl::keylet::oracle(getAccountIdWithString(account), docId).key;
     EXPECT_CALL(backend, doFetchLedgerObject(oracleIndex, kRANGE_MAX, _))
         .WillOnce(Return(oracleObject.getSerializer().peekData()));
 }
@@ -616,16 +616,16 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewLedgerObjectHasNoPricePair)
     constexpr auto kDOCUMENT_ID = 1;
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID, kTX1, 1e3, 2);  // 10
 
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256(kTX1), _))
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256(kTX1), _))
         .WillRepeatedly(Return(createOracleSetTxWithMetadata(
             kACCOUNT,
             kRANGE_MAX,
             123,
             1,
             4321u,
-            createPriceDataSeries({createOraclePriceData(
-                1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2
-            )}),
+            createPriceDataSeries(
+                {createOraclePriceData(1e3, xrpl::to_currency("EUR"), xrpl::to_currency("XRP"), 2)}
+            ),
             kINDEX,
             true,
             kTX2
@@ -911,7 +911,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoOracleEntryFound)
 
     constexpr auto kDOCUMENT_ID = 1;
     auto const oracleIndex =
-        ripple::keylet::oracle(getAccountIdWithString(kACCOUNT), kDOCUMENT_ID).key;
+        xrpl::keylet::oracle(getAccountIdWithString(kACCOUNT), kDOCUMENT_ID).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(oracleIndex, kRANGE_MAX, _))
         .WillOnce(Return(std::nullopt));
 
@@ -1311,20 +1311,20 @@ TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
 
     constexpr auto kDOCUMENT_ID = 1;
     auto const oracleIndex =
-        ripple::keylet::oracle(getAccountIdWithString(kACCOUNT), kDOCUMENT_ID).key;
+        xrpl::keylet::oracle(getAccountIdWithString(kACCOUNT), kDOCUMENT_ID).key;
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID, kTX1, 1e3, 2);  // 10
     // return a tx which contains NewFields
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256(kTX1), _))
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256(kTX1), _))
         .WillOnce(Return(createOracleSetTxWithMetadata(
             kACCOUNT,
             kRANGE_MAX,
             123,
             1,
             4321u,
-            createPriceDataSeries({createOraclePriceData(
-                1e3, ripple::to_currency("JPY"), ripple::to_currency("XRP"), 2
-            )}),
-            ripple::to_string(oracleIndex),
+            createPriceDataSeries(
+                {createOraclePriceData(1e3, xrpl::to_currency("JPY"), xrpl::to_currency("XRP"), 2)}
+            ),
+            xrpl::to_string(oracleIndex),
             false,
             kTX1
         )));
@@ -1378,35 +1378,35 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
 
     constexpr auto kDOCUMENT_ID = 1;
     auto const oracleIndex =
-        ripple::keylet::oracle(getAccountIdWithString(kACCOUNT), kDOCUMENT_ID).key;
+        xrpl::keylet::oracle(getAccountIdWithString(kACCOUNT), kDOCUMENT_ID).key;
     mockLedgerObject(*backend_, kACCOUNT, kDOCUMENT_ID, kTX1, 1e3, 2);  // 10
 
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256(kTX1), _))
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256(kTX1), _))
         .WillOnce(Return(createOracleSetTxWithMetadata(
             kACCOUNT,
             kRANGE_MAX,
             123,
             1,
             4321u,
-            createPriceDataSeries({createOraclePriceData(
-                1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2
-            )}),
-            ripple::to_string(oracleIndex),
+            createPriceDataSeries(
+                {createOraclePriceData(1e3, xrpl::to_currency("EUR"), xrpl::to_currency("XRP"), 2)}
+            ),
+            xrpl::to_string(oracleIndex),
             false,
             kTX2
         )));
 
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256(kTX2), _))
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256(kTX2), _))
         .WillRepeatedly(Return(createOracleSetTxWithMetadata(
             kACCOUNT,
             kRANGE_MAX,
             123,
             1,
             4321u,
-            createPriceDataSeries({createOraclePriceData(
-                1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2
-            )}),
-            ripple::to_string(oracleIndex),
+            createPriceDataSeries(
+                {createOraclePriceData(1e3, xrpl::to_currency("EUR"), xrpl::to_currency("XRP"), 2)}
+            ),
+            xrpl::to_string(oracleIndex),
             false,
             kTX2
         )));

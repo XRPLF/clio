@@ -231,7 +231,7 @@ SubscribeHandler::subscribeToBooks(
                 if (!output.asks)
                     output.asks = boost::json::array();
                 getOrderBook(internalBook.book, *(output.bids));
-                getOrderBook(ripple::reversed(internalBook.book), *(output.asks));
+                getOrderBook(xrpl::reversed(internalBook.book), *(output.asks));
             } else {
                 if (!output.offers)
                     output.offers = boost::json::array();
@@ -242,7 +242,7 @@ SubscribeHandler::subscribeToBooks(
         subscriptions_->subBook(internalBook.book, session);
 
         if (internalBook.both)
-            subscriptions_->subBook(ripple::reversed(internalBook.book), session);
+            subscriptions_->subBook(xrpl::reversed(internalBook.book), session);
     }
 }
 

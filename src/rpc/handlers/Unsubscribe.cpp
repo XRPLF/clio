@@ -151,7 +151,7 @@ UnsubscribeHandler::unsubscribeFromBooks(
         subscriptions_->unsubBook(orderBook.book, session);
 
         if (orderBook.both)
-            subscriptions_->unsubBook(ripple::reversed(orderBook.book), session);
+            subscriptions_->unsubBook(xrpl::reversed(orderBook.book), session);
     }
 }
 

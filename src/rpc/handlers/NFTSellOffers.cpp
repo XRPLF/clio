@@ -5,7 +5,7 @@
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Indexes.h>
 
-using namespace ripple;
+using namespace xrpl;
 
 namespace rpc {
 

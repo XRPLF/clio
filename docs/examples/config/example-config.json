@@ -7,7 +7,7 @@
     "cassandra": {
       "contact_points": "127.0.0.1",
       "port": 9042,
-      "keyspace": "clio",
+      "keyspace": "clio_5",
       "replication_factor": 1,
       "table_prefix": "",
       "max_write_requests_outstanding": 25000,
@@ -31,8 +31,8 @@
   "etl_sources": [
     {
       "ip": "127.0.0.1",
-      "ws_port": "6006",
-      "grpc_port": "50051"
+      "ws_port": "6007",
+      "grpc_port": "50052"
     }
   ],
   "forwarding": {

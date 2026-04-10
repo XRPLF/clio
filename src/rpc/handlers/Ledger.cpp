@@ -63,7 +63,7 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
                 return toJsonWithBinaryTx(tx, ctx.apiVersion);
             };
 
-            auto const isoTimeStr = ripple::to_string_iso(lgrInfo.closeTime);
+            auto const isoTimeStr = xrpl::to_string_iso(lgrInfo.closeTime);
 
             auto const expandTxJsonV2 = [&](data::TransactionAndMetadata const& tx) {
                 auto [txn, meta] = toExpandedJson(tx, ctx.apiVersion);
@@ -78,7 +78,7 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
                     }
 
                     entry[JS(close_time_iso)] = isoTimeStr;
-                    entry[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+                    entry[JS(ledger_hash)] = xrpl::strHex(lgrInfo.hash);
                     if (txn.contains(JS(hash))) {
                         entry[JS(hash)] = txn.at(JS(hash));
                         txn.erase(JS(hash));
@@ -105,10 +105,10 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
                     if (input.ownerFunds) {
                         // check the type of tx
                         auto const [tx, meta] = rpc::deserializeTxPlusMeta(obj);
-                        if (tx and tx->isFieldPresent(ripple::sfTransactionType) and
-                            tx->getTxnType() == ripple::ttOFFER_CREATE) {
-                            auto const account = tx->getAccountID(ripple::sfAccount);
-                            auto const amount = tx->getFieldAmount(ripple::sfTakerGets);
+                        if (tx and tx->isFieldPresent(xrpl::sfTransactionType) and
+                            tx->getTxnType() == xrpl::ttOFFER_CREATE) {
+                            auto const account = tx->getAccountID(xrpl::sfAccount);
+                            auto const amount = tx->getFieldAmount(xrpl::sfTakerGets);
 
                             // If the offer create is not self funded then add the
                             // owner balance
@@ -137,7 +137,7 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
                 std::move_iterator(hashes.begin()),
                 std::move_iterator(hashes.end()),
                 std::back_inserter(jsonTxs),
-                [](auto hash) { return boost::json::string(ripple::strHex(hash)); }
+                [](auto hash) { return boost::json::string(xrpl::strHex(hash)); }
             );
         }
     }
@@ -150,13 +150,13 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
 
         for (auto const& obj : diff) {
             boost::json::object entry;
-            entry["object_id"] = ripple::strHex(obj.key);
+            entry["object_id"] = xrpl::strHex(obj.key);
 
             if (input.binary) {
-                entry["object"] = ripple::strHex(obj.blob);
+                entry["object"] = xrpl::strHex(obj.blob);
             } else if (!obj.blob.empty()) {
-                ripple::STLedgerEntry const sle{
-                    ripple::SerialIter{obj.blob.data(), obj.blob.size()}, obj.key
+                xrpl::STLedgerEntry const sle{
+                    xrpl::SerialIter{obj.blob.data(), obj.blob.size()}, obj.key
                 };
                 entry["object"] = toJson(sle);
             } else {
@@ -167,7 +167,7 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
         }
     }
 
-    output.ledgerHash = ripple::strHex(lgrInfo.hash);
+    output.ledgerHash = xrpl::strHex(lgrInfo.hash);
     output.ledgerIndex = lgrInfo.seq;
 
     return output;

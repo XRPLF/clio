@@ -220,7 +220,7 @@ TEST_F(RPCVaultInfoHandlerTest, VaultIDFailsVaultDeserializationReturnsEntryNotF
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     // Mock: vault_id exists, but data is not a valid vault object
-    ripple::uint256 const vaultKey = ripple::uint256{kVAULT_ID};
+    xrpl::uint256 const vaultKey = xrpl::uint256{kVAULT_ID};
     EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKey, kSEQ, _))
         .WillOnce(Return(std::nullopt));  // intentionally invalid vault
 
@@ -251,8 +251,8 @@ TEST_F(RPCVaultInfoHandlerTest, MissingIssuanceObject)
     auto const ledgerHeader = createLedgerHeader(kINDEX1, kSEQ);
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
-    ripple::uint192 const mptSharesID{123};
-    ripple::uint256 const prevTxId{2};
+    xrpl::uint192 const mptSharesID{123};
+    xrpl::uint256 const prevTxId{2};
     uint32_t const prevTxSeq = 3;
     uint64_t const ownerNode = 4;
 
@@ -268,8 +268,8 @@ TEST_F(RPCVaultInfoHandlerTest, MissingIssuanceObject)
         prevTxSeq
     );
 
-    auto const vaultKeylet = ripple::keylet::vault(ripple::uint256{kVAULT_ID}).key;
-    auto const mptIssuance = ripple::keylet::mptIssuance(mptSharesID).key;
+    auto const vaultKeylet = xrpl::keylet::vault(xrpl::uint256{kVAULT_ID}).key;
+    auto const mptIssuance = xrpl::keylet::mptIssuance(mptSharesID).key;
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKeylet, kSEQ, _))
         .WillOnce(Return(vault.getSerializer().peekData()));
@@ -341,8 +341,8 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     // Vault params
-    ripple::uint192 const mptSharesID{123};
-    ripple::uint256 const prevTxId{2};
+    xrpl::uint192 const mptSharesID{123};
+    xrpl::uint256 const prevTxId{2};
     uint32_t const prevTxSeq = 3;
     uint64_t const ownerNode = 4;
 
@@ -361,8 +361,8 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByVaultID)
 
     // Set up keylet based on vaultID
     auto const issuance = createMptIssuanceObject(kACCOUNT, kSEQ, "metadata");
-    auto const vaultKeylet = ripple::keylet::vault(ripple::uint256{kVAULT_ID}).key;
-    auto const mptIssuance = ripple::keylet::mptIssuance(mptSharesID).key;
+    auto const vaultKeylet = xrpl::keylet::vault(xrpl::uint256{kVAULT_ID}).key;
+    auto const mptIssuance = xrpl::keylet::mptIssuance(mptSharesID).key;
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(vaultKeylet, kSEQ, _))
         .WillOnce(Return(vault.getSerializer().peekData()));
@@ -433,8 +433,8 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     // Vault params
-    ripple::uint192 const mptSharesID{123};
-    ripple::uint256 const prevTxId{2};
+    xrpl::uint192 const mptSharesID{123};
+    xrpl::uint256 const prevTxId{2};
     uint32_t const prevTxSeq = 3;
     uint64_t const ownerNode = 4;
 
@@ -455,9 +455,9 @@ TEST_F(RPCVaultInfoHandlerTest, ValidVaultObjectQueryByOwnerAndSeq)
 
     auto const accountRoot = createAccountRootObject(kACCOUNT, 0, kSEQ, 200, 2, kINDEX1, 2);
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKeylet = ripple::keylet::account(account).key;
-    auto const vaultKeylet = ripple::keylet::vault(account, kSEQ).key;
-    auto const mptIssuance = ripple::keylet::mptIssuance(mptSharesID).key;
+    auto const accountKeylet = xrpl::keylet::account(account).key;
+    auto const vaultKeylet = xrpl::keylet::vault(account, kSEQ).key;
+    auto const mptIssuance = xrpl::keylet::mptIssuance(mptSharesID).key;
 
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKeylet, kSEQ, _))
         .WillOnce(Return(accountRoot.getSerializer().peekData()));

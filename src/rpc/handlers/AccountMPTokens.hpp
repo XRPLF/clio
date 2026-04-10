@@ -128,7 +128,7 @@ public:
 
 private:
     static void
-    addMPToken(std::vector<MPTokenResponse>& mpts, ripple::SLE const& sle);
+    addMPToken(std::vector<MPTokenResponse>& mpts, xrpl::SLE const& sle);
 
 private:
     /**

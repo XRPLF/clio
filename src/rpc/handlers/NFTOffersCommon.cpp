@@ -32,10 +32,10 @@
 #include <utility>
 #include <vector>
 
-using namespace ripple;
+using namespace xrpl;
 using namespace ::rpc;
 
-namespace ripple {
+namespace xrpl {
 
 // TODO: move to some common serialization impl place
 inline static void
@@ -59,15 +59,15 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, SLE const& offer
     jv = std::move(obj);
 }
 
-}  // namespace ripple
+}  // namespace xrpl
 
 namespace rpc {
 
 NFTOffersHandlerBase::Result
 NFTOffersHandlerBase::iterateOfferDirectory(
     Input input,
-    ripple::uint256 const& tokenID,
-    ripple::Keylet const& directory,
+    xrpl::uint256 const& tokenID,
+    xrpl::Keylet const& directory,
     boost::asio::yield_context yield
 ) const
 {
@@ -88,7 +88,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
         return Error{Status{RippledError::rpcOBJECT_NOT_FOUND, "notFound"}};
 
     auto output = Output{.nftID = input.nftID, .offers = {}, .limit = {}, .marker = {}};
-    auto offers = std::vector<ripple::SLE>{};
+    auto offers = std::vector<xrpl::SLE>{};
     auto reserve = input.limit;
     auto cursor = uint256{};
     auto startHint = uint64_t{0ul};
@@ -108,12 +108,12 @@ NFTOffersHandlerBase::iterateOfferDirectory(
             return nullptr;
         }();
 
-        if (!sle || sle->getFieldU16(ripple::sfLedgerEntryType) != ripple::ltNFTOKEN_OFFER ||
-            tokenID != sle->getFieldH256(ripple::sfNFTokenID)) {
+        if (!sle || sle->getFieldU16(xrpl::sfLedgerEntryType) != xrpl::ltNFTOKEN_OFFER ||
+            tokenID != sle->getFieldH256(xrpl::sfNFTokenID)) {
             return Error{Status{RippledError::rpcINVALID_PARAMS}};
         }
 
-        startHint = sle->getFieldU64(ripple::sfNFTokenOfferNode);
+        startHint = sle->getFieldU64(xrpl::sfNFTokenOfferNode);
         output.offers.push_back(*sle);
         offers.reserve(reserve);
     } else {
@@ -129,8 +129,8 @@ NFTOffersHandlerBase::iterateOfferDirectory(
         lgrInfo.seq,
         reserve,
         yield,
-        [&offers](ripple::SLE&& offer) {
-            if (offer.getType() == ripple::ltNFTOKEN_OFFER) {
+        [&offers](xrpl::SLE&& offer) {
+            if (offer.getType() == xrpl::ltNFTOKEN_OFFER) {
                 offers.push_back(std::move(offer));
                 return true;
             }

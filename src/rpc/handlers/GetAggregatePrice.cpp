@@ -60,47 +60,46 @@ GetAggregatePriceHandler::process(
     // sorted descending by lastUpdateTime, ascending by AssetPrice
     using TimestampPricesBiMap = boost::bimaps::bimap<
         boost::bimaps::multiset_of<std::uint32_t, std::greater<std::uint32_t>>,
-        boost::bimaps::multiset_of<ripple::STAmount>>;
+        boost::bimaps::multiset_of<xrpl::STAmount>>;
 
     TimestampPricesBiMap timestampPricesBiMap;
 
     for (auto const& oracle : input.oracles) {
-        auto const oracleIndex = ripple::keylet::oracle(oracle.account, oracle.documentId).key;
+        auto const oracleIndex = xrpl::keylet::oracle(oracle.account, oracle.documentId).key;
 
         auto const oracleObject =
             sharedPtrBackend_->fetchLedgerObject(oracleIndex, lgrInfo.seq, ctx.yield);
         if (not oracleObject)
             continue;
 
-        ripple::STLedgerEntry const oracleSle{
-            ripple::SerialIter{oracleObject->data(), oracleObject->size()}, oracleIndex
+        xrpl::STLedgerEntry const oracleSle{
+            xrpl::SerialIter{oracleObject->data(), oracleObject->size()}, oracleIndex
         };
 
         tracebackOracleObject(ctx.yield, oracleSle, [&](auto const& node) {
-            auto const& series = node.getFieldArray(ripple::sfPriceDataSeries);
+            auto const& series = node.getFieldArray(xrpl::sfPriceDataSeries);
             // Find the token pair entry with the price
             if (auto const iter = std::find_if(
                     series.begin(),
                     series.end(),
-                    [&](ripple::STObject const& o) -> bool {
-                        return o.getFieldCurrency(ripple::sfBaseAsset).getText() ==
+                    [&](xrpl::STObject const& o) -> bool {
+                        return o.getFieldCurrency(xrpl::sfBaseAsset).getText() ==
                             input.baseAsset and
-                            o.getFieldCurrency(ripple::sfQuoteAsset).getText() ==
-                            input.quoteAsset and
-                            o.isFieldPresent(ripple::sfAssetPrice);
+                            o.getFieldCurrency(xrpl::sfQuoteAsset).getText() == input.quoteAsset and
+                            o.isFieldPresent(xrpl::sfAssetPrice);
                     }
                 );
                 iter != series.end()) {
-                auto const price = iter->getFieldU64(ripple::sfAssetPrice);
+                auto const price = iter->getFieldU64(xrpl::sfAssetPrice);
                 // Asset price is after scale, so we need to get the negative of the scale
-                auto const scale = iter->isFieldPresent(ripple::sfScale)
-                    ? -static_cast<int>(iter->getFieldU8(ripple::sfScale))
+                auto const scale = iter->isFieldPresent(xrpl::sfScale)
+                    ? -static_cast<int>(iter->getFieldU8(xrpl::sfScale))
                     : 0;
 
                 timestampPricesBiMap.insert(
                     TimestampPricesBiMap::value_type(
-                        node.getFieldU32(ripple::sfLastUpdateTime),
-                        ripple::STAmount{ripple::noIssue(), price, scale}
+                        node.getFieldU32(xrpl::sfLastUpdateTime),
+                        xrpl::STAmount{xrpl::noIssue(), price, scale}
                     )
                 );
                 return true;
@@ -110,14 +109,14 @@ GetAggregatePriceHandler::process(
     }
 
     if (timestampPricesBiMap.empty())
-        return Error{Status{ripple::rpcOBJECT_NOT_FOUND}};
+        return Error{Status{xrpl::rpcOBJECT_NOT_FOUND}};
 
     auto const latestTime = timestampPricesBiMap.left.begin()->first;
 
     Output out{
         .time = latestTime,
         .trimStats = std::nullopt,
-        .ledgerHash = ripple::to_string(lgrInfo.hash),
+        .ledgerHash = xrpl::to_string(lgrInfo.hash),
         .ledgerIndex = lgrInfo.seq,
         .median = ""
     };
@@ -137,15 +136,15 @@ GetAggregatePriceHandler::process(
 
     auto const getStats = [](TimestampPricesBiMap::right_const_iterator begin,
                              TimestampPricesBiMap::right_const_iterator end) -> Stats {
-        ripple::STAmount avg{ripple::noIssue(), 0, 0};
-        ripple::Number sd{0};
+        xrpl::STAmount avg{xrpl::noIssue(), 0, 0};
+        xrpl::Number sd{0};
         std::uint16_t const size = std::distance(begin, end);
-        avg = std::accumulate(begin, end, avg, [&](ripple::STAmount const& acc, auto const& it) {
+        avg = std::accumulate(begin, end, avg, [&](xrpl::STAmount const& acc, auto const& it) {
             return acc + it.first;
         });
-        avg = divide(avg, ripple::STAmount{ripple::noIssue(), size, 0}, ripple::noIssue());
+        avg = divide(avg, xrpl::STAmount{xrpl::noIssue(), size, 0}, xrpl::noIssue());
         if (size > 1) {
-            sd = std::accumulate(begin, end, sd, [&](ripple::Number const& acc, auto const& it) {
+            sd = std::accumulate(begin, end, sd, [&](xrpl::Number const& acc, auto const& it) {
                 return acc + ((it.first - avg) * (it.first - avg));
             });
             sd = root2(sd / (size - 1));
@@ -174,11 +173,11 @@ GetAggregatePriceHandler::process(
     auto const median = [&, size = out.extireStats.size]() {
         auto const middle = size / 2;
         if ((size % 2) == 0) {
-            static ripple::STAmount const kTWO{ripple::noIssue(), 2, 0};
+            static xrpl::STAmount const kTWO{xrpl::noIssue(), 2, 0};
             auto it = itAdvance(timestampPricesBiMap.right.begin(), middle - 1);
             auto const& a1 = it->first;
             auto const& a2 = (++it)->first;
-            return divide(a1 + a2, kTWO, ripple::noIssue());
+            return divide(a1 + a2, kTWO, xrpl::noIssue());
         }
         return itAdvance(timestampPricesBiMap.right.begin(), middle)->first;
     }();
@@ -190,14 +189,14 @@ GetAggregatePriceHandler::process(
 void
 GetAggregatePriceHandler::tracebackOracleObject(
     boost::asio::yield_context yield,
-    ripple::STObject const& oracleObject,
-    std::function<bool(ripple::STObject const&)> const& callback
+    xrpl::STObject const& oracleObject,
+    std::function<bool(xrpl::STObject const&)> const& callback
 ) const
 {
     static constexpr auto kHISTORY_MAX = 3;
 
-    std::optional<ripple::STObject> optOracleObject = oracleObject;
-    std::optional<ripple::STObject> optCurrentObject = optOracleObject;
+    std::optional<xrpl::STObject> optOracleObject = oracleObject;
+    std::optional<xrpl::STObject> optCurrentObject = optOracleObject;
 
     bool isNew = false;
     bool noOracleFound = false;
@@ -215,7 +214,7 @@ GetAggregatePriceHandler::tracebackOracleObject(
         if (++history > kHISTORY_MAX)
             return;
 
-        auto const prevTxIndex = optCurrentObject->getFieldH256(ripple::sfPreviousTxnID);
+        auto const prevTxIndex = optCurrentObject->getFieldH256(xrpl::sfPreviousTxnID);
 
         auto const prevTx = sharedPtrBackend_->fetchTransaction(prevTxIndex, yield);
         if (not prevTx)
@@ -224,13 +223,13 @@ GetAggregatePriceHandler::tracebackOracleObject(
         noOracleFound = true;
         auto const [_, meta] = deserializeTxPlusMeta(*prevTx);
 
-        for (ripple::STObject const& node : meta->getFieldArray(ripple::sfAffectedNodes)) {
-            if (node.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltORACLE) {
+        for (xrpl::STObject const& node : meta->getFieldArray(xrpl::sfAffectedNodes)) {
+            if (node.getFieldU16(xrpl::sfLedgerEntryType) != xrpl::ltORACLE) {
                 continue;
             }
             noOracleFound = false;
             optCurrentObject = node;
-            isNew = node.isFieldPresent(ripple::sfNewFields);
+            isNew = node.isFieldPresent(xrpl::sfNewFields);
             // if a meta is for the new and this is the first
             // look-up then it's the meta for the tx that
             // created the current object; i.e. there is no
@@ -239,8 +238,8 @@ GetAggregatePriceHandler::tracebackOracleObject(
                 return;
 
             optOracleObject = isNew
-                ? dynamic_cast<ripple::STObject const&>(node.peekAtField(ripple::sfNewFields))
-                : dynamic_cast<ripple::STObject const&>(node.peekAtField(ripple::sfFinalFields));
+                ? dynamic_cast<xrpl::STObject const&>(node.peekAtField(xrpl::sfNewFields))
+                : dynamic_cast<xrpl::STObject const&>(node.peekAtField(xrpl::sfFinalFields));
 
             break;
         }
@@ -268,7 +267,7 @@ tag_invoke(boost::json::value_to_tag<GetAggregatePriceHandler::Input>, boost::js
                 .documentId = boost::json::value_to<std::uint64_t>(
                     oracle.as_object().at(JS(oracle_document_id))
                 ),
-                .account = *util::parseBase58Wrapper<ripple::AccountID>(
+                .account = *util::parseBase58Wrapper<xrpl::AccountID>(
                     boost::json::value_to<std::string>(oracle.as_object().at(JS(account)))
                 )
             }
@@ -301,7 +300,7 @@ tag_invoke(
         {JS(entire_set),
          boost::json::object{
              {JS(mean), output.extireStats.avg.getText()},
-             {JS(standard_deviation), ripple::to_string(output.extireStats.sd)},
+             {JS(standard_deviation), xrpl::to_string(output.extireStats.sd)},
              {JS(size), output.extireStats.size}
          }},
         {JS(median), output.median}
@@ -310,7 +309,7 @@ tag_invoke(
     if (output.trimStats) {
         jv.as_object()[JS(trimmed_set)] = boost::json::object{
             {JS(mean), output.trimStats->avg.getText()},
-            {JS(standard_deviation), ripple::to_string(output.trimStats->sd)},
+            {JS(standard_deviation), xrpl::to_string(output.trimStats->sd)},
             {JS(size), output.trimStats->size}
         };
     }

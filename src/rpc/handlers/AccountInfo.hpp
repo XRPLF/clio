@@ -39,12 +39,12 @@ public:
     struct Output {
         uint32_t ledgerIndex;
         std::string ledgerHash;
-        ripple::STLedgerEntry accountData;
+        xrpl::STLedgerEntry accountData;
         bool isDisallowIncomingEnabled = false;
         bool isClawbackEnabled = false;
         bool isTokenEscrowEnabled = false;
         uint32_t apiVersion;
-        std::optional<std::vector<ripple::STLedgerEntry>> signerLists;
+        std::optional<std::vector<xrpl::STLedgerEntry>> signerLists;
         // validated should be sent via framework
         bool validated = true;
     };

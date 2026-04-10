@@ -52,7 +52,7 @@ FeatureHandler::process(FeatureHandler::Input const& input, Context const& ctx) 
 
     auto searchPredicate = [search = input.feature](auto const& feature) {
         if (search) {
-            return ripple::to_string(feature.feature) == search.value() or
+            return xrpl::to_string(feature.feature) == search.value() or
                 feature.name == search.value();
         }
         return true;
@@ -63,7 +63,7 @@ FeatureHandler::process(FeatureHandler::Input const& input, Context const& ctx) 
         all | vs::filter(searchPredicate), std::back_inserter(filtered), [&](auto const& feature) {
             return Output::Feature{
                 .name = feature.name,
-                .key = ripple::to_string(feature.feature),
+                .key = xrpl::to_string(feature.feature),
                 .supported = feature.isSupportedByClio and feature.isSupportedByXRPL,
             };
         }
@@ -90,7 +90,7 @@ FeatureHandler::process(FeatureHandler::Input const& input, Context const& ctx) 
 
     return Output{
         .features = std::move(features),
-        .ledgerHash = ripple::strHex(lgrInfo.hash),
+        .ledgerHash = xrpl::strHex(lgrInfo.hash),
         .ledgerIndex = lgrInfo.seq,
         .inlineResult = input.feature.has_value()
     };

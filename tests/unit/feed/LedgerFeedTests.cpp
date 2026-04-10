@@ -71,7 +71,7 @@ TEST_F(FeedLedgerTest, SubPub)
     // test publish
     EXPECT_CALL(*mockSessionPtr, send(sharedStringJsonEq(kLEDGER_PUB))).Times(1);
     auto const ledgerHeader2 = createLedgerHeader(kLEDGER_HASH, 31);
-    auto fee2 = ripple::Fees();
+    auto fee2 = xrpl::Fees();
     fee2.reserve = 10;
     testFeedPtr->pub(ledgerHeader2, fee2, "10-31", 8, networkID);
 
@@ -123,7 +123,7 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
     EXPECT_EQ(testFeedPtr->count(), 0);
 
     auto const ledgerHeader2 = createLedgerHeader(kLEDGER_HASH, 31);
-    auto fee2 = ripple::Fees();
+    auto fee2 = xrpl::Fees();
     fee2.reserve = 10;
     // no error
     testFeedPtr->pub(ledgerHeader2, fee2, "10-31", 8, networkID);

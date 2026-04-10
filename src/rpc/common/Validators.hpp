@@ -460,8 +460,8 @@ checkIsU32Numeric(std::string_view sv);
 
 template <class HexType>
     requires(
-        std::is_same_v<HexType, ripple::uint160> || std::is_same_v<HexType, ripple::uint192> ||
-        std::is_same_v<HexType, ripple::uint256>
+        std::is_same_v<HexType, xrpl::uint160> || std::is_same_v<HexType, xrpl::uint192> ||
+        std::is_same_v<HexType, xrpl::uint256>
     )
 MaybeError
 makeHexStringValidator(boost::json::value const& value, std::string_view key)
@@ -574,7 +574,7 @@ struct CustomValidators final {
     static CustomValidator subscribeAccountsValidator;
 
     /**
-     * @brief Validates an asset (ripple::Issue).
+     * @brief Validates an asset (xrpl::Issue).
      *
      * Used by amm_info.
      */
@@ -618,7 +618,7 @@ struct Hex256ItemType final {
 
         // loop through each item in the array and make sure it is uint256 hex string
         for (auto const& elem : res.as_array()) {
-            ripple::uint256 num;
+            xrpl::uint256 num;
             if (!elem.is_string() || !num.parseHex(elem.as_string())) {
                 return Error{
                     Status{RippledError::rpcINVALID_PARAMS, "Item is not a valid uint256 type."}

@@ -9,8 +9,8 @@
 std::string
 hexStringToBinaryString(std::string const& hex);
 
-ripple::uint256
+xrpl::uint256
 binaryStringToUint256(std::string const& bin);
 
 std::string
-ledgerHeaderToBinaryString(ripple::LedgerHeader const& info);
+ledgerHeaderToBinaryString(xrpl::LedgerHeader const& info);

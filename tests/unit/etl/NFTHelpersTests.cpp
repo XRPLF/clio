@@ -41,12 +41,12 @@ protected:
     static void
     verifyNFTTransactionsData(
         NFTTransactionsData const& data,
-        ripple::STTx const& sttx,
-        ripple::TxMeta const& txMeta,
+        xrpl::STTx const& sttx,
+        xrpl::TxMeta const& txMeta,
         std::string_view nftId
     )
     {
-        EXPECT_EQ(data.tokenID, ripple::uint256(nftId));
+        EXPECT_EQ(data.tokenID, xrpl::uint256(nftId));
         EXPECT_EQ(data.ledgerSequence, txMeta.getLgrSeq());
         EXPECT_EQ(data.transactionIndex, txMeta.getIndex());
         EXPECT_EQ(data.txHash, sttx.getTransactionID());
@@ -55,33 +55,33 @@ protected:
     static void
     verifyNFTsData(
         NFTsData const& data,
-        ripple::STTx const& sttx,
-        ripple::TxMeta const& txMeta,
+        xrpl::STTx const& sttx,
+        xrpl::TxMeta const& txMeta,
         std::string_view nftId,
         std::optional<std::string> const& owner
     )
     {
-        EXPECT_EQ(data.tokenID, ripple::uint256(nftId));
+        EXPECT_EQ(data.tokenID, xrpl::uint256(nftId));
         EXPECT_EQ(data.ledgerSequence, txMeta.getLgrSeq());
         EXPECT_EQ(data.transactionIndex, txMeta.getIndex());
         if (owner)
             EXPECT_EQ(data.owner, getAccountIdWithString(*owner));
 
-        if (sttx.getTxnType() == ripple::ttNFTOKEN_MINT ||
-            sttx.getTxnType() == ripple::ttNFTOKEN_MODIFY) {
+        if (sttx.getTxnType() == xrpl::ttNFTOKEN_MINT ||
+            sttx.getTxnType() == xrpl::ttNFTOKEN_MODIFY) {
             EXPECT_TRUE(data.uri.has_value());
-            EXPECT_EQ(*data.uri, sttx.getFieldVL(ripple::sfURI));
+            EXPECT_EQ(*data.uri, sttx.getFieldVL(xrpl::sfURI));
         } else {
             EXPECT_FALSE(data.uri.has_value());
         }
 
-        if (sttx.getTxnType() == ripple::ttNFTOKEN_BURN) {
+        if (sttx.getTxnType() == xrpl::ttNFTOKEN_BURN) {
             EXPECT_TRUE(data.isBurned);
         } else {
             EXPECT_FALSE(data.isBurned);
         }
 
-        if (sttx.getTxnType() == ripple::ttNFTOKEN_MODIFY) {
+        if (sttx.getTxnType() == xrpl::ttNFTOKEN_MODIFY) {
             EXPECT_TRUE(data.onlyUriChanged);
         } else {
             EXPECT_FALSE(data.onlyUriChanged);
@@ -91,16 +91,16 @@ protected:
 
 TEST_F(NFTHelpersTest, NFTDataFromFailedTx)
 {
-    auto const tx = createNftModifyTxWithMetadata(kACCOUNT, kNFT_ID, ripple::Blob{});
+    auto const tx = createNftModifyTxWithMetadata(kACCOUNT, kNFT_ID, xrpl::Blob{});
 
     // Inject a failed result
-    ripple::SerialIter sitMeta(ripple::makeSlice(tx.metadata));
-    ripple::STObject objMeta(sitMeta, ripple::sfMetadata);
-    objMeta.setFieldU8(ripple::sfTransactionResult, ripple::tecINCOMPLETE);
+    xrpl::SerialIter sitMeta(xrpl::makeSlice(tx.metadata));
+    xrpl::STObject objMeta(sitMeta, xrpl::sfMetadata);
+    objMeta.setFieldU8(xrpl::sfTransactionResult, xrpl::tecINCOMPLETE);
 
-    ripple::TxMeta const txMeta(ripple::uint256(kTX), 1, objMeta.getSerializer().peekData());
+    xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, objMeta.getSerializer().peekData());
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(
-        txMeta, ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()})
+        txMeta, xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()})
     );
 
     EXPECT_EQ(nftTxs.size(), 0);
@@ -116,17 +116,17 @@ TEST_F(NFTHelpersTest, NotNFTTx)
         1,
         4321u,
         createPriceDataSeries(
-            {createOraclePriceData(1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2)}
+            {createOraclePriceData(1e3, xrpl::to_currency("EUR"), xrpl::to_currency("XRP"), 2)}
         ),
         kPAGE_INDEX,
         false,
         kTX
     );
 
-    ripple::TxMeta const txMeta(ripple::uint256(kTX), 1, tx.metadata);
+    xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
 
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(
-        txMeta, ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()})
+        txMeta, xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()})
     );
 
     EXPECT_EQ(nftTxs.size(), 0);
@@ -136,15 +136,14 @@ TEST_F(NFTHelpersTest, NotNFTTx)
 TEST_F(NFTHelpersTest, NFTModifyWithURI)
 {
     std::string const uri("1234567890A");
-    ripple::Blob const uriBlob(uri.begin(), uri.end());
+    xrpl::Blob const uriBlob(uri.begin(), uri.end());
 
     auto const tx = createNftModifyTxWithMetadata(kACCOUNT, kNFT_ID, uriBlob);
-    ripple::TxMeta const txMeta(ripple::uint256(kTX), 1, tx.metadata);
+    xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
 
-    auto const sttx =
-        ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(
-        txMeta, ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()})
+        txMeta, xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()})
     );
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -154,10 +153,9 @@ TEST_F(NFTHelpersTest, NFTModifyWithURI)
 
 TEST_F(NFTHelpersTest, NFTModifyWithoutURI)
 {
-    auto const tx = createNftModifyTxWithMetadata(kACCOUNT, kNFT_ID, ripple::Blob{});
-    ripple::TxMeta const txMeta(ripple::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const tx = createNftModifyTxWithMetadata(kACCOUNT, kNFT_ID, xrpl::Blob{});
+    xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -168,10 +166,9 @@ TEST_F(NFTHelpersTest, NFTModifyWithoutURI)
 TEST_F(NFTHelpersTest, NFTMintFromModifiedNode)
 {
     auto const tx = createMintNftTxWithMetadata(kACCOUNT, 1, 20, 1, kNFT_ID);
-    ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
-    txMeta.getNodes()[0].setFieldH256(ripple::sfLedgerIndex, ripple::uint256(kPAGE_INDEX));
-    auto const sttx =
-        ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    xrpl::TxMeta txMeta(xrpl::uint256(kTX), 1, tx.metadata);
+    txMeta.getNodes()[0].setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256(kPAGE_INDEX));
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -185,11 +182,11 @@ TEST_F(NFTHelpersTest, NFTMintCantFindNewNFT)
     auto const tx = createMintNftTxWithMetadataOfCreatedNode(
         kACCOUNT, 1, 20, 1, std::nullopt, std::nullopt, kPAGE_INDEX
     );
-    ripple::TxMeta const txMeta(ripple::uint256(kTX), 1, tx.metadata);
+    xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
 
     EXPECT_THROW(
         etl::getNFTDataFromTx(
-            txMeta, ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()})
+            txMeta, xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()})
         ),
         std::runtime_error
     );
@@ -198,12 +195,11 @@ TEST_F(NFTHelpersTest, NFTMintCantFindNewNFT)
 TEST_F(NFTHelpersTest, NFTMintFromCreatedNode)
 {
     std::string const uri("1234567890A");
-    ripple::Blob const uriBlob(uri.begin(), uri.end());
+    xrpl::Blob const uriBlob(uri.begin(), uri.end());
     auto const tx =
         createMintNftTxWithMetadataOfCreatedNode(kACCOUNT, 1, 20, 1, kNFT_ID, uri, kPAGE_INDEX);
-    ripple::TxMeta const txMeta(ripple::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
 
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
@@ -217,9 +213,8 @@ TEST_F(NFTHelpersTest, NFTMintWithoutUriField)
     auto const tx = createMintNftTxWithMetadataOfCreatedNode(
         kACCOUNT, 1, 20, 1, kNFT_ID, std::nullopt, kPAGE_INDEX
     );
-    ripple::TxMeta const txMeta(ripple::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
 
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
@@ -233,12 +228,12 @@ TEST_F(NFTHelpersTest, NFTMintZeroMetaNode)
     auto const tx = createMintNftTxWithMetadataOfCreatedNode(
         kACCOUNT, 1, 20, 1, kNFT_ID, std::nullopt, kPAGE_INDEX
     );
-    ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
+    xrpl::TxMeta txMeta(xrpl::uint256(kTX), 1, tx.metadata);
     txMeta.getNodes().clear();
 
     EXPECT_THROW(
         etl::getNFTDataFromTx(
-            txMeta, ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()})
+            txMeta, xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()})
         ),
         std::runtime_error
     );
@@ -247,10 +242,9 @@ TEST_F(NFTHelpersTest, NFTMintZeroMetaNode)
 TEST_F(NFTHelpersTest, NFTBurnFromDeletedNode)
 {
     auto const tx = createNftBurnTxWithMetadataOfDeletedNode(kACCOUNT, kNFT_ID);
-    ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
-    txMeta.getNodes()[1].setFieldH256(ripple::sfLedgerIndex, ripple::uint256(kPAGE_INDEX));
-    auto const sttx =
-        ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    xrpl::TxMeta txMeta(xrpl::uint256(kTX), 1, tx.metadata);
+    txMeta.getNodes()[1].setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256(kPAGE_INDEX));
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -261,12 +255,12 @@ TEST_F(NFTHelpersTest, NFTBurnFromDeletedNode)
 TEST_F(NFTHelpersTest, NFTBurnZeroMetaNode)
 {
     auto const tx = createNftBurnTxWithMetadataOfDeletedNode(kACCOUNT, kNFT_ID);
-    ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
+    xrpl::TxMeta txMeta(xrpl::uint256(kTX), 1, tx.metadata);
     txMeta.getNodes().clear();
 
     EXPECT_THROW(
         etl::getNFTDataFromTx(
-            txMeta, ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()})
+            txMeta, xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()})
         ),
         std::runtime_error
     );
@@ -275,11 +269,10 @@ TEST_F(NFTHelpersTest, NFTBurnZeroMetaNode)
 TEST_F(NFTHelpersTest, NFTBurnFromModifiedNode)
 {
     auto const tx = createNftBurnTxWithMetadataOfModifiedNode(kACCOUNT, kNFT_ID);
-    ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
-    txMeta.getNodes()[0].setFieldH256(ripple::sfLedgerIndex, ripple::uint256(kPAGE_INDEX));
+    xrpl::TxMeta txMeta(xrpl::uint256(kTX), 1, tx.metadata);
+    txMeta.getNodes()[0].setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256(kPAGE_INDEX));
 
-    auto const sttx =
-        ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -292,10 +285,9 @@ TEST_F(NFTHelpersTest, NFTCancelOffer)
     auto const tx = createCancelNftOffersTxWithMetadata(
         kACCOUNT, 1, 2, std::vector<std::string>{kNFT_ID, kNFT_ID2}
     );
-    ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
-    txMeta.getNodes()[0].setFieldH256(ripple::sfLedgerIndex, ripple::uint256(kPAGE_INDEX));
-    auto const sttx =
-        ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    xrpl::TxMeta txMeta(xrpl::uint256(kTX), 1, tx.metadata);
+    txMeta.getNodes()[0].setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256(kPAGE_INDEX));
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 2);
@@ -309,9 +301,8 @@ TEST_F(NFTHelpersTest, NFTCancelOfferContainsDuplicateNFTs)
     auto const tx = createCancelNftOffersTxWithMetadata(
         kACCOUNT, 1, 2, std::vector<std::string>{kNFT_ID2, kNFT_ID, kNFT_ID2, kNFT_ID}
     );
-    ripple::TxMeta const txMeta(ripple::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 2);
@@ -326,13 +317,13 @@ TEST_F(NFTHelpersTest, UniqueNFTDatas)
 
     auto const generateNFTsData = [](char const* nftID, std::uint32_t txIndex) {
         auto const tx = createCreateNftOfferTxWithMetadata(kACCOUNT, 1, 50, nftID, 123, kOFFER1);
-        ripple::SerialIter s{tx.metadata.data(), tx.metadata.size()};
-        ripple::STObject meta{s, ripple::sfMetadata};
-        meta.setFieldU32(ripple::sfTransactionIndex, txIndex);
-        ripple::TxMeta const txMeta(ripple::uint256(kTX), 1, meta.getSerializer().peekData());
+        xrpl::SerialIter s{tx.metadata.data(), tx.metadata.size()};
+        xrpl::STObject meta{s, xrpl::sfMetadata};
+        meta.setFieldU32(xrpl::sfTransactionIndex, txIndex);
+        xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, meta.getSerializer().peekData());
 
         auto const account = getAccountIdWithString(kACCOUNT);
-        return NFTsData{ripple::uint256(nftID), account, ripple::Blob{}, txMeta};
+        return NFTsData{xrpl::uint256(nftID), account, xrpl::Blob{}, txMeta};
     };
 
     nftDatas.push_back(generateNFTsData(kNFT_ID, 3));
@@ -350,16 +341,15 @@ TEST_F(NFTHelpersTest, UniqueNFTDatas)
     EXPECT_EQ(uniqueNFTDatas[1].ledgerSequence, 1);
     EXPECT_EQ(uniqueNFTDatas[0].transactionIndex, 5);
     EXPECT_EQ(uniqueNFTDatas[1].transactionIndex, 3);
-    EXPECT_EQ(uniqueNFTDatas[0].tokenID, ripple::uint256(kNFT_ID2));
-    EXPECT_EQ(uniqueNFTDatas[1].tokenID, ripple::uint256(kNFT_ID));
+    EXPECT_EQ(uniqueNFTDatas[0].tokenID, xrpl::uint256(kNFT_ID2));
+    EXPECT_EQ(uniqueNFTDatas[1].tokenID, xrpl::uint256(kNFT_ID));
 }
 
 TEST_F(NFTHelpersTest, NFTAcceptBuyerOffer)
 {
     auto const tx = createAcceptNftBuyerOfferTxWithMetadata(kACCOUNT, 1, 2, kNFT_ID, kOFFER_ID);
-    ripple::TxMeta const txMeta(ripple::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -372,13 +362,13 @@ TEST_F(NFTHelpersTest, NFTAcceptBuyerOffer)
 TEST_F(NFTHelpersTest, NFTAcceptBuyerOfferCheckOfferIDFail)
 {
     auto const tx = createAcceptNftBuyerOfferTxWithMetadata(kACCOUNT, 1, 2, kNFT_ID, kOFFER_ID);
-    ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
+    xrpl::TxMeta txMeta(xrpl::uint256(kTX), 1, tx.metadata);
     // inject a different offer id
-    txMeta.getNodes()[0].setFieldH256(ripple::sfLedgerIndex, ripple::uint256(kPAGE_INDEX));
+    txMeta.getNodes()[0].setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256(kPAGE_INDEX));
 
     EXPECT_THROW(
         etl::getNFTDataFromTx(
-            txMeta, ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()})
+            txMeta, xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()})
         ),
         std::runtime_error
     );
@@ -389,9 +379,8 @@ TEST_F(NFTHelpersTest, NFTAcceptSellerOfferFromCreatedNode)
     auto const tx = createAcceptNftSellerOfferTxWithMetadata(
         kACCOUNT2, 1, 2, kNFT_ID, kOFFER_ID, kPAGE_INDEX, true
     );
-    ripple::TxMeta const txMeta(ripple::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -405,9 +394,8 @@ TEST_F(NFTHelpersTest, NFTAcceptSellerOfferFromModifiedNode)
     auto const tx = createAcceptNftSellerOfferTxWithMetadata(
         kACCOUNT2, 1, 2, kNFT_ID, kOFFER_ID, kPAGE_INDEX, false
     );
-    ripple::TxMeta const txMeta(ripple::uint256(kTX), 1, tx.metadata);
-    auto const sttx =
-        ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -422,11 +410,11 @@ TEST_F(NFTHelpersTest, NFTAcceptSellerOfferCheckFail)
     auto const tx = createAcceptNftSellerOfferTxWithMetadata(
         kACCOUNT, 1, 2, kNFT_ID, kOFFER_ID, kPAGE_INDEX, true
     );
-    ripple::TxMeta const txMeta(ripple::uint256(kTX), 1, tx.metadata);
+    xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 1, tx.metadata);
 
     EXPECT_THROW(
         etl::getNFTDataFromTx(
-            txMeta, ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()})
+            txMeta, xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()})
         ),
         std::runtime_error
     );
@@ -437,13 +425,13 @@ TEST_F(NFTHelpersTest, NFTAcceptSellerOfferNotInMeta)
     auto const tx = createAcceptNftSellerOfferTxWithMetadata(
         kACCOUNT, 1, 2, kNFT_ID, kOFFER_ID, kPAGE_INDEX, true
     );
-    ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
+    xrpl::TxMeta txMeta(xrpl::uint256(kTX), 1, tx.metadata);
     // inject a different offer id
-    txMeta.getNodes()[0].setFieldH256(ripple::sfLedgerIndex, ripple::uint256(kPAGE_INDEX));
+    txMeta.getNodes()[0].setFieldH256(xrpl::sfLedgerIndex, xrpl::uint256(kPAGE_INDEX));
 
     EXPECT_THROW(
         etl::getNFTDataFromTx(
-            txMeta, ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()})
+            txMeta, xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()})
         ),
         std::runtime_error
     );
@@ -454,12 +442,12 @@ TEST_F(NFTHelpersTest, NFTAcceptSellerOfferZeroMetaNode)
     auto const tx = createAcceptNftSellerOfferTxWithMetadata(
         kACCOUNT2, 1, 2, kNFT_ID, kOFFER_ID, kPAGE_INDEX, true
     );
-    ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
+    xrpl::TxMeta txMeta(xrpl::uint256(kTX), 1, tx.metadata);
     txMeta.getNodes().clear();
 
     EXPECT_THROW(
         etl::getNFTDataFromTx(
-            txMeta, ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()})
+            txMeta, xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()})
         ),
         std::runtime_error
     );
@@ -470,16 +458,16 @@ TEST_F(NFTHelpersTest, NFTAcceptSellerOfferIDNotInMetaData)
     auto const tx = createAcceptNftSellerOfferTxWithMetadata(
         kACCOUNT2, 1, 2, kNFT_ID, kOFFER_ID, kPAGE_INDEX, true
     );
-    ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
+    xrpl::TxMeta txMeta(xrpl::uint256(kTX), 1, tx.metadata);
     // The first node is offer, the second is nft page. Change the offer id to something else
     txMeta.getNodes()[0]
-        .getField(ripple::sfFinalFields)
-        .downcast<ripple::STObject>()
-        .setFieldH256(ripple::sfNFTokenID, ripple::uint256(kNFT_ID2));
+        .getField(xrpl::sfFinalFields)
+        .downcast<xrpl::STObject>()
+        .setFieldH256(xrpl::sfNFTokenID, xrpl::uint256(kNFT_ID2));
 
     EXPECT_THROW(
         etl::getNFTDataFromTx(
-            txMeta, ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()})
+            txMeta, xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()})
         ),
         std::runtime_error
     );
@@ -488,9 +476,8 @@ TEST_F(NFTHelpersTest, NFTAcceptSellerOfferIDNotInMetaData)
 TEST_F(NFTHelpersTest, NFTCreateOffer)
 {
     auto const tx = createCreateNftOfferTxWithMetadata(kACCOUNT, 1, 2, kNFT_ID, 1, kOFFER_ID);
-    ripple::TxMeta const txMeta(ripple::uint256(kTX), 5, tx.metadata);
-    auto const sttx =
-        ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
+    xrpl::TxMeta const txMeta(xrpl::uint256(kTX), 5, tx.metadata);
+    auto const sttx = xrpl::STTx(xrpl::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
 
     EXPECT_EQ(nftTxs.size(), 1);
@@ -502,8 +489,8 @@ TEST_F(NFTHelpersTest, NFTDataFromLedgerObject)
 {
     std::string const url1 = "abcd1";
     std::string const url2 = "abcd2";
-    ripple::Blob const uri1Blob(url1.begin(), url1.end());
-    ripple::Blob const uri2Blob(url2.begin(), url2.end());
+    xrpl::Blob const uri1Blob(url1.begin(), url1.end());
+    xrpl::Blob const uri2Blob(url2.begin(), url2.end());
 
     auto const account = getAccountIdWithString(kACCOUNT);
     auto const nftPage = createNftTokenPage({{kNFT_ID, url1}, {kNFT_ID2, url2}}, std::nullopt);
@@ -522,14 +509,14 @@ TEST_F(NFTHelpersTest, NFTDataFromLedgerObject)
     auto const nftDatas = etl::getNFTDataFromObj(kSEQ, key, blob);
 
     EXPECT_EQ(nftDatas.size(), 2);
-    EXPECT_EQ(nftDatas[0].tokenID, ripple::uint256(kNFT_ID));
+    EXPECT_EQ(nftDatas[0].tokenID, xrpl::uint256(kNFT_ID));
     EXPECT_EQ(*(nftDatas[0].uri), uri1Blob);
     EXPECT_FALSE(nftDatas[0].onlyUriChanged);
     EXPECT_EQ(nftDatas[0].owner, account);
     EXPECT_EQ(nftDatas[0].ledgerSequence, kSEQ);
     EXPECT_FALSE(nftDatas[0].isBurned);
 
-    EXPECT_EQ(nftDatas[1].tokenID, ripple::uint256(kNFT_ID2));
+    EXPECT_EQ(nftDatas[1].tokenID, xrpl::uint256(kNFT_ID2));
     EXPECT_EQ(*(nftDatas[1].uri), uri2Blob);
     EXPECT_FALSE(nftDatas[1].onlyUriChanged);
     EXPECT_EQ(nftDatas[1].owner, account);

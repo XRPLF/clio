@@ -12,9 +12,9 @@ namespace util {
  * @brief Calculates the SHA256 sum of a string.
  *
  * @param s The string to hash.
- * @return The SHA256 sum as a ripple::uint256.
+ * @return The SHA256 sum as a xrpl::uint256.
  */
-ripple::uint256
+xrpl::uint256
 sha256sum(std::string_view s);
 
 /**
@@ -33,7 +33,7 @@ sha256sumString(std::string_view s);
  * without requiring all data to be in memory at once.
  */
 class Sha256sum {
-    ripple::sha256_hasher hasher_;
+    xrpl::sha256_hasher hasher_;
 
 public:
     /**
@@ -58,11 +58,11 @@ public:
     }
 
     /**
-     * @brief Finalize hash and return result as ripple::uint256.
+     * @brief Finalize hash and return result as xrpl::uint256.
      *
      * @return The SHA-256 hash.
      */
-    ripple::uint256
+    xrpl::uint256
     finalize() &&;
 };
 

@@ -41,7 +41,7 @@ TransactionEntryHandler::process(
 
     output.ledgerHeader = expectedLgrInfo.value();
     auto const dbRet =
-        sharedPtrBackend_->fetchTransaction(ripple::uint256{input.txHash.c_str()}, ctx.yield);
+        sharedPtrBackend_->fetchTransaction(xrpl::uint256{input.txHash.c_str()}, ctx.yield);
     // Note: transaction_entry is meant to only search a specified ledger for
     // the specified transaction. tx searches the entire range of history. For
     // rippled, having two separate commands made sense, as tx would use SQLite
@@ -78,11 +78,11 @@ tag_invoke(
         {metaKey, output.metadata},
         {JS(tx_json), output.tx},
         {JS(ledger_index), output.ledgerHeader->seq},
-        {JS(ledger_hash), ripple::strHex(output.ledgerHeader->hash)},
+        {JS(ledger_hash), xrpl::strHex(output.ledgerHeader->hash)},
     };
 
     if (output.apiVersion > 1u) {
-        jv.as_object()[JS(close_time_iso)] = ripple::to_string_iso(output.ledgerHeader->closeTime);
+        jv.as_object()[JS(close_time_iso)] = xrpl::to_string_iso(output.ledgerHeader->closeTime);
         if (output.tx.contains(JS(hash))) {
             jv.as_object()[JS(hash)] = output.tx.at(JS(hash));
             jv.as_object()[JS(tx_json)].as_object().erase(JS(hash));

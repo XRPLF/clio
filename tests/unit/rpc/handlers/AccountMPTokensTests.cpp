@@ -178,8 +178,8 @@ TEST_P(AccountMPTokensParameterTest, InvalidParams)
 TEST_F(RPCAccountMPTokensHandlerTest, NonExistLedgerViaLedgerHash)
 {
     // mock fetchLedgerByHash to return empty
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
-        .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLEDGER_HASH}, _))
+        .WillOnce(Return(std::optional<xrpl::LedgerHeader>{}));
 
     auto const input = json::parse(
         fmt::format(
@@ -206,7 +206,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
     // mock fetchLedgerBySequence to return empty
     EXPECT_CALL(*backend_, fetchLedgerBySequence)
-        .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillOnce(Return(std::optional<xrpl::LedgerHeader>{}));
 
     auto const input = json::parse(
         fmt::format(
@@ -231,7 +231,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
     // mock fetchLedgerBySequence to return empty
     EXPECT_CALL(*backend_, fetchLedgerBySequence)
-        .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
+        .WillOnce(Return(std::optional<xrpl::LedgerHeader>{}));
 
     auto const input = json::parse(
         fmt::format(
@@ -255,7 +255,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, NonExistLedgerViaLedgerIntIndex)
 TEST_F(RPCAccountMPTokensHandlerTest, LedgerSeqOutOfRangeByHash)
 {
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 31);
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLEDGER_HASH}, _))
         .WillOnce(Return(ledgerHeader));
 
     auto const input = json::parse(
@@ -305,7 +305,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, LedgerSeqOutOfRangeByIndex)
 TEST_F(RPCAccountMPTokensHandlerTest, NonExistAccount)
 {
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30);
-    EXPECT_CALL(*backend_, fetchLedgerByHash(ripple::uint256{kLEDGER_HASH}, _))
+    EXPECT_CALL(*backend_, fetchLedgerByHash(xrpl::uint256{kLEDGER_HASH}, _))
         .WillOnce(Return(ledgerHeader));
     // fetch account object return empty
     EXPECT_CALL(*backend_, doFetchLedgerObject).WillOnce(Return(std::optional<Blob>{}));
@@ -337,13 +337,13 @@ TEST_F(RPCAccountMPTokensHandlerTest, DefaultParameters)
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    auto const owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    ripple::STObject const ownerDir = createOwnerDirLedgerObject(
-        {ripple::uint256{kTOKEN_INDEX1}, ripple::uint256{kTOKEN_INDEX2}}, kTOKEN_INDEX1
+    xrpl::STObject const ownerDir = createOwnerDirLedgerObject(
+        {xrpl::uint256{kTOKEN_INDEX1}, xrpl::uint256{kTOKEN_INDEX2}}, kTOKEN_INDEX1
     );
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
@@ -351,9 +351,9 @@ TEST_F(RPCAccountMPTokensHandlerTest, DefaultParameters)
     auto const bbs = std::vector<Blob>{
         createMpTokenObject(
             kACCOUNT,
-            ripple::uint192(kISSUANCE_ID_HEX),
+            xrpl::uint192(kISSUANCE_ID_HEX),
             kTOKEN1_AMOUNT,
-            ripple::lsfMPTLocked,
+            xrpl::lsfMPTLocked,
             kTOKEN1_LOCKED_AMOUNT
         )
             .getSerializer()
@@ -361,9 +361,9 @@ TEST_F(RPCAccountMPTokensHandlerTest, DefaultParameters)
 
         createMpTokenObject(
             kACCOUNT,
-            ripple::uint192(kISSUANCE_ID_HEX),
+            xrpl::uint192(kISSUANCE_ID_HEX),
             kTOKEN2_AMOUNT,
-            ripple::lsfMPTAuthorized,
+            xrpl::lsfMPTAuthorized,
             std::nullopt
         )
             .getSerializer()
@@ -406,18 +406,18 @@ TEST_F(RPCAccountMPTokensHandlerTest, UseLimit)
     ON_CALL(*backend_, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    auto const owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const indexes = std::vector<ripple::uint256>(50, ripple::uint256{kTOKEN_INDEX1});
+    auto const indexes = std::vector<xrpl::uint256>(50, xrpl::uint256{kTOKEN_INDEX1});
     auto const bbs = [&]() {
         std::vector<Blob> v;
         v.reserve(50);
         for (int i = 0; i < 50; ++i) {
             v.push_back(
-                createMpTokenObject(kACCOUNT, ripple::uint192(kISSUANCE_ID_HEX), i, 0, std::nullopt)
+                createMpTokenObject(kACCOUNT, xrpl::uint192(kISSUANCE_ID_HEX), i, 0, std::nullopt)
                     .getSerializer()
                     .peekData()
             );
@@ -425,8 +425,8 @@ TEST_F(RPCAccountMPTokensHandlerTest, UseLimit)
         return v;
     }();
 
-    ripple::STObject ownerDir = createOwnerDirLedgerObject(indexes, kTOKEN_INDEX1);
-    ownerDir.setFieldU64(ripple::sfIndexNext, 99);
+    xrpl::STObject ownerDir = createOwnerDirLedgerObject(indexes, kTOKEN_INDEX1);
+    ownerDir.setFieldU64(xrpl::sfIndexNext, 99);
     ON_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(7);
@@ -505,10 +505,9 @@ TEST_F(RPCAccountMPTokensHandlerTest, MarkerOutput)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    auto const ownerDir2Kk =
-        ripple::keylet::page(ripple::keylet::ownerDir(account), kNEXT_PAGE).key;
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const ownerDirKk = xrpl::keylet::ownerDir(account).key;
+    auto const ownerDir2Kk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), kNEXT_PAGE).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
@@ -517,7 +516,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, MarkerOutput)
         v.reserve(kLIMIT);
         for (int i = 0; i < kLIMIT; ++i) {
             v.push_back(
-                createMpTokenObject(kACCOUNT, ripple::uint192(kISSUANCE_ID_HEX), i, 0, std::nullopt)
+                createMpTokenObject(kACCOUNT, xrpl::uint192(kISSUANCE_ID_HEX), i, 0, std::nullopt)
                     .getSerializer()
                     .peekData()
             );
@@ -526,18 +525,18 @@ TEST_F(RPCAccountMPTokensHandlerTest, MarkerOutput)
     }();
     EXPECT_CALL(*backend_, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    std::vector<ripple::uint256> indexes1;
+    std::vector<xrpl::uint256> indexes1;
     indexes1.reserve(10);
     for (int i = 0; i < 10; ++i) {
         indexes1.emplace_back(kTOKEN_INDEX1);
     }
-    ripple::STObject ownerDir1 = createOwnerDirLedgerObject(indexes1, kTOKEN_INDEX1);
-    ownerDir1.setFieldU64(ripple::sfIndexNext, kNEXT_PAGE);
+    xrpl::STObject ownerDir1 = createOwnerDirLedgerObject(indexes1, kTOKEN_INDEX1);
+    ownerDir1.setFieldU64(xrpl::sfIndexNext, kNEXT_PAGE);
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillByDefault(Return(ownerDir1.getSerializer().peekData()));
 
-    ripple::STObject ownerDir2 = createOwnerDirLedgerObject(indexes1, kTOKEN_INDEX2);
-    ownerDir2.setFieldU64(ripple::sfIndexNext, 0);
+    xrpl::STObject ownerDir2 = createOwnerDirLedgerObject(indexes1, kTOKEN_INDEX2);
+    ownerDir2.setFieldU64(xrpl::sfIndexNext, 0);
     ON_CALL(*backend_, doFetchLedgerObject(ownerDir2Kk, _, _))
         .WillByDefault(Return(ownerDir2.getSerializer().peekData()));
     EXPECT_CALL(*backend_, doFetchLedgerObject).Times(3);
@@ -574,18 +573,18 @@ TEST_F(RPCAccountMPTokensHandlerTest, MarkerInput)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
+    auto const accountKk = xrpl::keylet::account(account).key;
     ON_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
-    auto const ownerDirKk = ripple::keylet::page(ripple::keylet::ownerDir(account), kNEXT_PAGE).key;
+    auto const ownerDirKk = xrpl::keylet::page(xrpl::keylet::ownerDir(account), kNEXT_PAGE).key;
 
-    auto const indexes = std::vector<ripple::uint256>(kLIMIT, ripple::uint256{kTOKEN_INDEX1});
+    auto const indexes = std::vector<xrpl::uint256>(kLIMIT, xrpl::uint256{kTOKEN_INDEX1});
     auto const bbs = [&]() {
         std::vector<Blob> v;
         v.reserve(kLIMIT);
         for (int i = 0; i < kLIMIT; ++i) {
             v.push_back(
-                createMpTokenObject(kACCOUNT, ripple::uint192(kISSUANCE_ID_HEX), i, 0, std::nullopt)
+                createMpTokenObject(kACCOUNT, xrpl::uint192(kISSUANCE_ID_HEX), i, 0, std::nullopt)
                     .getSerializer()
                     .peekData()
             );
@@ -593,8 +592,8 @@ TEST_F(RPCAccountMPTokensHandlerTest, MarkerInput)
         return v;
     }();
 
-    ripple::STObject ownerDir = createOwnerDirLedgerObject(indexes, kTOKEN_INDEX1);
-    ownerDir.setFieldU64(ripple::sfIndexNext, 0);
+    xrpl::STObject ownerDir = createOwnerDirLedgerObject(indexes, kTOKEN_INDEX1);
+    ownerDir.setFieldU64(xrpl::sfIndexNext, 0);
     ON_CALL(*backend_, doFetchLedgerObject(ownerDirKk, _, _))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
 
@@ -630,13 +629,13 @@ TEST_F(RPCAccountMPTokensHandlerTest, LimitLessThanMin)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    auto const owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    ripple::STObject const ownerDir = createOwnerDirLedgerObject(
-        {ripple::uint256{kTOKEN_INDEX1}, ripple::uint256{kTOKEN_INDEX2}}, kTOKEN_INDEX1
+    xrpl::STObject const ownerDir = createOwnerDirLedgerObject(
+        {xrpl::uint256{kTOKEN_INDEX1}, xrpl::uint256{kTOKEN_INDEX2}}, kTOKEN_INDEX1
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
@@ -644,9 +643,9 @@ TEST_F(RPCAccountMPTokensHandlerTest, LimitLessThanMin)
     auto const bbs = std::vector<Blob>{
         createMpTokenObject(
             kACCOUNT,
-            ripple::uint192(kISSUANCE_ID_HEX),
+            xrpl::uint192(kISSUANCE_ID_HEX),
             kTOKEN1_AMOUNT,
-            ripple::lsfMPTLocked,
+            xrpl::lsfMPTLocked,
             kTOKEN1_LOCKED_AMOUNT
         )
             .getSerializer()
@@ -654,9 +653,9 @@ TEST_F(RPCAccountMPTokensHandlerTest, LimitLessThanMin)
 
         createMpTokenObject(
             kACCOUNT,
-            ripple::uint192(kISSUANCE_ID_HEX),
+            xrpl::uint192(kISSUANCE_ID_HEX),
             kTOKEN2_AMOUNT,
-            ripple::lsfMPTAuthorized,
+            xrpl::lsfMPTAuthorized,
             std::nullopt
         )
             .getSerializer()
@@ -709,13 +708,13 @@ TEST_F(RPCAccountMPTokensHandlerTest, LimitMoreThanMax)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    auto const owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    ripple::STObject const ownerDir = createOwnerDirLedgerObject(
-        {ripple::uint256{kTOKEN_INDEX1}, ripple::uint256{kTOKEN_INDEX2}}, kTOKEN_INDEX1
+    xrpl::STObject const ownerDir = createOwnerDirLedgerObject(
+        {xrpl::uint256{kTOKEN_INDEX1}, xrpl::uint256{kTOKEN_INDEX2}}, kTOKEN_INDEX1
     );
     EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
@@ -723,9 +722,9 @@ TEST_F(RPCAccountMPTokensHandlerTest, LimitMoreThanMax)
     auto const bbs = std::vector<Blob>{
         createMpTokenObject(
             kACCOUNT,
-            ripple::uint192(kISSUANCE_ID_HEX),
+            xrpl::uint192(kISSUANCE_ID_HEX),
             kTOKEN1_AMOUNT,
-            ripple::lsfMPTLocked,
+            xrpl::lsfMPTLocked,
             kTOKEN1_LOCKED_AMOUNT
         )
             .getSerializer()
@@ -733,9 +732,9 @@ TEST_F(RPCAccountMPTokensHandlerTest, LimitMoreThanMax)
 
         createMpTokenObject(
             kACCOUNT,
-            ripple::uint192(kISSUANCE_ID_HEX),
+            xrpl::uint192(kISSUANCE_ID_HEX),
             kTOKEN2_AMOUNT,
-            ripple::lsfMPTAuthorized,
+            xrpl::lsfMPTAuthorized,
             std::nullopt
         )
             .getSerializer()
@@ -788,12 +787,12 @@ TEST_F(RPCAccountMPTokensHandlerTest, EmptyResult)
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const accountKk = ripple::keylet::account(account).key;
-    auto const owneDirKk = ripple::keylet::ownerDir(account).key;
+    auto const accountKk = xrpl::keylet::account(account).key;
+    auto const owneDirKk = xrpl::keylet::ownerDir(account).key;
     EXPECT_CALL(*backend_, doFetchLedgerObject(accountKk, _, _))
         .WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    ripple::STObject const ownerDir = createOwnerDirLedgerObject({}, kTOKEN_INDEX1);
+    xrpl::STObject const ownerDir = createOwnerDirLedgerObject({}, kTOKEN_INDEX1);
     EXPECT_CALL(*backend_, doFetchLedgerObject(owneDirKk, _, _))
         .WillOnce(Return(ownerDir.getSerializer().peekData()));
 

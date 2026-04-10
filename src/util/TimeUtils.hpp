@@ -33,6 +33,6 @@ systemTpToUtcStr(std::chrono::system_clock::time_point const& tp, std::string co
  * @return The system_clock::time_point.
  */
 [[nodiscard]] std::chrono::system_clock::time_point
-systemTpFromLedgerCloseTime(ripple::NetClock::time_point closeTime);
+systemTpFromLedgerCloseTime(xrpl::NetClock::time_point closeTime);
 
 }  // namespace util

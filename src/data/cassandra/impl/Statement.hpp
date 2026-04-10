@@ -93,18 +93,17 @@ public:
         using DecayedType = std::decay_t<Type>;
         using UCharVectorType = std::vector<unsigned char>;
         using UintTupleType = std::tuple<uint32_t, uint32_t>;
-        using UintByteTupleType = std::tuple<uint32_t, ripple::uint256>;
-        using ByteVectorType = std::vector<ripple::uint256>;
+        using UintByteTupleType = std::tuple<uint32_t, xrpl::uint256>;
+        using ByteVectorType = std::vector<xrpl::uint256>;
 
         if constexpr (
-            std::is_same_v<DecayedType, ripple::uint256> ||
-            std::is_same_v<DecayedType, ripple::uint192>
+            std::is_same_v<DecayedType, xrpl::uint256> || std::is_same_v<DecayedType, xrpl::uint192>
         ) {
             auto const rc = bindBytes(value.data(), value.size());
-            throwErrorIfNeeded(rc, "Bind ripple::base_uint");
-        } else if constexpr (std::is_same_v<DecayedType, ripple::AccountID>) {
+            throwErrorIfNeeded(rc, "Bind xrpl::base_uint");
+        } else if constexpr (std::is_same_v<DecayedType, xrpl::AccountID>) {
             auto const rc = bindBytes(value.data(), value.size());
-            throwErrorIfNeeded(rc, "Bind ripple::AccountID");
+            throwErrorIfNeeded(rc, "Bind xrpl::AccountID");
         } else if constexpr (std::is_same_v<DecayedType, UCharVectorType>) {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind vector<unsigned char>");
@@ -122,7 +121,7 @@ public:
             std::is_same_v<DecayedType, UintByteTupleType>
         ) {
             auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::forward<Type>(value)});
-            throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32> or <uint32_t, ripple::uint256>");
+            throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32> or <uint32_t, xrpl::uint256>");
         } else if constexpr (std::is_same_v<DecayedType, ByteVectorType>) {
             auto const rc =
                 cass_statement_bind_collection(*this, idx, Collection{std::forward<Type>(value)});

@@ -162,7 +162,7 @@ TEST_F(RPCTxTest, InvalidBinaryV1)
             .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -234,7 +234,7 @@ TEST_F(RPCTxTest, InvalidLgrRange)
 
 TEST_F(RPCTxTest, TxnNotFound)
 {
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _))
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _))
         .WillOnce(Return(std::optional<TransactionAndMetadata>{}));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
@@ -264,7 +264,7 @@ TEST_F(RPCTxTest, TxnNotFound)
 TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
 {
     backend_->setRange(10, 30);
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _))
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _))
         .WillOnce(Return(std::optional<TransactionAndMetadata>{}));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
@@ -297,7 +297,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
 TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
 {
     backend_->setRange(1, 1000);
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _))
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _))
         .WillOnce(Return(std::optional<TransactionAndMetadata>{}));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
@@ -373,7 +373,7 @@ TEST_F(RPCTxTest, DefaultParameter_API_v1)
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -407,7 +407,7 @@ TEST_F(RPCTxTest, PaymentTx_API_v1)
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -441,7 +441,7 @@ TEST_F(RPCTxTest, PaymentTx_API_v2)
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
     EXPECT_CALL(*backend_, fetchLedgerBySequence(tx.ledgerSequence, _))
         .WillOnce(Return(std::nullopt));
 
@@ -480,7 +480,7 @@ TEST_F(RPCTxTest, DefaultParameter_API_v2)
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, tx.ledgerSequence);
     EXPECT_CALL(*backend_, fetchLedgerBySequence(tx.ledgerSequence, _))
         .WillOnce(Return(ledgerHeader));
@@ -529,7 +529,7 @@ TEST_F(RPCTxTest, ReturnBinary)
             .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -577,7 +577,7 @@ TEST_F(RPCTxTest, ReturnBinaryWithCTID)
             .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -664,7 +664,7 @@ TEST_F(RPCTxTest, MintNFT)
 
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -694,7 +694,7 @@ TEST_F(RPCTxTest, NFTAcceptOffer)
 
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -724,7 +724,7 @@ TEST_F(RPCTxTest, NFTCancelOffer)
 
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -763,7 +763,7 @@ TEST_F(RPCTxTest, NFTCreateOffer)
 
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -936,7 +936,7 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
             .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -1008,7 +1008,7 @@ TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvailable)
             .peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*backend_, fetchTransaction(ripple::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend_, fetchTransaction(xrpl::uint256{kTXN_ID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr_.get());
     ASSERT_NE(rawETLPtr, nullptr);

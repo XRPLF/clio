@@ -29,20 +29,20 @@
 namespace rpc {
 
 void
-AccountOffersHandler::addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle)
+AccountOffersHandler::addOffer(std::vector<Offer>& offers, xrpl::SLE const& offerSle)
 {
     auto offer = AccountOffersHandler::Offer();
-    offer.takerPays = offerSle.getFieldAmount(ripple::sfTakerPays);
-    offer.takerGets = offerSle.getFieldAmount(ripple::sfTakerGets);
-    offer.seq = offerSle.getFieldU32(ripple::sfSequence);
-    offer.flags = offerSle.getFieldU32(ripple::sfFlags);
+    offer.takerPays = offerSle.getFieldAmount(xrpl::sfTakerPays);
+    offer.takerGets = offerSle.getFieldAmount(xrpl::sfTakerGets);
+    offer.seq = offerSle.getFieldU32(xrpl::sfSequence);
+    offer.flags = offerSle.getFieldU32(xrpl::sfFlags);
 
-    auto const quality = getQuality(offerSle.getFieldH256(ripple::sfBookDirectory));
-    auto const rate = ripple::amountFromQuality(quality);
+    auto const quality = getQuality(offerSle.getFieldH256(xrpl::sfBookDirectory));
+    auto const rate = xrpl::amountFromQuality(quality);
     offer.quality = rate.getText();
 
-    if (offerSle.isFieldPresent(ripple::sfExpiration))
-        offer.expiration = offerSle.getFieldU32(ripple::sfExpiration);
+    if (offerSle.isFieldPresent(xrpl::sfExpiration))
+        offer.expiration = offerSle.getFieldU32(xrpl::sfExpiration);
 
     offers.push_back(offer);
 };
@@ -62,19 +62,19 @@ AccountOffersHandler::process(AccountOffersHandler::Input const& input, Context 
     auto const& lgrInfo = expectedLgrInfo.value();
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+        xrpl::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
     );
 
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     Output response;
-    response.account = ripple::to_string(*accountID);
-    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.account = xrpl::to_string(*accountID);
+    response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
-    auto const addToResponse = [&](ripple::SLE const sle) {
-        if (sle.getType() == ripple::ltOFFER)
+    auto const addToResponse = [&](xrpl::SLE const sle) {
+        if (sle.getType() == xrpl::ltOFFER)
             addOffer(response.offers, sle);
 
         return true;
@@ -138,13 +138,13 @@ tag_invoke(
     if (offer.expiration)
         jsonObject[JS(expiration)] = *offer.expiration;
 
-    auto const convertAmount = [&](char const* field, ripple::STAmount const& amount) {
+    auto const convertAmount = [&](char const* field, xrpl::STAmount const& amount) {
         if (amount.native()) {
             jsonObject[field] = amount.getText();
         } else {
             jsonObject[field] = {
-                {JS(currency), ripple::to_string(amount.getCurrency())},
-                {JS(issuer), ripple::to_string(amount.getIssuer())},
+                {JS(currency), xrpl::to_string(amount.getCurrency())},
+                {JS(issuer), xrpl::to_string(amount.getIssuer())},
                 {JS(value), amount.getText()},
             };
         }

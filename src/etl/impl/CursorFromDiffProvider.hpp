@@ -43,8 +43,8 @@ public:
         auto const range = backend_->fetchLedgerRange();
         ASSERT(range.has_value(), "Ledger range is not available when cache is loading");
 
-        std::set<ripple::uint256> liveCursors;
-        std::set<ripple::uint256> deletedCursors;
+        std::set<xrpl::uint256> liveCursors;
+        std::set<xrpl::uint256> deletedCursors;
         auto i = 0;
         while (liveCursors.size() < numCursors_ and seq - i >= range->minSequence) {
             auto diffs = fetchDiff(i++);
@@ -66,7 +66,7 @@ public:
             );
         }
 
-        std::vector<ripple::uint256> cursors{data::kFIRST_KEY};
+        std::vector<xrpl::uint256> cursors{data::kFIRST_KEY};
         rg::copy(
             liveCursors | vs::take(std::min(liveCursors.size(), numCursors_)),
             std::back_inserter(cursors)

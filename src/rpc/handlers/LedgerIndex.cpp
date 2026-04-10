@@ -32,8 +32,8 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input const& input, Context cons
         auto const ledger = sharedPtrBackend_->fetchLedgerBySequence(index, ctx.yield);
         return Output{
             .ledgerIndex = index,
-            .ledgerHash = ripple::strHex(ledger->hash),
-            .closeTimeIso = ripple::to_string_iso(ledger->closeTime)
+            .ledgerHash = xrpl::strHex(ledger->hash),
+            .closeTimeIso = xrpl::to_string_iso(ledger->closeTime)
         };
     };
 

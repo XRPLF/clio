@@ -51,13 +51,13 @@ DepositAuthorizedHandler::process(
     auto const destinationAccountID = accountFromStringStrict(input.destinationAccount);
 
     auto const srcAccountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*sourceAccountID).key, lgrInfo.seq, ctx.yield
+        xrpl::keylet::account(*sourceAccountID).key, lgrInfo.seq, ctx.yield
     );
 
     if (!srcAccountLedgerObject)
         return Error{Status{RippledError::rpcSRC_ACT_NOT_FOUND, "source_accountNotFound"}};
 
-    auto const dstKeylet = ripple::keylet::account(*destinationAccountID).key;
+    auto const dstKeylet = xrpl::keylet::account(*destinationAccountID).key;
     auto const dstAccountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(dstKeylet, lgrInfo.seq, ctx.yield);
 
@@ -66,21 +66,21 @@ DepositAuthorizedHandler::process(
 
     Output response;
 
-    auto it = ripple::SerialIter{dstAccountLedgerObject->data(), dstAccountLedgerObject->size()};
-    auto const sleDest = ripple::SLE{it, dstKeylet};
+    auto it = xrpl::SerialIter{dstAccountLedgerObject->data(), dstAccountLedgerObject->size()};
+    auto const sleDest = xrpl::SLE{it, dstKeylet};
     bool const reqAuth =
-        sleDest.isFlag(ripple::lsfDepositAuth) && (sourceAccountID != destinationAccountID);
+        sleDest.isFlag(xrpl::lsfDepositAuth) && (sourceAccountID != destinationAccountID);
     auto const& creds = input.credentials;
     bool const credentialsPresent = creds.has_value();
 
-    ripple::STArray authCreds;
+    xrpl::STArray authCreds;
     if (credentialsPresent) {
         if (creds.value().empty()) {
             return Error{
                 Status{RippledError::rpcINVALID_PARAMS, "credential array has no elements."}
             };
         }
-        if (creds.value().size() > ripple::maxCredentialsArraySize) {
+        if (creds.value().size() > xrpl::maxCredentialsArraySize) {
             return Error{Status{RippledError::rpcINVALID_PARAMS, "credential array too long."}};
         }
         auto const credArray = credentials::fetchCredentialArray(
@@ -96,7 +96,7 @@ DepositAuthorizedHandler::process(
     bool depositAuthorized = true;
 
     if (reqAuth) {
-        ripple::uint256 hashKey;
+        xrpl::uint256 hashKey;
         if (credentialsPresent) {
             auto const sortedAuthCreds = credentials::createAuthCredentials(authCreds);
             ASSERT(
@@ -104,9 +104,9 @@ DepositAuthorizedHandler::process(
                 "should already be checked above that there is no duplicate"
             );
 
-            hashKey = ripple::keylet::depositPreauth(*destinationAccountID, sortedAuthCreds).key;
+            hashKey = xrpl::keylet::depositPreauth(*destinationAccountID, sortedAuthCreds).key;
         } else {
-            hashKey = ripple::keylet::depositPreauth(*destinationAccountID, *sourceAccountID).key;
+            hashKey = xrpl::keylet::depositPreauth(*destinationAccountID, *sourceAccountID).key;
         }
 
         depositAuthorized =
@@ -115,7 +115,7 @@ DepositAuthorizedHandler::process(
 
     response.sourceAccount = input.sourceAccount;
     response.destinationAccount = input.destinationAccount;
-    response.ledgerHash = ripple::strHex(lgrInfo.hash);
+    response.ledgerHash = xrpl::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
     response.depositAuthorized = depositAuthorized;
     if (credentialsPresent)

@@ -184,8 +184,8 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                             txnPlusMeta.ledgerSequence, ctx.yield
                         );
                         ledgerHeader) {
-                        obj[JS(ledger_hash)] = ripple::strHex(ledgerHeader->hash);
-                        obj[JS(close_time_iso)] = ripple::to_string_iso(ledgerHeader->closeTime);
+                        obj[JS(ledger_hash)] = xrpl::strHex(ledgerHeader->hash);
+                        obj[JS(close_time_iso)] = xrpl::to_string_iso(ledgerHeader->closeTime);
                     }
                 }
                 obj[JS(validated)] = true;
@@ -201,7 +201,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
     }
 
     response.limit = input.limit;
-    response.account = ripple::to_string(*accountID);
+    response.account = xrpl::to_string(*accountID);
     response.ledgerIndexMin = minIndex;
     response.ledgerIndexMax = maxIndex;
 

@@ -84,8 +84,8 @@ TEST_F(LedgerCachePrometheusMetricTest, startLoading)
 }
 
 struct LedgerCacheSaveLoadTest : LedgerCacheTest {
-    ripple::uint256 const key1{1};
-    ripple::uint256 const key2{2};
+    xrpl::uint256 const key1{1};
+    xrpl::uint256 const key2{2};
     std::vector<etl::model::Object> const objs{
         etl::model::Object{
             .key = key1,

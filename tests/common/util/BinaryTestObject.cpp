@@ -43,20 +43,20 @@ createTxAndMetaBlobs(std::string metaStr, std::string txnStr)
     return {hexStringToBinaryString(metaStr), hexStringToBinaryString(txnStr)};
 }
 
-std::pair<ripple::STTx, ripple::TxMeta>
+std::pair<xrpl::STTx, xrpl::TxMeta>
 createTxAndMeta(std::string hashStr, std::string metaStr, std::string txnStr)
 {
-    ripple::uint256 hash;
+    xrpl::uint256 hash;
     EXPECT_TRUE(hash.parseHex(hashStr));
 
     auto const [metaBlob, txnBlob] = createTxAndMetaBlobs(metaStr, txnStr);
 
-    ripple::SerialIter it{txnBlob.data(), txnBlob.size()};
-    return {ripple::STTx{it}, ripple::TxMeta{hash, kSEQ, metaBlob}};
+    xrpl::SerialIter it{txnBlob.data(), txnBlob.size()};
+    return {xrpl::STTx{it}, xrpl::TxMeta{hash, kSEQ, xrpl::Blob(metaBlob.begin(), metaBlob.end())}};
 }
 
 etl::model::Transaction
-createTransaction(ripple::TxType type, std::string hashStr, std::string metaStr, std::string txnStr)
+createTransaction(xrpl::TxType type, std::string hashStr, std::string metaStr, std::string txnStr)
 {
     auto const [sttx, meta] = createTxAndMeta(hashStr, metaStr, txnStr);
     return {
@@ -64,7 +64,7 @@ createTransaction(ripple::TxType type, std::string hashStr, std::string metaStr,
         .metaRaw = "",
         .sttx = sttx,
         .meta = meta,
-        .id = ripple::uint256{"0000000000000000000000000000000000000000000000000000000000000001"},
+        .id = xrpl::uint256{"0000000000000000000000000000000000000000000000000000000000000001"},
         .key = "0000000000000000000000000000000000000000000000000000000000000001",
         .type = type
     };
@@ -91,8 +91,8 @@ createObject(etl::model::Object::ModType modType, std::string key)
     return {
         .key = binaryStringToUint256(hexStringToBinaryString(key)),
         .keyRaw = hexStringToBinaryString(key),
-        .data = modType == etl::model::Object::ModType::Deleted ? ripple::Blob{}
-                                                                : *ripple::strUnHex(kOBJ_BLOB),
+        .data = modType == etl::model::Object::ModType::Deleted ? xrpl::Blob{}
+                                                                : *xrpl::strUnHex(kOBJ_BLOB),
         .dataRaw = modType == etl::model::Object::ModType::Deleted
             ? ""
             : hexStringToBinaryString(kOBJ_BLOB),
@@ -120,8 +120,8 @@ createObjectWithBookBase(etl::model::Object::ModType modType, std::string key)
     return {
         .key = binaryStringToUint256(hexStringToBinaryString(key)),
         .keyRaw = hexStringToBinaryString(key),
-        .data = modType == etl::model::Object::ModType::Deleted ? ripple::Blob{}
-                                                                : *ripple::strUnHex(kOBJ_BLOB),
+        .data = modType == etl::model::Object::ModType::Deleted ? xrpl::Blob{}
+                                                                : *xrpl::strUnHex(kOBJ_BLOB),
         .dataRaw = modType == etl::model::Object::ModType::Deleted
             ? ""
             : hexStringToBinaryString(kOBJ_BLOB),
@@ -136,8 +136,8 @@ createObjectWithTwoNFTs()
 {
     std::string const url1 = "abcd1";
     std::string const url2 = "abcd2";
-    ripple::Blob const uri1Blob(url1.begin(), url1.end());
-    ripple::Blob const uri2Blob(url2.begin(), url2.end());
+    xrpl::Blob const uri1Blob(url1.begin(), url1.end());
+    xrpl::Blob const uri2Blob(url2.begin(), url2.end());
 
     constexpr auto kACCOUNT = "rM2AGCCCRb373FRuD8wHyUwUsh2dV4BW5Q";
     constexpr auto kNFT_ID = "0008013AE1CD8B79A8BCB52335CD40DE97401B2D60A828720000099B00000000";
@@ -173,13 +173,13 @@ createObjectWithMPT()
     constexpr auto kACCOUNT = "rM2AGCCCRb373FRuD8wHyUwUsh2dV4BW5Q";
 
     auto const account = getAccountIdWithString(kACCOUNT);
-    auto const mptID = ripple::makeMptID(2, getAccountIdWithString(kACCOUNT));
+    auto const mptID = xrpl::makeMptID(2, getAccountIdWithString(kACCOUNT));
     auto const mptokenObject = createMpTokenObject(kACCOUNT, mptID);
 
     // key is a token made up from several fields described here:
     // https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#2121-mptoken-ledger-identifier
     constexpr auto kSPACE_KEY = 0x007F;
-    auto const keySha512Half = ripple::sha512Half(kSPACE_KEY, mptID, account);
+    auto const keySha512Half = xrpl::sha512Half(kSPACE_KEY, mptID, account);
 
     return {
         .key = {},
@@ -200,10 +200,10 @@ createSuccessor()
 {
     return {
         .firstBook = uint256ToString(
-            ripple::uint256{"A000000000000000000000000000000000000000000000000000000000000000"}
+            xrpl::uint256{"A000000000000000000000000000000000000000000000000000000000000000"}
         ),
         .bookBase = uint256ToString(
-            ripple::uint256{"A000000000000000000000000000000000000000000000000000000000000001"}
+            xrpl::uint256{"A000000000000000000000000000000000000000000000000000000000000001"}
         ),
     };
 }
