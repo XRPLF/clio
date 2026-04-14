@@ -60,7 +60,7 @@ jobs:
           fetch-depth: 0
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@2cbf481018d930656e9276fcc20dc0e3a0be5b6d
+        uses: XRPLF/actions/prepare-runner@90f11ee655d1687824fb8793db770477d52afbab
         with:
           enable_ccache: false
 
@@ -94,7 +94,7 @@ jobs:
           git-cliff "${BASE_COMMIT}..HEAD" --ignore-tags "nightly|-b|-rc" >> "${RUNNER_TEMP}/release_notes.md"
 
       - name: Upload release notes
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release_notes_${{ inputs.version }}
           path: "${RUNNER_TEMP}/release_notes.md"
