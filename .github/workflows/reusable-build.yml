@@ -113,7 +113,7 @@ jobs:
 
       - name: Restore ccache cache
         if: ${{ inputs.download_ccache && github.ref != 'refs/heads/develop' }}
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ${{ steps.cache_key.outputs.key }}
@@ -164,7 +164,7 @@ jobs:
 
       - name: Save ccache cache
         if: ${{ inputs.upload_ccache && github.ref == 'refs/heads/develop' }}
-        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ${{ steps.cache_key.outputs.key }}
