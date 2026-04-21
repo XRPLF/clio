@@ -49,20 +49,20 @@ ProxyIpResolver::fromConfig(util::config::ClioConfigDefinition const& config)
     return ProxyIpResolver{std::move(ips), std::move(tokens)};
 }
 
-std::string
+std::optional<std::string>
 ProxyIpResolver::resolveClientIp(std::string const& connectionIp, HttpHeaders const& headers) const
 {
     if (proxyIps_.contains(connectionIp)) {
-        return extractClientIp(headers).value_or(connectionIp);
+        return extractClientIp(headers);
     }
 
     if (auto it = headers.find(kPROXY_TOKEN_HEADER); it != headers.end()) {
         auto const tokenHash = util::sha256sum(it->value());
         if (proxyTokens_.contains(tokenHash)) {
-            return extractClientIp(headers).value_or(connectionIp);
+            return extractClientIp(headers);
         }
     }
-    return connectionIp;
+    return std::nullopt;
 }
 
 std::optional<std::string>

@@ -122,6 +122,7 @@ class HttpBase : public ConnectionBase {
     SendLambda sender_;
     std::shared_ptr<AdminVerificationStrategy> adminVerification_;
     std::shared_ptr<ProxyIpResolver> proxyIpResolver_;
+    bool isProxyConnection_ = false;
 
 protected:
     boost::beast::flat_buffer buffer_;
@@ -222,14 +223,26 @@ public:
         if (ec)
             return httpFail(ec, "read");
 
-        if (auto resolvedIp = proxyIpResolver_->resolveClientIp(clientIp_, req_);
-            resolvedIp != clientIp_) {
+        auto const updateClientIp = [&](std::string newIp) {
+            if (newIp == clientIp_)
+                return;
             LOG(log_.info()) << tag()
-                             << "Detected a forwarded request from proxy. Proxy ip: " << clientIp_
-                             << ". Resolved client ip: " << resolvedIp;
+                             << "Detected a forwarded request from proxy. Resolved client ip: "
+                             << newIp;
             dosGuard_.get().decrement(clientIp_);
-            clientIp_ = std::move(resolvedIp);
+            clientIp_ = std::move(newIp);
             dosGuard_.get().increment(clientIp_);
+        };
+
+        if (isProxyConnection_) {
+            if (auto resolvedIp = ProxyIpResolver::extractClientIp(req_); resolvedIp.has_value())
+                updateClientIp(std::move(*resolvedIp));
+        } else if (
+            auto resolvedIp = proxyIpResolver_->resolveClientIp(clientIp_, req_);
+            resolvedIp.has_value()
+        ) {
+            updateClientIp(std::move(*resolvedIp));
+            isProxyConnection_ = true;
         }
 
         if (req_.method() == http::verb::get and req_.target() == "/health")

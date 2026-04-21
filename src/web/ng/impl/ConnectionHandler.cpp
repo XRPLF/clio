@@ -402,14 +402,26 @@ ConnectionHandler::handleRequest(
 void
 ConnectionHandler::resolveClientIp(Connection& connection, Request const& request) const
 {
-    if (auto resolvedClientIp =
-            proxyIpResolver_.resolveClientIp(connection.ip(), request.httpHeaders());
-        resolvedClientIp != connection.ip()) {
+    auto const updateIp = [&](std::string newIp) {
+        if (newIp == connection.ip())
+            return;
         LOG(log_.info()) << connection.tag()
-                         << "Detected a forwarded request from proxy. Proxy ip: " << connection.ip()
-                         << ". Resolved client ip: " << resolvedClientIp;
-        onIpChangeHook_(connection.ip(), resolvedClientIp);
-        connection.setIp(std::move(resolvedClientIp));
+                         << "Detected a forwarded request from proxy. Resolved client ip: "
+                         << newIp;
+        onIpChangeHook_(connection.ip(), newIp);
+        connection.setIp(std::move(newIp));
+    };
+
+    if (connection.isProxyConnection()) {
+        if (auto resolvedIp = ProxyIpResolver::extractClientIp(request.httpHeaders());
+            resolvedIp.has_value())
+            updateIp(std::move(*resolvedIp));
+    } else if (
+        auto resolvedIp = proxyIpResolver_.resolveClientIp(connection.ip(), request.httpHeaders());
+        resolvedIp.has_value()
+    ) {
+        updateIp(std::move(*resolvedIp));
+        connection.markAsProxyConnection();
     }
 }
 

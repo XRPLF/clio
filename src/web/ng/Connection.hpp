@@ -26,6 +26,7 @@ class ConnectionMetadata : public util::Taggable {
 protected:
     std::string ip_;  // client ip
     std::optional<bool> isAdmin_;
+    bool isProxyConnection_ = false;
 
 public:
     /**
@@ -61,6 +62,26 @@ public:
     setIp(std::string newIp)
     {
         ip_ = std::move(newIp);
+    }
+
+    /**
+     * @brief Mark this connection as coming through a trusted proxy.
+     */
+    void
+    markAsProxyConnection()
+    {
+        isProxyConnection_ = true;
+    }
+
+    /**
+     * @brief Whether this connection was identified as coming through a trusted proxy.
+     *
+     * @return true if the connection is a proxy connection.
+     */
+    [[nodiscard]] bool
+    isProxyConnection() const
+    {
+        return isProxyConnection_;
     }
 
     /**
