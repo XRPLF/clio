@@ -192,6 +192,26 @@ INSTANTIATE_TEST_SUITE_P(
                 {{std::string(http::to_string(http::field::forwarded)), "for=\";some_other_text"}},
             .connectionIp = "5.6.7.8",
             .expectedIp = std::nullopt
+        },
+        ProxyIpResolverTestParams{
+            .testName = "ForwardedHeaderWithMultipleForValues",
+            .proxyIps = {"5.6.7.8"},
+            .proxyTokens = {},
+            .headers =
+                {{std::string(http::to_string(http::field::forwarded)),
+                  "for=1.2.3.4, for=9.10.11.12"}},
+            .connectionIp = "5.6.7.8",
+            .expectedIp = "9.10.11.12"
+        },
+        ProxyIpResolverTestParams{
+            .testName = "ForwardedHeaderWithMultipleForValuesAndSectionDelimiters",
+            .proxyIps = {"5.6.7.8"},
+            .proxyTokens = {},
+            .headers =
+                {{std::string(http::to_string(http::field::forwarded)),
+                  "for=1.2.3.4; proto=http, for=9.10.11.12; proto=https"}},
+            .connectionIp = "5.6.7.8",
+            .expectedIp = "9.10.11.12"
         }
     ),
     tests::util::kNAME_GENERATOR
