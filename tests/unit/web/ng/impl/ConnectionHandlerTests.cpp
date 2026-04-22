@@ -605,10 +605,9 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, ProxyConnection_SameClientReus
         getHandlerMock;
     connectionHandler.onGet(target, getHandlerMock.AsStdFunction());
 
-    StrictMockHttpConnectionPtr mockProxyConnection =
-        std::make_unique<StrictMockHttpConnection>(
-            proxyIp, boost::beast::flat_buffer{}, tagDecoratorFactory
-        );
+    StrictMockHttpConnectionPtr mockProxyConnection = std::make_unique<StrictMockHttpConnection>(
+        proxyIp, boost::beast::flat_buffer{}, tagDecoratorFactory
+    );
 
     auto request = http::request<http::string_body>{http::verb::get, target, 11, ""};
     request.set(http::field::forwarded, fmt::format("for={}", clientIp));
@@ -623,11 +622,9 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, ProxyConnection_SameClientReus
 
     EXPECT_CALL(getHandlerMock, Call)
         .Times(2)
-        .WillRepeatedly(
-            [](Request const& req, auto&&, auto&&, auto&&) {
-                return Response(http::status::ok, "ok", req);
-            }
-        );
+        .WillRepeatedly([](Request const& req, auto&&, auto&&, auto&&) {
+            return Response(http::status::ok, "ok", req);
+        });
 
     EXPECT_CALL(*mockProxyConnection, send)
         .Times(2)
@@ -639,11 +636,9 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, ProxyConnection_SameClientReus
             EXPECT_EQ(c.ip(), clientIp);
         });
 
-    runSpawn(
-        [this, c = std::move(mockProxyConnection)](boost::asio::yield_context yield) mutable {
-            connectionHandler.processConnection(std::move(c), yield);
-        }
-    );
+    runSpawn([this, c = std::move(mockProxyConnection)](boost::asio::yield_context yield) mutable {
+        connectionHandler.processConnection(std::move(c), yield);
+    });
 }
 
 TEST_F(
@@ -662,10 +657,9 @@ TEST_F(
         getHandlerMock;
     connectionHandler.onGet(target, getHandlerMock.AsStdFunction());
 
-    StrictMockHttpConnectionPtr mockProxyConnection =
-        std::make_unique<StrictMockHttpConnection>(
-            proxyIp, boost::beast::flat_buffer{}, tagDecoratorFactory
-        );
+    StrictMockHttpConnectionPtr mockProxyConnection = std::make_unique<StrictMockHttpConnection>(
+        proxyIp, boost::beast::flat_buffer{}, tagDecoratorFactory
+    );
 
     auto request1 = http::request<http::string_body>{http::verb::get, target, 11, ""};
     request1.set(http::field::forwarded, fmt::format("for={}", clientIp));
@@ -684,11 +678,9 @@ TEST_F(
 
     EXPECT_CALL(getHandlerMock, Call)
         .Times(2)
-        .WillRepeatedly(
-            [](Request const& req, auto&&, auto&&, auto&&) {
-                return Response(http::status::ok, "ok", req);
-            }
-        );
+        .WillRepeatedly([](Request const& req, auto&&, auto&&, auto&&) {
+            return Response(http::status::ok, "ok", req);
+        });
 
     EXPECT_CALL(*mockProxyConnection, send)
         .Times(2)
@@ -700,11 +692,9 @@ TEST_F(
             EXPECT_EQ(c.ip(), anotherClientIp);
         });
 
-    runSpawn(
-        [this, c = std::move(mockProxyConnection)](boost::asio::yield_context yield) mutable {
-            connectionHandler.processConnection(std::move(c), yield);
-        }
-    );
+    runSpawn([this, c = std::move(mockProxyConnection)](boost::asio::yield_context yield) mutable {
+        connectionHandler.processConnection(std::move(c), yield);
+    });
 }
 
 TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
@@ -984,11 +974,9 @@ TEST_F(ConnectionHandlerParallelProcessingTest, ProxyConnection_SameClientReuses
             EXPECT_EQ(c.ip(), clientIp);
         });
 
-    runSpawn(
-        [this, c = std::move(mockProxyConnection)](boost::asio::yield_context yield) mutable {
-            connectionHandler.processConnection(std::move(c), yield);
-        }
-    );
+    runSpawn([this, c = std::move(mockProxyConnection)](boost::asio::yield_context yield) mutable {
+        connectionHandler.processConnection(std::move(c), yield);
+    });
 }
 
 TEST_F(
@@ -1030,11 +1018,9 @@ TEST_F(
             EXPECT_EQ(c.ip(), anotherClientIp);
         });
 
-    runSpawn(
-        [this, c = std::move(mockProxyConnection)](boost::asio::yield_context yield) mutable {
-            connectionHandler.processConnection(std::move(c), yield);
-        }
-    );
+    runSpawn([this, c = std::move(mockProxyConnection)](boost::asio::yield_context yield) mutable {
+        connectionHandler.processConnection(std::move(c), yield);
+    });
 }
 
 TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop)
