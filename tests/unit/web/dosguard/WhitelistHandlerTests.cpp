@@ -172,7 +172,9 @@ TEST_F(WhitelistHandlerTest, CreateWithInvalidIPFails)
 
     testing::StrictMock<MockResolver> mockResolver;
     EXPECT_CALL(mockResolver, resolve(testing::_))
-        .WillOnce([](auto hostname) -> std::vector<std::string> { return {std::string{hostname}}; });
+        .WillOnce([](auto hostname) -> std::vector<std::string> {
+            return {std::string{hostname}};
+        });
 
     ClioConfigDefinition const cfg{getParseWhitelistHandlerConfig(boost::json::parse(kJSON))};
     auto const result = WhitelistHandler::create(cfg, mockResolver);
