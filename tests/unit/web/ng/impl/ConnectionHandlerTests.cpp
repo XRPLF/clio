@@ -593,6 +593,110 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, OnIpChangeHookCalledWhenSentFr
              ) mutable { connectionHandler.processConnection(std::move(c), yield); });
 }
 
+TEST_F(ConnectionHandlerSequentialProcessingTest, ProxyConnection_SameClientReuses_HookCalledOnce)
+{
+    std::string const target = "/some/target";
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
+        getHandlerMock;
+    connectionHandler.onGet(target, getHandlerMock.AsStdFunction());
+
+    StrictMockHttpConnectionPtr mockProxyConnection = std::make_unique<StrictMockHttpConnection>(
+        proxyIp, boost::beast::flat_buffer{}, tagDecoratorFactory
+    );
+
+    auto request = http::request<http::string_body>{http::verb::get, target, 11, ""};
+    request.set(http::field::forwarded, fmt::format("for={}", clientIp));
+
+    EXPECT_CALL(*mockProxyConnection, wasUpgraded).WillOnce(Return(false));
+    EXPECT_CALL(*mockProxyConnection, receive)
+        .WillOnce(Return(makeRequest(request)))
+        .WillOnce(Return(makeRequest(request)))
+        .WillOnce(Return(makeError(http::error::end_of_stream)));
+
+    EXPECT_CALL(onIpChangeMock, Call(proxyIp, clientIp));
+
+    EXPECT_CALL(getHandlerMock, Call)
+        .Times(2)
+        .WillRepeatedly([](Request const& req, auto&&, auto&&, auto&&) {
+            return Response(http::status::ok, "ok", req);
+        });
+
+    EXPECT_CALL(*mockProxyConnection, send)
+        .Times(2)
+        .WillRepeatedly(Return(std::expected<void, web::ng::Error>{}));
+
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([this, ptr = mockProxyConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, ptr);
+            EXPECT_EQ(c.ip(), clientIp);
+        });
+
+    runSpawn([this, c = std::move(mockProxyConnection)](boost::asio::yield_context yield) mutable {
+        connectionHandler.processConnection(std::move(c), yield);
+    });
+}
+
+TEST_F(
+    ConnectionHandlerSequentialProcessingTest,
+    ProxyConnection_DifferentClientReuses_HookCalledForEachIpChange
+)
+{
+    std::string const target = "/some/target";
+    std::string const anotherClientIp = "9.10.11.12";
+    testing::StrictMock<testing::MockFunction<Response(
+        Request const&,
+        ConnectionMetadata const&,
+        web::SubscriptionContextPtr,
+        boost::asio::yield_context
+    )>>
+        getHandlerMock;
+    connectionHandler.onGet(target, getHandlerMock.AsStdFunction());
+
+    StrictMockHttpConnectionPtr mockProxyConnection = std::make_unique<StrictMockHttpConnection>(
+        proxyIp, boost::beast::flat_buffer{}, tagDecoratorFactory
+    );
+
+    auto request1 = http::request<http::string_body>{http::verb::get, target, 11, ""};
+    request1.set(http::field::forwarded, fmt::format("for={}", clientIp));
+
+    auto request2 = http::request<http::string_body>{http::verb::get, target, 11, ""};
+    request2.set(http::field::forwarded, fmt::format("for={}", anotherClientIp));
+
+    EXPECT_CALL(*mockProxyConnection, wasUpgraded).WillOnce(Return(false));
+    EXPECT_CALL(*mockProxyConnection, receive)
+        .WillOnce(Return(makeRequest(request1)))
+        .WillOnce(Return(makeRequest(request2)))
+        .WillOnce(Return(makeError(http::error::end_of_stream)));
+
+    EXPECT_CALL(onIpChangeMock, Call(proxyIp, clientIp));
+    EXPECT_CALL(onIpChangeMock, Call(clientIp, anotherClientIp));
+
+    EXPECT_CALL(getHandlerMock, Call)
+        .Times(2)
+        .WillRepeatedly([](Request const& req, auto&&, auto&&, auto&&) {
+            return Response(http::status::ok, "ok", req);
+        });
+
+    EXPECT_CALL(*mockProxyConnection, send)
+        .Times(2)
+        .WillRepeatedly(Return(std::expected<void, web::ng::Error>{}));
+
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([anotherClientIp, ptr = mockProxyConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, ptr);
+            EXPECT_EQ(c.ip(), anotherClientIp);
+        });
+
+    runSpawn([this, c = std::move(mockProxyConnection)](boost::asio::yield_context yield) mutable {
+        connectionHandler.processConnection(std::move(c), yield);
+    });
+}
+
 TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
 {
     testing::StrictMock<testing::MockFunction<Response(
@@ -836,6 +940,85 @@ TEST_F(ConnectionHandlerParallelProcessingTest, OnIpChangeHookCalledWhenSentFrom
 
     runSpawn([this,
               c = std::move(mockWsConnectionFromProxy)](boost::asio::yield_context yield) mutable {
+        connectionHandler.processConnection(std::move(c), yield);
+    });
+}
+
+TEST_F(ConnectionHandlerParallelProcessingTest, ProxyConnection_SameClientReuses_HookCalledOnce)
+{
+    connectionHandler.onWs([](Request const& req, auto&&, auto&&, auto&&) {
+        return Response(http::status::ok, "ok", req);
+    });
+
+    StrictMockWsConnectionPtr mockProxyConnection = std::make_unique<StrictMockWsConnection>(
+        proxyIp, boost::beast::flat_buffer{}, tagDecoratorFactory
+    );
+
+    headers.set(http::field::forwarded, fmt::format("for={}", clientIp));
+
+    EXPECT_CALL(*mockProxyConnection, wasUpgraded).WillOnce(Return(true));
+    EXPECT_CALL(*mockProxyConnection, receive)
+        .WillOnce(Return(makeRequest("msg", headers)))
+        .WillOnce(Return(makeRequest("msg", headers)))
+        .WillOnce(Return(makeError(websocket::error::closed)));
+
+    EXPECT_CALL(onIpChangeMock, Call(proxyIp, clientIp));
+
+    EXPECT_CALL(*mockProxyConnection, send)
+        .Times(2)
+        .WillRepeatedly(Return(std::expected<void, web::ng::Error>{}));
+
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([this, ptr = mockProxyConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, ptr);
+            EXPECT_EQ(c.ip(), clientIp);
+        });
+
+    runSpawn([this, c = std::move(mockProxyConnection)](boost::asio::yield_context yield) mutable {
+        connectionHandler.processConnection(std::move(c), yield);
+    });
+}
+
+TEST_F(
+    ConnectionHandlerParallelProcessingTest,
+    ProxyConnection_DifferentClientReuses_HookCalledForEachIpChange
+)
+{
+    std::string const anotherClientIp = "9.10.11.12";
+    connectionHandler.onWs([](Request const& req, auto&&, auto&&, auto&&) {
+        return Response(http::status::ok, "ok", req);
+    });
+
+    StrictMockWsConnectionPtr mockProxyConnection = std::make_unique<StrictMockWsConnection>(
+        proxyIp, boost::beast::flat_buffer{}, tagDecoratorFactory
+    );
+
+    Request::HttpHeaders headers1;
+    headers1.set(http::field::forwarded, fmt::format("for={}", clientIp));
+
+    Request::HttpHeaders headers2;
+    headers2.set(http::field::forwarded, fmt::format("for={}", anotherClientIp));
+
+    EXPECT_CALL(*mockProxyConnection, wasUpgraded).WillOnce(Return(true));
+    EXPECT_CALL(*mockProxyConnection, receive)
+        .WillOnce(Return(makeRequest("msg", headers1)))
+        .WillOnce(Return(makeRequest("msg", headers2)))
+        .WillOnce(Return(makeError(websocket::error::closed)));
+
+    EXPECT_CALL(onIpChangeMock, Call(proxyIp, clientIp));
+    EXPECT_CALL(onIpChangeMock, Call(clientIp, anotherClientIp));
+
+    EXPECT_CALL(*mockProxyConnection, send)
+        .Times(2)
+        .WillRepeatedly(Return(std::expected<void, web::ng::Error>{}));
+
+    EXPECT_CALL(onDisconnectMock, Call)
+        .WillOnce([anotherClientIp, ptr = mockProxyConnection.get()](Connection const& c) {
+            EXPECT_EQ(&c, ptr);
+            EXPECT_EQ(c.ip(), anotherClientIp);
+        });
+
+    runSpawn([this, c = std::move(mockProxyConnection)](boost::asio::yield_context yield) mutable {
         connectionHandler.processConnection(std::move(c), yield);
     });
 }

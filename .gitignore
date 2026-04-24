@@ -12,3 +12,5 @@ CMakeUserPresets.json
 config.json
 CLAUDE.md
 .claude/**
+.agents/**
+.augment/**

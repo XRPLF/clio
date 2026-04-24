@@ -27,7 +27,7 @@ jobs:
           lfs: true
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@2cbf481018d930656e9276fcc20dc0e3a0be5b6d
+        uses: XRPLF/actions/prepare-runner@90f11ee655d1687824fb8793db770477d52afbab
         with:
           enable_ccache: false
 
@@ -46,7 +46,7 @@ jobs:
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: build_docs/html
           name: docs-develop
