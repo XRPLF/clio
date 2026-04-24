@@ -36,7 +36,7 @@ public:
      * @brief Add network address to whitelist.
      *
      * @param net Network part of the ip address
-     * @return An error string if the address is not valid; empty on success
+     * @return void on success, or an error string if the address is not valid
      */
     std::expected<void, std::string>
     add(std::string_view net);

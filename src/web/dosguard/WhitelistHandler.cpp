@@ -10,7 +10,6 @@
 #include <regex>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -36,9 +35,17 @@ Whitelist::add(std::string_view net)
     }
 
     if (isV4(net)) {
-        subnetsV4_.push_back(ip::make_network_v4(net));
+        boost::system::error_code ec;
+        auto const net4 = ip::make_network_v4(net, ec);
+        if (ec.failed())
+            return std::unexpected{fmt::format("Malformed network: {}. ", net)};
+        subnetsV4_.push_back(net4);
     } else if (isV6(net)) {
-        subnetsV6_.push_back(ip::make_network_v6(net));
+        boost::system::error_code ec;
+        auto const net6 = ip::make_network_v6(net, ec);
+        if (ec.failed())
+            return std::unexpected{fmt::format("Malformed network: {}. ", net)};
+        subnetsV6_.push_back(net6);
     } else {
         return std::unexpected{fmt::format("Malformed network: {}. ", net)};
     }

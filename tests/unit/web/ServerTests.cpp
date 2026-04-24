@@ -311,8 +311,9 @@ TEST_F(WebServerTest, IncompleteSslConfig)
     jsonConfig.as_object()["ssl_key_file"] = sslKeyFile.path;
 
     auto cache = MockLedgerCache();
-    auto const server = makeServerSync(getParseServerConfig(jsonConfig), ctx, dosGuard, e, cache);
-    EXPECT_EQ(server, nullptr);
+    auto const result =
+        web::makeHttpServer(getParseServerConfig(jsonConfig), ctx, dosGuard, e, cache);
+    EXPECT_FALSE(result.has_value());
 }
 
 TEST_F(WebServerTest, WrongSslConfig)
@@ -324,8 +325,9 @@ TEST_F(WebServerTest, WrongSslConfig)
     jsonConfig.as_object()["ssl_cert_file"] = "wrong_path";
 
     auto cache = MockLedgerCache();
-    auto const server = makeServerSync(getParseServerConfig(jsonConfig), ctx, dosGuard, e, cache);
-    EXPECT_EQ(server, nullptr);
+    auto const result =
+        web::makeHttpServer(getParseServerConfig(jsonConfig), ctx, dosGuard, e, cache);
+    EXPECT_FALSE(result.has_value());
 }
 
 TEST_F(WebServerTest, Https)
@@ -711,9 +713,8 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminSet)
     )};
 
     MockLedgerCache cache;
-    EXPECT_THROW(
-        web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache), std::logic_error
-    );
+    auto const result = web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache);
+    EXPECT_FALSE(result.has_value());
 }
 
 TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
@@ -736,9 +737,8 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
     )};
 
     MockLedgerCache cache;
-    EXPECT_THROW(
-        web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache), std::logic_error
-    );
+    auto const result = web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache);
+    EXPECT_FALSE(result.has_value());
 }
 
 struct WebServerPrometheusTest : util::prometheus::WithPrometheus, WebServerTest {};

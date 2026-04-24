@@ -388,8 +388,9 @@ makeHttpServer(
 
     auto expectedSslContext = ng::impl::makeServerSslContext(config);
     if (not expectedSslContext) {
-        LOG(log.error()) << "Failed to create SSL context: " << expectedSslContext.error();
-        return nullptr;
+        return std::unexpected(
+            fmt::format("Failed to create SSL context: {}", expectedSslContext.error())
+        );
     }
 
     auto const serverConfig = config.getObject("server");
@@ -403,10 +404,8 @@ makeHttpServer(
     auto const port = serverConfig.get<unsigned short>("port");
 
     auto expectedAdminVerification = makeAdminVerificationStrategy(config);
-    if (not expectedAdminVerification.has_value()) {
-        LOG(log.error()) << expectedAdminVerification.error();
-        throw std::logic_error{expectedAdminVerification.error()};
-    }
+    if (not expectedAdminVerification.has_value())
+        return std::unexpected(expectedAdminVerification.error());
 
     // If the transactions number is 200 per ledger, A client which subscribes everything will send
     // 400+ feeds for each ledger. we allow user delay 3 ledgers by default
