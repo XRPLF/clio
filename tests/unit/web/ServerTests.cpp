@@ -216,10 +216,25 @@ makeServerSync(
     std::reference_wrapper<data::LedgerCacheInterface const> cache
 )
 {
-    return web::makeHttpServer(config, ioc, dosGuard, handler, cache);
+    auto result = web::makeHttpServer(config, ioc, dosGuard, handler, cache);
+    [&]() { ASSERT_TRUE(result.has_value()); }();
+    return std::move(result).value();
 }
 
 }  // namespace
+
+TEST_F(WebServerTest, InvalidIpAddress)
+{
+    auto jsonConfig = generateJSONWithDynamicPort(port);
+    jsonConfig.as_object()["server"].as_object()["ip"] = "not-an-ip";
+
+    auto cache = MockLedgerCache();
+    auto const e = std::make_shared<EchoExecutor>();
+    auto const result =
+        web::makeHttpServer(getParseServerConfig(jsonConfig), ctx, dosGuard, e, cache);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_THAT(result.error(), testing::HasSubstr("Invalid 'server.ip' config value"));
+}
 
 TEST_F(WebServerTest, Http)
 {

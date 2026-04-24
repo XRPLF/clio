@@ -222,10 +222,13 @@ ClioApplication::run(bool const useNgWebServer)
         config_, backend, rpcEngine, etl, dosGuard
     );
 
-    auto const httpServer = web::makeHttpServer(config_, ioc, dosGuard, handler, cache);
+    auto const expectedHttpServer = web::makeHttpServer(config_, ioc, dosGuard, handler, cache);
+    if (not expectedHttpServer.has_value())
+        LOG(util::LogService::fatal()) << expectedHttpServer.error();
+
     appStopper_.setOnStop(
         Stopper::makeOnStopCallback(
-            *httpServer,
+            **expectedHttpServer,
             *balancer,
             *etl,
             *subscriptions,

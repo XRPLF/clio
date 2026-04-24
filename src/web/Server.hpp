@@ -375,7 +375,7 @@ using HttpServer = Server<HttpSession, SslHttpSession, HandlerType>;
  * @return The server instance
  */
 template <typename HandlerType>
-static std::shared_ptr<HttpServer<HandlerType>>
+static std::expected<std::shared_ptr<HttpServer<HandlerType>>, std::string>
 makeHttpServer(
     util::config::ClioConfigDefinition const& config,
     boost::asio::io_context& ioc,
@@ -393,7 +393,13 @@ makeHttpServer(
     }
 
     auto const serverConfig = config.getObject("server");
-    auto const address = boost::asio::ip::make_address(serverConfig.get<std::string>("ip"));
+
+    auto const ipFromConfig = serverConfig.get<std::string>("ip");
+    boost::system::error_code ec;
+    auto const address = boost::asio::ip::make_address(ipFromConfig, ec);
+    if (ec)
+        return std::unexpected(fmt::format("Invalid 'server.ip' config value: {}", ipFromConfig));
+
     auto const port = serverConfig.get<unsigned short>("port");
 
     auto expectedAdminVerification = makeAdminVerificationStrategy(config);
