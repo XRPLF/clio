@@ -397,7 +397,7 @@ makeHttpServer(
     auto const ipFromConfig = serverConfig.get<std::string>("ip");
     boost::system::error_code ec;
     auto const address = boost::asio::ip::make_address(ipFromConfig, ec);
-    if (ec)
+    if (ec.failed())
         return std::unexpected(fmt::format("Invalid 'server.ip' config value: {}", ipFromConfig));
 
     auto const port = serverConfig.get<unsigned short>("port");

@@ -92,9 +92,14 @@ ClioApplication::run(bool const useNgWebServer)
     boost::asio::io_context ioc{threads};
 
     // Rate limiter, to prevent abuse
-    auto whitelistHandler = web::dosguard::WhitelistHandler{config_};
+    auto whitelistHandler = web::dosguard::WhitelistHandler::create(config_);
+    if (not whitelistHandler.has_value()) {
+        LOG(util::LogService::fatal()) << whitelistHandler.error();
+        return EXIT_FAILURE;
+    }
+
     auto const dosguardWeights = web::dosguard::Weights::make(config_);
-    auto dosGuard = web::dosguard::DOSGuard{config_, whitelistHandler, dosguardWeights};
+    auto dosGuard = web::dosguard::DOSGuard{config_, *whitelistHandler, dosguardWeights};
     auto sweepHandler = web::dosguard::IntervalSweepHandler{config_, ioc, dosGuard};
 
     auto cache = data::LedgerCache{};
@@ -223,8 +228,10 @@ ClioApplication::run(bool const useNgWebServer)
     );
 
     auto const expectedHttpServer = web::makeHttpServer(config_, ioc, dosGuard, handler, cache);
-    if (not expectedHttpServer.has_value())
+    if (not expectedHttpServer.has_value()) {
         LOG(util::LogService::fatal()) << expectedHttpServer.error();
+        return EXIT_FAILURE;
+    }
 
     appStopper_.setOnStop(
         Stopper::makeOnStopCallback(

@@ -150,13 +150,15 @@ struct WebServerTest : public virtual ::testing::Test {
     boost::asio::io_context ctxSync;
     std::string const port = std::to_string(tests::util::generateFreePort());
     ClioConfigDefinition cfg{getParseServerConfig(generateJSONWithDynamicPort(port))};
-    dosguard::WhitelistHandler whitelistHandler{cfg};
+    dosguard::WhitelistHandler whitelistHandler{dosguard::WhitelistHandler::create(cfg).value()};
     dosguard::Weights dosguardWeights{1, {}};
     dosguard::DOSGuard dosGuard{cfg, whitelistHandler, dosguardWeights};
     dosguard::IntervalSweepHandler sweepHandler{cfg, ctxSync, dosGuard};
 
     ClioConfigDefinition cfgOverload{getParseServerConfig(generateJSONDataOverload(port))};
-    dosguard::WhitelistHandler whitelistHandlerOverload{cfgOverload};
+    dosguard::WhitelistHandler whitelistHandlerOverload{
+        dosguard::WhitelistHandler::create(cfgOverload).value()
+    };
     dosguard::DOSGuard dosGuardOverload{cfgOverload, whitelistHandlerOverload, dosguardWeights};
     dosguard::IntervalSweepHandler sweepHandlerOverload{cfgOverload, ctxSync, dosGuardOverload};
     // this ctx is for http server
