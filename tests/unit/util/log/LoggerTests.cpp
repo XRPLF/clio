@@ -8,6 +8,10 @@
 #include "util/log/Logger.hpp"
 
 #include <boost/json/object.hpp>
+#include <boost/uuid/random_generator.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <fmt/core.h>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
@@ -112,8 +116,9 @@ TEST_F(LoggerTest, ManyDynamicLoggers)
  * loggers to that sink so that written messages actually land on disk.
  */
 struct LogFileRotationTests : ::testing::Test {
-    std::filesystem::path const tmpDir =
-        std::filesystem::temp_directory_path() / "clio_log_rotation_tests";
+    std::filesystem::path const tmpDir = std::filesystem::temp_directory_path() /
+        fmt::format("clio_log_rotation_tests_{}",
+                    boost::uuids::to_string(boost::uuids::random_generator{}()));
 
     util::config::ClioConfigDefinition config{
         {"log.channels.[].channel", Array{ConfigValue{ConfigType::String}}},
@@ -215,7 +220,6 @@ TEST_F(LogFileRotationTests, RotationDisabledProducesSingleLogFile)
 
 TEST_F(LogFileRotationTests, RotationEnabledProducesMultipleLogFiles)
 {
-    // rotation_size=1 (MB) is the minimum allowed value; writing > 1 MB triggers rotation.
     auto const parsingErrors = config.parse(
         ConfigFileJson{boost::json::object{
             {"log",

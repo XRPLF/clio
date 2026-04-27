@@ -185,19 +185,17 @@ spdlog::sink_ptr
 LogService::createFileSink(FileLoggingParams const& params, std::string const& format)
 {
     std::filesystem::path const dirPath(params.logDir);
-    std::shared_ptr<spdlog::sinks::sink> fileSink;
-
-    if (params.rotation.has_value()) {
-        // rotation sizes are taken from user in MB, but spdlog needs bytes
-        auto const rotationSize = mbToBytes(params.rotation->sizeMB);
-        fileSink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-            (dirPath / "clio.log").string(), rotationSize, params.rotation->maxFiles
-        );
-    } else {
-        fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
-            (dirPath / "clio.log").string(), /*truncate=*/false
-        );
-    }
+    auto fileSink = [&]() -> std::shared_ptr<spdlog::sinks::sink> {
+        auto const logPath = (dirPath / "clio.log").string();
+        if (params.rotation.has_value()) {
+            // rotation sizes are taken from user in MB, but spdlog needs bytes
+            auto const rotationSize = mbToBytes(params.rotation->sizeMB);
+            return std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+                logPath, rotationSize, params.rotation->maxFiles
+            );
+        }
+        return std::make_shared<spdlog::sinks::basic_file_sink_mt>(logPath, /*truncate=*/false);
+    }();
 
     fileSink->set_level(spdlog::level::trace);
     fileSink->set_formatter(std::make_unique<spdlog::pattern_formatter>(format));
