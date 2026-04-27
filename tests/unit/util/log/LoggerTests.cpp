@@ -122,8 +122,7 @@ struct LogFileRotationTests : ::testing::Test {
         {"log.level", ConfigValue{ConfigType::String}.defaultValue("info")},
 
         {"log.format",
-         ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")
-        },
+         ConfigValue{ConfigType::String}.defaultValue(R"(%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v)")},
         {"log.is_async", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
 
         {"log.enable_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
@@ -191,13 +190,15 @@ struct LogFileRotationTests : ::testing::Test {
 
 TEST_F(LogFileRotationTests, RotationDisabledProducesSingleLogFile)
 {
-    auto const parsingErrors = config.parse(ConfigFileJson{boost::json::object{
-        {"log",
-         boost::json::object{
-             {"directory", tmpDir.string()},
-             {"rotate", false},
-         }}
-    }});
+    auto const parsingErrors = config.parse(
+        ConfigFileJson{boost::json::object{
+            {"log",
+             boost::json::object{
+                 {"directory", tmpDir.string()},
+                 {"rotate", false},
+             }}
+        }}
+    );
     ASSERT_FALSE(parsingErrors.has_value());
 
     initFileLogging();
@@ -215,15 +216,17 @@ TEST_F(LogFileRotationTests, RotationDisabledProducesSingleLogFile)
 TEST_F(LogFileRotationTests, RotationEnabledProducesMultipleLogFiles)
 {
     // rotation_size=1 (MB) is the minimum allowed value; writing > 1 MB triggers rotation.
-    auto const parsingErrors = config.parse(ConfigFileJson{boost::json::object{
-        {"log",
-         boost::json::object{
-             {"directory", tmpDir.string()},
-             {"rotate", true},
-             {"rotation_size", 1},
-             {"directory_max_files", 2},
-         }}
-    }});
+    auto const parsingErrors = config.parse(
+        ConfigFileJson{boost::json::object{
+            {"log",
+             boost::json::object{
+                 {"directory", tmpDir.string()},
+                 {"rotate", true},
+                 {"rotation_size", 1},
+                 {"directory_max_files", 2},
+             }}
+        }}
+    );
     ASSERT_FALSE(parsingErrors.has_value());
 
     initFileLogging();

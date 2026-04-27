@@ -239,4 +239,3 @@ TEST_F(LogServiceInitTests, RotationDisabledConfigParsesSuccessfully)
 
     EXPECT_FALSE(config_.get<bool>("log.rotate"));
 }
-
