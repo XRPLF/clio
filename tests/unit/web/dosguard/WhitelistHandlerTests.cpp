@@ -151,7 +151,7 @@ TEST_F(WhitelistTest, AddInvalidNetwork)
 
 TEST_F(WhitelistTest, IsWhiteListedWithInvalidIP)
 {
-    Whitelist whitelist;
+    Whitelist const whitelist;
     EXPECT_FALSE(whitelist.isWhiteListed("not-an-ip"));
 }
 
