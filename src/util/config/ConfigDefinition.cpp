@@ -312,7 +312,8 @@ getClioConfig()
          {"num_markers",
           ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNumMarkers)},
 
-         {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}.optional()}},
+         {"dos_guard.whitelist.[]",
+          Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)}},
          {"dos_guard.max_fetches",
           ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(gValidateUint32)},
          {"dos_guard.max_connections",
@@ -361,7 +362,8 @@ getClioConfig()
          {"server.ws_max_sending_queue_size",
           ConfigValue{ConfigType::Integer}.defaultValue(1500).withConstraint(gValidateUint32)},
          {"server.__ng_web_server", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-         {"server.proxy.ips.[]", Array{ConfigValue{ConfigType::String}}},
+         {"server.proxy.ips.[]",
+          Array{ConfigValue{ConfigType::String}.withConstraint(gValidateIp)}},
          {"server.proxy.tokens.[]", Array{ConfigValue{ConfigType::String}}},
 
          {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},

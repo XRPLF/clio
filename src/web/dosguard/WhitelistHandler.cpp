@@ -8,32 +8,48 @@
 #include <algorithm>
 #include <functional>
 #include <regex>
-#include <stdexcept>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace web::dosguard {
 
-void
+WhitelistHandler::WhitelistHandler(Whitelist whitelist) : whitelist_(std::move(whitelist))
+{
+}
+
+std::expected<void, std::string>
 Whitelist::add(std::string_view net)
 {
     using namespace boost::asio;
 
     if (not isMask(net)) {
-        ips_.push_back(ip::make_address(net));
-        return;
+        boost::system::error_code ec;
+        auto const ip = ip::make_address(net, ec);
+        if (ec.failed())
+            return std::unexpected{fmt::format("Malformed whitelist ip address: {}. ", net)};
+        ips_.push_back(ip);
+        return {};
     }
 
     if (isV4(net)) {
-        subnetsV4_.push_back(ip::make_network_v4(net));
+        boost::system::error_code ec;
+        auto const net4 = ip::make_network_v4(net, ec);
+        if (ec.failed())
+            return std::unexpected{fmt::format("Malformed network: {}. ", net)};
+        subnetsV4_.push_back(net4);
     } else if (isV6(net)) {
-        subnetsV6_.push_back(ip::make_network_v6(net));
+        boost::system::error_code ec;
+        auto const net6 = ip::make_network_v6(net, ec);
+        if (ec.failed())
+            return std::unexpected{fmt::format("Malformed network: {}. ", net)};
+        subnetsV6_.push_back(net6);
     } else {
-        throw std::runtime_error(fmt::format("malformed network: {}", net.data()));
+        return std::unexpected{fmt::format("Malformed network: {}. ", net)};
     }
+    return {};
 }
 
 bool
@@ -41,7 +57,11 @@ Whitelist::isWhiteListed(std::string_view ip) const
 {
     using namespace boost::asio;
 
-    auto const addr = ip::make_address(ip);
+    boost::system::error_code ec;
+    auto const addr = ip::make_address(ip, ec);
+    if (ec.failed())
+        return false;
+
     if (std::ranges::find(ips_, addr) != std::end(ips_))
         return true;
 
@@ -95,7 +115,7 @@ Whitelist::isV6(std::string_view net)
 bool
 Whitelist::isMask(std::string_view net)
 {
-    return net.find('/') != std::string_view::npos;
+    return net.contains('/');
 }
 
 }  // namespace web::dosguard

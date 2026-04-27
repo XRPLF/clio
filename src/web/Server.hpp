@@ -375,7 +375,7 @@ using HttpServer = Server<HttpSession, SslHttpSession, HandlerType>;
  * @return The server instance
  */
 template <typename HandlerType>
-static std::shared_ptr<HttpServer<HandlerType>>
+static std::expected<std::shared_ptr<HttpServer<HandlerType>>, std::string>
 makeHttpServer(
     util::config::ClioConfigDefinition const& config,
     boost::asio::io_context& ioc,
@@ -388,19 +388,24 @@ makeHttpServer(
 
     auto expectedSslContext = ng::impl::makeServerSslContext(config);
     if (not expectedSslContext) {
-        LOG(log.error()) << "Failed to create SSL context: " << expectedSslContext.error();
-        return nullptr;
+        return std::unexpected(
+            fmt::format("Failed to create SSL context: {}", expectedSslContext.error())
+        );
     }
 
     auto const serverConfig = config.getObject("server");
-    auto const address = boost::asio::ip::make_address(serverConfig.get<std::string>("ip"));
+
+    auto const ipFromConfig = serverConfig.get<std::string>("ip");
+    boost::system::error_code ec;
+    auto const address = boost::asio::ip::make_address(ipFromConfig, ec);
+    if (ec.failed())
+        return std::unexpected(fmt::format("Invalid 'server.ip' config value: {}", ipFromConfig));
+
     auto const port = serverConfig.get<unsigned short>("port");
 
     auto expectedAdminVerification = makeAdminVerificationStrategy(config);
-    if (not expectedAdminVerification.has_value()) {
-        LOG(log.error()) << expectedAdminVerification.error();
-        throw std::logic_error{expectedAdminVerification.error()};
-    }
+    if (not expectedAdminVerification.has_value())
+        return std::unexpected(expectedAdminVerification.error());
 
     // If the transactions number is 200 per ledger, A client which subscribes everything will send
     // 400+ feeds for each ledger. we allow user delay 3 ledgers by default

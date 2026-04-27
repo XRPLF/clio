@@ -230,7 +230,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: False
 - **Type**: string
 - **Default value**: None
-- **Constraints**: None
+- **Constraints**: The value must be a valid IP address.
 - **Description**: The list of IP addresses to whitelist for DOS protection.
 
 ### dos_guard.max_fetches
@@ -342,7 +342,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: string
 - **Default value**: None
-- **Constraints**: None
+- **Constraints**: The value must be a valid IP address.
 - **Description**: List of proxy ip addresses. When Clio receives a request from proxy it will use `Forwarded` value (if any) as client ip. When this option is used together with `server.proxy.tokens` Clio will identify proxy by ip or by token.
 
 ### server.proxy.tokens.[]

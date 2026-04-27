@@ -150,13 +150,15 @@ struct WebServerTest : public virtual ::testing::Test {
     boost::asio::io_context ctxSync;
     std::string const port = std::to_string(tests::util::generateFreePort());
     ClioConfigDefinition cfg{getParseServerConfig(generateJSONWithDynamicPort(port))};
-    dosguard::WhitelistHandler whitelistHandler{cfg};
+    dosguard::WhitelistHandler whitelistHandler{dosguard::WhitelistHandler::create(cfg).value()};
     dosguard::Weights dosguardWeights{1, {}};
     dosguard::DOSGuard dosGuard{cfg, whitelistHandler, dosguardWeights};
     dosguard::IntervalSweepHandler sweepHandler{cfg, ctxSync, dosGuard};
 
     ClioConfigDefinition cfgOverload{getParseServerConfig(generateJSONDataOverload(port))};
-    dosguard::WhitelistHandler whitelistHandlerOverload{cfgOverload};
+    dosguard::WhitelistHandler whitelistHandlerOverload{
+        dosguard::WhitelistHandler::create(cfgOverload).value()
+    };
     dosguard::DOSGuard dosGuardOverload{cfgOverload, whitelistHandlerOverload, dosguardWeights};
     dosguard::IntervalSweepHandler sweepHandlerOverload{cfgOverload, ctxSync, dosGuardOverload};
     // this ctx is for http server
@@ -216,10 +218,25 @@ makeServerSync(
     std::reference_wrapper<data::LedgerCacheInterface const> cache
 )
 {
-    return web::makeHttpServer(config, ioc, dosGuard, handler, cache);
+    auto result = web::makeHttpServer(config, ioc, dosGuard, handler, cache);
+    [&]() { ASSERT_TRUE(result.has_value()); }();
+    return std::move(result).value();
 }
 
 }  // namespace
+
+TEST_F(WebServerTest, InvalidIpAddress)
+{
+    auto jsonConfig = generateJSONWithDynamicPort(port);
+    jsonConfig.as_object()["server"].as_object()["ip"] = "not-an-ip";
+
+    auto cache = MockLedgerCache();
+    auto const e = std::make_shared<EchoExecutor>();
+    auto const result =
+        web::makeHttpServer(getParseServerConfig(jsonConfig), ctx, dosGuard, e, cache);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_THAT(result.error(), testing::HasSubstr("Invalid 'server.ip' config value"));
+}
 
 TEST_F(WebServerTest, Http)
 {
@@ -294,8 +311,9 @@ TEST_F(WebServerTest, IncompleteSslConfig)
     jsonConfig.as_object()["ssl_key_file"] = sslKeyFile.path;
 
     auto cache = MockLedgerCache();
-    auto const server = makeServerSync(getParseServerConfig(jsonConfig), ctx, dosGuard, e, cache);
-    EXPECT_EQ(server, nullptr);
+    auto const result =
+        web::makeHttpServer(getParseServerConfig(jsonConfig), ctx, dosGuard, e, cache);
+    EXPECT_FALSE(result.has_value());
 }
 
 TEST_F(WebServerTest, WrongSslConfig)
@@ -307,8 +325,9 @@ TEST_F(WebServerTest, WrongSslConfig)
     jsonConfig.as_object()["ssl_cert_file"] = "wrong_path";
 
     auto cache = MockLedgerCache();
-    auto const server = makeServerSync(getParseServerConfig(jsonConfig), ctx, dosGuard, e, cache);
-    EXPECT_EQ(server, nullptr);
+    auto const result =
+        web::makeHttpServer(getParseServerConfig(jsonConfig), ctx, dosGuard, e, cache);
+    EXPECT_FALSE(result.has_value());
 }
 
 TEST_F(WebServerTest, Https)
@@ -694,9 +713,8 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminSet)
     )};
 
     MockLedgerCache cache;
-    EXPECT_THROW(
-        web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache), std::logic_error
-    );
+    auto const result = web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache);
+    EXPECT_FALSE(result.has_value());
 }
 
 TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
@@ -719,9 +737,8 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
     )};
 
     MockLedgerCache cache;
-    EXPECT_THROW(
-        web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache), std::logic_error
-    );
+    auto const result = web::makeHttpServer(serverConfig, ctx, dosGuardOverload, e, cache);
+    EXPECT_FALSE(result.has_value());
 }
 
 struct WebServerPrometheusTest : util::prometheus::WithPrometheus, WebServerTest {};

@@ -14,11 +14,11 @@
 #include <fmt/format.h>
 
 #include <algorithm>
-#include <regex>
+#include <optional>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace web::dosguard {
@@ -36,16 +36,15 @@ public:
      * @brief Add network address to whitelist.
      *
      * @param net Network part of the ip address
-     * @throws std::runtime::error when the network address is not valid
+     * @return void on success, or an error string if the address is not valid
      */
-    void
+    std::expected<void, std::string>
     add(std::string_view net);
 
     /**
      * @brief Checks to see if ip address is whitelisted.
      *
      * @param ip IP address
-     * @throws std::runtime::error when the network address is not valid
      * @return true if the given IP is whitelisted; false otherwise
      */
     bool
@@ -76,21 +75,38 @@ class WhitelistHandler : public WhitelistHandlerInterface {
 
 public:
     /**
-     * @brief Adds all whitelisted IPs and masks from the given config.
+     * @brief Constructs a WhitelistHandler from an already-built Whitelist.
+     *
+     * @param whitelist The whitelist to use
+     */
+    explicit WhitelistHandler(Whitelist whitelist);
+
+    /**
+     * @brief Creates a WhitelistHandler by loading all whitelisted IPs and masks from config.
      *
      * @param config The Clio config to use
      * @param resolver The resolver to use for hostname resolution
+     * @return The WhitelistHandler on success, or an error string if any whitelist entry is invalid
      */
     template <SomeResolver HostnameResolverType = Resolver>
-    WhitelistHandler(
-        util::config::ClioConfigDefinition const& config,
-        HostnameResolverType&& resolver = {}
-    )
+    static std::expected<WhitelistHandler, std::string>
+    create(util::config::ClioConfigDefinition const& config, HostnameResolverType&& resolver = {})
     {
         std::unordered_set<std::string> const arr =
             getWhitelist(config, std::forward<HostnameResolverType>(resolver));
-        for (auto const& net : arr)
-            whitelist_.add(net);
+        Whitelist whitelist;
+        std::optional<std::string> errors;
+        for (auto const& net : arr) {
+            if (auto result = whitelist.add(net); !result.has_value()) {
+                if (!errors.has_value())
+                    errors.emplace();
+                errors->append(std::move(result).error());
+            }
+        }
+        if (errors.has_value()) {
+            return std::unexpected{std::move(errors).value()};
+        }
+        return WhitelistHandler(std::move(whitelist));
     }
 
     /**
