@@ -357,6 +357,10 @@ Documentation can be found at: <https://github.com/gabime/spdlog/wiki/Custom-for
                     "file starts."},
         KV{.key = "log.directory_max_files",
            .value = "The maximum number of log files in the directory."},
+        KV{.key = "log.rotate",
+           .value = "Enables or disables log file rotation. When disabled, a single log file is "
+                    "used without size-based rotation. Useful when rotation is managed externally "
+                    "(e.g., via logrotate)."},
         KV{.key = "log.tag_style",
            .value = "Log tags are unique identifiers for log messages. `uint`/`int` starts logging "
                     "from 0 and increments, "

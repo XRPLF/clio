@@ -66,6 +66,8 @@ protected:
         {"log.directory_max_files",
          ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(config::gValidateUint32)},
 
+        {"log.rotate", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+
         {"log.tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
     };
 
@@ -218,4 +220,22 @@ TEST_F(LogServiceInitTests, LogSizeAndHourRotationCannotBeZero)
             )
         );
     }
+}
+
+TEST_F(LogServiceInitTests, RotateDefaultsToTrue)
+{
+    auto const parsingErrors = config_.parse(ConfigFileJson{boost::json::object{}});
+    ASSERT_FALSE(parsingErrors.has_value());
+
+    EXPECT_TRUE(config_.get<bool>("log.rotate"));
+}
+
+TEST_F(LogServiceInitTests, RotationDisabledConfigParsesSuccessfully)
+{
+    auto const parsingErrors = config_.parse(
+        ConfigFileJson{boost::json::object{{"log", boost::json::object{{"rotate", false}}}}}
+    );
+    ASSERT_FALSE(parsingErrors.has_value());
+
+    EXPECT_FALSE(config_.get<bool>("log.rotate"));
 }

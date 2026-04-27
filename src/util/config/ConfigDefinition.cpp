@@ -422,6 +422,8 @@ getClioConfig()
          {"log.directory_max_files",
           ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(gValidateUint32)},
 
+         {"log.rotate", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+
          {"log.tag_style",
           ConfigValue{ConfigType::String}.defaultValue("none").withConstraint(gValidateLogTag)},
 
