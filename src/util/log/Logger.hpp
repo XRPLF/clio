@@ -388,7 +388,7 @@ private:
      */
     [[nodiscard]] static std::
         expected<std::vector<std::shared_ptr<spdlog::sinks::sink>>, std::string>
-   tSinks(config::ClioConfigDefinition const& config);
+        getSinks(config::ClioConfigDefinition const& config);
 
     struct RotationParams {
         uint32_t sizeMB;
