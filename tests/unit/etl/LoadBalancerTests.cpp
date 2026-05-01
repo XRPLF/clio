@@ -809,6 +809,36 @@ TEST_F(LoadBalancerForwardToRippledPrometheusTests, source0Fails)
     });
 }
 
+TEST_F(LoadBalancerForwardToRippledPrometheusTests, adminRequestAlwaysCacheMiss)
+{
+    configJson_.as_object()["forwarding"] = boost::json::object{{"cache_timeout", 10.}};
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
+    auto loadBalancer = makeLoadBalancer();
+
+    auto const request = boost::json::object{{"command", "server_info"}};
+
+    auto& cacheMissCounter = makeMock<CounterInt>("forwarding_cache_miss_counter", "");
+    auto& successDurationCounter =
+        makeMock<CounterInt>("forwarding_duration_milliseconds_counter", "{status=\"success\"}");
+
+    EXPECT_CALL(cacheMissCounter, add(1)).Times(2);
+    EXPECT_CALL(successDurationCounter, add(testing::_)).Times(2);
+
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0),
+        forwardToRippled(
+            request, clientIP_, LoadBalancer::kADMIN_FORWARDING_X_USER_VALUE, testing::_
+        )
+    )
+        .Times(2)
+        .WillRepeatedly(Return(response_));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, true, yield), response_);
+        EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, true, yield), response_);
+    });
+}
+
 struct LoadBalancerForwardToRippledErrorTestBundle {
     std::string testName;
     rpc::ClioError firstSourceError;
@@ -902,6 +932,59 @@ TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheEnabled)
 
     runSpawn([&](boost::asio::yield_context yield) {
         EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), response_);
+        EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), response_);
+    });
+}
+
+TEST_F(LoadBalancerForwardToRippledTests, adminRequestBypassesForwardingCache)
+{
+    configJson_.as_object()["forwarding"] = boost::json::object{{"cache_timeout", 10.}};
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
+    auto loadBalancer = makeLoadBalancer();
+
+    auto const request = boost::json::object{{"command", "server_info"}};
+
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0),
+        forwardToRippled(
+            request, clientIP_, LoadBalancer::kADMIN_FORWARDING_X_USER_VALUE, testing::_
+        )
+    )
+        .Times(2)
+        .WillRepeatedly(Return(response_));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, true, yield), response_);
+        EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, true, yield), response_);
+    });
+}
+
+TEST_F(LoadBalancerForwardToRippledTests, adminResponseNotCachedForSubsequentUserRequest)
+{
+    configJson_.as_object()["forwarding"] = boost::json::object{{"cache_timeout", 10.}};
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
+    auto loadBalancer = makeLoadBalancer();
+
+    auto const request = boost::json::object{{"command", "server_info"}};
+
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0),
+        forwardToRippled(
+            request, clientIP_, LoadBalancer::kADMIN_FORWARDING_X_USER_VALUE, testing::_
+        )
+    )
+        .WillOnce(Return(response_));
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0),
+        forwardToRippled(
+            request, clientIP_, LoadBalancer::kUSER_FORWARDING_X_USER_VALUE, testing::_
+        )
+    )
+        .WillOnce(Return(response_));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, true, yield), response_);
+        // User request must reach the source, not be served from the admin response
         EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), response_);
     });
 }

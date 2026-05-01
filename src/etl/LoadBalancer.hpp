@@ -254,6 +254,9 @@ private:
      */
     void
     chooseForwardingSource();
+
+    bool
+    shouldUseCache(bool isAdmin) const;
 };
 
 }  // namespace etl
