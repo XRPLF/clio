@@ -275,7 +275,7 @@ LoadBalancer::forwardToRippled(
         return std::unexpected{rpc::ClioError::RpcCommandIsMissing};
 
     auto const cmd = boost::json::value_to<std::string>(request.at("command"));
-    if (forwardingCache_ and not isAdmin) {
+    if (shouldUseCache(isAdmin)) {
         if (auto cachedResponse = forwardingCache_->get(cmd); cachedResponse) {
             forwardingCounters_.cacheHit.get() += 1;
             return std::move(cachedResponse).value();
@@ -310,7 +310,7 @@ LoadBalancer::forwardToRippled(
     }
 
     if (response) {
-        if (forwardingCache_ and not isAdmin and not response->contains("error"))
+        if (shouldUseCache(isAdmin) and not response->contains("error"))
             forwardingCache_->put(cmd, *response);
         return std::move(response).value();
     }
