@@ -300,7 +300,9 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
     );
     if (not connectionExpected.has_value()) {
         if (connectionExpected.error().has_value()) {
-            LOG(log_.info()) << *connectionExpected.error();
+            LOG(
+                log_.info()
+            ) << *connectionExpected.error();  // NOLINT(bugprone-unchecked-optional-access)
         }
         return;
     }

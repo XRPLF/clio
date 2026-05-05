@@ -359,6 +359,8 @@ insertMPTIssuanceID(
 
     auto const id = getMPTIssuanceID(meta);
     ASSERT(id.has_value(), "MPTIssuanceID must have value");
+    if (!id)
+        return false;
 
     // For mpttokenissuance create, add mpt_issuance_id to metajson
     // Otherwise, add it to txn json
@@ -630,6 +632,8 @@ traverseNFTObjects(
             return AccountCursor{.index = nftPreviousPage, .hint = count};
 
         page = backend.fetchLedgerObject(nftPreviousPage, sequence, yield);
+        if (!page)
+            break;
         pageSLE = ripple::SLE{ripple::SerialIter{page->data(), page->size()}, nftPreviousPage};
     }
 

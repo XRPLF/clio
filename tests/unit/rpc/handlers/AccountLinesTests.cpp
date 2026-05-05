@@ -610,9 +610,9 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
 
-        EXPECT_EQ((*output.result).as_object().at("lines").as_array().size(), 20);
+        EXPECT_EQ(output.result->as_object().at("lines").as_array().size(), 20);
         EXPECT_THAT(
-            boost::json::value_to<std::string>((*output.result).as_object().at("marker")),
+            boost::json::value_to<std::string>(output.result->as_object().at("marker")),
             EndsWith(",0")
         );
     });
@@ -710,7 +710,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
         auto handler = AnyHandler{AccountLinesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output.result).as_object().at("lines").as_array().size(), 20);
+        EXPECT_EQ(output.result->as_object().at("lines").as_array().size(), 20);
     });
 }
 
@@ -747,7 +747,7 @@ TEST_F(RPCAccountLinesHandlerTest, EmptyChannel)
         auto handler = AnyHandler{AccountLinesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output.result).as_object().at("lines").as_array().size(), 0);
+        EXPECT_EQ(output.result->as_object().at("lines").as_array().size(), 0);
     });
 }
 
@@ -1002,10 +1002,10 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
-            boost::json::value_to<std::string>((*output.result).as_object().at("marker")),
+            boost::json::value_to<std::string>(output.result->as_object().at("marker")),
             fmt::format("{},{}", kINDEX1, kNEXT_PAGE)
         );
-        EXPECT_EQ((*output.result).as_object().at("lines").as_array().size(), 15);
+        EXPECT_EQ(output.result->as_object().at("lines").as_array().size(), 15);
     });
 }
 
@@ -1064,10 +1064,10 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
         auto handler = AnyHandler{AccountLinesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_TRUE((*output.result).as_object().if_contains("marker") == nullptr);
+        EXPECT_TRUE(output.result->as_object().if_contains("marker") == nullptr);
         // the first item is the marker itself, so the result will have limit-1
         // items
-        EXPECT_EQ((*output.result).as_object().at("lines").as_array().size(), kLIMIT - 1);
+        EXPECT_EQ(output.result->as_object().at("lines").as_array().size(), kLIMIT - 1);
     });
 }
 

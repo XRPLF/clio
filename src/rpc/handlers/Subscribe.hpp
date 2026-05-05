@@ -107,11 +107,11 @@ public:
      * @param ctx The context of the request
      * @return The result of the operation
      */
-    Result
+    [[nodiscard]] Result
     process(Input const& input, Context const& ctx) const;
 
 private:
-    boost::json::object
+    [[nodiscard]] boost::json::object
     subscribeToStreams(
         boost::asio::yield_context yield,
         std::vector<std::string> const& streams,

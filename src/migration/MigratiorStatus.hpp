@@ -15,7 +15,7 @@ public:
     /**
      * @brief The status of a migrator
      */
-    enum Status { Migrated, NotMigrated, NotKnown, NumStatuses };
+    enum class Status { Migrated, NotMigrated, NotKnown, NumStatuses };
 
     /**
      * @brief Construct a new Migrator Status object with the given status
@@ -48,7 +48,7 @@ public:
      *
      * @return The string representation of the status
      */
-    std::string
+    [[nodiscard]] std::string
     toString() const;
 
     /**
@@ -61,11 +61,8 @@ public:
     fromString(std::string const& statusStr);
 
 private:
-    static constexpr std::array<char const*, static_cast<size_t>(NumStatuses)> kSTATUS_STR_MAP = {
-        "Migrated",
-        "NotMigrated",
-        "NotKnown"
-    };
+    static constexpr std::array<char const*, static_cast<size_t>(Status::NumStatuses)>
+        kSTATUS_STR_MAP = {"Migrated", "NotMigrated", "NotKnown"};
 
     Status status_;
 };

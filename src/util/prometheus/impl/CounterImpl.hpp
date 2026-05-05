@@ -43,7 +43,7 @@ public:
         value_->set(value);
     }
 
-    ValueType
+    [[nodiscard]] ValueType
     value() const
     {
         return value_->value();

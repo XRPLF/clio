@@ -171,7 +171,7 @@ public:
      * @return A bound and ready to execute Statement object
      */
     template <typename... Args>
-    Statement
+    [[nodiscard]] Statement
     bind(Args&&... args) const
     {
         Statement statement = cass_prepared_bind(*this);

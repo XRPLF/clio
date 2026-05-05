@@ -33,7 +33,7 @@ struct AsyncAsioContextTest : virtual public ::testing::Test {
     ~AsyncAsioContextTest() override
     {
         work_.reset();
-        if (runner_->joinable())
+        if (runner_.has_value() && runner_->joinable())
             runner_->join();
         ctx_.stop();
     }
@@ -42,7 +42,7 @@ struct AsyncAsioContextTest : virtual public ::testing::Test {
     stop()
     {
         work_.reset();
-        if (runner_->joinable())
+        if (runner_.has_value() && runner_->joinable())
             runner_->join();
         ctx_.stop();
     }

@@ -493,7 +493,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, UseLimit)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
 
-        auto const resultJson = (*output.result).as_object();
+        auto const resultJson = output.result->as_object();
         EXPECT_EQ(resultJson.at("mpt_issuances").as_array().size(), kLIMIT);
         ASSERT_TRUE(resultJson.contains("marker"));
         EXPECT_THAT(boost::json::value_to<std::string>(resultJson.at("marker")), EndsWith(",0"));
@@ -514,7 +514,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, UseLimit)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
-            (*output.result).as_object().at("limit").as_uint64(),
+            output.result->as_object().at("limit").as_uint64(),
             AccountMPTokenIssuancesHandler::kLIMIT_MIN
         );
     });
@@ -534,7 +534,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, UseLimit)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
-            (*output.result).as_object().at("limit").as_uint64(),
+            output.result->as_object().at("limit").as_uint64(),
             AccountMPTokenIssuancesHandler::kLIMIT_MAX
         );
     });
@@ -593,7 +593,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerOutput)
         auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        auto const& resultJson = (*output.result).as_object();
+        auto const& resultJson = output.result->as_object();
         EXPECT_EQ(
             boost::json::value_to<std::string>(resultJson.at("marker")),
             fmt::format("{},{}", kISSUANCE_INDEX1, kNEXT_PAGE)
@@ -652,7 +652,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, MarkerInput)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
 
-        auto const& resultJson = (*output.result).as_object();
+        auto const& resultJson = output.result->as_object();
         EXPECT_TRUE(resultJson.if_contains("marker") == nullptr);
         EXPECT_EQ(resultJson.at("mpt_issuances").as_array().size(), kLIMIT - 1);
     });
@@ -861,7 +861,7 @@ TEST_F(RPCAccountMPTokenIssuancesHandlerTest, EmptyResult)
         auto const handler = AnyHandler{AccountMPTokenIssuancesHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output.result).as_object().at("mpt_issuances").as_array().size(), 0);
+        EXPECT_EQ(output.result->as_object().at("mpt_issuances").as_array().size(), 0);
     });
 }
 
@@ -1069,7 +1069,7 @@ TEST_P(AccountMPTokenIssuancesImmutableFlagsTest, SingleFlag)
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        auto const& resultJson = (*output.result).as_object();
+        auto const& resultJson = output.result->as_object();
         auto const& issuances = resultJson.at("mpt_issuances").as_array();
         ASSERT_EQ(issuances.size(), 1);
 
@@ -1175,7 +1175,7 @@ TEST_P(AccountMPTokenIssuancesMutableFlagsTest, SingleMutableFlag)
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        auto const& resultJson = (*output.result).as_object();
+        auto const& resultJson = output.result->as_object();
         auto const& issuances = resultJson.at("mpt_issuances").as_array();
         ASSERT_EQ(issuances.size(), 1);
 

@@ -100,7 +100,8 @@ TEST_F(RequestAsHttpRequestTest, HttpRequest)
     Request const request{httpRequest};
     auto const maybeHttpRequest = request.asHttpRequest();
     ASSERT_TRUE(maybeHttpRequest.has_value());
-    auto const& actualHttpRequest = maybeHttpRequest->get();
+    auto const& actualHttpRequest =
+        maybeHttpRequest->get();  // NOLINT(bugprone-unchecked-optional-access)
     EXPECT_EQ(actualHttpRequest.method(), httpRequest.method());
     EXPECT_EQ(actualHttpRequest.target(), httpRequest.target());
     EXPECT_EQ(actualHttpRequest.version(), httpRequest.version());
@@ -204,7 +205,7 @@ TEST_F(RequestHeaderValueTest, headerValue)
     Request const request{httpRequest};
     auto const maybeHeaderValue = request.headerValue(headerName);
     ASSERT_TRUE(maybeHeaderValue.has_value());
-    EXPECT_EQ(maybeHeaderValue.value(), headerValue);
+    EXPECT_EQ(*maybeHeaderValue, headerValue);  // NOLINT(bugprone-unchecked-optional-access)
 }
 
 TEST_F(RequestHeaderValueTest, headerValueString)
@@ -216,7 +217,7 @@ TEST_F(RequestHeaderValueTest, headerValueString)
     Request const request{httpRequest};
     auto const maybeHeaderValue = request.headerValue(headerName);
     ASSERT_TRUE(maybeHeaderValue.has_value());
-    EXPECT_EQ(maybeHeaderValue.value(), headerValue);
+    EXPECT_EQ(*maybeHeaderValue, headerValue);  // NOLINT(bugprone-unchecked-optional-access)
 }
 
 TEST_F(RequestHeaderValueTest, headerValueNotFound)
@@ -236,5 +237,5 @@ TEST_F(RequestHeaderValueTest, headerValueWebsocketRequest)
     Request const request{"websocket message", headers};
     auto const maybeHeaderValue = request.headerValue(headerName);
     ASSERT_TRUE(maybeHeaderValue.has_value());
-    EXPECT_EQ(maybeHeaderValue.value(), headerValue);
+    EXPECT_EQ(*maybeHeaderValue, headerValue);  // NOLINT(bugprone-unchecked-optional-access)
 }

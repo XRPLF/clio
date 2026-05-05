@@ -98,7 +98,7 @@ public:
             case State::HasValue: {
                 auto const value = value_.template lock<std::shared_lock>();
                 ASSERT(value->has_value(), "Value should be presented when the cache is full");
-                return value->value();
+                return **value;  // NOLINT(bugprone-unchecked-optional-access)
             }
             case State::NoValue: {
                 return update(yield, std::move(updater), std::move(verifier));
@@ -127,10 +127,10 @@ public:
         state_ = State::Updating;
 
         auto const result = updater(yield);
-        auto const shouldBeCached = result.has_value() and verifier(result.value());
+        auto const shouldBeCached = result.has_value() and verifier(*result);
 
         if (shouldBeCached) {
-            value_.lock().get() = result.value();
+            value_.lock().get() = *result;
             state_ = State::HasValue;
         } else {
             state_ = State::NoValue;
@@ -208,7 +208,7 @@ private:
         if (state_ == State::Updating) {
             sharedContext->timer.async_wait(yield[errorCode]);
             ASSERT(sharedContext->result.has_value(), "There should be some value after waiting");
-            return std::move(sharedContext->result).value();
+            return *std::move(sharedContext->result);  // NOLINT(bugprone-unchecked-optional-access)
         }
         return asyncGet(yield, std::move(updater), std::move(verifier));
     }

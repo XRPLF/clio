@@ -53,23 +53,30 @@ AccountOffersHandler::process(AccountOffersHandler::Input const& input, Context 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountOffer's ledger range must be available");
     auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+        *sharedPtrBackend_,
+        ctx.yield,
+        input.ledgerHash,
+        input.ledgerIndex,
+        range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
     if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
-    auto const& lgrInfo = expectedLgrInfo.value();
+    auto const& lgrInfo = *expectedLgrInfo;
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        ripple::keylet::account(*accountID).key,
+        lgrInfo.seq,
+        ctx.yield
     );
 
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     Output response;
-    response.account = ripple::to_string(*accountID);
+    response.account = ripple::to_string(*accountID);  // NOLINT(bugprone-unchecked-optional-access)
     response.ledgerHash = ripple::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
@@ -82,7 +89,7 @@ AccountOffersHandler::process(AccountOffersHandler::Input const& input, Context 
 
     auto const expectedNext = traverseOwnedNodes(
         *sharedPtrBackend_,
-        *accountID,
+        *accountID,  // NOLINT(bugprone-unchecked-optional-access)
         lgrInfo.seq,
         input.limit,
         input.marker,
@@ -93,7 +100,7 @@ AccountOffersHandler::process(AccountOffersHandler::Input const& input, Context 
     if (not expectedNext.has_value())
         return Error{expectedNext.error()};
 
-    auto const nextMarker = expectedNext.value();
+    auto const nextMarker = *expectedNext;
 
     if (nextMarker.isNonZero())
         response.marker = nextMarker.toString();

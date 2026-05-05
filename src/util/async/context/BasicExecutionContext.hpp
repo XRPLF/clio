@@ -64,7 +64,7 @@ struct AsioPoolContext {
     AsioPoolContext(AsioPoolContext const&) = delete;
     AsioPoolContext(AsioPoolContext&&) = default;
 
-    Strand
+    [[nodiscard]] Strand
     makeStrand() const
     {
         ASSERT(executor, "Called after executor was moved from.");
@@ -85,7 +85,7 @@ struct AsioPoolContext {
             executor->join();
     }
 
-    Executor&
+    [[nodiscard]] Executor&
     getExecutor() const
     {
         ASSERT(executor, "Called after executor was moved from.");

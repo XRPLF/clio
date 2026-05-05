@@ -29,7 +29,7 @@ public:
      * @param ip The ip addr of the client
      * @return true if authorized; false otherwise
      */
-    virtual bool
+    [[nodiscard]] virtual bool
     isAdmin(RequestHeader const& request, std::string_view ip) const = 0;
 };
 
@@ -45,7 +45,7 @@ public:
      * @param ip The ip addr of the client
      * @return true if authorized; false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isAdmin(RequestHeader const&, std::string_view ip) const override;
 };
 
@@ -76,7 +76,7 @@ public:
      * @param request The request from a host
      * @return true if the password from request matches admin password from config
      */
-    bool
+    [[nodiscard]] bool
     isAdmin(RequestHeader const& request, std::string_view) const override;
 };
 

@@ -525,13 +525,13 @@ private:
         {
             // mutex lock required to prevent race condition around spurious
             // wakeup
-            std::lock_guard const lck(throttleMutex_);
+            std::scoped_lock const lck(throttleMutex_);
             throttleCv_.notify_one();
         }
         if (cur == 0) {
             // mutex lock required to prevent race condition around spurious
             // wakeup
-            std::lock_guard const lck(syncMutex_);
+            std::scoped_lock const lck(syncMutex_);
             syncCv_.notify_one();
         }
     }

@@ -42,7 +42,7 @@ public:
      *
      * @return true if the connection was upgraded.
      */
-    virtual bool
+    [[nodiscard]] virtual bool
     wasUpgraded() const = 0;
 
     /**
@@ -50,7 +50,7 @@ public:
      *
      * @return The ip of the client.
      */
-    std::string const&
+    [[nodiscard]] std::string const&
     ip() const;
 
     /**
@@ -89,7 +89,7 @@ public:
      *
      * @return true if the client is an admin.
      */
-    bool
+    [[nodiscard]] bool
     isAdmin() const;
 
     /**

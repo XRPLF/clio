@@ -108,7 +108,7 @@ public:
                       ...);
 
                   if (firstFailure)
-                      return Error{firstFailure.value()};
+                      return Error{*firstFailure};
 
                   return {};
               }

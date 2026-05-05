@@ -16,7 +16,7 @@ jobs:
     with:
       sign_commit: true
       committer: "Clio CI <skuznetsov@ripple.com>"
-      reviewers: "godexsoft,kuznetsss,PeterChen13579,mathbunnyru"
+      reviewers: "godexsoft,kuznetsss,mathbunnyru"
     secrets:
       GPG_PRIVATE_KEY: ${{ secrets.ACTIONS_GPG_PRIVATE_KEY }}
       GPG_PASSPHRASE: ${{ secrets.ACTIONS_GPG_PASSPHRASE }}

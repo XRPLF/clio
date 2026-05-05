@@ -85,8 +85,12 @@ parseAuthorizeCredentials(boost::json::array const& jv)
         );
 
         auto credential = ripple::STObject::makeInnerObject(ripple::sfCredential);
+
+        // NOLINTBEGIN(bugprone-unchecked-optional-access)
         credential.setAccountID(ripple::sfIssuer, *issuer);
         credential.setFieldVL(ripple::sfCredentialType, *credentialType);
+        // NOLINTEND(bugprone-unchecked-optional-access)
+
         arr.push_back(std::move(credential));
     }
 
@@ -104,7 +108,7 @@ fetchCredentialArray(
 {
     ripple::STArray authCreds;
     std::unordered_set<std::string_view> elems;
-    for (auto const& elem : credID.value()) {
+    for (auto const& elem : *credID) {  // NOLINT(bugprone-unchecked-optional-access)
         ASSERT(
             elem.is_string(), "should already be checked in validators.hpp that elem is a string."
         );

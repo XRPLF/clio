@@ -484,7 +484,7 @@ TEST_P(ChannelCallbackTest, ChannelClosureScenarios)
 
                         boost::asio::post(
                             executor, [&executor, receiverPtr, senderPtr, &testCompleted]() {
-                                senderPtr->reset();
+                                (*senderPtr).reset();
                                 EXPECT_TRUE(receiverPtr->isClosed());
 
                                 boost::asio::post(executor, [receiverPtr, &testCompleted]() {
@@ -555,7 +555,7 @@ TEST_P(ChannelCallbackTest, TryMethodsWithClosedChannel)
             EXPECT_TRUE(senderPtr->value().trySend(100));
             EXPECT_TRUE(senderPtr->value().trySend(101));
 
-            senderPtr->reset();
+            (*senderPtr).reset();
 
             EXPECT_TRUE(receiverPtr->isClosed());
 

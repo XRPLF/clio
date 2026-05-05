@@ -97,7 +97,7 @@ public:
      *
      * @return true if source is connected; false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isConnected() const final
     {
         return subscriptionSource_->isConnected();
@@ -119,7 +119,7 @@ public:
      *
      * @return JSON representation of the source
      */
-    boost::json::object
+    [[nodiscard]] boost::json::object
     toJson() const final
     {
         boost::json::object res;
@@ -144,7 +144,7 @@ public:
     }
 
     /** @return String representation of the source (for debug) */
-    std::string
+    [[nodiscard]] std::string
     toString() const final
     {
         return "{validated range: " + subscriptionSource_->validatedRange() + ", ip: " + ip_ +
@@ -157,7 +157,7 @@ public:
      * @param sequence The ledger sequence to check
      * @return true if ledger is in the range of this source; false otherwise
      */
-    bool
+    [[nodiscard]] bool
     hasLedger(uint32_t sequence) const final
     {
         return subscriptionSource_->hasLedger(sequence);
@@ -208,7 +208,7 @@ public:
      * @param yield The coroutine context
      * @return Response or ClioError
      */
-    std::expected<boost::json::object, rpc::ClioError>
+    [[nodiscard]] std::expected<boost::json::object, rpc::ClioError>
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& forwardToRippledClientIp,

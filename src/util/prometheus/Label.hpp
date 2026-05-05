@@ -27,7 +27,7 @@ public:
      *
      * @return The serialized label
      */
-    std::string
+    [[nodiscard]] std::string
     serialize() const;
 
 private:
@@ -55,7 +55,7 @@ public:
      *
      * @return The serialized labels
      */
-    std::string
+    [[nodiscard]] std::string
     serialize() const;
 
 private:

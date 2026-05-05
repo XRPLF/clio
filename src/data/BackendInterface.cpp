@@ -188,7 +188,7 @@ BackendInterface::fetchBookOffers(
         auto mid2 = std::chrono::system_clock::now();
         numSucc++;
         succMillis += getMillis(mid2 - mid1);
-        if (!offerDir || offerDir->key >= bookEnd) {
+        if (not offerDir.has_value() || offerDir->key >= bookEnd) {
             LOG(log_.trace()) << "offerDir.has_value() " << offerDir.has_value() << " breaking";
             break;
         }
@@ -208,8 +208,10 @@ BackendInterface::fetchBookOffers(
             auto nextKey = ripple::keylet::page(uTipIndex, next);
             auto nextDir = fetchLedgerObject(nextKey.key, ledgerSequence, yield);
             ASSERT(nextDir.has_value(), "Next dir must exist");
+            // NOLINTBEGIN(bugprone-unchecked-optional-access)
             offerDir->blob = *nextDir;
             offerDir->key = nextKey.key;
+            // NOLINTEND(bugprone-unchecked-optional-access)
         }
         auto mid3 = std::chrono::system_clock::now();
         pageMillis += getMillis(mid3 - mid2);
@@ -312,6 +314,7 @@ BackendInterface::fetchLedgerPage(
             return (cursor ? *cursor : kFIRST_KEY);
         }();
 
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         std::uint32_t const seq = outOfOrder ? range_->maxSequence : ledgerSequence;
         auto succ = fetchSuccessorKey(curCursor, seq, yield);
 

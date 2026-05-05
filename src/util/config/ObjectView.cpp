@@ -40,7 +40,7 @@ ObjectView::getValueView(std::string_view key) const
 {
     auto const fullKey = getFullKey(key);
     if (arrayIndex_.has_value()) {
-        return clioConfig_.get().getArray(fullKey).valueAt(arrayIndex_.value());
+        return clioConfig_.get().getArray(fullKey).valueAt(*arrayIndex_);
     }
     return clioConfig_.get().getValueView(fullKey);
 }
@@ -53,7 +53,7 @@ ObjectView::getObject(std::string_view key) const
         return clioConfig_.get().getObject(fullKey);
     }
     if (startsWithKey(fullKey) && arrayIndex_.has_value()) {
-        return ObjectView(fullKey, arrayIndex_.value(), clioConfig_);
+        return ObjectView(fullKey, *arrayIndex_, clioConfig_);
     }
     ASSERT(false, "Key {} does not exist in object", fullKey);
     std::unreachable();

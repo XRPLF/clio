@@ -61,7 +61,7 @@ class MigratorsRegister {
             LOG(log_.info()) << "Running migration: " << name;
             Migrator::runMigration(backend_, config);
             backend_->writeMigratorStatus(
-                name, MigratorStatus(MigratorStatus::Migrated).toString()
+                name, MigratorStatus(MigratorStatus::Status::Migrated).toString()
             );
             LOG(log_.info()) << "Finished migration: " << name;
         }
@@ -125,7 +125,7 @@ public:
      * @return A vector of tuple, the first element is the migrator's name, the second element is
      * the status of the migrator
      */
-    std::vector<std::tuple<std::string, MigratorStatus>>
+    [[nodiscard]] std::vector<std::tuple<std::string, MigratorStatus>>
     getMigratorsStatus() const
     {
         auto const fullList = getMigratorNames();
@@ -145,19 +145,19 @@ public:
      * @param name The migrator's name to get the status
      * @return The status of the migrator
      */
-    MigratorStatus
+    [[nodiscard]] MigratorStatus
     getMigratorStatus(std::string const& name) const
     {
         auto const fullList = getMigratorNames();
         if (std::ranges::find(fullList, name) == fullList.end()) {
-            return MigratorStatus::NotKnown;
+            return MigratorStatus::Status::NotKnown;
         }
         auto const statusStringOpt = data::synchronous([&](auto yield) {
             return backend_->fetchMigratorStatus(name, yield);
         });
 
         return statusStringOpt ? MigratorStatus::fromString(statusStringOpt.value())
-                               : MigratorStatus::NotMigrated;
+                               : MigratorStatus::Status::NotMigrated;
     }
 
     /**
@@ -165,7 +165,7 @@ public:
      *
      * @return A array of migrator's names
      */
-    constexpr auto
+    [[nodiscard]] constexpr auto
     getMigratorNames() const
     {
         return std::array<std::string_view, sizeof...(MigratorType)>{MigratorType::kNAME...};
@@ -177,7 +177,7 @@ public:
      * @param name The migrator's name
      * @return The description of the migrator
      */
-    std::string
+    [[nodiscard]] std::string
     getMigratorDescription(std::string const& name) const
     {
         if constexpr (sizeof...(MigratorType) == 0) {
@@ -199,7 +199,7 @@ public:
      * @return std::nullopt if the migrator name is not found, or a boolean value indicating whether
      * the migrator is blocking Clio server.
      */
-    std::optional<bool>
+    [[nodiscard]] std::optional<bool>
     canMigratorBlockClio(std::string_view name) const
     {
         if constexpr (sizeof...(MigratorType) == 0) {

@@ -70,7 +70,7 @@ void
 Retry::reset()
 {
     attemptNumber_ = 0;
-    strategy_->reset();
+    (*strategy_).reset();
 }
 
 ExponentialBackoffStrategy::ExponentialBackoffStrategy(

@@ -87,7 +87,7 @@ public:
      *
      * @return The message of the response.
      */
-    std::string const&
+    [[nodiscard]] std::string const&
     message() const;
 
     /**
@@ -121,7 +121,7 @@ public:
      *
      * @return The message of the response as a const buffer.
      */
-    boost::asio::const_buffer
+    [[nodiscard]] boost::asio::const_buffer
     asWsResponse() const&;
 };
 

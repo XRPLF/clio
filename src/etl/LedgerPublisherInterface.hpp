@@ -32,7 +32,7 @@ struct LedgerPublisherInterface {
      *
      * @return A std::chrono::time_point representing the time of the last publish
      */
-    virtual std::chrono::time_point<std::chrono::system_clock>
+    [[nodiscard]] virtual std::chrono::time_point<std::chrono::system_clock>
     getLastPublish() const = 0;
 
     /**
@@ -40,7 +40,7 @@ struct LedgerPublisherInterface {
      *
      * @return The number of seconds since the last ledger close as std::uint32_t
      */
-    virtual std::uint32_t
+    [[nodiscard]] virtual std::uint32_t
     lastCloseAgeSeconds() const = 0;
 
     /**
@@ -48,7 +48,7 @@ struct LedgerPublisherInterface {
      *
      * @return The number of seconds since the last publish as std::uint32_t
      */
-    virtual std::uint32_t
+    [[nodiscard]] virtual std::uint32_t
     lastPublishAgeSeconds() const = 0;
 };
 

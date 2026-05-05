@@ -144,7 +144,7 @@ TEST_F(WorkQueuePriorityTest, HighPriorityTasks)
     for (int i = 0; i < kTOTAL; ++i) {
         queue.postCoro(
             [&](auto) {
-                std::lock_guard const lock(mtx);
+                std::scoped_lock const lock(mtx);
                 executionOrder.push_back(WorkQueue::Priority::High);
             },
             /* isWhiteListed = */ true,
@@ -152,7 +152,7 @@ TEST_F(WorkQueuePriorityTest, HighPriorityTasks)
         );
         queue.postCoro(
             [&](auto) {
-                std::lock_guard const lock(mtx);
+                std::scoped_lock const lock(mtx);
                 executionOrder.push_back(WorkQueue::Priority::Default);
             },
             /* isWhiteListed = */ true,

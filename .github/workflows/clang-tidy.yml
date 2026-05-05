@@ -103,15 +103,12 @@ jobs:
       - name: Create an issue
         if: ${{ (steps.clang_tidy.outcome != 'success' || steps.files_changed.outcome != 'success') && github.event_name != 'pull_request' }}
         id: create_issue
-        uses: ./.github/actions/create-issue
-        env:
-          GH_TOKEN: ${{ github.token }}
+        uses: XRPLF/actions/create-issue@fbcc16eb7f20dc3199eaf1aed0d3523a5ba9008c
         with:
           title: "Clang-tidy found bugs in code 🐛"
-          body: >
-            Clang-tidy found issues in the code:
-
-            List of the issues found: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/
+          body: Clang-tidy found issues in the code.
+          labels: "bug"
+          assignees: "godexsoft,kuznetsss,mathbunnyru"
 
       - uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7.0.0
         if: ${{ steps.files_changed.outcome != 'success' && github.event_name != 'pull_request' }}
@@ -134,8 +131,11 @@ jobs:
           branch-suffix: timestamp
           delete-branch: true
           title: "style: clang-tidy auto fixes"
-          body: "Fixes #${{ steps.create_issue.outputs.created_issue_id }}. Please review and commit clang-tidy fixes."
-          reviewers: "godexsoft,kuznetsss,PeterChen13579,mathbunnyru"
+          body: >
+            Fixes #${{ steps.create_issue.outputs.issue_number }}.
+
+            Please review and commit clang-tidy fixes.
+          reviewers: "godexsoft,kuznetsss,mathbunnyru"
 
       - name: Fail the job
         if: ${{ steps.clang_tidy.outcome != 'success' || steps.files_changed.outcome != 'success' }}

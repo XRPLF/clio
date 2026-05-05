@@ -564,7 +564,7 @@ public:
                           << ", key = " << ripple::to_string(key);
         if (auto const res = executor_.read(yield, schema_->selectObject, key, sequence); res) {
             if (auto const result = res->template get<Blob, std::uint32_t>(); result) {
-                auto [_, seq] = result.value();
+                auto [_, seq] = *result;
                 return seq;
             }
             LOG(log_.debug()) << "Could not fetch ledger object sequence - no rows";
@@ -923,14 +923,15 @@ public:
                         record.tokenID
                     ));
                     statements.push_back(schema_->insertNFTURI.bind(
-                        record.tokenID, record.ledgerSequence, record.uri.value()
+                        record.tokenID, record.ledgerSequence, *record.uri
                     ));
                 }
             } else {
                 // only uri changed, we update the uri table only
-                statements.push_back(schema_->insertNFTURI.bind(
-                    record.tokenID, record.ledgerSequence, record.uri.value()
-                ));
+                statements.push_back(
+                    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+                    schema_->insertNFTURI.bind(record.tokenID, record.ledgerSequence, *record.uri)
+                );
             }
         }
 
@@ -1002,7 +1003,7 @@ protected:
             return false;
         }
 
-        if (not maybeSuccess.value()) {
+        if (not *maybeSuccess) {
             LOG(log_.warn()) << "Update failed. Checking if DB state is what we expect";
 
             // error may indicate that another writer wrote something.

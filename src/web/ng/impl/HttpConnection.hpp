@@ -124,7 +124,7 @@ public:
         return {};
     }
 
-    bool
+    [[nodiscard]] bool
     wasUpgraded() const override
     {
         return false;
@@ -156,7 +156,7 @@ public:
     receive(boost::asio::yield_context yield) override
     {
         if (request_.has_value()) {
-            Request result{std::move(request_).value()};
+            Request result{*std::move(request_)};
             request_.reset();
             return result;
         }
@@ -196,7 +196,7 @@ public:
 
         request_ = std::move(expectedRequest).value();
 
-        return boost::beast::websocket::is_upgrade(request_.value());
+        return boost::beast::websocket::is_upgrade(*request_);
     }
 
     std::expected<ConnectionPtr, Error>
@@ -211,7 +211,7 @@ public:
             std::move(stream_),
             std::move(ip_),
             std::move(buffer_),
-            std::move(request_).value(),
+            std::move(*request_),  // NOLINT(bugprone-unchecked-optional-access)
             tagDecoratorFactory,
             yield
         );

@@ -66,7 +66,7 @@ public:
      * @return The resolved client IP address if the connection is from a trusted proxy, otherwise
      * std::nullopt.
      */
-    std::optional<std::string>
+    [[nodiscard]] std::optional<std::string>
     resolveClientIp(std::string const& connectionIp, HttpHeaders const& headers) const;
 
     /**

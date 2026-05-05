@@ -51,6 +51,8 @@ Monitor::notifySequenceLoaded(uint32_t seq)
         lck->lastSeenMaxSeqInDb = std::max(seq, lck->lastSeenMaxSeqInDb);
         lck->lastDbCheckTime = std::chrono::steady_clock::now();
     }
+
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     repeatedTask_->invoke();  // force-invoke doWork immediately
 };
 
@@ -110,6 +112,8 @@ Monitor::onNextSequence(uint32_t seq)
 {
     ASSERT(repeatedTask_.has_value(), "Ledger subscription without repeated task is a logic error");
     LOG(log_.debug()) << "Notified about new sequence on the network: " << seq;
+
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     repeatedTask_->invoke();  // force-invoke immediately
 }
 

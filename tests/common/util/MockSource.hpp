@@ -86,7 +86,7 @@ public:
         mock_->stop(yield);
     }
 
-    bool
+    [[nodiscard]] bool
     isConnected() const override
     {
         return mock_->isConnected();
@@ -98,19 +98,19 @@ public:
         mock_->setForwarding(isForwarding);
     }
 
-    boost::json::object
+    [[nodiscard]] boost::json::object
     toJson() const override
     {
         return mock_->toJson();
     }
 
-    std::string
+    [[nodiscard]] std::string
     toString() const override
     {
         return mock_->toString();
     }
 
-    bool
+    [[nodiscard]] bool
     hasLedger(uint32_t sequence) const override
     {
         return mock_->hasLedger(sequence);
@@ -132,7 +132,7 @@ public:
         return mock_->loadInitialLedger(sequence, maxLedger, observer);
     }
 
-    std::expected<boost::json::object, rpc::ClioError>
+    [[nodiscard]] std::expected<boost::json::object, rpc::ClioError>
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& forwardToRippledClientIp,
@@ -233,7 +233,7 @@ public:
     {
         auto& callbacks = mockData_.at(index).callbacks;
         [&]() { ASSERT_TRUE(callbacks.has_value()) << "Callbacks not set"; }();
-        return *callbacks;
+        return *callbacks;  // NOLINT(bugprone-unchecked-optional-access)
     }
 };
 

@@ -15,7 +15,6 @@ on:
 
       - ".github/actions/**"
       - "!.github/actions/build-docker-image/**"
-      - "!.github/actions/create-issue/**"
 
       - CMakeLists.txt
       - conanfile.py

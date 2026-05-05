@@ -455,11 +455,13 @@ TEST_F(SuccessorExtTests, OnInitialDataWithSuccessorsButNotBookDirAndNoSuccessor
         writeSuccessor(uint256ToString(secondKey), kSEQ, uint256ToString(data::kLAST_KEY))
     );
 
-    for (auto const& key : data.edgeKeys.value()) {
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
+    for (auto const& key : *data.edgeKeys) {
         EXPECT_CALL(cache_, getSuccessor(*ripple::uint256::fromVoidChecked(key), kSEQ))
             .InSequence(inSeq)
             .WillOnce(testing::Return(std::nullopt));
     }
+    // NOLINTEND(bugprone-unchecked-optional-access)
 
     ext_.onInitialData(data);
 }
@@ -502,12 +504,14 @@ TEST_F(SuccessorExtTests, OnInitialDataWithSuccessorsButNotBookDirAndSuccessorsF
         writeSuccessor(uint256ToString(secondKey), kSEQ, uint256ToString(data::kLAST_KEY))
     );
 
-    for (auto const& key : data.edgeKeys.value()) {
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
+    for (auto const& key : *data.edgeKeys) {
         EXPECT_CALL(cache_, getSuccessor(*ripple::uint256::fromVoidChecked(key), kSEQ))
             .InSequence(inSeq)
             .WillOnce(testing::Return(data::LedgerObject{.key = firstKey, .blob = {}}));
         EXPECT_CALL(*backend_, writeSuccessor(auto{key}, kSEQ, uint256ToString(firstKey)));
     }
+    // NOLINTEND(bugprone-unchecked-optional-access)
 
     ext_.onInitialData(data);
 }
@@ -562,13 +566,15 @@ TEST_F(SuccessorExtTests, OnInitialDataWithSuccessorsAndBookDirAndSuccessorsForE
         *backend_, writeSuccessor(uint256ToString(bookBase), kSEQ, testing::_)
     );  // Called once because firstKey returned repeatedly above
 
-    for (auto const& key : data.edgeKeys.value()) {
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
+    for (auto const& key : *data.edgeKeys) {
         EXPECT_CALL(cache_, getSuccessor(*ripple::uint256::fromVoidChecked(key), kSEQ))
             .InSequence(inSeq)
             .WillOnce(testing::Return(data::LedgerObject{.key = firstKey, .blob = {'1'}}));
         EXPECT_CALL(*backend_, writeSuccessor(auto{key}, kSEQ, uint256ToString(firstKey)))
             .InSequence(inSeq);
     }
+    // NOLINTEND(bugprone-unchecked-optional-access)
 
     ext_.onInitialData(data);
 }

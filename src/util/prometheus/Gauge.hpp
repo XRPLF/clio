@@ -103,7 +103,7 @@ struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType> {
      *
      * @return The value of the counter
      */
-    ValueType
+    [[nodiscard]] ValueType
     value() const
     {
         return this->pimpl_->value();

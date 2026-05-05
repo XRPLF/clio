@@ -211,6 +211,7 @@ TEST_F(LogServiceInitTests, LogSizeAndHourRotationCannotBeZero)
 
     auto const parsingErrors =
         config_.parse(ConfigFileJson{boost::json::parse(jsonStr).as_object()});
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
     ASSERT_EQ(parsingErrors->size(), 2);
     for (std::size_t i = 0; i < parsingErrors->size(); ++i) {
         EXPECT_EQ(
@@ -220,6 +221,7 @@ TEST_F(LogServiceInitTests, LogSizeAndHourRotationCannotBeZero)
             )
         );
     }
+    // NOLINTEND(bugprone-unchecked-optional-access)
 }
 
 TEST_F(LogServiceInitTests, RotateDefaultsToTrue)

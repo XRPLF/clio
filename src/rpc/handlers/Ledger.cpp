@@ -36,13 +36,17 @@ LedgerHandler::process(LedgerHandler::Input const& input, Context const& ctx) co
     ASSERT(range.has_value(), "LedgerHandler's ledger range must be available");
 
     auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+        *sharedPtrBackend_,
+        ctx.yield,
+        input.ledgerHash,
+        input.ledgerIndex,
+        range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
     if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
-    auto const& lgrInfo = expectedLgrInfo.value();
+    auto const& lgrInfo = *expectedLgrInfo;
     Output output;
 
     output.header = toJson(lgrInfo, input.binary, ctx.apiVersion);

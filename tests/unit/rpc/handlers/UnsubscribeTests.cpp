@@ -548,12 +548,14 @@ TEST_F(RPCUnsubscribeTest, Accounts)
 
     EXPECT_CALL(
         *mockSubscriptionManagerPtr_,
-        unsubAccount(rpc::accountFromStringStrict(kACCOUNT).value(), _)
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        unsubAccount(*rpc::accountFromStringStrict(kACCOUNT), _)
     )
         .Times(1);
     EXPECT_CALL(
         *mockSubscriptionManagerPtr_,
-        unsubAccount(rpc::accountFromStringStrict(kACCOUNT2).value(), _)
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        unsubAccount(*rpc::accountFromStringStrict(kACCOUNT2), _)
     )
         .Times(1);
 
@@ -579,12 +581,14 @@ TEST_F(RPCUnsubscribeTest, AccountsProposed)
 
     EXPECT_CALL(
         *mockSubscriptionManagerPtr_,
-        unsubProposedAccount(rpc::accountFromStringStrict(kACCOUNT).value(), _)
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        unsubProposedAccount(*rpc::accountFromStringStrict(kACCOUNT), _)
     )
         .Times(1);
     EXPECT_CALL(
         *mockSubscriptionManagerPtr_,
-        unsubProposedAccount(rpc::accountFromStringStrict(kACCOUNT2).value(), _)
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        unsubProposedAccount(*rpc::accountFromStringStrict(kACCOUNT2), _)
     )
         .Times(1);
 
@@ -620,7 +624,7 @@ TEST_F(RPCUnsubscribeTest, Books)
 
     auto const parsedBookMaybe =
         rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
-    auto const book = parsedBookMaybe.value();
+    auto const book = *parsedBookMaybe;
 
     EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubBook(book, _)).Times(1);
     EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubBook(ripple::reversed(book), _)).Times(1);
@@ -656,7 +660,7 @@ TEST_F(RPCUnsubscribeTest, SingleBooks)
 
     auto const parsedBookMaybe =
         rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
-    auto const book = parsedBookMaybe.value();
+    auto const book = *parsedBookMaybe;
 
     EXPECT_CALL(*mockSubscriptionManagerPtr_, unsubBook(book, _)).Times(1);
 

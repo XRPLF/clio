@@ -68,16 +68,12 @@ jobs:
 
       - name: Create an issue
         if: ${{ steps.run_clio_tests.outcome == 'failure' && endsWith(inputs.conan_profile, 'san') }}
-        uses: ./.github/actions/create-issue
-        env:
-          GH_TOKEN: ${{ github.token }}
+        uses: XRPLF/actions/create-issue@fbcc16eb7f20dc3199eaf1aed0d3523a5ba9008c
         with:
-          labels: "bug"
           title: "[${{ inputs.conan_profile }}] reported issues"
-          body: >
-            Clio tests failed one or more sanitizer checks when built with `${{ inputs.conan_profile }}`.
-
-            Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/
+          body: "Clio tests failed one or more sanitizer checks when built with `${{ inputs.conan_profile }}`."
+          labels: "bug"
+          assignees: "godexsoft,kuznetsss,mathbunnyru"
 
       - name: Fail the job if clio_tests failed
         if: ${{ steps.run_clio_tests.outcome == 'failure' }}

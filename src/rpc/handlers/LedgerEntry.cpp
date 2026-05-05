@@ -50,25 +50,30 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
             return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
     } else if (input.accountRoot) {
         key = ripple::keylet::account(
+                  // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
                   *util::parseBase58Wrapper<ripple::AccountID>(*(input.accountRoot))
         )
                   .key;
     } else if (input.did) {
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         key = ripple::keylet::did(*util::parseBase58Wrapper<ripple::AccountID>(*(input.did))).key;
     } else if (input.directory) {
         auto const expectedkey = composeKeyFromDirectory(*input.directory);
         if (!expectedkey.has_value())
             return Error{expectedkey.error()};
 
-        key = expectedkey.value();
+        key = expectedkey.value();  // std::expected, not optional
     } else if (input.offer) {
         auto const id = util::parseBase58Wrapper<ripple::AccountID>(
             boost::json::value_to<std::string>(input.offer->at(JS(account)))
         );
+
+        // NOLINTBEGIN(bugprone-unchecked-optional-access)
         key = ripple::keylet::offer(
                   *id, boost::json::value_to<std::uint32_t>(input.offer->at(JS(seq)))
         )
                   .key;
+        // NOLINTEND(bugprone-unchecked-optional-access)
     } else if (input.rippleStateAccount) {
         auto const id1 =
             util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(
@@ -82,12 +87,14 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
             boost::json::value_to<std::string>(input.rippleStateAccount->at(JS(currency)))
         );
 
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         key = ripple::keylet::line(*id1, *id2, currency).key;
     } else if (input.escrow) {
         auto const id = util::parseBase58Wrapper<ripple::AccountID>(
             boost::json::value_to<std::string>(input.escrow->at(JS(owner)))
         );
         key =
+            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
             ripple::keylet::escrow(*id, util::integralValueAs<uint32_t>(input.escrow->at(JS(seq))))
                 .key;
     } else if (input.depositPreauth) {
@@ -107,6 +114,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
             auto const authorized = util::parseBase58Wrapper<ripple::AccountID>(
                 boost::json::value_to<std::string>(input.depositPreauth->at(JS(authorized)))
             );
+            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
             key = ripple::keylet::depositPreauth(*owner, *authorized).key;
         } else {
             auto const authorizedCredentials = rpc::credentials::parseAuthorizeCredentials(
@@ -120,7 +128,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
                 }};
             }
 
-            key = ripple::keylet::depositPreauth(owner.value(), authCreds).key;
+            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+            key = ripple::keylet::depositPreauth(*owner, authCreds).key;
         }
     } else if (input.ticket) {
         auto const id = util::parseBase58Wrapper<ripple::AccountID>(
@@ -128,7 +137,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         );
 
         key = ripple::getTicketIndex(
-            *id, util::integralValueAs<uint32_t>(input.ticket->at(JS(ticket_seq)))
+            *id,  // NOLINT(bugprone-unchecked-optional-access)
+            util::integralValueAs<uint32_t>(input.ticket->at(JS(ticket_seq)))
         );
     } else if (input.amm) {
         auto const getIssuerFromJson = [](auto const& assetJson) {
@@ -164,18 +174,17 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
 
             key = ripple::keylet::bridge(input.bridge->value(), chainType).key;
         } else if (input.chainClaimId) {
-            key = ripple::keylet::xChainClaimID(input.bridge->value(), input.chainClaimId.value())
-                      .key;
+            key = ripple::keylet::xChainClaimID(input.bridge->value(), *input.chainClaimId).key;
         } else {
             key = ripple::keylet::xChainCreateAccountClaimID(
-                      input.bridge->value(), input.createAccountClaimId.value()
+                      input.bridge->value(), *input.createAccountClaimId
             )
                       .key;
         }
     } else if (input.oracleNode) {
-        key = input.oracleNode.value();
+        key = *input.oracleNode;
     } else if (input.credential) {
-        key = input.credential.value();
+        key = *input.credential;
     } else if (input.mptIssuance) {
         auto const mptIssuanceID = ripple::uint192{std::string_view(*(input.mptIssuance))};
         key = ripple::keylet::mptIssuance(mptIssuanceID).key;
@@ -186,24 +195,28 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         auto const mptIssuanceID = ripple::uint192{std::string_view(
             boost::json::value_to<std::string>(input.mptoken->at(JS(mpt_issuance_id)))
         )};
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         key = ripple::keylet::mptoken(mptIssuanceID, *holder).key;
     } else if (input.permissionedDomain) {
         auto const account = ripple::parseBase58<ripple::AccountID>(
             boost::json::value_to<std::string>(input.permissionedDomain->at(JS(account)))
         );
         auto const seq = util::integralValueAs<uint32_t>(input.permissionedDomain->at(JS(seq)));
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         key = ripple::keylet::permissionedDomain(*account, seq).key;
     } else if (input.vault) {
         auto const account = ripple::parseBase58<ripple::AccountID>(
             boost::json::value_to<std::string>(input.vault->at(JS(owner)))
         );
         auto const seq = util::integralValueAs<uint32_t>(input.vault->at(JS(seq)));
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         key = ripple::keylet::vault(*account, seq).key;
     } else if (input.loanBroker) {
         auto const account = ripple::parseBase58<ripple::AccountID>(
             boost::json::value_to<std::string>(input.loanBroker->at(JS(owner)))
         );
         auto const seq = util::integralValueAs<uint32_t>(input.loanBroker->at(JS(seq)));
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         key = ripple::keylet::loanbroker(*account, seq).key;
     } else if (input.loan) {
         auto const id = ripple::uint256{
@@ -218,6 +231,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
         auto const authorize = ripple::parseBase58<ripple::AccountID>(
             boost::json::value_to<std::string>(input.delegate->at(JS(authorize)))
         );
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         key = ripple::keylet::delegate(*account, *authorize).key;
     } else {
         // Must specify 1 of the following fields to indicate what type
@@ -230,13 +244,17 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "LedgerEntry's ledger range must be available");
     auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+        *sharedPtrBackend_,
+        ctx.yield,
+        input.ledgerHash,
+        input.ledgerIndex,
+        range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
     if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
-    auto const& lgrInfo = expectedLgrInfo.value();
+    auto const& lgrInfo = *expectedLgrInfo;
     auto output = LedgerEntryHandler::Output{};
     auto ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
 
@@ -247,7 +265,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input const& input, Context cons
             sharedPtrBackend_->fetchLedgerObjectSeq(key, lgrInfo.seq, ctx.yield);
         if (!deletedSeq)
             return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
-        ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, deletedSeq.value() - 1, ctx.yield);
+        ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, *deletedSeq - 1, ctx.yield);
         if (!ledgerObject || ledgerObject->empty())
             return Error{Status{RippledError::rpcENTRY_NOT_FOUND}};
         output.deletedLedgerIndex = deletedSeq;
@@ -301,6 +319,7 @@ LedgerEntryHandler::composeKeyFromDirectory(boost::json::object const& directory
     auto const ownerID = util::parseBase58Wrapper<ripple::AccountID>(
         boost::json::value_to<std::string>(directory.at(JS(owner)))
     );
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     return ripple::keylet::page(ripple::keylet::ownerDir(*ownerID), subIndex).key;
 }
 
@@ -324,7 +343,7 @@ tag_invoke(
     if (output.nodeBinary) {
         object[JS(node_binary)] = *(output.nodeBinary);
     } else {
-        object[JS(node)] = *(output.node);
+        object[JS(node)] = *(output.node);  // NOLINT(bugprone-unchecked-optional-access)
     }
 
     jv = std::move(object);

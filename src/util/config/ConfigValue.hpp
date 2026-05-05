@@ -101,8 +101,8 @@ public:
         ASSERT(cons_.has_value(), "Constraint must be defined");
 
         if (value_.has_value()) {
-            auto const& temp = cons_.value().get();
-            auto const& result = temp.checkConstraint(value_.value());
+            auto const& temp = cons_->get();
+            auto const& result = temp.checkConstraint(*value_);
             if (result.has_value()) {
                 // useful for specifying clear Error message
                 std::string type;
@@ -113,7 +113,7 @@ public:
                         [&type](double tmp) { type = fmt::format("double {}", tmp); },
                         [&type](int64_t tmp) { type = fmt::format("int {}", tmp); },
                     },
-                    value_.value()
+                    *value_
                 );
                 ASSERT(false, "Value {} ConfigValue does not satisfy the set Constraint", type);
             }
@@ -185,7 +185,7 @@ public:
     getValue() const
     {
         ASSERT(value_.has_value(), "getValue() is called when there is no value set");
-        return value_.value();
+        return *value_;  // NOLINT(bugprone-unchecked-optional-access)
     }
 
     /**
@@ -202,7 +202,7 @@ public:
         stream << "- **Type**: " << val.type() << "\n";
         if (val.description_.has_value()) {
             stream << "- **Default value**: " << *val.description_ << "\n";
-        } else if (val.hasValue()) {
+        } else if (val.value_.has_value()) {
             stream << "- **Default value**: `" << *val.value_ << "`\n";
         } else {
             stream << "- **Default value**: None\n";

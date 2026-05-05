@@ -99,7 +99,7 @@ public:
         return true;
     }
 
-    NFTsAndCursor
+    [[nodiscard]] NFTsAndCursor
     fetchNFTsByIssuer(
         ripple::AccountID const& issuer,
         std::optional<std::uint32_t> const& taxon,
@@ -190,7 +190,7 @@ public:
         return ret;
     }
 
-    std::vector<ripple::uint256>
+    [[nodiscard]] std::vector<ripple::uint256>
     fetchAccountRoots(
         std::uint32_t number,
         std::uint32_t pageSize,

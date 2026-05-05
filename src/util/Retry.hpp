@@ -31,7 +31,7 @@ public:
     /**
      * @return The current delay value
      */
-    std::chrono::steady_clock::duration
+    [[nodiscard]] std::chrono::steady_clock::duration
     getDelay() const;
 
     /**
@@ -50,7 +50,7 @@ protected:
     /**
      * @return The next computed delay value
      */
-    virtual std::chrono::steady_clock::duration
+    [[nodiscard]] virtual std::chrono::steady_clock::duration
     nextDelay() const = 0;
 };
 using RetryStrategyPtr = std::unique_ptr<RetryStrategy>;
@@ -114,13 +114,13 @@ public:
     /**
      * @return The current attempt number
      */
-    size_t
+    [[nodiscard]] size_t
     attemptNumber() const;
 
     /**
      * @return The current delay value
      */
-    std::chrono::steady_clock::duration
+    [[nodiscard]] std::chrono::steady_clock::duration
     delayValue() const;
 
     /**
@@ -149,7 +149,7 @@ public:
     );
 
 private:
-    std::chrono::steady_clock::duration
+    [[nodiscard]] std::chrono::steady_clock::duration
     nextDelay() const override;
 };
 

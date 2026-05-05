@@ -24,7 +24,7 @@ struct MakeServerSslContextFromConfigTestBundle {
     std::optional<std::string> expectedError;
     bool expectContext;
 
-    boost::json::value
+    [[nodiscard]] boost::json::value
     configJson() const
     {
         boost::json::object result;
@@ -57,7 +57,9 @@ TEST_P(MakeServerSslContextFromConfigTest, makeFromConfig)
     if (GetParam().expectedError.has_value()) {
         ASSERT_FALSE(expectedServerSslContext.has_value());
         EXPECT_THAT(
-            expectedServerSslContext.error(), testing::HasSubstr(*GetParam().expectedError)
+            expectedServerSslContext.error(),
+            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+            testing::HasSubstr(*GetParam().expectedError)
         );
     } else {
         EXPECT_EQ(expectedServerSslContext.value().has_value(), GetParam().expectContext);

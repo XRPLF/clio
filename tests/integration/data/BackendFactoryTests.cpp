@@ -81,7 +81,7 @@ public:
         // drop the keyspace for next test
         data::cassandra::Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
-        handle.execute("DROP KEYSPACE " + std::string{kKEYSPACE});
+        EXPECT_TRUE(handle.execute("DROP KEYSPACE " + std::string{kKEYSPACE}));
     }
 };
 
@@ -120,16 +120,16 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
         // insert range table
         data::cassandra::Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
-        handle.execute(
+        EXPECT_TRUE(handle.execute(
             fmt::format(
                 "INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (False, 100)", kKEYSPACE
             )
-        );
-        handle.execute(
+        ));
+        EXPECT_TRUE(handle.execute(
             fmt::format(
                 "INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (True, 500)", kKEYSPACE
             )
-        );
+        ));
     }
 
     {
@@ -138,7 +138,10 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
         EXPECT_TRUE(backend);
 
         auto const range = backend->fetchLedgerRange();
+        ASSERT_TRUE(range.has_value());
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         EXPECT_EQ(range->minSequence, 100);
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         EXPECT_EQ(range->maxSequence, 500);
     }
 }

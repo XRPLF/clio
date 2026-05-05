@@ -108,7 +108,7 @@ tag_invoke(boost::json::value_to_tag<ClioNode>, boost::json::value const& jv)
         // Json data doesn't contain uuid so leaving it empty here. It will be filled outside of
         // this parsing
         .uuid = std::make_shared<boost::uuids::uuid>(),
-        .updateTime = updateTime.value(),
+        .updateTime = *updateTime,
         .dbRole = dbRole,
         .etlStarted = etlStarted,
         .cacheIsFull = cacheIsFull,

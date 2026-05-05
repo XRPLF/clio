@@ -63,7 +63,7 @@ public:
      * @param request Json request
      * @return size_t The weight value (specific weight if defined, otherwise default weight)
      */
-    size_t
+    [[nodiscard]] size_t
     requestWeight(boost::json::object const& request) const override;
 };
 

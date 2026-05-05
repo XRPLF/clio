@@ -114,7 +114,7 @@ public:
      *
      * @return Possibly an error
      */
-    [[maybe_unused]] MaybeErrorType
+    [[nodiscard]] [[maybe_unused]] MaybeErrorType
     disconnect() const;
 
     /**
@@ -162,7 +162,7 @@ public:
      * @return The result or an error
      */
     template <typename... Args>
-    [[maybe_unused]] ResultOrErrorType
+    [[nodiscard]] [[maybe_unused]] ResultOrErrorType
     execute(std::string_view query, Args&&... args) const
     {
         return asyncExecute<Args...>(query, std::forward<Args>(args)...).get();
@@ -189,7 +189,7 @@ public:
      * @param statements The statements to execute
      * @return Possibly an error
      */
-    [[maybe_unused]] MaybeErrorType
+    [[nodiscard]] [[maybe_unused]] MaybeErrorType
     executeEach(std::vector<StatementType> const& statements) const;
 
     /**
@@ -250,7 +250,7 @@ public:
      * @param statement The statement to execute
      * @return The result or an error
      */
-    [[maybe_unused]] ResultOrErrorType
+    [[nodiscard]] [[maybe_unused]] ResultOrErrorType
     execute(StatementType const& statement) const;
 
     /**
@@ -270,7 +270,7 @@ public:
      * @param statements The statements to execute
      * @return Possibly an error
      */
-    [[maybe_unused]] MaybeErrorType
+    [[nodiscard]] [[maybe_unused]] MaybeErrorType
     execute(std::vector<StatementType> const& statements) const;
 
     /**

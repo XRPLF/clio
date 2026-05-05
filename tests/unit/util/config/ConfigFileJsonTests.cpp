@@ -367,26 +367,28 @@ TEST_F(ConfigFileJsonTest, getArray)
     auto const array = jsonFileObj.getArray("array.[]");
     ASSERT_EQ(array.size(), 4);
 
-    auto const value0 = array.at(0).value();
+    auto const value0 = (*array.at(0));  // NOLINT(bugprone-unchecked-optional-access)
     ASSERT_TRUE(std::holds_alternative<int64_t>(value0));
     EXPECT_EQ(std::get<int64_t>(value0), 1);
 
-    auto const value1 = array.at(1).value();
+    auto const value1 = (*array.at(1));  // NOLINT(bugprone-unchecked-optional-access)
     ASSERT_TRUE(std::holds_alternative<std::string>(value1));
     EXPECT_EQ(std::get<std::string>(value1), "2");
 
-    auto const value2 = array.at(2).value();
+    auto const value2 = (*array.at(2));  // NOLINT(bugprone-unchecked-optional-access)
     ASSERT_TRUE(std::holds_alternative<double>(value2));
     EXPECT_NEAR(std::get<double>(value2), 3.14, kEPS);
 
-    auto const value3 = array.at(3).value();
+    auto const value3 = (*array.at(3));  // NOLINT(bugprone-unchecked-optional-access)
     ASSERT_TRUE(std::holds_alternative<bool>(value3));
     EXPECT_EQ(std::get<bool>(value3), true);
 
     auto const arrayFromObject = jsonFileObj.getArray("object.array.[]");
     ASSERT_EQ(arrayFromObject.size(), 2);
-    EXPECT_EQ(std::get<int64_t>(arrayFromObject.at(0).value()), 3);
-    EXPECT_EQ(std::get<int64_t>(arrayFromObject.at(1).value()), 4);
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_EQ(std::get<int64_t>((*arrayFromObject.at(0))), 3);
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_EQ(std::get<int64_t>((*arrayFromObject.at(1))), 4);
 }
 
 TEST_F(ConfigFileJsonTest, getArrayObjectInArray)
@@ -401,15 +403,19 @@ TEST_F(ConfigFileJsonTest, getArrayObjectInArray)
 
     auto const ints = jsonFileObj.getArray("array.[].int");
     ASSERT_EQ(ints.size(), 2);
-    ASSERT_TRUE(std::holds_alternative<int64_t>(ints.at(0).value()));
-    EXPECT_EQ(std::get<int64_t>(ints.at(0).value()), 42);
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    ASSERT_TRUE(std::holds_alternative<int64_t>((*ints.at(0))));
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_EQ(std::get<int64_t>((*ints.at(0))), 42);
     EXPECT_FALSE(ints.at(1).has_value());
 
     auto const strings = jsonFileObj.getArray("array.[].string");
     ASSERT_EQ(strings.size(), 2);
     EXPECT_FALSE(strings.at(0).has_value());
-    ASSERT_TRUE(std::holds_alternative<std::string>(strings.at(1).value()));
-    EXPECT_EQ(std::get<std::string>(strings.at(1).value()), "some string");
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    ASSERT_TRUE(std::holds_alternative<std::string>((*strings.at(1))));
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    EXPECT_EQ(std::get<std::string>((*strings.at(1))), "some string");
 }
 
 TEST_F(ConfigFileJsonTest, getArrayOptionalInArray)
@@ -424,16 +430,18 @@ TEST_F(ConfigFileJsonTest, getArrayOptionalInArray)
 
     auto const ints = jsonFileObj.getArray("array.[].int");
     ASSERT_EQ(ints.size(), 2);
-    ASSERT_TRUE(std::holds_alternative<int64_t>(ints.at(0).value()));
-    EXPECT_EQ(std::get<int64_t>(ints.at(0).value()), 42);
-    ASSERT_TRUE(std::holds_alternative<int64_t>(ints.at(1).value()));
-    EXPECT_EQ(std::get<int64_t>(ints.at(1).value()), 24);
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
+    ASSERT_TRUE(std::holds_alternative<int64_t>((*ints.at(0))));
+    EXPECT_EQ(std::get<int64_t>((*ints.at(0))), 42);
+    ASSERT_TRUE(std::holds_alternative<int64_t>((*ints.at(1))));
+    EXPECT_EQ(std::get<int64_t>((*ints.at(1))), 24);
 
     auto const bools = jsonFileObj.getArray("array.[].bool");
     ASSERT_EQ(bools.size(), 2);
     EXPECT_FALSE(bools.at(0).has_value());
-    ASSERT_TRUE(std::holds_alternative<bool>(bools.at(1).value()));
-    EXPECT_EQ(std::get<bool>(bools.at(1).value()), true);
+    ASSERT_TRUE(std::holds_alternative<bool>((*bools.at(1))));
+    EXPECT_EQ(std::get<bool>((*bools.at(1))), true);
+    // NOLINTEND(bugprone-unchecked-optional-access)
 }
 
 TEST_F(ConfigFileJsonAssertTest, getArrayInvalidKey)

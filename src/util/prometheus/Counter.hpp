@@ -90,7 +90,7 @@ struct AnyCounter : MetricBase, impl::AnyCounterBase<NumberType> {
      *
      * @return The value
      */
-    ValueType
+    [[nodiscard]] ValueType
     value() const
     {
         return this->pimpl_->value();
