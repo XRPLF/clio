@@ -81,7 +81,7 @@ public:
         // drop the keyspace for next test
         data::cassandra::Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
-        EXPECT_TRUE(handle.execute("DROP KEYSPACE " + std::string{kKEYSPACE}));
+        EXPECT_TRUE(handle.execute("DROP KEYSPACE IF EXISTS " + std::string{kKEYSPACE}));
     }
 };
 
@@ -98,7 +98,7 @@ TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
         {"database": {
             "type": "cassandra",
             "cassandra": {
-                "contact_points": "127.0.0.2"
+                "contact_points": "128.0.2.1"
             }
         }}
     )JSON");
