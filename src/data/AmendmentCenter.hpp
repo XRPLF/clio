@@ -159,6 +159,7 @@ struct Amendments {
     REGISTER(fix1523);
     REGISTER(fix1528);
     REGISTER(fixBatchInnerSigs);
+    REGISTER(fixCleanup3_1_3);
     // NOLINTEND(readability-identifier-naming)
     /** @endcond */
 };
