@@ -14,6 +14,7 @@ The image is based on Ubuntu 20.04 and contains:
 - GDB 17.1
 - gh 2.83.2
 - git-cliff 2.11.0
+- LLVM Tools 21
 - mold 2.40.4
 - Ninja 1.13.2
 - Python 3.8

@@ -330,9 +330,9 @@ TEST_F(ExtractionTests, MultipleSuccessors)
 
     auto res = maybeExtractSuccessors(data);
     ASSERT_TRUE(res.has_value());
-    EXPECT_EQ(res->size(), 10);
+    EXPECT_EQ(res->size(), 10);  // NOLINT(bugprone-unchecked-optional-access)
 
-    for (auto const& successor : res.value()) {
+    for (auto const& successor : res.value()) {  // NOLINT(bugprone-unchecked-optional-access)
         EXPECT_EQ(successor.firstBook, expected.firstBook);
         EXPECT_EQ(successor.bookBase, expected.bookBase);
     }
@@ -395,11 +395,13 @@ TEST_F(ExtractorTests, ExtractLedgerWithDiffWithResult)
     auto res = extractor.extractLedgerWithDiff(kSEQ);
 
     EXPECT_TRUE(res.has_value());
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
     EXPECT_EQ(res->objects.size(), 10);
     EXPECT_EQ(res->transactions.size(), 10);
     EXPECT_TRUE(res->successors.has_value());
     EXPECT_EQ(res->successors->size(), 10);
     EXPECT_FALSE(res->edgeKeys.has_value());  // this is set separately in ETL
+    // NOLINTEND(bugprone-unchecked-optional-access)
 }
 
 TEST_F(ExtractorTests, ExtractLedgerOnlyWithResult)
@@ -410,8 +412,10 @@ TEST_F(ExtractorTests, ExtractLedgerOnlyWithResult)
     auto res = extractor.extractLedgerOnly(kSEQ);
 
     EXPECT_TRUE(res.has_value());
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
     EXPECT_TRUE(res->objects.empty());
     EXPECT_EQ(res->transactions.size(), 10);
     EXPECT_FALSE(res->successors.has_value());
     EXPECT_FALSE(res->edgeKeys.has_value());  // this is set separately in ETL
+    // NOLINTEND(bugprone-unchecked-optional-access)
 }

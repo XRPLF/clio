@@ -29,9 +29,12 @@ jobs:
           fetch-depth: 0
 
       - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@2cbf481018d930656e9276fcc20dc0e3a0be5b6d
+        uses: XRPLF/actions/prepare-runner@90f11ee655d1687824fb8793db770477d52afbab
         with:
           enable_ccache: false
+
+      - name: Print build environment
+        uses: XRPLF/actions/print-build-env@59dec886e4afb05a1724443af08baccbc045b574
 
       - name: Update libXRPL version requirement
         run: |
@@ -59,7 +62,7 @@ jobs:
         run: strip build/clio_tests
 
       - name: Upload clio_tests
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: clio_tests_check_libxrpl
           path: build/clio_tests
@@ -95,14 +98,12 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Create an issue
-        uses: ./.github/actions/create-issue
-        env:
-          GH_TOKEN: ${{ github.token }}
+        uses: XRPLF/actions/create-issue@fbcc16eb7f20dc3199eaf1aed0d3523a5ba9008c
         with:
-          labels: "compatibility,bug"
           title: "Proposed libXRPL check failed"
           body: >
             Clio build or tests failed against `libXRPL ${{ github.event.client_payload.conan_ref }}`.
 
             PR: ${{ github.event.client_payload.pr_url }}
-            Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/
+          labels: "compatibility,bug"
+          assignees: "godexsoft,kuznetsss,mathbunnyru"

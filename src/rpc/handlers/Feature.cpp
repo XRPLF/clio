@@ -41,19 +41,22 @@ FeatureHandler::process(FeatureHandler::Input const& input, Context const& ctx) 
     ASSERT(range.has_value(), "Feature's ledger range must be available");
 
     auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+        *sharedPtrBackend_,
+        ctx.yield,
+        input.ledgerHash,
+        input.ledgerIndex,
+        range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
     if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
-    auto const& lgrInfo = expectedLgrInfo.value();
+    auto const& lgrInfo = *expectedLgrInfo;
     auto const& all = amendmentCenter_->getAll();
 
     auto searchPredicate = [search = input.feature](auto const& feature) {
         if (search) {
-            return ripple::to_string(feature.feature) == search.value() or
-                feature.name == search.value();
+            return ripple::to_string(feature.feature) == *search or feature.name == *search;
         }
         return true;
     };

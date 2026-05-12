@@ -94,6 +94,8 @@ extractObj(PBObjType obj)
 {
     auto const key = ripple::uint256::fromVoidChecked(obj.key());
     ASSERT(key.has_value(), "Failed to deserialize key from void");
+    if (!key)
+        return {};
 
     auto const valueOr = [](std::string const& maybe, std::string fallback) -> std::string {
         if (maybe.empty())

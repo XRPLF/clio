@@ -75,23 +75,30 @@ AccountChannelsHandler::process(
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountChannel's ledger range must be available");
     auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+        *sharedPtrBackend_,
+        ctx.yield,
+        input.ledgerHash,
+        input.ledgerIndex,
+        range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
     if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
-    auto const& lgrInfo = expectedLgrInfo.value();
+    auto const& lgrInfo = *expectedLgrInfo;
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        ripple::keylet::account(*accountID).key,
+        lgrInfo.seq,
+        ctx.yield
     );
 
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     auto const destAccountID = input.destinationAccount
-        ? accountFromStringStrict(input.destinationAccount.value())
+        ? accountFromStringStrict(*input.destinationAccount)
         : std::optional<ripple::AccountID>{};
 
     Output response;
@@ -107,7 +114,7 @@ AccountChannelsHandler::process(
 
     auto const expectedNext = traverseOwnedNodes(
         *sharedPtrBackend_,
-        *accountID,
+        *accountID,  // NOLINT(bugprone-unchecked-optional-access)
         lgrInfo.seq,
         input.limit,
         input.marker,
@@ -123,7 +130,7 @@ AccountChannelsHandler::process(
     response.ledgerHash = ripple::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
-    auto const nextMarker = expectedNext.value();
+    auto const nextMarker = *expectedNext;
     if (nextMarker.isNonZero())
         response.marker = nextMarker.toString();
 
@@ -180,7 +187,7 @@ tag_invoke(
     };
 
     if (output.marker)
-        obj[JS(marker)] = output.marker.value();
+        obj[JS(marker)] = *output.marker;
 
     jv = std::move(obj);
 }

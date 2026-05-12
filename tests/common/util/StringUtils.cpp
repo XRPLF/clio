@@ -14,7 +14,7 @@ hexStringToBinaryString(std::string const& hex)
     auto const blob = ripple::strUnHex(hex);
     std::string strBlob;
 
-    for (auto c : *blob)
+    for (auto c : *blob)  // NOLINT(bugprone-unchecked-optional-access)
         strBlob += c;
 
     return strBlob;

@@ -178,6 +178,7 @@ struct Status {
 };
 
 /** @brief Warning codes that can be returned by clio. */
+// NOLINTNEXTLINE(cppcoreguidelines-use-enum-class)
 enum WarningCode {
     WarnUnknown = -1,
     WarnRpcClio = 2001,
@@ -200,7 +201,7 @@ struct WarningInfo {
     {
     }
 
-    WarningCode code = WarnUnknown;
+    WarningCode code = WarningCode::WarnUnknown;
     std::string_view const message = "unknown warning";
 };
 
@@ -223,7 +224,7 @@ public:
      *
      * @return The error message
      */
-    char const*
+    [[nodiscard]] char const*
     what() const throw() override
     {
         return msg_.c_str();
@@ -249,7 +250,7 @@ public:
      *
      * @return The error message
      */
-    char const*
+    [[nodiscard]] char const*
     what() const throw() override
     {
         return account_.c_str();

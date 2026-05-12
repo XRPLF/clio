@@ -26,6 +26,7 @@ class ConnectionMetadata : public util::Taggable {
 protected:
     std::string ip_;  // client ip
     std::optional<bool> isAdmin_;
+    bool isProxyConnection_ = false;
 
 public:
     /**
@@ -41,7 +42,7 @@ public:
      *
      * @return true if the connection was upgraded.
      */
-    virtual bool
+    [[nodiscard]] virtual bool
     wasUpgraded() const = 0;
 
     /**
@@ -49,7 +50,7 @@ public:
      *
      * @return The ip of the client.
      */
-    std::string const&
+    [[nodiscard]] std::string const&
     ip() const;
 
     /**
@@ -64,11 +65,31 @@ public:
     }
 
     /**
+     * @brief Mark this connection as coming through a trusted proxy.
+     */
+    void
+    markAsProxyConnection()
+    {
+        isProxyConnection_ = true;
+    }
+
+    /**
+     * @brief Whether this connection was identified as coming through a trusted proxy.
+     *
+     * @return true if the connection is a proxy connection.
+     */
+    [[nodiscard]] bool
+    isProxyConnection() const
+    {
+        return isProxyConnection_;
+    }
+
+    /**
      * @brief Get whether the client is an admin.
      *
      * @return true if the client is an admin.
      */
-    bool
+    [[nodiscard]] bool
     isAdmin() const;
 
     /**

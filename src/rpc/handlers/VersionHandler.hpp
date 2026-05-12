@@ -51,7 +51,7 @@ public:
      * @param ctx The context of the request
      * @return The result of the command
      */
-    Result
+    [[nodiscard]] Result
     process([[maybe_unused]] Context const& ctx) const
     {
         using namespace rpc;

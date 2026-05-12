@@ -43,7 +43,7 @@ handleHttpRequest(
 )
 {
     ASSERT(request.target().has_value(), "Got not a HTTP request");
-    auto it = handlers.find(*request.target());
+    auto it = handlers.find(*request.target());  // NOLINT(bugprone-unchecked-optional-access)
     if (it == handlers.end()) {
         return Response{boost::beast::http::status::bad_request, "Bad target", request};
     }
@@ -282,7 +282,7 @@ ConnectionHandler::sequentRequestResponseLoop(
         auto maybeReturnValue =
             processRequest(connection, subscriptionContext, *expectedRequest, yield);
         if (maybeReturnValue.has_value())
-            return maybeReturnValue.value();
+            return *maybeReturnValue;
     }
 }
 
@@ -326,7 +326,7 @@ ConnectionHandler::parallelRequestResponseLoop(
                         processRequest(connection, subscriptionContext, request, innerYield);
                     if (maybeCloseConnectionGracefully.has_value()) {
                         stop = true;
-                        closeConnectionGracefully &= maybeCloseConnectionGracefully.value();
+                        closeConnectionGracefully &= *maybeCloseConnectionGracefully;
                     }
                 }
             );
@@ -402,14 +402,26 @@ ConnectionHandler::handleRequest(
 void
 ConnectionHandler::resolveClientIp(Connection& connection, Request const& request) const
 {
-    if (auto resolvedClientIp =
-            proxyIpResolver_.resolveClientIp(connection.ip(), request.httpHeaders());
-        resolvedClientIp != connection.ip()) {
+    auto const updateIp = [&](std::string newIp) {
+        if (newIp == connection.ip())
+            return;
         LOG(log_.info()) << connection.tag()
-                         << "Detected a forwarded request from proxy. Proxy ip: " << connection.ip()
-                         << ". Resolved client ip: " << resolvedClientIp;
-        onIpChangeHook_(connection.ip(), resolvedClientIp);
-        connection.setIp(std::move(resolvedClientIp));
+                         << "Detected a forwarded request from proxy. Resolved client ip: "
+                         << newIp;
+        onIpChangeHook_(connection.ip(), newIp);
+        connection.setIp(std::move(newIp));
+    };
+
+    if (connection.isProxyConnection()) {
+        if (auto resolvedIp = ProxyIpResolver::extractClientIp(request.httpHeaders());
+            resolvedIp.has_value())
+            updateIp(std::move(*resolvedIp));
+    } else if (
+        auto resolvedIp = proxyIpResolver_.resolveClientIp(connection.ip(), request.httpHeaders());
+        resolvedIp.has_value()
+    ) {
+        updateIp(std::move(*resolvedIp));
+        connection.markAsProxyConnection();
     }
 }
 

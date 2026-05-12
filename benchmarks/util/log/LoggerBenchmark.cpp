@@ -11,6 +11,7 @@
 #include <barrier>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -24,9 +25,15 @@ static constexpr auto kLOG_FORMAT = "%Y-%m-%d %H:%M:%S.%f %^%3!l:%n%$ - %v";
 
 struct BenchmarkLoggingInitializer {
     [[nodiscard]] static std::shared_ptr<spdlog::sinks::sink>
-    createFileSink(LogService::FileLoggingParams const& params)
+    createFileSink(std::string const& logDir, uint32_t sizeMB, uint32_t maxFiles)
     {
-        return LogService::createFileSink(params, kLOG_FORMAT);
+        return LogService::createFileSink(
+            LogService::FileLoggingParams{
+                .logDir = logDir,
+                .rotation = LogService::RotationParams{.sizeMB = sizeMB, .maxFiles = maxFiles},
+            },
+            kLOG_FORMAT
+        );
     }
 
     static Logger
@@ -68,11 +75,7 @@ benchmarkConcurrentFileLogging(benchmark::State& state)
         static constexpr size_t kTHREAD_COUNT = 1;
         spdlog::init_thread_pool(kQUEUE_SIZE, kTHREAD_COUNT);
 
-        auto fileSink = BenchmarkLoggingInitializer::createFileSink({
-            .logDir = logDir,
-            .rotationSizeMB = 5,
-            .dirMaxFiles = 25,
-        });
+        auto fileSink = BenchmarkLoggingInitializer::createFileSink(logDir, 5, 25);
 
         std::vector<std::thread> threads;
         threads.reserve(numThreads);

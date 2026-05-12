@@ -311,7 +311,7 @@ TEST_F(IncorrectOverrideValues, InvalidJsonErrors)
     };
 
     std::set<std::string_view> actualErrors;
-    for (auto const& error : errors.value()) {
+    for (auto const& error : *errors) {  // NOLINT(bugprone-unchecked-optional-access)
         actualErrors.insert(error.error);
     }
     EXPECT_EQ(expectedErrors, actualErrors);
@@ -435,8 +435,10 @@ TEST_F(ClioConfigDefinitionParseArrayTest, missingRequiredFields)
     auto const configFile = ConfigFileJson{configJson};
     auto const result = config.parse(configFile);
     ASSERT_TRUE(result.has_value());
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
     EXPECT_EQ(result->size(), 1);
     EXPECT_THAT(result->at(0).error, testing::StartsWith("The value of array.[].int"));
+    // NOLINTEND(bugprone-unchecked-optional-access)
 }
 
 TEST_F(ClioConfigDefinitionParseArrayTest, missingAllRequiredFields)
@@ -452,8 +454,10 @@ TEST_F(ClioConfigDefinitionParseArrayTest, missingAllRequiredFields)
     auto const configFile = ConfigFileJson{configJson};
     auto const result = config.parse(configFile);
     ASSERT_TRUE(result.has_value());
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
     EXPECT_EQ(result->size(), 1);
     EXPECT_THAT(result->at(0).error, testing::StartsWith("The value of array.[].int"));
+    // NOLINTEND(bugprone-unchecked-optional-access)
 }
 
 TEST(ClioConfigDefinitionParse, unexpectedFields)
@@ -478,14 +482,19 @@ TEST(ClioConfigDefinitionParse, unexpectedFields)
 
     auto const configFile = ConfigFileJson{configJson};
     auto result = config.parse(configFile);
-    std::ranges::sort(*result, [](auto const& lhs, auto const& rhs) {
-        return lhs.error < rhs.error;
-    });
     ASSERT_TRUE(result.has_value());
+    std::ranges::sort(
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        *result,
+        [](auto const& lhs, auto const& rhs) { return lhs.error < rhs.error; }
+    );
+    ASSERT_TRUE(result.has_value());
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
     ASSERT_EQ(result->size(), 4);
 
     EXPECT_EQ(result->at(0).error, "Unknown key: unexpected_empty_array.[]");
     EXPECT_EQ(result->at(1).error, "Unknown key: unexpected_non_empty_array.[].string");
     EXPECT_EQ(result->at(2).error, "Unknown key: unexpected_object.string");
     EXPECT_EQ(result->at(3).error, "Unknown key: unexpected_string");
+    // NOLINTEND(bugprone-unchecked-optional-access)
 }

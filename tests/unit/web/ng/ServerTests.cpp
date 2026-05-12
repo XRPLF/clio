@@ -229,6 +229,7 @@ TEST_F(ServerTest, BadEndpoint)
 
     auto maybeError = server.run();
     ASSERT_TRUE(maybeError.has_value());
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_THAT(*maybeError, testing::HasSubstr("Error creating TCP acceptor"));
 }
 
@@ -236,7 +237,7 @@ struct ServerHttpTestBundle {
     std::string testName;
     http::verb method;
 
-    Request::Method
+    [[nodiscard]] Request::Method
     expectedMethod() const
     {
         switch (method) {

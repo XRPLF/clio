@@ -166,8 +166,8 @@ TEST_F(RPCServerInfoHandlerTest, NoFeesErrorsOutWithInternal)
 TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
 {
     MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr_.get();
-    MockCounters* rawCountersPtr = mockCountersPtr_.get();
-    MockETLService* rawETLServicePtr = mockETLServicePtr_.get();
+    MockCounters const* rawCountersPtr = mockCountersPtr_.get();
+    MockETLService const* rawETLServicePtr = mockETLServicePtr_.get();
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
@@ -209,8 +209,8 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
 TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
 {
     MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr_.get();
-    MockCounters* rawCountersPtr = mockCountersPtr_.get();
-    MockETLService* rawETLServicePtr = mockETLServicePtr_.get();
+    MockCounters const* rawCountersPtr = mockCountersPtr_.get();
+    MockETLService const* rawETLServicePtr = mockETLServicePtr_.get();
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
@@ -250,8 +250,8 @@ TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
 TEST_F(RPCServerInfoHandlerTest, CorruptionDetectedIsPresentIfSet)
 {
     MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr_.get();
-    MockCounters* rawCountersPtr = mockCountersPtr_.get();
-    MockETLService* rawETLServicePtr = mockETLServicePtr_.get();
+    MockCounters const* rawCountersPtr = mockCountersPtr_.get();
+    MockETLService const* rawETLServicePtr = mockETLServicePtr_.get();
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend_, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
@@ -291,7 +291,7 @@ TEST_F(RPCServerInfoHandlerTest, CorruptionDetectedIsPresentIfSet)
 TEST_F(RPCServerInfoHandlerTest, CacheReportsEnabledFlagCorrectly)
 {
     MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr_.get();
-    MockCounters* rawCountersPtr = mockCountersPtr_.get();
+    MockCounters const* rawCountersPtr = mockCountersPtr_.get();
 
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend_, fetchLedgerBySequence).Times(2).WillRepeatedly(Return(ledgerHeader));
@@ -346,9 +346,9 @@ TEST_F(RPCServerInfoHandlerTest, CacheReportsEnabledFlagCorrectly)
 
 TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
 {
-    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr_.get();
-    MockCounters* rawCountersPtr = mockCountersPtr_.get();
-    MockETLService* rawETLServicePtr = mockETLServicePtr_.get();
+    MockLoadBalancer const* rawBalancerPtr = mockLoadBalancerPtr_.get();
+    MockCounters const* rawCountersPtr = mockCountersPtr_.get();
+    MockETLService const* rawETLServicePtr = mockETLServicePtr_.get();
 
     auto const empty = json::object{};
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30, 3);  // 3 seconds old
@@ -389,9 +389,9 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
 
 TEST_F(RPCServerInfoHandlerTest, BackendCountersPresentWhenRequestWithParam)
 {
-    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr_.get();
-    MockCounters* rawCountersPtr = mockCountersPtr_.get();
-    MockETLService* rawETLServicePtr = mockETLServicePtr_.get();
+    MockLoadBalancer const* rawBalancerPtr = mockLoadBalancerPtr_.get();
+    MockCounters const* rawCountersPtr = mockCountersPtr_.get();
+    MockETLService const* rawETLServicePtr = mockETLServicePtr_.get();
 
     auto const empty = json::object{};
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30, 3);  // 3 seconds old
@@ -439,9 +439,9 @@ TEST_F(RPCServerInfoHandlerTest, BackendCountersPresentWhenRequestWithParam)
 
 TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
 {
-    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr_.get();
-    MockCounters* rawCountersPtr = mockCountersPtr_.get();
-    MockETLService* rawETLServicePtr = mockETLServicePtr_.get();
+    MockLoadBalancer const* rawBalancerPtr = mockLoadBalancerPtr_.get();
+    MockCounters const* rawCountersPtr = mockCountersPtr_.get();
+    MockETLService const* rawETLServicePtr = mockETLServicePtr_.get();
 
     auto const empty = json::object{};
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30, 3);  // 3 seconds old
@@ -493,9 +493,9 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
 
 TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
 {
-    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr_.get();
-    MockCounters* rawCountersPtr = mockCountersPtr_.get();
-    MockETLService* rawETLServicePtr = mockETLServicePtr_.get();
+    MockLoadBalancer const* rawBalancerPtr = mockLoadBalancerPtr_.get();
+    MockCounters const* rawCountersPtr = mockCountersPtr_.get();
+    MockETLService const* rawETLServicePtr = mockETLServicePtr_.get();
 
     auto const empty = json::object{};
     auto const ledgerHeader = createLedgerHeader(kLEDGER_HASH, 30, 3);  // 3 seconds old

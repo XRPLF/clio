@@ -72,13 +72,13 @@ int
 MigratorApplication::migrate(std::string const& migratorName)
 {
     auto const status = migrationManager_->getMigratorStatusByName(migratorName);
-    if (status == migration::MigratorStatus::Migrated) {
+    if (status == migration::MigratorStatus::Status::Migrated) {
         std::cout << "Migrator " << migratorName << " has already migrated" << std::endl;
         printStatus();
         return EXIT_SUCCESS;
     }
 
-    if (status == migration::MigratorStatus::NotKnown) {
+    if (status == migration::MigratorStatus::Status::NotKnown) {
         std::cout << "Migrator " << migratorName << " not found" << std::endl;
         printStatus();
         return EXIT_FAILURE;

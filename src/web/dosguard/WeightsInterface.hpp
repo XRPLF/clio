@@ -22,7 +22,7 @@ public:
      * @param request The JSON object representing the request
      * @return The calculated weight of the request
      */
-    virtual size_t
+    [[nodiscard]] virtual size_t
     requestWeight(boost::json::object const& request) const = 0;
 };
 

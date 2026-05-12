@@ -34,7 +34,7 @@ public:
         return data_;
     }
 
-    ProtectedDataType const&
+    [[nodiscard]] ProtectedDataType const&
     get() const
     {
         return data_;

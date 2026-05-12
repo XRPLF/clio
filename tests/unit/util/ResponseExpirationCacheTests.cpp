@@ -21,7 +21,7 @@ TEST_F(ResponseExpirationCacheTests, PutAndGetNotExpired)
     cache_.put("key", object_);
     auto result = cache_.get("key");
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(*result, object_);
+    EXPECT_EQ(*result, object_);  // NOLINT(bugprone-unchecked-optional-access)
     result = cache_.get("key2");
     ASSERT_FALSE(result.has_value());
 

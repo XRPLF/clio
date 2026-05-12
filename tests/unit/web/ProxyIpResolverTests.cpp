@@ -11,6 +11,7 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 
+#include <optional>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -26,7 +27,7 @@ struct ProxyIpResolverTestParams {
     std::unordered_set<std::string> proxyTokens;
     std::vector<std::pair<std::string, std::string>> headers;
     std::string connectionIp;
-    std::string expectedIp;
+    std::optional<std::string> expectedIp;
 };
 
 class ProxyIpResolverTest : public ::testing::TestWithParam<ProxyIpResolverTestParams> {};
@@ -61,11 +62,11 @@ TEST_F(ProxyIpResolverTest, FromConfig)
     auto const proxyIpResolver = ProxyIpResolver::fromConfig(config);
     ProxyIpResolver::HttpHeaders headers;
 
-    EXPECT_EQ(proxyIpResolver.resolveClientIp(clientIp, headers), clientIp);
-    EXPECT_EQ(proxyIpResolver.resolveClientIp(proxyIp, headers), proxyIp);
+    EXPECT_EQ(proxyIpResolver.resolveClientIp(clientIp, headers), std::nullopt);
+    EXPECT_EQ(proxyIpResolver.resolveClientIp(proxyIp, headers), std::nullopt);
 
     headers.set(boost::beast::http::field::forwarded, fmt::format("for={}", clientIp));
-    EXPECT_EQ(proxyIpResolver.resolveClientIp(clientIp, headers), clientIp);
+    EXPECT_EQ(proxyIpResolver.resolveClientIp(clientIp, headers), std::nullopt);
     EXPECT_EQ(proxyIpResolver.resolveClientIp(proxyIp, headers), clientIp);
 
     headers.set(ProxyIpResolver::kPROXY_TOKEN_HEADER, proxyToken);
@@ -95,7 +96,7 @@ INSTANTIATE_TEST_SUITE_P(
             .proxyTokens = {},
             .headers = {},
             .connectionIp = "1.2.3.4",
-            .expectedIp = "1.2.3.4"
+            .expectedIp = std::nullopt
         },
         ProxyIpResolverTestParams{
             .testName = "TrustedProxyIpWithForwardedHeader",
@@ -111,7 +112,7 @@ INSTANTIATE_TEST_SUITE_P(
             .proxyTokens = {},
             .headers = {},
             .connectionIp = "5.6.7.8",
-            .expectedIp = "5.6.7.8"
+            .expectedIp = std::nullopt
         },
         ProxyIpResolverTestParams{
             .testName = "UntrustedProxyIpWithForwardedHeader",
@@ -119,7 +120,7 @@ INSTANTIATE_TEST_SUITE_P(
             .proxyTokens = {},
             .headers = {{std::string(http::to_string(http::field::forwarded)), "for=1.2.3.4"}},
             .connectionIp = "5.6.7.8",
-            .expectedIp = "5.6.7.8"
+            .expectedIp = std::nullopt
         },
         ProxyIpResolverTestParams{
             .testName = "TrustedProxyTokenWithForwardedHeader",
@@ -137,7 +138,7 @@ INSTANTIATE_TEST_SUITE_P(
             .proxyTokens = {"test_token"},
             .headers = {{std::string(ProxyIpResolver::kPROXY_TOKEN_HEADER), "test_token"}},
             .connectionIp = "5.6.7.8",
-            .expectedIp = "5.6.7.8"
+            .expectedIp = std::nullopt
         },
         ProxyIpResolverTestParams{
             .testName = "UntrustedProxyTokenWithForwardedHeader",
@@ -147,7 +148,7 @@ INSTANTIATE_TEST_SUITE_P(
                 {{std::string(ProxyIpResolver::kPROXY_TOKEN_HEADER), "test_token"},
                  {std::string(http::to_string(http::field::forwarded)), "for=1.2.3.4"}},
             .connectionIp = "5.6.7.8",
-            .expectedIp = "5.6.7.8"
+            .expectedIp = std::nullopt
         },
         ProxyIpResolverTestParams{
             .testName = "ForwardedHeaderWithAdditionalFields",
@@ -173,7 +174,7 @@ INSTANTIATE_TEST_SUITE_P(
             .proxyTokens = {},
             .headers = {{std::string(http::to_string(http::field::forwarded)), "by=1.2.3.4"}},
             .connectionIp = "5.6.7.8",
-            .expectedIp = "5.6.7.8"
+            .expectedIp = std::nullopt
         },
         ProxyIpResolverTestParams{
             .testName = "ForwardedHeaderWithIpInQuotes",
@@ -190,7 +191,27 @@ INSTANTIATE_TEST_SUITE_P(
             .headers =
                 {{std::string(http::to_string(http::field::forwarded)), "for=\";some_other_text"}},
             .connectionIp = "5.6.7.8",
-            .expectedIp = "5.6.7.8"
+            .expectedIp = std::nullopt
+        },
+        ProxyIpResolverTestParams{
+            .testName = "ForwardedHeaderWithMultipleForValues",
+            .proxyIps = {"5.6.7.8"},
+            .proxyTokens = {},
+            .headers =
+                {{std::string(http::to_string(http::field::forwarded)),
+                  "for=1.2.3.4, for=9.10.11.12"}},
+            .connectionIp = "5.6.7.8",
+            .expectedIp = "9.10.11.12"
+        },
+        ProxyIpResolverTestParams{
+            .testName = "ForwardedHeaderWithMultipleForValuesAndSectionDelimiters",
+            .proxyIps = {"5.6.7.8"},
+            .proxyTokens = {},
+            .headers =
+                {{std::string(http::to_string(http::field::forwarded)),
+                  "for=1.2.3.4; proto=http, for=9.10.11.12; proto=https"}},
+            .connectionIp = "5.6.7.8",
+            .expectedIp = "9.10.11.12"
         }
     ),
     tests::util::kNAME_GENERATOR

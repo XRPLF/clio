@@ -104,7 +104,7 @@ private:
                     return;  // queue is empty
                 }
 
-                auto [start, end] = cursor.value();
+                auto [start, end] = *cursor;
                 LOG(log_.debug()) << "Starting a cursor: " << ripple::strHex(start);
 
                 while (not token.isStopRequested() and not cache_.get().isDisabled()) {
@@ -136,7 +136,7 @@ private:
                         break;  // pick up the next cursor if available
                     }
 
-                    start = std::move(res.cursor).value();
+                    start = *std::move(res.cursor);
                 }
             }
         });

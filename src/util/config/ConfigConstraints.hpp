@@ -104,7 +104,7 @@ protected:
      * @return The error message specifying what the value of key must be
      */
     template <std::size_t ArrSize>
-    constexpr std::string
+    [[nodiscard]] constexpr std::string
     makeErrorMsg(
         std::string_view key,
         Value const& value,
@@ -129,7 +129,7 @@ protected:
      * @param val The value type to be checked
      * @return An Error object if the constraint is not met, nullopt otherwise
      */
-    virtual std::optional<Error>
+    [[nodiscard]] virtual std::optional<Error>
     checkTypeImpl(Value const& val) const = 0;
 
     /**
@@ -138,7 +138,7 @@ protected:
      * @param val The value type to be checked
      * @return An Error object if the constraint is not met, nullopt otherwise
      */
-    virtual std::optional<Error>
+    [[nodiscard]] virtual std::optional<Error>
     checkValueImpl(Value const& val) const = 0;
 
     /**

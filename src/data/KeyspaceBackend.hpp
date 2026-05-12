@@ -102,7 +102,7 @@ public:
         return true;
     }
 
-    NFTsAndCursor
+    [[nodiscard]] NFTsAndCursor
     fetchNFTsByIssuer(
         ripple::AccountID const& issuer,
         std::optional<std::uint32_t> const& taxon,
@@ -162,7 +162,7 @@ public:
      * @param yield The coroutine context.
      * @return A vector of ripple::uint256 representing the account root hashes.
      */
-    std::vector<ripple::uint256>
+    [[nodiscard]] std::vector<ripple::uint256>
     fetchAccountRoots(
         [[maybe_unused]] std::uint32_t number,
         [[maybe_unused]] std::uint32_t pageSize,
@@ -175,7 +175,7 @@ public:
     }
 
 private:
-    std::vector<ripple::uint256>
+    [[nodiscard]] std::vector<ripple::uint256>
     fetchNFTIDsByTaxon(
         ripple::AccountID const& issuer,
         std::uint32_t const taxon,
@@ -198,7 +198,7 @@ private:
         return nftIDs;
     }
 
-    std::vector<ripple::uint256>
+    [[nodiscard]] std::vector<ripple::uint256>
     fetchNFTIDsWithoutTaxon(
         ripple::AccountID const& issuer,
         std::uint32_t const limit,
@@ -242,7 +242,7 @@ private:
      * @brief Takes a list of NFT IDs, fetches their full data, and assembles the final result with
      * a cursor.
      */
-    NFTsAndCursor
+    [[nodiscard]] NFTsAndCursor
     populateNFTsAndCreateCursor(
         std::vector<ripple::uint256> const& nftIDs,
         std::uint32_t const ledgerSequence,

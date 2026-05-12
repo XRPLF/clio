@@ -59,16 +59,16 @@ public:
      *
      * If the connection IP is in the trusted proxy list, or if a valid proxy token is provided in
      * the headers, this method will attempt to extract the client's IP from the `Forwarded` header.
-     * Otherwise, it returns the connection IP.
+     * Otherwise, returns std::nullopt.
      *
      * @param connectionIp The IP address of the direct connection.
      * @param headers The HTTP request headers.
-     * @return The resolved client IP address as a string.
+     * @return The resolved client IP address if the connection is from a trusted proxy, otherwise
+     * std::nullopt.
      */
-    std::string
+    [[nodiscard]] std::optional<std::string>
     resolveClientIp(std::string const& connectionIp, HttpHeaders const& headers) const;
 
-private:
     /**
      * @brief Extracts the client IP from the `Forwarded` HTTP header.
      *

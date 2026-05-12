@@ -41,14 +41,14 @@ public:
      * @brief Get the name of the metric
      * @return The name of the metric
      */
-    std::string const&
+    [[nodiscard]] std::string const&
     name() const;
 
     /**
      * @brief Get the labels of the metric in serialized format, e.g. {name="value",name2="value2"}
      * @return The labels of the metric
      */
-    std::string const&
+    [[nodiscard]] std::string const&
     labelsString() const;
 
 protected:

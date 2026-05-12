@@ -47,13 +47,13 @@ ClioConfigDefinition::getObject(std::string_view prefix, std::optional<std::size
     for (auto const& [mapKey, mapVal] : map_) {
         auto const hasPrefix = mapKey.starts_with(prefixWithDot);
         if (idx.has_value() && hasPrefix && std::holds_alternative<Array>(mapVal)) {
-            ASSERT(std::get<Array>(mapVal).size() > idx.value(), "Index provided is out of scope");
+            ASSERT(std::get<Array>(mapVal).size() > *idx, "Index provided is out of scope");
 
             // we want to support getObject("array") and getObject("array.[]"), so we check if "[]"
             // exists
             if (!prefix.contains("[]"))
-                return ObjectView{prefixWithDot + "[]", idx.value(), *this};
-            return ObjectView{prefix, idx.value(), *this};
+                return ObjectView{prefixWithDot + "[]", *idx, *this};
+            return ObjectView{prefix, *idx, *this};
         }
         if (hasPrefix && !idx.has_value() && !mapKey.contains(prefixWithDot + "[]"))
             return ObjectView{prefix, *this};
@@ -174,7 +174,7 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
                 [&key, &config, &listOfErrors](ConfigValue& val) {
                     if (auto const maybeError = val.setValue(config.getValue(key), key);
                         maybeError.has_value()) {
-                        listOfErrors.emplace_back(maybeError.value());
+                        listOfErrors.emplace_back(*maybeError);
                     }
                 },
                 // handle the case where the config value is an array.
@@ -312,7 +312,8 @@ getClioConfig()
          {"num_markers",
           ConfigValue{ConfigType::Integer}.optional().withConstraint(gValidateNumMarkers)},
 
-         {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}.optional()}},
+         {"dos_guard.whitelist.[]",
+          Array{ConfigValue{ConfigType::String}.optional().withConstraint(gValidateIp)}},
          {"dos_guard.max_fetches",
           ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(gValidateUint32)},
          {"dos_guard.max_connections",
@@ -361,7 +362,8 @@ getClioConfig()
          {"server.ws_max_sending_queue_size",
           ConfigValue{ConfigType::Integer}.defaultValue(1500).withConstraint(gValidateUint32)},
          {"server.__ng_web_server", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-         {"server.proxy.ips.[]", Array{ConfigValue{ConfigType::String}}},
+         {"server.proxy.ips.[]",
+          Array{ConfigValue{ConfigType::String}.withConstraint(gValidateIp)}},
          {"server.proxy.tokens.[]", Array{ConfigValue{ConfigType::String}}},
 
          {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
@@ -419,6 +421,8 @@ getClioConfig()
 
          {"log.directory_max_files",
           ConfigValue{ConfigType::Integer}.defaultValue(25).withConstraint(gValidateUint32)},
+
+         {"log.rotate", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
 
          {"log.tag_style",
           ConfigValue{ConfigType::String}.defaultValue("none").withConstraint(gValidateLogTag)},

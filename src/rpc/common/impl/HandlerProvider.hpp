@@ -41,16 +41,16 @@ public:
         Counters const& counters
     );
 
-    bool
+    [[nodiscard]] bool
     contains(std::string const& command) const override;
 
-    std::optional<AnyHandler>
+    [[nodiscard]] std::optional<AnyHandler>
     getHandler(std::string const& command) const override;
 
-    bool
+    [[nodiscard]] bool
     isClioOnly(std::string const& command) const override;
 
-    std::unordered_set<std::string>
+    [[nodiscard]] std::unordered_set<std::string>
     handlerNames() const;
 };
 

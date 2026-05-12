@@ -123,8 +123,8 @@ Cluster::setupContactPoints(Settings::ContactPoints const& points)
     }
 
     if (points.port) {
-        auto const rc = cass_cluster_set_port(*this, points.port.value());
-        throwErrorIfNeeded(rc, "port", to_string(points.port.value()));
+        auto const rc = cass_cluster_set_port(*this, *points.port);
+        throwErrorIfNeeded(rc, "port", to_string(*points.port));
     }
 }
 
@@ -158,10 +158,8 @@ Cluster::setupCredentials(Settings const& settings)
     if (not settings.username || not settings.password)
         return;
 
-    LOG(log_.debug()) << "Set credentials; username: " << settings.username.value();
-    cass_cluster_set_credentials(
-        *this, settings.username.value().c_str(), settings.password.value().c_str()
-    );
+    LOG(log_.debug()) << "Set credentials; username: " << *settings.username;
+    cass_cluster_set_credentials(*this, settings.username->c_str(), settings.password->c_str());
 }
 
 }  // namespace data::cassandra::impl

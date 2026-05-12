@@ -39,7 +39,7 @@ public:
      * @param yield The coroutine context
      * @return Response on success or error on failure
      */
-    std::expected<boost::json::object, rpc::ClioError>
+    [[nodiscard]] std::expected<boost::json::object, rpc::ClioError>
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& forwardToRippledClientIp,

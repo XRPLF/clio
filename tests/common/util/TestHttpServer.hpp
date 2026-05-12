@@ -54,7 +54,7 @@ public:
      *
      * @return string port number
      */
-    std::string
+    [[nodiscard]] std::string
     port() const;
 
 private:

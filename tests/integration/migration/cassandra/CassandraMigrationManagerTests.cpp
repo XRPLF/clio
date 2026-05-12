@@ -152,7 +152,7 @@ public:
         // drop the keyspace
         Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
-        handle.execute("DROP KEYSPACE " + TestGlobals::instance().backendKeyspace);
+        EXPECT_TRUE(handle.execute("DROP KEYSPACE " + TestGlobals::instance().backendKeyspace));
     }
 };
 
@@ -173,28 +173,28 @@ TEST_F(MigrationCassandraManagerCleanDBTest, AllMigratorStatusBeforeAnyMigration
 {
     auto const status = testMigrationManager_->allMigratorsStatusPairs();
     EXPECT_EQ(status.size(), 4);
-    EXPECT_EQ(std::get<1>(status[0]), MigratorStatus::NotMigrated);
-    EXPECT_EQ(std::get<1>(status[1]), MigratorStatus::NotMigrated);
-    EXPECT_EQ(std::get<1>(status[2]), MigratorStatus::NotMigrated);
-    EXPECT_EQ(std::get<1>(status[3]), MigratorStatus::NotMigrated);
+    EXPECT_EQ(std::get<1>(status[0]), MigratorStatus::Status::NotMigrated);
+    EXPECT_EQ(std::get<1>(status[1]), MigratorStatus::Status::NotMigrated);
+    EXPECT_EQ(std::get<1>(status[2]), MigratorStatus::Status::NotMigrated);
+    EXPECT_EQ(std::get<1>(status[3]), MigratorStatus::Status::NotMigrated);
 }
 
 TEST_F(MigrationCassandraManagerCleanDBTest, MigratorStatus)
 {
     auto status = testMigrationManager_->getMigratorStatusByName("ExampleObjectsMigrator");
-    EXPECT_EQ(status, MigratorStatus::NotMigrated);
+    EXPECT_EQ(status, MigratorStatus::Status::NotMigrated);
 
     status = testMigrationManager_->getMigratorStatusByName("ExampleTransactionsMigrator");
-    EXPECT_EQ(status, MigratorStatus::NotMigrated);
+    EXPECT_EQ(status, MigratorStatus::Status::NotMigrated);
 
     status = testMigrationManager_->getMigratorStatusByName("ExampleLedgerMigrator");
-    EXPECT_EQ(status, MigratorStatus::NotMigrated);
+    EXPECT_EQ(status, MigratorStatus::Status::NotMigrated);
 
     status = testMigrationManager_->getMigratorStatusByName("ExampleDropTableMigrator");
-    EXPECT_EQ(status, MigratorStatus::NotMigrated);
+    EXPECT_EQ(status, MigratorStatus::Status::NotMigrated);
 
     status = testMigrationManager_->getMigratorStatusByName("NonExistentMigrator");
-    EXPECT_EQ(status, MigratorStatus::NotKnown);
+    EXPECT_EQ(status, MigratorStatus::Status::NotKnown);
 }
 
 // The test suite for testing migration process for ExampleTransactionsMigrator. In this test suite,
@@ -217,7 +217,7 @@ TEST_F(MigrationCassandraManagerTxTableTest, MigrateExampleTransactionsMigrator)
     constexpr auto kTRANSACTIONS_MIGRATOR_NAME = "ExampleTransactionsMigrator";
     EXPECT_EQ(
         testMigrationManager_->getMigratorStatusByName(kTRANSACTIONS_MIGRATOR_NAME),
-        MigratorStatus::NotMigrated
+        MigratorStatus::Status::NotMigrated
     );
 
     ExampleTransactionsMigrator::count = 0;
@@ -241,24 +241,27 @@ TEST_F(MigrationCassandraManagerTxTableTest, MigrateExampleTransactionsMigrator)
     auto txType = getTxType(
         ripple::uint256("CEECF7E516F8A53C5D32A357B737ED54D3186FDD510B1973D908AD8D93AD8E00")
     );
-    EXPECT_TRUE(txType.has_value());
+    ASSERT_TRUE(txType.has_value());
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(txType.value(), "OracleSet");
 
     txType = getTxType(
         ripple::uint256("35DBFB1A88DE17EBD2BCE37F6E1FD6D3B9887C92B7933ED2FCF2A84E9138B7CA")
     );
-    EXPECT_TRUE(txType.has_value());
+    ASSERT_TRUE(txType.has_value());
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(txType.value(), "Payment");
 
     txType = getTxType(
         ripple::uint256("FCACE9D00625FA3BCC5316078324EA153EC8551243AC1701D496CC1CA2B8A474")
     );
-    EXPECT_TRUE(txType.has_value());
+    ASSERT_TRUE(txType.has_value());
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(txType.value(), "AMMCreate");
 
     EXPECT_EQ(
         testMigrationManager_->getMigratorStatusByName(kTRANSACTIONS_MIGRATOR_NAME),
-        MigratorStatus::Migrated
+        MigratorStatus::Status::Migrated
     );
 }
 
@@ -281,7 +284,7 @@ TEST_F(MigrationCassandraManagerObjectsTableTest, MigrateExampleObjectsMigrator)
     constexpr auto kOBJECTS_MIGRATOR_NAME = "ExampleObjectsMigrator";
     EXPECT_EQ(
         testMigrationManager_->getMigratorStatusByName(kOBJECTS_MIGRATOR_NAME),
-        MigratorStatus::NotMigrated
+        MigratorStatus::Status::NotMigrated
     );
 
     testMigrationManager_->runMigration(kOBJECTS_MIGRATOR_NAME);
@@ -291,7 +294,7 @@ TEST_F(MigrationCassandraManagerObjectsTableTest, MigrateExampleObjectsMigrator)
 
     EXPECT_EQ(
         testMigrationManager_->getMigratorStatusByName(kOBJECTS_MIGRATOR_NAME),
-        MigratorStatus::Migrated
+        MigratorStatus::Status::Migrated
     );
 }
 
@@ -315,13 +318,13 @@ TEST_F(MigrationCassandraManagerLedgerTableTest, MigrateExampleLedgerMigrator)
     constexpr auto kHEADER_MIGRATOR_NAME = "ExampleLedgerMigrator";
     EXPECT_EQ(
         testMigrationManager_->getMigratorStatusByName(kHEADER_MIGRATOR_NAME),
-        MigratorStatus::NotMigrated
+        MigratorStatus::Status::NotMigrated
     );
 
     testMigrationManager_->runMigration(kHEADER_MIGRATOR_NAME);
     EXPECT_EQ(
         testMigrationManager_->getMigratorStatusByName(kHEADER_MIGRATOR_NAME),
-        MigratorStatus::Migrated
+        MigratorStatus::Status::Migrated
     );
 
     auto const newTableSize = data::synchronous([&](auto ctx) {
@@ -357,7 +360,7 @@ TEST_F(MigrationCassandraManagerDropTableTest, MigrateDropTableMigrator)
     constexpr auto kDROP_TABLE_MIGRATOR_NAME = "ExampleDropTableMigrator";
     EXPECT_EQ(
         testMigrationManager_->getMigratorStatusByName(kDROP_TABLE_MIGRATOR_NAME),
-        MigratorStatus::NotMigrated
+        MigratorStatus::Status::NotMigrated
     );
 
     auto const beforeDropSize =
@@ -367,7 +370,7 @@ TEST_F(MigrationCassandraManagerDropTableTest, MigrateDropTableMigrator)
     testMigrationManager_->runMigration(kDROP_TABLE_MIGRATOR_NAME);
     EXPECT_EQ(
         testMigrationManager_->getMigratorStatusByName(kDROP_TABLE_MIGRATOR_NAME),
-        MigratorStatus::Migrated
+        MigratorStatus::Status::Migrated
     );
 
     auto const newTableSize =

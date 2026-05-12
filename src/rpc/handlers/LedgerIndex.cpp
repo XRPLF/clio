@@ -26,7 +26,7 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input const& input, Context cons
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "LedgerIndex's ledger range must be available");
 
-    auto const [minIndex, maxIndex] = *range;
+    auto const [minIndex, maxIndex] = *range;  // NOLINT(bugprone-unchecked-optional-access)
 
     auto const fillOutputByIndex = [&](std::uint32_t index) {
         auto const ledger = sharedPtrBackend_->fetchLedgerBySequence(index, ctx.yield);

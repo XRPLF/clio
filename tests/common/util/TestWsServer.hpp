@@ -46,7 +46,7 @@ public:
     std::optional<std::string>
     close(boost::asio::yield_context yield);
 
-    std::vector<util::requests::HttpHeader> const&
+    [[nodiscard]] std::vector<util::requests::HttpHeader> const&
     headers() const;
 
     void
@@ -65,7 +65,7 @@ class TestWsServer {
 public:
     TestWsServer(boost::asio::io_context& context, std::string const& host);
 
-    std::string
+    [[nodiscard]] std::string
     port() const;
 
     std::expected<TestWsConnection, util::requests::RequestError>

@@ -230,7 +230,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: False
 - **Type**: string
 - **Default value**: None
-- **Constraints**: None
+- **Constraints**: The value must be a valid IP address.
 - **Description**: The list of IP addresses to whitelist for DOS protection.
 
 ### dos_guard.max_fetches
@@ -342,7 +342,7 @@ This document provides a list of all available Clio configuration properties in 
 - **Required**: True
 - **Type**: string
 - **Default value**: None
-- **Constraints**: None
+- **Constraints**: The value must be a valid IP address.
 - **Description**: List of proxy ip addresses. When Clio receives a request from proxy it will use `Forwarded` value (if any) as client ip. When this option is used together with `server.proxy.tokens` Clio will identify proxy by ip or by token.
 
 ### server.proxy.tokens.[]
@@ -560,6 +560,14 @@ Documentation can be found at: <https://github.com/gabime/spdlog/wiki/Custom-for
 - **Default value**: `25`
 - **Constraints**: The minimum value is `1`. The maximum value is `4294967295`.
 - **Description**: The maximum number of log files in the directory.
+
+### log.rotate
+
+- **Required**: True
+- **Type**: boolean
+- **Default value**: `True`
+- **Constraints**: None
+- **Description**: Enables or disables log file rotation. When disabled, a single log file is used without size-based rotation. Useful when rotation is managed externally (e.g., via logrotate).
 
 ### log.tag_style
 

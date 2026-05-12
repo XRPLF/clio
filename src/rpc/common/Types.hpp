@@ -157,7 +157,7 @@ struct AccountCursor {
      *
      * @return The string representation of the cursor
      */
-    std::string
+    [[nodiscard]] std::string
     toString() const
     {
         return ripple::strHex(index) + "," + std::to_string(hint);
@@ -168,7 +168,7 @@ struct AccountCursor {
      *
      * @return true if the cursor is non-zero, false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isNonZero() const
     {
         return index.isNonZero() || hint != 0;

@@ -150,7 +150,7 @@ public:
      * @param yield yield context
      * @return WebSocket connection or error
      */
-    std::expected<WsConnectionPtr, RequestError>
+    [[nodiscard]] std::expected<WsConnectionPtr, RequestError>
     sslConnect(boost::asio::yield_context yield) const;
 
     /**
@@ -159,7 +159,7 @@ public:
      * @param yield yield context
      * @return WebSocket connection or error
      */
-    std::expected<WsConnectionPtr, RequestError>
+    [[nodiscard]] std::expected<WsConnectionPtr, RequestError>
     plainConnect(boost::asio::yield_context yield) const;
 
     /**
@@ -168,7 +168,7 @@ public:
      * @param yield yield context
      * @return WebSocket connection or error
      */
-    std::expected<WsConnectionPtr, RequestError>
+    [[nodiscard]] std::expected<WsConnectionPtr, RequestError>
     connect(boost::asio::yield_context yield) const;
 
     static constexpr std::chrono::seconds kDEFAULT_TIMEOUT{

@@ -257,10 +257,10 @@ private:
             }
 
             boost::json::array warnings = std::move(result.warnings);
-            warnings.emplace_back(rpc::makeWarning(rpc::WarnRpcClio));
+            warnings.emplace_back(rpc::makeWarning(rpc::WarningCode::WarnRpcClio));
 
             if (etl_->lastCloseAgeSeconds() >= 60)
-                warnings.emplace_back(rpc::makeWarning(rpc::WarnRpcOutdated));
+                warnings.emplace_back(rpc::makeWarning(rpc::WarningCode::WarnRpcOutdated));
 
             response["warnings"] = warnings;
             connection->send(boost::json::serialize(response));
@@ -277,7 +277,7 @@ private:
         }
     }
 
-    bool
+    [[nodiscard]] bool
     shouldReplaceParams(boost::json::object const& req) const
     {
         auto const hasParams = req.contains(JS(params));

@@ -247,7 +247,7 @@ TEST_F(NgRpcServerHandlerTest, DosguardAddsLoadWarning)
         EXPECT_EQ(responseJson.at("warning").as_string(), "load");
         EXPECT_EQ(
             responseJson.at("warnings").as_array().at(0).as_object().at("id").as_int64(),
-            rpc::WarnRpcRateLimit
+            static_cast<int64_t>(rpc::WarningCode::WarnRpcRateLimit)
         );
     });
 }
@@ -351,7 +351,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_BuildResponseFailed)
         ASSERT_EQ(jsonResponse.at("warnings").as_array().size(), 1);
         EXPECT_EQ(
             jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(),
-            rpc::WarnRpcClio
+            static_cast<int64_t>(rpc::WarningCode::WarnRpcClio)
         );
     });
 }
@@ -420,7 +420,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest)
         ASSERT_EQ(jsonResponse.at("warnings").as_array().size(), 1) << jsonResponse;
         EXPECT_EQ(
             jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(),
-            rpc::WarnRpcClio
+            static_cast<int64_t>(rpc::WarningCode::WarnRpcClio)
         );
     });
 }
@@ -464,8 +464,8 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_OutdatedWarning)
         );
 
         EXPECT_EQ(warningCodes.size(), 2);
-        EXPECT_TRUE(warningCodes.contains(rpc::WarnRpcClio));
-        EXPECT_TRUE(warningCodes.contains(rpc::WarnRpcOutdated));
+        EXPECT_TRUE(warningCodes.contains(static_cast<int64_t>(rpc::WarningCode::WarnRpcClio)));
+        EXPECT_TRUE(warningCodes.contains(static_cast<int64_t>(rpc::WarningCode::WarnRpcOutdated)));
     });
 }
 
@@ -508,7 +508,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_Forwarded)
         ASSERT_EQ(jsonResponse.at("warnings").as_array().size(), 1) << jsonResponse;
         EXPECT_EQ(
             jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(),
-            rpc::WarnRpcClio
+            static_cast<int64_t>(rpc::WarningCode::WarnRpcClio)
         );
     });
 }
@@ -551,7 +551,7 @@ TEST_F(NgRpcServerHandlerTest, HandleRequest_Successful_HttpRequest_HasError)
         ASSERT_EQ(jsonResponse.at("warnings").as_array().size(), 1) << jsonResponse;
         EXPECT_EQ(
             jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(),
-            rpc::WarnRpcClio
+            static_cast<int64_t>(rpc::WarningCode::WarnRpcClio)
         );
     });
 }
@@ -617,7 +617,7 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest)
         ASSERT_EQ(jsonResponse.at("warnings").as_array().size(), 1) << jsonResponse;
         EXPECT_EQ(
             jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(),
-            rpc::WarnRpcClio
+            static_cast<int64_t>(rpc::WarningCode::WarnRpcClio)
         );
     });
 }
@@ -664,7 +664,7 @@ TEST_F(NgRpcServerHandlerWsTest, HandleRequest_Successful_WsRequest_HasError)
         ASSERT_EQ(jsonResponse.at("warnings").as_array().size(), 1) << jsonResponse;
         EXPECT_EQ(
             jsonResponse.at("warnings").as_array().at(0).as_object().at("id").as_int64(),
-            rpc::WarnRpcClio
+            static_cast<int64_t>(rpc::WarningCode::WarnRpcClio)
         );
     });
 }

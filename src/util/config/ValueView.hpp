@@ -142,7 +142,7 @@ public:
      * @return The value cast to the specified type T
      */
     template <typename T>
-    T
+    [[nodiscard]] T
     getValueImpl() const
     {
         ASSERT(configVal_.get().hasValue(), "ConfigValue does not have a value");
@@ -173,7 +173,7 @@ public:
      * @return Returns the value as an optional<T> value exists, or std::nullopt if not
      */
     template <typename T>
-    std::optional<T>
+    [[nodiscard]] std::optional<T>
     asOptional() const
     {
         ASSERT(isOptional(), "A Config Value is not an optional value");

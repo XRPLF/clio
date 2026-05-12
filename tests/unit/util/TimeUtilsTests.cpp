@@ -11,6 +11,7 @@ TEST(TimeUtilTests, SystemTpFromUTCStrSuccess)
 {
     auto const tp = util::systemTpFromUtcStr("2024-01-01T10:50:40Z", "%Y-%m-%dT%H:%M:%SZ");
     ASSERT_TRUE(tp.has_value());
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     auto const time = std::chrono::system_clock::to_time_t(tp.value());
     std::tm timeStruct{};
     gmtime_r(&time, &timeStruct);
@@ -55,6 +56,7 @@ TEST(TimeUtilTests, StringToTimePointToString)
     auto timePoint = util::systemTpFromUtcStr(originalStr, isoFormat);
     ASSERT_TRUE(timePoint.has_value());
 
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     std::string const convertedStr = util::systemTpToUtcStr(*timePoint, isoFormat);
     EXPECT_EQ(originalStr, convertedStr);
 
@@ -63,10 +65,11 @@ TEST(TimeUtilTests, StringToTimePointToString)
     auto timePoint2 = util::systemTpFromUtcStr(originalCustomStr, customFormat);
     ASSERT_TRUE(timePoint2.has_value());
 
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     std::string const convertedCustomStr = util::systemTpToUtcStr(*timePoint2, customFormat);
     EXPECT_EQ(originalCustomStr, convertedCustomStr);
 
-    EXPECT_EQ(*timePoint, *timePoint2);
+    EXPECT_EQ(*timePoint, *timePoint2);  // NOLINT(bugprone-unchecked-optional-access)
 }
 
 TEST(TimeUtilTests, SystemTpFromLedgerCloseTime)

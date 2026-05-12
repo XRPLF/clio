@@ -81,7 +81,9 @@ struct RPCEngineTest : util::prometheus::WithPrometheus,
 
     util::TagDecoratorFactory tagFactory{cfg};
     WorkQueue queue = WorkQueue::makeWorkQueue(cfg);
-    web::dosguard::WhitelistHandler whitelistHandler{cfg};
+    web::dosguard::WhitelistHandler whitelistHandler{
+        web::dosguard::WhitelistHandler::create(cfg).value()
+    };
     web::dosguard::Weights weights{1, {}};
     web::dosguard::DOSGuard dosGuard{cfg, whitelistHandler, weights};
     std::shared_ptr<MockHandlerProvider> handlerProvider = std::make_shared<MockHandlerProvider>();

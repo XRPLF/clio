@@ -566,9 +566,9 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
 
-        EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), 20);
+        EXPECT_EQ(output.result->as_object().at("channels").as_array().size(), 20);
         EXPECT_THAT(
-            boost::json::value_to<std::string>((*output.result).as_object().at("marker")),
+            boost::json::value_to<std::string>(output.result->as_object().at("marker")),
             EndsWith(",0")
         );
     });
@@ -664,7 +664,7 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), 20);
+        EXPECT_EQ(output.result->as_object().at("channels").as_array().size(), 20);
     });
 }
 
@@ -701,7 +701,7 @@ TEST_F(RPCAccountChannelsHandlerTest, EmptyChannel)
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), 0);
+        EXPECT_EQ(output.result->as_object().at("channels").as_array().size(), 0);
     });
 }
 
@@ -859,10 +859,10 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
-            boost::json::value_to<std::string>((*output.result).as_object().at("marker")),
+            boost::json::value_to<std::string>(output.result->as_object().at("marker")),
             fmt::format("{},{}", kINDEX1, kNEXT_PAGE)
         );
-        EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), 15);
+        EXPECT_EQ(output.result->as_object().at("channels").as_array().size(), 15);
     });
 }
 
@@ -920,10 +920,10 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerInput)
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_TRUE((*output.result).as_object().if_contains("marker") == nullptr);
+        EXPECT_TRUE(output.result->as_object().if_contains("marker") == nullptr);
         // the first item is the marker itself, so the result will have limit-1
         // items
-        EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), kLIMIT - 1);
+        EXPECT_EQ(output.result->as_object().at("channels").as_array().size(), kLIMIT - 1);
     });
 }
 
@@ -972,9 +972,9 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitLessThanMin)
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), 2);
+        EXPECT_EQ(output.result->as_object().at("channels").as_array().size(), 2);
         EXPECT_EQ(
-            (*output.result).as_object().at("limit").as_uint64(), AccountChannelsHandler::kLIMIT_MIN
+            output.result->as_object().at("limit").as_uint64(), AccountChannelsHandler::kLIMIT_MIN
         );
     });
 }
@@ -1024,9 +1024,9 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitMoreThanMax)
         auto handler = AnyHandler{AccountChannelsHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), 2);
+        EXPECT_EQ(output.result->as_object().at("channels").as_array().size(), 2);
         EXPECT_EQ(
-            (*output.result).as_object().at("limit").as_uint64(), AccountChannelsHandler::kLIMIT_MAX
+            output.result->as_object().at("limit").as_uint64(), AccountChannelsHandler::kLIMIT_MAX
         );
     });
 }

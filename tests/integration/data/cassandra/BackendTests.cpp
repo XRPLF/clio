@@ -123,7 +123,7 @@ public:
         // drop the keyspace for next test
         Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
-        handle.execute("DROP KEYSPACE " + TestGlobals::instance().backendKeyspace);
+        EXPECT_TRUE(handle.execute("DROP KEYSPACE " + TestGlobals::instance().backendKeyspace));
     }
 };
 

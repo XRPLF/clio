@@ -111,7 +111,7 @@ TEST_F(BackendCassandraBaseTest, ConnectionFailTimeout)
     Settings settings;
     settings.connectionTimeout = std::chrono::milliseconds{30};
     settings.connectionInfo =
-        Settings::ContactPoints{.contactPoints = "127.0.0.2", .port = std::nullopt};
+        Settings::ContactPoints{.contactPoints = "128.0.2.1", .port = std::nullopt};
 
     Handle const handle{settings};
     auto const f = handle.asyncConnect();

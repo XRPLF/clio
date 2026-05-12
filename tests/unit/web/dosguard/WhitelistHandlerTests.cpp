@@ -11,6 +11,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <expected>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -62,7 +63,9 @@ TEST_F(WhitelistHandlerTest, TestWhiteListIPV4)
     ClioConfigDefinition const cfg{
         getParseWhitelistHandlerConfig(boost::json::parse(kJSON_DATA_IP_V4))
     };
-    WhitelistHandler const whitelistHandler{cfg, mockResolver};
+    auto const result = WhitelistHandler::create(cfg, mockResolver);
+    ASSERT_TRUE(result.has_value());
+    auto const& whitelistHandler = *result;
 
     EXPECT_TRUE(whitelistHandler.isWhiteListed("192.168.1.10"));
     EXPECT_FALSE(whitelistHandler.isWhiteListed("193.168.0.123"));
@@ -86,7 +89,9 @@ TEST_F(WhitelistHandlerTest, TestWhiteListResolvesHostname)
     ClioConfigDefinition const cfg{
         getParseWhitelistHandlerConfig(boost::json::parse(kJSON_DATA_IP_V4))
     };
-    WhitelistHandler const whitelistHandler{cfg};
+    auto const result = WhitelistHandler::create(cfg);
+    ASSERT_TRUE(result.has_value());
+    auto const& whitelistHandler = *result;
 
     EXPECT_TRUE(whitelistHandler.isWhiteListed("127.0.0.1"));
     EXPECT_FALSE(whitelistHandler.isWhiteListed("193.168.0.123"));
@@ -110,10 +115,69 @@ TEST_F(WhitelistHandlerTest, TestWhiteListIPV6)
     ClioConfigDefinition const cfg{
         getParseWhitelistHandlerConfig(boost::json::parse(kJSON_DATA_IP_V6))
     };
-    WhitelistHandler const whitelistHandler{cfg};
+    auto const result = WhitelistHandler::create(cfg);
+    ASSERT_TRUE(result.has_value());
+    auto const& whitelistHandler = *result;
 
     EXPECT_TRUE(whitelistHandler.isWhiteListed("2002:1dd8:85a7:0000:0000:8a6e:0000:1111"));
     EXPECT_FALSE(whitelistHandler.isWhiteListed("2002:1dd8:85a7:1101:0000:8a6e:0000:1111"));
     EXPECT_TRUE(whitelistHandler.isWhiteListed("2001:0db8:85a3:0000:0000:8a2e:0000:0000"));
     EXPECT_TRUE(whitelistHandler.isWhiteListed("2001:0db8:85a3:0000:1111:8a2e:0370:7334"));
+}
+
+struct WhitelistTest : public virtual ::testing::Test {};
+
+TEST_F(WhitelistTest, AddValidIPV4)
+{
+    Whitelist whitelist;
+    EXPECT_TRUE(whitelist.add("1.2.3.4").has_value());
+}
+
+TEST_F(WhitelistTest, AddInvalidIP)
+{
+    Whitelist whitelist;
+    auto const result = whitelist.add("not-an-ip");
+    ASSERT_FALSE(result.has_value());
+    EXPECT_THAT(result.error(), testing::HasSubstr("not-an-ip"));
+}
+
+TEST_F(WhitelistTest, AddInvalidNetwork)
+{
+    Whitelist whitelist;
+    auto const result = whitelist.add("not-a-net/24");
+    ASSERT_FALSE(result.has_value());
+    EXPECT_THAT(result.error(), testing::HasSubstr("not-a-net/24"));
+}
+
+TEST_F(WhitelistTest, IsWhiteListedWithInvalidIP)
+{
+    Whitelist const whitelist;
+    EXPECT_FALSE(whitelist.isWhiteListed("not-an-ip"));
+}
+
+TEST_F(WhitelistHandlerTest, CreateWithInvalidIPFails)
+{
+    struct MockResolver {
+        MOCK_METHOD(std::vector<std::string>, resolve, (std::string_view, std::string_view));
+        MOCK_METHOD(std::vector<std::string>, resolve, (std::string_view));
+    };
+
+    static constexpr auto kJSON = R"JSON(
+        {
+            "dos_guard": {
+                "whitelist": ["not-an-ip"]
+            }
+        }
+    )JSON";
+
+    testing::StrictMock<MockResolver> mockResolver;
+    EXPECT_CALL(mockResolver, resolve(testing::_))
+        .WillOnce([](auto hostname) -> std::vector<std::string> {
+            return {std::string{hostname}};
+        });
+
+    ClioConfigDefinition const cfg{getParseWhitelistHandlerConfig(boost::json::parse(kJSON))};
+    auto const result = WhitelistHandler::create(cfg, mockResolver);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_THAT(result.error(), testing::HasSubstr("not-an-ip"));
 }

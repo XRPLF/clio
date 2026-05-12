@@ -83,7 +83,7 @@ public:
      *
      * @return The string representation of the tag
      */
-    std::string
+    [[nodiscard]] std::string
     toString() const
     {
         std::ostringstream oss;
@@ -132,7 +132,7 @@ public:
         os << "[";
 
         if (parent_.has_value())
-            (*parent_).get().decorate(os);
+            parent_->get().decorate(os);
 
         os << tag_ << "] ";
     }
@@ -217,7 +217,7 @@ public:
      *
      * @return An instance of the requested decorator
      */
-    std::unique_ptr<BaseTagDecorator>
+    [[nodiscard]] std::unique_ptr<BaseTagDecorator>
     make() const;
 
     /**
@@ -226,7 +226,7 @@ public:
      * @param parent The parent tag decorator to use
      * @return A new instance of the tag decorator factory
      */
-    TagDecoratorFactory
+    [[nodiscard]] TagDecoratorFactory
     with(ParentType parent) const noexcept;
 };
 
@@ -260,7 +260,7 @@ public:
      *
      * @return Reference to the tag decorator
      */
-    BaseTagDecorator const&
+    [[nodiscard]] BaseTagDecorator const&
     tag() const
     {
         return *tagDecorator_;

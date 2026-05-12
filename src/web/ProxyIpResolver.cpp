@@ -8,6 +8,7 @@
 
 #include <boost/beast/http/field.hpp>
 
+#include <algorithm>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -49,20 +50,20 @@ ProxyIpResolver::fromConfig(util::config::ClioConfigDefinition const& config)
     return ProxyIpResolver{std::move(ips), std::move(tokens)};
 }
 
-std::string
+std::optional<std::string>
 ProxyIpResolver::resolveClientIp(std::string const& connectionIp, HttpHeaders const& headers) const
 {
     if (proxyIps_.contains(connectionIp)) {
-        return extractClientIp(headers).value_or(connectionIp);
+        return extractClientIp(headers);
     }
 
     if (auto it = headers.find(kPROXY_TOKEN_HEADER); it != headers.end()) {
         auto const tokenHash = util::sha256sum(it->value());
         if (proxyTokens_.contains(tokenHash)) {
-            return extractClientIp(headers).value_or(connectionIp);
+            return extractClientIp(headers);
         }
     }
-    return connectionIp;
+    return std::nullopt;
 }
 
 std::optional<std::string>
@@ -78,14 +79,17 @@ ProxyIpResolver::extractClientIp(HttpHeaders const& headers)
     auto const headerValue = util::toLower(it->value());
 
     static constexpr std::string_view kFOR_PREFIX = "for=";
-    auto const startPos = headerValue.find(kFOR_PREFIX);
+    auto const startPos = headerValue.rfind(kFOR_PREFIX);
     if (startPos == std::string::npos) {
         return std::nullopt;
     }
     auto value = it->value().substr(startPos + kFOR_PREFIX.size());
 
-    static constexpr char kDELIMITER = ';';
-    auto const endPos = value.find(kDELIMITER);
+    static constexpr char kSECTION_DELIMITER = ';';
+    static constexpr char kCHAIN_DELIMITER = ',';
+    auto const sectionEnd = value.find(kSECTION_DELIMITER);
+    auto const chainEnd = value.find(kCHAIN_DELIMITER);
+    auto const endPos = std::min(sectionEnd, chainEnd);
     auto const ip = value.substr(0, endPos);
 
     static constexpr auto kMIN_IP_LENGTH = 7;  // minimum 3 dots + 4 digits

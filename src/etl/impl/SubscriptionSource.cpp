@@ -155,7 +155,7 @@ SubscriptionSource::subscribe()
             if (auto const writeErrorOpt =
                     wsConnection_->write(subscribeCommand, yield, wsTimeout_);
                 writeErrorOpt) {
-                handleError(writeErrorOpt.value(), yield);
+                handleError(*writeErrorOpt, yield);
                 return;
             }
 
@@ -172,8 +172,8 @@ SubscriptionSource::subscribe()
                     return;
                 }
 
-                if (auto const handleErrorOpt = handleMessage(message.value()); handleErrorOpt) {
-                    handleError(handleErrorOpt.value(), yield);
+                if (auto const handleErrorOpt = handleMessage(*message); handleErrorOpt) {
+                    handleError(*handleErrorOpt, yield);
                     return;
                 }
             }
@@ -296,8 +296,8 @@ SubscriptionSource::logError(util::requests::RequestError const& error) const
     auto const& errorCodeOpt = error.errorCode();
 
     if (not errorCodeOpt or
-        (errorCodeOpt.value() != boost::asio::error::operation_aborted &&
-         errorCodeOpt.value() != boost::asio::error::connection_refused)) {
+        (*errorCodeOpt != boost::asio::error::operation_aborted &&
+         *errorCodeOpt != boost::asio::error::connection_refused)) {
         LOG(log_.error()) << error.message();
     } else {
         LOG(log_.warn()) << error.message();

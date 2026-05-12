@@ -47,7 +47,7 @@ public:
      * @param ctx The context of the request
      * @return The result of the operation
      */
-    Result
+    [[nodiscard]] Result
     process(Context const& ctx) const;
 
 private:

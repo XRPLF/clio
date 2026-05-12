@@ -171,14 +171,14 @@ public:
      */
     WriterState(std::shared_ptr<SystemState> state, data::LedgerCacheInterface const& cache);
 
-    bool
+    [[nodiscard]] bool
     isReadOnly() const override;
 
     /**
      * @brief Check if the ETL process is currently writing to the database.
      * @return true if the process is writing, false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isWriting() const override;
 
     /**
@@ -213,11 +213,11 @@ public:
      *
      * @return true if the cluster has switched to fallback mode, false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isFallback() const override;
 
     /** @copydoc WriterStateInterface::isFallbackRecovery */
-    bool
+    [[nodiscard]] bool
     isFallbackRecovery() const override;
 
     /** @copydoc WriterStateInterface::setFallbackRecovery */
@@ -225,11 +225,11 @@ public:
     setFallbackRecovery(bool newValue) override;
 
     /** @copydoc WriterStateInterface::isEtlStarted */
-    bool
+    [[nodiscard]] bool
     isEtlStarted() const override;
 
     /** @copydoc WriterStateInterface::isCacheFull */
-    bool
+    [[nodiscard]] bool
     isCacheFull() const override;
 
     /**
@@ -239,7 +239,7 @@ public:
      *
      * @return A unique pointer to the cloned writer state.
      */
-    std::unique_ptr<WriterStateInterface>
+    [[nodiscard]] std::unique_ptr<WriterStateInterface>
     clone() const override;
 };
 

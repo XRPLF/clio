@@ -59,7 +59,7 @@ public:
      *
      * @return The method of the request.
      */
-    Method
+    [[nodiscard]] Method
     method() const;
 
     /**
@@ -67,7 +67,7 @@ public:
      *
      * @return true if the request is an HTTP request, false otherwise.
      */
-    bool
+    [[nodiscard]] bool
     isHttp() const;
 
     /**
@@ -75,7 +75,7 @@ public:
      *
      * @return The HTTP request or std::nullopt if the request is a WebSocket request.
      */
-    std::optional<
+    [[nodiscard]] std::optional<
         std::reference_wrapper<boost::beast::http::request<boost::beast::http::string_body> const>>
     asHttpRequest() const;
 
@@ -85,7 +85,7 @@ public:
      *
      * @return The message of the request.
      */
-    std::string_view
+    [[nodiscard]] std::string_view
     message() const;
 
     /**
@@ -93,7 +93,7 @@ public:
      *
      * @return The target of the request or std::nullopt if the request is a WebSocket request.
      */
-    std::optional<std::string_view>
+    [[nodiscard]] std::optional<std::string_view>
     target() const;
 
     /**
@@ -101,7 +101,7 @@ public:
      *
      * @return The headers of the request.
      */
-    HttpHeaders const&
+    [[nodiscard]] HttpHeaders const&
     httpHeaders() const;
 
     /**
@@ -110,7 +110,7 @@ public:
      * @param headerName The name of the header.
      * @return The value of the header or std::nullopt if the header does not exist.
      */
-    std::optional<std::string_view>
+    [[nodiscard]] std::optional<std::string_view>
     headerValue(boost::beast::http::field headerName) const;
 
     /**
@@ -119,7 +119,7 @@ public:
      * @param headerName The name of the header.
      * @return The value of the header or std::nullopt if the header does not exist.
      */
-    std::optional<std::string_view>
+    [[nodiscard]] std::optional<std::string_view>
     headerValue(std::string const& headerName) const;
 
 private:
@@ -130,7 +130,7 @@ private:
      *
      * @return The HTTP request.
      */
-    HttpRequest const&
+    [[nodiscard]] HttpRequest const&
     httpRequest() const;
 };
 

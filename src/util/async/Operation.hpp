@@ -62,7 +62,7 @@ struct BasicScheduledOperation : util::MoveTracker {
         void
         emplace(auto&& op)
         {
-            std::lock_guard const lock{m_};
+            std::scoped_lock const lock{m_};
             op_.emplace(std::forward<decltype(op)>(op));
             ready_.notify_all();
         }
@@ -72,7 +72,7 @@ struct BasicScheduledOperation : util::MoveTracker {
         {
             std::unique_lock lock{m_};
             ready_.wait(lock, [this] { return op_.has_value(); });
-            return op_.value();
+            return *op_;  // NOLINT(bugprone-unchecked-optional-access)
         }
     };
 

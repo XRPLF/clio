@@ -333,7 +333,7 @@ TEST_F(RPCHelpersTest, EncodeCTID)
 {
     auto const ctid = encodeCTID(0x1234, 0x67, 0x89);
     ASSERT_TRUE(ctid);
-    EXPECT_EQ(*ctid, "C000123400670089");
+    EXPECT_EQ(*ctid, "C000123400670089");  // NOLINT(bugprone-unchecked-optional-access)
     EXPECT_FALSE(encodeCTID(0x1FFFFFFF, 0x67, 0x89));
 }
 
@@ -341,6 +341,7 @@ TEST_F(RPCHelpersTest, DecodeCTIDString)
 {
     auto const ctid = decodeCTID("C000123400670089");
     ASSERT_TRUE(ctid);
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(*ctid, std::make_tuple(0x1234, 0x67, 0x89));
     EXPECT_FALSE(decodeCTID("F000123400670089"));
     EXPECT_FALSE(decodeCTID("F0001234006700"));
@@ -352,6 +353,7 @@ TEST_F(RPCHelpersTest, DecodeCTIDInt)
     uint64_t ctidStr = 0xC000123400670089;
     auto const ctid = decodeCTID(ctidStr);
     ASSERT_TRUE(ctid);
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(*ctid, std::make_tuple(0x1234, 0x67, 0x89));
     ctidStr = 0xF000123400670089;
     EXPECT_FALSE(decodeCTID(ctidStr));

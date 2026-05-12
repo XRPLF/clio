@@ -38,7 +38,7 @@ class ResponseExpirationCache {
          *
          * @return The response
          */
-        std::optional<boost::json::object>
+        [[nodiscard]] std::optional<boost::json::object>
         get() const;
 
         /**
@@ -46,7 +46,7 @@ class ResponseExpirationCache {
          *
          * @return The last time the cache was updated
          */
-        std::chrono::steady_clock::time_point
+        [[nodiscard]] std::chrono::steady_clock::time_point
         lastUpdated() const;
 
         /**

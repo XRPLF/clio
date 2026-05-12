@@ -11,7 +11,7 @@ namespace {
 struct FakeStopToken {
     bool stopRequested = false;
 
-    bool
+    [[nodiscard]] bool
     isStopRequested() const
     {
         return stopRequested;

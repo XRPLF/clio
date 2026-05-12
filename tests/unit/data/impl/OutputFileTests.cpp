@@ -18,7 +18,7 @@ using namespace data::impl;
 struct OutputFileTest : ::testing::Test {
     TmpFile tmpFile = TmpFile::empty();
 
-    std::string
+    [[nodiscard]] std::string
     readFileContents() const
     {
         std::ifstream ifs(tmpFile.path, std::ios::binary);

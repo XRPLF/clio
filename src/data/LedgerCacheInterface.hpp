@@ -55,7 +55,7 @@ public:
      * @param seq The sequence to fetch for
      * @return If found in cache, will return the cached Blob; otherwise nullopt is returned
      */
-    virtual std::optional<Blob>
+    [[nodiscard]] virtual std::optional<Blob>
     get(ripple::uint256 const& key, uint32_t seq) const = 0;
 
     /**
@@ -65,7 +65,7 @@ public:
      * @param seq The sequence to fetch for
      * @return If found in deleted cache, will return the cached Blob; otherwise nullopt is returned
      */
-    virtual std::optional<Blob>
+    [[nodiscard]] virtual std::optional<Blob>
     getDeleted(ripple::uint256 const& key, uint32_t seq) const = 0;
 
     /**
@@ -77,7 +77,7 @@ public:
      * @param seq The sequence to fetch for
      * @return If found in cache, will return the cached successor; otherwise nullopt is returned
      */
-    virtual std::optional<LedgerObject>
+    [[nodiscard]] virtual std::optional<LedgerObject>
     getSuccessor(ripple::uint256 const& key, uint32_t seq) const = 0;
 
     /**
@@ -89,7 +89,7 @@ public:
      * @param seq The sequence to fetch for
      * @return If found in cache, will return the cached predcessor; otherwise nullopt is returned
      */
-    virtual std::optional<LedgerObject>
+    [[nodiscard]] virtual std::optional<LedgerObject>
     getPredecessor(ripple::uint256 const& key, uint32_t seq) const = 0;
 
     /**
@@ -101,7 +101,7 @@ public:
     /**
      * @return true if the cache is disabled; false otherwise
      */
-    virtual bool
+    [[nodiscard]] virtual bool
     isDisabled() const = 0;
 
     /**
@@ -117,33 +117,33 @@ public:
     /**
      * @return The latest ledger sequence for which cache is available.
      */
-    virtual uint32_t
+    [[nodiscard]] virtual uint32_t
     latestLedgerSequence() const = 0;
 
     /**
      * @return true if the cache has all data for the most recent ledger; false otherwise
      */
-    virtual bool
+    [[nodiscard]] virtual bool
     isFull() const = 0;
 
     /**
      * @return The total size of the cache.
      */
-    virtual size_t
+    [[nodiscard]] virtual size_t
     size() const = 0;
 
     /**
      * @return A number representing the success rate of hitting an object in the cache versus
      * missing it.
      */
-    virtual float
+    [[nodiscard]] virtual float
     getObjectHitRate() const = 0;
 
     /**
      * @return A number representing the success rate of hitting a successor in the cache versus
      * missing it.
      */
-    virtual float
+    [[nodiscard]] virtual float
     getSuccessorHitRate() const = 0;
 
     /**

@@ -76,7 +76,7 @@ makeFieldChecker(std::string const& key, Checks&&... checks)
         (
             [&j, &key, &warnings, req = &checks]() {
                 if (auto res = req->check(j, key); res)
-                    warnings.push_back(std::move(res).value());
+                    warnings.push_back(*std::move(res));
             }(),
             ...);
         return warnings;

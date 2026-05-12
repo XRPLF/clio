@@ -41,7 +41,7 @@ public:
      * @return A vector of tuple, the first element is the migrator's name, the second element is
      * the status of the migrator
      */
-    std::vector<std::tuple<std::string, MigratorStatus>>
+    [[nodiscard]] std::vector<std::tuple<std::string, MigratorStatus>>
     allMigratorsStatusPairs() const override
     {
         return migrators_.getMigratorsStatus();
@@ -53,7 +53,7 @@ public:
      * @param name The name of the migrator
      * @return The status of the migrator
      */
-    MigratorStatus
+    [[nodiscard]] MigratorStatus
     getMigratorStatusByName(std::string const& name) const override
     {
         return migrators_.getMigratorStatus(name);
@@ -64,7 +64,7 @@ public:
      *
      * @return A vector of string, the names of all the migrators
      */
-    std::vector<std::string>
+    [[nodiscard]] std::vector<std::string>
     allMigratorsNames() const override
     {
         auto const names = migrators_.getMigratorNames();
@@ -77,7 +77,7 @@ public:
      * @param name The name of the migrator
      * @return The description of the migrator
      */
-    std::string
+    [[nodiscard]] std::string
     getMigratorDescriptionByName(std::string const& name) const override
     {
         return migrators_.getMigratorDescription(name);
@@ -88,7 +88,7 @@ public:
      *
      * @return True if server is blocked, false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isBlockingClio() const override
     {
         return std::ranges::any_of(migrators_.getMigratorNames(), [&](auto const& migrator) {

@@ -122,6 +122,7 @@ class HttpBase : public ConnectionBase {
     SendLambda sender_;
     std::shared_ptr<AdminVerificationStrategy> adminVerification_;
     std::shared_ptr<ProxyIpResolver> proxyIpResolver_;
+    bool isProxyConnection_ = false;
 
 protected:
     boost::beast::flat_buffer buffer_;
@@ -222,14 +223,26 @@ public:
         if (ec)
             return httpFail(ec, "read");
 
-        if (auto resolvedIp = proxyIpResolver_->resolveClientIp(clientIp_, req_);
-            resolvedIp != clientIp_) {
+        auto const updateClientIp = [&](std::string newIp) {
+            if (newIp == clientIp_)
+                return;
             LOG(log_.info()) << tag()
-                             << "Detected a forwarded request from proxy. Proxy ip: " << clientIp_
-                             << ". Resolved client ip: " << resolvedIp;
+                             << "Detected a forwarded request from proxy. Resolved client ip: "
+                             << newIp;
             dosGuard_.get().decrement(clientIp_);
-            clientIp_ = std::move(resolvedIp);
+            clientIp_ = std::move(newIp);
             dosGuard_.get().increment(clientIp_);
+        };
+
+        if (isProxyConnection_) {
+            if (auto resolvedIp = ProxyIpResolver::extractClientIp(req_); resolvedIp.has_value())
+                updateClientIp(std::move(*resolvedIp));
+        } else if (
+            auto resolvedIp = proxyIpResolver_->resolveClientIp(clientIp_, req_);
+            resolvedIp.has_value()
+        ) {
+            updateClientIp(std::move(*resolvedIp));
+            isProxyConnection_ = true;
         }
 
         if (req_.method() == http::verb::get and req_.target() == "/health")
@@ -310,11 +323,11 @@ public:
             jsonResponse["warning"] = "load";
             if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {
                 jsonResponse["warnings"].as_array().push_back(
-                    rpc::makeWarning(rpc::WarnRpcRateLimit)
+                    rpc::makeWarning(rpc::WarningCode::WarnRpcRateLimit)
                 );
             } else {
                 jsonResponse["warnings"] =
-                    boost::json::array{rpc::makeWarning(rpc::WarnRpcRateLimit)};
+                    boost::json::array{rpc::makeWarning(rpc::WarningCode::WarnRpcRateLimit)};
             }
 
             // Reserialize when we need to include this warning
@@ -348,7 +361,7 @@ public:
     }
 
 private:
-    http::response<http::string_body>
+    [[nodiscard]] http::response<http::string_body>
     httpResponse(http::status status, std::string contentType, std::string message) const
     {
         http::response<http::string_body> res{status, req_.version()};

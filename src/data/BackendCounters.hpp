@@ -130,7 +130,7 @@ public:
      *
      * @return The report
      */
-    boost::json::object
+    [[nodiscard]] boost::json::object
     report() const;
 
 private:
@@ -152,7 +152,7 @@ private:
         void
         registerError(std::uint64_t count);
 
-        boost::json::object
+        [[nodiscard]] boost::json::object
         report() const;
 
     private:

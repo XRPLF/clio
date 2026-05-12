@@ -65,7 +65,7 @@ public:
     /**
      * @return The final error message as a std::string
      */
-    std::string
+    [[nodiscard]] std::string
     message() const
     {
         return message_;
@@ -74,7 +74,7 @@ public:
     /**
      * @return The error code
      */
-    uint32_t
+    [[nodiscard]] uint32_t
     code() const
     {
         return code_;
@@ -83,7 +83,7 @@ public:
     /**
      * @return true if the wrapped error is considered a timeout; false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isTimeout() const
     {
         return code_ == CASS_ERROR_LIB_NO_HOSTS_AVAILABLE or
@@ -94,7 +94,7 @@ public:
     /**
      * @return true if the wrapped error is an invalid query; false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isInvalidQuery() const
     {
         return code_ == CASS_ERROR_SERVER_INVALID_QUERY;

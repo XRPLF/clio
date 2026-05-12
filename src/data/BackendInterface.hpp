@@ -42,7 +42,7 @@ public:
     /**
      * @return The error message as a C string
      */
-    char const*
+    [[nodiscard]] char const*
     what() const throw() override
     {
         return "Database read timed out. Please retry the request";

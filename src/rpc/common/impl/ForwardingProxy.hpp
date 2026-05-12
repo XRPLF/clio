@@ -36,7 +36,7 @@ public:
     {
     }
 
-    bool
+    [[nodiscard]] bool
     shouldForward(web::Context const& ctx) const
     {
         auto const& request = ctx.params;
@@ -85,7 +85,7 @@ public:
         return Result{std::move(res).value()};
     }
 
-    bool
+    [[nodiscard]] bool
     isProxied(std::string const& method) const
     {
         return RPCCenter::isForwarded(method);
@@ -106,13 +106,13 @@ private:
             counters_.get().rpcFailedToForward(method);
     }
 
-    bool
+    [[nodiscard]] bool
     validHandler(std::string const& method) const
     {
         return handlerProvider_->contains(method) || isProxied(method);
     }
 
-    bool
+    [[nodiscard]] bool
     isForcedForward(web::Context const& ctx) const
     {
         static constexpr auto kFORCE_FORWARD = "force_forward";

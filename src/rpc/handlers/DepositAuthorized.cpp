@@ -40,23 +40,31 @@ DepositAuthorizedHandler::process(
     ASSERT(range.has_value(), "DepositAuthorized ledger range must be available");
 
     auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+        *sharedPtrBackend_,
+        ctx.yield,
+        input.ledgerHash,
+        input.ledgerIndex,
+        range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
     if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
-    auto const& lgrInfo = expectedLgrInfo.value();
+    auto const& lgrInfo = *expectedLgrInfo;
     auto const sourceAccountID = accountFromStringStrict(input.sourceAccount);
     auto const destinationAccountID = accountFromStringStrict(input.destinationAccount);
 
     auto const srcAccountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*sourceAccountID).key, lgrInfo.seq, ctx.yield
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        ripple::keylet::account(*sourceAccountID).key,
+        lgrInfo.seq,
+        ctx.yield
     );
 
     if (!srcAccountLedgerObject)
         return Error{Status{RippledError::rpcSRC_ACT_NOT_FOUND, "source_accountNotFound"}};
 
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     auto const dstKeylet = ripple::keylet::account(*destinationAccountID).key;
     auto const dstAccountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(dstKeylet, lgrInfo.seq, ctx.yield);
@@ -75,20 +83,24 @@ DepositAuthorizedHandler::process(
 
     ripple::STArray authCreds;
     if (credentialsPresent) {
-        if (creds.value().empty()) {
+        if (creds->empty()) {
             return Error{
                 Status{RippledError::rpcINVALID_PARAMS, "credential array has no elements."}
             };
         }
-        if (creds.value().size() > ripple::maxCredentialsArraySize) {
+        if (creds->size() > ripple::maxCredentialsArraySize) {
             return Error{Status{RippledError::rpcINVALID_PARAMS, "credential array too long."}};
         }
         auto const credArray = credentials::fetchCredentialArray(
-            input.credentials, *sourceAccountID, *sharedPtrBackend_, lgrInfo, ctx.yield
+            input.credentials,
+            *sourceAccountID,  // NOLINT(bugprone-unchecked-optional-access)
+            *sharedPtrBackend_,
+            lgrInfo,
+            ctx.yield
         );
         if (!credArray.has_value())
             return Error{std::move(credArray).error()};
-        authCreds = std::move(credArray).value();
+        authCreds = *std::move(credArray);
     }
 
     // If the two accounts are the same OR if that flag is
@@ -104,8 +116,10 @@ DepositAuthorizedHandler::process(
                 "should already be checked above that there is no duplicate"
             );
 
+            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
             hashKey = ripple::keylet::depositPreauth(*destinationAccountID, sortedAuthCreds).key;
         } else {
+            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
             hashKey = ripple::keylet::depositPreauth(*destinationAccountID, *sourceAccountID).key;
         }
 
@@ -119,7 +133,7 @@ DepositAuthorizedHandler::process(
     response.ledgerIndex = lgrInfo.seq;
     response.depositAuthorized = depositAuthorized;
     if (credentialsPresent)
-        response.credentials = input.credentials.value();
+        response.credentials = *input.credentials;
 
     return response;
 }
