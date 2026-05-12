@@ -20,7 +20,7 @@ struct MigrationInspectorInterface {
      * @return A vector of tuple, the first element is the migrator's name, the second element is
      * the status of the
      */
-    virtual std::vector<std::tuple<std::string, MigratorStatus>>
+    [[nodiscard]] virtual std::vector<std::tuple<std::string, MigratorStatus>>
     allMigratorsStatusPairs() const = 0;
 
     /**
@@ -28,7 +28,7 @@ struct MigrationInspectorInterface {
      *
      * @return A vector of migrators' names
      */
-    virtual std::vector<std::string>
+    [[nodiscard]] virtual std::vector<std::string>
     allMigratorsNames() const = 0;
 
     /**
@@ -37,7 +37,7 @@ struct MigrationInspectorInterface {
      * @param name The migrator's name
      * @return The status of the migrator
      */
-    virtual MigratorStatus
+    [[nodiscard]] virtual MigratorStatus
     getMigratorStatusByName(std::string const& name) const = 0;
 
     /**
@@ -46,7 +46,7 @@ struct MigrationInspectorInterface {
      * @param name The migrator's name
      * @return The description of the migrator
      */
-    virtual std::string
+    [[nodiscard]] virtual std::string
     getMigratorDescriptionByName(std::string const& name) const = 0;
 
     /**
@@ -54,7 +54,7 @@ struct MigrationInspectorInterface {
      *
      * @return True if Clio server is blocked by migration, false otherwise
      */
-    virtual bool
+    [[nodiscard]] virtual bool
     isBlockingClio() const = 0;
 };
 

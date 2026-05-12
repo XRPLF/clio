@@ -108,7 +108,7 @@ struct Result : public ManagedObject<CassResult const> {
     hasRows() const;
 
     template <typename... RowTypes>
-    std::optional<std::tuple<RowTypes...>>
+    [[nodiscard]] std::optional<std::tuple<RowTypes...>>
     get() const
         requires(std::tuple_size<std::tuple<RowTypes...>>{} > 1)
     {
@@ -126,7 +126,7 @@ struct Result : public ManagedObject<CassResult const> {
     }
 
     template <typename RowType>
-    std::optional<RowType>
+    [[nodiscard]] std::optional<RowType>
     get() const
     {
         // row managed internally by cassandra driver, hence no ManagedObject.
@@ -153,7 +153,7 @@ public:
     hasMore() const;
 
     template <typename... RowTypes>
-    std::tuple<RowTypes...>
+    [[nodiscard]] std::tuple<RowTypes...>
     extractCurrentRow() const
     {
         // note: row is invalidated on each iteration.

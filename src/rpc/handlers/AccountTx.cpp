@@ -38,12 +38,14 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountTX's ledger range must be available");
 
-    auto [minIndex, maxIndex] = *range;
+    auto [minIndex, maxIndex] = *range;  // NOLINT(bugprone-unchecked-optional-access)
 
     if (input.ledgerIndexMin) {
         if (ctx.apiVersion > 1u &&
-            (input.ledgerIndexMin > range->maxSequence ||
-             input.ledgerIndexMin < range->minSequence)) {
+            (input.ledgerIndexMin >
+                 range->maxSequence ||  // NOLINT(bugprone-unchecked-optional-access)
+             input.ledgerIndexMin <
+                 range->minSequence)) {  // NOLINT(bugprone-unchecked-optional-access)
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMinOutOfRange"}};
         }
 
@@ -53,8 +55,10 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
 
     if (input.ledgerIndexMax) {
         if (ctx.apiVersion > 1u &&
-            (input.ledgerIndexMax > range->maxSequence ||
-             input.ledgerIndexMax < range->minSequence)) {
+            (input.ledgerIndexMax >
+                 range->maxSequence ||  // NOLINT(bugprone-unchecked-optional-access)
+             input.ledgerIndexMax <
+                 range->minSequence)) {  // NOLINT(bugprone-unchecked-optional-access)
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMaxOutOfRange"}};
         }
 
@@ -84,13 +88,13 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                 ctx.yield,
                 input.ledgerHash,
                 input.ledgerIndex,
-                range->maxSequence
+                range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
             );
 
             if (not expectedLgrInfo.has_value())
                 return Error{expectedLgrInfo.error()};
 
-            maxIndex = minIndex = expectedLgrInfo.value().seq;
+            maxIndex = minIndex = expectedLgrInfo->seq;
         }
     }
 
@@ -146,7 +150,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
 
             if (txn.contains(JS(TransactionType)) && input.transactionTypeInLowercase.has_value() &&
                 util::toLower(boost::json::value_to<std::string>(txn[JS(TransactionType)])) !=
-                    input.transactionTypeInLowercase.value())
+                    *input.transactionTypeInLowercase)
                 continue;
 
             if (!input.binary) {
@@ -166,7 +170,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
                     if (auto const& ctid =
                             rpc::encodeCTID(txnPlusMeta.ledgerSequence, txnIdx, networkID);
                         ctid)
-                        obj[txKey].as_object()[JS(ctid)] = ctid.value();
+                        obj[txKey].as_object()[JS(ctid)] = *ctid;
                 }
 
                 obj[txKey].as_object()[JS(date)] = txnPlusMeta.date;
@@ -201,7 +205,7 @@ AccountTxHandler::process(AccountTxHandler::Input const& input, Context const& c
     }
 
     response.limit = input.limit;
-    response.account = ripple::to_string(*accountID);
+    response.account = ripple::to_string(*accountID);  // NOLINT(bugprone-unchecked-optional-access)
     response.ledgerIndexMin = minIndex;
     response.ledgerIndexMax = maxIndex;
 

@@ -99,6 +99,9 @@ jobs:
         with:
           enable_ccache: ${{ inputs.download_ccache }}
 
+      - name: Print build environment
+        uses: XRPLF/actions/print-build-env@59dec886e4afb05a1724443af08baccbc045b574
+
       - name: Setup conan on macOS
         if: ${{ runner.os == 'macOS' }}
         run: ./.github/scripts/conan/init.sh

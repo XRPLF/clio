@@ -106,16 +106,23 @@ AccountMPTokenIssuancesHandler::process(
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountMPTokenIssuances' ledger range must be available");
     auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+        *sharedPtrBackend_,
+        ctx.yield,
+        input.ledgerHash,
+        input.ledgerIndex,
+        range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
     if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
-    auto const& lgrInfo = expectedLgrInfo.value();
+    auto const& lgrInfo = *expectedLgrInfo;
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        ripple::keylet::account(*accountID).key,
+        lgrInfo.seq,
+        ctx.yield
     );
 
     if (not accountLedgerObject.has_value())
@@ -132,7 +139,7 @@ AccountMPTokenIssuancesHandler::process(
 
     auto const expectedNext = traverseOwnedNodes(
         *sharedPtrBackend_,
-        *accountID,
+        *accountID,  // NOLINT(bugprone-unchecked-optional-access)
         lgrInfo.seq,
         input.limit,
         input.marker,
@@ -143,7 +150,7 @@ AccountMPTokenIssuancesHandler::process(
     if (not expectedNext.has_value())
         return Error{expectedNext.error()};
 
-    auto const nextMarker = expectedNext.value();
+    auto const nextMarker = *expectedNext;
 
     response.account = input.account;
     response.limit = input.limit;

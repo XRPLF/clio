@@ -31,6 +31,9 @@ jobs:
         with:
           enable_ccache: false
 
+      - name: Print build environment
+        uses: XRPLF/actions/print-build-env@59dec886e4afb05a1724443af08baccbc045b574
+
       - name: Create build directory
         run: mkdir build_docs
 

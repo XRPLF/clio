@@ -32,7 +32,7 @@ public:
      * @param ctx The context of the request
      * @return The result of the operation
      */
-    Result
+    [[nodiscard]] Result
     process(Input const& input, Context const& ctx) const;
 };
 

@@ -47,7 +47,7 @@ public:
      * @param ip IP address
      * @return true if the given IP is whitelisted; false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isWhiteListed(std::string_view ip) const;
 
 private:
@@ -115,7 +115,7 @@ public:
      * @param ip The IP to check
      * @return true if the given IP is whitelisted; false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isWhiteListed(std::string_view ip) const override
     {
         return whitelist_.isWhiteListed(ip);

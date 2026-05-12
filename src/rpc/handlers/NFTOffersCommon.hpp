@@ -105,7 +105,7 @@ protected:
      * @param yield The coroutine context
      * @return The result of the iteration
      */
-    Result
+    [[nodiscard]] Result
     iterateOfferDirectory(
         Input input,
         ripple::uint256 const& tokenID,

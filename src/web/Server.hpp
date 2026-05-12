@@ -338,7 +338,7 @@ private:
 
         if (!ec) {
             auto ctxRef = ctx_
-                ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_.value()}
+                ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{*ctx_}
                 : std::nullopt;
 
             std::make_shared<Detector<PlainSessionType, SslSessionType, HandlerType>>(

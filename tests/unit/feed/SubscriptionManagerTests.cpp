@@ -120,10 +120,10 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
             "book_changes": 2
         })JSON";
     web::SubscriptionContextPtr const session1 = std::make_shared<MockSession>();
-    MockSession* mockSession1 = dynamic_cast<MockSession*>(session1.get());
+    auto const* mockSession1 = dynamic_cast<MockSession const*>(session1.get());
 
     web::SubscriptionContextPtr session2 = std::make_shared<MockSession>();
-    MockSession* mockSession2 = dynamic_cast<MockSession*>(session2.get());
+    auto const* mockSession2 = dynamic_cast<MockSession const*>(session2.get());
     std::vector<web::SubscriptionContextInterface::OnDisconnectSlot> session2OnDisconnectSlots;
     ON_CALL(*mockSession2, onDisconnect).WillByDefault([&session2OnDisconnectSlots](auto slot) {
         session2OnDisconnectSlots.push_back(slot);

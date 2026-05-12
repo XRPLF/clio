@@ -61,7 +61,7 @@ struct HistogramTests : ::testing::Test {
     std::string labelsString = R"JSON({label1="value1",label2="value2"})JSON";
     HistogramInt histogram{"t", labelsString, {1, 2, 3}};
 
-    std::string
+    [[nodiscard]] std::string
     serialize() const
     {
         OStream stream{false};

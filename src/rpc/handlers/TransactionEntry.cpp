@@ -30,7 +30,11 @@ TransactionEntryHandler::process(
     ASSERT(range.has_value(), "TransactionEntry's ledger range must be available");
 
     auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+        *sharedPtrBackend_,
+        ctx.yield,
+        input.ledgerHash,
+        input.ledgerIndex,
+        range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
     if (not expectedLgrInfo.has_value())
@@ -39,7 +43,7 @@ TransactionEntryHandler::process(
     auto output = TransactionEntryHandler::Output{};
     output.apiVersion = ctx.apiVersion;
 
-    output.ledgerHeader = expectedLgrInfo.value();
+    output.ledgerHeader = *expectedLgrInfo;
     auto const dbRet =
         sharedPtrBackend_->fetchTransaction(ripple::uint256{input.txHash.c_str()}, ctx.yield);
     // Note: transaction_entry is meant to only search a specified ledger for
@@ -73,6 +77,8 @@ tag_invoke(
 )
 {
     auto const metaKey = output.apiVersion > 1u ? JS(meta) : JS(metadata);
+
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
     jv = {
         {JS(validated), output.validated},
         {metaKey, output.metadata},
@@ -80,8 +86,10 @@ tag_invoke(
         {JS(ledger_index), output.ledgerHeader->seq},
         {JS(ledger_hash), ripple::strHex(output.ledgerHeader->hash)},
     };
+    // NOLINTEND(bugprone-unchecked-optional-access)
 
     if (output.apiVersion > 1u) {
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         jv.as_object()[JS(close_time_iso)] = ripple::to_string_iso(output.ledgerHeader->closeTime);
         if (output.tx.contains(JS(hash))) {
             jv.as_object()[JS(hash)] = output.tx.at(JS(hash));

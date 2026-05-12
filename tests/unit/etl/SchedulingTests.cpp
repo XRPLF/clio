@@ -48,7 +48,7 @@ TEST_F(ForwardSchedulerTests, ExhaustsSchedulerIfMostRecentLedgerIsNewerThanRequ
         auto maybeTask = scheduler.next();
 
         EXPECT_TRUE(maybeTask.has_value());
-        EXPECT_EQ(maybeTask->seq, i);
+        EXPECT_EQ(maybeTask->seq, i);  // NOLINT(bugprone-unchecked-optional-access)
     }
 
     auto const empty = scheduler.next();
@@ -66,7 +66,7 @@ TEST_F(ForwardSchedulerTests, ReturnsNulloptIfMostRecentLedgerIsOlderThanRequest
         auto const maybeTask = scheduler.next();
 
         EXPECT_TRUE(maybeTask.has_value());
-        EXPECT_EQ(maybeTask->seq, i);
+        EXPECT_EQ(maybeTask->seq, i);  // NOLINT(bugprone-unchecked-optional-access)
     }
 
     for (auto i = 0u; i < 5u; ++i)
@@ -81,7 +81,7 @@ TEST(BackfillSchedulerTests, ExhaustsSchedulerUntilMinSeqReached)
         auto maybeTask = scheduler.next();
 
         EXPECT_TRUE(maybeTask.has_value());
-        EXPECT_EQ(maybeTask->seq, i);
+        EXPECT_EQ(maybeTask->seq, i);  // NOLINT(bugprone-unchecked-optional-access)
     }
 
     auto const empty = scheduler.next();
@@ -96,7 +96,7 @@ TEST(BackfillSchedulerTests, ExhaustsSchedulerUntilDefaultMinValueReached)
         auto const maybeTask = scheduler.next();
 
         EXPECT_TRUE(maybeTask.has_value());
-        EXPECT_EQ(maybeTask->seq, i);
+        EXPECT_EQ(maybeTask->seq, i);  // NOLINT(bugprone-unchecked-optional-access)
     }
 
     auto const empty = scheduler.next();
@@ -121,7 +121,7 @@ TEST(SchedulerChainTests, ExhaustsOneGenerator)
         auto const maybeTask = scheduler->next();
 
         EXPECT_TRUE(maybeTask.has_value());
-        EXPECT_EQ(maybeTask->seq, i);
+        EXPECT_EQ(maybeTask->seq, i);  // NOLINT(bugprone-unchecked-optional-access)
     }
 
     auto const empty = scheduler->next();
@@ -158,13 +158,13 @@ TEST(SchedulerChainTests, ExhaustsFirstSchedulerBeforeUsingSecond)
         auto const maybeTask = scheduler->next();
 
         EXPECT_TRUE(maybeTask.has_value());
-        EXPECT_EQ(maybeTask->seq, i);
+        EXPECT_EQ(maybeTask->seq, i);  // NOLINT(bugprone-unchecked-optional-access)
     }
     for (auto i = 10u; i > 0u; --i) {
         auto const maybeTask = scheduler->next();
 
         EXPECT_TRUE(maybeTask.has_value());
-        EXPECT_EQ(maybeTask->seq, i);
+        EXPECT_EQ(maybeTask->seq, i);  // NOLINT(bugprone-unchecked-optional-access)
     }
 
     auto const empty = scheduler->next();

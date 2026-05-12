@@ -35,13 +35,13 @@ public:
     /**
      * @return The error message
      */
-    std::string const&
+    [[nodiscard]] std::string const&
     message() const;
 
     /**
      * @return The error code, if any
      */
-    std::optional<boost::beast::error_code> const&
+    [[nodiscard]] std::optional<boost::beast::error_code> const&
     errorCode() const;
 };
 

@@ -83,12 +83,13 @@ TEST(ParseAuthorizeCredentialsTest, ValidCredentialsArray)
     ASSERT_TRUE(cred.isFieldPresent(ripple::sfIssuer));
     ASSERT_TRUE(cred.isFieldPresent(ripple::sfCredentialType));
 
-    auto const expectedIssuer = *ripple::parseBase58<ripple::AccountID>(
-        static_cast<std::string>(credential1[JS(issuer)].as_string())
-    );
+    auto const expectedIssuer =
+        *ripple::parseBase58<ripple::AccountID>(  // NOLINT(bugprone-unchecked-optional-access)
+            static_cast<std::string>(credential1[JS(issuer)].as_string())
+        );
     auto const expectedCredentialType =
-        ripple::strUnHex(static_cast<std::string>(credential1[JS(credential_type)].as_string()))
-            .value();
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        *ripple::strUnHex(static_cast<std::string>(credential1[JS(credential_type)].as_string()));
 
     EXPECT_EQ(cred.getAccountID(ripple::sfIssuer), expectedIssuer);
     EXPECT_EQ(cred.getFieldVL(ripple::sfCredentialType), expectedCredentialType);

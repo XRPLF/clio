@@ -41,12 +41,14 @@ TEST_F(MigrationInspectorBaseTest, AllStatus)
     EXPECT_EQ(status.size(), 2);
     EXPECT_TRUE(
         std::ranges::find(
-            status, std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::Migrated)
+            status,
+            std::make_tuple("SimpleTestMigrator", migration::MigratorStatus::Status::Migrated)
         ) != status.end()
     );
     EXPECT_TRUE(
         std::ranges::find(
-            status, std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)
+            status,
+            std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::Status::NotMigrated)
         ) != status.end()
     );
 }
@@ -78,14 +80,14 @@ TEST_F(MigrationInspectorBaseTest, getMigratorStatusByName)
         .WillOnce(testing::Return("Migrated"));
     EXPECT_EQ(
         migrationInspector_->getMigratorStatusByName("SimpleTestMigrator"),
-        migration::MigratorStatus::Migrated
+        migration::MigratorStatus::Status::Migrated
     );
 
     EXPECT_CALL(*backend_, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
         .WillOnce(testing::Return("NotMigrated"));
     EXPECT_EQ(
         migrationInspector_->getMigratorStatusByName("SimpleTestMigrator2"),
-        migration::MigratorStatus::NotMigrated
+        migration::MigratorStatus::Status::NotMigrated
     );
 }
 

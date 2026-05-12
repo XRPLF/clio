@@ -13,10 +13,10 @@ namespace data::cassandra::impl {
 struct Future : public ManagedObject<CassFuture> {
     /* implicit */ Future(CassFuture* ptr);
 
-    MaybeError
+    [[nodiscard]] MaybeError
     await() const;
 
-    ResultOrError
+    [[nodiscard]] ResultOrError
     get() const;
 };
 

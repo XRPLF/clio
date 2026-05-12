@@ -43,7 +43,7 @@ handleHttpRequest(
 )
 {
     ASSERT(request.target().has_value(), "Got not a HTTP request");
-    auto it = handlers.find(*request.target());
+    auto it = handlers.find(*request.target());  // NOLINT(bugprone-unchecked-optional-access)
     if (it == handlers.end()) {
         return Response{boost::beast::http::status::bad_request, "Bad target", request};
     }
@@ -282,7 +282,7 @@ ConnectionHandler::sequentRequestResponseLoop(
         auto maybeReturnValue =
             processRequest(connection, subscriptionContext, *expectedRequest, yield);
         if (maybeReturnValue.has_value())
-            return maybeReturnValue.value();
+            return *maybeReturnValue;
     }
 }
 
@@ -326,7 +326,7 @@ ConnectionHandler::parallelRequestResponseLoop(
                         processRequest(connection, subscriptionContext, request, innerYield);
                     if (maybeCloseConnectionGracefully.has_value()) {
                         stop = true;
-                        closeConnectionGracefully &= maybeCloseConnectionGracefully.value();
+                        closeConnectionGracefully &= *maybeCloseConnectionGracefully;
                     }
                 }
             );

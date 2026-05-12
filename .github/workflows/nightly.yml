@@ -172,12 +172,9 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Create an issue
-        uses: ./.github/actions/create-issue
-        env:
-          GH_TOKEN: ${{ github.token }}
+        uses: XRPLF/actions/create-issue@fbcc16eb7f20dc3199eaf1aed0d3523a5ba9008c
         with:
           title: "Nightly release failed 🌙"
-          body: >
-            Nightly release failed:
-
-            Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/
+          body: ""
+          labels: "bug"
+          assignees: "godexsoft,kuznetsss,mathbunnyru"

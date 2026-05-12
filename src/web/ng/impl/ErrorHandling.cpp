@@ -42,7 +42,7 @@ composeErrorImpl(
         if (not rawRequest.isHttp())
             appendFieldIfExist(JS(api_version));
 
-        e[JS(request)] = request.value();
+        e[JS(request)] = *request;
     }
 
     if (not rawRequest.isHttp()) {

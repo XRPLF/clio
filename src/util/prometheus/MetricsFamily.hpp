@@ -82,7 +82,7 @@ public:
      *
      * @return The name
      */
-    std::string const&
+    [[nodiscard]] std::string const&
     name() const;
 
     /**
@@ -90,7 +90,7 @@ public:
      *
      * @return The description
      */
-    MetricType
+    [[nodiscard]] MetricType
     type() const;
 
 private:

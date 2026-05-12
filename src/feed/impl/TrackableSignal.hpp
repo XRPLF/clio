@@ -106,7 +106,7 @@ public:
     /**
      * @brief Get the number of connections.
      */
-    std::size_t
+    [[nodiscard]] std::size_t
     count() const
     {
         return connections_.template lock<std::scoped_lock>()->size();

@@ -25,7 +25,7 @@ public:
      * @param key The key of configuration.
      * @return the value associated with key.
      */
-    virtual Value
+    [[nodiscard]] virtual Value
     getValue(std::string_view key) const = 0;
 
     /**
@@ -34,7 +34,7 @@ public:
      * @param key The key of the configuration array.
      * @return A vector of configuration values some of which could be nullopt
      */
-    virtual std::vector<std::optional<Value>>
+    [[nodiscard]] virtual std::vector<std::optional<Value>>
     getArray(std::string_view key) const = 0;
 
     /**
@@ -43,7 +43,7 @@ public:
      * @param key The key to search for.
      * @return true if key exists in configuration file, false otherwise.
      */
-    virtual bool
+    [[nodiscard]] virtual bool
     containsKey(std::string_view key) const = 0;
 
     /**
@@ -51,7 +51,7 @@ public:
      *
      * @return A vector of all keys in the configuration file.
      */
-    virtual std::vector<std::string>
+    [[nodiscard]] virtual std::vector<std::string>
     getAllKeys() const = 0;
 };
 

@@ -166,6 +166,7 @@ SubscribeHandler::subscribeToAccountsProposed(
 {
     for (auto const& account : accounts) {
         auto const accountID = accountFromStringStrict(account);
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         subscriptions_->subProposedAccount(*accountID, session);
     }
 }
@@ -178,6 +179,7 @@ SubscribeHandler::subscribeToAccounts(
 {
     for (auto const& account : accounts) {
         auto const accountID = accountFromStringStrict(account);
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         subscriptions_->subAccount(*accountID, session);
     }
 }
@@ -305,7 +307,7 @@ tag_invoke(boost::json::value_to_tag<SubscribeHandler::Input>, boost::json::valu
 
             auto const parsedBookMaybe = parseBook(book.as_object());
             ASSERT(parsedBookMaybe.has_value(), "Book parsing failed");
-            internalBook.book = parsedBookMaybe.value();
+            internalBook.book = *parsedBookMaybe;
             input.books->push_back(internalBook);
         }
     }

@@ -234,7 +234,7 @@ TransactionFeed::pub(
                     networkID
                 );
                 ctid)
-                pubObj[JS(ctid)] = ctid.value();
+                pubObj[JS(ctid)] = *ctid;
         }
 
         pubObj[JS(type)] = "transaction";

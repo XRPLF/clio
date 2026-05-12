@@ -30,7 +30,7 @@ TEST_F(FetchLedgerCacheTest, CanStoreAndRetrieveEntry)
     auto const result = cache_.get();
 
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result.value(), entry);
+    EXPECT_EQ(result.value(), entry);  // NOLINT(bugprone-unchecked-optional-access)
 }
 
 TEST_F(FetchLedgerCacheTest, PutOverwritesPreviousEntry)
@@ -46,5 +46,5 @@ TEST_F(FetchLedgerCacheTest, PutOverwritesPreviousEntry)
 
     auto const result = cache_.get();
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result.value(), entry2);
+    EXPECT_EQ(result.value(), entry2);  // NOLINT(bugprone-unchecked-optional-access)
 }

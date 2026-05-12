@@ -36,16 +36,23 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountNFT's ledger range must be available");
     auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+        *sharedPtrBackend_,
+        ctx.yield,
+        input.ledgerHash,
+        input.ledgerIndex,
+        range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
     if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
-    auto const& lgrInfo = expectedLgrInfo.value();
+    auto const& lgrInfo = *expectedLgrInfo;
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        ripple::keylet::account(*accountID).key,
+        lgrInfo.seq,
+        ctx.yield
     );
 
     if (!accountLedgerObject)
@@ -59,6 +66,7 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
 
     // if a marker was passed, start at the page specified in marker. Else, start at the max page
     auto const pageKey = input.marker ? ripple::uint256{input.marker->c_str()}
+                                      // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
                                       : ripple::keylet::nftpage_max(*accountID).key;
     auto const blob = sharedPtrBackend_->fetchLedgerObject(pageKey, lgrInfo.seq, ctx.yield);
 
@@ -113,6 +121,7 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input const& input, Context cons
             auto const nextBlob =
                 sharedPtrBackend_->fetchLedgerObject(nextKey.key, lgrInfo.seq, ctx.yield);
             page.emplace(
+                // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
                 ripple::SLE{ripple::SerialIter{nextBlob->data(), nextBlob->size()}, nextKey.key}
             );
         } else {

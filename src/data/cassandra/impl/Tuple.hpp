@@ -93,7 +93,7 @@ public:
 
 private:
     template <typename Type>
-    Type
+    [[nodiscard]] Type
     extractNext() const
     {
         using std::to_string;

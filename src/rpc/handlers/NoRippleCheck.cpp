@@ -43,15 +43,20 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
     ASSERT(range.has_value(), "NoRippleCheck's ledger range must be available");
 
     auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+        *sharedPtrBackend_,
+        ctx.yield,
+        input.ledgerHash,
+        input.ledgerIndex,
+        range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
     if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
-    auto const& lgrInfo = expectedLgrInfo.value();
+    auto const& lgrInfo = *expectedLgrInfo;
     auto const accountID = accountFromStringStrict(input.account);
-    auto const keylet = ripple::keylet::account(*accountID).key;
+    auto const keylet =
+        ripple::keylet::account(*accountID).key;  // NOLINT(bugprone-unchecked-optional-access)
     auto const accountObj = sharedPtrBackend_->fetchLedgerObject(keylet, lgrInfo.seq, ctx.yield);
 
     if (!accountObj)
@@ -88,7 +93,8 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
         output.problems.emplace_back("You should immediately set your default ripple flag");
 
         if (input.transactions) {
-            auto tx = getBaseTx(*accountID, accountSeq++);
+            auto tx =
+                getBaseTx(*accountID, accountSeq++);  // NOLINT(bugprone-unchecked-optional-access)
             tx[JS(TransactionType)] = "AccountSet";
             tx[JS(SetFlag)] = ripple::asfDefaultRipple;
             output.transactions->push_back(tx);
@@ -99,7 +105,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input const& input, Context 
 
     traverseOwnedNodes(
         *sharedPtrBackend_,
-        *accountID,
+        *accountID,  // NOLINT(bugprone-unchecked-optional-access)
         lgrInfo.seq,
         std::numeric_limits<std::uint32_t>::max(),
         {},

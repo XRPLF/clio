@@ -29,7 +29,7 @@ protected:
 
         virtual void set(ValueType) = 0;
 
-        virtual ValueType
+        [[nodiscard]] virtual ValueType
         value() const = 0;
     };
 
@@ -53,7 +53,7 @@ protected:
             impl.set(v);
         }
 
-        ValueType
+        [[nodiscard]] ValueType
         value() const override
         {
             return impl.value();

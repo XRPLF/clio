@@ -37,16 +37,23 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     ASSERT(range.has_value(), "AccountObject's ledger range must be available");
     auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+        *sharedPtrBackend_,
+        ctx.yield,
+        input.ledgerHash,
+        input.ledgerIndex,
+        range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
 
     if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
-    auto const& lgrInfo = expectedLgrInfo.value();
+    auto const& lgrInfo = *expectedLgrInfo;
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        ripple::keylet::account(*accountID).key,
+        lgrInfo.seq,
+        ctx.yield
     );
 
     if (!accountLedgerObject)
@@ -73,9 +80,8 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
     Output response;
     auto const addToResponse = [&](ripple::SLE&& sle) {
         if (not typeFilter or
-            std::find(
-                std::begin(typeFilter.value()), std::end(typeFilter.value()), sle.getType()
-            ) != std::end(typeFilter.value())) {
+            std::find(std::begin(*typeFilter), std::end(*typeFilter), sle.getType()) !=
+                std::end(*typeFilter)) {
             response.accountObjects.push_back(std::move(sle));
         }
         return true;
@@ -83,7 +89,7 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
 
     auto const expectedNext = traverseOwnedNodes(
         *sharedPtrBackend_,
-        *accountID,
+        *accountID,  // NOLINT(bugprone-unchecked-optional-access)
         lgrInfo.seq,
         input.limit,
         input.marker,
@@ -100,7 +106,7 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input const& input, Contex
     response.limit = input.limit;
     response.account = input.account;
 
-    auto const& nextMarker = expectedNext.value();
+    auto const& nextMarker = *expectedNext;
 
     if (nextMarker.isNonZero())
         response.marker = nextMarker.toString();

@@ -450,7 +450,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, UseLimit)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
 
-        auto const resultJson = (*output.result).as_object();
+        auto const resultJson = output.result->as_object();
         EXPECT_EQ(resultJson.at("mptokens").as_array().size(), kLIMIT);
         ASSERT_TRUE(resultJson.contains("marker"));
         EXPECT_THAT(boost::json::value_to<std::string>(resultJson.at("marker")), EndsWith(",0"));
@@ -472,7 +472,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, UseLimit)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
-            (*output.result).as_object().at("limit").as_uint64(), AccountMPTokensHandler::kLIMIT_MIN
+            output.result->as_object().at("limit").as_uint64(), AccountMPTokensHandler::kLIMIT_MIN
         );
     });
 
@@ -492,7 +492,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, UseLimit)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
-            (*output.result).as_object().at("limit").as_uint64(), AccountMPTokensHandler::kLIMIT_MAX
+            output.result->as_object().at("limit").as_uint64(), AccountMPTokensHandler::kLIMIT_MAX
         );
     });
 }
@@ -556,7 +556,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, MarkerOutput)
         auto const handler = AnyHandler{AccountMPTokensHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        auto const& resultJson = (*output.result).as_object();
+        auto const& resultJson = output.result->as_object();
         EXPECT_EQ(resultJson.at("mptokens").as_array().size(), kLIMIT);
         EXPECT_EQ(
             boost::json::value_to<std::string>(resultJson.at("marker")),
@@ -618,7 +618,7 @@ TEST_F(RPCAccountMPTokensHandlerTest, MarkerInput)
         auto const handler = AnyHandler{AccountMPTokensHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        auto const& resultJson = (*output.result).as_object();
+        auto const& resultJson = output.result->as_object();
         EXPECT_TRUE(resultJson.if_contains("marker") == nullptr);
         EXPECT_EQ(resultJson.at("mptokens").as_array().size(), kLIMIT - 1);
     });
@@ -809,6 +809,6 @@ TEST_F(RPCAccountMPTokensHandlerTest, EmptyResult)
         auto const handler = AnyHandler{AccountMPTokensHandler{this->backend_}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output.result).as_object().at("mptokens").as_array().size(), 0);
+        EXPECT_EQ(output.result->as_object().at("mptokens").as_array().size(), 0);
     });
 }

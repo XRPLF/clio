@@ -21,7 +21,7 @@ UUIDTagGenerator::next()
     static boost::uuids::random_generator kGEN{};
     static std::mutex kMTX{};
 
-    std::lock_guard const lk(kMTX);
+    std::scoped_lock const lk(kMTX);
     return kGEN();
 }
 

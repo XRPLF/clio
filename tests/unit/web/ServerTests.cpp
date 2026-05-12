@@ -128,7 +128,7 @@ struct WebServerTest : public virtual ::testing::Test {
     {
         work_.reset();
         ctx.stop();
-        if (runner_->joinable())
+        if (runner_.has_value() && runner_->joinable())
             runner_->join();
     }
 

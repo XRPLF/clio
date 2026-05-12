@@ -236,7 +236,7 @@ public:
      *
      * @return The report of the number of subscribers.
      */
-    virtual boost::json::object
+    [[nodiscard]] virtual boost::json::object
     report() const = 0;
 
     /**
@@ -251,7 +251,7 @@ public:
      *
      * @return The network id.
      */
-    virtual uint32_t
+    [[nodiscard]] virtual uint32_t
     getNetworkID() const = 0;
 };
 

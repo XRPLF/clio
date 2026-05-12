@@ -44,7 +44,7 @@ struct SpecsTests : testing::Test {
         {
         }
 
-        std::optional<check::Warning>
+        [[nodiscard]] std::optional<check::Warning>
         check(boost::json::value const& value, std::string key) const
         {
             return ref.check(value, key);
@@ -100,8 +100,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(FieldProcessorTests, FieldSpecWithRequirementProcess)
 {
     EXPECT_CALL(requirementMock, verify).WillOnce(testing::Return(GetParam().requirementResult));
-    if (GetParam().otherRequirementResult) {
+    if (GetParam().otherRequirementResult.has_value()) {
         EXPECT_CALL(anotherRequirementMock, verify)
+            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
             .WillOnce(testing::Return(GetParam().otherRequirementResult.value()));
     }
 
@@ -204,8 +205,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(RpcSpecProcessTests, Process)
 {
     EXPECT_CALL(requirementMock, verify).WillOnce(testing::Return(GetParam().requirementResult));
-    if (GetParam().otherRequirementResult) {
+    if (GetParam().otherRequirementResult.has_value()) {
         EXPECT_CALL(anotherRequirementMock, verify)
+            // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
             .WillOnce(testing::Return(GetParam().otherRequirementResult.value()));
     }
     auto const result = spec.process(json);

@@ -67,7 +67,7 @@ public:
      * @return Value of key of type T
      */
     template <typename T>
-    T
+    [[nodiscard]] T
     get(std::string_view key) const
     {
         return getValueView(key).getValueImpl<T>();
@@ -81,7 +81,7 @@ public:
      * @return The value of type T if it exists, std::nullopt otherwise.
      */
     template <typename T>
-    std::optional<T>
+    [[nodiscard]] std::optional<T>
     maybeValue(std::string_view key) const
     {
         return getValueView(key).asOptional<T>();

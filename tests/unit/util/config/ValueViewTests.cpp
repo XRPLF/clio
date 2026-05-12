@@ -82,8 +82,8 @@ TEST_F(ValueViewTest, OptionalValues)
     ValueView const vv3{cv3};
     ValueView const vv4{cv4};
 
-    EXPECT_EQ(vv.asOptional<uint32_t>().value(), 432);
-    EXPECT_EQ(vv.asOptional<uint64_t>().value(), 432);
+    EXPECT_EQ(*vv.asOptional<uint32_t>(), 432);  // NOLINT(bugprone-unchecked-optional-access)
+    EXPECT_EQ(*vv.asOptional<uint64_t>(), 432);  // NOLINT(bugprone-unchecked-optional-access)
     EXPECT_EQ(vv2.asOptional<uint64_t>(), std::nullopt);
     EXPECT_EQ(vv3.asOptional<std::string>(), std::nullopt);
     EXPECT_EQ(vv4.asOptional<std::string>(), "hello");

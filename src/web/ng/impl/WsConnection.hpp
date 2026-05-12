@@ -99,7 +99,7 @@ public:
         return {};
     }
 
-    bool
+    [[nodiscard]] bool
     wasUpgraded() const override
     {
         return true;

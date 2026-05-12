@@ -20,7 +20,7 @@ public:
      * @param command The method to check for
      * @return true if the provider contains a handler for the method, false otherwise
      */
-    virtual bool
+    [[nodiscard]] virtual bool
     contains(std::string const& command) const = 0;
 
     /**
@@ -29,7 +29,7 @@ public:
      * @param command The method to get the handler for
      * @return The handler for the method, or std::nullopt if the method is not found
      */
-    virtual std::optional<AnyHandler>
+    [[nodiscard]] virtual std::optional<AnyHandler>
     getHandler(std::string const& command) const = 0;
 
     /**
@@ -38,7 +38,7 @@ public:
      * @param command The method to check
      * @return true if the method is Clio-only, false otherwise
      */
-    virtual bool
+    [[nodiscard]] virtual bool
     isClioOnly(std::string const& command) const = 0;
 };
 

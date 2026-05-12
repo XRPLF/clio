@@ -20,7 +20,7 @@ public:
         return &first_;
     }
 
-    std::string
+    [[nodiscard]] std::string
     book_base() const
     {
         return base_;
@@ -52,23 +52,23 @@ public:
 
 class FakeLedgerObject {
 public:
-    enum ModType : int { MODIFIED, DELETED };
+    enum class ModType : int { MODIFIED, DELETED };
 
 private:
     std::string key_;
     std::string data_;
     std::string predecessor_;
     std::string successor_;
-    ModType mod_ = MODIFIED;
+    ModType mod_ = ModType::MODIFIED;
 
 public:
-    ModType
+    [[nodiscard]] ModType
     mod_type() const
     {
         return mod_;
     }
 
-    std::string
+    [[nodiscard]] std::string
     key() const
     {
         return key_;
@@ -80,7 +80,7 @@ public:
         return &key_;
     }
 
-    std::string
+    [[nodiscard]] std::string
     data() const
     {
         return data_;
@@ -120,7 +120,7 @@ class FakeTransactionsList {
     std::size_t size_ = 0;
 
 public:
-    std::size_t
+    [[nodiscard]] std::size_t
     transactions_size() const
     {
         return size_;
@@ -131,7 +131,7 @@ class FakeObjectsList {
     std::size_t size_ = 0;
 
 public:
-    std::size_t
+    [[nodiscard]] std::size_t
     objects_size() const
     {
         return size_;
@@ -173,7 +173,7 @@ struct FakeFetchResponse {
         return {};
     }
 
-    bool
+    [[nodiscard]] bool
     object_neighbors_included() const
     {
         return objectNeighborsIncluded;
@@ -185,7 +185,7 @@ struct FakeFetchResponse {
         return &ledgerObjects;
     }
 
-    std::string
+    [[nodiscard]] std::string
     ledger_header() const
     {
         return ledgerHeader;

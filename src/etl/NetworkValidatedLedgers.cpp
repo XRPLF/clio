@@ -18,7 +18,7 @@ NetworkValidatedLedgers::makeValidatedLedgers()
 void
 NetworkValidatedLedgers::push(uint32_t idx)
 {
-    std::lock_guard const lck(mtx_);
+    std::scoped_lock const lck(mtx_);
     if (!latest_ || idx > *latest_)
         latest_ = idx;
 

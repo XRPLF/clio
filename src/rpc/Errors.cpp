@@ -61,14 +61,14 @@ WarningInfo const&
 getWarningInfo(WarningCode code)
 {
     static constexpr WarningInfo kINFOS[]{
-        {WarnUnknown, "Unknown warning"},
-        {WarnRpcClio,
+        {WarningCode::WarnUnknown, "Unknown warning"},
+        {WarningCode::WarnRpcClio,
          "This is a clio server. clio only serves validated data. If you want to talk to rippled, "
          "include "
          "'ledger_index':'current' in your request"},
-        {WarnRpcOutdated, "This server may be out of date"},
-        {WarnRpcRateLimit, "You are about to be rate limited"},
-        {WarnRpcDeprecated,
+        {WarningCode::WarnRpcOutdated, "This server may be out of date"},
+        {WarningCode::WarnRpcRateLimit, "You are about to be rate limited"},
+        {WarningCode::WarnRpcDeprecated,
          "Some fields from your request are deprecated. Please check the documentation at "
          "https://xrpl.org/docs/references/http-websocket-apis/ and update your request."}
     };
@@ -85,7 +85,7 @@ makeWarning(WarningCode code)
 {
     auto json = boost::json::object{};
     auto const& info = getWarningInfo(code);
-    json["id"] = code;
+    json["id"] = static_cast<int>(code);
     json["message"] = info.message;
     return json;
 }
@@ -220,7 +220,7 @@ makeError(Status const& status)
     );
 
     if (status.extraInfo) {
-        for (auto& [key, value] : status.extraInfo.value())
+        for (auto& [key, value] : *status.extraInfo)
             res[key] = value;
     }
 

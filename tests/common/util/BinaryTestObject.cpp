@@ -91,8 +91,9 @@ createObject(etl::model::Object::ModType modType, std::string key)
     return {
         .key = binaryStringToUint256(hexStringToBinaryString(key)),
         .keyRaw = hexStringToBinaryString(key),
-        .data = modType == etl::model::Object::ModType::Deleted ? ripple::Blob{}
-                                                                : *ripple::strUnHex(kOBJ_BLOB),
+        .data = modType == etl::model::Object::ModType::Deleted
+            ? ripple::Blob{}
+            : *ripple::strUnHex(kOBJ_BLOB),  // NOLINT(bugprone-unchecked-optional-access)
         .dataRaw = modType == etl::model::Object::ModType::Deleted
             ? ""
             : hexStringToBinaryString(kOBJ_BLOB),
@@ -120,8 +121,9 @@ createObjectWithBookBase(etl::model::Object::ModType modType, std::string key)
     return {
         .key = binaryStringToUint256(hexStringToBinaryString(key)),
         .keyRaw = hexStringToBinaryString(key),
-        .data = modType == etl::model::Object::ModType::Deleted ? ripple::Blob{}
-                                                                : *ripple::strUnHex(kOBJ_BLOB),
+        .data = modType == etl::model::Object::ModType::Deleted
+            ? ripple::Blob{}
+            : *ripple::strUnHex(kOBJ_BLOB),  // NOLINT(bugprone-unchecked-optional-access)
         .dataRaw = modType == etl::model::Object::ModType::Deleted
             ? ""
             : hexStringToBinaryString(kOBJ_BLOB),

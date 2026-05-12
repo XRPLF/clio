@@ -402,7 +402,7 @@ TYPED_TEST(AsyncExecutionContextTests, repeatingOperationAutoAborts)
 {
     auto const repeatDelay = std::chrono::milliseconds{1};
     auto const timeout = std::chrono::milliseconds{15};
-    auto callCount = 0uz;
+    std::atomic_size_t callCount = 0uz;
     auto timeSpentMs = 0u;
 
     {
@@ -420,8 +420,8 @@ TYPED_TEST(AsyncExecutionContextTests, repeatingOperationAutoAborts)
 
     EXPECT_GE(callCount, expectedPureCalls / 2u);  // expect at least half of the scheduled calls
     EXPECT_LE(
-        callCount, expectedActualCount
-    );  // never should be called more times than possible before timeout
+        callCount, expectedActualCount + 1u
+    );  // at most 1 extra call from an in-flight post that raced with abort
 }
 
 using NoErrorHandlerSyncExecutionContext = BasicExecutionContext<

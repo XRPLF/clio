@@ -115,7 +115,7 @@ public:
             [this,
              &request,
              &response,
-             &onTaskComplete = onTaskComplete.value(),
+             &onTaskComplete = *onTaskComplete,  // NOLINT(bugprone-unchecked-optional-access)
              &connectionMetadata,
              subscriptionContext =
                  std::move(subscriptionContext)](boost::asio::yield_context innerYield) mutable {
@@ -171,7 +171,7 @@ public:
 
         if (not postSuccessful) {
             // onTaskComplete must be called to notify coroutineGroup that the foreign task is done
-            onTaskComplete->operator()();
+            (*onTaskComplete)();  // NOLINT(bugprone-unchecked-optional-access)
             rpcEngine_->notifyTooBusy();
             return impl::ErrorHelper{request}.makeTooBusyError();
         }
@@ -180,11 +180,13 @@ public:
         coroutineGroup.asyncWait(yield);
         ASSERT(response.has_value(), "Woke up coroutine without setting response");
 
+        // NOLINTBEGIN(bugprone-unchecked-optional-access)
         if (not dosguard_.get().add(connectionMetadata.ip(), response->message().size())) {
             response->setMessage(makeLoadWarning(*response));
         }
 
-        return std::move(response).value();
+        return *std::move(response);
+        // NOLINTEND(bugprone-unchecked-optional-access)
     }
 
 private:
@@ -317,10 +319,10 @@ private:
             }
 
             boost::json::array warnings = std::move(result.warnings);
-            warnings.emplace_back(rpc::makeWarning(rpc::WarnRpcClio));
+            warnings.emplace_back(rpc::makeWarning(rpc::WarningCode::WarnRpcClio));
 
             if (etl_->lastCloseAgeSeconds() >= 60)
-                warnings.emplace_back(rpc::makeWarning(rpc::WarnRpcOutdated));
+                warnings.emplace_back(rpc::makeWarning(rpc::WarningCode::WarnRpcOutdated));
 
             response["warnings"] = warnings;
             return Response{boost::beast::http::status::ok, response, rawRequest};
@@ -361,14 +363,17 @@ private:
         auto jsonResponse = boost::json::parse(response.message()).as_object();
         jsonResponse["warning"] = "load";
         if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {
-            jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::WarnRpcRateLimit));
+            jsonResponse["warnings"].as_array().push_back(
+                rpc::makeWarning(rpc::WarningCode::WarnRpcRateLimit)
+            );
         } else {
-            jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::WarnRpcRateLimit)};
+            jsonResponse["warnings"] =
+                boost::json::array{rpc::makeWarning(rpc::WarningCode::WarnRpcRateLimit)};
         }
         return jsonResponse;
     }
 
-    bool
+    [[nodiscard]] bool
     shouldReplaceParams(boost::json::object const& req) const
     {
         auto const hasParams = req.contains(JS(params));

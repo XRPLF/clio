@@ -4,6 +4,7 @@ Checks: "-*,
   bugprone-assert-side-effect,
   bugprone-bad-signal-to-kill-thread,
   bugprone-bool-pointer-implicit-conversion,
+  bugprone-capturing-this-in-member-variable,
   bugprone-casting-through-void,
   bugprone-chained-comparison,
   bugprone-compare-pointer-to-member-virtual-function,
@@ -23,6 +24,7 @@ Checks: "-*,
   bugprone-lambda-function-name,
   bugprone-macro-parentheses,
   bugprone-macro-repeated-side-effects,
+  bugprone-misleading-setter-of-reference,
   bugprone-misplaced-operator-in-strlen-in-alloc,
   bugprone-misplaced-pointer-arithmetic-in-alloc,
   bugprone-misplaced-widening-cast,
@@ -64,6 +66,7 @@ Checks: "-*,
   bugprone-terminating-continue,
   bugprone-throw-keyword-missing,
   bugprone-too-small-loop-variable,
+  bugprone-unchecked-optional-access,
   bugprone-undefined-memory-manipulation,
   bugprone-undelegated-constructor,
   bugprone-unhandled-exception-at-new,
@@ -82,6 +85,7 @@ Checks: "-*,
   cppcoreguidelines-pro-type-static-cast-downcast,
   cppcoreguidelines-rvalue-reference-param-not-moved,
   cppcoreguidelines-use-default-member-init,
+  cppcoreguidelines-use-enum-class,
   cppcoreguidelines-virtual-class-destructor,
   hicpp-ignored-remove-result,
   llvm-namespace-comment,
@@ -105,8 +109,10 @@ Checks: "-*,
   modernize-use-emplace,
   modernize-use-equals-default,
   modernize-use-equals-delete,
+  modernize-use-nodiscard,
   modernize-use-override,
   modernize-use-ranges,
+  modernize-use-scoped-lock,
   modernize-use-starts-ends-with,
   modernize-use-std-numbers,
   modernize-use-using,
@@ -118,6 +124,7 @@ Checks: "-*,
   performance-move-constructor-init,
   performance-no-automatic-move,
   performance-trivially-destructible,
+  readability-ambiguous-smartptr-reset-call,
   readability-avoid-nested-conditional-operator,
   readability-avoid-return-with-void-value,
   readability-braces-around-statements,
@@ -128,9 +135,9 @@ Checks: "-*,
   readability-duplicate-include,
   readability-else-after-return,
   readability-enum-initial-value,
+  readability-identifier-naming,
   readability-implicit-bool-conversion,
   readability-inconsistent-declaration-parameter-name,
-  readability-identifier-naming,
   readability-make-member-function-const,
   readability-math-missing-parentheses,
   readability-misleading-indentation,
@@ -149,6 +156,11 @@ Checks: "-*,
   "
 
 CheckOptions:
+  bugprone-unsafe-functions.ReportMoreUnsafeFunctions: true
+  bugprone-unused-return-value.CheckedReturnTypes: ::std::error_code;::std::error_condition;::std::errc
+
+  misc-include-cleaner.IgnoreHeaders: '.*/(detail|impl)/.*;.*(expected|unexpected).*;.*ranges_lower_bound\.h;time.h;stdlib.h;__chrono/.*;fmt/chrono.h;boost/uuid/uuid_hash.hpp'
+
   readability-braces-around-statements.ShortStatementLines: 2
   readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
   readability-identifier-naming.ClassCase: CamelCase
@@ -183,9 +195,6 @@ CheckOptions:
   readability-identifier-naming.ProtectedMemberSuffix: _
   readability-identifier-naming.PublicMemberSuffix: ""
   readability-identifier-naming.FunctionIgnoredRegexp: ".*tag_invoke.*"
-  bugprone-unsafe-functions.ReportMoreUnsafeFunctions: true
-  bugprone-unused-return-value.CheckedReturnTypes: ::std::error_code;::std::error_condition;::std::errc
-  misc-include-cleaner.IgnoreHeaders: '.*/(detail|impl)/.*;.*(expected|unexpected).*;.*ranges_lower_bound\.h;time.h;stdlib.h;__chrono/.*;fmt/chrono.h;boost/uuid/uuid_hash.hpp'
 
 HeaderFilterRegex: '^.*/(src|tests)/.*\.(h|hpp)$'
 WarningsAsErrors: "*"

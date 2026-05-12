@@ -126,6 +126,7 @@ UnsubscribeHandler::unsubscribeFromAccounts(
 {
     for (auto const& account : accounts) {
         auto const accountID = accountFromStringStrict(account);
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         subscriptions_->unsubAccount(*accountID, session);
     }
 }
@@ -138,6 +139,7 @@ UnsubscribeHandler::unsubscribeFromProposedAccounts(
 {
     for (auto const& account : accountsProposed) {
         auto const accountID = accountFromStringStrict(account);
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
         subscriptions_->unsubProposedAccount(*accountID, session);
     }
 }
@@ -188,7 +190,7 @@ tag_invoke(boost::json::value_to_tag<UnsubscribeHandler::Input>, boost::json::va
 
             auto const parsedBookMaybe = parseBook(book.as_object());
             ASSERT(parsedBookMaybe.has_value(), "Invalid book format");
-            internalBook.book = parsedBookMaybe.value();
+            internalBook.book = *parsedBookMaybe;
             input.books->push_back(internalBook);
         }
     }

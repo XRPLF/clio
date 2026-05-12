@@ -119,6 +119,7 @@ WebServerSslSyncClient::connect(std::string const& host, std::string const& port
 void
 WebServerSslSyncClient::disconnect()
 {
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     ws_->close(boost::beast::websocket::close_code::normal);
 }
 
@@ -126,8 +127,8 @@ std::string
 WebServerSslSyncClient::syncPost(std::string const& body)
 {
     boost::beast::flat_buffer buffer;
-    ws_->write(net::buffer(std::string(body)));
-    ws_->read(buffer);
+    ws_->write(net::buffer(std::string(body)));  // NOLINT(bugprone-unchecked-optional-access)
+    ws_->read(buffer);                           // NOLINT(bugprone-unchecked-optional-access)
 
     return boost::beast::buffers_to_string(buffer.data());
 }

@@ -54,7 +54,7 @@ public:
      *
      * @return The API subversion.
      */
-    virtual uint32_t
+    [[nodiscard]] virtual uint32_t
     apiSubversion() const = 0;
 };
 

@@ -142,7 +142,7 @@ public:
 
         if (not ctx.isAdmin and responseCache_) {
             if (auto res = responseCache_->get(ctx.method); res.has_value())
-                return Result{std::move(res).value()};
+                return Result{*std::move(res)};
         }
 
         if (backend_->isTooBusy()) {
@@ -167,7 +167,7 @@ public:
                 .clientIp = ctx.clientIp,
                 .apiVersion = ctx.apiVersion
             };
-            auto v = (*method).process(ctx.params, context);
+            auto v = method->process(ctx.params, context);
 
             LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
 
@@ -321,7 +321,7 @@ public:
     }
 
 private:
-    bool
+    [[nodiscard]] bool
     validHandler(std::string const& method) const
     {
         return handlerProvider_->contains(method) || forwardingProxy_.isProxied(method);
@@ -352,7 +352,7 @@ private:
                 .clientIp = ctx.clientIp,
                 .apiVersion = ctx.apiVersion
             };
-            auto v = (*method).process(ctx.params, context);
+            auto v = method->process(ctx.params, context);
 
             LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
 

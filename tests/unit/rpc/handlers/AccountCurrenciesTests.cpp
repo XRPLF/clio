@@ -305,7 +305,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
     runSpawn([&](auto yield) {
         auto const output = handler.process(kINPUT, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output.result).as_object().at("ledger_index").as_uint64(), ledgerSeq);
+        EXPECT_EQ(output.result->as_object().at("ledger_index").as_uint64(), ledgerSeq);
     });
 }
 

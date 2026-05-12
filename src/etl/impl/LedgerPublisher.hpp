@@ -139,6 +139,8 @@ public:
                 "Ledger must exist in database. Ledger sequence = {}",
                 ledgerSequence
             );
+            if (!lgr)
+                return false;
             publish(*lgr);
 
             return true;

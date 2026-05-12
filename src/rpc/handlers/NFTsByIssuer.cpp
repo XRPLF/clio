@@ -34,18 +34,25 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
     ASSERT(range.has_value(), "NFTsByIssuer's ledger range must be available");
 
     auto const expectedLgrInfo = getLedgerHeaderFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+        *sharedPtrBackend_,
+        ctx.yield,
+        input.ledgerHash,
+        input.ledgerIndex,
+        range->maxSequence  // NOLINT(bugprone-unchecked-optional-access)
     );
     if (not expectedLgrInfo.has_value())
         return Error{expectedLgrInfo.error()};
 
-    auto const& lgrInfo = expectedLgrInfo.value();
+    auto const& lgrInfo = *expectedLgrInfo;
 
     auto const limit = input.limit.value_or(NFTsByIssuerHandler::kLIMIT_DEFAULT);
 
     auto const issuer = accountFromStringStrict(input.issuer);
     auto const accountLedgerObject = sharedPtrBackend_->fetchLedgerObject(
-        ripple::keylet::account(*issuer).key, lgrInfo.seq, ctx.yield
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        ripple::keylet::account(*issuer).key,
+        lgrInfo.seq,
+        ctx.yield
     );
 
     if (!accountLedgerObject)
@@ -56,12 +63,18 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input const& input, Context co
         cursor = uint256{input.marker->c_str()};
 
     auto const dbResponse = sharedPtrBackend_->fetchNFTsByIssuer(
-        *issuer, input.nftTaxon, lgrInfo.seq, limit, cursor, ctx.yield
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+        *issuer,
+        input.nftTaxon,
+        lgrInfo.seq,
+        limit,
+        cursor,
+        ctx.yield
     );
 
     auto output = NFTsByIssuerHandler::Output{};
 
-    output.issuer = toBase58(*issuer);
+    output.issuer = toBase58(*issuer);  // NOLINT(bugprone-unchecked-optional-access)
     output.limit = limit;
     output.ledgerIndex = lgrInfo.seq;
     output.nftTaxon = input.nftTaxon;

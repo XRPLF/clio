@@ -28,22 +28,22 @@ public:
 
     ProductionAPIVersionParser(util::config::ObjectView const& config);
 
-    std::expected<uint32_t, std::string>
+    [[nodiscard]] std::expected<uint32_t, std::string>
     parse(boost::json::object const& request) const override;
 
-    uint32_t
+    [[nodiscard]] uint32_t
     getDefaultVersion() const
     {
         return defaultVersion_;
     }
 
-    uint32_t
+    [[nodiscard]] uint32_t
     getMinVersion() const
     {
         return minVersion_;
     }
 
-    uint32_t
+    [[nodiscard]] uint32_t
     getMaxVersion() const
     {
         return maxVersion_;

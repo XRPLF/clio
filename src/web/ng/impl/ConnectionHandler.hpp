@@ -101,7 +101,7 @@ public:
     void
     stop(boost::asio::yield_context yield);
 
-    bool
+    [[nodiscard]] bool
     isStopping() const;
 
 private:
@@ -112,7 +112,7 @@ private:
      * @param connection The connection that caused the error.
      * @return True if the connection should be gracefully closed, false otherwise.
      */
-    bool
+    [[nodiscard]] bool
     handleError(Error const& error, Connection const& connection) const;
 
     /**

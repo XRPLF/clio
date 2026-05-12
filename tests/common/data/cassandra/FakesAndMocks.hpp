@@ -23,7 +23,7 @@ struct FakeResultOrError {
         return err.code() == CASS_OK;
     }
 
-    CassandraError
+    [[nodiscard]] CassandraError
     error() const
     {
         return err;
@@ -45,7 +45,7 @@ struct FakePreparedStatement {};
 struct FakeFuture {
     FakeResultOrError data;
 
-    FakeResultOrError
+    [[nodiscard]] FakeResultOrError
     get() const
     {
         return data;

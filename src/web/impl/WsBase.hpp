@@ -210,11 +210,11 @@ public:
 
             if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {
                 jsonResponse["warnings"].as_array().push_back(
-                    rpc::makeWarning(rpc::WarnRpcRateLimit)
+                    rpc::makeWarning(rpc::WarningCode::WarnRpcRateLimit)
                 );
             } else {
                 jsonResponse["warnings"] =
-                    boost::json::array{rpc::makeWarning(rpc::WarnRpcRateLimit)};
+                    boost::json::array{rpc::makeWarning(rpc::WarningCode::WarnRpcRateLimit)};
             }
 
             // Reserialize when we need to include this warning

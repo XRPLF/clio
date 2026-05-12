@@ -100,9 +100,11 @@ TEST_F(PrometheusHandleRequestTests, emptyResponse)
 {
     auto response = handlePrometheusRequest(req, true);
     ASSERT_TRUE(response.has_value());
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
     EXPECT_EQ(response->result(), http::status::ok);
     EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
     EXPECT_EQ(response->body(), "");
+    // NOLINTEND(bugprone-unchecked-optional-access)
 }
 
 struct PrometheusDisabledHandleRequestTests : util::prometheus::WithPrometheusDisabled,
@@ -112,6 +114,7 @@ TEST_F(PrometheusDisabledHandleRequestTests, prometheusDisabled)
 {
     auto response = handlePrometheusRequest(req, true);
     ASSERT_TRUE(response.has_value());
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(response->result(), http::status::forbidden);
 }
 
@@ -119,6 +122,7 @@ TEST_F(PrometheusHandleRequestTests, notAdmin)
 {
     auto response = handlePrometheusRequest(req, false);
     ASSERT_TRUE(response.has_value());
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(response->result(), http::status::unauthorized);
 }
 
@@ -134,6 +138,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounter)
 
     auto response = handlePrometheusRequest(req, true);
     ASSERT_TRUE(response.has_value());
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
     EXPECT_EQ(response->result(), http::status::ok);
     EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
     auto const expectedBody = fmt::format(
@@ -143,6 +148,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounter)
         labels.serialize()
     );
     EXPECT_EQ(response->body(), expectedBody);
+    // NOLINTEND(bugprone-unchecked-optional-access)
 }
 
 TEST_F(PrometheusHandleRequestTests, responseWithGauge)
@@ -157,6 +163,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithGauge)
 
     auto response = handlePrometheusRequest(req, true);
     ASSERT_TRUE(response.has_value());
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
     EXPECT_EQ(response->result(), http::status::ok);
     EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
     auto const expectedBody = fmt::format(
@@ -166,6 +173,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithGauge)
         labels.serialize()
     );
     EXPECT_EQ(response->body(), expectedBody);
+    // NOLINTEND(bugprone-unchecked-optional-access)
 }
 
 TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
@@ -188,7 +196,9 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
 
     auto response = handlePrometheusRequest(req, true);
 
-    EXPECT_EQ(response->result(), http::status::ok);
+    ASSERT_TRUE(response.has_value());
+    EXPECT_EQ(response->result(), http::status::ok);  // NOLINT(bugprone-unchecked-optional-access)
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
     auto const expectedBody = fmt::format(
         "# HELP {3} {4}\n# TYPE {3} gauge\n{3}{5} -2\n\n"
@@ -210,6 +220,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
         gaugeDescription,
         gaugeLabels.serialize()
     );
+    // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     EXPECT_TRUE(response->body() == expectedBody || response->body() == anotherExpectedBody);
 }
 
@@ -227,8 +238,10 @@ TEST_F(PrometheusHandleRequestTests, compressReply)
 
     auto response = handlePrometheusRequest(req, true);
     ASSERT_TRUE(response.has_value());
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
     EXPECT_EQ(response->result(), http::status::ok);
     EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
     EXPECT_EQ(response->operator[](http::field::content_encoding), "gzip");
     EXPECT_GT(response->body().size(), 0ul);
+    // NOLINTEND(bugprone-unchecked-optional-access)
 }

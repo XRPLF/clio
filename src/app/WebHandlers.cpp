@@ -83,7 +83,7 @@ MetricsHandler::operator()(
     ASSERT(onTaskComplete.has_value(), "Coroutine group can't be full");
 
     bool const postSuccessful = workQueue_.get().postCoro(
-        [this, &request, &response, &onTaskComplete = onTaskComplete.value(), &connectionMetadata](
+        [this, &request, &response, &onTaskComplete = *onTaskComplete, &connectionMetadata](  // NOLINT(bugprone-unchecked-optional-access)
             boost::asio::yield_context
         ) mutable {
             auto const maybeHttpRequest = request.asHttpRequest();
@@ -94,7 +94,7 @@ MetricsHandler::operator()(
                 httpRequest, adminVerifier_->isAdmin(httpRequest, connectionMetadata.ip())
             );
             ASSERT(maybeResponse.has_value(), "Got unexpected request for Prometheus");
-            response = web::ng::Response{std::move(maybeResponse).value(), request};
+            response = web::ng::Response{*std::move(maybeResponse), request};
             // notify the coroutine group that the foreign task is done
             onTaskComplete();
         },
@@ -114,7 +114,7 @@ MetricsHandler::operator()(
     coroutineGroup.asyncWait(yield);
     ASSERT(response.has_value(), "Woke up coroutine without setting response");
 
-    return std::move(response).value();
+    return *std::move(response);  // NOLINT(bugprone-unchecked-optional-access)
 }
 
 web::ng::Response

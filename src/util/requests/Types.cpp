@@ -20,7 +20,7 @@ RequestError::RequestError(std::string message, boost::beast::error_code errorCo
 {
     message_.append(": ");
     if (auto const sslError = impl::sslErrorToString(errorCode); sslError.has_value()) {
-        message_.append(sslError.value());
+        message_.append(*sslError);
     } else {
         message_.append(errorCode.message());
     }

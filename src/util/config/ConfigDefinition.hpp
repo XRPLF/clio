@@ -81,7 +81,7 @@ public:
      * @return Value of key of type T
      */
     template <typename T>
-    T
+    [[nodiscard]] T
     get(std::string_view fullKey) const
     {
         ASSERT(map_.contains(fullKey), "key {} does not exist in config", fullKey);
@@ -164,7 +164,7 @@ public:
      * @return The value of type T if it exists, std::nullopt otherwise.
      */
     template <typename T>
-    std::optional<T>
+    [[nodiscard]] std::optional<T>
     maybeValue(std::string_view fullKey) const
     {
         return getValueView(fullKey).asOptional<T>();

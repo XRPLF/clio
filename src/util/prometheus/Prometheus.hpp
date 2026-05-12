@@ -160,7 +160,7 @@ public:
      *
      * @return true if prometheus is enabled
      */
-    bool
+    [[nodiscard]] bool
     isEnabled() const
     {
         return isEnabled_;
@@ -171,7 +171,7 @@ public:
      *
      * @return true if the reply should be compressed
      */
-    bool
+    [[nodiscard]] bool
     compressReplyEnabled() const
     {
         return compressReplyEnabled_;
