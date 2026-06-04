@@ -278,6 +278,41 @@ public:
                 R"(
            CREATE TABLE IF NOT EXISTS {}
                   (
+                     mpt_id blob,
+                    seq_idx tuple<bigint, bigint>,
+                       hash blob,
+                    tx_type text,
+                     PRIMARY KEY (mpt_id, seq_idx)
+                  )
+             WITH CLUSTERING ORDER BY (seq_idx DESC)
+            )",
+                qualifiedTableName(settingsProvider_.get(), "mpt_transactions")
+            )
+        );
+
+        statements.emplace_back(
+            fmt::format(
+                R"(
+           CREATE TABLE IF NOT EXISTS {}
+                  (
+                     mpt_id blob,
+                    account blob,
+                    seq_idx tuple<bigint, bigint>,
+                       hash blob,
+                    tx_type text,
+                     PRIMARY KEY ((mpt_id, account), seq_idx)
+                  )
+             WITH CLUSTERING ORDER BY (seq_idx DESC)
+            )",
+                qualifiedTableName(settingsProvider_.get(), "account_mpt_transactions")
+            )
+        );
+
+        statements.emplace_back(
+            fmt::format(
+                R"(
+           CREATE TABLE IF NOT EXISTS {}
+                  (
                     mpt_id blob,
                     holder blob,
                    PRIMARY KEY (mpt_id, holder)
@@ -470,6 +505,32 @@ public:
                 VALUES (?, ?, ?)
                 )",
                     qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
+                )
+            );
+        }();
+
+        PreparedStatement insertMPTTx = [this]() {
+            return handle_.get().prepare(
+                fmt::format(
+                    R"(
+                INSERT INTO {}
+                       (mpt_id, seq_idx, hash, tx_type)
+                VALUES (?, ?, ?, ?)
+                )",
+                    qualifiedTableName(settingsProvider_.get(), "mpt_transactions")
+                )
+            );
+        }();
+
+        PreparedStatement insertAccountMPTTx = [this]() {
+            return handle_.get().prepare(
+                fmt::format(
+                    R"(
+                INSERT INTO {}
+                       (mpt_id, account, seq_idx, hash, tx_type)
+                VALUES (?, ?, ?, ?, ?)
+                )",
+                    qualifiedTableName(settingsProvider_.get(), "account_mpt_transactions")
                 )
             );
         }();
@@ -736,6 +797,72 @@ public:
                  LIMIT ?
                 )",
                     qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
+                )
+            );
+        }();
+
+        PreparedStatement selectMPTTx = [this]() {
+            return handle_.get().prepare(
+                fmt::format(
+                    R"(
+                SELECT hash, seq_idx, tx_type
+                  FROM {}
+                 WHERE mpt_id = ?
+                   AND seq_idx < ?
+              ORDER BY seq_idx DESC
+                 LIMIT ?
+                )",
+                    qualifiedTableName(settingsProvider_.get(), "mpt_transactions")
+                )
+            );
+        }();
+
+        PreparedStatement selectMPTTxForward = [this]() {
+            return handle_.get().prepare(
+                fmt::format(
+                    R"(
+                SELECT hash, seq_idx, tx_type
+                  FROM {}
+                 WHERE mpt_id = ?
+                   AND seq_idx >= ?
+              ORDER BY seq_idx ASC
+                 LIMIT ?
+                )",
+                    qualifiedTableName(settingsProvider_.get(), "mpt_transactions")
+                )
+            );
+        }();
+
+        PreparedStatement selectAccountMPTTx = [this]() {
+            return handle_.get().prepare(
+                fmt::format(
+                    R"(
+                SELECT hash, seq_idx, tx_type
+                  FROM {}
+                 WHERE mpt_id = ?
+                   AND account = ?
+                   AND seq_idx < ?
+              ORDER BY seq_idx DESC
+                 LIMIT ?
+                )",
+                    qualifiedTableName(settingsProvider_.get(), "account_mpt_transactions")
+                )
+            );
+        }();
+
+        PreparedStatement selectAccountMPTTxForward = [this]() {
+            return handle_.get().prepare(
+                fmt::format(
+                    R"(
+                SELECT hash, seq_idx, tx_type
+                  FROM {}
+                 WHERE mpt_id = ?
+                   AND account = ?
+                   AND seq_idx >= ?
+              ORDER BY seq_idx ASC
+                 LIMIT ?
+                )",
+                    qualifiedTableName(settingsProvider_.get(), "account_mpt_transactions")
                 )
             );
         }();

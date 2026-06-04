@@ -14,6 +14,7 @@
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <boost/uuid/string_generator.hpp>
@@ -485,6 +486,45 @@ public:
         return {txns, {}};
     }
 
+    TransactionsAndCursor
+    fetchMPTTransactions(
+        ripple::uint192 const& mptID,
+        std::optional<std::string> const& txType,
+        std::uint32_t const limit,
+        bool const forward,
+        std::optional<TransactionsCursor> const& cursorIn,
+        boost::asio::yield_context yield
+    ) const override
+    {
+        auto const statement = [this, forward, &mptID]() {
+            if (forward)
+                return schema_->selectMPTTxForward.bind(mptID);
+
+            return schema_->selectMPTTx.bind(mptID);
+        }();
+        return fetchMPTTransactionsImpl(statement, 1, txType, limit, forward, cursorIn, yield);
+    }
+
+    TransactionsAndCursor
+    fetchAccountMPTTransactions(
+        ripple::uint192 const& mptID,
+        ripple::AccountID const& account,
+        std::optional<std::string> const& txType,
+        std::uint32_t const limit,
+        bool const forward,
+        std::optional<TransactionsCursor> const& cursorIn,
+        boost::asio::yield_context yield
+    ) const override
+    {
+        auto const statement = [this, forward, &mptID, &account]() {
+            if (forward)
+                return schema_->selectAccountMPTTxForward.bind(mptID, account);
+
+            return schema_->selectAccountMPTTx.bind(mptID, account);
+        }();
+        return fetchMPTTransactionsImpl(statement, 2, txType, limit, forward, cursorIn, yield);
+    }
+
     MPTHoldersAndCursor
     fetchMPTHolders(
         ripple::uint192 const& mptID,
@@ -878,6 +918,53 @@ public:
     }
 
     void
+    writeMPTTransactions(std::vector<MPTTransactionsData> const& data) override
+    {
+        std::vector<Statement> statements;
+        statements.reserve(data.size());
+
+        std::ranges::transform(data, std::back_inserter(statements), [this](auto const& record) {
+            return schema_->insertMPTTx.bind(
+                record.mptID,
+                std::make_tuple(record.ledgerSequence, record.transactionIndex),
+                record.txHash,
+                Text{record.txType}
+            );
+        });
+
+        executor_.write(std::move(statements));
+    }
+
+    void
+    writeAccountMPTTransactions(std::vector<MPTTransactionsData> const& data) override
+    {
+        std::size_t numStatements = 0u;
+        for (auto const& record : data)
+            numStatements += record.accounts.size();
+
+        std::vector<Statement> statements;
+        statements.reserve(numStatements);
+
+        for (auto const& record : data) {
+            std::ranges::transform(
+                record.accounts,
+                std::back_inserter(statements),
+                [this, &record](auto const& account) {
+                    return schema_->insertAccountMPTTx.bind(
+                        record.mptID,
+                        account,
+                        std::make_tuple(record.ledgerSequence, record.transactionIndex),
+                        record.txHash,
+                        Text{record.txType}
+                    );
+                }
+            );
+        }
+
+        executor_.write(std::move(statements));
+    }
+
+    void
     writeTransaction(
         std::string&& hash,
         std::uint32_t const seq,
@@ -1015,6 +1102,100 @@ protected:
         }
 
         return true;
+    }
+
+    /**
+     * @brief Shared implementation of the two MPT transaction-index fetchers.
+     *
+     * Mirrors @ref fetchNFTTransactions: binds the cursor/limit onto an already partition-bound
+     * statement, reads `(hash, seq_idx, tx_type)` index rows, then hydrates the blobs via
+     * @ref fetchTransactions. The forward path uses an inclusive `seq_idx >=`, so the returned
+     * cursor's transaction index is advanced by one (matching the NFT history convention).
+     *
+     * When @p txType is set, index rows whose stored type does not match (case-insensitively) are
+     * dropped before hydration, so filtered-out rows cost no blob fetch. The returned cursor tracks
+     * the raw index page boundary (the last row read from the partition) independent of the filter,
+     * so a filtered page may return fewer than @p limit transactions while still paging correctly.
+     *
+     * @param statement The statement already bound with the partition-key columns
+     * @param cursorIdx The bind index for the `seq_idx` cursor tuple (the `LIMIT` binds at
+     * `cursorIdx + 1`)
+     * @param txType Optional `TxFormats` transaction type name to filter on (case-insensitive)
+     * @param limit The maximum number of transactions per result page
+     * @param forward Whether the page is fetched forwards or backwards
+     * @param cursorIn The cursor to resume fetching from
+     * @param yield The coroutine context
+     * @return Results and a cursor to resume from
+     */
+    TransactionsAndCursor
+    fetchMPTTransactionsImpl(
+        Statement const& statement,
+        std::size_t const cursorIdx,
+        std::optional<std::string> const& txType,
+        std::uint32_t const limit,
+        bool const forward,
+        std::optional<TransactionsCursor> const& cursorIn,
+        boost::asio::yield_context yield
+    ) const
+    {
+        auto rng = fetchLedgerRange();
+        if (!rng)
+            return {.txns = {}, .cursor = {}};
+
+        auto cursor = cursorIn;
+        if (cursor) {
+            statement.bindAt(cursorIdx, cursor->asTuple());
+        } else {
+            // Forward uses the nft_history-style inclusive lower bound; reverse starts just past
+            // the latest validated ledger so its exclusive `<` query includes that ledger's rows.
+            auto const ledgerSequence = forward ? rng->minSequence : rng->maxSequence;
+            auto const transactionIndex = forward ? 0u : std::numeric_limits<std::uint32_t>::max();
+            statement.bindAt(cursorIdx, std::make_tuple(ledgerSequence, transactionIndex));
+        }
+
+        statement.bindAt(cursorIdx + 1, Limit{limit});
+
+        auto const res = executor_.read(yield, statement);
+        auto const& results = res.value();
+        if (not results.hasRows()) {
+            LOG(log_.debug()) << "No rows returned";
+            return {};
+        }
+
+        std::vector<ripple::uint256> hashes = {};
+        // The marker rides the raw index page boundary, so the full page must be counted even
+        // when the tx_type filter drops some rows from the hydrated result.
+        auto const rawRowCount = results.numRows();
+        auto remaining = rawRowCount;
+        LOG(log_.info()) << "num_rows = " << rawRowCount;
+
+        for (auto const& [hash, data, rowTxType] :
+             extract<ripple::uint256, std::tuple<uint32_t, uint32_t>, std::string>(results)) {
+            if (not txType.has_value() || boost::iequals(rowTxType, *txType))
+                hashes.push_back(hash);
+
+            if (--remaining == 0) {
+                LOG(log_.debug()) << "Setting cursor";
+                cursor = data;
+
+                // forward queries by ledger/tx sequence `>=`
+                // so we have to advance the index by one
+                if (forward)
+                    ++cursor->transactionIndex;
+            }
+        }
+
+        auto txns = fetchTransactions(hashes, yield);
+        LOG(log_.debug()) << "MPT Txns = " << txns.size();
+
+        // Return a cursor only when the raw partition page was full (a short page means the
+        // partition is exhausted), regardless of how many rows the tx_type filter removed.
+        if (rawRowCount == limit) {
+            LOG(log_.debug()) << "Returning cursor";
+            return {std::move(txns), cursor};
+        }
+
+        return {std::move(txns), {}};
     }
 };
 

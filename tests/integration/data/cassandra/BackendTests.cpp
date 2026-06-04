@@ -48,6 +48,7 @@
 #include <memory>
 #include <optional>
 #include <random>
+#include <set>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -1458,6 +1459,454 @@ TEST_F(CacheBackendCassandraTest, CacheFetchLedgerBySeq)
             ASSERT_TRUE(ledger.has_value());
             EXPECT_EQ(ledger->seq, lgrInfo.seq);
         }
+    });
+}
+
+// ====================================================================================
+// MPT transaction-history index round-trip tests
+//
+// These exercise the MPT index tables / fetchers against real Cassandra/Scylla, which a mock
+// cannot validate (CLUSTERING ORDER BY DESC, the `<` vs `>=` boundary, the forward
+// `++transactionIndex` fix-up, and the tuple<bigint,bigint><->uint32 round-trip). The deep
+// pagination tests focus on the issuance-wide table; this first test keeps account-table
+// round-trip, fanout, and tx_type coverage in the same real-backend suite.
+// ====================================================================================
+struct BackendCassandraMPTTest : BackendCassandraTest {
+    static constexpr auto kTX_TYPE_A = "Payment";
+    static constexpr auto kTX_TYPE_B = "MPTokenAuthorize";
+
+    // A real 24-byte (48 hex char) MPT issuance id.
+    static ripple::uint192
+    makeMptId()
+    {
+        ripple::uint192 mptId;
+        EXPECT_TRUE(mptId.parseHex("00000001AE123A7216F1B07AE9C36F107879B6E9D3A3C1B0"));
+        return mptId;
+    }
+
+    static ripple::AccountID
+    makeAccount(std::uint8_t seed)
+    {
+        ripple::AccountID account;
+        account.begin()[0] = seed;
+        return account;
+    }
+
+    static ripple::uint256
+    makeHash(std::uint8_t seed)
+    {
+        ripple::uint256 hash;
+        hash.begin()[0] = seed;
+        return hash;
+    }
+
+    // Writes a single ledger so that fetchLedgerRange() is populated, which the fetchers
+    // require before reading any index rows.
+    void
+    setupLedgerRange(std::uint32_t seq)
+    {
+        std::string rawHeaderBlob = hexStringToBinaryString(kRawheader);
+        ripple::LedgerHeader lgrInfo = util::deserializeHeader(ripple::makeSlice(rawHeaderBlob));
+        lgrInfo.seq = seq;
+        backend_->writeLedger(lgrInfo, std::move(rawHeaderBlob));
+        backend_->writeSuccessor(
+            uint256ToString(data::kFirstKey), lgrInfo.seq, uint256ToString(data::kLastKey)
+        );
+        ASSERT_TRUE(backend_->finishWrites(lgrInfo.seq));
+        auto const rng = backend_->fetchLedgerRange();
+        ASSERT_TRUE(rng.has_value());
+    }
+
+    // Writes a real Transactions-table row keyed by `hash` (so hydration finds a blob).
+    void
+    writeTxBlob(ripple::uint256 const& hash, std::uint32_t seq)
+    {
+        backend_->writeTransaction(
+            uint256ToString(hash),
+            seq,
+            0,
+            "tx_" + ripple::strHex(hash),
+            "meta_" + ripple::strHex(hash)
+        );
+    }
+};
+
+TEST_F(BackendCassandraMPTTest, RoundTripBothShapesAndTxTypeFilter)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const mptId = makeMptId();
+        auto const account = makeAccount(0x42);
+        auto const secondAccount = makeAccount(0x43);
+        std::uint32_t const seq = 100;
+
+        setupLedgerRange(seq);
+
+        auto const hash = makeHash(0x01);
+        writeTxBlob(hash, seq);
+        auto const expectedTxBlob = "tx_" + ripple::strHex(hash);
+        auto const expectedMetaBlob = "meta_" + ripple::strHex(hash);
+
+        auto expectHydratedSingle = [&](auto const& txns) {
+            ASSERT_EQ(txns.size(), 1);
+            EXPECT_EQ(
+                std::string(txns[0].transaction.begin(), txns[0].transaction.end()), expectedTxBlob
+            );
+            EXPECT_EQ(
+                std::string(txns[0].metadata.begin(), txns[0].metadata.end()), expectedMetaBlob
+            );
+            EXPECT_EQ(txns[0].ledgerSequence, seq);
+        };
+
+        MPTTransactionsData const record{mptId, {account, secondAccount}, kTX_TYPE_A, seq, 1, hash};
+        backend_->writeMPTTransactions({record});
+        backend_->writeAccountMPTTransactions({record});
+        backend_->waitForWritesToFinish();
+
+        // Issuance-wide shape, unfiltered.
+        {
+            auto [txns, cursor] =
+                backend_->fetchMPTTransactions(mptId, std::nullopt, 100, false, {}, yield);
+            expectHydratedSingle(txns);
+            EXPECT_FALSE(cursor);
+        }
+        // Account shape, unfiltered.
+        {
+            auto [txns, cursor] = backend_->fetchAccountMPTTransactions(
+                mptId, account, std::nullopt, 100, false, {}, yield
+            );
+            expectHydratedSingle(txns);
+            EXPECT_FALSE(cursor);
+        }
+        // Account fanout writes one row per affected account.
+        {
+            auto [txns, cursor] = backend_->fetchAccountMPTTransactions(
+                mptId, secondAccount, std::nullopt, 100, false, {}, yield
+            );
+            expectHydratedSingle(txns);
+            EXPECT_FALSE(cursor);
+        }
+        // Issuance-wide shape, tx_type filter that matches case-insensitively ("payment"
+        // vs the stored canonical "Payment" -- kTX_TYPE_A).
+        {
+            auto [txns, cursor] =
+                backend_->fetchMPTTransactions(mptId, "payment", 100, false, {}, yield);
+            expectHydratedSingle(txns);
+            EXPECT_FALSE(cursor);
+        }
+        // Account shape, tx_type filter that matches case-insensitively too.
+        {
+            auto [txns, cursor] = backend_->fetchAccountMPTTransactions(
+                mptId, account, "payment", 100, false, {}, yield
+            );
+            expectHydratedSingle(txns);
+            EXPECT_FALSE(cursor);
+        }
+
+        // tx_type filter that does not match -> empty, on both shapes.
+        {
+            auto [txns, cursor] =
+                backend_->fetchMPTTransactions(mptId, kTX_TYPE_B, 100, false, {}, yield);
+            EXPECT_EQ(txns.size(), 0);
+        }
+        {
+            auto [txns, cursor] = backend_->fetchAccountMPTTransactions(
+                mptId, account, kTX_TYPE_B, 100, false, {}, yield
+            );
+            EXPECT_EQ(txns.size(), 0);
+        }
+        // unseen account -> empty
+        {
+            auto [txns, cursor] = backend_->fetchAccountMPTTransactions(
+                mptId, makeAccount(0x99), std::nullopt, 100, false, {}, yield
+            );
+            EXPECT_EQ(txns.size(), 0);
+        }
+    });
+}
+
+TEST_F(BackendCassandraMPTTest, DescendingOrderForwardAndReverse)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const mptId = makeMptId();
+        std::uint32_t const baseSeq = 200;
+
+        // Three txns spanning three distinct ledgers, so the full (ledger, tx_index)
+        // tuple ordering is exercised rather than tx_index alone.
+        std::vector<ripple::uint256> hashes;
+        std::vector<std::uint32_t> seqs;
+        for (std::uint8_t i = 1; i <= 3; ++i) {
+            auto const seq = baseSeq + i;
+            seqs.push_back(seq);
+            setupLedgerRange(seq);
+            auto const hash = makeHash(i);
+            hashes.push_back(hash);
+            writeTxBlob(hash, seq);
+            MPTTransactionsData const record{mptId, {}, kTX_TYPE_A, seq, i, hash};
+            backend_->writeMPTTransactions({record});
+        }
+        backend_->waitForWritesToFinish();
+
+        // The blob stored for hash h is "tx_" + strHex(h); map a returned tx back to its
+        // originating row's hash so ordering can be checked exactly.
+        auto txBlobToString = [](data::TransactionAndMetadata const& tx) {
+            return std::string(tx.transaction.begin(), tx.transaction.end());
+        };
+        auto expectedBlob = [&](std::uint8_t i) { return "tx_" + ripple::strHex(makeHash(i)); };
+
+        // Reverse (forward=false): newest first -> rows 3, 2, 1.
+        {
+            auto [txns, cursor] =
+                backend_->fetchMPTTransactions(mptId, std::nullopt, 100, false, {}, yield);
+            ASSERT_EQ(txns.size(), 3);
+            EXPECT_FALSE(cursor);
+            EXPECT_EQ(txBlobToString(txns[0]), expectedBlob(3));
+            EXPECT_EQ(txBlobToString(txns[1]), expectedBlob(2));
+            EXPECT_EQ(txBlobToString(txns[2]), expectedBlob(1));
+        }
+        // Forward (forward=true): oldest first -> rows 1, 2, 3 (the reverse order).
+        {
+            auto [txns, cursor] =
+                backend_->fetchMPTTransactions(mptId, std::nullopt, 100, true, {}, yield);
+            ASSERT_EQ(txns.size(), 3);
+            EXPECT_FALSE(cursor);
+            EXPECT_EQ(txBlobToString(txns[0]), expectedBlob(1));
+            EXPECT_EQ(txBlobToString(txns[1]), expectedBlob(2));
+            EXPECT_EQ(txBlobToString(txns[2]), expectedBlob(3));
+        }
+    });
+}
+
+TEST_F(BackendCassandraMPTTest, MarkerPaginationRoundTrip)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const mptId = makeMptId();
+        std::uint32_t const baseSeq = 300;
+
+        auto txBlobToString = [](data::TransactionAndMetadata const& tx) {
+            return std::string(tx.transaction.begin(), tx.transaction.end());
+        };
+        auto expectedBlob = [&](std::uint8_t i) { return "tx_" + ripple::strHex(makeHash(i)); };
+
+        // Writes `total` rows, each in its own ledger (distinct seq) and at distinct tx_index,
+        // so the full (ledger, tx_index) tuple ordering is paged over.
+        auto setup = [&](std::uint8_t total) {
+            std::set<std::string> expected;
+            for (std::uint8_t i = 1; i <= total; ++i) {
+                auto const seq = baseSeq + i;
+                setupLedgerRange(seq);
+                auto const hash = makeHash(i);
+                writeTxBlob(hash, seq);
+                MPTTransactionsData const record{mptId, {}, kTX_TYPE_A, seq, i, hash};
+                backend_->writeMPTTransactions({record});
+                expected.insert(expectedBlob(i));
+            }
+            backend_->waitForWritesToFinish();
+            return expected;
+        };
+
+        // Page through every row; assert the union of pages equals `expected` exactly:
+        // every row seen exactly once (no duplicates from a repeated cursor row, no gaps from
+        // a dropped row). Each full page (one that returns a cursor) must be exactly `limit`.
+        auto pageThrough =
+            [&](bool forward, std::uint32_t limit, std::set<std::string> const& expected) {
+                std::vector<std::string> seen;
+                std::optional<data::TransactionsCursor> cursor;
+                std::size_t pages = 0;
+                do {
+                    auto [txns, retCursor] = backend_->fetchMPTTransactions(
+                        mptId, std::nullopt, limit, forward, cursor, yield
+                    );
+                    ++pages;
+                    // Guard against an infinite loop from a non-advancing cursor.
+                    ASSERT_LE(pages, expected.size() + 2);
+                    if (retCursor)
+                        EXPECT_EQ(txns.size(), limit);
+                    for (auto const& tx : txns)
+                        seen.push_back(txBlobToString(tx));
+                    cursor = retCursor;
+                } while (cursor);
+
+                // No duplicates.
+                std::set<std::string> const seenSet(seen.begin(), seen.end());
+                EXPECT_EQ(seen.size(), seenSet.size()) << "pagination returned duplicate rows";
+                // No gaps: union equals the full expected set.
+                EXPECT_EQ(seenSet, expected) << "pagination dropped or repeated rows";
+                EXPECT_EQ(seen.size(), expected.size());
+            };
+
+        // Case A: total not a multiple of the limit (25 rows, limit 10 -> 10,10,5).
+        {
+            auto const expected = setup(25);
+            pageThrough(false, 10, expected);
+            pageThrough(true, 10, expected);
+        }
+
+        // Case B (Finding #3): total an exact multiple of the limit (20 rows, limit 10).
+        // The last full page returns a cursor; the subsequent fetch must return an empty page
+        // (the `not results.hasRows()` early-return path) and end the loop -- no infinite loop
+        // and no spurious trailing duplicate.
+        {
+            // Reuse the same mptId but a fresh issuance space would require a new id; instead
+            // verify the exact-multiple boundary on a dedicated mptId so rows from case A do
+            // not bleed in.
+            ripple::uint192 mptIdB;
+            EXPECT_TRUE(mptIdB.parseHex("00000002BE223A7216F1B07AE9C36F107879B6E9D3A3C1B0"));
+            std::set<std::string> expectedB;
+            for (std::uint8_t i = 1; i <= 20; ++i) {
+                // Continue the ledger sequence contiguously after case A (which ended at
+                // baseSeq + 25); the backend's finishWrites enforces contiguous ledgers.
+                auto const seq = baseSeq + 25 + i;
+                setupLedgerRange(seq);
+                auto const hash = makeHash(i);
+                writeTxBlob(hash, seq);
+                MPTTransactionsData const record{mptIdB, {}, kTX_TYPE_A, seq, i, hash};
+                backend_->writeMPTTransactions({record});
+                expectedB.insert(expectedBlob(i));
+            }
+            backend_->waitForWritesToFinish();
+
+            auto pageThroughB = [&](bool forward) {
+                std::vector<std::string> seen;
+                std::optional<data::TransactionsCursor> cursor;
+                std::uint32_t const limit = 10;
+                std::size_t pages = 0;
+                bool sawEmptyTerminator = false;
+                do {
+                    auto [txns, retCursor] = backend_->fetchMPTTransactions(
+                        mptIdB, std::nullopt, limit, forward, cursor, yield
+                    );
+                    ++pages;
+                    ASSERT_LE(pages, 4u) << "exact-multiple paging did not terminate cleanly";
+                    if (txns.empty()) {
+                        // Terminal empty page reached after the last full page returned a cursor.
+                        sawEmptyTerminator = true;
+                        EXPECT_FALSE(retCursor);
+                    } else {
+                        for (auto const& tx : txns)
+                            seen.push_back(txBlobToString(tx));
+                    }
+                    cursor = retCursor;
+                } while (cursor);
+
+                EXPECT_TRUE(sawEmptyTerminator)
+                    << "expected a trailing empty page after the last full page's cursor";
+                std::set<std::string> const seenSet(seen.begin(), seen.end());
+                EXPECT_EQ(seen.size(), seenSet.size())
+                    << "exact-multiple paging returned duplicates";
+                EXPECT_EQ(seenSet, expectedB);
+                EXPECT_EQ(seen.size(), 20u);
+            };
+
+            pageThroughB(false);
+            pageThroughB(true);
+        }
+    });
+}
+
+TEST_F(BackendCassandraMPTTest, MissingBlobYieldsInPositionEmptyRecord)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const mptId = makeMptId();
+        std::uint32_t const seq = 400;
+        setupLedgerRange(seq);
+
+        // hash 1 and 3 have a Transactions row; hash 2 does NOT (missing blob).
+        auto const h1 = makeHash(1);
+        auto const h2 = makeHash(2);
+        auto const h3 = makeHash(3);
+        writeTxBlob(h1, seq);
+        writeTxBlob(h3, seq);
+
+        backend_->writeMPTTransactions({MPTTransactionsData{mptId, {}, kTX_TYPE_A, seq, 1, h1}});
+        backend_->writeMPTTransactions({MPTTransactionsData{mptId, {}, kTX_TYPE_A, seq, 2, h2}});
+        backend_->writeMPTTransactions({MPTTransactionsData{mptId, {}, kTX_TYPE_A, seq, 3, h3}});
+        backend_->waitForWritesToFinish();
+
+        auto [txns, cursor] =
+            backend_->fetchMPTTransactions(mptId, std::nullopt, 100, false, {}, yield);
+        // The page is NOT shortened: the missing blob yields an in-position empty record.
+        ASSERT_EQ(txns.size(), 3);
+        EXPECT_FALSE(cursor);
+
+        // Reverse order is newest-first: index 3, 2, 1. Middle entry (index 2) is empty.
+        EXPECT_EQ(txns[1], data::TransactionAndMetadata{});
+        EXPECT_NE(txns[0], data::TransactionAndMetadata{});
+        EXPECT_NE(txns[2], data::TransactionAndMetadata{});
+    });
+}
+
+// A selective tx_type filter must drop non-matching rows from the hydrated page while the
+// returned cursor keeps tracking the raw index page boundary. So a full raw page (== limit) that
+// contains only a few matching rows still returns a cursor (fewer than `limit` txns), and paging
+// drains every matching row exactly once before a short raw page ends the scan.
+TEST_F(BackendCassandraMPTTest, TxTypeFilterMarkerRidesRawPageBoundary)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        ripple::uint192 mptId;
+        ASSERT_TRUE(mptId.parseHex("00000003CE323A7216F1B07AE9C36F107879B6E9D3A3C1B0"));
+        std::uint32_t const baseSeq = 500;
+
+        auto expectedBlob = [&](std::uint8_t i) { return "tx_" + ripple::strHex(makeHash(i)); };
+        auto txBlobToString = [](data::TransactionAndMetadata const& tx) {
+            return std::string(tx.transaction.begin(), tx.transaction.end());
+        };
+
+        // 12 rows; every 4th (i = 4, 8, 12) is the rare type B, the rest type A.
+        constexpr std::uint8_t kTotal = 12;
+        std::set<std::string> expectedTypeB;
+        for (std::uint8_t i = 1; i <= kTotal; ++i) {
+            auto const seq = baseSeq + i;
+            setupLedgerRange(seq);
+            auto const hash = makeHash(i);
+            writeTxBlob(hash, seq);
+            auto const txType = (i % 4 == 0) ? kTX_TYPE_B : kTX_TYPE_A;
+            backend_->writeMPTTransactions({MPTTransactionsData{mptId, {}, txType, seq, i, hash}});
+            if (i % 4 == 0)
+                expectedTypeB.insert(expectedBlob(i));
+        }
+        backend_->waitForWritesToFinish();
+        ASSERT_EQ(expectedTypeB.size(), 3u);
+
+        // Drain the rare type B with a limit larger than the number of matches per page. The
+        // matching SET is direction-independent, so the same invariants hold for forward (which
+        // also exercises the inclusive `>=` + ++transactionIndex cursor fix-up) and reverse.
+        auto drain = [&](bool forward) {
+            std::vector<std::string> seen;
+            std::optional<data::TransactionsCursor> cursor;
+            std::uint32_t const limit = 5;
+            std::size_t pages = 0;
+            bool sawShortPageWithCursor = false;
+            do {
+                auto [txns, retCursor] = backend_->fetchMPTTransactions(
+                    mptId, kTX_TYPE_B, limit, forward, cursor, yield
+                );
+                ++pages;
+                ASSERT_LE(pages, 4u) << "filtered paging did not terminate";
+                // The filter only ever removes rows, so a page never exceeds the raw limit.
+                EXPECT_LE(txns.size(), limit);
+                // A cursor with fewer than `limit` hydrated txns proves the marker rode the raw
+                // page boundary rather than the filtered count.
+                if (retCursor && txns.size() < limit)
+                    sawShortPageWithCursor = true;
+                for (auto const& tx : txns)
+                    seen.push_back(txBlobToString(tx));
+                cursor = retCursor;
+            } while (cursor);
+
+            EXPECT_TRUE(sawShortPageWithCursor)
+                << "a full raw page with few matches should still return a cursor (forward="
+                << forward << ")";
+
+            // Only type B rows came back, each exactly once, with no type A leakage.
+            std::set<std::string> const seenSet(seen.begin(), seen.end());
+            EXPECT_EQ(seen.size(), seenSet.size())
+                << "filtered paging returned duplicates (forward=" << forward << ")";
+            EXPECT_EQ(seenSet, expectedTypeB)
+                << "filter leaked non-matching rows or dropped matches (forward=" << forward << ")";
+        };
+
+        drain(false);
+        drain(true);
     });
 }
 

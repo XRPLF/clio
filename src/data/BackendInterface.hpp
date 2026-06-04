@@ -409,6 +409,61 @@ public:
     ) const = 0;
 
     /**
+     * @brief Fetches transactions that touched a given MPT issuance, optionally filtered by type.
+     *
+     * When @p txType is set, index rows whose stored type does not match (case-insensitively) are
+     * dropped before the transaction blobs are hydrated, so filtered-out rows cost no extra fetch.
+     * The returned cursor tracks the raw index page boundary independent of the filter, so a
+     * filtered page may return fewer than @p limit transactions while still paging correctly.
+     *
+     * @param mptID The 24-byte MPT issuance ID
+     * @param txType Optional `TxFormats` transaction type name to filter on (case-insensitive)
+     * @param limit The maximum number of transactions per result page
+     * @param forward Whether to fetch the page forwards or backwards from the given cursor
+     * @param cursorIn The cursor to resume fetching from
+     * @param yield The coroutine context
+     * @return Results and a cursor to resume from
+     */
+    virtual TransactionsAndCursor
+    fetchMPTTransactions(
+        ripple::uint192 const& mptID,
+        std::optional<std::string> const& txType,
+        std::uint32_t limit,
+        bool forward,
+        std::optional<TransactionsCursor> const& cursorIn,
+        boost::asio::yield_context yield
+    ) const = 0;
+
+    /**
+     * @brief Fetches transactions that touched a given MPT issuance and involved a given account,
+     * optionally filtered by type.
+     *
+     * When @p txType is set, index rows whose stored type does not match (case-insensitively) are
+     * dropped before the transaction blobs are hydrated, so filtered-out rows cost no extra fetch.
+     * The returned cursor tracks the raw index page boundary independent of the filter, so a
+     * filtered page may return fewer than @p limit transactions while still paging correctly.
+     *
+     * @param mptID The 24-byte MPT issuance ID
+     * @param account The account that must be affected by the transaction
+     * @param txType Optional `TxFormats` transaction type name to filter on (case-insensitive)
+     * @param limit The maximum number of transactions per result page
+     * @param forward Whether to fetch the page forwards or backwards from the given cursor
+     * @param cursorIn The cursor to resume fetching from
+     * @param yield The coroutine context
+     * @return Results and a cursor to resume from
+     */
+    virtual TransactionsAndCursor
+    fetchAccountMPTTransactions(
+        ripple::uint192 const& mptID,
+        ripple::AccountID const& account,
+        std::optional<std::string> const& txType,
+        std::uint32_t limit,
+        bool forward,
+        std::optional<TransactionsCursor> const& cursorIn,
+        boost::asio::yield_context yield
+    ) const = 0;
+
+    /**
      * @brief Fetches a specific ledger object.
      *
      * Currently the real fetch happens in doFetchLedgerObject and fetchLedgerObject attempts to
@@ -724,6 +779,24 @@ public:
      */
     virtual void
     writeNFTTransactions(std::vector<NFTTransactionsData> const& data) = 0;
+
+    /**
+     * @brief Write MPT transaction index rows to the `mpt_transactions` table.
+     *
+     * @param data A vector of MPTTransactionsData objects
+     */
+    virtual void
+    writeMPTTransactions(std::vector<MPTTransactionsData> const& data) = 0;
+
+    /**
+     * @brief Write MPT transaction index rows to the `account_mpt_transactions` table.
+     *
+     * One row is written per affected account in each record.
+     *
+     * @param data A vector of MPTTransactionsData objects
+     */
+    virtual void
+    writeAccountMPTTransactions(std::vector<MPTTransactionsData> const& data) = 0;
 
     /**
      * @brief Write accounts that started holding onto a MPT.
